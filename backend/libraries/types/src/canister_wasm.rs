@@ -28,10 +28,27 @@ pub enum UpgradeChunkedCanisterWasmResponse {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Default)]
+#[serde(from = "ChunkedCanisterWasmPrevious")]
 pub struct ChunkedCanisterWasm {
     pub wasm: CanisterWasm,
     pub chunks: Vec<Hash>,
     pub wasm_hash: Hash,
+}
+
+#[derive(Deserialize)]
+pub struct ChunkedCanisterWasmPrevious {
+    pub wasm: CanisterWasm,
+    pub chunks: Vec<Hash>,
+}
+
+impl From<ChunkedCanisterWasmPrevious> for ChunkedCanisterWasm {
+    fn from(value: ChunkedCanisterWasmPrevious) -> Self {
+        ChunkedCanisterWasm {
+            wasm_hash: value.wasm.module.hash(),
+            wasm: value.wasm,
+            chunks: value.chunks,
+        }
+    }
 }
 
 impl From<CanisterWasm> for ChunkedCanisterWasm {
