@@ -3989,9 +3989,9 @@ export class OpenChatAgent extends EventTarget {
         ];
     }
 
-    deleteUser(userId: string): Promise<boolean> {
-        return this._userIndexClient.deleteUser(userId);
-    }
+    // deleteUser(userId: string): Promise<boolean> {
+    //     return this._userIndexClient.deleteUser(userId);
+    // }
 
     getChannelSummary(channelId: ChannelIdentifier): Promise<ChannelSummaryResponse> {
         return this.communityClient(channelId.communityId)
@@ -4019,6 +4019,17 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.registerBot(bot);
     }
 
+    updateRegisteredBot(
+        id: string,
+        ownerId?: string,
+        name?: string,
+        avatarUrl?: string,
+        endpoint?: string,
+    ): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+        return this._userIndexClient.updateRegisteredBot(id, ownerId, name, avatarUrl, endpoint);
+    }
+
     addBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
@@ -4032,25 +4043,34 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    updateBot(
+    updateInstalledBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
         grantedPermissions: SlashCommandPermissions,
     ): Promise<boolean> {
         switch (id.kind) {
             case "community":
-                return this.communityClient(id.communityId).updateBot(botId, grantedPermissions);
+                return this.communityClient(id.communityId).updateInstalledBot(
+                    botId,
+                    grantedPermissions,
+                );
             case "group_chat":
-                return this.getGroupClient(id.groupId).updateBot(botId, grantedPermissions);
+                return this.getGroupClient(id.groupId).updateInstalledBot(
+                    botId,
+                    grantedPermissions,
+                );
         }
     }
 
-    removeBot(id: CommunityIdentifier | GroupChatIdentifier, botId: string): Promise<boolean> {
+    removeInstalledBot(
+        id: CommunityIdentifier | GroupChatIdentifier,
+        botId: string,
+    ): Promise<boolean> {
         switch (id.kind) {
             case "community":
-                return this.communityClient(id.communityId).removeBot(botId);
+                return this.communityClient(id.communityId).removeInstalledBot(botId);
             case "group_chat":
-                return this.getGroupClient(id.groupId).removeBot(botId);
+                return this.getGroupClient(id.groupId).removeInstalledBot(botId);
         }
     }
 

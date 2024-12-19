@@ -100,7 +100,7 @@
     function updateBot() {
         busy = true;
         client
-            .updateBot(id, bot.id, $state.snapshot(grantedPermissions))
+            .updateInstalledBot(id, bot.id, $state.snapshot(grantedPermissions))
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.edit.failure"));

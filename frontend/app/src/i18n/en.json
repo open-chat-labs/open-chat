@@ -156,7 +156,8 @@
             "noPermissions": "No special permissions required",
             "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the commands available.",
             "title": "Add bot to community",
-            "loadDefinition": "Load definition"
+            "loadDefinition": "Load definition",
+            "action": "Register"
         },
         "builder": {
             "addAnother": "Add another",
@@ -328,7 +329,10 @@
             }
         },
         "update_bot": {
-            "desc": "Start a proposal to update an existing OpenChat bot"
+            "desc": "Start a proposal to update an existing OpenChat bot",
+            "select": "Please search for the bot that you would like to update. Note that you can only update a bot that you own.",
+            "nobots": "Only the owner of a registerd bot can update the bot. You are not the owner of any registered bots.",
+            "action": "Update"
         },
         "view": {
             "close": "Close",

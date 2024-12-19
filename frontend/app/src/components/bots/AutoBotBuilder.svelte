@@ -2,7 +2,6 @@
     import Reload from "svelte-material-icons/Reload.svelte";
     import {
         validEndpoint,
-        emptyBotInstance,
         OpenChat,
         validateBot,
         ValidationErrors,
@@ -29,13 +28,14 @@
     interface Props {
         valid: boolean;
         onUpdate: (bot: ExternalBot) => void;
+        mode: "register" | "update";
+        candidate: ExternalBot;
     }
 
-    let { valid = $bindable(), onUpdate }: Props = $props();
+    let { valid = $bindable(), onUpdate, mode = "register", candidate }: Props = $props();
     let selectedCommand = $state<SlashCommandSchema | undefined>(undefined);
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
-    let candidate = $state<ExternalBot>(emptyBotInstance());
     let schemaLoaded = $state(false);
     let schemaLoading = $state(false);
     let showNext = $derived(

@@ -182,6 +182,7 @@
         | { kind: "verify_humanity" }
         | { kind: "select_chat" }
         | { kind: "register_bot" }
+        | { kind: "update_bot" }
         | { kind: "suspended" }
         | { kind: "no_access" }
         | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
@@ -270,7 +271,7 @@
         } else if (ev instanceof RegisterBot) {
             modal = { kind: "register_bot" };
         } else if (ev instanceof UpdateBot) {
-            modal = { kind: "register_bot" };
+            modal = { kind: "update_bot" };
         } else if (ev instanceof SummonWitch) {
             summonWitch();
         } else if (ev instanceof RemoteVideoCallStartedEvent) {
@@ -1333,6 +1334,8 @@
         {:else if modal.kind === "suspended"}
             <SuspendedModal on:close={closeModal} />
         {:else if modal.kind === "register_bot"}
+            <BotBuilderModal onClose={closeModal} />
+        {:else if modal.kind === "update_bot"}
             <BotBuilderModal onClose={closeModal} />
         {:else if modal.kind === "no_access"}
             <NoAccess on:close={closeNoAccess} />

@@ -38,7 +38,7 @@
     let reviewMode: "editing" | "viewing" | undefined = $state(undefined);
 
     function removeBot() {
-        client.removeBot(id, bot.id).then((success) => {
+        client.removeInstalledBot(id, bot.id).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
             }
