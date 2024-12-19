@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Add logging + skip steps that have already been completed ([#7093](https://github.com/open-chat-labs/open-chat/pull/7093))
+- Change bot cmd number param values from u16 to f64 ([#7095](https://github.com/open-chat-labs/open-chat/pull/7095))
 
 ## [[2.0.1533](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1533-user_index)] - 2024-12-19
 
