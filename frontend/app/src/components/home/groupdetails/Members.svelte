@@ -26,6 +26,7 @@
         type ExternalBot,
         externalBots,
         type SlashCommandPermissions,
+        type BotMatch as BotMatchType,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import InvitedUser from "./InvitedUser.svelte";
@@ -38,6 +39,7 @@
     import { botsEnabled } from "../../../utils/bots";
     import BotExplorer from "../../bots/BotExplorer.svelte";
     import BotMember from "../../bots/BotMember.svelte";
+    import BotMatch from "../../bots/BotMatch.svelte";
 
     type EnhancedExternalBot = ExternalBot & { grantedPermissions: SlashCommandPermissions };
 
@@ -416,7 +418,11 @@
     </div>
 {:else if selectedTab === "add-bots" && collection.kind !== "channel"}
     <div class="bot-explorer">
-        <BotExplorer id={botContainer} />
+        <BotExplorer>
+            {#snippet botMatch(match: BotMatchType)}
+                <BotMatch id={botContainer} {match} />
+            {/snippet}
+        </BotExplorer>
     </div>
 {/if}
 

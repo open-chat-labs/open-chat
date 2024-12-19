@@ -150,9 +150,11 @@
     "blockUserSucceeded": "该用户已被加入黑名单",
     "bots": {
         "add": {
+            "action": "登记",
             "addBot": "添加机器人",
             "choosePermissions": "权限",
             "failure": "抱歉，我们无法添加该机器人",
+            "loadDefinition": "荷载定义",
             "noPermissions": "无需特殊权限",
             "permissionsInfo": "此机器人寻求以下权限。选择限制授予的权限将限制可用的命令。",
             "title": "将机器人添加到社区"
@@ -173,6 +175,7 @@
             "commandNamePlaceholder": "输入命令名称",
             "commandPermissionsDesc": "描述此命令所需的权限",
             "commandPermissionsLabel": "命令权限",
+            "commandsLabel": "命令",
             "descLabel": "机器人描述",
             "descPlaceholder": "输入机器人描述",
             "endpointLabel": "机器人端点",
@@ -187,6 +190,7 @@
                 "minLength": "必须至少包含 {n} 个字符",
                 "nameCheckError": "检查机器人名称时出错",
                 "noCommands": "机器人必须至少包含一个命令",
+                "owner": "您必须输入机器人的所有者",
                 "principal": "您必须输入有效的主体来识别机器人"
             },
             "iconLabel": "机器人图标",
@@ -202,6 +206,8 @@
             "namePlaceholder": "输入机器人名称",
             "nameRules": "必须是唯一的，并且仅包含字母数字字符和下划线",
             "optional": "选修的",
+            "ownerLabel": "机器人所有者",
+            "ownerRules": "该机器人的联系人是谁",
             "paramDescLabel": "参数说明",
             "paramDescPlaceholder": "输入参数描述",
             "paramLabel": "参数：{name}",
@@ -209,6 +215,7 @@
             "paramNamePlaceholder": "输入参数名称",
             "paramPlaceholderLabel": "参数占位符",
             "paramPlaceholderPlaceholder": "输入参数占位符",
+            "paramsLabel": "参数",
             "paramTypeLabel": "参数类型",
             "permSameAsMessage": "与消息权限相同",
             "permScopeChat": "聊天",
@@ -325,7 +332,11 @@
             }
         },
         "update_bot": {
-            "desc": "发起更新现有 OpenChat 机器人的提案"
+            "action": "更新",
+            "desc": "发起更新现有 OpenChat 机器人的提案",
+            "nobots": "只有已注册机器人的所有者才能更新机器人。您不是任何已注册机器人的所有者。",
+            "select": "选择您想要更新的机器人。",
+            "title": "更新机器人"
         },
         "view": {
             "close": "关闭",

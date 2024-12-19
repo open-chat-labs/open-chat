@@ -45,6 +45,7 @@
     import { toastStore } from "../../stores/toast";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
+    import BotAvatar from "./BotAvatar.svelte";
 
     interface Props {
         onCancel: () => void;
@@ -204,7 +205,7 @@
             class:selected={$focusedCommandIndex === i}
             onclick={() => selectCommand(command)}>
             {#if command.kind === "external_bot"}
-                <img class="icon" src={command.botIcon} alt={command.botName} />
+                <BotAvatar bot={command} />
             {:else}
                 <Logo />
             {/if}

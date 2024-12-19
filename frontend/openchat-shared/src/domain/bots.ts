@@ -175,21 +175,19 @@ export type SlashCommandInstance = {
 
 export type Bot = ExternalBot | InternalBot;
 
-export function emptyBotInstance(bot?: ExternalBot): ExternalBot {
-    return bot
-        ? structuredClone(bot)
-        : {
-              kind: "external_bot",
-              id: "",
-              ownerId: "",
-              name: "",
-              endpoint: "",
-              definition: {
-                  kind: "bot_definition",
-                  description: "",
-                  commands: [],
-              },
-          };
+export function emptyBotInstance(ownerId: string): ExternalBot {
+    return {
+        kind: "external_bot",
+        id: "",
+        ownerId,
+        name: "",
+        endpoint: "",
+        definition: {
+            kind: "bot_definition",
+            description: "",
+            commands: [],
+        },
+    };
 }
 
 type BotCommon = {
@@ -243,7 +241,7 @@ export type FlattenedCommand = SlashCommandSchema &
         | {
               kind: "external_bot";
               botName: string;
-              botIcon?: string;
+              avatarUrl?: string;
               botId: string;
               botEndpoint: string;
               botDescription?: string;
@@ -386,6 +384,10 @@ export function validEndpoint(endpoint: string): boolean {
 export function validateBot(bot: ExternalBot): ValidationErrors {
     const errors = new ValidationErrors();
     errors.addErrors(`bot_name`, validBotComponentName(bot.name));
+
+    if (bot.ownerId === "") {
+        errors.addErrors("bot_owner", i18nKey("bots.builder.errors.owner"));
+    }
 
     if (!validEndpoint(bot.endpoint)) {
         errors.addErrors("bot_endpoint", i18nKey("bots.builder.errors.endpoint"));

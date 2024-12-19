@@ -150,9 +150,11 @@
     "blockUserSucceeded": "L'utente è stato bloccato",
     "bots": {
         "add": {
+            "action": "Registro",
             "addBot": "Aggiungi bot",
             "choosePermissions": "Permessi",
             "failure": "Spiacenti, non siamo riusciti ad aggiungere il bot",
+            "loadDefinition": "Definizione del carico",
             "noPermissions": "Non sono richieste autorizzazioni speciali",
             "permissionsInfo": "Questo bot richiede i seguenti permessi. Scegliendo di limitare i permessi concessi si limiteranno i comandi disponibili.",
             "title": "Aggiungi bot alla community"
@@ -173,6 +175,7 @@
             "commandNamePlaceholder": "Inserisci il nome del comando",
             "commandPermissionsDesc": "Descrivi i permessi richiesti da questo comando",
             "commandPermissionsLabel": "Permessi di comando",
+            "commandsLabel": "Comandi",
             "descLabel": "Descrizione del bot",
             "descPlaceholder": "Inserisci la descrizione del bot",
             "endpointLabel": "Punto finale del bot",
@@ -187,6 +190,7 @@
                 "minLength": "Deve contenere almeno {n} caratteri",
                 "nameCheckError": "Si è verificato un errore durante il controllo del nome del bot",
                 "noCommands": "Un bot deve contenere almeno un comando",
+                "owner": "Devi inserire un proprietario per il bot",
                 "principal": "Devi inserire un'entità valida per identificare il bot"
             },
             "iconLabel": "Icona del bot",
@@ -202,6 +206,8 @@
             "namePlaceholder": "Inserisci il nome del bot",
             "nameRules": "Deve essere univoco e contenere solo caratteri alfanumerici e caratteri di sottolineatura",
             "optional": "opzionale",
+            "ownerLabel": "Proprietario del bot",
+            "ownerRules": "Chi è il punto di contatto per questo bot?",
             "paramDescLabel": "Descrizione del parametro",
             "paramDescPlaceholder": "Inserisci la descrizione del parametro",
             "paramLabel": "Parametro: {name}",
@@ -209,6 +215,7 @@
             "paramNamePlaceholder": "Inserisci il nome del parametro",
             "paramPlaceholderLabel": "Parametro segnaposto",
             "paramPlaceholderPlaceholder": "Inserisci segnaposto parametro",
+            "paramsLabel": "Parametri",
             "paramTypeLabel": "Tipo di parametro",
             "permSameAsMessage": "Uguali alle autorizzazioni dei messaggi",
             "permScopeChat": "Chiacchierata",
@@ -325,7 +332,11 @@
             }
         },
         "update_bot": {
-            "desc": "Avvia una proposta per aggiornare un bot OpenChat esistente"
+            "action": "Aggiornamento",
+            "desc": "Avvia una proposta per aggiornare un bot OpenChat esistente",
+            "nobots": "Solo il proprietario di un bot registrato può aggiornare il bot. Non sei il proprietario di alcun bot registrato.",
+            "select": "Seleziona il bot che desideri aggiornare.",
+            "title": "Aggiorna bot"
         },
         "view": {
             "close": "Vicino",

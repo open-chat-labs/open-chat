@@ -1,6 +1,5 @@
 <script lang="ts">
     import {
-        AvatarSize,
         emptySlashCommandPermissions,
         OpenChat,
         type BotMatch,
@@ -9,7 +8,6 @@
         type CommunityIdentifier,
         type GroupChatIdentifier,
     } from "openchat-client";
-    import Avatar from "../Avatar.svelte";
     import { getContext } from "svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -25,6 +23,7 @@
     import Checkbox from "../Checkbox.svelte";
     import { togglePermission } from "../../utils/bots";
     import { toastStore } from "../../stores/toast";
+    import BotAvatar from "./BotAvatar.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -100,7 +99,7 @@
     function updateBot() {
         busy = true;
         client
-            .updateBot(id, bot.id, $state.snapshot(grantedPermissions))
+            .updateInstalledBot(id, bot.id, $state.snapshot(grantedPermissions))
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.edit.failure"));
@@ -132,7 +131,7 @@
         </div>
         <div class="body" slot="body">
             <span class="avatar">
-                <Avatar url={bot.avatarUrl} size={AvatarSize.Default} />
+                <BotAvatar {bot} />
             </span>
             <div class="details">
                 <h4 class="bot-name">

@@ -150,9 +150,11 @@
     "blockUserSucceeded": "Benutzer wurde gesperrt",
     "bots": {
         "add": {
+            "action": "Registrieren",
             "addBot": "Bot hinzufügen",
             "choosePermissions": "Berechtigungen",
             "failure": "Es ist uns leider nicht gelungen, den Bot hinzuzufügen.",
+            "loadDefinition": "Lastdefinition",
             "noPermissions": "Keine besonderen Berechtigungen erforderlich",
             "permissionsInfo": "Dieser Bot fordert die folgenden Berechtigungen an. Wenn Sie die erteilten Berechtigungen einschränken, werden auch die verfügbaren Befehle eingeschränkt.",
             "title": "Bot zur Community hinzufügen"
@@ -173,6 +175,7 @@
             "commandNamePlaceholder": "Geben Sie den Befehlsnamen ein",
             "commandPermissionsDesc": "Beschreiben Sie die Berechtigungen, die dieser Befehl erfordert",
             "commandPermissionsLabel": "Befehlsberechtigungen",
+            "commandsLabel": "Befehle",
             "descLabel": "Bot-Beschreibung",
             "descPlaceholder": "Geben Sie die Bot-Beschreibung ein",
             "endpointLabel": "Bot-Endpunkt",
@@ -187,6 +190,7 @@
                 "minLength": "Muss mindestens {n} Zeichen haben",
                 "nameCheckError": "Beim Überprüfen des Botnamens ist ein Fehler aufgetreten",
                 "noCommands": "Ein Bot muss mindestens einen Befehl enthalten",
+                "owner": "Sie müssen einen Besitzer für den Bot eingeben",
                 "principal": "Sie müssen einen gültigen Auftraggeber eingeben, um den Bot zu identifizieren"
             },
             "iconLabel": "Bot-Symbol",
@@ -202,6 +206,8 @@
             "namePlaceholder": "Geben Sie den Bot-Namen ein",
             "nameRules": "Muss eindeutig sein und darf nur alphanumerische Zeichen und Unterstriche enthalten",
             "optional": "optional",
+            "ownerLabel": "Bot-Besitzer",
+            "ownerRules": "Wer ist der Ansprechpartner für diesen Bot",
             "paramDescLabel": "Parameterbeschreibung",
             "paramDescPlaceholder": "Geben Sie eine Parameterbeschreibung ein",
             "paramLabel": "Parameter: {name}",
@@ -209,6 +215,7 @@
             "paramNamePlaceholder": "Geben Sie den Parameternamen ein",
             "paramPlaceholderLabel": "Parameterplatzhalter",
             "paramPlaceholderPlaceholder": "Parameterplatzhalter eingeben",
+            "paramsLabel": "Parameter",
             "paramTypeLabel": "Parametertyp",
             "permSameAsMessage": "Gleich wie Nachrichtenberechtigungen",
             "permScopeChat": "Chat",
@@ -325,7 +332,11 @@
             }
         },
         "update_bot": {
-            "desc": "Starten Sie einen Vorschlag zur Aktualisierung eines vorhandenen OpenChat-Bots"
+            "action": "Aktualisieren",
+            "desc": "Starten Sie einen Vorschlag zur Aktualisierung eines vorhandenen OpenChat-Bots",
+            "nobots": "Nur der Besitzer eines registrierten Bots kann diesen aktualisieren. Sie sind nicht der Besitzer eines registrierten Bots.",
+            "select": "Wählen Sie den Bot aus, den Sie aktualisieren möchten.",
+            "title": "Bot aktualisieren"
         },
         "view": {
             "close": "Schließen",

@@ -150,9 +150,11 @@
     "blockUserSucceeded": "Użytkownik został zablokowany",
     "bots": {
         "add": {
+            "action": "Rejestr",
             "addBot": "Dodaj bota",
             "choosePermissions": "Uprawnienia",
             "failure": "Przepraszamy, nie udało nam się dodać bota",
+            "loadDefinition": "Definicja obciążenia",
             "noPermissions": "Nie są wymagane żadne specjalne uprawnienia",
             "permissionsInfo": "Ten bot szuka następujących uprawnień. Wybór ograniczenia przyznanych uprawnień ograniczy dostępne polecenia.",
             "title": "Dodaj bota do społeczności"
@@ -173,6 +175,7 @@
             "commandNamePlaceholder": "Wprowadź nazwę polecenia",
             "commandPermissionsDesc": "Opisz uprawnienia, których wymaga to polecenie",
             "commandPermissionsLabel": "Uprawnienia do poleceń",
+            "commandsLabel": "Polecenia",
             "descLabel": "Opis bota",
             "descPlaceholder": "Wprowadź opis bota",
             "endpointLabel": "Punkt końcowy bota",
@@ -187,6 +190,7 @@
                 "minLength": "Musi mieć co najmniej {n} znaków",
                 "nameCheckError": "Wystąpił błąd podczas sprawdzania nazwy bota",
                 "noCommands": "Bot musi zawierać co najmniej jedno polecenie",
+                "owner": "Musisz podać właściciela bota",
                 "principal": "Aby zidentyfikować bota, należy wprowadzić prawidłowy podmiot"
             },
             "iconLabel": "Ikona bota",
@@ -202,6 +206,8 @@
             "namePlaceholder": "Wprowadź nazwę bota",
             "nameRules": "Musi być unikalny i zawierać wyłącznie znaki alfanumeryczne oraz podkreślenia",
             "optional": "fakultatywny",
+            "ownerLabel": "Właściciel bota",
+            "ownerRules": "Kto jest osobą kontaktową dla tego bota",
             "paramDescLabel": "Opis parametrów",
             "paramDescPlaceholder": "Wprowadź opis parametru",
             "paramLabel": "Parametr: {name}",
@@ -209,6 +215,7 @@
             "paramNamePlaceholder": "Wprowadź nazwę parametru",
             "paramPlaceholderLabel": "Symbol zastępczy parametru",
             "paramPlaceholderPlaceholder": "Wprowadź symbol zastępczy parametru",
+            "paramsLabel": "Parametry",
             "paramTypeLabel": "Typ parametru",
             "permSameAsMessage": "Tak samo jak uprawnienia do wiadomości",
             "permScopeChat": "Pogawędzić",
@@ -325,7 +332,11 @@
             }
         },
         "update_bot": {
-            "desc": "Rozpocznij propozycję aktualizacji istniejącego bota OpenChat"
+            "action": "Aktualizacja",
+            "desc": "Rozpocznij propozycję aktualizacji istniejącego bota OpenChat",
+            "nobots": "Tylko właściciel zarejestrowanego bota może aktualizować bota. Nie jesteś właścicielem żadnego zarejestrowanego bota.",
+            "select": "Wybierz bota, którego chcesz zaktualizować.",
+            "title": "Aktualizacja bota"
         },
         "view": {
             "close": "Zamknąć",

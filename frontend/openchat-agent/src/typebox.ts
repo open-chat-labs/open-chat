@@ -2149,13 +2149,6 @@ export const UserIndexSearchArgs = Type.Object({
     max_results: Type.Number(),
 });
 
-export type UserIndexDeleteUserResponse = Static<typeof UserIndexDeleteUserResponse>;
-export const UserIndexDeleteUserResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("NotAuthorized"),
-    Type.Literal("UserNotFound"),
-]);
-
 export type UserIndexUnsuspendUserResponse = Static<typeof UserIndexUnsuspendUserResponse>;
 export const UserIndexUnsuspendUserResponse = Type.Union([
     Type.Literal("Success"),
@@ -2210,6 +2203,26 @@ export type UserIndexSetUsernameArgs = Static<typeof UserIndexSetUsernameArgs>;
 export const UserIndexSetUsernameArgs = Type.Object({
     username: Type.String(),
 });
+
+export type UserIndexUpdateBotResponse = Static<typeof UserIndexUpdateBotResponse>;
+export const UserIndexUpdateBotResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NameInvalid"),
+    Type.Literal("NameAlreadyExists"),
+    Type.Literal("AvatarInvalid"),
+    Type.Literal("EndpointInvalid"),
+    Type.Literal("BotNotFound"),
+    Type.Literal("BotSuspended"),
+    Type.Literal("NotAuthorised"),
+    Type.Literal("OwnerNotFound"),
+    Type.Literal("OwnerSuspended"),
+    Type.Literal("NewOwnerNotFound"),
+    Type.Literal("NewOwnerSuspended"),
+    Type.Literal("DefinitionNotFound"),
+    Type.Literal("DefinitionInvalid"),
+    Type.Literal("DescriptionTooLong"),
+    Type.Literal("TooManyCommands"),
+]);
 
 export type UserIndexSetDisplayNameResponse = Static<typeof UserIndexSetDisplayNameResponse>;
 export const UserIndexSetDisplayNameResponse = Type.Union([
@@ -4941,11 +4954,6 @@ export const UserIndexReferralMetricsResponse = Type.Object({
     Success: UserIndexReferralMetricsReferralMetrics,
 });
 
-export type UserIndexDeleteUserArgs = Static<typeof UserIndexDeleteUserArgs>;
-export const UserIndexDeleteUserArgs = Type.Object({
-    user_id: UserId,
-});
-
 export type UserIndexUnsuspendUserArgs = Static<typeof UserIndexUnsuspendUserArgs>;
 export const UserIndexUnsuspendUserArgs = Type.Object({
     user_id: UserId,
@@ -4970,6 +4978,15 @@ export const UserIndexChitLeaderboardChitUserBalance = Type.Object({
     user_id: UserId,
     username: Type.String(),
     balance: Type.Number(),
+});
+
+export type UserIndexUpdateBotArgs = Static<typeof UserIndexUpdateBotArgs>;
+export const UserIndexUpdateBotArgs = Type.Object({
+    bot_id: UserId,
+    owner: Type.Optional(Type.Union([UserId, Type.Undefined()])),
+    name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    avatar: OptionUpdateString,
+    endpoint: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
 });
 
 export type UserIndexSetDiamondMembershipFeesArgs = Static<

@@ -150,9 +150,11 @@
     "blockUserSucceeded": "ユーザーはブロックされました",
     "bots": {
         "add": {
+            "action": "登録する",
             "addBot": "ボットを追加",
             "choosePermissions": "権限",
             "failure": "申し訳ありませんが、ボットを追加できませんでした",
+            "loadDefinition": "荷重定義",
             "noPermissions": "特別な許可は必要ありません",
             "permissionsInfo": "このボットは以下の権限を要求します。付与される権限を制限することを選択すると、使用可能なコマンドが制限されます。",
             "title": "コミュニティにボットを追加する"
@@ -173,6 +175,7 @@
             "commandNamePlaceholder": "コマンド名を入力",
             "commandPermissionsDesc": "このコマンドに必要な権限について説明します",
             "commandPermissionsLabel": "コマンド権限",
+            "commandsLabel": "コマンド",
             "descLabel": "ボットの説明",
             "descPlaceholder": "ボットの説明を入力してください",
             "endpointLabel": "ボットエンドポイント",
@@ -187,6 +190,7 @@
                 "minLength": "少なくとも {n} 文字が必要です",
                 "nameCheckError": "ボット名の確認中にエラーが発生しました",
                 "noCommands": "ボットには少なくとも1つのコマンドが含まれている必要があります",
+                "owner": "ボットの所有者を入力する必要があります",
                 "principal": "ボットを識別するには有効なプリンシパルを入力する必要があります"
             },
             "iconLabel": "ボットアイコン",
@@ -202,6 +206,8 @@
             "namePlaceholder": "ボット名を入力",
             "nameRules": "一意であり、英数字とアンダースコアのみを含む必要があります",
             "optional": "オプション",
+            "ownerLabel": "ボット所有者",
+            "ownerRules": "このボットの連絡先は誰ですか",
             "paramDescLabel": "パラメータの説明",
             "paramDescPlaceholder": "パラメータの説明を入力してください",
             "paramLabel": "パラメータ: {name}",
@@ -209,6 +215,7 @@
             "paramNamePlaceholder": "パラメータ名を入力してください",
             "paramPlaceholderLabel": "パラメータプレースホルダ",
             "paramPlaceholderPlaceholder": "パラメータプレースホルダを入力",
+            "paramsLabel": "パラメータ",
             "paramTypeLabel": "パラメータタイプ",
             "permSameAsMessage": "メッセージの権限と同じ",
             "permScopeChat": "チャット",
@@ -325,7 +332,11 @@
             }
         },
         "update_bot": {
-            "desc": "既存のOpenChatボットを更新する提案を開始する"
+            "action": "アップデート",
+            "desc": "既存のOpenChatボットを更新する提案を開始する",
+            "nobots": "登録されたボットの所有者のみがボットを更新できます。あなたは登録されたボットの所有者ではありません。",
+            "select": "更新するボットを選択します。",
+            "title": "ボットの更新"
         },
         "view": {
             "close": "近い",

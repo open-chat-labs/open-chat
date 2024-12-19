@@ -11,7 +11,7 @@ const ApiBotDefinition = Type.Object({
 });
 
 export function getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
-    return fetch(`${endpoint}/schema`)
+    return fetch(`${endpoint}`)
         .then((res) => {
             if (res.ok) {
                 return res.json();
@@ -30,6 +30,7 @@ export function getBotDefinition(endpoint: string): Promise<BotDefinitionRespons
 
 function validateSchema(json: unknown): BotDefinitionResponse {
     try {
+        console.log("Bot definition", json);
         const value = Value.Parse(ApiBotDefinition, json);
         return externalBotDefinition(value);
     } catch (err) {

@@ -803,6 +803,20 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.registerBot(payload.bot));
                 break;
 
+            case "updateRegisteredBot":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateRegisteredBot(
+                        payload.id,
+                        payload.ownerId,
+                        payload.name,
+                        payload.avatarUrl,
+                        payload.endpoint,
+                    ),
+                );
+                break;
+
             case "searchGroups":
                 executeThenReply(
                     payload,
@@ -1868,9 +1882,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "deleteUser":
-                executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
-                break;
+            // case "deleteUser":
+            //     executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
+            //     break;
 
             case "addBot":
                 executeThenReply(
@@ -1880,19 +1894,19 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "updateBot":
+            case "updateInstalledBot":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.updateBot(payload.id, payload.botId, payload.grantedPermissions),
+                    agent.updateInstalledBot(payload.id, payload.botId, payload.grantedPermissions),
                 );
                 break;
 
-            case "removeBot":
+            case "removeInstalledBot":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.removeBot(payload.id, payload.botId),
+                    agent.removeInstalledBot(payload.id, payload.botId),
                 );
                 break;
 
