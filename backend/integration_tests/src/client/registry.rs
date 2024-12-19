@@ -26,7 +26,17 @@ pub mod happy_path {
         registry_canister_id: CanisterId,
         subnet_id: Principal,
     ) -> Subnet {
-        let response = super::expand_onto_subnet(env, sender, registry_canister_id, &expand_onto_subnet::Args { subnet_id });
+        let response = super::expand_onto_subnet(
+            env,
+            sender,
+            registry_canister_id,
+            &expand_onto_subnet::Args {
+                subnet_id,
+                local_user_index: None,
+                local_group_index: None,
+                notifications_canister: None,
+            },
+        );
 
         assert!(matches!(response, expand_onto_subnet::Response::Success));
 

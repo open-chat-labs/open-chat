@@ -35,9 +35,9 @@ impl ToHumanReadable for Args {
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
             subnet_id: self.subnet_id.into(),
-            local_user_index: self.local_user_index.clone().map(HumanReadablePrincipal::from),
-            local_group_index: self.local_user_index.clone().map(HumanReadablePrincipal::from),
-            notifications_canister: self.local_user_index.clone().map(HumanReadablePrincipal::from),
+            local_user_index: self.local_user_index.map(HumanReadablePrincipal::from),
+            local_group_index: self.local_user_index.map(HumanReadablePrincipal::from),
+            notifications_canister: self.local_user_index.map(HumanReadablePrincipal::from),
         }
     }
 }
