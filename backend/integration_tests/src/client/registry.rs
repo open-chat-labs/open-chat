@@ -1,8 +1,8 @@
-use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_query_call, generate_update_call};
 use registry_canister::*;
 
 // Queries
-generate_msgpack_query_call!(subnets);
+generate_query_call!(subnets);
 generate_msgpack_query_call!(updates);
 
 // Updates

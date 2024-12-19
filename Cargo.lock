@@ -1122,6 +1122,7 @@ dependencies = [
  "online_users_canister",
  "proposals_bot_canister",
  "registry_canister",
+ "registry_canister_client",
  "sha256",
  "sign_in_with_email_canister",
  "storage_index_canister",

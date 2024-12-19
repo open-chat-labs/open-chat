@@ -24,7 +24,19 @@ fn expand_onto_subnet_impl(args: Args, state: &mut RuntimeState) -> Result<Expan
     } else if state.data.subnets.in_progress().is_some() {
         Err(AlreadyInProgress)
     } else {
-        state.data.subnets.start_new(args.subnet_id, state.env.now());
+        let now = state.env.now();
+        state.data.subnets.start_new(args.subnet_id, now);
+
+        if state.data.test_mode {
+            state.data.subnets.update_in_progress(
+                |s| {
+                    s.local_user_index = args.local_user_index;
+                    s.local_group_index = args.local_group_index;
+                    s.notifications_canister = args.notifications_canister;
+                },
+                now,
+            );
+        }
 
         Ok(ExpandOntoSubnetJob {
             subnet_id: args.subnet_id,
