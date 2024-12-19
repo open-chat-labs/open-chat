@@ -22,6 +22,8 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
+    canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
+
     data.events.fix_role_changed_events();
 
     let env = init_env(data.rng_seed);
@@ -29,8 +31,6 @@ fn post_upgrade(args: Args) {
     for channel in data.channels.iter_mut() {
         channel.chat.events.remove_spurious_video_call_in_progress(now);
     }
-
-    canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     init_state(env, data, args.wasm_version);
 
