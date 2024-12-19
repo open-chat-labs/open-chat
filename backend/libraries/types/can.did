@@ -2117,8 +2117,8 @@ type StringParamChoice = record {
 };
 
 type NumberParam = record {
-    min_size : float64;
-    max_size : float64;
+    max_value : float64;
+    max_value : float64;
     choices : vec NumberParamChoice;
 };
 
