@@ -1,6 +1,5 @@
 use crate::model::files::{Files, RemoveFileResult};
 use crate::model::index_event_batch::{EventToSync, IndexEventBatch};
-use crate::model::index_sync_state::IndexSyncState;
 use crate::model::users::Users;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
@@ -79,18 +78,11 @@ struct Data {
     storage_index_canister_id: CanisterId,
     users: Users,
     files: Files,
-    #[deprecated]
-    index_sync_state: IndexSyncState,
-    #[serde(default = "index_event_sync_queue")]
     index_event_sync_queue: GroupedTimerJobQueue<IndexEventBatch>,
     created: TimestampMillis,
     freezing_limit: Timestamped<Option<Cycles>>,
     rng_seed: [u8; 32],
     test_mode: bool,
-}
-
-fn index_event_sync_queue() -> GroupedTimerJobQueue<IndexEventBatch> {
-    GroupedTimerJobQueue::new(1, false)
 }
 
 impl Data {
@@ -100,7 +92,6 @@ impl Data {
             storage_index_canister_id,
             users: Users::default(),
             files: Files::default(),
-            index_sync_state: IndexSyncState::default(),
             index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
             created: now,
             freezing_limit: Timestamped::default(),
