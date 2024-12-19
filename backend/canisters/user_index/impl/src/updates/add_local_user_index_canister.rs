@@ -18,10 +18,14 @@ async fn add_local_user_index_canister(args: Args) -> Response {
             let wasm_version = result.canister_wasm.version;
 
             if let Err(error) = set_controllers(args.canister_id, vec![result.this_canister_id]).await {
-                InternalError(format!("Failed to set controller: {error:?}"))
-            } else if let Err(error) = install_basic(args.canister_id, result.canister_wasm, result.init_args).await {
-                InternalError(format!("Failed to install canister: {error:?}"))
-            } else if let Err(error) = upgrade_user_wasm_in_local_user_index(
+                return InternalError(format!("Failed to set controller: {error:?}"));
+            }
+            if let Err(error) = install_basic(args.canister_id, result.canister_wasm, result.init_args).await {
+                if !error.1.contains("canister is not empty") {
+                    return InternalError(format!("Failed to install canister: {error:?}"));
+                }
+            }
+            if let Err(error) = upgrade_user_wasm_in_local_user_index(
                 args.canister_id,
                 &result.user_canister_wasm,
                 result.user_canister_wasm_hash,
