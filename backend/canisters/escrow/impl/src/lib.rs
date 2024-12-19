@@ -66,10 +66,8 @@ struct Data {
     pub pending_payments_queue: PendingPaymentsQueue,
     pub notify_status_change_queue: NotifyStatusChangeQueue,
     timer_jobs: TimerJobs<TimerJob>,
-    #[serde(default = "CanisterId::anonymous")]
     pub registry_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(default)]
     pub disabled_tokens: BTreeSet<CanisterId>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,

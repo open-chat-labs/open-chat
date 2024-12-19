@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1519](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1519-group_index)] - 2024-12-19
+
 ### Changed
 
 - Allow Registry to add additional LocalGroupIndexes ([#7072](https://github.com/open-chat-labs/open-chat/pull/7072))
