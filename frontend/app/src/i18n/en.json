@@ -150,14 +150,14 @@
     "blockUserSucceeded": "User has been blocked",
     "bots": {
         "add": {
+            "action": "Register",
             "addBot": "Add bot",
             "choosePermissions": "Permissions",
             "failure": "Sorry we were unable to add the bot",
+            "loadDefinition": "Load definition",
             "noPermissions": "No special permissions required",
             "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the commands available.",
-            "title": "Add bot to community",
-            "loadDefinition": "Load definition",
-            "action": "Register"
+            "title": "Add bot to community"
         },
         "builder": {
             "addAnother": "Add another",
@@ -172,10 +172,10 @@
             "commandDescPlaceholder": "Enter command description",
             "commandLabel": "/{name}",
             "commandNameLabel": "Command name",
-            "commandsLabel": "Commands",
             "commandNamePlaceholder": "Enter command name",
             "commandPermissionsDesc": "Describe the permissions that this command requires",
             "commandPermissionsLabel": "Command permissions",
+            "commandsLabel": "Commands",
             "descLabel": "Bot description",
             "descPlaceholder": "Enter bot description",
             "endpointLabel": "Bot endpoint",
@@ -190,6 +190,7 @@
                 "minLength": "Must have at least {n} characters",
                 "nameCheckError": "There was an error checking the bot name",
                 "noCommands": "A bot must contain at least one command",
+                "owner": "You must enter an owner for the bot",
                 "principal": "You must enter a valid principal to identify the bot"
             },
             "iconLabel": "Bot avatar",
@@ -205,14 +206,16 @@
             "namePlaceholder": "Enter bot name",
             "nameRules": "Must be unique and contain alphanumeric characters and underscores only",
             "optional": "optional",
+            "ownerLabel": "Bot owner",
+            "ownerRules": "Who is the point of contact for this bot",
             "paramDescLabel": "Parameter description",
             "paramDescPlaceholder": "Enter parameter description",
             "paramLabel": "Param: {name}",
             "paramNameLabel": "Parameter name",
-            "paramsLabel": "Parameters",
             "paramNamePlaceholder": "Enter parameter name",
             "paramPlaceholderLabel": "Parameter placeholder",
             "paramPlaceholderPlaceholder": "Enter parameter placeholder",
+            "paramsLabel": "Parameters",
             "paramTypeLabel": "Param type",
             "permSameAsMessage": "Same as message permissions",
             "permScopeChat": "Chat",
@@ -329,10 +332,10 @@
             }
         },
         "update_bot": {
-            "desc": "Start a proposal to update an existing OpenChat bot",
-            "select": "Select the bot that you would like to update.",
-            "nobots": "Only the owner of a registerd bot can update the bot. You are not the owner of any registered bots.",
             "action": "Update",
+            "desc": "Start a proposal to update an existing OpenChat bot",
+            "nobots": "Only the owner of a registerd bot can update the bot. You are not the owner of any registered bots.",
+            "select": "Select the bot that you would like to update.",
             "title": "Update bot"
         },
         "view": {

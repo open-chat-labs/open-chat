@@ -670,9 +670,9 @@ export class UserIndexClient extends CandidService {
                 owner: mapOptional(ownerId, principalStringToBytes),
                 name: mapOptional(name, identity),
                 avatar:
-                    mapOptional(avatarUrl, (url) => {
-                        SetToSome: url;
-                    }) ?? "NoChange",
+                    mapOptional(avatarUrl, (url) => ({
+                        SetToSome: url,
+                    })) ?? "NoChange",
                 endpoint: mapOptional(endpoint, identity),
             },
             (resp) => {

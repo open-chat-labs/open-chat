@@ -1,9 +1,15 @@
 <script lang="ts">
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
-    import type { OpenChat, UserOrUserGroup } from "openchat-client";
+    import {
+        i18nKey,
+        type OpenChat,
+        type ResourceKey,
+        type UserOrUserGroup,
+    } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import UserPill from "../UserPill.svelte";
+    import ValidatingInput from "../bots/ValidatingInput.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -12,6 +18,10 @@
     export let selectedReceiver: UserOrUserGroup | undefined = undefined;
     export let direction: "up" | "down" = "down";
     export let placeholder: string = "tokenTransfer.chooseReceiver";
+    export let border = true;
+    export let mentionSelf = false;
+    export let error: ResourceKey[] = [];
+    export let invalid = false;
 
     let showMentionPicker = false;
     let textValue: string = "";
@@ -49,8 +59,9 @@
         <MentionPicker
             offset={inputHeight}
             {direction}
+            {mentionSelf}
             on:mention={selectReceiver}
-            border
+            {border}
             usersOnly
             prefix={textValue.startsWith("@") ? textValue.substring(1) : textValue} />
     {/if}
@@ -58,15 +69,24 @@
         <UserPill on:deleteUser={removeReceiver} userOrGroup={selectedReceiver} />
     {:else}
         <div class="wrapper" bind:clientHeight={inputHeight}>
-            <input
+            <ValidatingInput
+                onfocus={() => (showMentionPicker = true)}
+                onblur={blur}
+                {invalid}
+                {error}
+                {autofocus}
+                bind:value={textValue}
+                maxlength={100}
+                placeholder={i18nKey(placeholder)}>
+            </ValidatingInput>
+            <!-- <input
                 on:focus={() => (showMentionPicker = true)}
                 on:blur={blur}
-                class:showing-picker={showMentionPicker}
                 class="text-box"
                 maxlength="100"
                 {autofocus}
                 bind:value={textValue}
-                placeholder={$_(placeholder)} />
+                placeholder={$_(placeholder)} /> -->
         </div>
     {/if}
 </div>
@@ -77,15 +97,15 @@
         margin-bottom: $sp4;
     }
 
-    .text-box {
-        transition: border ease-in-out 300ms;
-        display: block;
-        width: 100%;
+    // .text-box {
+    //     transition: border ease-in-out 300ms;
+    //     display: block;
+    //     width: 100%;
 
-        @include input();
+    //     @include input();
 
-        &::placeholder {
-            color: var(--placeholder);
-        }
-    }
+    //     &::placeholder {
+    //         color: var(--placeholder);
+    //     }
+    // }
 </style>

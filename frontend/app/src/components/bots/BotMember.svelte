@@ -9,10 +9,9 @@
     import MenuItem from "../MenuItem.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../stores/iconSize";
-    import { AvatarSize, type ExternalBot } from "openchat-shared";
+    import { type ExternalBot } from "openchat-shared";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Avatar from "../Avatar.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
     import type {
         CommunityIdentifier,
@@ -23,6 +22,7 @@
     import { getContext } from "svelte";
     import { toastStore } from "../../stores/toast";
     import BotSummary from "./BotSummary.svelte";
+    import BotAvatar from "./BotAvatar.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -71,10 +71,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <div class="bot_member" role="button" onclick={viewBotDetails}>
     <span class="avatar">
-        <Avatar
-            userId={bot.id}
-            url={bot.avatarUrl ?? "/assets/bot_avatar.svg"}
-            size={AvatarSize.Default} />
+        <BotAvatar {bot} />
     </span>
     <div class="details">
         <div class="bot_name">

@@ -8,6 +8,7 @@
         type ExternalBot,
         type SlashCommandSchema,
         type ValidationErrorMessages,
+        userStore,
     } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import Input from "../Input.svelte";
@@ -22,6 +23,7 @@
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
     import CommandViewer from "./CommandViewer.svelte";
+    import SingleUserSelector from "../home/SingleUserSelector.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -100,7 +102,7 @@
     // let editing = $derived(bot !== undefined);
 
     $effect(() => {
-        const isValid = errors.size === 0;
+        const isValid = errors.size === 0 && schemaLoaded;
         if (isValid !== valid) {
             valid = isValid;
         }
@@ -121,6 +123,15 @@
     function onSelectCommand(cmd: SlashCommandSchema, index: number) {
         selectedCommand = cmd;
         selectedCommandIndex = index;
+    }
+
+    function endpointChanged() {
+        schemaLoaded = false;
+        candidate.definition = {
+            kind: "bot_definition",
+            description: "",
+            commands: [],
+        };
     }
 
     function loadDefinition() {
@@ -175,6 +186,22 @@
 
     <Legend
         required
+        label={i18nKey("bots.builder.ownerLabel")}
+        rules={i18nKey("bots.builder.ownerRules")}></Legend>
+    <SingleUserSelector
+        invalid={errors.has("bot_owner")}
+        error={errors.get("bot_owner")}
+        border={false}
+        direction={"up"}
+        mentionSelf
+        on:userSelected={(ev) => (candidate.ownerId = ev.detail.userId)}
+        on:userRemoved={(_) => (candidate.ownerId = "")}
+        selectedReceiver={$userStore.get(candidate.ownerId)}
+        placeholder={"bots.builder.ownerLabel"}
+        autofocus={false} />
+
+    <Legend
+        required
         label={i18nKey("bots.builder.nameLabel")}
         rules={i18nKey("bots.builder.nameRules")}></Legend>
     <ValidatingInput
@@ -197,13 +224,17 @@
                 maxlength={200}
                 invalid={errors.has("bot_endpoint")}
                 error={errors.get("bot_endpoint")}
+                oninput={endpointChanged}
+                onenter={loadDefinition}
                 placeholder={i18nKey("https://my_openchat_bot")}
                 bind:value={candidate.endpoint} />
         </div>
         <div class="icon">
             {#if !errors.has("bot_endpoint")}
-                <HoverIcon onclick={loadDefinition}>
-                    <Reload size={$iconSize} color={"var(--icon-txt)"}></Reload>
+                <HoverIcon title={"load definition"} onclick={loadDefinition}>
+                    <Reload
+                        size={$iconSize}
+                        color={schemaLoaded ? "var(--icon-txt)" : "var(--accent)"}></Reload>
                 </HoverIcon>
             {/if}
         </div>

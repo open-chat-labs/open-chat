@@ -33,8 +33,8 @@
     let step: "choose" | "edit" = $state(mode === "update" ? "choose" : "edit");
 
     let botState = $state({
-        original: emptyBotInstance(),
-        current: emptyBotInstance(),
+        original: emptyBotInstance($currentUser.userId),
+        current: emptyBotInstance($currentUser.userId),
     });
 
     let ownerDirty = $derived(botState.original.ownerId !== botState.current.ownerId);
