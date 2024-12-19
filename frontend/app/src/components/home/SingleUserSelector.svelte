@@ -79,14 +79,6 @@
                 maxlength={100}
                 placeholder={i18nKey(placeholder)}>
             </ValidatingInput>
-            <!-- <input
-                on:focus={() => (showMentionPicker = true)}
-                on:blur={blur}
-                class="text-box"
-                maxlength="100"
-                {autofocus}
-                bind:value={textValue}
-                placeholder={$_(placeholder)} /> -->
         </div>
     {/if}
 </div>
@@ -96,16 +88,4 @@
         position: relative;
         margin-bottom: $sp4;
     }
-
-    // .text-box {
-    //     transition: border ease-in-out 300ms;
-    //     display: block;
-    //     width: 100%;
-
-    //     @include input();
-
-    //     &::placeholder {
-    //         color: var(--placeholder);
-    //     }
-    // }
 </style>
