@@ -28,11 +28,11 @@
     interface Props {
         valid: boolean;
         onUpdate: (bot: ExternalBot) => void;
-        mode: "register" | "update";
         candidate: ExternalBot;
+        nameDirty: boolean;
     }
 
-    let { valid = $bindable(), onUpdate, mode = "register", candidate }: Props = $props();
+    let { valid = $bindable(), onUpdate, candidate, nameDirty }: Props = $props();
     let selectedCommand = $state<SlashCommandSchema | undefined>(undefined);
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
@@ -49,7 +49,7 @@
             () => [$state.snapshot(candidate)],
             async () => {
                 const errors = validateBot(candidate);
-                if (errors.get("bot_name").length == 0) {
+                if (errors.get("bot_name").length == 0 && nameDirty) {
                     errors.addErrors("bot_name", await checkUsername(candidate.name));
                 }
                 return errors;

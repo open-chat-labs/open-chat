@@ -67,9 +67,14 @@
         {bot} />
 {/if}
 
-<div class="bot_member" role="button">
+<!-- svelte-ignore a11y_interactive_supports_focus -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div class="bot_member" role="button" onclick={viewBotDetails}>
     <span class="avatar">
-        <Avatar userId={bot.id} url={bot.avatarUrl} size={AvatarSize.Default} />
+        <Avatar
+            userId={bot.id}
+            url={bot.avatarUrl ?? "/assets/bot_avatar.svg"}
+            size={AvatarSize.Default} />
     </span>
     <div class="details">
         <div class="bot_name">

@@ -132,7 +132,7 @@
         </div>
         <div class="body" slot="body">
             <span class="avatar">
-                <Avatar url={bot.avatarUrl} size={AvatarSize.Default} />
+                <Avatar url={bot.avatarUrl ?? "/assets/bot_avatar.svg"} size={AvatarSize.Default} />
             </span>
             <div class="details">
                 <h4 class="bot-name">

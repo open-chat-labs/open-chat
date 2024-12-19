@@ -330,9 +330,10 @@
         },
         "update_bot": {
             "desc": "Start a proposal to update an existing OpenChat bot",
-            "select": "Please search for the bot that you would like to update. Note that you can only update a bot that you own.",
+            "select": "Select the bot that you would like to update.",
             "nobots": "Only the owner of a registerd bot can update the bot. You are not the owner of any registered bots.",
-            "action": "Update"
+            "action": "Update",
+            "title": "Update bot"
         },
         "view": {
             "close": "Close",

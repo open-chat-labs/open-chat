@@ -2,6 +2,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import {
+        AvatarSize,
         emptySlashCommandPermissions,
         hasEveryRequiredPermission,
         type FlattenedCommand,
@@ -45,6 +46,7 @@
     import { toastStore } from "../../stores/toast";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
+    import Avatar from "../Avatar.svelte";
 
     interface Props {
         onCancel: () => void;
@@ -204,7 +206,9 @@
             class:selected={$focusedCommandIndex === i}
             onclick={() => selectCommand(command)}>
             {#if command.kind === "external_bot"}
-                <img class="icon" src={command.botIcon} alt={command.botName} />
+                <Avatar
+                    url={command.botIcon ?? "/assets/bot_avatar.svg"}
+                    size={AvatarSize.Default} />
             {:else}
                 <Logo />
             {/if}

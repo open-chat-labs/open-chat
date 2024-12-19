@@ -1334,9 +1334,9 @@
         {:else if modal.kind === "suspended"}
             <SuspendedModal on:close={closeModal} />
         {:else if modal.kind === "register_bot"}
-            <BotBuilderModal onClose={closeModal} />
+            <BotBuilderModal mode={"register"} onClose={closeModal} />
         {:else if modal.kind === "update_bot"}
-            <BotBuilderModal onClose={closeModal} />
+            <BotBuilderModal mode={"update"} onClose={closeModal} />
         {:else if modal.kind === "no_access"}
             <NoAccess on:close={closeNoAccess} />
         {:else if modal.kind === "not_found"}
