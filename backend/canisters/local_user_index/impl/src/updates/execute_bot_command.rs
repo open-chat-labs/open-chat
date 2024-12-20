@@ -9,7 +9,7 @@ use types::User;
 use crate::read_state;
 use crate::RuntimeState;
 
-#[update(candid = true, msgpack = true)]
+#[update(candid = true)]
 async fn execute_bot_command(args: Args) -> Response {
     let c2c_args = match read_state(|state| validate(args, state)) {
         Ok(c2c_args) => c2c_args,
