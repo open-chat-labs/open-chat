@@ -176,7 +176,6 @@ export type ExecuteBotCommand = {
     messageId: bigint;
     commandName: string;
     parameters: string;
-    version: number;
     commandText: string;
     botId: string;
     userId: string;

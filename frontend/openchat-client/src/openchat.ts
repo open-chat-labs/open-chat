@@ -7852,7 +7852,6 @@ export class OpenChat extends EventTarget {
                     messageId: random64(),
                     commandName: bot.command.name,
                     parameters: JSON.stringify(bot.command.params),
-                    version: 0,
                     commandText: `@${this.getDisplayName(
                         this.#liveState.user,
                     )} executed the command /${bot.command.name}`,

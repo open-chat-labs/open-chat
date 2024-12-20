@@ -708,7 +708,7 @@ export type DiamondMembershipStatusFull = "Inactive" | { "Active": DiamondMember
  * @default NoChange
  */
 export type OptionUpdateGroupSubtype = "NoChange" | "SetToNone" | { "SetToSome": GroupSubtype };
-export type BotCommandArgs = { user_id: UserId, bot: UserId, chat: Chat, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, command_name: string, parameters: string, version: number, command_text: string, };
+export type BotCommandArgs = { user_id: UserId, bot: UserId, chat: Chat, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, command_name: string, command_args: string, command_text: string, };
 export type GroupIndexActiveGroupsSuccessResult = { timestamp: bigint, active_groups: Array<ChatId>, active_communities: Array<CommunityId>, deleted_groups: Array<DeletedGroupInfo>, deleted_communities: Array<DeletedCommunityInfo>, };
 export type RegistryUpdatesSuccessResult = { last_updated: bigint, token_details?: Array<RegistryTokenDetails> | undefined, nervous_system_details: Array<RegistryNervousSystemSummary>, message_filters_added: Array<RegistryMessageFilterSummary>, message_filters_removed: Array<bigint>, swap_providers?: Array<ExchangeId> | undefined, airdrop_config: OptionUpdateAirdropConfig, };
 export type RegistryUpdatesResponse = { "Success": RegistryUpdatesSuccessResult } | "SuccessNoUpdates";

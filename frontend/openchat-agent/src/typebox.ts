@@ -6501,8 +6501,7 @@ export const BotCommandArgs = Type.Object({
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_id: MessageId,
     command_name: Type.String(),
-    parameters: Type.String(),
-    version: Type.Number(),
+    command_args: Type.String(),
     command_text: Type.String(),
 });
 

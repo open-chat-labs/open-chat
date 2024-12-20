@@ -608,8 +608,8 @@ export function apiCustomParamFields(param: SlashCommandParam): ApiSlashCommandP
         case "number":
             return {
                 NumberParam: {
-                    min_length: param.minValue,
-                    max_length: param.maxValue,
+                    min_value: param.minValue,
+                    max_value: param.maxValue,
                     choices: param.choices,
                 },
             };
