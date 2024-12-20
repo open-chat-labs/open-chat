@@ -3,8 +3,8 @@ use crate::{calc_chunk_count, MAX_BLOB_SIZE_BYTES};
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::collections::btree_map::Entry::{Occupied, Vacant};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use storage_bucket_canister::upload_chunk_v2::Args as UploadChunkArgs;
 use types::{AccessorId, CanisterId, FileAdded, FileId, FileMetaData, FileRemoved, Hash, TimestampMillis};
 use utils::file_id::generate_file_id;
@@ -12,8 +12,8 @@ use utils::hasher::hash_bytes;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Files {
-    files: HashMap<FileId, File>,
-    pending_files: HashMap<FileId, PendingFile>,
+    files: BTreeMap<FileId, File>,
+    pending_files: BTreeMap<FileId, PendingFile>,
     reference_counts: ReferenceCounts,
     accessors_map: AccessorsMap,
     blobs: StableBlobStorage,
@@ -23,10 +23,15 @@ pub struct Files {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct File {
+    #[serde(rename = "o", alias = "owner")]
     pub owner: Principal,
+    #[serde(rename = "c", alias = "created")]
     pub created: TimestampMillis,
-    pub accessors: HashSet<AccessorId>,
+    #[serde(rename = "a", alias = "accessors")]
+    pub accessors: BTreeSet<AccessorId>,
+    #[serde(rename = "h", alias = "hash")]
     pub hash: Hash,
+    #[serde(rename = "m", alias = "mine_type")]
     pub mime_type: String,
 }
 
@@ -172,7 +177,7 @@ impl Files {
         file_id: FileId,
         canister_id: CanisterId,
         file_id_seed: u128,
-        accessors: HashSet<AccessorId>,
+        accessors: BTreeSet<AccessorId>,
         now: TimestampMillis,
     ) -> ForwardFileResult {
         let (file, size) = match self.file_and_size(&file_id) {
@@ -379,7 +384,7 @@ impl Files {
 
 #[derive(Serialize, Deserialize, Default)]
 struct ReferenceCounts {
-    counts: HashMap<Hash, u32>,
+    counts: BTreeMap<Hash, u32>,
 }
 
 impl ReferenceCounts {
@@ -409,7 +414,7 @@ impl ReferenceCounts {
 
 #[derive(Serialize, Deserialize, Default)]
 struct AccessorsMap {
-    map: HashMap<AccessorId, HashSet<FileId>>,
+    map: BTreeMap<AccessorId, BTreeSet<FileId>>,
 }
 
 impl AccessorsMap {
@@ -435,23 +440,32 @@ impl AccessorsMap {
         }
     }
 
-    pub fn remove(&mut self, accessor_id: &AccessorId) -> Option<HashSet<FileId>> {
+    pub fn remove(&mut self, accessor_id: &AccessorId) -> Option<BTreeSet<FileId>> {
         self.map.remove(accessor_id)
     }
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct PendingFile {
+    #[serde(rename = "o", alias = "owner")]
     pub owner: Principal,
+    #[serde(rename = "c", alias = "created")]
     pub created: TimestampMillis,
+    #[serde(rename = "h", alias = "hash")]
     pub hash: Hash,
+    #[serde(rename = "m", alias = "mime_type")]
     pub mime_type: String,
-    pub accessors: HashSet<AccessorId>,
+    #[serde(rename = "a", alias = "accessors")]
+    pub accessors: BTreeSet<AccessorId>,
+    #[serde(rename = "u", alias = "chunk_size")]
     pub chunk_size: u32,
+    #[serde(rename = "t", alias = "total_size")]
     pub total_size: u64,
-    pub remaining_chunks: HashSet<u32>,
-    #[serde(with = "serde_bytes")]
+    #[serde(rename = "r", alias = "remaining_chunks")]
+    pub remaining_chunks: BTreeSet<u32>,
+    #[serde(rename = "b", alias = "bytes", with = "serde_bytes")]
     pub bytes: Vec<u8>,
+    #[serde(rename = "e", alias = "expiry", skip_serializing_if = "Option::is_none")]
     pub expiry: Option<TimestampMillis>,
 }
 
