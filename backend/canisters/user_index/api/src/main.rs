@@ -64,5 +64,6 @@ fn main() {
     generate_ts_method!(user_index, submit_proof_of_unique_personhood);
     generate_ts_method!(user_index, suspend_user);
     generate_ts_method!(user_index, unsuspend_user);
+    generate_ts_method!(user_index, update_bot);
     generate_ts_method!(user_index, update_diamond_membership_subscription);
 }
