@@ -4692,6 +4692,26 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    updateRegisteredBot(
+        id: string,
+        ownerId?: string,
+        name?: string,
+        avatarUrl?: string,
+        endpoint?: string,
+    ): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "updateRegisteredBot",
+            id,
+            ownerId,
+            name,
+            avatarUrl,
+            endpoint,
+        }).catch((err) => {
+            this.#logger.error("Failed to update registered bot: ", err);
+            return false;
+        });
+    }
+
     registerUser(username: string): Promise<RegisterUserResponse> {
         return this.#sendRequest({
             kind: "registerUser",
@@ -7744,7 +7764,6 @@ export class OpenChat extends EventTarget {
         return fetch(`${bot.endpoint}/execute_command`, {
             method: "POST",
             headers: headers,
-            body: token,
         }).then((res) => {
             if (res.ok) {
                 return res.json();
@@ -7869,13 +7888,13 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    updateBot(
+    updateInstalledBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
         grantedPermissions: SlashCommandPermissions,
     ): Promise<boolean> {
         return this.#sendRequest({
-            kind: "updateBot",
+            kind: "updateInstalledBot",
             id,
             botId,
             grantedPermissions,
@@ -7886,9 +7905,12 @@ export class OpenChat extends EventTarget {
     }
 
     // TODO - probably need to think about local updates here
-    removeBot(id: CommunityIdentifier | GroupChatIdentifier, botId: string): Promise<boolean> {
+    removeInstalledBot(
+        id: CommunityIdentifier | GroupChatIdentifier,
+        botId: string,
+    ): Promise<boolean> {
         return this.#sendRequest({
-            kind: "removeBot",
+            kind: "removeInstalledBot",
             id,
             botId,
         }).catch((err) => {

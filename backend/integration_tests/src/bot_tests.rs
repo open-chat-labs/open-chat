@@ -93,8 +93,7 @@ fn e2e_bot_test() {
             thread_root_message_index: None,
             message_id,
             command_name: command_name.clone(),
-            parameters: "".to_string(),
-            version: 1, // TODO: Remove this
+            command_args: "".to_string(),
             command_text: command_name.clone(),
         }),
         chat,

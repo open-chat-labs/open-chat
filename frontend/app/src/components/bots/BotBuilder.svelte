@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        currentUser,
         emptyBotInstance,
         emptySlashCommandPermissions,
         OpenChat,
@@ -33,7 +34,7 @@
     let selectedCommand = $state<SlashCommandSchema | undefined>(undefined);
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
-    let candidate = $state<ExternalBot>(emptyBotInstance());
+    let candidate = $state<ExternalBot>(emptyBotInstance($currentUser.userId));
 
     let errors = $derived.by(
         debouncedDerived(

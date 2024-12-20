@@ -31,6 +31,10 @@ fn validate(args: Args, state: &RuntimeState) -> Result<c2c_handle_bot_action::A
     let claims = verify_jwt::<Claims<BotCommandClaims>>(&args.jwt, state.data.oc_key_pair.public_key_pem())
         .map_err(|error| format!("Access token invalid: {error:?}"))?;
 
+    if claims.exp() < state.env.now() {
+        return Err("Access token expired".to_string());
+    }
+
     let bot_command_claims = claims.custom();
     let calling_user = bot.user_id;
     let jwt_user = bot_command_claims.bot;

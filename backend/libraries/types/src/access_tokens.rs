@@ -38,8 +38,7 @@ pub struct BotCommandArgs {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub command_name: String,
-    pub parameters: String,
-    pub version: u32,
+    pub command_args: String,
     pub command_text: String,
 }
 
