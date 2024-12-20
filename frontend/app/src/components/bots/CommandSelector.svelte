@@ -115,14 +115,14 @@
 
     function hasPermissionForCommand(
         command: FlattenedCommand,
-        currentCommunityBots: Map<string, SlashCommandPermissions>,
+        installedBots: Map<string, SlashCommandPermissions>,
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
     ): boolean {
         const userPermission = userHasPermissionForCommand(command, chat, community);
         if (command.kind === "external_bot") {
             // for an external bot we also need to know that the bot has been granted all the permissions it requires
-            const granted = currentCommunityBots.get(command.botId);
+            const granted = installedBots.get(command.botId);
             const required = command.permissions;
             return (
                 userPermission &&
