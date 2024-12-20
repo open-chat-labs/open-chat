@@ -1,5 +1,5 @@
 [package]
-name = "bot_api"
+name = "legacy_bot_api"
 version = "0.1.0"
 edition = "2021"
 
