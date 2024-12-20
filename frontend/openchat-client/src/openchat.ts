@@ -946,17 +946,15 @@ export class OpenChat extends EventTarget {
     }
 
     #startBotsPoller() {
-        this.#botsPoller?.stop();
-        this.#botsPoller = new Poller(
-            () => this.#loadBots(),
-            BOT_UPDATE_INTERVAL,
-            BOT_UPDATE_IDLE_INTERVAL,
-            true,
-        );
-
-        // we need to load chats at least once if we are completely offline
-        if (this.#liveState.offlineStore) {
-            this.#loadChats();
+        const enabled = localStorage.getItem("openchat_bots_enabled") === "true";
+        if (enabled) {
+            this.#botsPoller?.stop();
+            this.#botsPoller = new Poller(
+                () => this.#loadBots(),
+                BOT_UPDATE_INTERVAL,
+                BOT_UPDATE_IDLE_INTERVAL,
+                true,
+            );
         }
     }
 

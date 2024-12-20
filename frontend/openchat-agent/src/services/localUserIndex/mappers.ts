@@ -70,7 +70,7 @@ export function apiAccessTokenType(domain: AccessTokenType): TAccessTokenType {
                     ),
                     message_id: domain.messageId,
                     command_name: domain.commandName,
-                    parameters: domain.parameters,
+                    command_args: domain.parameters,
                     version: domain.version,
                     command_text: domain.commandText,
                 },
