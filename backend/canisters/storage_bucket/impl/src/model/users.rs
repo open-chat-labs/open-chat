@@ -1,11 +1,11 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use types::{FileId, RejectedReason};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Users {
-    users: HashMap<Principal, UserRecord>,
+    users: BTreeMap<Principal, UserRecord>,
 }
 
 impl Users {
@@ -45,7 +45,7 @@ impl Users {
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserRecord {
-    files_owned: HashMap<FileId, FileStatusInternal>,
+    files_owned: BTreeMap<FileId, FileStatusInternal>,
 }
 
 impl UserRecord {
@@ -64,13 +64,18 @@ impl UserRecord {
 
 #[derive(Serialize, Deserialize)]
 pub enum FileStatusInternal {
+    #[serde(rename = "c", alias = "Complete")]
     Complete(IndexSyncComplete),
+    #[serde(rename = "u", alias = "Uploading")]
     Uploading(IndexSyncComplete),
+    #[serde(rename = "r", alias = "Rejected")]
     Rejected(RejectedReason),
 }
 
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub enum IndexSyncComplete {
+    #[serde(rename = "y", alias = "Yes")]
     Yes,
+    #[serde(rename = "n", alias = "No")]
     No,
 }
