@@ -70,8 +70,7 @@ async fn access_token(args: Args) -> Response {
                 thread_root_message_index: bc.thread_root_message_index,
                 message_id: bc.message_id,
                 command_name: bc.command_name,
-                parameters: bc.parameters,
-                version: bc.version,
+                command_args: bc.command_args,
                 command_text: bc.command_text,
                 bot_api_gateway: state.env.canister_id(),
             };
