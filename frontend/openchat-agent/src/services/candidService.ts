@@ -21,7 +21,7 @@ import {
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 import { type Options, Packr } from "msgpackr";
 import type { Static, TSchema } from "@sinclair/typebox";
-import { Value } from "@sinclair/typebox/value";
+import { AssertError, Value } from "@sinclair/typebox/value";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -263,7 +263,11 @@ export abstract class CandidService {
             const validated = CandidService.validate(response, validator);
             return mapper(validated);
         } catch (err) {
-            console.error("Validation failed for response: ", response);
+            console.error(
+                "Validation failed for response: ",
+                response,
+                err instanceof AssertError ? err.error : undefined,
+            );
             throw err;
         }
     }
