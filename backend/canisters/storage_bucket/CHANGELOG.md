@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Reduce storage bucket memory usage ([#7103](https://github.com/open-chat-labs/open-chat/pull/7103))
+
+## [[2.0.1532](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1532-storage_bucket)] - 2024-12-19
+
+### Changed
+
 - Push any remaining events still queued in the old events system ([#7065](https://github.com/open-chat-labs/open-chat/pull/7065))
 
 ## [[2.0.1522](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1522-storage_bucket)] - 2024-12-16
