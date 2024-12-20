@@ -243,11 +243,6 @@ export abstract class CandidService {
 
     private static validate<T extends TSchema>(value: unknown, validator: T): Static<T> {
         return Value.Parse(validator, value);
-        // try {
-        //     return Value.Parse(validator, value);
-        // } catch (err) {
-        //     throw new Error("Validation failed: " + JSON.stringify(err));
-        // }
     }
 
     private static prepareMsgpackArgs<T extends TSchema>(
