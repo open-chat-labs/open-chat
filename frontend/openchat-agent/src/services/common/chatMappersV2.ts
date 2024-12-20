@@ -3415,8 +3415,8 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
     } else if ("NumberParam" in paramType) {
         return {
             kind: "number",
-            minValue: paramType.NumberParam.min_length,
-            maxValue: paramType.NumberParam.max_length,
+            minValue: paramType.NumberParam.min_value,
+            maxValue: paramType.NumberParam.max_value,
             choices: paramType.NumberParam.choices,
         };
     }

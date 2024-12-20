@@ -4,4 +4,4 @@ import type { MessageId } from "./MessageId";
 import type { MessageIndex } from "./MessageIndex";
 import type { UserId } from "./UserId";
 
-export type BotCommandArgs = { user_id: UserId, bot: UserId, chat: Chat, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, command_name: string, parameters: string, version: number, command_text: string, };
+export type BotCommandArgs = { user_id: UserId, bot: UserId, chat: Chat, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, command_name: string, command_args: string, command_text: string, };
