@@ -1,11 +1,7 @@
 <script lang="ts">
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import {
-        emptySlashCommandPermissions,
-        hasEveryRequiredPermission,
-        type FlattenedCommand,
-    } from "openchat-shared";
+    import { hasEveryRequiredPermission, type FlattenedCommand } from "openchat-shared";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import {
@@ -33,6 +29,7 @@
     } from "openchat-client";
     import {
         currentCommunityBots,
+        currentChatBots,
         isPermitted,
         selectedChatStore,
         selectedCommunity,
@@ -59,13 +56,15 @@
 
     let { onCancel, onNoMatches, onCommandSent, mode, messageContext }: Props = $props();
 
-    let emptyPermissions = emptySlashCommandPermissions();
+    let installedBots = $derived(
+        messageContext.chatId.kind === "channel" ? $currentCommunityBots : $currentChatBots,
+    );
 
     let commands = $derived.by(() =>
         $commandsStore.filter((c) => {
             return hasPermissionForCommand(
                 c,
-                $currentCommunityBots,
+                installedBots,
                 $selectedChatStore,
                 $selectedCommunity,
             );
@@ -116,16 +115,20 @@
 
     function hasPermissionForCommand(
         command: FlattenedCommand,
-        currenCommunityBots: Map<string, SlashCommandPermissions>,
+        installedBots: Map<string, SlashCommandPermissions>,
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
     ): boolean {
         const userPermission = userHasPermissionForCommand(command, chat, community);
         if (command.kind === "external_bot") {
             // for an external bot we also need to know that the bot has been granted all the permissions it requires
-            const granted = currenCommunityBots.get(command.botId) ?? emptyPermissions;
+            const granted = installedBots.get(command.botId);
             const required = command.permissions;
-            return userPermission && hasEveryRequiredPermission(required, granted);
+            return (
+                userPermission &&
+                granted !== undefined &&
+                hasEveryRequiredPermission(required, granted)
+            );
         } else {
             return userPermission;
         }
