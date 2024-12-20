@@ -26,8 +26,8 @@ impl<T> Claims<T> {
         }
     }
 
-    pub fn exp(&self) -> u64 {
-        self.exp
+    pub fn exp(&self) -> TimestampMillis {
+        self.exp * 1000
     }
 
     pub fn claim_type(&self) -> &str {
