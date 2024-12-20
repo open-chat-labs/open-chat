@@ -15,6 +15,8 @@
         children?: Snippet;
         onblur?: () => void;
         onfocus?: () => void;
+        oninput?: () => void;
+        onenter?: () => void;
     }
 </script>
 
@@ -40,6 +42,8 @@
         pattern = undefined,
         onblur = undefined,
         onfocus = undefined,
+        oninput = undefined,
+        onenter = undefined,
         children,
     }: InputProps = $props();
 
@@ -61,6 +65,7 @@
             value = parseInt(e.currentTarget.value, 10);
         }
         dispatch("change", value);
+        oninput?.();
     };
 
     export function setValue(text: string) {
@@ -70,6 +75,7 @@
     function keyDown(e: KeyboardEvent) {
         if (e.key === "Enter") {
             dispatch("enter");
+            onenter?.();
         }
     }
 

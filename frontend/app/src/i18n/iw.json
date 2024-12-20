@@ -150,9 +150,11 @@
     "blockUserSucceeded": "המשתמש נחסם",
     "bots": {
         "add": {
+            "action": "לִרְשׁוֹם",
             "addBot": "הוסף בוט",
             "choosePermissions": "הרשאות",
             "failure": "מצטערים שלא הצלחנו להוסיף את הבוט",
+            "loadDefinition": "הגדרת עומס",
             "noPermissions": "אין צורך בהרשאות מיוחדות",
             "permissionsInfo": "הבוט הזה מחפש את ההרשאות הבאות. בחירה להגביל את ההרשאות שניתנו תגביל את הפקודות הזמינות.",
             "title": "הוסף בוט לקהילה"
@@ -173,6 +175,7 @@
             "commandNamePlaceholder": "הזן את שם הפקודה",
             "commandPermissionsDesc": "תאר את ההרשאות שפקודה זו דורשת",
             "commandPermissionsLabel": "הרשאות פקודה",
+            "commandsLabel": "פקודות",
             "descLabel": "תיאור הבוט",
             "descPlaceholder": "הזן את תיאור הבוט",
             "endpointLabel": "נקודת קצה של בוט",
@@ -187,6 +190,7 @@
                 "minLength": "חייב לכלול לפחות {n} תווים",
                 "nameCheckError": "אירעה שגיאה בבדיקת שם הבוט",
                 "noCommands": "בוט חייב להכיל לפחות פקודה אחת",
+                "owner": "עליך להזין בעלים עבור הבוט",
                 "principal": "עליך להזין מנהל תקף כדי לזהות את הבוט"
             },
             "iconLabel": "סמל בוט",
@@ -202,6 +206,8 @@
             "namePlaceholder": "הזן את שם הבוט",
             "nameRules": "חייב להיות ייחודי ולהכיל תווים אלפאנומריים וקווים תחתונים בלבד",
             "optional": "אופציונלי",
+            "ownerLabel": "בעל בוט",
+            "ownerRules": "מיהו נקודת המגע של הבוט הזה",
             "paramDescLabel": "תיאור פרמטר",
             "paramDescPlaceholder": "הזן תיאור פרמטר",
             "paramLabel": "פראם: {name}",
@@ -209,6 +215,7 @@
             "paramNamePlaceholder": "הזן את שם הפרמטר",
             "paramPlaceholderLabel": "מציין מיקום של פרמטר",
             "paramPlaceholderPlaceholder": "הזן מציין מיקום של פרמטר",
+            "paramsLabel": "פרמטרים",
             "paramTypeLabel": "סוג פארם",
             "permSameAsMessage": "זהה להרשאות הודעות",
             "permScopeChat": "לְשׂוֹחֵחַ",
@@ -325,7 +332,11 @@
             }
         },
         "update_bot": {
-            "desc": "התחל הצעה לעדכון בוט OpenChat קיים"
+            "action": "לְעַדְכֵּן",
+            "desc": "התחל הצעה לעדכון בוט OpenChat קיים",
+            "nobots": "רק הבעלים של בוט רשום יכול לעדכן את הבוט. אינך הבעלים של בוטים רשומים כלשהם.",
+            "select": "בחר את הבוט שברצונך לעדכן.",
+            "title": "עדכן את הבוט"
         },
         "view": {
             "close": "לִסְגוֹר",

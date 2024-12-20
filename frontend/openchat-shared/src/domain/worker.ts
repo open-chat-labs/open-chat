@@ -418,13 +418,23 @@ export type WorkerRequest =
     | MarkActivityFeedRead
     | DeleteUser
     | AddBot
-    | RemoveBot
-    | UpdateBot
+    | RemoveInstalledBot
+    | UpdateInstalledBot
+    | UpdateRegisteredBot
     | GetBotDefinition;
 
 type GetBotDefinition = {
     kind: "getBotDefinition";
     endpoint: string;
+};
+
+type UpdateRegisteredBot = {
+    kind: "updateRegisteredBot";
+    id: string;
+    ownerId?: string;
+    name?: string;
+    avatarUrl?: string;
+    endpoint?: string;
 };
 
 type AddBot = {
@@ -434,15 +444,15 @@ type AddBot = {
     grantedPermissions: SlashCommandPermissions;
 };
 
-type UpdateBot = {
-    kind: "updateBot";
+type UpdateInstalledBot = {
+    kind: "updateInstalledBot";
     id: CommunityIdentifier | GroupChatIdentifier;
     botId: string;
     grantedPermissions: SlashCommandPermissions;
 };
 
-type RemoveBot = {
-    kind: "removeBot";
+type RemoveInstalledBot = {
+    kind: "removeInstalledBot";
     id: CommunityIdentifier | GroupChatIdentifier;
     botId: string;
 };
@@ -2002,6 +2012,8 @@ export type WorkerResult<T> = T extends Init
     ? ExploreBotsResponse
     : T extends RegisterBot
     ? boolean
+    : T extends UpdateRegisteredBot
+    ? boolean
     : T extends DismissRecommendations
     ? void
     : T extends GroupInvite
@@ -2272,8 +2284,8 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends GetBotDefinition
     ? BotDefinitionResponse
-    : T extends RemoveBot
+    : T extends RemoveInstalledBot
     ? boolean
-    : T extends UpdateBot
+    : T extends UpdateInstalledBot
     ? boolean
     : never;

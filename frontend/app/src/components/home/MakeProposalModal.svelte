@@ -14,8 +14,10 @@
         type Treasury,
         currentUser as user,
         cryptoBalance as cryptoBalanceStore,
+        currentUser,
     } from "openchat-client";
     import {
+        emptyBotInstance,
         isPrincipalValid,
         isSubAccountValid,
         isUrl,
@@ -101,7 +103,7 @@
     let refreshingBalance = false;
     let balanceWithRefresh: BalanceWithRefresh;
     let achivementName = "";
-    let candidateBot: ExternalBot | undefined = undefined;
+    let candidateBot: ExternalBot = emptyBotInstance($currentUser.userId);
     let candidateBotValid = false;
 
     $: errorMessage =
@@ -511,6 +513,8 @@
             <div class="action hidden" class:visible={step === 2}>
                 {#if selectedProposalType === "register_bot"}
                     <BotBuilder
+                        candidate={candidateBot}
+                        nameDirty={true}
                         onUpdate={(bot) => (candidateBot = bot)}
                         bind:valid={candidateBotValid} />
                 {:else if selectedProposalType === "transfer_sns_funds"}

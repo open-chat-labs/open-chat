@@ -1,14 +1,13 @@
 <script lang="ts">
     import {
-        AvatarSize,
         type BotMatch,
         type CommunityIdentifier,
         type GroupChatIdentifier,
     } from "openchat-client";
-    import Avatar from "../Avatar.svelte";
     import BotSummary from "./BotSummary.svelte";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
+    import BotAvatar from "./BotAvatar.svelte";
 
     interface Props {
         match: BotMatch;
@@ -27,7 +26,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="bot-match" onclick={() => (showing = true)}>
     <span class="avatar">
-        <Avatar url={match.avatarUrl} size={AvatarSize.Default} />
+        <BotAvatar bot={match} />
     </span>
     <div class="details">
         <h4 class="bot-name">

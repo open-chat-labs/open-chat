@@ -150,9 +150,11 @@
     "blockUserSucceeded": "لقد تم حظر المستخدم",
     "bots": {
         "add": {
+            "action": "يسجل",
             "addBot": "إضافة بوت",
             "choosePermissions": "الأذونات",
             "failure": "نأسف لعدم تمكننا من إضافة البوت",
+            "loadDefinition": "تعريف الحمل",
             "noPermissions": "لا يتطلب أذونات خاصة",
             "permissionsInfo": "يسعى هذا الروبوت إلى الحصول على الأذونات التالية. سيؤدي اختيار تقييد الأذونات الممنوحة إلى تقييد الأوامر المتاحة.",
             "title": "إضافة بوت إلى المجتمع"
@@ -173,6 +175,7 @@
             "commandNamePlaceholder": "أدخل اسم الأمر",
             "commandPermissionsDesc": "وصف الأذونات التي يتطلبها هذا الأمر",
             "commandPermissionsLabel": "أذونات الأوامر",
+            "commandsLabel": "الأوامر",
             "descLabel": "وصف البوت",
             "descPlaceholder": "أدخل وصف البوت",
             "endpointLabel": "نقطة نهاية البوت",
@@ -187,6 +190,7 @@
                 "minLength": "يجب أن يحتوي على {n} حرفًا على الأقل",
                 "nameCheckError": "حدث خطأ أثناء التحقق من اسم الروبوت",
                 "noCommands": "يجب أن يحتوي الروبوت على أمر واحد على الأقل",
+                "owner": "يجب عليك إدخال مالك للبوت",
                 "principal": "يجب عليك إدخال مدير صالح لتحديد الروبوت"
             },
             "iconLabel": "أيقونة البوت",
@@ -202,6 +206,8 @@
             "namePlaceholder": "أدخل اسم البوت",
             "nameRules": "يجب أن يكون فريدًا ويحتوي على أحرف أبجدية رقمية وعلامات سفلية فقط",
             "optional": "خياري",
+            "ownerLabel": "مالك البوت",
+            "ownerRules": "من هو نقطة الاتصال لهذا الروبوت؟",
             "paramDescLabel": "وصف المعلمة",
             "paramDescPlaceholder": "أدخل وصف المعلمة",
             "paramLabel": "المعلمة: {name}",
@@ -209,6 +215,7 @@
             "paramNamePlaceholder": "أدخل اسم المعلمة",
             "paramPlaceholderLabel": "عنصر نائب للمعلمة",
             "paramPlaceholderPlaceholder": "أدخل عنصر نائب للمعلمة",
+            "paramsLabel": "حدود",
             "paramTypeLabel": "نوع المعلمة",
             "permSameAsMessage": "نفس أذونات الرسالة",
             "permScopeChat": "محادثة",
@@ -325,7 +332,11 @@
             }
         },
         "update_bot": {
-            "desc": "ابدأ اقتراحًا لتحديث روبوت OpenChat الحالي"
+            "action": "تحديث",
+            "desc": "ابدأ اقتراحًا لتحديث روبوت OpenChat الحالي",
+            "nobots": "لا يمكن تحديث الروبوت إلا من قبل مالك الروبوت المسجل. أنت لست مالك أي روبوت مسجل.",
+            "select": "حدد الروبوت الذي تريد تحديثه.",
+            "title": "تحديث البوت"
         },
         "view": {
             "close": "يغلق",
