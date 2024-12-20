@@ -82,8 +82,8 @@ import {
     UserIndexCheckUsernameResponse,
     UserIndexChitLeaderboardResponse,
     UserIndexCurrentUserResponse,
-    UserIndexDeleteUserArgs,
-    UserIndexDeleteUserResponse,
+    // UserIndexDeleteUserArgs,
+    // UserIndexDeleteUserResponse,
     UserIndexDiamondMembershipFeesResponse,
     UserIndexExploreBotsArgs,
     UserIndexExploreBotsResponse,
@@ -114,6 +114,8 @@ import {
     UserIndexSuspendUserResponse,
     UserIndexUnsuspendUserArgs,
     UserIndexUnsuspendUserResponse,
+    UserIndexUpdateBotArgs,
+    UserIndexUpdateBotResponse,
     UserIndexUserRegistrationCanisterResponse,
     UserIndexUsersArgs,
     UserIndexUsersResponse,
@@ -604,15 +606,15 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    deleteUser(userId: string): Promise<boolean> {
-        return this.executeMsgpackUpdate(
-            "delete_user",
-            { user_id: principalStringToBytes(userId) },
-            (resp) => resp === "Success",
-            UserIndexDeleteUserArgs,
-            UserIndexDeleteUserResponse,
-        );
-    }
+    // deleteUser(userId: string): Promise<boolean> {
+    //     return this.executeMsgpackUpdate(
+    //         "delete_user",
+    //         { user_id: principalStringToBytes(userId) },
+    //         (resp) => resp === "Success",
+    //         UserIndexDeleteUserArgs,
+    //         UserIndexDeleteUserResponse,
+    //     );
+    // }
 
     exploreBots(
         searchTerm: string | undefined,
@@ -651,6 +653,34 @@ export class UserIndexClient extends CandidService {
             },
             UserIndexRegisterBotArgs,
             UserIndexRegisterBotResponse,
+        );
+    }
+
+    updateRegisteredBot(
+        id: string,
+        ownerId?: string,
+        name?: string,
+        avatarUrl?: string,
+        endpoint?: string,
+    ): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_bot",
+            {
+                bot_id: principalStringToBytes(id),
+                owner: mapOptional(ownerId, principalStringToBytes),
+                name: mapOptional(name, identity),
+                avatar:
+                    mapOptional(avatarUrl, (url) => ({
+                        SetToSome: url,
+                    })) ?? "NoChange",
+                endpoint: mapOptional(endpoint, identity),
+            },
+            (resp) => {
+                console.log("UserIndex update bot response: ", resp);
+                return true;
+            },
+            UserIndexUpdateBotArgs,
+            UserIndexUpdateBotResponse,
         );
     }
 

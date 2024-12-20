@@ -150,9 +150,11 @@
     "blockUserSucceeded": "Người dùng đã bị chặn",
     "bots": {
         "add": {
+            "action": "Đăng ký",
             "addBot": "Thêm bot",
             "choosePermissions": "Quyền",
             "failure": "Xin lỗi chúng tôi không thể thêm bot",
+            "loadDefinition": "Tải định nghĩa",
             "noPermissions": "Không cần quyền đặc biệt",
             "permissionsInfo": "Bot này tìm kiếm các quyền sau. Việc chọn giới hạn các quyền được cấp sẽ giới hạn các lệnh khả dụng.",
             "title": "Thêm bot vào cộng đồng"
@@ -173,6 +175,7 @@
             "commandNamePlaceholder": "Nhập tên lệnh",
             "commandPermissionsDesc": "Mô tả các quyền mà lệnh này yêu cầu",
             "commandPermissionsLabel": "Quyền lệnh",
+            "commandsLabel": "Lệnh",
             "descLabel": "Mô tả bot",
             "descPlaceholder": "Nhập mô tả bot",
             "endpointLabel": "Điểm cuối của Bot",
@@ -187,6 +190,7 @@
                 "minLength": "Phải có ít nhất {n} ký tự",
                 "nameCheckError": "Đã xảy ra lỗi khi kiểm tra tên bot",
                 "noCommands": "Một bot phải chứa ít nhất một lệnh",
+                "owner": "Bạn phải nhập chủ sở hữu cho bot",
                 "principal": "Bạn phải nhập một nguyên tắc hợp lệ để xác định bot"
             },
             "iconLabel": "Biểu tượng bot",
@@ -202,6 +206,8 @@
             "namePlaceholder": "Nhập tên bot",
             "nameRules": "Phải là duy nhất và chỉ chứa các ký tự chữ và số và dấu gạch dưới",
             "optional": "không bắt buộc",
+            "ownerLabel": "Chủ sở hữu bot",
+            "ownerRules": "Ai là người liên hệ cho bot này",
             "paramDescLabel": "Mô tả tham số",
             "paramDescPlaceholder": "Nhập mô tả tham số",
             "paramLabel": "Tham số: {name}",
@@ -209,6 +215,7 @@
             "paramNamePlaceholder": "Nhập tên tham số",
             "paramPlaceholderLabel": "Trình giữ chỗ tham số",
             "paramPlaceholderPlaceholder": "Nhập tham số giữ chỗ",
+            "paramsLabel": "Các tham số",
             "paramTypeLabel": "Kiểu tham số",
             "permSameAsMessage": "Giống như quyền tin nhắn",
             "permScopeChat": "Trò chuyện",
@@ -325,7 +332,11 @@
             }
         },
         "update_bot": {
-            "desc": "Bắt đầu đề xuất cập nhật bot OpenChat hiện có"
+            "action": "Cập nhật",
+            "desc": "Bắt đầu đề xuất cập nhật bot OpenChat hiện có",
+            "nobots": "Chỉ có chủ sở hữu của bot đã đăng ký mới có thể cập nhật bot. Bạn không phải là chủ sở hữu của bất kỳ bot đã đăng ký nào.",
+            "select": "Chọn bot mà bạn muốn cập nhật.",
+            "title": "Cập nhật bot"
         },
         "view": {
             "close": "Đóng",

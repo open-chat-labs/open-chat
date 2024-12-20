@@ -1308,7 +1308,10 @@ export class GroupClient extends CandidService {
         );
     }
 
-    updateBot(botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
+    updateInstalledBot(
+        botId: string,
+        grantedPermissions: SlashCommandPermissions,
+    ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "update_bot",
             {
@@ -1325,7 +1328,7 @@ export class GroupClient extends CandidService {
         );
     }
 
-    removeBot(botId: string): Promise<boolean> {
+    removeInstalledBot(botId: string): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "remove_bot",
             {

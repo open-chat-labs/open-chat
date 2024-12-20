@@ -1,25 +1,19 @@
 <script lang="ts">
-    import {
-        i18nKey,
-        type CommunityIdentifier,
-        type GroupChatIdentifier,
-        type OpenChat,
-    } from "openchat-client";
+    import { i18nKey, type BotMatch, type OpenChat } from "openchat-client";
     import Search from "../Search.svelte";
-    import { getContext } from "svelte";
+    import { getContext, type Snippet } from "svelte";
     import { botSearchState } from "../../stores/search.svelte";
     import Button from "../Button.svelte";
     import Translatable from "../Translatable.svelte";
-    import BotMatch from "./BotMatch.svelte";
 
     const client = getContext<OpenChat>("client");
     const PAGE_SIZE = 50;
 
     interface Props {
-        id: CommunityIdentifier | GroupChatIdentifier;
+        botMatch: Snippet<[BotMatch]>;
     }
 
-    let { id }: Props = $props();
+    let { botMatch }: Props = $props();
 
     let initialised = $state(false);
     let searching = $state(false);
@@ -75,7 +69,7 @@
 {/if}
 
 {#each botSearchState.results as match}
-    <BotMatch {id} {match} />
+    {@render botMatch(match)}
 {/each}
 
 <style lang="scss"></style>
