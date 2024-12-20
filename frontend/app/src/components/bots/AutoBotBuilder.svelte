@@ -177,7 +177,7 @@
     <ValidatingInput
         autofocus
         minlength={3}
-        maxlength={50}
+        maxlength={100}
         invalid={errors.has("bot_principal")}
         placeholder={i18nKey("bots.builder.principalPlaceholder")}
         error={errors.get("bot_principal")}
