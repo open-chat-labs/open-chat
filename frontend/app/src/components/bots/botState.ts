@@ -164,8 +164,8 @@ export function createBotInstance(
     }
 }
 
-export function setSelectedCommand(cmd?: FlattenedCommand) {
-    cmd = cmd ?? get(commands)[get(focusedCommandIndex)];
+export function setSelectedCommand(commands: FlattenedCommand[], cmd?: FlattenedCommand) {
+    cmd = cmd ?? commands[get(focusedCommandIndex)];
 
     // make sure that we don't set the same command twice
     if (!commandsMatch(get(selectedCommand), cmd)) {

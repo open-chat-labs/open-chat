@@ -135,7 +135,7 @@
     }
 
     function selectCommand(command: FlattenedCommand) {
-        setSelectedCommand(command);
+        setSelectedCommand(commands, command);
         sendCommandIfValid();
     }
 
@@ -180,7 +180,7 @@
                 break;
             case "Enter":
                 if (!$showingBuilder) {
-                    setSelectedCommand();
+                    setSelectedCommand(commands);
                     sendCommandIfValid();
                 }
                 break;
