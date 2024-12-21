@@ -37,6 +37,7 @@
 {#if $layoutStore.rightPanel === "floating"}
     <Overlay on:close={closeRightPanel} dismissible>
         <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
             <RightPanel
                 on:goToMessageIndex
@@ -45,6 +46,7 @@
                 on:showGroupMembers
                 on:chatWith
                 on:upgrade
+                on:verifyHumanity
                 on:deleteGroup
                 on:editGroup
                 on:editCommunity
