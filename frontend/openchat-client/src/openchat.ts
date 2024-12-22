@@ -7757,11 +7757,11 @@ export class OpenChat extends EventTarget {
 
     #callBotCommandEndpoint(bot: ExternalBotCommandInstance, token: string): Promise<unknown> {
         const headers = new Headers();
-        headers.append("x-auth-jwt", token);
-        headers.append("Content-type", "application/json");
+        headers.append("Content-type", "text/plain");
         return fetch(`${bot.endpoint}/execute_command`, {
             method: "POST",
             headers: headers,
+            body: token,
         }).then((res) => {
             if (res.ok) {
                 return res.json();
