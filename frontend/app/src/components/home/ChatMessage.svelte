@@ -22,6 +22,7 @@
         currentCommunityMembers as communityMembers,
         currentChatMembersMap as chatMembersMap,
         currentChatBlockedUsers,
+        type BotMessageContext as BotMessageContextType,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -63,6 +64,7 @@
     import WithRole from "./profile/WithRole.svelte";
     import RoleIcon from "./profile/RoleIcon.svelte";
     import Badges from "./profile/Badges.svelte";
+    import BotMessageContext from "../bots/BotMessageContext.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -99,6 +101,7 @@
     export let dateFormatter: (date: Date) => string = (date) => client.toShortTimeString(date);
     export let collapsed: boolean = false;
     export let threadRootMessage: Message | undefined;
+    export let botContext: BotMessageContextType | undefined;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -478,29 +481,36 @@
                     class:rtl={$rtlStore}>
                     {#if first && !isProposal && !isPrize}
                         <div class="sender" class:fill class:rtl={$rtlStore}>
-                            <Link underline={"never"} on:click={openUserProfile}>
-                                <h4 class="username" class:fill class:crypto>
-                                    {senderDisplayName}
-                                </h4>
-                                <Badges
-                                    uniquePerson={sender?.isUniquePerson}
-                                    diamondStatus={sender?.diamondStatus}
-                                    streak={client.getStreak(sender?.userId)} />
-                                {#if sender !== undefined && multiUserChat}
-                                    <WithRole
-                                        userId={sender.userId}
-                                        chatMembers={$chatMembersMap}
-                                        communityMembers={$communityMembers}
-                                        let:chatRole
-                                        let:communityRole>
-                                        <RoleIcon level="community" popup role={communityRole} />
-                                        <RoleIcon
-                                            level={chatType === "channel" ? "channel" : "group"}
-                                            popup
-                                            role={chatRole} />
-                                    </WithRole>
-                                {/if}
-                            </Link>
+                            {#if botContext !== undefined}
+                                <BotMessageContext {botContext} />
+                            {:else}
+                                <Link underline={"never"} on:click={openUserProfile}>
+                                    <h4 class="username" class:fill class:crypto>
+                                        {senderDisplayName}
+                                    </h4>
+                                    <Badges
+                                        uniquePerson={sender?.isUniquePerson}
+                                        diamondStatus={sender?.diamondStatus}
+                                        streak={client.getStreak(sender?.userId)} />
+                                    {#if sender !== undefined && multiUserChat}
+                                        <WithRole
+                                            userId={sender.userId}
+                                            chatMembers={$chatMembersMap}
+                                            communityMembers={$communityMembers}
+                                            let:chatRole
+                                            let:communityRole>
+                                            <RoleIcon
+                                                level="community"
+                                                popup
+                                                role={communityRole} />
+                                            <RoleIcon
+                                                level={chatType === "channel" ? "channel" : "group"}
+                                                popup
+                                                role={chatRole} />
+                                        </WithRole>
+                                    {/if}
+                                </Link>
+                            {/if}
                             {#if senderTyping}
                                 <span class="typing">
                                     <Typing />
@@ -591,6 +601,7 @@
                         <pre>timestamp: {timestamp}</pre>
                         <pre>expiresAt: {expiresAt}</pre>
                         <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
+                        <pre>botContext: {JSON.stringify(botContext, null, 4)}</pre>
                     {/if}
 
                     {#if showChatMenu && intersecting}
