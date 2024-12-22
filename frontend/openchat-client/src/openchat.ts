@@ -7758,7 +7758,7 @@ export class OpenChat extends EventTarget {
     #callBotCommandEndpoint(bot: ExternalBotCommandInstance, token: string): Promise<unknown> {
         const headers = new Headers();
         headers.append("Content-type", "text/plain");
-        return fetch(`${bot.endpoint}/execute_command`, {
+        return fetch(`${bot.endpoint}/execute`, {
             method: "POST",
             headers: headers,
             body: token,
