@@ -12,6 +12,7 @@ lazy_static! {
     pub static ref ESCROW: CanisterWasm = get_canister_wasm("escrow");
     pub static ref EVENT_RELAY: CanisterWasm = get_canister_wasm("event_relay");
     pub static ref EVENT_STORE: CanisterWasm = get_canister_wasm("event_store");
+    pub static ref GREET_BOT: CanisterWasm = get_canister_wasm("greet_bot");
     pub static ref GROUP: CanisterWasm = get_canister_wasm("group");
     pub static ref GROUP_INDEX: CanisterWasm = get_canister_wasm("group_index");
     pub static ref ICP_LEDGER: CanisterWasm = get_canister_wasm("icp_ledger");

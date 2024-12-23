@@ -285,7 +285,7 @@ fn send_message_impl(
             ic_cdk::spawn(send_to_bot_canister(
                 recipient,
                 message_event.event.message_index,
-                bot_api::handle_direct_message::Args::new(send_message_args, sender_name),
+                legacy_bot_api::handle_direct_message::Args::new(send_message_args, sender_name),
             ));
         } else {
             state.push_user_canister_event(
@@ -341,9 +341,13 @@ fn send_message_impl(
     }
 }
 
-async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, args: bot_api::handle_direct_message::Args) {
-    match bot_c2c_client::handle_direct_message(recipient.into(), &args).await {
-        Ok(bot_api::handle_direct_message::Response::Success(result)) => {
+async fn send_to_bot_canister(
+    recipient: UserId,
+    message_index: MessageIndex,
+    args: legacy_bot_api::handle_direct_message::Args,
+) {
+    match legacy_bot_c2c_client::handle_direct_message(recipient.into(), &args).await {
+        Ok(legacy_bot_api::handle_direct_message::Response::Success(result)) => {
             mutate_state(|state| {
                 if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
                     let now = state.env.now();

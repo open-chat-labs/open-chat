@@ -31,6 +31,7 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 identity
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 online_users
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 proposals_bot
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 greet_bot
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 airdrop_bot
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000000 storage_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000000 cycles_dispenser
