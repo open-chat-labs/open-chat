@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use types::{BotDefinition, MessagePermission, SlashCommandPermissions, SlashCommandSchema};
 
-pub fn definition() -> BotDefinition {
+pub fn get_definition() -> BotDefinition {
     BotDefinition {
         description: "Ths bot provides a single command `greet`".to_string(),
         commands: vec![SlashCommandSchema {

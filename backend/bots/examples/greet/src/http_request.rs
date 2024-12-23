@@ -4,22 +4,22 @@ use serde::Serialize;
 use std::str;
 
 use crate::{
-    definition::definition,
-    execute::{execute, ExecuteResponse},
+    execute_command::{execute_command, ExecuteCommandResponse},
+    get_definition::get_definition,
 };
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
     if request.method.to_ascii_uppercase() == "GET" {
         // Return the `bot definition` regardless of the path
-        let body = to_json(&definition());
+        let body = to_json(&get_definition());
 
         return text_response(200, body);
     }
 
     if request.method.to_ascii_uppercase() == "POST" {
         if let Ok(path) = request.get_path() {
-            if path == "/execute" {
+            if path == "/execute_command" {
                 return upgrade();
             }
         }
@@ -32,12 +32,12 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 async fn http_request_update(request: HttpRequest) -> HttpResponse {
     if request.method.to_ascii_uppercase() == "POST" {
         if let Ok(path) = request.get_path() {
-            if path == "/execute" {
+            if path == "/execute_command" {
                 let (status_code, body) = match str::from_utf8(&request.body) {
-                    Ok(access_token) => match execute(access_token).await {
-                        ExecuteResponse::Success(result) => (200, to_json(&result)),
-                        ExecuteResponse::BadRequest(bad_request) => (400, to_json(&bad_request)),
-                        ExecuteResponse::InternalError(internal_error) => (500, to_json(&internal_error)),
+                    Ok(access_token) => match execute_command(access_token).await {
+                        ExecuteCommandResponse::Success(result) => (200, to_json(&result)),
+                        ExecuteCommandResponse::BadRequest(bad_request) => (400, to_json(&bad_request)),
+                        ExecuteCommandResponse::InternalError(internal_error) => (500, to_json(&internal_error)),
                     },
                     Err(error) => (400, format!("Invalid access token: {:?}", error)),
                 };

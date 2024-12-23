@@ -10,7 +10,7 @@ use crate::{
     state::{self, State},
 };
 
-pub enum ExecuteResponse {
+pub enum ExecuteCommandResponse {
     Success(SuccessResult),
     BadRequest(BadRequest),
     InternalError(InternalError),
@@ -36,27 +36,27 @@ pub enum BadRequest {
     ArgsInvalid,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub enum InternalError {
     Invalid(String),
     CanisterError(HandleBotActionsError),
     C2CError(i32, String),
 }
 
-pub async fn execute(access_token: &str) -> ExecuteResponse {
+pub async fn execute_command(access_token: &str) -> ExecuteCommandResponse {
     let bot = match state::read(|state| prepare(access_token, state)) {
         Ok(c) => c,
-        Err(bad_request) => return ExecuteResponse::BadRequest(bad_request),
+        Err(bad_request) => return ExecuteCommandResponse::BadRequest(bad_request),
     };
 
     let result = match bot.command_name.as_str() {
         "greet" => greet(bot, access_token).await,
-        _ => return ExecuteResponse::BadRequest(BadRequest::CommandNotFound),
+        _ => return ExecuteCommandResponse::BadRequest(BadRequest::CommandNotFound),
     };
 
     match result {
-        Ok(success) => ExecuteResponse::Success(success),
-        Err(internal_error) => ExecuteResponse::InternalError(internal_error),
+        Ok(success) => ExecuteCommandResponse::Success(success),
+        Err(internal_error) => ExecuteCommandResponse::InternalError(internal_error),
     }
 }
 
