@@ -1,7 +1,6 @@
 [workspace]
 members = [
-    "backend/bots/api",
-    "backend/bots/c2c_client",
+    "backend/bots/examples/greet",
     "backend/canisters/airdrop_bot/api",
     "backend/canisters/airdrop_bot/client",
     "backend/canisters/airdrop_bot/impl",
@@ -106,6 +105,8 @@ members = [
     "backend/external_canisters/sonic/api",
     "backend/external_canisters/sonic/c2c_client",
     "backend/integration_tests",
+    "backend/legacy_bots/api",
+    "backend/legacy_bots/c2c_client",
     "backend/libraries/activity_notification_state",
     "backend/libraries/candid_gen",
     "backend/libraries/canister_agent_utils",
@@ -186,6 +187,7 @@ futures = "0.3.30"
 getrandom = { version = "0.2.15", features = ["custom"] }
 hex = "0.4.3"
 hmac-sha256 = { version = "1.1.7", features = ["traits010"] }
+http = "1.1.0"
 ic-agent = "0.39.1"
 ic-canister-sig-creation = "1.1.0"
 ic-captcha = "1.0.0"
@@ -195,6 +197,7 @@ ic-cdk-macros = "0.17.0"
 ic-cdk-timers = "0.11.0"
 ic-certificate-verification = "2.4.0"
 ic-certification = "2.5.0"
+ic-http-certification = "2.5.0"
 ic-ledger-types = "0.14.0"
 ic_principal = "0.1.1"
 ic-stable-structures = "0.6.7"

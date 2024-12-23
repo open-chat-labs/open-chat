@@ -26,7 +26,11 @@ impl<T> Claims<T> {
         }
     }
 
-    pub fn exp(&self) -> TimestampMillis {
+    pub fn exp(&self) -> u64 {
+        self.exp
+    }
+
+    pub fn exp_ms(&self) -> TimestampMillis {
         self.exp * 1000
     }
 
@@ -36,6 +40,10 @@ impl<T> Claims<T> {
 
     pub fn custom(&self) -> &T {
         &self.custom
+    }
+
+    pub fn into_custom(self) -> T {
+        self.custom
     }
 }
 
