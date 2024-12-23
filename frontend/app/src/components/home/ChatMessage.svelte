@@ -433,6 +433,11 @@
 
 {#if expiresAt === undefined || percentageExpired < 100}
     <div out:fade|local={{ duration: 1000 }} class="message-wrapper" class:last>
+        {#if botContext !== undefined}
+            <div class="bot-context">
+                <BotMessageContext botName={senderDisplayName} {botContext} />
+            </div>
+        {/if}
         <IntersectionObserverComponent let:intersecting>
             <div
                 bind:this={msgElement}
@@ -451,12 +456,6 @@
                                     size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
                             </div>
                         {/if}
-                    </div>
-                {/if}
-
-                {#if botContext !== undefined}
-                    <div class="bot-context">
-                        <BotMessageContext botName={senderDisplayName} {botContext} />
                     </div>
                 {/if}
 
@@ -805,12 +804,12 @@
     }
 
     .bot-context {
-        position: absolute;
-        top: -7px;
-        left: $avatar-width;
+        display: flex;
+        margin-inline-start: $avatar-width;
+        margin-bottom: $sp1;
 
         @include mobile() {
-            left: $avatar-width-mob;
+            margin-inline-start: $avatar-width-mob;
         }
     }
 
@@ -872,10 +871,6 @@
         overflow-wrap: break-word;
         border: var(--currentChat-msg-bd);
         box-shadow: var(--currentChat-msg-sh);
-
-        &.bot {
-            margin-top: $sp4;
-        }
 
         &.proposal {
             max-width: 800px;
