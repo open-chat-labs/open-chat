@@ -161,6 +161,7 @@
         msg.content.kind === "deleted_content" &&
         Number(msg.content.timestamp) < $now - 5 * 60 * 1000;
     $: canRevealDeleted = deletedByMe && !undeleting && !permanentlyDeleted;
+    $: edited = msg.edited && !botContext?.finalised;
 
     onMount(() => {
         if (!readByMe) {
@@ -558,7 +559,7 @@
                         messageId={msg.messageId}
                         myUserId={user.userId}
                         content={msg.content}
-                        edited={msg.edited}
+                        {edited}
                         height={mediaCalculatedHeight}
                         blockLevelMarkdown={msg.blockLevelMarkdown}
                         on:removePreview

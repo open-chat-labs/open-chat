@@ -202,6 +202,7 @@ import type {
 import type { JsonnableDelegationChain } from "@dfinity/identity";
 import type { Verification } from "./wallet";
 import type {
+    BotCommandResponse,
     BotDefinitionResponse,
     BotsResponse,
     ExternalBot,
@@ -421,7 +422,14 @@ export type WorkerRequest =
     | RemoveInstalledBot
     | UpdateInstalledBot
     | UpdateRegisteredBot
-    | GetBotDefinition;
+    | GetBotDefinition
+    | CallBotCommandEndpoint;
+
+type CallBotCommandEndpoint = {
+    kind: "callBotCommandEndpoint";
+    endpoint: string;
+    token: string;
+};
 
 type GetBotDefinition = {
     kind: "getBotDefinition";
@@ -1572,7 +1580,8 @@ export type WorkerResponseInner =
     | ExternalAchievement[]
     | MessageActivityFeedResponse
     | ExploreBotsResponse
-    | BotDefinitionResponse;
+    | BotDefinitionResponse
+    | BotCommandResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2284,6 +2293,8 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends GetBotDefinition
     ? BotDefinitionResponse
+    : T extends CallBotCommandEndpoint
+    ? BotCommandResponse
     : T extends RemoveInstalledBot
     ? boolean
     : T extends UpdateInstalledBot
