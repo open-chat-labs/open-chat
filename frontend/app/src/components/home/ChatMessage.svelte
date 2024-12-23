@@ -454,6 +454,12 @@
                     </div>
                 {/if}
 
+                {#if botContext !== undefined}
+                    <div class="bot-context">
+                        <BotMessageContext botName={senderDisplayName} {botContext} />
+                    </div>
+                {/if}
+
                 <!-- svelte-ignore a11y-no-static-element-interactions -->
                 <div
                     bind:this={msgBubbleElement}
@@ -476,42 +482,36 @@
                     class:readByMe
                     class:crypto
                     class:failed
+                    class:bot={botContext !== undefined}
                     class:p2pSwap={isP2PSwap}
                     class:proposal={isProposal && !inert}
                     class:thread={inThread}
                     class:rtl={$rtlStore}>
                     {#if first && !isProposal && !isPrize}
                         <div class="sender" class:fill class:rtl={$rtlStore}>
-                            {#if botContext !== undefined}
-                                <BotMessageContext {botContext} />
-                            {:else}
-                                <Link underline={"never"} on:click={openUserProfile}>
-                                    <h4 class="username" class:fill class:crypto>
-                                        {senderDisplayName}
-                                    </h4>
-                                    <Badges
-                                        uniquePerson={sender?.isUniquePerson}
-                                        diamondStatus={sender?.diamondStatus}
-                                        streak={client.getStreak(sender?.userId)} />
-                                    {#if sender !== undefined && multiUserChat}
-                                        <WithRole
-                                            userId={sender.userId}
-                                            chatMembers={$chatMembersMap}
-                                            communityMembers={$communityMembers}
-                                            let:chatRole
-                                            let:communityRole>
-                                            <RoleIcon
-                                                level="community"
-                                                popup
-                                                role={communityRole} />
-                                            <RoleIcon
-                                                level={chatType === "channel" ? "channel" : "group"}
-                                                popup
-                                                role={chatRole} />
-                                        </WithRole>
-                                    {/if}
-                                </Link>
-                            {/if}
+                            <Link underline={"never"} on:click={openUserProfile}>
+                                <h4 class="username" class:fill class:crypto>
+                                    {senderDisplayName}
+                                </h4>
+                                <Badges
+                                    uniquePerson={sender?.isUniquePerson}
+                                    diamondStatus={sender?.diamondStatus}
+                                    streak={client.getStreak(sender?.userId)} />
+                                {#if sender !== undefined && multiUserChat}
+                                    <WithRole
+                                        userId={sender.userId}
+                                        chatMembers={$chatMembersMap}
+                                        communityMembers={$communityMembers}
+                                        let:chatRole
+                                        let:communityRole>
+                                        <RoleIcon level="community" popup role={communityRole} />
+                                        <RoleIcon
+                                            level={chatType === "channel" ? "channel" : "group"}
+                                            popup
+                                            role={chatRole} />
+                                    </WithRole>
+                                {/if}
+                            </Link>
                             {#if senderTyping}
                                 <span class="typing">
                                     <Typing />
@@ -804,10 +804,21 @@
         }
     }
 
+    .bot-context {
+        position: absolute;
+        top: -7px;
+        left: $avatar-width;
+
+        @include mobile() {
+            left: $avatar-width-mob;
+        }
+    }
+
     .message {
         display: flex;
         justify-content: flex-start;
         margin-bottom: $sp2;
+        position: relative;
 
         .avatar-col {
             flex: 0 0 $avatar-width;
@@ -861,6 +872,10 @@
         overflow-wrap: break-word;
         border: var(--currentChat-msg-bd);
         box-shadow: var(--currentChat-msg-sh);
+
+        &.bot {
+            margin-top: $sp4;
+        }
 
         &.proposal {
             max-width: 800px;
