@@ -177,7 +177,8 @@
                             timestamp={thread.rootMessage.timestamp}
                             expiresAt={thread.rootMessage.expiresAt}
                             dateFormatter={(date) => client.toDatetimeString(date)}
-                            msg={thread.rootMessage.event} />
+                            msg={thread.rootMessage.event}
+                            botContext={thread.rootMessage.event.botContext} />
                     </div>
                     {#if missingMessages > 0}
                         <div class="separator">
@@ -222,7 +223,8 @@
                                 timestamp={evt.timestamp}
                                 expiresAt={evt.expiresAt}
                                 dateFormatter={(date) => client.toDatetimeString(date)}
-                                msg={evt.event} />
+                                msg={evt.event}
+                                botContext={evt.event.botContext} />
                         {/each}
                     {/each}
                     <LinkButton underline="hover" on:click={selectThread}

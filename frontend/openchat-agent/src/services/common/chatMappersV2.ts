@@ -125,6 +125,7 @@ import type {
     SlashCommandSchema,
     SlashCommandParamType,
     SlashCommandParam,
+    BotMessageContext,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -237,6 +238,7 @@ import type {
     ImageContent as TImageContent,
     LocalUserIndexJoinGroupResponse,
     Message as TMessage,
+    BotMessageContext as TBotMessageContext,
     MessageContent as TMessageContent,
     MessageContentInitial as TMessageContentInitial,
     MessageMatch as TMessageMatch,
@@ -556,6 +558,15 @@ export function message(value: TMessage): Message {
         deleted: content.kind === "deleted_content",
         thread: mapOptional(value.thread_summary, threadSummary),
         blockLevelMarkdown: value.block_level_markdown,
+        botContext: mapOptional(value.bot_context, botMessageContext),
+    };
+}
+
+export function botMessageContext(value: TBotMessageContext): BotMessageContext {
+    return {
+        initiator: principalBytesToString(value.initiator),
+        commandText: value.command_text,
+        finalised: value.finalised,
     };
 }
 

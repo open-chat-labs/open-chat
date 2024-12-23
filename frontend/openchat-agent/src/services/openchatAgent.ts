@@ -1423,6 +1423,15 @@ export class OpenChatAgent extends EventTarget {
 
     rehydrateUserSummary<T extends UserSummary>(userSummary: T): T {
         const ref = userSummary.blobReference;
+        if (userSummary.kind === "bot") {
+            return {
+                ...userSummary,
+                blobData: undefined,
+                blobUrl: `${this.config.blobUrlPattern
+                    .replace("{canisterId}", this.config.userIndexCanister)
+                    .replace("{blobType}", "avatar")}/${userSummary.userId}/${ref?.blobId}`,
+            };
+        }
         return {
             ...userSummary,
             blobData: undefined,
