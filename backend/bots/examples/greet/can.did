@@ -1,18 +1,2 @@
-type BotApiCallResponse = variant {
-    Ok;
-    Err : variant {
-        Invalid : text;
-        CanisterError : variant {
-            NotAuthorized;
-            Frozen;
-            Other : text;
-        };
-        C2CError: record {
-            0 : nat32;
-            1 : text;
-        };
-    };
-};
-
 service : {
 };
