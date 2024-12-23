@@ -1,4 +1,4 @@
-use crate::client::{create_canister, create_canister_with_id, install_canister};
+use crate::client::{create_canister, create_canister_with_id, install_canister, user_index};
 use crate::env::VIDEO_CALL_OPERATOR;
 use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds, TestEnv, T};
@@ -9,6 +9,7 @@ use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use rand::{rngs::StdRng, Rng, SeedableRng};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
@@ -86,6 +87,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let identity_canister_id = create_canister(env, controller);
     let online_users_canister_id = create_canister(env, controller);
     let airdrop_bot_canister_id = create_canister(env, controller);
+    let greet_bot_canister_id = create_canister(env, controller);
     let proposals_bot_canister_id = create_canister(env, controller);
     let storage_index_canister_id = create_canister(env, controller);
     let cycles_dispenser_canister_id = create_canister(env, controller);
@@ -103,6 +105,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let escrow_canister_wasm = wasms::ESCROW.clone();
     let event_relay_canister_wasm = wasms::EVENT_RELAY.clone();
     let event_store_canister_wasm = wasms::EVENT_STORE.clone();
+    let greet_bot_canister_wasm = wasms::GREET_BOT.clone();
     let group_canister_wasm = wasms::GROUP.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
     let icp_ledger_canister_wasm = wasms::ICP_LEDGER.clone();
@@ -243,6 +246,21 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         online_users_canister_id,
         online_users_canister_wasm,
         online_users_init_args,
+    );
+
+    let oc_public_key = user_index::happy_path::public_key(env, user_index_canister_id);
+
+    let greet_bot_init_args = GreetBotArgs {
+        test_mode,
+        oc_public_key,
+    };
+
+    install_canister(
+        env,
+        controller,
+        greet_bot_canister_id,
+        greet_bot_canister_wasm,
+        greet_bot_init_args,
     );
 
     let proposals_bot_init_args = proposals_bot_canister::init::Args {
@@ -615,4 +633,10 @@ struct SnsWasmCanisterInitPayload {
     allowed_principals: Vec<Principal>,
     access_controls_enabled: bool,
     sns_subnet_ids: Vec<Principal>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+struct GreetBotArgs {
+    pub oc_public_key: String,
+    pub test_mode: bool,
 }
