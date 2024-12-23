@@ -653,6 +653,13 @@ export type Message<T extends MessageContent = MessageContent> = {
     deleted: boolean;
     thread?: ThreadSummary;
     blockLevelMarkdown: boolean;
+    botContext?: BotMessageContext;
+};
+
+export type BotMessageContext = {
+    initiator: string;
+    commandText: string;
+    finalised: boolean;
 };
 
 export type ThreadSummary = {

@@ -1,5 +1,5 @@
 import { Principal } from "@dfinity/principal";
-import type { MessageContext } from "./chat";
+import type { MessageContent, MessageContext } from "./chat";
 import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
 import type { InterpolationValues, ResourceKey } from "../utils";
 import { ValidationErrors } from "../utils/validation";
@@ -512,3 +512,20 @@ function validCanister(canister: string | undefined): boolean {
         return false;
     }
 }
+
+export type BotCommandResponse = BotCommandSuccess | BotCommandFailure;
+
+export type BotCommandFailure = {
+    kind: "failure";
+    error: unknown;
+};
+
+export type BotCommandSuccess = {
+    kind: "success";
+    placeholder?: BotResponseMessage;
+};
+
+export type BotResponseMessage = {
+    messageId: bigint;
+    messageContent: MessageContent;
+};

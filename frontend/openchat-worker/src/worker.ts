@@ -12,6 +12,7 @@ import {
     setCommunityReferral,
     getBotDefinition,
 } from "openchat-agent";
+import { callBotCommandEndpoint } from "openchat-agent/lib/services/externalBot/externalBot";
 import {
     type CorrelatedWorkerRequest,
     type Init,
@@ -1912,6 +1913,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "getBotDefinition":
                 executeThenReply(payload, correlationId, getBotDefinition(payload.endpoint));
+                break;
+
+            case "callBotCommandEndpoint":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    callBotCommandEndpoint(payload.endpoint, payload.token),
+                );
                 break;
 
             default:

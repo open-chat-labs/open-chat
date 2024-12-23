@@ -160,6 +160,7 @@
             {supportsEdit}
             {supportsReply}
             {collapsed}
+            botContext={event.event.botContext}
             on:chatWith
             on:goToMessageIndex
             on:replyPrivatelyTo
