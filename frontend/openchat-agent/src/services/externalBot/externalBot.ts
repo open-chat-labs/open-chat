@@ -24,7 +24,16 @@ const ApiBotResponse = Type.Union([
         }),
     }),
     Type.Object({
-        BadRequest: Type.Any(),
+        BadRequest: Type.Union([
+            Type.Literal("AccessTokenNotFound"),
+            Type.Literal("AccessTokenInvalid"),
+            Type.Literal("AccessTokenExpired"),
+            Type.Literal("CommandNotFound"),
+            Type.Literal("ArgsInvalid"),
+        ]),
+    }),
+    Type.Object({
+        InternalError: Type.Any(),
     }),
 ]);
 
