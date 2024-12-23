@@ -17,7 +17,7 @@ const ApiBotResponse = Type.Union([
         Success: Type.Object({
             message: Type.Optional(
                 Type.Object({
-                    id: Type.BigInt(),
+                    id: Type.String(),
                     content: MessageContent,
                 }),
             ),
