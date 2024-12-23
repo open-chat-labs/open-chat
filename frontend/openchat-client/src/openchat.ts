@@ -7944,6 +7944,11 @@ export class OpenChat extends EventTarget {
                                     forwarded: false,
                                     deleted: false,
                                     blockLevelMarkdown: false,
+                                    botContext: {
+                                        initiator: this.#liveState.user.userId,
+                                        finalised: false,
+                                        commandText: `/${bot.command.name}`,
+                                    },
                                 };
                                 const event = {
                                     index: eventIndex,
