@@ -26,7 +26,7 @@
 
 <style lang="scss">
     .bot-context {
-        @include font(light, normal, fs-80);
+        @include font(light, normal, fs-70);
         color: var(--txt-light);
         display: flex;
         gap: $sp2;

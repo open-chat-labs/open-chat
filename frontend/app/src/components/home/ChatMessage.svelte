@@ -806,7 +806,8 @@
     .bot-context {
         display: flex;
         margin-inline-start: $avatar-width;
-        margin-bottom: $sp1;
+        margin-bottom: $sp2;
+        margin-top: $sp2;
 
         @include mobile() {
             margin-inline-start: $avatar-width-mob;
