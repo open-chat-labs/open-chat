@@ -781,10 +781,8 @@ dependencies = [
  "candid",
  "chat_events",
  "event_store_producer",
- "getrandom 0.2.15",
  "ic-cdk 0.17.0",
  "ic-stable-structures",
- "rand 0.8.5",
  "stable_memory_map",
  "types",
 ]

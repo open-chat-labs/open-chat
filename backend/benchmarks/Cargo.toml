@@ -8,9 +8,7 @@ canbench-rs = { workspace = true }
 candid = { workspace = true }
 chat_events = { path = "../libraries/chat_events" }
 event_store_producer = { workspace = true }
-getrandom = { workspace = true }
 ic-cdk = { workspace = true }
 ic-stable-structures = { workspace = true }
-rand = { workspace = true }
 stable_memory_map = { path = "../libraries/stable_memory_map" }
 types = { path = "../libraries/types" }
