@@ -1,5 +1,5 @@
 use crate::keys::macros::key;
-use crate::{BaseKey, KeyPrefix, KeyType};
+use crate::{KeyPrefix, KeyType};
 use ic_principal::Principal;
 
 key!(PrincipalToUserIdKey, PrincipalToUserIdKeyPrefix, KeyType::PrincipalToUserId);
@@ -39,7 +39,7 @@ impl PrincipalToUserIdKey {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Key;
+    use crate::{BaseKey, Key};
     use rand::{thread_rng, RngCore};
 
     #[test]

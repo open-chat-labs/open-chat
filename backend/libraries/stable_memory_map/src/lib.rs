@@ -41,6 +41,10 @@ impl StableMemoryMap {
         self.map.get(&key.into())
     }
 
+    pub fn contains_key<K: Key>(&self, key: K) -> bool {
+        self.map.contains_key(&key.into())
+    }
+
     pub fn insert<K: Key>(&mut self, key: K, value: Vec<u8>) -> Option<Vec<u8>> {
         self.map.insert(key.into(), value)
     }
