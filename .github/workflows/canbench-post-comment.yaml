@@ -1,10 +1,10 @@
-name: Post Canbench results
-
 on:
   workflow_run:
     workflows: ["Benchmarks"]
     types:
       - completed
+
+name: Post Canbench results
 
 jobs:
   download-results:
