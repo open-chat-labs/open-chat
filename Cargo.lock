@@ -8175,6 +8175,7 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "getrandom 0.2.15",
  "hex",
  "ic-ledger-types",
  "icrc-ledger-types",
