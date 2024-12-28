@@ -7,6 +7,7 @@
         isArchitectureRoute,
         isBlogRoute,
         isDiamondRoute,
+        isDevelopersRoute,
         isFaqRoute,
         isGuidelinesRoute,
         isTermsRoute,
@@ -122,6 +123,14 @@
                         </div>
                     {:then { default: DiamondPage }}
                         <DiamondPage />
+                    {/await}
+                {:else if isDevelopersRoute($pathParams)}
+                    {#await import("../bots/docs/Shell.svelte")}
+                        <div class="loading">
+                            <Loading />
+                        </div>
+                    {:then { default: DevelopersPage }}
+                        <DevelopersPage />
                     {/await}
                 {:else}
                     <HomePage on:login={() => client.login()} />

@@ -47,6 +47,12 @@
             () => (route = LandingPage),
         );
         page(
+            "/developers",
+            parsePathParams(() => ({ kind: "developers_route" })),
+            track,
+            () => (route = LandingPage),
+        );
+        page(
             "/features",
             parsePathParams(() => ({ kind: "features_route" })),
             track,

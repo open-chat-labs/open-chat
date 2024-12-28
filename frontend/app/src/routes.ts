@@ -109,6 +109,10 @@ export function isDiamondRoute(route: RouteParams): route is DiamondRoute {
     return route.kind === "diamond_route";
 }
 
+export function isDevelopersRoute(route: RouteParams): route is DevelopersRoute {
+    return route.kind === "developers_route";
+}
+
 export function blogRoute(ctx: PageJS.Context): RouteParams {
     return {
         kind: "blog_route",
@@ -256,7 +260,8 @@ export type LandingPageRoute =
     | FaqRoute
     | GuidelinesRoute
     | TermsRoute
-    | DiamondRoute;
+    | DiamondRoute
+    | DevelopersRoute;
 
 export type RouteType = RouteParams["kind"];
 
@@ -284,6 +289,7 @@ export type WhitepaperRoute = { kind: "whitepaper_route" };
 export type RoadmapRoute = { kind: "roadmap_route" };
 export type FaqRoute = { kind: "faq_route" };
 export type DiamondRoute = { kind: "diamond_route" };
+export type DevelopersRoute = { kind: "developers_route" };
 export type GuidelinesRoute = { kind: "guidelines_route" };
 export type TermsRoute = { kind: "terms_route" };
 

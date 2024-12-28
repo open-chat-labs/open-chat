@@ -12,6 +12,7 @@
     import Blog from "svelte-material-icons/PostOutline.svelte";
     import Help from "svelte-material-icons/HelpCircleOutline.svelte";
     import Security from "svelte-material-icons/Security.svelte";
+    import WrenchOutline from "svelte-material-icons/WrenchOutline.svelte";
     import Menu from "../../Menu.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import Login from "svelte-material-icons/Login.svelte";
@@ -86,6 +87,10 @@
     <MenuItem href="https://tokenterminal.com/terminal/projects/openchat">
         <ChartLine size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Metrics</span>
+    </MenuItem>
+    <MenuItem on:click={() => page("/developers")}>
+        <WrenchOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+        <span slot="text">Developers</span>
     </MenuItem>
     {#if admin}
         <MenuItem separator />
