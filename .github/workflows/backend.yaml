@@ -67,7 +67,7 @@ jobs:
 
       - name: Benchmark
         run: |
-          bash ./scripts/ci-run-benchmark.sh . ${{ github.job }}
+          bash ./scripts/ci-run-benchmarks.sh . ${{ github.job }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -85,7 +85,7 @@ jobs:
 
       - name: Pass or fail
         run: |
-          bash ./scripts/ci-post-run-benchmark.sh
+          bash ./scripts/ci-post-run-benchmarks.sh
 
   unit_tests:
     name: run unit tests
