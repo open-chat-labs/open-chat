@@ -1432,18 +1432,6 @@ export const MessageMatch = Type.Object({
     score: Type.Number(),
 });
 
-export type OptionUpdateStreakInsurance = Static<typeof OptionUpdateStreakInsurance>;
-export const OptionUpdateStreakInsurance = Type.Union(
-    [
-        Type.Literal("NoChange"),
-        Type.Literal("SetToNone"),
-        Type.Object({
-            SetToSome: StreakInsurance,
-        }),
-    ],
-    { default: "NoChange" },
-);
-
 export type DirectChatCreated = Static<typeof DirectChatCreated>;
 export const DirectChatCreated = Type.Record(Type.String(), Type.Never());
 
@@ -9299,7 +9287,6 @@ export const UserUpdatesSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     streak_ends: Type.BigInt(),
-    streak_insurance: OptionUpdateStreakInsurance,
     next_daily_claim: Type.BigInt(),
     is_unique_person: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
     wallet_config: Type.Optional(Type.Union([UserWalletConfig, Type.Undefined()])),
