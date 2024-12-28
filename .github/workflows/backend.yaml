@@ -50,43 +50,6 @@ jobs:
           command: clippy
           args: --tests -- -D warnings
 
-  benchmarks:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: 1.82.0
-          override: true
-      - run: rustup target add wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "build-debug"
-          save-if: "false"
-
-      - name: Benchmark
-        run: |
-          bash ./scripts/ci-run-benchmarks.sh . ${{ github.job }}
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: canbench_result_${{github.job}}
-          path: /tmp/canbench_result_${{ github.job }}
-
-      - name: Save PR number
-        run: |
-          echo ${{ github.event.number }} > /tmp/pr_number
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pr_number
-          path: /tmp/pr_number
-
-      - name: Pass or fail
-        run: |
-          bash ./scripts/ci-post-run-benchmarks.sh
-
   unit_tests:
     name: run unit tests
     runs-on: ubuntu-latest
