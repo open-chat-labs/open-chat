@@ -19,13 +19,16 @@ mod proptests;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Files {
+    #[deprecated]
     files: BTreeMap<FileId, File>,
     #[serde(default)]
     files_stable: FilesMap,
     pending_files: BTreeMap<FileId, PendingFile>,
+    #[deprecated]
     reference_counts: ReferenceCounts,
     #[serde(default)]
     reference_counts_stable: ReferenceCountsStableMap,
+    #[deprecated]
     accessors_map: AccessorsMap,
     #[serde(default)]
     accessors_map_stable: FilesPerAccessorStableMap,
@@ -63,6 +66,7 @@ impl File {
 }
 
 impl Files {
+    #[allow(deprecated)]
     pub fn migrate_files(&mut self) -> bool {
         if self.files.is_empty() {
             return true;
@@ -81,6 +85,7 @@ impl Files {
         self.reference_counts.counts.is_empty()
     }
 
+    #[allow(deprecated)]
     pub fn migrate_reference_counts(&mut self) -> bool {
         if self.reference_counts.counts.is_empty() {
             return true;
@@ -99,6 +104,7 @@ impl Files {
         self.reference_counts.counts.is_empty()
     }
 
+    #[allow(deprecated)]
     pub fn migrate_accessors(&mut self) -> bool {
         if self.accessors_map.map.is_empty() {
             return true;
@@ -117,6 +123,32 @@ impl Files {
         }
         info!(keys, "Migrated accessors to stable map");
         self.accessors_map.map.is_empty()
+    }
+
+    #[allow(deprecated)]
+    fn migrate_file(&mut self, file_id: FileId) -> bool {
+        if let Some(file) = self.files.remove(&file_id) {
+            let hash = file.hash;
+            if let Some(count) = self.reference_counts.counts.remove(&hash) {
+                self.reference_counts_stable.set(hash, count);
+            }
+            self.files_stable.set(file_id, file);
+            true
+        } else {
+            false
+        }
+    }
+
+    #[allow(deprecated)]
+    fn migrate_accessor(&mut self, accessor_id: AccessorId) -> bool {
+        if let Some(files) = self.accessors_map.map.remove(&accessor_id) {
+            for file in files {
+                self.accessors_map_stable.link(accessor_id, file);
+            }
+            true
+        } else {
+            false
+        }
     }
 
     pub fn get(&self, file_id: &FileId) -> Option<File> {
@@ -244,6 +276,11 @@ impl Files {
         accessors: BTreeSet<AccessorId>,
         now: TimestampMillis,
     ) -> ForwardFileResult {
+        self.migrate_file(file_id);
+        for accessor in accessors.iter() {
+            self.migrate_accessor(*accessor);
+        }
+
         let (file, size) = match self.file_and_size(&file_id) {
             Some((f, s)) => (f, s),
             None => return ForwardFileResult::NotFound,
@@ -252,11 +289,11 @@ impl Files {
         let hash = file.hash;
         let new_file_id = generate_file_id(canister_id, caller, hash, file_id_seed, now);
 
-        self.link_accessor_to_file(caller, new_file_id);
+        self.accessors_map_stable.link(caller, new_file_id);
         for accessor in accessors.iter().copied() {
-            self.link_accessor_to_file(accessor, new_file_id);
+            self.accessors_map_stable.link(accessor, new_file_id);
         }
-        self.incr_reference_count(hash);
+        self.reference_counts_stable.incr(hash);
 
         let meta_data = file.meta_data();
         let new_file = File {
@@ -267,7 +304,7 @@ impl Files {
             mime_type: file.mime_type,
         };
 
-        self.set_file(new_file_id, new_file);
+        self.files_stable.set(new_file_id, new_file);
         ForwardFileResult::Success(FileAdded {
             file_id: new_file_id,
             hash,
@@ -281,33 +318,31 @@ impl Files {
     }
 
     pub fn remove_accessor(&mut self, accessor_id: &AccessorId) -> Vec<FileRemoved> {
+        self.migrate_accessor(*accessor_id);
+
         let mut files_removed = Vec::new();
 
-        if let Some(file_ids) = self
-            .accessors_map
-            .remove(accessor_id)
-            .or_else(|| Some(self.accessors_map_stable.remove(*accessor_id).into_iter().collect()))
-        {
-            for file_id in file_ids {
-                let mut blob_to_delete = None;
-                if let Some(mut file) = self.get_file(&file_id) {
-                    file.accessors.remove(accessor_id);
-                    if file.accessors.is_empty() {
-                        let delete_blob = self.decr_reference_count(file.hash) == 0;
-                        if delete_blob {
-                            blob_to_delete = Some(file.hash);
-                        }
-                        if let Some(file_removed) = self.remove_file(file_id) {
-                            files_removed.push(file_removed);
-                        }
-                    } else {
-                        self.set_file(file_id, file);
+        let file_ids = self.accessors_map_stable.remove(*accessor_id);
+        for file_id in file_ids {
+            self.migrate_file(file_id);
+            let mut blob_to_delete = None;
+            if let Some(mut file) = self.get_file(&file_id) {
+                file.accessors.remove(accessor_id);
+                if file.accessors.is_empty() {
+                    let delete_blob = self.reference_counts_stable.decr(file.hash) == 0;
+                    if delete_blob {
+                        blob_to_delete = Some(file.hash);
                     }
+                    if let Some(file_removed) = self.remove_file(file_id) {
+                        files_removed.push(file_removed);
+                    }
+                } else {
+                    self.files_stable.set(file_id, file);
                 }
+            }
 
-                if let Some(blob_to_delete) = blob_to_delete {
-                    self.remove_blob(&blob_to_delete);
-                }
+            if let Some(blob_to_delete) = blob_to_delete {
+                self.remove_blob(&blob_to_delete);
             }
         }
 
@@ -315,9 +350,11 @@ impl Files {
     }
 
     pub fn update_owner(&mut self, file_id: &FileId, new_owner: Principal) -> bool {
+        self.migrate_file(*file_id);
+
         if let Some(mut file) = self.get_file(file_id) {
             file.owner = new_owner;
-            self.set_file(*file_id, file);
+            self.files_stable.set(*file_id, file);
             true
         } else {
             false
@@ -325,17 +362,19 @@ impl Files {
     }
 
     pub fn update_accessor_id(&mut self, old_accessor_id: AccessorId, new_accessor_id: AccessorId) {
-        if let Some(files) = self.accessors_map.map.remove(&old_accessor_id) {
-            for file_id in files.iter() {
-                if let Some(mut file) = self.get_file(file_id) {
-                    if file.accessors.remove(&old_accessor_id) {
-                        file.accessors.insert(new_accessor_id);
-                        self.set_file(*file_id, file);
-                    }
+        self.migrate_accessor(old_accessor_id);
+        self.migrate_accessor(new_accessor_id);
+
+        let files = self.accessors_map_stable.remove(old_accessor_id);
+        for file_id in files.iter() {
+            self.migrate_file(*file_id);
+            if let Some(mut file) = self.get_file(file_id) {
+                if file.accessors.remove(&old_accessor_id) {
+                    file.accessors.insert(new_accessor_id);
+                    self.files_stable.set(*file_id, file);
+                    self.accessors_map_stable.link(new_accessor_id, *file_id);
                 }
             }
-
-            self.accessors_map.map.insert(new_accessor_id, files);
         }
     }
 
@@ -380,6 +419,7 @@ impl Files {
     }
 
     pub fn metrics(&self) -> Metrics {
+        #[allow(deprecated)]
         Metrics {
             file_count: (self.files.len() + self.files_stable.len()) as u64,
             blob_count: self.blobs.len(),
@@ -387,19 +427,19 @@ impl Files {
     }
 
     fn insert_completed_file(&mut self, file_id: FileId, completed_file: PendingFile) {
-        self.link_accessor_to_file(completed_file.owner, file_id);
+        self.accessors_map_stable.link(completed_file.owner, file_id);
         for accessor in completed_file.accessors.iter().copied() {
-            self.link_accessor_to_file(accessor, file_id);
+            self.accessors_map_stable.link(accessor, file_id);
         }
 
-        self.incr_reference_count(completed_file.hash);
+        self.reference_counts_stable.incr(completed_file.hash);
         self.add_blob_if_not_exists(completed_file.hash, completed_file.bytes);
 
         if let Some(expiry) = completed_file.expiry {
             self.expiration_queue.entry(expiry).or_default().push_back(file_id);
         }
 
-        self.set_file(
+        self.files_stable.set(
             file_id,
             File {
                 owner: completed_file.owner,
@@ -411,26 +451,22 @@ impl Files {
         );
     }
 
+    #[allow(deprecated)]
     fn get_file(&self, file_id: &FileId) -> Option<File> {
         self.files.get(file_id).cloned().or_else(|| self.files_stable.get(file_id))
     }
 
+    #[allow(deprecated)]
     fn contains_file(&self, file_id: &FileId) -> bool {
         self.files.contains_key(file_id) || self.files_stable.contains_key(file_id)
     }
 
-    fn set_file(&mut self, file_id: FileId, file: File) {
-        if let Occupied(mut e) = self.files.entry(file_id) {
-            e.insert(file);
-        } else {
-            self.files_stable.set(file_id, file);
-        }
-    }
-
     fn remove_file(&mut self, file_id: FileId) -> Option<FileRemoved> {
-        let file = self.files.remove(&file_id).or_else(|| self.files_stable.remove(&file_id))?;
+        self.migrate_file(file_id);
 
-        if self.decr_reference_count(file.hash) == 0 {
+        let file = self.files_stable.remove(&file_id)?;
+
+        if self.reference_counts_stable.decr(file.hash) == 0 {
             self.remove_blob(&file.hash);
         }
 
@@ -469,31 +505,8 @@ impl Files {
         Some((file.clone(), size))
     }
 
-    fn incr_reference_count(&mut self, hash: Hash) -> u32 {
-        if self.reference_counts.counts.contains_key(&hash) {
-            self.reference_counts.incr(hash)
-        } else {
-            self.reference_counts_stable.incr(hash)
-        }
-    }
-
-    fn decr_reference_count(&mut self, hash: Hash) -> u32 {
-        if self.reference_counts.counts.contains_key(&hash) {
-            self.reference_counts.decr(hash)
-        } else {
-            self.reference_counts_stable.decr(hash)
-        }
-    }
-
-    fn link_accessor_to_file(&mut self, accessor_id: AccessorId, file_id: FileId) {
-        if self.accessors_map.map.contains_key(&accessor_id) {
-            self.accessors_map.link(accessor_id, file_id);
-        } else {
-            self.accessors_map_stable.link(accessor_id, file_id);
-        }
-    }
-
     fn unlink_accessor_from_file(&mut self, accessor_id: AccessorId, file_id: FileId) {
+        #[allow(deprecated)]
         self.accessors_map.unlink(accessor_id, &file_id);
         self.accessors_map_stable.unlink(accessor_id, file_id);
     }
@@ -524,41 +537,12 @@ struct ReferenceCounts {
     counts: BTreeMap<Hash, u32>,
 }
 
-impl ReferenceCounts {
-    pub fn incr(&mut self, hash: Hash) -> u32 {
-        *self
-            .counts
-            .entry(hash)
-            .and_modify(|c| {
-                *c += 1;
-            })
-            .or_insert(1)
-    }
-
-    pub fn decr(&mut self, hash: Hash) -> u32 {
-        if let Occupied(mut e) = self.counts.entry(hash) {
-            let count = e.get_mut();
-            if *count > 1 {
-                *count -= 1;
-                return *count;
-            } else {
-                e.remove();
-            }
-        }
-        0
-    }
-}
-
 #[derive(Serialize, Deserialize, Default)]
 struct AccessorsMap {
     map: BTreeMap<AccessorId, BTreeSet<FileId>>,
 }
 
 impl AccessorsMap {
-    pub fn link(&mut self, accessor_id: AccessorId, file_id: FileId) {
-        self.map.entry(accessor_id).or_default().insert(file_id);
-    }
-
     pub fn unlink(&mut self, accessor_id: AccessorId, file_id: &FileId) {
         if let Occupied(mut e) = self.map.entry(accessor_id) {
             let entry = e.get_mut();
@@ -567,10 +551,6 @@ impl AccessorsMap {
                 e.remove();
             }
         }
-    }
-
-    pub fn remove(&mut self, accessor_id: &AccessorId) -> Option<BTreeSet<FileId>> {
-        self.map.remove(accessor_id)
     }
 }
 
