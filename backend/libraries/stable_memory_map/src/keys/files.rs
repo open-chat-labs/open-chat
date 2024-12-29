@@ -112,3 +112,76 @@ impl FilesPerAccessorKey {
         FileId::from_be_bytes(self.0[start..].try_into().unwrap())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{BaseKey, Key};
+    use rand::{thread_rng, Rng};
+
+    #[test]
+    fn file_id_to_file_key_e2e() {
+        for _ in 0..100 {
+            let file_id: u128 = thread_rng().gen();
+            let prefix = FileIdToFileKeyPrefix::new();
+            let key = BaseKey::from(prefix.create_key(&file_id));
+            let file_key = FileIdToFileKey::try_from(key.clone()).unwrap();
+
+            assert_eq!(*file_key.0.first().unwrap(), KeyType::FileIdToFile as u8);
+            assert_eq!(file_key.0.len(), 17);
+            assert!(file_key.matches_prefix(&prefix));
+            assert_eq!(file_key.file_id(), file_id);
+
+            let serialized = msgpack::serialize_then_unwrap(&file_key);
+            assert_eq!(serialized.len(), file_key.0.len() + 2);
+            let deserialized: FileIdToFileKey = msgpack::deserialize_then_unwrap(&serialized);
+            assert_eq!(deserialized, file_key);
+            assert_eq!(deserialized.0, key.0);
+        }
+    }
+
+    #[test]
+    fn file_reference_count_key_e2e() {
+        for _ in 0..100 {
+            let hash: [u8; 32] = thread_rng().gen();
+            let prefix = FileReferenceCountKeyPrefix::new();
+            let key = BaseKey::from(prefix.create_key(&hash));
+            let reference_count_key = FileReferenceCountKey::try_from(key.clone()).unwrap();
+
+            assert_eq!(*reference_count_key.0.first().unwrap(), KeyType::FileReferenceCount as u8);
+            assert_eq!(reference_count_key.0.len(), 33);
+            assert!(reference_count_key.matches_prefix(&prefix));
+            assert_eq!(reference_count_key.hash(), hash);
+
+            let serialized = msgpack::serialize_then_unwrap(&reference_count_key);
+            assert_eq!(serialized.len(), reference_count_key.0.len() + 2);
+            let deserialized: FileReferenceCountKey = msgpack::deserialize_then_unwrap(&serialized);
+            assert_eq!(deserialized, reference_count_key);
+            assert_eq!(deserialized.0, key.0);
+        }
+    }
+
+    #[test]
+    fn files_per_accessor_key_e2e() {
+        for _ in 0..100 {
+            let accessor_id_bytes: [u8; 10] = thread_rng().gen();
+            let accessor_id = AccessorId::from_slice(&accessor_id_bytes);
+            let file_id: u128 = thread_rng().gen();
+            let prefix = FilesPerAccessorKeyPrefix::new();
+            let key = BaseKey::from(prefix.create_key(&(accessor_id, file_id)));
+            let member_key = FilesPerAccessorKey::try_from(key.clone()).unwrap();
+
+            assert_eq!(*member_key.0.first().unwrap(), KeyType::FilesPerAccessor as u8);
+            assert_eq!(member_key.0.len(), 27);
+            assert!(member_key.matches_prefix(&prefix));
+            assert_eq!(member_key.accessor_id(), accessor_id);
+            assert_eq!(member_key.file_id(), file_id);
+
+            let serialized = msgpack::serialize_then_unwrap(&member_key);
+            assert_eq!(serialized.len(), member_key.0.len() + 2);
+            let deserialized: FilesPerAccessorKey = msgpack::deserialize_then_unwrap(&serialized);
+            assert_eq!(deserialized, member_key);
+            assert_eq!(deserialized.0, key.0);
+        }
+    }
+}
