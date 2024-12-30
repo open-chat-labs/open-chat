@@ -34,11 +34,17 @@ async fn http_request_update(request: HttpRequest) -> HttpResponse {
         if let Ok(path) = request.get_path() {
             if path == "/execute_command" {
                 let (status_code, body) = match str::from_utf8(&request.body) {
-                    Ok(access_token) => match execute_command(access_token).await {
-                        ExecuteCommandResponse::Success(result) => (200, to_json(&result)),
-                        ExecuteCommandResponse::BadRequest(bad_request) => (400, to_json(&bad_request)),
-                        ExecuteCommandResponse::InternalError(internal_error) => (500, to_json(&internal_error)),
-                    },
+                    Ok(access_token) => {
+                        let response = execute_command(access_token).await;
+                        let body = to_json(&response);
+                        let code = match response {
+                            ExecuteCommandResponse::Success(_) => 200,
+                            ExecuteCommandResponse::BadRequest(_) => 400,
+                            ExecuteCommandResponse::InternalError(_) => 500,
+                        };
+
+                        (code, body)
+                    }
                     Err(error) => (400, format!("Invalid access token: {:?}", error)),
                 };
 

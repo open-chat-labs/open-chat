@@ -10,6 +10,7 @@ use crate::{
     state::{self, State},
 };
 
+#[derive(Serialize)]
 pub enum ExecuteCommandResponse {
     Success(SuccessResult),
     BadRequest(BadRequest),
