@@ -19,13 +19,20 @@ fn run() {
     info!("'migrate_data_to_stable_map' job running");
 
     mutate_state(|state| {
-        if state.data.files.migrate_files()
-            && state.data.files.migrate_reference_counts()
-            && state.data.files.migrate_accessors()
-        {
-            if let Some(timer_id) = TIMER_ID.take() {
-                ic_cdk_timers::clear_timer(timer_id);
-                info!("'migrate_data_to_stable_map' job completed");
+        if state.data.files.migrate_files() {
+            state.data.files_migrated = true;
+
+            if state.data.files.migrate_reference_counts() {
+                state.data.file_reference_counts_migrated = true;
+
+                if state.data.files.migrate_accessors() {
+                    state.data.files_per_accessor_migrated = true;
+
+                    if let Some(timer_id) = TIMER_ID.take() {
+                        ic_cdk_timers::clear_timer(timer_id);
+                        info!("'migrate_data_to_stable_map' job completed");
+                    }
+                }
             }
         }
     })
