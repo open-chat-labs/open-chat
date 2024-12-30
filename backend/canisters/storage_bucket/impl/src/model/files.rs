@@ -1,3 +1,4 @@
+use crate::memory::Memory;
 use crate::model::files_map::FilesMap;
 use crate::model::files_per_accessor_map::FilesPerAccessorStableMap;
 use crate::model::reference_counts::ReferenceCountsStableMap;
@@ -512,9 +513,18 @@ impl Files {
     }
 
     #[cfg(test)]
+    pub fn new_with_blobs_memory(memory: Memory) -> Files {
+        Files {
+            blobs: StableBlobStorage::init_with_memory(memory),
+            ..Default::default()
+        }
+    }
+
+    #[cfg(test)]
     fn check_invariants(&self) {
         let files = self.files_stable.get_all();
 
+        assert!(!files.is_empty());
         assert_eq!(files.len(), self.files_stable.len());
 
         let mut files_per_accessor: BTreeMap<AccessorId, Vec<FileId>> = BTreeMap::new();

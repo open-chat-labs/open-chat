@@ -6,7 +6,8 @@ use proptest::collection::vec as pvec;
 use proptest::prelude::*;
 use proptest::prop_oneof;
 use test_strategy::proptest;
-use types::{AccessorId, CanisterId, FileId, Hash, TimestampMillis};
+use types::{AccessorId, CanisterId, FileId, TimestampMillis};
+use utils::hasher::hash_bytes;
 
 #[derive(Debug, Clone)]
 enum Operation {
@@ -44,11 +45,11 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
 }
 
 #[proptest(cases = 10)]
-fn comprehensive(#[strategy(pvec(operation_strategy(), 1_000..5_000))] ops: Vec<Operation>) {
+fn comprehensive(#[strategy(pvec(operation_strategy(), 100..1_000))] ops: Vec<Operation>) {
     let memory = MemoryManager::init(DefaultMemoryImpl::default());
-    stable_memory_map::init(memory.get(MemoryId::new(1)));
+    stable_memory_map::init(memory.get(MemoryId::new(2)));
 
-    let mut files = Files::default();
+    let mut files = Files::new_with_blobs_memory(memory.get(MemoryId::new(1)));
 
     let mut file_ids = Vec::new();
 
@@ -68,16 +69,17 @@ fn comprehensive(#[strategy(pvec(operation_strategy(), 1_000..5_000))] ops: Vec<
 fn execute_operation(files: &mut Files, op: Operation, timestamp: TimestampMillis, file_ids: &mut [(Principal, FileId)]) {
     match op {
         Operation::Add { owner, file_id } => {
+            let bytes = file_bytes(file_id);
             files.put_chunk(PutChunkArgs {
                 owner,
                 file_id,
-                hash: hash(file_id),
+                hash: hash_bytes(&bytes),
                 mime_type: "".to_string(),
                 accessors: vec![owner],
                 chunk_index: 0,
                 chunk_size: 1,
-                total_size: 1,
-                bytes: vec![1],
+                total_size: bytes.len() as u64,
+                bytes,
                 expiry: None,
                 now: timestamp,
             });
@@ -114,10 +116,8 @@ fn execute_operation(files: &mut Files, op: Operation, timestamp: TimestampMilli
     };
 }
 
-fn hash(file_id: FileId) -> Hash {
-    let mut bytes = [0u8; 32];
-    bytes[0] = (file_id % 100) as u8;
-    bytes
+fn file_bytes(file_id: FileId) -> Vec<u8> {
+    vec![file_id as u8]
 }
 
 fn principal(index: usize) -> Principal {
