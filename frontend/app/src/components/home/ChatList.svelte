@@ -209,7 +209,11 @@
     function onViewChanged() {
         previousView = view;
         const scrollTop = view === "chats" ? chatsScrollTop : 0;
-        tick().then(() => (chatListElement.scrollTop = scrollTop));
+        tick().then(() => {
+            if (chatListElement !== undefined) {
+                chatListElement.scrollTop = scrollTop;
+            }
+        });
     }
 
     function markAllRead() {
