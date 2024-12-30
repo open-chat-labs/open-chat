@@ -20,7 +20,7 @@ impl FilesMap {
 
     pub fn set(&mut self, file_id: FileId, file: File) {
         if with_map_mut(|m| m.insert(self.prefix.create_key(&file_id), file_to_bytes(file))).is_none() {
-            self.len = self.len.saturating_sub(1);
+            self.len = self.len.saturating_add(1);
         }
     }
 
