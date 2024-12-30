@@ -488,7 +488,7 @@
                         href="https://x.com/CoinstoreExc/status/1831973943462531167">Coinstore</XL>
                 </li>
                 <li>
-                    Improved wallet UX to account for a large number of tokens and giving the user
+                    Improved wallet UX to account for a large number of tokens and to give the user
                     more control
                 </li>
                 <li>
