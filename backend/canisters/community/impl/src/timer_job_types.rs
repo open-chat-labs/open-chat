@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::import_groups::{finalize_group_import, mark_import_complete, process_channel_members};
 use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::updates::end_video_call::end_video_call_impl;
-use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
+use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_timer_jobs::Job;
 use chat_events::MessageContentInternal;
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
@@ -465,47 +465,51 @@ impl Job for MarkVideoCallEndedJob {
 }
 
 impl Job for JoinMembersToPublicChannelJob {
-    fn execute(mut self) {
-        mutate_state(|state| {
-            let channel_id = self.channel_id;
-            if let Some(channel) = state.data.channels.get_mut(&channel_id) {
-                if !channel.chat.is_public.value || channel.chat.gate_config.is_some() {
-                    return;
-                }
+    fn execute(self) {
+        mutate_state(|state| self.execute_with_state(state))
+    }
+}
 
-                let mut users_added = Vec::new();
-                let now = state.env.now();
-                while let Some(user_id) = self.members.pop() {
-                    if let Some(member) = state.data.members.get_by_user_id(&user_id) {
-                        let result = join_channel_unchecked(
-                            user_id,
-                            member.user_type,
-                            channel,
-                            &mut state.data.members,
-                            state.data.is_public.value,
-                            false,
-                            now,
-                        );
-                        if matches!(result, AddResult::Success(_)) {
-                            users_added.push(user_id);
-                            if users_added.len() % 100 == 0 && ic_cdk::api::instruction_counter() > 2_000_000_000 {
-                                break;
-                            }
+impl JoinMembersToPublicChannelJob {
+    pub fn execute_with_state(mut self, state: &mut RuntimeState) {
+        let channel_id = self.channel_id;
+        if let Some(channel) = state.data.channels.get_mut(&channel_id) {
+            if !channel.chat.is_public.value || channel.chat.gate_config.is_some() {
+                return;
+            }
+
+            let mut users_added = Vec::new();
+            let now = state.env.now();
+            while let Some(user_id) = self.members.pop() {
+                if let Some(member) = state.data.members.get_by_user_id(&user_id) {
+                    let result = join_channel_unchecked(
+                        user_id,
+                        member.user_type,
+                        channel,
+                        &mut state.data.members,
+                        state.data.is_public.value,
+                        false,
+                        now,
+                    );
+                    if matches!(result, AddResult::Success(_)) {
+                        users_added.push(user_id);
+                        if users_added.len() % 100 == 0 && ic_cdk::api::instruction_counter() > 2_000_000_000 {
+                            break;
                         }
                     }
                 }
-
-                info!("Joined {} members to channel {channel_id}", users_added.len());
-
-                channel.chat.events.mark_members_added_to_public_channel(users_added, now);
-
-                if !self.members.is_empty() {
-                    state
-                        .data
-                        .timer_jobs
-                        .enqueue_job(TimerJob::JoinMembersToPublicChannel(self), now, now);
-                }
             }
-        })
+
+            info!("Joined {} members to channel {channel_id}", users_added.len());
+
+            channel.chat.events.mark_members_added_to_public_channel(users_added, now);
+
+            if !self.members.is_empty() {
+                state
+                    .data
+                    .timer_jobs
+                    .enqueue_job(TimerJob::JoinMembersToPublicChannel(self), now, now);
+            }
+        }
     }
 }

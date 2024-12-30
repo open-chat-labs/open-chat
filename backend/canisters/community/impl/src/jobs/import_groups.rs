@@ -8,7 +8,6 @@ use crate::timer_job_types::{
 };
 use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{mutate_state, read_state, RuntimeState};
-use canister_timer_jobs::Job;
 use chat_events::ChatEvents;
 use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::c2c_export_group::{Args, Response};
@@ -365,7 +364,7 @@ fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut
                 channel_id,
                 members: state.data.members.iter_member_ids().collect(),
             }
-            .execute();
+            .execute_with_state(state);
         }
     }
 }

@@ -5,7 +5,6 @@ use crate::model::channels::Channel;
 use crate::timer_job_types::JoinMembersToPublicChannelJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
-use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community;
 use community_canister::create_channel::{Response::*, *};
@@ -162,7 +161,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                     channel_id,
                     members: state.data.members.iter_member_ids().collect(),
                 }
-                .execute();
+                .execute_with_state(state);
             }
 
             handle_activity_notification(state);
