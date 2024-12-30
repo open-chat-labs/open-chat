@@ -3,9 +3,12 @@ use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
 use crate::model::members::AddResult;
-use crate::timer_job_types::{FinalizeGroupImportJob, ProcessGroupImportChannelMembersJob, TimerJob};
-use crate::updates::c2c_join_channel::{add_members_to_public_channel_unchecked, join_channel_unchecked};
+use crate::timer_job_types::{
+    FinalizeGroupImportJob, JoinMembersToPublicChannelJob, ProcessGroupImportChannelMembersJob, TimerJob,
+};
+use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{mutate_state, read_state, RuntimeState};
+use canister_timer_jobs::Job;
 use chat_events::ChatEvents;
 use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::c2c_export_group::{Args, Response};
@@ -358,15 +361,11 @@ fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut
     if let Some(channel) = state.data.channels.get_mut(&channel_id) {
         // If this is a public channel, add all community members to it
         if channel.chat.is_public.value && channel.chat.gate_config.value.is_none() {
-            let now = state.env.now();
-            let user_ids: Vec<_> = state.data.members.iter_member_ids().collect();
-            add_members_to_public_channel_unchecked(
-                user_ids.into_iter(),
-                channel,
-                &mut state.data.members,
-                state.data.is_public.value,
-                now,
-            );
+            JoinMembersToPublicChannelJob {
+                channel_id,
+                members: state.data.members.iter_member_ids().collect(),
+            }
+            .execute();
         }
     }
 }

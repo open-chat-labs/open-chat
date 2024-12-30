@@ -2,9 +2,10 @@ use super::c2c_join_community::join_community_impl;
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_proposals_bot;
 use crate::model::channels::Channel;
-use crate::updates::c2c_join_channel::add_members_to_public_channel_unchecked;
+use crate::timer_job_types::JoinMembersToPublicChannelJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
+use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community;
 use community_canister::create_channel::{Response::*, *};
@@ -150,24 +151,19 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
 
             state.data.members.mark_member_joined_channel(member.user_id, channel_id);
 
-            let mut channel = Channel {
+            state.data.channels.add(Channel {
                 id: channel_id,
                 chat,
                 date_imported: None,
-            };
+            });
 
             if args.is_public && args.gate_config.is_none() {
-                let user_ids: Vec<_> = state.data.members.iter_member_ids().collect();
-                add_members_to_public_channel_unchecked(
-                    user_ids.into_iter(),
-                    &mut channel,
-                    &mut state.data.members,
-                    state.data.is_public.value,
-                    now,
-                );
+                JoinMembersToPublicChannelJob {
+                    channel_id,
+                    members: state.data.members.iter_member_ids().collect(),
+                }
+                .execute();
             }
-
-            state.data.channels.add(channel);
 
             handle_activity_notification(state);
             Success(SuccessResult { channel_id })
