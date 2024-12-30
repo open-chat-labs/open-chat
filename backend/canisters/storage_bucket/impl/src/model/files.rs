@@ -82,7 +82,7 @@ impl Files {
             }
         }
         info!(keys, "Migrated files to stable map");
-        self.reference_counts.counts.is_empty()
+        self.files.is_empty()
     }
 
     #[allow(deprecated)]
