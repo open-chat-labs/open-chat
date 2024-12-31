@@ -587,7 +587,6 @@ type ProposalData = record {
   payload_text_rendering : opt text;
   action : nat64;
   failure_reason : opt GovernanceError;
-  action_auxiliary : opt ActionAuxiliary;
   ballots : vec record { text; Ballot };
   minimum_yes_proportion_of_total : opt Percentage;
   reward_event_round : nat64;
@@ -824,7 +823,7 @@ type GetUpgradeJournalResponse = record {
   upgrade_journal_entry_count: opt nat64;
 };
 
-service : (Governance) -> {
+service : {
   get_metadata : (record {}) -> (GetMetadataResponse) query;
   get_nervous_system_parameters : (null) -> (NervousSystemParameters) query;
   list_neurons : (ListNeurons) -> (ListNeuronsResponse) query;

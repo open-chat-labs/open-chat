@@ -22,6 +22,7 @@ pub struct DisburseMaturityInProgress {
     pub amount_e8s: u64,
     pub timestamp_of_disbursement_seconds: u64,
     pub account_to_disburse_to: Option<Account>,
+    pub finalize_disbursement_timestamp_seconds: Option<u64>,
 }
 /// A neuron in the governance system.
 #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
@@ -1550,6 +1551,10 @@ pub mod manage_neuron_response {
     pub struct DisburseMaturityResponse {
         /// The amount disbursed in e8s of the governance token.
         pub amount_disbursed_e8s: u64,
+        /// The amount of maturity in e8s of the governance token deducted from the Neuron.
+        /// This amount will undergo maturity modulation if enabled, and may be increased or
+        /// decreased at the time of disbursement.
+        pub amount_deducted_e8s: Option<u64>,
     }
     #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
     pub struct StakeMaturityResponse {
@@ -1692,6 +1697,8 @@ pub struct ListProposals {
 pub struct ListProposalsResponse {
     /// The returned list of proposals' ProposalData.
     pub proposals: Vec<ProposalData>,
+    /// Whether ballots cast by the caller are included in the returned proposals.
+    pub include_ballots_by_caller: Option<bool>,
 }
 /// An operation that lists all neurons tracked in the Governance state in a
 /// paginated fashion.
