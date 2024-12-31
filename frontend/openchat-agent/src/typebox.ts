@@ -5316,6 +5316,13 @@ export const ProposalsBotTransferSnsTreasuryFunds = Type.Object({
     memo: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
 });
 
+export type ProposalsBotMintSnsTokens = Static<typeof ProposalsBotMintSnsTokens>;
+export const ProposalsBotMintSnsTokens = Type.Object({
+    amount: Type.BigInt(),
+    to: AccountICRC1,
+    memo: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
+});
+
 export type OnlineUsersLastOnlineArgs = Static<typeof OnlineUsersLastOnlineArgs>;
 export const OnlineUsersLastOnlineArgs = Type.Object({
     user_ids: Type.Array(UserId),
@@ -6856,7 +6863,11 @@ export const ProposalsBotProposalToSubmitAction = Type.Union([
     Type.Object({
         TransferSnsTreasuryFunds: ProposalsBotTransferSnsTreasuryFunds,
     }),
+    Type.Object({
+        MintSnsTokens: ProposalsBotMintSnsTokens,
+    }),
     Type.Literal("UpgradeSnsToNextVersion"),
+    Type.Literal("AdvanceSnsTargetVersion"),
     Type.Object({
         UpgradeSnsControlledCanister: ProposalsBotUpgradeSnsControlledCanister,
     }),
