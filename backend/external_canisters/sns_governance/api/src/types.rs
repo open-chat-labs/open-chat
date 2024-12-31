@@ -288,6 +288,28 @@ pub mod transfer_sns_treasury_funds {
         }
     }
 }
+/// A proposal function that changes the ledger's parameters.
+/// Fields with None values will remain unchanged.
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct ManageLedgerParameters {
+    pub transfer_fee: Option<u64>,
+    pub token_name: Option<String>,
+    pub token_symbol: Option<String>,
+    pub token_logo: Option<String>,
+}
+/// A proposal to mint SNS tokens to (optionally a Subaccount of) the
+/// target principal.
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct MintSnsTokens {
+    /// The amount to transfer, in e8s.
+    pub amount_e8s: Option<u64>,
+    /// An optional memo to use for the transfer.
+    pub memo: Option<u64>,
+    /// The principal to transfer the funds to.
+    pub to_principal: Option<candid::Principal>,
+    /// An (optional) Subaccount of the principal to transfer the funds to.
+    pub to_subaccount: Option<Subaccount>,
+}
 /// A proposal function to change the values of SNS metadata.
 /// Fields with None values will remain unchanged.
 #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
@@ -323,6 +345,45 @@ pub struct DeregisterDappCanisters {
     pub canister_ids: Vec<candid::Principal>,
     /// The new controllers for the deregistered canisters.
     pub new_controllers: Vec<candid::Principal>,
+}
+/// A proposal to manage the settings of one or more dapp canisters.
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct ManageDappCanisterSettings {
+    /// The canister IDs of the dapp canisters to be modified.
+    pub canister_ids: Vec<candid::Principal>,
+    /// Below are fields under CanisterSettings defined at
+    /// <https://internetcomputer.org/docs/current/references/ic-interface-spec/#ic-candid.>
+    pub compute_allocation: Option<u64>,
+    pub memory_allocation: Option<u64>,
+    pub freezing_threshold: Option<u64>,
+    pub reserved_cycles_limit: Option<u64>,
+    pub log_visibility: Option<i32>,
+    pub wasm_memory_limit: Option<u64>,
+    pub wasm_memory_threshold: Option<u64>,
+}
+/// Unlike `Governance.Version`, this message has optional fields and is the recommended one
+/// to use in APIs that can evolve. For example, the SNS Governance could eventually support
+/// a shorthand notation for SNS versions, enabling clients to specify SNS versions without having
+/// to set each individual SNS framework canister's WASM hash.
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct SnsVersion {
+    /// The hash of the Governance canister WASM.
+    pub governance_wasm_hash: Option<Vec<u8>>,
+    /// The hash of the Swap canister WASM.
+    pub swap_wasm_hash: Option<Vec<u8>>,
+    /// The hash of the Root canister WASM.
+    pub root_wasm_hash: Option<Vec<u8>>,
+    /// The hash of the Index canister WASM.
+    pub index_wasm_hash: Option<Vec<u8>>,
+    /// The hash of the Ledger canister WASM.
+    pub ledger_wasm_hash: Option<Vec<u8>>,
+    /// The hash of the Ledger Archive canister WASM.
+    pub archive_wasm_hash: Option<Vec<u8>>,
+}
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct AdvanceSnsTargetVersion {
+    /// If not specified, the target will advance to the latest SNS version known to this SNS.
+    pub new_target: Option<SnsVersion>,
 }
 /// A proposal is the immutable input of a proposal submission.
 #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
@@ -419,6 +480,22 @@ pub mod proposal {
         ///
         /// Id = 11.
         DeregisterDappCanisters(super::DeregisterDappCanisters),
+        /// Mint SNS tokens to an account.
+        ///
+        /// Id = 12.
+        MintSnsTokens(super::MintSnsTokens),
+        /// Change some parameters on the ledger.
+        ///
+        /// Id = 13.
+        ManageLedgerParameters(super::ManageLedgerParameters),
+        /// Change canister settings for one or more dapp canister(s).
+        ///
+        /// Id = 14.
+        ManageDappCanisterSettings(super::ManageDappCanisterSettings),
+        /// Advance SNS target version.
+        ///
+        /// Id = 15.
+        AdvanceSnsTargetVersion(super::AdvanceSnsTargetVersion),
     }
 }
 #[derive(candid::CandidType, candid::Deserialize, Clone, Debug, PartialEq)]

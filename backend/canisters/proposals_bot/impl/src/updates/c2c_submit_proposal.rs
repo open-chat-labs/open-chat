@@ -11,8 +11,8 @@ use proposals_bot_canister::{ProposalToSubmit, ProposalToSubmitAction, Treasury}
 use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
 use sns_governance_canister::types::{
-    manage_neuron_response, ExecuteGenericNervousSystemFunction, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds,
-    UpgradeSnsControlledCanister, UpgradeSnsToNextVersion,
+    manage_neuron_response, AdvanceSnsTargetVersion, ExecuteGenericNervousSystemFunction, MintSnsTokens, Motion, Proposal,
+    Subaccount, TransferSnsTreasuryFunds, UpgradeSnsControlledCanister, UpgradeSnsToNextVersion,
 };
 use tracing::{error, info};
 use types::{icrc1, CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId};
@@ -217,7 +217,16 @@ fn convert_proposal_action(action: ProposalToSubmitAction) -> Action {
             to_principal: Some(t.to.owner),
             to_subaccount: t.to.subaccount.map(|sa| Subaccount { subaccount: sa.to_vec() }),
         }),
+        ProposalToSubmitAction::MintSnsTokens(t) => Action::MintSnsTokens(MintSnsTokens {
+            amount_e8s: t.amount.try_into().unwrap(),
+            memo: t.memo,
+            to_principal: Some(t.to.owner),
+            to_subaccount: t.to.subaccount.map(|sa| Subaccount { subaccount: sa.to_vec() }),
+        }),
         ProposalToSubmitAction::UpgradeSnsToNextVersion => Action::UpgradeSnsToNextVersion(UpgradeSnsToNextVersion {}),
+        ProposalToSubmitAction::AdvanceSnsTargetVersion => {
+            Action::AdvanceSnsTargetVersion(AdvanceSnsTargetVersion { new_target: None })
+        }
         ProposalToSubmitAction::UpgradeSnsControlledCanister(u) => {
             Action::UpgradeSnsControlledCanister(UpgradeSnsControlledCanister {
                 canister_id: Some(u.canister_id),
