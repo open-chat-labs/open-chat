@@ -359,7 +359,7 @@ export function createRegisterExternalAchievementPayload(
                     name,
                     url,
                     logo: optionalStringToCandid(logo),
-                    canisterId: Principal.fromText(canisterId),
+                    canister_id: Principal.fromText(canisterId),
                     chit_reward: chitReward,
                     expires: expiryTimestampMillis,
                     max_awards: maxAwards,
