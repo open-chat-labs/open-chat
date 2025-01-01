@@ -1,7 +1,7 @@
 use crate::guards::caller_is_governance_principal;
 use crate::model::user_map::Bot;
 use crate::model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN};
-use crate::{mutate_state, read_state, RuntimeState, ONE_GB, ONE_MB, USER_LIMIT};
+use crate::{mutate_state, read_state, RuntimeState, ONE_GB, USER_LIMIT};
 use candid::Principal;
 use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
