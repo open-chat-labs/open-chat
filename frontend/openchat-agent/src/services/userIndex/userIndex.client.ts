@@ -639,7 +639,7 @@ export class UserIndexClient extends CandidService {
         return this.executeMsgpackUpdate(
             "register_bot",
             {
-                principal: principalStringToBytes(bot.id),
+                principal: principalStringToBytes(bot.principal),
                 owner: principalStringToBytes(bot.ownerId),
                 name: bot.name,
                 avatar: mapOptional(bot.avatarUrl, identity),
