@@ -8,6 +8,7 @@ async fn main() {
     let opts = Opts::parse();
 
     let canister_ids = CanisterIds {
+        openchat_installer: opts.openchat_installer,
         user_index: opts.user_index,
         group_index: opts.group_index,
         notifications_index: opts.notifications_index,
@@ -55,6 +56,9 @@ struct Opts {
 
     #[arg(long)]
     controller: String,
+
+    #[arg(long)]
+    openchat_installer: CanisterId,
 
     #[arg(long)]
     user_index: CanisterId,

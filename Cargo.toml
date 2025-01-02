@@ -52,6 +52,7 @@ members = [
     "backend/canisters/online_users/client",
     "backend/canisters/online_users/impl",
     "backend/canisters/openchat_installer/api",
+    "backend/canisters/openchat_installer/client",
     "backend/canisters/openchat_installer/impl",
     "backend/canisters/proposal_validation/api",
     "backend/canisters/proposal_validation/impl",

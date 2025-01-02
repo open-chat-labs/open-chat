@@ -160,6 +160,14 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         openchat_installer_init_args,
     );
 
+    client::openchat_installer::happy_path::upload_wasm_in_chunks(
+        env,
+        controller,
+        openchat_installer_canister_id,
+        &user_index_canister_wasm.module,
+        openchat_installer_canister::CanisterType::UserIndex,
+    );
+
     client::openchat_installer::happy_path::install_canisters(
         env,
         controller,

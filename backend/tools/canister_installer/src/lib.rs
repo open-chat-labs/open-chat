@@ -28,6 +28,7 @@ async fn install_service_canisters_impl(
         vec![Principal::from_text("wp3oc-ig6b4-6xvef-yoj27-qt3kw-u2xmp-qbvuv-2grco-s2ndy-wv3ud-7qe").unwrap()];
 
     futures::future::join_all(vec![
+        set_controllers(management_canister, &canister_ids.openchat_installer, controllers.clone()),
         set_controllers(management_canister, &canister_ids.user_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.group_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.notifications_index, controllers.clone()),
@@ -63,29 +64,60 @@ async fn install_service_canisters_impl(
 
     let version = BuildVersion::min();
 
-    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
-    let user_index_init_args = user_index_canister::init::Args {
+    let openchat_installer_canister_wasm = get_canister_wasm(CanisterName::OpenChatInstaller, version);
+    let openchat_installer_init_args = openchat_installer_canister::init::Args {
         governance_principals: vec![principal],
+        upload_wasm_chunks_whitelist: Vec::new(),
+        user_index_canister_id: canister_ids.user_index,
         group_index_canister_id: canister_ids.group_index,
         notifications_index_canister_id: canister_ids.notifications_index,
         identity_canister_id: canister_ids.identity,
         proposals_bot_canister_id: canister_ids.proposals_bot,
         airdrop_bot_canister_id: canister_ids.airdrop_bot,
         online_users_canister_id: canister_ids.online_users,
-        storage_index_canister_id: canister_ids.storage_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        storage_index_canister_id: canister_ids.storage_index,
         escrow_canister_id: canister_ids.escrow,
         event_relay_canister_id: canister_ids.event_relay,
         registry_canister_id: canister_ids.registry,
-        nns_governance_canister_id: canister_ids.nns_governance,
-        internet_identity_canister_id: canister_ids.nns_internet_identity,
         translations_canister_id: canister_ids.translations,
         website_canister_id: canister_ids.website,
-        video_call_operators: video_call_operators.clone(),
+        nns_governance_canister_id: canister_ids.nns_governance,
+        internet_identity_canister_id: canister_ids.nns_internet_identity,
         ic_root_key: agent.read_root_key(),
         wasm_version: version,
         test_mode,
     };
+
+    install_wasm(
+        management_canister,
+        &canister_ids.openchat_installer,
+        &openchat_installer_canister_wasm.module,
+        openchat_installer_init_args,
+    )
+    .await;
+
+    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
+    openchat_installer_canister_client::upload_wasm_in_chunks(
+        agent,
+        &canister_ids.openchat_installer,
+        &user_index_canister_wasm.module,
+        openchat_installer_canister::CanisterType::UserIndex,
+    )
+    .await
+    .unwrap();
+
+    openchat_installer_canister_client::install_canisters(
+        agent,
+        &canister_ids.openchat_installer,
+        &openchat_installer_canister::install_canisters::Args {
+            user_index_wasm_hash: sha256(&user_index_canister_wasm.module),
+            video_call_operators: video_call_operators.clone(),
+            wasm_version: version,
+        },
+    )
+    .await
+    .unwrap();
 
     let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version);
     let group_index_init_args = group_index_canister::init::Args {
@@ -313,13 +345,7 @@ async fn install_service_canisters_impl(
         runtime_features: None,
     };
 
-    futures::future::join5(
-        install_wasm(
-            management_canister,
-            &canister_ids.user_index,
-            &user_index_canister_wasm.module,
-            user_index_init_args,
-        ),
+    futures::future::join4(
         install_wasm(
             management_canister,
             &canister_ids.group_index,
