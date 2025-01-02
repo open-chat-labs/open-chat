@@ -89,7 +89,10 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
             }
         }
         UserIndexEvent::BotRegistered(ev) => {
-            state.data.bots.set(ev.user_principal, ev.user_id, ev.name, ev.commands);
+            state.data.bots.add(ev.user_principal, ev.user_id, ev.name, ev.commands);
+        }
+        UserIndexEvent::BotUpdated(ev) => {
+            state.data.bots.update(ev.user_id, ev.name, ev.commands);
         }
         UserIndexEvent::SuperAdminStatusChanged(ev) => {
             state.data.global_users.set_platform_moderator(ev.user_id, ev.is_super_admin);
