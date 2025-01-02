@@ -22,6 +22,7 @@ lazy_static! {
     pub static ref NOTIFICATIONS: CanisterWasm = get_canister_wasm("notifications");
     pub static ref NOTIFICATIONS_INDEX: CanisterWasm = get_canister_wasm("notifications_index");
     pub static ref ONLINE_USERS: CanisterWasm = get_canister_wasm("online_users");
+    pub static ref OPENCHAT_INSTALLER: CanisterWasm = get_canister_wasm("openchat_installer");
     pub static ref PROPOSALS_BOT: CanisterWasm = get_canister_wasm("proposals_bot");
     pub static ref REGISTRY: CanisterWasm = get_canister_wasm("registry");
     pub static ref SIGN_IN_WITH_EMAIL: CanisterWasm = get_canister_wasm("sign_in_with_email");

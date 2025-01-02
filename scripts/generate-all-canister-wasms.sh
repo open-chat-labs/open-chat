@@ -37,6 +37,7 @@ cargo build --locked --target wasm32-unknown-unknown --release \
   --package notifications_canister_impl \
   --package notifications_index_canister_impl \
   --package online_users_canister_impl \
+  --package openchat_installer_canister_impl \
   --package proposal_validation_canister_impl \
   --package proposals_bot_canister_impl \
   --package registry_canister_impl \
@@ -67,6 +68,7 @@ ic-wasm ./target/wasm32-unknown-unknown/release/neuron_controller_canister_impl.
 ic-wasm ./target/wasm32-unknown-unknown/release/notifications_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/notifications_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/notifications_index_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/notifications_index_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/online_users_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/online_users_canister_impl-opt.wasm shrink
+ic-wasm ./target/wasm32-unknown-unknown/release/openchat_installer_canister_impl -o ./target/wasm32-unknown-unknown/release/openchat_installer_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/proposal_validation_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/proposal_validation_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/proposals_bot_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/proposals_bot_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/registry_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/registry_canister_impl-opt.wasm shrink
@@ -93,6 +95,7 @@ gzip -fckn9 target/wasm32-unknown-unknown/release/neuron_controller_canister_imp
 gzip -fckn9 target/wasm32-unknown-unknown/release/notifications_canister_impl-opt.wasm > ./wasms/notifications.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/notifications_index_canister_impl-opt.wasm > ./wasms/notifications_index.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/online_users_canister_impl-opt.wasm > ./wasms/online_users.wasm.gz
+gzip -fckn9 target/wasm32-unknown-unknown/release/openchat_installer_canister_impl-opt.wasm > ./wasms/openchat_installer.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/proposal_validation_canister_impl-opt.wasm > ./wasms/proposal_validation.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/proposals_bot_canister_impl-opt.wasm > ./wasms/proposals_bot.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/registry_canister_impl-opt.wasm > ./wasms/registry.wasm.gz

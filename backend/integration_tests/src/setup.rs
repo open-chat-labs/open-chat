@@ -80,6 +80,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     );
     let chat_governance_canister_id = SNS_GOVERNANCE_CANISTER_ID;
 
+    let openchat_installer_canister_id = create_canister(env, controller);
     let user_index_canister_id = create_canister(env, controller);
     let group_index_canister_id = create_canister(env, controller);
     let notifications_index_canister_id = create_canister(env, controller);
@@ -112,6 +113,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let notifications_canister_wasm = wasms::NOTIFICATIONS.clone();
     let notifications_index_canister_wasm = wasms::NOTIFICATIONS_INDEX.clone();
     let online_users_canister_wasm = wasms::ONLINE_USERS.clone();
+    let openchat_installer_canister_wasm = wasms::OPENCHAT_INSTALLER.clone();
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
     let airdrop_bot_canister_wasm = wasms::AIRDROP_BOT.clone();
     let registry_canister_wasm = wasms::REGISTRY.clone();
@@ -125,6 +127,22 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let wasm_version = BuildVersion::min();
     let test_mode = true;
+
+    let openchat_installer_init_args = openchat_installer_canister::init::Args {
+        governance_principals: vec![controller],
+        upload_wasm_chunks_whitelist: Vec::new(),
+        user_index_canister_id,
+        cycles_dispenser_canister_id,
+        wasm_version,
+        test_mode,
+    };
+    install_canister(
+        env,
+        controller,
+        openchat_installer_canister_id,
+        openchat_installer_canister_wasm,
+        openchat_installer_init_args,
+    );
 
     let user_index_init_args = user_index_canister::init::Args {
         governance_principals: vec![controller],
@@ -512,6 +530,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     tick_many(env, 10);
 
     let canister_ids = CanisterIds {
+        openchat_installer: openchat_installer_canister_id,
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
         notifications_index: notifications_index_canister_id,

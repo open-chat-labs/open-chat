@@ -4214,6 +4214,7 @@ dependencies = [
  "notifications_canister",
  "notifications_index_canister",
  "online_users_canister",
+ "openchat_installer_canister",
  "pocket-ic",
  "proposals_bot_canister",
  "rand 0.8.5",
