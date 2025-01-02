@@ -5342,6 +5342,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
+name = "openchat_installer_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "openchat_installer_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "http_request",
+ "ic-cdk 0.17.0",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "msgpack",
+ "openchat_installer_canister",
+ "rand 0.8.5",
+ "serde",
+ "stable_memory",
+ "stable_memory_map",
+ "tracing",
+ "types",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
+ "utils 0.1.0",
+]
+
+[[package]]
 name = "openssl"
 version = "0.10.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
