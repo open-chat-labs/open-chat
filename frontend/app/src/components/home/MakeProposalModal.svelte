@@ -105,6 +105,7 @@
     let achivementName = "";
     let candidateBot: ExternalBot = emptyBotInstance($currentUser.userId);
     let candidateBotValid = false;
+    let botSchemaLoaded = false;
 
     $: errorMessage =
         error !== undefined ? i18nKey("proposal.maker." + error) : $pinNumberErrorMessageStore;
@@ -516,6 +517,8 @@
                         candidate={candidateBot}
                         nameDirty={true}
                         onUpdate={(bot) => (candidateBot = bot)}
+                        mode={"register"}
+                        bind:schemaLoaded={botSchemaLoaded}
                         bind:valid={candidateBotValid} />
                 {:else if selectedProposalType === "transfer_sns_funds"}
                     <div>
