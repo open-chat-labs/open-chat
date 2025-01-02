@@ -434,9 +434,9 @@
                                 >Register external achievement</option>
                             <option value={"add_token"}>Add token</option>
                             <option value={"update_token"}>Update token</option>
-                        {/if}
-                        {#if botsEnabled}
-                            <option value={"register_bot"}>Register a bot</option>
+                            {#if botsEnabled}
+                                <option value={"register_bot"}>Register a bot</option>
+                            {/if}
                         {/if}
                     </Select>
                 </section>
