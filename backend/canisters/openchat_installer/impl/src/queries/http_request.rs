@@ -1,4 +1,4 @@
-use crate::{read_state, RuntimeState};
+use crate::{read_state, State};
 use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk::query;
 use types::{HttpRequest, HttpResponse, TimestampMillis};
@@ -17,7 +17,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         encode_logs(canister_logger::export_traces(), since.unwrap_or(0))
     }
 
-    fn get_metrics_impl(state: &RuntimeState) -> HttpResponse {
+    fn get_metrics_impl(state: &State) -> HttpResponse {
         build_json_response(&state.metrics())
     }
 

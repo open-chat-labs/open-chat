@@ -5347,6 +5347,8 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "hex",
+ "human_readable",
  "serde",
  "types",
 ]
@@ -5361,6 +5363,7 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "http_request",
+ "human_readable",
  "ic-cdk 0.17.0",
  "ic-cdk-timers",
  "ic-stable-structures",
@@ -5372,8 +5375,6 @@ dependencies = [
  "stable_memory_map",
  "tracing",
  "types",
- "user_index_canister",
- "user_index_canister_c2c_client",
  "utils 0.1.0",
 ]
 

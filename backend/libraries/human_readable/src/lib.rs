@@ -114,7 +114,7 @@ impl From<&CanisterWasm> for CanisterWasmTrimmed {
 }
 
 #[derive(Serialize)]
-struct HumanReadableUpgradesFilter {
+pub struct HumanReadableUpgradesFilter {
     include: Vec<HumanReadablePrincipal>,
     exclude: Vec<HumanReadablePrincipal>,
 }
