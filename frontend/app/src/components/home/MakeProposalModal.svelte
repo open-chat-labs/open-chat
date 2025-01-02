@@ -46,7 +46,7 @@
     import Translatable from "../Translatable.svelte";
     import DurationPicker from "./DurationPicker.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import BotBuilder from "../bots/AutoBotBuilder.svelte";
+    import BotBuilder from "../bots/AutoBotBuilderWrapper.svelte";
     import { botsEnabled } from "../../utils/bots";
 
     const MIN_TITLE_LENGTH = 3;
@@ -514,10 +514,7 @@
             <div class="action hidden" class:visible={step === 2}>
                 {#if selectedProposalType === "register_bot"}
                     <BotBuilder
-                        candidate={candidateBot}
-                        nameDirty={true}
                         onUpdate={(bot) => (candidateBot = bot)}
-                        mode={"register"}
                         bind:schemaLoaded={botSchemaLoaded}
                         bind:valid={candidateBotValid} />
                 {:else if selectedProposalType === "transfer_sns_funds"}
