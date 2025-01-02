@@ -68,7 +68,7 @@ ic-wasm ./target/wasm32-unknown-unknown/release/neuron_controller_canister_impl.
 ic-wasm ./target/wasm32-unknown-unknown/release/notifications_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/notifications_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/notifications_index_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/notifications_index_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/online_users_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/online_users_canister_impl-opt.wasm shrink
-ic-wasm ./target/wasm32-unknown-unknown/release/openchat_installer_canister_impl -o ./target/wasm32-unknown-unknown/release/openchat_installer_canister_impl-opt.wasm shrink
+ic-wasm ./target/wasm32-unknown-unknown/release/openchat_installer_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/openchat_installer_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/proposal_validation_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/proposal_validation_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/proposals_bot_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/proposals_bot_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/registry_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/registry_canister_impl-opt.wasm shrink

@@ -36,7 +36,7 @@ impl State {
 
     pub fn can_caller_upload_wasm_chunks(&self) -> bool {
         let caller = self.env.caller();
-        self.data.upload_wasm_chunks_whitelist.contains(&caller)
+        self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
     }
 
     pub fn metrics(&self) -> Metrics {
