@@ -5378,6 +5378,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "hex",
  "http_request",
  "human_readable",
  "ic-cdk 0.17.0",

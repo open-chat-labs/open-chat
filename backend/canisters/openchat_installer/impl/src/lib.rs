@@ -50,6 +50,13 @@ impl State {
             stable_memory_sizes: memory::memory_sizes(),
             governance_principals: self.data.governance_principals.clone(),
             upload_wasm_chunks_whitelist: self.data.upload_wasm_chunks_whitelist.clone(),
+            wasm_chunks_uploaded: self
+                .data
+                .canister_wasms
+                .chunk_hashes()
+                .into_iter()
+                .map(|(c, h)| (*c, hex::encode(h)))
+                .collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -161,6 +168,7 @@ pub struct Metrics {
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub governance_principals: Vec<Principal>,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
+    pub wasm_chunks_uploaded: Vec<(CanisterType, String)>,
     pub canister_ids: CanisterIds,
 }
 

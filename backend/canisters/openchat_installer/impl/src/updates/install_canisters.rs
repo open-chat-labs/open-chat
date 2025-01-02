@@ -61,14 +61,14 @@ struct PrepareResult {
 }
 
 fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
-    let user_index_canister_wasm = state.data.canister_wasms.get(CanisterType::UserIndex);
+    let user_index_wasm_hash = state.data.canister_wasms.chunks_hash(CanisterType::UserIndex);
 
-    if user_index_canister_wasm.wasm_hash != args.user_index_wasm_hash {
-        Err(HashMismatch(CanisterType::UserIndex, user_index_canister_wasm.wasm_hash))
+    if user_index_wasm_hash != args.user_index_wasm_hash {
+        Err(HashMismatch(CanisterType::UserIndex, user_index_wasm_hash))
     } else {
         Ok(PrepareResult {
             user_index_canister_id: state.data.user_index_canister_id,
-            user_index_wasm: user_index_canister_wasm.wasm.module.clone(),
+            user_index_wasm: state.data.canister_wasms.wasm_from_chunks(CanisterType::UserIndex),
             user_index_wasm_hash: args.user_index_wasm_hash,
             user_index_init_args: user_index_canister::init::Args {
                 governance_principals: state.data.governance_principals.clone(),
