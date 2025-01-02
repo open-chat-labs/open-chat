@@ -2,7 +2,7 @@ use candid::{CandidType, Principal};
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{SlashCommandSchema, UserId};
+use types::{BotDefinition, UserId};
 
 #[ts_export(user_index, register_bot)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -12,8 +12,7 @@ pub struct Args {
     pub name: String,
     pub avatar: Option<String>, // Image as a data URL
     pub endpoint: String,
-    pub description: String,
-    pub commands: Vec<SlashCommandSchema>,
+    pub definition: BotDefinition,
 }
 
 #[ts_export(user_index, register_bot)]
@@ -29,7 +28,7 @@ pub struct HumanReadableArgs {
     name: String,
     endpoint: String,
     description: String,
-    commands: Vec<SlashCommandSchema>,
+    definition: BotDefinition,
 }
 
 impl ToHumanReadable for Args {
@@ -42,7 +41,7 @@ impl ToHumanReadable for Args {
             name: self.name.clone(),
             endpoint: self.endpoint.clone(),
             description: self.endpoint.clone(),
-            commands: self.commands.clone(),
+            definition: self.definition.clone(),
         }
     }
 }

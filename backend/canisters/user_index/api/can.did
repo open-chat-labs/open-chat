@@ -157,16 +157,46 @@ type DiamondMembershipFeesResponse = variant {
 
 type RegisterBotArgs = record {
     "principal" : principal;
-    owner: UserId;
-    name: text;
-    avatar: opt text;
-    endpoint: text;
-    description: text;
-    commands: vec SlashCommandSchema;
+    owner : UserId;
+    name : text;
+    avatar : opt text;
+    endpoint : text;
+    definition : BotDefinition;
 };
 
 type RegisterBotResponse = variant {
     Success;
+};
+
+type UpdateBotArgs = record {
+    bot_id : UserId;
+    owner : opt UserId;
+    name : opt text;
+    avatar : TextUpdate; // Image as a data URL
+    endpoint : opt text;
+    definition : opt BotDefinition;
+};
+
+type UpdateBotResponse = variant {
+    Success;
+    NameInvalid;
+    NameAlreadyExists;
+    AvatarInvalid;
+    EndpointInvalid;
+    BotNotFound;
+    BotSuspended;
+    NotAuthorised;
+    OwnerNotFound;
+    OwnerSuspended;
+    NewOwnerNotFound;
+    NewOwnerSuspended;
+    DescriptionTooLong;
+    TooManyCommands;
+};
+
+type BotDefinition = record {
+    description : text;
+    commands : vec SlashCommandSchema;
 };
 
 type RegisterExternalAchievementArgs = record {
@@ -301,4 +331,7 @@ service : {
 
     // Only callable by whitelisted canisters
     award_external_achievement : (AwardExternalAchievementArgs) -> (AwardExternalAchievementResponse);
+
+    // Only callable by bot owner
+    update_bot : (UpdateBotArgs) -> (UpdateBotResponse);
 };

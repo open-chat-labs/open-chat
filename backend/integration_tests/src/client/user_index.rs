@@ -32,6 +32,7 @@ generate_update_call!(upgrade_local_user_index_canister_wasm);
 generate_update_call!(upgrade_user_canister_wasm);
 generate_update_call!(upload_wasm_chunk);
 generate_msgpack_update_call!(register_bot);
+generate_msgpack_update_call!(update_bot);
 
 pub mod happy_path {
     use candid::Principal;
@@ -40,8 +41,8 @@ pub mod happy_path {
     use sha256::sha256;
     use std::collections::HashMap;
     use types::{
-        CanisterId, CanisterWasm, Chit, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, Empty, UserId,
-        UserSummary,
+        BotDefinition, CanisterId, CanisterWasm, Chit, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration,
+        Empty, OptionUpdate, UserId, UserSummary,
     };
     use user_index_canister::users::UserGroup;
     use user_index_canister::ChildCanisterType;
@@ -270,6 +271,37 @@ pub mod happy_path {
 
         match response {
             user_index_canister::users_chit::Response::Success(result) => users.into_iter().zip(result.chit).collect(),
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn update_bot(
+        env: &mut PocketIc,
+        user_index_canister_id: CanisterId,
+        caller: Principal,
+        bot_id: UserId,
+        owner: Option<UserId>,
+        name: Option<String>,
+        endpoint: Option<String>,
+        definition: Option<BotDefinition>,
+    ) {
+        let response = super::update_bot(
+            env,
+            caller,
+            user_index_canister_id,
+            &user_index_canister::update_bot::Args {
+                bot_id,
+                owner,
+                name,
+                avatar: OptionUpdate::NoChange,
+                endpoint,
+                definition,
+            },
+        );
+
+        match response {
+            user_index_canister::update_bot::Response::Success => (),
+            response => panic!("'update_bot' expected Success: {response:?}"),
         }
     }
 
