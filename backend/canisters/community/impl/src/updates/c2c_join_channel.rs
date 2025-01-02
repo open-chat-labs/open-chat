@@ -290,33 +290,6 @@ fn commit(
     }
 }
 
-pub(crate) fn add_members_to_public_channel_unchecked(
-    user_ids: impl Iterator<Item = UserId>,
-    channel: &mut Channel,
-    community_members: &mut CommunityMembers,
-    notifications_muted: bool,
-    now: TimestampMillis,
-) {
-    let mut users_added = Vec::new();
-    for user_id in user_ids {
-        let user_type = community_members.bots().get(&user_id).copied().unwrap_or_default();
-        let result = join_channel_unchecked(
-            user_id,
-            user_type,
-            channel,
-            community_members,
-            notifications_muted,
-            false,
-            now,
-        );
-        if matches!(result, AddResult::Success(_)) {
-            users_added.push(user_id);
-        }
-    }
-
-    channel.chat.events.mark_members_added_to_public_channel(users_added, now);
-}
-
 pub(crate) fn join_channel_unchecked(
     user_id: UserId,
     user_type: UserType,

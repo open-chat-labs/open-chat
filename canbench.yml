@@ -1,0 +1,5 @@
+build_cmd:
+  cargo build -p benchmarks --release --target wasm32-unknown-unknown
+
+wasm_path:
+  ./target/wasm32-unknown-unknown/release/benchmarks.wasm

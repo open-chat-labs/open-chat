@@ -18,20 +18,14 @@
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
-    import { communityFiltersStore } from "../../../../stores/communityFilters";
     import Plus from "svelte-material-icons/Plus.svelte";
     import CommunityCardLink from "./CommunityCardLink.svelte";
     import Translatable from "../../../Translatable.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
     import { communitySearchState } from "../../../../stores/search.svelte";
     import Fab from "../../../Fab.svelte";
-    import {
-        anonUser,
-        offlineStore,
-        identityState,
-        isDiamond,
-        moderationFlags,
-    } from "openchat-client";
+    import { anonUser, offlineStore, identityState, isDiamond } from "openchat-client";
+    import { exploreCommunitiesFilters } from "../../../../stores/communityFilters";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -40,13 +34,6 @@
     let showFab = $state(false);
     let scrollableElement: HTMLElement | null;
     let initialised = $state(false);
-
-    let filters = $derived.by(() => {
-        return {
-            languages: Array.from($communityFiltersStore.languages),
-            flags: $moderationFlags,
-        };
-    });
 
     function calculatePageSize(width: ScreenWidth): number {
         // make sure we get even rows of results
@@ -74,7 +61,7 @@
         }
     }
 
-    function search(reset = false) {
+    function search(filters: { languages: string[]; flags: number }, reset = false) {
         searching = true;
         if (reset) {
             communitySearchState.reset();
@@ -107,13 +94,6 @@
         pushRightPanelHistory({ kind: "community_filters" });
     }
 
-    $effect(() => {
-        if (initialised || communitySearchState.results.length === 0) {
-            search(true);
-        }
-        initialised = true;
-    });
-
     onMount(() => {
         tick().then(() => {
             scrollableElement = document.getElementById("communities-wrapper");
@@ -121,6 +101,12 @@
                 scrollableElement.scrollTop = communitySearchState.scrollPos;
             }
             onScroll();
+        });
+        return exploreCommunitiesFilters.subscribe((filters) => {
+            if (initialised || communitySearchState.results.length === 0) {
+                search(filters, true);
+            }
+            initialised = true;
         });
     });
 
@@ -167,7 +153,7 @@
                         fill
                         bind:searchTerm={communitySearchState.term}
                         searching={false}
-                        on:searchEntered={() => search(true)}
+                        on:searchEntered={() => search($exploreCommunitiesFilters, true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
                 <div class="create">
@@ -194,7 +180,7 @@
                         searching={false}
                         fill
                         bind:searchTerm={communitySearchState.term}
-                        on:searchEntered={() => search(true)}
+                        on:searchEntered={() => search($exploreCommunitiesFilters, true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
             {/if}
@@ -248,7 +234,10 @@
         </div>
         {#if more}
             <div class="more">
-                <Button disabled={searching} loading={searching} on:click={() => search(false)}
+                <Button
+                    disabled={searching}
+                    loading={searching}
+                    on:click={() => search($exploreCommunitiesFilters, false)}
                     ><Translatable resourceKey={i18nKey("communities.loadMore")} /></Button>
             </div>
         {/if}

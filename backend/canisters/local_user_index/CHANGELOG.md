@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Change bot cmd number param values from u16 to f64 ([#7095](https://github.com/open-chat-labs/open-chat/pull/7095))
 - Rename access token `parameters` to `command_args` ([#7104](https://github.com/open-chat-labs/open-chat/pull/7104))
+- Use `StringChat` in `BotCommandClaims` ([#7133](https://github.com/open-chat-labs/open-chat/pull/7133))
+- Handle bot name/definition update ([#7135](https://github.com/open-chat-labs/open-chat/pull/7135))
 
 ### Fixes
 

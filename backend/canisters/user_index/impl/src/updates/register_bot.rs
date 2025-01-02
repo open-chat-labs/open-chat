@@ -1,13 +1,14 @@
 use crate::guards::caller_is_governance_principal;
 use crate::model::user_map::Bot;
 use crate::model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN};
-use crate::{mutate_state, read_state, RuntimeState, USER_LIMIT};
+use crate::{mutate_state, read_state, RuntimeState, ONE_GB, USER_LIMIT};
 use candid::Principal;
 use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use local_user_index_canister::{BotRegistered, UserIndexEvent};
 use rand::RngCore;
+use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
 use types::{UserId, UserType};
 use url::Url;
@@ -72,8 +73,8 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             name: args.name.clone(),
             owner: args.owner,
             endpoint: args.endpoint.clone(),
-            description: args.description.clone(),
-            commands: args.commands.clone(),
+            description: args.definition.description.clone(),
+            commands: args.definition.commands.clone(),
             last_updated: now,
             avatar,
         }),
@@ -84,9 +85,17 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             user_id,
             user_principal: args.principal,
             name: args.name.clone(),
-            commands: args.commands.clone(),
+            commands: args.definition.commands.clone(),
         }),
         None,
+    );
+
+    state.data.storage_index_user_sync_queue.push(
+        state.data.storage_index_canister_id,
+        UserConfig {
+            user_id: args.principal,
+            byte_limit: ONE_GB,
+        },
     );
 
     state.data.event_store_client.push(
@@ -123,11 +132,11 @@ fn validate_request(args: &Args, state: &RuntimeState) -> Result<(), String> {
         return Err("avatar too big".to_string());
     }
 
-    if args.description.len() > MAX_DESCRIPTION_LEN {
+    if args.definition.description.len() > MAX_DESCRIPTION_LEN {
         return Err("description too long".to_string());
     }
 
-    if args.commands.len() > MAX_COMMANDS {
+    if args.definition.commands.len() > MAX_COMMANDS {
         return Err("too many commands".to_string());
     }
 
