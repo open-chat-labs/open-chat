@@ -1,5 +1,5 @@
 use crate::jobs;
-use crate::updates::c2c_join_channel::add_members_to_public_channel_unchecked;
+use crate::timer_job_types::JoinMembersToPublicChannelJob;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -76,13 +76,11 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                                 !state.data.members.member_channel_links_removed_contains(*user_id, channel_id)
                             }));
 
-                            add_members_to_public_channel_unchecked(
-                                user_ids.into_iter(),
-                                channel,
-                                &mut state.data.members,
-                                state.data.is_public.value,
-                                now,
-                            );
+                            JoinMembersToPublicChannelJob {
+                                channel_id,
+                                members: user_ids,
+                            }
+                            .execute_with_state(state);
                         }
                     }
 

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { type Writable, writable } from "svelte/store";
+import { moderationFlags } from "openchat-client";
+import { derived, type Writable, writable } from "svelte/store";
 
 type CommunityFilter = {
     languages: Set<string>;
@@ -47,3 +48,13 @@ export const communityFiltersStore = {
         });
     },
 };
+
+export const exploreCommunitiesFilters = derived(
+    [communityFiltersStore, moderationFlags],
+    ([communityFilters, flags]) => {
+        return {
+            languages: Array.from(communityFilters.languages),
+            flags,
+        };
+    },
+);

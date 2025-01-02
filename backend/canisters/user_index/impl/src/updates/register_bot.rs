@@ -1,13 +1,14 @@
 use crate::guards::caller_is_governance_principal;
 use crate::model::user_map::Bot;
 use crate::model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN};
-use crate::{mutate_state, read_state, RuntimeState, USER_LIMIT};
+use crate::{mutate_state, read_state, RuntimeState, ONE_GB, USER_LIMIT};
 use candid::Principal;
 use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use local_user_index_canister::{BotRegistered, UserIndexEvent};
 use rand::RngCore;
+use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
 use types::{UserId, UserType};
 use url::Url;
@@ -87,6 +88,14 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             commands: args.commands.clone(),
         }),
         None,
+    );
+
+    state.data.storage_index_user_sync_queue.push(
+        state.data.storage_index_canister_id,
+        UserConfig {
+            user_id: args.principal,
+            byte_limit: ONE_GB,
+        },
     );
 
     state.data.event_store_client.push(
