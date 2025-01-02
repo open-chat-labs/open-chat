@@ -483,10 +483,7 @@ impl Files {
 
     fn add_blob_if_not_exists(&mut self, hash: Hash, bytes: Vec<u8>) {
         if !self.blobs.exists(&hash) {
-            self.bytes_used = self
-                .bytes_used
-                .checked_add(bytes.len() as u64)
-                .expect("'bytes_used' overflowed");
+            self.bytes_used = self.bytes_used.saturating_add(bytes.len() as u64);
 
             self.blobs.insert(hash, bytes);
         }
@@ -495,7 +492,7 @@ impl Files {
     fn remove_blob(&mut self, hash: &Hash) {
         if let Some(size) = self.blobs.data_size(hash) {
             self.blobs.remove(hash);
-            self.bytes_used = self.bytes_used.checked_sub(size).expect("'bytes used' underflowed");
+            self.bytes_used = self.bytes_used.saturating_sub(size);
         }
     }
 
