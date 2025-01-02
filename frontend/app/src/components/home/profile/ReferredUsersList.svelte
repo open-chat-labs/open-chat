@@ -17,7 +17,11 @@
     function showUserProfile(ev: Event, userId: string) {
         ev.target?.dispatchEvent(
             new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-                detail: { userId, chatButton: false, inGlobalContext: true },
+                detail: {
+                    userId,
+                    chatButton: false,
+                    inGlobalContext: true,
+                },
                 bubbles: true,
             }),
         );

@@ -29,6 +29,7 @@
     let { onClose, mode = "register" }: Props = $props();
 
     let valid = $state(false);
+    let schemaLoaded = $state(false);
     let busy = $state(false);
     let step: "choose" | "edit" = $state(mode === "update" ? "choose" : "edit");
 
@@ -41,7 +42,7 @@
     let nameDirty = $derived(botState.original.name !== botState.current.name);
     let avatarDirty = $derived(botState.original.avatarUrl !== botState.current.avatarUrl);
     let endpointDirty = $derived(botState.original.endpoint !== botState.current.endpoint);
-    let dirty = $derived(ownerDirty || nameDirty || avatarDirty || endpointDirty);
+    // let dirty = $derived(ownerDirty || nameDirty || avatarDirty || endpointDirty);
 
     let myBots = $derived(
         mode === "update"
@@ -73,7 +74,9 @@
     function update() {
         if (botState.current !== undefined && valid) {
             busy = true;
-            const { id, ownerId, name, avatarUrl, endpoint } = $state.snapshot(botState.current);
+            const { id, ownerId, name, avatarUrl, endpoint, definition } = $state.snapshot(
+                botState.current,
+            );
             client
                 .updateRegisteredBot(
                     id,
@@ -81,6 +84,7 @@
                     nameDirty ? name : undefined,
                     avatarDirty ? avatarUrl : undefined,
                     endpointDirty ? endpoint : undefined,
+                    definition,
                 )
                 .then((success) => {
                     if (!success) {
@@ -148,8 +152,10 @@
         {:else if step === "edit" && botState.current !== undefined}
             <BotBuilder
                 {nameDirty}
+                {mode}
                 candidate={botState.current}
                 onUpdate={(b) => (botState.current = b)}
+                bind:schemaLoaded
                 bind:valid />
         {/if}
     </div>
@@ -160,7 +166,7 @@
             </Button>
             <Button
                 on:click={mode === "update" ? update : register}
-                disabled={!valid || busy || !dirty}
+                disabled={!valid || busy}
                 loading={busy}
                 small={!$mobileWidth}
                 tiny={$mobileWidth}>

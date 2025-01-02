@@ -67,6 +67,7 @@
         SummonWitch,
         RegisterBot,
         UpdateBot,
+        userStore,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -1207,13 +1208,16 @@
 </script>
 
 {#if showProfileCard !== undefined}
-    <ViewUserProfile
-        userId={showProfileCard.userId}
-        inGlobalContext={showProfileCard.inGlobalContext}
-        chatButton={showProfileCard.chatButton}
-        alignTo={showProfileCard.alignTo}
-        on:openDirectChat={chatWithFromProfileCard}
-        on:close={() => (showProfileCard = undefined)} />
+    {@const profileUser = $userStore.get(showProfileCard.userId)}
+    {#if profileUser?.kind !== "bot"}
+        <ViewUserProfile
+            userId={showProfileCard.userId}
+            inGlobalContext={showProfileCard.inGlobalContext}
+            chatButton={showProfileCard.chatButton}
+            alignTo={showProfileCard.alignTo}
+            on:openDirectChat={chatWithFromProfileCard}
+            on:close={() => (showProfileCard = undefined)} />
+    {/if}
 {/if}
 
 <main class:anon={$anonUser} class:offline={$offlineStore}>

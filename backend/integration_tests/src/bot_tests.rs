@@ -1,9 +1,7 @@
-use crate::client::unwrap_msgpack_response;
 use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use pocket_ic::common::rest::{CanisterHttpReply, CanisterHttpResponse, MockCanisterHttpResponse};
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -11,7 +9,7 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::bot_actions::{BotMessageAction, MessageContent};
 use types::{
-    AccessTokenType, BotAction, BotCommandArgs, BotDefinition, Chat, ChatEvent, ChatId, MessagePermission, OptionUpdate,
+    AccessTokenType, BotAction, BotCommandArgs, BotDefinition, Chat, ChatEvent, ChatId, MessagePermission,
     SlashCommandPermissions, SlashCommandSchema, TextContent,
 };
 
@@ -49,9 +47,11 @@ fn e2e_bot_test() {
         canister_ids,
         &user,
         bot_name.clone(),
-        description.clone(),
         endpoint.clone(),
-        commands.clone(),
+        BotDefinition {
+            description: description.clone(),
+            commands: commands.clone(),
+        },
     );
 
     let initial_time = now_millis(env);
@@ -205,58 +205,17 @@ fn e2e_bot_test() {
     assert!(message.bot_context.as_ref().unwrap().finalised);
 
     // Update the bot name
-    // Internally this will also try to call the bot endpoint to load the latest bot definition.
-    // We need to do the following to handle this
-    // 1. submit the update call but not wait for the response
-    // 2. tick
-    // 3. Intercept and mock the http outcall response
-    // 4. wait for the update_bot call to complete
     let new_bot_name = random_string();
-    let raw_message_id = match env.submit_call(
+    client::user_index::happy_path::update_bot(
+        env,
         canister_ids.user_index,
         user.principal,
-        "update_bot_msgpack",
-        msgpack::serialize_then_unwrap(&user_index_canister::update_bot::Args {
-            bot_id: bot.id,
-            owner: None,
-            name: Some(new_bot_name.clone()),
-            avatar: OptionUpdate::NoChange,
-            endpoint: None,
-        }),
-    ) {
-        Ok(r) => r,
-        Err(error) => panic!("'update_bot' call error: {error:?}"),
-    };
-
-    env.tick();
-    env.tick();
-
-    // Intercept the http call to get the bot definition and mock the response
-    let outgoing_http_requests = env.get_canister_http();
-
-    assert_eq!(outgoing_http_requests.len(), 1);
-    let bof_definition_request = &outgoing_http_requests[0];
-    assert_eq!(bof_definition_request.url, endpoint);
-
-    let body = serde_json::to_string(&BotDefinition { description, commands })
-        .unwrap()
-        .into_bytes();
-
-    env.mock_canister_http_response(MockCanisterHttpResponse {
-        subnet_id: bof_definition_request.subnet_id,
-        request_id: bof_definition_request.request_id,
-        response: CanisterHttpResponse::CanisterHttpReply(CanisterHttpReply {
-            status: 200,
-            headers: vec![],
-            body,
-        }),
-        additional_responses: vec![],
-    });
-
-    match unwrap_msgpack_response::<user_index_canister::update_bot::Response>(env.await_call(raw_message_id)) {
-        user_index_canister::update_bot::Response::Success => (),
-        response => panic!("'update_bot' response error: {response:?}"),
-    }
+        bot.id,
+        None,
+        Some(new_bot_name.clone()),
+        None,
+        None,
+    );
 
     // Confirm bot returned in `bot_updates`
     let response =

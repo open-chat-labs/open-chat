@@ -203,6 +203,7 @@ import type { JsonnableDelegationChain } from "@dfinity/identity";
 import type { Verification } from "./wallet";
 import type {
     BotCommandResponse,
+    BotDefinition,
     BotDefinitionResponse,
     BotsResponse,
     ExternalBot,
@@ -443,6 +444,7 @@ type UpdateRegisteredBot = {
     name?: string;
     avatarUrl?: string;
     endpoint?: string;
+    definition?: BotDefinition;
 };
 
 type AddBot = {

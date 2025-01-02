@@ -73,8 +73,8 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             name: args.name.clone(),
             owner: args.owner,
             endpoint: args.endpoint.clone(),
-            description: args.description.clone(),
-            commands: args.commands.clone(),
+            description: args.definition.description.clone(),
+            commands: args.definition.commands.clone(),
             last_updated: now,
             avatar,
         }),
@@ -85,7 +85,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             user_id,
             user_principal: args.principal,
             name: args.name.clone(),
-            commands: args.commands.clone(),
+            commands: args.definition.commands.clone(),
         }),
         None,
     );
@@ -132,11 +132,11 @@ fn validate_request(args: &Args, state: &RuntimeState) -> Result<(), String> {
         return Err("avatar too big".to_string());
     }
 
-    if args.description.len() > MAX_DESCRIPTION_LEN {
+    if args.definition.description.len() > MAX_DESCRIPTION_LEN {
         return Err("description too long".to_string());
     }
 
-    if args.commands.len() > MAX_COMMANDS {
+    if args.definition.commands.len() > MAX_COMMANDS {
         return Err("too many commands".to_string());
     }
 
