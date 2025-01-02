@@ -11,7 +11,7 @@ use url::Url;
 use user_index_canister::update_bot::{Response::*, *};
 use utils::{document::try_parse_data_url, text_validation::validate_username};
 
-#[update(msgpack = true)]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn update_bot(args: Args) -> Response {
     mutate_state(|state| update_bot_impl(args, state))
@@ -161,7 +161,5 @@ fn validate(args: &Args, state: &RuntimeState) -> Result<(), Response> {
         }
     }
 
-    // TODO: Throttle how often this endpoint can be called because of relatively high cost
-    // to make an HTTP out call
     Ok(())
 }
