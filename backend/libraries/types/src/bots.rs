@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use ts_export::ts_export;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct BotDefinition {
     pub description: String,
     pub commands: Vec<SlashCommandSchema>,
