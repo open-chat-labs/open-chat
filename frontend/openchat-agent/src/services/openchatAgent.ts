@@ -37,7 +37,7 @@ import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { RegistryClient } from "./registry/registry.client";
 import { DexesAgent } from "./dexes";
-import { chunk, distinctBy, toRecord } from "../utils/list";
+import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { measure } from "./common/profiling";
 import {
     buildBlobUrl,
@@ -259,6 +259,7 @@ import {
 import { AnonUserClient } from "./user/anonUser.client";
 import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
 import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
+import { IcpSwapClient } from "./icpSwap/icpSwapClient";
 import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
 import { TranslationsClient } from "./translations/translations.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter";
@@ -274,6 +275,7 @@ import {
     clearCache as clearReferralCache,
     getCommunityReferral,
 } from "../utils/referralCache";
+import { mean } from "../utils/maths";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -291,7 +293,7 @@ export class OpenChatAgent extends EventTarget {
     private _ledgerIndexClients: Record<string, LedgerIndexClient>;
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
-    private _icpcoinsClient: IcpCoinsClient;
+    private _exchangeRateClients: ExchangeRateClient[];
     private _signInWithEmailClient: SignInWithEmailClient;
     private _signInWithEthereumClient: SignInWithEthereumClient;
     private _signInWithSolanaClient: SignInWithSolanaClient;
@@ -345,7 +347,10 @@ export class OpenChatAgent extends EventTarget {
             config.blobUrlPattern,
         );
         this._dataClient = new DataClient(identity, this._agent, config);
-        this._icpcoinsClient = new IcpCoinsClient(identity, this._agent);
+        this._exchangeRateClients = [
+            new IcpCoinsClient(identity, this._agent),
+            new IcpSwapClient(identity, this._agent),
+        ];
         this.translationsClient = new TranslationsClient(
             identity,
             this._agent,
@@ -3531,10 +3536,34 @@ export class OpenChatAgent extends EventTarget {
         return this._registryClient.setTokenEnabled(ledger, enabled);
     }
 
-    exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
-        return isMainnet(this.config.icUrl)
-            ? this._icpcoinsClient.exchangeRates()
-            : Promise.resolve({});
+    async exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
+        if (!isMainnet(this.config.icUrl)) {
+            return Promise.resolve({});
+        }
+
+        const exchangeRatesFromAllProviders = await Promise.allSettled(
+            this._exchangeRateClients.map((c) => c.exchangeRates()),
+        );
+
+        const grouped: Record<string, TokenExchangeRates[]> = {};
+        for (const response of exchangeRatesFromAllProviders) {
+            if (response.status === "fulfilled") {
+                for (const [token, exchangeRates] of Object.entries(response.value)) {
+                    if (grouped[token] === undefined) {
+                        grouped[token] = [];
+                    }
+                    grouped[token].push(exchangeRates);
+                }
+            }
+        }
+
+        return toRecord2(
+            Object.entries(grouped),
+            ([token, _]) => token,
+            ([_, group]) => ({
+                toUSD: mean(group.map((e) => e.toUSD)),
+            }),
+        );
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {
@@ -4110,4 +4139,8 @@ export class OpenChatAgent extends EventTarget {
             }
         });
     }
+}
+
+export interface ExchangeRateClient {
+    exchangeRates(): Promise<Record<string, TokenExchangeRates>>;
 }

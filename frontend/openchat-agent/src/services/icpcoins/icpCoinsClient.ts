@@ -3,10 +3,11 @@ import type { TokenExchangeRates } from "openchat-shared";
 import { idlFactory, type ICPCoinsService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { getLatestResponse } from "./mappers";
+import type { ExchangeRateClient } from "../openchatAgent";
 
 const ICPCOINS_CANISTER_ID = "u45jl-liaaa-aaaam-abppa-cai";
 
-export class IcpCoinsClient extends CandidService {
+export class IcpCoinsClient extends CandidService implements ExchangeRateClient {
     private service: ICPCoinsService;
 
     constructor(identity: Identity, agent: HttpAgent) {

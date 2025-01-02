@@ -12,17 +12,8 @@ export function getLatestResponse(
         const [from, to] = parseSymbolPair(pairText);
 
         if (to === "usd") {
-            exchangeRates[from] = { ...exchangeRates[from], toUSD: rate };
-        } else if (to === "icp") {
-            exchangeRates[from] = { ...exchangeRates[from], toICP: rate };
+            exchangeRates[from] = { toUSD: rate };
         }
-    }
-
-    exchangeRates["icp"] = { ...exchangeRates["icp"], toICP: 1 };
-
-    const icpToUsd = exchangeRates["icp"]["toUSD"];
-    if (icpToUsd !== undefined) {
-        exchangeRates["ckusdc"] = { toICP: 1 / icpToUsd, toUSD: 1 };
     }
 
     return exchangeRates;
