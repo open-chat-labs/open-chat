@@ -29,7 +29,11 @@ async fn install_service_canisters_impl(
 
     futures::future::join_all(vec![
         set_controllers(management_canister, &canister_ids.openchat_installer, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.user_index, controllers.clone()),
+        set_controllers(
+            management_canister,
+            &canister_ids.user_index,
+            vec![canister_ids.openchat_installer],
+        ),
         set_controllers(management_canister, &canister_ids.group_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.notifications_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.identity, controllers.clone()),

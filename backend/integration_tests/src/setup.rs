@@ -82,7 +82,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let chat_governance_canister_id = SNS_GOVERNANCE_CANISTER_ID;
 
     let openchat_installer_canister_id = create_canister(env, controller);
-    let user_index_canister_id = create_canister(env, controller);
+    let user_index_canister_id = create_canister(env, openchat_installer_canister_id);
     let group_index_canister_id = create_canister(env, controller);
     let notifications_index_canister_id = create_canister(env, controller);
     let identity_canister_id = create_canister(env, controller);
