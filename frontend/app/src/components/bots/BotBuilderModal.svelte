@@ -74,7 +74,9 @@
     function update() {
         if (botState.current !== undefined && valid) {
             busy = true;
-            const { id, ownerId, name, avatarUrl, endpoint } = $state.snapshot(botState.current);
+            const { id, ownerId, name, avatarUrl, endpoint, definition } = $state.snapshot(
+                botState.current,
+            );
             client
                 .updateRegisteredBot(
                     id,
@@ -82,6 +84,7 @@
                     nameDirty ? name : undefined,
                     avatarDirty ? avatarUrl : undefined,
                     endpointDirty ? endpoint : undefined,
+                    definition,
                 )
                 .then((success) => {
                     if (!success) {

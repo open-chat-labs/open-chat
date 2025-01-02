@@ -343,7 +343,11 @@
     function openUserProfile(ev: Event) {
         ev.target?.dispatchEvent(
             new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-                detail: { userId: msg.sender, chatButton: multiUserChat, inGlobalContext: false },
+                detail: {
+                    userId: msg.sender,
+                    chatButton: multiUserChat,
+                    inGlobalContext: false,
+                },
                 bubbles: true,
             }),
         );

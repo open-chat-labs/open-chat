@@ -32,7 +32,11 @@
         if (profile) {
             ev.target?.dispatchEvent(
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-                    detail: { userId: user.userId, chatButton: !me, inGlobalContext: false },
+                    detail: {
+                        userId: user.userId,
+                        chatButton: !me,
+                        inGlobalContext: false,
+                    },
                     bubbles: true,
                 }),
             );

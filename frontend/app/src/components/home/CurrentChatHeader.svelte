@@ -114,7 +114,11 @@
         if (hasUserProfile) {
             ev.target?.dispatchEvent(
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-                    detail: { userId, chatButton: false, inGlobalContext: false },
+                    detail: {
+                        userId,
+                        chatButton: false,
+                        inGlobalContext: false,
+                    },
                     bubbles: true,
                 }),
             );
