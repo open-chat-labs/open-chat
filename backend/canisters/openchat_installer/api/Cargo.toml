@@ -11,4 +11,5 @@ candid_gen = { path = "../../../libraries/candid_gen" }
 hex = { workspace = true }
 human_readable = { path = "../../../libraries/human_readable" }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 types = { path = "../../../libraries/types" }

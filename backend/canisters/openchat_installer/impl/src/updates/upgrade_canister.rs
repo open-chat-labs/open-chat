@@ -3,41 +3,33 @@ use crate::{read_state, State};
 use candid::CandidType;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use ic_cdk::api::management_canister::main::{CanisterInstallMode, ClearChunkStoreArgument, UploadChunkArgument};
-use openchat_installer_canister::upgrade_canister_wasm::*;
+use ic_cdk::api::management_canister::main::CanisterInstallMode;
+use openchat_installer_canister::upgrade_canister::*;
 use openchat_installer_canister::CanisterType;
-use types::{
-    BuildVersion, CanisterId, CanisterWasmBytes, Hash, UpgradeChunkedCanisterWasmArgs, UpgradeChunkedCanisterWasmResponse,
+use types::{BuildVersion, CanisterId, CanisterWasmBytes, UpgradeChunkedCanisterWasmArgs, UpgradeChunkedCanisterWasmResponse};
+use utils::canister::{
+    clear_chunk_store, install, upload_wasm_in_chunks, CanisterToInstall, ChunkedWasmToInstall, WasmToInstall,
 };
-use utils::canister::{install, CanisterToInstall, ChunkedWasmToInstall, WasmToInstall};
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
-async fn upgrade_canister_wasm(args: Args) -> Response {
+async fn upgrade_canister(args: Args) -> Response {
     let PrepareResult { canister_id, wasm, args } = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
-    let mut chunk_hashes = Vec::new();
-    for chunk in wasm.chunks(1_000_000) {
-        match ic_cdk::api::management_canister::main::upload_chunk(UploadChunkArgument {
-            canister_id,
-            chunk: chunk.to_vec(),
-        })
-        .await
-        {
-            Ok((result,)) => chunk_hashes.push(Hash::try_from(result.hash).unwrap()),
-            Err(error) => return UpgradeChunkedCanisterWasmResponse::InternalError(format!("{error:?}")),
-        }
-    }
+    let chunks = match upload_wasm_in_chunks(&wasm, canister_id).await {
+        Ok(chunks) => chunks,
+        Err(error) => return UpgradeChunkedCanisterWasmResponse::InternalError(format!("{error:?}")),
+    };
 
     let response = match install(CanisterToInstall {
         canister_id,
         current_wasm_version: BuildVersion::default(),
         new_wasm_version: args.version,
         new_wasm: WasmToInstall::Chunked(ChunkedWasmToInstall {
-            chunks: chunk_hashes,
+            chunks,
             wasm_hash: args.wasm_hash,
             store_canister_id: canister_id,
         }),
@@ -54,7 +46,7 @@ async fn upgrade_canister_wasm(args: Args) -> Response {
         Err(error) => UpgradeChunkedCanisterWasmResponse::InternalError(format!("{error:?}")),
     };
 
-    let _ = ic_cdk::api::management_canister::main::clear_chunk_store(ClearChunkStoreArgument { canister_id }).await;
+    let _ = clear_chunk_store(canister_id).await;
 
     response
 }

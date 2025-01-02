@@ -5351,6 +5351,7 @@ dependencies = [
  "hex",
  "human_readable",
  "serde",
+ "serde_bytes",
  "types",
 ]
 
@@ -5372,10 +5373,11 @@ dependencies = [
  "openchat_installer_canister",
  "rand 0.8.5",
  "serde",
+ "serde_bytes",
  "stable_memory",
- "stable_memory_map",
  "tracing",
  "types",
+ "user_index_canister",
  "utils 0.1.0",
 ]
 

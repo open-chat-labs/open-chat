@@ -9,6 +9,7 @@ use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use rand::{rngs::StdRng, Rng, SeedableRng};
+use sha256::sha256;
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
@@ -132,20 +133,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         governance_principals: vec![controller],
         upload_wasm_chunks_whitelist: Vec::new(),
         user_index_canister_id,
-        cycles_dispenser_canister_id,
-        wasm_version,
-        test_mode,
-    };
-    install_canister(
-        env,
-        controller,
-        openchat_installer_canister_id,
-        openchat_installer_canister_wasm,
-        openchat_installer_init_args,
-    );
-
-    let user_index_init_args = user_index_canister::init::Args {
-        governance_principals: vec![controller],
         group_index_canister_id,
         notifications_index_canister_id,
         identity_canister_id,
@@ -157,11 +144,10 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         escrow_canister_id,
         event_relay_canister_id,
         registry_canister_id,
-        nns_governance_canister_id,
-        internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         translations_canister_id,
         website_canister_id,
-        video_call_operators: vec![VIDEO_CALL_OPERATOR],
+        nns_governance_canister_id,
+        internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         ic_root_key: env.root_key().unwrap(),
         wasm_version,
         test_mode,
@@ -169,9 +155,18 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     install_canister(
         env,
         controller,
-        user_index_canister_id,
-        user_index_canister_wasm,
-        user_index_init_args,
+        openchat_installer_canister_id,
+        openchat_installer_canister_wasm,
+        openchat_installer_init_args,
+    );
+
+    client::openchat_installer::happy_path::install_canisters(
+        env,
+        controller,
+        openchat_installer_canister_id,
+        sha256(&user_index_canister_wasm.module),
+        vec![VIDEO_CALL_OPERATOR],
+        wasm_version,
     );
 
     let group_index_init_args = group_index_canister::init::Args {
