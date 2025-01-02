@@ -66,7 +66,7 @@ async fn access_token(args: Args) -> Response {
             let custom_claims = BotCommandClaims {
                 initiator: bc.user_id,
                 bot: bc.bot,
-                chat: bc.chat,
+                chat: bc.chat.into(),
                 thread_root_message_index: bc.thread_root_message_index,
                 message_id: bc.message_id,
                 command_name: bc.command_name,
