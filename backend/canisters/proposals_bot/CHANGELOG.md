@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support submitting proposals directly to ProposalsBot ([#7143](https://github.com/open-chat-labs/open-chat/pull/7143))
+
 ### Changed
 
 - Support submitting `MintSnsTokens` and `AdvanceSnsTargetVersion` proposals ([#7128](https://github.com/open-chat-labs/open-chat/pull/7128))
