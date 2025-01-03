@@ -7,7 +7,6 @@ on:
       - "*.rs"
       - "*.toml"
       - "**/Cargo.lock"
-      - ".github/workflows/integration_tests.yaml"
 
 name: Integration tests
 
