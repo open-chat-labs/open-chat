@@ -34,8 +34,16 @@ async fn install_service_canisters_impl(
             &canister_ids.user_index,
             vec![canister_ids.openchat_installer],
         ),
-        set_controllers(management_canister, &canister_ids.group_index, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.notifications_index, controllers.clone()),
+        set_controllers(
+            management_canister,
+            &canister_ids.group_index,
+            vec![canister_ids.openchat_installer],
+        ),
+        set_controllers(
+            management_canister,
+            &canister_ids.notifications_index,
+            vec![canister_ids.openchat_installer],
+        ),
         set_controllers(management_canister, &canister_ids.identity, controllers.clone()),
         set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
