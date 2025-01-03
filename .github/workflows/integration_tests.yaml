@@ -1,6 +1,5 @@
 on:
   pull_request:
-  merge_group:
     branches:
       - master
     paths:
