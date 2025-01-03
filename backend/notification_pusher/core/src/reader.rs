@@ -83,12 +83,15 @@ impl<I: IndexStore> Reader<I> {
             for user_id in notification.recipients {
                 if let Some(subscriptions) = subscriptions_map.get(&user_id) {
                     for subscription_info in subscriptions.iter().cloned() {
+                        // Wait here if needed to ensure the notification is pushed to all
+                        // subscriptions to avoid partially processed notifications
                         self.sender
-                            .try_send(Notification {
+                            .send(Notification {
                                 recipient: user_id,
                                 payload: payload.clone(),
                                 subscription_info,
                             })
+                            .await
                             .unwrap();
                     }
                 }
