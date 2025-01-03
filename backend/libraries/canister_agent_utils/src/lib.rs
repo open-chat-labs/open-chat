@@ -28,6 +28,7 @@ pub enum CanisterName {
     Notifications,
     NotificationsIndex,
     OnlineUsers,
+    OpenChatInstaller,
     ProposalsBot,
     Registry,
     SignInWithEmail,
@@ -61,6 +62,7 @@ impl FromStr for CanisterName {
             "notifications" => Ok(CanisterName::Notifications),
             "notifications_index" => Ok(CanisterName::NotificationsIndex),
             "online_users" => Ok(CanisterName::OnlineUsers),
+            "openchat_installer" => Ok(CanisterName::OpenChatInstaller),
             "proposals_bot" => Ok(CanisterName::ProposalsBot),
             "registry" => Ok(CanisterName::Registry),
             "sign_in_with_email" => Ok(CanisterName::SignInWithEmail),
@@ -95,6 +97,7 @@ impl Display for CanisterName {
             CanisterName::Notifications => "notifications",
             CanisterName::NotificationsIndex => "notifications_index",
             CanisterName::OnlineUsers => "online_users",
+            CanisterName::OpenChatInstaller => "openchat_installer",
             CanisterName::ProposalsBot => "proposals_bot",
             CanisterName::Registry => "registry",
             CanisterName::SignInWithEmail => "sign_in_with_email",
@@ -113,6 +116,7 @@ impl Display for CanisterName {
 
 #[derive(Debug)]
 pub struct CanisterIds {
+    pub openchat_installer: CanisterId,
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,

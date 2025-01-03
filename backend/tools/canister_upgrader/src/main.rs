@@ -35,6 +35,9 @@ async fn main() {
             upgrade_notifications_canister(identity, opts.url, opts.notifications_index, opts.version).await
         }
         CanisterName::OnlineUsers => upgrade_online_users_canister(identity, opts.url, opts.online_users, opts.version).await,
+        CanisterName::OpenChatInstaller => {
+            upgrade_openchat_installer_canister(identity, opts.url, opts.openchat_installer, opts.version).await
+        }
         CanisterName::ProposalsBot => {
             upgrade_proposals_bot_canister(identity, opts.url, opts.proposals_bot, opts.version).await
         }
@@ -65,6 +68,9 @@ struct Opts {
 
     #[arg(long)]
     controller: String,
+
+    #[arg(long)]
+    openchat_installer: CanisterId,
 
     #[arg(long)]
     user_index: CanisterId,

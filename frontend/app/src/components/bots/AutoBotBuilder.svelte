@@ -29,16 +29,24 @@
 
     interface Props {
         valid: boolean;
+        schemaLoaded: boolean;
         onUpdate: (bot: ExternalBot) => void;
         candidate: ExternalBot;
         nameDirty: boolean;
+        mode: "register" | "update";
     }
 
-    let { valid = $bindable(), onUpdate, candidate, nameDirty }: Props = $props();
+    let {
+        valid = $bindable(),
+        schemaLoaded = $bindable(),
+        onUpdate,
+        candidate,
+        nameDirty,
+        mode,
+    }: Props = $props();
     let selectedCommand = $state<SlashCommandSchema | undefined>(undefined);
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
-    let schemaLoaded = $state(false);
     let schemaLoading = $state(false);
     let showNext = $derived(
         selectedCommandIndex !== undefined &&
@@ -50,7 +58,7 @@
         debouncedDerived(
             () => [$state.snapshot(candidate)],
             async () => {
-                const errors = validateBot(candidate);
+                const errors = validateBot(candidate, mode);
                 if (errors.get("bot_name").length == 0 && nameDirty) {
                     errors.addErrors("bot_name", await checkUsername(candidate.name));
                 }
@@ -173,16 +181,18 @@
             on:imageSelected={botAvatarSelected} />
     </div>
 
-    <Legend required label={i18nKey("bots.builder.principalLabel")}></Legend>
-    <ValidatingInput
-        autofocus
-        minlength={3}
-        maxlength={100}
-        invalid={errors.has("bot_principal")}
-        placeholder={i18nKey("bots.builder.principalPlaceholder")}
-        error={errors.get("bot_principal")}
-        bind:value={candidate.id}>
-    </ValidatingInput>
+    {#if mode === "register"}
+        <Legend required label={i18nKey("bots.builder.principalLabel")}></Legend>
+        <ValidatingInput
+            autofocus
+            minlength={3}
+            maxlength={100}
+            invalid={errors.has("bot_principal")}
+            placeholder={i18nKey("bots.builder.principalPlaceholder")}
+            error={errors.get("bot_principal")}
+            bind:value={candidate.principal}>
+        </ValidatingInput>
+    {/if}
 
     <Legend
         required

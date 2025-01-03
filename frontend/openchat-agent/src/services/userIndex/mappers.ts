@@ -118,6 +118,7 @@ export function botSchema(
     return {
         kind: "external_bot",
         id: botId,
+        principal: "",
         name: bot.name,
         avatarUrl: mapOptional(
             bot.avatar_id,

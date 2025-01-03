@@ -179,6 +179,7 @@ export function emptyBotInstance(ownerId: string): ExternalBot {
     return {
         kind: "external_bot",
         id: "",
+        principal: "",
         ownerId,
         name: "",
         endpoint: "",
@@ -198,6 +199,7 @@ type BotCommon = {
 export type ExternalBot = BotCommon & {
     kind: "external_bot";
     avatarUrl?: string;
+    principal: string;
     id: string;
     ownerId: string;
     endpoint: string;
@@ -381,7 +383,7 @@ export function validEndpoint(endpoint: string): boolean {
     return validOrigin(endpoint) || validCanister(endpoint);
 }
 
-export function validateBot(bot: ExternalBot): ValidationErrors {
+export function validateBot(bot: ExternalBot, mode: "register" | "update"): ValidationErrors {
     const errors = new ValidationErrors();
     errors.addErrors(`bot_name`, validBotComponentName(bot.name));
 
@@ -393,7 +395,7 @@ export function validateBot(bot: ExternalBot): ValidationErrors {
         errors.addErrors("bot_endpoint", i18nKey("bots.builder.errors.endpoint"));
     }
 
-    if (!validatePrincipal(bot.id)) {
+    if (mode === "register" && !validatePrincipal(bot.principal)) {
         errors.addErrors("bot_principal", i18nKey("bots.builder.errors.principal"));
     }
 

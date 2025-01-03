@@ -40,7 +40,7 @@
         debouncedDerived(
             () => [$state.snapshot(candidate)],
             async () => {
-                const errors = validateBot(candidate);
+                const errors = validateBot(candidate, "register");
                 if (errors.get("bot_name").length == 0) {
                     errors.addErrors("bot_name", await checkUsername(candidate.name));
                 }

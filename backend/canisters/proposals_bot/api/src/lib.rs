@@ -17,7 +17,9 @@ pub struct ProposalToSubmit {
 pub enum ProposalToSubmitAction {
     Motion,
     TransferSnsTreasuryFunds(TransferSnsTreasuryFunds),
+    MintSnsTokens(MintSnsTokens),
     UpgradeSnsToNextVersion,
+    AdvanceSnsTargetVersion,
     UpgradeSnsControlledCanister(UpgradeSnsControlledCanister),
     ExecuteGenericNervousSystemFunction(ExecuteGenericNervousSystemFunction),
 }
@@ -36,6 +38,14 @@ pub struct TransferSnsTreasuryFunds {
 pub enum Treasury {
     ICP,
     SNS,
+}
+
+#[ts_export(proposals_bot)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MintSnsTokens {
+    pub amount: u128,
+    pub to: Account,
+    pub memo: Option<u64>,
 }
 
 #[ts_export(proposals_bot)]
