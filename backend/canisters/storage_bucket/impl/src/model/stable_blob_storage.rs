@@ -78,6 +78,14 @@ impl StableBlobStorage {
 
         Some([first].into_iter().chain(iter))
     }
+
+    #[cfg(test)]
+    pub fn init_with_memory(memory: Memory) -> StableBlobStorage {
+        StableBlobStorage {
+            blobs: StableBTreeMap::init(memory),
+            count: 0,
+        }
+    }
 }
 
 fn init_blobs() -> StableBTreeMap<Key, Chunk, Memory> {

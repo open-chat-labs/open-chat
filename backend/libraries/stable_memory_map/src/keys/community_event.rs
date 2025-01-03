@@ -1,5 +1,5 @@
 use crate::keys::macros::key;
-use crate::{BaseKey, KeyPrefix, KeyType};
+use crate::{KeyPrefix, KeyType};
 use types::EventIndex;
 
 key!(CommunityEventKey, CommunityEventKeyPrefix, KeyType::CommunityEvent);
@@ -39,7 +39,7 @@ impl CommunityEventKey {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Key;
+    use crate::{BaseKey, Key};
     use rand::{thread_rng, RngCore};
     use types::EventIndex;
 

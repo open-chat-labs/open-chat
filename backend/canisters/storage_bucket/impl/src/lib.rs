@@ -69,6 +69,9 @@ impl RuntimeState {
             index_sync_queue_length: self.data.index_event_sync_queue.len() as u32,
             freezing_limit: self.data.freezing_limit.value.unwrap_or_default(),
             stable_memory_sizes: memory::memory_sizes(),
+            files_migrated: self.data.files_migrated,
+            file_reference_counts_migrated: self.data.file_reference_counts_migrated,
+            files_per_accessor_migrated: self.data.files_per_accessor_migrated,
         }
     }
 }
@@ -83,11 +86,16 @@ struct Data {
     freezing_limit: Timestamped<Option<Cycles>>,
     rng_seed: [u8; 32],
     test_mode: bool,
+    #[serde(default)]
+    files_migrated: bool,
+    #[serde(default)]
+    file_reference_counts_migrated: bool,
+    #[serde(default)]
+    files_per_accessor_migrated: bool,
 }
 
 impl Data {
     pub fn new(storage_index_canister_id: CanisterId, now: TimestampMillis, test_mode: bool) -> Data {
-        #[allow(deprecated)]
         Data {
             storage_index_canister_id,
             users: Users::default(),
@@ -97,6 +105,9 @@ impl Data {
             freezing_limit: Timestamped::default(),
             rng_seed: [0; 32],
             test_mode,
+            files_migrated: true,
+            file_reference_counts_migrated: true,
+            files_per_accessor_migrated: true,
         }
     }
 
@@ -130,6 +141,9 @@ pub struct Metrics {
     pub index_sync_queue_length: u32,
     pub freezing_limit: Cycles,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub files_migrated: bool,
+    pub file_reference_counts_migrated: bool,
+    pub files_per_accessor_migrated: bool,
 }
 
 pub fn calc_chunk_count(chunk_size: u32, total_size: u64) -> u32 {
