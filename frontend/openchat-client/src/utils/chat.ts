@@ -201,6 +201,12 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.updatedBy;
         case "users_invited":
             return event.invitedBy;
+        case "bot_updated":
+            return event.updatedBy;
+        case "bot_added":
+            return event.addedBy;
+        case "bot_removed":
+            return event.removedBy;
         case "aggregate_common_events":
         case "chat_frozen":
         case "chat_unfrozen":
