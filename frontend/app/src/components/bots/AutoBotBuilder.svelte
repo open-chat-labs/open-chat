@@ -58,7 +58,7 @@
 
     let errors = $derived.by(
         debouncedDerived(
-            () => [$state.snapshot(candidate)],
+            () => [$state.snapshot(candidate), principal],
             async () => {
                 const errors = validateBot(principal, candidate, mode);
                 if (errors.get("bot_name").length == 0 && nameDirty) {
