@@ -58,11 +58,11 @@ fn prepare(
     state: &RuntimeState,
 ) -> Result<PrepareResult, Response> {
     use ValidateSubmitProposalPaymentError as E;
-    match state
-        .data
-        .nervous_systems
-        .validate_submit_proposal_payment(&governance_canister_id, transaction)
-    {
+    match state.data.nervous_systems.validate_submit_proposal_payment(
+        &governance_canister_id,
+        transaction.ledger,
+        transaction.amount,
+    ) {
         Ok(neuron_id) => Ok(PrepareResult {
             caller: state.env.caller(),
             user_index_canister_id: state.data.user_index_canister_id,
@@ -74,7 +74,7 @@ fn prepare(
     }
 }
 
-fn prepare_proposal(
+pub(crate) fn prepare_proposal(
     mut proposal: ProposalToSubmit,
     user_id: UserId,
     username: String,
@@ -132,7 +132,14 @@ pub(crate) async fn lookup_user_then_submit_proposal(
 
     let proposal = prepare_proposal(proposal, user_id, username, chat);
 
-    submit_proposal(user_id, governance_canister_id, neuron_id, proposal, payment).await
+    let refund_if_fails = ProcessUserRefundJob {
+        user_id,
+        ledger_canister_id: payment.ledger,
+        amount: payment.amount,
+        fee: payment.fee,
+    };
+
+    submit_proposal(user_id, governance_canister_id, neuron_id, proposal, refund_if_fails).await
 }
 
 pub(crate) async fn submit_proposal(
@@ -140,7 +147,7 @@ pub(crate) async fn submit_proposal(
     governance_canister_id: CanisterId,
     neuron_id: SnsNeuronId,
     proposal: ProposalToSubmit,
-    payment: icrc1::CompletedCryptoTransaction,
+    refund_if_fails: ProcessUserRefundJob,
 ) -> Response {
     let make_proposal_args = sns_governance_canister::manage_neuron::Args {
         subaccount: neuron_id.to_vec(),
@@ -168,13 +175,7 @@ pub(crate) async fn submit_proposal(
                         Success
                     }
                     manage_neuron_response::Command::Error(error) => {
-                        let job = ProcessUserRefundJob {
-                            user_id,
-                            ledger_canister_id: payment.ledger,
-                            amount: payment.amount - payment.fee,
-                            fee: payment.fee,
-                        };
-                        job.execute();
+                        refund_if_fails.execute();
                         error!(?error, %user_id, "Failed to submit proposal, refunding user");
                         InternalError(format!("{error:?}"))
                     }
@@ -192,7 +193,7 @@ pub(crate) async fn submit_proposal(
                         governance_canister_id,
                         neuron_id,
                         proposal,
-                        payment,
+                        refund_if_fails,
                     }),
                     state,
                 )
