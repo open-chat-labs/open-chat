@@ -83,8 +83,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let openchat_installer_canister_id = create_canister(env, controller);
     let user_index_canister_id = create_canister(env, openchat_installer_canister_id);
-    let group_index_canister_id = create_canister(env, controller);
-    let notifications_index_canister_id = create_canister(env, controller);
+    let group_index_canister_id = create_canister(env, openchat_installer_canister_id);
+    let notifications_index_canister_id = create_canister(env, openchat_installer_canister_id);
     let identity_canister_id = create_canister(env, controller);
     let online_users_canister_id = create_canister(env, controller);
     let airdrop_bot_canister_id = create_canister(env, controller);
@@ -168,54 +168,32 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         openchat_installer_canister::CanisterType::UserIndex,
     );
 
+    client::openchat_installer::happy_path::upload_wasm_in_chunks(
+        env,
+        controller,
+        openchat_installer_canister_id,
+        &group_index_canister_wasm.module,
+        openchat_installer_canister::CanisterType::GroupIndex,
+    );
+
+    client::openchat_installer::happy_path::upload_wasm_in_chunks(
+        env,
+        controller,
+        openchat_installer_canister_id,
+        &notifications_index_canister_wasm.module,
+        openchat_installer_canister::CanisterType::NotificationsIndex,
+    );
+
     client::openchat_installer::happy_path::install_canisters(
         env,
         controller,
         openchat_installer_canister_id,
         sha256(&user_index_canister_wasm.module),
+        sha256(&group_index_canister_wasm.module),
+        sha256(&notifications_canister_wasm.module),
         vec![VIDEO_CALL_OPERATOR],
+        vec![controller],
         wasm_version,
-    );
-
-    let group_index_init_args = group_index_canister::init::Args {
-        governance_principals: vec![controller],
-        user_index_canister_id,
-        cycles_dispenser_canister_id,
-        proposals_bot_user_id: proposals_bot_canister_id.into(),
-        escrow_canister_id,
-        event_relay_canister_id,
-        registry_canister_id,
-        internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
-        video_call_operators: vec![VIDEO_CALL_OPERATOR],
-        ic_root_key: env.root_key().unwrap(),
-        wasm_version,
-        test_mode,
-    };
-    install_canister(
-        env,
-        controller,
-        group_index_canister_id,
-        group_index_canister_wasm,
-        group_index_init_args,
-    );
-
-    let notifications_index_init_args = notifications_index_canister::init::Args {
-        governance_principals: vec![controller],
-        push_service_principals: vec![controller],
-        user_index_canister_id,
-        registry_canister_id,
-        authorizers: vec![user_index_canister_id, group_index_canister_id],
-        cycles_dispenser_canister_id,
-        notifications_canister_wasm: CanisterWasm::default(),
-        wasm_version,
-        test_mode,
-    };
-    install_canister(
-        env,
-        controller,
-        notifications_index_canister_id,
-        notifications_index_canister_wasm,
-        notifications_index_init_args,
     );
 
     let identity_init_args = identity_canister::init::Args {

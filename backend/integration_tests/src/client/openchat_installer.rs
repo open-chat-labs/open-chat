@@ -11,12 +11,16 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{BuildVersion, CanisterId, Hash};
 
+    #[allow(clippy::too_many_arguments)]
     pub fn install_canisters(
         env: &mut PocketIc,
         sender: Principal,
         openchat_installer_canister_id: CanisterId,
         user_index_wasm_hash: Hash,
+        group_index_wasm_hash: Hash,
+        notifications_index_wasm_hash: Hash,
         video_call_operators: Vec<Principal>,
+        push_service_principals: Vec<Principal>,
         wasm_version: BuildVersion,
     ) {
         let response = super::install_canisters(
@@ -25,7 +29,10 @@ pub mod happy_path {
             openchat_installer_canister_id,
             &openchat_installer_canister::install_canisters::Args {
                 user_index_wasm_hash,
+                group_index_wasm_hash,
+                notifications_index_wasm_hash,
                 video_call_operators,
+                push_service_principals,
                 wasm_version,
             },
         );

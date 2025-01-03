@@ -4,7 +4,7 @@ use constants::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use sha256::sha256;
-use types::{BuildVersion, CanisterWasm, Cycles};
+use types::{BuildVersion, Cycles};
 
 const T: Cycles = 1_000_000_000_000;
 
@@ -102,12 +102,29 @@ async fn install_service_canisters_impl(
     .await;
 
     let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
-    openchat_installer_canister_client::upload_wasm_in_chunks(
-        agent,
-        &canister_ids.openchat_installer,
-        &user_index_canister_wasm.module,
-        openchat_installer_canister::CanisterType::UserIndex,
-    )
+    let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version);
+    let notifications_index_canister_wasm = get_canister_wasm(CanisterName::NotificationsIndex, version);
+
+    futures::future::try_join_all([
+        openchat_installer_canister_client::upload_wasm_in_chunks(
+            agent,
+            &canister_ids.openchat_installer,
+            &user_index_canister_wasm.module,
+            openchat_installer_canister::CanisterType::UserIndex,
+        ),
+        openchat_installer_canister_client::upload_wasm_in_chunks(
+            agent,
+            &canister_ids.openchat_installer,
+            &group_index_canister_wasm.module,
+            openchat_installer_canister::CanisterType::GroupIndex,
+        ),
+        openchat_installer_canister_client::upload_wasm_in_chunks(
+            agent,
+            &canister_ids.openchat_installer,
+            &notifications_index_canister_wasm.module,
+            openchat_installer_canister::CanisterType::NotificationsIndex,
+        ),
+    ])
     .await
     .unwrap();
 
@@ -116,41 +133,15 @@ async fn install_service_canisters_impl(
         &canister_ids.openchat_installer,
         &openchat_installer_canister::install_canisters::Args {
             user_index_wasm_hash: sha256(&user_index_canister_wasm.module),
+            group_index_wasm_hash: sha256(&group_index_canister_wasm.module),
+            notifications_index_wasm_hash: sha256(&notifications_index_canister_wasm.module),
             video_call_operators: video_call_operators.clone(),
+            push_service_principals: vec![principal],
             wasm_version: version,
         },
     )
     .await
     .unwrap();
-
-    let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version);
-    let group_index_init_args = group_index_canister::init::Args {
-        governance_principals: vec![principal],
-        user_index_canister_id: canister_ids.user_index,
-        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
-        proposals_bot_user_id: canister_ids.proposals_bot.into(),
-        escrow_canister_id: canister_ids.escrow,
-        event_relay_canister_id: canister_ids.event_relay,
-        registry_canister_id: canister_ids.registry,
-        internet_identity_canister_id: canister_ids.nns_internet_identity,
-        video_call_operators: video_call_operators.clone(),
-        ic_root_key: agent.read_root_key(),
-        wasm_version: version,
-        test_mode,
-    };
-
-    let notifications_index_canister_wasm = get_canister_wasm(CanisterName::NotificationsIndex, version);
-    let notifications_index_init_args = notifications_index_canister::init::Args {
-        governance_principals: vec![principal],
-        push_service_principals: vec![principal],
-        user_index_canister_id: canister_ids.user_index,
-        authorizers: vec![canister_ids.user_index, canister_ids.group_index],
-        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
-        registry_canister_id: canister_ids.registry,
-        notifications_canister_wasm: CanisterWasm::default(),
-        wasm_version: version,
-        test_mode,
-    };
 
     let identity_canister_wasm = get_canister_wasm(CanisterName::Identity, version);
     let identity_init_args = identity_canister::init::Args {
@@ -349,19 +340,7 @@ async fn install_service_canisters_impl(
         runtime_features: None,
     };
 
-    futures::future::join4(
-        install_wasm(
-            management_canister,
-            &canister_ids.group_index,
-            &group_index_canister_wasm.module,
-            group_index_init_args,
-        ),
-        install_wasm(
-            management_canister,
-            &canister_ids.notifications_index,
-            &notifications_index_canister_wasm.module,
-            notifications_index_init_args,
-        ),
+    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.identity,
@@ -374,10 +353,6 @@ async fn install_service_canisters_impl(
             &online_users_canister_wasm.module,
             online_users_init_args,
         ),
-    )
-    .await;
-
-    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.proposals_bot,
@@ -396,6 +371,10 @@ async fn install_service_canisters_impl(
             &cycles_dispenser_canister_wasm.module,
             cycles_dispenser_init_args,
         ),
+    )
+    .await;
+
+    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.registry,
@@ -408,10 +387,6 @@ async fn install_service_canisters_impl(
             &market_maker_canister_wasm.module,
             market_maker_init_args,
         ),
-    )
-    .await;
-
-    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.neuron_controller,
@@ -430,6 +405,10 @@ async fn install_service_canisters_impl(
             &translations_canister_wasm.module,
             translations_init_args,
         ),
+    )
+    .await;
+
+    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.event_relay,
@@ -442,10 +421,6 @@ async fn install_service_canisters_impl(
             &event_store_canister_wasm.module,
             event_store_init_args,
         ),
-    )
-    .await;
-
-    futures::future::join4(
         install_wasm(
             management_canister,
             &canister_ids.sign_in_with_email,
@@ -464,12 +439,14 @@ async fn install_service_canisters_impl(
             &sign_in_with_solana_wasm.module,
             sign_in_with_solana_init_args,
         ),
-        install_wasm(
-            management_canister,
-            &canister_ids.airdrop_bot,
-            &airdrop_bot_canister_wasm.module,
-            airdrop_bot_init_args,
-        ),
+    )
+    .await;
+
+    install_wasm(
+        management_canister,
+        &canister_ids.airdrop_bot,
+        &airdrop_bot_canister_wasm.module,
+        airdrop_bot_init_args,
     )
     .await;
 
