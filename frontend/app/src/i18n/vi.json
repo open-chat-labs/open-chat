@@ -224,6 +224,7 @@
             "permScopeThread": "Chủ đề",
             "principalLabel": "Hiệu trưởng",
             "principalPlaceholder": "Nhập bot chính",
+            "principalRules": "Đây sẽ là canisterID cho một bot onchain",
             "required": "Tham số bắt buộc",
             "requiredDesc": "Đây có phải là tham số bắt buộc cho lệnh không?",
             "title": "Xây dựng một bot",

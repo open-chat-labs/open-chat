@@ -224,6 +224,7 @@
             "permScopeThread": "धागा",
             "principalLabel": "प्रधानाचार्य",
             "principalPlaceholder": "बॉट प्रिंसिपल दर्ज करें",
+            "principalRules": "यह ऑनचेन बॉट के लिए कैनिस्टरआईडी होगी",
             "required": "आवश्यक पैरामीटर",
             "requiredDesc": "क्या यह कमांड के लिए आवश्यक पैरामीटर है",
             "title": "एक बॉट बनाएँ",

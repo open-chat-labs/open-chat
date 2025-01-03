@@ -224,6 +224,7 @@
             "permScopeThread": "Hilo",
             "principalLabel": "Principal",
             "principalPlaceholder": "Ingresar el bot principal",
+            "principalRules": "Este será el canisterID para un bot en cadena",
             "required": "Parámetro requerido",
             "requiredDesc": "¿Es este un parámetro obligatorio para el comando?",
             "title": "Construir un bot",

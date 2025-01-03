@@ -224,6 +224,7 @@
             "permScopeThread": "Fil",
             "principalLabel": "Principal",
             "principalPlaceholder": "Entrez le principal du bot",
+            "principalRules": "Ce sera le canisterID pour un bot onchain",
             "required": "Paramètre obligatoire",
             "requiredDesc": "Est-ce un paramètre obligatoire pour la commande",
             "title": "Construire un bot",
