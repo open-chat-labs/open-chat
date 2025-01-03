@@ -9,9 +9,15 @@
         onUpdate: (bot: ExternalBot) => void;
         schemaLoaded: boolean;
         valid: boolean;
+        principal: string;
     }
 
-    let { valid = $bindable(), schemaLoaded = $bindable(), onUpdate }: Props = $props();
+    let {
+        valid = $bindable(),
+        schemaLoaded = $bindable(),
+        onUpdate,
+        principal = $bindable(),
+    }: Props = $props();
 
     let candidate = $state(emptyBotInstance($currentUser.userId));
 </script>
@@ -20,6 +26,7 @@
     {candidate}
     bind:valid
     bind:schemaLoaded
+    bind:principal
     {onUpdate}
     nameDirty={true}
     mode={"register"} />

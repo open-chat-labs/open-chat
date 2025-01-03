@@ -224,6 +224,7 @@
             "permScopeThread": "Faden",
             "principalLabel": "Rektor",
             "principalPlaceholder": "Geben Sie den Bot-Hauptbenutzer ein",
+            "principalRules": "Dies ist die CanisterID für einen Onchain-Bot",
             "required": "Erforderlicher Parameter",
             "requiredDesc": "Ist dies ein erforderlicher Parameter für den Befehl",
             "title": "Einen Bot erstellen",

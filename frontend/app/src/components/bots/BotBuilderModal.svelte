@@ -28,6 +28,7 @@
 
     let { onClose, mode = "register" }: Props = $props();
 
+    let principal = $state("");
     let valid = $state(false);
     let schemaLoaded = $state(false);
     let busy = $state(false);
@@ -55,7 +56,7 @@
             busy = true;
             const snapshot = $state.snapshot(botState.current);
             client
-                .registerBot({
+                .registerBot(principal, {
                     ...snapshot,
                     ownerId: $currentUser.userId,
                 })
@@ -156,7 +157,8 @@
                 candidate={botState.current}
                 onUpdate={(b) => (botState.current = b)}
                 bind:schemaLoaded
-                bind:valid />
+                bind:valid
+                bind:principal />
         {/if}
     </div>
     <div class="footer" slot="footer">

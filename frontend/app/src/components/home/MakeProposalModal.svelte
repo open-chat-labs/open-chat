@@ -106,6 +106,7 @@
     let candidateBot: ExternalBot = emptyBotInstance($currentUser.userId);
     let candidateBotValid = false;
     let botSchemaLoaded = false;
+    let botPrincipal = "";
 
     $: errorMessage =
         error !== undefined ? i18nKey("proposal.maker." + error) : $pinNumberErrorMessageStore;
@@ -325,9 +326,9 @@
                 }
                 return {
                     kind: "execute_generic_nervous_system_function",
-                    functionId: BigInt(1012),
+                    functionId: BigInt(4004),
                     payload: createRegisterExternalBotPayload(
-                        $user.userId,
+                        botPrincipal,
                         $user.userId,
                         candidateBot,
                     ),
@@ -515,6 +516,7 @@
                 {#if selectedProposalType === "register_bot"}
                     <BotBuilder
                         onUpdate={(bot) => (candidateBot = bot)}
+                        bind:principal={botPrincipal}
                         bind:schemaLoaded={botSchemaLoaded}
                         bind:valid={candidateBotValid} />
                 {:else if selectedProposalType === "transfer_sns_funds"}

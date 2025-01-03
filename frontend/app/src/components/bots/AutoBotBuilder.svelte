@@ -33,6 +33,7 @@
         onUpdate: (bot: ExternalBot) => void;
         candidate: ExternalBot;
         nameDirty: boolean;
+        principal: string;
         mode: "register" | "update";
     }
 
@@ -40,6 +41,7 @@
         valid = $bindable(),
         schemaLoaded = $bindable(),
         onUpdate,
+        principal = $bindable(),
         candidate,
         nameDirty,
         mode,
@@ -58,7 +60,7 @@
         debouncedDerived(
             () => [$state.snapshot(candidate)],
             async () => {
-                const errors = validateBot(candidate, mode);
+                const errors = validateBot(principal, candidate, mode);
                 if (errors.get("bot_name").length == 0 && nameDirty) {
                     errors.addErrors("bot_name", await checkUsername(candidate.name));
                 }
@@ -182,7 +184,10 @@
     </div>
 
     {#if mode === "register"}
-        <Legend required label={i18nKey("bots.builder.principalLabel")}></Legend>
+        <Legend
+            required
+            label={i18nKey("bots.builder.principalLabel")}
+            rules={i18nKey("bots.builder.principalRules")}></Legend>
         <ValidatingInput
             autofocus
             minlength={3}
@@ -190,7 +195,7 @@
             invalid={errors.has("bot_principal")}
             placeholder={i18nKey("bots.builder.principalPlaceholder")}
             error={errors.get("bot_principal")}
-            bind:value={candidate.principal}>
+            bind:value={principal}>
         </ValidatingInput>
     {/if}
 
