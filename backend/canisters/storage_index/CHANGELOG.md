@@ -14,6 +14,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Increase reserved cycles limit of StorageBuckets ([#7147](https://github.com/open-chat-labs/open-chat/pull/7147))
+
+## [[2.0.1546](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1546-storage_index)] - 2025-01-03
+
+### Changed
+
 - Increase memory limit of StorageBucket which has reached limit ([#7142](https://github.com/open-chat-labs/open-chat/pull/7142))
 
 ## [[2.0.1521](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1521-storage_index)] - 2024-12-16
