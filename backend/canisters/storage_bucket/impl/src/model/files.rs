@@ -509,7 +509,7 @@ impl Files {
     }
 
     #[cfg(test)]
-    pub fn new_with_blobs_memory(memory: Memory) -> Files {
+    pub fn new_with_blobs_memory(memory: crate::memory::Memory) -> Files {
         Files {
             blobs: StableBlobStorage::init_with_memory(memory),
             ..Default::default()

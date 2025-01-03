@@ -1,5 +1,4 @@
 use crate::model::nervous_systems::ValidateSubmitProposalPaymentError;
-use crate::timer_job_types::ProcessUserRefundJob;
 use crate::updates::c2c_submit_proposal::{prepare_proposal, submit_proposal};
 use crate::{read_state, RuntimeState};
 use candid::Principal;
@@ -30,14 +29,7 @@ async fn submit_proposal(args: Args) -> Response {
         Err(LookupUserError::InternalError(error)) => return InternalError(format!("Failed to lookup user: {error}")),
     };
 
-    let refund_if_fails = ProcessUserRefundJob {
-        user_id,
-        ledger_canister_id: args.transaction.ledger,
-        amount: args.transaction.amount,
-        fee: args.transaction.fee,
-    };
-
-    match process_transaction(args.transaction, this_canister_id).await {
+    match process_transaction(args.transaction.clone(), this_canister_id).await {
         Ok(Ok(_)) => {}
         Ok(Err(error)) => return PaymentFailed(error.error_message),
         Err(error) => return InternalError(format!("{:?}", error)),
@@ -45,9 +37,17 @@ async fn submit_proposal(args: Args) -> Response {
 
     let proposal = prepare_proposal(args.proposal, user_id, username, chat);
 
-    submit_proposal(user_id, args.governance_canister_id, neuron_id, proposal, refund_if_fails)
-        .await
-        .into()
+    submit_proposal(
+        user_id,
+        args.governance_canister_id,
+        neuron_id,
+        proposal,
+        args.transaction.ledger,
+        args.transaction.amount,
+        args.transaction.fee,
+    )
+    .await
+    .into()
 }
 
 struct PrepareResult {

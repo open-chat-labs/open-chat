@@ -10,12 +10,12 @@ use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron};
 use tracing::error;
-use types::{icrc1, icrc2, CanisterId, MultiUserChat, NnsNeuronId, ProposalId, SnsNeuronId, UserId};
+use types::{icrc1, CanisterId, MultiUserChat, NnsNeuronId, ProposalId, SnsNeuronId, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
-    SubmitProposal(SubmitProposalJob),
-    LookupUserThenSubmitProposal(LookupUserThenSubmitProposalJob),
+    SubmitProposal(Box<SubmitProposalJob>),
+    LookupUserThenSubmitProposal(Box<LookupUserThenSubmitProposalJob>),
     ProcessUserRefund(ProcessUserRefundJob),
     TopUpNeuron(TopUpNeuronJob),
     RefreshNeuron(RefreshNeuronJob),
@@ -28,7 +28,9 @@ pub struct SubmitProposalJob {
     pub user_id: UserId,
     pub neuron_id: SnsNeuronId,
     pub proposal: ProposalToSubmit,
-    pub refund_if_fails: ProcessUserRefundJob,
+    pub ledger: CanisterId,
+    pub payment_amount: u128,
+    pub transaction_fee: u128,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -40,18 +42,6 @@ pub struct LookupUserThenSubmitProposalJob {
     pub chat: MultiUserChat,
     pub proposal: ProposalToSubmit,
     pub payment: icrc1::CompletedCryptoTransaction,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct LookupUserThenSubmitProposalJobV2 {
-    pub caller: Principal,
-    pub user_index_canister_id: CanisterId,
-    pub governance_canister_id: CanisterId,
-    pub neuron_id: SnsNeuronId,
-    pub chat: MultiUserChat,
-    pub proposal: ProposalToSubmit,
-    pub payment: icrc2::PendingCryptoTransaction,
-    pub payment_complete: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -106,7 +96,9 @@ impl Job for SubmitProposalJob {
                 self.governance_canister_id,
                 self.neuron_id,
                 self.proposal,
-                self.refund_if_fails,
+                self.ledger,
+                self.payment_amount,
+                self.transaction_fee,
             )
             .await;
         });
