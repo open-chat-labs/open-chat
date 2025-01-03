@@ -5,7 +5,10 @@ export function getLatestResponse(
     candid: Array<LatestTokenRow>,
     supportedTokens: CryptocurrencyDetails[],
 ): Record<string, TokenExchangeRates> {
-    const supportedSymbols = new Set<string>(supportedTokens.map((t) => t.symbol));
+    const supportedSymbols = new Set<string>(supportedTokens.map((t) => t.symbol.toLowerCase()));
+    supportedSymbols.add("btc");
+    supportedSymbols.add("eth");
+
     const exchangeRates: Record<string, TokenExchangeRates> = {};
 
     for (const row of candid) {
