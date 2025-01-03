@@ -91,6 +91,7 @@ impl From<&User> for types::User {
 }
 
 pub struct CanisterIds {
+    pub openchat_installer: CanisterId,
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
