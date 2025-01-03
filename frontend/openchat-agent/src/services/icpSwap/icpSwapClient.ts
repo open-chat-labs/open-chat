@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
-import type { TokenExchangeRates } from "openchat-shared";
+import type { CryptocurrencyDetails, TokenExchangeRates } from "openchat-shared";
 import { idlFactory, type ICPSwapService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { getAllTokensResponse } from "./mappers";
@@ -16,7 +16,12 @@ export class IcpSwapClient extends CandidService implements ExchangeRateClient {
         this.service = this.createServiceClient<ICPSwapService>(idlFactory);
     }
 
-    exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
-        return this.handleQueryResponse(() => this.service.getAllTokens(), getAllTokensResponse);
+    exchangeRates(
+        supportedTokens: CryptocurrencyDetails[],
+    ): Promise<Record<string, TokenExchangeRates>> {
+        return this.handleQueryResponse(
+            () => this.service.getAllTokens(),
+            (resp) => getAllTokensResponse(resp, supportedTokens),
+        );
     }
 }

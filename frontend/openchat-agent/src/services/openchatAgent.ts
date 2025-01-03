@@ -3537,12 +3537,14 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
-        if (!isMainnet(this.config.icUrl)) {
+        const tokens = this._registryValue?.tokenDetails;
+
+        if (tokens === undefined || !isMainnet(this.config.icUrl)) {
             return Promise.resolve({});
         }
 
         const exchangeRatesFromAllProviders = await Promise.allSettled(
-            this._exchangeRateClients.map((c) => c.exchangeRates()),
+            this._exchangeRateClients.map((c) => c.exchangeRates(tokens)),
         );
 
         const grouped: Record<string, TokenExchangeRates[]> = {};
@@ -4142,5 +4144,7 @@ export class OpenChatAgent extends EventTarget {
 }
 
 export interface ExchangeRateClient {
-    exchangeRates(): Promise<Record<string, TokenExchangeRates>>;
+    exchangeRates(
+        supportedTokens: CryptocurrencyDetails[],
+    ): Promise<Record<string, TokenExchangeRates>>;
 }
