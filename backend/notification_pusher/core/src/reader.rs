@@ -58,38 +58,46 @@ impl<I: IndexStore> Reader<I> {
             .notifications(&self.notifications_canister_id, from_notification_index)
             .await?;
 
-        if let Some(latest_notification_index) = ic_response.notifications.last().map(|e| e.index) {
-            let subscriptions_map: HashMap<UserId, Vec<SubscriptionInfo>> = ic_response
-                .subscriptions
-                .into_iter()
-                .map(|(k, v)| (k, v.into_iter().map(convert_subscription).collect()))
-                .collect();
+        let subscriptions_map: HashMap<UserId, Vec<SubscriptionInfo>> = ic_response
+            .subscriptions
+            .into_iter()
+            .map(|(k, v)| (k, v.into_iter().map(convert_subscription).collect()))
+            .collect();
 
-            for notification in ic_response.notifications.into_iter().map(|n| n.value) {
-                let base64 = base64::engine::general_purpose::STANDARD_NO_PAD.encode(notification.notification_bytes);
+        let mut latest_index_processed = None;
+        for indexed_notification in ic_response.notifications.into_iter() {
+            let notification = indexed_notification.value;
+            let remaining_capacity = self.sender.capacity().unwrap().saturating_sub(self.sender.len());
+            if remaining_capacity < notification.recipients.len() {
+                error!(
+                    "Not enough capacity to enqueue {} notifications",
+                    notification.recipients.len()
+                );
+                break;
+            }
 
-                let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
+            let base64 = base64::engine::general_purpose::STANDARD_NO_PAD.encode(notification.notification_bytes);
+            let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
 
-                for user_id in notification.recipients {
-                    if let Some(subscriptions) = subscriptions_map.get(&user_id) {
-                        for subscription_info in subscriptions.iter().cloned() {
-                            if self
-                                .sender
-                                .try_send(Notification {
-                                    recipient: user_id,
-                                    payload: payload.clone(),
-                                    subscription_info,
-                                })
-                                .is_err()
-                            {
-                                return Err("Notifications queue is full".into());
-                            }
-                        }
+            for user_id in notification.recipients {
+                if let Some(subscriptions) = subscriptions_map.get(&user_id) {
+                    for subscription_info in subscriptions.iter().cloned() {
+                        self.sender
+                            .try_send(Notification {
+                                recipient: user_id,
+                                payload: payload.clone(),
+                                subscription_info,
+                            })
+                            .unwrap();
                     }
                 }
             }
 
-            self.set_index_processed_up_to(latest_notification_index).await?;
+            latest_index_processed = Some(indexed_notification.index);
+        }
+
+        if let Some(latest_index) = latest_index_processed {
+            self.set_index_processed_up_to(latest_index).await?;
         }
 
         Ok(())
