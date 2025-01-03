@@ -36,7 +36,7 @@ fn post_upgrade(args: Args) {
         ic_cdk::spawn(increase_heap_memory_limit(
             CanisterId::from_text("6qq3i-kyaaa-aaaap-qhota-cai").unwrap(),
         ))
-    })
+    });
 }
 
 async fn increase_heap_memory_limit(canister_id: CanisterId) {
@@ -49,5 +49,6 @@ async fn increase_heap_memory_limit(canister_id: CanisterId) {
             ..Default::default()
         },
     })
+    .await
     .unwrap()
 }
