@@ -3,11 +3,6 @@ on:
   merge_group:
     branches:
       - master
-    paths:
-      - "*.rs"
-      - "*.toml"
-      - "**/Cargo.lock"
-      - ".github/workflows/backend.yaml"
 
 name: Backend linting and unit tests
 
@@ -76,6 +71,10 @@ jobs:
 
   integration_tests:
     name: run integration tests
+    paths:
+      - "*.rs"
+      - "*.toml"
+      - "**/Cargo.lock"
     runs-on:
       - runs-on
       - runner=16cpu-linux-x64
