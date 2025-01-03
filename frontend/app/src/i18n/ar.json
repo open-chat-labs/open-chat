@@ -224,6 +224,7 @@
             "permScopeThread": "خيط",
             "principalLabel": "رئيسي",
             "principalPlaceholder": "أدخل رئيس البوت",
+            "principalRules": "سيكون هذا هو canisterID لروبوت onchain",
             "required": "المعلمة المطلوبة",
             "requiredDesc": "هل هذه معلمة مطلوبة للأمر",
             "title": "بناء بوت",

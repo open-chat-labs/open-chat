@@ -224,6 +224,7 @@
             "permScopeThread": "Нить",
             "principalLabel": "Главный",
             "principalPlaceholder": "Введите принципала бота",
+            "principalRules": "Это будет canisterID для ончейн-бота.",
             "required": "Обязательный параметр",
             "requiredDesc": "Является ли это обязательным параметром для команды?",
             "title": "Создать бота",

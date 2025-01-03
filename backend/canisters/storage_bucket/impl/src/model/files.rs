@@ -1,4 +1,3 @@
-use crate::memory::Memory;
 use crate::model::files_map::FilesMap;
 use crate::model::files_per_accessor_map::FilesPerAccessorStableMap;
 use crate::model::reference_counts::ReferenceCountsStableMap;
@@ -510,7 +509,7 @@ impl Files {
     }
 
     #[cfg(test)]
-    pub fn new_with_blobs_memory(memory: Memory) -> Files {
+    pub fn new_with_blobs_memory(memory: crate::memory::Memory) -> Files {
         Files {
             blobs: StableBlobStorage::init_with_memory(memory),
             ..Default::default()

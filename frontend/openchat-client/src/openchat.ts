@@ -4686,9 +4686,10 @@ export class OpenChat extends EventTarget {
             : this.getUser(this.#referralCode);
     }
 
-    registerBot(bot: ExternalBot): Promise<boolean> {
+    registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
         return this.#sendRequest({
             kind: "registerBot",
+            principal,
             bot,
         }).catch((err) => {
             this.#logger.error("Failed to register bot: ", err);

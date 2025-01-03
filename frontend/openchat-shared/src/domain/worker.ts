@@ -830,6 +830,7 @@ type ExploreCommunities = {
 
 type RegisterBot = {
     kind: "registerBot";
+    principal: string;
     bot: ExternalBot;
 };
 
