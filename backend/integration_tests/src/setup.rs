@@ -190,7 +190,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         openchat_installer_canister_id,
         sha256(&user_index_canister_wasm.module),
         sha256(&group_index_canister_wasm.module),
-        sha256(&notifications_canister_wasm.module),
+        sha256(&notifications_index_canister_wasm.module),
         vec![VIDEO_CALL_OPERATOR],
         vec![controller],
         wasm_version,
