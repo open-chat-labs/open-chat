@@ -814,6 +814,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.name,
                         payload.avatarUrl,
                         payload.endpoint,
+                        payload.definition,
                     ),
                 );
                 break;

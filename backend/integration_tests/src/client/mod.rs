@@ -8,7 +8,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::time::Duration;
 use testing::rng::random_internet_identity_principal;
-use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDelegation, SlashCommandSchema};
+use types::{BotDefinition, CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDelegation};
 
 mod macros;
 
@@ -26,6 +26,7 @@ pub mod local_user_index;
 pub mod notifications;
 pub mod notifications_index;
 pub mod online_users;
+pub mod openchat_installer;
 pub mod registry;
 pub mod sign_in_with_email;
 pub mod storage_bucket;
@@ -220,9 +221,8 @@ pub fn register_bot(
     canister_ids: &CanisterIds,
     owner: &User,
     name: String,
-    description: String,
     endpoint: String,
-    commands: Vec<SlashCommandSchema>,
+    definition: BotDefinition,
 ) -> Principal {
     let (auth_principal, _) = random_internet_identity_principal();
 
@@ -236,8 +236,7 @@ pub fn register_bot(
             name,
             avatar: None,
             endpoint,
-            description,
-            commands,
+            definition,
         },
     );
 

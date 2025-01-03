@@ -22,6 +22,7 @@ then
     ./scripts/download-canister-wasm.sh $CANISTER_NAME $WASM_SRC || exit 1
 fi
 
+OPENCHAT_INSTALLER_CANISTER_ID=$(dfx canister --network $NETWORK id openchat_installer)
 USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id notifications_index)
@@ -44,6 +45,7 @@ cargo run \
   --manifest-path backend/tools/canister_upgrader/Cargo.toml -- \
   --url $IC_URL \
   --controller $IDENTITY \
+  --openchat-installer $OPENCHAT_INSTALLER_CANISTER_ID \
   --user-index $USER_INDEX_CANISTER_ID \
   --group-index $GROUP_INDEX_CANISTER_ID \
   --notifications-index $NOTIFICATIONS_INDEX_CANISTER_ID \

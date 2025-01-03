@@ -24,6 +24,7 @@ pub enum UserIndexEvent {
     StorageUpgraded(StorageUpgraded),
     UserRegistered(UserRegistered),
     BotRegistered(BotRegistered),
+    BotUpdated(BotUpdated),
     SuperAdminStatusChanged(PlatformModeratorStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
     UserUpgradeConcurrencyChanged(UserUpgradeConcurrencyChanged),
@@ -85,6 +86,13 @@ pub struct BotRegistered {
     pub user_principal: Principal,
     pub name: String,
     pub commands: Vec<SlashCommandSchema>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotUpdated {
+    pub user_id: UserId,
+    pub name: Option<String>,
+    pub commands: Option<Vec<SlashCommandSchema>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
