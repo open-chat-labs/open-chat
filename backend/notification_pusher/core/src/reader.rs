@@ -67,11 +67,12 @@ impl<I: IndexStore> Reader<I> {
         let mut latest_index_processed = None;
         for indexed_notification in ic_response.notifications.into_iter() {
             let notification = indexed_notification.value;
-            let remaining_capacity = self.sender.capacity().unwrap().saturating_sub(self.sender.len());
-            if remaining_capacity < notification.recipients.len() {
+            let available_capacity = self.sender.capacity().unwrap().saturating_sub(self.sender.len());
+            if available_capacity < notification.recipients.len() {
                 error!(
-                    "Not enough capacity to enqueue {} notifications",
-                    notification.recipients.len()
+                    available_capacity,
+                    notifications = notification.recipients.len(),
+                    "Not enough available capacity to enqueue notifications",
                 );
                 break;
             }
