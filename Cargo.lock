@@ -5868,18 +5868,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proposals_bot_canister_c2c_client"
-version = "0.1.0"
-dependencies = [
- "canister_client",
- "ic-cdk 0.17.0",
- "msgpack",
- "proposals_bot_canister",
- "tracing",
- "types",
-]
-
-[[package]]
 name = "proposals_bot_canister_impl"
 version = "0.1.0"
 dependencies = [
@@ -8424,9 +8412,6 @@ dependencies = [
  "nns_governance_canister_c2c_client",
  "notifications_canister",
  "notifications_canister_c2c_client",
- "num-traits",
- "proposals_bot_canister",
- "proposals_bot_canister_c2c_client",
  "rand 0.8.5",
  "search",
  "serde",

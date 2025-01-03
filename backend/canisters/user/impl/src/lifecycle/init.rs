@@ -22,7 +22,6 @@ fn init(args: Args) {
         args.local_user_index_canister_id,
         args.group_index_canister_id,
         args.notifications_canister_id,
-        args.proposals_bot_canister_id,
         args.escrow_canister_id,
         args.video_call_operators,
         args.username,

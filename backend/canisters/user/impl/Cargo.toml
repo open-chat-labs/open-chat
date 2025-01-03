@@ -59,9 +59,6 @@ nns_governance_canister = { path = "../../../external_canisters/nns_governance/a
 nns_governance_canister_c2c_client = { path = "../../../external_canisters/nns_governance/c2c_client" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
-num-traits = { workspace = true }
-proposals_bot_canister = { path = "../../proposals_bot/api" }
-proposals_bot_canister_c2c_client = { path = "../../proposals_bot/c2c_client" }
 rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
