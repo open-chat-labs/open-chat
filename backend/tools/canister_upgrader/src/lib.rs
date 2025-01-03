@@ -8,6 +8,25 @@ use ic_utils::interfaces::ManagementCanister;
 use sha256::sha256;
 use types::{BuildVersion, CanisterId, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs};
 
+pub async fn upgrade_openchat_installer_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    openchat_installer_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        openchat_installer_canister_id,
+        version,
+        openchat_installer_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::OpenChatInstaller,
+    )
+    .await;
+
+    println!("OpenChat installer canister upgraded");
+}
+
 pub async fn upgrade_group_index_canister(
     identity: Box<dyn Identity>,
     url: String,
