@@ -118,7 +118,11 @@
             bind:this={imgElement}
             on:click={onClick}
             on:dblclick|stopPropagation={onDoubleClick}
-            on:error={() => (imgElement.src = normalised.fallback)}
+            on:error={() => {
+                if (imgElement) {
+                    imgElement.src = normalised.fallback;
+                }
+            }}
             class="unzoomed"
             class:landscape
             class:fill
