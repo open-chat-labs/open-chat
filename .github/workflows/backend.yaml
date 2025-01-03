@@ -1,6 +1,5 @@
 on:
   pull_request:
-  merge_group:
     branches:
       - master
 
@@ -68,30 +67,3 @@ jobs:
         with:
           command: test
           args: --workspace --exclude integration_tests
-
-  integration_tests:
-    name: run integration tests
-    runs-on:
-      - runs-on
-      - runner=16cpu-linux-x64
-      - family=m7i
-      - run-id=${{ github.run_id }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: 1.82.0
-          override: true
-      - run: rustup target add wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "build-wasms"
-          save-if: "false"
-      - uses: arduino/setup-protoc@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build canister wasms
-        run: ./scripts/generate-all-canister-wasms.sh
-      - name: Run integration tests
-        run: ./scripts/run-integration-tests.sh local

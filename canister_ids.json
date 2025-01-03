@@ -60,6 +60,10 @@
     "ic": "3vlw6-fiaaa-aaaaf-aaa3a-cai",
     "ic_test": "7dlom-nqaaa-aaaaf-ab2da-cai"
   },
+  "openchat_installer": {
+    "ic": "jodzs-iqaaa-aaaar-qamqa-cai",
+    "ic_test": "xeg2u-baaaa-aaaaf-bscyq-cai"
+  },
   "proposal_validation": {
     "ic": "wkype-7qaaa-aaaar-ajfyq-cai"
   },
