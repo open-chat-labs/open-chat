@@ -37,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove all code to migrate events to stable memory ([#6858](https://github.com/open-chat-labs/open-chat/pull/6858))
 - Remove the old `gate` field which has been superseded by `gate_config` ([#6902](https://github.com/open-chat-labs/open-chat/pull/6902))
 - Remove candid endpoints from User canisters ([#6905](https://github.com/open-chat-labs/open-chat/pull/6905))
+- Remove `submit_proposal` from User canisters ([#7144](https://github.com/open-chat-labs/open-chat/pull/7144))
 
 ### Fixed
 
