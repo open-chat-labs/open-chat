@@ -636,11 +636,11 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    registerBot(bot: ExternalBot): Promise<boolean> {
+    registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "register_bot",
             {
-                principal: principalStringToBytes(bot.principal),
+                principal: principalStringToBytes(principal),
                 owner: principalStringToBytes(bot.ownerId),
                 name: bot.name,
                 avatar: mapOptional(bot.avatarUrl, identity),

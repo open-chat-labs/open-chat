@@ -283,7 +283,7 @@ function createPermissions(perm: SlashCommandPermissions): Record<string, any> {
 }
 
 export function createRegisterExternalBotPayload(
-    userId: string,
+    principal: string,
     ownerId: string,
     candidate: ExternalBot,
 ): Uint8Array {
@@ -302,7 +302,7 @@ export function createRegisterExternalBotPayload(
             ],
             [
                 {
-                    principal: Principal.fromText(userId),
+                    principal: Principal.fromText(principal),
                     endpoint: candidate.endpoint,
                     owner: Principal.fromText(ownerId),
                     name: candidate.name,

@@ -4055,9 +4055,9 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.exploreBots(searchTerm, pageIndex, pageSize);
     }
 
-    registerBot(bot: ExternalBot): Promise<boolean> {
+    registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
-        return this._userIndexClient.registerBot(bot);
+        return this._userIndexClient.registerBot(principal, bot);
     }
 
     updateRegisteredBot(

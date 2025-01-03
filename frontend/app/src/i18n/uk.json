@@ -224,6 +224,7 @@
             "permScopeThread": "Нитка",
             "principalLabel": "Директор",
             "principalPlaceholder": "Введіть принципала бота",
+            "principalRules": "Це буде canisterID для ончейн-бота",
             "required": "Обов'язковий параметр",
             "requiredDesc": "Чи є це обов'язковим параметром для команди",
             "title": "Створіть бота",

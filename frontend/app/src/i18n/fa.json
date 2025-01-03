@@ -224,6 +224,7 @@
             "permScopeThread": "موضوع",
             "principalLabel": "اصلی",
             "principalPlaceholder": "اصل ربات را وارد کنید",
+            "principalRules": "این شناسه canister برای یک ربات onchain خواهد بود",
             "required": "پارامتر مورد نیاز",
             "requiredDesc": "آیا این یک پارامتر لازم برای دستور است؟",
             "title": "یک ربات بسازید",

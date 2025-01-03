@@ -224,6 +224,7 @@
             "permScopeThread": "פְּתִיל",
             "principalLabel": "קֶרֶן",
             "principalPlaceholder": "הכנס למנהל הבוט",
+            "principalRules": "זה יהיה ה-canisterID עבור בוט onchain",
             "required": "פרמטר נדרש",
             "requiredDesc": "האם זה פרמטר נדרש עבור הפקודה",
             "title": "בנה בוט",

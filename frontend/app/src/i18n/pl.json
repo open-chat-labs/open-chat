@@ -224,6 +224,7 @@
             "permScopeThread": "Nitka",
             "principalLabel": "Główny",
             "principalPlaceholder": "Wprowadź dane bota",
+            "principalRules": "Będzie to identyfikator kanistra dla bota onchain",
             "required": "Wymagany parametr",
             "requiredDesc": "Czy jest to wymagany parametr dla polecenia?",
             "title": "Zbuduj bota",
