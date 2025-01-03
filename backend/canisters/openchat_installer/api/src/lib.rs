@@ -13,4 +13,6 @@ pub use updates::*;
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum CanisterType {
     UserIndex,
+    GroupIndex,
+    NotificationsIndex,
 }

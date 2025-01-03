@@ -141,7 +141,6 @@ impl Data {
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         registry_canister_id: CanisterId,
-        notifications_canister_wasm: CanisterWasm,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -153,8 +152,8 @@ impl Data {
             registry_canister_id,
             principal_to_user_id_map: PrincipalToUserIdMap::default(),
             subscriptions: Subscriptions::default(),
-            notifications_canister_wasm_for_new_canisters: notifications_canister_wasm.clone(),
-            notifications_canister_wasm_for_upgrades: notifications_canister_wasm,
+            notifications_canister_wasm_for_new_canisters: CanisterWasm::default(),
+            notifications_canister_wasm_for_upgrades: CanisterWasm::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             notifications_index_event_sync_queue: CanisterEventSyncQueue::default(),
             rng_seed: [0; 32],

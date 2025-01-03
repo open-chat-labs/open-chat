@@ -65,6 +65,8 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
     } else {
         let canister_id = match args.canister_type {
             CanisterType::UserIndex => state.data.user_index_canister_id,
+            CanisterType::GroupIndex => state.data.group_index_canister_id,
+            CanisterType::NotificationsIndex => state.data.notifications_index_canister_id,
         };
 
         Ok(PrepareResult {

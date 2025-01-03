@@ -21,7 +21,6 @@ fn init(args: Args) {
         args.user_index_canister_id,
         args.cycles_dispenser_canister_id,
         args.registry_canister_id,
-        args.notifications_canister_wasm,
         args.test_mode,
     );
 
