@@ -929,6 +929,14 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(CannotTipSelf));
         }
         if message.sender != args.recipient {
+            error!(
+                user = %args.user_id,
+                recipient = %args.recipient,
+                sender = %message.sender,
+                message_index = ?message.message_index,
+                message_id = ?message.message_id,
+                "Tip failed due to recipient mismatch"
+            );
             return Err(UpdateEventError::NoChange(RecipientMismatch));
         }
 
