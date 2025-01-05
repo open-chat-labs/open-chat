@@ -20,7 +20,7 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
-    let new_local_user_index = CanisterId::from_text("").unwrap();
+    let new_local_user_index = CanisterId::from_text("lyt4m-myaaa-aaaac-aadkq-cai").unwrap();
     if data.local_index_map.contains_key(&new_local_user_index) {
         for user in data.users.iter() {
             data.user_index_event_sync_queue.push(
