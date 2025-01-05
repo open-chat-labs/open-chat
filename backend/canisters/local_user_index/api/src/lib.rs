@@ -210,18 +210,21 @@ pub struct ExternalAchievementAwarded {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UserDetailsFull {
+    #[serde(rename = "i")]
     pub user_id: UserId,
+    #[serde(rename = "p")]
     pub user_principal: Principal,
+    #[serde(rename = "n")]
     pub username: String,
-    #[serde(default, skip_serializing_if = "is_default")]
+    #[serde(rename = "t", default, skip_serializing_if = "is_default")]
     pub user_type: UserType,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "r", skip_serializing_if = "Option::is_none")]
     pub referred_by: Option<UserId>,
-    #[serde(default, skip_serializing_if = "is_default")]
+    #[serde(rename = "m", default, skip_serializing_if = "is_default")]
     pub is_platform_moderator: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "d", skip_serializing_if = "Option::is_none")]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "u", skip_serializing_if = "Option::is_none")]
     pub unique_person_proof: Option<UniquePersonProof>,
 }
 
