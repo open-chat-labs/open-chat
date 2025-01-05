@@ -2,7 +2,7 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
+    is_default, CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
     DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, NotifyChit, PhoneNumber,
     ReferralType, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User,
     UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType,
@@ -41,6 +41,7 @@ pub enum UserIndexEvent {
     NotifyUniquePersonProof(UserId, UniquePersonProof),
     AddCanisterToPool(CanisterId),
     ExternalAchievementAwarded(ExternalAchievementAwarded),
+    SyncExistingUser(UserDetailsFull),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -205,6 +206,23 @@ pub struct ExternalAchievementAwarded {
     pub user_id: UserId,
     pub name: String,
     pub chit_reward: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserDetailsFull {
+    pub user_id: UserId,
+    pub user_principal: Principal,
+    pub username: String,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub user_type: UserType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub referred_by: Option<UserId>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub is_platform_moderator: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub diamond_membership_expires_at: Option<TimestampMillis>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub unique_person_proof: Option<UniquePersonProof>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

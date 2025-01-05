@@ -4,7 +4,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk::api::management_canister::main::{canister_info, CanisterInfoRequest};
-use local_user_index_canister::{UserIndexEvent, UserRegistered};
+use local_user_index_canister::{UserDetailsFull, UserIndexEvent};
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 use user_index_canister::add_local_user_index_canister::{Response::*, *};
@@ -116,12 +116,15 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
         for user in state.data.users.iter() {
             state.data.user_index_event_sync_queue.push(
                 canister_id,
-                UserIndexEvent::UserRegistered(UserRegistered {
+                UserIndexEvent::SyncExistingUser(UserDetailsFull {
                     user_id: user.user_id,
                     user_principal: user.principal,
                     username: user.username.clone(),
                     user_type: user.user_type,
                     referred_by: user.referred_by,
+                    is_platform_moderator: state.data.platform_moderators.contains(&user.user_id),
+                    diamond_membership_expires_at: user.diamond_membership_details.expires_at(),
+                    unique_person_proof: user.unique_person_proof.clone(),
                 }),
             )
         }
