@@ -1,16 +1,18 @@
-use crate::state;
 use crate::state::State;
-use candid::CandidType;
+use crate::{rng, state};
+use candid::{CandidType, Principal};
 use ic_cdk::init;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct InitOrUpgradeArgs {
     pub oc_public_key: String,
-    pub test_mode: bool,
+    pub administrator: Principal,
 }
 
 #[init]
 fn init(args: InitOrUpgradeArgs) {
-    state::init(State::new(args.oc_public_key, args.test_mode));
+    let state = State::new(args.oc_public_key, args.administrator);
+    rng::set(state.rng_seed());
+    state::init(state);
 }

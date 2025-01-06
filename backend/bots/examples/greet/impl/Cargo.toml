@@ -1,0 +1,34 @@
+[package]
+name = "greet_bot_canister_impl"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+candid = { workspace = true }
+canister_api_macros = { path = "../../../../libraries/canister_api_macros" }
+canister_client = { path = "../../../../libraries/canister_client" }
+canister_time = { path = "../../../../libraries/canister_time" }
+getrandom = { workspace = true }
+greet_bot_canister = { path = "../api" }
+http = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
+ic-http-certification = { workspace = true }
+ic_principal = { workspace = true }
+ic-stable-structures = { workspace = true }
+jwt = { path = "../../../../libraries/jwt" }
+local_user_index_canister = { path = "../../../../canisters/local_user_index/api" }
+local_user_index_canister_c2c_client = { path = "../../../../canisters/local_user_index/c2c_client" }
+msgpack = { path = "../../../../libraries/msgpack" }
+rand = { workspace = true }
+rmp-serde = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha256 = { path = "../../../../libraries/sha256" }
+types = { path = "../../../../libraries/types" }

@@ -4,14 +4,24 @@ use serde::Serialize;
 use std::str;
 
 use crate::{
+    entropy::entropy,
     execute_command::{execute_command, ExecuteCommandResponse},
     get_definition::get_definition,
+    rng, state,
 };
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
     if request.method.to_ascii_uppercase() == "GET" {
-        // Return the `bot definition` regardless of the path
+        if let Ok(path) = request.get_path() {
+            if path == "/joke" {
+                // Because this is a canister query the state isn't updated so seed the RNG before each execution
+                rng::set(entropy([0; 32]));
+                let joke = state::read(|state| state.get_random_joke());
+                return text_response(200, joke);
+            }
+        }
+        // Otherwise return the `bot definition` regardless of the path
         let body = to_json(&get_definition());
 
         return text_response(200, body);

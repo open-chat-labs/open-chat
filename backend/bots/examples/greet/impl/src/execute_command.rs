@@ -6,6 +6,7 @@ use types::{bot_actions::MessageContent, BotCommandClaims, HandleBotActionsError
 
 use crate::{
     commands::greet::greet,
+    commands::joke::joke,
     env,
     state::{self, State},
 };
@@ -52,6 +53,7 @@ pub async fn execute_command(access_token: &str) -> ExecuteCommandResponse {
 
     let result = match bot.command_name.as_str() {
         "greet" => greet(bot, access_token).await,
+        "joke" => joke(bot, access_token).await,
         _ => return ExecuteCommandResponse::BadRequest(BadRequest::CommandNotFound),
     };
 

@@ -1,7 +1,7 @@
-use crate::lifecycle::READER_WRITER_BUFFER_SIZE;
 use crate::memory::get_upgrades_memory;
 use crate::state;
 use crate::state::State;
+use crate::{lifecycle::READER_WRITER_BUFFER_SIZE, rng};
 use ic_cdk::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
 use serde::Deserialize;
@@ -16,7 +16,8 @@ fn post_upgrade(args: InitOrUpgradeArgs) {
 
     let mut state = State::deserialize(&mut deserializer).unwrap();
 
-    state.update(args.oc_public_key, args.test_mode);
+    state.update(args.oc_public_key, args.administrator);
 
+    rng::set(state.rng_seed());
     state::init(state);
 }
