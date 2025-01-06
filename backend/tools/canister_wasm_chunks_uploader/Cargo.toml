@@ -11,6 +11,8 @@ clap = { workspace = true, features = ["derive"] }
 group_index_canister = { path = "../../canisters/group_index/api" }
 group_index_canister_client = { path = "../../canisters/group_index/client" }
 ic-agent = { workspace = true }
+openchat_installer_canister = { path = "../../canisters/openchat_installer/api" }
+openchat_installer_canister_client = { path = "../../canisters/openchat_installer/client" }
 tokio = { workspace = true, features = ["full"] }
 types = { path = "../../libraries/types" }
 user_index_canister = { path = "../../canisters/user_index/api" }
