@@ -1248,6 +1248,7 @@ dependencies = [
  "notifications_index_canister_client",
  "online_users_canister",
  "openchat_installer_canister",
+ "openchat_installer_canister_client",
  "proposals_bot_canister",
  "registry_canister",
  "sha256",
