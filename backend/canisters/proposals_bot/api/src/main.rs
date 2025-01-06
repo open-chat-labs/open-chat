@@ -1,12 +1,13 @@
-use candid_gen::generate_candid_method;
+use std::env;
+use ts_export::generate_ts_method;
 
-#[allow(deprecated)]
 fn main() {
-    generate_candid_method!(proposals_bot, lookup_proposal_message, query);
+    let directory = env::current_dir().unwrap().join("tsBindings/proposalsBot");
+    if directory.exists() {
+        std::fs::remove_dir_all(&directory).unwrap();
+    }
 
-    generate_candid_method!(proposals_bot, stake_neuron_for_submitting_proposals, update);
-    generate_candid_method!(proposals_bot, top_up_neuron, update);
-
-    candid::export_service!();
-    std::print!("{}", __export_service());
+    generate_ts_method!(proposals_bot, stake_neuron_for_submitting_proposals);
+    generate_ts_method!(proposals_bot, submit_proposal);
+    generate_ts_method!(proposals_bot, top_up_neuron);
 }

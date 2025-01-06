@@ -1,8 +1,8 @@
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::{CallResult, RejectionCode};
-use ic_cdk::update;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::compute_neuron_staking_subaccount_bytes;
@@ -16,7 +16,7 @@ use sns_governance_canister_c2c_client::configure_neuron;
 use types::{CanisterId, SnsNeuronId};
 use user_index_canister_c2c_client::LookupUserError;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 async fn stake_neuron_for_submitting_proposals(args: Args) -> Response {
     let PrepareResult {
