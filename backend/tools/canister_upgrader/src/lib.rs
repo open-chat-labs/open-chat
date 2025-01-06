@@ -8,18 +8,36 @@ use ic_utils::interfaces::ManagementCanister;
 use sha256::sha256;
 use types::{BuildVersion, CanisterId, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs};
 
-pub async fn upgrade_group_index_canister(
+pub async fn upgrade_openchat_installer_canister(
     identity: Box<dyn Identity>,
     url: String,
-    group_index_canister_id: CanisterId,
+    openchat_installer_canister_id: CanisterId,
     version: BuildVersion,
 ) {
     upgrade_top_level_canister(
         identity,
         url,
-        group_index_canister_id,
+        openchat_installer_canister_id,
         version,
-        group_index_canister::post_upgrade::Args { wasm_version: version },
+        openchat_installer_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::OpenChatInstaller,
+    )
+    .await;
+
+    println!("OpenChat installer canister upgraded");
+}
+
+pub async fn upgrade_group_index_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    openchat_installer_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_canister_via_openchat_installer(
+        identity,
+        url,
+        openchat_installer_canister_id,
+        version,
         CanisterName::GroupIndex,
     )
     .await;
@@ -30,15 +48,14 @@ pub async fn upgrade_group_index_canister(
 pub async fn upgrade_user_index_canister(
     identity: Box<dyn Identity>,
     url: String,
-    user_index_canister_id: CanisterId,
+    openchat_installer_canister_id: CanisterId,
     version: BuildVersion,
 ) {
-    upgrade_top_level_canister(
+    upgrade_canister_via_openchat_installer(
         identity,
         url,
-        user_index_canister_id,
+        openchat_installer_canister_id,
         version,
-        user_index_canister::post_upgrade::Args { wasm_version: version },
         CanisterName::UserIndex,
     )
     .await;
@@ -49,15 +66,14 @@ pub async fn upgrade_user_index_canister(
 pub async fn upgrade_notifications_index_canister(
     identity: Box<dyn Identity>,
     url: String,
-    notifications_index_canister_id: CanisterId,
+    openchat_installer_canister_id: CanisterId,
     version: BuildVersion,
 ) {
-    upgrade_top_level_canister(
+    upgrade_canister_via_openchat_installer(
         identity,
         url,
-        notifications_index_canister_id,
+        openchat_installer_canister_id,
         version,
-        notifications_index_canister::post_upgrade::Args { wasm_version: version },
         CanisterName::NotificationsIndex,
     )
     .await;
@@ -596,6 +612,50 @@ async fn upgrade_top_level_canister<A: CandidType + Send + Sync>(
     let canister_wasm = get_canister_wasm(canister_name, version);
 
     upgrade_wasm(&management_canister, &canister_id, &canister_wasm.module, args).await;
+}
+
+async fn upgrade_canister_via_openchat_installer(
+    identity: Box<dyn Identity>,
+    url: String,
+    openchat_installer_canister_id: CanisterId,
+    version: BuildVersion,
+    canister_name: CanisterName,
+) {
+    let agent = build_ic_agent(url, identity).await;
+    let canister_wasm = get_canister_wasm(&canister_name, version);
+    let canister_type = match canister_name {
+        CanisterName::UserIndex => openchat_installer_canister::CanisterType::UserIndex,
+        CanisterName::GroupIndex => openchat_installer_canister::CanisterType::GroupIndex,
+        CanisterName::NotificationsIndex => openchat_installer_canister::CanisterType::NotificationsIndex,
+        _ => unreachable!(),
+    };
+
+    openchat_installer_canister_client::upload_wasm_in_chunks(
+        &agent,
+        &openchat_installer_canister_id,
+        &canister_wasm.module,
+        canister_type,
+    )
+    .await
+    .unwrap();
+
+    let response = openchat_installer_canister_client::upgrade_canister(
+        &agent,
+        &openchat_installer_canister_id,
+        &openchat_installer_canister::upgrade_canister::Args {
+            canister_type,
+            version,
+            wasm_hash: sha256(&canister_wasm.module),
+            filter: None,
+        },
+    )
+    .await
+    .unwrap();
+
+    assert!(matches!(
+        response,
+        openchat_installer_canister::upgrade_canister::Response::Success
+    ));
 }
 
 async fn upgrade_wasm<A: CandidType + Send + Sync>(

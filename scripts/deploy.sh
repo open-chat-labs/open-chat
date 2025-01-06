@@ -33,6 +33,7 @@ fi
 ./scripts/download-canister-wasm-dfx.sh sign_in_with_ethereum || exit 1
 ./scripts/download-canister-wasm-dfx.sh sign_in_with_solana || exit 1
 
+OPENCHAT_INSTALLER_CANISTER_ID=$(dfx canister --network $NETWORK id openchat_installer)
 USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id notifications_index)
@@ -63,6 +64,7 @@ cargo run \
   --url $IC_URL \
   --test-mode $TEST_MODE \
   --controller $IDENTITY \
+  --openchat-installer $OPENCHAT_INSTALLER_CANISTER_ID \
   --user-index $USER_INDEX_CANISTER_ID \
   --group-index $GROUP_INDEX_CANISTER_ID \
   --notifications-index $NOTIFICATIONS_INDEX_CANISTER_ID \

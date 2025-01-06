@@ -47,9 +47,11 @@ export const lastCryptoSent = {
 export const enhancedCryptoLookup = derived(
     [cryptoLookup, cryptoBalance, exchangeRatesLookupStore],
     ([$lookup, $balance, $exchangeRatesLookup]) => {
+        const xrICPtoDollar = $exchangeRatesLookup["icp"]?.toUSD;
         const xrBTCtoDollar = $exchangeRatesLookup["btc"]?.toUSD;
         const xrETHtoDollar = $exchangeRatesLookup["eth"]?.toUSD;
 
+        const xrDollarToICP = xrICPtoDollar === undefined ? 0 : 1 / xrICPtoDollar;
         const xrDollarToBTC = xrBTCtoDollar === undefined ? 0 : 1 / xrBTCtoDollar;
         const xrDollarToETH = xrETHtoDollar === undefined ? 0 : 1 / xrETHtoDollar;
 
@@ -60,8 +62,10 @@ export const enhancedCryptoLookup = derived(
             const rates = $exchangeRatesLookup[symbolLower];
             const xrUSD = rates?.toUSD;
             const dollarBalance = xrUSD !== undefined ? xrUSD * balanceWholeUnits : undefined;
-            const xrICP = rates?.toICP;
-            const icpBalance = xrICP !== undefined ? xrICP * balanceWholeUnits : undefined;
+            const icpBalance =
+                dollarBalance !== undefined && xrDollarToICP !== undefined
+                    ? dollarBalance * xrDollarToICP
+                    : undefined;
             const btcBalance =
                 dollarBalance !== undefined && xrDollarToBTC !== undefined
                     ? dollarBalance * xrDollarToBTC

@@ -1,6 +1,6 @@
 use crate::keys::extract_key_type;
 use crate::keys::macros::key;
-use crate::{BaseKey, KeyPrefix, KeyType};
+use crate::{KeyPrefix, KeyType};
 use ic_principal::Principal;
 use types::{ChannelId, Chat, EventIndex, MessageIndex, UserId};
 
@@ -156,7 +156,7 @@ impl ChatEventKey {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Key;
+    use crate::{BaseKey, Key};
     use rand::{thread_rng, Rng, RngCore};
     use types::{ChannelId, Chat, EventIndex, MessageIndex};
 

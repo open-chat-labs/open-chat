@@ -1135,6 +1135,8 @@ dependencies = [
  "notifications_index_canister",
  "notifications_index_canister_client",
  "online_users_canister",
+ "openchat_installer_canister",
+ "openchat_installer_canister_client",
  "proposals_bot_canister",
  "registry_canister",
  "registry_canister_client",
@@ -1195,7 +1197,9 @@ name = "canister_upgrade_proposal_builder"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_agent_utils",
  "clap 4.5.4",
+ "openchat_installer_canister",
  "sha256",
  "sns_governance_canister",
  "types",
@@ -1222,6 +1226,8 @@ dependencies = [
  "notifications_index_canister",
  "notifications_index_canister_client",
  "online_users_canister",
+ "openchat_installer_canister",
+ "openchat_installer_canister_client",
  "proposals_bot_canister",
  "registry_canister",
  "serde",
@@ -1245,6 +1251,8 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_client",
  "ic-agent",
+ "openchat_installer_canister",
+ "openchat_installer_canister_client",
  "tokio",
  "types",
  "user_index_canister",
@@ -4256,6 +4264,7 @@ dependencies = [
  "notifications_canister",
  "notifications_index_canister",
  "online_users_canister",
+ "openchat_installer_canister",
  "pocket-ic",
  "proposals_bot_canister",
  "rand 0.8.5",
@@ -5420,6 +5429,60 @@ name = "opaque-debug"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
+
+[[package]]
+name = "openchat_installer_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "hex",
+ "human_readable",
+ "serde",
+ "serde_bytes",
+ "types",
+]
+
+[[package]]
+name = "openchat_installer_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-agent",
+ "openchat_installer_canister",
+ "types",
+]
+
+[[package]]
+name = "openchat_installer_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "futures",
+ "group_index_canister",
+ "hex",
+ "http_request",
+ "human_readable",
+ "ic-cdk 0.17.0",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "msgpack",
+ "notifications_index_canister",
+ "openchat_installer_canister",
+ "rand 0.8.5",
+ "serde",
+ "serde_bytes",
+ "stable_memory",
+ "tracing",
+ "types",
+ "user_index_canister",
+ "utils 0.1.0",
+]
 
 [[package]]
 name = "openssl"
@@ -7455,13 +7518,17 @@ dependencies = [
  "ic-stable-structures",
  "msgpack",
  "num-traits",
+ "proptest",
  "rand 0.8.5",
  "serde",
  "serde_bytes",
  "stable_memory",
+ "stable_memory_map",
  "storage_bucket_canister",
  "storage_index_canister",
  "storage_index_canister_c2c_client",
+ "test-case",
+ "test-strategy",
  "timer_job_queues",
  "tracing",
  "types",

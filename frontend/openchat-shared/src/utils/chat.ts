@@ -114,6 +114,15 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "chat_unfrozen":
                 userIds.add(e.event.unfrozenBy);
                 break;
+            case "bot_added":
+                userIds.add(e.event.addedBy);
+                break;
+            case "bot_removed":
+                userIds.add(e.event.removedBy);
+                break;
+            case "bot_updated":
+                userIds.add(e.event.updatedBy);
+                break;
             case "aggregate_common_events":
             case "direct_chat_created":
             case "empty":

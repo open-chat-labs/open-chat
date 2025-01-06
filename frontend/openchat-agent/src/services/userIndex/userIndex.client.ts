@@ -23,6 +23,7 @@ import type {
     ExploreBotsResponse,
     ExternalBot,
     BotsResponse,
+    BotDefinition,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -635,17 +636,19 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    registerBot(bot: ExternalBot): Promise<boolean> {
+    registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "register_bot",
             {
-                principal: principalStringToBytes(bot.principal),
+                principal: principalStringToBytes(principal),
                 owner: principalStringToBytes(bot.ownerId),
                 name: bot.name,
                 avatar: mapOptional(bot.avatarUrl, identity),
                 endpoint: bot.endpoint,
-                description: bot.definition.description ?? "",
-                commands: bot.definition.commands.map(apiExternalBotCommand),
+                definition: {
+                    description: bot.definition.description ?? "",
+                    commands: bot.definition.commands.map(apiExternalBotCommand),
+                },
             },
             (resp) => {
                 console.log("UserIndex register bot response: ", resp);
@@ -662,6 +665,7 @@ export class UserIndexClient extends CandidService {
         name?: string,
         avatarUrl?: string,
         endpoint?: string,
+        definition?: BotDefinition,
     ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "update_bot",
@@ -674,6 +678,10 @@ export class UserIndexClient extends CandidService {
                         SetToSome: url,
                     })) ?? "NoChange",
                 endpoint: mapOptional(endpoint, identity),
+                definition: mapOptional(definition, (d) => ({
+                    description: d.description,
+                    commands: d.commands.map(apiExternalBotCommand),
+                })),
             },
             (resp) => {
                 console.log("UserIndex update bot response: ", resp);

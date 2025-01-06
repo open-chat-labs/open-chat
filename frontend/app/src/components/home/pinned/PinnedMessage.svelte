@@ -38,7 +38,11 @@
         e.preventDefault();
         e.target?.dispatchEvent(
             new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-                detail: { userId: sender.userId, chatButton: !me, inGlobalContext: false },
+                detail: {
+                    userId: sender.userId,
+                    chatButton: !me,
+                    inGlobalContext: false,
+                },
                 bubbles: true,
             }),
         );

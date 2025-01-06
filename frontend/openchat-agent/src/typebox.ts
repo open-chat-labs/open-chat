@@ -1432,6 +1432,18 @@ export const MessageMatch = Type.Object({
     score: Type.Number(),
 });
 
+export type OptionUpdateStreakInsurance = Static<typeof OptionUpdateStreakInsurance>;
+export const OptionUpdateStreakInsurance = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: StreakInsurance,
+        }),
+    ],
+    { default: "NoChange" },
+);
+
 export type DirectChatCreated = Static<typeof DirectChatCreated>;
 export const DirectChatCreated = Type.Record(Type.String(), Type.Never());
 
@@ -2199,8 +2211,6 @@ export const UserIndexUpdateBotResponse = Type.Union([
     Type.Literal("OwnerSuspended"),
     Type.Literal("NewOwnerNotFound"),
     Type.Literal("NewOwnerSuspended"),
-    Type.Literal("DefinitionNotFound"),
-    Type.Literal("DefinitionInvalid"),
     Type.Literal("DescriptionTooLong"),
     Type.Literal("TooManyCommands"),
 ]);
@@ -4927,15 +4937,6 @@ export const UserIndexChitLeaderboardChitUserBalance = Type.Object({
     balance: Type.Number(),
 });
 
-export type UserIndexUpdateBotArgs = Static<typeof UserIndexUpdateBotArgs>;
-export const UserIndexUpdateBotArgs = Type.Object({
-    bot_id: UserId,
-    owner: Type.Optional(Type.Union([UserId, Type.Undefined()])),
-    name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
-    avatar: OptionUpdateString,
-    endpoint: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
-});
-
 export type UserIndexSetDiamondMembershipFeesArgs = Static<
     typeof UserIndexSetDiamondMembershipFeesArgs
 >;
@@ -5311,6 +5312,13 @@ export type ProposalsBotTransferSnsTreasuryFunds = Static<
 >;
 export const ProposalsBotTransferSnsTreasuryFunds = Type.Object({
     treasury: ProposalsBotTreasury,
+    amount: Type.BigInt(),
+    to: AccountICRC1,
+    memo: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
+});
+
+export type ProposalsBotMintSnsTokens = Static<typeof ProposalsBotMintSnsTokens>;
+export const ProposalsBotMintSnsTokens = Type.Object({
     amount: Type.BigInt(),
     to: AccountICRC1,
     memo: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
@@ -6493,6 +6501,12 @@ export const BotCommandArgs = Type.Object({
     command_text: Type.String(),
 });
 
+export type BotDefinition = Static<typeof BotDefinition>;
+export const BotDefinition = Type.Object({
+    description: Type.String(),
+    commands: Type.Array(SlashCommandSchema),
+});
+
 export type GroupIndexActiveGroupsSuccessResult = Static<
     typeof GroupIndexActiveGroupsSuccessResult
 >;
@@ -6580,6 +6594,16 @@ export const UserIndexChitLeaderboardResponse = Type.Object({
     SuccessV2: UserIndexChitLeaderboardSuccessResult,
 });
 
+export type UserIndexUpdateBotArgs = Static<typeof UserIndexUpdateBotArgs>;
+export const UserIndexUpdateBotArgs = Type.Object({
+    bot_id: UserId,
+    owner: Type.Optional(Type.Union([UserId, Type.Undefined()])),
+    name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    avatar: OptionUpdateString,
+    endpoint: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    definition: Type.Optional(Type.Union([BotDefinition, Type.Undefined()])),
+});
+
 export type UserIndexRegisterBotArgs = Static<typeof UserIndexRegisterBotArgs>;
 export const UserIndexRegisterBotArgs = Type.Object({
     principal: TSBytes,
@@ -6587,8 +6611,7 @@ export const UserIndexRegisterBotArgs = Type.Object({
     name: Type.String(),
     avatar: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     endpoint: Type.String(),
-    description: Type.String(),
-    commands: Type.Array(SlashCommandSchema),
+    definition: BotDefinition,
 });
 
 export type UserIndexCurrentUserSuccessResult = Static<typeof UserIndexCurrentUserSuccessResult>;
@@ -6856,7 +6879,11 @@ export const ProposalsBotProposalToSubmitAction = Type.Union([
     Type.Object({
         TransferSnsTreasuryFunds: ProposalsBotTransferSnsTreasuryFunds,
     }),
+    Type.Object({
+        MintSnsTokens: ProposalsBotMintSnsTokens,
+    }),
     Type.Literal("UpgradeSnsToNextVersion"),
+    Type.Literal("AdvanceSnsTargetVersion"),
     Type.Object({
         UpgradeSnsControlledCanister: ProposalsBotUpgradeSnsControlledCanister,
     }),
@@ -9287,6 +9314,7 @@ export const UserUpdatesSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     streak_ends: Type.BigInt(),
+    streak_insurance: OptionUpdateStreakInsurance,
     next_daily_claim: Type.BigInt(),
     is_unique_person: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
     wallet_config: Type.Optional(Type.Union([UserWalletConfig, Type.Undefined()])),

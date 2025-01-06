@@ -410,6 +410,7 @@ import type {
     ChatEventsResponse,
     BotDefinitionResponse,
     BotCommandResponse,
+    BotDefinition,
 } from "openchat-shared";
 import {
     Stream,
@@ -4685,9 +4686,10 @@ export class OpenChat extends EventTarget {
             : this.getUser(this.#referralCode);
     }
 
-    registerBot(bot: ExternalBot): Promise<boolean> {
+    registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
         return this.#sendRequest({
             kind: "registerBot",
+            principal,
             bot,
         }).catch((err) => {
             this.#logger.error("Failed to register bot: ", err);
@@ -4701,6 +4703,7 @@ export class OpenChat extends EventTarget {
         name?: string,
         avatarUrl?: string,
         endpoint?: string,
+        definition?: BotDefinition,
     ): Promise<boolean> {
         return this.#sendRequest({
             kind: "updateRegisteredBot",
@@ -4709,6 +4712,7 @@ export class OpenChat extends EventTarget {
             name,
             avatarUrl,
             endpoint,
+            definition,
         }).catch((err) => {
             this.#logger.error("Failed to update registered bot: ", err);
             return false;

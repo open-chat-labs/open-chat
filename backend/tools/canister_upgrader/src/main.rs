@@ -23,19 +23,24 @@ async fn main() {
         CanisterName::LocalGroupIndex => {
             upgrade_local_group_index_canister(identity, opts.url, opts.group_index, opts.version).await
         }
-        CanisterName::GroupIndex => upgrade_group_index_canister(identity, opts.url, opts.group_index, opts.version).await,
+        CanisterName::GroupIndex => {
+            upgrade_group_index_canister(identity, opts.url, opts.openchat_installer, opts.version).await
+        }
         CanisterName::Identity => upgrade_identity_canister(identity, opts.url, opts.identity, opts.version).await,
         CanisterName::MarketMaker => upgrade_market_maker_canister(identity, opts.url, opts.market_maker, opts.version).await,
         CanisterName::NeuronController => {
             upgrade_neuron_controller_canister(identity, opts.url, opts.neuron_controller, opts.version).await
         }
         CanisterName::NotificationsIndex => {
-            upgrade_notifications_index_canister(identity, opts.url, opts.notifications_index, opts.version).await
+            upgrade_notifications_index_canister(identity, opts.url, opts.openchat_installer, opts.version).await
         }
         CanisterName::Notifications => {
             upgrade_notifications_canister(identity, opts.url, opts.notifications_index, opts.version).await
         }
         CanisterName::OnlineUsers => upgrade_online_users_canister(identity, opts.url, opts.online_users, opts.version).await,
+        CanisterName::OpenChatInstaller => {
+            upgrade_openchat_installer_canister(identity, opts.url, opts.openchat_installer, opts.version).await
+        }
         CanisterName::ProposalsBot => {
             upgrade_proposals_bot_canister(identity, opts.url, opts.proposals_bot, opts.version).await
         }
@@ -51,7 +56,7 @@ async fn main() {
         CanisterName::LocalUserIndex => {
             upgrade_local_user_index_canister(identity, opts.url, opts.user_index, opts.version).await
         }
-        CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.user_index, opts.version).await,
+        CanisterName::UserIndex => upgrade_user_index_canister(identity, opts.url, opts.openchat_installer, opts.version).await,
         CanisterName::SignInWithEmail => {
             upgrade_sign_in_with_email_canister(identity, opts.url, opts.sign_in_with_email, opts.version).await
         }
@@ -66,6 +71,9 @@ struct Opts {
 
     #[arg(long)]
     controller: String,
+
+    #[arg(long)]
+    openchat_installer: CanisterId,
 
     #[arg(long)]
     user_index: CanisterId,

@@ -8,7 +8,7 @@ macro_rules! key {
         #[serde(into = "crate::keys::BaseKeyPrefix", try_from = "crate::keys::BaseKeyPrefix")]
         pub struct $key_prefix_name(Vec<u8>);
 
-        impl From<$key_name> for BaseKey {
+        impl From<$key_name> for crate::keys::BaseKey {
             fn from(value: $key_name) -> Self {
                 crate::keys::BaseKey(value.0)
             }
@@ -20,18 +20,18 @@ macro_rules! key {
             }
         }
 
-        impl TryFrom<crate::BaseKey> for $key_name {
+        impl TryFrom<crate::keys::BaseKey> for $key_name {
             type Error = String;
 
-            fn try_from(value: crate::BaseKey) -> Result<Self, Self::Error> {
+            fn try_from(value: crate::keys::BaseKey) -> Result<Self, Self::Error> {
                 crate::keys::validate_key(&value.0, |kt| matches!(kt, $key_types)).map(|_| $key_name(value.0))
             }
         }
 
-        impl TryFrom<crate::BaseKeyPrefix> for $key_prefix_name {
+        impl TryFrom<crate::keys::BaseKeyPrefix> for $key_prefix_name {
             type Error = String;
 
-            fn try_from(value: crate::BaseKeyPrefix) -> Result<Self, Self::Error> {
+            fn try_from(value: crate::keys::BaseKeyPrefix) -> Result<Self, Self::Error> {
                 crate::keys::validate_key(&value.0, |kt| matches!(kt, $key_types)).map(|_| $key_prefix_name(value.0))
             }
         }

@@ -14,8 +14,8 @@ use types::{icrc1, CanisterId, MultiUserChat, NnsNeuronId, ProposalId, SnsNeuron
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
-    SubmitProposal(SubmitProposalJob),
-    LookupUserThenSubmitProposal(LookupUserThenSubmitProposalJob),
+    SubmitProposal(Box<SubmitProposalJob>),
+    LookupUserThenSubmitProposal(Box<LookupUserThenSubmitProposalJob>),
     ProcessUserRefund(ProcessUserRefundJob),
     TopUpNeuron(TopUpNeuronJob),
     RefreshNeuron(RefreshNeuronJob),
@@ -28,7 +28,9 @@ pub struct SubmitProposalJob {
     pub user_id: UserId,
     pub neuron_id: SnsNeuronId,
     pub proposal: ProposalToSubmit,
-    pub payment: icrc1::CompletedCryptoTransaction,
+    pub ledger: CanisterId,
+    pub payment_amount: u128,
+    pub transaction_fee: u128,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -94,7 +96,9 @@ impl Job for SubmitProposalJob {
                 self.governance_canister_id,
                 self.neuron_id,
                 self.proposal,
-                self.payment,
+                self.ledger,
+                self.payment_amount,
+                self.transaction_fee,
             )
             .await;
         });

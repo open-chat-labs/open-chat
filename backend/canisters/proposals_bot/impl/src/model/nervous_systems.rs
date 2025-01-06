@@ -6,7 +6,7 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap};
 use std::mem;
 use types::{
-    icrc1, CanisterId, MessageId, MessageIndex, Milliseconds, MultiUserChat, Proposal, ProposalDecisionStatus, ProposalId,
+    CanisterId, MessageId, MessageIndex, Milliseconds, MultiUserChat, Proposal, ProposalDecisionStatus, ProposalId,
     ProposalRewardStatus, ProposalUpdate, SnsNeuronId, TimestampMillis, UserId,
 };
 
@@ -65,14 +65,15 @@ impl NervousSystems {
     pub fn validate_submit_proposal_payment(
         &self,
         governance_canister_id: &CanisterId,
-        payment: &icrc1::CompletedCryptoTransaction,
+        payment_ledger: CanisterId,
+        payment_amount: u128,
     ) -> Result<SnsNeuronId, ValidateSubmitProposalPaymentError> {
         use ValidateSubmitProposalPaymentError::*;
         if let Some(ns) = self.nervous_systems.get(governance_canister_id) {
             if let Some(neuron_id) = ns.neuron_id_for_submitting_proposals {
-                return if payment.ledger != ns.ledger_canister_id {
+                return if payment_ledger != ns.ledger_canister_id {
                     Err(IncorrectLedger)
-                } else if u64::try_from(payment.amount).unwrap() < ns.proposal_rejection_fee {
+                } else if u64::try_from(payment_amount).unwrap() < ns.proposal_rejection_fee {
                     Err(InsufficientPayment(ns.proposal_rejection_fee + ns.transaction_fee))
                 } else {
                     Ok(neuron_id)

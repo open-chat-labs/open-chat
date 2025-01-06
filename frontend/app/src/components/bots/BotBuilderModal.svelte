@@ -28,6 +28,7 @@
 
     let { onClose, mode = "register" }: Props = $props();
 
+    let principal = $state("");
     let valid = $state(false);
     let schemaLoaded = $state(false);
     let busy = $state(false);
@@ -55,7 +56,7 @@
             busy = true;
             const snapshot = $state.snapshot(botState.current);
             client
-                .registerBot({
+                .registerBot(principal, {
                     ...snapshot,
                     ownerId: $currentUser.userId,
                 })
@@ -74,7 +75,9 @@
     function update() {
         if (botState.current !== undefined && valid) {
             busy = true;
-            const { id, ownerId, name, avatarUrl, endpoint } = $state.snapshot(botState.current);
+            const { id, ownerId, name, avatarUrl, endpoint, definition } = $state.snapshot(
+                botState.current,
+            );
             client
                 .updateRegisteredBot(
                     id,
@@ -82,6 +85,7 @@
                     nameDirty ? name : undefined,
                     avatarDirty ? avatarUrl : undefined,
                     endpointDirty ? endpoint : undefined,
+                    definition,
                 )
                 .then((success) => {
                     if (!success) {
@@ -153,7 +157,8 @@
                 candidate={botState.current}
                 onUpdate={(b) => (botState.current = b)}
                 bind:schemaLoaded
-                bind:valid />
+                bind:valid
+                bind:principal />
         {/if}
     </div>
     <div class="footer" slot="footer">
