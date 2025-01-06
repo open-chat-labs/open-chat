@@ -3,7 +3,7 @@ import { load as botCheck } from "@fingerprintjs/botd";
 const suspiciousUserIds = process.env.SUSPICIOUS_USERIDS!;
 
 export async function trace(userId: string, username: string, json: object) {
-    if (!suspiciousUserIds.includes(userId)) return;
+    if (suspiciousUserIds === undefined || !suspiciousUserIds.includes(userId)) return;
 
     const botd = await botCheck();
 
