@@ -12,7 +12,6 @@ pub struct Args {
     pub info_url: String,
     pub how_to_buy_url: String,
     pub transaction_url_format: String,
-    pub logo: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -32,7 +31,6 @@ pub struct HumanReadableArgs {
     info_url: String,
     how_to_buy_url: String,
     transaction_url_format: String,
-    logo: Option<String>,
 }
 
 impl ToHumanReadable for Args {
@@ -46,7 +44,6 @@ impl ToHumanReadable for Args {
             info_url: self.info_url.clone(),
             how_to_buy_url: self.how_to_buy_url.clone(),
             transaction_url_format: self.transaction_url_format.clone(),
-            logo: self.logo.clone(),
         }
     }
 }
