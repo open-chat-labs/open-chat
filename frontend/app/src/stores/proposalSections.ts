@@ -13,7 +13,8 @@ export type ProposalActionCategory =
     | "storageIndex"
     | "cyclesDispenser"
     | "registry"
-    | "neuronController";
+    | "neuronController"
+    | "openchatInstaller";
 
 export type ProposalSectionState = Record<ProposalActionCategory, boolean>;
 
@@ -29,6 +30,7 @@ const defaultSectionState: ProposalSectionState = {
     cyclesDispenser: false,
     registry: false,
     neuronController: false,
+    openchatInstaller: false,
 };
 
 function initialise() {

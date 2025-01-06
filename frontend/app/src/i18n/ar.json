@@ -1355,6 +1355,7 @@
         "noEligibleNeurons": "لم يتم العثور على الخلايا العصبية المؤهلة",
         "noEligibleNeuronsMessage": "لم يتم العثور على أي خلايا عصبية مؤهلة أو مرتبطة. للتصويت على المقترحات من داخل OpenChat، يجب عليك أولاً إضافة معرف مستخدم OpenChat الخاص بك كمفتاح سريع لأي خلايا عصبية ترغب في التصويت بها. <br/><br/>معرف مستخدم OpenChat الخاص بك هو: {userId}. <br/><br/>لمزيد من المعلومات حول التصويت والحوكمة، اقرأ <a target=\"_blank\" href=\"https://oc.app/blog/governance\">منشور المدونة هذا</a>.",
         "notificationsAction": "فهرس الإشعارات الإجراءات",
+        "openchatInstallerAction": "إجراءات تثبيت OpenChat",
         "proposalNotAceptingVotes": "هذا الاقتراح لا يقبل الأصوات - حاول إعادة تحميل الصفحة",
         "proposalsBotAction": "اقتراحات إجراءات الروبوت",
         "proposedBy": "مقترح من قبل",
