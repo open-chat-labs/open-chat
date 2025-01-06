@@ -1355,6 +1355,7 @@
         "noEligibleNeurons": "未找到符合条件的神经元",
         "noEligibleNeuronsMessage": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您想要投票的任何神经元。<br/><br/>您的 OpenChat 用户 ID 是：{userId}。<br/><br/>有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。",
         "notificationsAction": "通知索引操作",
+        "openchatInstallerAction": "OpenChat 安装程序操作",
         "proposalNotAceptingVotes": "此提案不接受投票 - 尝试重新加载页面",
         "proposalsBotAction": "提案机器人操作",
         "proposedBy": "提议者",

@@ -190,6 +190,7 @@
             {#if !me}
                 <ButtonGroup align="fill">
                     <SecureButton
+                        label={"Prize message clicked"}
                         loading={$claimsStore.has(messageId)}
                         onClick={claim}
                         {disabled}
