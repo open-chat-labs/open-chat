@@ -92,7 +92,7 @@
         | "register_bot"
         | "transfer_sns_funds"
         | "upgrade_sns_to_next_version"
-        | "register_external_acievement"
+        | "register_external_achievement"
         | "add_token"
         | "update_token" = "motion";
     let error: string | undefined = undefined;
@@ -126,7 +126,7 @@
     $: insufficientFundsForPayment =
         cryptoBalance <
         requiredFunds +
-            (selectedProposalType === "register_external_acievement"
+            (selectedProposalType === "register_external_achievement"
                 ? achievementChatCost
                 : selectedProposalType === "add_token"
                   ? TOKEN_LISTING_FEE
@@ -149,7 +149,7 @@
     $: addOrUpdateTokenHowToBuyUrl = "";
     $: addOrUpdateTokenInfoUrl = "";
     $: addOrUpdateTokenTransactionUrlFormat = "";
-    $: tokenLogo = "";
+    $: logo = "";
     $: achievementUrl = "";
     $: awardingAchievementCanisterId = "";
     $: valid =
@@ -165,25 +165,23 @@
                 amountValid &&
                 recipientOwnerValid &&
                 recipientSubaccountValid) ||
-            (selectedProposalType === "register_external_acievement" &&
+            (selectedProposalType === "register_external_achievement" &&
                 achievementNameValid &&
                 chitRewardValid &&
                 maxAwardsValid &&
                 achievementExpiryValid &&
-                isLogoValid(tokenLogo) &&
+                isLogoValid(logo) &&
                 achievementUrl.length > 0 &&
                 awardingAchievementCanisterId.length > 0 &&
                 isPrincipalValid(awardingAchievementCanisterId)) ||
             (selectedProposalType === "add_token" &&
                 isPrincipalValid(addOrUpdateTokenLedgerCanisterId) &&
                 addOrUpdateTokenHowToBuyUrl.length > 0 &&
-                addOrUpdateTokenTransactionUrlFormat.length > 0 &&
-                isLogoValid(tokenLogo)) ||
+                addOrUpdateTokenTransactionUrlFormat.length > 0) ||
             (selectedProposalType === "update_token" &&
                 isPrincipalValid(addOrUpdateTokenLedgerCanisterId) &&
                 (addOrUpdateTokenHowToBuyUrl.length > 0 ||
-                    addOrUpdateTokenTransactionUrlFormat.length > 0 ||
-                    (tokenLogo.length > 0 && isLogoValid(tokenLogo)))));
+                    addOrUpdateTokenTransactionUrlFormat.length > 0)));
     $: canSubmit =
         step === 2 ||
         (step === 1 &&
@@ -221,7 +219,7 @@
         busy = true;
 
         if (
-            selectedProposalType === "register_external_acievement" ||
+            selectedProposalType === "register_external_achievement" ||
             selectedProposalType === "add_token"
         ) {
             const addToken = selectedProposalType === "add_token";
@@ -282,7 +280,6 @@
                         addOrUpdateTokenInfoUrl,
                         addOrUpdateTokenHowToBuyUrl,
                         addOrUpdateTokenTransactionUrlFormat,
-                        tokenLogo,
                     ),
                 };
             }
@@ -297,11 +294,10 @@
                         addOrUpdateTokenInfoUrl,
                         addOrUpdateTokenHowToBuyUrl,
                         addOrUpdateTokenTransactionUrlFormat,
-                        tokenLogo,
                     ),
                 };
             }
-            case "register_external_acievement": {
+            case "register_external_achievement": {
                 return {
                     kind: "execute_generic_nervous_system_function",
                     functionId: BigInt(1012),
@@ -310,7 +306,7 @@
                         $user.userId,
                         achivementName,
                         achievementUrl,
-                        tokenLogo,
+                        logo,
                         awardingAchievementCanisterId,
                         chitReward,
                         BigInt(Date.now()) + achievementExpiry,
@@ -431,7 +427,7 @@
                         <option value={"upgrade_sns_to_next_version"}
                             >Upgrade SNS to next version</option>
                         {#if symbol === "CHAT"}
-                            <option value={"register_external_acievement"}
+                            <option value={"register_external_achievement"}
                                 >Register external achievement</option>
                             <option value={"add_token"}>Add token</option>
                             <option value={"update_token"}>Update token</option>
@@ -576,7 +572,7 @@
                                 })} />
                         </section>
                     </div>
-                {:else if selectedProposalType === "register_external_acievement"}
+                {:else if selectedProposalType === "register_external_achievement"}
                     <div>
                         <section>
                             <Legend label={i18nKey("proposal.maker.achievementName")} required />
@@ -604,10 +600,10 @@
                             <Legend label={i18nKey("proposal.maker.achievementLogo")} />
                             <Input
                                 disabled={busy}
-                                invalid={!isLogoValid(tokenLogo)}
+                                invalid={!isLogoValid(logo)}
                                 minlength={0}
                                 maxlength={50000}
-                                bind:value={tokenLogo}
+                                bind:value={logo}
                                 countdown
                                 placeholder={i18nKey("data:image/svg+xml;base64,PHN2ZyB3aW...")} />
                         </section>
@@ -719,24 +715,13 @@
                                     `https://token.com/transactions/{transaction_index}`,
                                 )} />
                         </section>
-                        <section>
-                            <Legend label={i18nKey("proposal.maker.tokenLogo")} />
-                            <Input
-                                disabled={busy}
-                                invalid={!isLogoValid(tokenLogo)}
-                                minlength={0}
-                                maxlength={50000}
-                                bind:value={tokenLogo}
-                                countdown
-                                placeholder={i18nKey("data:image/svg+xml;base64,PHN2ZyB3aW...")} />
-                        </section>
                     </div>
                 {/if}
             </div>
         </div>
     </div>
     <span class="footer" slot="footer">
-        {#if (selectedProposalType === "register_external_acievement" || selectedProposalType === "add_token") && step === 2}
+        {#if (selectedProposalType === "register_external_achievement" || selectedProposalType === "add_token") && step === 2}
             <p class="message" class:error={insufficientFundsForPayment}>
                 <Translatable
                     resourceKey={i18nKey(
