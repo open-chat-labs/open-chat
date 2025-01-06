@@ -1,7 +1,11 @@
-const fishy = ["5qha5-vqaaa-aaaar-asssq-cai", "uzklx-viaaa-aaaaf-bo7aq-cai"];
+import { load as botCheck } from "@fingerprintjs/botd";
 
-export function trace(userId: string, username: string, json: object) {
-    if (!fishy.includes(userId)) return;
+const suspiciousUserIds = process.env.SUSPICIOUS_USERIDS!;
+
+export async function trace(userId: string, username: string, json: object) {
+    if (!suspiciousUserIds.includes(userId)) return;
+
+    const botd = await botCheck();
 
     const err = new Error();
     let headers = new Headers();
@@ -13,6 +17,7 @@ export function trace(userId: string, username: string, json: object) {
         body: JSON.stringify({
             ...json,
             username,
+            bot: botd.detect(),
             stack: err.stack,
         }),
     }).catch((err) => console.warn("Trace logging failed", err));

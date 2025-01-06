@@ -289,6 +289,7 @@ export default {
                 process.env.WALLET_CONNECT_PROJECT_ID,
             ),
             "process.env.SERVICE_WORKER_PATH": SERVICE_WORKER_PATH,
+            "process.env.SUSPICIOUS_USERIDS": process.env.SUSPICIOUS_USERIDS,
         }),
 
         html({
