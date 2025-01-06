@@ -24,7 +24,7 @@
         portal.appendChild(ref);
 
         if (fade) {
-            tick().then(() => ref.classList.add("faded"));
+            tick().then(() => ref?.classList.add("faded"));
         }
 
         window.addEventListener("popstate", popState);
