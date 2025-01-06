@@ -4,9 +4,15 @@
     import Button from "./Button.svelte";
     import { suspectedAutomationBot } from "../stores/automation";
     import { isTouchDevice } from "../utils/devices";
+    import { trace } from "../utils/trace";
+    import { currentUser } from "openchat-client";
 
-    let { children, onClick, ...rest }: ButtonProps & { onClick: (ev: MouseEvent) => void } =
-        $props();
+    let {
+        children,
+        onClick,
+        label,
+        ...rest
+    }: ButtonProps & { label: string; onClick: (ev: MouseEvent) => void } = $props();
 
     // real users move, pause and then click. Bots either don't move at all or move and then click immediately
     const PAUSE_TRESHOLD = 10;
@@ -27,12 +33,14 @@
     function probablyBot(ev: MouseEvent): boolean {
         const pause = Date.now() - lastMoved;
         const fakePause = pause < PAUSE_TRESHOLD && !isTouchDevice;
-        console.debug("Suspected bot click detected: ", pause, isTouchDevice, ev.isTrusted, $suspectedAutomationBot)
-        return (
-            fakePause ||
-            !ev.isTrusted ||
-            $suspectedAutomationBot
-        );
+        trace($currentUser.userId, $currentUser.username, {
+            label,
+            pause,
+            isTouchDevice,
+            isTrusted: ev.isTrusted,
+            isSuspectesdBot: $suspectedAutomationBot,
+        });
+        return fakePause || !ev.isTrusted || $suspectedAutomationBot;
     }
 
     function internalOnclick(ev: MouseEvent) {
