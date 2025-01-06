@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1550](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1550-cycles_dispenser)] - 2025-01-06
+
 ### Changed
 
 - Log message if an unauthorized canister tries to request cycles ([#7163](https://github.com/open-chat-labs/open-chat/pull/7163))

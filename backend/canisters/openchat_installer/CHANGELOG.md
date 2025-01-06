@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1549](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1549-openchat_installer)] - 2025-01-06
+
 ### Fixed
 
 - Fix `upgrade_canister` to first assemble the wasm from the chunks ([#7161](https://github.com/open-chat-labs/open-chat/pull/7161))
