@@ -1355,6 +1355,7 @@
         "noEligibleNeurons": "לא נמצאו נוירונים מתאימים",
         "noEligibleNeuronsMessage": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את מזהה המשתמש שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם.<br/><br/> מזהה המשתמש שלך ב-OpenChat הוא: {userId}.<br/><br/> למידע נוסף על הצבעה וממשל קרא <a target=\"_blank\" href=\"https://oc.app/blog/governance\">פוסט זה בבלוג</a> .",
         "notificationsAction": "פעולות אינדקס התראות",
+        "openchatInstallerAction": "פעולות מתקין OpenChat",
         "proposalNotAceptingVotes": "הצעה זו אינה מקבלת הצבעות - נסה לטעון מחדש את הדף",
         "proposalsBotAction": "הצעות פעולות בוט",
         "proposedBy": "הוצע על ידי",
