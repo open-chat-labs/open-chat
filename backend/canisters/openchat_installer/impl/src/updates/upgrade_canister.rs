@@ -58,10 +58,10 @@ struct PrepareResult {
 }
 
 fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
-    let canister_wasm = state.data.canister_wasms.get(args.canister_type);
+    let wasm_hash = state.data.canister_wasms.chunks_hash(args.canister_type);
 
-    if canister_wasm.wasm_hash != args.wasm_hash {
-        Err(UpgradeChunkedCanisterWasmResponse::HashMismatch(canister_wasm.wasm_hash))
+    if wasm_hash != args.wasm_hash {
+        Err(UpgradeChunkedCanisterWasmResponse::HashMismatch(wasm_hash))
     } else {
         let canister_id = match args.canister_type {
             CanisterType::UserIndex => state.data.user_index_canister_id,
@@ -71,7 +71,7 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
 
         Ok(PrepareResult {
             canister_id,
-            wasm: canister_wasm.wasm.module.clone(),
+            wasm: state.data.canister_wasms.wasm_from_chunks(args.canister_type),
             args: UpgradeChunkedCanisterWasmArgs {
                 version: args.version,
                 wasm_hash: args.wasm_hash,
