@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Remove logo from "Add token" proposals since we get it from the ledger ([#7160](https://github.com/open-chat-labs/open-chat/pull/7160))
+
 ## [[2.0.1539](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1539-registry)] - 2024-12-19
 
 ### Changed
