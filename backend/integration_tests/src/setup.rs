@@ -576,7 +576,7 @@ pub fn install_icrc_ledger(
         transfer_fee: transfer_fee.into(),
         token_name,
         token_symbol,
-        metadata: Vec::new(),
+        metadata: vec![("icrc1:symbol".to_string(), MetadataValue::Text("logo".to_string()))],
         archive_options: ArchiveOptions {
             trigger_threshold: 1000,
             num_blocks_to_archive: 1000,

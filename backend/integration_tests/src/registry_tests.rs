@@ -26,7 +26,6 @@ fn add_token_succeeds() {
     let info_url = "info".to_string();
     let how_to_buy_url = "how to buy".to_string();
     let transaction_url_format = "transaction format".to_string();
-    let logo = "logo".to_string();
 
     let add_token_response = client::registry::add_token(
         env,
@@ -39,7 +38,6 @@ fn add_token_succeeds() {
             info_url: info_url.clone(),
             how_to_buy_url: how_to_buy_url.clone(),
             transaction_url_format: transaction_url_format.clone(),
-            logo: Some(logo.clone()),
         },
     );
 
@@ -75,7 +73,6 @@ fn add_token_succeeds() {
         assert_eq!(token.info_url, info_url);
         assert_eq!(token.how_to_buy_url, how_to_buy_url);
         assert_eq!(token.transaction_url_format, transaction_url_format);
-        assert_eq!(token.logo, logo);
         assert_eq!(token.last_updated, now);
     } else {
         panic!()
@@ -109,7 +106,6 @@ fn update_token_succeeds() {
     let info_url = "info".to_string();
     let how_to_buy_url = "how to buy".to_string();
     let transaction_url_format = "transaction format".to_string();
-    let logo = "logo".to_string();
 
     client::registry::add_token(
         env,
@@ -122,7 +118,6 @@ fn update_token_succeeds() {
             info_url: info_url.clone(),
             how_to_buy_url: how_to_buy_url.clone(),
             transaction_url_format: transaction_url_format.clone(),
-            logo: Some(logo.clone()),
         },
     );
 
