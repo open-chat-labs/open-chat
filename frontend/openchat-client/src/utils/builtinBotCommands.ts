@@ -215,7 +215,6 @@ export const builtinBot: InternalBot = {
                 name: "update_bot",
                 description: "bots.update_bot.desc",
                 permissions: emptyPermissions,
-                devmode: true,
                 params: [],
             },
             {
