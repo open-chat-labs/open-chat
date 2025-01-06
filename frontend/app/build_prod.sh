@@ -10,5 +10,6 @@ export CUSTOM_DOMAINS=oc.app,webtest.oc.app
 export BLOB_URL_PATTERN=https://{canisterId}.raw.icp0.io/{blobType}
 export ACHIEVEMENT_URL_PATH=https://{canisterId}.raw.icp0.io
 export WALLET_CONNECT_PROJECT_ID=adf8b4a7c5514a8229981aabdee2e246
+export PREVIEW_PROXY_URL=https://dy7sqxe9if6te.cloudfront.net
 
 npx rollup -c

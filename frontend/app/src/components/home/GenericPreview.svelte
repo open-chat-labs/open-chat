@@ -39,25 +39,16 @@
     }
 
     async function loadPreview(url: string): Promise<LinkInfo> {
-        const response = await fetch(`https://proxy.cors.sh/${url}`, {
-            headers: {
-                "x-cors-api-key": process.env.CORS_APIKEY!,
-            },
-        });
+        const response = await fetch(
+            `${process.env.PREVIEW_PROXY_URL}/preview?url=${encodeURIComponent(url)}`,
+        );
 
-        const html = await response.text();
-        const doc = new DOMParser().parseFromString(html, "text/html");
-        const title = doc.querySelector('meta[property="og:title"]')?.getAttribute("content");
-        const description = doc
-            .querySelector('meta[property="og:description"]')
-            ?.getAttribute("content");
-        const image = doc.querySelector('meta[property="og:image"]')?.getAttribute("content");
-
+        const meta = await response.json();
         return {
             url,
-            title,
-            description,
-            image: image ? new URL(image, url).toString() : undefined,
+            title: meta.title,
+            description: meta.description,
+            image: meta.image ? new URL(meta.image, url).toString() : undefined,
         };
     }
 
