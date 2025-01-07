@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_cycles_dispenser_client, init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{read_state, Data};
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::api::management_canister::main::{CanisterSettings, UpdateSettingsArgument};
@@ -8,7 +8,8 @@ use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use std::time::Duration;
 use storage_index_canister::post_upgrade::Args;
-use tracing::{error, info};
+use tracing::info;
+use types::CanisterId;
 
 #[post_upgrade]
 #[trace]
@@ -31,24 +32,23 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(increase_reserved_cycles_limits()));
+    ic_cdk_timers::set_timer(Duration::ZERO, || {
+        ic_cdk::spawn(increase_heap_memory_limit(
+            CanisterId::from_text("6xr54-haaaa-aaaap-qhotq-cai").unwrap(),
+        ))
+    });
 }
 
-async fn increase_reserved_cycles_limits() {
-    let bucket_ids: Vec<_> = read_state(|state| state.data.buckets.iter().map(|b| b.canister_id).collect());
+async fn increase_heap_memory_limit(canister_id: CanisterId) {
+    const HALF_GB: u128 = 512 * 1024 * 1024;
 
-    for bucket in bucket_ids {
-        match ic_cdk::api::management_canister::main::update_settings(UpdateSettingsArgument {
-            canister_id: bucket,
-            settings: CanisterSettings {
-                reserved_cycles_limit: Some(10_000_000_000_000u128.into()), // 10T
-                ..Default::default()
-            },
-        })
-        .await
-        {
-            Ok(_) => info!(%bucket, "Reserved cycles limit increased"),
-            Err(error) => error!(%bucket, ?error, "Failed to increase reserved cycles limit"),
-        }
-    }
+    ic_cdk::api::management_canister::main::update_settings(UpdateSettingsArgument {
+        canister_id,
+        settings: CanisterSettings {
+            wasm_memory_limit: Some((7 * HALF_GB).into()), // 3.5 GB
+            ..Default::default()
+        },
+    })
+    .await
+    .unwrap()
 }
