@@ -135,10 +135,6 @@ impl EventsMap for ChatEventsStableStorage {
     }
 }
 
-fn event_to_bytes(value: EventWrapperInternal<ChatEventInternal>) -> Vec<u8> {
-    msgpack::serialize_then_unwrap(&value)
-}
-
 fn bytes_to_event(bytes: &[u8]) -> EventWrapperInternal<ChatEventInternal> {
     match msgpack::deserialize(bytes) {
         Ok(result) => result,
