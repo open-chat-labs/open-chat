@@ -47,7 +47,7 @@ pub struct File {
     pub accessors: BTreeSet<AccessorId>,
     #[serde(rename = "h", alias = "hash")]
     pub hash: Hash,
-    #[serde(rename = "m", alias = "mine_type")]
+    #[serde(rename = "m", alias = "mime_type")]
     pub mime_type: String,
 }
 
