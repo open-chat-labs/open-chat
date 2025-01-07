@@ -1,6 +1,4 @@
 use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
-use crate::model::new_joiner_rewards::{NewJoinerRewardMetrics, NewJoinerRewardStatus, NewJoinerRewards};
-use crate::new_joiner_rewards::process_new_joiner_reward;
 use crate::timer_job_types::{MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
 use crate::updates::c2c_freeze_group::freeze_group_impl;
 use activity_notification_state::ActivityNotificationState;
@@ -48,7 +46,6 @@ mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
-mod new_joiner_rewards;
 mod queries;
 mod regular_jobs;
 mod timer_job_types;
@@ -240,17 +237,6 @@ impl RuntimeState {
 
         if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
             self.data.principal_to_user_id_map.insert(args.principal, args.user_id);
-            if let Some(new_joiner_rewards) = &mut self.data.new_joiner_rewards {
-                if let Ok(amount) = new_joiner_rewards.try_claim_user_reward(args.user_id, args.now) {
-                    ic_cdk::spawn(process_new_joiner_reward(
-                        self.env.canister_id(),
-                        args.user_id,
-                        Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
-                        amount,
-                        args.now,
-                    ));
-                }
-            }
         }
 
         result
@@ -403,7 +389,6 @@ impl RuntimeState {
             messages_in_last_day,
             events_in_last_hour,
             events_in_last_day,
-            new_joiner_rewards: self.data.new_joiner_rewards.as_ref().map(|r| r.metrics()),
             frozen: self.data.is_frozen(),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
             community_being_imported_into: self
@@ -483,7 +468,6 @@ struct Data {
     pub internet_identity_canister_id: CanisterId,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
-    pub new_joiner_rewards: Option<NewJoinerRewards>,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -584,7 +568,6 @@ impl Data {
             test_mode,
             invite_code: None,
             invite_code_enabled: false,
-            new_joiner_rewards: None,
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
@@ -765,7 +748,6 @@ pub struct Metrics {
     pub messages_in_last_day: u64,
     pub events_in_last_hour: u64,
     pub events_in_last_day: u64,
-    pub new_joiner_rewards: Option<NewJoinerRewardMetrics>,
     pub frozen: bool,
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub community_being_imported_into: Option<CommunityId>,
