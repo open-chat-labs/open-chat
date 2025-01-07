@@ -3398,7 +3398,7 @@ export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommand
     return {
         name: command.name,
         description: command.description,
-        placeholder: "cockpiss partridge",
+        placeholder: mapOptional(command.placeholder, identity),
         params: command.params.map(externalBotParam),
         permissions: slashCommandPermissions(command.permissions),
     };

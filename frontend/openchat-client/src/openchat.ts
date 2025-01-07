@@ -7969,7 +7969,9 @@ export class OpenChat extends EventTarget {
                         this.#sendPlaceholderMessage(
                             bot.command.messageContext,
                             botContext,
-                            { kind: "bot_placeholder_content" },
+                            bot.command.placeholder !== undefined
+                                ? { kind: "text_content", text: bot.command.placeholder }
+                                : { kind: "bot_placeholder_content" },
                             msgId,
                             bot.id,
                         );

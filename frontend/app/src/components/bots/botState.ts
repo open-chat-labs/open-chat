@@ -150,6 +150,7 @@ export function createBotInstance(
                     name: command.name,
                     messageContext: context,
                     params: get(selectedCommandParamInstances),
+                    placeholder: command.placeholder,
                 },
             };
         case "internal_bot":
