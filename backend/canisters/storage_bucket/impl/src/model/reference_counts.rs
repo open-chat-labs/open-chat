@@ -1,43 +1,42 @@
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{with_map, with_map_mut, FileReferenceCountKeyPrefix, KeyPrefix};
+use stable_memory_map::{with_map, FileReferenceCountKeyPrefix, KeyPrefix, StableMemoryMap};
 use types::Hash;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ReferenceCountsStableMap {
-    prefix: FileReferenceCountKeyPrefix,
+    #[serde(default)]
+    map: StableMemoryMap<FileReferenceCountKeyPrefix, u32>,
 }
 
 impl ReferenceCountsStableMap {
     pub fn incr(&mut self, hash: Hash) -> u32 {
-        let count = self.get(hash).saturating_add(1);
-        self.set(hash, count);
+        let count = self.get(&hash).saturating_add(1);
+        self.set(&hash, count);
         count
     }
 
     pub fn decr(&mut self, hash: Hash) -> u32 {
-        let count = self.get(hash).saturating_sub(1);
-        self.set(hash, count);
+        let count = self.get(&hash).saturating_sub(1);
+        self.set(&hash, count);
         count
     }
 
-    fn get(&self, hash: Hash) -> u32 {
-        with_map(|m| m.get(self.prefix.create_key(&hash)))
-            .map(bytes_to_u32)
-            .unwrap_or_default()
+    fn get(&self, hash: &Hash) -> u32 {
+        self.map.get(hash).unwrap_or_default()
     }
 
-    pub fn set(&mut self, hash: Hash, count: u32) {
+    fn set(&mut self, hash: &Hash, count: u32) {
         if count == 0 {
-            with_map_mut(|m| m.remove(self.prefix.create_key(&hash)));
+            self.map.remove(&hash);
         } else {
-            with_map_mut(|m| m.insert(self.prefix.create_key(&hash), count.to_be_bytes().to_vec()));
+            self.map.insert(hash, count);
         }
     }
 
     #[cfg(test)]
     pub fn get_all(&self) -> std::collections::BTreeMap<Hash, u32> {
         with_map(|m| {
-            m.range(self.prefix.create_key(&[0; 32])..)
+            m.range(self.map.prefix().create_key(&[0; 32])..)
                 .map(|(k, v)| (k.hash(), bytes_to_u32(v)))
                 .collect()
         })

@@ -1,13 +1,18 @@
 use crate::CommunityMemberInternal;
 use candid::Deserialize;
 use serde::Serialize;
-use stable_memory_map::{with_map, with_map_mut, KeyPrefix, MemberKeyPrefix};
+use stable_memory_map::{with_map, KeyPrefix, MemberKeyPrefix, StableMemoryMap};
 use std::collections::BTreeSet;
 use types::{is_default, CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version};
 
 #[derive(Serialize, Deserialize)]
 pub struct MembersStableStorage {
-    prefix: MemberKeyPrefix,
+    #[serde(default = "default_map")]
+    map: StableMemoryMap<MemberKeyPrefix, CommunityMemberStableStorage>,
+}
+
+fn default_map() -> StableMemoryMap<MemberKeyPrefix, CommunityMemberStableStorage> {
+    StableMemoryMap::new(MemberKeyPrefix::new_from_community())
 }
 
 impl MembersStableStorage {
@@ -18,21 +23,15 @@ impl MembersStableStorage {
     }
 
     pub fn get(&self, user_id: &UserId) -> Option<CommunityMemberInternal> {
-        with_map(|m| {
-            m.get(self.prefix.create_key(user_id))
-                .map(|v| bytes_to_member(&v).hydrate(*user_id))
-        })
+        self.map.get(user_id).map(|m| m.hydrate(*user_id))
     }
 
     pub fn insert(&mut self, member: CommunityMemberInternal) {
-        with_map_mut(|m| m.insert(self.prefix.create_key(&member.user_id), member_to_bytes(member.into())));
+        self.map.insert(&member.user_id, &member.into());
     }
 
     pub fn remove(&mut self, user_id: &UserId) -> Option<CommunityMemberInternal> {
-        with_map_mut(|m| {
-            m.remove(self.prefix.create_key(user_id))
-                .map(|v| bytes_to_member(&v).hydrate(*user_id))
-        })
+        self.map.remove(user_id).map(|m| m.hydrate(*user_id))
     }
 
     #[cfg(test)]
@@ -41,8 +40,8 @@ impl MembersStableStorage {
         use stable_memory_map::Key;
 
         with_map(|m| {
-            m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)
-                .take_while(|(k, _)| k.matches_prefix(&self.prefix))
+            m.range(self.map.prefix().create_key(&Principal::from_slice(&[]).into())..)
+                .take_while(|(k, _)| k.matches_prefix(&self.prefix()))
                 .map(|(k, v)| bytes_to_member(&v).hydrate(k.user_id()))
                 .collect()
         })
@@ -52,7 +51,7 @@ impl MembersStableStorage {
 impl Default for MembersStableStorage {
     fn default() -> Self {
         MembersStableStorage {
-            prefix: MemberKeyPrefix::new_from_community(),
+            map: StableMemoryMap::new(MemberKeyPrefix::new_from_community()),
         }
     }
 }
