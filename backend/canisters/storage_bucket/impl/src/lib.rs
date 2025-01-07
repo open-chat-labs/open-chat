@@ -86,11 +86,8 @@ struct Data {
     freezing_limit: Timestamped<Option<Cycles>>,
     rng_seed: [u8; 32],
     test_mode: bool,
-    #[serde(default)]
     files_migrated: bool,
-    #[serde(default)]
     file_reference_counts_migrated: bool,
-    #[serde(default)]
     files_per_accessor_migrated: bool,
 }
 
