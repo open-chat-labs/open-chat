@@ -42,7 +42,8 @@ impl MembersStableStorage {
     }
 
     pub fn insert(&mut self, member: GroupMemberInternal) {
-        self.map.insert(&member.user_id, &member.into());
+        let user_id = member.user_id;
+        self.map.insert(&user_id, &(member.into()));
     }
 
     pub fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal> {
@@ -67,7 +68,7 @@ impl MembersStableStorage {
             m.range(start_key.clone()..)
                 .skip_while(|(k, _)| *k == start_key)
                 .take_while(|(k, v)| {
-                    if !k.matches_prefix(&self.map.prefix()) {
+                    if !k.matches_prefix(self.map.prefix()) {
                         return false;
                     }
                     total_bytes += v.len();
@@ -82,7 +83,7 @@ impl MembersStableStorage {
     pub fn all_members(&self) -> Vec<GroupMemberInternal> {
         with_map(|m| {
             m.range(self.map.prefix().create_key(&Principal::from_slice(&[]).into())..)
-                .take_while(|(k, _)| k.matches_prefix(&self.map.prefix()))
+                .take_while(|(k, _)| k.matches_prefix(self.map.prefix()))
                 .map(|(k, v)| bytes_to_member(&v).hydrate(k.user_id()))
                 .collect()
         })

@@ -78,7 +78,7 @@ impl<KeyPrefix: crate::KeyPrefix + Default, Value> Default for StableMemoryMap<K
     fn default() -> Self {
         StableMemoryMap {
             prefix: KeyPrefix::default(),
-            _phantom: PhantomData::default(),
+            _phantom: PhantomData,
         }
     }
 }

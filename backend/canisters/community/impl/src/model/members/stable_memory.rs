@@ -1,7 +1,7 @@
 use crate::CommunityMemberInternal;
 use candid::Deserialize;
 use serde::Serialize;
-use stable_memory_map::{with_map, KeyPrefix, MemberKeyPrefix, StableMemoryMap};
+use stable_memory_map::{MemberKeyPrefix, StableMemoryMap};
 use std::collections::BTreeSet;
 use types::{is_default, CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version};
 
@@ -27,7 +27,8 @@ impl MembersStableStorage {
     }
 
     pub fn insert(&mut self, member: CommunityMemberInternal) {
-        self.map.insert(&member.user_id, &member.into());
+        let user_id = member.user_id;
+        self.map.insert(&user_id, &member.into());
     }
 
     pub fn remove(&mut self, user_id: &UserId) -> Option<CommunityMemberInternal> {
@@ -37,12 +38,12 @@ impl MembersStableStorage {
     #[cfg(test)]
     pub fn all_members(&self) -> Vec<CommunityMemberInternal> {
         use candid::Principal;
-        use stable_memory_map::Key;
+        use stable_memory_map::{with_map, Key, KeyPrefix};
 
         with_map(|m| {
             m.range(self.map.prefix().create_key(&Principal::from_slice(&[]).into())..)
-                .take_while(|(k, _)| k.matches_prefix(&self.prefix()))
-                .map(|(k, v)| bytes_to_member(&v).hydrate(k.user_id()))
+                .take_while(|(k, _)| k.matches_prefix(self.map.prefix()))
+                .map(|(k, v)| msgpack::deserialize_then_unwrap::<CommunityMemberStableStorage>(&v).hydrate(k.user_id()))
                 .collect()
         })
     }
@@ -113,12 +114,4 @@ impl From<CommunityMemberInternal> for CommunityMemberStableStorage {
             suspended: value.suspended,
         }
     }
-}
-
-fn member_to_bytes(member: CommunityMemberStableStorage) -> Vec<u8> {
-    msgpack::serialize_then_unwrap(member)
-}
-
-fn bytes_to_member(bytes: &[u8]) -> CommunityMemberStableStorage {
-    msgpack::deserialize_then_unwrap(bytes)
 }
