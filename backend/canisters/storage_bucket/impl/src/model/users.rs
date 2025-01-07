@@ -51,7 +51,7 @@ impl Users {
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserRecord {
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(rename = "f", alias = "files_owned", default, skip_serializing_if = "BTreeMap::is_empty")]
     files_owned: BTreeMap<FileId, FileStatusInternal>,
 }
 
