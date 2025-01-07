@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Allow bots to upload 1GB of file data ([#7131](https://github.com/open-chat-labs/open-chat/pull/7131))
 - Pass definition to `update_bot` and propagate to LUIs ([#7135](https://github.com/open-chat-labs/open-chat/pull/7135))
+- Add optional `placeholder` field to `SlashCommandSchema` ([#7172](https://github.com/open-chat-labs/open-chat/pull/7172))
 
 ### Fixed
 
