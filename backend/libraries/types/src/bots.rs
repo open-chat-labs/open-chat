@@ -16,7 +16,6 @@ pub struct BotDefinition {
 pub struct SlashCommandSchema {
     pub name: String,
     pub description: Option<String>,
-    #[serde(default)]
     pub placeholder: Option<String>,
     pub params: Vec<SlashCommandParam>,
     pub permissions: SlashCommandPermissions,
