@@ -34,6 +34,7 @@ fn e2e_bot_test() {
     let commands = vec![SlashCommandSchema {
         name: command_name.clone(),
         description: Some("Hello {user}".to_string()),
+        placeholder: None,
         params: vec![],
         permissions: SlashCommandPermissions {
             community: HashSet::new(),

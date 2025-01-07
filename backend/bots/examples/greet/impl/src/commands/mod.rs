@@ -1,4 +1,5 @@
-use crate::execute_command::{execute_bot_command, InternalError};
+use crate::execute_command::InternalError;
+use ic_cdk::api::call::CallResult;
 use local_user_index_canister::execute_bot_command::BotApiCallError;
 use local_user_index_canister::execute_bot_command::{self};
 use types::bot_actions::{BotMessageAction, MessageContent};
@@ -18,7 +19,10 @@ pub fn send_message_to_oc_chat(bot_api_gateway: CanisterId, content: MessageCont
     ic_cdk::spawn(call_oc_bot_action_inner(bot_api_gateway, args));
 
     async fn call_oc_bot_action_inner(bot_api_gateway: CanisterId, args: execute_bot_command::Args) {
-        let result = match execute_bot_command(bot_api_gateway, &args).await {
+        let response: CallResult<(execute_bot_command::Response,)> =
+            ic_cdk::call(bot_api_gateway, "execute_bot_command", (&args,)).await;
+
+        let result = match response.map(|r| r.0) {
             Ok(Ok(_)) => Ok(()),
             Ok(Err(error)) => match error {
                 BotApiCallError::C2CError(code, message) => Err(InternalError::C2CError(code, message)),

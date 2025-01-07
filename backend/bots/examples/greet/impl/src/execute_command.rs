@@ -27,6 +27,7 @@ pub struct SuccessResult {
 pub struct Message {
     pub id: MessageId,
     pub content: MessageContent,
+    pub finalised: bool,
 }
 
 #[derive(Serialize)]

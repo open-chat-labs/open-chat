@@ -15,6 +15,7 @@ pub async fn greet(bot: BotCommandClaims, access_token: &str) -> Result<SuccessR
         message: Some(Message {
             id: bot.message_id,
             content,
+            finalised: true,
         }),
     })
 }

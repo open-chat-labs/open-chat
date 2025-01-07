@@ -9,6 +9,7 @@ pub fn get_definition() -> BotDefinition {
             SlashCommandSchema {
                 name: "greet".to_string(),
                 description: Some("This will greet the caller".to_string()),
+                placeholder: Some("Please wait".to_string()),
                 params: vec![],
                 permissions: SlashCommandPermissions {
                     community: HashSet::new(),
@@ -19,6 +20,7 @@ pub fn get_definition() -> BotDefinition {
             SlashCommandSchema {
                 name: "joke".to_string(),
                 description: Some("This will send a random joke".to_string()),
+                placeholder: Some("Thinking of a joke...".to_string()),
                 params: vec![],
                 permissions: SlashCommandPermissions {
                     community: HashSet::new(),

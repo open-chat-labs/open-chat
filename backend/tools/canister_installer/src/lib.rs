@@ -1,9 +1,8 @@
-use candid::{CandidType, Principal};
+use candid::Principal;
 use canister_agent_utils::{build_ic_agent, get_canister_wasm, install_wasm, set_controllers, CanisterIds, CanisterName};
 use constants::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
-use serde::Serialize;
 use sha256::sha256;
 use types::{BuildVersion, Cycles};
 
@@ -47,7 +46,6 @@ async fn install_service_canisters_impl(
         ),
         set_controllers(management_canister, &canister_ids.identity, controllers.clone()),
         set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.greet_bot, controllers.clone()),
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
         set_controllers(management_canister, &canister_ids.airdrop_bot, controllers.clone()),
         set_controllers(management_canister, &canister_ids.storage_index, controllers.clone()),
@@ -209,12 +207,6 @@ async fn install_service_canisters_impl(
         chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
         wasm_version: version,
         test_mode,
-    };
-
-    let greet_bot_canister_wasm = get_canister_wasm(CanisterName::GreetBot, version);
-    let greet_bot_init_args = GreetBotArgs {
-        test_mode,
-        oc_public_key: "".to_string(),
     };
 
     let storage_index_canister_wasm = get_canister_wasm(CanisterName::StorageIndex, version);
@@ -455,18 +447,14 @@ async fn install_service_canisters_impl(
             &sign_in_with_solana_wasm.module,
             sign_in_with_solana_init_args,
         ),
-        install_wasm(
-            management_canister,
-            &canister_ids.airdrop_bot,
-            &airdrop_bot_canister_wasm.module,
-            airdrop_bot_init_args,
-        ),
-        install_wasm(
-            management_canister,
-            &canister_ids.greet_bot,
-            &greet_bot_canister_wasm.module,
-            greet_bot_init_args,
-        ),
+    )
+    .await;
+
+    install_wasm(
+        management_canister,
+        &canister_ids.airdrop_bot,
+        &airdrop_bot_canister_wasm.module,
+        airdrop_bot_init_args,
     )
     .await;
 
@@ -653,10 +641,4 @@ mod siws {
         pub targets: Option<Vec<String>>,
         pub runtime_features: Option<Vec<RuntimeFeature>>,
     }
-}
-
-#[derive(CandidType, Serialize, Debug)]
-struct GreetBotArgs {
-    pub oc_public_key: String,
-    pub test_mode: bool,
 }

@@ -17,7 +17,6 @@ async fn main() {
         notifications: opts.notifications,
         identity: opts.identity,
         online_users: opts.online_users,
-        greet_bot: opts.greet_bot,
         proposals_bot: opts.proposals_bot,
         airdrop_bot: opts.airdrop_bot,
         storage_index: opts.storage_index,
@@ -84,9 +83,6 @@ struct Opts {
 
     #[arg(long)]
     online_users: CanisterId,
-
-    #[arg(long)]
-    greet_bot: CanisterId,
 
     #[arg(long)]
     proposals_bot: CanisterId,

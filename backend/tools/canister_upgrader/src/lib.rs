@@ -176,21 +176,6 @@ pub async fn upgrade_airdrop_bot_canister(
     println!("Airdrop bot canister upgraded");
 }
 
-pub async fn upgrade_greet_bot_canister(_identity: Box<dyn Identity>, _url: String, _greet_bot_canister_id: CanisterId) {
-    // TODO
-    // upgrade_top_level_canister(
-    //     identity,
-    //     url,
-    //     greet_bot_canister_id,
-    //     version,
-    //     greet_bot_canister_impl::init::InitOrUpgradeArgs {  },
-    //     CanisterName::AirdropBot,
-    // )
-    // .await;
-
-    println!("Greet bot canister upgraded");
-}
-
 pub async fn upgrade_storage_index_canister(
     identity: Box<dyn Identity>,
     url: String,
