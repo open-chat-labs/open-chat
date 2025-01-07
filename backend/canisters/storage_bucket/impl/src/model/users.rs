@@ -71,18 +71,18 @@ impl UserRecord {
 
 #[derive(Serialize, Deserialize)]
 pub enum FileStatusInternal {
-    #[serde(rename = "c", alias = "Complete")]
+    #[serde(rename = "c")]
     Complete(IndexSyncComplete),
-    #[serde(rename = "u", alias = "Uploading")]
+    #[serde(rename = "u")]
     Uploading(IndexSyncComplete),
-    #[serde(rename = "r", alias = "Rejected")]
+    #[serde(rename = "r")]
     Rejected(RejectedReason),
 }
 
 #[derive(Serialize, Deserialize, Copy, Clone)]
 pub enum IndexSyncComplete {
-    #[serde(rename = "y", alias = "Yes")]
+    #[serde(rename = "y")]
     Yes,
-    #[serde(rename = "n", alias = "No")]
+    #[serde(rename = "n")]
     No,
 }
