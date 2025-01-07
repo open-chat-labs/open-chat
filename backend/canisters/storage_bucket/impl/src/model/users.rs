@@ -1,5 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
+use std::collections::btree_map::Entry::Vacant;
 use std::collections::BTreeMap;
 use types::{FileId, RejectedReason};
 
@@ -10,7 +11,12 @@ pub struct Users {
 
 impl Users {
     pub fn add(&mut self, user_id: Principal) -> bool {
-        self.users.insert(user_id, UserRecord::default()).is_none()
+        if let Vacant(e) = self.users.entry(user_id) {
+            e.insert(UserRecord::default());
+            true
+        } else {
+            false
+        }
     }
 
     pub fn remove(&mut self, user_id: &Principal) -> Option<UserRecord> {
@@ -45,6 +51,7 @@ impl Users {
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserRecord {
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     files_owned: BTreeMap<FileId, FileStatusInternal>,
 }
 
