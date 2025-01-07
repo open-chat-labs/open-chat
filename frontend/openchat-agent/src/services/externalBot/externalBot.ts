@@ -19,7 +19,7 @@ const ApiBotResponse = Type.Union([
                 Type.Object({
                     id: Type.String(),
                     content: MessageContent,
-                    finalised: Type.Boolean(),
+                    finalised: Type.Optional(Type.Boolean()),
                 }),
             ),
         }),
@@ -96,7 +96,7 @@ function externalBotResponse(value: ApiBotResponse): BotCommandResponse {
                 return {
                     messageId: BigInt(id),
                     messageContent: messageContent(content, ""),
-                    finalised,
+                    finalised: finalised ?? false,
                 };
             }),
         };
