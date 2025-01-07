@@ -1,14 +1,12 @@
 use crate::lifecycle::{init_cycles_dispenser_client, init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{read_state, Data};
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
-use ic_cdk::api::management_canister::main::{CanisterSettings, UpdateSettingsArgument};
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
-use std::time::Duration;
 use storage_index_canister::post_upgrade::Args;
-use tracing::{error, info};
+use tracing::info;
 
 #[post_upgrade]
 #[trace]
@@ -30,25 +28,4 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(increase_reserved_cycles_limits()));
-}
-
-async fn increase_reserved_cycles_limits() {
-    let bucket_ids: Vec<_> = read_state(|state| state.data.buckets.iter().map(|b| b.canister_id).collect());
-
-    for bucket in bucket_ids {
-        match ic_cdk::api::management_canister::main::update_settings(UpdateSettingsArgument {
-            canister_id: bucket,
-            settings: CanisterSettings {
-                reserved_cycles_limit: Some(10_000_000_000_000u128.into()), // 10T
-                ..Default::default()
-            },
-        })
-        .await
-        {
-            Ok(_) => info!(%bucket, "Reserved cycles limit increased"),
-            Err(error) => error!(%bucket, ?error, "Failed to increase reserved cycles limit"),
-        }
-    }
 }
