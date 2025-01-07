@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_cycles_dispenser_client, init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{read_state, Data};
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::api::management_canister::main::{CanisterSettings, UpdateSettingsArgument};
@@ -8,7 +8,7 @@ use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use std::time::Duration;
 use storage_index_canister::post_upgrade::Args;
-use tracing::{error, info};
+use tracing::info;
 use types::CanisterId;
 
 #[post_upgrade]
