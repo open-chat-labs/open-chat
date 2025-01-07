@@ -38,6 +38,12 @@
                     "$ref": "#/definitions/NameField",
                     "description": "The name that users will use to trigger this command in OpenChat."
                 },
+                "placeholder": {
+                    "type": "string",
+                    "description": "An optional placeholder message to display in OpenChat while await the initial response from the bot",
+                    "minLength": 5,
+                    "maxLength": 500
+                },
                 "description": {
                     "type": "string",
                     "description": "A brief description of what the slash command does.",

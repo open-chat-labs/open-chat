@@ -411,6 +411,7 @@ import type {
     BotDefinitionResponse,
     BotCommandResponse,
     BotDefinition,
+    BotMessageContext,
 } from "openchat-shared";
 import {
     Stream,
@@ -7838,7 +7839,8 @@ export class OpenChat extends EventTarget {
         chat: ChatSummary,
         threadRootMessageIndex: number | undefined,
         bot: ExternalBotCommandInstance,
-    ): Promise<string> {
+    ): Promise<[string, bigint]> {
+        const messageId = random64();
         return this.#getLocalUserIndex(chat).then((localUserIndex) => {
             return this.#sendRequest({
                 kind: "getAccessToken",
@@ -7846,7 +7848,7 @@ export class OpenChat extends EventTarget {
                 accessTokenType: {
                     kind: "execute_bot_command",
                     messageContext: { chatId: chat.id, threadRootMessageIndex },
-                    messageId: random64(),
+                    messageId,
                     commandName: bot.command.name,
                     parameters: JSON.stringify(bot.command.params),
                     commandText: `/${bot.command.name}`,
@@ -7859,7 +7861,7 @@ export class OpenChat extends EventTarget {
                     throw new Error("Didn't get an access token");
                 }
                 console.log("TOKEN: ", token);
-                return token;
+                return [token, messageId];
             });
         });
     }
@@ -7911,61 +7913,80 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    #sendPlaceholderMessage(
+        msgContext: MessageContext,
+        botContext: BotMessageContext,
+        content: MessageContent,
+        msgId: bigint,
+        senderId: string,
+    ) {
+        if (unconfirmed.contains(msgContext, msgId)) {
+            unconfirmed.overwriteContent(msgContext, msgId, content, botContext);
+        } else {
+            const currentEvents = this.#eventsForMessageContext(msgContext);
+            const [eventIndex, messageIndex] =
+                msgContext.threadRootMessageIndex !== undefined
+                    ? nextEventAndMessageIndexesForThread(currentEvents)
+                    : nextEventAndMessageIndexes();
+            this.dispatchEvent(new SendingMessage(msgContext));
+            const event: EventWrapper<Message> = {
+                index: eventIndex,
+                timestamp: BigInt(Date.now()),
+                event: {
+                    content,
+                    messageIndex,
+                    kind: "message",
+                    sender: senderId,
+                    messageId: msgId,
+                    reactions: [],
+                    tips: {},
+                    edited: false,
+                    forwarded: false,
+                    deleted: false,
+                    blockLevelMarkdown: false,
+                    botContext,
+                },
+            };
+            unconfirmed.add(msgContext, event);
+            this.dispatchEvent(new SentMessage(msgContext, event));
+        }
+    }
+
     executeBotCommand(
         chat: ChatSummary,
         threadRootMessageIndex: number | undefined,
         bot: BotCommandInstance,
     ): Promise<boolean> {
+        const botContext = {
+            initiator: this.#liveState.user.userId,
+            finalised: false,
+            commandText: `/${bot.command.name}`,
+        };
         switch (bot.kind) {
             case "external_bot":
                 return this.#getAuthTokenForBotCommand(chat, threadRootMessageIndex, bot)
-                    .then((token) => this.#callBotCommandEndpoint(bot.endpoint, token))
+                    .then(([token, msgId]) => {
+                        this.#sendPlaceholderMessage(
+                            bot.command.messageContext,
+                            botContext,
+                            { kind: "bot_placeholder_content" },
+                            msgId,
+                            bot.id,
+                        );
+                        return this.#callBotCommandEndpoint(bot.endpoint, token);
+                    })
                     .then((resp) => {
                         if (resp.kind === "failure") {
                             console.error("Bot command failed with: ", resp.error);
                         } else {
-                            if (resp.placeholder !== undefined) {
-                                // we need to somehow act like this message has been sent in the front end
-                                const currentEvents = this.#eventsForMessageContext(
+                            if (resp.message !== undefined) {
+                                this.#sendPlaceholderMessage(
                                     bot.command.messageContext,
+                                    { ...botContext, finalised: resp.message.finalised },
+                                    resp.message.messageContent,
+                                    resp.message.messageId,
+                                    bot.id,
                                 );
-                                const [eventIndex, messageIndex] =
-                                    threadRootMessageIndex !== undefined
-                                        ? nextEventAndMessageIndexesForThread(currentEvents)
-                                        : nextEventAndMessageIndexes();
-
-                                this.dispatchEvent(new SendingMessage(bot.command.messageContext));
-
-                                const msg: Message = {
-                                    content: resp.placeholder?.messageContent,
-                                    messageIndex,
-                                    kind: "message",
-                                    sender: bot.id,
-                                    messageId: resp.placeholder.messageId,
-                                    reactions: [],
-                                    tips: {},
-                                    edited: false,
-                                    forwarded: false,
-                                    deleted: false,
-                                    blockLevelMarkdown: false,
-                                    botContext: {
-                                        initiator: this.#liveState.user.userId,
-                                        finalised: false,
-                                        commandText: `/${bot.command.name}`,
-                                    },
-                                };
-                                const event = {
-                                    index: eventIndex,
-                                    timestamp: BigInt(Date.now()),
-                                    event: msg,
-                                };
-
-                                window.setTimeout(() => {
-                                    unconfirmed.add(bot.command.messageContext, event);
-                                    this.dispatchEvent(
-                                        new SentMessage(bot.command.messageContext, event),
-                                    );
-                                }, 0);
                             }
                         }
                         return resp.kind === "success";

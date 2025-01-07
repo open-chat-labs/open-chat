@@ -1358,7 +1358,8 @@ export function canForward(content: MessageContent): boolean {
         content.kind !== "poll_content" &&
         content.kind !== "deleted_content" &&
         content.kind !== "proposal_content" &&
-        content.kind !== "placeholder_content"
+        content.kind !== "placeholder_content" &&
+        content.kind !== "bot_placeholder_content"
     );
 }
 

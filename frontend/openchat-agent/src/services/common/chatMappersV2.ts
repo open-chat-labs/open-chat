@@ -1537,6 +1537,7 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "prize_content":
         case "prize_winner_content":
         case "placeholder_content":
+        case "bot_placeholder_content":
         case "proposal_content":
         case "message_reminder_content":
         case "message_reminder_created_content":
@@ -3397,6 +3398,7 @@ export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommand
     return {
         name: command.name,
         description: command.description,
+        placeholder: "cockpiss partridge",
         params: command.params.map(externalBotParam),
         permissions: slashCommandPermissions(command.permissions),
     };

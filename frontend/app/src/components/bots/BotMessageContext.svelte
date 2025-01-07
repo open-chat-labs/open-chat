@@ -3,6 +3,7 @@
     import Markdown from "../home/Markdown.svelte";
     import Avatar from "../Avatar.svelte";
     import { getContext } from "svelte";
+    import Typing from "../Typing.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -22,6 +23,9 @@
         <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Tiny} />
     {/if}
     <Markdown {text} />
+    {#if !botContext.finalised}
+        <Typing />
+    {/if}
 </div>
 
 <style lang="scss">

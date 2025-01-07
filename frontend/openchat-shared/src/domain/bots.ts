@@ -110,6 +110,7 @@ export function emptySlashCommand(): SlashCommandSchema {
 export type SlashCommandSchema = {
     name: string;
     description?: string;
+    placeholder?: string;
     params: SlashCommandParam[];
     permissions: SlashCommandPermissions;
     devmode?: boolean;
@@ -171,6 +172,7 @@ export type SlashCommandInstance = {
     name: string;
     messageContext: MessageContext;
     params: SlashCommandParamInstance[];
+    placeholder?: string;
 };
 
 export type Bot = ExternalBot | InternalBot;
@@ -516,10 +518,11 @@ export type BotCommandFailure = {
 
 export type BotCommandSuccess = {
     kind: "success";
-    placeholder?: BotResponseMessage;
+    message?: BotResponseMessage;
 };
 
 export type BotResponseMessage = {
     messageId: bigint;
     messageContent: MessageContent;
+    finalised: boolean;
 };

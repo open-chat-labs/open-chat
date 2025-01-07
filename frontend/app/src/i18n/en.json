@@ -170,6 +170,8 @@
             "choiceValue": "Choice value",
             "commandDescLabel": "Command description",
             "commandDescPlaceholder": "Enter command description",
+            "commandPlaceholderLabel": "Command placeholder message",
+            "commandPlaceholderPlaceholder": "Command placeholder message not specified",
             "commandLabel": "/{name}",
             "commandNameLabel": "Command name",
             "commandNamePlaceholder": "Enter command name",
