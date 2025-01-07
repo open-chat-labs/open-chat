@@ -7839,6 +7839,7 @@ export class OpenChat extends EventTarget {
         chat: ChatSummary,
         threadRootMessageIndex: number | undefined,
         bot: ExternalBotCommandInstance,
+        commandText: string,
     ): Promise<[string, bigint]> {
         const messageId = random64();
         return this.#getLocalUserIndex(chat).then((localUserIndex) => {
@@ -7851,7 +7852,8 @@ export class OpenChat extends EventTarget {
                     messageId,
                     commandName: bot.command.name,
                     parameters: JSON.stringify(bot.command.params),
-                    commandText: `/${bot.command.name}`,
+                    // commandText: `/${bot.command.name}`,
+                    commandText,
                     botId: bot.id,
                     userId: this.#liveState.user.userId,
                 },
@@ -7960,11 +7962,19 @@ export class OpenChat extends EventTarget {
         const botContext = {
             initiator: this.#liveState.user.userId,
             finalised: false,
-            commandText: `/${bot.command.name}`,
+            commandText: JSON.stringify({
+                name: bot.command.name,
+                params: bot.command.params,
+            }),
         };
         switch (bot.kind) {
             case "external_bot":
-                return this.#getAuthTokenForBotCommand(chat, threadRootMessageIndex, bot)
+                return this.#getAuthTokenForBotCommand(
+                    chat,
+                    threadRootMessageIndex,
+                    bot,
+                    botContext.commandText,
+                )
                     .then(([token, msgId]) => {
                         this.#sendPlaceholderMessage(
                             bot.command.messageContext,
