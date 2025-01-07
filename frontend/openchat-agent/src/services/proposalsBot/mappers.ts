@@ -1,27 +1,27 @@
 import type {
-    ApiStakeNeuronForSubmittingProposalsResponse,
-    ApiTopUpNeuronResponse,
-} from "./candid/idl";
-import type {
     StakeNeuronForSubmittingProposalsResponse,
     TopUpNeuronResponse,
 } from "openchat-shared";
 import { CommonResponses } from "openchat-shared";
+import type {
+    ProposalsBotStakeNeuronForSubmittingProposalsResponse,
+    ProposalsBotTopUpNeuronResponse,
+} from "../../typebox";
 
 export function stakeNeuronForSubmittingProposalsResponse(
-    candid: ApiStakeNeuronForSubmittingProposalsResponse,
+    value: ProposalsBotStakeNeuronForSubmittingProposalsResponse,
 ): StakeNeuronForSubmittingProposalsResponse {
-    if ("Success" in candid) {
+    if (typeof value === "object" && "Success" in value) {
         return CommonResponses.success();
     }
-    console.warn("stakeNeuronForSubmittingProposals failed with: ", candid);
+    console.warn("stakeNeuronForSubmittingProposals failed with: ", value);
     return CommonResponses.failure();
 }
 
-export function topUpNeuronResponse(candid: ApiTopUpNeuronResponse): TopUpNeuronResponse {
-    if ("Success" in candid) {
+export function topUpNeuronResponse(value: ProposalsBotTopUpNeuronResponse): TopUpNeuronResponse {
+    if (typeof value === "object" && "Success" in value) {
         return CommonResponses.success();
     }
-    console.warn("topUpNeuron failed with: ", candid);
+    console.warn("topUpNeuron failed with: ", value);
     return CommonResponses.failure();
 }

@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Remove file data from being stored on the heap ([#7171](https://github.com/open-chat-labs/open-chat/pull/7171))
+
+## [[2.0.1553](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1553-storage_bucket)] - 2025-01-07
+
+### Changed
+
 - Reduce storage bucket memory usage ([#7103](https://github.com/open-chat-labs/open-chat/pull/7103))
 - Move file metadata to stable memory ([#7120](https://github.com/open-chat-labs/open-chat/pull/7120))
 
