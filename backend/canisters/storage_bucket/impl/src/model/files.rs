@@ -302,6 +302,12 @@ impl Files {
         files_removed
     }
 
+    pub fn remove_old_pending_files(&mut self, cutoff: TimestampMillis) -> u32 {
+        let current_count = self.pending_files.len();
+        self.pending_files.retain(|_, f| f.created > cutoff);
+        (self.pending_files.len() - current_count) as u32
+    }
+
     pub fn next_expiry(&self) -> Option<TimestampMillis> {
         self.expiration_queue.keys().copied().next()
     }
@@ -318,6 +324,7 @@ impl Files {
         Metrics {
             file_count: self.files.len() as u64,
             blob_count: self.blobs.len(),
+            pending_files: self.pending_files.len() as u64,
         }
     }
 
@@ -587,4 +594,5 @@ pub struct ChunkSizeMismatch {
 pub struct Metrics {
     pub file_count: u64,
     pub blob_count: u64,
+    pub pending_files: u64,
 }
