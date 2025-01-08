@@ -98,35 +98,8 @@
     <div class:modal class="header" slot="titleSlot">
         <span class="subtitle">4</span>
         <div class="title">
-            Account creation and usage
-            <div class="copy" on:click|stopPropagation={() => copyUrl("4")}>
-                <Copy size={copySize} {color} />
-            </div>
-        </div>
-    </div>
-    <div class:modal class="body">
-        <p>
-            It is against the platform guidelines to buy or sell accounts, or to create multiple
-            accounts:
-        </p>
-        <ul class="list">
-            <li>that you aren't actively using</li>
-            <li>to squat on usernames with the intention of selling them</li>
-            <li>to farm tokens</li>
-            <li>to give the appearance of activity in a group/community</li>
-            <li>to DoS the platform or otherwise drain platform resources</li>
-            <li>any other nefarious purpose</li>
-        </ul>
-        <p>Breaking these rules will likely result in the multiple accounts being suspended.</p>
-    </div>
-</CollapsibleCard>
-
-<CollapsibleCard transition={false} open={linked === 5}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">5</span>
-        <div class="title">
             Group rules
-            <div class="copy" on:click|stopPropagation={() => copyUrl("5")}>
+            <div class="copy" on:click|stopPropagation={() => copyUrl("4")}>
                 <Copy size={copySize} {color} />
             </div>
         </div>
@@ -162,12 +135,12 @@
     </div>
 </CollapsibleCard>
 
-<CollapsibleCard transition={false} open={linked === 6}>
+<CollapsibleCard transition={false} open={linked === 5}>
     <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">6</span>
+        <span class="subtitle">5</span>
         <div class="title">
             Content moderation process
-            <div class="copy" on:click|stopPropagation={() => copyUrl("6")}>
+            <div class="copy" on:click|stopPropagation={() => copyUrl("5")}>
                 <Copy size={copySize} {color} />
             </div>
         </div>
@@ -204,12 +177,12 @@
     </div>
 </CollapsibleCard>
 
-<CollapsibleCard transition={false} open={linked === 7}>
+<CollapsibleCard transition={false} open={linked === 6}>
     <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">7</span>
+        <span class="subtitle">6</span>
         <div class="title">
             Governance
-            <div class="copy" on:click|stopPropagation={() => copyUrl("7")}>
+            <div class="copy" on:click|stopPropagation={() => copyUrl("6")}>
                 <Copy size={copySize} {color} />
             </div>
         </div>

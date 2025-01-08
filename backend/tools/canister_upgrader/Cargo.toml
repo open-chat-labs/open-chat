@@ -27,7 +27,6 @@ openchat_installer_canister = { path = "../../canisters/openchat_installer/api" 
 openchat_installer_canister_client = { path = "../../canisters/openchat_installer/client" }
 proposals_bot_canister = { path = "../../canisters/proposals_bot/api" }
 registry_canister = { path = "../../canisters/registry/api" }
-serde = { workspace = true }
 sha256 = { path = "../../libraries/sha256" }
 sign_in_with_email_canister = { workspace = true }
 storage_index_canister = { path = "../../canisters/storage_index/api" }
