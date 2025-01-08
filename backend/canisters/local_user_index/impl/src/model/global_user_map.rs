@@ -2,6 +2,7 @@ use candid::Principal;
 use local_user_index_canister::GlobalUser;
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::StableMemoryMap;
 use std::collections::{HashMap, HashSet};
 use types::{TimestampMillis, UniquePersonProof, UserId, UserType};
 
@@ -68,7 +69,7 @@ impl GlobalUserMap {
     }
 
     pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
-        if let Some(user_id) = self.principal_to_user_id.remove(&old_principal) {
+        if let Some(user_id) = self.principal_to_user_id.remove(&old_principal).map(|v| v.into_value()) {
             self.principal_to_user_id.insert(new_principal, user_id);
             self.user_id_to_principal.insert(user_id, new_principal);
         }

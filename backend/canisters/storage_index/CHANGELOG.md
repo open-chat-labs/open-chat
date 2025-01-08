@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1554](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1554-storage_index)] - 2025-01-07
+
 ### Changed
 
 - Increase memory limit of another StorageBucket which has reached limit ([#7170](https://github.com/open-chat-labs/open-chat/pull/7170))

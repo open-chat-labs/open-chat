@@ -11,10 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Log error if end video call job fails ([#7066](https://github.com/open-chat-labs/open-chat/pull/7066))
 - 2-stage bot messages + bot context in messages ([#7060](https://github.com/open-chat-labs/open-chat/pull/7060))
 - Log error if tip fails due to recipient mismatch ([#7151](https://github.com/open-chat-labs/open-chat/pull/7151))
+- Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
 
 ### Removed
 
 - Remove bot thread permissions ([#7071](https://github.com/open-chat-labs/open-chat/pull/7071))
+- Remove NewJoinerRewards which are no longer used ([#7074](https://github.com/open-chat-labs/open-chat/pull/7074))
 
 ### Fixed
 

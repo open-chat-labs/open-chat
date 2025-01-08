@@ -3,6 +3,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use notifications_index_canister::push_subscription::{Response::*, *};
+use stable_memory_map::StableMemoryMap;
 use types::{CanisterId, UserId};
 use user_index_canister::c2c_lookup_user;
 
