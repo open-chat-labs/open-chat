@@ -65,6 +65,7 @@
     import RoleIcon from "./profile/RoleIcon.svelte";
     import Badges from "./profile/Badges.svelte";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
+    import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -123,6 +124,7 @@
     let percentageExpired = 100;
     let mediaCalculatedHeight = undefined as number | undefined;
     let msgBubbleCalculatedWidth = undefined as number | undefined;
+    let botProfile: BotProfileProps | undefined = undefined;
 
     $: maxWidthFraction = $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8;
     $: canTip = !me && confirmed && !inert && !failed;
@@ -341,16 +343,25 @@
     }
 
     function openUserProfile(ev: Event) {
-        ev.target?.dispatchEvent(
-            new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-                detail: {
-                    userId: msg.sender,
-                    chatButton: multiUserChat,
-                    inGlobalContext: false,
-                },
-                bubbles: true,
-            }),
-        );
+        if (sender?.kind === "bot") {
+            console.log("let's show the bot profile");
+            botProfile = {
+                botId: sender.userId,
+                chatId,
+                onClose: () => (botProfile = undefined),
+            };
+        } else {
+            ev.target?.dispatchEvent(
+                new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+                    detail: {
+                        userId: msg.sender,
+                        chatButton: multiUserChat,
+                        inGlobalContext: false,
+                    },
+                    bubbles: true,
+                }),
+            );
+        }
     }
 
     function registerVote(ev: CustomEvent<{ answerIndex: number; type: "register" | "delete" }>) {
@@ -386,6 +397,10 @@
 </script>
 
 <svelte:window on:resize={recalculateMediaDimensions} />
+
+{#if botProfile !== undefined}
+    <BotProfile {...botProfile} />
+{/if}
 
 {#if tipping !== undefined}
     <TipBuilder
