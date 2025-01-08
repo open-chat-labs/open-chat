@@ -1,7 +1,7 @@
 use crate::{ChatEventInternal, EventsMap};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use stable_memory_map::{with_map, with_map_mut, ChatEventKey, ChatEventKeyPrefix, KeyPrefix};
+use stable_memory_map::{with_map, with_map_mut, ChatEventKey, ChatEventKeyPrefix, KeyPrefix, StableMemoryMap};
 use std::cmp::min;
 use std::collections::VecDeque;
 use std::ops::RangeBounds;
@@ -55,6 +55,20 @@ pub struct ChatEventsStableStorage {
     prefix: ChatEventKeyPrefix,
 }
 
+impl StableMemoryMap<ChatEventKeyPrefix, EventWrapperInternal<ChatEventInternal>> for ChatEventsStableStorage {
+    fn prefix(&self) -> &ChatEventKeyPrefix {
+        &self.prefix
+    }
+
+    fn value_to_bytes(value: EventWrapperInternal<ChatEventInternal>) -> Vec<u8> {
+        event_to_bytes(value)
+    }
+
+    fn bytes_to_value(_key: &EventIndex, bytes: Vec<u8>) -> EventWrapperInternal<ChatEventInternal> {
+        bytes_to_event(&bytes)
+    }
+}
+
 impl ChatEventsStableStorage {
     pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
         ChatEventsStableStorage {
@@ -90,15 +104,15 @@ impl EventsMap for ChatEventsStableStorage {
     }
 
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        with_map(|m| m.get(self.prefix.create_key(&event_index))).map(|v| bytes_to_event(&v))
+        StableMemoryMap::get(self, &event_index)
     }
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
-        with_map_mut(|m| m.insert(self.prefix.create_key(&event.index), event_to_bytes(event)));
+        StableMemoryMap::insert(self, event.index, event);
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        with_map_mut(|m| m.remove(self.prefix.create_key(&event_index))).map(|v| bytes_to_event(&v))
+        StableMemoryMap::remove(self, &event_index).map(|v| v.into_value())
     }
 
     fn range<R: RangeBounds<EventIndex>>(

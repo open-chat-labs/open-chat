@@ -4,7 +4,7 @@
 
 use ic_stable_structures::memory_manager::VirtualMemory;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
-use std::cell::RefCell;
+use std::cell::{Cell, OnceCell, RefCell};
 use std::marker::PhantomData;
 use std::ops::{Bound, RangeBounds};
 
@@ -14,29 +14,99 @@ pub use keys::*;
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
-pub struct StableMemoryMap {
+pub struct StableMemoryMapInner {
     map: StableBTreeMap<BaseKey, Vec<u8>, Memory>,
 }
 
 thread_local! {
-    static MAP: RefCell<Option<StableMemoryMap>> = RefCell::default();
+    static MAP: RefCell<Option<StableMemoryMapInner>> = RefCell::default();
 }
 
 pub fn init(memory: Memory) {
-    MAP.set(Some(StableMemoryMap {
+    MAP.set(Some(StableMemoryMapInner {
         map: StableBTreeMap::init(memory),
     }));
 }
 
-pub fn with_map<F: FnOnce(&StableMemoryMap) -> R, R>(f: F) -> R {
+pub trait StableMemoryMap<KeyPrefix: crate::KeyPrefix, Value> {
+    fn prefix(&self) -> &KeyPrefix;
+
+    fn value_to_bytes(value: Value) -> Vec<u8>;
+
+    fn bytes_to_value(key: &KeyPrefix::Suffix, bytes: Vec<u8>) -> Value;
+
+    fn get(&self, key: &KeyPrefix::Suffix) -> Option<Value> {
+        with_map(|m| m.get(self.prefix().create_key(key))).map(|v| Self::bytes_to_value(key, v))
+    }
+
+    fn contains_key(&self, key: &KeyPrefix::Suffix) -> bool {
+        with_map(|m| m.contains_key(self.prefix().create_key(key)))
+    }
+
+    fn insert(&mut self, key: KeyPrefix::Suffix, value: Value) -> Option<LazyValue<KeyPrefix::Suffix, Value>> {
+        let existing_bytes = with_map_mut(|m| m.insert(self.prefix().create_key(&key), Self::value_to_bytes(value)));
+
+        let existing = existing_bytes.map(|v| {
+            let key_clone = key.clone();
+            LazyValue::new(key_clone, v, Self::bytes_to_value)
+        });
+        self.on_inserted(&key, &existing);
+        existing
+    }
+
+    fn remove(&mut self, key: &KeyPrefix::Suffix) -> Option<LazyValue<KeyPrefix::Suffix, Value>> {
+        let bytes_removed = with_map_mut(|m| m.remove(self.prefix().create_key(key)))?;
+
+        let key_clone = key.clone();
+        let removed = LazyValue::new(key_clone, bytes_removed, Self::bytes_to_value);
+        self.on_removed(key, &removed);
+        Some(removed)
+    }
+
+    #[allow(unused_variables)]
+    fn on_inserted(&mut self, key: &KeyPrefix::Suffix, existing: &Option<LazyValue<KeyPrefix::Suffix, Value>>) {}
+
+    #[allow(unused_variables)]
+    fn on_removed(&mut self, key: &KeyPrefix::Suffix, removed: &LazyValue<KeyPrefix::Suffix, Value>) {}
+}
+
+pub struct LazyValue<Key, Value> {
+    args: Cell<Option<(Key, Vec<u8>)>>,
+    value: OnceCell<Value>,
+    f: fn(&Key, Vec<u8>) -> Value,
+}
+
+impl<Key, Value> LazyValue<Key, Value> {
+    fn new(key: Key, value: Vec<u8>, f: fn(&Key, Vec<u8>) -> Value) -> Self {
+        LazyValue {
+            args: Cell::new(Some((key, value))),
+            value: OnceCell::new(),
+            f,
+        }
+    }
+
+    pub fn value(&self) -> &Value {
+        self.value.get_or_init(|| {
+            let (key, bytes) = self.args.take().unwrap();
+            (self.f)(&key, bytes)
+        })
+    }
+
+    pub fn into_value(mut self) -> Value {
+        self.value();
+        self.value.take().unwrap()
+    }
+}
+
+pub fn with_map<F: FnOnce(&StableMemoryMapInner) -> R, R>(f: F) -> R {
     MAP.with_borrow(|m| f(m.as_ref().unwrap()))
 }
 
-pub fn with_map_mut<F: FnOnce(&mut StableMemoryMap) -> R, R>(f: F) -> R {
+pub fn with_map_mut<F: FnOnce(&mut StableMemoryMapInner) -> R, R>(f: F) -> R {
     MAP.with_borrow_mut(|m| f(m.as_mut().unwrap()))
 }
 
-impl StableMemoryMap {
+impl StableMemoryMapInner {
     pub fn get<K: Key>(&self, key: K) -> Option<Vec<u8>> {
         self.map.get(&key.into())
     }
