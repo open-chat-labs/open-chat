@@ -6,6 +6,7 @@ use group_community_common::{Member, MemberUpdate, Members};
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet};
 use types::{
@@ -119,7 +120,7 @@ impl CommunityMembers {
                 lapsed: Timestamped::default(),
             };
             self.add_user_id(principal, user_id);
-            self.members_map.insert(member.clone());
+            self.members_map.insert(member.user_id, member.clone());
             self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
 
             if let Some(referrer) = referred_by {
@@ -275,7 +276,7 @@ impl CommunityMembers {
             _ => false,
         };
 
-        self.members_map.insert(member);
+        self.members_map.insert(member.user_id, member);
         self.prune_then_insert_member_update(user_id, MemberUpdate::RoleChanged, now);
 
         ChangeRoleResult::Success(ChangeRoleSuccessResult {
@@ -572,7 +573,7 @@ impl CommunityMembers {
 
         let updated = update_fn(&mut member);
         if updated {
-            self.members_map.insert(member);
+            self.members_map.insert(member.user_id, member);
         }
         Some(updated)
     }

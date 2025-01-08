@@ -3,6 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_update_user_principal::*;
+use stable_memory_map::StableMemoryMap;
 
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]

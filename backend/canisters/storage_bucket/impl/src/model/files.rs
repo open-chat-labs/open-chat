@@ -5,6 +5,7 @@ use crate::model::stable_blob_storage::StableBlobStorage;
 use crate::{calc_chunk_count, MAX_BLOB_SIZE_BYTES};
 use candid::Principal;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::StableMemoryMap;
 use std::cmp::Ordering;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
@@ -204,7 +205,7 @@ impl Files {
             mime_type: file.mime_type,
         };
 
-        self.files_stable.set(new_file_id, new_file);
+        self.files_stable.insert(new_file_id, new_file);
         ForwardFileResult::Success(FileAdded {
             file_id: new_file_id,
             hash,
@@ -234,7 +235,7 @@ impl Files {
                         files_removed.push(file_removed);
                     }
                 } else {
-                    self.files_stable.set(file_id, file);
+                    self.files_stable.insert(file_id, file);
                 }
             }
 
@@ -249,7 +250,7 @@ impl Files {
     pub fn update_owner(&mut self, file_id: &FileId, new_owner: Principal) -> bool {
         if let Some(mut file) = self.get(file_id) {
             file.owner = new_owner;
-            self.files_stable.set(*file_id, file);
+            self.files_stable.insert(*file_id, file);
             true
         } else {
             false
@@ -262,7 +263,7 @@ impl Files {
             if let Some(mut file) = self.get(file_id) {
                 if file.accessors.remove(&old_accessor_id) {
                     file.accessors.insert(new_accessor_id);
-                    self.files_stable.set(*file_id, file);
+                    self.files_stable.insert(*file_id, file);
                     self.accessors_map_stable.link(new_accessor_id, *file_id);
                 }
             }
@@ -329,7 +330,7 @@ impl Files {
             self.expiration_queue.entry(expiry).or_default().push_back(file_id);
         }
 
-        self.files_stable.set(
+        self.files_stable.insert(
             file_id,
             File {
                 owner: completed_file.owner,

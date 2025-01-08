@@ -23,7 +23,7 @@ use notifications_canister::c2c_push_notification;
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
+use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, StableMemoryMap};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet};

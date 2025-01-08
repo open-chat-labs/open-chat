@@ -9,10 +9,10 @@ edition = "2021"
 ic-cdk = { workspace = true }
 ic_principal = { workspace = true }
 ic-stable-structures = { workspace = true }
-msgpack = { path = "../msgpack" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 types = { path = "../types" }
 
 [dev-dependencies]
+msgpack = { path = "../msgpack" }
 rand = { workspace = true }

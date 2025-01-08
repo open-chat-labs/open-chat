@@ -3,6 +3,7 @@ use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use online_users_canister::c2c_remove_user::{Response::*, *};
+use stable_memory_map::StableMemoryMap;
 
 #[update(guard = "caller_is_user_index_canister")]
 #[trace]

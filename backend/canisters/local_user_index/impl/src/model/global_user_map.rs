@@ -2,6 +2,7 @@ use candid::Principal;
 use local_user_index_canister::GlobalUser;
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::StableMemoryMap;
 use std::collections::{HashMap, HashSet};
 use types::{TimestampMillis, UniquePersonProof, UserId, UserType};
 

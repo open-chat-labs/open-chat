@@ -5,34 +5,35 @@ use types::FileId;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct FilesMap {
-    #[serde(default)]
-    map: StableMemoryMap<FileIdToFileKeyPrefix, File>,
+    prefix: FileIdToFileKeyPrefix,
     len: usize,
 }
 
-impl FilesMap {
-    pub fn get(&self, file_id: &FileId) -> Option<File> {
-        self.map.get(file_id)
+impl StableMemoryMap<FileIdToFileKeyPrefix, File> for FilesMap {
+    fn prefix(&self) -> &FileIdToFileKeyPrefix {
+        &self.prefix
     }
 
-    pub fn contains_key(&self, file_id: &FileId) -> bool {
-        self.map.contains_key(file_id)
+    fn value_to_bytes(&self, value: File) -> Vec<u8> {
+        file_to_bytes(value)
     }
 
-    pub fn set(&mut self, file_id: FileId, file: File) {
-        if self.map.insert(&file_id, &file).is_none() {
+    fn bytes_to_value(&self, _key: &FileId, bytes: Vec<u8>) -> File {
+        bytes_to_file(bytes)
+    }
+
+    fn on_inserted(&mut self, _key: &FileId, existing: &Option<File>) {
+        if existing.is_none() {
             self.len = self.len.saturating_add(1);
         }
     }
 
-    pub fn remove(&mut self, file_id: &FileId) -> Option<File> {
-        let removed = self.map.remove(file_id);
-        if removed.is_some() {
-            self.len = self.len.saturating_sub(1);
-        }
-        removed
+    fn on_removed(&mut self, _key: &FileId, _removed: &File) {
+        self.len = self.len.saturating_sub(1);
     }
+}
 
+impl FilesMap {
     pub fn len(&self) -> usize {
         self.len
     }
@@ -40,11 +41,18 @@ impl FilesMap {
     #[cfg(test)]
     pub fn get_all(&self) -> Vec<(FileId, File)> {
         use stable_memory_map::{with_map, KeyPrefix};
-
         with_map(|m| {
-            m.range(self.map.prefix().create_key(&0)..)
-                .map(|(k, v)| (k.file_id(), msgpack::deserialize_then_unwrap(&v)))
+            m.range(self.prefix.create_key(&0)..)
+                .map(|(k, v)| (k.file_id(), bytes_to_file(v)))
                 .collect()
         })
     }
+}
+
+fn file_to_bytes(file: File) -> Vec<u8> {
+    msgpack::serialize_then_unwrap(file)
+}
+
+fn bytes_to_file(bytes: Vec<u8>) -> File {
+    msgpack::deserialize_then_unwrap(&bytes)
 }

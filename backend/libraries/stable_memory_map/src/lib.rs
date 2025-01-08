@@ -4,8 +4,6 @@
 
 use ic_stable_structures::memory_manager::VirtualMemory;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::marker::PhantomData;
 use std::ops::{Bound, RangeBounds};
@@ -30,57 +28,41 @@ pub fn init(memory: Memory) {
     }));
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct StableMemoryMap<KeyPrefix: crate::KeyPrefix, Value> {
-    prefix: KeyPrefix,
-    #[serde(skip)]
-    _phantom: PhantomData<Value>,
-}
+pub trait StableMemoryMap<KeyPrefix: crate::KeyPrefix, Value> {
+    fn prefix(&self) -> &KeyPrefix;
 
-impl<KeyPrefix: crate::KeyPrefix, Value: Serialize + DeserializeOwned> StableMemoryMap<KeyPrefix, Value> {
-    pub fn new(prefix: KeyPrefix) -> Self {
-        StableMemoryMap {
-            prefix,
-            _phantom: PhantomData,
+    fn value_to_bytes(&self, value: Value) -> Vec<u8>;
+
+    fn bytes_to_value(&self, key: &KeyPrefix::Suffix, bytes: Vec<u8>) -> Value;
+
+    fn get(&self, key: &KeyPrefix::Suffix) -> Option<Value> {
+        with_map(|m| m.get(self.prefix().create_key(key))).map(|v| self.bytes_to_value(key, v))
+    }
+
+    fn contains_key(&self, key: &KeyPrefix::Suffix) -> bool {
+        with_map(|m| m.contains_key(self.prefix().create_key(key)))
+    }
+
+    fn insert(&mut self, key: KeyPrefix::Suffix, value: Value) -> Option<Value> {
+        let existing = with_map_mut(|m| m.insert(self.prefix().create_key(&key), self.value_to_bytes(value)))
+            .map(|v| self.bytes_to_value(&key, v));
+        self.on_inserted(&key, &existing);
+        existing
+    }
+
+    fn remove(&mut self, key: &KeyPrefix::Suffix) -> Option<Value> {
+        let removed = with_map_mut(|m| m.remove(self.prefix().create_key(key))).map(|v| self.bytes_to_value(key, v));
+        if let Some(value) = &removed {
+            self.on_removed(key, value);
         }
+        removed
     }
 
-    pub fn get(&self, key: &KeyPrefix::Suffix) -> Option<Value> {
-        with_map(|m| m.get(self.prefix.create_key(key))).map(Self::bytes_to_value)
-    }
+    #[allow(unused_variables)]
+    fn on_inserted(&mut self, key: &KeyPrefix::Suffix, existing: &Option<Value>) {}
 
-    pub fn contains_key(&self, key: &KeyPrefix::Suffix) -> bool {
-        with_map(|m| m.contains_key(self.prefix.create_key(key)))
-    }
-
-    pub fn insert(&mut self, key: &KeyPrefix::Suffix, value: &Value) -> Option<Value> {
-        with_map_mut(|m| m.insert(self.prefix.create_key(key), Self::value_to_bytes(value))).map(Self::bytes_to_value)
-    }
-
-    pub fn remove(&mut self, key: &KeyPrefix::Suffix) -> Option<Value> {
-        with_map_mut(|m| m.remove(self.prefix.create_key(key))).map(Self::bytes_to_value)
-    }
-
-    pub fn prefix(&self) -> &KeyPrefix {
-        &self.prefix
-    }
-
-    fn value_to_bytes(value: &Value) -> Vec<u8> {
-        msgpack::serialize_then_unwrap(value)
-    }
-
-    fn bytes_to_value(bytes: Vec<u8>) -> Value {
-        msgpack::deserialize_then_unwrap(&bytes)
-    }
-}
-
-impl<KeyPrefix: crate::KeyPrefix + Default, Value> Default for StableMemoryMap<KeyPrefix, Value> {
-    fn default() -> Self {
-        StableMemoryMap {
-            prefix: KeyPrefix::default(),
-            _phantom: PhantomData,
-        }
-    }
+    #[allow(unused_variables)]
+    fn on_removed(&mut self, key: &KeyPrefix::Suffix, removed: &Value) {}
 }
 
 pub fn with_map<F: FnOnce(&StableMemoryMapInner) -> R, R>(f: F) -> R {

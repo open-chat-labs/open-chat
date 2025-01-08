@@ -7,6 +7,7 @@ use constants::{calculate_summary_updates_data_removal_cutoff, ONE_MB};
 use group_community_common::{Member, MemberUpdate, Members};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use stable_memory_map::StableMemoryMap;
 use std::cell::OnceCell;
 use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
@@ -124,7 +125,7 @@ impl GroupMembers {
                 user_type,
                 lapsed: Timestamped::default(),
             };
-            self.members_map.insert(member.clone());
+            self.members_map.insert(member.user_id, member.clone());
             if user_type.is_bot() {
                 self.bots.insert(user_id, user_type);
             }
@@ -229,7 +230,7 @@ impl GroupMembers {
 
         let updated = update_fn(&mut member);
         if updated {
-            self.members_map.insert(member);
+            self.members_map.insert(member.user_id, member);
         }
         Some(updated)
     }

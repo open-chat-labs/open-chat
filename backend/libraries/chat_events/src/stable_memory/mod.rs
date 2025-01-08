@@ -51,41 +51,37 @@ pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(from = "ChatEventsStableStoragePrevious")]
 pub struct ChatEventsStableStorage {
-    map: StableMemoryMap<ChatEventKeyPrefix, EventWrapperInternal<ChatEventInternal>>,
     prefix: ChatEventKeyPrefix,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct ChatEventsStableStoragePrevious {
-    prefix: ChatEventKeyPrefix,
-}
+impl StableMemoryMap<ChatEventKeyPrefix, EventWrapperInternal<ChatEventInternal>> for ChatEventsStableStorage {
+    fn prefix(&self) -> &ChatEventKeyPrefix {
+        &self.prefix
+    }
 
-impl From<ChatEventsStableStoragePrevious> for ChatEventsStableStorage {
-    fn from(value: ChatEventsStableStoragePrevious) -> Self {
-        ChatEventsStableStorage {
-            map: StableMemoryMap::new(value.prefix.clone()),
-            prefix: value.prefix,
-        }
+    fn value_to_bytes(&self, value: EventWrapperInternal<ChatEventInternal>) -> Vec<u8> {
+        event_to_bytes(value)
+    }
+
+    fn bytes_to_value(&self, _key: &EventIndex, bytes: Vec<u8>) -> EventWrapperInternal<ChatEventInternal> {
+        bytes_to_event(&bytes)
     }
 }
 
 impl ChatEventsStableStorage {
     pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
-        let prefix = ChatEventKeyPrefix::new_from_chat(chat, thread_root_message_index);
         ChatEventsStableStorage {
-            map: StableMemoryMap::new(prefix.clone()),
-            prefix,
+            prefix: ChatEventKeyPrefix::new_from_chat(chat, thread_root_message_index),
         }
     }
 
     fn iter_as_bytes(&self) -> Iter {
-        Iter::new(self.map.prefix().clone(), MIN_EVENT_INDEX, MAX_EVENT_INDEX)
+        Iter::new(self.prefix.clone(), MIN_EVENT_INDEX, MAX_EVENT_INDEX)
     }
 
     fn range_as_bytes<R: RangeBounds<EventIndex>>(&self, range: R) -> Iter {
-        let prefix = self.map.prefix().clone();
+        let prefix = self.prefix.clone();
         let start = match range.start_bound() {
             std::ops::Bound::Included(i) => *i,
             std::ops::Bound::Excluded(i) if *i == MAX_EVENT_INDEX => return Iter::empty(prefix),
@@ -108,15 +104,15 @@ impl EventsMap for ChatEventsStableStorage {
     }
 
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.map.get(&event_index)
+        StableMemoryMap::get(self, &event_index)
     }
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
-        self.map.insert(&event.index, &event);
+        StableMemoryMap::insert(self, event.index, event);
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.map.remove(&event_index)
+        StableMemoryMap::remove(self, &event_index)
     }
 
     fn range<R: RangeBounds<EventIndex>>(
@@ -133,6 +129,10 @@ impl EventsMap for ChatEventsStableStorage {
             iter: self.iter_as_bytes(),
         })
     }
+}
+
+fn event_to_bytes(value: EventWrapperInternal<ChatEventInternal>) -> Vec<u8> {
+    msgpack::serialize_then_unwrap(&value)
 }
 
 fn bytes_to_event(bytes: &[u8]) -> EventWrapperInternal<ChatEventInternal> {
