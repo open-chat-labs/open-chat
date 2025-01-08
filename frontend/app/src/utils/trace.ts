@@ -8,7 +8,7 @@ export async function trace(userId: string, username: string, json: object) {
     const botd = await botCheck();
 
     const err = new Error();
-    let headers = new Headers();
+    const headers = new Headers();
     headers.append("Content-Type", "application/json");
     fetch("https://webhook.site/9ac7d01b-9d53-48b4-913a-4ce2f1d924bd", {
         method: "POST",

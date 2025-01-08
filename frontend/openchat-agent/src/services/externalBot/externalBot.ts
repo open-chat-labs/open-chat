@@ -19,6 +19,7 @@ const ApiBotResponse = Type.Union([
                 Type.Object({
                     id: Type.String(),
                     content: MessageContent,
+                    finalised: Type.Optional(Type.Boolean()),
                 }),
             ),
         }),
@@ -91,10 +92,11 @@ function externalBotResponse(value: ApiBotResponse): BotCommandResponse {
     if ("Success" in value) {
         return {
             kind: "success",
-            placeholder: mapOptional(value.Success.message, ({ id, content }) => {
+            message: mapOptional(value.Success.message, ({ id, content, finalised }) => {
                 return {
                     messageId: BigInt(id),
                     messageContent: messageContent(content, ""),
+                    finalised: finalised ?? false,
                 };
             }),
         };

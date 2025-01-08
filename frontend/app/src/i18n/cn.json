@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "输入命令名称",
             "commandPermissionsDesc": "描述此命令所需的权限",
             "commandPermissionsLabel": "命令权限",
+            "commandPlaceholderLabel": "命令占位符消息",
+            "commandPlaceholderPlaceholder": "未指定命令占位符消息",
             "commandsLabel": "命令",
             "descLabel": "机器人描述",
             "descPlaceholder": "输入机器人描述",

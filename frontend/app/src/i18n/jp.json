@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "コマンド名を入力",
             "commandPermissionsDesc": "このコマンドに必要な権限について説明します",
             "commandPermissionsLabel": "コマンド権限",
+            "commandPlaceholderLabel": "コマンドプレースホルダーメッセージ",
+            "commandPlaceholderPlaceholder": "コマンドプレースホルダーメッセージが指定されていません",
             "commandsLabel": "コマンド",
             "descLabel": "ボットの説明",
             "descPlaceholder": "ボットの説明を入力してください",

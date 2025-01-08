@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "نام فرمان را وارد کنید",
             "commandPermissionsDesc": "مجوزهای مورد نیاز این دستور را شرح دهید",
             "commandPermissionsLabel": "مجوزهای فرمان",
+            "commandPlaceholderLabel": "پیام نگهدارنده فرمان",
+            "commandPlaceholderPlaceholder": "پیام نگهدارنده فرمان مشخص نشده است",
             "commandsLabel": "دستورات",
             "descLabel": "توضیحات ربات",
             "descPlaceholder": "توضیحات ربات را وارد کنید",

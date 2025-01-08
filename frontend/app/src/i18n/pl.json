@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "Wprowadź nazwę polecenia",
             "commandPermissionsDesc": "Opisz uprawnienia, których wymaga to polecenie",
             "commandPermissionsLabel": "Uprawnienia do poleceń",
+            "commandPlaceholderLabel": "Komunikat zastępczy polecenia",
+            "commandPlaceholderPlaceholder": "Nie określono komunikatu zastępczego polecenia",
             "commandsLabel": "Polecenia",
             "descLabel": "Opis bota",
             "descPlaceholder": "Wprowadź opis bota",

@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "أدخل اسم الأمر",
             "commandPermissionsDesc": "وصف الأذونات التي يتطلبها هذا الأمر",
             "commandPermissionsLabel": "أذونات الأوامر",
+            "commandPlaceholderLabel": "رسالة العنصر النائب للأوامر",
+            "commandPlaceholderPlaceholder": "لم يتم تحديد رسالة العنصر النائب للأمر",
             "commandsLabel": "الأوامر",
             "descLabel": "وصف البوت",
             "descPlaceholder": "أدخل وصف البوت",
