@@ -6519,6 +6519,7 @@ export type SlashCommandSchema = Static<typeof SlashCommandSchema>;
 export const SlashCommandSchema = Type.Object({
     name: Type.String(),
     description: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    placeholder: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     params: Type.Array(SlashCommandParam),
     permissions: SlashCommandPermissions,
 });
@@ -9453,7 +9454,8 @@ export const UserUpdatesSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     streak_ends: Type.BigInt(),
-    streak_insurance: OptionUpdateStreakInsurance,
+    // Uncomment this once User canisters have been released
+    // streak_insurance: OptionUpdateStreakInsurance,
     next_daily_claim: Type.BigInt(),
     is_unique_person: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
     wallet_config: Type.Optional(Type.Union([UserWalletConfig, Type.Undefined()])),

@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "Введіть назву команди",
             "commandPermissionsDesc": "Опишіть дозволи, які вимагає ця команда",
             "commandPermissionsLabel": "Дозволи команди",
+            "commandPlaceholderLabel": "Повідомлення-заповнювач команди",
+            "commandPlaceholderPlaceholder": "Повідомлення-заповнювач команди не вказано",
             "commandsLabel": "Команди",
             "descLabel": "Опис бота",
             "descPlaceholder": "Введіть опис бота",

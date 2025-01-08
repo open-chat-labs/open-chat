@@ -635,6 +635,7 @@ export function apiExternalBotCommand(command: SlashCommandSchema): ApiSlashComm
     return {
         name: command.name,
         description: command.description,
+        placeholder: command.placeholder,
         params: command.params.map(apiExternalBotParam),
         permissions: {
             chat: command.permissions.chatPermissions.map(apiChatPermission),

@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "कमांड का नाम दर्ज करें",
             "commandPermissionsDesc": "इस आदेश के लिए आवश्यक अनुमतियों का वर्णन करें",
             "commandPermissionsLabel": "कमांड अनुमतियाँ",
+            "commandPlaceholderLabel": "कमांड प्लेसहोल्डर संदेश",
+            "commandPlaceholderPlaceholder": "कमांड प्लेसहोल्डर संदेश निर्दिष्ट नहीं है",
             "commandsLabel": "आदेश",
             "descLabel": "बॉट विवरण",
             "descPlaceholder": "बॉट विवरण दर्ज करें",
