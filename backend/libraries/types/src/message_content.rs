@@ -734,13 +734,6 @@ pub struct CustomContent {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct DeletedBy {
-    pub deleted_by: UserId,
-    pub timestamp: TimestampMillis,
-}
-
-#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct BlobReference {
     pub canister_id: CanisterId,
@@ -761,4 +754,11 @@ impl Debug for ThumbnailData {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ThumbnailData").field("byte_length", &self.0.len()).finish()
     }
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct DeletedBy {
+    pub deleted_by: UserId,
+    pub timestamp: TimestampMillis,
 }

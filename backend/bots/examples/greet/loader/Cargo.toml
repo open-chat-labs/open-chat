@@ -6,12 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+agent_utils = { path = "../../../agent_utils" }
 candid = { workspace = true }
-canister_agent_utils = { path = "../../../../libraries/canister_agent_utils" }
 clap = { workspace = true, features = ["derive"] }
 csv = "1.3.1"
 greet_bot_canister = { path = "../api" }
-greet_bot_canister_client = { path = "../client" }
+ic-agent = { workspace = true }
 itertools = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true, features = ["preserve_order"] }

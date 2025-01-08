@@ -77,6 +77,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "agent_utils"
+version = "0.1.0"
+dependencies = [
+ "ic-agent",
+]
+
+[[package]]
 name = "ahash"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -918,6 +925,30 @@ dependencies = [
  "sha2 0.10.8",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "bot_types"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
+]
+
+[[package]]
+name = "bot_utils"
+version = "0.1.0"
+dependencies = [
+ "bot_types",
+ "candid",
+ "ct-codecs",
+ "hmac-sha256",
+ "ic-cdk 0.17.0",
+ "p256",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "sha2 0.10.8",
 ]
 
 [[package]]
@@ -2734,23 +2765,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "greet_bot_canister_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client",
- "greet_bot_canister",
- "ic-agent",
-]
-
-[[package]]
 name = "greet_bot_canister_impl"
 version = "0.1.0"
 dependencies = [
+ "bot_types",
+ "bot_utils",
  "candid",
- "canister_api_macros",
- "canister_client",
- "canister_time",
  "getrandom 0.2.15",
  "greet_bot_canister",
  "http 1.1.0",
@@ -2759,16 +2779,10 @@ dependencies = [
  "ic-http-certification",
  "ic-stable-structures",
  "ic_principal",
- "jwt",
- "local_user_index_canister",
- "local_user_index_canister_c2c_client",
- "msgpack",
  "rand 0.8.5",
  "rmp-serde",
  "serde",
  "serde_json",
- "sha256",
- "types",
 ]
 
 [[package]]
@@ -4351,12 +4365,12 @@ checksum = "b1a46d1a171d865aa5f83f92695765caa047a9b4cbae2cbf37dbd613a793fd4c"
 name = "joke_uploader"
 version = "0.1.0"
 dependencies = [
+ "agent_utils",
  "candid",
- "canister_agent_utils",
  "clap 4.5.4",
  "csv",
  "greet_bot_canister",
- "greet_bot_canister_client",
+ "ic-agent",
  "itertools 0.13.0",
  "serde",
  "serde_json",

@@ -2,9 +2,11 @@
 members = [
     "backend/benchmarks",
     "backend/bots/examples/greet/api",
-    "backend/bots/examples/greet/client",
     "backend/bots/examples/greet/impl",
     "backend/bots/examples/greet/loader",
+    "backend/bots/agent_utils",
+    "backend/bots/types",
+    "backend/bots/utils",
     "backend/canisters/airdrop_bot/api",
     "backend/canisters/airdrop_bot/client",
     "backend/canisters/airdrop_bot/impl",

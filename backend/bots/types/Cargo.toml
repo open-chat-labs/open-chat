@@ -1,5 +1,5 @@
 [package]
-name = "greet_bot_canister_client"
+name = "bot_types"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,6 +7,4 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-canister_client = { path = "../../../../libraries/canister_client" }
-ic-agent = { workspace = true }
-greet_bot_canister = { path = "../api" }
+serde = { workspace = true }

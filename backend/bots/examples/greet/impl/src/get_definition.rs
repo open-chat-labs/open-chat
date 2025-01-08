@@ -1,10 +1,9 @@
+use bot_types::bot_definition::{BotDefinition, MessagePermission, SlashCommandPermissions, SlashCommandSchema};
 use std::collections::HashSet;
-
-use types::{BotDefinition, MessagePermission, SlashCommandPermissions, SlashCommandSchema};
 
 pub fn get_definition() -> BotDefinition {
     BotDefinition {
-        description: "Ths bot provides a single command `greet`".to_string(),
+        description: "Ths bot can greet you and tell jokes".to_string(),
         commands: vec![
             SlashCommandSchema {
                 name: "greet".to_string(),

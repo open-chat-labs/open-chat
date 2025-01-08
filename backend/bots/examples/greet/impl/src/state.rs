@@ -1,8 +1,9 @@
+use bot_utils::env;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::{cell::RefCell, collections::HashMap};
 
-use crate::{entropy::entropy, rng};
+use crate::rng;
 
 thread_local! {
     static STATE: RefCell<Option<State>> = RefCell::default();
@@ -47,7 +48,10 @@ impl State {
             oc_public_key,
             administrator,
             jokes: HashMap::new(),
-            rng_seed: entropy([0; 32]),
+            // Note this is not cryptographically secure which is fine for picking a random joke.
+            // To get a cryptographically secure seed use the async function:
+            // `ic_cdk::api::management_canister::main::raw_rand()`
+            rng_seed: env::entropy(),
         }
     }
 

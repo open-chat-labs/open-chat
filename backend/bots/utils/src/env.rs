@@ -1,5 +1,7 @@
+use bot_types::{Hash, Nanoseconds, TimestampMillis, TimestampNanos};
 use candid::Principal;
-use types::{Nanoseconds, TimestampMillis, TimestampNanos};
+
+use crate::sha256;
 
 const NANOS_PER_MILLISECOND: Nanoseconds = 1_000_000;
 
@@ -25,4 +27,16 @@ pub fn cycles_balance() -> u128 {
 
 pub fn arg_data_raw() -> Vec<u8> {
     ic_cdk::api::call::arg_data_raw()
+}
+
+pub fn entropy() -> Hash {
+    let mut bytes = Vec::new();
+
+    bytes.extend(canister_id().as_slice());
+    bytes.extend(caller().as_slice());
+    bytes.extend(now_nanos().to_ne_bytes());
+    bytes.extend(cycles_balance().to_ne_bytes());
+    bytes.extend(arg_data_raw());
+
+    sha256(&bytes)
 }

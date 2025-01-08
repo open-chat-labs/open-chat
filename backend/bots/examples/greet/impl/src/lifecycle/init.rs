@@ -13,6 +13,6 @@ pub struct InitOrUpgradeArgs {
 #[init]
 fn init(args: InitOrUpgradeArgs) {
     let state = State::new(args.oc_public_key, args.administrator);
-    rng::set(state.rng_seed());
+    rng::init(state.rng_seed());
     state::init(state);
 }

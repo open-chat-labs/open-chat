@@ -1,6 +1,8 @@
+use agent_utils::agent;
 use candid::Principal;
-use canister_agent_utils::{build_ic_agent, get_dfx_identity};
 use clap::Parser;
+use greet_bot_canister::insert_jokes;
+use ic_agent::Agent;
 use std::{collections::HashMap, error::Error, fs::File};
 
 #[derive(Parser, Debug)]
@@ -30,8 +32,7 @@ struct Record {
 
 pub async fn run(config: Config) -> Result<(), Box<dyn Error + Send + Sync>> {
     // Create an IC agent
-    let identity = get_dfx_identity(&config.controller);
-    let agent = build_ic_agent(config.url, identity).await;
+    let agent = agent::build(config.url, &config.controller).await;
 
     // Load the jokes from the CSV file
     let mut jokes: HashMap<u32, String> = HashMap::new();
@@ -47,9 +48,30 @@ pub async fn run(config: Config) -> Result<(), Box<dyn Error + Send + Sync>> {
             let batch = std::mem::take(&mut jokes);
             let args = greet_bot_canister::insert_jokes::Args { jokes: batch };
 
-            greet_bot_canister_client::insert_jokes(&agent, &config.greet_bot_canister_id, &args).await?;
+            make_update_call(&agent, &config.greet_bot_canister_id, "insert_jokes", &args).await?;
         }
     }
 
     Ok(())
+}
+
+async fn make_update_call(
+    agent: &Agent,
+    canister_id: &Principal,
+    method_name: &str,
+    args: &insert_jokes::Args,
+) -> Result<insert_jokes::Response, Box<dyn std::error::Error + Sync + std::marker::Send>> {
+    use candid::{Decode, Encode};
+
+    let candid_args = Encode!(args)?;
+
+    let response = agent
+        .update(canister_id, method_name)
+        .with_arg(candid_args)
+        .call_and_wait()
+        .await?;
+
+    let result = Decode!(response.as_slice(), insert_jokes::Response)?;
+
+    Ok(result)
 }

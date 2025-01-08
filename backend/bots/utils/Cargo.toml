@@ -1,0 +1,19 @@
+[package]
+name = "bot_utils"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bot_types = { path = "../types" }
+candid = { workspace = true }
+ct-codecs = { workspace = true }
+hmac-sha256 = { workspace = true }
+ic-cdk = { workspace = true }
+p256 = { workspace = true, features = ["ecdsa", "pkcs8"] }
+rand = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+

@@ -18,6 +18,6 @@ fn post_upgrade(args: InitOrUpgradeArgs) {
 
     state.update(args.oc_public_key, args.administrator);
 
-    rng::set(state.rng_seed());
+    rng::init(state.rng_seed());
     state::init(state);
 }

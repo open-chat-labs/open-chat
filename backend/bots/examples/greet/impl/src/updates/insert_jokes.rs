@@ -1,8 +1,9 @@
-use crate::{env, state};
-use canister_api_macros::update;
+use crate::state;
+use bot_utils::env;
 use greet_bot_canister::insert_jokes::{Args, Response};
+use ic_cdk::update;
 
-#[update(msgpack = true, candid = true)]
+#[update]
 fn insert_jokes(args: Args) -> Response {
     state::mutate(|state| {
         if *state.administrator() != env::caller() {
