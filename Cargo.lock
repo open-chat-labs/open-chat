@@ -7513,6 +7513,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "constants",
  "http_request",
  "ic-cdk 0.17.0",
  "ic-cdk-timers",
