@@ -1827,6 +1827,7 @@ type FollowThread = {
 };
 
 type SubmitProposal = {
+    currentUserId: string;
     governanceCanisterId: string;
     proposal: CandidateProposal;
     ledger: string;

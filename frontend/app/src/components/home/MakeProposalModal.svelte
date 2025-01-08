@@ -63,6 +63,7 @@
     const ONE_MONTH = 1000 * 60 * 60 * 24 * 7 * 4;
     const TOKEN_LISTING_FEE: bigint = 50_000_100_000n; // 500 CHAT + transfer fee
 
+    const PROPOSALS_BOT_CANISTER = process.env.PROPOSALS_BOT_CANISTER!;
     const REGISTRY_CANISTER = process.env.REGISTRY_CANISTER!;
     const USER_INDEX_CANISTER = process.env.USER_INDEX_CANISTER!;
 
@@ -117,7 +118,7 @@
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: transferFee = tokenDetails.transferFee;
     $: proposalCost = nervousSystem.proposalRejectionFee;
-    $: requiredFunds = proposalCost + transferFee + transferFee;
+    $: requiredFunds = proposalCost + (BigInt(3) * transferFee);
     $: chitReward = Number(chitRewardText);
     $: chitRewardValid = chitReward >= MIN_CHIT_REWARD;
     $: achievementChatCost =
@@ -217,6 +218,11 @@
         if (!valid) return;
 
         busy = true;
+
+        if (!(await approvePayment(PROPOSALS_BOT_CANISTER, proposalCost + (BigInt(2) * transferFee)))) {
+            busy = false;
+            return;
+        }
 
         if (
             selectedProposalType === "register_external_achievement" ||
