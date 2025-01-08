@@ -7900,19 +7900,73 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    // TODO - probably need to think about local updates here
+    #removeInstalledBotLocally(
+        id: CommunityIdentifier | GroupChatIdentifier,
+        botId: string,
+    ): SlashCommandPermissions | undefined {
+        let perm: SlashCommandPermissions | undefined;
+        switch (id.kind) {
+            case "community":
+                communityStateStore.updateProp(id, "bots", (b) => {
+                    perm = b.get(botId);
+                    b.delete(botId);
+                    return new Map(b);
+                });
+                break;
+            case "group_chat":
+                chatStateStore.updateProp(id, "bots", (b) => {
+                    perm = b.get(botId);
+                    b.delete(botId);
+                    return new Map(b);
+                });
+                break;
+        }
+        return perm;
+    }
+
+    #reinstateInstalledBotLocally(
+        id: CommunityIdentifier | GroupChatIdentifier,
+        botId: string,
+        perm: SlashCommandPermissions | undefined,
+    ): void {
+        switch (id.kind) {
+            case "community":
+                communityStateStore.updateProp(id, "bots", (b) => {
+                    if (perm === undefined) return b;
+                    b.set(botId, perm);
+                    return new Map(b);
+                });
+                break;
+            case "group_chat":
+                chatStateStore.updateProp(id, "bots", (b) => {
+                    if (perm === undefined) return b;
+                    b.set(botId, perm);
+                    return new Map(b);
+                });
+                break;
+        }
+    }
+
     removeInstalledBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
     ): Promise<boolean> {
+        const perm = this.#removeInstalledBotLocally(id, botId);
         return this.#sendRequest({
             kind: "removeInstalledBot",
             id,
             botId,
-        }).catch((err) => {
-            this.#logger.error("Error removing bot from group or community", err);
-            return false;
-        });
+        })
+            .then((res) => {
+                if (!res) {
+                    this.#reinstateInstalledBotLocally(id, botId, perm);
+                }
+                return res;
+            })
+            .catch((err) => {
+                this.#logger.error("Error removing bot from group or community", err);
+                return false;
+            });
     }
 
     #sendPlaceholderMessage(
