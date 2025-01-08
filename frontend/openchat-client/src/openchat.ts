@@ -7873,15 +7873,23 @@ export class OpenChat extends EventTarget {
         botId: string,
         grantedPermissions: SlashCommandPermissions,
     ): Promise<boolean> {
+        this.#installBotLocally(id, botId, grantedPermissions);
         return this.#sendRequest({
             kind: "addBot",
             id,
             botId,
             grantedPermissions,
-        }).catch((err) => {
-            this.#logger.error("Error adding bot to group or community", err);
-            return false;
-        });
+        })
+            .then((resp) => {
+                if (!resp) {
+                    this.#removeInstalledBotLocally(id, botId);
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this.#logger.error("Error adding bot to group or community", err);
+                return false;
+            });
     }
 
     updateInstalledBot(
@@ -7924,7 +7932,7 @@ export class OpenChat extends EventTarget {
         return perm;
     }
 
-    #reinstateInstalledBotLocally(
+    #installBotLocally(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
         perm: SlashCommandPermissions | undefined,
@@ -7959,7 +7967,7 @@ export class OpenChat extends EventTarget {
         })
             .then((res) => {
                 if (!res) {
-                    this.#reinstateInstalledBotLocally(id, botId, perm);
+                    this.#installBotLocally(id, botId, perm);
                 }
                 return res;
             })
