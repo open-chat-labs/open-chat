@@ -151,8 +151,8 @@
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("bots.failed"));
                     }
-                })
-                .finally(onCommandSent);
+                });
+            onCommandSent();
         }
     }
 

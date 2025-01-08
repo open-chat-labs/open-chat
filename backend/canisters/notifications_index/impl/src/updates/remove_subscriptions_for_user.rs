@@ -2,6 +2,7 @@ use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use notifications_index_canister::remove_subscriptions_for_user::{Response::*, *};
+use stable_memory_map::StableMemoryMap;
 
 #[update(msgpack = true)]
 #[trace]

@@ -1,8 +1,10 @@
 import { writable } from "svelte/store";
 import { createSetStore } from "./setStore";
 import {
+    type BotMessageContext,
     type EventWrapper,
     type Message,
+    type MessageContent,
     type MessageContext,
     MessageContextMap,
 } from "openchat-shared";
@@ -71,6 +73,25 @@ function createUnconfirmedStore() {
         subscribe: store.subscribe,
         getMessages: (key: MessageContext): EventWrapper<Message>[] => {
             return storeValue.get(key)?.messages ?? [];
+        },
+        overwriteContent: (
+            key: MessageContext,
+            messageId: bigint,
+            content: MessageContent,
+            botContext?: BotMessageContext,
+        ): void => {
+            store.update((state) => {
+                const s = state.get(key);
+                if (s !== undefined) {
+                    s.messages = s.messages.map((m) =>
+                        m.event.messageId === messageId
+                            ? { ...m, event: { ...m.event, content, botContext } }
+                            : m,
+                    );
+                    state.set(key, s);
+                }
+                return state;
+            });
         },
         add: (key: MessageContext, message: EventWrapper<Message>): void => {
             store.update((state) => {

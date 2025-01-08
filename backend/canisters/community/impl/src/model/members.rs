@@ -6,6 +6,7 @@ use group_community_common::{Member, MemberUpdate, Members};
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet};
 use types::{
@@ -119,7 +120,7 @@ impl CommunityMembers {
                 lapsed: Timestamped::default(),
             };
             self.add_user_id(principal, user_id);
-            self.members_map.insert(member.clone());
+            self.members_map.insert(member.user_id, member.clone());
             self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
 
             if let Some(referrer) = referred_by {
@@ -144,7 +145,7 @@ impl CommunityMembers {
     }
 
     pub fn remove_by_principal(&mut self, principal: Principal, now: TimestampMillis) -> Option<CommunityMemberInternal> {
-        let user_id = self.principal_to_user_id_map.remove(&principal)?;
+        let user_id = self.principal_to_user_id_map.remove(&principal)?.into_value();
         self.remove(user_id, Some(principal), now)
     }
 
@@ -155,11 +156,11 @@ impl CommunityMembers {
         now: TimestampMillis,
     ) -> Option<CommunityMemberInternal> {
         if let Some(principal) = principal {
-            let user_id_removed = self.principal_to_user_id_map.remove(&principal);
+            let user_id_removed = self.principal_to_user_id_map.remove(&principal).map(|v| v.into_value());
             assert_eq!(user_id_removed, Some(user_id));
         }
 
-        let member = self.members_map.remove(&user_id)?;
+        let member = self.members_map.remove(&user_id)?.into_value();
 
         match member.role {
             CommunityRole::Owner => self.owners.remove(&user_id),
@@ -275,7 +276,7 @@ impl CommunityMembers {
             _ => false,
         };
 
-        self.members_map.insert(member);
+        self.members_map.insert(member.user_id, member);
         self.prune_then_insert_member_update(user_id, MemberUpdate::RoleChanged, now);
 
         ChangeRoleResult::Success(ChangeRoleSuccessResult {
@@ -350,7 +351,7 @@ impl CommunityMembers {
     }
 
     pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
-        if let Some(user_id) = self.principal_to_user_id_map.remove(&old_principal) {
+        if let Some(user_id) = self.principal_to_user_id_map.remove(&old_principal).map(|v| v.into_value()) {
             self.principal_to_user_id_map.insert(new_principal, user_id);
         }
     }
@@ -572,7 +573,7 @@ impl CommunityMembers {
 
         let updated = update_fn(&mut member);
         if updated {
-            self.members_map.insert(member);
+            self.members_map.insert(member.user_id, member);
         }
         Some(updated)
     }

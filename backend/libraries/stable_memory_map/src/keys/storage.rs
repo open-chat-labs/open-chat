@@ -1,5 +1,6 @@
 use crate::keys::macros::key;
 use crate::{KeyPrefix, KeyType};
+use ic_principal::Principal;
 use types::{AccessorId, FileId, Hash};
 
 key!(FileIdToFileKey, FileIdToFileKeyPrefix, KeyType::FileIdToFile);
@@ -113,6 +114,40 @@ impl FilesPerAccessorKey {
     }
 }
 
+key!(UserStorageRecordKey, UserStorageRecordKeyPrefix, KeyType::UserStorageRecord);
+
+impl UserStorageRecordKeyPrefix {
+    pub fn new() -> Self {
+        // KeyType::UserStorageRecord    1 byte
+        UserStorageRecordKeyPrefix(vec![KeyType::UserStorageRecord as u8])
+    }
+}
+
+impl KeyPrefix for UserStorageRecordKeyPrefix {
+    type Key = UserStorageRecordKey;
+    type Suffix = Principal;
+
+    fn create_key(&self, principal: &Principal) -> UserStorageRecordKey {
+        let principal_bytes = principal.as_slice();
+        let mut bytes = Vec::with_capacity(principal_bytes.len() + 1);
+        bytes.push(KeyType::UserStorageRecord as u8);
+        bytes.extend_from_slice(principal_bytes);
+        UserStorageRecordKey(bytes)
+    }
+}
+
+impl Default for UserStorageRecordKeyPrefix {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl UserStorageRecordKey {
+    pub fn principal(&self) -> Principal {
+        Principal::from_slice(&self.0[1..])
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -181,6 +216,28 @@ mod tests {
             assert_eq!(serialized.len(), member_key.0.len() + 2);
             let deserialized: FilesPerAccessorKey = msgpack::deserialize_then_unwrap(&serialized);
             assert_eq!(deserialized, member_key);
+            assert_eq!(deserialized.0, key.0);
+        }
+    }
+
+    #[test]
+    fn user_storage_record_key_e2e() {
+        for _ in 0..100 {
+            let principal_bytes: [u8; 29] = thread_rng().gen();
+            let principal = Principal::from_slice(&principal_bytes);
+            let prefix = UserStorageRecordKeyPrefix::new();
+            let key = BaseKey::from(prefix.create_key(&principal));
+            let storage_record_key = UserStorageRecordKey::try_from(key.clone()).unwrap();
+
+            assert_eq!(*storage_record_key.0.first().unwrap(), KeyType::UserStorageRecord as u8);
+            assert_eq!(storage_record_key.0.len(), 30);
+            assert!(storage_record_key.matches_prefix(&prefix));
+            assert_eq!(storage_record_key.principal(), principal);
+
+            let serialized = msgpack::serialize_then_unwrap(&storage_record_key);
+            assert_eq!(serialized.len(), storage_record_key.0.len() + 2);
+            let deserialized: UserStorageRecordKey = msgpack::deserialize_then_unwrap(&serialized);
+            assert_eq!(deserialized, storage_record_key);
             assert_eq!(deserialized.0, key.0);
         }
     }

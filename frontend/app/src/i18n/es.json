@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "Introduzca el nombre del comando",
             "commandPermissionsDesc": "Describe los permisos que requiere este comando",
             "commandPermissionsLabel": "Permisos de comando",
+            "commandPlaceholderLabel": "Mensaje de marcador de posición de comando",
+            "commandPlaceholderPlaceholder": "Mensaje de marcador de posición de comando no especificado",
             "commandsLabel": "Comandos",
             "descLabel": "Descripción del bot",
             "descPlaceholder": "Ingresar la descripción del bot",

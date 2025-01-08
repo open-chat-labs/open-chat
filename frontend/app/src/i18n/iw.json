@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "הזן את שם הפקודה",
             "commandPermissionsDesc": "תאר את ההרשאות שפקודה זו דורשת",
             "commandPermissionsLabel": "הרשאות פקודה",
+            "commandPlaceholderLabel": "הודעת מציין מיקום פקודה",
+            "commandPlaceholderPlaceholder": "הודעת מציין מיקום פקודה לא צוינה",
             "commandsLabel": "פקודות",
             "descLabel": "תיאור הבוט",
             "descPlaceholder": "הזן את תיאור הבוט",
