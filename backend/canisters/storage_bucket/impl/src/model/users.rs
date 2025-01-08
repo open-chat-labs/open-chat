@@ -2,6 +2,7 @@ use crate::model::users_map::UsersMap;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
+use std::collections::btree_map::Entry::Occupied;
 use std::collections::{BTreeMap, BTreeSet};
 use tracing::info;
 use types::{FileId, RejectedReason};
@@ -65,8 +66,8 @@ impl Users {
     ) -> Option<FileStatusInternal> {
         let previous = user_record.set_file_status(file_id, status);
 
-        if self.users.contains_key(&user_id) {
-            self.users.insert(user_id, user_record);
+        if let Occupied(mut e) = self.users.entry(user_id) {
+            e.insert(user_record);
         } else {
             self.users_stable.insert(user_id, user_record);
         }
