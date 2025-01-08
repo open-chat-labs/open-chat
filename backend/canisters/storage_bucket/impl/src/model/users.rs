@@ -2,41 +2,19 @@ use crate::model::users_map::UsersMap;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
-use std::collections::btree_map::Entry::Occupied;
 use std::collections::{BTreeMap, BTreeSet};
-use tracing::info;
 use types::{FileId, RejectedReason};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Users {
-    users: BTreeMap<Principal, UserRecord>,
-    #[serde(default)]
-    users_stable: UsersMap,
+    #[serde(alias = "users_stable")]
+    users: UsersMap,
 }
 
 impl Users {
-    pub fn migrate_users(&mut self) -> bool {
-        if self.users.is_empty() {
-            return true;
-        }
-
-        let mut count = 0;
-        while ic_cdk::api::instruction_counter() < 3_000_000_000 {
-            if let Some((principal, user_record)) = self.users.pop_first() {
-                self.users_stable.insert(principal, user_record);
-                count += 1;
-            } else {
-                break;
-            }
-        }
-
-        info!(count, "Migrated users to stable memory");
-        self.users.is_empty()
-    }
-
     pub fn add(&mut self, user_id: Principal) -> bool {
         if !self.exists(&user_id) {
-            self.users_stable.insert(user_id, UserRecord::default());
+            self.users.insert(user_id, UserRecord::default());
             true
         } else {
             false
@@ -44,17 +22,15 @@ impl Users {
     }
 
     pub fn remove(&mut self, user_id: &Principal) -> Option<UserRecord> {
-        self.users
-            .remove(user_id)
-            .or_else(|| self.users_stable.remove(user_id).map(|v| v.into_value()))
+        self.users.remove(user_id).map(|v| v.into_value())
     }
 
     pub fn exists(&self, user_id: &Principal) -> bool {
-        self.users.contains_key(user_id) || self.users_stable.contains_key(user_id)
+        self.users.contains_key(user_id)
     }
 
     pub fn get(&self, user_id: &Principal) -> Option<UserRecord> {
-        self.users.get(user_id).cloned().or_else(|| self.users_stable.get(user_id))
+        self.users.get(user_id)
     }
 
     pub fn set_file_status(
@@ -65,19 +41,13 @@ impl Users {
         status: FileStatusInternal,
     ) -> Option<FileStatusInternal> {
         let previous = user_record.set_file_status(file_id, status);
-
-        if let Occupied(mut e) = self.users.entry(user_id) {
-            e.insert(user_record);
-        } else {
-            self.users_stable.insert(user_id, user_record);
-        }
-
+        self.users.insert(user_id, user_record);
         previous
     }
 
     pub fn update_user_id(&mut self, old_user_id: Principal, new_user_id: Principal) -> bool {
         if let Some(user) = self.remove(&old_user_id) {
-            self.users_stable.insert(new_user_id, user);
+            self.users.insert(new_user_id, user);
             true
         } else {
             false
@@ -85,45 +55,16 @@ impl Users {
     }
 
     pub fn len(&self) -> usize {
-        self.users.len() + self.users_stable.len()
+        self.users.len()
     }
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
-#[serde(from = "UserRecordPrevious")]
 pub struct UserRecord {
-    #[serde(rename = "p", alias = "files_owned", default, skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(rename = "p", default, skip_serializing_if = "BTreeMap::is_empty")]
     files_pending: BTreeMap<FileId, FileStatusInternal>,
     #[serde(rename = "c", default, skip_serializing_if = "BTreeSet::is_empty")]
     files_complete: BTreeSet<FileId>,
-}
-
-#[derive(Serialize, Deserialize, Default)]
-struct UserRecordPrevious {
-    #[serde(rename = "p", alias = "files_owned", default, skip_serializing_if = "BTreeMap::is_empty")]
-    files_pending: BTreeMap<FileId, FileStatusInternal>,
-    #[serde(rename = "c", default, skip_serializing_if = "BTreeSet::is_empty")]
-    files_complete: BTreeSet<FileId>,
-}
-
-impl From<UserRecordPrevious> for UserRecord {
-    fn from(value: UserRecordPrevious) -> Self {
-        let mut pending = BTreeMap::new();
-        let mut complete = value.files_complete;
-
-        for (file_id, status) in value.files_pending {
-            if status.is_complete() {
-                complete.insert(file_id);
-            } else {
-                pending.insert(file_id, status);
-            }
-        }
-
-        UserRecord {
-            files_pending: pending,
-            files_complete: complete,
-        }
-    }
 }
 
 impl UserRecord {
