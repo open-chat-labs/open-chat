@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Reduce size of users map when serialized ([#7175](https://github.com/open-chat-labs/open-chat/pull/7175))
 - Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
+- Migrate user records to stable memory ([#7178](https://github.com/open-chat-labs/open-chat/pull/7178))
 
 ## [[2.0.1555](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1555-storage_bucket)] - 2025-01-07
 
