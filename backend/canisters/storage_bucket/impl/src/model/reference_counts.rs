@@ -12,11 +12,11 @@ impl StableMemoryMap<FileReferenceCountKeyPrefix, u32> for ReferenceCountsStable
         &self.prefix
     }
 
-    fn value_to_bytes(&self, value: u32) -> Vec<u8> {
+    fn value_to_bytes(value: u32) -> Vec<u8> {
         value.to_be_bytes().to_vec()
     }
 
-    fn bytes_to_value(&self, _key: &Hash, bytes: Vec<u8>) -> u32 {
+    fn bytes_to_value(_key: &Hash, bytes: Vec<u8>) -> u32 {
         u32::from_be_bytes(bytes.try_into().unwrap())
     }
 }
@@ -50,7 +50,7 @@ impl ReferenceCountsStableMap {
             m.range(self.prefix.create_key(&[0; 32])..)
                 .map(|(k, v)| {
                     let hash = k.hash();
-                    (hash, self.bytes_to_value(&hash, v))
+                    (hash, Self::bytes_to_value(&hash, v))
                 })
                 .collect()
         })

@@ -14,11 +14,11 @@ impl StableMemoryMap<PrincipalToUserIdKeyPrefix, UserId> for PrincipalToUserIdMa
         &self.prefix
     }
 
-    fn value_to_bytes(&self, value: UserId) -> Vec<u8> {
+    fn value_to_bytes(value: UserId) -> Vec<u8> {
         value.as_slice().to_vec()
     }
 
-    fn bytes_to_value(&self, _key: &Principal, bytes: Vec<u8>) -> UserId {
+    fn bytes_to_value(_key: &Principal, bytes: Vec<u8>) -> UserId {
         UserId::from(Principal::from_slice(&bytes))
     }
 

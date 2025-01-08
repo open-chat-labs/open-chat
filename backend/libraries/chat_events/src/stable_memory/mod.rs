@@ -60,11 +60,11 @@ impl StableMemoryMap<ChatEventKeyPrefix, EventWrapperInternal<ChatEventInternal>
         &self.prefix
     }
 
-    fn value_to_bytes(&self, value: EventWrapperInternal<ChatEventInternal>) -> Vec<u8> {
+    fn value_to_bytes(value: EventWrapperInternal<ChatEventInternal>) -> Vec<u8> {
         event_to_bytes(value)
     }
 
-    fn bytes_to_value(&self, _key: &EventIndex, bytes: Vec<u8>) -> EventWrapperInternal<ChatEventInternal> {
+    fn bytes_to_value(_key: &EventIndex, bytes: Vec<u8>) -> EventWrapperInternal<ChatEventInternal> {
         bytes_to_event(&bytes)
     }
 }

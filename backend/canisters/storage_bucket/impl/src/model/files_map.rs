@@ -14,11 +14,11 @@ impl StableMemoryMap<FileIdToFileKeyPrefix, File> for FilesMap {
         &self.prefix
     }
 
-    fn value_to_bytes(&self, value: File) -> Vec<u8> {
+    fn value_to_bytes(value: File) -> Vec<u8> {
         file_to_bytes(value)
     }
 
-    fn bytes_to_value(&self, _key: &FileId, bytes: Vec<u8>) -> File {
+    fn bytes_to_value(_key: &FileId, bytes: Vec<u8>) -> File {
         bytes_to_file(bytes)
     }
 

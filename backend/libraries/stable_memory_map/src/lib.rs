@@ -31,12 +31,12 @@ pub fn init(memory: Memory) {
 pub trait StableMemoryMap<KeyPrefix: crate::KeyPrefix, Value> {
     fn prefix(&self) -> &KeyPrefix;
 
-    fn value_to_bytes(&self, value: Value) -> Vec<u8>;
+    fn value_to_bytes(value: Value) -> Vec<u8>;
 
-    fn bytes_to_value(&self, key: &KeyPrefix::Suffix, bytes: Vec<u8>) -> Value;
+    fn bytes_to_value(key: &KeyPrefix::Suffix, bytes: Vec<u8>) -> Value;
 
     fn get(&self, key: &KeyPrefix::Suffix) -> Option<Value> {
-        with_map(|m| m.get(self.prefix().create_key(key))).map(|v| self.bytes_to_value(key, v))
+        with_map(|m| m.get(self.prefix().create_key(key))).map(|v| Self::bytes_to_value(key, v))
     }
 
     fn contains_key(&self, key: &KeyPrefix::Suffix) -> bool {
@@ -44,14 +44,14 @@ pub trait StableMemoryMap<KeyPrefix: crate::KeyPrefix, Value> {
     }
 
     fn insert(&mut self, key: KeyPrefix::Suffix, value: Value) -> Option<Value> {
-        let existing = with_map_mut(|m| m.insert(self.prefix().create_key(&key), self.value_to_bytes(value)))
-            .map(|v| self.bytes_to_value(&key, v));
+        let existing = with_map_mut(|m| m.insert(self.prefix().create_key(&key), Self::value_to_bytes(value)))
+            .map(|v| Self::bytes_to_value(&key, v));
         self.on_inserted(&key, &existing);
         existing
     }
 
     fn remove(&mut self, key: &KeyPrefix::Suffix) -> Option<Value> {
-        let removed = with_map_mut(|m| m.remove(self.prefix().create_key(key))).map(|v| self.bytes_to_value(key, v));
+        let removed = with_map_mut(|m| m.remove(self.prefix().create_key(key))).map(|v| Self::bytes_to_value(key, v));
         if let Some(value) = &removed {
             self.on_removed(key, value);
         }

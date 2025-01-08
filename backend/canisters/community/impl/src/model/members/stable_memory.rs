@@ -15,11 +15,11 @@ impl StableMemoryMap<MemberKeyPrefix, CommunityMemberInternal> for MembersStable
         &self.prefix
     }
 
-    fn value_to_bytes(&self, value: CommunityMemberInternal) -> Vec<u8> {
+    fn value_to_bytes(value: CommunityMemberInternal) -> Vec<u8> {
         member_to_bytes(value.into())
     }
 
-    fn bytes_to_value(&self, user_id: &UserId, bytes: Vec<u8>) -> CommunityMemberInternal {
+    fn bytes_to_value(user_id: &UserId, bytes: Vec<u8>) -> CommunityMemberInternal {
         bytes_to_member(&bytes).hydrate(*user_id)
     }
 }

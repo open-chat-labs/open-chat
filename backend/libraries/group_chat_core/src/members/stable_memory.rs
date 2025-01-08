@@ -15,11 +15,11 @@ impl StableMemoryMap<MemberKeyPrefix, GroupMemberInternal> for MembersStableStor
         &self.prefix
     }
 
-    fn value_to_bytes(&self, value: GroupMemberInternal) -> Vec<u8> {
+    fn value_to_bytes(value: GroupMemberInternal) -> Vec<u8> {
         member_to_bytes(value.into())
     }
 
-    fn bytes_to_value(&self, user_id: &UserId, bytes: Vec<u8>) -> GroupMemberInternal {
+    fn bytes_to_value(user_id: &UserId, bytes: Vec<u8>) -> GroupMemberInternal {
         bytes_to_member(&bytes).hydrate(*user_id)
     }
 }
