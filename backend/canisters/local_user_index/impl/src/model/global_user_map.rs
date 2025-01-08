@@ -69,7 +69,7 @@ impl GlobalUserMap {
     }
 
     pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
-        if let Some(user_id) = self.principal_to_user_id.remove(&old_principal) {
+        if let Some(user_id) = self.principal_to_user_id.remove(&old_principal).map(|v| v.into_value()) {
             self.principal_to_user_id.insert(new_principal, user_id);
             self.user_id_to_principal.insert(user_id, new_principal);
         }

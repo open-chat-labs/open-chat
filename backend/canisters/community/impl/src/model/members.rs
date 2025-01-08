@@ -145,7 +145,7 @@ impl CommunityMembers {
     }
 
     pub fn remove_by_principal(&mut self, principal: Principal, now: TimestampMillis) -> Option<CommunityMemberInternal> {
-        let user_id = self.principal_to_user_id_map.remove(&principal)?;
+        let user_id = self.principal_to_user_id_map.remove(&principal)?.into_value();
         self.remove(user_id, Some(principal), now)
     }
 
@@ -156,11 +156,11 @@ impl CommunityMembers {
         now: TimestampMillis,
     ) -> Option<CommunityMemberInternal> {
         if let Some(principal) = principal {
-            let user_id_removed = self.principal_to_user_id_map.remove(&principal);
+            let user_id_removed = self.principal_to_user_id_map.remove(&principal).map(|v| v.into_value());
             assert_eq!(user_id_removed, Some(user_id));
         }
 
-        let member = self.members_map.remove(&user_id)?;
+        let member = self.members_map.remove(&user_id)?.into_value();
 
         match member.role {
             CommunityRole::Owner => self.owners.remove(&user_id),
@@ -351,7 +351,7 @@ impl CommunityMembers {
     }
 
     pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
-        if let Some(user_id) = self.principal_to_user_id_map.remove(&old_principal) {
+        if let Some(user_id) = self.principal_to_user_id_map.remove(&old_principal).map(|v| v.into_value()) {
             self.principal_to_user_id_map.insert(new_principal, user_id);
         }
     }

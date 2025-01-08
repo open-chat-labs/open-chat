@@ -1,6 +1,6 @@
 use crate::model::files::File;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{FileIdToFileKeyPrefix, StableMemoryMap};
+use stable_memory_map::{FileIdToFileKeyPrefix, LazyValue, StableMemoryMap};
 use types::FileId;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -22,13 +22,13 @@ impl StableMemoryMap<FileIdToFileKeyPrefix, File> for FilesMap {
         bytes_to_file(bytes)
     }
 
-    fn on_inserted(&mut self, _key: &FileId, existing: &Option<File>) {
+    fn on_inserted(&mut self, _key: &FileId, existing: &Option<LazyValue<FileId, File>>) {
         if existing.is_none() {
             self.len = self.len.saturating_add(1);
         }
     }
 
-    fn on_removed(&mut self, _key: &FileId, _removed: &File) {
+    fn on_removed(&mut self, _key: &FileId, _removed: &LazyValue<FileId, File>) {
         self.len = self.len.saturating_sub(1);
     }
 }

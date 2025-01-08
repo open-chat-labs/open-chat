@@ -12,7 +12,12 @@ fn c2c_remove_user(args: Args) -> Response {
 }
 
 fn c2c_remove_user_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if let Some(user_id) = state.data.principal_to_user_id_map.remove(&args.principal) {
+    if let Some(user_id) = state
+        .data
+        .principal_to_user_id_map
+        .remove(&args.principal)
+        .map(|v| v.into_value())
+    {
         state.data.last_online_dates.remove(user_id);
     }
     Success

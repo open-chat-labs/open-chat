@@ -112,7 +112,7 @@ impl EventsMap for ChatEventsStableStorage {
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        StableMemoryMap::remove(self, &event_index)
+        StableMemoryMap::remove(self, &event_index).map(|v| v.into_value())
     }
 
     fn range<R: RangeBounds<EventIndex>>(

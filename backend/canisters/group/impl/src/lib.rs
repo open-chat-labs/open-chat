@@ -649,6 +649,7 @@ impl Data {
     pub fn remove_invitation(&mut self, caller: Principal, now: TimestampMillis) -> Option<UserInvitation> {
         self.principal_to_user_id_map
             .remove(&caller)
+            .map(|v| v.into_value())
             .and_then(|user_id| self.chat.invited_users.remove(&user_id, now))
     }
 
@@ -693,7 +694,7 @@ impl Data {
 
     pub fn remove_user(&mut self, user_id: UserId, principal: Option<Principal>) {
         if let Some(principal) = principal {
-            let user_id_removed = self.principal_to_user_id_map.remove(&principal);
+            let user_id_removed = self.principal_to_user_id_map.remove(&principal).map(|v| v.into_value());
             assert_eq!(user_id_removed, Some(user_id));
         }
 

@@ -1,6 +1,6 @@
 use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{PrincipalToUserIdKeyPrefix, StableMemoryMap};
+use stable_memory_map::{LazyValue, PrincipalToUserIdKeyPrefix, StableMemoryMap};
 use types::UserId;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -22,13 +22,13 @@ impl StableMemoryMap<PrincipalToUserIdKeyPrefix, UserId> for PrincipalToUserIdMa
         UserId::from(Principal::from_slice(&bytes))
     }
 
-    fn on_inserted(&mut self, _key: &Principal, existing: &Option<UserId>) {
+    fn on_inserted(&mut self, _key: &Principal, existing: &Option<LazyValue<Principal, UserId>>) {
         if existing.is_none() {
             self.count = self.count.saturating_add(1);
         }
     }
 
-    fn on_removed(&mut self, _key: &Principal, _removed: &UserId) {
+    fn on_removed(&mut self, _key: &Principal, _removed: &LazyValue<Principal, UserId>) {
         self.count = self.count.saturating_sub(1);
     }
 }

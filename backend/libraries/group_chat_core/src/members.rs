@@ -140,31 +140,28 @@ impl GroupMembers {
     }
 
     pub fn remove(&mut self, user_id: UserId, now: TimestampMillis) -> Option<GroupMemberInternal> {
-        if let Some(member) = self.members_map.remove(&user_id) {
-            match member.role.value {
-                GroupRoleInternal::Owner => self.owners.remove(&user_id),
-                GroupRoleInternal::Admin => self.admins.remove(&user_id),
-                GroupRoleInternal::Moderator => self.moderators.remove(&user_id),
-                _ => false,
-            };
-            if member.user_type.is_bot() {
-                self.bots.remove(&user_id);
-            }
-            if !member.notifications_muted.value {
-                self.notifications_unmuted.remove(&user_id);
-            }
-            if member.lapsed.value {
-                self.lapsed.remove(&user_id);
-            }
-            if member.suspended.value {
-                self.suspended.remove(&user_id);
-            }
-            self.member_ids.remove(&user_id);
-            self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
-            Some(member)
-        } else {
-            None
+        let member = self.members_map.remove(&user_id)?.into_value();
+        match member.role.value {
+            GroupRoleInternal::Owner => self.owners.remove(&user_id),
+            GroupRoleInternal::Admin => self.admins.remove(&user_id),
+            GroupRoleInternal::Moderator => self.moderators.remove(&user_id),
+            _ => false,
+        };
+        if member.user_type.is_bot() {
+            self.bots.remove(&user_id);
         }
+        if !member.notifications_muted.value {
+            self.notifications_unmuted.remove(&user_id);
+        }
+        if member.lapsed.value {
+            self.lapsed.remove(&user_id);
+        }
+        if member.suspended.value {
+            self.suspended.remove(&user_id);
+        }
+        self.member_ids.remove(&user_id);
+        self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
+        Some(member)
     }
 
     pub fn block(&mut self, user_id: UserId, now: TimestampMillis) -> bool {

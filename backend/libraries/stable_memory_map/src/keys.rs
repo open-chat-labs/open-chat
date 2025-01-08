@@ -66,7 +66,7 @@ pub trait Key: Into<BaseKey> + TryFrom<BaseKey> + Clone {
 
 pub trait KeyPrefix: Into<BaseKeyPrefix> + TryFrom<BaseKeyPrefix> + Clone {
     type Key: Key<Prefix = Self>;
-    type Suffix;
+    type Suffix: Clone;
 
     fn create_key(&self, value: &Self::Suffix) -> Self::Key;
 }

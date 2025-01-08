@@ -347,7 +347,7 @@ impl Files {
     }
 
     fn remove_file(&mut self, file_id: FileId) -> Option<FileRemoved> {
-        let file = self.files.remove(&file_id)?;
+        let file = self.files.remove(&file_id)?.into_value();
 
         if self.reference_counts.decr(file.hash) == 0 {
             self.remove_blob(&file.hash);
