@@ -1,7 +1,7 @@
 use clap::Parser;
-use std::process;
 use joke_uploader::run;
 use joke_uploader::Config;
+use std::process;
 
 #[tokio::main]
 async fn main() {
