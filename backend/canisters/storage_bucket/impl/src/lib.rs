@@ -68,6 +68,7 @@ impl RuntimeState {
             blob_count: file_metrics.blob_count,
             index_sync_queue_length: self.data.index_event_sync_queue.len() as u32,
             freezing_limit: self.data.freezing_limit.value.unwrap_or_default(),
+            users_migrated: self.data.users_migrated,
             stable_memory_sizes: memory::memory_sizes(),
         }
     }
@@ -82,6 +83,8 @@ struct Data {
     created: TimestampMillis,
     freezing_limit: Timestamped<Option<Cycles>>,
     rng_seed: [u8; 32],
+    #[serde(default)]
+    users_migrated: bool,
     test_mode: bool,
 }
 
@@ -95,6 +98,7 @@ impl Data {
             created: now,
             freezing_limit: Timestamped::default(),
             rng_seed: [0; 32],
+            users_migrated: true,
             test_mode,
         }
     }
@@ -128,6 +132,7 @@ pub struct Metrics {
     pub blob_count: u64,
     pub index_sync_queue_length: u32,
     pub freezing_limit: Cycles,
+    pub users_migrated: bool,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
 }
 

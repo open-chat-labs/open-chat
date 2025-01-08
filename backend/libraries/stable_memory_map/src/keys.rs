@@ -5,16 +5,16 @@ use std::borrow::Cow;
 
 mod chat_event;
 mod community_event;
-mod files;
 mod macros;
 mod member;
 mod principal_to_user_id;
+mod storage;
 
 pub use chat_event::*;
 pub use community_event::*;
-pub use files::*;
 pub use member::*;
 pub use principal_to_user_id::*;
+pub use storage::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(transparent)]
@@ -96,6 +96,7 @@ pub enum KeyType {
     FileIdToFile = 12,
     FileReferenceCount = 13,
     FilesPerAccessor = 14,
+    UserStorageRecord = 15,
 }
 
 fn extract_key_type(bytes: &[u8]) -> Option<KeyType> {
@@ -121,6 +122,7 @@ impl TryFrom<u8> for KeyType {
             12 => Ok(KeyType::FileIdToFile),
             13 => Ok(KeyType::FileReferenceCount),
             14 => Ok(KeyType::FilesPerAccessor),
+            15 => Ok(KeyType::UserStorageRecord),
             _ => Err(()),
         }
     }
