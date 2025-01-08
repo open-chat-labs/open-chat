@@ -1,4 +1,4 @@
-use bot_types::bot_definition::{BotDefinition, MessagePermission, SlashCommandPermissions, SlashCommandSchema};
+use bots_sdk::api::{BotDefinition, MessagePermission, SlashCommandPermissions, SlashCommandSchema};
 use std::collections::HashSet;
 
 pub fn get_definition() -> BotDefinition {

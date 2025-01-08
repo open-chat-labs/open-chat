@@ -1,2 +1,5 @@
-pub mod greet;
-pub mod joke;
+mod greet;
+mod joke;
+
+pub use greet::*;
+pub use joke::*;

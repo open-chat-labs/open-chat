@@ -10,8 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-bot_types = { path = "../../../types" }
-bot_utils = { path = "../../../utils" }
+bots_sdk = { path = "../../../sdk" }
 candid = { workspace = true }
 getrandom = { workspace = true }
 greet_bot_canister = { path = "../api" }

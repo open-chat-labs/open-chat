@@ -928,18 +928,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "bot_types"
+name = "bots_sdk"
 version = "0.1.0"
 dependencies = [
- "candid",
- "serde",
-]
-
-[[package]]
-name = "bot_utils"
-version = "0.1.0"
-dependencies = [
- "bot_types",
  "candid",
  "ct-codecs",
  "hmac-sha256",
@@ -2766,8 +2757,7 @@ dependencies = [
 name = "greet_bot_canister_impl"
 version = "0.1.0"
 dependencies = [
- "bot_types",
- "bot_utils",
+ "bots_sdk",
  "candid",
  "getrandom 0.2.15",
  "greet_bot_canister",

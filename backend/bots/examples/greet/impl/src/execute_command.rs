@@ -1,27 +1,27 @@
-use bot_types::{
-    access_token::BotCommandClaims,
-    commands::{BadRequest, ExecuteCommandResponse},
-};
-use bot_utils::{
-    env,
-    jwt::{self},
+use bots_sdk::{
+    agent::{Agent, TokenError},
+    api::{BadRequest, ExecuteCommandResponse},
 };
 
 use crate::{
-    commands::greet::greet,
-    commands::joke::joke,
-    state::{self, State},
+    commands,
+    state::{self},
 };
 
 pub async fn execute_command(access_token: &str) -> ExecuteCommandResponse {
-    let bot = match state::read(|state| prepare(access_token, state)) {
-        Ok(c) => c,
-        Err(bad_request) => return ExecuteCommandResponse::BadRequest(bad_request),
+    let public_key = state::read(|state| state.oc_public_key().to_string());
+
+    let agent = match Agent::build(access_token.to_string(), &public_key) {
+        Ok(a) => a,
+        Err(bad_request) => match bad_request {
+            TokenError::Invalid(_) => return ExecuteCommandResponse::BadRequest(BadRequest::AccessTokenInvalid),
+            TokenError::Expired => return ExecuteCommandResponse::BadRequest(BadRequest::AccessTokenExpired),
+        },
     };
 
-    let result = match bot.command_name.as_str() {
-        "greet" => greet(bot, access_token).await,
-        "joke" => joke(bot, access_token).await,
+    let result = match agent.claims().command_name.as_str() {
+        "greet" => commands::greet(agent).await,
+        "joke" => commands::joke(agent).await,
         _ => return ExecuteCommandResponse::BadRequest(BadRequest::CommandNotFound),
     };
 
@@ -29,19 +29,4 @@ pub async fn execute_command(access_token: &str) -> ExecuteCommandResponse {
         Ok(success) => ExecuteCommandResponse::Success(success),
         Err(internal_error) => ExecuteCommandResponse::InternalError(internal_error),
     }
-}
-
-fn prepare(access_token: &str, state: &State) -> Result<BotCommandClaims, BadRequest> {
-    let oc_public_key_pem = state.oc_public_key();
-
-    let claims = jwt::verify::<jwt::Claims<BotCommandClaims>>(access_token, oc_public_key_pem).map_err(|error| {
-        ic_cdk::println!("Access token invalid: {:?}, error: {:?}", access_token, error);
-        BadRequest::AccessTokenInvalid
-    })?;
-
-    if claims.exp_ms() < env::now() {
-        return Err(BadRequest::AccessTokenExpired);
-    }
-
-    Ok(claims.into_custom())
 }

@@ -1,7 +1,7 @@
-use bot_types::{Hash, Nanoseconds, TimestampMillis, TimestampNanos};
 use candid::Principal;
+use sha2::{Digest, Sha256};
 
-use crate::sha256;
+use crate::types::{Hash, Nanoseconds, TimestampMillis, TimestampNanos};
 
 const NANOS_PER_MILLISECOND: Nanoseconds = 1_000_000;
 
@@ -39,4 +39,10 @@ pub fn entropy() -> Hash {
     bytes.extend(arg_data_raw());
 
     sha256(&bytes)
+}
+
+fn sha256(bytes: &[u8]) -> [u8; 32] {
+    let mut hasher = Sha256::new();
+    hasher.update(bytes);
+    hasher.finalize().into()
 }

@@ -1,6 +1,7 @@
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-use crate::{execute_bot_action::HandleBotActionsError, MessageContent, MessageId};
+use crate::types::{MessageContent, MessageId};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Serialize)]
@@ -34,6 +35,13 @@ pub enum BadRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum InternalError {
     Invalid(String),
-    CanisterError(HandleBotActionsError),
+    CanisterError(CanisterError),
     C2CError(i32, String),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum CanisterError {
+    NotAuthorized,
+    Frozen,
+    Other(String),
 }

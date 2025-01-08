@@ -1,4 +1,4 @@
-use bot_utils::env;
+use bots_sdk::env;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::{cell::RefCell, collections::HashMap};

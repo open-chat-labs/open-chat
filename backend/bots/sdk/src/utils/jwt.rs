@@ -1,4 +1,3 @@
-use bot_types::TimestampMillis;
 use ct_codecs::{Base64UrlSafeNoPadding, Decoder};
 use p256::ecdsa;
 use p256::ecdsa::signature::Verifier;
@@ -6,6 +5,8 @@ use p256::pkcs8::DecodePublicKey;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+
+use crate::types::TimestampMillis;
 
 #[derive(Serialize, Deserialize)]
 pub struct Claims<T> {

@@ -1,24 +1,14 @@
-use bot_types::{
-    access_token::BotCommandClaims,
-    commands::{InternalError, Message, SuccessResult},
-    MessageContent, TextContent,
+use bots_sdk::{
+    agent::Agent,
+    api::{InternalError, SuccessResult},
 };
-use bot_utils::action;
 
-pub async fn greet(bot: BotCommandClaims, access_token: &str) -> Result<SuccessResult, InternalError> {
-    let user_id = bot.initiator;
-    let content = MessageContent::Text(TextContent {
-        text: format!("hello @UserId({user_id})"),
-    });
+pub async fn greet(agent: Agent) -> Result<SuccessResult, InternalError> {
+    let user_id = agent.claims().initiator;
+    let text = format!("hello @UserId({user_id})");
 
-    // Send the message to the OC chat but don't wait for the response
-    action::send_message(bot.bot_api_gateway, content.clone(), access_token.to_string());
+    // Send the message to OpenChat but don't wait for the response
+    let message = agent.send_text_message(text, true);
 
-    Ok(SuccessResult {
-        message: Some(Message {
-            id: bot.message_id,
-            content,
-            finalised: true,
-        }),
-    })
+    Ok(SuccessResult { message: Some(message) })
 }
