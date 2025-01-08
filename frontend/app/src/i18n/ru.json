@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "Введите имя команды",
             "commandPermissionsDesc": "Опишите разрешения, необходимые этой команде.",
             "commandPermissionsLabel": "Разрешения на выполнение команд",
+            "commandPlaceholderLabel": "Сообщение-заполнитель команды",
+            "commandPlaceholderPlaceholder": "Сообщение-заполнитель команды не указано",
             "commandsLabel": "Команды",
             "descLabel": "Описание бота",
             "descPlaceholder": "Введите описание бота",

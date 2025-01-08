@@ -49,6 +49,7 @@ export type MessageContent =
     | DeletedContent
     | BlockedContent
     | PlaceholderContent
+    | BotPlaceholderContent
     | PollContent
     | CryptocurrencyContent
     | GiphyContent
@@ -187,6 +188,10 @@ export type IndexRange = [number, number];
 
 export interface PlaceholderContent {
     kind: "placeholder_content";
+}
+
+export interface BotPlaceholderContent {
+    kind: "bot_placeholder_content";
 }
 
 export type CryptocurrencyDeposit = {

@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "Nhập tên lệnh",
             "commandPermissionsDesc": "Mô tả các quyền mà lệnh này yêu cầu",
             "commandPermissionsLabel": "Quyền lệnh",
+            "commandPlaceholderLabel": "Tin nhắn giữ chỗ lệnh",
+            "commandPlaceholderPlaceholder": "Tin nhắn giữ chỗ lệnh không được chỉ định",
             "commandsLabel": "Lệnh",
             "descLabel": "Mô tả bot",
             "descPlaceholder": "Nhập mô tả bot",

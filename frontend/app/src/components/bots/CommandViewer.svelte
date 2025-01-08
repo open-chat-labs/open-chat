@@ -90,17 +90,27 @@
                     maxlength={25}
                     invalid={errors.has(`${errorPath}_name`)}
                     placeholder={i18nKey("bots.builder.commandNamePlaceholder")}
-                    bind:value={command.name} />
+                    value={command.name} />
             </section>
 
             <section>
                 <Legend required label={i18nKey("bots.builder.commandDescLabel")}></Legend>
                 <Input
                     disabled
-                    minlength={3}
-                    maxlength={200}
+                    minlength={5}
+                    maxlength={500}
                     placeholder={i18nKey("bots.builder.commandDescPlaceholder")}
-                    bind:value={command.description} />
+                    value={command.description} />
+            </section>
+
+            <section>
+                <Legend label={i18nKey("bots.builder.commandPlaceholderLabel")}></Legend>
+                <Input
+                    disabled
+                    minlength={5}
+                    maxlength={500}
+                    placeholder={i18nKey("bots.builder.commandPlaceholderPlaceholder")}
+                    value={command.placeholder} />
             </section>
 
             <section>

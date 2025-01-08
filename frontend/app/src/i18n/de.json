@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "Geben Sie den Befehlsnamen ein",
             "commandPermissionsDesc": "Beschreiben Sie die Berechtigungen, die dieser Befehl erfordert",
             "commandPermissionsLabel": "Befehlsberechtigungen",
+            "commandPlaceholderLabel": "Platzhalternachricht für Befehle",
+            "commandPlaceholderPlaceholder": "Platzhalternachricht für Befehl nicht angegeben",
             "commandsLabel": "Befehle",
             "descLabel": "Bot-Beschreibung",
             "descPlaceholder": "Geben Sie die Bot-Beschreibung ein",

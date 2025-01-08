@@ -252,7 +252,7 @@
                 <Translatable resourceKey={i18nKey("communities.userGroups")} />
             </button>
         {/if}
-        {#if botsEnabled}
+        {#if botsEnabled && canManageBots}
             <button
                 on:click={() => selectTab("add-bots")}
                 class:selected={selectedTab === "add-bots"}

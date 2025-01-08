@@ -175,6 +175,8 @@
             "commandNamePlaceholder": "Entrer le nom de la commande",
             "commandPermissionsDesc": "Décrivez les autorisations requises par cette commande",
             "commandPermissionsLabel": "Autorisations de commande",
+            "commandPlaceholderLabel": "Message d'espace réservé à la commande",
+            "commandPlaceholderPlaceholder": "Message d'espace réservé à la commande non spécifié",
             "commandsLabel": "Commandes",
             "descLabel": "Description du robot",
             "descPlaceholder": "Entrez la description du bot",

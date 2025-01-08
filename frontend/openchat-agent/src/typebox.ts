@@ -6519,6 +6519,7 @@ export type SlashCommandSchema = Static<typeof SlashCommandSchema>;
 export const SlashCommandSchema = Type.Object({
     name: Type.String(),
     description: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    placeholder: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     params: Type.Array(SlashCommandParam),
     permissions: SlashCommandPermissions,
 });
