@@ -59,14 +59,14 @@ impl BaseKeyPrefix {
 }
 
 pub trait Key: Into<BaseKey> + TryFrom<BaseKey> + Clone {
-    type Prefix: KeyPrefix;
+    type Prefix: KeyPrefix<Key = Self>;
 
     fn matches_prefix(&self, key: &Self::Prefix) -> bool;
 }
 
 pub trait KeyPrefix: Into<BaseKeyPrefix> + TryFrom<BaseKeyPrefix> + Clone {
-    type Key;
-    type Suffix;
+    type Key: Key<Prefix = Self>;
+    type Suffix: Clone;
 
     fn create_key(&self, value: &Self::Suffix) -> Self::Key;
 }
