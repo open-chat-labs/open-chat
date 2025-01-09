@@ -19,12 +19,9 @@ mod proptests;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Files {
-    #[serde(alias = "files_stable")]
     files: FilesMap,
     pending_files: BTreeMap<FileId, PendingFile>,
-    #[serde(alias = "reference_counts_stable")]
     reference_counts: ReferenceCountsStableMap,
-    #[serde(alias = "accessors_map_stable")]
     accessors_map: FilesPerAccessorStableMap,
     blobs: StableBlobStorage,
     expiration_queue: BTreeMap<TimestampMillis, VecDeque<FileId>>,
@@ -303,9 +300,9 @@ impl Files {
     }
 
     pub fn remove_old_pending_files(&mut self, cutoff: TimestampMillis) -> u32 {
-        let current_count = self.pending_files.len();
+        let old_count = self.pending_files.len();
         self.pending_files.retain(|_, f| f.created > cutoff);
-        (self.pending_files.len() - current_count) as u32
+        (old_count - self.pending_files.len()) as u32
     }
 
     pub fn next_expiry(&self) -> Option<TimestampMillis> {

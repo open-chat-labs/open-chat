@@ -7,13 +7,14 @@ use types::{FileId, RejectedReason};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Users {
-    users_stable: UsersMap,
+    #[serde(alias = "users_stable")]
+    users: UsersMap,
 }
 
 impl Users {
     pub fn add(&mut self, user_id: Principal) -> bool {
         if !self.exists(&user_id) {
-            self.users_stable.insert(user_id, UserRecord::default());
+            self.users.insert(user_id, UserRecord::default());
             true
         } else {
             false
@@ -21,15 +22,15 @@ impl Users {
     }
 
     pub fn remove(&mut self, user_id: &Principal) -> Option<UserRecord> {
-        self.users_stable.remove(user_id).map(|v| v.into_value())
+        self.users.remove(user_id).map(|v| v.into_value())
     }
 
     pub fn exists(&self, user_id: &Principal) -> bool {
-        self.users_stable.contains_key(user_id)
+        self.users.contains_key(user_id)
     }
 
     pub fn get(&self, user_id: &Principal) -> Option<UserRecord> {
-        self.users_stable.get(user_id)
+        self.users.get(user_id)
     }
 
     pub fn set_file_status(
@@ -40,13 +41,13 @@ impl Users {
         status: FileStatusInternal,
     ) -> Option<FileStatusInternal> {
         let previous = user_record.set_file_status(file_id, status);
-        self.users_stable.insert(user_id, user_record);
+        self.users.insert(user_id, user_record);
         previous
     }
 
     pub fn update_user_id(&mut self, old_user_id: Principal, new_user_id: Principal) -> bool {
         if let Some(user) = self.remove(&old_user_id) {
-            self.users_stable.insert(new_user_id, user);
+            self.users.insert(new_user_id, user);
             true
         } else {
             false
@@ -54,7 +55,7 @@ impl Users {
     }
 
     pub fn len(&self) -> usize {
-        self.users_stable.len()
+        self.users.len()
     }
 }
 
