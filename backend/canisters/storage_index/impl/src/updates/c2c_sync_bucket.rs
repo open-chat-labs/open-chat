@@ -24,13 +24,14 @@ fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     if let Some(b) = state.data.buckets.get_mut(&bucket) {
-        b.bytes_used = args.bytes_used;
-        b.bytes_remaining = args.bytes_remaining;
+        b.heap_memory_used = args.heap_memory_used;
+        b.stable_memory_used = args.stable_memory_used;
+        b.total_file_bytes = args.total_file_bytes;
     }
 
-    if args.bytes_remaining <= 0 {
-        state.data.buckets.set_full(bucket, true);
-    }
+    // if args.bytes_remaining <= 0 {
+    //     state.data.buckets.set_full(bucket, true);
+    // }
 
     Response::Success(SuccessResult { files_rejected })
 }
