@@ -1,7 +1,7 @@
 use crate::guards::caller_is_bucket;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use constants::{ONE_GB, ONE_MB};
+use constants::ONE_GB;
 use ic_cdk::update;
 use storage_index_canister::c2c_sync_bucket::*;
 
