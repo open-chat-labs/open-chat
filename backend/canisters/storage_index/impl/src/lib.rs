@@ -9,8 +9,8 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use storage_index_canister::init::CyclesDispenserConfig;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Cycles, CyclesTopUp, FileAdded, FileRejected, FileRejectedReason, FileRemoved,
-    TimestampMillis, Timestamped,
+    BuildVersion, CanisterId, CanisterWasm, Cycles, FileAdded, FileRejected, FileRejectedReason, FileRemoved, TimestampMillis,
+    Timestamped,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -243,7 +243,11 @@ pub struct Metrics {
 pub struct BucketMetrics {
     pub canister_id: CanisterId,
     pub wasm_version: BuildVersion,
-    pub bytes_used: u64,
-    pub bytes_remaining: i64,
-    pub cycle_top_ups: Vec<CyclesTopUp>,
+    #[serde(default)]
+    pub heap_memory_used: u64,
+    #[serde(default)]
+    pub stable_memory_used: u64,
+    #[serde(default)]
+    pub total_file_bytes: u64,
+    pub cycle_top_ups: u128,
 }
