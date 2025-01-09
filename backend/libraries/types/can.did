@@ -2086,6 +2086,7 @@ type ExchangeId = variant {
 type SlashCommandSchema = record {
     name : text;
     description : opt text;
+    placeholder : opt text;
     params : vec SlashCommandParam;
     permissions : SlashCommandPermissions;
 };

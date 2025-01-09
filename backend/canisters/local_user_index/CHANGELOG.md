@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Add optional `placeholder` field to `SlashCommandSchema` ([#7172](https://github.com/open-chat-labs/open-chat/pull/7172))
+- Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
+
+## [[2.0.1547](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1547-local_user_index)] - 2025-01-06
+
+### Changed
+
 - Change bot cmd number param values from u16 to f64 ([#7095](https://github.com/open-chat-labs/open-chat/pull/7095))
 - Rename access token `parameters` to `command_args` ([#7104](https://github.com/open-chat-labs/open-chat/pull/7104))
 - Use `StringChat` in `BotCommandClaims` ([#7133](https://github.com/open-chat-labs/open-chat/pull/7133))
@@ -16,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixes
 
 - Fix unit of claims expiry ([#7106](https://github.com/open-chat-labs/open-chat/pull/7106))
+- Sync full user details to new LocalUserIndexes ([#7153](https://github.com/open-chat-labs/open-chat/pull/7153))
 
 ## [[2.0.1530](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1530-local_user_index)] - 2024-12-19
 

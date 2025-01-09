@@ -2,7 +2,7 @@ use crate::{GroupMemberInternal, GroupMemberStableStorage};
 use candid::{Deserialize, Principal};
 use serde::Serialize;
 use serde_bytes::ByteBuf;
-use stable_memory_map::{with_map, with_map_mut, Key, KeyPrefix, MemberKeyPrefix};
+use stable_memory_map::{with_map, with_map_mut, Key, KeyPrefix, MemberKeyPrefix, StableMemoryMap};
 use types::{MultiUserChat, UserId};
 
 #[derive(Serialize, Deserialize)]
@@ -10,31 +10,27 @@ pub struct MembersStableStorage {
     prefix: MemberKeyPrefix,
 }
 
+impl StableMemoryMap<MemberKeyPrefix, GroupMemberInternal> for MembersStableStorage {
+    fn prefix(&self) -> &MemberKeyPrefix {
+        &self.prefix
+    }
+
+    fn value_to_bytes(value: GroupMemberInternal) -> Vec<u8> {
+        member_to_bytes(value.into())
+    }
+
+    fn bytes_to_value(user_id: &UserId, bytes: Vec<u8>) -> GroupMemberInternal {
+        bytes_to_member(&bytes).hydrate(*user_id)
+    }
+}
+
 impl MembersStableStorage {
     pub fn new(chat: MultiUserChat, member: GroupMemberInternal) -> Self {
         let mut map = MembersStableStorage {
             prefix: MemberKeyPrefix::new_from_chat(chat),
         };
-        map.insert(member);
+        map.insert(member.user_id, member);
         map
-    }
-
-    pub fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        with_map(|m| {
-            m.get(self.prefix.create_key(user_id))
-                .map(|v| bytes_to_member(&v).hydrate(*user_id))
-        })
-    }
-
-    pub fn insert(&mut self, member: GroupMemberInternal) {
-        with_map_mut(|m| m.insert(self.prefix.create_key(&member.user_id), member_to_bytes(member.into())));
-    }
-
-    pub fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        with_map_mut(|m| {
-            m.remove(self.prefix.create_key(user_id))
-                .map(|v| bytes_to_member(&v).hydrate(*user_id))
-        })
     }
 
     pub fn set_chat(&mut self, chat: MultiUserChat) {

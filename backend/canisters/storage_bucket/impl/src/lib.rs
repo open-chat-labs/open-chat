@@ -18,7 +18,6 @@ mod model;
 mod queries;
 mod updates;
 
-const DATA_LIMIT_BYTES: u64 = 1 << 36; // 64GB
 const MAX_BLOB_SIZE_BYTES: u64 = 100 * (1 << 20); // 100MB
 const MAX_EVENTS_TO_SYNC_PER_BATCH: usize = 1000;
 
@@ -66,12 +65,13 @@ impl RuntimeState {
             user_count: self.data.users.len() as u64,
             file_count: file_metrics.file_count,
             blob_count: file_metrics.blob_count,
+            pending_files: file_metrics.pending_files,
+            total_file_bytes: file_metrics.total_file_bytes,
             index_sync_queue_length: self.data.index_event_sync_queue.len() as u32,
+            expiration_queue_keys: file_metrics.expiration_queue_keys,
+            expiration_queue_values: file_metrics.expiration_queue_values,
             freezing_limit: self.data.freezing_limit.value.unwrap_or_default(),
             stable_memory_sizes: memory::memory_sizes(),
-            files_migrated: self.data.files_migrated,
-            file_reference_counts_migrated: self.data.file_reference_counts_migrated,
-            files_per_accessor_migrated: self.data.files_per_accessor_migrated,
         }
     }
 }
@@ -86,12 +86,6 @@ struct Data {
     freezing_limit: Timestamped<Option<Cycles>>,
     rng_seed: [u8; 32],
     test_mode: bool,
-    #[serde(default)]
-    files_migrated: bool,
-    #[serde(default)]
-    file_reference_counts_migrated: bool,
-    #[serde(default)]
-    files_per_accessor_migrated: bool,
 }
 
 impl Data {
@@ -105,9 +99,6 @@ impl Data {
             freezing_limit: Timestamped::default(),
             rng_seed: [0; 32],
             test_mode,
-            files_migrated: true,
-            file_reference_counts_migrated: true,
-            files_per_accessor_migrated: true,
         }
     }
 
@@ -123,7 +114,7 @@ impl Data {
 
     pub fn push_event_to_index(&mut self, event_to_sync: EventToSync) {
         self.index_event_sync_queue
-            .push(self.storage_index_canister_id, (event_to_sync, self.files.bytes_used()));
+            .push(self.storage_index_canister_id, (event_to_sync, self.files.total_file_bytes()));
     }
 }
 
@@ -138,12 +129,13 @@ pub struct Metrics {
     pub user_count: u64,
     pub file_count: u64,
     pub blob_count: u64,
+    pub pending_files: u64,
+    pub total_file_bytes: u64,
     pub index_sync_queue_length: u32,
+    pub expiration_queue_keys: u64,
+    pub expiration_queue_values: u64,
     pub freezing_limit: Cycles,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
-    pub files_migrated: bool,
-    pub file_reference_counts_migrated: bool,
-    pub files_per_accessor_migrated: bool,
 }
 
 pub fn calc_chunk_count(chunk_size: u32, total_size: u64) -> u32 {

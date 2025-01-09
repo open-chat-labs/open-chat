@@ -149,6 +149,7 @@ import type {
     AccessGate as TAccessGate,
     AccessGateConfig as TAccessGateConfig,
     AccessGateNonComposite as TAccessGateNonComposite,
+    AccountICRC1,
     AudioContent as TAudioContent,
     BlobReference as TBlobReference,
     CallParticipant as TCallParticipant,
@@ -1537,6 +1538,7 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "prize_content":
         case "prize_winner_content":
         case "placeholder_content":
+        case "bot_placeholder_content":
         case "proposal_content":
         case "message_reminder_content":
         case "message_reminder_created_content":
@@ -1963,10 +1965,7 @@ export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): TCr
                     ICRC1: {
                         ledger: principalStringToBytes(domain.ledger),
                         token: apiToken(domain.token),
-                        to: {
-                            owner: principalStringToBytes(domain.recipient),
-                            subaccount: undefined,
-                        },
+                        to: principalToIcrcAccount(domain.recipient),
                         amount: domain.amountE8s,
                         fee: domain.feeE8s ?? BigInt(0),
                         memo: mapOptional(domain.memo, bigintToBytes),
@@ -2039,7 +2038,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                 ICRC1: {
                     ledger: principalStringToBytes(domain.ledger),
                     token: apiToken(domain.token),
-                    to: { owner: principalStringToBytes(domain.to), subaccount: undefined },
+                    to: principalToIcrcAccount(domain.to),
                     amount: domain.amountE8s,
                     fee: domain.feeE8s ?? BigInt(0),
                     memo: mapOptional(domain.memo, bigintToBytes),
@@ -3397,6 +3396,7 @@ export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommand
     return {
         name: command.name,
         description: command.description,
+        placeholder: mapOptional(command.placeholder, identity),
         params: command.params.map(externalBotParam),
         permissions: slashCommandPermissions(command.permissions),
     };
@@ -3432,4 +3432,11 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
         };
     }
     throw new UnsupportedValueError("Unexpected ApiSlashCommandParamType value", paramType);
+}
+
+export function principalToIcrcAccount(principal: string): AccountICRC1 {
+    return {
+        owner: principalStringToBytes(principal),
+        subaccount: undefined,
+    };
 }

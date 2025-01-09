@@ -1,8 +1,8 @@
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::{CallResult, RejectionCode};
-use ic_cdk::update;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use proposals_bot_canister::top_up_neuron::{Response::*, *};
@@ -12,7 +12,7 @@ use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron
 use types::{CanisterId, SnsNeuronId};
 use user_index_canister_c2c_client::LookupUserError;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 async fn top_up_neuron(args: Args) -> Response {
     let PrepareResult {

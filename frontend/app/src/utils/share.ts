@@ -72,7 +72,11 @@ export function canShareMessage(content: MessageContent): boolean {
         return false;
     }
 
-    if (content.kind === "placeholder_content" || content.kind === "deleted_content") {
+    if (
+        content.kind === "placeholder_content" ||
+        content.kind === "deleted_content" ||
+        content.kind === "bot_placeholder_content"
+    ) {
         return false;
     }
 
@@ -139,7 +143,11 @@ async function buildShareFromMessage(
     cryptoLookup: Record<string, CryptocurrencyDetails>,
 ): Promise<Share> {
     const content = msg.content;
-    if (content.kind === "deleted_content" || content.kind === "placeholder_content") {
+    if (
+        content.kind === "deleted_content" ||
+        content.kind === "placeholder_content" ||
+        content.kind === "bot_placeholder_content"
+    ) {
         return Promise.reject();
     }
 

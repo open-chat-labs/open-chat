@@ -20,7 +20,7 @@ use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
 use types::{
-    AcceptP2PSwapResult, BotMessageContext, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType,
+    AcceptP2PSwapResult, BlobReference, BotMessageContext, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType,
     CompleteP2PSwapResult, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex,
     EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen,
     GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContent, MessageContentInitial, MessageEditedEventPayload,
@@ -929,6 +929,14 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(CannotTipSelf));
         }
         if message.sender != args.recipient {
+            error!(
+                user = %args.user_id,
+                recipient = %args.recipient,
+                sender = %message.sender,
+                message_index = ?message.message_index,
+                message_id = ?message.message_id,
+                "Tip failed due to recipient mismatch"
+            );
             return Err(UpdateEventError::NoChange(RecipientMismatch));
         }
 
@@ -1881,6 +1889,7 @@ impl ChatEvents {
                             followers: thread.followers,
                         });
                     }
+                    result.files.extend(m.content.blob_references());
                     if let MessageContentInternal::Prize(mut p) = m.content {
                         result
                             .final_prize_payments
@@ -2439,6 +2448,7 @@ pub enum UnfollowThreadResult {
 pub struct RemoveExpiredEventsResult {
     pub events: Vec<EventIndex>,
     pub threads: Vec<ExpiredThread>,
+    pub files: Vec<BlobReference>,
     pub final_prize_payments: Vec<PendingCryptoTransaction>,
 }
 

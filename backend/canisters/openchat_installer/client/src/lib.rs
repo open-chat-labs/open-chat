@@ -7,6 +7,7 @@ use types::CanisterId;
 
 // Updates
 generate_update_call!(install_canisters);
+generate_update_call!(upgrade_canister);
 generate_update_call!(upload_wasm_chunk);
 
 pub async fn upload_wasm_in_chunks(

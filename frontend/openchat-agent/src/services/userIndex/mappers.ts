@@ -118,7 +118,6 @@ export function botSchema(
     return {
         kind: "external_bot",
         id: botId,
-        principal: "",
         name: bot.name,
         avatarUrl: mapOptional(
             bot.avatar_id,
@@ -636,6 +635,7 @@ export function apiExternalBotCommand(command: SlashCommandSchema): ApiSlashComm
     return {
         name: command.name,
         description: command.description,
+        placeholder: command.placeholder,
         params: command.params.map(apiExternalBotParam),
         permissions: {
             chat: command.permissions.chatPermissions.map(apiChatPermission),

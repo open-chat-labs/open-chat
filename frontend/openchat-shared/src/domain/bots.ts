@@ -110,6 +110,7 @@ export function emptySlashCommand(): SlashCommandSchema {
 export type SlashCommandSchema = {
     name: string;
     description?: string;
+    placeholder?: string;
     params: SlashCommandParam[];
     permissions: SlashCommandPermissions;
     devmode?: boolean;
@@ -171,6 +172,7 @@ export type SlashCommandInstance = {
     name: string;
     messageContext: MessageContext;
     params: SlashCommandParamInstance[];
+    placeholder?: string;
 };
 
 export type Bot = ExternalBot | InternalBot;
@@ -179,7 +181,6 @@ export function emptyBotInstance(ownerId: string): ExternalBot {
     return {
         kind: "external_bot",
         id: "",
-        principal: "",
         ownerId,
         name: "",
         endpoint: "",
@@ -199,7 +200,6 @@ type BotCommon = {
 export type ExternalBot = BotCommon & {
     kind: "external_bot";
     avatarUrl?: string;
-    principal: string;
     id: string;
     ownerId: string;
     endpoint: string;
@@ -380,10 +380,14 @@ function validatePrincipal(p: string): boolean {
 }
 
 export function validEndpoint(endpoint: string): boolean {
-    return validOrigin(endpoint) || validCanister(endpoint);
+    return validOrigin(endpoint);
 }
 
-export function validateBot(bot: ExternalBot, mode: "register" | "update"): ValidationErrors {
+export function validateBot(
+    principal: string,
+    bot: ExternalBot,
+    mode: "register" | "update",
+): ValidationErrors {
     const errors = new ValidationErrors();
     errors.addErrors(`bot_name`, validBotComponentName(bot.name));
 
@@ -395,7 +399,7 @@ export function validateBot(bot: ExternalBot, mode: "register" | "update"): Vali
         errors.addErrors("bot_endpoint", i18nKey("bots.builder.errors.endpoint"));
     }
 
-    if (mode === "register" && !validatePrincipal(bot.principal)) {
+    if (mode === "register" && !validatePrincipal(principal)) {
         errors.addErrors("bot_principal", i18nKey("bots.builder.errors.principal"));
     }
 
@@ -505,16 +509,6 @@ function validOrigin(origin: string | undefined): boolean {
     }
 }
 
-function validCanister(canister: string | undefined): boolean {
-    if (!canister) return false;
-    try {
-        Principal.fromText(canister);
-        return true;
-    } catch (_) {
-        return false;
-    }
-}
-
 export type BotCommandResponse = BotCommandSuccess | BotCommandFailure;
 
 export type BotCommandFailure = {
@@ -524,10 +518,11 @@ export type BotCommandFailure = {
 
 export type BotCommandSuccess = {
     kind: "success";
-    placeholder?: BotResponseMessage;
+    message?: BotResponseMessage;
 };
 
 export type BotResponseMessage = {
     messageId: bigint;
     messageContent: MessageContent;
+    finalised: boolean;
 };

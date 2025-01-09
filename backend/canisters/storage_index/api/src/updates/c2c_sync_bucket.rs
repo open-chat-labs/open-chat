@@ -6,8 +6,12 @@ use types::{FileAdded, FileRejected, FileRemoved};
 pub struct Args {
     pub files_added: Vec<FileAdded>,
     pub files_removed: Vec<FileRemoved>,
-    pub bytes_used: u64,
-    pub bytes_remaining: i64,
+    #[serde(default)]
+    pub heap_memory_used: u64,
+    #[serde(default)]
+    pub stable_memory_used: u64,
+    #[serde(default)]
+    pub total_file_bytes: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

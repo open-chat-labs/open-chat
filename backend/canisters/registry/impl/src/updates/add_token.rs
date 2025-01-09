@@ -23,7 +23,6 @@ async fn add_token(args: Args) -> Response {
         Some(args.info_url),
         Some(args.how_to_buy_url),
         Some(args.transaction_url_format),
-        args.logo,
     )
     .await
 }
@@ -33,7 +32,6 @@ pub(crate) async fn add_sns_token(nervous_system: NervousSystemDetails) {
         nervous_system.ledger_canister_id,
         None,
         Some(nervous_system),
-        None,
         None,
         None,
         None,
@@ -49,7 +47,6 @@ pub(crate) async fn add_token_impl(
     info_url: Option<String>,
     how_to_buy_url: Option<String>,
     transaction_url_format: Option<String>,
-    logo: Option<String>,
 ) -> Response {
     let metadata = match icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await {
         Ok(r) => r,
@@ -80,7 +77,6 @@ pub(crate) async fn add_token_impl(
     let Some(logo) = metadata_helper
         .logo()
         .cloned()
-        .or(logo)
         .or(nervous_system.as_ref().map(|ns| ns.logo.clone()))
     else {
         let error = "Failed to find logo for token";

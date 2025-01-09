@@ -8,6 +8,7 @@
         title: string | null | undefined;
         description: string | null | undefined;
         image: string | null | undefined;
+        imageAlt: string | null | undefined;
     };
 
     const dispatch = createEventDispatcher();
@@ -39,26 +40,27 @@
     }
 
     async function loadPreview(url: string): Promise<LinkInfo> {
-        const response = await fetch(`https://proxy.cors.sh/${url}`, {
-            headers: {
-                "x-cors-api-key": process.env.CORS_APIKEY!,
-            },
-        });
-
-        const html = await response.text();
-        const doc = new DOMParser().parseFromString(html, "text/html");
-        const title = doc.querySelector('meta[property="og:title"]')?.getAttribute("content");
-        const description = doc
-            .querySelector('meta[property="og:description"]')
-            ?.getAttribute("content");
-        const image = doc.querySelector('meta[property="og:image"]')?.getAttribute("content");
-
-        return {
-            url,
-            title,
-            description,
-            image: image ? new URL(image, url).toString() : undefined,
-        };
+        const response = await fetch(
+            `${process.env.PREVIEW_PROXY_URL}/preview?url=${encodeURIComponent(url)}`,
+        );
+        if (response.ok) {
+            const meta = await response.json();
+            return {
+                url,
+                title: meta.title,
+                description: meta.description,
+                image: meta.image ? new URL(meta.image, url).toString() : undefined,
+                imageAlt: meta.imageAlt,
+            };
+        } else {
+            return {
+                url,
+                title: undefined,
+                description: undefined,
+                image: undefined,
+                imageAlt: undefined,
+            };
+        }
     }
 
     function imageLoaded() {
@@ -83,7 +85,7 @@
                             on:error={imageLoaded}
                             class="image"
                             src={preview.image}
-                            alt="link preview image" />
+                            alt={preview.imageAlt ?? "link preview image"} />
                     </a>
                 {/if}
             </div>

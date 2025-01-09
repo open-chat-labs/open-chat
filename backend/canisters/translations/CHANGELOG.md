@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Refactor transfers to differentiate between transfers that failed due to c2c error vs transfer error ([#6500](https://github.com/open-chat-labs/open-chat/pull/6500))
 - Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
 
+### Fixed
+
+- Use composite query to authorize caller via UserIndex ([#7187](https://github.com/open-chat-labs/open-chat/pull/7187))
+
 ## [[2.0.1326](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1326-translations)] - 2024-09-03
 
 ### Changed

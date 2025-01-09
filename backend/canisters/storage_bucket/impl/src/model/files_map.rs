@@ -1,6 +1,6 @@
 use crate::model::files::File;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{with_map, with_map_mut, FileIdToFileKeyPrefix, KeyPrefix};
+use stable_memory_map::{FileIdToFileKeyPrefix, LazyValue, StableMemoryMap};
 use types::FileId;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -9,35 +9,38 @@ pub struct FilesMap {
     len: usize,
 }
 
-impl FilesMap {
-    pub fn get(&self, file_id: &FileId) -> Option<File> {
-        with_map(|m| m.get(self.prefix.create_key(file_id))).map(bytes_to_file)
+impl StableMemoryMap<FileIdToFileKeyPrefix, File> for FilesMap {
+    fn prefix(&self) -> &FileIdToFileKeyPrefix {
+        &self.prefix
     }
 
-    pub fn contains_key(&self, file_id: &FileId) -> bool {
-        with_map(|m| m.contains_key(self.prefix.create_key(file_id)))
+    fn value_to_bytes(value: File) -> Vec<u8> {
+        file_to_bytes(value)
     }
 
-    pub fn set(&mut self, file_id: FileId, file: File) {
-        if with_map_mut(|m| m.insert(self.prefix.create_key(&file_id), file_to_bytes(file))).is_none() {
+    fn bytes_to_value(_key: &FileId, bytes: Vec<u8>) -> File {
+        bytes_to_file(bytes)
+    }
+
+    fn on_inserted(&mut self, _key: &FileId, existing: &Option<LazyValue<FileId, File>>) {
+        if existing.is_none() {
             self.len = self.len.saturating_add(1);
         }
     }
 
-    pub fn remove(&mut self, file_id: &FileId) -> Option<File> {
-        let removed = with_map_mut(|m| m.remove(self.prefix.create_key(file_id))).map(bytes_to_file);
-        if removed.is_some() {
-            self.len = self.len.saturating_sub(1);
-        }
-        removed
+    fn on_removed(&mut self, _key: &FileId, _removed: &LazyValue<FileId, File>) {
+        self.len = self.len.saturating_sub(1);
     }
+}
 
+impl FilesMap {
     pub fn len(&self) -> usize {
         self.len
     }
 
     #[cfg(test)]
     pub fn get_all(&self) -> Vec<(FileId, File)> {
+        use stable_memory_map::{with_map, KeyPrefix};
         with_map(|m| {
             m.range(self.prefix.create_key(&0)..)
                 .map(|(k, v)| (k.file_id(), bytes_to_file(v)))

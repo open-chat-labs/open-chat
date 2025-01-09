@@ -830,6 +830,7 @@ type ExploreCommunities = {
 
 type RegisterBot = {
     kind: "registerBot";
+    principal: string;
     bot: ExternalBot;
 };
 
@@ -1826,6 +1827,7 @@ type FollowThread = {
 };
 
 type SubmitProposal = {
+    currentUserId: string;
     governanceCanisterId: string;
     proposal: CandidateProposal;
     ledger: string;

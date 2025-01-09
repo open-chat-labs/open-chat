@@ -190,7 +190,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         openchat_installer_canister_id,
         sha256(&user_index_canister_wasm.module),
         sha256(&group_index_canister_wasm.module),
-        sha256(&notifications_canister_wasm.module),
+        sha256(&notifications_index_canister_wasm.module),
         vec![VIDEO_CALL_OPERATOR],
         vec![controller],
         wasm_version,
@@ -576,7 +576,7 @@ pub fn install_icrc_ledger(
         transfer_fee: transfer_fee.into(),
         token_name,
         token_symbol,
-        metadata: Vec::new(),
+        metadata: vec![("icrc1:logo".to_string(), MetadataValue::Text("logo".to_string()))],
         archive_options: ArchiveOptions {
             trigger_threshold: 1000,
             num_blocks_to_archive: 1000,

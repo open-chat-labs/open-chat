@@ -8,6 +8,124 @@
 
 import { Type, type Static } from "@sinclair/typebox";
 
+export type ProposalsBotStakeNeuronForSubmittingProposalsResponse = Static<
+    typeof ProposalsBotStakeNeuronForSubmittingProposalsResponse
+>;
+export const ProposalsBotStakeNeuronForSubmittingProposalsResponse = Type.Union([
+    Type.Object({
+        Success: Type.Tuple([
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+        ]),
+    }),
+    Type.Object({
+        NeuronAlreadyExists: Type.Tuple([
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+            Type.Number(),
+        ]),
+    }),
+    Type.Literal("StakeTooLow"),
+    Type.Object({
+        TransferError: Type.String(),
+    }),
+    Type.Literal("GovernanceCanisterNotSupported"),
+    Type.Literal("Unauthorized"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type ProposalsBotTopUpNeuronResponse = Static<typeof ProposalsBotTopUpNeuronResponse>;
+export const ProposalsBotTopUpNeuronResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        TransferError: Type.String(),
+    }),
+    Type.Literal("GovernanceCanisterNotSupported"),
+    Type.Literal("Unauthorized"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type ProposalsBotSubmitProposalResponse = Static<typeof ProposalsBotSubmitProposalResponse>;
+export const ProposalsBotSubmitProposalResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("GovernanceCanisterNotSupported"),
+    Type.Object({
+        InsufficientPayment: Type.BigInt(),
+    }),
+    Type.Object({
+        PaymentFailed: Type.String(),
+    }),
+    Type.Object({
+        Retrying: Type.String(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
 export type ProposalsBotCanisterInstallMode = Static<typeof ProposalsBotCanisterInstallMode>;
 export const ProposalsBotCanisterInstallMode = Type.Union([
     Type.Literal("Install"),
@@ -3467,6 +3585,20 @@ export const StorageBucketForwardFileArgs = Type.Object({
     accessors: Type.Array(TSBytes),
 });
 
+export type ProposalsBotStakeNeuronForSubmittingProposalsArgs = Static<
+    typeof ProposalsBotStakeNeuronForSubmittingProposalsArgs
+>;
+export const ProposalsBotStakeNeuronForSubmittingProposalsArgs = Type.Object({
+    governance_canister_id: TSBytes,
+    stake: Type.BigInt(),
+});
+
+export type ProposalsBotTopUpNeuronArgs = Static<typeof ProposalsBotTopUpNeuronArgs>;
+export const ProposalsBotTopUpNeuronArgs = Type.Object({
+    governance_canister_id: TSBytes,
+    amount: Type.BigInt(),
+});
+
 export type ProposalsBotExecuteGenericNervousSystemFunction = Static<
     typeof ProposalsBotExecuteGenericNervousSystemFunction
 >;
@@ -6387,6 +6519,7 @@ export type SlashCommandSchema = Static<typeof SlashCommandSchema>;
 export const SlashCommandSchema = Type.Object({
     name: Type.String(),
     description: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    placeholder: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     params: Type.Array(SlashCommandParam),
     permissions: SlashCommandPermissions,
 });
@@ -7637,6 +7770,13 @@ export const CommunityAcceptP2pSwapResponse = Type.Union([
     }),
     Type.Literal("UserLapsed"),
 ]);
+
+export type ProposalsBotSubmitProposalArgs = Static<typeof ProposalsBotSubmitProposalArgs>;
+export const ProposalsBotSubmitProposalArgs = Type.Object({
+    governance_canister_id: TSBytes,
+    proposal: ProposalsBotProposalToSubmit,
+    transaction: PendingCryptoTransactionICRC2,
+});
 
 export type GroupClaimPrizeResponse = Static<typeof GroupClaimPrizeResponse>;
 export const GroupClaimPrizeResponse = Type.Union([
@@ -9314,7 +9454,8 @@ export const UserUpdatesSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     streak_ends: Type.BigInt(),
-    streak_insurance: OptionUpdateStreakInsurance,
+    // Uncomment this once User canisters have been released
+    // streak_insurance: OptionUpdateStreakInsurance,
     next_daily_claim: Type.BigInt(),
     is_unique_person: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
     wallet_config: Type.Optional(Type.Union([UserWalletConfig, Type.Undefined()])),

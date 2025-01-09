@@ -1,7 +1,7 @@
 use crate::CommunityMemberInternal;
 use candid::Deserialize;
 use serde::Serialize;
-use stable_memory_map::{with_map, with_map_mut, KeyPrefix, MemberKeyPrefix};
+use stable_memory_map::{MemberKeyPrefix, StableMemoryMap};
 use std::collections::BTreeSet;
 use types::{is_default, CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version};
 
@@ -10,35 +10,31 @@ pub struct MembersStableStorage {
     prefix: MemberKeyPrefix,
 }
 
+impl StableMemoryMap<MemberKeyPrefix, CommunityMemberInternal> for MembersStableStorage {
+    fn prefix(&self) -> &MemberKeyPrefix {
+        &self.prefix
+    }
+
+    fn value_to_bytes(value: CommunityMemberInternal) -> Vec<u8> {
+        member_to_bytes(value.into())
+    }
+
+    fn bytes_to_value(user_id: &UserId, bytes: Vec<u8>) -> CommunityMemberInternal {
+        bytes_to_member(&bytes).hydrate(*user_id)
+    }
+}
+
 impl MembersStableStorage {
     pub fn new(member: CommunityMemberInternal) -> Self {
         let mut map = MembersStableStorage::default();
-        map.insert(member);
+        map.insert(member.user_id, member);
         map
-    }
-
-    pub fn get(&self, user_id: &UserId) -> Option<CommunityMemberInternal> {
-        with_map(|m| {
-            m.get(self.prefix.create_key(user_id))
-                .map(|v| bytes_to_member(&v).hydrate(*user_id))
-        })
-    }
-
-    pub fn insert(&mut self, member: CommunityMemberInternal) {
-        with_map_mut(|m| m.insert(self.prefix.create_key(&member.user_id), member_to_bytes(member.into())));
-    }
-
-    pub fn remove(&mut self, user_id: &UserId) -> Option<CommunityMemberInternal> {
-        with_map_mut(|m| {
-            m.remove(self.prefix.create_key(user_id))
-                .map(|v| bytes_to_member(&v).hydrate(*user_id))
-        })
     }
 
     #[cfg(test)]
     pub fn all_members(&self) -> Vec<CommunityMemberInternal> {
         use candid::Principal;
-        use stable_memory_map::Key;
+        use stable_memory_map::{with_map, Key, KeyPrefix};
 
         with_map(|m| {
             m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)

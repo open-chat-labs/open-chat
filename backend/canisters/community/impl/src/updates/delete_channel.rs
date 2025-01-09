@@ -6,6 +6,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::delete_channel::{Response::*, *};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, MemberKeyPrefix};
+use tracing::info;
 use types::{ChannelDeleted, ChannelId};
 
 #[update(msgpack = true)]
@@ -13,7 +14,13 @@ use types::{ChannelDeleted, ChannelId};
 fn delete_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| delete_channel_impl(args.channel_id, state))
+    let response = mutate_state(|state| delete_channel_impl(args.channel_id, state));
+
+    if !matches!(response, Success) {
+        info!(channel_id = ?args.channel_id, ?response, "Delete channel failed");
+    }
+
+    response
 }
 
 fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Response {

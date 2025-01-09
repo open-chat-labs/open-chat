@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1551](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1551-proposals_bot)] - 2025-01-06
+
 ### Added
 
 - Support submitting proposals directly to ProposalsBot ([#7143](https://github.com/open-chat-labs/open-chat/pull/7143))
@@ -13,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Support submitting `MintSnsTokens` and `AdvanceSnsTargetVersion` proposals ([#7128](https://github.com/open-chat-labs/open-chat/pull/7128))
+- Switch ProposalsBot over to using MessagePack ([#7165](https://github.com/open-chat-labs/open-chat/pull/7165))
 
 ## [[2.0.1534](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1534-proposals_bot)] - 2024-12-19
 

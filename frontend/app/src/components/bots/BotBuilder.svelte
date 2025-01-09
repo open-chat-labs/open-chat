@@ -31,6 +31,7 @@
     }
 
     let { valid = $bindable(), onUpdate }: Props = $props();
+    let principal = $state("");
     let selectedCommand = $state<SlashCommandSchema | undefined>(undefined);
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
@@ -40,7 +41,7 @@
         debouncedDerived(
             () => [$state.snapshot(candidate)],
             async () => {
-                const errors = validateBot(candidate, "register");
+                const errors = validateBot(principal, candidate, "register");
                 if (errors.get("bot_name").length == 0) {
                     errors.addErrors("bot_name", await checkUsername(candidate.name));
                 }
@@ -144,7 +145,7 @@
         invalid={errors.has("bot_principal")}
         placeholder={i18nKey("bots.builder.principalPlaceholder")}
         error={errors.get("bot_principal")}
-        bind:value={candidate.id}>
+        bind:value={principal}>
     </ValidatingInput>
 
     <Legend

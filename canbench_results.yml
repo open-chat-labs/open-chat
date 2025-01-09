@@ -1,13 +1,13 @@
 benches:
   add_reactions:
     total:
-      instructions: 908333531
+      instructions: 908374531
       heap_increase: 3
       stable_memory_increase: 0
     scopes: {}
   push_simple_text_messages:
     total:
-      instructions: 300245789
+      instructions: 300257789
       heap_increase: 12
       stable_memory_increase: 0
     scopes: {}

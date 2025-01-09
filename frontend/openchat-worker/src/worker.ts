@@ -801,7 +801,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "registerBot":
-                executeThenReply(payload, correlationId, agent.registerBot(payload.bot));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.registerBot(payload.principal, payload.bot),
+                );
                 break;
 
             case "updateRegisteredBot":
@@ -1498,6 +1502,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.submitProposal(
+                        payload.currentUserId,
                         payload.governanceCanisterId,
                         payload.proposal,
                         payload.ledger,

@@ -65,9 +65,7 @@ $SUMMARY"
 
 if [ "$FUNCTION_ID" -ge "1000" ] ; then
     # Setup variables
-    PROPOSAL_BUILDER_FOLDER=$SCRIPT_DIR/../backend/tools/canister_upgrade_proposal_builder
-    PROPOSAL_FILE=proposal.candid
-    PROPOSAL_BUILDER_PATH=$PROPOSAL_BUILDER_FOLDER/$PROPOSAL_FILE
+    PROPOSAL_FILE=$SCRIPT_DIR/proposal.candid
 
     if [ "$CHUNKED" == "true" ] ; then
       echo "Canister wasm chunks uploader building"
@@ -75,25 +73,31 @@ if [ "$FUNCTION_ID" -ge "1000" ] ; then
 
       echo "Canister wasm chunks uploader starting"
       cargo run --package canister_wasm_chunks_uploader -- \
-        --url "https://ic0.app/" --dfx-identity $DFX_IDENTITY --user-index 4bkt6-4aaaa-aaaaf-aaaiq-cai \
-        --group-index 4ijyc-kiaaa-aaaaf-aaaja-cai --canister-to-upload $CANISTER_NAME --version $VERSION || exit 1
+        --url "https://ic0.app/" \
+        --dfx-identity $DFX_IDENTITY \
+        --openchat-installer jodzs-iqaaa-aaaar-qamqa-cai \
+        --user-index 4bkt6-4aaaa-aaaaf-aaaiq-cai \
+        --group-index 4ijyc-kiaaa-aaaaf-aaaja-cai \
+        --canister-to-upload $CANISTER_NAME \
+        --version $VERSION || exit 1
 
       echo "Canister wasm chunks uploader completed"
     fi
 
     # Build the proposal file
-    cd $PROPOSAL_BUILDER_FOLDER
-    cargo run --quiet -- \
-      --title "$TITLE" --summary "$SUMMARY" --url "$URL" --function-id $FUNCTION_ID --wasm-path "$WASM_PATH" \
-      --version $VERSION --chunked $CHUNKED > $PROPOSAL_FILE
-
-    # cd back into root of OpenChat repo
-    cd $SCRIPT_DIR/..
+    cargo run --package canister_upgrade_proposal_builder --quiet -- \
+      --title "$TITLE" \
+      --summary "$SUMMARY" \
+      --url "$URL" \
+      --function-id $FUNCTION_ID \
+      --canister-name $CANISTER_NAME \
+      --wasm-path "$WASM_PATH" \
+      --version $VERSION > $PROPOSAL_FILE
 
     # Submit the proposal
-    ./sns/scripts/utils/submit_proposal_file.sh $PROPOSAL_BUILDER_PATH
+    ./sns/scripts/utils/submit_proposal_file.sh $PROPOSAL_FILE
 
-    rm -f $PROPOSAL_BUILDER_PATH
+    rm -f $PROPOSAL_FILE
 else
     # Parse the version string
     IFS='.' read -ra VERSION_PARTS <<< "$VERSION"

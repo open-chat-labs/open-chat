@@ -7,7 +7,9 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
+canister_agent_utils = { path = "../../libraries/canister_agent_utils" }
 clap = { workspace = true, features = ["derive"] }
 sha256 = { path = "../../libraries/sha256" }
+openchat_installer_canister = { path = "../../canisters/openchat_installer/api" }
 sns_governance_canister = { path = "../../external_canisters/sns_governance/api" }
 types = { path = "../../libraries/types" }

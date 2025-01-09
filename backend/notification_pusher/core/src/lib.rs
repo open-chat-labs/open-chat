@@ -23,8 +23,8 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
 ) {
     info!("Notifications pusher starting");
 
-    let (sender, receiver) = async_channel::bounded::<Notification>(50_000);
-    let (subscriptions_to_remove_sender, subscriptions_to_remove_receiver) = async_channel::bounded(10_000);
+    let (sender, receiver) = async_channel::bounded::<Notification>(200_000);
+    let (subscriptions_to_remove_sender, subscriptions_to_remove_receiver) = async_channel::bounded(20_000);
 
     for notification_canister_id in notifications_canister_ids {
         let reader = Reader::new(

@@ -3,6 +3,7 @@ use canister_tracing_macros::trace;
 use cycles_dispenser_canister::c2c_request_cycles::{Response::*, *};
 use ic_cdk::update;
 use std::cmp::min;
+use tracing::info;
 use types::{CanisterId, Cycles, Milliseconds, TimestampMillis};
 use utils::canister::deposit_cycles;
 
@@ -48,6 +49,7 @@ fn prepare(args: Args, state: &mut State) -> Result<PrepareResult, Response> {
             Ok(PrepareResult { canister_id, amount })
         }
     } else {
+        info!(%canister_id, "Unauthorized canister tried to request cycles");
         Err(NotAuthorized)
     }
 }
