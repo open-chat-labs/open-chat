@@ -101,8 +101,12 @@ impl Buckets {
 pub struct BucketRecord {
     pub canister_id: CanisterId,
     pub wasm_version: BuildVersion,
-    pub bytes_used: u64,
-    pub bytes_remaining: i64,
+    #[serde(default)]
+    pub heap_memory_used: u64,
+    #[serde(default)]
+    pub stable_memory_used: u64,
+    #[serde(default)]
+    pub total_file_bytes: u64,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
@@ -111,8 +115,9 @@ impl BucketRecord {
         BucketRecord {
             canister_id,
             wasm_version,
-            bytes_used: 0,
-            bytes_remaining: 0,
+            heap_memory_used: 0,
+            stable_memory_used: 0,
+            total_file_bytes: 0,
             cycle_top_ups: Vec::new(),
         }
     }
@@ -123,9 +128,10 @@ impl From<&BucketRecord> for BucketMetrics {
         BucketMetrics {
             canister_id: bucket.canister_id,
             wasm_version: bucket.wasm_version,
-            bytes_used: bucket.bytes_used,
-            bytes_remaining: bucket.bytes_remaining,
-            cycle_top_ups: bucket.cycle_top_ups.clone(),
+            heap_memory_used: bucket.heap_memory_used,
+            stable_memory_used: bucket.heap_memory_used,
+            total_file_bytes: bucket.total_file_bytes,
+            cycle_top_ups: bucket.cycle_top_ups.iter().map(|t| t.amount).sum(),
         }
     }
 }

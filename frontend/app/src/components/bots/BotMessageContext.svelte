@@ -13,6 +13,7 @@
     import Typing from "../Typing.svelte";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
+    import { mobileWidth } from "../../stores/screenDimensions";
 
     const client = getContext<OpenChat>("client");
 
@@ -37,10 +38,20 @@
             };
         }
     });
+    let MAX_COMMAND_LENGTH = $derived($mobileWidth ? 50 : 150);
+    let paramValues = $derived(commandInstance.params.map(paramValue));
+    let paramsLength = $derived(paramValues.reduce((total, p) => total + p.length, 0));
+    let paramMode: "truncated" | "full" = $derived(
+        paramsLength > MAX_COMMAND_LENGTH ? "truncated" : "full",
+    );
     let text = $derived.by(() => {
-        return `@UserId(${botContext.initiator}) used **/${commandInstance.name}**${
-            commandInstance.params.length > 0 ? " with " : ""
-        }`;
+        if (paramMode === "truncated") {
+            return `@UserId(${botContext.initiator}) used **/${commandInstance.name}**${
+                commandInstance.params.length > 0 ? " with " : ""
+            }`;
+        } else {
+            return `@UserId(${botContext.initiator}) used **/${commandInstance.name}**`;
+        }
     });
     let user = $derived($userStore.get(botContext.initiator));
 
@@ -64,23 +75,29 @@
     {/if}
     <Markdown {text} />
     {#if commandInstance.params.length > 0}
-        <TooltipWrapper position="right" align="middle">
-            <div class="cog" slot="target">
-                <CogOutline size={"1.2em"} color={"var(--icon-txt)"} />
-            </div>
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {align} {position}>
-                    <div class="command-params">
-                        {#each commandInstance.params as param}
-                            <div class="param">
-                                <div class="name">{param.name}:</div>
-                                <div class="value">{paramValue(param)}</div>
-                            </div>
-                        {/each}
-                    </div>
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
+        {#if paramMode === "truncated"}
+            <TooltipWrapper position="right" align="middle">
+                <div class="cog" slot="target">
+                    <CogOutline size={"1.2em"} color={"var(--icon-txt)"} />
+                </div>
+                <div let:position let:align slot="tooltip">
+                    <TooltipPopup {align} {position}>
+                        <div class="command-params">
+                            {#each commandInstance.params as param}
+                                <div class="param">
+                                    <div class="name">{param.name}:</div>
+                                    <div class="value">{paramValue(param)}</div>
+                                </div>
+                            {/each}
+                        </div>
+                    </TooltipPopup>
+                </div>
+            </TooltipWrapper>
+        {:else}
+            {#each paramValues as param}
+                <div class="inline-param">{param}</div>
+            {/each}
+        {/if}
     {/if}
     {#if !botContext.finalised}
         <Typing />
@@ -94,10 +111,28 @@
         display: flex;
         gap: $sp2;
         align-items: center;
+        @include ellipsis();
+
+        :global(.markdown-wrapper) {
+            @include ellipsis();
+            flex-shrink: 0;
+        }
+
+        :global(.avatar.tiny) {
+            flex: 0 0 toRem(20);
+        }
 
         .cog {
             display: flex;
         }
+    }
+
+    .inline-param {
+        // background-color: #efefef;
+        padding: 0 $sp2;
+        border-radius: $sp2;
+        border: 1px solid var(--bd);
+        @include font(light, normal, fs-60);
     }
 
     :global(.command-params) {
