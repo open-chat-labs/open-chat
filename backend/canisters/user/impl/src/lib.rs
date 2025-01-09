@@ -9,10 +9,10 @@ use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
-use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
-use canister_timer_jobs::TimerJobs;
+use canister_timer_jobs::{Job, TimerJobs};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -130,15 +130,21 @@ impl RuntimeState {
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
         let mut next_event_expiry = None;
+        let mut files_to_delete = Vec::new();
         for chat in self.data.direct_chats.iter_mut() {
-            chat.events.remove_expired_events(now);
+            let result = chat.events.remove_expired_events(now);
             if let Some(expiry) = chat.events.next_event_expiry() {
                 if next_event_expiry.map_or(true, |current| expiry < current) {
                     next_event_expiry = Some(expiry);
                 }
             }
+            files_to_delete.extend(result.files);
         }
 
+        if !files_to_delete.is_empty() {
+            let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
+            delete_files_job.execute();
+        }
         self.data.next_event_expiry = next_event_expiry;
         if let Some(expiry) = self.data.next_event_expiry {
             self.data
