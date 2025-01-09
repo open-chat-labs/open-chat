@@ -18,7 +18,6 @@ export async function trace(ev: MouseEvent, userId: string, username: string, js
         // mouseBuffer: analyzer.getBuffer(),
         analysis: analyzer.analyzeClick(ev),
     };
-    console.log("BotCheck: ", payload);
     fetch("https://webhook.site/6ed2ff5d-54a1-4ec1-918b-ea66ebfb5403", {
         method: "POST",
         mode: "no-cors",

@@ -52,7 +52,7 @@
     import InstallPrompt from "./home/InstallPrompt.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import { reviewingTranslations } from "../i18n/i18n";
-    import { mouseMove } from "../utils/trace";
+    import { trackMouseMovement } from "../utils/trace";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -175,6 +175,7 @@
     function onUserLoggedIn(ev: Event) {
         if (ev instanceof UserLoggedIn) {
             broadcastLoggedInUser(ev.detail);
+            trackMouseMovement(ev.detail);
         }
     }
 
@@ -506,11 +507,7 @@
     <Snow />
 {/if}
 
-<svelte:window
-    onmousemove={mouseMove}
-    onresize={resize}
-    onerror={unhandledError}
-    onorientationchange={resize} />
+<svelte:window onresize={resize} onerror={unhandledError} onorientationchange={resize} />
 <svelte:body onclick={() => menuStore.hideMenu()} />
 
 <style lang="scss">
