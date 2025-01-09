@@ -2,11 +2,11 @@ use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_i
 use crate::model::channels::Channels;
 use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
 use crate::model::members::CommunityMembers;
-use crate::timer_job_types::{MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use canister_timer_jobs::TimerJobs;
+use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, ChatMetricsInternal};
 use community_canister::add_members_to_channel::UserFailedError;
 use community_canister::EventsResponse;
@@ -234,6 +234,7 @@ impl RuntimeState {
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
         let mut next_event_expiry = None;
+        let mut files_to_delete = Vec::new();
         let mut final_prize_payments = Vec::new();
         for channel in self.data.channels.iter_mut() {
             let result = channel.chat.remove_expired_events(now);
@@ -242,6 +243,7 @@ impl RuntimeState {
                     next_event_expiry = Some(expiry);
                 }
             }
+            files_to_delete.extend(result.files);
             final_prize_payments.extend(result.final_prize_payments);
             for thread in result.threads {
                 self.data.stable_memory_keys_to_garbage_collect.push(BaseKeyPrefix::from(
@@ -256,6 +258,10 @@ impl RuntimeState {
             self.data
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+        if !files_to_delete.is_empty() {
+            let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
+            delete_files_job.execute();
         }
         for pending_transaction in final_prize_payments {
             self.data.timer_jobs.enqueue_job(
