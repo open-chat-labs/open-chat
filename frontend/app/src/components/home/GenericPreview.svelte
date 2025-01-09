@@ -8,6 +8,7 @@
         title: string | null | undefined;
         description: string | null | undefined;
         image: string | null | undefined;
+        imageAlt: string | null | undefined;
     };
 
     const dispatch = createEventDispatcher();
@@ -42,14 +43,24 @@
         const response = await fetch(
             `${process.env.PREVIEW_PROXY_URL}/preview?url=${encodeURIComponent(url)}`,
         );
-
-        const meta = await response.json();
-        return {
-            url,
-            title: meta.title,
-            description: meta.description,
-            image: meta.image ? new URL(meta.image, url).toString() : undefined,
-        };
+        if (response.ok) {
+            const meta = await response.json();
+            return {
+                url,
+                title: meta.title,
+                description: meta.description,
+                image: meta.image ? new URL(meta.image, url).toString() : undefined,
+                imageAlt: meta.imageAlt,
+            };
+        } else {
+            return {
+                url,
+                title: undefined,
+                description: undefined,
+                image: undefined,
+                imageAlt: undefined,
+            };
+        }
     }
 
     function imageLoaded() {
@@ -74,7 +85,7 @@
                             on:error={imageLoaded}
                             class="image"
                             src={preview.image}
-                            alt="link preview image" />
+                            alt={preview.imageAlt ?? "link preview image"} />
                     </a>
                 {/if}
             </div>
