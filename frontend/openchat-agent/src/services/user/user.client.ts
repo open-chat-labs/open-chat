@@ -49,8 +49,6 @@ import type {
     TipMessageResponse,
     NamedAccount,
     SaveCryptoAccountResponse,
-    CandidateProposal,
-    SubmitProposalResponse,
     CryptocurrencyDetails,
     ExchangeTokenSwapArgs,
     SwapTokensResponse,
@@ -94,8 +92,6 @@ import {
     tipMessageResponse,
     savedCryptoAccountsResponse,
     saveCryptoAccountResponse,
-    proposalToSubmit,
-    submitProposalResponse,
     reportMessageResponse,
     swapTokensResponse,
     tokenSwapStatusResponse,
@@ -244,8 +240,6 @@ import {
     UserSetMessageReminderResponse,
     UserSetPinNumberArgs,
     UserSetPinNumberResponse,
-    UserSubmitProposalArgs,
-    UserSubmitProposalResponse,
     UserSwapTokensArgs,
     UserSwapTokensResponse,
     UserTipMessageArgs,
@@ -1390,30 +1384,6 @@ export class UserClient extends CandidService {
             (_) => true,
             UserSetCommunityIndexesArgs,
             UserSetCommunityIndexesResponse,
-        );
-    }
-
-    submitProposal(
-        governanceCanisterId: string,
-        proposal: CandidateProposal,
-        ledger: string,
-        token: string,
-        proposalRejectionFee: bigint,
-        transactionFee: bigint,
-    ): Promise<SubmitProposalResponse> {
-        return this.executeMsgpackUpdate(
-            "submit_proposal",
-            {
-                governance_canister_id: principalStringToBytes(governanceCanisterId),
-                proposal: proposalToSubmit(proposal),
-                ledger: principalStringToBytes(ledger),
-                token: apiToken(token),
-                proposal_rejection_fee: proposalRejectionFee,
-                transaction_fee: transactionFee,
-            },
-            submitProposalResponse,
-            UserSubmitProposalArgs,
-            UserSubmitProposalResponse,
         );
     }
 

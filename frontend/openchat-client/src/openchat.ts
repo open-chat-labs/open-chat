@@ -6665,6 +6665,7 @@ export class OpenChat extends EventTarget {
         return this.#sendRequest(
             {
                 kind: "submitProposal",
+                currentUserId: this.#liveState.user.userId,
                 governanceCanisterId,
                 proposal,
                 ledger: nervousSystem.token.ledger,

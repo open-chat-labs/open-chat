@@ -1502,6 +1502,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.submitProposal(
+                        payload.currentUserId,
                         payload.governanceCanisterId,
                         payload.proposal,
                         payload.ledger,
