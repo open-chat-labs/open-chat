@@ -16,7 +16,7 @@ export async function trace(ev: MouseEvent, userId: string, username: string, js
         bot: botd.detect(),
         stack: err.stack,
         // mouseBuffer: analyzer.getBuffer(),
-        analysis: analyzer.analyzeClick(ev),
+        analysis: analyzer.analyseClick(ev),
     };
     fetch("https://webhook.site/6ed2ff5d-54a1-4ec1-918b-ea66ebfb5403", {
         method: "POST",
@@ -101,7 +101,7 @@ class MouseMovementBuffer {
     }
 }
 
-class MouseMovementAnalyzer {
+class MouseMovementAnalyser {
     #buffer: MouseMovementBuffer;
 
     constructor(bufferSize = 100) {
@@ -116,7 +116,7 @@ class MouseMovementAnalyzer {
         return this.#buffer.getBuffer();
     }
 
-    analyzeClick(event: MouseEvent) {
+    analyseClick(event: MouseEvent) {
         const buffer = this.#buffer.getBuffer();
         if (buffer.length < 5) {
             return { human: false, reason: "Insufficient data" };
@@ -157,7 +157,7 @@ class MouseMovementAnalyzer {
     }
 }
 
-const analyzer = new MouseMovementAnalyzer(50);
+const analyzer = new MouseMovementAnalyser(50);
 
 export function trackMouseMovement(userId: string) {
     if (suspiciousUserIds.includes(userId)) {
