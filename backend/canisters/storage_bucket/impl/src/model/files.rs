@@ -322,6 +322,8 @@ impl Files {
             file_count: self.files.len() as u64,
             blob_count: self.blobs.len(),
             pending_files: self.pending_files.len() as u64,
+            expiration_queue_keys: self.expiration_queue.len() as u64,
+            expiration_queue_values: self.expiration_queue.values().map(|v| v.len() as u64).sum(),
         }
     }
 
@@ -592,4 +594,6 @@ pub struct Metrics {
     pub file_count: u64,
     pub blob_count: u64,
     pub pending_files: u64,
+    pub expiration_queue_keys: u64,
+    pub expiration_queue_values: u64,
 }

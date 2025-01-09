@@ -68,6 +68,8 @@ impl RuntimeState {
             blob_count: file_metrics.blob_count,
             pending_files: file_metrics.pending_files,
             index_sync_queue_length: self.data.index_event_sync_queue.len() as u32,
+            expiration_queue_keys: file_metrics.expiration_queue_keys,
+            expiration_queue_values: file_metrics.expiration_queue_values,
             freezing_limit: self.data.freezing_limit.value.unwrap_or_default(),
             stable_memory_sizes: memory::memory_sizes(),
         }
@@ -129,6 +131,8 @@ pub struct Metrics {
     pub blob_count: u64,
     pub pending_files: u64,
     pub index_sync_queue_length: u32,
+    pub expiration_queue_keys: u64,
+    pub expiration_queue_values: u64,
     pub freezing_limit: Cycles,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
 }
