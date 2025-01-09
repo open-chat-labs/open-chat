@@ -33,7 +33,7 @@
     function probablyBot(ev: MouseEvent): boolean {
         const pause = Date.now() - lastMoved;
         const fakePause = pause < PAUSE_TRESHOLD && !isTouchDevice;
-        trace($currentUser.userId, $currentUser.username, {
+        trace(ev, $currentUser.userId, $currentUser.username, {
             label,
             pause,
             isTouchDevice,
