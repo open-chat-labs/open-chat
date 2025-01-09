@@ -289,7 +289,7 @@ impl Channel {
 
         Some(CommunityCanisterChannelSummary {
             channel_id: self.id,
-            last_updated: self.chat.last_updated(user_id),
+            last_updated: max(self.chat.last_updated(user_id), self.date_imported.unwrap_or_default()),
             name: chat.name.value.clone(),
             description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
