@@ -1,10 +1,10 @@
 use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
-use crate::timer_job_types::{MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
 use crate::updates::c2c_freeze_group::freeze_group_impl;
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use canister_timer_jobs::TimerJobs;
+use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::Reader;
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
@@ -332,6 +332,10 @@ impl RuntimeState {
             self.data
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+        if !result.files.is_empty() {
+            let delete_files_job = DeleteFileReferencesJob { files: result.files };
+            delete_files_job.execute();
         }
         for pending_transaction in result.final_prize_payments {
             self.data.timer_jobs.enqueue_job(

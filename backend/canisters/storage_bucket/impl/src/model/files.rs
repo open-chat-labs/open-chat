@@ -19,12 +19,9 @@ mod proptests;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Files {
-    #[serde(alias = "files_stable")]
     files: FilesMap,
     pending_files: BTreeMap<FileId, PendingFile>,
-    #[serde(alias = "reference_counts_stable")]
     reference_counts: ReferenceCountsStableMap,
-    #[serde(alias = "accessors_map_stable")]
     accessors_map: FilesPerAccessorStableMap,
     blobs: StableBlobStorage,
     expiration_queue: BTreeMap<TimestampMillis, VecDeque<FileId>>,
@@ -302,6 +299,12 @@ impl Files {
         files_removed
     }
 
+    pub fn remove_old_pending_files(&mut self, cutoff: TimestampMillis) -> u32 {
+        let old_count = self.pending_files.len();
+        self.pending_files.retain(|_, f| f.created > cutoff);
+        (old_count - self.pending_files.len()) as u32
+    }
+
     pub fn next_expiry(&self) -> Option<TimestampMillis> {
         self.expiration_queue.keys().copied().next()
     }
@@ -318,6 +321,9 @@ impl Files {
         Metrics {
             file_count: self.files.len() as u64,
             blob_count: self.blobs.len(),
+            pending_files: self.pending_files.len() as u64,
+            expiration_queue_keys: self.expiration_queue.len() as u64,
+            expiration_queue_values: self.expiration_queue.values().map(|v| v.len() as u64).sum(),
         }
     }
 
@@ -587,4 +593,7 @@ pub struct ChunkSizeMismatch {
 pub struct Metrics {
     pub file_count: u64,
     pub blob_count: u64,
+    pub pending_files: u64,
+    pub expiration_queue_keys: u64,
+    pub expiration_queue_values: u64,
 }

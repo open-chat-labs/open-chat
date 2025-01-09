@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support submitting `MintSnsTokens` and `AdvanceSnsTargetVersion` proposals ([#7128](https://github.com/open-chat-labs/open-chat/pull/7128))
 - Log error if tip fails due to recipient mismatch ([#7151](https://github.com/open-chat-labs/open-chat/pull/7151))
 - Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
+- When disappearing messages expire delete any linked files ([#7184](https://github.com/open-chat-labs/open-chat/pull/7184))
 
 ### Removed
 

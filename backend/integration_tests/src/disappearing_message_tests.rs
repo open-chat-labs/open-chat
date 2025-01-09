@@ -2,11 +2,12 @@ use crate::client::community::STABLE_MEMORY_MAP_MEMORY_ID;
 use crate::client::group::CHAT_EVENTS_MEMORY_ID;
 use crate::env::ENV;
 use crate::stable_memory::get_stable_memory_map;
+use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
-use types::{EventIndex, MessageIndex, OptionUpdate};
+use types::{EventIndex, FileContent, MessageContentInitial, MessageIndex, OptionUpdate};
 
 #[test]
 fn disappearing_messages_in_group_chats() {
@@ -207,6 +208,69 @@ fn expired_event_and_message_ranges_are_correct() {
     assert!(!events_response2.events.is_empty());
     assert_eq!(events_response2.expired_event_ranges, expected_expired_event_ranges);
     assert_eq!(events_response2.expired_message_ranges, expected_expired_message_ranges);
+}
+
+#[test]
+fn files_deleted_after_message_disappears() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), false, true);
+
+    client::group::update_group_v2(
+        env,
+        user.principal,
+        group_id.into(),
+        &group_canister::update_group_v2::Args {
+            events_ttl: OptionUpdate::SetToSome(1000),
+            ..Default::default()
+        },
+    );
+
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        user.principal,
+        canister_ids.storage_index,
+        100,
+        vec![user.principal, group_id.into()],
+    );
+
+    client::group::happy_path::send_message(
+        env,
+        &user,
+        group_id,
+        None,
+        MessageContentInitial::File(FileContent {
+            name: random_string(),
+            caption: None,
+            mime_type: "abc".to_string(),
+            file_size: 100,
+            blob_reference: Some(blob_reference.clone()),
+        }),
+        None,
+        None,
+    );
+
+    env.advance_time(Duration::from_millis(999));
+    tick_many(env, 5);
+
+    assert!(client::storage_bucket::happy_path::file_exists(
+        env,
+        user.principal,
+        blob_reference.canister_id,
+        blob_reference.blob_id
+    ));
+
+    env.advance_time(Duration::from_millis(1));
+    tick_many(env, 5);
+
+    assert!(!client::storage_bucket::happy_path::file_exists(
+        env,
+        user.principal,
+        blob_reference.canister_id,
+        blob_reference.blob_id
+    ));
 }
 
 #[test]
