@@ -1,5 +1,5 @@
-use bots_sdk::env;
 use candid::Principal;
+use oc_bots_sdk_canister::env;
 use serde::{Deserialize, Serialize};
 use std::{cell::RefCell, collections::HashMap};
 

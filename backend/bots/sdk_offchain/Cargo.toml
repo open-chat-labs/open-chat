@@ -1,5 +1,5 @@
 [package]
-name = "agent_utils"
+name = "oc_bots_sdk_offchain"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,4 +7,3 @@ edition = "2021"
 
 [dependencies]
 ic-agent = { workspace = true }
-

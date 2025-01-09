@@ -1,7 +1,10 @@
-use crate::state;
-use bots_sdk::env;
-use greet_bot_canister::insert_jokes::{Args, Response};
 use ic_cdk::update;
+use oc_bots_sdk_canister::env;
+
+use crate::{
+    api::insert_jokes::{Args, Response},
+    state,
+};
 
 #[update]
 fn insert_jokes(args: Args) -> Response {

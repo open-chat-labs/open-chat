@@ -1,9 +1,9 @@
-use agent_utils::agent;
 use candid::Principal;
 use clap::Parser;
-use greet_bot_canister::insert_jokes;
-use ic_agent::Agent;
+use oc_bots_sdk_offchain::agent;
 use std::{collections::HashMap, error::Error, fs::File};
+
+mod insert_jokes;
 
 #[derive(Parser, Debug)]
 pub struct Config {
@@ -46,7 +46,7 @@ pub async fn run(config: Config) -> Result<(), Box<dyn Error + Send + Sync>> {
         // Upload the jokes to the Greet bot canister in batches
         if jokes.len() % 10_000 == 0 {
             let batch = std::mem::take(&mut jokes);
-            let args = greet_bot_canister::insert_jokes::Args { jokes: batch };
+            let args = insert_jokes::Args { jokes: batch };
 
             make_update_call(&agent, &config.greet_bot_canister_id, "insert_jokes", &args).await?;
         }
@@ -56,7 +56,7 @@ pub async fn run(config: Config) -> Result<(), Box<dyn Error + Send + Sync>> {
 }
 
 async fn make_update_call(
-    agent: &Agent,
+    agent: &ic_agent::Agent,
     canister_id: &Principal,
     method_name: &str,
     args: &insert_jokes::Args,

@@ -1,7 +1,7 @@
 use clap::Parser;
-use joke_uploader::run;
-use joke_uploader::Config;
 use std::process;
+
+use greet_bot_loader::{run, Config};
 
 #[tokio::main]
 async fn main() {

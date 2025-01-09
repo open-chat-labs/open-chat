@@ -1,7 +1,6 @@
 use candid::Principal;
+use oc_bots_sdk::types::{Hash, Nanoseconds, TimestampMillis, TimestampNanos};
 use sha2::{Digest, Sha256};
-
-use crate::types::{Hash, Nanoseconds, TimestampMillis, TimestampNanos};
 
 const NANOS_PER_MILLISECOND: Nanoseconds = 1_000_000;
 

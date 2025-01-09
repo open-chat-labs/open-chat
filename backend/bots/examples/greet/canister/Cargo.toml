@@ -10,16 +10,17 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-bots_sdk = { path = "../../../sdk" }
+oc_bots_sdk = { path = "../../../sdk" }
+oc_bots_sdk_canister = { path = "../../../sdk_canister" }
 candid = { workspace = true }
 getrandom = { workspace = true }
-greet_bot_canister = { path = "../api" }
 http = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-http-certification = { workspace = true }
 ic_principal = { workspace = true }
 ic-stable-structures = { workspace = true }
+itertools = { workspace = true }
 rand = { workspace = true }
 rmp-serde = { workspace = true }
 serde = { workspace = true }

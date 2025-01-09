@@ -1,39 +1,23 @@
-use candid::CandidType;
 use ic_cdk::api::call::CallResult;
-use serde::{Deserialize, Serialize};
-
-use crate::{
+use oc_bots_sdk::{
     api::Message,
-    env, jwt,
-    types::{CanisterId, MessageContent, MessageId, MessageIndex, StringChat, TextContent, UserId},
+    jwt,
+    types::{
+        ActionArgs, ActionResponse, BotAction, BotApiCallError, BotCommandClaims, BotMessageAction, CanisterId, MessageContent,
+        TextContent, TokenError,
+    },
 };
 
-pub struct Agent {
-    access_token: String,
+use super::env;
+
+pub struct OpenChatClient {
+    jwt: String,
     claims: BotCommandClaims,
 }
 
-pub enum TokenError {
-    Invalid(String),
-    Expired,
-}
-
-#[derive(Deserialize)]
-pub struct BotCommandClaims {
-    pub initiator: UserId,
-    pub bot: UserId,
-    pub chat: StringChat,
-    pub thread_root_message_index: Option<MessageIndex>,
-    pub message_id: MessageId,
-    pub command_name: String,
-    pub command_args: String,
-    pub command_text: String,
-    pub bot_api_gateway: CanisterId,
-}
-
-impl Agent {
-    pub fn build(access_token: String, public_key: &str) -> Result<Self, TokenError> {
-        let claims = jwt::verify::<jwt::Claims<BotCommandClaims>>(&access_token, public_key)
+impl OpenChatClient {
+    pub fn build(jwt: String, public_key: &str) -> Result<Self, TokenError> {
+        let claims = jwt::verify::<jwt::Claims<BotCommandClaims>>(&jwt, public_key)
             .map_err(|error| TokenError::Invalid(error.to_string()))?;
 
         if claims.exp_ms() < env::now() {
@@ -41,7 +25,7 @@ impl Agent {
         }
 
         Ok(Self {
-            access_token,
+            jwt,
             claims: claims.into_custom(),
         })
     }
@@ -70,7 +54,7 @@ impl Agent {
     fn execute_bot_action(&self, action: BotAction) {
         let args = ActionArgs {
             action,
-            jwt: self.access_token.clone(),
+            jwt: self.jwt.clone(),
         };
 
         ic_cdk::spawn(execute_bot_action_inner(self.claims.bot_api_gateway, args));
@@ -88,37 +72,4 @@ impl Agent {
             }
         }
     }
-}
-
-#[derive(CandidType, Serialize, Clone)]
-struct ActionArgs {
-    pub action: BotAction,
-    pub jwt: String,
-}
-
-type ActionResponse = Result<(), BotApiCallError>;
-
-#[derive(CandidType, Deserialize, Clone, Debug)]
-enum BotApiCallError {
-    Invalid(String),
-    CanisterError(CanisterError),
-    C2CError(i32, String),
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-enum CanisterError {
-    NotAuthorized,
-    Frozen,
-    Other(String),
-}
-
-#[derive(CandidType, Serialize, Clone)]
-enum BotAction {
-    SendMessage(BotMessageAction),
-}
-
-#[derive(CandidType, Serialize, Clone)]
-struct BotMessageAction {
-    pub content: MessageContent,
-    pub finalised: bool,
 }

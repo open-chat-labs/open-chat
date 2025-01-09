@@ -1,5 +1,5 @@
 [package]
-name = "greet_bot_canister"
+name = "oc_bots_sdk_canister"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,4 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-serde = { workspace = true }
+ic-cdk = { workspace = true }
+oc_bots_sdk = { path = "../sdk" }
+serde_json = { workspace = true }
+sha2 = { workspace = true }

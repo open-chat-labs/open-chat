@@ -1,7 +1,7 @@
 use crate::{execute_command::execute_command, get_definition::get_definition};
-use bots_sdk::api::ExecuteCommandResponse;
 use ic_cdk::{query, update};
 use ic_http_certification::{HttpRequest, HttpResponse};
+use oc_bots_sdk::api::ExecuteCommandResponse;
 use serde::Serialize;
 use std::str;
 
@@ -30,8 +30,8 @@ async fn http_request_update(request: HttpRequest) -> HttpResponse {
         if let Ok(path) = request.get_path() {
             if path == "/execute_command" {
                 let (status_code, body) = match str::from_utf8(&request.body) {
-                    Ok(access_token) => {
-                        let response = execute_command(access_token).await;
+                    Ok(jwt) => {
+                        let response = execute_command(jwt).await;
                         let body = to_json(&response);
                         let code = match response {
                             ExecuteCommandResponse::Success(_) => 200,

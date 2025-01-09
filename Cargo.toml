@@ -1,11 +1,11 @@
 [workspace]
 members = [
     "backend/benchmarks",
-    "backend/bots/examples/greet/api",
-    "backend/bots/examples/greet/impl",
+    "backend/bots/examples/greet/canister",
     "backend/bots/examples/greet/loader",
-    "backend/bots/agent_utils",
     "backend/bots/sdk",
+    "backend/bots/sdk_canister",
+    "backend/bots/sdk_offchain",
     "backend/canisters/airdrop_bot/api",
     "backend/canisters/airdrop_bot/client",
     "backend/canisters/airdrop_bot/impl",
