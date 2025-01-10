@@ -62,14 +62,14 @@ async fn access_token(args: Args) -> Response {
             };
             build_token(token_type_name, custom_claims, state)
         }
-        AccessTokenType::BotAction(bc) => {
+        AccessTokenType::BotAction(ba) => {
             let custom_claims = BotCommandClaims {
-                initiator: bc.user_id,
-                bot: bc.bot,
-                chat: bc.chat.into(),
-                thread_root_message_index: bc.thread_root_message_index,
-                message_id: bc.message_id,
-                command: bc.command,
+                initiator: ba.user_id,
+                bot: ba.bot,
+                chat: ba.chat.into(),
+                thread_root_message_index: ba.thread_root_message_index,
+                message_id: ba.message_id,
+                command: ba.command,
                 bot_api_gateway: state.env.canister_id(),
             };
             build_token(token_type_name, custom_claims, state)
