@@ -2,8 +2,7 @@ type TokenReply = variant {
     LP : LPTokenReply;
     IC : ICTokenReply;
 };
-type LPTokenReply = record {
-};
+type LPTokenReply = record {};
 type ICTokenReply = record {
     canister_id : text;
     is_removed : bool;
