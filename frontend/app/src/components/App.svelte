@@ -52,6 +52,7 @@
     import InstallPrompt from "./home/InstallPrompt.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import { reviewingTranslations } from "../i18n/i18n";
+    import { trackMouseMovement } from "../utils/trace";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -174,6 +175,7 @@
     function onUserLoggedIn(ev: Event) {
         if (ev instanceof UserLoggedIn) {
             broadcastLoggedInUser(ev.detail);
+            trackMouseMovement(ev.detail);
         }
     }
 

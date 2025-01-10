@@ -118,6 +118,7 @@ import {
     cryptoLookup,
     exchangeRatesLookupStore,
     nervousSystemLookup,
+    swappableTokensStore,
 } from "./stores/crypto";
 import {
     disableAllProposalFilters,
@@ -5931,6 +5932,7 @@ export class OpenChat extends EventTarget {
                 if (!this.#liveState.anonUser) {
                     this.#initWebRtc();
                     startMessagesReadTracker(this);
+                    this.refreshSwappableTokens();
                     window.setTimeout(() => this.#refreshBalancesInSeries(), 0);
                 }
             }
@@ -6665,6 +6667,7 @@ export class OpenChat extends EventTarget {
         return this.#sendRequest(
             {
                 kind: "submitProposal",
+                currentUserId: this.#liveState.user.userId,
                 governanceCanisterId,
                 proposal,
                 ledger: nervousSystem.token.ledger,
@@ -6686,10 +6689,13 @@ export class OpenChat extends EventTarget {
             .catch(() => false);
     }
 
-    swappableTokens(): Promise<Set<string>> {
+    refreshSwappableTokens(): Promise<Set<string>> {
         return this.#sendRequest({
             kind: "canSwap",
             tokenLedgers: new Set(Object.keys(get(cryptoLookup))),
+        }).then((tokens) => {
+            swappableTokensStore.set(tokens);
+            return tokens;
         });
     }
 

@@ -8,8 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Sync heap and stable memory sizes to StorageIndex ([#7192](https://github.com/open-chat-labs/open-chat/pull/7192))
+
+## [[2.0.1560](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1560-storage_bucket)] - 2025-01-09
+
+### Changed
+
+- Clean up after users and files migrated to stable memory ([#7182](https://github.com/open-chat-labs/open-chat/pull/7182))
+- Expose expiration queue length in metrics ([#7189](https://github.com/open-chat-labs/open-chat/pull/7189))
+
+## [[2.0.1558](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1558-storage_bucket)] - 2025-01-09
+
+### Changed
+
 - Remove code to migrate users to stable memory ([#7182](https://github.com/open-chat-labs/open-chat/pull/7182))
 - Regular job to remove old pending files ([#7183](https://github.com/open-chat-labs/open-chat/pull/7183))
+- Revert field name changes until the old fields have been removed ([#7185](https://github.com/open-chat-labs/open-chat/pull/7185))
 
 ## [[2.0.1557](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1557-storage_bucket)] - 2025-01-08
 

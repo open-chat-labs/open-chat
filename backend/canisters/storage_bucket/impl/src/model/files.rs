@@ -19,29 +19,27 @@ mod proptests;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Files {
-    #[serde(alias = "files_stable")]
     files: FilesMap,
     pending_files: BTreeMap<FileId, PendingFile>,
-    #[serde(alias = "reference_counts_stable")]
     reference_counts: ReferenceCountsStableMap,
-    #[serde(alias = "accessors_map_stable")]
     accessors_map: FilesPerAccessorStableMap,
     blobs: StableBlobStorage,
     expiration_queue: BTreeMap<TimestampMillis, VecDeque<FileId>>,
-    bytes_used: u64,
+    #[serde(alias = "bytes_used")]
+    total_file_bytes: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct File {
-    #[serde(rename = "o", alias = "owner")]
+    #[serde(rename = "o")]
     pub owner: Principal,
-    #[serde(rename = "c", alias = "created")]
+    #[serde(rename = "c")]
     pub created: TimestampMillis,
-    #[serde(rename = "a", alias = "accessors")]
+    #[serde(rename = "a")]
     pub accessors: BTreeSet<AccessorId>,
-    #[serde(rename = "h", alias = "hash")]
+    #[serde(rename = "h")]
     pub hash: Hash,
-    #[serde(rename = "m", alias = "mime_type")]
+    #[serde(rename = "m")]
     pub mime_type: String,
 }
 
@@ -303,9 +301,9 @@ impl Files {
     }
 
     pub fn remove_old_pending_files(&mut self, cutoff: TimestampMillis) -> u32 {
-        let current_count = self.pending_files.len();
+        let old_count = self.pending_files.len();
         self.pending_files.retain(|_, f| f.created > cutoff);
-        (self.pending_files.len() - current_count) as u32
+        (old_count - self.pending_files.len()) as u32
     }
 
     pub fn next_expiry(&self) -> Option<TimestampMillis> {
@@ -316,8 +314,8 @@ impl Files {
         self.blobs.data_size(hash)
     }
 
-    pub fn bytes_used(&self) -> u64 {
-        self.bytes_used
+    pub fn total_file_bytes(&self) -> u64 {
+        self.total_file_bytes
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -325,6 +323,9 @@ impl Files {
             file_count: self.files.len() as u64,
             blob_count: self.blobs.len(),
             pending_files: self.pending_files.len() as u64,
+            total_file_bytes: self.total_file_bytes,
+            expiration_queue_keys: self.expiration_queue.len() as u64,
+            expiration_queue_values: self.expiration_queue.values().map(|v| v.len() as u64).sum(),
         }
     }
 
@@ -372,7 +373,7 @@ impl Files {
 
     fn add_blob_if_not_exists(&mut self, hash: Hash, bytes: Vec<u8>) {
         if !self.blobs.exists(&hash) {
-            self.bytes_used = self.bytes_used.saturating_add(bytes.len() as u64);
+            self.total_file_bytes = self.total_file_bytes.saturating_add(bytes.len() as u64);
 
             self.blobs.insert(hash, bytes);
         }
@@ -381,7 +382,7 @@ impl Files {
     fn remove_blob(&mut self, hash: &Hash) {
         if let Some(size) = self.blobs.data_size(hash) {
             self.blobs.remove(hash);
-            self.bytes_used = self.bytes_used.saturating_sub(size);
+            self.total_file_bytes = self.total_file_bytes.saturating_sub(size);
         }
     }
 
@@ -595,4 +596,7 @@ pub struct Metrics {
     pub file_count: u64,
     pub blob_count: u64,
     pub pending_files: u64,
+    pub total_file_bytes: u64,
+    pub expiration_queue_keys: u64,
+    pub expiration_queue_values: u64,
 }

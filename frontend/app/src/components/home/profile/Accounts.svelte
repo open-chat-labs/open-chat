@@ -3,11 +3,12 @@
         type EnhancedTokenDetails,
         ICP_SYMBOL,
         type OpenChat,
+        swappableTokensStore,
         walletTokensSorted as accountsSorted,
         walletConfigStore as walletConfig,
         nervousSystemLookup,
     } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import HeartRemoveOutline from "svelte-material-icons/HeartRemoveOutline.svelte";
@@ -41,7 +42,6 @@
     let actionMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted";
     let selectedLedger: string | undefined = undefined;
     let transactionsFormat: string;
-    let swappableTokensPromise = client.swappableTokens();
 
     $: manualWalletConfig = $walletConfig.kind === "manual_wallet";
     $: snsLedgers = new Set<string>(
@@ -51,6 +51,8 @@
     );
     $: total =
         selectedConversion === "none" ? "" : calculateTotal($accountsSorted, selectedConversion);
+
+    onMount(() => client.refreshSwappableTokens());
 
     function calculateTotal(
         accounts: EnhancedTokenDetails[],
@@ -196,8 +198,7 @@
                                                 resourceKey={i18nKey("cryptoAccount.receive")} />
                                         </div>
                                     </MenuItem>
-                                    {#await swappableTokensPromise then swappableTokens}
-                                        {#if swappableTokens.has(token.ledger)}
+                                        {#if $swappableTokensStore.has(token.ledger)}
                                             <MenuItem on:click={() => showSwap(token.ledger)}>
                                                 <SwapIcon
                                                     size={$iconSize}
@@ -211,7 +212,6 @@
                                                 </div>
                                             </MenuItem>
                                         {/if}
-                                    {/await}
                                 {/if}
                                 {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
                                     <MenuItem on:click={() => showTransactions(token)}>

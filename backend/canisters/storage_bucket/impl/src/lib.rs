@@ -18,7 +18,6 @@ mod model;
 mod queries;
 mod updates;
 
-const DATA_LIMIT_BYTES: u64 = 1 << 36; // 64GB
 const MAX_BLOB_SIZE_BYTES: u64 = 100 * (1 << 20); // 100MB
 const MAX_EVENTS_TO_SYNC_PER_BATCH: usize = 1000;
 
@@ -67,9 +66,11 @@ impl RuntimeState {
             file_count: file_metrics.file_count,
             blob_count: file_metrics.blob_count,
             pending_files: file_metrics.pending_files,
+            total_file_bytes: file_metrics.total_file_bytes,
             index_sync_queue_length: self.data.index_event_sync_queue.len() as u32,
+            expiration_queue_keys: file_metrics.expiration_queue_keys,
+            expiration_queue_values: file_metrics.expiration_queue_values,
             freezing_limit: self.data.freezing_limit.value.unwrap_or_default(),
-            users_migrated: self.data.users_migrated,
             stable_memory_sizes: memory::memory_sizes(),
         }
     }
@@ -84,8 +85,6 @@ struct Data {
     created: TimestampMillis,
     freezing_limit: Timestamped<Option<Cycles>>,
     rng_seed: [u8; 32],
-    #[serde(default)]
-    users_migrated: bool,
     test_mode: bool,
 }
 
@@ -99,7 +98,6 @@ impl Data {
             created: now,
             freezing_limit: Timestamped::default(),
             rng_seed: [0; 32],
-            users_migrated: true,
             test_mode,
         }
     }
@@ -116,7 +114,7 @@ impl Data {
 
     pub fn push_event_to_index(&mut self, event_to_sync: EventToSync) {
         self.index_event_sync_queue
-            .push(self.storage_index_canister_id, (event_to_sync, self.files.bytes_used()));
+            .push(self.storage_index_canister_id, (event_to_sync, self.files.total_file_bytes()));
     }
 }
 
@@ -132,9 +130,11 @@ pub struct Metrics {
     pub file_count: u64,
     pub blob_count: u64,
     pub pending_files: u64,
+    pub total_file_bytes: u64,
     pub index_sync_queue_length: u32,
+    pub expiration_queue_keys: u64,
+    pub expiration_queue_values: u64,
     pub freezing_limit: Cycles,
-    pub users_migrated: bool,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
 }
 

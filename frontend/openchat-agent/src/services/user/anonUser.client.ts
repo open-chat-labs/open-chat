@@ -60,8 +60,6 @@ import type {
     TipMessageResponse,
     NamedAccount,
     SaveCryptoAccountResponse,
-    CandidateProposal,
-    SubmitProposalResponse,
     MessageContext,
     PendingCryptocurrencyTransfer,
     CryptocurrencyDetails,
@@ -393,17 +391,6 @@ export class AnonUserClient {
     }
 
     setCommunityIndexes(_communityIndexes: Record<string, number>): Promise<boolean> {
-        throw new AnonymousOperationError();
-    }
-
-    submitProposal(
-        _governanceCanisterId: string,
-        _proposal: CandidateProposal,
-        _ledger: string,
-        _token: string,
-        _proposalRejectionFee: bigint,
-        _transactionFee: bigint,
-    ): Promise<SubmitProposalResponse> {
         throw new AnonymousOperationError();
     }
 

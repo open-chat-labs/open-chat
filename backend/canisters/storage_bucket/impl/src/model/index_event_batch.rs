@@ -1,5 +1,5 @@
 use crate::model::users::FileStatusInternal;
-use crate::{mutate_state, DATA_LIMIT_BYTES, MAX_EVENTS_TO_SYNC_PER_BATCH};
+use crate::{mutate_state, MAX_EVENTS_TO_SYNC_PER_BATCH};
 use candid::Deserialize;
 use serde::Serialize;
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
@@ -19,20 +19,22 @@ pub enum EventToSync {
 
 impl TimerJobItem for IndexEventBatch {
     async fn process(&self) -> Result<(), bool> {
-        let mut args = storage_index_canister::c2c_sync_bucket::Args::default();
+        let mut args = storage_index_canister::c2c_sync_bucket::Args {
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
+            ..Default::default()
+        };
 
-        for (event, bytes_used) in &self.events {
+        for (event, total_file_bytes) in &self.events {
             match event {
                 EventToSync::FileAdded(file) => {
                     args.files_added.push(file.clone());
-                    args.bytes_used = *bytes_used;
                 }
                 EventToSync::FileRemoved(file) => {
                     args.files_removed.push(file.clone());
                 }
             }
-            args.bytes_used = *bytes_used;
-            args.bytes_remaining = (DATA_LIMIT_BYTES as i64) - (args.bytes_used as i64);
+            args.total_file_bytes = *total_file_bytes;
         }
 
         let response = storage_index_canister_c2c_client::c2c_sync_bucket(self.canister_id, &args).await;

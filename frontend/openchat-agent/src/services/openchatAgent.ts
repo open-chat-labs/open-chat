@@ -3347,6 +3347,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     submitProposal(
+        currentUserId: string,
         governanceCanisterId: string,
         proposal: CandidateProposal,
         ledger: string,
@@ -3356,7 +3357,8 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<SubmitProposalResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this.userClient.submitProposal(
+        return this._proposalsBotClient.submitProposal(
+            currentUserId,
             governanceCanisterId,
             proposal,
             ledger,
