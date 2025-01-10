@@ -35,7 +35,7 @@ import type {
 } from "../community";
 import type { ChitEarned } from "../chit";
 import type { WalletConfig } from "../crypto";
-import type { BotGroupDetails, SlashCommandPermissions } from "../bots";
+import type { BotGroupDetails, SlashCommandParamInstance, SlashCommandPermissions } from "../bots";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -663,7 +663,10 @@ export type Message<T extends MessageContent = MessageContent> = {
 
 export type BotMessageContext = {
     initiator: string;
-    commandText: string;
+    command: {
+        name: string;
+        args: SlashCommandParamInstance[];
+    };
     finalised: boolean;
 };
 

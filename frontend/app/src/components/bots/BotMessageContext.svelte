@@ -17,29 +17,15 @@
 
     const client = getContext<OpenChat>("client");
 
-    type SlashCommandInstance = {
-        name: string;
-        params: SlashCommandParamInstance[];
-    };
-
     interface Props {
         botContext: BotMessageContext;
         botName: string;
     }
 
     let { botContext }: Props = $props();
-    let commandInstance: SlashCommandInstance = $derived.by(() => {
-        try {
-            return JSON.parse(botContext.commandText);
-        } catch {
-            return {
-                name: botContext.commandText.slice(1),
-                params: [],
-            };
-        }
-    });
+    let commandInstance = botContext.command;
     let MAX_COMMAND_LENGTH = $derived($mobileWidth ? 50 : 150);
-    let paramValues = $derived(commandInstance.params.map(paramValue));
+    let paramValues = $derived(commandInstance.args.map(paramValue));
     let paramsLength = $derived(paramValues.reduce((total, p) => total + p.length, 0));
     let paramMode: "truncated" | "full" = $derived(
         paramsLength > MAX_COMMAND_LENGTH ? "truncated" : "full",
@@ -47,7 +33,7 @@
     let text = $derived.by(() => {
         if (paramMode === "truncated") {
             return `@UserId(${botContext.initiator}) used **/${commandInstance.name}**${
-                commandInstance.params.length > 0 ? " with " : ""
+                commandInstance.args.length > 0 ? " with " : ""
             }`;
         } else {
             return `@UserId(${botContext.initiator}) used **/${commandInstance.name}**`;
@@ -74,7 +60,7 @@
         <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Tiny} />
     {/if}
     <Markdown {text} />
-    {#if commandInstance.params.length > 0}
+    {#if commandInstance.args.length > 0}
         {#if paramMode === "truncated"}
             <TooltipWrapper position="right" align="middle">
                 <div class="cog" slot="target">
@@ -83,7 +69,7 @@
                 <div let:position let:align slot="tooltip">
                     <TooltipPopup {align} {position}>
                         <div class="command-params">
-                            {#each commandInstance.params as param}
+                            {#each commandInstance.args as param}
                                 <div class="param">
                                     <div class="name">{param.name}:</div>
                                     <div class="value">{paramValue(param)}</div>
