@@ -26,18 +26,18 @@ fn c2c_can_issue_access_token_for_channel_impl(args: Args, state: &RuntimeState)
             can_start_video_call(member.role(), state.data.is_public.value, vc.call_type, &channel.chat)
         }
         CheckAccessTokenType::JoinVideoCall | CheckAccessTokenType::MarkVideoCallAsEnded => true,
-        CheckAccessTokenType::BotAction(a) => {
+        CheckAccessTokenType::BotAction(c) => {
             // Get the permissions granted to the bot in this community
-            let Some(granted_to_bot) = state.data.get_bot_permissions(&a.bot) else {
+            let Some(granted_to_bot) = state.data.get_bot_permissions(&c.bot) else {
                 return false;
             };
 
             // Get the permissions granted to the user in this community/channel
-            let Some(granted_to_user) = state.data.get_user_permissions_for_bot_commands(&a.user_id, &args.channel_id) else {
+            let Some(granted_to_user) = state.data.get_user_permissions_for_bot_commands(&c.user_id, &args.channel_id) else {
                 return false;
             };
 
-            can_bot_execute_action(&a.permissions, granted_to_bot, &granted_to_user)
+            can_bot_execute_action(&c.permissions, granted_to_bot, &granted_to_user)
         }
     }
 }

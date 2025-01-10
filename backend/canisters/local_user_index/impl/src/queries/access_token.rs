@@ -8,7 +8,7 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use serde::Serialize;
 use types::{
-    AccessTokenType, BotCommandClaims, ChannelId, Chat, ChatId, CheckAccessTokenType, CheckBotActionArgs, CommunityId,
+    AccessTokenType, BotCommandClaims, ChannelId, Chat, ChatId, CheckAccessTokenBotAction, CheckAccessTokenType, CommunityId,
     JoinOrEndVideoCallClaims, StartVideoCallClaims, UserId,
 };
 
@@ -114,7 +114,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 return Err(Response::NotAuthorized);
             };
 
-            CheckAccessTokenType::BotAction(CheckBotActionArgs {
+            CheckAccessTokenType::BotAction(CheckAccessTokenBotAction {
                 user_id: action.user_id,
                 bot: action.bot,
                 chat: action.chat,
