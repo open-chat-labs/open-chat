@@ -44,17 +44,14 @@
             .executeBotCommand(
                 chat,
                 messageContext.threadRootMessageIndex,
-                createBotInstance(command, messageContext),
+                $state.snapshot(createBotInstance(command, messageContext)),
             )
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.failed"));
                 }
-            })
-            .finally(() => {
-                busy = false;
-                onCommandSent();
             });
+        onCommandSent();
     }
 
     function focusFirstInput() {
