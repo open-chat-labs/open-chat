@@ -57,7 +57,7 @@ impl AccessTokenType {
             AccessTokenType::StartVideoCallV2(_) => "StartVideoCall",
             AccessTokenType::JoinVideoCall => "JoinVideoCall",
             AccessTokenType::MarkVideoCallAsEnded => "MarkVideoCallAsEnded",
-            AccessTokenType::BotCommand(_) => "BotAction",
+            AccessTokenType::BotCommand(_) => "BotCommand",
         }
     }
 }
