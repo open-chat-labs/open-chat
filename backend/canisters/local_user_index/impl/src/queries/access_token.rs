@@ -103,23 +103,23 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         }
         AccessTokenType::JoinVideoCall => CheckAccessTokenType::JoinVideoCall,
         AccessTokenType::MarkVideoCallAsEnded => CheckAccessTokenType::MarkVideoCallAsEnded,
-        AccessTokenType::BotCommand(command) => {
+        AccessTokenType::BotCommand(access_token) => {
             let Some(permissions) = state
                 .data
                 .bots
-                .get(&command.bot)
-                .and_then(|b| b.commands.iter().find(|c| c.name == command.command.name))
+                .get(&access_token.bot)
+                .and_then(|b| b.commands.iter().find(|c| c.name == access_token.command.name))
                 .map(|c| c.permissions.clone())
             else {
                 return Err(Response::NotAuthorized);
             };
 
             CheckAccessTokenType::BotCommand(CheckAccessTokenBotCommand {
-                user_id: command.user_id,
-                bot: command.bot,
-                chat: command.chat,
-                thread_root_message_index: command.thread_root_message_index,
-                message_id: command.message_id,
+                user_id: access_token.user_id,
+                bot: access_token.bot,
+                chat: access_token.chat,
+                thread_root_message_index: access_token.thread_root_message_index,
+                message_id: access_token.message_id,
                 permissions,
             })
         }
