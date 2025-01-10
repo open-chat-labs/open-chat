@@ -2183,6 +2183,23 @@ type BotGroupDetails = record {
 
 type BotMessageContext = record {
     initiator : principal;
-    command_text : text;
+    command : BotCommand;
     finalised : bool;
+};
+
+type BotCommand = record {
+    name : text;
+    args : vec BotCommandArg;
+};
+
+type BotCommandArg = record {
+    name : text;
+    value : BotCommandArgValue;
+};
+
+type BotCommandArgValue = variant {
+    String : text;
+    Number : float64;
+    Boolean : bool;
+    User : UserId;
 };

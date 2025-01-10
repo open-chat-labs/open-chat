@@ -3,7 +3,7 @@ pub mod c2c_notify_user_events;
 pub mod c2c_notify_user_index_events;
 pub mod c2c_push_wasm_chunk;
 pub mod c2c_upgrade_user_canister_wasm;
-pub mod execute_bot_command;
+pub mod execute_bot_action;
 pub mod invite_users_to_channel;
 pub mod invite_users_to_community;
 pub mod invite_users_to_group;

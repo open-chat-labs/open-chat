@@ -2724,42 +2724,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
 
 [[package]]
-name = "greet_bot_canister_impl"
-version = "0.1.0"
-dependencies = [
- "candid",
- "getrandom 0.2.15",
- "http 1.1.0",
- "ic-cdk 0.17.0",
- "ic-cdk-timers",
- "ic-http-certification",
- "ic-stable-structures",
- "ic_principal",
- "itertools 0.13.0",
- "oc_bots_sdk",
- "oc_bots_sdk_canister",
- "rand 0.8.5",
- "rmp-serde",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "greet_bot_loader"
-version = "0.1.0"
-dependencies = [
- "candid",
- "clap 4.5.4",
- "csv",
- "ic-agent",
- "itertools 0.13.0",
- "oc_bots_sdk_offchain",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "group"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3622,21 +3586,6 @@ dependencies = [
  "serde",
  "serde_bytes",
  "sha2 0.10.8",
-]
-
-[[package]]
-name = "ic-http-certification"
-version = "2.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff0b97e949845039149dc5e7ea6a7c12ee4333bb402e37bc507904643c7b3e41"
-dependencies = [
- "candid",
- "http 0.2.11",
- "ic-certification",
- "ic-representation-independent-hash",
- "serde",
- "thiserror",
- "urlencoding",
 ]
 
 [[package]]
@@ -5313,35 +5262,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a6a622008b6e321afc04970976f62ee297fdbaa6f95318ca343e3eebb9648441"
 dependencies = [
  "memchr",
-]
-
-[[package]]
-name = "oc_bots_sdk"
-version = "0.1.0"
-dependencies = [
- "candid",
- "ct-codecs",
- "p256",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "oc_bots_sdk_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "ic-cdk 0.17.0",
- "oc_bots_sdk",
- "serde_json",
- "sha2 0.10.8",
-]
-
-[[package]]
-name = "oc_bots_sdk_offchain"
-version = "0.1.0"
-dependencies = [
- "ic-agent",
 ]
 
 [[package]]

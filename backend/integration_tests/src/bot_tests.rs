@@ -9,7 +9,7 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::bot_actions::{BotMessageAction, MessageContent};
 use types::{
-    AccessTokenType, BotAction, BotCommandArgs, BotDefinition, Chat, ChatEvent, ChatId, MessagePermission,
+    AccessTokenType, BotAction, BotActionArgs, BotCommand, BotDefinition, Chat, ChatEvent, ChatId, MessagePermission,
     SlashCommandPermissions, SlashCommandSchema, TextContent,
 };
 
@@ -87,15 +87,16 @@ fn e2e_bot_test() {
     let chat = Chat::Group(group_id);
     let message_id = random_from_u128();
     let access_token_args = local_user_index_canister::access_token::Args {
-        token_type: AccessTokenType::BotCommand(BotCommandArgs {
+        token_type: AccessTokenType::BotAction(BotActionArgs {
             user_id: user.user_id,
             bot: bot.id,
             chat,
             thread_root_message_index: None,
             message_id,
-            command_name: command_name.clone(),
-            command_args: "".to_string(),
-            command_text: command_name.clone(),
+            command: BotCommand {
+                name: command_name.clone(),
+                args: Vec::new(),
+            },
         }),
         chat,
     };
@@ -135,14 +136,14 @@ fn e2e_bot_test() {
 
     println!("ACCESS TOKEN: {access_token}");
 
-    // Call execute_bot_command as bot - unfinalised message
+    // Call execute_bot_action as bot - unfinalised message
     let username = user.username();
     let text = format!("Hello {username}");
-    let response = client::local_user_index::execute_bot_command(
+    let response = client::local_user_index::execute_bot_action(
         env,
         bot_principal,
         canister_ids.local_user_index(env, group_id),
-        &local_user_index_canister::execute_bot_command::Args {
+        &local_user_index_canister::execute_bot_action::Args {
             action: BotAction::SendMessage(BotMessageAction {
                 content: MessageContent::Text(TextContent { text: text.clone() }),
                 finalised: false,
@@ -152,7 +153,7 @@ fn e2e_bot_test() {
     );
 
     if response.is_err() {
-        panic!("'execute_bot_command' error: {response:?}");
+        panic!("'execute_bot_action' error: {response:?}");
     }
 
     // Call `events` and confirm the latest event is a text message from the bot
@@ -170,13 +171,13 @@ fn e2e_bot_test() {
     assert!(message.bot_context.is_some());
     assert!(!message.bot_context.as_ref().unwrap().finalised);
 
-    // Call execute_bot_command as bot - finalised message
+    // Call execute_bot_action as bot - finalised message
     let text = "Hello world".to_string();
-    let response = client::local_user_index::execute_bot_command(
+    let response = client::local_user_index::execute_bot_action(
         env,
         bot_principal,
         canister_ids.local_user_index(env, group_id),
-        &local_user_index_canister::execute_bot_command::Args {
+        &local_user_index_canister::execute_bot_action::Args {
             action: BotAction::SendMessage(BotMessageAction {
                 content: MessageContent::Text(TextContent { text: text.clone() }),
                 finalised: true,
@@ -186,7 +187,7 @@ fn e2e_bot_test() {
     );
 
     if response.is_err() {
-        panic!("'execute_bot_command' error: {response:?}");
+        panic!("'execute_bot_action' error: {response:?}");
     }
 
     // Call `events` and confirm the latest event is a text message from the bot

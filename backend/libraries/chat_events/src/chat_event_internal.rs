@@ -483,7 +483,7 @@ mod tests {
     };
     use candid::Principal;
     use std::collections::HashSet;
-    use types::{BotMessageContext, EventWrapperInternal, Reaction, Tips};
+    use types::{BotCommand, BotCommandArg, BotCommandArgValue, BotMessageContext, EventWrapperInternal, Reaction, Tips};
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -534,7 +534,13 @@ mod tests {
             content: MessageContentInternal::Text(TextContentInternal { text: "123".to_string() }),
             bot_context: Some(BotMessageContext {
                 initiator: principal.into(),
-                command_text: "weather london".to_string(),
+                command: BotCommand {
+                    name: "weather".to_string(),
+                    args: vec![BotCommandArg {
+                        name: "location".to_string(),
+                        value: BotCommandArgValue::String("London".to_string()),
+                    }],
+                },
                 finalised: true,
             }),
             replies_to: Some(ReplyContextInternal {

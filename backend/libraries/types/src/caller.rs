@@ -1,4 +1,4 @@
-use crate::{UserId, UserType};
+use crate::{BotCommand, UserId, UserType};
 
 #[derive(Clone)]
 pub enum Caller {
@@ -12,7 +12,7 @@ pub enum Caller {
 pub struct BotCaller {
     pub initiator: UserId,
     pub bot: UserId,
-    pub command_text: String,
+    pub command: BotCommand,
     pub finalised: bool,
 }
 
