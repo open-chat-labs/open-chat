@@ -477,13 +477,9 @@ impl From<&ReplyContext> for ReplyContextInternal {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        ChatEventInternal, ChatInternal, DeletedByInternal, MessageContentInternal, MessageInternal, ReplyContextInternal,
-        TextContentInternal, ThreadSummaryInternal,
-    };
+    use crate::{ChatEventInternal, MessageContentInternal, MessageInternal, TextContentInternal};
     use candid::Principal;
-    use std::collections::HashSet;
-    use types::{BotCommand, BotCommandArg, BotCommandArgValue, BotMessageContext, EventWrapperInternal, Reaction, Tips};
+    use types::{EventWrapperInternal, Tips};
 
     #[test]
     fn serialize_with_max_defaults() {
