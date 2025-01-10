@@ -24,16 +24,6 @@
 
     let { botContext }: Props = $props();
     let commandInstance = botContext.command;
-    // let commandInstance: SlashCommandInstance = $derived.by(() => {
-    //     try {
-    //         return JSON.parse(botContext.commandText);
-    //     } catch {
-    //         return {
-    //             name: botContext.commandText.slice(1),
-    //             params: [],
-    //         };
-    //     }
-    // });
     let MAX_COMMAND_LENGTH = $derived($mobileWidth ? 50 : 150);
     let paramValues = $derived(commandInstance.args.map(paramValue));
     let paramsLength = $derived(paramValues.reduce((total, p) => total + p.length, 0));
