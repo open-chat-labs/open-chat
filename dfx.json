@@ -79,12 +79,6 @@
       "wasm": "wasms/airdrop_bot.wasm.gz",
       "build": "./scripts/generate-wasm.sh airdrop_bot"
     },
-    "greet_bot": {
-      "type": "custom",
-      "candid": "backend/bots/examples/greet/can.did",
-      "wasm": "wasms/greet_bot.wasm.gz",
-      "build": "./scripts/generate-wasm.sh greet_bot"
-    },
     "user": {
       "type": "custom",
       "candid": "backend/canisters/user/api/can.did",
