@@ -6,6 +6,7 @@
         enhancedCryptoLookup as cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
         cryptoBalance as cryptoBalanceStore,
+        swappableTokensStore,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Markdown from "../Markdown.svelte";
@@ -51,6 +52,7 @@
     let warnValueUnknown = false;
     let warnValueDropped = false;
 
+    $: initialized = false;
     $: detailsIn = $cryptoLookup[ledgerIn];
     $: detailsOut = ledgerOut !== undefined ? $cryptoLookup[ledgerOut] : undefined;
     $: anySwapsAvailable = Object.keys(swaps).length > 0 && detailsOut !== undefined;
@@ -223,6 +225,8 @@
         client.getTokenSwaps(ledger).then((results) => {
             ledgerOut = undefined;
             swaps = results;
+            client.refreshSwappableTokens();
+            initialized = true;
         });
     }
 
@@ -279,14 +283,14 @@
         {/if}
     </span>
     <form class="body" slot="body">
-        {#if state === "quote"}
-            {#await client.swappableTokens() then swappableTokens}
+        {#if initialized}
+            {#if state === "quote"}
                 <div class="swap">
                     <div class="select-from">
                         <Legend label={i18nKey("cryptoAccount.transactionHeaders.from")} />
                         <div class="inner">
                             <CryptoSelector
-                                filter={(t) => t.balance > 0 && swappableTokens.has(t.ledger)}
+                                filter={(t) => t.balance > 0 && $swappableTokensStore.has(t.ledger)}
                                 bind:ledger={ledgerIn}
                                 on:select={onLedgerInSelected} />
                         </div>
@@ -308,64 +312,64 @@
                         </div>
                     </div>
                 </div>
-            {/await}
-        {/if}
-
-        {#if (swapping || state === "finished") && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
-            <div>
-                <SwapProgress
-                    {swapId}
-                    tokenIn={detailsIn.symbol}
-                    tokenOut={detailsOut.symbol}
-                    ledgerIn={detailsIn.ledger}
-                    ledgerOut={detailsOut.ledger}
-                    amountIn={amountInText}
-                    decimalsOut={detailsOut.decimals}
-                    dex={dexName(bestQuote[0])}
-                    on:finished={onSwapFinished} />
-            </div>
-        {/if}
-
-        {#if state === "swap" && !swapping}
-            <div>{$_("tokenSwap.bestQuote", { values: swapMessageValues })}</div>
-            <Markdown text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
-
-            {#if warnValueDropped || warnValueUnknown}
-                <AlertBox>
-                    <div class="warning">
-                        {#if warnValueDropped}
-                            <Translatable
-                                resourceKey={i18nKey(
-                                    "tokenSwap.warningValueDropped",
-                                    swapMessageValues,
-                                )} />
-                        {:else}
-                            <Translatable
-                                resourceKey={i18nKey(
-                                    "tokenSwap.warningValueUnknown",
-                                    swapMessageValues,
-                                )} />
-                        {/if}
-                    </div>
-                    <Checkbox
-                        id="confirm-understanding"
-                        small
-                        label={i18nKey("tokenSwap.confirmUnderstanding")}
-                        bind:checked={userAcceptedWarning} />
-                </AlertBox>
             {/if}
 
-            <div>{$_("tokenSwap.proceedWithSwap", { values: swapMessageValues })}</div>
-        {/if}
+            {#if (swapping || state === "finished") && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
+                <div>
+                    <SwapProgress
+                        {swapId}
+                        tokenIn={detailsIn.symbol}
+                        tokenOut={detailsOut.symbol}
+                        ledgerIn={detailsIn.ledger}
+                        ledgerOut={detailsOut.ledger}
+                        amountIn={amountInText}
+                        decimalsOut={detailsOut.decimals}
+                        dex={dexName(bestQuote[0])}
+                        on:finished={onSwapFinished} />
+                </div>
+            {/if}
 
-        {#if error !== undefined || pinNumberError !== undefined}
-            <ErrorMessage>
-                {#if pinNumberError !== undefined}
-                    <Translatable resourceKey={pinNumberError} />
-                {:else}
-                    {error}
+            {#if state === "swap" && !swapping}
+                <div>{$_("tokenSwap.bestQuote", { values: swapMessageValues })}</div>
+                <Markdown text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
+
+                {#if warnValueDropped || warnValueUnknown}
+                    <AlertBox>
+                        <div class="warning">
+                            {#if warnValueDropped}
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        "tokenSwap.warningValueDropped",
+                                        swapMessageValues,
+                                    )} />
+                            {:else}
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        "tokenSwap.warningValueUnknown",
+                                        swapMessageValues,
+                                    )} />
+                            {/if}
+                        </div>
+                        <Checkbox
+                            id="confirm-understanding"
+                            small
+                            label={i18nKey("tokenSwap.confirmUnderstanding")}
+                            bind:checked={userAcceptedWarning} />
+                    </AlertBox>
                 {/if}
-            </ErrorMessage>
+
+                <div>{$_("tokenSwap.proceedWithSwap", { values: swapMessageValues })}</div>
+            {/if}
+
+            {#if error !== undefined || pinNumberError !== undefined}
+                <ErrorMessage>
+                    {#if pinNumberError !== undefined}
+                        <Translatable resourceKey={pinNumberError} />
+                    {:else}
+                        {error}
+                    {/if}
+                </ErrorMessage>
+            {/if}
         {/if}
     </form>
     <span slot="footer">

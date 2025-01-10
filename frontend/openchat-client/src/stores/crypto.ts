@@ -10,6 +10,7 @@ import {
 } from "openchat-shared";
 import { toRecord } from "../utils/list";
 import { localGlobalUpdates } from "./localGlobalUpdates";
+import { createSetStore } from "./setStore";
 
 type LedgerCanister = string;
 type GovernanceCanister = string;
@@ -132,6 +133,8 @@ export const walletTokensSorted = derived(
         );
     },
 );
+
+export const swappableTokensStore = createSetStore(writable(new Set<string>()));
 
 function compareTokens(a: EnhancedTokenDetails, b: EnhancedTokenDetails): number {
     // Sort by non-zero balances first
