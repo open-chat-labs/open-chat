@@ -101,9 +101,9 @@ dependencies = [
 name = "airdrop_bot_canister"
 version = "0.1.0"
 dependencies = [
- "bot_api",
  "candid",
  "candid_gen",
+ "legacy_bot_api",
  "serde",
  "types",
 ]
@@ -918,28 +918,6 @@ dependencies = [
  "sha2 0.10.8",
  "subtle",
  "zeroize",
-]
-
-[[package]]
-name = "bot_api"
-version = "0.1.0"
-dependencies = [
- "serde",
- "types",
- "user_canister",
-]
-
-[[package]]
-name = "bot_c2c_client"
-version = "0.1.0"
-dependencies = [
- "bot_api",
- "candid",
- "canister_client",
- "ic-cdk 0.17.0",
- "msgpack",
- "tracing",
- "types",
 ]
 
 [[package]]
@@ -1765,9 +1743,9 @@ dependencies = [
 
 [[package]]
 name = "csv"
-version = "1.3.0"
+version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac574ff4d437a7b5ad237ef331c17ccca63c46479e5b5453eb8e10bb99a759fe"
+checksum = "acdc4883a9c96732e4733212c01447ebd805833b7275a73ca3ee080fd77afdaf"
 dependencies = [
  "csv-core",
  "itoa",
@@ -3627,9 +3605,9 @@ dependencies = [
 
 [[package]]
 name = "ic-representation-independent-hash"
-version = "2.5.0"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4d9c969c80e9b445255341da79772680f503ef856b95b3ddf162b41d096df1f"
+checksum = "08ae59483e377cd9aad94ec339ed1d2583b0d5929cab989328dac2d853b2f570"
 dependencies = [
  "leb128",
  "sha2 0.10.8",
@@ -4493,6 +4471,28 @@ dependencies = [
  "icrc_ledger_canister_c2c_client",
  "sha2 0.10.8",
  "test-case",
+ "tracing",
+ "types",
+]
+
+[[package]]
+name = "legacy_bot_api"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "types",
+ "user_canister",
+]
+
+[[package]]
+name = "legacy_bot_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.17.0",
+ "legacy_bot_api",
+ "msgpack",
  "tracing",
  "types",
 ]
@@ -8382,8 +8382,6 @@ name = "user_canister_impl"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "bot_api",
- "bot_c2c_client",
  "candid",
  "canister_api_macros",
  "canister_client",
@@ -8423,6 +8421,8 @@ dependencies = [
  "kongswap_canister",
  "kongswap_canister_c2c_client",
  "ledger_utils",
+ "legacy_bot_api",
+ "legacy_bot_c2c_client",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",

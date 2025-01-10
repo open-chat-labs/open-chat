@@ -1,4 +1,4 @@
-use crate::{BotAction, Chat, MessageId, MessageIndex, User, UserId};
+use crate::{BotAction, BotCommand, Chat, MessageId, MessageIndex, User, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +10,7 @@ pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub action: BotAction,
-    pub command_text: String,
+    pub command: BotCommand,
 }
 
 pub type Response = Result<(), HandleBotActionsError>;

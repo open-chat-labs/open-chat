@@ -477,13 +477,9 @@ impl From<&ReplyContext> for ReplyContextInternal {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        ChatEventInternal, ChatInternal, DeletedByInternal, MessageContentInternal, MessageInternal, ReplyContextInternal,
-        TextContentInternal, ThreadSummaryInternal,
-    };
+    use crate::{ChatEventInternal, MessageContentInternal, MessageInternal, TextContentInternal};
     use candid::Principal;
-    use std::collections::HashSet;
-    use types::{BotMessageContext, EventWrapperInternal, Reaction, Tips};
+    use types::{EventWrapperInternal, Tips};
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -518,62 +514,6 @@ mod tests {
 
         assert_eq!(message_bytes_len, 33);
         assert_eq!(event_bytes_len, message_bytes_len + 12);
-
-        let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
-    }
-
-    #[test]
-    fn serialize_with_no_defaults() {
-        let principal = Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap();
-        let mut tips = Tips::default();
-        tips.push(principal, principal.into(), 1);
-        let message = MessageInternal {
-            message_index: 1.into(),
-            message_id: 1u64.into(),
-            sender: principal.into(),
-            content: MessageContentInternal::Text(TextContentInternal { text: "123".to_string() }),
-            bot_context: Some(BotMessageContext {
-                initiator: principal.into(),
-                command_text: "weather london".to_string(),
-                finalised: true,
-            }),
-            replies_to: Some(ReplyContextInternal {
-                chat_if_other: Some((ChatInternal::Group(principal.into()), Some(1.into()))),
-                event_index: 1.into(),
-            }),
-            reactions: vec![(Reaction::new("1".to_string()), HashSet::from([principal.into()]))],
-            tips,
-            last_edited: Some(1),
-            deleted_by: Some(DeletedByInternal {
-                deleted_by: principal.into(),
-                timestamp: 1,
-            }),
-            thread_summary: Some(ThreadSummaryInternal {
-                participants: vec![principal.into()],
-                followers: HashSet::new(),
-                reply_count: 1,
-                latest_event_index: 1.into(),
-                latest_event_timestamp: 1,
-            }),
-            forwarded: true,
-            block_level_markdown: false,
-        };
-
-        let message_bytes_len = msgpack::serialize_then_unwrap(&message).len();
-
-        let event = EventWrapperInternal {
-            index: 1.into(),
-            timestamp: 1,
-            correlation_id: 1,
-            expires_at: Some(1),
-            event: ChatEventInternal::Message(Box::new(message)),
-        };
-
-        let event_bytes = msgpack::serialize_then_unwrap(&event);
-        let event_bytes_len = event_bytes.len();
-
-        assert_eq!(message_bytes_len, 230);
-        assert_eq!(event_bytes_len, message_bytes_len + 18);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
     }

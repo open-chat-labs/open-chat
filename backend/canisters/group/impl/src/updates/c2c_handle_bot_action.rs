@@ -8,7 +8,7 @@ use group_canister::send_message_v2;
 use types::bot_actions::MessageContent;
 use types::HandleBotActionsError;
 use types::{BotAction, BotCaller, MessageContentInitial};
-use utils::bots::can_execute_bot_command;
+use utils::bots::can_bot_execute_action;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -23,7 +23,7 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
         return Err(HandleBotActionsError::Frozen);
     }
 
-    if !is_bot_permitted_to_execute_command(&args, state) {
+    if !is_bot_permitted_to_execute_action(&args, state) {
         return Err(HandleBotActionsError::NotAuthorized);
     }
 
@@ -58,7 +58,7 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                 Some(BotCaller {
                     bot: args.bot.user_id,
                     initiator: args.initiator,
-                    command_text: args.command_text,
+                    command: args.command,
                     finalised: action.finalised,
                 }),
                 state,
@@ -70,7 +70,7 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
     }
 }
 
-fn is_bot_permitted_to_execute_command(args: &Args, state: &RuntimeState) -> bool {
+fn is_bot_permitted_to_execute_action(args: &Args, state: &RuntimeState) -> bool {
     // Get the permissions granted to the bot in this community
     let Some(granted_to_bot) = state.data.get_bot_permissions(&args.bot.user_id) else {
         return false;
@@ -84,5 +84,5 @@ fn is_bot_permitted_to_execute_command(args: &Args, state: &RuntimeState) -> boo
     // Get the permissions required to execute the given action
     let permissions_required = args.action.permissions_required();
 
-    can_execute_bot_command(&permissions_required, granted_to_bot, &granted_to_user)
+    can_bot_execute_action(&permissions_required, granted_to_bot, &granted_to_user)
 }

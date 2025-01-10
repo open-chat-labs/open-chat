@@ -1,6 +1,6 @@
 use crate::{
-    Achievement, BotCaller, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary,
-    UserId,
+    Achievement, BotCaller, BotCommand, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction,
+    ThreadSummary, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -248,17 +248,49 @@ pub type CustomContentEventPayload = ();
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "BotMessageContextCombined")]
 pub struct BotMessageContext {
     pub initiator: UserId,
+    pub command: BotCommand,
+    pub finalised: bool,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotMessageContextCombined {
+    pub initiator: UserId,
+    #[serde(default)]
+    pub command: BotCommand,
+    #[serde(default)]
+    pub command_name: String,
+    #[serde(default)]
+    pub command_args: String,
+    #[serde(default)]
     pub command_text: String,
     pub finalised: bool,
+}
+
+impl From<BotMessageContextCombined> for BotMessageContext {
+    fn from(combined: BotMessageContextCombined) -> BotMessageContext {
+        BotMessageContext {
+            initiator: combined.initiator,
+            command: if combined.command == BotCommand::default() {
+                BotCommand {
+                    name: combined.command_name.clone(),
+                    args: Vec::new(),
+                }
+            } else {
+                combined.command
+            },
+            finalised: combined.finalised,
+        }
+    }
 }
 
 impl From<&BotCaller> for BotMessageContext {
     fn from(caller: &BotCaller) -> Self {
         BotMessageContext {
             initiator: caller.initiator,
-            command_text: caller.command_text.clone(),
+            command: caller.command.clone(),
             finalised: caller.finalised,
         }
     }
