@@ -102,7 +102,7 @@
     } from "../../theme/themes";
     import SuspendedModal from "../SuspendedModal.svelte";
     import NoAccess from "./NoAccess.svelte";
-    import NewGroup from "./addgroup/NewGroup.svelte";
+    import CreateOrUpdateGroup from "./createOrUpdateGroup/CreateOrUpdateGroup.svelte";
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "../../routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
@@ -1353,7 +1353,7 @@
                 on:close={closeModal}
                 on:success={accessGatesEvaluated} />
         {:else if modal.kind === "new_group"}
-            <NewGroup
+            <CreateOrUpdateGroup
                 embeddedContent={modal.embeddedContent}
                 candidateGroup={modal.candidate}
                 on:upgrade={upgrade}
