@@ -167,7 +167,7 @@
     </div>
 {/if}
 
-{#if candidate.public && candidate.kind === "candidate_group_chat" && candidate.level === "channel"}
+{#if candidate.public && candidate.kind === "candidate_group_chat"}
     <div class="section">
         <Checkbox
             id="visible_to_non_members"
