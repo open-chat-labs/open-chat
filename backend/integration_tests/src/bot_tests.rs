@@ -9,7 +9,7 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::bot_actions::{BotMessageAction, MessageContent};
 use types::{
-    AccessTokenBotAction, AccessTokenType, BotAction, BotCommand, BotDefinition, Chat, ChatEvent, ChatId, MessagePermission,
+    AccessTokenBotCommand, AccessTokenType, BotAction, BotCommand, BotDefinition, Chat, ChatEvent, ChatId, MessagePermission,
     SlashCommandPermissions, SlashCommandSchema, TextContent,
 };
 
@@ -87,7 +87,7 @@ fn e2e_bot_test() {
     let chat = Chat::Group(group_id);
     let message_id = random_from_u128();
     let access_token_args = local_user_index_canister::access_token::Args {
-        token_type: AccessTokenType::BotAction(AccessTokenBotAction {
+        token_type: AccessTokenType::BotCommand(AccessTokenBotCommand {
             user_id: user.user_id,
             bot: bot.id,
             chat,

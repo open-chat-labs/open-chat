@@ -8,7 +8,7 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use serde::Serialize;
 use types::{
-    AccessTokenType, BotCommandClaims, ChannelId, Chat, ChatId, CheckAccessTokenBotAction, CheckAccessTokenType, CommunityId,
+    AccessTokenType, BotCommandClaims, ChannelId, Chat, ChatId, CheckAccessTokenBotCommand, CheckAccessTokenType, CommunityId,
     JoinOrEndVideoCallClaims, StartVideoCallClaims, UserId,
 };
 
@@ -62,14 +62,14 @@ async fn access_token(args: Args) -> Response {
             };
             build_token(token_type_name, custom_claims, state)
         }
-        AccessTokenType::BotAction(ba) => {
+        AccessTokenType::BotCommand(bc) => {
             let custom_claims = BotCommandClaims {
-                initiator: ba.user_id,
-                bot: ba.bot,
-                chat: ba.chat.into(),
-                thread_root_message_index: ba.thread_root_message_index,
-                message_id: ba.message_id,
-                command: ba.command,
+                initiator: bc.user_id,
+                bot: bc.bot,
+                chat: bc.chat.into(),
+                thread_root_message_index: bc.thread_root_message_index,
+                message_id: bc.message_id,
+                command: bc.command,
                 bot_api_gateway: state.env.canister_id(),
             };
             build_token(token_type_name, custom_claims, state)
@@ -103,23 +103,23 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         }
         AccessTokenType::JoinVideoCall => CheckAccessTokenType::JoinVideoCall,
         AccessTokenType::MarkVideoCallAsEnded => CheckAccessTokenType::MarkVideoCallAsEnded,
-        AccessTokenType::BotAction(action) => {
+        AccessTokenType::BotCommand(command) => {
             let Some(permissions) = state
                 .data
                 .bots
-                .get(&action.bot)
-                .and_then(|b| b.commands.iter().find(|c| c.name == action.command.name))
+                .get(&command.bot)
+                .and_then(|b| b.commands.iter().find(|c| c.name == command.command.name))
                 .map(|c| c.permissions.clone())
             else {
                 return Err(Response::NotAuthorized);
             };
 
-            CheckAccessTokenType::BotAction(CheckAccessTokenBotAction {
-                user_id: action.user_id,
-                bot: action.bot,
-                chat: action.chat,
-                thread_root_message_index: action.thread_root_message_index,
-                message_id: action.message_id,
+            CheckAccessTokenType::BotCommand(CheckAccessTokenBotCommand {
+                user_id: command.user_id,
+                bot: command.bot,
+                chat: command.chat,
+                thread_root_message_index: command.thread_root_message_index,
+                message_id: command.message_id,
                 permissions,
             })
         }

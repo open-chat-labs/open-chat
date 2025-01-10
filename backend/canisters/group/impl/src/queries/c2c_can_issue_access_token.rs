@@ -20,7 +20,7 @@ fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
     match args.access_type {
         CheckAccessTokenType::StartVideoCallV2(vc) => can_start_video_call(member.role(), vc.call_type, &state.data.chat),
         CheckAccessTokenType::JoinVideoCall | CheckAccessTokenType::MarkVideoCallAsEnded => true,
-        CheckAccessTokenType::BotAction(c) => {
+        CheckAccessTokenType::BotCommand(c) => {
             // Get the permissions granted to the bot in this group
             let Some(granted_to_bot) = state.data.get_bot_permissions(&c.bot) else {
                 return false;

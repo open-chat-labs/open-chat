@@ -10,7 +10,7 @@ pub enum AccessTokenType {
     StartVideoCallV2(VideoCallAccessTokenArgs),
     JoinVideoCall,
     MarkVideoCallAsEnded,
-    BotAction(AccessTokenBotAction),
+    BotCommand(AccessTokenBotCommand),
 }
 
 #[ts_export]
@@ -20,7 +20,7 @@ pub enum CheckAccessTokenType {
     StartVideoCallV2(VideoCallAccessTokenArgs),
     JoinVideoCall,
     MarkVideoCallAsEnded,
-    BotAction(CheckAccessTokenBotAction),
+    BotCommand(CheckAccessTokenBotCommand),
 }
 
 #[ts_export]
@@ -31,7 +31,7 @@ pub struct VideoCallAccessTokenArgs {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct AccessTokenBotAction {
+pub struct AccessTokenBotCommand {
     pub user_id: UserId,
     pub bot: UserId,
     pub chat: Chat,
@@ -42,7 +42,7 @@ pub struct AccessTokenBotAction {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct CheckAccessTokenBotAction {
+pub struct CheckAccessTokenBotCommand {
     pub user_id: UserId,
     pub bot: UserId,
     pub chat: Chat,
@@ -57,7 +57,7 @@ impl AccessTokenType {
             AccessTokenType::StartVideoCallV2(_) => "StartVideoCall",
             AccessTokenType::JoinVideoCall => "JoinVideoCall",
             AccessTokenType::MarkVideoCallAsEnded => "MarkVideoCallAsEnded",
-            AccessTokenType::BotAction(_) => "BotAction",
+            AccessTokenType::BotCommand(_) => "BotAction",
         }
     }
 }
