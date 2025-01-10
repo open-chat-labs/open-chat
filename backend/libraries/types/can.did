@@ -2201,5 +2201,5 @@ type BotCommandArgValue = variant {
     String : text;
     Number : float64;
     Boolean : bool;
-    Principal : principal;
+    User : UserId;
 };
