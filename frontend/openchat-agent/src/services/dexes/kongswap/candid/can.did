@@ -4,30 +4,28 @@ type TokenReply = variant {
 };
 type LPTokenReply = record {
     token_id : nat32;
-    name : text;
     chain : text;
-    symbol : text;
-    token : text;
-    pool_id_of : nat32;
     address : text;
+    name : text;
+    symbol : text;
+    pool_id_of : nat32;
     decimals : nat8;
     fee : nat;
     total_supply : nat;
-    on_kong : bool;
+    is_removed : bool;
 };
 type ICTokenReply = record {
     token_id : nat32;
-    name : text;
     chain : text;
-    symbol : text;
-    token : text;
     canister_id : text;
+    name : text;
+    symbol : text;
     decimals : nat8;
     fee : nat;
     icrc1 : bool;
     icrc2 : bool;
     icrc3 : bool;
-    on_kong : bool;
+    is_removed : bool;
 };
 type TokensResult = variant { Ok : vec TokenReply; Err : text };
 

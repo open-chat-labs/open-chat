@@ -5,7 +5,6 @@ import type { IDL } from '@dfinity/candid';
 export interface ICTokenReply {
   'fee' : bigint,
   'decimals' : number,
-  'token' : string,
   'token_id' : number,
   'chain' : string,
   'name' : string,
@@ -13,21 +12,20 @@ export interface ICTokenReply {
   'icrc1' : boolean,
   'icrc2' : boolean,
   'icrc3' : boolean,
+  'is_removed' : boolean,
   'symbol' : string,
-  'on_kong' : boolean,
 }
 export interface LPTokenReply {
   'fee' : bigint,
   'decimals' : number,
-  'token' : string,
   'token_id' : number,
   'chain' : string,
   'name' : string,
   'address' : string,
   'pool_id_of' : number,
+  'is_removed' : boolean,
   'total_supply' : bigint,
   'symbol' : string,
-  'on_kong' : boolean,
 }
 export interface SwapAmountsReply {
   'txs' : Array<SwapAmountsTxReply>,

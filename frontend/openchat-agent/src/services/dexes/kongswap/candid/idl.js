@@ -34,7 +34,6 @@ export const idlFactory = ({ IDL }) => {
   const ICTokenReply = IDL.Record({
     'fee' : IDL.Nat,
     'decimals' : IDL.Nat8,
-    'token' : IDL.Text,
     'token_id' : IDL.Nat32,
     'chain' : IDL.Text,
     'name' : IDL.Text,
@@ -42,21 +41,20 @@ export const idlFactory = ({ IDL }) => {
     'icrc1' : IDL.Bool,
     'icrc2' : IDL.Bool,
     'icrc3' : IDL.Bool,
+    'is_removed' : IDL.Bool,
     'symbol' : IDL.Text,
-    'on_kong' : IDL.Bool,
   });
   const LPTokenReply = IDL.Record({
     'fee' : IDL.Nat,
     'decimals' : IDL.Nat8,
-    'token' : IDL.Text,
     'token_id' : IDL.Nat32,
     'chain' : IDL.Text,
     'name' : IDL.Text,
     'address' : IDL.Text,
     'pool_id_of' : IDL.Nat32,
+    'is_removed' : IDL.Bool,
     'total_supply' : IDL.Nat,
     'symbol' : IDL.Text,
-    'on_kong' : IDL.Bool,
   });
   const TokenReply = IDL.Variant({ 'IC' : ICTokenReply, 'LP' : LPTokenReply });
   const TokensResult = IDL.Variant({
