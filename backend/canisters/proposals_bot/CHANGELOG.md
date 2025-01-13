@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Fix `inspect_message` to handle calls to MessagePack endpoints ([#7209](https://github.com/open-chat-labs/open-chat/pull/7209))
+
+## [[2.0.1565](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1565-proposals_bot)] - 2025-01-13
+
+### Fixed
+
 - Handle `submit_proposal` in `inspect_message` ([#7205](https://github.com/open-chat-labs/open-chat/pull/7205))
 
 ## [[2.0.1551](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1551-proposals_bot)] - 2025-01-06
