@@ -8048,8 +8048,8 @@ export class OpenChat extends EventTarget {
                         return this.#callBotCommandEndpoint(bot.endpoint, token);
                     })
                     .then((resp) => {
-                        if (resp.kind === "failure") {
-                            console.error("Bot command failed with: ", resp.error);
+                        if (resp.kind !== "success") {
+                            console.error("Bot command failed with: ", resp);
                         } else {
                             if (resp.message !== undefined) {
                                 this.#sendPlaceholderMessage(

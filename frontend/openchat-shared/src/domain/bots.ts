@@ -509,10 +509,15 @@ function validOrigin(origin: string | undefined): boolean {
     }
 }
 
-export type BotCommandResponse = BotCommandSuccess | BotCommandFailure;
+export type BotCommandResponse = BotCommandSuccess | BotCommandBadRequest | BotCommandInternalError;
 
-export type BotCommandFailure = {
-    kind: "failure";
+export type BotCommandBadRequest = {
+    kind: "bad_request";
+    reason: string;
+};
+
+export type BotCommandInternalError = {
+    kind: "internal_error";
     error: unknown;
 };
 

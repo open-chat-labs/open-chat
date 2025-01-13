@@ -11,32 +11,41 @@ const ApiBotDefinition = Type.Object({
     commands: Type.Array(SlashCommandSchema),
 });
 
-type ApiBotResponse = Static<typeof ApiBotResponse>;
+const ApiBotSuccess = Type.Object({
+    message: Type.Optional(
+        Type.Object({
+            id: Type.String(),
+            content: MessageContent,
+            finalised: Type.Optional(Type.Boolean()),
+        }),
+    ),
+});
+type ApiBotSuccess = Static<typeof ApiBotSuccess>;
+
+const ApiBotBadRequest = Type.Union([
+    Type.Literal("AccessTokenNotFound"),
+    Type.Literal("AccessTokenInvalid"),
+    Type.Literal("AccessTokenExpired"),
+    Type.Literal("CommandNotFound"),
+    Type.Literal("ArgsInvalid"),
+]);
+type ApiBotBadRequest = Static<typeof ApiBotBadRequest>;
+
+const ApiBotInternalError = Type.Any();
+type ApiBotInternalError = Static<typeof ApiBotInternalError>;
+
 const ApiBotResponse = Type.Union([
     Type.Object({
-        Success: Type.Object({
-            message: Type.Optional(
-                Type.Object({
-                    id: Type.String(),
-                    content: MessageContent,
-                    finalised: Type.Optional(Type.Boolean()),
-                }),
-            ),
-        }),
+        Success: ApiBotSuccess,
     }),
     Type.Object({
-        BadRequest: Type.Union([
-            Type.Literal("AccessTokenNotFound"),
-            Type.Literal("AccessTokenInvalid"),
-            Type.Literal("AccessTokenExpired"),
-            Type.Literal("CommandNotFound"),
-            Type.Literal("ArgsInvalid"),
-        ]),
+        BadRequest: ApiBotBadRequest,
     }),
     Type.Object({
-        InternalError: Type.Any(),
+        InternalError: ApiBotInternalError,
     }),
 ]);
+type ApiBotResponse = Static<typeof ApiBotResponse>;
 
 export function getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
     return fetch(`${endpoint}`)
@@ -82,7 +91,7 @@ function validateBotResponse(json: unknown): BotCommandResponse {
         return externalBotResponse(value);
     } catch (err) {
         return {
-            kind: "failure",
+            kind: "internal_error",
             error: formatError(err),
         };
     }
@@ -100,8 +109,21 @@ function externalBotResponse(value: ApiBotResponse): BotCommandResponse {
                 };
             }),
         };
+    } else if ("BadRequest" in value) {
+        return {
+            kind: "bad_request",
+            reason: value.BadRequest,
+        };
+    } else if ("InternalError" in value) {
+        return {
+            kind: "internal_error",
+            error: value.InternalError,
+        };
     }
-    return { kind: "failure", error: value };
+    return {
+        kind: "internal_error",
+        error: "unknown",
+    };
 }
 
 export function callBotCommandEndpoint(
@@ -115,16 +137,18 @@ export function callBotCommandEndpoint(
         headers: headers,
         body: token,
     })
-        .then((res) => {
+        .then(async (res) => {
             if (res.ok) {
-                return res.json();
+                return { Success: await res.json() };
+            } else if (res.status === 400) {
+                return { BadRequest: await res.text() };
             } else {
-                return "InternalError";
+                return { InternalError: await res.text() };
             }
         })
         .then(validateBotResponse)
         .catch((err) => {
             console.log("Bot command failed: ", err);
-            return { kind: "failure", error: err };
+            return { kind: "internal_error", error: err };
         });
 }
