@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Pass definition to `update_bot` and propagate to LUIs ([#7135](https://github.com/open-chat-labs/open-chat/pull/7135))
 - Add optional `placeholder` field to `SlashCommandSchema` ([#7172](https://github.com/open-chat-labs/open-chat/pull/7172))
 - Reinstate code now that we can install larger wasms ([#7207](https://github.com/open-chat-labs/open-chat/pull/7207))
+- Sync platform operators to LocalUserIndexes ([#7210](https://github.com/open-chat-labs/open-chat/pull/7210))
 
 ### Fixed
 
