@@ -11,6 +11,8 @@ pub struct GlobalUserMap {
     user_id_to_principal: HashMap<UserId, Principal>,
     principal_to_user_id: PrincipalToUserIdMap,
     unique_person_proofs: HashMap<UserId, UniquePersonProof>,
+    #[serde(default)]
+    platform_operators: HashSet<UserId>,
     platform_moderators: HashSet<UserId>,
     legacy_bots: HashSet<UserId>,
     oc_controlled_bot_users: HashSet<UserId>,
@@ -28,6 +30,14 @@ impl GlobalUserMap {
             if user_type.is_oc_controlled_bot() {
                 self.oc_controlled_bot_users.insert(user_id);
             }
+        }
+    }
+
+    pub fn set_platform_operator(&mut self, user_id: UserId, is_platform_operator: bool) {
+        if is_platform_operator {
+            self.platform_operators.insert(user_id);
+        } else {
+            self.platform_operators.remove(&user_id);
         }
     }
 
@@ -125,6 +135,7 @@ impl GlobalUserMap {
         GlobalUser {
             user_id,
             principal,
+            is_platform_operator: self.platform_operators.contains(&user_id),
             is_platform_moderator: self.platform_moderators.contains(&user_id),
             diamond_membership_expires_at: self.diamond_membership_expiry_dates.get(&user_id).copied(),
             unique_person_proof: self.unique_person_proofs.get(&user_id).cloned(),
