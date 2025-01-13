@@ -80,8 +80,17 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
         UserIndexEvent::BotUpdated(ev) => {
             state.data.bots.update(ev.user_id, ev.name, ev.commands);
         }
-        UserIndexEvent::SuperAdminStatusChanged(ev) => {
-            state.data.global_users.set_platform_moderator(ev.user_id, ev.is_super_admin);
+        UserIndexEvent::PlatformOperatorStatusChanged(ev) => {
+            state
+                .data
+                .global_users
+                .set_platform_operator(ev.user_id, ev.is_platform_operator);
+        }
+        UserIndexEvent::PlatformModeratorStatusChanged(ev) => {
+            state
+                .data
+                .global_users
+                .set_platform_moderator(ev.user_id, ev.is_platform_moderator);
         }
         UserIndexEvent::MaxConcurrentCanisterUpgradesChanged(ev) => {
             state.data.max_concurrent_canister_upgrades = ev.value;

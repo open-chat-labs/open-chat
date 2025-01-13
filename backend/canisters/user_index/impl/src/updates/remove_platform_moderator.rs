@@ -28,9 +28,9 @@ fn commit(user_id: UserId, state: &mut RuntimeState) {
     state.data.platform_moderators.remove(&user_id);
 
     state.push_event_to_all_local_user_indexes(
-        UserIndexEvent::SuperAdminStatusChanged(PlatformModeratorStatusChanged {
+        UserIndexEvent::PlatformModeratorStatusChanged(PlatformModeratorStatusChanged {
             user_id,
-            is_super_admin: false,
+            is_platform_moderator: false,
         }),
         None,
     );
