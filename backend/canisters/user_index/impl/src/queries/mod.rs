@@ -14,7 +14,7 @@ pub mod public_key;
 pub mod referral_metrics;
 pub mod reported_messages;
 pub mod search;
-// pub mod suspected_bots;
+pub mod suspected_bots;
 pub mod user;
 pub mod user_registration_canister;
 pub mod users;

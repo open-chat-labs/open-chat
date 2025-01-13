@@ -223,17 +223,17 @@ impl UserMap {
         self.bots.get(user_id)
     }
 
-    // pub fn delete_user(&mut self, user_id: UserId, now: TimestampMillis) -> Option<User> {
-    //     let user = self.users.remove(&user_id)?;
-    //     if self.principal_to_user_id.get(&user.principal) == Some(&user_id) {
-    //         self.principal_to_user_id.remove(&user.principal);
-    //     }
-    //     if self.username_to_user_id.get(&user.username) == Some(&user_id) {
-    //         self.username_to_user_id.remove(&user.username);
-    //     }
-    //     self.deleted_users.insert(user_id, now);
-    //     Some(user)
-    // }
+    pub fn delete_user(&mut self, user_id: UserId, now: TimestampMillis) -> Option<User> {
+        let user = self.users.remove(&user_id)?;
+        if self.principal_to_user_id.get(&user.principal) == Some(&user_id) {
+            self.principal_to_user_id.remove(&user.principal);
+        }
+        if self.username_to_user_id.get(&user.username) == Some(&user_id) {
+            self.username_to_user_id.remove(&user.username);
+        }
+        self.deleted_users.insert(user_id, now);
+        Some(user)
+    }
 
     pub fn is_deleted(&self, user_id: &UserId) -> bool {
         self.deleted_users.contains_key(user_id) && !self.users.contains_key(user_id)
@@ -387,19 +387,19 @@ impl UserMap {
         self.user_referrals.get(user_id).map_or(Vec::new(), |refs| refs.clone())
     }
 
-    // pub fn mark_suspected_bot(&mut self, principal: &Principal) {
-    //     if let Some(user_id) = self.principal_to_user_id.get(principal) {
-    //         self.suspected_bots.insert(*user_id);
-    //     }
-    // }
+    pub fn mark_suspected_bot(&mut self, principal: &Principal) {
+        if let Some(user_id) = self.principal_to_user_id.get(principal) {
+            self.suspected_bots.insert(*user_id);
+        }
+    }
 
-    // pub fn suspected_bots(&self, after: Option<UserId>, count: usize) -> Vec<UserId> {
-    //     if let Some(after) = after {
-    //         self.suspected_bots.range(&after..).skip(1).take(count).copied().collect()
-    //     } else {
-    //         self.suspected_bots.iter().take(count).copied().collect()
-    //     }
-    // }
+    pub fn suspected_bots(&self, after: Option<UserId>, count: usize) -> Vec<UserId> {
+        if let Some(after) = after {
+            self.suspected_bots.range(&after..).skip(1).take(count).copied().collect()
+        } else {
+            self.suspected_bots.iter().take(count).copied().collect()
+        }
+    }
 
     pub fn is_suspected_bot(&self, user_id: &UserId) -> bool {
         self.suspected_bots.contains(user_id)

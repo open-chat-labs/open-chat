@@ -7,7 +7,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use constants::DAY_IN_MS;
-use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
@@ -162,38 +162,38 @@ impl RuntimeState {
         jobs::submit_message_to_modclub::start_job_if_required(self);
     }
 
-    // pub fn delete_user(&mut self, user_id: UserId, triggered_by_user: bool) {
-    //     let now = self.env.now();
-    //     if let Some(user) = self.data.users.delete_user(user_id, now) {
-    //         self.data.local_index_map.remove_user(&user_id);
-    //         self.data.empty_users.remove(&user_id);
-    //
-    //         #[derive(Serialize)]
-    //         struct EventPayload {
-    //             triggered_by_user: bool,
-    //         }
-    //
-    //         self.data.event_store_client.push(
-    //             EventBuilder::new("user_deleted", now)
-    //                 .with_user(user_id.to_string(), true)
-    //                 .with_source(self.env.canister_id().to_string(), false)
-    //                 .with_json_payload(&EventPayload { triggered_by_user })
-    //                 .build(),
-    //         );
-    //
-    //         self.data.deleted_users.push(DeletedUser {
-    //             user_id,
-    //             triggered_by_user,
-    //             timestamp: now,
-    //         });
-    //
-    //         self.data.identity_canister_user_sync_queue.push_back((user.principal, None));
-    //         jobs::sync_users_to_identity_canister::try_run_now(self);
-    //
-    //         self.data.remove_from_online_users_queue.push_back(user.principal);
-    //         jobs::remove_from_online_users_canister::start_job_if_required(self);
-    //     }
-    // }
+    pub fn delete_user(&mut self, user_id: UserId, triggered_by_user: bool) {
+        let now = self.env.now();
+        if let Some(user) = self.data.users.delete_user(user_id, now) {
+            self.data.local_index_map.remove_user(&user_id);
+            self.data.empty_users.remove(&user_id);
+
+            #[derive(Serialize)]
+            struct EventPayload {
+                triggered_by_user: bool,
+            }
+
+            self.data.event_store_client.push(
+                EventBuilder::new("user_deleted", now)
+                    .with_user(user_id.to_string(), true)
+                    .with_source(self.env.canister_id().to_string(), false)
+                    .with_json_payload(&EventPayload { triggered_by_user })
+                    .build(),
+            );
+
+            self.data.deleted_users.push(DeletedUser {
+                user_id,
+                triggered_by_user,
+                timestamp: now,
+            });
+
+            self.data.identity_canister_user_sync_queue.push_back((user.principal, None));
+            jobs::sync_users_to_identity_canister::try_run_now(self);
+
+            self.data.remove_from_online_users_queue.push_back(user.principal);
+            jobs::remove_from_online_users_canister::start_job_if_required(self);
+        }
+    }
 
     pub fn user_metrics(&self, user_id: UserId) -> Option<UserMetrics> {
         self.data.users.get_by_user_id(&user_id).map(|user| {
