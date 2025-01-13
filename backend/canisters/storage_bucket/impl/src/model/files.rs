@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
 use std::cmp::Ordering;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::collections::{BTreeMap, BTreeSet};
 use storage_bucket_canister::upload_chunk_v2::Args as UploadChunkArgs;
 use types::{AccessorId, CanisterId, FileAdded, FileId, FileMetaData, FileRemoved, Hash, TimestampMillis};
 use utils::file_id::generate_file_id;
@@ -24,7 +24,7 @@ pub struct Files {
     reference_counts: ReferenceCountsStableMap,
     accessors_map: FilesPerAccessorStableMap,
     blobs: StableBlobStorage,
-    expiration_queue: BTreeMap<TimestampMillis, VecDeque<FileId>>,
+    expiration_queue: BTreeSet<(TimestampMillis, FileId)>,
     #[serde(alias = "bytes_used")]
     total_file_bytes: u64,
 }
@@ -273,28 +273,19 @@ impl Files {
     }
 
     pub fn remove_expired_files(&mut self, now: TimestampMillis, max_count: usize) -> Vec<FileRemoved> {
-        let mut files_to_remove = Vec::new();
-        while let Some((timestamp, files)) = self.expiration_queue.iter_mut().next().filter(|(&t, _)| t <= now) {
-            while let Some(file_id) = files.pop_front() {
-                files_to_remove.push(file_id);
-                if files_to_remove.len() >= max_count {
-                    break;
-                }
-            }
-
-            if files.is_empty() {
-                let timestamp = *timestamp;
-                self.expiration_queue.remove(&timestamp);
-            }
-            if files_to_remove.len() >= max_count {
-                break;
-            }
-        }
-
-        let mut files_removed = Vec::with_capacity(files_to_remove.len());
-        for file_id in files_to_remove {
+        let mut files_removed = Vec::new();
+        while let Some(file_id) = self
+            .expiration_queue
+            .first()
+            .filter(|(ts, _)| *ts <= now)
+            .is_some()
+            .then(|| self.expiration_queue.pop_first().unwrap().1)
+        {
             if let Some(file_removed) = self.remove_file(file_id) {
                 files_removed.push(file_removed);
+                if files_removed.len() >= max_count {
+                    break;
+                }
             }
         }
         files_removed
@@ -307,7 +298,7 @@ impl Files {
     }
 
     pub fn next_expiry(&self) -> Option<TimestampMillis> {
-        self.expiration_queue.keys().copied().next()
+        self.expiration_queue.first().map(|(ts, _)| *ts)
     }
 
     pub fn data_size(&self, hash: &Hash) -> Option<u64> {
@@ -324,8 +315,7 @@ impl Files {
             blob_count: self.blobs.len(),
             pending_files: self.pending_files.len() as u64,
             total_file_bytes: self.total_file_bytes,
-            expiration_queue_keys: self.expiration_queue.len() as u64,
-            expiration_queue_values: self.expiration_queue.values().map(|v| v.len() as u64).sum(),
+            expiration_queue_len: self.expiration_queue.len() as u64,
         }
     }
 
@@ -339,7 +329,7 @@ impl Files {
         self.add_blob_if_not_exists(completed_file.hash, completed_file.bytes);
 
         if let Some(expiry) = completed_file.expiry {
-            self.expiration_queue.entry(expiry).or_default().push_back(file_id);
+            self.expiration_queue.insert((expiry, file_id));
         }
 
         self.files.insert(
@@ -597,6 +587,5 @@ pub struct Metrics {
     pub blob_count: u64,
     pub pending_files: u64,
     pub total_file_bytes: u64,
-    pub expiration_queue_keys: u64,
-    pub expiration_queue_values: u64,
+    pub expiration_queue_len: u64,
 }
