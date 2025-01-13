@@ -190,15 +190,15 @@ pub struct DeleteUser {
 pub struct GlobalUser {
     pub user_id: UserId,
     pub principal: Principal,
-    #[serde(default, skip_serializing_if = "is_default")]
+    #[serde(default)]
     pub is_platform_operator: bool,
-    #[serde(default, skip_serializing_if = "is_default")]
+    #[serde(default)]
     pub is_platform_moderator: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unique_person_proof: Option<UniquePersonProof>,
-    #[serde(default, skip_serializing_if = "is_default")]
+    #[serde(default)]
     pub user_type: UserType,
 }
 
