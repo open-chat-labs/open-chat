@@ -650,7 +650,7 @@ impl GroupChatCore {
                 if let Some(bot_message) = message.bot_context {
                     if bot_now.bot == message.sender
                         && bot_now.initiator == bot_message.initiator
-                        && bot_now.command_text == bot_message.command_text
+                        && bot_now.command == bot_message.command
                         && bot_now.finalised
                         && !bot_message.finalised
                     {

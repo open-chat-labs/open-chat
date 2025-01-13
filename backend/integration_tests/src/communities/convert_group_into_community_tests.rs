@@ -1,12 +1,16 @@
+use crate::client::community::STABLE_MEMORY_MAP_MEMORY_ID;
 use crate::env::ENV;
+use crate::stable_memory::get_stable_memory_map;
 use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use chat_events::ChatEventInternal;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
+use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::ops::Deref;
 use testing::rng::random_string;
-use types::{ChatId, Rules};
+use types::{ChatId, EventIndex, EventWrapperInternal, Rules};
 
 #[test]
 fn convert_into_community_succeeds() {
@@ -69,6 +73,21 @@ fn convert_into_community_succeeds() {
         let selected_channel_initial =
             client::community::happy_path::selected_channel_initial(env, &user1, result.community_id, result.channel_id);
         assert!(selected_channel_initial.blocked_users.is_empty());
+
+        let stable_memory_map = get_stable_memory_map(env, result.community_id, STABLE_MEMORY_MAP_MEMORY_ID);
+        let key_prefix = ChatEventKeyPrefix::new_from_channel(result.channel_id, None);
+        let range_start = key_prefix.create_key(&EventIndex::default());
+        let range_end = key_prefix.create_key(&EventIndex::from(u32::MAX));
+
+        let mut latest_event_index = EventIndex::default();
+        for event in stable_memory_map
+            .values_range(range_start.as_ref().to_vec()..range_end.as_ref().to_vec())
+            .map(|bytes| msgpack::deserialize_then_unwrap::<EventWrapperInternal<ChatEventInternal>>(&bytes))
+        {
+            latest_event_index = event.index;
+            assert!(!matches!(event.event, ChatEventInternal::ChatFrozen(_)),);
+        }
+        assert_eq!(latest_event_index, selected_channel_initial.latest_event_index);
     } else {
         panic!("'convert_into_community' error: {convert_into_community_response:?}");
     }

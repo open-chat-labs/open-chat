@@ -12,7 +12,12 @@ fn c2c_export_group_events(args: Args) -> Response {
 }
 
 fn c2c_export_group_events_impl(args: Args, state: &RuntimeState) -> Response {
-    let events = state.data.chat.events.read_events_as_bytes_from_stable_memory(args.after);
+    let mut events = state.data.chat.events.read_events_as_bytes_from_stable_memory(args.after);
+
+    // Exclude the latest event since that is the GroupFrozen event which we don't want to transfer
+    // to the community
+    let latest_event_index = state.data.chat.events.latest_event_index().unwrap();
+    events.retain(|(e, _)| e.thread_root_message_index.is_some() || e.event_index < latest_event_index);
 
     Success(SuccessResult {
         finished: events.is_empty(),

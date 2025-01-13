@@ -126,6 +126,7 @@ import type {
     SlashCommandParamType,
     SlashCommandParam,
     BotMessageContext,
+    SlashCommandParamInstance,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -302,6 +303,7 @@ import type {
     SlashCommandSchema as ApiSlashCommandSchema,
     SlashCommandParamType as ApiSlashCommandParamType,
     SlashCommandParam as ApiSlashCommandParam,
+    BotCommandArg,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -566,9 +568,42 @@ export function message(value: TMessage): Message {
 export function botMessageContext(value: TBotMessageContext): BotMessageContext {
     return {
         initiator: principalBytesToString(value.initiator),
-        commandText: value.command_text,
         finalised: value.finalised,
+        command: {
+            name: value.command.name,
+            args: value.command.args.map(botCommandArg),
+        },
     };
+}
+
+export function botCommandArg(api: BotCommandArg): SlashCommandParamInstance {
+    const { name, value } = api;
+    if ("Boolean" in value) {
+        return {
+            kind: "boolean",
+            name,
+            value: value.Boolean,
+        };
+    } else if ("Number" in value) {
+        return {
+            kind: "number",
+            name,
+            value: value.Number,
+        };
+    } else if ("String" in value) {
+        return {
+            kind: "string",
+            name,
+            value: value.String,
+        };
+    } else if ("User" in value) {
+        return {
+            kind: "user",
+            name,
+            userId: principalBytesToString(value.User),
+        };
+    }
+    throw new Error(`Unexpected ApiBotCommandArg type received, ${api}`);
 }
 
 export function tips(value: [Uint8Array, [Uint8Array, bigint][]][]): TipsReceived {
