@@ -12,7 +12,7 @@ fn remove_platform_operator(args: Args) -> Response {
         state.data.platform_operators.remove(&args.user_id);
         state.push_event_to_all_local_user_indexes(
             UserIndexEvent::PlatformOperatorStatusChanged(PlatformOperatorStatusChanged {
-                user_id,
+                user_id: args.user_id,
                 is_platform_operator: false,
             }),
             None,
