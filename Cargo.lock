@@ -4177,6 +4177,7 @@ version = "0.1.0"
 dependencies = [
  "airdrop_bot_canister",
  "candid",
+ "chat_events",
  "community_canister",
  "constants",
  "cycles_dispenser_canister",
@@ -4209,6 +4210,7 @@ dependencies = [
  "serde_json",
  "sha256",
  "sign_in_with_email_canister",
+ "stable_memory_map",
  "storage_bucket_canister",
  "storage_index_canister",
  "test-case",
