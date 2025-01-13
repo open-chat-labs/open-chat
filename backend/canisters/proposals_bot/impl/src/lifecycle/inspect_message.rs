@@ -7,7 +7,7 @@ fn inspect_message() {
 }
 
 fn accept_if_valid(state: &RuntimeState) {
-    let method_name = ic_cdk::api::call::method_name();
+    let method_name = ic_cdk::api::call::method_name().trim_end_matches("_msgpack").to_string();
 
     let is_valid = match method_name.as_str() {
         "add_governance_canister"
