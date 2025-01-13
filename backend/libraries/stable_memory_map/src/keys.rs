@@ -58,7 +58,7 @@ impl BaseKeyPrefix {
     }
 }
 
-pub trait Key: Into<BaseKey> + TryFrom<BaseKey> + Clone {
+pub trait Key: Into<BaseKey> + TryFrom<BaseKey> + Clone + AsRef<[u8]> {
     type Prefix: KeyPrefix<Key = Self>;
 
     fn matches_prefix(&self, key: &Self::Prefix) -> bool;

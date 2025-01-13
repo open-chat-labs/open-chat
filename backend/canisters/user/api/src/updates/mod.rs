@@ -61,7 +61,6 @@ pub mod set_contact;
 pub mod set_message_reminder_v2;
 pub mod set_pin_number;
 pub mod start_video_call;
-pub mod submit_proposal;
 pub mod swap_tokens;
 pub mod tip_message;
 pub mod unblock_user;

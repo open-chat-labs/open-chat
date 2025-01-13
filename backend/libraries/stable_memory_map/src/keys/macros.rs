@@ -43,6 +43,12 @@ macro_rules! key {
                 self.0.starts_with(&prefix.0)
             }
         }
+
+        impl AsRef<[u8]> for $key_name {
+            fn as_ref(&self) -> &[u8] {
+                self.0.as_ref()
+            }
+        }
     };
 }
 

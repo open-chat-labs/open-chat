@@ -22,15 +22,3 @@ pub enum Response {
     Retrying(String),
     InternalError(String),
 }
-
-impl From<crate::c2c_submit_proposal::Response> for Response {
-    fn from(value: crate::c2c_submit_proposal::Response) -> Self {
-        match value {
-            crate::c2c_submit_proposal::Response::Success => Response::Success,
-            crate::c2c_submit_proposal::Response::GovernanceCanisterNotSupported => Response::Success,
-            crate::c2c_submit_proposal::Response::InsufficientPayment(amount) => Response::InsufficientPayment(amount),
-            crate::c2c_submit_proposal::Response::Retrying(error) => Response::Retrying(error),
-            crate::c2c_submit_proposal::Response::InternalError(error) => Response::InternalError(error),
-        }
-    }
-}
