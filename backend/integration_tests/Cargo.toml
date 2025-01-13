@@ -8,6 +8,7 @@ edition = "2021"
 [dev-dependencies]
 airdrop_bot_canister = { path = "../canisters/airdrop_bot/api" }
 candid = { workspace = true }
+chat_events = { path = "../libraries/chat_events" }
 community_canister = { path = "../canisters/community/api" }
 constants = { path = "../libraries/constants" }
 cycles_dispenser_canister = { path = "../canisters/cycles_dispenser/api" }
@@ -41,6 +42,7 @@ serde_json = { workspace = true }
 sha256 = { path = "../libraries/sha256" }
 sign_in_with_email_canister = { workspace = true }
 sign_in_with_email_canister_test_utils = { workspace = true }
+stable_memory_map = { path = "../libraries/stable_memory_map" }
 storage_bucket_canister = { path = "../canisters/storage_bucket/api" }
 storage_index_canister = { path = "../canisters/storage_index/api" }
 testing = { path = "../libraries/testing" }
