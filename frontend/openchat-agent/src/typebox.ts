@@ -6255,13 +6255,6 @@ export const GroupInviteCodeChanged = Type.Object({
     changed_by: UserId,
 });
 
-export type BotMessageContext = Static<typeof BotMessageContext>;
-export const BotMessageContext = Type.Object({
-    initiator: UserId,
-    command_text: Type.String(),
-    finalised: Type.Boolean(),
-});
-
 export type GroupNameChanged = Static<typeof GroupNameChanged>;
 export const GroupNameChanged = Type.Object({
     new_name: Type.String(),
@@ -6500,6 +6493,22 @@ export const EventsTimeToLiveUpdated = Type.Object({
     new_ttl: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
 });
 
+export type BotCommandArgValue = Static<typeof BotCommandArgValue>;
+export const BotCommandArgValue = Type.Union([
+    Type.Object({
+        String: Type.String(),
+    }),
+    Type.Object({
+        Number: Type.Number(),
+    }),
+    Type.Object({
+        Boolean: Type.Boolean(),
+    }),
+    Type.Object({
+        User: UserId,
+    }),
+]);
+
 export type MemberJoined = Static<typeof MemberJoined>;
 export const MemberJoined = Type.Object({
     user_id: UserId,
@@ -6621,18 +6630,6 @@ export const OptionUpdateGroupSubtype = Type.Union(
     ],
     { default: "NoChange" },
 );
-
-export type BotCommandArgs = Static<typeof BotCommandArgs>;
-export const BotCommandArgs = Type.Object({
-    user_id: UserId,
-    bot: UserId,
-    chat: Chat,
-    thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
-    message_id: MessageId,
-    command_name: Type.String(),
-    command_args: Type.String(),
-    command_text: Type.String(),
-});
 
 export type BotDefinition = Static<typeof BotDefinition>;
 export const BotDefinition = Type.Object({
@@ -7471,17 +7468,17 @@ export const CurrentUserSummary = Type.Object({
     is_unique_person: Type.Boolean(),
 });
 
-export type AccessTokenType = Static<typeof AccessTokenType>;
-export const AccessTokenType = Type.Union([
-    Type.Object({
-        StartVideoCallV2: VideoCallAccessTokenArgs,
-    }),
-    Type.Literal("JoinVideoCall"),
-    Type.Literal("MarkVideoCallAsEnded"),
-    Type.Object({
-        BotCommand: BotCommandArgs,
-    }),
-]);
+export type BotCommandArg = Static<typeof BotCommandArg>;
+export const BotCommandArg = Type.Object({
+    name: Type.String(),
+    value: BotCommandArgValue,
+});
+
+export type BotCommand = Static<typeof BotCommand>;
+export const BotCommand = Type.Object({
+    name: Type.String(),
+    args: Type.Array(BotCommandArg),
+});
 
 export type SwapStatusError = Static<typeof SwapStatusError>;
 export const SwapStatusError = Type.Union([
@@ -7656,12 +7653,6 @@ export const UserIndexExploreBotsResponse = Type.Union([
     }),
     Type.Literal("InvalidTerm"),
 ]);
-
-export type LocalUserIndexAccessTokenArgs = Static<typeof LocalUserIndexAccessTokenArgs>;
-export const LocalUserIndexAccessTokenArgs = Type.Object({
-    token_type: AccessTokenType,
-    chat: Chat,
-});
 
 export type LocalUserIndexChatEventsArgs = Static<typeof LocalUserIndexChatEventsArgs>;
 export const LocalUserIndexChatEventsArgs = Type.Object({
@@ -8053,6 +8044,23 @@ export const PrizeContentInitial = Type.Object({
     streak_only: Type.Number(),
 });
 
+export type AccessTokenBotCommand = Static<typeof AccessTokenBotCommand>;
+export const AccessTokenBotCommand = Type.Object({
+    user_id: UserId,
+    bot: UserId,
+    chat: Chat,
+    thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
+    message_id: MessageId,
+    command: BotCommand,
+});
+
+export type BotMessageContext = Static<typeof BotMessageContext>;
+export const BotMessageContext = Type.Object({
+    initiator: UserId,
+    command: BotCommand,
+    finalised: Type.Boolean(),
+});
+
 export type OptionUpdateAccessGate = Static<typeof OptionUpdateAccessGate>;
 export const OptionUpdateAccessGate = Type.Union(
     [
@@ -8064,6 +8072,18 @@ export const OptionUpdateAccessGate = Type.Union(
     ],
     { default: "NoChange" },
 );
+
+export type AccessTokenType = Static<typeof AccessTokenType>;
+export const AccessTokenType = Type.Union([
+    Type.Object({
+        StartVideoCallV2: VideoCallAccessTokenArgs,
+    }),
+    Type.Literal("JoinVideoCall"),
+    Type.Literal("MarkVideoCallAsEnded"),
+    Type.Object({
+        BotCommand: AccessTokenBotCommand,
+    }),
+]);
 
 export type MessageContent = Static<typeof MessageContent>;
 export const MessageContent = Type.Union([
@@ -8229,6 +8249,12 @@ export const GroupIndexExploreGroupsResponse = Type.Union([
     }),
     Type.Literal("InvalidTerm"),
 ]);
+
+export type LocalUserIndexAccessTokenArgs = Static<typeof LocalUserIndexAccessTokenArgs>;
+export const LocalUserIndexAccessTokenArgs = Type.Object({
+    token_type: AccessTokenType,
+    chat: Chat,
+});
 
 export type CommunityDeletedMessageSuccessResult = Static<
     typeof CommunityDeletedMessageSuccessResult
@@ -9454,8 +9480,7 @@ export const UserUpdatesSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     streak_ends: Type.BigInt(),
-    // Uncomment this once User canisters have been released
-    // streak_insurance: OptionUpdateStreakInsurance,
+    streak_insurance: OptionUpdateStreakInsurance,
     next_daily_claim: Type.BigInt(),
     is_unique_person: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
     wallet_config: Type.Optional(Type.Union([UserWalletConfig, Type.Undefined()])),

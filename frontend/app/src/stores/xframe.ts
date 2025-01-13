@@ -37,6 +37,7 @@ const FRAME_ANCESTORS = [
     "https://wk3k3-vaaaa-aaaak-adtza-cai.icp0.io", //Mitch's portfilio POC canister ID
     "https://fantasyextreme.org", //fantasyextreme prod
     "https://snxxs-viaaa-aaaam-acuba-cai.icp0.io", //fantasyextreme staging
+    "https://e7bx6-iiaaa-aaaag-qm7oq-cai.icp0.io", // Partnrship
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;

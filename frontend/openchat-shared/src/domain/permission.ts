@@ -1,3 +1,4 @@
+import type { SlashCommandParamInstance } from "./bots";
 import type { MessageContext, VideoCallType } from "./chat";
 import type { OptionUpdate } from "./optionUpdate";
 
@@ -175,8 +176,7 @@ export type ExecuteBotCommand = {
     messageContext: MessageContext;
     messageId: bigint;
     commandName: string;
-    parameters: string;
-    commandText: string;
+    arguments: SlashCommandParamInstance[];
     botId: string;
     userId: string;
 };

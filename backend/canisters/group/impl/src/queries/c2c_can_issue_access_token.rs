@@ -5,7 +5,7 @@ use canister_api_macros::query;
 use group_canister::c2c_can_issue_access_token::*;
 use group_chat_core::{GroupChatCore, GroupRoleInternal};
 use types::{CheckAccessTokenType, VideoCallType};
-use utils::bots::can_execute_bot_command;
+use utils::bots::can_bot_execute_action;
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_can_issue_access_token(args: Args) -> Response {
@@ -31,7 +31,7 @@ fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
                 return false;
             };
 
-            can_execute_bot_command(&c.permissions, granted_to_bot, &granted_to_user)
+            can_bot_execute_action(&c.permissions, granted_to_bot, &granted_to_user)
         }
     }
 }

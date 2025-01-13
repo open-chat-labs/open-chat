@@ -121,3 +121,26 @@ pub struct BotGroupDetails {
 pub struct BotGroupConfig {
     pub permissions: SlashCommandPermissions,
 }
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
+pub struct BotCommand {
+    pub name: String,
+    pub args: Vec<BotCommandArg>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct BotCommandArg {
+    pub name: String,
+    pub value: BotCommandArgValue,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum BotCommandArgValue {
+    String(String),
+    Number(f64),
+    Boolean(bool),
+    User(UserId),
+}

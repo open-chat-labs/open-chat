@@ -1,7 +1,7 @@
 use canister_api_macros::update;
 use canister_client::generate_c2c_call;
 use jwt::{verify_jwt, Claims};
-use local_user_index_canister::execute_bot_command::*;
+use local_user_index_canister::execute_bot_action::*;
 use types::BotCommandClaims;
 use types::User;
 use types::{c2c_handle_bot_action, Chat};
@@ -10,7 +10,7 @@ use crate::read_state;
 use crate::RuntimeState;
 
 #[update(candid = true)]
-async fn execute_bot_command(args: Args) -> Response {
+async fn execute_bot_action(args: Args) -> Response {
     let c2c_args = match read_state(|state| validate(args, state)) {
         Ok(c2c_args) => c2c_args,
         Err(message) => return Err(BotApiCallError::Invalid(message)),
@@ -31,7 +31,7 @@ fn validate(args: Args, state: &RuntimeState) -> Result<c2c_handle_bot_action::A
     let claims = verify_jwt::<Claims<BotCommandClaims>>(&args.jwt, state.data.oc_key_pair.public_key_pem())
         .map_err(|error| format!("Access token invalid: {error:?}"))?;
 
-    if claims.exp() < state.env.now() {
+    if claims.exp_ms() < state.env.now() {
         return Err("Access token expired".to_string());
     }
 
@@ -57,7 +57,7 @@ fn validate(args: Args, state: &RuntimeState) -> Result<c2c_handle_bot_action::A
         thread_root_message_index: bot_command_claims.thread_root_message_index,
         message_id: bot_command_claims.message_id,
         action: args.action,
-        command_text: bot_command_claims.command_text.clone(),
+        command: bot_command_claims.command.clone(),
     })
 }
 

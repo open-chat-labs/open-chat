@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add optional `placeholder` field to `SlashCommandSchema` ([#7172](https://github.com/open-chat-labs/open-chat/pull/7172))
 - Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
+- Use typed command in `BotCommandClaims` ([#7113](https://github.com/open-chat-labs/open-chat/pull/7113))
 
 ## [[2.0.1547](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1547-local_user_index)] - 2025-01-06
 

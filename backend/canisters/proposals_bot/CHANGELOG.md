@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove `c2c_submit_proposal` ([#7144](https://github.com/open-chat-labs/open-chat/pull/7144))
 
+### Fixed
+
+- Handle `submit_proposal` in `inspect_message` ([#7205](https://github.com/open-chat-labs/open-chat/pull/7205))
+
 ## [[2.0.1551](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1551-proposals_bot)] - 2025-01-06
 
 ### Added

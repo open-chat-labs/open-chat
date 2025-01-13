@@ -118,6 +118,7 @@ import {
     cryptoLookup,
     exchangeRatesLookupStore,
     nervousSystemLookup,
+    swappableTokensStore,
 } from "./stores/crypto";
 import {
     disableAllProposalFilters,
@@ -5931,6 +5932,7 @@ export class OpenChat extends EventTarget {
                 if (!this.#liveState.anonUser) {
                     this.#initWebRtc();
                     startMessagesReadTracker(this);
+                    this.refreshSwappableTokens();
                     window.setTimeout(() => this.#refreshBalancesInSeries(), 0);
                 }
             }
@@ -6687,10 +6689,13 @@ export class OpenChat extends EventTarget {
             .catch(() => false);
     }
 
-    swappableTokens(): Promise<Set<string>> {
+    refreshSwappableTokens(): Promise<Set<string>> {
         return this.#sendRequest({
             kind: "canSwap",
             tokenLedgers: new Set(Object.keys(get(cryptoLookup))),
+        }).then((tokens) => {
+            swappableTokensStore.set(tokens);
+            return tokens;
         });
     }
 
@@ -7840,7 +7845,6 @@ export class OpenChat extends EventTarget {
         chat: ChatSummary,
         threadRootMessageIndex: number | undefined,
         bot: ExternalBotCommandInstance,
-        commandText: string,
     ): Promise<[string, bigint]> {
         const messageId = random64();
         return this.#getLocalUserIndex(chat).then((localUserIndex) => {
@@ -7852,9 +7856,7 @@ export class OpenChat extends EventTarget {
                     messageContext: { chatId: chat.id, threadRootMessageIndex },
                     messageId,
                     commandName: bot.command.name,
-                    parameters: JSON.stringify(bot.command.params),
-                    // commandText: `/${bot.command.name}`,
-                    commandText,
+                    arguments: bot.command.params,
                     botId: bot.id,
                     userId: this.#liveState.user.userId,
                 },
@@ -8025,19 +8027,14 @@ export class OpenChat extends EventTarget {
         const botContext = {
             initiator: this.#liveState.user.userId,
             finalised: false,
-            commandText: JSON.stringify({
+            command: {
                 name: bot.command.name,
-                params: bot.command.params,
-            }),
+                args: bot.command.params,
+            },
         };
         switch (bot.kind) {
             case "external_bot":
-                return this.#getAuthTokenForBotCommand(
-                    chat,
-                    threadRootMessageIndex,
-                    bot,
-                    botContext.commandText,
-                )
+                return this.#getAuthTokenForBotCommand(chat, threadRootMessageIndex, bot)
                     .then(([token, msgId]) => {
                         this.#sendPlaceholderMessage(
                             bot.command.messageContext,

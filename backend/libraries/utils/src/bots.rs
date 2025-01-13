@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use std::hash::Hash;
 use types::SlashCommandPermissions;
 
-pub fn can_execute_bot_command(
+pub fn can_bot_execute_action(
     required: &SlashCommandPermissions,
     granted_to_bot: &SlashCommandPermissions,
     granted_to_user: &SlashCommandPermissions,
@@ -37,21 +37,21 @@ mod tests {
     fn can_execute_remove_community_member_succeeds() {
         let (required, granted_to_bot, granted_to_user) = setup(false, false);
 
-        assert!(can_execute_bot_command(&required, &granted_to_bot, &granted_to_user));
+        assert!(can_bot_execute_action(&required, &granted_to_bot, &granted_to_user));
     }
 
     #[test]
     fn can_execute_remove_community_member_fails_if_bot_missing_permission() {
         let (required, granted_to_bot, granted_to_user) = setup(true, false);
 
-        assert!(!can_execute_bot_command(&required, &granted_to_bot, &granted_to_user));
+        assert!(!can_bot_execute_action(&required, &granted_to_bot, &granted_to_user));
     }
 
     #[test]
     fn can_execute_remove_community_member_fails_if_user_missing_permission() {
         let (required, granted_to_bot, granted_to_user) = setup(false, true);
 
-        assert!(!can_execute_bot_command(&required, &granted_to_bot, &granted_to_user));
+        assert!(!can_bot_execute_action(&required, &granted_to_bot, &granted_to_user));
     }
 
     fn setup(
