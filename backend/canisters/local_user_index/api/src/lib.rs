@@ -25,7 +25,8 @@ pub enum UserIndexEvent {
     UserRegistered(UserRegistered),
     BotRegistered(BotRegistered),
     BotUpdated(BotUpdated),
-    SuperAdminStatusChanged(PlatformModeratorStatusChanged),
+    PlatformOperatorStatusChanged(PlatformOperatorStatusChanged),
+    PlatformModeratorStatusChanged(PlatformModeratorStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
     UserUpgradeConcurrencyChanged(UserUpgradeConcurrencyChanged),
     UserSuspended(UserSuspended),
@@ -97,9 +98,15 @@ pub struct BotUpdated {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PlatformOperatorStatusChanged {
+    pub user_id: UserId,
+    pub is_platform_operator: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlatformModeratorStatusChanged {
     pub user_id: UserId,
-    pub is_super_admin: bool,
+    pub is_platform_moderator: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -183,11 +190,15 @@ pub struct DeleteUser {
 pub struct GlobalUser {
     pub user_id: UserId,
     pub principal: Principal,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub is_platform_operator: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
     pub is_platform_moderator: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub unique_person_proof: Option<UniquePersonProof>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub user_type: UserType,
 }
 
