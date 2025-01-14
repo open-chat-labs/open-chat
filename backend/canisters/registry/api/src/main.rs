@@ -3,6 +3,7 @@ use std::env;
 use ts_export::generate_ts_method;
 
 fn main() {
+    generate_candid_method!(registry, add_token, update);
     generate_candid_method!(registry, updates, query);
 
     candid::export_service!();
