@@ -40,6 +40,7 @@
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
     const ONE_WEEK = ONE_DAY * 7;
+    const OC_FEE_PERCENTAGE = 5n;
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
     const streaks = ["3", "7", "14", "30", "100"];
@@ -73,15 +74,17 @@
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
-    $: transferFees = tokenDetails.transferFee;
-    $: totalFees = transferFees + transferFees * BigInt(numberOfWinners ?? 0);
+    $: transferFee = tokenDetails.transferFee;
+    $: transferFees = transferFee * BigInt(numberOfWinners ?? 0);
+    $: prizeFees = transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n;
+    $: totalFees = transferFee + prizeFees;
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalance =
         draftAmount > 0n ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
-    $: minAmount = 100n * BigInt(numberOfWinners ?? 0) * transferFees;
+    $: minAmount = 100n * BigInt(numberOfWinners ?? 0) * transferFee;
     $: maxAmount = bigIntMax(cryptoBalance - totalFees, BigInt(0));
     $: valid = error === undefined && tokenInputState === "ok" && !tokenChanging;
-    $: zero = cryptoBalance <= transferFees && !tokenChanging;
+    $: zero = cryptoBalance <= transferFee && !tokenChanging;
     $: errorMessage = error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore;
 
     $: {
@@ -126,7 +129,9 @@
 
     function send() {
         const prizes = generatePrizes();
-        const prizeFees = transferFees * BigInt(numberOfWinners ?? 0);
+        const amountE8s = prizes.reduce((total, p) => total + p) + prizeFees;
+
+        console.log(`Prize amount: ${amountE8s}`);
         const content: PrizeContentInitial = {
             kind: "prize_content_initial",
             caption: message === "" ? undefined : message,
@@ -140,8 +145,8 @@
                 ledger,
                 token: symbol,
                 recipient: recipientFromContext(context),
-                amountE8s: prizes.reduce((total, p) => total + p) + prizeFees,
-                feeE8s: transferFees,
+                amountE8s,
+                feeE8s: transferFee,
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
             prizes,
@@ -183,7 +188,7 @@
         tokenChanging = false;
         if (remainingBalance < 0) {
             remainingBalance = BigInt(0);
-            draftAmount = cryptoBalance - transferFees;
+            draftAmount = cryptoBalance - transferFee;
             if (draftAmount < 0) {
                 draftAmount = BigInt(0);
             }
@@ -239,9 +244,9 @@
         let maxIndex = 0;
         for (let i = 0; i < prizes.length; i++) {
             const prize = prizes[i];
-            if (prize < transferFees) {
-                prizes[i] = transferFees;
-                totalAdded += transferFees - prize;
+            if (prize < transferFee) {
+                prizes[i] = transferFee;
+                totalAdded += transferFee - prize;
             } else if (prize > max) {
                 max = prize;
                 maxIndex = i;
