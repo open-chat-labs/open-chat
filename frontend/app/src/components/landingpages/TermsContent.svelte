@@ -71,6 +71,7 @@
                         <li>Schedule 1: Risks relating to Cryptoassets</li>
                         <li>Schedule 2: Content Standards</li>
                         <li>Schedule 3: CHAT Features</li>
+                        <li>Schedule 4: Multiple accounts</li>
                     </ul>
                 </li>
                 <li>
@@ -430,6 +431,10 @@
                     You shall notify us via the help channel in the OpenChat Community (accessible
                     via the OpenChat Platform) immediately if you become aware you have breached, or
                     may have breached, any of your obligations under these Terms.
+                </li>
+                <li>
+                    You may not create multiple accounts on the OpenChat Platform according to
+                    Schedule 4;
                 </li>
             </ul>
         </li>
@@ -2028,6 +2033,23 @@
             of any business conducted at any time by us other than as explicitly stated above.
         </strong>
     </p>
+
+    <HashLinkTarget on:copyUrl={onCopyUrl} id="11">
+        <h2>Schedule 4: Multiple accounts</h2>
+    </HashLinkTarget>
+
+    <p>
+        You may not buy or sell OpenChat accounts, nor may you create multiple accounts on the
+        OpenChat Platform:
+    </p>
+    <ul class="custom_list" style={"--prefix: ''"}>
+        <li>that you aren't actively using</li>
+        <li>to squat on usernames with the intention of selling them</li>
+        <li>to farm tokens</li>
+        <li>to give the appearance of activity in a group/community</li>
+        <li>to DoS the platform or otherwise drain platform resources</li>
+        <li>any other nefarious purpose</li>
+    </ul>
 </div>
 
 <style lang="scss">
