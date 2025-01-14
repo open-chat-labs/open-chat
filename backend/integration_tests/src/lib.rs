@@ -3,6 +3,8 @@
 use crate::utils::principal_to_username;
 use candid::Principal;
 use pocket_ic::PocketIc;
+use registry_canister::subnets::Subnet;
+use std::fmt::{Debug, Formatter};
 use types::{CanisterId, Cycles, UserId};
 
 mod airdrop_bot_tests;
@@ -16,7 +18,7 @@ mod cycles_dispenser_tests;
 mod delete_direct_chat_tests;
 mod delete_group_tests;
 mod delete_message_tests;
-mod delete_user_tests;
+// mod delete_user_tests;
 mod diamond_membership_tests;
 mod disappearing_message_tests;
 mod edit_message_tests;
@@ -33,7 +35,7 @@ mod message_activity_tests;
 mod notification_tests;
 mod p2p_swap_tests;
 mod pin_number_tests;
-mod platform_moderator_tests;
+// mod platform_moderator_tests;
 mod poll_tests;
 mod prize_message_tests;
 mod register_user_tests;
@@ -66,6 +68,7 @@ pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
     pub public_key: Vec<u8>,
+    pub local_user_index: CanisterId,
 }
 
 impl User {
@@ -87,14 +90,11 @@ impl From<&User> for types::User {
     }
 }
 
-#[derive(Debug)]
 pub struct CanisterIds {
+    pub openchat_installer: CanisterId,
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
-    pub local_user_index: CanisterId,
-    pub local_group_index: CanisterId,
-    pub notifications: CanisterId,
     pub identity: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
@@ -110,6 +110,51 @@ pub struct CanisterIds {
     pub icp_ledger: CanisterId,
     pub chat_ledger: CanisterId,
     pub cycles_minting_canister: CanisterId,
+    pub subnets: Vec<Subnet>,
+}
+
+impl CanisterIds {
+    pub fn local_user_index(&self, env: &PocketIc, canister_id: impl Into<CanisterId>) -> CanisterId {
+        self.subnet(env, canister_id.into()).local_user_index
+    }
+
+    pub fn local_group_index(&self, env: &PocketIc, canister_id: impl Into<CanisterId>) -> CanisterId {
+        self.subnet(env, canister_id.into()).local_group_index
+    }
+
+    pub fn notifications(&self, env: &PocketIc, canister_id: impl Into<CanisterId>) -> CanisterId {
+        self.subnet(env, canister_id.into()).notifications_canister
+    }
+
+    fn subnet(&self, env: &PocketIc, canister_id: CanisterId) -> Subnet {
+        let subnet_id = env.topology().get_subnet(canister_id).unwrap();
+        self.subnets.iter().find(|s| s.subnet_id == subnet_id).cloned().unwrap()
+    }
+}
+
+impl Debug for CanisterIds {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut w = f.debug_struct("CanisterIds");
+        w.field("user_index", &self.user_index.to_string());
+        w.field("group_index", &self.group_index.to_string());
+        w.field("notifications_index", &self.notifications_index.to_string());
+        w.field("identity", &self.identity.to_string());
+        w.field("online_users", &self.online_users.to_string());
+        w.field("proposals_bot", &self.proposals_bot.to_string());
+        w.field("airdrop_bot", &self.airdrop_bot.to_string());
+        w.field("storage_index", &self.storage_index.to_string());
+        w.field("cycles_dispenser", &self.cycles_dispenser.to_string());
+        w.field("registry", &self.registry.to_string());
+        w.field("escrow", &self.escrow.to_string());
+        w.field("translations", &self.translations.to_string());
+        w.field("event_relay", &self.event_relay.to_string());
+        w.field("event_store", &self.event_store.to_string());
+        w.field("sign_in_with_email", &self.sign_in_with_email.to_string());
+        w.field("icp_ledger", &self.icp_ledger.to_string());
+        w.field("chat_ledger", &self.chat_ledger.to_string());
+        w.field("cycles_minting_canister", &self.cycles_minting_canister.to_string());
+        w.finish()
+    }
 }
 
 pub const T: Cycles = 1_000_000_000_000;

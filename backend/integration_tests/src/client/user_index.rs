@@ -9,6 +9,7 @@ generate_msgpack_query_call!(platform_moderators);
 generate_msgpack_query_call!(platform_moderators_group);
 generate_query_call!(public_key);
 generate_msgpack_query_call!(user);
+generate_msgpack_query_call!(user_registration_canister);
 generate_msgpack_query_call!(users);
 generate_msgpack_query_call!(users_chit);
 generate_msgpack_query_call!(bot_updates);
@@ -31,6 +32,7 @@ generate_update_call!(upgrade_local_user_index_canister_wasm);
 generate_update_call!(upgrade_user_canister_wasm);
 generate_update_call!(upload_wasm_chunk);
 generate_msgpack_update_call!(register_bot);
+generate_msgpack_update_call!(update_bot);
 
 pub mod happy_path {
     use candid::Principal;
@@ -39,8 +41,8 @@ pub mod happy_path {
     use sha256::sha256;
     use std::collections::HashMap;
     use types::{
-        CanisterId, CanisterWasm, Chit, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, Empty, UserId,
-        UserSummary,
+        BotDefinition, CanisterId, CanisterWasm, Chit, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration,
+        Empty, OptionUpdate, UserId, UserSummary,
     };
     use user_index_canister::users::UserGroup;
     use user_index_canister::ChildCanisterType;
@@ -272,6 +274,37 @@ pub mod happy_path {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
+    pub fn update_bot(
+        env: &mut PocketIc,
+        user_index_canister_id: CanisterId,
+        caller: Principal,
+        bot_id: UserId,
+        owner: Option<UserId>,
+        name: Option<String>,
+        endpoint: Option<String>,
+        definition: Option<BotDefinition>,
+    ) {
+        let response = super::update_bot(
+            env,
+            caller,
+            user_index_canister_id,
+            &user_index_canister::update_bot::Args {
+                bot_id,
+                owner,
+                name,
+                avatar: OptionUpdate::NoChange,
+                endpoint,
+                definition,
+            },
+        );
+
+        match response {
+            user_index_canister::update_bot::Response::Success => (),
+            response => panic!("'update_bot' expected Success: {response:?}"),
+        }
+    }
+
     pub fn bot_updates(
         env: &PocketIc,
         sender: Principal,
@@ -311,6 +344,15 @@ pub mod happy_path {
         match response {
             user_index_canister::explore_bots::Response::Success(success_result) => success_result,
             response => panic!("'explore_bots' expected Success: {response:?}"),
+        }
+    }
+
+    pub fn user_registration_canister(env: &PocketIc, user_index_canister_id: CanisterId) -> CanisterId {
+        let response = super::user_registration_canister(env, Principal::anonymous(), user_index_canister_id, &Empty {});
+
+        match response {
+            user_index_canister::user_registration_canister::Response::Success(local_user_index) => local_user_index,
+            response => panic!("'user_registration_canister' error: {response:?}"),
         }
     }
 

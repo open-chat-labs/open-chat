@@ -28,6 +28,7 @@ echo "Downloading wasms"
 ./download-canister-wasm.sh notifications $WASM_SRC || exit 1
 ./download-canister-wasm.sh notifications_index $WASM_SRC || exit 1
 ./download-canister-wasm.sh online_users $WASM_SRC || exit 1
+./download-canister-wasm.sh openchat_installer $WASM_SRC || exit 1
 ./download-canister-wasm.sh proposal_validation $WASM_SRC || exit 1
 ./download-canister-wasm.sh proposals_bot $WASM_SRC || exit 1
 ./download-canister-wasm.sh registry $WASM_SRC || exit 1

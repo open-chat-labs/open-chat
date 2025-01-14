@@ -6,8 +6,8 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_handle_bot_action::*;
 use community_canister::send_message;
 use types::bot_actions::MessageContent;
-use types::{BotAction, Chat, HandleBotActionsError, MessageContentInitial};
-use utils::bots::can_execute_bot_command;
+use types::{BotAction, BotCaller, Chat, HandleBotActionsError, MessageContentInitial};
+use utils::bots::can_bot_execute_action;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -22,7 +22,7 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
         return Err(HandleBotActionsError::Frozen);
     }
 
-    if !is_bot_permitted_to_execute_command(&args, state) {
+    if !is_bot_permitted_to_execute_action(&args, state) {
         return Err(HandleBotActionsError::NotAuthorized);
     }
 
@@ -31,8 +31,8 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
     };
 
     match args.action {
-        BotAction::SendMessage(content) => {
-            let content = match content {
+        BotAction::SendMessage(action) => {
+            let content = match action.content {
                 MessageContent::Text(text_content) => MessageContentInitial::Text(text_content),
                 MessageContent::Image(image_content) => MessageContentInitial::Image(image_content),
                 MessageContent::Video(video_content) => MessageContentInitial::Video(video_content),
@@ -59,7 +59,12 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                     message_filter_failed: None,
                     new_achievement: false,
                 },
-                Some(args.bot.user_id.into()),
+                Some(BotCaller {
+                    bot: args.bot.user_id,
+                    initiator: args.initiator,
+                    command: args.command,
+                    finalised: action.finalised,
+                }),
                 state,
             ) {
                 send_message::Response::Success(_) => Ok(()),
@@ -69,7 +74,7 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
     }
 }
 
-fn is_bot_permitted_to_execute_command(args: &Args, state: &RuntimeState) -> bool {
+fn is_bot_permitted_to_execute_action(args: &Args, state: &RuntimeState) -> bool {
     let Chat::Channel(_, channel_id) = args.chat else {
         unreachable!()
     };
@@ -80,15 +85,12 @@ fn is_bot_permitted_to_execute_command(args: &Args, state: &RuntimeState) -> boo
     };
 
     // Get the permissions granted to the user in this community/channel
-    let Some(granted_to_user) = state
-        .data
-        .get_user_permissions_for_bot_commands(&args.commanded_by, &channel_id)
-    else {
+    let Some(granted_to_user) = state.data.get_user_permissions_for_bot_commands(&args.initiator, &channel_id) else {
         return false;
     };
 
     // Get the permissions required to execute the given action
-    let permissions_required = args.action.permissions_required(args.thread_root_message_index.is_some());
+    let permissions_required = args.action.permissions_required();
 
-    can_execute_bot_command(&permissions_required, granted_to_bot, &granted_to_user)
+    can_bot_execute_action(&permissions_required, granted_to_bot, &granted_to_user)
 }

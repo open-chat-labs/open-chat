@@ -16,7 +16,7 @@
  */
 export function debouncedDerived<T>(
     dependencies: () => void,
-    action: () => T,
+    action: () => Promise<T>,
     delay: number,
     initialValue: T,
 ) {
@@ -25,7 +25,7 @@ export function debouncedDerived<T>(
     $effect(() => {
         dependencies(); // subscribe to the dependencies (*this* is the hack)
         window.clearTimeout(timer);
-        timer = window.setTimeout(() => (value = action()), delay);
+        timer = window.setTimeout(async () => (value = await action()), delay);
         return () => clearTimeout(timer);
     });
     return () => value;

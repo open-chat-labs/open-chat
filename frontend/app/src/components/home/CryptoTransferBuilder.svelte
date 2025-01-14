@@ -9,7 +9,7 @@
         cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
     } from "openchat-client";
-    import type { CryptocurrencyContent, MessageContext } from "openchat-shared";
+    import { type CryptocurrencyContent, type MessageContext, nowNanos } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -97,7 +97,7 @@
                 recipient: receiver.userId,
                 amountE8s: draftAmount,
                 feeE8s: transferFees,
-                createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+                createdAtNanos: nowNanos(),
             },
         };
 

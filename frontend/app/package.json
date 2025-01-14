@@ -61,6 +61,7 @@
         "@dfinity/candid": "^2.1.1",
         "@dfinity/identity": "^2.1.1",
         "@dfinity/principal": "^2.1.1",
+        "@fingerprintjs/botd": "^1.9.1",
         "@fortawesome/free-solid-svg-icons": "^6.4.2",
         "@memefighter/maker-core": "^0.0.17",
         "@metamask/sdk": "^0.28.4",

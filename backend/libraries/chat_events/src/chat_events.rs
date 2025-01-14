@@ -6,6 +6,7 @@ use crate::search_index::SearchIndex;
 use crate::*;
 use constants::{HOUR_IN_MS, ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use rand::rngs::StdRng;
 use rand::Rng;
 use search::simple::{Document, Query};
@@ -19,15 +20,15 @@ use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
 use types::{
-    AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
-    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex, EventWrapper,
-    EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
-    HydratedMention, Mention, Message, MessageContent, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload,
-    MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat,
-    P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
-    PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult,
-    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
-    VideoCallParticipants, VideoCallPresence, VoteOperation,
+    AcceptP2PSwapResult, BlobReference, BotMessageContext, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType,
+    CompleteP2PSwapResult, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex,
+    EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen,
+    GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContent, MessageContentInitial, MessageEditedEventPayload,
+    MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds,
+    MultiUserChat, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
+    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload,
+    RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
+    UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -54,8 +55,14 @@ impl ChatEvents {
         // 3. More than 2 hours have passed since the call was started
         // THEN remove the video call in progress indicator
 
-        if self.video_call_is_spurious(now) {
-            self.video_call_in_progress = Timestamped::new(None, now);
+        let video_call_in_progress = self.video_call_in_progress.value.as_ref().map(|vc| vc.message_index);
+
+        if let Some(message_index) = video_call_in_progress {
+            if self.video_call_is_spurious(now) {
+                self.video_call_in_progress = Timestamped::new(None, now);
+
+                self.end_video_call::<CdkRuntime>(message_index.into(), now, None);
+            }
         }
     }
 
@@ -222,6 +229,7 @@ impl ChatEvents {
             message_id: args.message_id,
             sender: args.sender,
             content: args.content,
+            bot_context: args.bot_context,
             replies_to: args.replies_to,
             reactions: Vec::new(),
             tips: Tips::default(),
@@ -361,6 +369,12 @@ impl ChatEvents {
 
                 let already_edited = message.last_edited.is_some();
                 message.last_edited = Some(args.now);
+
+                if args.finalise_bot_message {
+                    if let Some(bot_context) = message.bot_context.as_mut() {
+                        bot_context.finalised = true;
+                    }
+                }
 
                 if let Some(client) = event_store_client {
                     let new_length = message.content.text_length();
@@ -915,6 +929,14 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(CannotTipSelf));
         }
         if message.sender != args.recipient {
+            error!(
+                user = %args.user_id,
+                recipient = %args.recipient,
+                sender = %message.sender,
+                message_index = ?message.message_index,
+                message_id = ?message.message_id,
+                "Tip failed due to recipient mismatch"
+            );
             return Err(UpdateEventError::NoChange(RecipientMismatch));
         }
 
@@ -990,7 +1012,13 @@ impl ChatEvents {
 
         content.reservations.insert(user_id);
 
-        Ok(ReservePrizeResult::Success(token, ledger_canister_id, amount, fee))
+        Ok(ReservePrizeResult::Success(ReservePriceSuccess {
+            token,
+            ledger_canister_id,
+            amount,
+            fee,
+            message_index: message.message_index,
+        }))
     }
 
     pub fn claim_prize<R: Runtime + Send + 'static>(
@@ -1025,6 +1053,7 @@ impl ChatEvents {
                             block_index: transaction.index(),
                             prize_message: message_index,
                         }),
+                        bot_context: None,
                         mentioned: Vec::new(),
                         replies_to: None,
                         forwarded: false,
@@ -1500,6 +1529,7 @@ impl ChatEvents {
                             notes,
                         }],
                     }),
+                    bot_context: None,
                     mentioned: Vec::new(),
                     replies_to: Some(ReplyContextInternal {
                         chat_if_other: Some((chat.into(), thread_root_message_index)),
@@ -1859,6 +1889,7 @@ impl ChatEvents {
                             followers: thread.followers,
                         });
                     }
+                    result.files.extend(m.content.blob_references());
                     if let MessageContentInternal::Prize(mut p) = m.content {
                         result
                             .final_prize_payments
@@ -2231,6 +2262,7 @@ pub struct PushMessageArgs {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub content: MessageContentInternal,
+    pub bot_context: Option<BotMessageContext>,
     pub mentioned: Vec<UserId>,
     pub replies_to: Option<ReplyContextInternal>,
     pub forwarded: bool,
@@ -2247,6 +2279,7 @@ pub struct EditMessageArgs {
     pub message_id: MessageId,
     pub content: MessageContentInitial,
     pub block_level_markdown: Option<bool>,
+    pub finalise_bot_message: bool,
     pub now: TimestampMillis,
 }
 
@@ -2370,12 +2403,20 @@ pub enum TipMessageResult {
 }
 
 pub enum ReservePrizeResult {
-    Success(Cryptocurrency, CanisterId, u128, u128),
+    Success(ReservePriceSuccess),
     MessageNotFound,
     AlreadyClaimed,
     PrizeFullyClaimed,
     PrizeEnded,
     LedgerError,
+}
+
+pub struct ReservePriceSuccess {
+    pub token: Cryptocurrency,
+    pub ledger_canister_id: CanisterId,
+    pub amount: u128,
+    pub fee: u128,
+    pub message_index: MessageIndex,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -2407,6 +2448,7 @@ pub enum UnfollowThreadResult {
 pub struct RemoveExpiredEventsResult {
     pub events: Vec<EventIndex>,
     pub threads: Vec<ExpiredThread>,
+    pub files: Vec<BlobReference>,
     pub final_prize_payments: Vec<PendingCryptoTransaction>,
 }
 

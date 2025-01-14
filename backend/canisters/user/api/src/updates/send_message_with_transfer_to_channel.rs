@@ -44,6 +44,7 @@ pub enum Response {
     UserLapsed,
     CommunityFrozen,
     RulesNotAccepted,
+    MessageAlreadyExists,
     CommunityRulesNotAccepted,
     Retrying(String, CompletedCryptoTransaction),
     PinRequired,

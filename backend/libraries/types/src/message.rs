@@ -1,5 +1,6 @@
 use crate::{
-    Achievement, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, UserId,
+    Achievement, BotCaller, BotCommand, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction,
+    ThreadSummary, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -13,6 +14,7 @@ pub struct Message {
     pub message_id: MessageId,
     pub sender: UserId,
     pub content: MessageContent,
+    pub bot_context: Option<BotMessageContext>,
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
     pub tips: Tips,
@@ -243,3 +245,53 @@ pub struct P2PSwapContentEventPayload {
 pub type DeletedContentEventPayload = ();
 pub type VideoCallContentEventPayload = ();
 pub type CustomContentEventPayload = ();
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "BotMessageContextCombined")]
+pub struct BotMessageContext {
+    pub initiator: UserId,
+    pub command: BotCommand,
+    pub finalised: bool,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotMessageContextCombined {
+    pub initiator: UserId,
+    #[serde(default)]
+    pub command: BotCommand,
+    #[serde(default)]
+    pub command_name: String,
+    #[serde(default)]
+    pub command_args: String,
+    #[serde(default)]
+    pub command_text: String,
+    pub finalised: bool,
+}
+
+impl From<BotMessageContextCombined> for BotMessageContext {
+    fn from(combined: BotMessageContextCombined) -> BotMessageContext {
+        BotMessageContext {
+            initiator: combined.initiator,
+            command: if combined.command == BotCommand::default() {
+                BotCommand {
+                    name: combined.command_name.clone(),
+                    args: Vec::new(),
+                }
+            } else {
+                combined.command
+            },
+            finalised: combined.finalised,
+        }
+    }
+}
+
+impl From<&BotCaller> for BotMessageContext {
+    fn from(caller: &BotCaller) -> Self {
+        BotMessageContext {
+            initiator: caller.initiator,
+            command: caller.command.clone(),
+            finalised: caller.finalised,
+        }
+    }
+}

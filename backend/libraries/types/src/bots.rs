@@ -6,9 +6,17 @@ use ts_export::ts_export;
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct BotDefinition {
+    pub description: String,
+    pub commands: Vec<SlashCommandSchema>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct SlashCommandSchema {
     pub name: String,
     pub description: Option<String>,
+    pub placeholder: Option<String>,
     pub params: Vec<SlashCommandParam>,
     pub permissions: SlashCommandPermissions,
 }
@@ -37,17 +45,17 @@ pub enum SlashCommandParamType {
 pub struct StringParam {
     pub min_length: u16,
     pub max_length: u16,
-    #[ts(as = "SlashCommandOptionChoiceString")]
+    #[ts(as = "Vec<SlashCommandOptionChoiceString>")]
     pub choices: Vec<SlashCommandOptionChoice<String>>,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct NumberParam {
-    pub min_length: u16,
-    pub max_length: u16,
-    #[ts(as = "SlashCommandOptionChoiceU16")]
-    pub choices: Vec<SlashCommandOptionChoice<u16>>,
+    pub min_value: f64,
+    pub max_value: f64,
+    #[ts(as = "Vec<SlashCommandOptionChoiceF64>")]
+    pub choices: Vec<SlashCommandOptionChoice<f64>>,
 }
 
 #[ts_export]
@@ -63,7 +71,6 @@ pub struct SlashCommandPermissions {
     pub community: HashSet<CommunityPermission>,
     pub chat: HashSet<GroupPermission>,
     pub message: HashSet<MessagePermission>,
-    pub thread: HashSet<MessagePermission>,
 }
 
 #[ts_export]
@@ -99,12 +106,13 @@ macro_rules! slash_command_option_choice {
 }
 
 slash_command_option_choice!(SlashCommandOptionChoiceString, String);
-slash_command_option_choice!(SlashCommandOptionChoiceU16, u16);
+slash_command_option_choice!(SlashCommandOptionChoiceF64, f64);
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct BotGroupDetails {
     pub user_id: UserId,
+    pub added_by: UserId,
     pub permissions: SlashCommandPermissions,
 }
 
@@ -112,4 +120,27 @@ pub struct BotGroupDetails {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct BotGroupConfig {
     pub permissions: SlashCommandPermissions,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
+pub struct BotCommand {
+    pub name: String,
+    pub args: Vec<BotCommandArg>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct BotCommandArg {
+    pub name: String,
+    pub value: BotCommandArgValue,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum BotCommandArgValue {
+    String(String),
+    Number(f64),
+    Boolean(bool),
+    User(UserId),
 }

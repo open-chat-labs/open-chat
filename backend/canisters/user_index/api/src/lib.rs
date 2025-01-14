@@ -2,7 +2,7 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    NotifyChit, TimestampMillis, UniquePersonProof, User, UserId,
+    NotifyChit, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -18,12 +18,13 @@ pub enum LocalUserIndexEvent {
     UserRegistered(Box<UserRegistered>),
     UserJoinedGroup(Box<UserJoinedGroup>),
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
-    JoinUserToGroup(Box<JoinUserToGroup>),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     UserDeleted(Box<UserDeleted>),
     NotifyUniquePersonProof(Box<(UserId, UniquePersonProof)>),
     NotifyChit(Box<(UserId, NotifyChit)>),
+    NotifyStreakInsurancePayment(Box<StreakInsurancePayment>),
+    NotifyStreakInsuranceClaim(Box<StreakInsuranceClaim>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

@@ -149,6 +149,16 @@
     "blockUserFailed": "مسدود کردن کاربر ممکن نیست",
     "blockUserSucceeded": "کاربر مسدود شده است",
     "bots": {
+        "add": {
+            "action": "ثبت نام کنید",
+            "addBot": "اضافه کردن ربات",
+            "choosePermissions": "مجوزها",
+            "failure": "متأسفیم که نتوانستیم ربات را اضافه کنیم",
+            "loadDefinition": "تعریف بار",
+            "noPermissions": "هیچ مجوز خاصی لازم نیست",
+            "permissionsInfo": "این ربات به دنبال مجوزهای زیر است. انتخاب محدود کردن مجوزهای اعطا شده، دستورات موجود را محدود می کند.",
+            "title": "اضافه کردن ربات به انجمن"
+        },
         "builder": {
             "addAnother": "دیگری اضافه کنید",
             "addChoice": "یک انتخاب اضافه کنید",
@@ -165,17 +175,25 @@
             "commandNamePlaceholder": "نام فرمان را وارد کنید",
             "commandPermissionsDesc": "مجوزهای مورد نیاز این دستور را شرح دهید",
             "commandPermissionsLabel": "مجوزهای فرمان",
+            "commandPlaceholderLabel": "پیام نگهدارنده فرمان",
+            "commandPlaceholderPlaceholder": "پیام نگهدارنده فرمان مشخص نشده است",
+            "commandsLabel": "دستورات",
             "descLabel": "توضیحات ربات",
             "descPlaceholder": "توضیحات ربات را وارد کنید",
             "endpointLabel": "نقطه پایانی ربات",
             "endpointRules": "باید مبدأ معتبر یا شناسه قوطی باشد",
             "errors": {
                 "alphaOnly": "فقط باید دارای حروف الفبا و زیرخط باشد",
+                "botNameInvalid": "این نام ربات نامعتبر است",
                 "duplicateCommands": "ربات حاوی دستورات تکراری است",
+                "duplicateName": "آن نام ربات قبلاً گرفته شده است",
                 "duplicateParams": "فرمان حاوی پارامترهای تکراری است",
                 "endpoint": "نقطه پایانی باید یک مبدا یا شناسه canister معتبر باشد",
                 "minLength": "باید حداقل {n} کاراکتر داشته باشد",
-                "noCommands": "یک ربات باید حداقل یک دستور داشته باشد"
+                "nameCheckError": "هنگام بررسی نام ربات خطایی روی داد",
+                "noCommands": "یک ربات باید حداقل یک دستور داشته باشد",
+                "owner": "باید یک مالک برای ربات وارد کنید",
+                "principal": "برای شناسایی ربات باید یک اصل معتبر وارد کنید"
             },
             "iconLabel": "نماد ربات",
             "maxLengthLabel": "حداکثر طول",
@@ -190,6 +208,8 @@
             "namePlaceholder": "نام ربات را وارد کنید",
             "nameRules": "باید منحصر به فرد باشد و فقط شامل نویسه های الفبایی و زیرخط باشد",
             "optional": "اختیاری",
+            "ownerLabel": "صاحب ربات",
+            "ownerRules": "چه کسی نقطه تماس این ربات است",
             "paramDescLabel": "توضیحات پارامتر",
             "paramDescPlaceholder": "توضیحات پارامتر را وارد کنید",
             "paramLabel": "پارامتر: {name}",
@@ -197,12 +217,16 @@
             "paramNamePlaceholder": "نام پارامتر را وارد کنید",
             "paramPlaceholderLabel": "مکان نگهدار پارامتر",
             "paramPlaceholderPlaceholder": "متغیر پارامتر پارامتر را وارد کنید",
+            "paramsLabel": "پارامترها",
             "paramTypeLabel": "نوع پارام",
             "permSameAsMessage": "مانند مجوزهای پیام",
             "permScopeChat": "چت کنید",
             "permScopeCommunity": "جامعه",
             "permScopeMessage": "پیام",
             "permScopeThread": "موضوع",
+            "principalLabel": "اصلی",
+            "principalPlaceholder": "اصل ربات را وارد کنید",
+            "principalRules": "این شناسه canister برای یک ربات onchain خواهد بود",
             "required": "پارامتر مورد نیاز",
             "requiredDesc": "آیا این یک پارامتر لازم برای دستور است؟",
             "title": "یک ربات بسازید",
@@ -229,6 +253,20 @@
         },
         "diamond": {
             "desc": "یک لینک برای توضیح عضویت در Diamond ارسال کنید"
+        },
+        "edit": {
+            "failure": "متأسفیم که نتوانستیم مجوزهای ربات را به روز کنیم",
+            "title": "به روز رسانی مجوزهای ربات",
+            "updateBot": "به روز رسانی ربات"
+        },
+        "events": {
+            "add": "ربات **{botname}** اضافه شده توسط {username}",
+            "remove": "ربات **{botname}** توسط {username} حذف شد",
+            "update": "ربات **{botname}** به روز شده توسط {username}"
+        },
+        "explorer": {
+            "addBots": "ربات ها را اضافه کنید",
+            "loadMore": "بارگیری بیشتر..."
         },
         "failed": "با عرض پوزش، ما نتوانستیم دستور ربات را اجرا کنیم",
         "faq": {
@@ -269,7 +307,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "حذف ربات",
+            "removeFailed": "متأسفیم که نتوانستیم ربات را حذف کنیم",
+            "review": "مجوزهای ربات را بررسی کنید",
+            "view": "مشاهده جزئیات ربات"
+        },
         "matchingCommands": "تطبیق دستورات",
+        "member": {
+            "bots": "ربات ها",
+            "people": "مردم"
+        },
         "poll": {
             "desc": "یک نظرسنجی در چت فعلی ایجاد کنید"
         },
@@ -287,7 +335,15 @@
             }
         },
         "update_bot": {
-            "desc": "پیشنهادی را برای به روز رسانی ربات OpenChat موجود شروع کنید"
+            "action": "به روز رسانی",
+            "desc": "پیشنهادی را برای به روز رسانی ربات OpenChat موجود شروع کنید",
+            "nobots": "فقط صاحب یک ربات ثبت شده می تواند ربات را به روز کند. شما مالک هیچ ربات ثبت شده ای نیستید.",
+            "select": "رباتی را که می خواهید به روز کنید انتخاب کنید.",
+            "title": "به روز رسانی ربات"
+        },
+        "view": {
+            "close": "بستن",
+            "title": "جزئیات ربات"
         },
         "witch": {
             "desc": "جادوگر را احضار کن"
@@ -1301,6 +1357,7 @@
         "noEligibleNeurons": "هیچ نورون واجد شرایطی یافت نشد",
         "noEligibleNeuronsMessage": "هیچ نورون واجد شرایط یا مرتبطی یافت نشد. برای رای دادن به پیشنهادات از داخل OpenChat، ابتدا باید شناسه کاربری OpenChat خود را به عنوان کلید میانبر به هر نورونی که می خواهید با آن رای دهید اضافه کنید. <br/><br/>شناسه کاربری OpenChat شما این است: {userId}. <br/><br/>برای اطلاعات بیشتر در مورد رأی‌گیری و حکومت، <a target=\"_blank\" href=\"https://oc.app/blog/governance\">این پست وبلاگ</a> را بخوانید.",
         "notificationsAction": "اقدامات فهرست اعلان ها",
+        "openchatInstallerAction": "اقدامات نصب کننده OpenChat",
         "proposalNotAceptingVotes": "این پیشنهاد رای نمی‌پذیرد - صفحه را دوباره بارگیری کنید",
         "proposalsBotAction": "Proposals Bot Actions",
         "proposedBy": "پیشنهاد شده توسط",

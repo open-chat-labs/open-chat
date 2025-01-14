@@ -3,7 +3,7 @@ use crate::model::subscriptions::Subscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, SubscriptionRemoved};
-use principal_to_user_id_map::{deserialize_principal_to_user_id_map_from_heap, PrincipalToUserIdMap};
+use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -39,6 +39,10 @@ impl RuntimeState {
     pub fn is_caller_governance_principal(&self) -> bool {
         let caller = self.env.caller();
         self.data.governance_principals.contains(&caller)
+    }
+
+    pub fn is_caller_registry_canister(&self) -> bool {
+        self.env.caller() == self.data.registry_canister_id
     }
 
     pub fn is_caller_push_service(&self) -> bool {
@@ -119,10 +123,7 @@ struct Data {
     pub push_service_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(
-        alias = "principal_to_user_id",
-        deserialize_with = "deserialize_principal_to_user_id_map_from_heap"
-    )]
+    pub registry_canister_id: CanisterId,
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub subscriptions: Subscriptions,
     pub notifications_canister_wasm_for_new_canisters: CanisterWasm,
@@ -139,7 +140,7 @@ impl Data {
         push_service_principals: Vec<Principal>,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
-        notifications_canister_wasm: CanisterWasm,
+        registry_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -148,10 +149,11 @@ impl Data {
             push_service_principals: push_service_principals.into_iter().collect(),
             user_index_canister_id,
             cycles_dispenser_canister_id,
+            registry_canister_id,
             principal_to_user_id_map: PrincipalToUserIdMap::default(),
             subscriptions: Subscriptions::default(),
-            notifications_canister_wasm_for_new_canisters: notifications_canister_wasm.clone(),
-            notifications_canister_wasm_for_upgrades: notifications_canister_wasm,
+            notifications_canister_wasm_for_new_canisters: CanisterWasm::default(),
+            notifications_canister_wasm_for_upgrades: CanisterWasm::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             notifications_index_event_sync_queue: CanisterEventSyncQueue::default(),
             rng_seed: [0; 32],

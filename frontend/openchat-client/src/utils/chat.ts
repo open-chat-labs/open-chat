@@ -201,6 +201,12 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.updatedBy;
         case "users_invited":
             return event.invitedBy;
+        case "bot_updated":
+            return event.updatedBy;
+        case "bot_added":
+            return event.addedBy;
+        case "bot_removed":
+            return event.removedBy;
         case "aggregate_common_events":
         case "chat_frozen":
         case "chat_unfrozen":
@@ -1352,7 +1358,8 @@ export function canForward(content: MessageContent): boolean {
         content.kind !== "poll_content" &&
         content.kind !== "deleted_content" &&
         content.kind !== "proposal_content" &&
-        content.kind !== "placeholder_content"
+        content.kind !== "placeholder_content" &&
+        content.kind !== "bot_placeholder_content"
     );
 }
 
@@ -1489,7 +1496,7 @@ export function mergeEventsAndLocalUpdates(
     if (unconfirmed.length > 0) {
         unconfirmed.sort(sortByTimestampThenEventIndex);
 
-        let unconfirmedAdded = new Set<bigint>();
+        const unconfirmedAdded = new Set<bigint>();
         for (const message of unconfirmed) {
             // Only include unconfirmed events that are either contiguous with the loaded confirmed events, or are the
             // first events in a new chat

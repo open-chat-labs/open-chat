@@ -54,7 +54,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
         client::local_user_index::happy_path::invite_users_to_group(
             env,
             &user1,
-            canister_ids.local_user_index,
+            canister_ids.local_user_index(env, group_id),
             group_id,
             vec![user2.user_id],
         );
@@ -63,7 +63,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
     let join_group_response = client::local_user_index::join_group(
         env,
         user2.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, group_id),
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
             invite_code: None,
@@ -137,7 +137,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
     let join_group_response = client::local_user_index::join_group(
         env,
         user2.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, group_id),
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
             invite_code: None,
@@ -231,7 +231,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
     let join_group_response = client::local_user_index::join_group(
         env,
         user2.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, group_id),
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
             invite_code: None,
@@ -322,7 +322,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
         Principal::from(group_id),
         amount - fee,
     );
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     tick_many(env, 3);
 

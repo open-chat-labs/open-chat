@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
+
+## [[2.0.1529](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1529-notifications_index)] - 2024-12-19
+
+### Changed
+
+- Allow Registry to add additional Notifications canisters ([#7072](https://github.com/open-chat-labs/open-chat/pull/7072))
+
+## [[2.0.1518](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1518-notifications_index)] - 2024-12-13
+
 ### Added
 
 - Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))

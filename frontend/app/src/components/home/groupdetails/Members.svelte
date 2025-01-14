@@ -23,6 +23,10 @@
         LARGE_GROUP_THRESHOLD,
         userStore,
         currentUser as user,
+        type ExternalBot,
+        externalBots,
+        type SlashCommandPermissions,
+        type BotMatch as BotMatchType,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import InvitedUser from "./InvitedUser.svelte";
@@ -32,6 +36,12 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
     import User from "./User.svelte";
+    import { botsEnabled } from "../../../utils/bots";
+    import BotExplorer from "../../bots/BotExplorer.svelte";
+    import BotMember from "../../bots/BotMember.svelte";
+    import BotMatch from "../../bots/BotMatch.svelte";
+
+    type EnhancedExternalBot = ExternalBot & { grantedPermissions: SlashCommandPermissions };
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
@@ -42,6 +52,7 @@
     export let members: MemberType[];
     export let blocked: Set<string>;
     export let lapsed: Set<string>;
+    export let installedBots: Map<string, SlashCommandPermissions>;
     export let initialUsergroup: number | undefined = undefined;
     export let showHeader = true;
 
@@ -62,6 +73,30 @@
     $: showLapsed = lapsedMembers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
     $: canPromoteMyselfToOwner = false;
+    $: bots = hydrateBots(installedBots, $externalBots).filter((b) =>
+        matchesSearch(searchTermLower, b),
+    );
+    $: canManageBots = client.canManageBots(collection.id);
+    $: botContainer =
+        collection.kind === "channel"
+            ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
+            : collection.id;
+
+    function hydrateBots(
+        bots: Map<string, SlashCommandPermissions>,
+        allBots: Map<string, ExternalBot>,
+    ): EnhancedExternalBot[] {
+        return [...bots.entries()].reduce((bots, [id, perm]) => {
+            const bot = allBots.get(id);
+            if (bot !== undefined) {
+                bots.push({
+                    ...bot,
+                    grantedPermissions: perm,
+                });
+            }
+            return bots;
+        }, [] as EnhancedExternalBot[]);
+    }
 
     function matchingUsers(
         term: string,
@@ -82,7 +117,7 @@
     let id = collection.id;
     let membersList: VirtualList;
     let memberView: "members" | "blocked" | "invited" | "lapsed" = "members";
-    let selectedTab: "users" | "groups" = "users";
+    let selectedTab: "users" | "groups" | "add-bots" = "users";
 
     $: searchTerm = trimLeadingAtSymbol(searchTermEntered);
     $: searchTermLower = searchTerm.toLowerCase();
@@ -127,8 +162,16 @@
         dispatch("showInviteUsers");
     }
 
-    function matchesSearch(searchTermLower: string, user: UserSummary): boolean {
+    function matchesSearch(searchTermLower: string, user: UserSummary | ExternalBot): boolean {
         if (searchTermLower === "") return true;
+        if (user.kind === "external_bot") {
+            return (
+                user.name.toLowerCase().includes(searchTermLower) ||
+                (user.definition.description !== undefined &&
+                    user.definition.description.toLocaleLowerCase().includes(searchTermLower))
+            );
+        }
+
         if (user.username === undefined) return true;
         return (
             user.username.toLowerCase().includes(searchTermLower) ||
@@ -168,7 +211,7 @@
         memberView = v;
     }
 
-    function selectTab(tab: "users" | "groups") {
+    function selectTab(tab: "users" | "groups" | "add-bots") {
         selectedTab = tab;
         userGroups?.reset();
     }
@@ -193,24 +236,30 @@
         on:showInviteUsers={showInviteUsers} />
 {/if}
 
-{#if collection.level === "community"}
+{#if collection.kind !== "channel"}
     <div class="tabs">
-        <div
-            tabindex="0"
-            role="button"
+        <button
             on:click={() => selectTab("users")}
             class:selected={selectedTab === "users"}
             class="tab">
             <Translatable resourceKey={i18nKey("communities.members")} />
-        </div>
-        <div
-            tabindex="0"
-            role="button"
-            on:click={() => selectTab("groups")}
-            class:selected={selectedTab === "groups"}
-            class="tab">
-            <Translatable resourceKey={i18nKey("communities.userGroups")} />
-        </div>
+        </button>
+        {#if collection.kind === "community"}
+            <button
+                on:click={() => selectTab("groups")}
+                class:selected={selectedTab === "groups"}
+                class="tab">
+                <Translatable resourceKey={i18nKey("communities.userGroups")} />
+            </button>
+        {/if}
+        {#if botsEnabled && canManageBots}
+            <button
+                on:click={() => selectTab("add-bots")}
+                class:selected={selectedTab === "add-bots"}
+                class="tab">
+                <Translatable resourceKey={i18nKey("bots.explorer.addBots")} />
+            </button>
+        {/if}
     </div>
 {/if}
 
@@ -226,9 +275,7 @@
     {#if showBlocked || showInvited || showLapsed}
         <div class="tabs">
             <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <div
-                tabindex="0"
-                role="button"
+            <button
                 on:click={() => setView("members")}
                 class:selected={memberView === "members"}
                 class="tab sub">
@@ -237,12 +284,9 @@
                     viewBox={"0 -2 24 24"}
                     color={memberView === "members" ? "var(--txt)" : "var(--txt-light)"} />
                 <Translatable resourceKey={i18nKey("members")} />
-            </div>
+            </button>
             {#if showInvited}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
-                    tabindex="0"
-                    role="button"
+                <button
                     on:click={() => setView("invited")}
                     class:selected={memberView === "invited"}
                     class="tab sub">
@@ -251,14 +295,11 @@
                         viewBox={"0 -2 24 24"}
                         color={memberView === "invited" ? "var(--txt)" : "var(--txt-light)"} />
                     <Translatable resourceKey={i18nKey("invited")} />
-                </div>
+                </button>
             {/if}
 
             {#if showBlocked}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
-                    tabindex="0"
-                    role="button"
+                <button
                     on:click={() => setView("blocked")}
                     class:selected={memberView === "blocked"}
                     class="tab sub">
@@ -267,14 +308,11 @@
                         viewBox={"0 -2 24 24"}
                         color={memberView === "blocked" ? "var(--txt)" : "var(--txt-light)"} />
                     <Translatable resourceKey={i18nKey("blocked")} />
-                </div>
+                </button>
             {/if}
 
             {#if showLapsed}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
-                    tabindex="0"
-                    role="button"
+                <button
                     on:click={() => setView("lapsed")}
                     class:selected={memberView === "lapsed"}
                     class="tab sub">
@@ -283,7 +321,7 @@
                         viewBox={"0 -2 24 24"}
                         color={memberView === "lapsed" ? "var(--txt)" : "var(--txt-light)"} />
                     <Translatable resourceKey={i18nKey("access.lapsed.user")} />
-                </div>
+                </button>
             {/if}
         </div>
     {/if}
@@ -299,6 +337,27 @@
                 canDemoteToMember={client.canDemote(collection.id, me.role, "member")}
                 on:changeRole />
         {/if}
+
+        {#if bots.length > 0}
+            <h4 class="member_type_label">
+                <Translatable resourceKey={i18nKey("bots.member.bots")}></Translatable>
+            </h4>
+            {#each bots as bot}
+                <BotMember
+                    id={botContainer}
+                    {bot}
+                    grantedPermissions={bot.grantedPermissions}
+                    canManage={canManageBots}
+                    {searchTerm} />
+            {/each}
+
+            {#if fullMembers.length > 0}
+                <h4 class="member_type_label">
+                    <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
+                </h4>
+            {/if}
+        {/if}
+
         <VirtualList
             bind:this={membersList}
             keyFn={(user) => user.userId}
@@ -350,12 +409,20 @@
             {/each}
         </div>
     {/if}
-{:else if collection.kind === "community"}
+{:else if selectedTab === "groups" && collection.kind === "community"}
     <div class="user-groups">
         <UserGroups
             bind:this={userGroups}
             bind:openedGroupId={initialUsergroup}
             community={collection} />
+    </div>
+{:else if selectedTab === "add-bots" && collection.kind !== "channel"}
+    <div class="bot-explorer">
+        <BotExplorer>
+            {#snippet botMatch(match: BotMatchType)}
+                <BotMatch id={botContainer} {match} />
+            {/snippet}
+        </BotExplorer>
     </div>
 {/if}
 
@@ -379,7 +446,8 @@
         @include nice-scrollbar();
     }
 
-    .user-groups {
+    .user-groups,
+    .bot-explorer {
         padding: 0 0 $sp4 0;
         flex: auto;
     }
@@ -399,6 +467,7 @@
         }
 
         .tab {
+            all: unset;
             padding-bottom: 10px;
             margin-bottom: -2px;
             border-bottom: 3px solid transparent;
@@ -412,5 +481,12 @@
                 }
             }
         }
+    }
+
+    .member_type_label {
+        padding: $sp2 $sp4;
+        text-transform: uppercase;
+        @include font(light, normal, fs-50);
+        border-bottom: 1px solid var(--bd);
     }
 </style>

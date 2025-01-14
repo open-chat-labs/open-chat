@@ -40,7 +40,7 @@ fn access_token_valid() {
     let token = local_user_index::happy_path::access_token(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         channel_id,
         AccessTokenType::StartVideoCallV2(VideoCallAccessTokenArgs {
@@ -61,7 +61,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let community_id =
         client::user::happy_path::create_community(env, &user1, &random_string(), true, vec!["general".to_string()]);
 
-    let summary = client::community::happy_path::summary(env, &user1, community_id);
+    let summary = client::community::happy_path::summary(env, user1.principal, community_id);
 
     TestData {
         user1,

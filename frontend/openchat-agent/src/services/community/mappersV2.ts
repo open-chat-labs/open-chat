@@ -69,6 +69,7 @@ import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils
 import {
     accessGateConfig,
     apiCommunityPermissionRole,
+    botGroupDetails,
     chatMetrics,
     communityChannelSummary,
     communityPermissions,
@@ -467,6 +468,7 @@ export function communityDetailsResponse(
             lastUpdated: value.Success.timestamp,
             userGroups: new Map(value.Success.user_groups.map(userGroupDetails)),
             referrals: new Set(value.Success.referrals.map(principalBytesToString)),
+            bots: value.Success.bots.map(botGroupDetails),
         };
     } else {
         console.warn("CommunityDetails failed with", value);
@@ -518,6 +520,8 @@ export function communityDetailsUpdatesResponse(
                     value.Success.referrals_removed.map(principalBytesToString),
                 ),
                 referralsAdded: new Set(value.Success.referrals_added.map(principalBytesToString)),
+                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(botGroupDetails),
+                botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {

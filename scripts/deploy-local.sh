@@ -22,6 +22,7 @@ NNS_SNS_WASM_CANISTER_ID=qaa6y-5yaaa-aaaaa-aaafa-cai
 NNS_INDEX_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
 
 # Create the OpenChat canisters
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 openchat_installer
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 user_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 group_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications_index

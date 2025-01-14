@@ -1,4 +1,4 @@
-use crate::model::bucket_sync_state::EventToSync;
+use crate::model::bucket_event_batch::{BucketEventBatch, EventToSync};
 use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
 use candid::{CandidType, Principal};
@@ -7,9 +7,10 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use storage_index_canister::init::CyclesDispenserConfig;
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Cycles, CyclesTopUp, FileAdded, FileRejected, FileRejectedReason, FileRemoved,
-    TimestampMillis, Timestamped,
+    BuildVersion, CanisterId, CanisterWasm, Cycles, FileAdded, FileRejected, FileRejectedReason, FileRemoved, TimestampMillis,
+    Timestamped,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -59,8 +60,9 @@ impl RuntimeState {
     }
 
     pub fn push_event_to_buckets(&mut self, event: EventToSync) {
-        self.data.buckets.sync_event(event);
-        jobs::sync_buckets::start_job_if_required(&self.data);
+        for bucket in self.data.buckets.iter().map(|b| b.canister_id) {
+            self.data.bucket_event_sync_queue.push(bucket, event.clone());
+        }
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -101,6 +103,7 @@ struct Data {
     pub users: HashMap<Principal, UserRecordInternal>,
     pub files: Files,
     pub buckets: Buckets,
+    pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_config: CyclesDispenserConfig,
@@ -123,6 +126,7 @@ impl Data {
             users: HashMap::new(),
             files: Files::default(),
             buckets: Buckets::default(),
+            bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
             cycles_dispenser_config,
@@ -159,9 +163,8 @@ impl Data {
                             .collect();
 
                         for file_to_delete in files_to_delete {
-                            if let Some(bucket) = self.buckets.get_mut(&file_to_delete.bucket) {
-                                bucket.sync_state.enqueue(EventToSync::FileToRemove(file_to_delete.file_id));
-                            }
+                            self.bucket_event_sync_queue
+                                .push(file_to_delete.bucket, EventToSync::FileToRemove(file_to_delete.file_id));
                         }
                     } else {
                         return Err(FileRejected {
@@ -175,7 +178,6 @@ impl Data {
             }
 
             self.files.add(file, bucket);
-            jobs::sync_buckets::start_job_if_required(self);
             Ok(())
         } else {
             Err(FileRejected {
@@ -196,12 +198,12 @@ impl Data {
         }
     }
 
-    pub fn add_bucket(&mut self, mut bucket: BucketRecord, release_creation_lock: bool) {
-        for user_id in self.users.keys() {
-            bucket.sync_state.enqueue(EventToSync::UserAdded(*user_id))
-        }
+    pub fn add_bucket(&mut self, bucket: BucketRecord, release_creation_lock: bool) {
+        self.bucket_event_sync_queue.push_many(
+            bucket.canister_id,
+            self.users.keys().map(|p| EventToSync::UserAdded(*p)).collect(),
+        );
         self.buckets.add_bucket(bucket, release_creation_lock);
-        jobs::sync_buckets::start_job_if_required(self);
     }
 }
 
@@ -241,7 +243,11 @@ pub struct Metrics {
 pub struct BucketMetrics {
     pub canister_id: CanisterId,
     pub wasm_version: BuildVersion,
-    pub bytes_used: u64,
-    pub bytes_remaining: i64,
-    pub cycle_top_ups: Vec<CyclesTopUp>,
+    #[serde(default)]
+    pub heap_memory_used: u64,
+    #[serde(default)]
+    pub stable_memory_used: u64,
+    #[serde(default)]
+    pub total_file_bytes: u64,
+    pub cycle_top_ups: u128,
 }

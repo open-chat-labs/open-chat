@@ -279,6 +279,7 @@ export default {
             "process.env.ACHIEVEMENT_URL_PATH": JSON.stringify(process.env.ACHIEVEMENT_URL_PATH),
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             "process.env.VIDEO_BRIDGE_URL": JSON.stringify(process.env.VIDEO_BRIDGE_URL),
+            "process.env.PREVIEW_PROXY_URL": JSON.stringify(process.env.PREVIEW_PROXY_URL),
             "process.env.METERED_APIKEY": JSON.stringify(process.env.METERED_APIKEY),
             "process.env.TENOR_APIKEY": JSON.stringify(process.env.TENOR_APIKEY),
             "process.env.CORS_APIKEY": JSON.stringify(process.env.CORS_APIKEY),
@@ -289,6 +290,7 @@ export default {
                 process.env.WALLET_CONNECT_PROJECT_ID,
             ),
             "process.env.SERVICE_WORKER_PATH": SERVICE_WORKER_PATH,
+            "process.env.SUSPICIOUS_USERIDS": process.env.SUSPICIOUS_USERIDS,
         }),
 
         html({

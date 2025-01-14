@@ -78,6 +78,7 @@ fn main() {
     generate_ts_method!(group, video_call_participants);
 
     generate_ts_method!(group, accept_p2p_swap);
+    generate_ts_method!(group, add_bot);
     generate_ts_method!(group, add_reaction);
     generate_ts_method!(group, block_user);
     generate_ts_method!(group, cancel_invites);
@@ -96,6 +97,7 @@ fn main() {
     generate_ts_method!(group, register_poll_vote);
     generate_ts_method!(group, register_proposal_vote);
     generate_ts_method!(group, register_proposal_vote_v2);
+    generate_ts_method!(group, remove_bot);
     generate_ts_method!(group, remove_participant);
     generate_ts_method!(group, remove_reaction);
     generate_ts_method!(group, report_message);
@@ -107,6 +109,7 @@ fn main() {
     generate_ts_method!(group, undelete_messages);
     generate_ts_method!(group, unfollow_thread);
     generate_ts_method!(group, unpin_message);
+    generate_ts_method!(group, update_bot);
     generate_ts_method!(group, update_group_v2);
 
     candid::export_service!();

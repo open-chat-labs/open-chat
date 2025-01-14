@@ -8,8 +8,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Sync heap and stable memory sizes to StorageIndex ([#7192](https://github.com/open-chat-labs/open-chat/pull/7192))
+
+## [[2.0.1554](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1554-storage_index)] - 2025-01-07
+
+### Changed
+
+- Increase memory limit of another StorageBucket which has reached limit ([#7170](https://github.com/open-chat-labs/open-chat/pull/7170))
+
+## [[2.0.1552](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1552-storage_index)] - 2025-01-07
+
+### Changed
+
+- Increase reserved cycles limit of StorageBuckets ([#7147](https://github.com/open-chat-labs/open-chat/pull/7147))
+
+## [[2.0.1546](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1546-storage_index)] - 2025-01-03
+
+### Changed
+
+- Increase memory limit of StorageBucket which has reached limit ([#7142](https://github.com/open-chat-labs/open-chat/pull/7142))
+
+## [[2.0.1521](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1521-storage_index)] - 2024-12-16
+
+### Changed
+
 - Update the canister creation fee to 0.5T ([#6700](https://github.com/open-chat-labs/open-chat/pull/6700))
 - Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+- Use `GroupedTimerJobQueue` to sync events to storage buckets ([#7045](https://github.com/open-chat-labs/open-chat/pull/7045))
+- Include some entropy when choosing the storage bucket for a file ([#7048](https://github.com/open-chat-labs/open-chat/pull/7048))
 
 ## [[2.0.1419](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1419-storage_index)] - 2024-10-28
 

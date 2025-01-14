@@ -7,14 +7,14 @@ fn inspect_message() {
 }
 
 fn accept_if_valid(state: &RuntimeState) {
-    let method_name = ic_cdk::api::call::method_name();
+    let method_name = ic_cdk::api::call::method_name().trim_end_matches("_msgpack").to_string();
 
     let is_valid = match method_name.as_str() {
         "add_governance_canister"
         | "remove_governance_canister"
         | "appoint_admins"
         | "import_proposals_group_into_community" => state.is_caller_governance_principal(),
-        "stake_neuron_for_submitting_proposals" | "top_up_neuron" => true,
+        "stake_neuron_for_submitting_proposals" | "submit_proposal" | "top_up_neuron" => true,
         _ => false,
     };
 

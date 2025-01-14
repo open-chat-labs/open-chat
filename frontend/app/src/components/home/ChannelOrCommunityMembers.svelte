@@ -11,6 +11,7 @@
         currentCommunityInvitedUsers as currentCommunityInvited,
         currentCommunityBlockedUsers as currentCommunityBlocked,
         currentCommunityLapsedMembers as currentCommunityLapsed,
+        currentCommunityBots,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -110,6 +111,7 @@
         members={[...$currentCommunityMembers.values()]}
         blocked={$currentCommunityBlocked}
         lapsed={$currentCommunityLapsed}
+        installedBots={$currentCommunityBots}
         on:close
         on:blockUser={onBlockCommunityUser}
         on:unblockUser={onUnblockCommunityUser}
@@ -128,6 +130,7 @@
         members={$currentChatMembers}
         blocked={$currentChatBlocked}
         lapsed={$currentChatLapsed}
+        installedBots={$currentCommunityBots}
         on:close
         on:blockUser={onBlockGroupUser}
         on:unblockUser={onUnblockGroupUser}

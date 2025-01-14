@@ -1,4 +1,4 @@
-use crate::{Chat, MessageId, MessageIndex, SlashCommandPermissions, UserId, VideoCallType};
+use crate::{BotCommand, Chat, MessageId, MessageIndex, SlashCommandPermissions, UserId, VideoCallType};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -10,7 +10,7 @@ pub enum AccessTokenType {
     StartVideoCallV2(VideoCallAccessTokenArgs),
     JoinVideoCall,
     MarkVideoCallAsEnded,
-    BotCommand(BotCommandArgs),
+    BotCommand(AccessTokenBotCommand),
 }
 
 #[ts_export]
@@ -20,7 +20,7 @@ pub enum CheckAccessTokenType {
     StartVideoCallV2(VideoCallAccessTokenArgs),
     JoinVideoCall,
     MarkVideoCallAsEnded,
-    BotCommand(CheckBotCommandArgs),
+    BotCommand(CheckAccessTokenBotCommand),
 }
 
 #[ts_export]
@@ -31,21 +31,18 @@ pub struct VideoCallAccessTokenArgs {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct BotCommandArgs {
+pub struct AccessTokenBotCommand {
     pub user_id: UserId,
     pub bot: UserId,
     pub chat: Chat,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub command_name: String,
-    pub parameters: String,
-    pub version: u32,
-    pub command_text: String,
+    pub command: BotCommand,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct CheckBotCommandArgs {
+pub struct CheckAccessTokenBotCommand {
     pub user_id: UserId,
     pub bot: UserId,
     pub chat: Chat,

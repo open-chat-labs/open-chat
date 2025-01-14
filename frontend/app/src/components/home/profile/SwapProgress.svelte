@@ -56,6 +56,12 @@
         }
     }
 
+    function updatePercent(newPercent: number) {
+        if (newPercent >= (percent ?? 0)) {
+            percent = newPercent;
+        }
+    }
+
     async function querySwapProgress() {
         let response = await client.tokenSwapStatus(swapId);
 
@@ -90,7 +96,7 @@
                         { label: "swap", status: "done" },
                         { label: "withdraw", status: "doing" },
                     ]);
-                    percent = 80;
+                    updatePercent(80);
                 } else {
                     updateSteps([
                         { label: "get", status: "done" },
@@ -108,14 +114,14 @@
                     { label: "notify", status: "done" },
                     { label: "swap", status: "doing" },
                 ]);
-                percent = 60;
+                updatePercent(60);
             } else if (response.transfer?.kind == "ok") {
                 updateSteps([
                     { label: "get", status: "done" },
                     { label: "deposit", status: "done" },
                     { label: "notify", status: "doing" },
                 ]);
-                percent = 40;
+                updatePercent(40);
             } else if (response.transfer?.kind == "error") {
                 updateSteps([
                     { label: "get", status: "done" },
@@ -128,7 +134,7 @@
                     { label: "get", status: "done" },
                     { label: "deposit", status: "doing" },
                 ]);
-                percent = 20;
+                updatePercent(20);
             } else if (response.depositAccount?.kind == "error") {
                 updateSteps([{ label: "get", status: "failed" }]);
                 result = { label: "error", status: "failed" };

@@ -1,5 +1,5 @@
 use crate::keys::macros::key;
-use crate::{BaseKey, KeyPrefix, KeyType};
+use crate::{KeyPrefix, KeyType};
 use ic_principal::Principal;
 use types::{ChannelId, MultiUserChat, UserId};
 
@@ -68,7 +68,7 @@ impl MemberKey {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Key;
+    use crate::{BaseKey, Key};
     use rand::{thread_rng, Rng, RngCore};
 
     #[test]

@@ -67,7 +67,7 @@
         SummonWitch,
         RegisterBot,
         UpdateBot,
-        nervousSystemLookup,
+        userStore,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -102,7 +102,7 @@
     } from "../../theme/themes";
     import SuspendedModal from "../SuspendedModal.svelte";
     import NoAccess from "./NoAccess.svelte";
-    import NewGroup from "./addgroup/NewGroup.svelte";
+    import CreateOrUpdateGroup from "./createOrUpdateGroup/CreateOrUpdateGroup.svelte";
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "../../routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
@@ -183,6 +183,7 @@
         | { kind: "verify_humanity" }
         | { kind: "select_chat" }
         | { kind: "register_bot" }
+        | { kind: "update_bot" }
         | { kind: "suspended" }
         | { kind: "no_access" }
         | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
@@ -212,8 +213,6 @@
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
     let currentChatMessages: CurrentChatMessages | undefined;
-
-    $: console.log("Nervous System: ", $nervousSystemLookup);
 
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
 
@@ -273,7 +272,7 @@
         } else if (ev instanceof RegisterBot) {
             modal = { kind: "register_bot" };
         } else if (ev instanceof UpdateBot) {
-            modal = { kind: "register_bot" };
+            modal = { kind: "update_bot" };
         } else if (ev instanceof SummonWitch) {
             summonWitch();
         } else if (ev instanceof RemoteVideoCallStartedEvent) {
@@ -1209,13 +1208,16 @@
 </script>
 
 {#if showProfileCard !== undefined}
-    <ViewUserProfile
-        userId={showProfileCard.userId}
-        inGlobalContext={showProfileCard.inGlobalContext}
-        chatButton={showProfileCard.chatButton}
-        alignTo={showProfileCard.alignTo}
-        on:openDirectChat={chatWithFromProfileCard}
-        on:close={() => (showProfileCard = undefined)} />
+    {@const profileUser = $userStore.get(showProfileCard.userId)}
+    {#if profileUser?.kind !== "bot"}
+        <ViewUserProfile
+            userId={showProfileCard.userId}
+            inGlobalContext={showProfileCard.inGlobalContext}
+            chatButton={showProfileCard.chatButton}
+            alignTo={showProfileCard.alignTo}
+            on:openDirectChat={chatWithFromProfileCard}
+            on:close={() => (showProfileCard = undefined)} />
+    {/if}
 {/if}
 
 <main class:anon={$anonUser} class:offline={$offlineStore}>
@@ -1336,7 +1338,9 @@
         {:else if modal.kind === "suspended"}
             <SuspendedModal on:close={closeModal} />
         {:else if modal.kind === "register_bot"}
-            <BotBuilderModal on:close={closeModal} />
+            <BotBuilderModal mode={"register"} onClose={closeModal} />
+        {:else if modal.kind === "update_bot"}
+            <BotBuilderModal mode={"update"} onClose={closeModal} />
         {:else if modal.kind === "no_access"}
             <NoAccess on:close={closeNoAccess} />
         {:else if modal.kind === "not_found"}
@@ -1349,7 +1353,7 @@
                 on:close={closeModal}
                 on:success={accessGatesEvaluated} />
         {:else if modal.kind === "new_group"}
-            <NewGroup
+            <CreateOrUpdateGroup
                 embeddedContent={modal.embeddedContent}
                 candidateGroup={modal.candidate}
                 on:upgrade={upgrade}

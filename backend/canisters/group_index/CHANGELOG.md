@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1541](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1541-group_index)] - 2024-12-19
+
+### Changed
+
+- Handle retry attempts when adding a new LocalGroupIndex ([#7091](https://github.com/open-chat-labs/open-chat/pull/7091))
+- Add logging + skip steps that have already been completed ([#7093](https://github.com/open-chat-labs/open-chat/pull/7093))
+
+### Fixed
+
+- Set `wasm_hash` field which was previously empty ([#7097](https://github.com/open-chat-labs/open-chat/pull/7097))
+
+## [[2.0.1528](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1528-group_index)] - 2024-12-19
+
+### Changed
+
+- Allow Registry to add additional LocalGroupIndexes ([#7072](https://github.com/open-chat-labs/open-chat/pull/7072))
+- Handle installing large wasms onto new subnets ([#7078](https://github.com/open-chat-labs/open-chat/pull/7078))
+
+## [[2.0.1509](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1509-group_index)] - 2024-12-13
+
 ### Changed
 
 - Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))

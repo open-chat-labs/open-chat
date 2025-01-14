@@ -1,5 +1,4 @@
 use candid::{CandidType, Principal};
-use ic_agent::agent::http_transport::ReqwestTransport;
 use ic_agent::identity::{BasicIdentity, Secp256k1Identity};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
@@ -29,6 +28,7 @@ pub enum CanisterName {
     Notifications,
     NotificationsIndex,
     OnlineUsers,
+    OpenChatInstaller,
     ProposalsBot,
     Registry,
     SignInWithEmail,
@@ -62,6 +62,7 @@ impl FromStr for CanisterName {
             "notifications" => Ok(CanisterName::Notifications),
             "notifications_index" => Ok(CanisterName::NotificationsIndex),
             "online_users" => Ok(CanisterName::OnlineUsers),
+            "openchat_installer" => Ok(CanisterName::OpenChatInstaller),
             "proposals_bot" => Ok(CanisterName::ProposalsBot),
             "registry" => Ok(CanisterName::Registry),
             "sign_in_with_email" => Ok(CanisterName::SignInWithEmail),
@@ -96,6 +97,7 @@ impl Display for CanisterName {
             CanisterName::Notifications => "notifications",
             CanisterName::NotificationsIndex => "notifications_index",
             CanisterName::OnlineUsers => "online_users",
+            CanisterName::OpenChatInstaller => "openchat_installer",
             CanisterName::ProposalsBot => "proposals_bot",
             CanisterName::Registry => "registry",
             CanisterName::SignInWithEmail => "sign_in_with_email",
@@ -114,6 +116,7 @@ impl Display for CanisterName {
 
 #[derive(Debug)]
 pub struct CanisterIds {
+    pub openchat_installer: CanisterId,
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
@@ -163,13 +166,12 @@ pub fn get_dfx_identity(name: &str) -> Box<dyn Identity> {
 
 pub async fn build_ic_agent(url: String, identity: Box<dyn Identity>) -> Agent {
     let mainnet = is_mainnet(&url);
-    let transport = ReqwestTransport::create(url).expect("Failed to create Reqwest transport");
     let timeout = std::time::Duration::from_secs(60 * 5);
 
     let agent = Agent::builder()
-        .with_transport(transport)
+        .with_url(url)
         .with_boxed_identity(identity)
-        .with_ingress_expiry(Some(timeout))
+        .with_ingress_expiry(timeout)
         .build()
         .expect("Failed to build IC agent");
 

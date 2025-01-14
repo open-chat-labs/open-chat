@@ -7,14 +7,14 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::bot_actions::MessageContent;
+use types::bot_actions::{BotMessageAction, MessageContent};
 use types::{
-    AccessTokenType, BotAction, BotCommandArgs, Chat, ChatEvent, ChatId, MessagePermission, SlashCommandPermissions,
-    SlashCommandSchema, TextContent,
+    AccessTokenBotCommand, AccessTokenType, BotAction, BotCommand, BotDefinition, Chat, ChatEvent, ChatId, MessagePermission,
+    SlashCommandPermissions, SlashCommandSchema, TextContent,
 };
 
 #[test]
-fn bot_smoke_test() {
+fn e2e_bot_test() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -29,24 +29,30 @@ fn bot_smoke_test() {
     // Register a bot
     let bot_name = random_string();
     let command_name = "greet".to_string();
+    let endpoint = "https://my.bot.xyz/".to_string();
+    let description = "greet".to_string();
+    let commands = vec![SlashCommandSchema {
+        name: command_name.clone(),
+        description: Some("Hello {user}".to_string()),
+        placeholder: None,
+        params: vec![],
+        permissions: SlashCommandPermissions {
+            community: HashSet::new(),
+            chat: HashSet::new(),
+            message: HashSet::from_iter([MessagePermission::Text]),
+        },
+    }];
+
     let bot_principal = client::register_bot(
         env,
         canister_ids,
         &user,
         bot_name.clone(),
-        "greet".to_string(),
-        "https://my.bot.xyz/".to_string(),
-        vec![SlashCommandSchema {
-            name: command_name.clone(),
-            description: Some("Hello {user}".to_string()),
-            params: vec![],
-            permissions: SlashCommandPermissions {
-                community: HashSet::new(),
-                chat: HashSet::new(),
-                message: HashSet::from_iter([MessagePermission::Text]),
-                thread: HashSet::new(),
-            },
-        }],
+        endpoint.clone(),
+        BotDefinition {
+            description: description.clone(),
+            commands: commands.clone(),
+        },
     );
 
     let initial_time = now_millis(env);
@@ -73,7 +79,7 @@ fn bot_smoke_test() {
     env.tick();
 
     // Confirm bot returned in `selected_initial`
-    let response = client::group::happy_path::selected_initial(env, &user, group_id);
+    let response = client::group::happy_path::selected_initial(env, user.principal, group_id);
     assert_eq!(response.bots.len(), 1);
     assert_eq!(response.bots[0].user_id, bot.id);
 
@@ -81,21 +87,25 @@ fn bot_smoke_test() {
     let chat = Chat::Group(group_id);
     let message_id = random_from_u128();
     let access_token_args = local_user_index_canister::access_token::Args {
-        token_type: AccessTokenType::BotCommand(BotCommandArgs {
+        token_type: AccessTokenType::BotCommand(AccessTokenBotCommand {
             user_id: user.user_id,
             bot: bot.id,
             chat,
             thread_root_message_index: None,
             message_id,
-            command_name: command_name.clone(),
-            parameters: "".to_string(),
-            version: 1, // TODO: Remove this
-            command_text: command_name.clone(),
+            command: BotCommand {
+                name: command_name.clone(),
+                args: Vec::new(),
+            },
         }),
         chat,
     };
-    let response =
-        client::local_user_index::access_token(env, user.principal, canister_ids.local_user_index, &access_token_args);
+    let response = client::local_user_index::access_token(
+        env,
+        user.principal,
+        canister_ids.local_user_index(env, group_id),
+        &access_token_args,
+    );
 
     // Confirm bot is unauthorised
     assert!(matches!(
@@ -114,29 +124,36 @@ fn bot_smoke_test() {
     assert_eq!(response.bots_added_or_updated[0].user_id, bot.id);
 
     // Try again to get an access token to call the greet command
-    let access_token =
-        match client::local_user_index::access_token(env, user.principal, canister_ids.local_user_index, &access_token_args) {
-            local_user_index_canister::access_token::Response::Success(access_token) => access_token,
-            response => panic!("'access_token' error: {response:?}"),
-        };
+    let access_token = match client::local_user_index::access_token(
+        env,
+        user.principal,
+        canister_ids.local_user_index(env, group_id),
+        &access_token_args,
+    ) {
+        local_user_index_canister::access_token::Response::Success(access_token) => access_token,
+        response => panic!("'access_token' error: {response:?}"),
+    };
 
     println!("ACCESS TOKEN: {access_token}");
 
-    // Call execute_bot_command as bot
+    // Call execute_bot_action as bot - unfinalised message
     let username = user.username();
     let text = format!("Hello {username}");
-    let response = client::local_user_index::execute_bot_command(
+    let response = client::local_user_index::execute_bot_action(
         env,
         bot_principal,
-        canister_ids.local_user_index,
-        &local_user_index_canister::execute_bot_command::Args {
-            action: BotAction::SendMessage(MessageContent::Text(TextContent { text: text.clone() })),
-            jwt: access_token,
+        canister_ids.local_user_index(env, group_id),
+        &local_user_index_canister::execute_bot_action::Args {
+            action: BotAction::SendMessage(BotMessageAction {
+                content: MessageContent::Text(TextContent { text: text.clone() }),
+                finalised: false,
+            }),
+            jwt: access_token.clone(),
         },
     );
 
     if response.is_err() {
-        panic!("'execute_bot_command' error: {response:?}");
+        panic!("'execute_bot_action' error: {response:?}");
     }
 
     // Call `events` and confirm the latest event is a text message from the bot
@@ -150,6 +167,65 @@ fn bot_smoke_test() {
         panic!("Expected message to be text");
     };
     assert_eq!(text_content.text, text);
+    assert!(!message.edited);
+    assert!(message.bot_context.is_some());
+    assert!(!message.bot_context.as_ref().unwrap().finalised);
+
+    // Call execute_bot_action as bot - finalised message
+    let text = "Hello world".to_string();
+    let response = client::local_user_index::execute_bot_action(
+        env,
+        bot_principal,
+        canister_ids.local_user_index(env, group_id),
+        &local_user_index_canister::execute_bot_action::Args {
+            action: BotAction::SendMessage(BotMessageAction {
+                content: MessageContent::Text(TextContent { text: text.clone() }),
+                finalised: true,
+            }),
+            jwt: access_token,
+        },
+    );
+
+    if response.is_err() {
+        panic!("'execute_bot_action' error: {response:?}");
+    }
+
+    // Call `events` and confirm the latest event is a text message from the bot
+    let response = client::group::happy_path::events(env, &user, group_id, 0.into(), true, 5, 10);
+
+    let latest_event = response.events.last().expect("Expected some channel events");
+    let ChatEvent::Message(message) = &latest_event.event else {
+        panic!("Expected latest event to be a message: {latest_event:?}");
+    };
+    let types::MessageContent::Text(text_content) = &message.content else {
+        panic!("Expected message to be text");
+    };
+    assert_eq!(text_content.text, text);
+
+    assert!(message.edited);
+    assert!(message.bot_context.is_some());
+    assert!(message.bot_context.as_ref().unwrap().finalised);
+
+    // Update the bot name
+    let new_bot_name = random_string();
+    client::user_index::happy_path::update_bot(
+        env,
+        canister_ids.user_index,
+        user.principal,
+        bot.id,
+        None,
+        Some(new_bot_name.clone()),
+        None,
+        None,
+    );
+
+    // Confirm bot returned in `bot_updates`
+    let response =
+        client::user_index::happy_path::bot_updates(env, user.principal, canister_ids.user_index, bot_added_timestamp);
+    assert_eq!(response.added_or_updated.len(), 1);
+
+    let bot = &response.added_or_updated[0];
+    assert_eq!(bot.name, new_bot_name);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

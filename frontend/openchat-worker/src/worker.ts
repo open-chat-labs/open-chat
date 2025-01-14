@@ -6,7 +6,13 @@ import {
     ECDSAKeyIdentity,
     type JsonnableDelegationChain,
 } from "@dfinity/identity";
-import { IdentityAgent, OpenChatAgent, setCommunityReferral } from "openchat-agent";
+import {
+    IdentityAgent,
+    OpenChatAgent,
+    setCommunityReferral,
+    getBotDefinition,
+} from "openchat-agent";
+import { callBotCommandEndpoint } from "openchat-agent/lib/services/externalBot/externalBot";
 import {
     type CorrelatedWorkerRequest,
     type Init,
@@ -311,6 +317,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 streamReplies(payload, correlationId, agent.getUpdates(payload.initialLoad));
                 break;
 
+            case "getBots":
+                streamReplies(payload, correlationId, agent.getBots(payload.initialLoad));
+                break;
+
             case "createUserClient":
                 agent.createUserClient(payload.userId);
                 sendResponse(correlationId, undefined);
@@ -420,7 +430,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "checkUsername":
-                executeThenReply(payload, correlationId, agent.checkUsername(payload.username));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.checkUsername(payload.username, payload.isBot),
+                );
                 break;
 
             case "searchUsers":
@@ -774,6 +788,37 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.pageSize,
                         payload.flags,
                         payload.languages,
+                    ),
+                );
+                break;
+
+            case "exploreBots":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.exploreBots(payload.searchTerm, payload.pageIndex, payload.pageSize),
+                );
+                break;
+
+            case "registerBot":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.registerBot(payload.principal, payload.bot),
+                );
+                break;
+
+            case "updateRegisteredBot":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateRegisteredBot(
+                        payload.id,
+                        payload.ownerId,
+                        payload.name,
+                        payload.avatarUrl,
+                        payload.endpoint,
+                        payload.definition,
                     ),
                 );
                 break;
@@ -1457,6 +1502,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.submitProposal(
+                        payload.currentUserId,
                         payload.governanceCanisterId,
                         payload.proposal,
                         payload.ledger,
@@ -1843,8 +1889,44 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "deleteUser":
-                executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
+            // case "deleteUser":
+            //     executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
+            //     break;
+
+            case "addBot":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.addBot(payload.id, payload.botId, payload.grantedPermissions),
+                );
+                break;
+
+            case "updateInstalledBot":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateInstalledBot(payload.id, payload.botId, payload.grantedPermissions),
+                );
+                break;
+
+            case "removeInstalledBot":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.removeInstalledBot(payload.id, payload.botId),
+                );
+                break;
+
+            case "getBotDefinition":
+                executeThenReply(payload, correlationId, getBotDefinition(payload.endpoint));
+                break;
+
+            case "callBotCommandEndpoint":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    callBotCommandEndpoint(payload.endpoint, payload.token),
+                );
                 break;
 
             default:

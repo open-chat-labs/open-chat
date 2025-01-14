@@ -1,6 +1,6 @@
 use crate::guards::caller_is_known_user;
 use crate::model::files::{PutChunkArgs, PutChunkResult};
-use crate::model::index_sync_state::EventToSync;
+use crate::model::index_event_batch::EventToSync;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
@@ -18,7 +18,7 @@ fn upload_chunk_v2(args: Args) -> Response {
 fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
     let user_id = state.env.caller();
     let now = state.env.now();
-    let user = state.data.users.get_mut(&user_id).unwrap();
+    let user = state.data.users.get(&user_id).unwrap();
     let file_id = args.file_id;
 
     if !validate_file_id(file_id, state.env.canister_id()) {
@@ -26,6 +26,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let mut index_sync_complete = IndexSyncComplete::No;
+    let mut status = None;
     if let Some(status) = user.file_status(&file_id) {
         match status {
             FileStatusInternal::Complete(_) | FileStatusInternal::Rejected(RejectedReason::HashMismatch) => {
@@ -39,13 +40,13 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
     } else if args.expiry.map_or(false, |e| e < now) {
         return FileExpired;
     } else {
-        user.set_file_status(file_id, FileStatusInternal::Uploading(IndexSyncComplete::No));
+        status = Some(FileStatusInternal::Uploading(IndexSyncComplete::No));
     }
 
-    match state.data.files.put_chunk(PutChunkArgs::new(user_id, args, now)) {
+    let response = match state.data.files.put_chunk(PutChunkArgs::new(user_id, args, now)) {
         PutChunkResult::Success(r) => {
             if r.file_completed {
-                user.set_file_status(file_id, FileStatusInternal::Complete(index_sync_complete));
+                status = Some(FileStatusInternal::Complete(index_sync_complete));
             }
             if let Some(file_added) = r.file_added {
                 state.data.push_event_to_index(EventToSync::FileAdded(file_added));
@@ -56,7 +57,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
         PutChunkResult::FileAlreadyExists => FileAlreadyExists,
         PutChunkResult::FileTooBig(_) => FileTooBig,
         PutChunkResult::FileExpired => {
-            user.set_file_status(file_id, FileStatusInternal::Rejected(RejectedReason::FileExpired));
+            status = Some(FileStatusInternal::Rejected(RejectedReason::FileExpired));
             FileExpired
         }
         PutChunkResult::ChunkAlreadyExists => ChunkAlreadyExists,
@@ -66,7 +67,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
             // When there is a hash mismatch, the file has already been removed from the list of
             // pending files, so we now need to update the status and tell the index canister to
             // remove the file reference.
-            user.set_file_status(file_id, FileStatusInternal::Rejected(RejectedReason::HashMismatch));
+            status = Some(FileStatusInternal::Rejected(RejectedReason::HashMismatch));
 
             // We only need to remove the file reference from the index canister if this file
             // consists of multiple chunks. If the file is a single chunk then the Success case of
@@ -81,5 +82,11 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
 
             HashMismatch
         }
+    };
+
+    if let Some(status) = status {
+        state.data.users.set_file_status(user_id, user, file_id, status);
     }
+
+    response
 }

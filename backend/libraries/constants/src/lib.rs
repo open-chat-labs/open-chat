@@ -8,6 +8,7 @@ pub const DAY_IN_MS: Milliseconds = HOUR_IN_MS * 24;
 pub const WEEK_IN_MS: Milliseconds = DAY_IN_MS * 7;
 pub const NANOS_PER_MILLISECOND: u64 = 1_000_000;
 pub const ONE_MB: u32 = 1024 * 1024;
+pub const ONE_GB: u64 = 1024 * ONE_MB as u64;
 
 // This only applies to the 'top level' canisters (ie. not user + group canisters)
 pub fn min_cycles_balance(test_mode: bool) -> Cycles {
@@ -32,11 +33,6 @@ pub const SNS_ROOT_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0,
 pub const SNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 24, 1, 1]);
 pub const SNS_LEDGER_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 25, 1, 1]);
 
-pub const DEV_TEAM_DFX_PRINCIPAL: CanisterId = Principal::from_slice(&[
-    143, 216, 195, 195, 27, 134, 102, 49, 184, 154, 196, 117, 143, 40, 192, 164, 121, 209, 89, 30, 45, 18, 30, 32, 92, 106,
-    138, 30, 2,
-]);
-
 pub const IC_ROOT_KEY: &[u8; 133] = b"\x30\x81\x82\x30\x1d\x06\x0d\x2b\x06\x01\x04\x01\x82\xdc\x7c\x05\x03\x01\x02\x01\x06\x0c\x2b\x06\x01\x04\x01\x82\xdc\x7c\x05\x03\x02\x01\x03\x61\x00\x81\x4c\x0e\x6e\xc7\x1f\xab\x58\x3b\x08\xbd\x81\x37\x3c\x25\x5c\x3c\x37\x1b\x2e\x84\x86\x3c\x98\xa4\xf1\xe0\x8b\x74\x23\x5d\x14\xfb\x5d\x9c\x0c\xd5\x46\xd9\x68\x5f\x91\x3a\x0c\x0b\x2c\xc5\x34\x15\x83\xbf\x4b\x43\x92\xe4\x67\xdb\x96\xd6\x5b\x9b\xb4\xcb\x71\x71\x12\xf8\x47\x2e\x0d\x5a\x4d\x14\x50\x5f\xfd\x74\x84\xb0\x12\x91\x09\x1c\x5f\x87\xb9\x88\x83\x46\x3f\x98\x09\x1a\x0b\xaa\xae";
 
 pub const MEMO_MESSAGE: [u8; 6] = [0x4f, 0x43, 0x5f, 0x4d, 0x53, 0x47]; // OC_MSG
@@ -56,6 +52,7 @@ pub const MEMO_GROUP_IMPORT_INTO_COMMUNITY: [u8; 6] = [0x4f, 0x43, 0x5f, 0x47, 0
 pub const MEMO_CHIT_FOR_CHAT_AIRDROP: [u8; 6] = [0x4f, 0x43, 0x5f, 0x41, 0x49, 0x52]; // OC_AIR
 pub const MEMO_CHIT_FOR_CHAT_LOTTERY: [u8; 6] = [0x4f, 0x43, 0x5f, 0x4C, 0x4F, 0x54]; // OC_LOT
 pub const MEMO_LIST_TOKEN: [u8; 6] = [0x4f, 0x43, 0x5f, 0x54, 0x4f, 0x4b]; // OC_TOK
+pub const MEMO_STREAK_INSURANCE: [u8; 6] = [0x4f, 0x43, 0x5f, 0x49, 0x4e, 0x53]; // OC_INS
 
 pub const LIFETIME_DIAMOND_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is in the year 2920
 
@@ -110,14 +107,6 @@ mod tests {
         assert_eq!(
             SNS_LEDGER_CANISTER_ID,
             Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap()
-        );
-    }
-
-    #[test]
-    fn dev_team_dfx_principal() {
-        assert_eq!(
-            DEV_TEAM_DFX_PRINCIPAL,
-            Principal::from_text("tu45y-p4p3d-b4gg4-gmyy3-rgweo-whsrq-fephi-vshrn-cipca-xdkri-pae").unwrap()
         );
     }
 

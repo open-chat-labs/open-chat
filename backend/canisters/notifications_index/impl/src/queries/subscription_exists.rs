@@ -1,6 +1,7 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use notifications_index_canister::subscription_exists::{Response::*, *};
+use stable_memory_map::StableMemoryMap;
 
 #[query(msgpack = true)]
 fn subscription_exists(args: Args) -> Response {

@@ -1,0 +1,10 @@
+type PublicTokenOverview =
+ record {
+   address: text;
+   priceUSD: float64;
+   symbol: text;
+   volumeUSD7d: float64;
+ };
+service : {
+  getAllTokens: () -> (vec PublicTokenOverview) query;
+}

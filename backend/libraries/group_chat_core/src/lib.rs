@@ -1,10 +1,10 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
-    DeleteUndeleteMessagesArgs, GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader,
+    DeleteUndeleteMessagesArgs, EditMessageArgs, GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader,
     RemoveExpiredEventsResult, TipMessageArgs, UndeleteMessageResult,
 };
-use constants::OPENCHAT_BOT_USER_ID;
 use event_store_producer::{EventStoreClient, Runtime};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use group_community_common::{BotUpdate, GroupBots, MemberUpdate};
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -15,14 +15,15 @@ use std::cmp::{max, min, Reverse};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotAdded, BotGroupConfig, BotGroupDetails,
-    BotRemoved, BotUpdated, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper,
-    EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupMember,
-    GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged,
-    HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds,
-    MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, PushEventResult,
-    Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId,
-    UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall, MAX_RETURNED_MENTIONS,
+    BotRemoved, BotUpdated, Caller, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange,
+    EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
+    GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
+    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
+    MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
+    PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
+    Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
+    MAX_RETURNED_MENTIONS,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -354,6 +355,7 @@ impl GroupChatCore {
                             result.bots_added_or_updated.push(BotGroupDetails {
                                 user_id,
                                 permissions: bot.permissions.clone(),
+                                added_by: bot.added_by,
                             });
                         }
                     }
@@ -601,8 +603,7 @@ impl GroupChatCore {
 
     pub fn validate_and_send_message<R: Runtime + Send + 'static>(
         &mut self,
-        sender: UserId,
-        sender_user_type: UserType,
+        caller: &Caller,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         content: MessageContentInitial,
@@ -621,7 +622,7 @@ impl GroupChatCore {
             return NotAuthorized;
         }
 
-        if let Err(error) = content.validate_for_new_message(false, sender_user_type, forwarding, now) {
+        if let Err(error) = content.validate_for_new_message(false, caller.into(), forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -639,9 +640,41 @@ impl GroupChatCore {
             };
         }
 
+        // If there is an existing message with the same message id then this is invalid unless
+        // a bot is finalising its unfinalised message
+        if let Some((message, _)) =
+            self.events
+                .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
+        {
+            if let Caller::BotV2(bot_now) = &caller {
+                if let Some(bot_message) = message.bot_context {
+                    if bot_now.bot == message.sender
+                        && bot_now.initiator == bot_message.initiator
+                        && bot_now.command == bot_message.command
+                        && bot_now.finalised
+                        && !bot_message.finalised
+                    {
+                        return self.finalise_bot_message(
+                            caller,
+                            thread_root_message_index,
+                            message_id,
+                            content,
+                            replies_to,
+                            mentioned,
+                            rules_accepted,
+                            suppressed,
+                            block_level_markdown,
+                            now,
+                        );
+                    }
+                }
+            }
+
+            return SendMessageResult::MessageAlreadyExists;
+        }
+
         self.send_message(
-            sender,
-            sender_user_type,
+            caller,
             thread_root_message_index,
             message_id,
             content.into(),
@@ -658,8 +691,7 @@ impl GroupChatCore {
 
     pub fn send_message<R: Runtime + Send + 'static>(
         &mut self,
-        sender: UserId,
-        sender_user_type: UserType,
+        caller: &Caller,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         content: MessageContentInternal,
@@ -677,14 +709,7 @@ impl GroupChatCore {
         let PrepareSendMessageSuccess {
             min_visible_event_index,
             everyone_mentioned,
-        } = match self.prepare_send_message(
-            sender,
-            sender_user_type,
-            thread_root_message_index,
-            &content,
-            rules_accepted,
-            now,
-        ) {
+        } = match self.prepare_send_message(caller, thread_root_message_index, &content, rules_accepted, now) {
             PrepareSendMessageResult::Success(success) => success,
             PrepareSendMessageResult::UserLapsed => return UserLapsed,
             PrepareSendMessageResult::UserSuspended => return UserSuspended,
@@ -702,26 +727,139 @@ impl GroupChatCore {
             }
         }
 
-        let user_being_replied_to = replies_to
-            .as_ref()
-            .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
+        let sender = caller.agent();
 
         let push_message_args = PushMessageArgs {
             sender,
             thread_root_message_index,
             message_id,
             content,
+            bot_context: if let Caller::BotV2(bot) = caller { Some(bot.into()) } else { None },
             mentioned: if !suppressed { mentioned.to_vec() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
-            sender_is_bot: sender_user_type.is_bot(),
+            sender_is_bot: caller.is_bot(),
             block_level_markdown,
             correlation_id: 0,
             now,
         };
 
         let message_event = self.events.push_message(push_message_args, Some(event_store_client));
-        let message_index = message_event.event.message_index;
+
+        let unfinalised_bot_message = if let Caller::BotV2(bot) = caller { !bot.finalised } else { false };
+
+        let users_to_notify = if unfinalised_bot_message {
+            vec![]
+        } else {
+            self.build_users_to_notify(
+                thread_root_message_index,
+                min_visible_event_index,
+                replies_to,
+                &message_event,
+                mentioned,
+                everyone_mentioned,
+                suppressed,
+                now,
+            )
+        };
+
+        Success(SendMessageSuccess {
+            message_event,
+            users_to_notify,
+            unfinalised_bot_message,
+        })
+    }
+
+    fn finalise_bot_message(
+        &mut self,
+        caller: &Caller,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        content: MessageContentInitial,
+        replies_to: Option<GroupReplyContext>,
+        mentioned: &[UserId],
+        rules_accepted: Option<Version>,
+        suppressed: bool,
+        block_level_markdown: bool,
+        now: TimestampMillis,
+    ) -> SendMessageResult {
+        use SendMessageResult::*;
+
+        let PrepareSendMessageSuccess {
+            min_visible_event_index,
+            everyone_mentioned,
+        } = match self.prepare_send_message(
+            caller,
+            thread_root_message_index,
+            &content.clone().into(),
+            rules_accepted,
+            now,
+        ) {
+            PrepareSendMessageResult::Success(success) => success,
+            PrepareSendMessageResult::UserLapsed => return UserLapsed,
+            PrepareSendMessageResult::UserSuspended => return UserSuspended,
+            PrepareSendMessageResult::UserNotInGroup => return UserNotInGroup,
+            PrepareSendMessageResult::RulesNotAccepted => return RulesNotAccepted,
+            PrepareSendMessageResult::NotAuthorized => return NotAuthorized,
+        };
+
+        let edit_message_args = EditMessageArgs {
+            sender: caller.agent(),
+            min_visible_event_index,
+            thread_root_message_index,
+            message_id,
+            content,
+            block_level_markdown: Some(block_level_markdown),
+            finalise_bot_message: true,
+            now,
+        };
+
+        self.events.edit_message::<CdkRuntime>(edit_message_args, None);
+
+        let reader = self
+            .events
+            .events_reader(min_visible_event_index, thread_root_message_index)
+            .unwrap();
+
+        let message_event = reader.message_event(message_id.into(), Some(caller.agent())).unwrap();
+
+        let users_to_notify = self.build_users_to_notify(
+            thread_root_message_index,
+            min_visible_event_index,
+            replies_to,
+            &message_event,
+            mentioned,
+            suppressed,
+            everyone_mentioned,
+            now,
+        );
+
+        SendMessageResult::Success(SendMessageSuccess {
+            message_event,
+            users_to_notify,
+            unfinalised_bot_message: false,
+        })
+    }
+
+    fn build_users_to_notify(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        min_visible_event_index: EventIndex,
+        replies_to: Option<GroupReplyContext>,
+        message_event: &EventWrapper<Message>,
+        mentioned: &[UserId],
+        everyone_mentioned: bool,
+        suppressed: bool,
+        now: TimestampMillis,
+    ) -> Vec<UserId> {
+        let message = &message_event.event;
+        let message_index = message.message_index;
+        let sender = message.sender;
+        let message_id = message.message_id;
+
+        let user_being_replied_to = replies_to
+            .as_ref()
+            .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
 
         let mentions: HashSet<_> = mentioned.iter().copied().chain(user_being_replied_to).collect();
 
@@ -792,16 +930,12 @@ impl GroupChatCore {
             users_to_notify.remove(user_id);
         }
 
-        Success(SendMessageSuccess {
-            message_event,
-            users_to_notify: users_to_notify.iter().copied().collect(),
-        })
+        users_to_notify.iter().copied().collect()
     }
 
     fn prepare_send_message(
         &mut self,
-        sender: UserId,
-        sender_user_type: UserType,
+        caller: &Caller,
         thread_root_message_index: Option<MessageIndex>,
         content: &MessageContentInternal,
         rules_accepted: Option<Version>,
@@ -809,7 +943,7 @@ impl GroupChatCore {
     ) -> PrepareSendMessageResult {
         use PrepareSendMessageResult::*;
 
-        if sender == OPENCHAT_BOT_USER_ID || matches!(sender_user_type, UserType::OcControlledBot | UserType::BotV2) {
+        if matches!(caller, Caller::OCBot(_)) {
             return Success(PrepareSendMessageSuccess {
                 min_visible_event_index: EventIndex::default(),
                 everyone_mentioned: false,
@@ -817,13 +951,13 @@ impl GroupChatCore {
         }
 
         if let Some(version) = rules_accepted {
-            self.members.update_member(&sender, |m| {
+            self.members.update_member(&caller.agent(), |m| {
                 m.accept_rules(min(version, self.rules.text.version), now);
                 true
             });
         }
 
-        let member = match self.members.get_verified_member(sender) {
+        let member = match self.members.get_verified_member(caller.initiator()) {
             Ok(member) => member,
             Err(error) => {
                 return match error {
@@ -1825,7 +1959,7 @@ impl GroupChatCore {
     }
 
     pub fn add_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.add(user_id, config, now) {
+        if !self.bots.add(user_id, owner_id, config.permissions, now) {
             return false;
         }
 
@@ -1842,7 +1976,7 @@ impl GroupChatCore {
     }
 
     pub fn update_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.update(user_id, config, now) {
+        if !self.bots.update(user_id, config.permissions, now) {
             return false;
         }
 
@@ -2052,12 +2186,14 @@ pub enum SendMessageResult {
     UserSuspended,
     UserLapsed,
     RulesNotAccepted,
+    MessageAlreadyExists,
     InvalidRequest(String),
 }
 
 pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
+    pub unfinalised_bot_message: bool,
 }
 
 pub enum AddRemoveReactionResult {

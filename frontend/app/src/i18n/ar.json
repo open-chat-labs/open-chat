@@ -149,6 +149,16 @@
     "blockUserFailed": "غير قادر على حظر المستخدم",
     "blockUserSucceeded": "لقد تم حظر المستخدم",
     "bots": {
+        "add": {
+            "action": "يسجل",
+            "addBot": "إضافة بوت",
+            "choosePermissions": "الأذونات",
+            "failure": "نأسف لعدم تمكننا من إضافة البوت",
+            "loadDefinition": "تعريف الحمل",
+            "noPermissions": "لا يتطلب أذونات خاصة",
+            "permissionsInfo": "يسعى هذا الروبوت إلى الحصول على الأذونات التالية. سيؤدي اختيار تقييد الأذونات الممنوحة إلى تقييد الأوامر المتاحة.",
+            "title": "إضافة بوت إلى المجتمع"
+        },
         "builder": {
             "addAnother": "أضف آخر",
             "addChoice": "أضف خيارا",
@@ -165,17 +175,25 @@
             "commandNamePlaceholder": "أدخل اسم الأمر",
             "commandPermissionsDesc": "وصف الأذونات التي يتطلبها هذا الأمر",
             "commandPermissionsLabel": "أذونات الأوامر",
+            "commandPlaceholderLabel": "رسالة العنصر النائب للأوامر",
+            "commandPlaceholderPlaceholder": "لم يتم تحديد رسالة العنصر النائب للأمر",
+            "commandsLabel": "الأوامر",
             "descLabel": "وصف البوت",
             "descPlaceholder": "أدخل وصف البوت",
             "endpointLabel": "نقطة نهاية البوت",
             "endpointRules": "يجب أن يكون أصلًا صالحًا أو معرف علبة",
             "errors": {
                 "alphaOnly": "يجب أن يحتوي فقط على أحرف أبجدية رقمية وشرطات سفلية",
+                "botNameInvalid": "اسم هذا البوت غير صالح",
                 "duplicateCommands": "يحتوي الروبوت على أوامر مكررة",
+                "duplicateName": "اسم هذا الروبوت مأخوذ بالفعل",
                 "duplicateParams": "يحتوي الأمر على معلمات مكررة",
                 "endpoint": "يجب أن تكون نقطة النهاية أصلًا أو معرف علبة صالحًا",
                 "minLength": "يجب أن يحتوي على {n} حرفًا على الأقل",
-                "noCommands": "يجب أن يحتوي الروبوت على أمر واحد على الأقل"
+                "nameCheckError": "حدث خطأ أثناء التحقق من اسم الروبوت",
+                "noCommands": "يجب أن يحتوي الروبوت على أمر واحد على الأقل",
+                "owner": "يجب عليك إدخال مالك للبوت",
+                "principal": "يجب عليك إدخال مدير صالح لتحديد الروبوت"
             },
             "iconLabel": "أيقونة البوت",
             "maxLengthLabel": "الحد الأقصى للطول",
@@ -190,6 +208,8 @@
             "namePlaceholder": "أدخل اسم البوت",
             "nameRules": "يجب أن يكون فريدًا ويحتوي على أحرف أبجدية رقمية وعلامات سفلية فقط",
             "optional": "خياري",
+            "ownerLabel": "مالك البوت",
+            "ownerRules": "من هو نقطة الاتصال لهذا الروبوت؟",
             "paramDescLabel": "وصف المعلمة",
             "paramDescPlaceholder": "أدخل وصف المعلمة",
             "paramLabel": "المعلمة: {name}",
@@ -197,12 +217,16 @@
             "paramNamePlaceholder": "أدخل اسم المعلمة",
             "paramPlaceholderLabel": "عنصر نائب للمعلمة",
             "paramPlaceholderPlaceholder": "أدخل عنصر نائب للمعلمة",
+            "paramsLabel": "حدود",
             "paramTypeLabel": "نوع المعلمة",
             "permSameAsMessage": "نفس أذونات الرسالة",
             "permScopeChat": "محادثة",
             "permScopeCommunity": "مجتمع",
             "permScopeMessage": "رسالة",
             "permScopeThread": "خيط",
+            "principalLabel": "رئيسي",
+            "principalPlaceholder": "أدخل رئيس البوت",
+            "principalRules": "سيكون هذا هو canisterID لروبوت onchain",
             "required": "المعلمة المطلوبة",
             "requiredDesc": "هل هذه معلمة مطلوبة للأمر",
             "title": "بناء بوت",
@@ -229,6 +253,20 @@
         },
         "diamond": {
             "desc": "انشر رابطًا لشرح العضوية الماسية"
+        },
+        "edit": {
+            "failure": "نأسف لعدم تمكننا من تحديث أذونات الروبوت",
+            "title": "تحديث أذونات الروبوت",
+            "updateBot": "تحديث البوت"
+        },
+        "events": {
+            "add": "تم إضافة الروبوت **{botname}** بواسطة {username}",
+            "remove": "تم إزالة الروبوت **{botname}** بواسطة {username}",
+            "update": "تم تحديث الروبوت **{botname}** بواسطة {username}"
+        },
+        "explorer": {
+            "addBots": "إضافة الروبوتات",
+            "loadMore": "تحميل المزيد..."
         },
         "failed": "عذرا، لقد فشلنا في تنفيذ أمر الروبوت",
         "faq": {
@@ -269,7 +307,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "إزالة البوت",
+            "removeFailed": "نأسف لأننا لم نتمكن من إزالة الروبوت",
+            "review": "مراجعة أذونات الروبوت",
+            "view": "عرض تفاصيل البوت"
+        },
         "matchingCommands": "أوامر المطابقة",
+        "member": {
+            "bots": "الروبوتات",
+            "people": "الناس"
+        },
         "poll": {
             "desc": "إنشاء استطلاع رأي في الدردشة الحالية"
         },
@@ -287,7 +335,15 @@
             }
         },
         "update_bot": {
-            "desc": "ابدأ اقتراحًا لتحديث روبوت OpenChat الحالي"
+            "action": "تحديث",
+            "desc": "ابدأ اقتراحًا لتحديث روبوت OpenChat الحالي",
+            "nobots": "لا يمكن تحديث الروبوت إلا من قبل مالك الروبوت المسجل. أنت لست مالك أي روبوت مسجل.",
+            "select": "حدد الروبوت الذي تريد تحديثه.",
+            "title": "تحديث البوت"
+        },
+        "view": {
+            "close": "يغلق",
+            "title": "تفاصيل البوت"
         },
         "witch": {
             "desc": "استدعاء الساحرة"
@@ -1301,6 +1357,7 @@
         "noEligibleNeurons": "لم يتم العثور على الخلايا العصبية المؤهلة",
         "noEligibleNeuronsMessage": "لم يتم العثور على أي خلايا عصبية مؤهلة أو مرتبطة. للتصويت على المقترحات من داخل OpenChat، يجب عليك أولاً إضافة معرف مستخدم OpenChat الخاص بك كمفتاح سريع لأي خلايا عصبية ترغب في التصويت بها. <br/><br/>معرف مستخدم OpenChat الخاص بك هو: {userId}. <br/><br/>لمزيد من المعلومات حول التصويت والحوكمة، اقرأ <a target=\"_blank\" href=\"https://oc.app/blog/governance\">منشور المدونة هذا</a>.",
         "notificationsAction": "فهرس الإشعارات الإجراءات",
+        "openchatInstallerAction": "إجراءات تثبيت OpenChat",
         "proposalNotAceptingVotes": "هذا الاقتراح لا يقبل الأصوات - حاول إعادة تحميل الصفحة",
         "proposalsBotAction": "اقتراحات إجراءات الروبوت",
         "proposedBy": "مقترح من قبل",

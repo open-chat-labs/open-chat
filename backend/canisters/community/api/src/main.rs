@@ -97,6 +97,7 @@ fn main() {
     generate_ts_method!(community, video_call_participants);
 
     generate_ts_method!(community, accept_p2p_swap);
+    generate_ts_method!(community, add_bot);
     generate_ts_method!(community, add_members_to_channel);
     generate_ts_method!(community, add_reaction);
     generate_ts_method!(community, block_user);
@@ -122,6 +123,7 @@ fn main() {
     generate_ts_method!(community, register_poll_vote);
     generate_ts_method!(community, register_proposal_vote);
     generate_ts_method!(community, register_proposal_vote_v2);
+    generate_ts_method!(community, remove_bot);
     generate_ts_method!(community, remove_member_from_channel);
     generate_ts_method!(community, remove_member);
     generate_ts_method!(community, remove_reaction);
@@ -135,6 +137,7 @@ fn main() {
     generate_ts_method!(community, undelete_messages);
     generate_ts_method!(community, unfollow_thread);
     generate_ts_method!(community, unpin_message);
+    generate_ts_method!(community, update_bot);
     generate_ts_method!(community, update_channel);
     generate_ts_method!(community, update_community);
     generate_ts_method!(community, update_user_group);

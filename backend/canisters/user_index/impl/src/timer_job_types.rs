@@ -5,7 +5,7 @@ use crate::{mutate_state, read_state};
 use canister_timer_jobs::Job;
 use constants::{MINUTE_IN_MS, SECOND_IN_MS};
 use ic_ledger_types::Tokens;
-use local_user_index_canister::{OpenChatBotMessage, UserIndexEvent, UserJoinedGroup};
+use local_user_index_canister::{OpenChatBotMessage, UserIndexEvent};
 use serde::{Deserialize, Serialize};
 use types::{
     ChatId, CommunityId, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContent, Milliseconds,
@@ -19,7 +19,6 @@ pub enum TimerJob {
     SetUserSuspendedInGroup(SetUserSuspendedInGroup),
     SetUserSuspendedInCommunity(SetUserSuspendedInCommunity),
     UnsuspendUser(UnsuspendUser),
-    JoinUserToGroup(JoinUserToGroup),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -71,7 +70,6 @@ impl Job for TimerJob {
             TimerJob::SetUserSuspendedInGroup(job) => job.execute(),
             TimerJob::SetUserSuspendedInCommunity(job) => job.execute(),
             TimerJob::UnsuspendUser(job) => job.execute(),
-            TimerJob::JoinUserToGroup(job) => job.execute(),
         }
     }
 }
@@ -244,72 +242,6 @@ impl Job for UnsuspendUser {
 
         async fn unsuspend_user(user_id: UserId) {
             unsuspend_user_impl(user_id).await;
-        }
-    }
-}
-
-impl Job for JoinUserToGroup {
-    fn execute(self) {
-        if let Some(args) = read_state(|state| {
-            #[allow(deprecated)]
-            state
-                .data
-                .users
-                .get_by_user_id(&self.user_id)
-                .map(|u| group_canister::c2c_join_group::Args {
-                    user_id: self.user_id,
-                    principal: u.principal,
-                    invite_code: None,
-                    correlation_id: 0,
-                    is_platform_moderator: state.data.platform_moderators.contains(&self.user_id),
-                    is_bot: u.user_type.is_bot(),
-                    user_type: u.user_type,
-                    diamond_membership_expires_at: state
-                        .data
-                        .users
-                        .get_by_user_id(&self.user_id)
-                        .and_then(|u| u.diamond_membership_details.expires_at()),
-                    verified_credential_args: None,
-                    unique_person_proof: None,
-                })
-        }) {
-            ic_cdk::spawn(join_group(self.group_id, args, self.attempt));
-        }
-
-        async fn join_group(group_id: ChatId, args: group_canister::c2c_join_group::Args, attempt: usize) {
-            use group_canister::c2c_join_group::*;
-
-            match group_canister_c2c_client::c2c_join_group(group_id.into(), &args).await {
-                Ok(Response::Success(s) | Response::AlreadyInGroupV2(s)) => mutate_state(|state| {
-                    state.push_event_to_local_user_index(
-                        args.user_id,
-                        UserIndexEvent::UserJoinedGroup(UserJoinedGroup {
-                            user_id: args.user_id,
-                            chat_id: group_id,
-                            local_user_index_canister_id: s.local_user_index_canister_id,
-                            latest_message_index: s.latest_message.map(|m| m.event.message_index),
-                            group_canister_timestamp: s.last_updated,
-                        }),
-                    )
-                }),
-                Ok(Response::InternalError(_)) | Err(_) => {
-                    if attempt < 50 {
-                        mutate_state(|state| {
-                            let now = state.env.now();
-                            state.data.timer_jobs.enqueue_job(
-                                TimerJob::JoinUserToGroup(JoinUserToGroup {
-                                    user_id: args.user_id,
-                                    group_id,
-                                    attempt: attempt + 1,
-                                }),
-                                now + 10 * SECOND_IN_MS,
-                                now,
-                            );
-                        })
-                    }
-                }
-                _ => {}
-            }
         }
     }
 }

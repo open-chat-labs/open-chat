@@ -2,37 +2,44 @@ use candid::Principal;
 use constants::calculate_summary_updates_data_removal_cutoff;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::collections::{BTreeMap, BTreeSet};
-use types::{BotGroupConfig, TimestampMillis, UserId};
+use std::collections::{btree_map::Entry, BTreeMap, BTreeSet};
+use types::{SlashCommandPermissions, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupBots {
-    bots: BTreeMap<UserId, BotGroupConfig>,
+    bots: BTreeMap<UserId, BotInternal>,
     updates: BTreeSet<(TimestampMillis, UserId, BotUpdate)>,
     latest_update_removed: TimestampMillis,
 }
 
 impl GroupBots {
-    pub fn add(&mut self, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
+    pub fn add(
+        &mut self,
+        user_id: UserId,
+        added_by: UserId,
+        permissions: SlashCommandPermissions,
+        now: TimestampMillis,
+    ) -> bool {
         if self.bots.contains_key(&user_id) {
             return false;
         }
 
-        self.bots.insert(user_id, bot_config);
+        self.bots.insert(user_id, BotInternal { added_by, permissions });
         self.prune_then_insert_member_update(user_id, BotUpdate::Added, now);
 
         true
     }
 
-    pub fn update(&mut self, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.contains_key(&user_id) {
-            return false;
+    pub fn update(&mut self, user_id: UserId, permissions: SlashCommandPermissions, now: TimestampMillis) -> bool {
+        match self.bots.entry(user_id) {
+            Entry::Vacant(_) => false,
+            Entry::Occupied(mut o) => {
+                let bot = o.get_mut();
+                bot.permissions = permissions;
+                self.prune_then_insert_member_update(user_id, BotUpdate::Updated, now);
+                true
+            }
         }
-
-        self.bots.insert(user_id, bot_config);
-        self.prune_then_insert_member_update(user_id, BotUpdate::Updated, now);
-
-        true
     }
 
     pub fn remove(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
@@ -45,11 +52,11 @@ impl GroupBots {
         removed
     }
 
-    pub fn get(&self, user_id: &UserId) -> Option<&BotGroupConfig> {
+    pub fn get(&self, user_id: &UserId) -> Option<&BotInternal> {
         self.bots.get(user_id)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &BotGroupConfig)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &BotInternal)> {
         self.bots.iter()
     }
 
@@ -92,4 +99,10 @@ pub enum BotUpdate {
     Added = 1,
     Removed = 2,
     Updated = 3,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BotInternal {
+    pub added_by: UserId,
+    pub permissions: SlashCommandPermissions,
 }

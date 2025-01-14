@@ -456,12 +456,216 @@
         <div class="header" slot="titleSlot">
             <div class="date subtitle">
                 <div class="year">2024</div>
-                <div class="quarter">Q3,4</div>
+                <div class="quarter">Q3</div>
             </div>
-            <div class="title">NFTs, contacts, profile pages, personas</div>
+            <div class="title">Tokenisation and Growth continued</div>
         </div>
         <div class="body">
-            <p>Here is a non-exhaustive list of more features we expect to build this year.</p>
+            <ul>
+                <li>
+                    <XL href="https://oc.app/blog/chit"
+                        >Extended CHIT reward scheme with achievements, user referrals, leaderboard,
+                        badges etc</XL>
+                </li>
+                <li>
+                    <XL href={x("1821139921244946577")}
+                        >Monthly CHIT for CHAT airdrops including lottery</XL>
+                </li>
+                <li>
+                    <XL href={x("1817903346885259698")}
+                        >Introduced Proof of Unique Personhood to gate airdrops</XL>
+                </li>
+                <li>
+                    <XL
+                        href="https://tokenterminal.com/explorer/projects/openchat?v=M2ViOTBjYTRlYzg2OTA3NTI4ZWE0YmI5"
+                        >DAUs grew from around 3K to 10K</XL>
+                </li>
+                <li>
+                    $CHAT listed on <XL
+                        href="https://x.com/LBank_Exchange/status/1818225021992497568">LBank</XL
+                    >, <XL href="https://x.com/BitrueOfficial/status/1818550356047200703"
+                        >Bitrue</XL> and <XL
+                        href="https://x.com/CoinstoreExc/status/1831973943462531167">Coinstore</XL>
+                </li>
+                <li>
+                    Improved wallet UX to account for a large number of tokens and to give the user
+                    more control
+                </li>
+                <li>
+                    Enhanced community/channel/group access control with new access gates
+                    <ul>
+                        <li>lifetime diamond</li>
+                        <li>unique person</li>
+                        <li>verified credential</li>
+                        <li>member referral</li>
+                        <li>composite gates</li>
+                    </ul>
+                </li>
+                <li>Performance enhancements making OpenChat faster</li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2024</div>
+                <div class="quarter">Q4</div>
+            </div>
+            <div class="title">Scalability and performance</div>
+        </div>
+        <div class="body">
+            <ul>
+                <li>
+                    <XL href={x("1867622369537536337")}>Scalability and performance</XL>
+                    <ul>
+                        <li>
+                            Migrated large majority of user/group/community data (incl messages and
+                            members) to stable memory allowing for huge communities/groups and
+                            faster/cheaper canister upgrades
+                        </li>
+                        <li>
+                            Migrated canister APIs to use msgpack rather than candid greatly
+                            reducing network bandwidth thus improving performance
+                        </li>
+                        <li>Scaled OpenChat onto a 3rd subnet</li>
+                    </ul>
+                </li>
+                <li>
+                    <XL
+                        href="https://tokenterminal.com/explorer/projects/openchat?v=M2ViOTBjYTRlYzg2OTA3NTI4ZWE0YmI5"
+                        >DAUs grew from around 10K to 15.5K</XL>
+                </li>
+                <li>
+                    <XL href={x("1873018431622275241")}
+                        >Recruited a full-stack developer, and a product and marketing specialist,
+                        both starting in early January</XL>
+                </li>
+                <li>
+                    $CHAT listed on <XL
+                        href="https://x.com/BitMartExchange/status/1843939377476767839">Bitmart</XL>
+                    and <XL href="https://x.com/kongswap/status/1847125452491837880">Kongswap</XL>
+                </li>
+                <li>
+                    View activity feed showing messages where you have been mentioned, replied to,
+                    tipped, etc
+                </li>
+                <li>
+                    Link additional sign-in providers to your OpenChat account (eg. recovery email /
+                    ETH wallet)
+                </li>
+                <li>
+                    <XL href="/blog/access_gate_expiry"
+                        >Support expiry of community/channel/group access gates and "lapsing"
+                        membership</XL>
+                </li>
+                <li>
+                    <XL href="/community/u7zzf-hyaaa-aaaaf-bm63a-cai"
+                        >Created the "OpenChat Arcade" community with Minesweeper and Cupetopia
+                        (more to follow)</XL>
+                </li>
+                <li>
+                    Phase 1 Bots framework - think Discord or Telegram bots - public release in
+                    January
+                </li>
+                <li>
+                    <XL href={x("1843917939558494695")}
+                        >Kong Swap added to OpenChat as a swap provider.</XL> For each swap OpenChat
+                    uses the provider giving the best price.
+                </li>
+            </ul>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="year">2025</div>
+                <div class="quarter">Q1</div>
+            </div>
+            <div class="title">Bots and e2e encryption</div>
+        </div>
+        <div class="body">
+            <p>Here is a list of features we expect to build this year.</p>
+            <h4>Bots</h4>
+            <p>
+                Bots are a key feature of modern chat apps. They can be used to automate tasks,
+                provide information, or just for fun. We plan to build a small suite of initial bots
+                and then release a bot framework allowing users to interact with bots by typing
+                commands into the chat box. We will also write developer documentation to help
+                others build their own bots. We will then extend the bot framework to support
+                webhooks and autonomous agents. And we will integrate an AI chat bot that can hold a
+                conversation with users.
+            </p>
+            <h4>End-to-end encryption</h4>
+            <p>
+                We plan to add end-to-end encryption for 1-1 chats. This will ensure that only the
+                sender and recipient can read the messages. As a stretch goal, we will add the
+                option to enable end-to-end encryption for private group chats.
+            </p>
+            <h4>Wallet</h4>
+            <p>
+                By implementing the new ICRC wallet standards we will allow users to connect
+                3rd-party wallets, including Oisy, to support transfer, swap, etc. We will also
+                allow users to deposit Bitcoin directly into their OpenChat wallet by automatically
+                converting it to ckBTC. And we will allow users to withdraw ckBTC from their
+                OpenChat wallet to a BTC address.
+            </p>
+            <h4>User profiles</h4>
+            <p>
+                We will add the ability for users to create a public profile page optionally
+                including a personal feed of messages. This is a pre-cursor to the concept of
+                "following" other users and ultimately the development of aggregated feeds of all
+                users that you choose to follow.
+            </p>
+            <h4>Communities</h4>
+            <ul>
+                <li>
+                    We will add a proposal mechanism to support verified communities (blue tick).
+                </li>
+                <li>
+                    Allow owners to turn on advertising (using FairBuy) to help monetise their
+                    communities/groups
+                </li>
+                <li>
+                    Allow owners to pay to boost their communities in the community explorer
+                    (stretch goal)
+                </li>
+                <li>
+                    Enhanced tooling for community governance. This may include quorum decision
+                    making for community owners to avoid centralised community control (stretch
+                    goal)
+                </li>
+            </ul>
+            <h4>Native apps</h4>
+            <p>
+                We will investigate the viability of building native apps for iOS and Android
+                devices. The aim is to build thin native "wrappers" around the core web components
+                used by the existing web app such that the large majority of code is shared. As a
+                strech goal for the quarter we will build proof of concept OpenChat apps hosted in
+                the app stores with native app notifications.
+            </p>
+            <h4>Onboarding</h4>
+            <p>
+                We will improve the onboarding experience for new users to help them understand the
+                key features of OpenChat and how to use them. We will also make it simpler for new
+                and existing users to link an optional email address to allow account recovery if
+                the user loses access to their primary sign-in method.
+            </p>
+            <h4>Monetisation</h4>
+            <p>
+                We will introduce some additional monetisation features including, CHIT streak
+                insurance, and a 5% fee on prize messages.
+            </p>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle future">Future</div>
+            <div class="title">NFTs, contacts, personas and more</div>
+        </div>
+        <div class="body">
             <h4>NFTs</h4>
             <p>
                 It is expected the ICRC NFT proposals
@@ -498,20 +702,6 @@
                 <li>verifiable contact information (using verified credentials)</li>
                 <li>build a social graph to help spot mercenary/farming behaviour</li>
             </ul>
-            <h4>User profile pages</h4>
-            <p>
-                Users could have a publicly (or not) addressable profile page including the
-                following:
-            </p>
-            <ul class="inset">
-                <li>avatar</li>
-                <li>status / bio</li>
-                <li>contact info + socials</li>
-                <li>badges / achievements</li>
-                <li>public group/community membership</li>
-                <li>public message board</li>
-                <li>user's posts</li>
-            </ul>
             <h4>Personas</h4>
             <p>
                 Create multiple personas on OpenChat each with their own canister but tied to the
@@ -527,68 +717,6 @@
                 <li>Events calendar for a community</li>
                 <li>Custom emojis, stickers</li>
             </ul>
-        </div>
-    </CollapsibleCard>
-
-    <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle future">Future</div>
-            <div class="title">Integrations</div>
-        </div>
-        <div class="body">
-            <h4>Integate OpenChat into other apps</h4>
-            <p>
-                We are keen to provide chat functionality as a service to other dApps in the
-                Internet Computer ecosystem. Having spoken to lots of IC builders we know the
-                appetite is there! OpenChat has already been integrated into a bunch of IC dapps
-                using iframes but we would like to also build the apis, libraries and UI components
-                to allow deeper and more seamless integrations.
-            </p>
-            <h4>Integrate chats apps into OpenChat</h4>
-            <p>
-                To help and encourage existing communities to migrate from other chat platforms we
-                could provide the ability to import the users and messages into an OpenChat
-                community. Going a step further we can imagine mirroring chats such that messages
-                posted in the other app appear in OpenChat and vice-versa. Some obvious candidates
-                would be Discord, Slack, Telegram, and Matrix.
-            </p>
-            <h4>Integrate IC apps into OpenChat</h4>
-            <p>
-                Host virtual spaces/worlds in channels provided by Yuku or Cubetopia. Or have blog
-                channels provided by Nuance.
-            </p>
-            <h4>AI integrations</h4>
-            <p>
-                AI chatbot channels, AI assistant (content authoring, scheduling, planning), AI help
-                and support, AI user/content rating (help spot mercenary/farming behaviour)
-            </p>
-            <h4>Webhooks</h4>
-            <p>Use webhooks to integrate useful 3rd party functionality into OpenChat</p>
-            <h4>Bots and mini-apps</h4>
-            <p>Support for 3rd party bots and mini app integrations (think WeChat)</p>
-        </div>
-    </CollapsibleCard>
-
-    <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle future">Future</div>
-            <div class="title">End to end encryption</div>
-        </div>
-        <div class="body">
-            <p>
-                Currently, while the Internet Computer does provide very strong security guarantees,
-                there is still a hypothetical risk that a rogue node provider could gain access to
-                ingress messages and node memory.
-            </p>
-            <p>
-                As such we will develop opt-in end-to-end encryption which will come with some
-                necessary restrictions such as not being able to search your message history.
-            </p>
-            <p>
-                We are currently blocked by the availability of
-                <XL href="https://internetcomputer.org/docs/current/references/vetkeys-overview"
-                    >vetKeys</XL> on the Internet Computer, expected later this year.
-            </p>
         </div>
     </CollapsibleCard>
 
@@ -681,6 +809,15 @@
 
     ul.inset {
         margin-left: 3rem;
+    }
+
+    :global(.roadmap ul ul) {
+        list-style: none;
+        left: 4px;
+    }
+
+    :global(.roadmap ul ul li) {
+        margin-left: 0;
     }
 
     h4 {

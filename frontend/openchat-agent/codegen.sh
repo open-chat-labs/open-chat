@@ -8,9 +8,6 @@ didc bind ../../backend/canisters/identity/api/can.did -t js > ./src/services/id
 didc bind ../../backend/canisters/market_maker/api/can.did -t ts > ./src/services/marketMaker/candid/types.d.ts
 didc bind ../../backend/canisters/market_maker/api/can.did -t js > ./src/services/marketMaker/candid/idl.js
 
-didc bind ../../backend/canisters/proposals_bot/api/can.did -t ts > ./src/services/proposalsBot/candid/types.d.ts
-didc bind ../../backend/canisters/proposals_bot/api/can.did -t js > ./src/services/proposalsBot/candid/idl.js
-
 didc bind ../../backend/canisters/storage_bucket/api/can.did -t ts > ./src/services/storageBucket/candid/types.d.ts
 didc bind ../../backend/canisters/storage_bucket/api/can.did -t js > ./src/services/storageBucket/candid/idl.js
 
@@ -34,6 +31,9 @@ didc bind ./src/services/dexes/sonic/swaps/candid/can.did -t js > ./src/services
 
 didc bind ./src/services/icpcoins/candid/can.did -t ts > ./src/services/icpcoins/candid/types.d.ts
 didc bind ./src/services/icpcoins/candid/can.did -t js > ./src/services/icpcoins/candid/idl.js
+
+didc bind ./src/services/icpSwap/candid/can.did -t ts > ./src/services/icpSwap/candid/types.d.ts
+didc bind ./src/services/icpSwap/candid/can.did -t js > ./src/services/icpSwap/candid/idl.js
 
 didc bind ./src/services/icpLedgerIndex/candid/can.did -t ts > ./src/services/icpLedgerIndex/candid/types.d.ts
 didc bind ./src/services/icpLedgerIndex/candid/can.did -t js > ./src/services/icpLedgerIndex/candid/idl.js

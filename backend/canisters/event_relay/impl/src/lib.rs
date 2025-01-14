@@ -40,6 +40,10 @@ impl RuntimeState {
         self.data.push_events_whitelist.contains(&caller)
     }
 
+    pub fn is_caller_registry_canister(&self) -> bool {
+        self.env.caller() == self.data.registry_canister_id
+    }
+
     pub fn metrics(&self) -> Metrics {
         let event_store_client_info = self.data.event_store_client.info();
         let event_store_canister_id = event_store_client_info.event_store_canister_id;
@@ -58,6 +62,7 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 event_sink: event_store_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                registry: self.data.registry_canister_id,
                 chat_ledger: self.data.chat_ledger_canister_id,
                 chat_governance: self.data.chat_governance_canister_id,
             },
@@ -71,6 +76,7 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub cycles_dispenser_canister_id: CanisterId,
+    pub registry_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
     pub chat_governance_canister_id: CanisterId,
     pub chat_treasury_subaccount: [u8; 32],
@@ -84,6 +90,7 @@ impl Data {
         push_events_whitelist: HashSet<Principal>,
         event_store_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
+        registry_canister_id: CanisterId,
         chat_ledger_canister_id: CanisterId,
         chat_governance_canister_id: CanisterId,
         test_mode: bool,
@@ -95,6 +102,7 @@ impl Data {
                 .build(),
             event_deduper: EventDeduper::default(),
             cycles_dispenser_canister_id,
+            registry_canister_id,
             chat_ledger_canister_id,
             chat_governance_canister_id,
             chat_treasury_subaccount: compute_distribution_subaccount_bytes(chat_governance_canister_id, 0),
@@ -131,6 +139,7 @@ pub struct Metrics {
 pub struct CanisterIds {
     pub event_sink: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub registry: CanisterId,
     pub chat_ledger: CanisterId,
     pub chat_governance: CanisterId,
 }

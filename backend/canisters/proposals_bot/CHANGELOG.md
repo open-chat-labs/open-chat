@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove `c2c_submit_proposal` ([#7144](https://github.com/open-chat-labs/open-chat/pull/7144))
+
+### Fixed
+
+- Fix `inspect_message` to handle calls to MessagePack endpoints ([#7209](https://github.com/open-chat-labs/open-chat/pull/7209))
+
+## [[2.0.1565](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1565-proposals_bot)] - 2025-01-13
+
+### Fixed
+
+- Handle `submit_proposal` in `inspect_message` ([#7205](https://github.com/open-chat-labs/open-chat/pull/7205))
+
+## [[2.0.1551](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1551-proposals_bot)] - 2025-01-06
+
+### Added
+
+- Support submitting proposals directly to ProposalsBot ([#7143](https://github.com/open-chat-labs/open-chat/pull/7143))
+
+### Changed
+
+- Support submitting `MintSnsTokens` and `AdvanceSnsTargetVersion` proposals ([#7128](https://github.com/open-chat-labs/open-chat/pull/7128))
+- Switch ProposalsBot over to using MessagePack ([#7165](https://github.com/open-chat-labs/open-chat/pull/7165))
+
+## [[2.0.1534](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1534-proposals_bot)] - 2024-12-19
+
 ### Changed
 
 - Generate 64bit message Ids ([#6978](https://github.com/open-chat-labs/open-chat/pull/6978))

@@ -76,7 +76,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn upgrade_notifications_canister_wasm(
+    pub fn upgrade_bucket_canister_wasm(
         env: &mut PocketIc,
         sender: Principal,
         storage_index_canister_id: CanisterId,

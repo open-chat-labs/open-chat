@@ -12,6 +12,7 @@ import type {
     ChatListScope,
     ExpiredEventsRange,
     MessageContext,
+    SlashCommandPermissions,
 } from "openchat-shared";
 import {
     compareChats,
@@ -89,6 +90,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
         serverEvents: [],
         expandedDeletedMessages: new Set(),
         expiredEventRanges: new DRange(),
+        bots: new Map(),
     }),
 );
 
@@ -96,6 +98,12 @@ const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvent
     chatStateStore,
     "serverEvents",
     () => [],
+);
+
+export const currentChatBots = createDerivedPropStore<ChatSpecificState, "bots">(
+    chatStateStore,
+    "bots",
+    () => new Map<string, SlashCommandPermissions>(),
 );
 
 export const currentChatUserIds = createDerivedPropStore<ChatSpecificState, "userIds">(
@@ -623,10 +631,7 @@ export function setSelectedChat(
         !clientChat.subtype.isNns
     ) {
         const { governanceCanisterId } = clientChat.subtype;
-        api.sendRequest({
-            kind: "listNervousSystemFunctions",
-            snsGovernanceCanisterId: governanceCanisterId,
-        }).then((val) => {
+        api.listNervousSystemFunctions(governanceCanisterId).then((val) => {
             snsFunctions.set(governanceCanisterId, val.functions);
             return val;
         });

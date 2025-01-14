@@ -1,9 +1,6 @@
-use crate::model::bucket_sync_state::BucketSyncState;
-use crate::model::bucket_sync_state::EventToSync;
 use crate::BucketMetrics;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use storage_bucket_canister::c2c_sync_index;
 use types::{BuildVersion, CanisterId, CyclesTopUp, Hash};
 
 const TARGET_ACTIVE_BUCKETS: usize = 4;
@@ -51,41 +48,19 @@ impl Buckets {
         }
     }
 
-    pub fn allocate(&self, blob_hash: Hash) -> Option<CanisterId> {
+    pub fn allocate(&self, blob_hash: Hash, entropy: u64) -> Option<CanisterId> {
         let bucket_count = self.active_buckets.len();
         if bucket_count == 0 {
             None
         } else {
-            let usize_from_hash = u64::from_le_bytes(blob_hash[..8].try_into().unwrap()) as usize;
+            let mut bucket_allocation_hash = blob_hash;
+            bucket_allocation_hash.rotate_left((entropy % 32) as usize);
+            let usize_from_hash = u64::from_le_bytes(bucket_allocation_hash[..8].try_into().unwrap()) as usize;
 
             // Use a modified modulo of the hash to slightly favour the first bucket
             // so that they don't all run out of space at the same time
             let index = (usize_from_hash % ((bucket_count * 2) + 1)) % bucket_count;
             Some(self.active_buckets[index].canister_id)
-        }
-    }
-
-    pub fn sync_event(&mut self, event: EventToSync) {
-        for bucket in self.iter_mut() {
-            bucket.sync_state.enqueue(event.clone());
-        }
-    }
-
-    pub fn pop_args_for_next_sync(&mut self) -> Option<Vec<(CanisterId, c2c_sync_index::Args)>> {
-        let all_empty = !self.iter().any(|b| !b.sync_state.is_empty());
-        if all_empty {
-            None
-        } else {
-            Some(
-                self.iter_mut()
-                    .filter_map(|bucket| {
-                        bucket
-                            .sync_state
-                            .pop_args_for_next_sync()
-                            .map(|args| (bucket.canister_id, args))
-                    })
-                    .collect(),
-            )
         }
     }
 
@@ -120,19 +95,18 @@ impl Buckets {
     pub fn iter_full_buckets(&self) -> impl Iterator<Item = &BucketRecord> {
         self.full_buckets.values()
     }
-
-    fn iter_mut(&mut self) -> impl Iterator<Item = &mut BucketRecord> {
-        self.active_buckets.iter_mut().chain(self.full_buckets.values_mut())
-    }
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct BucketRecord {
     pub canister_id: CanisterId,
     pub wasm_version: BuildVersion,
-    pub bytes_used: u64,
-    pub bytes_remaining: i64,
-    pub sync_state: BucketSyncState,
+    #[serde(default)]
+    pub heap_memory_used: u64,
+    #[serde(default)]
+    pub stable_memory_used: u64,
+    #[serde(default)]
+    pub total_file_bytes: u64,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
@@ -141,9 +115,9 @@ impl BucketRecord {
         BucketRecord {
             canister_id,
             wasm_version,
-            bytes_used: 0,
-            bytes_remaining: 0,
-            sync_state: BucketSyncState::default(),
+            heap_memory_used: 0,
+            stable_memory_used: 0,
+            total_file_bytes: 0,
             cycle_top_ups: Vec::new(),
         }
     }
@@ -154,9 +128,10 @@ impl From<&BucketRecord> for BucketMetrics {
         BucketMetrics {
             canister_id: bucket.canister_id,
             wasm_version: bucket.wasm_version,
-            bytes_used: bucket.bytes_used,
-            bytes_remaining: bucket.bytes_remaining,
-            cycle_top_ups: bucket.cycle_top_ups.clone(),
+            heap_memory_used: bucket.heap_memory_used,
+            stable_memory_used: bucket.heap_memory_used,
+            total_file_bytes: bucket.total_file_bytes,
+            cycle_top_ups: bucket.cycle_top_ups.iter().map(|t| t.amount).sum(),
         }
     }
 }

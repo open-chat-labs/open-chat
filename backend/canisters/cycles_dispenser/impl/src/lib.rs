@@ -37,6 +37,10 @@ impl State {
         self.data.governance_principals.contains(&self.env.caller())
     }
 
+    pub fn is_caller_registry_canister(&self) -> bool {
+        self.env.caller() == self.data.registry_canister_id
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -54,8 +58,11 @@ impl State {
             min_cycles_balance: self.data.min_cycles_balance,
             icp_burn_amount: self.data.icp_burn_amount,
             stable_memory_sizes: memory::memory_sizes(),
-            ledger_canister: self.data.ledger_canister,
-            cycles_minting_canister: self.data.cycles_minting_canister,
+            canister_ids: CanisterIds {
+                registry: self.data.registry_canister_id,
+                ledger: self.data.ledger_canister,
+                cmc: self.data.cycles_minting_canister,
+            },
         }
     }
 }
@@ -64,6 +71,7 @@ impl State {
 struct Data {
     pub governance_principals: HashSet<Principal>,
     pub canisters: Canisters,
+    pub registry_canister_id: CanisterId,
     pub sns_root_canister: Option<CanisterId>,
     pub max_top_up_amount: Cycles,
     pub min_interval: Milliseconds,
@@ -81,6 +89,7 @@ impl Data {
     pub fn new(
         governance_principals: Vec<Principal>,
         canisters: Vec<CanisterId>,
+        registry_canister_id: CanisterId,
         max_top_up_amount: Cycles,
         min_interval: Milliseconds,
         min_cycles_balance: Cycles,
@@ -93,6 +102,7 @@ impl Data {
         Data {
             governance_principals: governance_principals.into_iter().collect(),
             canisters: Canisters::new(canisters, now),
+            registry_canister_id,
             sns_root_canister: None,
             max_top_up_amount,
             min_interval,
@@ -124,6 +134,12 @@ pub struct Metrics {
     pub min_cycles_balance: Cycles,
     pub icp_burn_amount: Tokens,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
-    pub ledger_canister: CanisterId,
-    pub cycles_minting_canister: CanisterId,
+    pub canister_ids: CanisterIds,
+}
+
+#[derive(CandidType, Serialize, Debug)]
+pub struct CanisterIds {
+    registry: CanisterId,
+    ledger: CanisterId,
+    cmc: CanisterId,
 }

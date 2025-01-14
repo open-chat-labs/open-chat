@@ -1,5 +1,4 @@
 use crate::guards::caller_is_governance_principal;
-use crate::timer_job_types::{JoinUserToGroup, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
@@ -32,23 +31,10 @@ fn is_already_platform_moderator(user_id: &UserId, state: &RuntimeState) -> bool
 fn commit(user_id: UserId, state: &mut RuntimeState) {
     state.data.platform_moderators.insert(user_id);
     state.push_event_to_all_local_user_indexes(
-        UserIndexEvent::SuperAdminStatusChanged(PlatformModeratorStatusChanged {
+        UserIndexEvent::PlatformModeratorStatusChanged(PlatformModeratorStatusChanged {
             user_id,
-            is_super_admin: true,
+            is_platform_moderator: true,
         }),
         None,
     );
-
-    if let Some(group_id) = state.data.platform_moderators_group {
-        let now = state.env.now();
-        state.data.timer_jobs.enqueue_job(
-            TimerJob::JoinUserToGroup(JoinUserToGroup {
-                user_id,
-                group_id,
-                attempt: 0,
-            }),
-            now,
-            now,
-        );
-    }
 }

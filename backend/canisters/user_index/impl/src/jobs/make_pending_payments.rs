@@ -51,15 +51,11 @@ async fn process_payment(pending_payment: PendingPayment) {
 
     mutate_state(|state| {
         match result {
-            Ok(Ok(block_index)) => match reason {
-                PendingPaymentReason::ReferralReward => {
+            Ok(Ok(block_index)) => {
+                if matches!(reason, PendingPaymentReason::ReferralReward) {
                     inform_referrer(&pending_payment, block_index, state);
                 }
-                PendingPaymentReason::TopUpNeuron => {
-                    state.data.refresh_nns_neuron();
-                }
-                _ => {}
-            },
+            }
             Ok(Err(_)) => {}
             Err(_) => {
                 state.data.pending_payments_queue.push(pending_payment);

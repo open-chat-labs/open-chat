@@ -1,11 +1,14 @@
 <script lang="ts">
     import {
+        currentUser,
         emptyBotInstance,
+        emptySlashCommandPermissions,
+        OpenChat,
         validateBot,
         ValidationErrors,
         type ExternalBot,
-        type SlashCommandPermissions,
         type SlashCommandSchema,
+        type ValidationErrorMessages,
     } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import Input from "../Input.svelte";
@@ -18,6 +21,9 @@
     import ValidatingInput from "./ValidatingInput.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { debouncedDerived } from "../../utils/reactivity.svelte";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         valid: boolean;
@@ -25,22 +31,45 @@
     }
 
     let { valid = $bindable(), onUpdate }: Props = $props();
+    let principal = $state("");
     let selectedCommand = $state<SlashCommandSchema | undefined>(undefined);
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
-    let candidate = $state<ExternalBot>(emptyBotInstance());
+    let candidate = $state<ExternalBot>(emptyBotInstance($currentUser.userId));
 
     let errors = $derived.by(
         debouncedDerived(
             () => [$state.snapshot(candidate)],
-            () => {
-                console.log("Validating candidate");
-                return validateBot(candidate);
+            async () => {
+                const errors = validateBot(principal, candidate, "register");
+                if (errors.get("bot_name").length == 0) {
+                    errors.addErrors("bot_name", await checkUsername(candidate.name));
+                }
+                return errors;
             },
             300,
             new ValidationErrors(),
         ),
     );
+
+    function checkUsername(value: string): Promise<ValidationErrorMessages> {
+        return client
+            .checkUsername(value, true)
+            .then((resp) => {
+                if (resp === "success") {
+                    return [];
+                }
+
+                if (resp === "username_taken") {
+                    return [i18nKey("bots.builder.errors.duplicateName")];
+                }
+
+                return [i18nKey("bots.builder.errors.botNameInvalid")];
+            })
+            .catch((_) => {
+                return [i18nKey("bots.builder.errors.nameCheckError")];
+            });
+    }
 
     // TODO we will probably need to come back to this to flesh out edit mode (is the bot dirty etc)
     // let editing = $derived(bot !== undefined);
@@ -53,12 +82,11 @@
     });
 
     $effect(() => {
-        console.log("Candidate updated");
         onUpdate($state.snapshot(candidate));
     });
 
     function botAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
-        candidate.avatar = ev.detail.url;
+        candidate.avatarUrl = ev.detail.url;
     }
 
     function onSubmit(e: Event) {
@@ -66,13 +94,13 @@
     }
 
     function addCommand() {
-        candidate.commands.push(emptySlashCommand());
-        selectedCommand = candidate.commands[candidate.commands.length - 1];
-        selectedCommandIndex = candidate.commands.length - 1;
+        candidate.definition.commands.push(emptySlashCommand());
+        selectedCommand = candidate.definition.commands[candidate.definition.commands.length - 1];
+        selectedCommandIndex = candidate.definition.commands.length - 1;
     }
 
     function onDeleteCommand(cmd: SlashCommandSchema) {
-        candidate.commands = candidate.commands.filter((c) => c !== cmd);
+        candidate.definition.commands = candidate.definition.commands.filter((c) => c !== cmd);
     }
 
     function onSelectCommand(cmd: SlashCommandSchema, index: number) {
@@ -85,16 +113,7 @@
             name: "",
             description: "",
             params: [],
-            permissions: emptyPermissions(),
-        };
-    }
-
-    function emptyPermissions(): SlashCommandPermissions {
-        return {
-            chatPermissions: [],
-            communityPermissions: [],
-            messagePermissions: [],
-            threadPermissions: [],
+            permissions: emptySlashCommandPermissions(),
         };
     }
 </script>
@@ -114,9 +133,20 @@
         <EditableAvatar
             overlayIcon
             size={"medium"}
-            image={candidate.avatar}
+            image={candidate.avatarUrl}
             on:imageSelected={botAvatarSelected} />
     </div>
+
+    <Legend required label={i18nKey("bots.builder.principalLabel")}></Legend>
+    <ValidatingInput
+        autofocus
+        minlength={3}
+        maxlength={50}
+        invalid={errors.has("bot_principal")}
+        placeholder={i18nKey("bots.builder.principalPlaceholder")}
+        error={errors.get("bot_principal")}
+        bind:value={principal}>
+    </ValidatingInput>
 
     <Legend
         required
@@ -137,7 +167,7 @@
         minlength={3}
         maxlength={200}
         placeholder={i18nKey("bots.builder.descPlaceholder")}
-        bind:value={candidate.description} />
+        bind:value={candidate.definition.description} />
 
     <Legend
         label={i18nKey("bots.builder.endpointLabel")}
@@ -153,7 +183,7 @@
 
     <div class="commands">
         <div class="commands">
-            {#each candidate.commands as command, i}
+            {#each candidate.definition.commands as command, i}
                 <SummaryButton
                     valid={!errors.has(`command_${i}`)}
                     onSelect={() => onSelectCommand(command, i)}

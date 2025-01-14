@@ -6,6 +6,7 @@ use types::{BuildVersion, CanisterId, Cycles, Milliseconds};
 pub struct Args {
     pub governance_principals: Vec<Principal>,
     pub canisters: Vec<CanisterId>,
+    pub registry_canister_id: CanisterId,
     pub max_top_up_amount: Cycles,
     pub min_interval: Milliseconds,
     pub min_cycles_balance: Cycles,

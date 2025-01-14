@@ -149,6 +149,16 @@
     "blockUserFailed": "Không thể chặn người dùng",
     "blockUserSucceeded": "Người dùng đã bị chặn",
     "bots": {
+        "add": {
+            "action": "Đăng ký",
+            "addBot": "Thêm bot",
+            "choosePermissions": "Quyền",
+            "failure": "Xin lỗi chúng tôi không thể thêm bot",
+            "loadDefinition": "Tải định nghĩa",
+            "noPermissions": "Không cần quyền đặc biệt",
+            "permissionsInfo": "Bot này tìm kiếm các quyền sau. Việc chọn giới hạn các quyền được cấp sẽ giới hạn các lệnh khả dụng.",
+            "title": "Thêm bot vào cộng đồng"
+        },
         "builder": {
             "addAnother": "Thêm một cái nữa",
             "addChoice": "Thêm một lựa chọn",
@@ -165,17 +175,25 @@
             "commandNamePlaceholder": "Nhập tên lệnh",
             "commandPermissionsDesc": "Mô tả các quyền mà lệnh này yêu cầu",
             "commandPermissionsLabel": "Quyền lệnh",
+            "commandPlaceholderLabel": "Tin nhắn giữ chỗ lệnh",
+            "commandPlaceholderPlaceholder": "Tin nhắn giữ chỗ lệnh không được chỉ định",
+            "commandsLabel": "Lệnh",
             "descLabel": "Mô tả bot",
             "descPlaceholder": "Nhập mô tả bot",
             "endpointLabel": "Điểm cuối của Bot",
             "endpointRules": "Phải là nguồn gốc hợp lệ hoặc là một canisterID",
             "errors": {
                 "alphaOnly": "Chỉ được chứa chữ và số và dấu gạch dưới",
+                "botNameInvalid": "Tên bot này không hợp lệ",
                 "duplicateCommands": "Bot chứa các lệnh trùng lặp",
+                "duplicateName": "Tên bot đó đã được sử dụng rồi",
                 "duplicateParams": "Lệnh chứa các tham số trùng lặp",
                 "endpoint": "Điểm cuối phải là một origin hoặc canisterID hợp lệ",
                 "minLength": "Phải có ít nhất {n} ký tự",
-                "noCommands": "Một bot phải chứa ít nhất một lệnh"
+                "nameCheckError": "Đã xảy ra lỗi khi kiểm tra tên bot",
+                "noCommands": "Một bot phải chứa ít nhất một lệnh",
+                "owner": "Bạn phải nhập chủ sở hữu cho bot",
+                "principal": "Bạn phải nhập một nguyên tắc hợp lệ để xác định bot"
             },
             "iconLabel": "Biểu tượng bot",
             "maxLengthLabel": "Chiều dài tối đa",
@@ -190,6 +208,8 @@
             "namePlaceholder": "Nhập tên bot",
             "nameRules": "Phải là duy nhất và chỉ chứa các ký tự chữ và số và dấu gạch dưới",
             "optional": "không bắt buộc",
+            "ownerLabel": "Chủ sở hữu bot",
+            "ownerRules": "Ai là người liên hệ cho bot này",
             "paramDescLabel": "Mô tả tham số",
             "paramDescPlaceholder": "Nhập mô tả tham số",
             "paramLabel": "Tham số: {name}",
@@ -197,12 +217,16 @@
             "paramNamePlaceholder": "Nhập tên tham số",
             "paramPlaceholderLabel": "Trình giữ chỗ tham số",
             "paramPlaceholderPlaceholder": "Nhập tham số giữ chỗ",
+            "paramsLabel": "Các tham số",
             "paramTypeLabel": "Kiểu tham số",
             "permSameAsMessage": "Giống như quyền tin nhắn",
             "permScopeChat": "Trò chuyện",
             "permScopeCommunity": "Cộng đồng",
             "permScopeMessage": "Tin nhắn",
             "permScopeThread": "Chủ đề",
+            "principalLabel": "Hiệu trưởng",
+            "principalPlaceholder": "Nhập bot chính",
+            "principalRules": "Đây sẽ là canisterID cho một bot onchain",
             "required": "Tham số bắt buộc",
             "requiredDesc": "Đây có phải là tham số bắt buộc cho lệnh không?",
             "title": "Xây dựng một bot",
@@ -229,6 +253,20 @@
         },
         "diamond": {
             "desc": "Đăng liên kết để giải thích về tư cách thành viên Kim cương"
+        },
+        "edit": {
+            "failure": "Xin lỗi, chúng tôi không thể cập nhật quyền của bot",
+            "title": "Cập nhật quyền bot",
+            "updateBot": "Cập nhật bot"
+        },
+        "events": {
+            "add": "Bot **{botname}** được thêm vào bởi {username}",
+            "remove": "Bot **{botname}** đã bị xóa bởi {username}",
+            "update": "Bot **{botname}** được cập nhật bởi {username}"
+        },
+        "explorer": {
+            "addBots": "Thêm bot",
+            "loadMore": "Tải thêm..."
         },
         "failed": "Xin lỗi, chúng tôi không thực hiện được lệnh bot",
         "faq": {
@@ -269,7 +307,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "Xóa bot",
+            "removeFailed": "Xin lỗi chúng tôi không thể xóa bot",
+            "review": "Xem lại quyền của bot",
+            "view": "Xem chi tiết bot"
+        },
         "matchingCommands": "Lệnh khớp",
+        "member": {
+            "bots": "Bots",
+            "people": "Mọi người"
+        },
         "poll": {
             "desc": "Tạo một cuộc thăm dò trong cuộc trò chuyện hiện tại"
         },
@@ -287,7 +335,15 @@
             }
         },
         "update_bot": {
-            "desc": "Bắt đầu đề xuất cập nhật bot OpenChat hiện có"
+            "action": "Cập nhật",
+            "desc": "Bắt đầu đề xuất cập nhật bot OpenChat hiện có",
+            "nobots": "Chỉ có chủ sở hữu của bot đã đăng ký mới có thể cập nhật bot. Bạn không phải là chủ sở hữu của bất kỳ bot đã đăng ký nào.",
+            "select": "Chọn bot mà bạn muốn cập nhật.",
+            "title": "Cập nhật bot"
+        },
+        "view": {
+            "close": "Đóng",
+            "title": "Chi tiết bot"
         },
         "witch": {
             "desc": "Triệu hồi phù thủy"
@@ -1301,6 +1357,7 @@
         "noEligibleNeurons": "Không tìm thấy tế bào thần kinh đủ điều kiện",
         "noEligibleNeuronsMessage": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm id người dùng OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.<br/><br/> Id người dùng OpenChat của bạn là: {userId}.<br/><br/> Để biết thêm thông tin về bỏ phiếu và quản trị, hãy đọc <a target=\"_blank\" href=\"https://oc.app/blog/governance\">bài đăng trên blog này</a> .",
         "notificationsAction": "Thông báo Chỉ mục Hành động",
+        "openchatInstallerAction": "Hành động cài đặt OpenChat",
         "proposalNotAceptingVotes": "Đề xuất này không chấp nhận phiếu bầu - hãy thử tải lại trang",
         "proposalsBotAction": "Hành động bot đề xuất",
         "proposedBy": "đề nghị bởi",

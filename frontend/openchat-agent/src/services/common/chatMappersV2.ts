@@ -118,6 +118,15 @@ import type {
     AcceptP2PSwapResponse,
     AccessGateConfig,
     SetPinNumberResponse,
+    MessagePermission,
+    SlashCommandPermissions,
+    BotGroupDetails,
+    BotDefinition,
+    SlashCommandSchema,
+    SlashCommandParamType,
+    SlashCommandParam,
+    BotMessageContext,
+    SlashCommandParamInstance,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -141,6 +150,7 @@ import type {
     AccessGate as TAccessGate,
     AccessGateConfig as TAccessGateConfig,
     AccessGateNonComposite as TAccessGateNonComposite,
+    AccountICRC1,
     AudioContent as TAudioContent,
     BlobReference as TBlobReference,
     CallParticipant as TCallParticipant,
@@ -230,6 +240,7 @@ import type {
     ImageContent as TImageContent,
     LocalUserIndexJoinGroupResponse,
     Message as TMessage,
+    BotMessageContext as TBotMessageContext,
     MessageContent as TMessageContent,
     MessageContentInitial as TMessageContentInitial,
     MessageMatch as TMessageMatch,
@@ -278,6 +289,21 @@ import type {
     VideoCallPresence as TVideoCallPresence,
     VideoCallType as TVideoCallType,
     VideoContent as TVideoContent,
+    GroupPermission,
+    CommunityPermission,
+    MessagePermission as ApiMessagePermission,
+    SlashCommandPermissions as ApiSlashCommandPermissions,
+    CommunityRemoveBotResponse,
+    CommunityAddBotResponse,
+    CommunityUpdateBotResponse,
+    GroupRemoveBotResponse,
+    GroupAddBotResponse,
+    GroupUpdateBotResponse,
+    BotGroupDetails as ApiBotGroupDetails,
+    SlashCommandSchema as ApiSlashCommandSchema,
+    SlashCommandParamType as ApiSlashCommandParamType,
+    SlashCommandParam as ApiSlashCommandParam,
+    BotCommandArg,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -491,6 +517,30 @@ export function event(value: TChatEvent): ChatEvent {
         };
     }
 
+    if ("BotAdded" in value) {
+        return {
+            kind: "bot_added",
+            userId: principalBytesToString(value.BotAdded.user_id),
+            addedBy: principalBytesToString(value.BotAdded.added_by),
+        };
+    }
+
+    if ("BotRemoved" in value) {
+        return {
+            kind: "bot_removed",
+            userId: principalBytesToString(value.BotRemoved.user_id),
+            removedBy: principalBytesToString(value.BotRemoved.removed_by),
+        };
+    }
+
+    if ("BotUpdated" in value) {
+        return {
+            kind: "bot_updated",
+            userId: principalBytesToString(value.BotUpdated.user_id),
+            updatedBy: principalBytesToString(value.BotUpdated.updated_by),
+        };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", value);
 }
 
@@ -511,7 +561,49 @@ export function message(value: TMessage): Message {
         deleted: content.kind === "deleted_content",
         thread: mapOptional(value.thread_summary, threadSummary),
         blockLevelMarkdown: value.block_level_markdown,
+        botContext: mapOptional(value.bot_context, botMessageContext),
     };
+}
+
+export function botMessageContext(value: TBotMessageContext): BotMessageContext {
+    return {
+        initiator: principalBytesToString(value.initiator),
+        finalised: value.finalised,
+        command: {
+            name: value.command.name,
+            args: value.command.args.map(botCommandArg),
+        },
+    };
+}
+
+export function botCommandArg(api: BotCommandArg): SlashCommandParamInstance {
+    const { name, value } = api;
+    if ("Boolean" in value) {
+        return {
+            kind: "boolean",
+            name,
+            value: value.Boolean,
+        };
+    } else if ("Number" in value) {
+        return {
+            kind: "number",
+            name,
+            value: value.Number,
+        };
+    } else if ("String" in value) {
+        return {
+            kind: "string",
+            name,
+            value: value.String,
+        };
+    } else if ("User" in value) {
+        return {
+            kind: "user",
+            name,
+            userId: principalBytesToString(value.User),
+        };
+    }
+    throw new Error(`Unexpected ApiBotCommandArg type received, ${api}`);
 }
 
 export function tips(value: [Uint8Array, [Uint8Array, bigint][]][]): TipsReceived {
@@ -1481,6 +1573,7 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "prize_content":
         case "prize_winner_content":
         case "placeholder_content":
+        case "bot_placeholder_content":
         case "proposal_content":
         case "message_reminder_content":
         case "message_reminder_created_content":
@@ -1907,10 +2000,7 @@ export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): TCr
                     ICRC1: {
                         ledger: principalStringToBytes(domain.ledger),
                         token: apiToken(domain.token),
-                        to: {
-                            owner: principalStringToBytes(domain.recipient),
-                            subaccount: undefined,
-                        },
+                        to: principalToIcrcAccount(domain.recipient),
                         amount: domain.amountE8s,
                         fee: domain.feeE8s ?? BigInt(0),
                         memo: mapOptional(domain.memo, bigintToBytes),
@@ -1983,7 +2073,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                 ICRC1: {
                     ledger: principalStringToBytes(domain.ledger),
                     token: apiToken(domain.token),
-                    to: { owner: principalStringToBytes(domain.to), subaccount: undefined },
+                    to: principalToIcrcAccount(domain.to),
                     amount: domain.amountE8s,
                     fee: domain.feeE8s ?? BigInt(0),
                     memo: mapOptional(domain.memo, bigintToBytes),
@@ -2577,6 +2667,7 @@ export function groupDetailsResponse(
                 });
             }
         }
+        const bots = "bots" in value.Success ? value.Success.bots : [];
         return {
             members,
             blockedUsers: new Set(value.Success.blocked_users.map(principalBytesToString)),
@@ -2584,6 +2675,7 @@ export function groupDetailsResponse(
             pinnedMessages: new Set(value.Success.pinned_messages),
             rules: value.Success.chat_rules,
             timestamp: value.Success.timestamp,
+            bots: bots.map(botGroupDetails),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
@@ -2612,6 +2704,8 @@ export function groupDetailsUpdatesResponse(
                     (invited_users) => new Set(invited_users.map(principalBytesToString)),
                 ),
                 timestamp: value.Success.timestamp,
+                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(botGroupDetails),
+                botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {
@@ -3131,4 +3225,253 @@ export function apiDexId(dex: DexId): TExchangeId {
         case "sonic":
             return "Sonic";
     }
+}
+
+export function apiChatPermission(perm: keyof ChatPermissions): GroupPermission {
+    switch (perm) {
+        case "addMembers":
+            return "AddMembers";
+        case "changeRoles":
+            return "ChangeRoles";
+        case "deleteMessages":
+            return "DeleteMessages";
+        case "inviteUsers":
+            return "InviteUsers";
+        case "mentionAllMembers":
+            return "MentionAllMembers";
+        case "pinMessages":
+            return "PinMessages";
+        case "reactToMessages":
+            return "ReactToMessages";
+        case "removeMembers":
+            return "RemoveMembers";
+        case "startVideoCall":
+            return "StartVideoCall";
+        case "updateGroup":
+            return "UpdateGroup";
+        default:
+            throw new Error(`Unexpected ChatPermission (${perm}) received`);
+    }
+}
+
+export function apiCommunityPermission(perm: keyof CommunityPermissions): CommunityPermission {
+    switch (perm) {
+        case "changeRoles":
+            return "ChangeRoles";
+        case "createPrivateChannel":
+            return "CreatePrivateChannel";
+        case "createPublicChannel":
+            return "CreatePublicChannel";
+        case "inviteUsers":
+            return "InviteUsers";
+        case "manageUserGroups":
+            return "ManageUserGroups";
+        case "removeMembers":
+            return "RemoveMembers";
+        case "updateDetails":
+            return "UpdateDetails";
+    }
+}
+
+export function apiMessagePermission(perm: MessagePermission): ApiMessagePermission {
+    switch (perm) {
+        case "audio":
+            return "Audio";
+        case "crypto":
+            return "Crypto";
+        case "file":
+            return "File";
+        case "giphy":
+            return "Giphy";
+        case "image":
+            return "Image";
+        case "p2pSwap":
+            return "P2pSwap";
+        case "poll":
+            return "Poll";
+        case "prize":
+            return "Prize";
+        case "text":
+            return "Text";
+        case "video":
+            return "Video";
+        default:
+            throw new Error(`Unexpect MessagePermission (${perm})`);
+    }
+}
+
+export function chatPermission(perm: GroupPermission): keyof ChatPermissions {
+    switch (perm) {
+        case "AddMembers":
+            return "addMembers";
+        case "ChangeRoles":
+            return "changeRoles";
+        case "DeleteMessages":
+            return "deleteMessages";
+        case "InviteUsers":
+            return "inviteUsers";
+        case "MentionAllMembers":
+            return "mentionAllMembers";
+        case "PinMessages":
+            return "pinMessages";
+        case "ReactToMessages":
+            return "reactToMessages";
+        case "RemoveMembers":
+            return "removeMembers";
+        case "StartVideoCall":
+            return "startVideoCall";
+        case "UpdateGroup":
+            return "updateGroup";
+    }
+}
+
+export function communityPermission(perm: CommunityPermission): keyof CommunityPermissions {
+    switch (perm) {
+        case "ChangeRoles":
+            return "changeRoles";
+        case "CreatePrivateChannel":
+            return "createPrivateChannel";
+        case "CreatePublicChannel":
+            return "createPublicChannel";
+        case "InviteUsers":
+            return "inviteUsers";
+        case "ManageUserGroups":
+            return "manageUserGroups";
+        case "RemoveMembers":
+            return "removeMembers";
+        case "UpdateDetails":
+            return "updateDetails";
+    }
+}
+
+export function messagePermission(perm: ApiMessagePermission): MessagePermission {
+    switch (perm) {
+        case "Audio":
+            return "audio";
+        case "Crypto":
+            return "crypto";
+        case "File":
+            return "file";
+        case "Giphy":
+            return "giphy";
+        case "Image":
+            return "image";
+        case "P2pSwap":
+            return "p2pSwap";
+        case "Poll":
+            return "poll";
+        case "Prize":
+            return "prize";
+        case "Text":
+            return "text";
+        case "Video":
+            return "video";
+        case "VideoCall":
+            return "text";
+    }
+}
+
+export function slashCommandPermissions(
+    value: ApiSlashCommandPermissions,
+): SlashCommandPermissions {
+    return {
+        chatPermissions: value.chat.map(chatPermission),
+        communityPermissions: value.community.map(communityPermission),
+        messagePermissions: value.message.map(messagePermission),
+    };
+}
+
+export function removeBotResponse(
+    value: CommunityRemoveBotResponse | GroupRemoveBotResponse,
+): boolean {
+    if (value === "Success") {
+        return true;
+    }
+    console.warn("Community|GroupRemoveBotResponse failed with ", value);
+    return false;
+}
+
+export function addBotResponse(value: CommunityAddBotResponse | GroupAddBotResponse): boolean {
+    if (value === "Success" || value === "AlreadyAdded") {
+        return true;
+    }
+    console.warn("Community|GroupAddBotResponse failed with ", value);
+    return false;
+}
+
+export function updateBotResponse(
+    value: CommunityUpdateBotResponse | GroupUpdateBotResponse,
+): boolean {
+    if (value === "Success") {
+        return true;
+    }
+    console.warn("Community|GroupUpdateBotResponse failed with ", value);
+    return false;
+}
+
+export function botGroupDetails(value: ApiBotGroupDetails): BotGroupDetails {
+    return {
+        id: principalBytesToString(value.user_id),
+        permissions: slashCommandPermissions(value.permissions),
+    };
+}
+
+export function externalBotDefinition(value: {
+    description: string;
+    commands: ApiSlashCommandSchema[];
+}): BotDefinition {
+    return {
+        kind: "bot_definition",
+        description: value.description,
+        commands: value.commands.map(externalBotCommand),
+    };
+}
+
+export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommandSchema {
+    return {
+        name: command.name,
+        description: command.description,
+        placeholder: mapOptional(command.placeholder, identity),
+        params: command.params.map(externalBotParam),
+        permissions: slashCommandPermissions(command.permissions),
+    };
+}
+
+export function externalBotParam(param: ApiSlashCommandParam): SlashCommandParam {
+    return {
+        ...param,
+        ...customParamFields(param.param_type),
+    };
+}
+
+export function customParamFields(paramType: ApiSlashCommandParamType): SlashCommandParamType {
+    if (paramType === "UserParam") {
+        return {
+            kind: "user",
+        };
+    } else if (paramType === "BooleanParam") {
+        return { kind: "boolean" };
+    } else if ("StringParam" in paramType) {
+        return {
+            kind: "string",
+            minLength: paramType.StringParam.min_length,
+            maxLength: paramType.StringParam.max_length,
+            choices: paramType.StringParam.choices,
+        };
+    } else if ("NumberParam" in paramType) {
+        return {
+            kind: "number",
+            minValue: paramType.NumberParam.min_value,
+            maxValue: paramType.NumberParam.max_value,
+            choices: paramType.NumberParam.choices,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiSlashCommandParamType value", paramType);
+}
+
+export function principalToIcrcAccount(principal: string): AccountICRC1 {
+    return {
+        owner: principalStringToBytes(principal),
+        subaccount: undefined,
+    };
 }

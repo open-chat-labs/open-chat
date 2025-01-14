@@ -34,9 +34,7 @@ fn delete_user_succeeds() {
         user_index_canister::current_user::Response::UserNotFound
     ));
 
-    let canister_status = env
-        .canister_status(user.canister(), Some(canister_ids.local_user_index))
-        .unwrap();
+    let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
     assert!(canister_status.module_hash.is_none());
 }
 

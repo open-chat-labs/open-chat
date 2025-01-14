@@ -149,6 +149,16 @@
     "blockUserFailed": "Impossibile bloccare l'utente",
     "blockUserSucceeded": "L'utente è stato bloccato",
     "bots": {
+        "add": {
+            "action": "Registro",
+            "addBot": "Aggiungi bot",
+            "choosePermissions": "Permessi",
+            "failure": "Spiacenti, non siamo riusciti ad aggiungere il bot",
+            "loadDefinition": "Definizione del carico",
+            "noPermissions": "Non sono richieste autorizzazioni speciali",
+            "permissionsInfo": "Questo bot richiede i seguenti permessi. Scegliendo di limitare i permessi concessi si limiteranno i comandi disponibili.",
+            "title": "Aggiungi bot alla community"
+        },
         "builder": {
             "addAnother": "Aggiungine un altro",
             "addChoice": "Aggiungi una scelta",
@@ -165,17 +175,25 @@
             "commandNamePlaceholder": "Inserisci il nome del comando",
             "commandPermissionsDesc": "Descrivi i permessi richiesti da questo comando",
             "commandPermissionsLabel": "Permessi di comando",
+            "commandPlaceholderLabel": "Messaggio segnaposto del comando",
+            "commandPlaceholderPlaceholder": "Messaggio segnaposto del comando non specificato",
+            "commandsLabel": "Comandi",
             "descLabel": "Descrizione del bot",
             "descPlaceholder": "Inserisci la descrizione del bot",
             "endpointLabel": "Punto finale del bot",
             "endpointRules": "Deve essere un'origine valida o un canisterID",
             "errors": {
                 "alphaOnly": "Deve contenere solo caratteri alfanumerici e caratteri di sottolineatura",
+                "botNameInvalid": "Il nome di questo bot non è valido",
                 "duplicateCommands": "Il bot contiene comandi duplicati",
+                "duplicateName": "Quel nome bot è già stato preso",
                 "duplicateParams": "Il comando contiene parametri duplicati",
                 "endpoint": "L'endpoint deve essere un'origine o un canisterID valido",
                 "minLength": "Deve contenere almeno {n} caratteri",
-                "noCommands": "Un bot deve contenere almeno un comando"
+                "nameCheckError": "Si è verificato un errore durante il controllo del nome del bot",
+                "noCommands": "Un bot deve contenere almeno un comando",
+                "owner": "Devi inserire un proprietario per il bot",
+                "principal": "Devi inserire un'entità valida per identificare il bot"
             },
             "iconLabel": "Icona del bot",
             "maxLengthLabel": "Lunghezza massima",
@@ -190,6 +208,8 @@
             "namePlaceholder": "Inserisci il nome del bot",
             "nameRules": "Deve essere univoco e contenere solo caratteri alfanumerici e caratteri di sottolineatura",
             "optional": "opzionale",
+            "ownerLabel": "Proprietario del bot",
+            "ownerRules": "Chi è il punto di contatto per questo bot?",
             "paramDescLabel": "Descrizione del parametro",
             "paramDescPlaceholder": "Inserisci la descrizione del parametro",
             "paramLabel": "Parametro: {name}",
@@ -197,12 +217,16 @@
             "paramNamePlaceholder": "Inserisci il nome del parametro",
             "paramPlaceholderLabel": "Parametro segnaposto",
             "paramPlaceholderPlaceholder": "Inserisci segnaposto parametro",
+            "paramsLabel": "Parametri",
             "paramTypeLabel": "Tipo di parametro",
             "permSameAsMessage": "Uguali alle autorizzazioni dei messaggi",
             "permScopeChat": "Chiacchierata",
             "permScopeCommunity": "Comunità",
             "permScopeMessage": "Messaggio",
             "permScopeThread": "Filo",
+            "principalLabel": "Principale",
+            "principalPlaceholder": "Inserisci il bot principale",
+            "principalRules": "Questo sarà il canisterID per un bot onchain",
             "required": "Parametro obbligatorio",
             "requiredDesc": "Questo è un parametro obbligatorio per il comando",
             "title": "Costruisci un bot",
@@ -229,6 +253,20 @@
         },
         "diamond": {
             "desc": "Pubblica un link per spiegare l'appartenenza a Diamond"
+        },
+        "edit": {
+            "failure": "Spiacenti, non siamo riusciti ad aggiornare le autorizzazioni del bot",
+            "title": "Aggiorna i permessi del bot",
+            "updateBot": "Aggiorna bot"
+        },
+        "events": {
+            "add": "Bot **{botname}** aggiunto da {username}",
+            "remove": "Bot **{botname}** rimosso da {username}",
+            "update": "Bot **{botname}** aggiornato da {username}"
+        },
+        "explorer": {
+            "addBots": "Aggiungi bot",
+            "loadMore": "Carica altro..."
         },
         "failed": "Spiacenti, non siamo riusciti a eseguire il comando del bot",
         "faq": {
@@ -269,7 +307,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "Rimuovi bot",
+            "removeFailed": "Spiacenti, non siamo riusciti a rimuovere il bot",
+            "review": "Rivedi le autorizzazioni del bot",
+            "view": "Visualizza i dettagli del bot"
+        },
         "matchingCommands": "Comandi corrispondenti",
+        "member": {
+            "bots": "I bot",
+            "people": "Persone"
+        },
         "poll": {
             "desc": "Crea un sondaggio nella chat corrente"
         },
@@ -287,7 +335,15 @@
             }
         },
         "update_bot": {
-            "desc": "Avvia una proposta per aggiornare un bot OpenChat esistente"
+            "action": "Aggiornamento",
+            "desc": "Avvia una proposta per aggiornare un bot OpenChat esistente",
+            "nobots": "Solo il proprietario di un bot registrato può aggiornare il bot. Non sei il proprietario di alcun bot registrato.",
+            "select": "Seleziona il bot che desideri aggiornare.",
+            "title": "Aggiorna bot"
+        },
+        "view": {
+            "close": "Vicino",
+            "title": "Dettagli del bot"
         },
         "witch": {
             "desc": "Evoca la strega"
@@ -1301,6 +1357,7 @@
         "noEligibleNeurons": "Nessun neurone idoneo trovato",
         "noEligibleNeuronsMessage": "Nessun neurone idoneo o collegato trovato. Per votare proposte da OpenChat devi prima aggiungere il tuo ID utente OpenChat come tasto di scelta rapida a qualsiasi neurone con cui desideri votare.<br/><br/> Il tuo ID utente OpenChat è: {userId}.<br/><br/> Per ulteriori informazioni sul voto e sulla governance leggere <a target=\"_blank\" href=\"https://oc.app/blog/governance\">questo post del blog</a> .",
         "notificationsAction": "Notifiche Indice Azioni",
+        "openchatInstallerAction": "Azioni di installazione di OpenChat",
         "proposalNotAceptingVotes": "Questa proposta non accetta voti: prova a ricaricare la pagina",
         "proposalsBotAction": "Proposte Bot Azioni",
         "proposedBy": "proposto da",

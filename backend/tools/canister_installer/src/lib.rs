@@ -4,7 +4,7 @@ use constants::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use sha256::sha256;
-use types::{BuildVersion, CanisterWasm, Cycles};
+use types::{BuildVersion, Cycles};
 
 const T: Cycles = 1_000_000_000_000;
 
@@ -28,9 +28,22 @@ async fn install_service_canisters_impl(
         vec![Principal::from_text("wp3oc-ig6b4-6xvef-yoj27-qt3kw-u2xmp-qbvuv-2grco-s2ndy-wv3ud-7qe").unwrap()];
 
     futures::future::join_all(vec![
-        set_controllers(management_canister, &canister_ids.user_index, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.group_index, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.notifications_index, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.openchat_installer, controllers.clone()),
+        set_controllers(
+            management_canister,
+            &canister_ids.user_index,
+            vec![canister_ids.openchat_installer],
+        ),
+        set_controllers(
+            management_canister,
+            &canister_ids.group_index,
+            vec![canister_ids.openchat_installer],
+        ),
+        set_controllers(
+            management_canister,
+            &canister_ids.notifications_index,
+            vec![canister_ids.openchat_installer],
+        ),
         set_controllers(management_canister, &canister_ids.identity, controllers.clone()),
         set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
@@ -50,72 +63,93 @@ async fn install_service_canisters_impl(
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
-            vec![canister_ids.user_index],
+            vec![canister_ids.registry],
         ),
         set_controllers(
             management_canister,
             &canister_ids.local_group_index,
-            vec![canister_ids.group_index],
+            vec![canister_ids.registry],
         ),
-        set_controllers(
-            management_canister,
-            &canister_ids.notifications,
-            vec![canister_ids.notifications_index],
-        ),
+        set_controllers(management_canister, &canister_ids.notifications, vec![canister_ids.registry]),
     ])
     .await;
 
     let version = BuildVersion::min();
 
-    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
-    let user_index_init_args = user_index_canister::init::Args {
+    let openchat_installer_canister_wasm = get_canister_wasm(CanisterName::OpenChatInstaller, version);
+    let openchat_installer_init_args = openchat_installer_canister::init::Args {
         governance_principals: vec![principal],
+        upload_wasm_chunks_whitelist: Vec::new(),
+        user_index_canister_id: canister_ids.user_index,
         group_index_canister_id: canister_ids.group_index,
         notifications_index_canister_id: canister_ids.notifications_index,
         identity_canister_id: canister_ids.identity,
         proposals_bot_canister_id: canister_ids.proposals_bot,
         airdrop_bot_canister_id: canister_ids.airdrop_bot,
         online_users_canister_id: canister_ids.online_users,
-        storage_index_canister_id: canister_ids.storage_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        storage_index_canister_id: canister_ids.storage_index,
         escrow_canister_id: canister_ids.escrow,
         event_relay_canister_id: canister_ids.event_relay,
-        nns_governance_canister_id: canister_ids.nns_governance,
-        internet_identity_canister_id: canister_ids.nns_internet_identity,
+        registry_canister_id: canister_ids.registry,
         translations_canister_id: canister_ids.translations,
         website_canister_id: canister_ids.website,
-        video_call_operators: video_call_operators.clone(),
-        ic_root_key: agent.read_root_key(),
-        wasm_version: version,
-        test_mode,
-    };
-
-    let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version);
-    let group_index_init_args = group_index_canister::init::Args {
-        governance_principals: vec![principal],
-        user_index_canister_id: canister_ids.user_index,
-        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
-        proposals_bot_user_id: canister_ids.proposals_bot.into(),
-        escrow_canister_id: canister_ids.escrow,
-        event_relay_canister_id: canister_ids.event_relay,
+        nns_governance_canister_id: canister_ids.nns_governance,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
-        video_call_operators: video_call_operators.clone(),
         ic_root_key: agent.read_root_key(),
         wasm_version: version,
         test_mode,
     };
 
+    install_wasm(
+        management_canister,
+        &canister_ids.openchat_installer,
+        &openchat_installer_canister_wasm.module,
+        openchat_installer_init_args,
+    )
+    .await;
+
+    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
+    let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version);
     let notifications_index_canister_wasm = get_canister_wasm(CanisterName::NotificationsIndex, version);
-    let notifications_index_init_args = notifications_index_canister::init::Args {
-        governance_principals: vec![principal],
-        push_service_principals: vec![principal],
-        user_index_canister_id: canister_ids.user_index,
-        authorizers: vec![canister_ids.user_index, canister_ids.group_index],
-        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
-        notifications_canister_wasm: CanisterWasm::default(),
-        wasm_version: version,
-        test_mode,
-    };
+
+    futures::future::try_join_all([
+        openchat_installer_canister_client::upload_wasm_in_chunks(
+            agent,
+            &canister_ids.openchat_installer,
+            &user_index_canister_wasm.module,
+            openchat_installer_canister::CanisterType::UserIndex,
+        ),
+        openchat_installer_canister_client::upload_wasm_in_chunks(
+            agent,
+            &canister_ids.openchat_installer,
+            &group_index_canister_wasm.module,
+            openchat_installer_canister::CanisterType::GroupIndex,
+        ),
+        openchat_installer_canister_client::upload_wasm_in_chunks(
+            agent,
+            &canister_ids.openchat_installer,
+            &notifications_index_canister_wasm.module,
+            openchat_installer_canister::CanisterType::NotificationsIndex,
+        ),
+    ])
+    .await
+    .unwrap();
+
+    openchat_installer_canister_client::install_canisters(
+        agent,
+        &canister_ids.openchat_installer,
+        &openchat_installer_canister::install_canisters::Args {
+            user_index_wasm_hash: sha256(&user_index_canister_wasm.module),
+            group_index_wasm_hash: sha256(&group_index_canister_wasm.module),
+            notifications_index_wasm_hash: sha256(&notifications_index_canister_wasm.module),
+            video_call_operators: video_call_operators.clone(),
+            push_service_principals: vec![principal],
+            wasm_version: version,
+        },
+    )
+    .await
+    .unwrap();
 
     let identity_canister_wasm = get_canister_wasm(CanisterName::Identity, version);
     let identity_init_args = identity_canister::init::Args {
@@ -195,13 +229,11 @@ async fn install_service_canisters_impl(
             canister_ids.user_index,
             canister_ids.group_index,
             canister_ids.notifications_index,
-            canister_ids.local_user_index,
-            canister_ids.local_group_index,
-            canister_ids.notifications,
             canister_ids.online_users,
             canister_ids.proposals_bot,
             canister_ids.storage_index,
         ],
+        registry_canister_id: canister_ids.registry,
         max_top_up_amount: 20 * T,
         min_interval: 5 * 60 * 1000, // 5 minutes
         min_cycles_balance: 200 * T,
@@ -215,6 +247,9 @@ async fn install_service_canisters_impl(
     let registry_canister_wasm = get_canister_wasm(CanisterName::Registry, version);
     let registry_init_args = registry_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
+        group_index_canister_id: canister_ids.group_index,
+        notifications_index_canister_id: canister_ids.notifications_index,
+        event_relay_canister_id: canister_ids.event_relay,
         governance_principals: vec![principal],
         proposals_bot_canister_id: canister_ids.proposals_bot,
         nns_ledger_canister_id: canister_ids.nns_ledger,
@@ -222,7 +257,9 @@ async fn install_service_canisters_impl(
         nns_root_canister_id: canister_ids.nns_root,
         sns_wasm_canister_id: canister_ids.nns_sns_wasm,
         nns_index_canister_id: canister_ids.nns_index,
+        escrow_canister_id: canister_ids.escrow,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        cycles_minting_canister_id: canister_ids.nns_cmc,
         wasm_version: version,
         test_mode,
     };
@@ -250,6 +287,7 @@ async fn install_service_canisters_impl(
 
     let escrow_canister_wasm = get_canister_wasm(CanisterName::Escrow, version);
     let escrow_init_args = escrow_canister::init::Args {
+        registry_canister_id: canister_ids.registry,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
@@ -265,6 +303,7 @@ async fn install_service_canisters_impl(
         ],
         event_store_canister_id: canister_ids.event_store,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        registry_canister_id: canister_ids.registry,
         chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
         chat_governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
         wasm_version: version,
@@ -312,24 +351,6 @@ async fn install_service_canisters_impl(
     futures::future::join5(
         install_wasm(
             management_canister,
-            &canister_ids.user_index,
-            &user_index_canister_wasm.module,
-            user_index_init_args,
-        ),
-        install_wasm(
-            management_canister,
-            &canister_ids.group_index,
-            &group_index_canister_wasm.module,
-            group_index_init_args,
-        ),
-        install_wasm(
-            management_canister,
-            &canister_ids.notifications_index,
-            &notifications_index_canister_wasm.module,
-            notifications_index_init_args,
-        ),
-        install_wasm(
-            management_canister,
             &canister_ids.identity,
             &identity_canister_wasm.module,
             identity_init_args,
@@ -340,10 +361,6 @@ async fn install_service_canisters_impl(
             &online_users_canister_wasm.module,
             online_users_init_args,
         ),
-    )
-    .await;
-
-    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.proposals_bot,
@@ -362,6 +379,10 @@ async fn install_service_canisters_impl(
             &cycles_dispenser_canister_wasm.module,
             cycles_dispenser_init_args,
         ),
+    )
+    .await;
+
+    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.registry,
@@ -374,10 +395,6 @@ async fn install_service_canisters_impl(
             &market_maker_canister_wasm.module,
             market_maker_init_args,
         ),
-    )
-    .await;
-
-    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.neuron_controller,
@@ -396,6 +413,10 @@ async fn install_service_canisters_impl(
             &translations_canister_wasm.module,
             translations_init_args,
         ),
+    )
+    .await;
+
+    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.event_relay,
@@ -408,10 +429,6 @@ async fn install_service_canisters_impl(
             &event_store_canister_wasm.module,
             event_store_init_args,
         ),
-    )
-    .await;
-
-    futures::future::join4(
         install_wasm(
             management_canister,
             &canister_ids.sign_in_with_email,
@@ -430,12 +447,14 @@ async fn install_service_canisters_impl(
             &sign_in_with_solana_wasm.module,
             sign_in_with_solana_init_args,
         ),
-        install_wasm(
-            management_canister,
-            &canister_ids.airdrop_bot,
-            &airdrop_bot_canister_wasm.module,
-            airdrop_bot_init_args,
-        ),
+    )
+    .await;
+
+    install_wasm(
+        management_canister,
+        &canister_ids.airdrop_bot,
+        &airdrop_bot_canister_wasm.module,
+        airdrop_bot_init_args,
     )
     .await;
 
@@ -544,59 +563,29 @@ async fn install_service_canisters_impl(
     .await
     .unwrap();
 
-    let add_local_group_index_canister_response = group_index_canister_client::add_local_group_index_canister(
+    registry_canister_client::expand_onto_subnet(
         agent,
-        &canister_ids.group_index,
-        &group_index_canister::add_local_group_index_canister::Args {
-            canister_id: canister_ids.local_group_index,
-            local_user_index_canister_id: canister_ids.local_user_index,
-            notifications_canister_id: canister_ids.notifications,
+        &canister_ids.registry,
+        &registry_canister::expand_onto_subnet::Args {
+            subnet_id: Principal::anonymous(),
+            local_user_index: Some(canister_ids.local_user_index),
+            local_group_index: Some(canister_ids.local_group_index),
+            notifications_canister: Some(canister_ids.notifications),
         },
     )
     .await
     .unwrap();
 
-    if !matches!(
-        add_local_group_index_canister_response,
-        group_index_canister::add_local_group_index_canister::Response::Success
-    ) {
-        panic!("{add_local_group_index_canister_response:?}");
-    }
+    for _ in 0..20 {
+        tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+        let registry_canister::subnets::Response::Success(subnets) =
+            registry_canister_client::subnets(agent, &canister_ids.registry, &registry_canister::subnets::Args {})
+                .await
+                .unwrap();
 
-    let add_local_user_index_canister_response = user_index_canister_client::add_local_user_index_canister(
-        agent,
-        &canister_ids.user_index,
-        &user_index_canister::add_local_user_index_canister::Args {
-            canister_id: canister_ids.local_user_index,
-            notifications_canister_id: canister_ids.notifications,
-        },
-    )
-    .await
-    .unwrap();
-
-    if !matches!(
-        add_local_user_index_canister_response,
-        user_index_canister::add_local_user_index_canister::Response::Success
-    ) {
-        panic!("{add_local_user_index_canister_response:?}");
-    }
-
-    let add_notifications_canister_response = notifications_index_canister_client::add_notifications_canister(
-        agent,
-        &canister_ids.notifications_index,
-        &notifications_index_canister::add_notifications_canister::Args {
-            canister_id: canister_ids.notifications,
-            authorizers: vec![canister_ids.local_user_index, canister_ids.local_group_index],
-        },
-    )
-    .await
-    .unwrap();
-
-    if !matches!(
-        add_notifications_canister_response,
-        notifications_index_canister::add_notifications_canister::Response::Success
-    ) {
-        panic!("{add_notifications_canister_response:?}");
+        if !subnets.is_empty() {
+            break;
+        }
     }
 
     println!("Canister wasms installed");

@@ -1,12 +1,10 @@
 use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
-use crate::model::new_joiner_rewards::{NewJoinerRewardMetrics, NewJoinerRewardStatus, NewJoinerRewards};
-use crate::new_joiner_rewards::process_new_joiner_reward;
-use crate::timer_job_types::{MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
 use crate::updates::c2c_freeze_group::freeze_group_impl;
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use canister_timer_jobs::TimerJobs;
+use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::Reader;
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
@@ -22,10 +20,10 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
-use principal_to_user_id_map::{deserialize_principal_to_user_id_map_from_heap, PrincipalToUserIdMap};
+use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
+use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, StableMemoryMap};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -33,10 +31,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles,
-    Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions,
-    GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, SlashCommandPermissions, TimestampMillis,
-    Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    AccessGateConfigInternal, Achievement, BotCaller, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId,
+    Cryptocurrency, Cycles, Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
+    GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, SlashCommandPermissions,
+    TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -48,7 +46,6 @@ mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
-mod new_joiner_rewards;
 mod queries;
 mod regular_jobs;
 mod timer_job_types;
@@ -240,17 +237,6 @@ impl RuntimeState {
 
         if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
             self.data.principal_to_user_id_map.insert(args.principal, args.user_id);
-            if let Some(new_joiner_rewards) = &mut self.data.new_joiner_rewards {
-                if let Ok(amount) = new_joiner_rewards.try_claim_user_reward(args.user_id, args.now) {
-                    ic_cdk::spawn(process_new_joiner_reward(
-                        self.env.canister_id(),
-                        args.user_id,
-                        Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
-                        amount,
-                        args.now,
-                    ));
-                }
-            }
         }
 
         result
@@ -347,6 +333,10 @@ impl RuntimeState {
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
         }
+        if !result.files.is_empty() {
+            let delete_files_job = DeleteFileReferencesJob { files: result.files };
+            delete_files_job.execute();
+        }
         for pending_transaction in result.final_prize_payments {
             self.data.timer_jobs.enqueue_job(
                 TimerJob::MakeTransfer(MakeTransferJob {
@@ -403,7 +393,6 @@ impl RuntimeState {
             messages_in_last_day,
             events_in_last_hour,
             events_in_last_day,
-            new_joiner_rewards: self.data.new_joiner_rewards.as_ref().map(|r| r.metrics()),
             frozen: self.data.is_frozen(),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
             community_being_imported_into: self
@@ -432,12 +421,46 @@ impl RuntimeState {
             },
         }
     }
+
+    pub fn verified_caller(&self, mut bot_context: Option<BotCaller>) -> CallerResult {
+        use CallerResult::*;
+
+        let caller = self.env.caller();
+
+        if caller == self.data.user_index_canister_id {
+            return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
+        }
+
+        let user_or_principal = bot_context.as_ref().map(|bc| bc.initiator.into()).unwrap_or(caller);
+
+        let Some(member) = self.data.get_member(user_or_principal) else {
+            return NotFound;
+        };
+
+        if member.suspended().value {
+            return Suspended;
+        }
+
+        if let Some(bot_context) = bot_context.take() {
+            if self.data.chat.bots.get(&bot_context.bot).is_some() {
+                Success(Caller::BotV2(bot_context))
+            } else {
+                NotFound
+            }
+        } else {
+            match member.user_type() {
+                UserType::User => Success(Caller::User(member.user_id())),
+                UserType::BotV2 => NotFound,
+                UserType::Bot => Success(Caller::Bot(member.user_id())),
+                UserType::OcControlledBot => Success(Caller::OCBot(member.user_id())),
+            }
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub chat: GroupChatCore,
-    #[serde(deserialize_with = "deserialize_principal_to_user_id_map_from_heap")]
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub group_index_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,
@@ -449,7 +472,6 @@ struct Data {
     pub internet_identity_canister_id: CanisterId,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
-    pub new_joiner_rewards: Option<NewJoinerRewards>,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -550,7 +572,6 @@ impl Data {
             test_mode,
             invite_code: None,
             invite_code_enabled: false,
-            new_joiner_rewards: None,
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
@@ -632,6 +653,7 @@ impl Data {
     pub fn remove_invitation(&mut self, caller: Principal, now: TimestampMillis) -> Option<UserInvitation> {
         self.principal_to_user_id_map
             .remove(&caller)
+            .map(|v| v.into_value())
             .and_then(|user_id| self.chat.invited_users.remove(&user_id, now))
     }
 
@@ -676,7 +698,7 @@ impl Data {
 
     pub fn remove_user(&mut self, user_id: UserId, principal: Option<Principal>) {
         if let Some(principal) = principal {
-            let user_id_removed = self.principal_to_user_id_map.remove(&principal);
+            let user_id_removed = self.principal_to_user_id_map.remove(&principal).map(|v| v.into_value());
             assert_eq!(user_id_removed, Some(user_id));
         }
 
@@ -701,20 +723,11 @@ impl Data {
 
         let group_permissions = member.role().permissions(&self.chat.permissions);
         let message_permissions = member.role().message_permissions(&self.chat.permissions.message_permissions);
-        let thread_permissions = self
-            .chat
-            .permissions
-            .thread_permissions
-            .as_ref()
-            .map_or(message_permissions.clone(), |thread_permissions| {
-                member.role().message_permissions(thread_permissions)
-            });
 
         Some(SlashCommandPermissions {
             community: HashSet::new(),
             chat: group_permissions,
             message: message_permissions,
-            thread: thread_permissions,
         })
     }
 }
@@ -740,7 +753,6 @@ pub struct Metrics {
     pub messages_in_last_day: u64,
     pub events_in_last_hour: u64,
     pub events_in_last_day: u64,
-    pub new_joiner_rewards: Option<NewJoinerRewardMetrics>,
     pub frozen: bool,
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub community_being_imported_into: Option<CommunityId>,
@@ -802,4 +814,10 @@ pub enum StartImportIntoCommunityResult {
 pub struct StartImportIntoCommunityResultSuccess {
     pub total_bytes: u64,
     pub transfers_required: HashMap<CanisterId, (u128, u128)>,
+}
+
+pub enum CallerResult {
+    Success(Caller),
+    NotFound,
+    Suspended,
 }

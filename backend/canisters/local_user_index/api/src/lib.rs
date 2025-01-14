@@ -2,10 +2,10 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
+    is_default, CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
     DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, NotifyChit, PhoneNumber,
     ReferralType, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User,
-    UserId, UserType,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType,
 };
 
 mod lifecycle;
@@ -24,7 +24,9 @@ pub enum UserIndexEvent {
     StorageUpgraded(StorageUpgraded),
     UserRegistered(UserRegistered),
     BotRegistered(BotRegistered),
-    SuperAdminStatusChanged(PlatformModeratorStatusChanged),
+    BotUpdated(BotUpdated),
+    PlatformOperatorStatusChanged(PlatformOperatorStatusChanged),
+    PlatformModeratorStatusChanged(PlatformModeratorStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
     UserUpgradeConcurrencyChanged(UserUpgradeConcurrencyChanged),
     UserSuspended(UserSuspended),
@@ -40,6 +42,7 @@ pub enum UserIndexEvent {
     NotifyUniquePersonProof(UserId, UniquePersonProof),
     AddCanisterToPool(CanisterId),
     ExternalAchievementAwarded(ExternalAchievementAwarded),
+    SyncExistingUser(UserDetailsFull),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -88,9 +91,22 @@ pub struct BotRegistered {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotUpdated {
+    pub user_id: UserId,
+    pub name: Option<String>,
+    pub commands: Option<Vec<SlashCommandSchema>>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PlatformOperatorStatusChanged {
+    pub user_id: UserId,
+    pub is_platform_operator: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlatformModeratorStatusChanged {
     pub user_id: UserId,
-    pub is_super_admin: bool,
+    pub is_platform_moderator: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -175,8 +191,12 @@ pub struct GlobalUser {
     pub user_id: UserId,
     pub principal: Principal,
     #[serde(default)]
+    pub is_platform_operator: bool,
+    #[serde(default)]
     pub is_platform_moderator: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub unique_person_proof: Option<UniquePersonProof>,
     #[serde(default)]
     pub user_type: UserType,
@@ -200,8 +220,30 @@ pub struct ExternalAchievementAwarded {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserDetailsFull {
+    #[serde(rename = "i")]
+    pub user_id: UserId,
+    #[serde(rename = "p")]
+    pub user_principal: Principal,
+    #[serde(rename = "n")]
+    pub username: String,
+    #[serde(rename = "t", default, skip_serializing_if = "is_default")]
+    pub user_type: UserType,
+    #[serde(rename = "r", skip_serializing_if = "Option::is_none")]
+    pub referred_by: Option<UserId>,
+    #[serde(rename = "m", default, skip_serializing_if = "is_default")]
+    pub is_platform_moderator: bool,
+    #[serde(rename = "d", skip_serializing_if = "Option::is_none")]
+    pub diamond_membership_expires_at: Option<TimestampMillis>,
+    #[serde(rename = "u", skip_serializing_if = "Option::is_none")]
+    pub unique_person_proof: Option<UniquePersonProof>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum UserEvent {
     NotifyChit(NotifyChit),
+    NotifyStreakInsurancePayment(UserCanisterStreakInsurancePayment),
+    NotifyStreakInsuranceClaim(UserCanisterStreakInsuranceClaim),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]

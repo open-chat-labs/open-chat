@@ -8,6 +8,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Add optional `placeholder` field to `SlashCommandSchema` ([#7172](https://github.com/open-chat-labs/open-chat/pull/7172))
+- Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
+- Use typed command in `BotCommandClaims` ([#7113](https://github.com/open-chat-labs/open-chat/pull/7113))
+- Sync platform operators to LocalUserIndexes ([#7210](https://github.com/open-chat-labs/open-chat/pull/7210))
+
+## [[2.0.1547](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1547-local_user_index)] - 2025-01-06
+
+### Changed
+
+- Change bot cmd number param values from u16 to f64 ([#7095](https://github.com/open-chat-labs/open-chat/pull/7095))
+- Rename access token `parameters` to `command_args` ([#7104](https://github.com/open-chat-labs/open-chat/pull/7104))
+- Use `StringChat` in `BotCommandClaims` ([#7133](https://github.com/open-chat-labs/open-chat/pull/7133))
+- Handle bot name/definition update ([#7135](https://github.com/open-chat-labs/open-chat/pull/7135))
+
+### Fixes
+
+- Fix unit of claims expiry ([#7106](https://github.com/open-chat-labs/open-chat/pull/7106))
+- Sync full user details to new LocalUserIndexes ([#7153](https://github.com/open-chat-labs/open-chat/pull/7153))
+
+## [[2.0.1530](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1530-local_user_index)] - 2024-12-19
+
+### Added
+
+- Implement streak insurance ([#7036](https://github.com/open-chat-labs/open-chat/pull/7036))
+
+### Changed
+
+- Rename fields in access token & c2c_handle_bot_action::Args ([#7060](https://github.com/open-chat-labs/open-chat/pull/7060))
+- Handle installing large wasms onto new subnets ([#7078](https://github.com/open-chat-labs/open-chat/pull/7078))
+
+### Removed
+
+- Remove bot thread permissions ([#7071](https://github.com/open-chat-labs/open-chat/pull/7071))
+
+## [[2.0.1513](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1513-local_user_index)] - 2024-12-13
+
+### Added
+
+- Expose the cycles top-ups of User canisters ([#7053](https://github.com/open-chat-labs/open-chat/pull/7053))
+
+### Changed
+
 - Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
 - Use `summary` instead of `c2c_summary` so that `c2c_summary` can be removed ([#6988](https://github.com/open-chat-labs/open-chat/pull/6988))
 - Set the derivation origin when checking verifiable credentials ([#6703](https://github.com/open-chat-labs/open-chat/pull/6703))
@@ -15,6 +57,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Switch to using `PrincipalToStableMemoryMap` ([#7023](https://github.com/open-chat-labs/open-chat/pull/7023))
 - Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
 - Notify CHIT updates via LocalUserIndex ([#7033](https://github.com/open-chat-labs/open-chat/pull/7033))
+- Include the total cycles topped up ([#7056](https://github.com/open-chat-labs/open-chat/pull/7056))
 
 ### Fixes
 

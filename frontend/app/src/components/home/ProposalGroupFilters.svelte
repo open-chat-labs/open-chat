@@ -35,6 +35,7 @@
         cyclesDispenser: "proposal.cyclesDispenserAction",
         registry: "proposal.registryAction",
         neuronController: "proposal.neuronControllerAction",
+        openchatInstaller: "proposal.openchatInstallerAction",
     };
 
     const client = getContext<OpenChat>("client");
@@ -66,6 +67,8 @@
                 return "registry";
             } else if (id < 9000) {
                 return "neuronController";
+            } else if (id < 10000) {
+                return "openchatInstaller";
             } else {
                 return "unknown";
             }

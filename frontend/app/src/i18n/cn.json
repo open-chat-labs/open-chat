@@ -149,6 +149,16 @@
     "blockUserFailed": "无法加入黑名单",
     "blockUserSucceeded": "该用户已被加入黑名单",
     "bots": {
+        "add": {
+            "action": "登记",
+            "addBot": "添加机器人",
+            "choosePermissions": "权限",
+            "failure": "抱歉，我们无法添加该机器人",
+            "loadDefinition": "荷载定义",
+            "noPermissions": "无需特殊权限",
+            "permissionsInfo": "此机器人寻求以下权限。选择限制授予的权限将限制可用的命令。",
+            "title": "将机器人添加到社区"
+        },
         "builder": {
             "addAnother": "添加另一个",
             "addChoice": "添加选择",
@@ -165,17 +175,25 @@
             "commandNamePlaceholder": "输入命令名称",
             "commandPermissionsDesc": "描述此命令所需的权限",
             "commandPermissionsLabel": "命令权限",
+            "commandPlaceholderLabel": "命令占位符消息",
+            "commandPlaceholderPlaceholder": "未指定命令占位符消息",
+            "commandsLabel": "命令",
             "descLabel": "机器人描述",
             "descPlaceholder": "输入机器人描述",
             "endpointLabel": "机器人端点",
             "endpointRules": "必须是有效的来源或 canisterID",
             "errors": {
                 "alphaOnly": "只能包含字母数字和下划线",
+                "botNameInvalid": "此机器人名称无效",
                 "duplicateCommands": "机器人包含重复的命令",
+                "duplicateName": "该机器人名称已被占用",
                 "duplicateParams": "命令包含重复参数",
                 "endpoint": "端点必须是有效的来源或 canisterID",
                 "minLength": "必须至少包含 {n} 个字符",
-                "noCommands": "机器人必须至少包含一个命令"
+                "nameCheckError": "检查机器人名称时出错",
+                "noCommands": "机器人必须至少包含一个命令",
+                "owner": "您必须输入机器人的所有者",
+                "principal": "您必须输入有效的主体来识别机器人"
             },
             "iconLabel": "机器人图标",
             "maxLengthLabel": "最大长度",
@@ -190,6 +208,8 @@
             "namePlaceholder": "输入机器人名称",
             "nameRules": "必须是唯一的，并且仅包含字母数字字符和下划线",
             "optional": "选修的",
+            "ownerLabel": "机器人所有者",
+            "ownerRules": "该机器人的联系人是谁",
             "paramDescLabel": "参数说明",
             "paramDescPlaceholder": "输入参数描述",
             "paramLabel": "参数：{name}",
@@ -197,12 +217,16 @@
             "paramNamePlaceholder": "输入参数名称",
             "paramPlaceholderLabel": "参数占位符",
             "paramPlaceholderPlaceholder": "输入参数占位符",
+            "paramsLabel": "参数",
             "paramTypeLabel": "参数类型",
             "permSameAsMessage": "与消息权限相同",
             "permScopeChat": "聊天",
             "permScopeCommunity": "社区",
             "permScopeMessage": "信息",
             "permScopeThread": "线",
+            "principalLabel": "主要的",
+            "principalPlaceholder": "输入机器人主体",
+            "principalRules": "这将是链上机器人的 canisterID",
             "required": "必需参数",
             "requiredDesc": "这是命令的必需参数吗",
             "title": "构建机器人",
@@ -229,6 +253,20 @@
         },
         "diamond": {
             "desc": "发布链接解释钻石会员资格"
+        },
+        "edit": {
+            "failure": "抱歉，我们无法更新机器人权限",
+            "title": "更新机器人权限",
+            "updateBot": "更新机器人"
+        },
+        "events": {
+            "add": "机器人 **{botname}** 由 {username} 添加",
+            "remove": "机器人 **{botname}** 已被 {username} 移除",
+            "update": "机器人 **{botname}** 由 {username} 更新"
+        },
+        "explorer": {
+            "addBots": "添加机器人",
+            "loadMore": "加载更多..."
         },
         "failed": "抱歉，我们无法执行机器人命令",
         "faq": {
@@ -269,7 +307,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "移除机器人",
+            "removeFailed": "抱歉，我们无法移除该机器人",
+            "review": "审查机器人权限",
+            "view": "查看机器人详细信息"
+        },
         "matchingCommands": "匹配命令",
+        "member": {
+            "bots": "机器人",
+            "people": "人们"
+        },
         "poll": {
             "desc": "在当前聊天中创建投票"
         },
@@ -287,7 +335,15 @@
             }
         },
         "update_bot": {
-            "desc": "发起更新现有 OpenChat 机器人的提案"
+            "action": "更新",
+            "desc": "发起更新现有 OpenChat 机器人的提案",
+            "nobots": "只有已注册机器人的所有者才能更新机器人。您不是任何已注册机器人的所有者。",
+            "select": "选择您想要更新的机器人。",
+            "title": "更新机器人"
+        },
+        "view": {
+            "close": "关闭",
+            "title": "机器人详细信息"
         },
         "witch": {
             "desc": "召唤女巫"
@@ -1301,6 +1357,7 @@
         "noEligibleNeurons": "未找到符合条件的神经元",
         "noEligibleNeuronsMessage": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您想要投票的任何神经元。<br/><br/>您的 OpenChat 用户 ID 是：{userId}。<br/><br/>有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。",
         "notificationsAction": "通知索引操作",
+        "openchatInstallerAction": "OpenChat 安装程序操作",
         "proposalNotAceptingVotes": "此提案不接受投票 - 尝试重新加载页面",
         "proposalsBotAction": "提案机器人操作",
         "proposedBy": "提议者",

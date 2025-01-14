@@ -35,6 +35,7 @@ import type {
 } from "../community";
 import type { ChitEarned } from "../chit";
 import type { WalletConfig } from "../crypto";
+import type { BotGroupDetails, SlashCommandParamInstance, SlashCommandPermissions } from "../bots";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -48,6 +49,7 @@ export type MessageContent =
     | DeletedContent
     | BlockedContent
     | PlaceholderContent
+    | BotPlaceholderContent
     | PollContent
     | CryptocurrencyContent
     | GiphyContent
@@ -186,6 +188,10 @@ export type IndexRange = [number, number];
 
 export interface PlaceholderContent {
     kind: "placeholder_content";
+}
+
+export interface BotPlaceholderContent {
+    kind: "bot_placeholder_content";
 }
 
 export type CryptocurrencyDeposit = {
@@ -652,6 +658,16 @@ export type Message<T extends MessageContent = MessageContent> = {
     deleted: boolean;
     thread?: ThreadSummary;
     blockLevelMarkdown: boolean;
+    botContext?: BotMessageContext;
+};
+
+export type BotMessageContext = {
+    initiator: string;
+    command: {
+        name: string;
+        args: SlashCommandParamInstance[];
+    };
+    finalised: boolean;
 };
 
 export type ThreadSummary = {
@@ -767,7 +783,28 @@ export type ChatEvent =
     | UsersInvitedEvent
     | MembersAddedToDefaultChannel
     | EmptyEvent
-    | ExternalUrlUpdated;
+    | ExternalUrlUpdated
+    | BotAdded
+    | BotRemoved
+    | BotUpdated;
+
+export type BotAdded = {
+    kind: "bot_added";
+    userId: string;
+    addedBy: string;
+};
+
+export type BotRemoved = {
+    kind: "bot_removed";
+    userId: string;
+    removedBy: string;
+};
+
+export type BotUpdated = {
+    kind: "bot_updated";
+    userId: string;
+    updatedBy: string;
+};
 
 export type MembersAdded = {
     kind: "members_added";
@@ -1388,6 +1425,7 @@ export type GroupChatDetails = {
     pinnedMessages: Set<number>;
     rules: VersionedRules;
     timestamp: bigint;
+    bots: BotGroupDetails[];
 };
 
 /**
@@ -1410,6 +1448,7 @@ export type ChatSpecificState = {
     serverEvents: EventWrapper<ChatEvent>[];
     expandedDeletedMessages: Set<number>;
     expiredEventRanges: DRange;
+    bots: Map<string, SlashCommandPermissions>;
 };
 
 export type GroupChatDetailsUpdates = {
@@ -1422,6 +1461,8 @@ export type GroupChatDetailsUpdates = {
     rules?: VersionedRules;
     invitedUsers?: Set<string>;
     timestamp: bigint;
+    botsAddedOrUpdated: BotGroupDetails[];
+    botsRemoved: Set<string>;
 };
 
 export type ChatSummary = DirectChatSummary | MultiUserChat;
@@ -1763,7 +1804,12 @@ export type SendMessageResponse =
     | P2PSwapSetUpFailed
     | DuplicateMessageId
     | PinNumberFailures
-    | MessageThrottled;
+    | MessageThrottled
+    | MessageAlreadyExists;
+
+export type MessageAlreadyExists = {
+    kind: "message_already_exists";
+};
 
 export type SendMessageSuccess = {
     kind: "success";

@@ -9,16 +9,16 @@ use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
-use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
-use canister_timer_jobs::TimerJobs;
+use canister_timer_jobs::{Job, TimerJobs};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
-use model::chit::ChitEarnedEvents;
+use model::chit_earned_events::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use model::message_activity_events::MessageActivityEvents;
@@ -36,7 +36,7 @@ use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
     Cryptocurrency, Cycles, Document, Milliseconds, Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof,
-    UserId,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -130,15 +130,21 @@ impl RuntimeState {
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
         let mut next_event_expiry = None;
+        let mut files_to_delete = Vec::new();
         for chat in self.data.direct_chats.iter_mut() {
-            chat.events.remove_expired_events(now);
+            let result = chat.events.remove_expired_events(now);
             if let Some(expiry) = chat.events.next_event_expiry() {
                 if next_event_expiry.map_or(true, |current| expiry < current) {
                     next_event_expiry = Some(expiry);
                 }
             }
+            files_to_delete.extend(result.files);
         }
 
+        if !files_to_delete.is_empty() {
+            let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
+            delete_files_job.execute();
+        }
         self.data.next_event_expiry = next_event_expiry;
         if let Some(expiry) = self.data.next_event_expiry {
             self.data
@@ -151,6 +157,33 @@ impl RuntimeState {
         if canister_id != OPENCHAT_BOT_USER_ID.into() && canister_id != self.env.canister_id() {
             self.data.user_canister_events_queue.push(canister_id.into(), event);
         }
+    }
+
+    pub fn mark_streak_insurance_payment(&mut self, payment: UserCanisterStreakInsurancePayment) {
+        let user_id: UserId = self.env.canister_id().into();
+        self.data.streak.mark_streak_insurance_payment(payment.clone());
+        self.data.event_store_client.push(
+            EventBuilder::new("user_streak_insurance_payment", payment.timestamp)
+                .with_user(user_id.to_string(), true)
+                .with_source(user_id.to_string(), true)
+                .with_json_payload(&payment)
+                .build(),
+        );
+        self.data
+            .push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsurancePayment(payment));
+    }
+
+    pub fn mark_streak_insurance_claim(&mut self, claim: UserCanisterStreakInsuranceClaim) {
+        let user_id: UserId = self.env.canister_id().into();
+        self.data.event_store_client.push(
+            EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
+                .with_user(user_id.to_string(), true)
+                .with_source(user_id.to_string(), true)
+                .with_json_payload(&claim)
+                .build(),
+        );
+        self.data
+            .push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim));
     }
 
     pub fn is_empty_and_dormant(&self) -> bool {
@@ -200,7 +233,6 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
-                proposals_bot: self.data.proposals_bot_canister_id,
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
@@ -220,7 +252,6 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    pub proposals_bot_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
     pub test_mode: bool,
@@ -274,7 +305,6 @@ impl Data {
         local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
-        proposals_bot_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
         username: String,
@@ -293,7 +323,6 @@ impl Data {
             local_user_index_canister_id,
             group_index_canister_id,
             notifications_canister_id,
-            proposals_bot_canister_id,
             escrow_canister_id,
             avatar: Timestamped::default(),
             test_mode,
@@ -425,16 +454,18 @@ impl Data {
         }
     }
 
+    pub fn push_local_user_index_canister_event(&mut self, event: LocalUserIndexEvent) {
+        self.local_user_index_event_sync_queue
+            .push(self.local_user_index_canister_id, event);
+    }
+
     pub fn notify_user_index_of_chit(&mut self, now: TimestampMillis) {
-        self.local_user_index_event_sync_queue.push(
-            self.local_user_index_canister_id,
-            LocalUserIndexEvent::NotifyChit(NotifyChit {
-                timestamp: now,
-                chit_balance: self.chit_events.balance_for_month_by_timestamp(now),
-                streak: self.streak.days(now),
-                streak_ends: self.streak.ends(),
-            }),
-        );
+        self.push_local_user_index_canister_event(LocalUserIndexEvent::NotifyChit(NotifyChit {
+            timestamp: now,
+            chit_balance: self.chit_events.balance_for_month_by_timestamp(now),
+            streak: self.streak.days(now),
+            streak_ends: self.streak.ends(),
+        }))
     }
 
     pub fn push_message_activity(&mut self, event: MessageActivityEvent, now: TimestampMillis) {
@@ -481,7 +512,6 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
-    pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
 }

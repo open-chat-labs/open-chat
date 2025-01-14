@@ -11,8 +11,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 async-trait = { workspace = true }
-bot_api = { path = "../../../bots/api" }
-bot_c2c_client = { path = "../../../bots/c2c_client" }
+legacy_bot_api = { path = "../../../legacy_bots/api" }
+legacy_bot_c2c_client = { path = "../../../legacy_bots/c2c_client" }
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_client = { path = "../../../libraries/canister_client" }
@@ -59,9 +59,6 @@ nns_governance_canister = { path = "../../../external_canisters/nns_governance/a
 nns_governance_canister_c2c_client = { path = "../../../external_canisters/nns_governance/c2c_client" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
-num-traits = { workspace = true }
-proposals_bot_canister = { path = "../../proposals_bot/api" }
-proposals_bot_canister_c2c_client = { path = "../../proposals_bot/c2c_client" }
 rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }

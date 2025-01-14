@@ -52,7 +52,7 @@
     import InstallPrompt from "./home/InstallPrompt.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import { reviewingTranslations } from "../i18n/i18n";
-    import { bots as botsStore } from "./bots/botState";
+    import { trackMouseMovement } from "../utils/trace";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -117,11 +117,6 @@
     );
 
     $effect(() => {
-        // TODO - this will not be like this in the end but just for now ...
-        client.getBots(false).then((bots) => botsStore.set(bots));
-    });
-
-    $effect(() => {
         // subscribe to the rtl store so that we can set the overall page direction at the right time
         document.dir = $rtlStore ? "rtl" : "ltr";
     });
@@ -180,6 +175,7 @@
     function onUserLoggedIn(ev: Event) {
         if (ev instanceof UserLoggedIn) {
             broadcastLoggedInUser(ev.detail);
+            trackMouseMovement(ev.detail);
         }
     }
 

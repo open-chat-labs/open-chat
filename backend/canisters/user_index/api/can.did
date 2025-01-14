@@ -157,16 +157,46 @@ type DiamondMembershipFeesResponse = variant {
 
 type RegisterBotArgs = record {
     "principal" : principal;
-    owner: UserId;
-    name: text;
-    avatar: opt text;
-    endpoint: text;
-    description: text;
-    commands: vec SlashCommandSchema;
+    owner : UserId;
+    name : text;
+    avatar : opt text;
+    endpoint : text;
+    definition : BotDefinition;
 };
 
 type RegisterBotResponse = variant {
     Success;
+};
+
+type UpdateBotArgs = record {
+    bot_id : UserId;
+    owner : opt UserId;
+    name : opt text;
+    avatar : TextUpdate; // Image as a data URL
+    endpoint : opt text;
+    definition : opt BotDefinition;
+};
+
+type UpdateBotResponse = variant {
+    Success;
+    NameInvalid;
+    NameAlreadyExists;
+    AvatarInvalid;
+    EndpointInvalid;
+    BotNotFound;
+    BotSuspended;
+    NotAuthorised;
+    OwnerNotFound;
+    OwnerSuspended;
+    NewOwnerNotFound;
+    NewOwnerSuspended;
+    DescriptionTooLong;
+    TooManyCommands;
+};
+
+type BotDefinition = record {
+    description : text;
+    commands : vec SlashCommandSchema;
 };
 
 type RegisterExternalAchievementArgs = record {
@@ -259,21 +289,6 @@ type ChitUserBalance = record {
     balance : nat32;
 };
 
-type AddReferralCodesArgs = record {
-    referral_type : ReferralType;
-    codes : vec text;
-    expiry : opt TimestampMillis;
-};
-
-type ReferralType = variant {
-    BtcMiami;
-    User;
-};
-
-type AddReferralCodesResponse = variant {
-    Success;
-};
-
 type AwardExternalAchievementArgs = record {
     achievement_id : nat32;
     user_id : UserId;
@@ -314,9 +329,9 @@ service : {
     register_bot : (RegisterBotArgs) -> (RegisterBotResponse);
     register_external_achievement : (RegisterExternalAchievementArgs) -> (RegisterExternalAchievementResponse);
 
-    // Only callable by OC dev team dfx identity
-    add_referral_codes : (AddReferralCodesArgs) -> (AddReferralCodesResponse);
-
     // Only callable by whitelisted canisters
     award_external_achievement : (AwardExternalAchievementArgs) -> (AwardExternalAchievementResponse);
+
+    // Only callable by bot owner
+    update_bot : (UpdateBotArgs) -> (UpdateBotResponse);
 };

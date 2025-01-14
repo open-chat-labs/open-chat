@@ -24,7 +24,7 @@
     </h4>
     {#if group.description.length > 0}
         <div>
-            <Markdown text={group.description} />
+            <Markdown inline={false} text={group.description} />
         </div>
     {/if}
     <div class="pop">

@@ -137,7 +137,7 @@ fn p2p_swap_in_group_succeeds() {
     let user2 = client::register_user(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     client::ledger::happy_path::transfer(
         env,
@@ -369,7 +369,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
     let user2 = client::register_user(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     let original_chat_balance = 11_000_000_000;
 
@@ -558,6 +558,88 @@ fn deposit_refunded_if_swap_expires() {
         user2_event,
         |status| matches!(status, P2PSwapStatus::Expired(e) if e.token0_txn_out.is_some()),
     );
+}
+
+#[test_case(false)]
+#[test_case(true)]
+fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, user.user_id);
+
+    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), true, true);
+
+    client::ledger::happy_path::transfer(
+        env,
+        *controller,
+        canister_ids.icp_ledger,
+        Principal::from(user.user_id),
+        1_100_000_000,
+    );
+
+    let message_id = random_from_u128();
+
+    client::registry::set_token_enabled(
+        env,
+        user.principal,
+        canister_ids.registry,
+        &registry_canister::set_token_enabled::Args {
+            ledger_canister_id: if input_token { canister_ids.icp_ledger } else { canister_ids.chat_ledger },
+            enabled: false,
+        },
+    );
+
+    let send_message_response = client::user::send_message_with_transfer_to_group(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::send_message_with_transfer_to_group::Args {
+            group_id,
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
+                token0: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token0_amount: 1_000_000_000,
+                token1: Cryptocurrency::CHAT.try_into().unwrap(),
+                token1_amount: 10_000_000_000,
+                expires_in: DAY_IN_MS,
+                caption: None,
+            }),
+            sender_name: user.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            block_level_markdown: false,
+            correlation_id: 0,
+            rules_accepted: None,
+            message_filter_failed: None,
+            pin: None,
+        },
+    );
+
+    // Re-enable token so that other tests aren't affected
+    client::registry::set_token_enabled(
+        env,
+        user.principal,
+        canister_ids.registry,
+        &registry_canister::set_token_enabled::Args {
+            ledger_canister_id: if input_token { canister_ids.icp_ledger } else { canister_ids.chat_ledger },
+            enabled: true,
+        },
+    );
+
+    if let user_canister::send_message_with_transfer_to_group::Response::InvalidRequest(error) = send_message_response {
+        assert!(error.contains(if input_token { "Input" } else { "Output" }))
+    } else {
+        panic!("Unexpected response: {:?}", send_message_response);
+    }
 }
 
 pub(crate) fn verify_swap_status<F: FnOnce(&P2PSwapStatus) -> bool>(event: ChatEvent, predicate: F) {

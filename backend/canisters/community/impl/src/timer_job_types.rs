@@ -1,13 +1,15 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::import_groups::{finalize_group_import, mark_import_complete, process_channel_members};
+use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::updates::end_video_call::end_video_call_impl;
-use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
+use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_timer_jobs::Job;
 use chat_events::MessageContentInternal;
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
+use group_chat_core::AddResult;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
-use tracing::error;
+use tracing::{error, info};
 use types::{
     BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId,
 };
@@ -27,6 +29,7 @@ pub enum TimerJob {
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
+    JoinMembersToPublicChannel(JoinMembersToPublicChannelJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -137,6 +140,12 @@ pub struct MarkP2PSwapExpiredJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MarkVideoCallEndedJob(pub community_canister::end_video_call::Args);
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct JoinMembersToPublicChannelJob {
+    pub channel_id: ChannelId,
+    pub members: Vec<UserId>,
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         if can_borrow_state() {
@@ -157,6 +166,7 @@ impl Job for TimerJob {
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
+            TimerJob::JoinMembersToPublicChannel(job) => job.execute(),
         }
     }
 }
@@ -447,6 +457,59 @@ impl Job for MarkP2PSwapExpiredJob {
 
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
-        mutate_state(|state| end_video_call_impl(self.0, state));
+        let response = mutate_state(|state| end_video_call_impl(self.0.clone(), state));
+        if !matches!(response, community_canister::end_video_call::Response::Success) {
+            error!(?response, args = ?self.0, "Failed to mark video call ended");
+        }
+    }
+}
+
+impl Job for JoinMembersToPublicChannelJob {
+    fn execute(self) {
+        mutate_state(|state| self.execute_with_state(state))
+    }
+}
+
+impl JoinMembersToPublicChannelJob {
+    pub fn execute_with_state(mut self, state: &mut RuntimeState) {
+        let channel_id = self.channel_id;
+        if let Some(channel) = state.data.channels.get_mut(&channel_id) {
+            if !channel.chat.is_public.value || channel.chat.gate_config.is_some() {
+                return;
+            }
+
+            let mut users_added = Vec::new();
+            let now = state.env.now();
+            while let Some(user_id) = self.members.pop() {
+                if let Some(member) = state.data.members.get_by_user_id(&user_id) {
+                    let result = join_channel_unchecked(
+                        user_id,
+                        member.user_type,
+                        channel,
+                        &mut state.data.members,
+                        state.data.is_public.value,
+                        false,
+                        now,
+                    );
+                    if matches!(result, AddResult::Success(_)) {
+                        users_added.push(user_id);
+                        if users_added.len() % 100 == 0 && ic_cdk::api::instruction_counter() > 2_000_000_000 {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            info!("Joined {} members to channel {channel_id}", users_added.len());
+
+            channel.chat.events.mark_members_added_to_public_channel(users_added, now);
+
+            if !self.members.is_empty() {
+                state
+                    .data
+                    .timer_jobs
+                    .enqueue_job(TimerJob::JoinMembersToPublicChannel(self), now, now);
+            }
+        }
     }
 }

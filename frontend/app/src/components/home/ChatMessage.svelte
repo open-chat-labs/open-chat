@@ -22,6 +22,7 @@
         currentCommunityMembers as communityMembers,
         currentChatMembersMap as chatMembersMap,
         currentChatBlockedUsers,
+        type BotMessageContext as BotMessageContextType,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -63,6 +64,8 @@
     import WithRole from "./profile/WithRole.svelte";
     import RoleIcon from "./profile/RoleIcon.svelte";
     import Badges from "./profile/Badges.svelte";
+    import BotMessageContext from "../bots/BotMessageContext.svelte";
+    import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -99,6 +102,7 @@
     export let dateFormatter: (date: Date) => string = (date) => client.toShortTimeString(date);
     export let collapsed: boolean = false;
     export let threadRootMessage: Message | undefined;
+    export let botContext: BotMessageContextType | undefined;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -120,6 +124,7 @@
     let percentageExpired = 100;
     let mediaCalculatedHeight = undefined as number | undefined;
     let msgBubbleCalculatedWidth = undefined as number | undefined;
+    let botProfile: BotProfileProps | undefined = undefined;
 
     $: maxWidthFraction = $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8;
     $: canTip = !me && confirmed && !inert && !failed;
@@ -158,6 +163,7 @@
         msg.content.kind === "deleted_content" &&
         Number(msg.content.timestamp) < $now - 5 * 60 * 1000;
     $: canRevealDeleted = deletedByMe && !undeleting && !permanentlyDeleted;
+    $: edited = msg.edited && !botContext?.finalised;
 
     onMount(() => {
         if (!readByMe) {
@@ -337,12 +343,25 @@
     }
 
     function openUserProfile(ev: Event) {
-        ev.target?.dispatchEvent(
-            new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-                detail: { userId: msg.sender, chatButton: multiUserChat, inGlobalContext: false },
-                bubbles: true,
-            }),
-        );
+        if (sender?.kind === "bot") {
+            console.log("let's show the bot profile");
+            botProfile = {
+                botId: sender.userId,
+                chatId,
+                onClose: () => (botProfile = undefined),
+            };
+        } else {
+            ev.target?.dispatchEvent(
+                new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+                    detail: {
+                        userId: msg.sender,
+                        chatButton: multiUserChat,
+                        inGlobalContext: false,
+                    },
+                    bubbles: true,
+                }),
+            );
+        }
     }
 
     function registerVote(ev: CustomEvent<{ answerIndex: number; type: "register" | "delete" }>) {
@@ -378,6 +397,10 @@
 </script>
 
 <svelte:window on:resize={recalculateMediaDimensions} />
+
+{#if botProfile !== undefined}
+    <BotProfile {...botProfile} />
+{/if}
 
 {#if tipping !== undefined}
     <TipBuilder
@@ -429,6 +452,11 @@
 
 {#if expiresAt === undefined || percentageExpired < 100}
     <div out:fade|local={{ duration: 1000 }} class="message-wrapper" class:last>
+        {#if botContext !== undefined}
+            <div class="bot-context">
+                <BotMessageContext botName={senderDisplayName} {botContext} />
+            </div>
+        {/if}
         <IntersectionObserverComponent let:intersecting>
             <div
                 bind:this={msgElement}
@@ -472,6 +500,7 @@
                     class:readByMe
                     class:crypto
                     class:failed
+                    class:bot={botContext !== undefined}
                     class:p2pSwap={isP2PSwap}
                     class:proposal={isProposal && !inert}
                     class:thread={inThread}
@@ -548,7 +577,7 @@
                         messageId={msg.messageId}
                         myUserId={user.userId}
                         content={msg.content}
-                        edited={msg.edited}
+                        {edited}
                         height={mediaCalculatedHeight}
                         blockLevelMarkdown={msg.blockLevelMarkdown}
                         on:removePreview
@@ -591,6 +620,7 @@
                         <pre>timestamp: {timestamp}</pre>
                         <pre>expiresAt: {expiresAt}</pre>
                         <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
+                        <pre>botContext: {JSON.stringify(botContext, null, 4)}</pre>
                     {/if}
 
                     {#if showChatMenu && intersecting}
@@ -792,10 +822,22 @@
         }
     }
 
+    .bot-context {
+        display: flex;
+        margin-inline-start: $avatar-width;
+        margin-bottom: $sp2;
+        margin-top: $sp2;
+
+        @include mobile() {
+            margin-inline-start: $avatar-width-mob;
+        }
+    }
+
     .message {
         display: flex;
         justify-content: flex-start;
         margin-bottom: $sp2;
+        position: relative;
 
         .avatar-col {
             flex: 0 0 $avatar-width;

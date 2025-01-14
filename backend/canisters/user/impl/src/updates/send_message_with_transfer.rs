@@ -117,6 +117,7 @@ async fn send_message_with_transfer_to_channel(
             Response::UserLapsed => UserLapsed,
             Response::CommunityFrozen => CommunityFrozen,
             Response::RulesNotAccepted => RulesNotAccepted,
+            Response::MessageAlreadyExists => MessageAlreadyExists,
             Response::CommunityRulesNotAccepted => CommunityRulesNotAccepted,
             Response::MessageEmpty
             | Response::InvalidPoll(_)
@@ -239,6 +240,7 @@ async fn send_message_with_transfer_to_group(
             Response::UserLapsed => UserLapsed,
             Response::ChatFrozen => ChatFrozen,
             Response::RulesNotAccepted => RulesNotAccepted,
+            Response::MessageAlreadyExists => MessageAlreadyExists,
             Response::MessageEmpty
             | Response::InvalidPoll(_)
             | Response::NotAuthorized

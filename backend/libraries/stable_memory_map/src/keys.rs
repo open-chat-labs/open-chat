@@ -8,11 +8,13 @@ mod community_event;
 mod macros;
 mod member;
 mod principal_to_user_id;
+mod storage;
 
 pub use chat_event::*;
 pub use community_event::*;
 pub use member::*;
 pub use principal_to_user_id::*;
+pub use storage::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(transparent)]
@@ -56,15 +58,15 @@ impl BaseKeyPrefix {
     }
 }
 
-pub trait Key: Into<BaseKey> + TryFrom<BaseKey> + Clone {
-    type Prefix: KeyPrefix;
+pub trait Key: Into<BaseKey> + TryFrom<BaseKey> + Clone + AsRef<[u8]> {
+    type Prefix: KeyPrefix<Key = Self>;
 
     fn matches_prefix(&self, key: &Self::Prefix) -> bool;
 }
 
 pub trait KeyPrefix: Into<BaseKeyPrefix> + TryFrom<BaseKeyPrefix> + Clone {
-    type Key;
-    type Suffix;
+    type Key: Key<Prefix = Self>;
+    type Suffix: Clone;
 
     fn create_key(&self, value: &Self::Suffix) -> Self::Key;
 }
@@ -91,6 +93,10 @@ pub enum KeyType {
     CommunityMember = 9,
     CommunityEvent = 10,
     PrincipalToUserId = 11,
+    FileIdToFile = 12,
+    FileReferenceCount = 13,
+    FilesPerAccessor = 14,
+    UserStorageRecord = 15,
 }
 
 fn extract_key_type(bytes: &[u8]) -> Option<KeyType> {
@@ -113,6 +119,10 @@ impl TryFrom<u8> for KeyType {
             9 => Ok(KeyType::CommunityMember),
             10 => Ok(KeyType::CommunityEvent),
             11 => Ok(KeyType::PrincipalToUserId),
+            12 => Ok(KeyType::FileIdToFile),
+            13 => Ok(KeyType::FileReferenceCount),
+            14 => Ok(KeyType::FilesPerAccessor),
+            15 => Ok(KeyType::UserStorageRecord),
             _ => Err(()),
         }
     }

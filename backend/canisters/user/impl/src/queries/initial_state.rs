@@ -52,6 +52,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         chit_balance: state.data.chit_events.balance_for_month_by_timestamp(now),
         streak: state.data.streak.days(now),
         streak_ends: state.data.streak.ends(),
+        streak_insurance: state.data.streak.streak_insurance(now),
         next_daily_claim: if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
         is_unique_person: state.data.unique_person_proof.is_some(),
         wallet_config: state.data.wallet_config.value.clone(),

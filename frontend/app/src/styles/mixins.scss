@@ -260,6 +260,7 @@ $sp11: 192px;
 $z-indexed-items: (
     "global": (
         "login",
+        "error",
         "bubble-stem",
         "left-panel",
         "current-user",
@@ -560,4 +561,12 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     position: absolute;
     bottom: -2px;
     right: 2px;
+}
+
+@mixin clamp($lines: 2) {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

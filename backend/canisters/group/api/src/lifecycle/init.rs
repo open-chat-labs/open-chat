@@ -17,7 +17,6 @@ pub struct Args {
     pub permissions_v2: Option<GroupPermissions>,
     pub created_by_principal: Principal,
     pub created_by_user_id: UserId,
-    #[serde(default)]
     pub created_by_user_type: UserType,
     pub events_ttl: Option<Milliseconds>,
     pub mark_active_duration: Milliseconds,

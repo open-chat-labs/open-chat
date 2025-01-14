@@ -9,6 +9,7 @@ import type {
     JoinGroupResponse,
     MessageContext,
     RegisterUserResponse,
+    SlashCommandParamInstance,
     VerifiedCredentialArgs,
     VideoCallType,
 } from "openchat-shared";
@@ -28,14 +29,19 @@ import type {
     LocalUserIndexRegisterUserResponse,
     VerifiedCredentialGateArgs as TVerifiedCredentialGateArgs,
     VideoCallType as TVideoCallType,
+    BotCommandArg,
+    BotCommandArgValue,
 } from "../../typebox";
 import { CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
 import {
     bytesToHexString,
+    identity,
+    mapOptional,
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
 import {
+    apiChatIdentifier,
     communityChannelSummary,
     communitySummary,
     eventsSuccessResponse,
@@ -54,6 +60,51 @@ export function apiAccessTokenType(domain: AccessTokenType): TAccessTokenType {
                 StartVideoCallV2: {
                     call_type: apiCallType(domain.callType),
                 },
+            };
+        case "execute_bot_command":
+            return {
+                BotCommand: {
+                    user_id: principalStringToBytes(domain.userId),
+                    bot: principalStringToBytes(domain.botId),
+                    chat: apiChatIdentifier(domain.messageContext.chatId),
+                    thread_root_message_index: mapOptional(
+                        domain.messageContext.threadRootMessageIndex,
+                        identity,
+                    ),
+                    message_id: domain.messageId,
+                    command: {
+                        name: domain.commandName,
+                        args: domain.arguments.map(apiBotCommandArg),
+                    },
+                },
+            };
+    }
+}
+
+export function apiBotCommandArg(domain: SlashCommandParamInstance): BotCommandArg {
+    return {
+        name: domain.name,
+        value: apiBotCommandArgValue(domain),
+    };
+}
+
+export function apiBotCommandArgValue(domain: SlashCommandParamInstance): BotCommandArgValue {
+    switch (domain.kind) {
+        case "boolean":
+            return {
+                Boolean: domain.value!,
+            };
+        case "number":
+            return {
+                Number: domain.value!,
+            };
+        case "string":
+            return {
+                String: domain.value!,
+            };
+        case "user":
+            return {
+                User: principalStringToBytes(domain.userId!),
             };
     }
 }

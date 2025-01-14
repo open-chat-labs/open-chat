@@ -149,6 +149,16 @@
     "blockUserFailed": "לא ניתן לחסום משתמש",
     "blockUserSucceeded": "המשתמש נחסם",
     "bots": {
+        "add": {
+            "action": "לִרְשׁוֹם",
+            "addBot": "הוסף בוט",
+            "choosePermissions": "הרשאות",
+            "failure": "מצטערים שלא הצלחנו להוסיף את הבוט",
+            "loadDefinition": "הגדרת עומס",
+            "noPermissions": "אין צורך בהרשאות מיוחדות",
+            "permissionsInfo": "הבוט הזה מחפש את ההרשאות הבאות. בחירה להגביל את ההרשאות שניתנו תגביל את הפקודות הזמינות.",
+            "title": "הוסף בוט לקהילה"
+        },
         "builder": {
             "addAnother": "הוסף עוד אחד",
             "addChoice": "הוסף בחירה",
@@ -165,17 +175,25 @@
             "commandNamePlaceholder": "הזן את שם הפקודה",
             "commandPermissionsDesc": "תאר את ההרשאות שפקודה זו דורשת",
             "commandPermissionsLabel": "הרשאות פקודה",
+            "commandPlaceholderLabel": "הודעת מציין מיקום פקודה",
+            "commandPlaceholderPlaceholder": "הודעת מציין מיקום פקודה לא צוינה",
+            "commandsLabel": "פקודות",
             "descLabel": "תיאור הבוט",
             "descPlaceholder": "הזן את תיאור הבוט",
             "endpointLabel": "נקודת קצה של בוט",
             "endpointRules": "חייב להיות מקור חוקי או מזהה מיכל",
             "errors": {
                 "alphaOnly": "חייב להכיל רק אלפאנומריות וקווים תחתונים",
+                "botNameInvalid": "שם הבוט הזה לא חוקי",
                 "duplicateCommands": "הבוט מכיל פקודות כפולות",
+                "duplicateName": "שם הבוט הזה כבר תפוס",
                 "duplicateParams": "הפקודה מכילה פרמטרים כפולים",
                 "endpoint": "נקודת הקצה חייבת להיות מקור חוקי או מזהה מיכל",
                 "minLength": "חייב לכלול לפחות {n} תווים",
-                "noCommands": "בוט חייב להכיל לפחות פקודה אחת"
+                "nameCheckError": "אירעה שגיאה בבדיקת שם הבוט",
+                "noCommands": "בוט חייב להכיל לפחות פקודה אחת",
+                "owner": "עליך להזין בעלים עבור הבוט",
+                "principal": "עליך להזין מנהל תקף כדי לזהות את הבוט"
             },
             "iconLabel": "סמל בוט",
             "maxLengthLabel": "אורך מקסימלי",
@@ -190,6 +208,8 @@
             "namePlaceholder": "הזן את שם הבוט",
             "nameRules": "חייב להיות ייחודי ולהכיל תווים אלפאנומריים וקווים תחתונים בלבד",
             "optional": "אופציונלי",
+            "ownerLabel": "בעל בוט",
+            "ownerRules": "מיהו נקודת המגע של הבוט הזה",
             "paramDescLabel": "תיאור פרמטר",
             "paramDescPlaceholder": "הזן תיאור פרמטר",
             "paramLabel": "פראם: {name}",
@@ -197,12 +217,16 @@
             "paramNamePlaceholder": "הזן את שם הפרמטר",
             "paramPlaceholderLabel": "מציין מיקום של פרמטר",
             "paramPlaceholderPlaceholder": "הזן מציין מיקום של פרמטר",
+            "paramsLabel": "פרמטרים",
             "paramTypeLabel": "סוג פארם",
             "permSameAsMessage": "זהה להרשאות הודעות",
             "permScopeChat": "לְשׂוֹחֵחַ",
             "permScopeCommunity": "קהילה",
             "permScopeMessage": "הוֹדָעָה",
             "permScopeThread": "פְּתִיל",
+            "principalLabel": "קֶרֶן",
+            "principalPlaceholder": "הכנס למנהל הבוט",
+            "principalRules": "זה יהיה ה-canisterID עבור בוט onchain",
             "required": "פרמטר נדרש",
             "requiredDesc": "האם זה פרמטר נדרש עבור הפקודה",
             "title": "בנה בוט",
@@ -229,6 +253,20 @@
         },
         "diamond": {
             "desc": "פרסם קישור להסבר על חברות Diamond"
+        },
+        "edit": {
+            "failure": "מצטערים שלא הצלחנו לעדכן את הרשאות הבוט",
+            "title": "עדכן הרשאות בוט",
+            "updateBot": "עדכן את הבוט"
+        },
+        "events": {
+            "add": "בוט **{botname}** נוסף על ידי {username}",
+            "remove": "הבוט **{botname}** הוסר על ידי {username}",
+            "update": "בוט **{botname}** עודכן על ידי {username}"
+        },
+        "explorer": {
+            "addBots": "הוסף בוטים",
+            "loadMore": "טען עוד..."
         },
         "failed": "מצטערים, לא הצלחנו לבצע את פקודת הבוט",
         "faq": {
@@ -269,7 +307,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "הסר בוט",
+            "removeFailed": "מצטערים שלא הצלחנו להסיר את הבוט",
+            "review": "בדוק את הרשאות הבוט",
+            "view": "הצג את פרטי הבוט"
+        },
         "matchingCommands": "התאמת פקודות",
+        "member": {
+            "bots": "בוטים",
+            "people": "אֲנָשִׁים"
+        },
         "poll": {
             "desc": "צור סקר בצ'אט הנוכחי"
         },
@@ -287,7 +335,15 @@
             }
         },
         "update_bot": {
-            "desc": "התחל הצעה לעדכון בוט OpenChat קיים"
+            "action": "לְעַדְכֵּן",
+            "desc": "התחל הצעה לעדכון בוט OpenChat קיים",
+            "nobots": "רק הבעלים של בוט רשום יכול לעדכן את הבוט. אינך הבעלים של בוטים רשומים כלשהם.",
+            "select": "בחר את הבוט שברצונך לעדכן.",
+            "title": "עדכן את הבוט"
+        },
+        "view": {
+            "close": "לִסְגוֹר",
+            "title": "פרטי בוט"
         },
         "witch": {
             "desc": "לזמן את המכשפה"
@@ -1301,6 +1357,7 @@
         "noEligibleNeurons": "לא נמצאו נוירונים מתאימים",
         "noEligibleNeuronsMessage": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את מזהה המשתמש שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם.<br/><br/> מזהה המשתמש שלך ב-OpenChat הוא: {userId}.<br/><br/> למידע נוסף על הצבעה וממשל קרא <a target=\"_blank\" href=\"https://oc.app/blog/governance\">פוסט זה בבלוג</a> .",
         "notificationsAction": "פעולות אינדקס התראות",
+        "openchatInstallerAction": "פעולות מתקין OpenChat",
         "proposalNotAceptingVotes": "הצעה זו אינה מקבלת הצבעות - נסה לטעון מחדש את הדף",
         "proposalsBotAction": "הצעות פעולות בוט",
         "proposedBy": "הוצע על ידי",

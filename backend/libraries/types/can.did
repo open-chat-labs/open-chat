@@ -586,6 +586,7 @@ type Message = record {
     message_id : MessageId;
     sender : UserId;
     content : MessageContent;
+    bot_context : opt BotMessageContext;
     replies_to : opt ReplyContext;
     reactions : vec record { text; vec UserId };
     tips : vec record { CanisterId; vec record { UserId; nat } };
@@ -2085,6 +2086,7 @@ type ExchangeId = variant {
 type SlashCommandSchema = record {
     name : text;
     description : opt text;
+    placeholder : opt text;
     params : vec SlashCommandParam;
     permissions : SlashCommandPermissions;
 };
@@ -2116,21 +2118,20 @@ type StringParamChoice = record {
 };
 
 type NumberParam = record {
-    min_length : nat16;
-    max_length : nat16;
+    min_value : float64;
+    max_value : float64;
     choices : vec NumberParamChoice;
 };
 
 type NumberParamChoice = record {
     name : text;
-    value : nat16;
+    value : float64;
 };
 
 type SlashCommandPermissions = record {
     community: vec CommunityPermission;
     chat: vec GroupPermission;
     message: vec MessagePermission;
-    thread: vec MessagePermission;
 };
 
 type CommunityPermission = variant {
@@ -2176,5 +2177,29 @@ type BotGroupConfig = record {
 
 type BotGroupDetails = record {
     user_id : UserId;
+    added_by : UserId;
     permissions : SlashCommandPermissions;
-}
+};
+
+type BotMessageContext = record {
+    initiator : principal;
+    command : BotCommand;
+    finalised : bool;
+};
+
+type BotCommand = record {
+    name : text;
+    args : vec BotCommandArg;
+};
+
+type BotCommandArg = record {
+    name : text;
+    value : BotCommandArgValue;
+};
+
+type BotCommandArgValue = variant {
+    String : text;
+    Number : float64;
+    Boolean : bool;
+    User : UserId;
+};

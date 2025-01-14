@@ -27,7 +27,7 @@ fn cancel_invites_succeeds() {
     client::local_user_index::happy_path::invite_users_to_community(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         vec![user2.user_id, user3.user_id],
     );
@@ -36,7 +36,7 @@ fn cancel_invites_succeeds() {
 
     env.tick();
 
-    let community_details = client::community::happy_path::selected_initial(env, &user1, community_id);
+    let community_details = client::community::happy_path::selected_initial(env, user1.principal, community_id);
     assert_eq!(community_details.invited_users, vec![user3.user_id]);
 }
 
@@ -62,7 +62,7 @@ fn cancel_channel_invites_succeeds() {
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         channel_id,
         vec![user2.user_id, user3.user_id],
@@ -70,7 +70,7 @@ fn cancel_channel_invites_succeeds() {
 
     client::community::happy_path::cancel_invites(env, user1.principal, community_id, vec![user2.user_id], Some(channel_id));
 
-    let community_details = client::community::happy_path::selected_initial(env, &user1, community_id);
+    let community_details = client::community::happy_path::selected_initial(env, user1.principal, community_id);
     assert_eq!(
         community_details.invited_users.into_iter().sorted().collect_vec(),
         vec![user2.user_id, user3.user_id].into_iter().sorted().collect_vec()
@@ -103,7 +103,7 @@ fn cancelling_community_invites_cancels_all_channel_invites() {
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         channel1_id,
         vec![user2.user_id, user3.user_id],
@@ -112,7 +112,7 @@ fn cancelling_community_invites_cancels_all_channel_invites() {
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         channel2_id,
         vec![user2.user_id, user3.user_id],
@@ -120,7 +120,7 @@ fn cancelling_community_invites_cancels_all_channel_invites() {
 
     client::community::happy_path::cancel_invites(env, user1.principal, community_id, vec![user2.user_id], None);
 
-    let community_details = client::community::happy_path::selected_initial(env, &user1, community_id);
+    let community_details = client::community::happy_path::selected_initial(env, user1.principal, community_id);
     assert_eq!(community_details.invited_users, vec![user3.user_id]);
 
     let channel1_details = client::community::happy_path::selected_channel_initial(env, &user1, community_id, channel1_id);
@@ -150,18 +150,12 @@ fn cancel_invites_not_authorized() {
     client::local_user_index::happy_path::invite_users_to_community(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         vec![user2.user_id, user3.user_id],
     );
 
-    client::local_user_index::happy_path::join_community(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        None,
-    );
+    client::community::happy_path::join_community(env, user2.principal, community_id);
 
     let response = client::community::cancel_invites(
         env,
@@ -178,7 +172,7 @@ fn cancel_invites_not_authorized() {
         community_canister::cancel_invites::Response::NotAuthorized
     ));
 
-    let community_details = client::community::happy_path::selected_initial(env, &user2, community_id);
+    let community_details = client::community::happy_path::selected_initial(env, user2.principal, community_id);
     assert_eq!(community_details.invited_users, vec![user3.user_id]);
 }
 

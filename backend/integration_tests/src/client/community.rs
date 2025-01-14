@@ -8,6 +8,7 @@ pub const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(3);
 generate_msgpack_query_call!(channel_summary);
 generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
+generate_msgpack_query_call!(local_user_index);
 generate_msgpack_query_call!(search_channel);
 generate_msgpack_query_call!(selected_channel_initial);
 generate_msgpack_query_call!(selected_channel_updates_v2);
@@ -53,10 +54,10 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
-        AccessGate, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
-        CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse, GroupReplyContext,
-        GroupRole, MessageContentInitial, MessageId, MessageIndex, PollVotes, Reaction, Rules, SlashCommandPermissions,
-        TextContent, TimestampMillis, UserId, VoteOperation,
+        AccessGate, CanisterId, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
+        CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, Empty, EventIndex, EventsResponse,
+        GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex, PollVotes, Reaction, Rules,
+        SlashCommandPermissions, TextContent, TimestampMillis, UserId, VoteOperation,
     };
 
     pub fn create_channel(
@@ -124,6 +125,20 @@ pub mod happy_path {
             community_canister::create_channel::Response::Success(result) => result.channel_id,
             response => panic!("'create_channel' error: {response:?}"),
         }
+    }
+
+    pub fn join_community(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+    ) -> CommunityCanisterCommunitySummary {
+        let local_user_index = local_user_index(env, community_id);
+        crate::client::local_user_index::happy_path::join_community(env, sender, local_user_index, community_id, None)
+    }
+
+    pub fn join_channel(env: &mut PocketIc, sender: Principal, community_id: CommunityId, channel_id: ChannelId) {
+        let local_user_index = local_user_index(env, community_id);
+        crate::client::local_user_index::happy_path::join_channel(env, sender, local_user_index, community_id, channel_id);
     }
 
     pub fn leave_channel(env: &mut PocketIc, sender: Principal, community_id: CommunityId, channel_id: ChannelId) {
@@ -414,10 +429,10 @@ pub mod happy_path {
         }
     }
 
-    pub fn summary(env: &PocketIc, sender: &User, community_id: CommunityId) -> CommunityCanisterCommunitySummary {
+    pub fn summary(env: &PocketIc, sender: Principal, community_id: CommunityId) -> CommunityCanisterCommunitySummary {
         let response = super::summary(
             env,
-            sender.principal,
+            sender,
             community_id.into(),
             &community_canister::summary::Args {
                 on_behalf_of: None,
@@ -433,13 +448,13 @@ pub mod happy_path {
 
     pub fn summary_updates(
         env: &PocketIc,
-        sender: &User,
+        sender: Principal,
         community_id: CommunityId,
         updates_since: TimestampMillis,
     ) -> Option<CommunityCanisterCommunitySummaryUpdates> {
         match super::summary_updates(
             env,
-            sender.principal,
+            sender,
             community_id.into(),
             &community_canister::summary_updates::Args {
                 on_behalf_of: None,
@@ -455,12 +470,12 @@ pub mod happy_path {
 
     pub fn selected_initial(
         env: &PocketIc,
-        sender: &User,
+        sender: Principal,
         community_id: CommunityId,
     ) -> community_canister::selected_initial::SuccessResult {
         let response = super::selected_initial(
             env,
-            sender.principal,
+            sender,
             community_id.into(),
             &community_canister::selected_initial::Args { invite_code: None },
         );
@@ -741,5 +756,12 @@ pub mod happy_path {
             community_canister::update_bot::Response::Success => {}
             response => panic!("'update_bot' error: {response:?}"),
         }
+    }
+
+    pub fn local_user_index(env: &PocketIc, community_id: CommunityId) -> CanisterId {
+        let community_canister::local_user_index::Response::Success(local_user_index) =
+            super::local_user_index(env, Principal::anonymous(), community_id.into(), &Empty {});
+
+        local_user_index
     }
 }

@@ -20,9 +20,9 @@ use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
-    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
+    BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
+    CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, MessageContent, ReferralType,
+    TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
@@ -289,7 +289,6 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
-    #[serde(default)]
     pub bots: BotsMap,
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_index_canister_id: CanisterId,
@@ -300,7 +299,6 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
-    #[serde(default = "website_canister_id")]
     pub website_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
@@ -324,10 +322,6 @@ struct Data {
     pub cycles_balance_check_queue: VecDeque<UserId>,
 }
 
-fn website_canister_id() -> CanisterId {
-    CanisterId::from_text("6hsbt-vqaaa-aaaaf-aaafq-cai").unwrap()
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct FailedMessageUsers {
     pub sender: UserId,
@@ -344,7 +338,6 @@ pub struct UserToDelete {
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        user_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
@@ -364,7 +357,7 @@ impl Data {
         Data {
             local_users: LocalUserMap::default(),
             global_users: GlobalUserMap::default(),
-            child_canister_wasms: ChildCanisterWasms::new(vec![(ChildCanisterType::User, user_canister_wasm)]),
+            child_canister_wasms: ChildCanisterWasms::default(),
             user_index_canister_id,
             group_index_canister_id,
             identity_canister_id,

@@ -1,11 +1,12 @@
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
+use crate::model::streak_insurance_logs::StreakInsuranceLogs;
 use crate::model::user_map::UserMap;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use constants::{DAY_IN_MS, DEV_TEAM_DFX_PRINCIPAL};
+use constants::DAY_IN_MS;
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -18,9 +19,6 @@ use model::pending_modclub_submissions_queue::{PendingModclubSubmission, Pending
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
-use nns_governance_canister::types::manage_neuron::claim_or_refresh::By;
-use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
-use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use p256_key_pair::P256KeyPair;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -84,6 +82,10 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn is_caller_registry_canister(&self) -> bool {
+        self.env.caller() == self.data.registry_canister_id
+    }
+
     pub fn is_caller_local_user_index_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.local_index_map.get(&caller).is_some()
@@ -115,11 +117,6 @@ impl RuntimeState {
         } else {
             false
         }
-    }
-
-    pub fn is_caller_dev_team_dfx_principal(&self) -> bool {
-        let caller = self.env.caller();
-        caller == DEV_TEAM_DFX_PRINCIPAL
     }
 
     pub fn is_caller_modclub(&self) -> bool {
@@ -283,6 +280,7 @@ impl RuntimeState {
                 .map(|(c, h)| (*c, hex::encode(h)))
                 .collect(),
             stable_memory_sizes: memory::memory_sizes(),
+            streak_insurance_metrics: self.data.streak_insurance_logs.metrics(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -295,6 +293,7 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 translations: self.data.translations_canister_id,
                 event_relay: event_relay_canister_id,
+                registry: self.data.registry_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
                 website: self.data.website_canister_id,
             },
@@ -348,8 +347,8 @@ struct Data {
     pub storage_index_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
+    pub registry_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
-    #[serde(skip_deserializing, default = "storage_index_user_sync_queue")]
     pub storage_index_user_sync_queue: GroupedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub pending_payments_queue: PendingPaymentsQueue,
@@ -364,7 +363,6 @@ struct Data {
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
-    #[serde(default = "website_canister_id")]
     pub website_canister_id: CanisterId,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
@@ -384,14 +382,7 @@ struct Data {
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
-}
-
-fn storage_index_user_sync_queue() -> GroupedTimerJobQueue<StorageIndexUserConfigBatch> {
-    GroupedTimerJobQueue::new(1, false)
-}
-
-fn website_canister_id() -> CanisterId {
-    CanisterId::from_text("6hsbt-vqaaa-aaaaf-aaafq-cai").unwrap()
+    pub streak_insurance_logs: StreakInsuranceLogs,
 }
 
 impl Data {
@@ -408,6 +399,7 @@ impl Data {
         storage_index_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
+        registry_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         translations_canister_id: CanisterId,
@@ -433,6 +425,7 @@ impl Data {
             storage_index_canister_id,
             escrow_canister_id,
             translations_canister_id,
+            registry_canister_id,
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
@@ -468,6 +461,7 @@ impl Data {
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
+            streak_insurance_logs: StreakInsuranceLogs::default(),
         };
 
         // Register the ProposalsBot
@@ -502,26 +496,6 @@ impl Data {
             owner: self.nns_governance_canister_id,
             subaccount: Some(n.subaccount),
         })
-    }
-
-    pub fn refresh_nns_neuron(&self) {
-        if let Some(neuron_id) = self.nns_8_year_neuron.as_ref().map(|n| n.neuron_id) {
-            ic_cdk::spawn(refresh_nns_neuron_inner(self.nns_governance_canister_id, neuron_id));
-        }
-
-        async fn refresh_nns_neuron_inner(nns_governance_canister_id: CanisterId, neuron_id: u64) {
-            let _ = nns_governance_canister_c2c_client::manage_neuron(
-                nns_governance_canister_id,
-                &ManageNeuron {
-                    id: Some(NeuronId { id: neuron_id }),
-                    neuron_id_or_subaccount: None,
-                    command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
-                        by: Some(By::NeuronIdOrSubaccount(Empty {})),
-                    })),
-                },
-            )
-            .await;
-        }
     }
 
     pub fn chit_bands(&self, size: u32, year: u32, month: u8) -> BTreeMap<u32, u32> {
@@ -564,6 +538,7 @@ impl Default for Data {
             storage_index_canister_id: Principal::anonymous(),
             escrow_canister_id: Principal::anonymous(),
             translations_canister_id: Principal::anonymous(),
+            registry_canister_id: Principal::anonymous(),
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
             storage_index_user_sync_queue: GroupedTimerJobQueue::new(1, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
@@ -597,6 +572,7 @@ impl Default for Data {
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
+            streak_insurance_logs: StreakInsuranceLogs::default(),
         }
     }
 }
@@ -643,6 +619,7 @@ pub struct Metrics {
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub streak_insurance_metrics: StreakInsuranceMetrics,
     pub canister_ids: CanisterIds,
 }
 
@@ -709,6 +686,15 @@ pub struct DeletedUser {
     pub timestamp: TimestampMillis,
 }
 
+#[derive(Serialize, Debug, Default)]
+pub struct StreakInsuranceMetrics {
+    payments: u32,
+    payments_unique_users: u32,
+    claims: u32,
+    claims_unique_users: u32,
+    total_paid: u128,
+}
+
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
     pub group_index: CanisterId,
@@ -722,6 +708,7 @@ pub struct CanisterIds {
     pub escrow: CanisterId,
     pub translations: CanisterId,
     pub event_relay: CanisterId,
+    pub registry: CanisterId,
     pub internet_identity: CanisterId,
     pub website: CanisterId,
 }

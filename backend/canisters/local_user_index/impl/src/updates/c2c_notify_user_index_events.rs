@@ -3,7 +3,7 @@ use crate::{jobs, mutate_state, RuntimeState, UserEvent, UserToDelete};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
-use local_user_index_canister::UserIndexEvent;
+use local_user_index_canister::{UserIndexEvent, UserRegistered};
 use p256_key_pair::P256KeyPair;
 use std::cmp::min;
 use tracing::info;
@@ -73,26 +73,24 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                 })),
             );
         }
-        UserIndexEvent::UserRegistered(ev) => {
-            state.data.global_users.add(ev.user_principal, ev.user_id, ev.user_type);
-
-            if let Some(referred_by) = ev.referred_by {
-                if state.data.local_users.get(&referred_by).is_some() {
-                    state.push_event_to_user(
-                        referred_by,
-                        UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered {
-                            user_id: ev.user_id,
-                            username: ev.username,
-                        })),
-                    );
-                }
-            }
-        }
+        UserIndexEvent::UserRegistered(ev) => handle_user_registered(ev, state),
         UserIndexEvent::BotRegistered(ev) => {
-            state.data.bots.set(ev.user_principal, ev.user_id, ev.name, ev.commands);
+            state.data.bots.add(ev.user_principal, ev.user_id, ev.name, ev.commands);
         }
-        UserIndexEvent::SuperAdminStatusChanged(ev) => {
-            state.data.global_users.set_platform_moderator(ev.user_id, ev.is_super_admin);
+        UserIndexEvent::BotUpdated(ev) => {
+            state.data.bots.update(ev.user_id, ev.name, ev.commands);
+        }
+        UserIndexEvent::PlatformOperatorStatusChanged(ev) => {
+            state
+                .data
+                .global_users
+                .set_platform_operator(ev.user_id, ev.is_platform_operator);
+        }
+        UserIndexEvent::PlatformModeratorStatusChanged(ev) => {
+            state
+                .data
+                .global_users
+                .set_platform_moderator(ev.user_id, ev.is_platform_moderator);
         }
         UserIndexEvent::MaxConcurrentCanisterUpgradesChanged(ev) => {
             state.data.max_concurrent_canister_upgrades = ev.value;
@@ -208,6 +206,47 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                 UserEvent::ExternalAchievementAwarded(Box::new(ExternalAchievementAwarded {
                     name: ev.name,
                     chit_reward: ev.chit_reward,
+                })),
+            );
+        }
+        UserIndexEvent::SyncExistingUser(user) => {
+            handle_user_registered(
+                UserRegistered {
+                    user_id: user.user_id,
+                    user_principal: user.user_principal,
+                    username: user.username,
+                    user_type: user.user_type,
+                    referred_by: user.referred_by,
+                },
+                state,
+            );
+
+            if user.is_platform_moderator {
+                state.data.global_users.set_platform_moderator(user.user_id, true);
+            }
+            if let Some(expires_at) = user.diamond_membership_expires_at {
+                state
+                    .data
+                    .global_users
+                    .set_diamond_membership_expiry_date(user.user_id, expires_at);
+            }
+            if let Some(proof) = user.unique_person_proof {
+                state.data.global_users.insert_unique_person_proof(user.user_id, proof);
+            }
+        }
+    }
+}
+
+fn handle_user_registered(user: UserRegistered, state: &mut RuntimeState) {
+    state.data.global_users.add(user.user_principal, user.user_id, user.user_type);
+
+    if let Some(referred_by) = user.referred_by {
+        if state.data.local_users.get(&referred_by).is_some() {
+            state.push_event_to_user(
+                referred_by,
+                UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered {
+                    user_id: user.user_id,
+                    username: user.username,
                 })),
             );
         }

@@ -17,6 +17,8 @@ import {
     setCachedExternalAchievements,
     getActivityFeedEvents,
     setActivityFeedEvents,
+    getCachedBots,
+    setCachedBots,
 } from "../utils/caching";
 import { isMainnet } from "../utils/network";
 import { getAllUsers, clearCache as clearUserCache } from "../utils/userCache";
@@ -35,7 +37,7 @@ import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { RegistryClient } from "./registry/registry.client";
 import { DexesAgent } from "./dexes";
-import { chunk, distinctBy, toRecord } from "../utils/list";
+import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { measure } from "./common/profiling";
 import {
     buildBlobUrl,
@@ -223,6 +225,11 @@ import type {
     FreezeCommunityResponse,
     UnfreezeCommunityResponse,
     ChannelSummaryResponse,
+    ExploreBotsResponse,
+    ExternalBot,
+    SlashCommandPermissions,
+    BotsResponse,
+    BotDefinition,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -252,6 +259,7 @@ import {
 import { AnonUserClient } from "./user/anonUser.client";
 import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
 import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
+import { IcpSwapClient } from "./icpSwap/icpSwapClient";
 import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
 import { TranslationsClient } from "./translations/translations.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter";
@@ -267,6 +275,7 @@ import {
     clearCache as clearReferralCache,
     getCommunityReferral,
 } from "../utils/referralCache";
+import { mean } from "../utils/maths";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -284,7 +293,7 @@ export class OpenChatAgent extends EventTarget {
     private _ledgerIndexClients: Record<string, LedgerIndexClient>;
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
-    private _icpcoinsClient: IcpCoinsClient;
+    private _exchangeRateClients: ExchangeRateClient[];
     private _signInWithEmailClient: SignInWithEmailClient;
     private _signInWithEthereumClient: SignInWithEthereumClient;
     private _signInWithSolanaClient: SignInWithSolanaClient;
@@ -309,6 +318,7 @@ export class OpenChatAgent extends EventTarget {
             identity,
             this._agent,
             config.userIndexCanister,
+            config.blobUrlPattern,
         );
         this._groupIndexClient = new GroupIndexClient(
             identity,
@@ -337,7 +347,10 @@ export class OpenChatAgent extends EventTarget {
             config.blobUrlPattern,
         );
         this._dataClient = new DataClient(identity, this._agent, config);
-        this._icpcoinsClient = new IcpCoinsClient(identity, this._agent);
+        this._exchangeRateClients = [
+            new IcpCoinsClient(identity, this._agent),
+            new IcpSwapClient(identity, this._agent),
+        ];
         this.translationsClient = new TranslationsClient(
             identity,
             this._agent,
@@ -1416,6 +1429,15 @@ export class OpenChatAgent extends EventTarget {
 
     rehydrateUserSummary<T extends UserSummary>(userSummary: T): T {
         const ref = userSummary.blobReference;
+        if (userSummary.kind === "bot") {
+            return {
+                ...userSummary,
+                blobData: undefined,
+                blobUrl: `${this.config.blobUrlPattern
+                    .replace("{canisterId}", this.config.userIndexCanister)
+                    .replace("{blobType}", "avatar")}/${userSummary.userId}/${ref?.blobId}`,
+            };
+        }
         return {
             ...userSummary,
             blobData: undefined,
@@ -2102,10 +2124,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setModerationFlags(flags);
     }
 
-    checkUsername(username: string): Promise<CheckUsernameResponse> {
+    checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
         if (offline()) return Promise.resolve("offline");
 
-        return this._userIndexClient.checkUsername(username);
+        return this._userIndexClient.checkUsername(username, isBot);
     }
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
@@ -3325,6 +3347,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     submitProposal(
+        currentUserId: string,
         governanceCanisterId: string,
         proposal: CandidateProposal,
         ledger: string,
@@ -3334,7 +3357,8 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<SubmitProposalResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this.userClient.submitProposal(
+        return this._proposalsBotClient.submitProposal(
+            currentUserId,
             governanceCanisterId,
             proposal,
             ledger,
@@ -3514,10 +3538,36 @@ export class OpenChatAgent extends EventTarget {
         return this._registryClient.setTokenEnabled(ledger, enabled);
     }
 
-    exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
-        return isMainnet(this.config.icUrl)
-            ? this._icpcoinsClient.exchangeRates()
-            : Promise.resolve({});
+    async exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
+        const supportedTokens = this._registryValue?.tokenDetails;
+
+        if (supportedTokens === undefined || !isMainnet(this.config.icUrl)) {
+            return Promise.resolve({});
+        }
+
+        const exchangeRatesFromAllProviders = await Promise.allSettled(
+            this._exchangeRateClients.map((c) => c.exchangeRates(supportedTokens)),
+        );
+
+        const grouped: Record<string, TokenExchangeRates[]> = {};
+        for (const response of exchangeRatesFromAllProviders) {
+            if (response.status === "fulfilled") {
+                for (const [token, exchangeRates] of Object.entries(response.value)) {
+                    if (grouped[token] === undefined) {
+                        grouped[token] = [];
+                    }
+                    grouped[token].push(exchangeRates);
+                }
+            }
+        }
+
+        return toRecord2(
+            Object.entries(grouped),
+            ([token, _]) => token,
+            ([_, group]) => ({
+                toUSD: mean(group.map((e) => e.toUSD)),
+            }),
+        );
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {
@@ -3982,9 +4032,9 @@ export class OpenChatAgent extends EventTarget {
         ];
     }
 
-    deleteUser(userId: string): Promise<boolean> {
-        return this._userIndexClient.deleteUser(userId);
-    }
+    // deleteUser(userId: string): Promise<boolean> {
+    //     return this._userIndexClient.deleteUser(userId);
+    // }
 
     getChannelSummary(channelId: ChannelIdentifier): Promise<ChannelSummaryResponse> {
         return this.communityClient(channelId.communityId)
@@ -3996,4 +4046,107 @@ export class OpenChatAgent extends EventTarget {
                 return resp;
             });
     }
+
+    exploreBots(
+        searchTerm: string | undefined,
+        pageIndex: number,
+        pageSize: number,
+    ): Promise<ExploreBotsResponse> {
+        if (offline()) return Promise.resolve(CommonResponses.offline());
+
+        return this._userIndexClient.exploreBots(searchTerm, pageIndex, pageSize);
+    }
+
+    registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+        return this._userIndexClient.registerBot(principal, bot);
+    }
+
+    updateRegisteredBot(
+        id: string,
+        ownerId?: string,
+        name?: string,
+        avatarUrl?: string,
+        endpoint?: string,
+        definition?: BotDefinition,
+    ): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+        return this._userIndexClient.updateRegisteredBot(
+            id,
+            ownerId,
+            name,
+            avatarUrl,
+            endpoint,
+            definition,
+        );
+    }
+
+    addBot(
+        id: CommunityIdentifier | GroupChatIdentifier,
+        botId: string,
+        grantedPermissions: SlashCommandPermissions,
+    ): Promise<boolean> {
+        switch (id.kind) {
+            case "community":
+                return this.communityClient(id.communityId).addBot(botId, grantedPermissions);
+            case "group_chat":
+                return this.getGroupClient(id.groupId).addBot(botId, grantedPermissions);
+        }
+    }
+
+    updateInstalledBot(
+        id: CommunityIdentifier | GroupChatIdentifier,
+        botId: string,
+        grantedPermissions: SlashCommandPermissions,
+    ): Promise<boolean> {
+        switch (id.kind) {
+            case "community":
+                return this.communityClient(id.communityId).updateInstalledBot(
+                    botId,
+                    grantedPermissions,
+                );
+            case "group_chat":
+                return this.getGroupClient(id.groupId).updateInstalledBot(
+                    botId,
+                    grantedPermissions,
+                );
+        }
+    }
+
+    removeInstalledBot(
+        id: CommunityIdentifier | GroupChatIdentifier,
+        botId: string,
+    ): Promise<boolean> {
+        switch (id.kind) {
+            case "community":
+                return this.communityClient(id.communityId).removeInstalledBot(botId);
+            case "group_chat":
+                return this.getGroupClient(id.groupId).removeInstalledBot(botId);
+        }
+    }
+
+    getBots(initialLoad: boolean): Stream<BotsResponse> {
+        return new Stream(async (resolve, reject) => {
+            const cachedBots = await getCachedBots(this.db, this.principal);
+            const isOffline = offline();
+            if (cachedBots && initialLoad) {
+                resolve(cachedBots, isOffline);
+            }
+            if (!isOffline) {
+                try {
+                    const updates = await this._userIndexClient.getBots(cachedBots);
+                    setCachedBots(this.db, this.principal, updates);
+                    resolve(updates, true);
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        });
+    }
+}
+
+export interface ExchangeRateClient {
+    exchangeRates(
+        supportedTokens: CryptocurrencyDetails[],
+    ): Promise<Record<string, TokenExchangeRates>>;
 }

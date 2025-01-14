@@ -18,8 +18,14 @@ fn init(args: Args) {
         args.governance_principals.into_iter().collect(),
         args.proposals_bot_canister_id,
         args.user_index_canister_id,
+        args.group_index_canister_id,
+        args.notifications_index_canister_id,
+        args.event_relay_canister_id,
         args.sns_wasm_canister_id,
+        args.escrow_canister_id,
         args.cycles_dispenser_canister_id,
+        args.nns_ledger_canister_id,
+        args.cycles_minting_canister_id,
         args.test_mode,
     );
 

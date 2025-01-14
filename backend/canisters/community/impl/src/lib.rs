@@ -2,15 +2,15 @@ use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_i
 use crate::model::channels::Channels;
 use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
 use crate::model::members::CommunityMembers;
-use crate::timer_job_types::{MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use canister_timer_jobs::TimerJobs;
+use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, ChatMetricsInternal};
 use community_canister::add_members_to_channel::UserFailedError;
 use community_canister::EventsResponse;
-use constants::{MINUTE_IN_MS, SNS_LEDGER_CANISTER_ID};
+use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -37,10 +37,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotGroupConfig, BotRemoved, BotUpdated, BuildVersion,
-    CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions,
-    Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules,
-    SlashCommandPermissions, TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotRemoved, BotUpdated,
+    BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
+    CommunityPermissions, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, MembersAdded, Milliseconds, Notification,
+    Rules, SlashCommandPermissions, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -234,6 +234,7 @@ impl RuntimeState {
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
         let mut next_event_expiry = None;
+        let mut files_to_delete = Vec::new();
         let mut final_prize_payments = Vec::new();
         for channel in self.data.channels.iter_mut() {
             let result = channel.chat.remove_expired_events(now);
@@ -242,6 +243,7 @@ impl RuntimeState {
                     next_event_expiry = Some(expiry);
                 }
             }
+            files_to_delete.extend(result.files);
             final_prize_payments.extend(result.final_prize_payments);
             for thread in result.threads {
                 self.data.stable_memory_keys_to_garbage_collect.push(BaseKeyPrefix::from(
@@ -256,6 +258,10 @@ impl RuntimeState {
             self.data
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+        if !files_to_delete.is_empty() {
+            let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
+            delete_files_job.execute();
         }
         for pending_transaction in final_prize_payments {
             self.data.timer_jobs.enqueue_job(
@@ -310,6 +316,43 @@ impl RuntimeState {
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
                 internet_identity: self.data.internet_identity_canister_id,
             },
+        }
+    }
+
+    pub fn verified_caller(&self, mut bot_context: Option<BotCaller>) -> CallerResult {
+        use CallerResult::*;
+
+        let caller = self.env.caller();
+
+        if caller == self.data.user_index_canister_id {
+            return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
+        }
+
+        let user_or_principal = bot_context.as_ref().map(|bc| bc.initiator.into()).unwrap_or(caller);
+
+        let Some(member) = self.data.members.get(user_or_principal) else {
+            return NotFound;
+        };
+
+        if member.suspended().value {
+            return Suspended;
+        } else if member.lapsed().value {
+            return Lapsed;
+        }
+
+        if let Some(bot_context) = bot_context.take() {
+            if self.data.bots.get(&bot_context.bot).is_some() {
+                Success(Caller::BotV2(bot_context))
+            } else {
+                NotFound
+            }
+        } else {
+            match member.user_type {
+                UserType::User => Success(Caller::User(member.user_id)),
+                UserType::BotV2 => NotFound,
+                UserType::Bot => Success(Caller::Bot(member.user_id)),
+                UserType::OcControlledBot => Success(Caller::OCBot(member.user_id)),
+            }
         }
     }
 }
@@ -367,7 +410,6 @@ struct Data {
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
-    #[serde(default)]
     bots: GroupBots,
 }
 
@@ -776,7 +818,7 @@ impl Data {
     }
 
     pub fn add_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.add(user_id, bot_config, now) {
+        if !self.bots.add(user_id, owner_id, bot_config.permissions, now) {
             return false;
         }
 
@@ -795,7 +837,7 @@ impl Data {
     }
 
     pub fn update_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.update(user_id, bot_config, now) {
+        if !self.bots.update(user_id, bot_config.permissions, now) {
             return false;
         }
 
@@ -849,20 +891,11 @@ impl Data {
         let message_permissions = channel_member
             .role()
             .message_permissions(&channel.chat.permissions.message_permissions);
-        let thread_permissions = channel
-            .chat
-            .permissions
-            .thread_permissions
-            .as_ref()
-            .map_or(message_permissions.clone(), |thread_permissions| {
-                channel_member.role().message_permissions(thread_permissions)
-            });
 
         Some(SlashCommandPermissions {
             community: community_permissions,
             chat: channel_permissions,
             message: message_permissions,
-            thread: thread_permissions,
         })
     }
 }
@@ -915,4 +948,11 @@ pub struct AddUsersToChannelResult {
     pub users_added: Vec<UserId>,
     pub users_already_in_channel: Vec<UserId>,
     pub users_limit_reached: Vec<UserId>,
+}
+
+pub enum CallerResult {
+    Success(Caller),
+    NotFound,
+    Suspended,
+    Lapsed,
 }

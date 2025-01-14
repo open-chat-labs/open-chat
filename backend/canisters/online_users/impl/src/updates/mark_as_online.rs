@@ -4,6 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use online_users_canister::mark_as_online::{Response::*, *};
+use stable_memory_map::StableMemoryMap;
 use types::{CanisterId, UserId};
 
 #[update(msgpack = true)]

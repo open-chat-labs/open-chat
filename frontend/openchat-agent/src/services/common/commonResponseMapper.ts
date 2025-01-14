@@ -39,6 +39,8 @@ function mapCommonResponsesInner(value: CommonCanisterResponse, name: string): C
                 return "invalid";
             case "MessageNotFound":
                 return "message_not_found";
+            case "MessageAlreadyExists":
+                return "message_already_exists";
             case "NotAuthorized":
                 return "not_authorized";
             case "ThreadMessageNotFound":
@@ -82,6 +84,7 @@ export type CommonCanisterResponse =
     | "InternalError"
     | "Invalid"
     | "MessageNotFound"
+    | "MessageAlreadyExists"
     | "NotAuthorized"
     | "ThreadMessageNotFound"
     | "ThreadNotFound"
@@ -108,6 +111,7 @@ export type CommonResponse =
     | "internal_error"
     | "invalid"
     | "message_not_found"
+    | "message_already_exists"
     | "not_authorized"
     | "thread_message_not_found"
     | "thread_not_found"

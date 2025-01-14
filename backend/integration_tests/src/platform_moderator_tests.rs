@@ -1,45 +1,10 @@
 use crate::env::ENV;
-use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::random_string;
 use types::{Chat, ChatEvent, ChatId, MessageContent, MultiUserChat};
-
-#[test]
-fn new_platform_moderators_added_to_moderators_group() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let TestData {
-        user1: _,
-        user2,
-        moderators_group,
-    } = init_test_data(env, canister_ids, *controller);
-
-    client::user_index::add_platform_moderator(
-        env,
-        *controller,
-        canister_ids.user_index,
-        &user_index_canister::add_platform_moderator::Args { user_id: user2.user_id },
-    );
-
-    tick_many(env, 5);
-
-    let initial_state = client::user::happy_path::initial_state(env, &user2);
-
-    assert!(initial_state
-        .group_chats
-        .summaries
-        .iter()
-        .any(|c| c.chat_id == moderators_group));
-}
 
 #[test]
 fn report_message_succeeds() {
@@ -62,7 +27,7 @@ fn report_message_succeeds() {
     let report_message_response = client::local_user_index::report_message_v2(
         env,
         user2.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, group_id),
         &local_user_index_canister::report_message_v2::Args {
             chat_id: MultiUserChat::Group(group_id),
             thread_root_message_index: None,

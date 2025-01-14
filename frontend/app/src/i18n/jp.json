@@ -149,6 +149,16 @@
     "blockUserFailed": "ユーザーをブロックできませんでした",
     "blockUserSucceeded": "ユーザーはブロックされました",
     "bots": {
+        "add": {
+            "action": "登録する",
+            "addBot": "ボットを追加",
+            "choosePermissions": "権限",
+            "failure": "申し訳ありませんが、ボットを追加できませんでした",
+            "loadDefinition": "荷重定義",
+            "noPermissions": "特別な許可は必要ありません",
+            "permissionsInfo": "このボットは以下の権限を要求します。付与される権限を制限することを選択すると、使用可能なコマンドが制限されます。",
+            "title": "コミュニティにボットを追加する"
+        },
         "builder": {
             "addAnother": "追加する",
             "addChoice": "選択肢を追加",
@@ -165,17 +175,25 @@
             "commandNamePlaceholder": "コマンド名を入力",
             "commandPermissionsDesc": "このコマンドに必要な権限について説明します",
             "commandPermissionsLabel": "コマンド権限",
+            "commandPlaceholderLabel": "コマンドプレースホルダーメッセージ",
+            "commandPlaceholderPlaceholder": "コマンドプレースホルダーメッセージが指定されていません",
+            "commandsLabel": "コマンド",
             "descLabel": "ボットの説明",
             "descPlaceholder": "ボットの説明を入力してください",
             "endpointLabel": "ボットエンドポイント",
             "endpointRules": "有効なオリジンまたはキャニスターIDである必要があります",
             "errors": {
                 "alphaOnly": "英数字とアンダースコアのみを含める必要があります",
+                "botNameInvalid": "このボット名は無効です",
                 "duplicateCommands": "ボットに重複したコマンドが含まれています",
+                "duplicateName": "そのボット名はすでに使用されています",
                 "duplicateParams": "コマンドに重複したパラメータが含まれています",
                 "endpoint": "エンドポイントは有効なオリジンまたはキャニスターIDである必要があります",
                 "minLength": "少なくとも {n} 文字が必要です",
-                "noCommands": "ボットには少なくとも1つのコマンドが含まれている必要があります"
+                "nameCheckError": "ボット名の確認中にエラーが発生しました",
+                "noCommands": "ボットには少なくとも1つのコマンドが含まれている必要があります",
+                "owner": "ボットの所有者を入力する必要があります",
+                "principal": "ボットを識別するには有効なプリンシパルを入力する必要があります"
             },
             "iconLabel": "ボットアイコン",
             "maxLengthLabel": "最大長",
@@ -190,6 +208,8 @@
             "namePlaceholder": "ボット名を入力",
             "nameRules": "一意であり、英数字とアンダースコアのみを含む必要があります",
             "optional": "オプション",
+            "ownerLabel": "ボット所有者",
+            "ownerRules": "このボットの連絡先は誰ですか",
             "paramDescLabel": "パラメータの説明",
             "paramDescPlaceholder": "パラメータの説明を入力してください",
             "paramLabel": "パラメータ: {name}",
@@ -197,12 +217,16 @@
             "paramNamePlaceholder": "パラメータ名を入力してください",
             "paramPlaceholderLabel": "パラメータプレースホルダ",
             "paramPlaceholderPlaceholder": "パラメータプレースホルダを入力",
+            "paramsLabel": "パラメータ",
             "paramTypeLabel": "パラメータタイプ",
             "permSameAsMessage": "メッセージの権限と同じ",
             "permScopeChat": "チャット",
             "permScopeCommunity": "コミュニティ",
             "permScopeMessage": "メッセージ",
             "permScopeThread": "糸",
+            "principalLabel": "主要",
+            "principalPlaceholder": "ボットプリンシパルを入力",
+            "principalRules": "これはオンチェーンボットのcanisterIDになります",
             "required": "必須パラメータ",
             "requiredDesc": "これはコマンドの必須パラメータですか",
             "title": "ボットを構築する",
@@ -229,6 +253,20 @@
         },
         "diamond": {
             "desc": "ダイヤモンド会員資格を説明するリンクを投稿する"
+        },
+        "edit": {
+            "failure": "申し訳ありませんが、ボットの権限を更新できませんでした",
+            "title": "ボットの権限を更新する",
+            "updateBot": "ボットの更新"
+        },
+        "events": {
+            "add": "ボット **{botname}** が {username} によって追加されました",
+            "remove": "ボット **{botname}** は {username} によって削除されました",
+            "update": "ボット **{botname}** が {username} によって更新されました"
+        },
+        "explorer": {
+            "addBots": "ボットを追加",
+            "loadMore": "さらに読み込む..."
         },
         "failed": "申し訳ありませんが、ボットコマンドの実行に失敗しました",
         "faq": {
@@ -269,7 +307,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "ボットを削除",
+            "removeFailed": "申し訳ありませんが、ボットを削除できませんでした",
+            "review": "ボットの権限を確認する",
+            "view": "ボットの詳細を表示"
+        },
         "matchingCommands": "一致するコマンド",
+        "member": {
+            "bots": "ボット",
+            "people": "人々"
+        },
         "poll": {
             "desc": "現在のチャットでアンケートを作成する"
         },
@@ -287,7 +335,15 @@
             }
         },
         "update_bot": {
-            "desc": "既存のOpenChatボットを更新する提案を開始する"
+            "action": "アップデート",
+            "desc": "既存のOpenChatボットを更新する提案を開始する",
+            "nobots": "登録されたボットの所有者のみがボットを更新できます。あなたは登録されたボットの所有者ではありません。",
+            "select": "更新するボットを選択します。",
+            "title": "ボットの更新"
+        },
+        "view": {
+            "close": "近い",
+            "title": "ボットの詳細"
         },
         "witch": {
             "desc": "魔女を召喚する"
@@ -1301,6 +1357,7 @@
         "noEligibleNeurons": "適格なニューロンが見つかりません",
         "noEligibleNeuronsMessage": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat ユーザー ID をホットキーとして投票したいニューロンに追加する必要があります。<br/><br/>あなたの OpenChat ユーザー ID は: {userId} です。<br/><br/>投票とガバナンスの詳細については、<a target=\"_blank\" href=\"https://oc.app/blog/governance\">このブログ投稿を</a>参照してください。",
         "notificationsAction": "通知インデックス アクション",
+        "openchatInstallerAction": "OpenChatインストーラーアクション",
         "proposalNotAceptingVotes": "この提案は投票を受け付けていません-ページをリロードしてみてください",
         "proposalsBotAction": "提案ボット アクション",
         "proposedBy": "によって提案されました",

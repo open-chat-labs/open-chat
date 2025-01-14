@@ -33,6 +33,7 @@ fn register_user_with_duplicate_username_appends_suffix() {
     let user_count = 5usize;
     let mut user_ids = Vec::new();
     let mut first_user_principal = None;
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
 
     for _ in 0..user_count {
         let (principal, public_key) = random_delegated_principal(canister_ids.identity);
@@ -42,7 +43,7 @@ fn register_user_with_duplicate_username_appends_suffix() {
         let response = client::local_user_index::register_user(
             env,
             principal,
-            canister_ids.local_user_index,
+            local_user_index,
             &local_user_index_canister::register_user::Args {
                 username: username.clone(),
                 referral_code: None,

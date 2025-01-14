@@ -20,6 +20,10 @@ import type {
     SubmitProofOfUniquePersonhoodResponse,
     ChitLeaderboardResponse,
     ExternalAchievementsResponse,
+    ExploreBotsResponse,
+    ExternalBot,
+    BotsResponse,
+    BotDefinition,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -44,6 +48,9 @@ import {
     userSearchResponse,
     apiJsonDiamondDuration,
     externalAchievementsResponse,
+    exploreBotsResponse,
+    apiExternalBotCommand,
+    botUpdatesResponse,
 } from "./mappers";
 import {
     getCachedUsers,
@@ -62,21 +69,32 @@ import {
     setCachedCurrentUser,
     setCurrentUserDiamondStatusInCache,
 } from "../../utils/caching";
-import { mapOptional, principalBytesToString, principalStringToBytes } from "../../utils/mapping";
+import {
+    identity,
+    mapOptional,
+    principalBytesToString,
+    principalStringToBytes,
+} from "../../utils/mapping";
 import {
     Empty,
+    UserIndexBotUpdatesArgs,
+    UserIndexBotUpdatesResponse,
     UserIndexCheckUsernameArgs,
     UserIndexCheckUsernameResponse,
     UserIndexChitLeaderboardResponse,
     UserIndexCurrentUserResponse,
-    UserIndexDeleteUserArgs,
-    UserIndexDeleteUserResponse,
+    // UserIndexDeleteUserArgs,
+    // UserIndexDeleteUserResponse,
     UserIndexDiamondMembershipFeesResponse,
+    UserIndexExploreBotsArgs,
+    UserIndexExploreBotsResponse,
     UserIndexExternalAchievementsArgs,
     UserIndexExternalAchievementsResponse,
     UserIndexPayForDiamondMembershipArgs,
     UserIndexPayForDiamondMembershipResponse,
     UserIndexPlatformModeratorsGroupResponse,
+    UserIndexRegisterBotArgs,
+    UserIndexRegisterBotResponse,
     UserIndexReportedMessagesArgs,
     UserIndexReportedMessagesResponse,
     UserIndexSearchArgs,
@@ -97,6 +115,8 @@ import {
     UserIndexSuspendUserResponse,
     UserIndexUnsuspendUserArgs,
     UserIndexUnsuspendUserResponse,
+    UserIndexUpdateBotArgs,
+    UserIndexUpdateBotResponse,
     UserIndexUserRegistrationCanisterResponse,
     UserIndexUsersArgs,
     UserIndexUsersResponse,
@@ -104,7 +124,12 @@ import {
 import { apiToken } from "../common/chatMappersV2";
 
 export class UserIndexClient extends CandidService {
-    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+    constructor(
+        identity: Identity,
+        agent: HttpAgent,
+        canisterId: string,
+        private blobUrlPattern: string,
+    ) {
         super(identity, agent, canisterId);
     }
 
@@ -367,9 +392,10 @@ export class UserIndexClient extends CandidService {
         };
     }
 
-    checkUsername(username: string): Promise<CheckUsernameResponse> {
+    checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
         const args = {
             username: username,
+            is_bot: isBot,
         };
         return this.executeMsgpackQuery(
             "check_username",
@@ -581,13 +607,100 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    deleteUser(userId: string): Promise<boolean> {
+    // deleteUser(userId: string): Promise<boolean> {
+    //     return this.executeMsgpackUpdate(
+    //         "delete_user",
+    //         { user_id: principalStringToBytes(userId) },
+    //         (resp) => resp === "Success",
+    //         UserIndexDeleteUserArgs,
+    //         UserIndexDeleteUserResponse,
+    //     );
+    // }
+
+    exploreBots(
+        searchTerm: string | undefined,
+        pageIndex: number,
+        pageSize: number,
+    ): Promise<ExploreBotsResponse> {
+        console.log("Explore bots: ", searchTerm, pageIndex, pageSize);
+        return this.executeMsgpackQuery(
+            "explore_bots",
+            {
+                search_term: searchTerm,
+                page_index: pageIndex,
+                page_size: pageSize,
+            },
+            (resp) => exploreBotsResponse(resp, this.blobUrlPattern, this.canisterId),
+            UserIndexExploreBotsArgs,
+            UserIndexExploreBotsResponse,
+        );
+    }
+
+    registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
         return this.executeMsgpackUpdate(
-            "delete_user",
-            { user_id: principalStringToBytes(userId) },
-            (resp) => resp === "Success",
-            UserIndexDeleteUserArgs,
-            UserIndexDeleteUserResponse,
+            "register_bot",
+            {
+                principal: principalStringToBytes(principal),
+                owner: principalStringToBytes(bot.ownerId),
+                name: bot.name,
+                avatar: mapOptional(bot.avatarUrl, identity),
+                endpoint: bot.endpoint,
+                definition: {
+                    description: bot.definition.description ?? "",
+                    commands: bot.definition.commands.map(apiExternalBotCommand),
+                },
+            },
+            (resp) => {
+                console.log("UserIndex register bot response: ", resp);
+                return true;
+            },
+            UserIndexRegisterBotArgs,
+            UserIndexRegisterBotResponse,
+        );
+    }
+
+    updateRegisteredBot(
+        id: string,
+        ownerId?: string,
+        name?: string,
+        avatarUrl?: string,
+        endpoint?: string,
+        definition?: BotDefinition,
+    ): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_bot",
+            {
+                bot_id: principalStringToBytes(id),
+                owner: mapOptional(ownerId, principalStringToBytes),
+                name: mapOptional(name, identity),
+                avatar:
+                    mapOptional(avatarUrl, (url) => ({
+                        SetToSome: url,
+                    })) ?? "NoChange",
+                endpoint: mapOptional(endpoint, identity),
+                definition: mapOptional(definition, (d) => ({
+                    description: d.description,
+                    commands: d.commands.map(apiExternalBotCommand),
+                })),
+            },
+            (resp) => {
+                console.log("UserIndex update bot response: ", resp);
+                return true;
+            },
+            UserIndexUpdateBotArgs,
+            UserIndexUpdateBotResponse,
+        );
+    }
+
+    getBots(current: BotsResponse | undefined): Promise<BotsResponse> {
+        return this.executeMsgpackQuery(
+            "bot_updates",
+            {
+                updated_since: current?.timestamp ?? 0n,
+            },
+            (resp) => botUpdatesResponse(resp, current, this.blobUrlPattern, this.canisterId),
+            UserIndexBotUpdatesArgs,
+            UserIndexBotUpdatesResponse,
         );
     }
 }

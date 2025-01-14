@@ -59,13 +59,13 @@ fn mention_users_succeeds(mention_everyone: bool) {
         group_canister::send_message_v2::Response::Success(_)
     ));
 
-    let user2_summary = client::group::happy_path::summary(env, &user2, group_id);
+    let user2_summary = client::group::happy_path::summary(env, user2.principal, group_id);
     assert_eq!(user2_summary.mentions.len(), 1);
     let mention = user2_summary.mentions.first().unwrap();
     assert_eq!(mention.message_index, 0.into());
     assert_eq!(mention.message_id, message_id);
 
-    let user3_summary = client::group::happy_path::summary(env, &user3, group_id);
+    let user3_summary = client::group::happy_path::summary(env, user3.principal, group_id);
     assert_eq!(user3_summary.mentions.len(), 1);
     let mention = user3_summary.mentions.first().unwrap();
     assert_eq!(mention.message_index, 0.into());
@@ -135,7 +135,7 @@ fn mention_everyone_only_succeeds_if_authorized(authorized: bool) {
         group_canister::send_message_v2::Response::Success(_)
     ));
 
-    let user1_summary = client::group::happy_path::summary(env, &user1, group_id);
+    let user1_summary = client::group::happy_path::summary(env, user1.principal, group_id);
 
     if authorized {
         assert_eq!(user1_summary.mentions.len(), 1);
@@ -193,7 +193,7 @@ fn mentioned_in_thread_adds_user_as_follower() {
         },
     );
 
-    let summary = client::group::happy_path::summary(env, &user2, group_id);
+    let summary = client::group::happy_path::summary(env, user2.principal, group_id);
     assert_eq!(summary.mentions.len(), 1);
     assert_eq!(summary.latest_threads.len(), 1);
 }
@@ -207,8 +207,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 
     let group_id = client::user::happy_path::create_group(env, &user1, &group_name, true, true);
 
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
-    client::local_user_index::happy_path::join_group(env, user3.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
+    client::group::happy_path::join_group(env, user3.principal, group_id);
 
     TestData {
         user1,

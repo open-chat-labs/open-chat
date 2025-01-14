@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Join users to new channels in batches to handle large communities ([#7125](https://github.com/open-chat-labs/open-chat/pull/7125))
+- Log error if tip fails due to recipient mismatch ([#7151](https://github.com/open-chat-labs/open-chat/pull/7151))
+- Log response if `delete_channel` fails ([#7152](https://github.com/open-chat-labs/open-chat/pull/7152))
+- Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
+- When disappearing messages expire delete any linked files ([#7184](https://github.com/open-chat-labs/open-chat/pull/7184))
+- Use typed command in `BotCommandClaims` ([#7113](https://github.com/open-chat-labs/open-chat/pull/7113))
+
+### Fixed
+
+- Return correct `last_updated` date after importing group into community ([#7193](https://github.com/open-chat-labs/open-chat/pull/7193))
+
+## [[2.0.1540](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1540-community)] - 2024-12-19
+
+### Fixed
+
+- Fix community `RoleChanged` event deserialization ([#7098](https://github.com/open-chat-labs/open-chat/pull/7098))
+
+## [[2.0.1538](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1538-community)] - 2024-12-19
+
+### Changed
+
+- Log error if end video call job fails ([#7066](https://github.com/open-chat-labs/open-chat/pull/7066))
+- 2-stage bot messages + bot context in messages ([#7060](https://github.com/open-chat-labs/open-chat/pull/7060))
+
+### Removed
+
+- Remove bot thread permissions ([#7071](https://github.com/open-chat-labs/open-chat/pull/7071))
+
+### Fixed
+
+- Fix `RoleChanged` events which were serialized under the wrong name (part 2) ([#7059](https://github.com/open-chat-labs/open-chat/pull/7059))
+- Fix any long-running video calls that failed to be marked as ended ([#7068](https://github.com/open-chat-labs/open-chat/pull/7068))
+- Avoid case where prize claims could result in "duplicate transfer" error ([#7079](https://github.com/open-chat-labs/open-chat/pull/7079))
+
+## [[2.0.1515](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1515-community)] - 2024-12-13
+
 ### Added
 
 - Update community bot config ([#7018](https://github.com/open-chat-labs/open-chat/pull/7018))
@@ -21,10 +59,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Merge member Ids set with channel links map ([#7027](https://github.com/open-chat-labs/open-chat/pull/7027))
 - Implement new lightweight search index for searching messages ([#7029](https://github.com/open-chat-labs/open-chat/pull/7029))
 - Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
+- Record user who added bot to community/group ([#7035](https://github.com/open-chat-labs/open-chat/pull/7035))
+- Bot message visibility tied to initiating user ([#7044](https://github.com/open-chat-labs/open-chat/pull/7044))
 
 ### Removed
 
 - Remove code to migrate members and events to stable memory ([#7024](https://github.com/open-chat-labs/open-chat/pull/7024))
+
+### Fixed
+
+- Fix `RoleChanged` events which were serialized under the wrong name ([#7054](https://github.com/open-chat-labs/open-chat/pull/7054))
 
 ## [[2.0.1500](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1500-community)] - 2024-12-06
 

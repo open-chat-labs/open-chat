@@ -1,7 +1,8 @@
 import {
+    builtinBot,
     createParamInstancesFromSchema,
+    externalBots,
     paramInstanceIsValid,
-    type Bot,
     type BotCommandInstance,
     type FlattenedCommand,
     type MessageContext,
@@ -56,7 +57,6 @@ export const selectedCommand = writable<FlattenedCommand | undefined>(undefined)
 export const focusedCommandIndex = writable(0);
 export const selectedCommandParamInstances = writable<SlashCommandParamInstance[]>([]);
 export const showingBuilder = writable(false);
-export const bots = writable<Bot[]>([]);
 
 export const prefixParts = derived(prefix, (prefix) => parseCommand(prefix));
 export const maybeParams = derived(prefixParts, (prefixParts) => prefixParts.slice(1) ?? []);
@@ -64,35 +64,38 @@ export const parsedPrefix = derived(
     prefixParts,
     (prefixParts) => prefixParts[0]?.slice(1)?.toLocaleLowerCase() ?? "",
 );
+
+// TODO - we need to account for the context here to filter out any commands that are not permitted
 export const commands = derived(
-    [_, bots, selectedCommand, parsedPrefix, prefixParts],
-    ([$_, bots, selectedCommand, parsedPrefix, prefixParts]) => {
+    [_, externalBots, selectedCommand, parsedPrefix, prefixParts],
+    ([$_, externalBots, selectedCommand, parsedPrefix, prefixParts]) => {
+        const bots = [builtinBot, ...externalBots.values()];
         return bots.flatMap((b) => {
             switch (b.kind) {
                 case "external_bot":
-                    return b.commands
+                    return b.definition.commands
                         .map((c) => {
                             return {
                                 ...c,
                                 kind: b.kind,
                                 botName: b.name,
-                                botIcon: b.avatar,
+                                avatarUrl: b.avatarUrl,
                                 botId: b.id,
                                 botEndpoint: b.endpoint,
-                                botDescription: b.description,
+                                botDescription: b.definition.description,
                             };
                         })
                         .filter((c) =>
                             filterCommand($_, c, selectedCommand, parsedPrefix, prefixParts),
                         ) as FlattenedCommand[];
                 case "internal_bot":
-                    return b.commands
+                    return b.definition.commands
                         .map((c) => {
                             return {
                                 ...c,
                                 kind: b.kind,
                                 botName: b.name,
-                                botDescription: b.description,
+                                botDescription: b.definition.description,
                             };
                         })
                         .filter((c) =>
@@ -147,6 +150,7 @@ export function createBotInstance(
                     name: command.name,
                     messageContext: context,
                     params: get(selectedCommandParamInstances),
+                    placeholder: command.placeholder,
                 },
             };
         case "internal_bot":
@@ -161,8 +165,8 @@ export function createBotInstance(
     }
 }
 
-export function setSelectedCommand(cmd?: FlattenedCommand) {
-    cmd = cmd ?? get(commands)[get(focusedCommandIndex)];
+export function setSelectedCommand(commands: FlattenedCommand[], cmd?: FlattenedCommand) {
+    cmd = cmd ?? commands[get(focusedCommandIndex)];
 
     // make sure that we don't set the same command twice
     if (!commandsMatch(get(selectedCommand), cmd)) {

@@ -1,18 +1,19 @@
 use candid::Principal;
 use local_user_index_canister::GlobalUser;
-use principal_to_user_id_map::{deserialize_principal_to_user_id_map_from_heap, PrincipalToUserIdMap};
+use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::StableMemoryMap;
 use std::collections::{HashMap, HashSet};
 use types::{TimestampMillis, UniquePersonProof, UserId, UserType};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GlobalUserMap {
     user_id_to_principal: HashMap<UserId, Principal>,
-    #[serde(deserialize_with = "deserialize_principal_to_user_id_map_from_heap")]
     principal_to_user_id: PrincipalToUserIdMap,
     unique_person_proofs: HashMap<UserId, UniquePersonProof>,
+    #[serde(default)]
+    platform_operators: HashSet<UserId>,
     platform_moderators: HashSet<UserId>,
-    #[serde(alias = "bots")]
     legacy_bots: HashSet<UserId>,
     oc_controlled_bot_users: HashSet<UserId>,
     diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
@@ -29,6 +30,14 @@ impl GlobalUserMap {
             if user_type.is_oc_controlled_bot() {
                 self.oc_controlled_bot_users.insert(user_id);
             }
+        }
+    }
+
+    pub fn set_platform_operator(&mut self, user_id: UserId, is_platform_operator: bool) {
+        if is_platform_operator {
+            self.platform_operators.insert(user_id);
+        } else {
+            self.platform_operators.remove(&user_id);
         }
     }
 
@@ -70,7 +79,7 @@ impl GlobalUserMap {
     }
 
     pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
-        if let Some(user_id) = self.principal_to_user_id.remove(&old_principal) {
+        if let Some(user_id) = self.principal_to_user_id.remove(&old_principal).map(|v| v.into_value()) {
             self.principal_to_user_id.insert(new_principal, user_id);
             self.user_id_to_principal.insert(user_id, new_principal);
         }
@@ -126,6 +135,7 @@ impl GlobalUserMap {
         GlobalUser {
             user_id,
             principal,
+            is_platform_operator: self.platform_operators.contains(&user_id),
             is_platform_moderator: self.platform_moderators.contains(&user_id),
             diamond_membership_expires_at: self.diamond_membership_expiry_dates.get(&user_id).copied(),
             unique_person_proof: self.unique_person_proofs.get(&user_id).cloned(),

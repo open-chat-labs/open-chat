@@ -454,7 +454,7 @@ fn invited_users_pass_composite_gate_then_expire_later(container_type: Container
 fn has_user_lapsed(env: &mut PocketIc, user: &User, container: &Container) -> bool {
     match container {
         Container::Community(community_id) => {
-            let summary = client::community::happy_path::summary(env, user, *community_id);
+            let summary = client::community::happy_path::summary(env, user.principal, *community_id);
             summary.membership.map_or(false, |m| m.lapsed)
         }
         Container::Channel(community_id, channel_id) => {
@@ -462,7 +462,7 @@ fn has_user_lapsed(env: &mut PocketIc, user: &User, container: &Container) -> bo
             summary.membership.map_or(false, |m| m.lapsed)
         }
         Container::Group(group_id) => {
-            let summary = client::group::happy_path::summary(env, user, *group_id);
+            let summary = client::group::happy_path::summary(env, user.principal, *group_id);
             summary.membership.map_or(false, |m| m.lapsed)
         }
     }
@@ -482,76 +482,52 @@ fn join_container(
                 client::local_user_index::happy_path::invite_users_to_community(
                     env,
                     owner,
-                    canister_ids.local_user_index,
+                    canister_ids.local_user_index(env, *community_id),
                     *community_id,
                     vec![user.user_id],
                 );
             }
 
-            client::local_user_index::happy_path::join_community(
-                env,
-                user.principal,
-                canister_ids.local_user_index,
-                *community_id,
-                None,
-            );
+            client::community::happy_path::join_community(env, user.principal, *community_id);
         }
         Container::Channel(community_id, channel_id) => {
             if invite {
                 client::local_user_index::happy_path::invite_users_to_community(
                     env,
                     owner,
-                    canister_ids.local_user_index,
+                    canister_ids.local_user_index(env, *community_id),
                     *community_id,
                     vec![user.user_id],
                 );
 
-                client::local_user_index::happy_path::join_community(
-                    env,
-                    user.principal,
-                    canister_ids.local_user_index,
-                    *community_id,
-                    None,
-                );
+                client::community::happy_path::join_community(env, user.principal, *community_id);
             }
 
             if invite {
                 client::local_user_index::happy_path::invite_users_to_channel(
                     env,
                     owner,
-                    canister_ids.local_user_index,
+                    canister_ids.local_user_index(env, *community_id),
                     *community_id,
                     *channel_id,
                     vec![user.user_id],
                 );
             }
 
-            client::local_user_index::happy_path::join_channel(
-                env,
-                user.principal,
-                canister_ids.local_user_index,
-                *community_id,
-                *channel_id,
-            );
+            client::community::happy_path::join_channel(env, user.principal, *community_id, *channel_id);
         }
         Container::Group(group_id) => {
             if invite {
                 client::local_user_index::happy_path::invite_users_to_group(
                     env,
                     owner,
-                    canister_ids.local_user_index,
+                    canister_ids.local_user_index(env, *group_id),
                     *group_id,
                     vec![user.user_id],
                 );
             }
 
-            client::local_user_index::happy_path::join_group(
-                //
-                env,
-                user.principal,
-                canister_ids.local_user_index,
-                *group_id,
-            );
+            client::group::happy_path::join_group(env, user.principal, *group_id);
         }
     }
 }

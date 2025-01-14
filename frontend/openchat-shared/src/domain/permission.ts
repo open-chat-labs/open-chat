@@ -1,4 +1,5 @@
-import type { VideoCallType } from "./chat";
+import type { SlashCommandParamInstance } from "./bots";
+import type { MessageContext, VideoCallType } from "./chat";
 import type { OptionUpdate } from "./optionUpdate";
 
 export const allRoles = ["none", "owner", "admin", "moderator", "member"] as const;
@@ -159,7 +160,7 @@ export function defaultOptionalMessagePermissions(): OptionalMessagePermissions 
 
 export type PermissionsByRole = Record<ChatPermissionRole, Set<string>>;
 
-export type AccessTokenType = JoinVideoCall | StartVideoCall;
+export type AccessTokenType = JoinVideoCall | StartVideoCall | ExecuteBotCommand;
 
 export type JoinVideoCall = {
     kind: "join_video_call";
@@ -168,4 +169,14 @@ export type JoinVideoCall = {
 export type StartVideoCall = {
     kind: "start_video_call";
     callType: VideoCallType;
+};
+
+export type ExecuteBotCommand = {
+    kind: "execute_bot_command";
+    messageContext: MessageContext;
+    messageId: bigint;
+    commandName: string;
+    arguments: SlashCommandParamInstance[];
+    botId: string;
+    userId: string;
 };

@@ -149,6 +149,16 @@
     "blockUserFailed": "Impossible de bloquer l'utilisateur",
     "blockUserSucceeded": "L'utilisateur a été bloqué",
     "bots": {
+        "add": {
+            "action": "Registre",
+            "addBot": "Ajouter un bot",
+            "choosePermissions": "Autorisations",
+            "failure": "Désolé, nous n'avons pas pu ajouter le bot",
+            "loadDefinition": "Définition de la charge",
+            "noPermissions": "Aucune autorisation spéciale requise",
+            "permissionsInfo": "Ce bot recherche les autorisations suivantes. Choisir de limiter les autorisations accordées limitera les commandes disponibles.",
+            "title": "Ajouter un bot à la communauté"
+        },
         "builder": {
             "addAnother": "Ajouter un autre",
             "addChoice": "Ajouter un choix",
@@ -165,17 +175,25 @@
             "commandNamePlaceholder": "Entrer le nom de la commande",
             "commandPermissionsDesc": "Décrivez les autorisations requises par cette commande",
             "commandPermissionsLabel": "Autorisations de commande",
+            "commandPlaceholderLabel": "Message d'espace réservé à la commande",
+            "commandPlaceholderPlaceholder": "Message d'espace réservé à la commande non spécifié",
+            "commandsLabel": "Commandes",
             "descLabel": "Description du robot",
             "descPlaceholder": "Entrez la description du bot",
             "endpointLabel": "Point de terminaison du bot",
             "endpointRules": "Doit être une origine valide ou un canisterID",
             "errors": {
                 "alphaOnly": "Doit contenir uniquement des caractères alphanumériques et des traits de soulignement",
+                "botNameInvalid": "Ce nom de bot n'est pas valide",
                 "duplicateCommands": "Le bot contient des commandes en double",
+                "duplicateName": "Ce nom de bot est déjà pris",
                 "duplicateParams": "La commande contient des paramètres en double",
                 "endpoint": "Le point de terminaison doit être une origine ou un canisterID valide",
                 "minLength": "Doit avoir au moins {n} caractères",
-                "noCommands": "Un bot doit contenir au moins une commande"
+                "nameCheckError": "Une erreur s'est produite lors de la vérification du nom du bot",
+                "noCommands": "Un bot doit contenir au moins une commande",
+                "owner": "Vous devez entrer un propriétaire pour le bot",
+                "principal": "Vous devez entrer un principal valide pour identifier le bot"
             },
             "iconLabel": "Icône de bot",
             "maxLengthLabel": "Longueur maximale",
@@ -190,6 +208,8 @@
             "namePlaceholder": "Entrez le nom du bot",
             "nameRules": "Doit être unique et contenir uniquement des caractères alphanumériques et des traits de soulignement",
             "optional": "facultatif",
+            "ownerLabel": "Propriétaire du bot",
+            "ownerRules": "Qui est le point de contact pour ce bot",
             "paramDescLabel": "Description des paramètres",
             "paramDescPlaceholder": "Entrer la description du paramètre",
             "paramLabel": "Paramètre : {name}",
@@ -197,12 +217,16 @@
             "paramNamePlaceholder": "Entrer le nom du paramètre",
             "paramPlaceholderLabel": "Espace réservé aux paramètres",
             "paramPlaceholderPlaceholder": "Entrer l'espace réservé au paramètre",
+            "paramsLabel": "Paramètres",
             "paramTypeLabel": "Type de paramètre",
             "permSameAsMessage": "Identique aux autorisations de message",
             "permScopeChat": "Chat",
             "permScopeCommunity": "Communauté",
             "permScopeMessage": "Message",
             "permScopeThread": "Fil",
+            "principalLabel": "Principal",
+            "principalPlaceholder": "Entrez le principal du bot",
+            "principalRules": "Ce sera le canisterID pour un bot onchain",
             "required": "Paramètre obligatoire",
             "requiredDesc": "Est-ce un paramètre obligatoire pour la commande",
             "title": "Construire un bot",
@@ -229,6 +253,20 @@
         },
         "diamond": {
             "desc": "Postez un lien pour expliquer l'adhésion Diamond"
+        },
+        "edit": {
+            "failure": "Désolé, nous n'avons pas pu mettre à jour les autorisations du bot",
+            "title": "Mettre à jour les autorisations du bot",
+            "updateBot": "Bot de mise à jour"
+        },
+        "events": {
+            "add": "Bot **{botname}** ajouté par {username}",
+            "remove": "Bot **{botname}** supprimé par {username}",
+            "update": "Bot **{botname}** mis à jour par {username}"
+        },
+        "explorer": {
+            "addBots": "Ajouter des robots",
+            "loadMore": "Charger plus..."
         },
         "failed": "Désolé, nous n'avons pas réussi à exécuter la commande du bot",
         "faq": {
@@ -269,7 +307,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "Supprimer le bot",
+            "removeFailed": "Désolé, nous n'avons pas pu supprimer le bot",
+            "review": "Examiner les autorisations du robot",
+            "view": "Afficher les détails du bot"
+        },
         "matchingCommands": "Commandes correspondantes",
+        "member": {
+            "bots": "Les robots",
+            "people": "Personnes"
+        },
         "poll": {
             "desc": "Créer un sondage dans le chat actuel"
         },
@@ -287,7 +335,15 @@
             }
         },
         "update_bot": {
-            "desc": "Démarrer une proposition pour mettre à jour un bot OpenChat existant"
+            "action": "Mise à jour",
+            "desc": "Démarrer une proposition pour mettre à jour un bot OpenChat existant",
+            "nobots": "Seul le propriétaire d'un bot enregistré peut mettre à jour le bot. Vous n'êtes pas le propriétaire d'un bot enregistré.",
+            "select": "Sélectionnez le bot que vous souhaitez mettre à jour.",
+            "title": "Bot de mise à jour"
+        },
+        "view": {
+            "close": "Fermer",
+            "title": "Détails du bot"
         },
         "witch": {
             "desc": "Invoquer la sorcière"
@@ -1301,6 +1357,7 @@
         "noEligibleNeurons": "Aucun neurone éligible trouvé",
         "noEligibleNeuronsMessage": "Aucun neurone éligible ou lié trouvé. Afin de voter sur les propositions depuis OpenChat, vous devez d&#39;abord ajouter votre identifiant d&#39;utilisateur OpenChat comme raccourci clavier pour tous les neurones avec lesquels vous souhaitez voter.<br/><br/> Votre identifiant OpenChat est : {userId}.<br/><br/> Pour plus d&#39;informations sur le vote et la gouvernance, lisez <a target=\"_blank\" href=\"https://oc.app/blog/governance\">cet article de blog</a> .",
         "notificationsAction": "Notifications Index Actions",
+        "openchatInstallerAction": "Actions de l'installateur OpenChat",
         "proposalNotAceptingVotes": "Cette proposition n'accepte pas les votes - essayez de recharger la page",
         "proposalsBotAction": "Actions du robot de propositions",
         "proposedBy": "Proposé par",

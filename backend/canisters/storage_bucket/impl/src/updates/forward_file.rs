@@ -1,6 +1,6 @@
 use crate::guards::caller_is_known_user;
 use crate::model::files::ForwardFileResult;
-use crate::model::index_sync_state::EventToSync;
+use crate::model::index_event_batch::EventToSync;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
@@ -27,9 +27,12 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
         .forward(caller, args.file_id, canister_id, file_id_seed, accessors, now)
     {
         ForwardFileResult::Success(f) => {
-            let user = state.data.users.get_mut(&caller).unwrap();
+            let user = state.data.users.get(&caller).unwrap();
             let file_id = f.file_id;
-            user.set_file_status(file_id, FileStatusInternal::Complete(IndexSyncComplete::No));
+            state
+                .data
+                .users
+                .set_file_status(caller, user, file_id, FileStatusInternal::Complete(IndexSyncComplete::No));
             state.data.push_event_to_index(EventToSync::FileAdded(f));
             crate::jobs::remove_expired_files::start_job_if_required(state);
             Success(file_id)

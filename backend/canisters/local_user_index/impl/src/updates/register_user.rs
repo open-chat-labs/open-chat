@@ -158,6 +158,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         .and_then(|c| c.user())
         .filter(|user_id| state.data.global_users.contains(user_id));
 
+    #[allow(deprecated)]
     let init_canister_args = InitUserCanisterArgs {
         owner: caller,
         group_index_canister_id: state.data.group_index_canister_id,

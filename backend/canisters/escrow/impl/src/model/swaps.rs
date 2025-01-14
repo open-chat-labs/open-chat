@@ -65,6 +65,8 @@ pub struct Swap {
     pub refunds: Vec<CompletedCryptoTransaction>,
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
+    #[serde(default)]
+    pub errors: Vec<String>,
 }
 
 impl Swap {
@@ -88,6 +90,7 @@ impl Swap {
             refunds: Vec::new(),
             additional_admins: args.additional_admins,
             canister_to_notify: args.canister_to_notify,
+            errors: Vec::new(),
         }
     }
 

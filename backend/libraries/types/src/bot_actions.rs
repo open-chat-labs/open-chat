@@ -7,7 +7,13 @@ use serde::Serialize;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotAction {
-    SendMessage(MessageContent),
+    SendMessage(BotMessageAction),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotMessageAction {
+    pub content: MessageContent,
+    pub finalised: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -22,12 +28,12 @@ pub enum MessageContent {
 }
 
 impl BotAction {
-    pub fn permissions_required(&self, in_thread: bool) -> SlashCommandPermissions {
+    pub fn permissions_required(&self) -> SlashCommandPermissions {
         let mut permissions_required = SlashCommandPermissions::default();
 
         match self {
-            BotAction::SendMessage(content) => {
-                let permission = match content {
+            BotAction::SendMessage(action) => {
+                let permission = match action.content {
                     MessageContent::Text(_) => MessagePermission::Text,
                     MessageContent::Image(_) => MessagePermission::Image,
                     MessageContent::Video(_) => MessagePermission::Video,
@@ -37,11 +43,7 @@ impl BotAction {
                     MessageContent::Giphy(_) => MessagePermission::Giphy,
                 };
 
-                if in_thread {
-                    permissions_required.thread.insert(permission);
-                } else {
-                    permissions_required.message.insert(permission);
-                }
+                permissions_required.message.insert(permission);
             }
         };
 

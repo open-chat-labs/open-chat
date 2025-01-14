@@ -56,6 +56,10 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn is_caller_registry_canister(&self) -> bool {
+        self.env.caller() == self.data.registry_canister_id
+    }
+
     pub fn is_caller_group_canister(&self) -> bool {
         let caller: ChatId = self.env.caller().into();
         self.data.public_groups.get(&caller).is_some() || self.data.private_groups.get(&caller).is_some()
@@ -129,6 +133,7 @@ impl RuntimeState {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 escrow: self.data.escrow_canister_id,
                 event_relay: self.data.event_relay_canister_id,
+                registry: self.data.registry_canister_id,
             },
         }
     }
@@ -150,6 +155,7 @@ struct Data {
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
     pub event_relay_canister_id: CanisterId,
+    pub registry_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
@@ -173,6 +179,7 @@ impl Data {
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
+        registry_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
         ic_root_key: Vec<u8>,
@@ -193,6 +200,7 @@ impl Data {
             proposals_bot_user_id,
             escrow_canister_id,
             event_relay_canister_id,
+            registry_canister_id,
             internet_identity_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode,
@@ -299,6 +307,7 @@ impl Default for Data {
             proposals_bot_user_id: Principal::anonymous().into(),
             escrow_canister_id: Principal::anonymous(),
             event_relay_canister_id: Principal::anonymous(),
+            registry_canister_id: Principal::anonymous(),
             internet_identity_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode: true,
@@ -381,6 +390,7 @@ pub struct CanisterIds {
     pub cycles_dispenser: CanisterId,
     pub escrow: CanisterId,
     pub event_relay: CanisterId,
+    pub registry: CanisterId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

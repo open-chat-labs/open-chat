@@ -30,12 +30,20 @@ impl<T> Claims<T> {
         self.exp
     }
 
+    pub fn exp_ms(&self) -> TimestampMillis {
+        self.exp * 1000
+    }
+
     pub fn claim_type(&self) -> &str {
         &self.claim_type
     }
 
     pub fn custom(&self) -> &T {
         &self.custom
+    }
+
+    pub fn into_custom(self) -> T {
+        self.custom
     }
 }
 

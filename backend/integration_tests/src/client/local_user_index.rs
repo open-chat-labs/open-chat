@@ -1,4 +1,4 @@
-use crate::{generate_msgpack_query_call, generate_msgpack_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_update_call};
 use local_user_index_canister::*;
 
 // Queries
@@ -7,7 +7,7 @@ generate_msgpack_query_call!(chat_events);
 generate_msgpack_query_call!(group_and_community_summary_updates);
 
 // Updates
-generate_msgpack_update_call!(execute_bot_command);
+generate_update_call!(execute_bot_action);
 generate_msgpack_update_call!(invite_users_to_channel);
 generate_msgpack_update_call!(invite_users_to_community);
 generate_msgpack_update_call!(invite_users_to_group);
@@ -53,6 +53,7 @@ pub mod happy_path {
                 principal,
                 user_id: res.user_id,
                 public_key,
+                local_user_index: canister_id,
             },
             response => panic!("'register_user' error: {response:?}"),
         }

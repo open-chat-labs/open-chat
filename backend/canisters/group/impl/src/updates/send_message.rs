@@ -1,16 +1,14 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaymentsJob, MarkP2PSwapExpiredJob};
-use crate::{mutate_state, run_regular_jobs, Data, RuntimeState, TimerJob};
-use candid::Principal;
+use crate::{mutate_state, run_regular_jobs, CallerResult, Data, RuntimeState, TimerJob};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use types::{
-    Achievement, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex, Notification,
-    TimestampMillis, User, UserId, UserType,
+    Achievement, BotCaller, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message, MessageContent,
+    MessageIndex, Notification, TimestampMillis, User,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -30,123 +28,96 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     mutate_state(|state| c2c_send_message_impl(args, state))
 }
 
-pub(crate) fn send_message_impl(args: Args, caller_override: Option<Principal>, state: &mut RuntimeState) -> Response {
-    match validate_caller(caller_override, state) {
-        Ok(Caller { user_id, user_type }) => {
-            let now = state.env.now();
-            let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
-            let result = state.data.chat.validate_and_send_message(
-                user_id,
-                user_type,
-                args.thread_root_message_index,
-                args.message_id,
-                args.content,
-                args.replies_to,
-                &mentioned,
-                args.forwarding,
-                args.rules_accepted,
-                args.message_filter_failed.is_some(),
-                args.block_level_markdown,
-                &mut state.data.event_store_client,
-                now,
-            );
-
-            process_send_message_result(
-                result,
-                user_id,
-                args.sender_name,
-                args.sender_display_name,
-                args.thread_root_message_index,
-                args.mentioned,
-                now,
-                args.new_achievement,
-                state,
-            )
-        }
-        Err(response) => response,
+pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
+        return ChatFrozen;
     }
+
+    let caller = match state.verified_caller(bot) {
+        CallerResult::Success(caller) => caller,
+        CallerResult::NotFound => return CallerNotInGroup,
+        CallerResult::Suspended => return UserSuspended,
+    };
+
+    let now = state.env.now();
+    let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
+    let result = state.data.chat.validate_and_send_message(
+        &caller,
+        args.thread_root_message_index,
+        args.message_id,
+        args.content,
+        args.replies_to,
+        &mentioned,
+        args.forwarding,
+        args.rules_accepted,
+        args.message_filter_failed.is_some(),
+        args.block_level_markdown,
+        &mut state.data.event_store_client,
+        now,
+    );
+
+    process_send_message_result(
+        result,
+        &caller,
+        args.sender_name,
+        args.sender_display_name,
+        args.thread_root_message_index,
+        args.mentioned,
+        now,
+        args.new_achievement,
+        state,
+    )
 }
 
 fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse {
-    match validate_caller(None, state) {
-        Ok(Caller { user_id, user_type }) => {
-            // Bots can't call this c2c endpoint since it skips the validation
-            if user_type.is_bot() && !user_type.is_oc_controlled_bot() {
-                return NotAuthorized;
-            }
-
-            let now = state.env.now();
-            let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
-            let result = state.data.chat.send_message(
-                user_id,
-                user_type,
-                args.thread_root_message_index,
-                args.message_id,
-                args.content,
-                args.replies_to,
-                &mentioned,
-                args.forwarding,
-                args.rules_accepted,
-                args.message_filter_failed.is_some(),
-                args.block_level_markdown,
-                &mut state.data.event_store_client,
-                now,
-            );
-            process_send_message_result(
-                result,
-                user_id,
-                args.sender_name,
-                args.sender_display_name,
-                args.thread_root_message_index,
-                args.mentioned,
-                now,
-                false,
-                state,
-            )
-        }
-        Err(response) => response,
-    }
-}
-
-struct Caller {
-    user_id: UserId,
-    user_type: UserType,
-}
-
-fn validate_caller(caller_override: Option<Principal>, state: &RuntimeState) -> Result<Caller, Response> {
     if state.data.is_frozen() {
-        return Err(ChatFrozen);
+        return ChatFrozen;
     }
 
-    let caller = caller_override.unwrap_or_else(|| state.env.caller());
-    if let Some(member) = state.data.get_member(caller) {
-        if member.suspended().value {
-            Err(UserSuspended)
-        } else {
-            Ok(Caller {
-                user_id: member.user_id(),
-                user_type: member.user_type(),
-            })
-        }
-    } else if state.data.chat.bots.get(&caller.into()).is_some() {
-        Ok(Caller {
-            user_id: caller.into(),
-            user_type: UserType::BotV2,
-        })
-    } else if caller == state.data.user_index_canister_id {
-        Ok(Caller {
-            user_id: OPENCHAT_BOT_USER_ID,
-            user_type: UserType::OcControlledBot,
-        })
-    } else {
-        Err(CallerNotInGroup)
+    let caller = match state.verified_caller(None) {
+        CallerResult::Success(caller) => caller,
+        CallerResult::NotFound => return CallerNotInGroup,
+        CallerResult::Suspended => return UserSuspended,
+    };
+
+    // Bots can't call this c2c endpoint since it skips the validation
+    if matches!(caller, Caller::Bot(_) | Caller::BotV2(_)) {
+        return NotAuthorized;
     }
+
+    let now = state.env.now();
+    let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
+    let result = state.data.chat.send_message(
+        &caller,
+        args.thread_root_message_index,
+        args.message_id,
+        args.content,
+        args.replies_to,
+        &mentioned,
+        args.forwarding,
+        args.rules_accepted,
+        args.message_filter_failed.is_some(),
+        args.block_level_markdown,
+        &mut state.data.event_store_client,
+        now,
+    );
+    process_send_message_result(
+        result,
+        &caller,
+        args.sender_name,
+        args.sender_display_name,
+        args.thread_root_message_index,
+        args.mentioned,
+        now,
+        false,
+        state,
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
 fn process_send_message_result(
     result: SendMessageResult,
-    sender: UserId,
+    caller: &Caller,
     sender_username: String,
     sender_display_name: Option<String>,
     thread_root_message_index: Option<MessageIndex>,
@@ -165,108 +136,104 @@ fn process_send_message_result(
 
             register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
 
-            let content = &message_event.event.content;
-            let chat_id = state.env.canister_id().into();
-            let sender_is_human = state
-                .data
-                .chat
-                .members
-                .get(&sender)
-                .map_or(false, |m| !m.user_type().is_bot());
+            if !result.unfinalised_bot_message {
+                let content = &message_event.event.content;
+                let chat_id = state.env.canister_id().into();
 
-            let notification = Notification::GroupMessage(GroupMessageNotification {
-                chat_id,
-                thread_root_message_index,
-                message_index,
-                event_index,
-                group_name: state.data.chat.name.value.clone(),
-                sender,
-                sender_name: sender_username,
-                sender_display_name,
-                message_type: content.message_type(),
-                message_text: content.notification_text(&mentioned, &[]),
-                image_url: content.notification_image_url(),
-                group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
-                crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
-            });
-            state.push_notification(result.users_to_notify, notification);
+                let notification = Notification::GroupMessage(GroupMessageNotification {
+                    chat_id,
+                    thread_root_message_index,
+                    message_index,
+                    event_index,
+                    group_name: state.data.chat.name.value.clone(),
+                    sender: caller.agent(),
+                    sender_name: sender_username,
+                    sender_display_name,
+                    message_type: content.message_type(),
+                    message_text: content.notification_text(&mentioned, &[]),
+                    image_url: content.notification_image_url(),
+                    group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
+                    crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
+                });
+                state.push_notification(result.users_to_notify, notification);
 
-            if new_achievement && sender_is_human {
-                for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
-                    state.data.notify_user_of_achievement(sender, a);
+                if new_achievement && !caller.is_bot() {
+                    for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
+                        state.data.notify_user_of_achievement(caller.agent(), a);
+                    }
                 }
-            }
 
-            let mut activity_events = Vec::new();
+                let mut activity_events = Vec::new();
 
-            if let MessageContent::Crypto(c) = content {
-                if state
-                    .data
-                    .chat
-                    .members
-                    .get(&c.recipient)
-                    .map_or(false, |m| !m.user_type().is_bot())
-                {
-                    state
-                        .data
-                        .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
-
-                    activity_events.push((c.recipient, MessageActivity::Crypto));
-                }
-            }
-
-            for user in mentioned {
-                if user.user_id != sender
-                    && state
+                if let MessageContent::Crypto(c) = content {
+                    if state
                         .data
                         .chat
                         .members
-                        .get(&user.user_id)
+                        .get(&c.recipient)
                         .map_or(false, |m| !m.user_type().is_bot())
-                {
-                    activity_events.push((user.user_id, MessageActivity::Mention));
-                }
-            }
+                    {
+                        state
+                            .data
+                            .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
 
-            if let Some(replying_to_event_index) = message_event
-                .event
-                .replies_to
-                .as_ref()
-                .filter(|r| r.chat_if_other.is_none())
-                .map(|r| r.event_index)
-            {
-                if let Some((message, _)) = state.data.chat.events.message_internal(
-                    EventIndex::default(),
-                    thread_root_message_index,
-                    replying_to_event_index.into(),
-                ) {
-                    if message.sender != sender
+                        activity_events.push((c.recipient, MessageActivity::Crypto));
+                    }
+                }
+
+                for user in mentioned {
+                    if user.user_id != caller.initiator()
                         && state
                             .data
                             .chat
                             .members
-                            .get(&message.sender)
+                            .get(&user.user_id)
                             .map_or(false, |m| !m.user_type().is_bot())
                     {
-                        activity_events.push((message.sender, MessageActivity::QuoteReply));
+                        activity_events.push((user.user_id, MessageActivity::Mention));
                     }
                 }
-            }
 
-            for (user_id, activity) in activity_events {
-                state.data.user_event_sync_queue.push(
-                    user_id,
-                    GroupCanisterEvent::MessageActivity(MessageActivityEvent {
-                        chat: Chat::Group(chat_id),
+                if let Some(replying_to_event_index) = message_event
+                    .event
+                    .replies_to
+                    .as_ref()
+                    .filter(|r| r.chat_if_other.is_none())
+                    .map(|r| r.event_index)
+                {
+                    if let Some((message, _)) = state.data.chat.events.message_internal(
+                        EventIndex::default(),
                         thread_root_message_index,
-                        message_index,
-                        message_id,
-                        event_index,
-                        activity,
-                        timestamp: now,
-                        user_id: Some(sender),
-                    }),
-                );
+                        replying_to_event_index.into(),
+                    ) {
+                        if message.sender != caller.initiator()
+                            && state
+                                .data
+                                .chat
+                                .members
+                                .get(&message.sender)
+                                .map_or(false, |m| !m.user_type().is_bot())
+                        {
+                            activity_events.push((message.sender, MessageActivity::QuoteReply));
+                        }
+                    }
+                }
+
+                for (user_id, activity) in activity_events {
+                    state.data.user_event_sync_queue.push(
+                        user_id,
+                        GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                            chat: Chat::Group(chat_id),
+                            thread_root_message_index,
+                            message_index,
+                            message_id,
+                            event_index,
+                            activity,
+                            timestamp: now,
+                            user_id: Some(caller.agent()),
+                        }),
+                    );
+                }
             }
 
             handle_activity_notification(state);
@@ -287,6 +254,7 @@ fn process_send_message_result(
         SendMessageResult::UserSuspended => UserSuspended,
         SendMessageResult::UserLapsed => NotAuthorized,
         SendMessageResult::RulesNotAccepted => RulesNotAccepted,
+        SendMessageResult::MessageAlreadyExists => MessageAlreadyExists,
         SendMessageResult::InvalidRequest(error) => InvalidRequest(error),
     }
 }

@@ -11,8 +11,6 @@ import type {
     FailedCryptoTransactionICRC1,
     FailedCryptoTransactionNNS,
     PinNumberSettings as TPinNumberSettings,
-    ProposalsBotProposalToSubmit,
-    ProposalsBotProposalToSubmitAction,
     ReferralStatus as TReferralStatus,
     UserApproveTransferResponse,
     UserArchiveUnarchiveChatsResponse,
@@ -50,7 +48,6 @@ import type {
     UserSetBioResponse,
     UserSetMessageReminderResponse,
     UserSetPinNumberPinNumberVerification,
-    UserSubmitProposalResponse,
     UserSwapTokensExchangeArgs,
     UserSwapTokensResponse,
     UserTipMessageResponse,
@@ -114,9 +111,6 @@ import type {
     TipMessageResponse,
     NamedAccount,
     SaveCryptoAccountResponse,
-    CandidateProposal,
-    CandidateProposalAction,
-    SubmitProposalResponse,
     SwapTokensResponse,
     TokenSwapStatusResponse,
     Result,
@@ -141,7 +135,6 @@ import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat
 import {
     bytesToBigint,
     bytesToHexString,
-    hexStringToBytes,
     identity,
     mapOptional,
     optionUpdateV2,
@@ -1258,107 +1251,6 @@ export function deleteCommunityResponse(
         console.warn("DeleteCommunity failed with", value);
         return "failure";
     }
-}
-
-export function proposalToSubmit(proposal: CandidateProposal): ProposalsBotProposalToSubmit {
-    return {
-        title: proposal.title,
-        url: proposal.url ?? "",
-        summary: proposal.summary,
-        action: proposalAction(proposal.action),
-    };
-}
-
-function proposalAction(action: CandidateProposalAction): ProposalsBotProposalToSubmitAction {
-    switch (action.kind) {
-        case "motion":
-            return "Motion";
-        case "transfer_sns_funds":
-            return {
-                TransferSnsTreasuryFunds: {
-                    to: {
-                        owner: principalStringToBytes(action.recipient.owner),
-                        subaccount: mapOptional(
-                            action.recipient.subaccount,
-                            (s) =>
-                                [...hexStringToBytes(s)] as [
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                    number,
-                                ],
-                        ),
-                    },
-                    amount: action.amount,
-                    memo: undefined,
-                    treasury: action.treasury,
-                },
-            };
-        case "upgrade_sns_to_next_version":
-            return "UpgradeSnsToNextVersion";
-        case "execute_generic_nervous_system_function":
-            return {
-                ExecuteGenericNervousSystemFunction: {
-                    function_id: action.functionId,
-                    payload: action.payload,
-                },
-            };
-    }
-}
-
-export function submitProposalResponse(value: UserSubmitProposalResponse): SubmitProposalResponse {
-    if (value === "Success") {
-        return { kind: "success" };
-    }
-    if (value === "GovernanceCanisterNotSupported") {
-        return { kind: "governance_canister_not_supported" };
-    }
-    if (value === "UserSuspended") {
-        return { kind: "user_suspended" };
-    }
-    if (typeof value === "object") {
-        if ("Retrying" in value) {
-            return { kind: "retrying", error: value.Retrying };
-        }
-        if ("InsufficientPayment" in value) {
-            return { kind: "insufficient_payment" };
-        }
-        if ("TransferFailed" in value) {
-            return { kind: "transfer_failed", error: value.TransferFailed };
-        }
-        if ("InternalError" in value) {
-            return { kind: "internal_error", error: value.InternalError };
-        }
-    }
-    throw new UnsupportedValueError("Unexpected ApiSubmitProposalResponse type received", value);
 }
 
 export function reportMessageResponse(value: UserReportMessageResponse): boolean {

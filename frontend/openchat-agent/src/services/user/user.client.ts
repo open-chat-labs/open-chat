@@ -49,8 +49,6 @@ import type {
     TipMessageResponse,
     NamedAccount,
     SaveCryptoAccountResponse,
-    CandidateProposal,
-    SubmitProposalResponse,
     CryptocurrencyDetails,
     ExchangeTokenSwapArgs,
     SwapTokensResponse,
@@ -94,8 +92,6 @@ import {
     tipMessageResponse,
     savedCryptoAccountsResponse,
     saveCryptoAccountResponse,
-    proposalToSubmit,
-    submitProposalResponse,
     reportMessageResponse,
     swapTokensResponse,
     tokenSwapStatusResponse,
@@ -121,7 +117,6 @@ import {
 import {
     apiCommunityPermissions,
     apiGroupPermissions,
-    apiMaybeAccessGate,
     apiMessageContent,
     editMessageResponse,
     apiPendingCryptocurrencyWithdrawal,
@@ -245,8 +240,6 @@ import {
     UserSetMessageReminderResponse,
     UserSetPinNumberArgs,
     UserSetPinNumberResponse,
-    UserSubmitProposalArgs,
-    UserSubmitProposalResponse,
     UserSwapTokensArgs,
     UserSwapTokensResponse,
     UserTipMessageArgs,
@@ -391,7 +384,6 @@ export class UserClient extends CandidService {
                 permissions: apiCommunityPermissions(community.permissions),
                 rules,
                 gate_config: apiMaybeAccessGateConfig(community.gateConfig),
-                gate: apiMaybeAccessGate(community.gateConfig.gate),
                 default_channels: defaultChannels,
                 default_channel_rules: defaultChannelRules,
                 primary_language: community.primaryLanguage,
@@ -419,7 +411,6 @@ export class UserClient extends CandidService {
                 }),
                 permissions_v2: apiGroupPermissions(group.permissions),
                 rules: group.rules,
-                gate: apiMaybeAccessGate(group.gateConfig.gate),
                 gate_config: apiMaybeAccessGateConfig(group.gateConfig),
                 events_ttl: group.eventsTTL,
                 messages_visible_to_non_members: group.messagesVisibleToNonMembers,
@@ -734,65 +725,51 @@ export class UserClient extends CandidService {
         onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
-        return this.sendMessageToBackend(
-            chatId,
-            event,
-            messageFilterFailed,
-            threadRootMessageIndex,
-            pin,
-            onRequestAccepted,
-        )
-            .then(
-                setCachedMessageFromSendResponse(
-                    this.db,
-                    this.chatId,
-                    event,
-                    threadRootMessageIndex,
-                ),
-            )
-            .catch((err) => {
-                recordFailedMessage(this.db, this.chatId, event, threadRootMessageIndex);
-                throw err;
-            });
-    }
 
-    sendMessageToBackend(
-        chatId: DirectChatIdentifier,
-        event: EventWrapper<Message>,
-        messageFilterFailed: bigint | undefined,
-        threadRootMessageIndex: number | undefined,
-        pin: string | undefined,
-        onRequestAccepted: () => void,
-    ): Promise<[SendMessageResponse, Message]> {
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(event.event.content, [this.userId, chatId.userId])
             : dataClient.uploadData(event.event.content, [this.userId, chatId.userId]);
 
         return uploadContentPromise.then((content) => {
-            const newContent = content ?? event.event.content;
+            const newEvent =
+                content !== undefined ? { ...event, event: { ...event.event, content } } : event;
             const req = {
-                content: apiMessageContent(newContent),
+                content: apiMessageContent(newEvent.event.content),
                 recipient: principalStringToBytes(chatId.userId),
-                message_id: event.event.messageId,
-                replies_to: mapOptional(event.event.repliesTo, (replyContext) =>
+                message_id: newEvent.event.messageId,
+                replies_to: mapOptional(newEvent.event.repliesTo, (replyContext) =>
                     apiReplyContextArgs(chatId, replyContext),
                 ),
-                forwarding: event.event.forwarded,
+                forwarding: newEvent.event.forwarded,
                 thread_root_message_index: threadRootMessageIndex,
                 message_filter_failed: messageFilterFailed,
                 pin,
                 correlation_id: generateUint64(),
-                block_level_markdown: event.event.blockLevelMarkdown,
+                block_level_markdown: newEvent.event.blockLevelMarkdown,
             };
             return this.executeMsgpackUpdate(
                 "send_message_v2",
                 req,
-                (resp) => sendMessageResponse(resp, event.event.sender, chatId.userId),
+                (resp) => sendMessageResponse(resp, newEvent.event.sender, chatId.userId),
                 UserSendMessageArgs,
                 UserSendMessageResponse,
                 onRequestAccepted,
-            ).then((resp) => [resp, { ...event.event, content: newContent }]);
+            )
+                .then((resp) => {
+                    const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
+                    setCachedMessageFromSendResponse(
+                        this.db,
+                        chatId,
+                        newEvent,
+                        threadRootMessageIndex,
+                    )(retVal);
+                    return retVal;
+                })
+                .catch((err) => {
+                    recordFailedMessage(this.db, chatId, newEvent, threadRootMessageIndex);
+                    throw err;
+                });
         });
     }
 
@@ -1407,30 +1384,6 @@ export class UserClient extends CandidService {
             (_) => true,
             UserSetCommunityIndexesArgs,
             UserSetCommunityIndexesResponse,
-        );
-    }
-
-    submitProposal(
-        governanceCanisterId: string,
-        proposal: CandidateProposal,
-        ledger: string,
-        token: string,
-        proposalRejectionFee: bigint,
-        transactionFee: bigint,
-    ): Promise<SubmitProposalResponse> {
-        return this.executeMsgpackUpdate(
-            "submit_proposal",
-            {
-                governance_canister_id: principalStringToBytes(governanceCanisterId),
-                proposal: proposalToSubmit(proposal),
-                ledger: principalStringToBytes(ledger),
-                token: apiToken(token),
-                proposal_rejection_fee: proposalRejectionFee,
-                transaction_fee: transactionFee,
-            },
-            submitProposalResponse,
-            UserSubmitProposalArgs,
-            UserSubmitProposalResponse,
         );
     }
 

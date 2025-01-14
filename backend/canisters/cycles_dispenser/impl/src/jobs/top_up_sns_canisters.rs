@@ -36,7 +36,7 @@ async fn run_async(canister_id: CanisterId) {
         // Add SNS canisters to the whitelist
         mutate_state(|state| {
             let now = state.env.now();
-            for canister_id in canisters.iter().flat_map(|c| c.canister_id) {
+            for canister_id in canisters.iter().filter_map(|s| s.canister_id) {
                 state.data.canisters.add(canister_id, now);
             }
         });

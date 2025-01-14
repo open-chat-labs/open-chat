@@ -24,7 +24,7 @@ fn join_public_group_succeeds() {
         group_id,
     } = init_test_data(env, canister_ids, *controller, true);
 
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     env.tick();
 
@@ -48,12 +48,12 @@ fn join_private_group_with_invitation_succeeds() {
     client::local_user_index::happy_path::invite_users_to_group(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, group_id),
         group_id,
         vec![user2.user_id],
     );
 
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     env.tick();
 
@@ -90,7 +90,7 @@ fn join_private_group_using_invite_code_succeeds() {
     let join_group_response = client::local_user_index::join_group(
         env,
         user2.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, group_id),
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
             invite_code: Some(invite_code),
@@ -132,7 +132,7 @@ fn join_leave_group_triggers_correct_updates() {
 
     env.advance_time(Duration::from_secs(1));
 
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     env.tick();
 

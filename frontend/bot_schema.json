@@ -1,0 +1,278 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "title": "OpenChat bot definition schema",
+    "description": "When a bot is registered with OpenChat it must expose its definition on a special endpoint called /schema. OpenChat will make a GET request to this endpoint and must receive a response which is valid against the following schema. This is so that OpenChat can determine how the user will interact with the bot i.e. which commands it supports and what their parameter are.",
+    "properties": {
+        "description": {
+            "type": "string",
+            "description": "A brief description of what your bot does.",
+            "minLength": 5,
+            "maxLength": 500
+        },
+        "commands": {
+            "type": "array",
+            "description": "This is the list of slash commands that your bot supports. Note that you must have between one and fifty commands.",
+            "items": {
+                "$ref": "#/definitions/SlashCommandSchema"
+            },
+            "minItems": 1,
+            "maxItems": 50
+        }
+    },
+    "required": ["description", "commands"],
+    "additionalProperties": false,
+    "definitions": {
+        "NameField": {
+            "type": "string",
+            "description": "A bot schema element name",
+            "minLength": 3,
+            "maxLength": 25,
+            "pattern": "^[a-zA-Z0-9_]+$"
+        },
+        "SlashCommandSchema": {
+            "type": "object",
+            "description": "This is the specification of each individual command.",
+            "properties": {
+                "name": {
+                    "$ref": "#/definitions/NameField",
+                    "description": "The name that users will use to trigger this command in OpenChat."
+                },
+                "placeholder": {
+                    "type": "string",
+                    "description": "An optional placeholder message to display in OpenChat while await the initial response from the bot",
+                    "minLength": 5,
+                    "maxLength": 500
+                },
+                "description": {
+                    "type": "string",
+                    "description": "A brief description of what the slash command does.",
+                    "minLength": 5,
+                    "maxLength": 500
+                },
+                "params": {
+                    "type": "array",
+                    "description": "List of parameters accepted by the slash command.",
+                    "maxItems": 50,
+                    "items": {
+                        "$ref": "#/definitions/SlashCommandParam"
+                    }
+                },
+                "permissions": {
+                    "$ref": "#/definitions/SlashCommandPermissions",
+                    "description": "The permissions required to execute the command. These are broken down into Community level, Chat level and Message level permissions."
+                }
+            },
+            "required": ["name", "description", "params", "permissions"],
+            "additionalProperties": false
+        },
+        "SlashCommandParam": {
+            "type": "object",
+            "description": "The definition for each parameter that a command can accept.",
+            "properties": {
+                "name": {
+                    "$ref": "#/definitions/NameField",
+                    "description": "The name of the parameter."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "A description of what the parameter represents.",
+                    "minLength": 5,
+                    "maxLength": 500
+                },
+                "placeholder": {
+                    "type": "string",
+                    "description": "A placeholder text shown when the parameter is being input.",
+                    "minLength": 5,
+                    "maxLength": 100
+                },
+                "required": {
+                    "type": "boolean",
+                    "description": "Indicates whether this parameter is required or optional."
+                },
+                "param_type": {
+                    "$ref": "#/definitions/SlashCommandParamType",
+                    "description": "The type of parameter (e.g., string, number, boolean, or user)."
+                }
+            },
+            "required": ["name", "description", "required", "param_type"],
+            "additionalProperties": false
+        },
+        "SlashCommandParamType": {
+            "anyOf": [
+                {
+                    "const": "UserParam",
+                    "description": "A parameter representing an OpenChat user."
+                },
+                { "const": "BooleanParam", "description": "A boolean (true/false) parameter." },
+                {
+                    "type": "object",
+                    "description": "A parameter representing a string.",
+                    "properties": {
+                        "StringParam": {
+                            "$ref": "#/definitions/StringParam"
+                        }
+                    },
+                    "required": ["StringParam"],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "description": "A parameter representing a number.",
+                    "properties": {
+                        "NumberParam": {
+                            "$ref": "#/definitions/NumberParam"
+                        }
+                    },
+                    "required": ["NumberParam"],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "StringParam": {
+            "type": "object",
+            "description": "String parameter constraints and choices",
+            "properties": {
+                "min_length": {
+                    "type": "integer",
+                    "description": "Minimum allowed length for the string parameter.",
+                    "minimum": 0
+                },
+                "max_length": {
+                    "type": "integer",
+                    "description": "Maximum allowed length for the string parameter.",
+                    "minimum": 0
+                },
+                "choices": {
+                    "type": "array",
+                    "description": "List of predefined choices for the string parameter.",
+                    "items": { "$ref": "#/definitions/SlashCommandOptionChoiceString" }
+                }
+            },
+            "required": ["min_length", "max_length", "choices"],
+            "additionalProperties": false
+        },
+        "NumberParam": {
+            "type": "object",
+            "description": "Number parameter constraints and choices",
+            "properties": {
+                "min_length": {
+                    "type": "integer",
+                    "description": "Minimum allowed value for the number parameter.",
+                    "minimum": 0
+                },
+                "max_length": {
+                    "type": "integer",
+                    "description": "Maximum allowed value for the number parameter.",
+                    "minimum": 0
+                },
+                "choices": {
+                    "type": "array",
+                    "description": "List of predefined choices for the number parameter.",
+                    "items": { "$ref": "#/definitions/SlashCommandOptionChoiceU16" }
+                }
+            },
+            "required": ["min_length", "max_length", "choices"],
+            "additionalProperties": false
+        },
+        "SlashCommandOptionChoiceString": {
+            "type": "object",
+            "description": "A choice for a string parameter.",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the choice.",
+                    "minLength": 1,
+                    "maxLength": 100
+                },
+                "value": {
+                    "type": "string",
+                    "description": "The value of the choice.",
+                    "minLength": 1,
+                    "maxLength": 100
+                }
+            },
+            "required": ["name", "value"],
+            "additionalProperties": false
+        },
+        "SlashCommandOptionChoiceU16": {
+            "type": "object",
+            "description": "A choice for a number parameter.",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the choice.",
+                    "minLength": 1,
+                    "maxLength": 100
+                },
+                "value": {
+                    "type": "integer",
+                    "description": "The value of the choice.",
+                    "minimum": 0
+                }
+            },
+            "required": ["name", "value"],
+            "additionalProperties": false
+        },
+        "SlashCommandPermissions": {
+            "type": "object",
+            "description": "Permissions required for slash commands to execute.",
+            "properties": {
+                "community": {
+                    "type": "array",
+                    "description": "Permissions specific to the community context.",
+                    "items": {
+                        "enum": [
+                            "ChangeRoles",
+                            "UpdateDetails",
+                            "InviteUsers",
+                            "RemoveMembers",
+                            "CreatePublicChannel",
+                            "CreatePrivateChannel",
+                            "ManageUserGroups"
+                        ]
+                    }
+                },
+                "chat": {
+                    "type": "array",
+                    "description": "Permissions specific to the chat context.",
+                    "items": {
+                        "enum": [
+                            "ChangeRoles",
+                            "UpdateGroup",
+                            "AddMembers",
+                            "InviteUsers",
+                            "RemoveMembers",
+                            "DeleteMessages",
+                            "PinMessages",
+                            "ReactToMessages",
+                            "MentionAllMembers",
+                            "StartVideoCall"
+                        ]
+                    }
+                },
+                "message": {
+                    "type": "array",
+                    "description": "Permissions specific to messages.",
+                    "items": {
+                        "enum": [
+                            "Text",
+                            "Image",
+                            "Video",
+                            "Audio",
+                            "File",
+                            "Poll",
+                            "Crypto",
+                            "Giphy",
+                            "Prize",
+                            "P2pSwap",
+                            "VideoCall"
+                        ]
+                    }
+                }
+            },
+            "required": ["community", "chat", "message"],
+            "additionalProperties": false
+        }
+    }
+}

@@ -6,12 +6,59 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Allow bots to upload 1GB of file data ([#7131](https://github.com/open-chat-labs/open-chat/pull/7131))
+- Pass definition to `update_bot` and propagate to LUIs ([#7135](https://github.com/open-chat-labs/open-chat/pull/7135))
+- Add optional `placeholder` field to `SlashCommandSchema` ([#7172](https://github.com/open-chat-labs/open-chat/pull/7172))
+- Reinstate code now that we can install larger wasms ([#7207](https://github.com/open-chat-labs/open-chat/pull/7207))
+- Sync platform operators to LocalUserIndexes ([#7210](https://github.com/open-chat-labs/open-chat/pull/7210))
+
+### Fixed
+
+- Sync full user details to new LocalUserIndexes ([#7153](https://github.com/open-chat-labs/open-chat/pull/7153))
+
+## [[2.0.1542](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1542-user_index)] - 2024-12-19
+
+### Changed
+
+- Add logging + skip steps that have already been completed ([#7093](https://github.com/open-chat-labs/open-chat/pull/7093))
+- Change bot cmd number param values from u16 to f64 ([#7095](https://github.com/open-chat-labs/open-chat/pull/7095))
+
+### Fixed
+
+- Set `wasm_hash` field which was previously empty ([#7097](https://github.com/open-chat-labs/open-chat/pull/7097))
+
+## [[2.0.1537](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1537-user_index)] - 2024-12-19
+
+### Changed
+
+- Handle retry attempts when adding a new LocalUserIndex ([#7091](https://github.com/open-chat-labs/open-chat/pull/7091))
+
+## [[2.0.1533](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1533-user_index)] - 2024-12-19
+
+### Changed
+
+- Allow Registry to add additional LocalUserIndexes ([#7072](https://github.com/open-chat-labs/open-chat/pull/7072))
+- Add `update_bot` endpoint only callable by bot owner ([#7073](https://github.com/open-chat-labs/open-chat/pull/7073))
+- Handle installing large wasms onto new subnets ([#7078](https://github.com/open-chat-labs/open-chat/pull/7078))
+- Have NeuronController refresh 8 year neuron rather than UserIndex ([#7080](https://github.com/open-chat-labs/open-chat/pull/7080))
+
+### Removed
+
+- Remove bot thread permissions ([#7071](https://github.com/open-chat-labs/open-chat/pull/7071))
+- Temporarily remove `delete_user` until we can support larger wasms ([#7082](https://github.com/open-chat-labs/open-chat/pull/7082))
+- Temporarily remove more code which is not yet being used ([#7083](https://github.com/open-chat-labs/open-chat/pull/7083))
+
+## [[2.0.1508](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1508-user_index)] - 2024-12-13
+
 ### Added
 
 - Implement `register_bot` including bot schema ([#6928](https://github.com/open-chat-labs/open-chat/pull/6928))
 - Implement `explore_bots` ([#6932](https://github.com/open-chat-labs/open-chat/pull/6932))
 - Implement `bot_updates` ([#6934](https://github.com/open-chat-labs/open-chat/pull/6934))
 - Serve bot avatars from UserIndex ([#6975](https://github.com/open-chat-labs/open-chat/pull/6975))
+- Implement streak insurance ([#7036](https://github.com/open-chat-labs/open-chat/pull/7036))
 
 ### Changed
 
@@ -22,6 +69,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
 - Notify CHIT updates via LocalUserIndex ([#7033](https://github.com/open-chat-labs/open-chat/pull/7033))
 - Use `GroupedTimerJobQueue` to push user config to StorageIndex ([#7034](https://github.com/open-chat-labs/open-chat/pull/7034))
+
+### Removed
+
+- Remove some unused code ([#7050](https://github.com/open-chat-labs/open-chat/pull/7050))
 
 ### Fixed
 

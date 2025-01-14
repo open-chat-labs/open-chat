@@ -45,7 +45,7 @@ fn change_casing_of_community_name_succeeds() {
     );
 
     // Check the name has changed
-    let summary = client::community::happy_path::summary(env, &user2, community_id);
+    let summary = client::community::happy_path::summary(env, user2.principal, community_id);
     assert_eq!(summary.name, new_community_name);
 
     tick_many(env, 3);
@@ -95,7 +95,7 @@ fn update_permissions_succeeds() {
 
     client::community::happy_path::update_community(env, user1.principal, community_id, &args);
 
-    let result = client::community::happy_path::summary(env, &user2, community_id);
+    let result = client::community::happy_path::summary(env, user2.principal, community_id);
 
     assert_eq!(result.description, "New description");
     assert!(matches!(
@@ -120,7 +120,7 @@ fn update_permissions_summary_updates_succeeds() {
         community_id,
     } = init_test_data(env, canister_ids, *controller, &random_string());
 
-    let summary = client::community::happy_path::summary(env, &user2, community_id);
+    let summary = client::community::happy_path::summary(env, user2.principal, community_id);
 
     env.advance_time(Duration::from_millis(1000));
 
@@ -146,7 +146,8 @@ fn update_permissions_summary_updates_succeeds() {
 
     client::community::happy_path::update_community(env, user1.principal, community_id, &args);
 
-    let result = match client::community::happy_path::summary_updates(env, &user2, community_id, summary.last_updated) {
+    let result = match client::community::happy_path::summary_updates(env, user2.principal, community_id, summary.last_updated)
+    {
         Some(r) => r,
         None => {
             panic!("Expected summary_updates")
@@ -191,7 +192,7 @@ fn make_private_community_public_succeeds() {
 
     client::community::happy_path::update_community(env, user.principal, community_id, &args);
 
-    let result = client::community::happy_path::summary(env, &user, community_id);
+    let result = client::community::happy_path::summary(env, user.principal, community_id);
 
     assert!(result.is_public);
 
@@ -210,13 +211,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let community_id =
         client::user::happy_path::create_community(env, &user1, community_name, true, vec!["general".to_string()]);
 
-    client::local_user_index::happy_path::join_community(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        None,
-    );
+    client::community::happy_path::join_community(env, user2.principal, community_id);
 
     TestData {
         user1,

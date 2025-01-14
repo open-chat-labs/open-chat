@@ -35,7 +35,7 @@ pub enum CommunityEventInternal {
     UsersInvited(Box<UsersInvited>),
     #[serde(rename = "mr", alias = "MembersRemoved")]
     MembersRemoved(Box<CommunityMembersRemoved>),
-    #[serde(rename = "rc", alias = "RoleChanged")]
+    #[serde(rename = "rl", alias = "RoleChanged")]
     RoleChanged(Box<CommunityRoleChanged>),
     #[serde(rename = "ub", alias = "UsersBlocked")]
     UsersBlocked(Box<CommunityUsersBlocked>),

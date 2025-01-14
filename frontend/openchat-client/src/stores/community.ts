@@ -12,7 +12,12 @@ import { createDerivedPropStore } from "./derived";
 import { chatListScopeStore, globalStateStore } from "./global";
 import { localCommunitySummaryUpdates } from "./localCommunitySummaryUpdates";
 import { mergeLocalUpdates } from "../utils/community";
-import type { Member, UserGroupDetails, UserGroupSummary } from "openchat-shared";
+import type {
+    Member,
+    SlashCommandPermissions,
+    UserGroupDetails,
+    UserGroupSummary,
+} from "openchat-shared";
 
 // Communities which the current user is previewing
 export const communityPreviewsStore: Writable<CommunityMap<CommunitySummary>> = writable(
@@ -67,7 +72,14 @@ export const communityStateStore = createCommunitySpecificObjectStore<CommunityS
         referrals: new Set<string>(),
         userGroups: new Map<number, UserGroupDetails>(),
         rules: emptyRules(),
+        bots: new Map(),
     }),
+);
+
+export const currentCommunityBots = createDerivedPropStore<CommunitySpecificState, "bots">(
+    communityStateStore,
+    "bots",
+    () => new Map<string, SlashCommandPermissions>(),
 );
 
 export const currentCommunityUserGroups = createDerivedPropStore<

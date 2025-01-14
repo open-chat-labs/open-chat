@@ -50,6 +50,7 @@ import type {
     VideoCallPresence,
     VideoCallParticipantsResponse,
     AccessGateConfig,
+    SlashCommandPermissions,
 } from "openchat-shared";
 import {
     DestinationInvalidError,
@@ -91,10 +92,13 @@ import {
 } from "../../utils/caching";
 import {
     acceptP2PSwapResponse,
+    addBotResponse,
     addRemoveReactionResponse,
-    apiAccessGate,
     apiAccessGateConfig,
+    apiChatPermission,
+    apiCommunityPermission,
     apiMessageContent,
+    apiMessagePermission,
     apiUser as apiUserV2,
     apiVideoCallPresence,
     cancelP2PSwapResponse,
@@ -113,11 +117,13 @@ import {
     pinMessageResponse,
     registerPollVoteResponse,
     registerProposalVoteResponse,
+    removeBotResponse,
     searchGroupChatResponse,
     setVideoCallPresence,
     threadPreviewsResponse,
     undeleteMessageResponse,
     unpinMessageResponse,
+    updateBotResponse,
     updateGroupResponse,
     videoCallParticipantsResponse,
 } from "../common/chatMappersV2";
@@ -223,6 +229,12 @@ import {
     GroupUpdateGroupResponse,
     GroupVideoCallParticipantsArgs,
     GroupVideoCallParticipantsResponse,
+    GroupAddBotArgs,
+    GroupAddBotResponse,
+    GroupUpdateBotArgs,
+    GroupUpdateBotResponse,
+    GroupRemoveBotArgs,
+    GroupRemoveBotResponse,
 } from "../../typebox";
 
 export class GroupClient extends CandidService {
@@ -597,22 +609,23 @@ export class GroupClient extends CandidService {
             : dataClient.uploadData(event.event.content, [this.chatId.groupId]);
 
         return uploadContentPromise.then((content) => {
-            const newContent = content ?? event.event.content;
+            const newEvent =
+                content !== undefined ? { ...event, event: { ...event.event, content } } : event;
             const args = {
-                content: apiMessageContent(newContent),
-                message_id: event.event.messageId,
+                content: apiMessageContent(newEvent.event.content),
+                message_id: newEvent.event.messageId,
                 sender_name: senderName,
                 sender_display_name: senderDisplayName,
                 rules_accepted: rulesAccepted,
-                replies_to: mapOptional(event.event.repliesTo, (replyContext) => ({
+                replies_to: mapOptional(newEvent.event.repliesTo, (replyContext) => ({
                     event_index: replyContext.eventIndex,
                 })),
                 mentioned: mentioned.map(apiUserV2),
-                forwarding: event.event.forwarded,
+                forwarding: newEvent.event.forwarded,
                 thread_root_message_index: threadRootMessageIndex,
                 message_filter_failed: messageFilterFailed,
                 correlation_id: generateUint64(),
-                block_level_markdown: event.event.blockLevelMarkdown,
+                block_level_markdown: newEvent.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
             };
 
@@ -625,20 +638,17 @@ export class GroupClient extends CandidService {
                 onRequestAccepted,
             )
                 .then((resp) => {
-                    const retVal: [SendMessageResponse, Message] = [
-                        resp,
-                        { ...event.event, content: newContent },
-                    ];
+                    const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
                     setCachedMessageFromSendResponse(
                         this.db,
                         this.chatId,
-                        event,
+                        newEvent,
                         threadRootMessageIndex,
                     )(retVal);
                     return retVal;
                 })
                 .catch((err) => {
-                    recordFailedMessage(this.db, this.chatId, event, threadRootMessageIndex);
+                    recordFailedMessage(this.db, this.chatId, newEvent, threadRootMessageIndex);
                     throw err;
                 });
         });
@@ -681,12 +691,6 @@ export class GroupClient extends CandidService {
                         : gateConfig.gate.kind === "no_gate"
                           ? "SetToNone"
                           : { SetToSome: apiAccessGateConfig(gateConfig) },
-                gate:
-                    gateConfig === undefined
-                        ? "NoChange"
-                        : gateConfig.gate.kind === "no_gate"
-                          ? "SetToNone"
-                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 messages_visible_to_non_members: messagesVisibleToNonMembers,
             },
             updateGroupResponse,
@@ -1284,6 +1288,55 @@ export class GroupClient extends CandidService {
             (value) => value === "Success",
             GroupCancelInvitesArgs,
             GroupCancelInvitesResponse,
+        );
+    }
+
+    addBot(botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "add_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+                granted_permissions: {
+                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
+                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
+                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                },
+            },
+            addBotResponse,
+            GroupAddBotArgs,
+            GroupAddBotResponse,
+        );
+    }
+
+    updateInstalledBot(
+        botId: string,
+        grantedPermissions: SlashCommandPermissions,
+    ): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+                granted_permissions: {
+                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
+                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
+                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                },
+            },
+            updateBotResponse,
+            GroupUpdateBotArgs,
+            GroupUpdateBotResponse,
+        );
+    }
+
+    removeInstalledBot(botId: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "remove_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+            },
+            removeBotResponse,
+            GroupRemoveBotArgs,
+            GroupRemoveBotResponse,
         );
     }
 }

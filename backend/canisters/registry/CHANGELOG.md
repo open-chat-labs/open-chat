@@ -8,8 +8,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Remove logo from "Add token" proposals since we get it from the ledger ([#7160](https://github.com/open-chat-labs/open-chat/pull/7160))
+
+## [[2.0.1539](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1539-registry)] - 2024-12-19
+
+### Changed
+
+- Expose any errors that occur while expanding onto a new subnet ([#7094](https://github.com/open-chat-labs/open-chat/pull/7094))
+
+## [[2.0.1536](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1536-registry)] - 2024-12-19
+
+### Fixed
+
+- Fix notifications index canisterId in already running job ([#7089](https://github.com/open-chat-labs/open-chat/pull/7089))
+
+## [[2.0.1535](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1535-registry)] - 2024-12-19
+
+### Fixed
+
+- Fix notifications index canisterId ([#7088](https://github.com/open-chat-labs/open-chat/pull/7088))
+
+## [[2.0.1524](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1524-registry)] - 2024-12-19
+
+### Added
+
+- Implement ability to expand onto additional subnets ([#7072](https://github.com/open-chat-labs/open-chat/pull/7072))
+
+### Changed
+
 - Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
 - Include the ledger canister Id in transfer failed error logs ([#7011](https://github.com/open-chat-labs/open-chat/pull/7011))
+- Disallow P2P swaps of disabled tokens ([#7057](https://github.com/open-chat-labs/open-chat/pull/7057))
 
 ## [[2.0.1490](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1490-registry)] - 2024-12-03
 

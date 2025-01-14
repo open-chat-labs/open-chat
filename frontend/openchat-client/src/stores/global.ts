@@ -381,7 +381,11 @@ export function setGlobalState(
     });
 
     globalStateStore.set(state);
-    chitStateStore.set(chitState);
+    chitStateStore.update((curr) => {
+        // Skip the new update if it is behind what we already have locally
+        const skipUpdate = chitState.streakEnds < curr.streakEnds;
+        return skipUpdate ? curr : chitState;
+    });
     serverWalletConfigStore.set(walletConfig);
 }
 

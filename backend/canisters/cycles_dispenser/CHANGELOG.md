@@ -6,9 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1550](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1550-cycles_dispenser)] - 2025-01-06
+
+### Changed
+
+- Log message if an unauthorized canister tries to request cycles ([#7163](https://github.com/open-chat-labs/open-chat/pull/7163))
+
+## [[2.0.1527](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1527-cycles_dispenser)] - 2024-12-19
+
+### Changed
+
+- Allow Registry to add additional canisters to the allow list ([#7072](https://github.com/open-chat-labs/open-chat/pull/7072))
+
+## [[2.0.1511](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1511-cycles_dispenser)] - 2024-12-13
+
 ### Changed
 
 - Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+
+### Fixed
+
+- Fix ordering of `latest_top_ups` ([#7046](https://github.com/open-chat-labs/open-chat/pull/7046))
 
 ## [[2.0.1485](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1485-cycles_dispenser)] - 2024-11-29
 
