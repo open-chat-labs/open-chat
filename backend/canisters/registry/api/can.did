@@ -1,5 +1,26 @@
 import "../../../libraries/types/can.did";
 
+type AddTokenArgs = record {
+    ledger_canister_id : CanisterId;
+    payer : opt UserId;
+    token_standard : TokenStandard;
+    info_url : text;
+    how_to_buy_url : text;
+    transaction_url_format : text;
+};
+
+type TokenStandard = variant {
+    icrc1;
+};
+
+type AddTokenResponse = variant {
+    Success;
+    AlreadyAdded;
+    InvalidRequest : text;
+    PaymentFailed : text;
+    InternalError : text;
+};
+
 type UpdatesArgs = record {
     since : opt TimestampMillis;
 };
@@ -65,5 +86,6 @@ type MessageFilterSummary = record {
 };
 
 service : {
+    add_token : (AddTokenArgs) -> (AddTokenResponse);
     updates : (UpdatesArgs) -> (UpdatesResponse) query;
 };
