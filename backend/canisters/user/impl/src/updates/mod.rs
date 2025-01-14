@@ -67,3 +67,4 @@ pub mod undelete_messages;
 pub mod unpin_chat_v2;
 pub mod wallet_receive;
 pub mod withdraw_crypto;
+pub mod withdraw_from_icpswap;

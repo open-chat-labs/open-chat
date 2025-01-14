@@ -230,16 +230,8 @@ pub(crate) async fn process_token_swap(
             return InternalError(msg);
         } else {
             mutate_state(|state| {
-                let now = state.env.now();
-                token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(amount_out), now));
-                token_swap.success = Some(Timestamped::new(successful_swap, now));
-
-                if debug {
-                    info!(swap_id = %token_swap.args.swap_id, "Swap succeeded");
-                }
-
-                state.data.token_swaps.upsert(token_swap);
-            });
+                mark_withdrawal_success(token_swap, successful_swap, amount_out, debug, state);
+            })
         }
     }
 
@@ -283,6 +275,24 @@ fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
         }
         ExchangeArgs::KongSwap(kongswap) => Box::new(KongSwapClient::new(kongswap.swap_canister_id, input_token, output_token)),
     }
+}
+
+pub(crate) fn mark_withdrawal_success(
+    mut token_swap: TokenSwap,
+    successful_swap: bool,
+    amount_out: u128,
+    debug: bool,
+    state: &mut RuntimeState,
+) {
+    let now = state.env.now();
+    token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(amount_out), now));
+    token_swap.success = Some(Timestamped::new(successful_swap, now));
+
+    if debug {
+        info!(swap_id = %token_swap.args.swap_id, "Swap succeeded");
+    }
+
+    state.data.token_swaps.upsert(token_swap);
 }
 
 fn enqueue_token_swap(token_swap: TokenSwap, attempt: u32, now: TimestampMillis, data: &mut Data) {
