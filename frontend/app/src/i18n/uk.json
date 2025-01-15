@@ -1341,6 +1341,7 @@
             "recipientOwner": "Довіритель рахунку одержувача",
             "recipientSubaccount": "Субрахунок одержувача",
             "recipientSubaccountRules": "має бути шістнадцятковим рядком",
+            "selectType": "Виберіть тип пропозиції",
             "summary": "Резюме",
             "summaryRules": "підтримує уцінку",
             "title": "Назва",

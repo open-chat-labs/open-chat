@@ -1341,6 +1341,7 @@
             "recipientOwner": "Hauptkonto des Empfängers",
             "recipientSubaccount": "Unterkonto des Empfängers",
             "recipientSubaccountRules": "muss eine Hex-Zeichenfolge sein",
+            "selectType": "Wählen Sie einen Vorschlagstyp aus",
             "summary": "Zusammenfassung",
             "summaryRules": "unterstützt Markdown",
             "title": "Titel",

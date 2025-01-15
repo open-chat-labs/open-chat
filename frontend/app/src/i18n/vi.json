@@ -1341,6 +1341,7 @@
             "recipientOwner": "Tiền gốc tài khoản của người nhận",
             "recipientSubaccount": "Tài khoản phụ của người nhận",
             "recipientSubaccountRules": "phải là một chuỗi hex",
+            "selectType": "Chọn loại đề xuất",
             "summary": "Bản tóm tắt",
             "summaryRules": "hỗ trợ đánh dấu",
             "title": "Tiêu đề",

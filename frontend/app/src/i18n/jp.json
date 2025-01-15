@@ -1341,6 +1341,7 @@
             "recipientOwner": "受信者のアカウント本人",
             "recipientSubaccount": "受信者のサブアカウント",
             "recipientSubaccountRules": "16 進文字列である必要があります",
+            "selectType": "提案タイプを選択",
             "summary": "まとめ",
             "summaryRules": "マークダウンをサポート",
             "title": "タイトル",

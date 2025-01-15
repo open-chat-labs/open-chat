@@ -1341,6 +1341,7 @@
             "recipientOwner": "Principal de la cuenta del destinatario",
             "recipientSubaccount": "Subcuenta del destinatario",
             "recipientSubaccountRules": "debe ser una cadena hexadecimal",
+            "selectType": "Seleccione un tipo de propuesta",
             "summary": "Resumen",
             "summaryRules": "admite rebajas",
             "title": "Título",

@@ -1341,6 +1341,7 @@
             "recipientOwner": "اصل حساب گیرنده",
             "recipientSubaccount": "حساب فرعی گیرنده",
             "recipientSubaccountRules": "باید یک رشته شش گوش باشد",
+            "selectType": "نوع پیشنهاد را انتخاب کنید",
             "summary": "خلاصه",
             "summaryRules": "از نشانه گذاری پشتیبانی می کند",
             "title": "عنوان",

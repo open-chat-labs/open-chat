@@ -1341,6 +1341,7 @@
             "recipientOwner": "Основная сумма счета получателя",
             "recipientSubaccount": "Субсчет получателя",
             "recipientSubaccountRules": "должна быть шестнадцатеричной строкой",
+            "selectType": "Выберите тип предложения",
             "summary": "Краткое содержание",
             "summaryRules": "поддерживает уценку",
             "title": "Заголовок",

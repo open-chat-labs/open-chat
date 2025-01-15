@@ -95,7 +95,8 @@
         | "upgrade_sns_to_next_version"
         | "register_external_achievement"
         | "add_token"
-        | "update_token" = "motion";
+        | "update_token"
+        | undefined = undefined;
     let error: string | undefined = undefined;
     let depositMessage: ResourceKey | undefined = undefined;
     let depositError = true;
@@ -118,7 +119,7 @@
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: transferFee = tokenDetails.transferFee;
     $: proposalCost = nervousSystem.proposalRejectionFee;
-    $: requiredFunds = proposalCost + (BigInt(3) * transferFee);
+    $: requiredFunds = proposalCost + BigInt(3) * transferFee;
     $: chitReward = Number(chitRewardText);
     $: chitRewardValid = chitReward >= MIN_CHIT_REWARD;
     $: achievementChatCost =
@@ -154,6 +155,7 @@
     $: achievementUrl = "";
     $: awardingAchievementCanisterId = "";
     $: valid =
+        selectedProposalType !== undefined &&
         !insufficientFunds &&
         !insufficientFundsForPayment &&
         titleValid &&
@@ -219,7 +221,9 @@
 
         busy = true;
 
-        if (!(await approvePayment(PROPOSALS_BOT_CANISTER, proposalCost + (BigInt(2) * transferFee)))) {
+        if (
+            !(await approvePayment(PROPOSALS_BOT_CANISTER, proposalCost + BigInt(2) * transferFee))
+        ) {
             busy = false;
             return;
         }
@@ -240,6 +244,11 @@
 
         const action = convertAction();
 
+        if (action === undefined) {
+            busy = false;
+            return;
+        }
+
         client
             .submitProposal(nervousSystem.governanceCanisterId, {
                 title,
@@ -257,7 +266,7 @@
             });
     }
 
-    function convertAction(): CandidateProposalAction {
+    function convertAction(): CandidateProposalAction | undefined {
         switch (selectedProposalType) {
             case "motion":
             case "upgrade_sns_to_next_version":
@@ -426,8 +435,11 @@
             </div>
             <div class="common hidden" class:visible={step === 1}>
                 <section class="type">
-                    <Legend label={i18nKey("proposal.maker.type")} />
+                    <Legend label={i18nKey("proposal.maker.type")} required />
                     <Select bind:value={selectedProposalType} margin={false}>
+                        <option value={undefined} disabled selected
+                            ><Translatable
+                                resourceKey={i18nKey("proposal.maker.selectType")} /></option>
                         <option value={"motion"}>Motion</option>
                         <option value={"transfer_sns_funds"}>Transfer SNS funds</option>
                         <option value={"upgrade_sns_to_next_version"}
@@ -777,7 +789,7 @@
                     secondary>{$_("cancel")}</Button>
 
                 <Button
-                    disabled={busy || (canSubmit && !valid)}
+                    disabled={busy || (canSubmit && !valid) || selectedProposalType === undefined}
                     loading={busy || refreshingBalance}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}

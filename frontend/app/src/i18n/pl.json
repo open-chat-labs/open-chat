@@ -1341,6 +1341,7 @@
             "recipientOwner": "Główny rachunek odbiorcy",
             "recipientSubaccount": "Subkonto odbiorcy",
             "recipientSubaccountRules": "musi być ciągiem szesnastkowym",
+            "selectType": "Wybierz typ propozycji",
             "summary": "Streszczenie",
             "summaryRules": "obsługuje przecenę",
             "title": "Tytuł",
