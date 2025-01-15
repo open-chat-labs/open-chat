@@ -4064,8 +4064,8 @@ export class OpenChatAgent extends EventTarget {
 
     updateRegisteredBot(
         id: string,
+        principal?: string,
         ownerId?: string,
-        name?: string,
         avatarUrl?: string,
         endpoint?: string,
         definition?: BotDefinition,
@@ -4073,8 +4073,8 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve(false);
         return this._userIndexClient.updateRegisteredBot(
             id,
+            principal,
             ownerId,
-            name,
             avatarUrl,
             endpoint,
             definition,
@@ -4144,9 +4144,17 @@ export class OpenChatAgent extends EventTarget {
         });
     }
 
-    async withdrawFromIcpSwap(userId: string, swapId: bigint, inputToken: boolean): Promise<boolean> {
+    async withdrawFromIcpSwap(
+        userId: string,
+        swapId: bigint,
+        inputToken: boolean,
+    ): Promise<boolean> {
         const localUserIndex = await this.getLocalUserIndexForUser(userId);
-        return this.getLocalUserIndexClient(localUserIndex).withdrawFromIcpSwap(userId, swapId, inputToken);
+        return this.getLocalUserIndexClient(localUserIndex).withdrawFromIcpSwap(
+            userId,
+            swapId,
+            inputToken,
+        );
     }
 }
 
