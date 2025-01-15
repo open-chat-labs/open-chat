@@ -122,8 +122,8 @@ function proposalAction(action: CandidateProposalAction): ProposalsBotProposalTo
                     treasury: action.treasury,
                 },
             };
-        case "upgrade_sns_to_next_version":
-            return "UpgradeSnsToNextVersion";
+        case "advance_sns_target_version":
+            return "AdvanceSnsTargetVersion";
         case "execute_generic_nervous_system_function":
             return {
                 ExecuteGenericNervousSystemFunction: {
