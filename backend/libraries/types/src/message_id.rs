@@ -85,7 +85,7 @@ mod deserialize {
 
     pub(super) struct MessageIdVisitor;
 
-    impl<'de> serde::de::Visitor<'de> for MessageIdVisitor {
+    impl serde::de::Visitor<'_> for MessageIdVisitor {
         type Value = super::MessageId;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
