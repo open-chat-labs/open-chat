@@ -30,6 +30,7 @@ import {
     joinChannelResponse,
     joinCommunityResponse,
     registerUserResponse,
+    withdrawFromIcpSwapResponse,
 } from "./mappers";
 import { joinGroupResponse, apiChatIdentifier } from "../common/chatMappersV2";
 import { MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
@@ -67,6 +68,8 @@ import {
     LocalUserIndexJoinGroupResponse,
     LocalUserIndexRegisterUserArgs,
     LocalUserIndexRegisterUserResponse,
+    LocalUserIndexWithdrawFromIcpswapArgs,
+    LocalUserIndexWithdrawFromIcpswapResponse,
 } from "../../typebox";
 
 export class LocalUserIndexClient extends CandidService {
@@ -384,6 +387,20 @@ export class LocalUserIndexClient extends CandidService {
             accessTokenResponse,
             LocalUserIndexAccessTokenArgs,
             LocalUserIndexAccessTokenResponse,
+        );
+    }
+
+    withdrawFromIcpSwap(userId: string, swapId: bigint, inputToken: boolean): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "withdraw_from_icpswap",
+            {
+                user_id: principalStringToBytes(userId),
+                swap_id: swapId,
+                input_token: inputToken
+            },
+            withdrawFromIcpSwapResponse,
+            LocalUserIndexWithdrawFromIcpswapArgs,
+            LocalUserIndexWithdrawFromIcpswapResponse
         );
     }
 }

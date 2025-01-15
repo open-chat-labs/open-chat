@@ -4143,6 +4143,11 @@ export class OpenChatAgent extends EventTarget {
             }
         });
     }
+
+    async withdrawFromIcpSwap(userId: string, swapId: bigint, inputToken: boolean): Promise<boolean> {
+        const localUserIndex = await this.getLocalUserIndexForUser(userId);
+        return this.getLocalUserIndexClient(localUserIndex).withdrawFromIcpSwap(userId, swapId, inputToken);
+    }
 }
 
 export interface ExchangeRateClient {

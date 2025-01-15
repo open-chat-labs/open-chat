@@ -424,7 +424,8 @@ export type WorkerRequest =
     | UpdateInstalledBot
     | UpdateRegisteredBot
     | GetBotDefinition
-    | CallBotCommandEndpoint;
+    | CallBotCommandEndpoint
+    | WithdrawFromIcpSwap;
 
 type CallBotCommandEndpoint = {
     kind: "callBotCommandEndpoint";
@@ -1421,6 +1422,13 @@ type DeleteUser = {
     userId: string;
 };
 
+type WithdrawFromIcpSwap = {
+    kind: "withdrawFromIcpSwap";
+    userId: string;
+    swapId: bigint;
+    inputToken: boolean;
+};
+
 /**
  * Worker error type
  */
@@ -2302,5 +2310,7 @@ export type WorkerResult<T> = T extends Init
     : T extends RemoveInstalledBot
     ? boolean
     : T extends UpdateInstalledBot
+    ? boolean
+    : T extends WithdrawFromIcpSwap
     ? boolean
     : never;
