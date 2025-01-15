@@ -40,13 +40,13 @@
     function cancelPreview() {
         if (previewingCommunity && $selectedCommunity) {
             client.removeCommunity($selectedCommunity.id);
-            page(routeForScope(client.getDefaultScope()));
         } else {
-            client.removeChat(chat.id);
             if (!chat.public) {
                 client.declineInvitation(chat.id);
             }
+            client.removeChat(chat.id);
         }
+        page(routeForScope(client.getDefaultScope()));
     }
 
     function freeze() {
