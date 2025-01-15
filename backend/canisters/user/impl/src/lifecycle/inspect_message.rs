@@ -16,7 +16,6 @@ fn accept_if_valid(state: &RuntimeState) {
     }
 
     if state.is_caller_owner()
-        || method_name == "withdraw_from_icpswap"
         || ((method_name == "start_video_call" || method_name == "end_video_call") && state.is_caller_video_call_operator())
     {
         ic_cdk::api::call::accept_message();
