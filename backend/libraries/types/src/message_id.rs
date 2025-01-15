@@ -8,15 +8,11 @@ use ts_export::ts_export;
 
 #[ts_export]
 #[derive(CandidType, Debug, Default, Clone, Copy, Eq)]
-pub struct MessageId(u128);
+pub struct MessageId(u64);
 
 impl MessageId {
-    pub fn as_u128(self) -> u128 {
-        self.0
-    }
-
     pub fn as_u64(self) -> u64 {
-        self.0 as u64
+        self.0
     }
 }
 
@@ -28,13 +24,13 @@ impl Distribution<MessageId> for Standard {
 
 impl From<u128> for MessageId {
     fn from(value: u128) -> MessageId {
-        MessageId(value)
+        MessageId(value as u64)
     }
 }
 
 impl From<u64> for MessageId {
     fn from(value: u64) -> MessageId {
-        MessageId(value as u128)
+        MessageId(value)
     }
 }
 
@@ -74,7 +70,7 @@ impl serde::Serialize for MessageId {
         if serializer.is_human_readable() {
             serializer.serialize_str(&self.0.to_string())
         } else {
-            serializer.serialize_u128(self.0)
+            serializer.serialize_u64(self.as_u64())
         }
     }
 }
@@ -86,7 +82,7 @@ mod deserialize {
     pub(super) struct MessageIdVisitor;
 
     impl serde::de::Visitor<'_> for MessageIdVisitor {
-        type Value = super::MessageId;
+        type Value = MessageId;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             formatter.write_str("u128 or string")
@@ -104,7 +100,7 @@ mod deserialize {
         where
             E: serde::de::Error,
         {
-            Ok(MessageId(v))
+            Ok(v.into())
         }
     }
 }
