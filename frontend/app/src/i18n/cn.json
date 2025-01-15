@@ -334,6 +334,7 @@
                 }
             }
         },
+        "tooManyRequests": "向该机器人发出的请求过多。请稍后重试。",
         "update_bot": {
             "action": "更新",
             "desc": "发起更新现有 OpenChat 机器人的提案",

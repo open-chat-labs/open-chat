@@ -334,6 +334,7 @@
                 }
             }
         },
+        "tooManyRequests": "Demasiadas solicitudes para este bot. Inténtalo de nuevo más tarde.",
         "update_bot": {
             "action": "Actualizar",
             "desc": "Iniciar una propuesta para actualizar un bot de OpenChat existente",

@@ -7779,7 +7779,9 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    executeInternalBotCommand(bot: InternalBotCommandInstance): Promise<boolean> {
+    executeInternalBotCommand(
+        bot: InternalBotCommandInstance,
+    ): Promise<"success" | "failure" | "too_many_requests"> {
         if (bot.command.name === "witch") {
             this.dispatchEvent(new SummonWitch());
         } else if (bot.command.name === "register_bot") {
@@ -7838,7 +7840,7 @@ export class OpenChat extends EventTarget {
         } else if (bot.command.name === "search" && bot.command.params[0]?.kind === "string") {
             this.dispatchEvent(new SearchChat(bot.command.params[0]?.value ?? ""));
         }
-        return Promise.resolve(true);
+        return Promise.resolve("success");
     }
 
     #getAuthTokenForBotCommand(
@@ -7986,7 +7988,7 @@ export class OpenChat extends EventTarget {
         content: MessageContent,
         msgId: bigint,
         senderId: string,
-    ) {
+    ): () => void {
         if (unconfirmed.contains(msgContext, msgId)) {
             unconfirmed.overwriteContent(msgContext, msgId, content, botContext);
         } else {
@@ -8017,13 +8019,14 @@ export class OpenChat extends EventTarget {
             unconfirmed.add(msgContext, event);
             this.dispatchEvent(new SentMessage(msgContext, event));
         }
+        return () => unconfirmed.delete(msgContext, msgId);
     }
 
     executeBotCommand(
         chat: ChatSummary,
         threadRootMessageIndex: number | undefined,
         bot: BotCommandInstance,
-    ): Promise<boolean> {
+    ): Promise<"success" | "failure" | "too_many_requests"> {
         const botContext = {
             initiator: this.#liveState.user.userId,
             finalised: false,
@@ -8032,11 +8035,12 @@ export class OpenChat extends EventTarget {
                 args: bot.command.params,
             },
         };
+        let removePlaceholder: (() => void) | undefined = undefined;
         switch (bot.kind) {
             case "external_bot":
                 return this.#getAuthTokenForBotCommand(chat, threadRootMessageIndex, bot)
                     .then(([token, msgId]) => {
-                        this.#sendPlaceholderMessage(
+                        removePlaceholder = this.#sendPlaceholderMessage(
                             bot.command.messageContext,
                             botContext,
                             bot.command.placeholder !== undefined
@@ -8050,9 +8054,16 @@ export class OpenChat extends EventTarget {
                     .then((resp) => {
                         if (resp.kind !== "success") {
                             console.error("Bot command failed with: ", resp);
+                            removePlaceholder?.();
+                            if (resp.kind === "too_many_requests") {
+                                console.log("Too many requests");
+                                return "too_many_requests";
+                            } else {
+                                return "failure";
+                            }
                         } else {
                             if (resp.message !== undefined) {
-                                this.#sendPlaceholderMessage(
+                                removePlaceholder = this.#sendPlaceholderMessage(
                                     bot.command.messageContext,
                                     { ...botContext, finalised: resp.message.finalised },
                                     resp.message.messageContent,
@@ -8060,12 +8071,13 @@ export class OpenChat extends EventTarget {
                                     bot.id,
                                 );
                             }
+                            return "success";
                         }
-                        return resp.kind === "success";
                     })
                     .catch((err) => {
                         console.log("Bot command failed with", err);
-                        return false;
+                        removePlaceholder?.();
+                        return "failure";
                     });
             case "internal_bot":
                 return this.executeInternalBotCommand(bot);

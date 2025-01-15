@@ -44,6 +44,7 @@ const ApiBotResponse = Type.Union([
     Type.Object({
         InternalError: ApiBotInternalError,
     }),
+    Type.Literal("TooManyRequests"),
 ]);
 type ApiBotResponse = Static<typeof ApiBotResponse>;
 
@@ -98,7 +99,11 @@ function validateBotResponse(json: unknown): BotCommandResponse {
 }
 
 function externalBotResponse(value: ApiBotResponse): BotCommandResponse {
-    if ("Success" in value) {
+    if (value === "TooManyRequests") {
+        return {
+            kind: "too_many_requests",
+        };
+    } else if ("Success" in value) {
         return {
             kind: "success",
             message: mapOptional(value.Success.message, ({ id, content, finalised }) => {
@@ -142,6 +147,8 @@ export function callBotCommandEndpoint(
                 return { Success: await res.json() };
             } else if (res.status === 400) {
                 return { BadRequest: await res.text() };
+            } else if (res.status === 429) {
+                return "TooManyRequests";
             } else {
                 return { InternalError: await res.text() };
             }
