@@ -4,9 +4,8 @@ use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
 use crate::*;
-use constants::{HOUR_IN_MS, ONE_MB, OPENCHAT_BOT_USER_ID};
+use constants::{ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
-use event_store_producer_cdk_runtime::CdkRuntime;
 use rand::rngs::StdRng;
 use rand::Rng;
 use search::simple::{Document, Query};
@@ -23,7 +22,7 @@ use types::{
     AcceptP2PSwapResult, BlobReference, BotMessageContext, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType,
     CompleteP2PSwapResult, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex,
     EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen,
-    GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContent, MessageContentInitial, MessageEditedEventPayload,
+    GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageEditedEventPayload,
     MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds,
     MultiUserChat, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
     PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload,
@@ -48,40 +47,6 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn remove_spurious_video_call_in_progress(&mut self, now: TimestampMillis) {
-        // IF any direct chats have video calls in progress where either:
-        // 1. The message cannot be found
-        // 2. The message is not a video call
-        // 3. More than 2 hours have passed since the call was started
-        // THEN remove the video call in progress indicator
-
-        let video_call_in_progress = self.video_call_in_progress.value.as_ref().map(|vc| vc.message_index);
-
-        if let Some(message_index) = video_call_in_progress {
-            if self.video_call_is_spurious(now) {
-                self.video_call_in_progress = Timestamped::new(None, now);
-
-                self.end_video_call::<CdkRuntime>(message_index.into(), now, None);
-            }
-        }
-    }
-
-    fn video_call_is_spurious(&self, now: TimestampMillis) -> bool {
-        if let Some(video_call) = &self.video_call_in_progress.value {
-            if now - self.video_call_in_progress.timestamp > 2 * HOUR_IN_MS {
-                return true;
-            }
-
-            if let Some(message) = self.main_events_reader().message(video_call.message_index.into(), None) {
-                return !matches!(message.content, MessageContent::VideoCall(_));
-            } else {
-                return true;
-            }
-        }
-
-        false
-    }
-
     pub fn prune_updated_events(&mut self, now: TimestampMillis) -> u32 {
         self.last_updated_timestamps.prune(now)
     }

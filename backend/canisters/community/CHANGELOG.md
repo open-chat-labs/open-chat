@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1570](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1570-community)] - 2025-01-14
+
 ### Changed
 
 - Join users to new channels in batches to handle large communities ([#7125](https://github.com/open-chat-labs/open-chat/pull/7125))
