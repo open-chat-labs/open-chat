@@ -136,6 +136,15 @@ impl RuntimeState {
         self.data.global_users.get(&caller).is_some()
     }
 
+    pub fn is_caller_platform_operator(&self) -> bool {
+        let caller = self.env.caller();
+        self.data
+            .global_users
+            .get_by_principal(&caller)
+            // TODO switch to `is_platform_operator` once UserIndex is released
+            .is_some_and(|u| u.is_platform_moderator)
+    }
+
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent) {
         self.data.user_event_sync_queue.push(user_id, event);
     }

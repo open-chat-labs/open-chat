@@ -68,4 +68,4 @@ pub mod undelete_messages;
 pub mod unmute_notifications;
 pub mod unpin_chat_v2;
 pub mod withdraw_crypto_v2;
-pub mod withdraw_from_icpswap;
+pub mod c2c_withdraw_from_icpswap;

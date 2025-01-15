@@ -21,6 +21,7 @@ generate_c2c_call!(c2c_remove_from_group);
 generate_c2c_call!(c2c_revoke_super_admin);
 generate_c2c_call!(c2c_set_user_suspended);
 generate_c2c_call!(c2c_vote_on_proposal);
+generate_c2c_call!(c2c_withdraw_from_icpswap);
 generate_c2c_call!(events);
 generate_c2c_call!(events_by_index);
 generate_c2c_call!(events_window);

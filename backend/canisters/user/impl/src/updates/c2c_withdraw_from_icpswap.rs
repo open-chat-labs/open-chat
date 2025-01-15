@@ -1,33 +1,20 @@
+use crate::guards::caller_is_local_user_index;
 use crate::model::token_swaps::TokenSwap;
 use crate::updates::swap_tokens::mark_withdrawal_success;
 use crate::{mutate_state, read_state, run_regular_jobs, token_swaps, RuntimeState};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_user_index_canister_c2c_client::LookupUserError;
-use types::CanisterId;
+use user_canister::c2c_withdraw_from_icpswap::{Response::*, *};
 use user_canister::swap_tokens::{ExchangeArgs, ICPSwapArgs};
-use user_canister::withdraw_from_icpswap::{Response::*, *};
 
-#[update(msgpack = true)]
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-async fn withdraw_from_icpswap(args: Args) -> Response {
+async fn c2c_withdraw_from_icpswap(args: Args) -> Response {
     run_regular_jobs();
 
-    let PrepareOk {
-        caller,
-        local_user_index_canister_id,
-        swap,
-        icpswap_args,
-    } = match read_state(|state| prepare(&args, state)) {
+    let PrepareOk { swap, icpswap_args } = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
-    };
-
-    match local_user_index_canister_c2c_client::lookup_user(caller, local_user_index_canister_id).await {
-        Ok(user) if user.is_platform_operator => {}
-        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
     };
 
     let token = if args.input_token { swap.args.input_token.clone() } else { swap.args.output_token.clone() };
@@ -49,8 +36,6 @@ async fn withdraw_from_icpswap(args: Args) -> Response {
 }
 
 struct PrepareOk {
-    caller: Principal,
-    local_user_index_canister_id: CanisterId,
     swap: TokenSwap,
     icpswap_args: ICPSwapArgs,
 }
@@ -63,10 +48,5 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareOk, Response> {
         return Err(SwapNotFound);
     };
 
-    Ok(PrepareOk {
-        caller: state.env.caller(),
-        local_user_index_canister_id: state.data.local_user_index_canister_id,
-        swap,
-        icpswap_args,
-    })
+    Ok(PrepareOk { swap, icpswap_args })
 }

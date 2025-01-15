@@ -31,3 +31,11 @@ pub fn caller_is_openchat_user() -> Result<(), String> {
         Err("Caller is not an OpenChat user".to_string())
     }
 }
+
+pub fn caller_is_platform_operator() -> Result<(), String> {
+    if read_state(|state| state.is_caller_platform_operator()) {
+        Ok(())
+    } else {
+        Err("Caller is not a platform operator".to_string())
+    }
+}
