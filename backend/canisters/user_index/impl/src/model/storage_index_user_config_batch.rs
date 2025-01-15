@@ -1,9 +1,9 @@
 use storage_index_canister::add_or_update_users::UserConfig;
-use timer_job_queues::{grouped_timer_job, TimerJobItem, TimerJobItemGroup};
+use timer_job_queues::{grouped_timer_job_batch, TimerJobItem, TimerJobItemGroup};
 use types::CanisterId;
 use utils::canister::should_retry_failed_c2c_call;
 
-grouped_timer_job!(StorageIndexUserConfigBatch, CanisterId, UserConfig, 1000);
+grouped_timer_job_batch!(StorageIndexUserConfigBatch, CanisterId, UserConfig, 1000);
 
 impl TimerJobItem for StorageIndexUserConfigBatch {
     async fn process(&self) -> Result<(), bool> {

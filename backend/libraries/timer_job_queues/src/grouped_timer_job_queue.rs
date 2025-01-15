@@ -239,7 +239,7 @@ where
 }
 
 #[macro_export]
-macro_rules! grouped_timer_job {
+macro_rules! grouped_timer_job_batch {
     ($name:ident, $key_type:ty, $item_type:ty, $batch_size:literal) => {
         pub struct $name {
             key: $key_type,

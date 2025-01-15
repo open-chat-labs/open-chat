@@ -2,11 +2,11 @@ use crate::model::users::FileStatusInternal;
 use crate::mutate_state;
 use candid::Deserialize;
 use serde::Serialize;
-use timer_job_queues::{grouped_timer_job, TimerJobItem, TimerJobItemGroup};
+use timer_job_queues::{grouped_timer_job_batch, TimerJobItem, TimerJobItemGroup};
 use types::{CanisterId, FileAdded, FileRemoved};
 use utils::canister::should_retry_failed_c2c_call;
 
-grouped_timer_job!(IndexEventBatch, CanisterId, (EventToSync, u64), 1000);
+grouped_timer_job_batch!(IndexEventBatch, CanisterId, (EventToSync, u64), 1000);
 
 #[derive(Serialize, Deserialize)]
 pub enum EventToSync {

@@ -1,10 +1,10 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use timer_job_queues::{grouped_timer_job, TimerJobItem, TimerJobItemGroup};
+use timer_job_queues::{grouped_timer_job_batch, TimerJobItem, TimerJobItemGroup};
 use types::{AccessorId, CanisterId, FileId};
 use utils::canister::should_retry_failed_c2c_call;
 
-grouped_timer_job!(BucketEventBatch, CanisterId, EventToSync, 1000);
+grouped_timer_job_batch!(BucketEventBatch, CanisterId, EventToSync, 1000);
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum EventToSync {
