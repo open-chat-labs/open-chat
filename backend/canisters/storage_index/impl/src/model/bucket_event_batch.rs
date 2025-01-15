@@ -1,14 +1,10 @@
-use crate::MAX_EVENTS_TO_SYNC_PER_BATCH;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
+use timer_job_queues::{grouped_timer_job_batch, TimerJobItem, TimerJobItemGroup};
 use types::{AccessorId, CanisterId, FileId};
 use utils::canister::should_retry_failed_c2c_call;
 
-pub struct BucketEventBatch {
-    canister_id: CanisterId,
-    events: Vec<EventToSync>,
-}
+grouped_timer_job_batch!(BucketEventBatch, CanisterId, EventToSync, 1000);
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum EventToSync {
@@ -22,7 +18,7 @@ pub enum EventToSync {
 impl TimerJobItem for BucketEventBatch {
     async fn process(&self) -> Result<(), bool> {
         let mut args = storage_bucket_canister::c2c_sync_index::Args::default();
-        for event in &self.events {
+        for event in &self.items {
             match event {
                 EventToSync::UserAdded(a) => args.users_added.push(*a),
                 EventToSync::UserRemoved(r) => args.users_removed.push(*r),
@@ -32,7 +28,7 @@ impl TimerJobItem for BucketEventBatch {
             }
         }
 
-        let response = storage_bucket_canister_c2c_client::c2c_sync_index(self.canister_id, &args).await;
+        let response = storage_bucket_canister_c2c_client::c2c_sync_index(self.key, &args).await;
 
         match response {
             Ok(_) => Ok(()),
@@ -41,33 +37,5 @@ impl TimerJobItem for BucketEventBatch {
                 Err(retry)
             }
         }
-    }
-}
-
-impl TimerJobItemGroup for BucketEventBatch {
-    type Key = CanisterId;
-    type Item = EventToSync;
-
-    fn new(canister_id: Self::Key) -> Self {
-        BucketEventBatch {
-            canister_id,
-            events: Vec::new(),
-        }
-    }
-
-    fn key(&self) -> Self::Key {
-        self.canister_id
-    }
-
-    fn add(&mut self, item: Self::Item) {
-        self.events.push(item);
-    }
-
-    fn into_items(self) -> Vec<Self::Item> {
-        self.events
-    }
-
-    fn is_full(&self) -> bool {
-        self.events.len() >= MAX_EVENTS_TO_SYNC_PER_BATCH
     }
 }

@@ -237,3 +237,38 @@ where
         Ok(value)
     }
 }
+
+#[macro_export]
+macro_rules! grouped_timer_job_batch {
+    ($name:ident, $key_type:ty, $item_type:ty, $batch_size:literal) => {
+        pub struct $name {
+            key: $key_type,
+            items: Vec<$item_type>,
+        }
+
+        impl TimerJobItemGroup for $name {
+            type Key = $key_type;
+            type Item = $item_type;
+
+            fn new(key: $key_type) -> Self {
+                $name { key, items: Vec::new() }
+            }
+
+            fn key(&self) -> $key_type {
+                self.key
+            }
+
+            fn add(&mut self, item: $item_type) {
+                self.items.push(item)
+            }
+
+            fn into_items(self) -> Vec<$item_type> {
+                self.items
+            }
+
+            fn is_full(&self) -> bool {
+                self.items.len() >= $batch_size
+            }
+        }
+    };
+}
