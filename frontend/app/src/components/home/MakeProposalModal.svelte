@@ -92,8 +92,8 @@
         | "motion"
         | "register_bot"
         | "transfer_sns_funds"
-        | "upgrade_sns_to_next_version"
         | "register_external_achievement"
+        | "advance_sns_target_version"
         | "add_token"
         | "update_token"
         | undefined = undefined;
@@ -162,7 +162,7 @@
         urlValid &&
         summaryValid &&
         (selectedProposalType === "motion" ||
-            selectedProposalType === "upgrade_sns_to_next_version" ||
+            selectedProposalType === "advance_sns_target_version" ||
             (selectedProposalType === "register_bot" && candidateBotValid) ||
             (selectedProposalType === "transfer_sns_funds" &&
                 amountValid &&
@@ -189,7 +189,7 @@
         step === 2 ||
         (step === 1 &&
             (selectedProposalType === "motion" ||
-                selectedProposalType === "upgrade_sns_to_next_version"));
+                selectedProposalType === "advance_sns_target_version"));
 
     $: {
         if (tokenDetails !== undefined) {
@@ -269,7 +269,7 @@
     function convertAction(): CandidateProposalAction | undefined {
         switch (selectedProposalType) {
             case "motion":
-            case "upgrade_sns_to_next_version":
+            case "advance_sns_target_version":
                 return { kind: selectedProposalType };
             case "transfer_sns_funds": {
                 return {
@@ -442,8 +442,8 @@
                                 resourceKey={i18nKey("proposal.maker.selectType")} /></option>
                         <option value={"motion"}>Motion</option>
                         <option value={"transfer_sns_funds"}>Transfer SNS funds</option>
-                        <option value={"upgrade_sns_to_next_version"}
-                            >Upgrade SNS to next version</option>
+                        <option value={"advance_sns_target_version"}
+                            >Advance SNS target version</option>
                         {#if symbol === "CHAT"}
                             <option value={"register_external_achievement"}
                                 >Register external achievement</option>
