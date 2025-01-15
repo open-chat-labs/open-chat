@@ -316,7 +316,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "claim_prize",
             {
-                channel_id: BigInt(channelId),
+                channel_id: Number(channelId),
                 message_id: messageId,
             },
             claimPrizeResponse,
@@ -334,7 +334,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "add_members_to_channel",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 user_ids: userIds.map(principalStringToBytes),
                 added_by_name: username,
                 added_by_display_name: displayName,
@@ -357,7 +357,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "add_reaction",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 username,
                 display_name: displayName,
                 message_id: messageId,
@@ -391,7 +391,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "change_channel_role",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 user_id: principalStringToBytes(userId),
                 new_role: apiMemberRole(newRole),
             },
@@ -446,7 +446,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "decline_invitation",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
             },
             declineInvitationResponse,
             CommunityDeclineInvitationArgs,
@@ -458,7 +458,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "delete_channel",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
             },
             deleteGroupResponse,
             CommunityDeleteChannelArgs,
@@ -474,7 +474,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackQuery(
             "deleted_message",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 message_id: messageId,
                 thread_root_message_index: threadRootMessageIndex,
             },
@@ -494,7 +494,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "delete_messages",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 message_ids: messageIds,
                 as_platform_moderator: asPlatformModerator,
                 thread_root_message_index: threadRootMessageIndex,
@@ -529,7 +529,7 @@ export class CommunityClient extends CandidService {
                 return this.executeMsgpackUpdate(
                     "edit_message",
                     {
-                        channel_id: BigInt(chatId.channelId),
+                        channel_id: Number(chatId.channelId),
                         thread_root_message_index: threadRootMessageIndex,
                         content: apiMessageContent(content ?? message.content),
                         message_id: message.messageId,
@@ -625,7 +625,7 @@ export class CommunityClient extends CandidService {
         maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
-            channel_id: BigInt(chatId.channelId),
+            channel_id: Number(chatId.channelId),
             thread_root_message_index: threadRootMessageIndex,
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,
@@ -675,7 +675,7 @@ export class CommunityClient extends CandidService {
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
-            channel_id: BigInt(chatId.channelId),
+            channel_id: Number(chatId.channelId),
             thread_root_message_index: threadRootMessageIndex,
             events: eventIndexes,
             latest_known_update: latestKnownUpdate,
@@ -769,7 +769,7 @@ export class CommunityClient extends CandidService {
         maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
-            channel_id: BigInt(chatId.channelId),
+            channel_id: Number(chatId.channelId),
             thread_root_message_index: threadRootMessageIndex,
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,
@@ -824,7 +824,7 @@ export class CommunityClient extends CandidService {
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
         const args = {
-            channel_id: BigInt(chatId.channelId),
+            channel_id: Number(chatId.channelId),
             thread_root_message_index: undefined,
             messages: messageIndexes,
             invite_code: mapOptional(this.inviteCode, textToCode),
@@ -891,7 +891,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "leave_channel",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
             },
             leaveGroupResponse,
             CommunityLeaveChannelArgs,
@@ -913,7 +913,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "unpin_message",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 message_index: messageIndex,
             },
             unpinMessageResponse,
@@ -926,7 +926,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "pin_message",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 message_index: messageIndex,
             },
             pinMessageResponse,
@@ -954,7 +954,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "remove_member_from_channel",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 user_id: principalStringToBytes(userId),
             },
             removeMemberFromChannelResponse,
@@ -972,7 +972,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "remove_reaction",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 message_id: messageId,
                 reaction,
                 thread_root_message_index: threadRootMessageIndex,
@@ -1002,7 +1002,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackQuery(
             "search_channel",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 max_results: maxResults,
                 users: users.map(principalStringToBytes),
                 search_term: searchTerm,
@@ -1111,7 +1111,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackQuery(
             "selected_channel_initial",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
             },
             groupDetailsResponse,
             CommunitySelectedChannelInitialArgs,
@@ -1138,7 +1138,7 @@ export class CommunityClient extends CandidService {
         const updatesResponse = await this.executeMsgpackQuery(
             "selected_channel_updates_v2",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 updates_since: previous.timestamp,
             },
             groupDetailsUpdatesResponse,
@@ -1185,7 +1185,7 @@ export class CommunityClient extends CandidService {
             const newEvent =
                 content !== undefined ? { ...event, event: { ...event.event, content } } : event;
             const args = {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 content: apiMessageContent(newEvent.event.content),
                 message_id: newEvent.event.messageId,
                 sender_name: senderName,
@@ -1238,7 +1238,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "register_poll_vote",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 thread_root_message_index: threadRootMessageIndex,
                 poll_option: answerIdx,
                 operation: voteType === "register" ? "RegisterVote" : "DeleteVote",
@@ -1255,7 +1255,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackQuery(
             "channel_summary",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 invite_code: mapOptional(this.inviteCode, textToCode),
             },
             (resp) => communityChannelSummaryResponse(resp, this.communityId),
@@ -1333,7 +1333,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "toggle_mute_notifications",
             {
-                channel_id: chatId ? BigInt(chatId.channelId) : undefined,
+                channel_id: chatId ? Number(chatId.channelId) : undefined,
                 mute,
             },
             toggleNotificationsResponse,
@@ -1362,7 +1362,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "undelete_messages",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 thread_root_message_index: threadRootMessageIndex,
                 message_ids: [messageId],
             },
@@ -1380,7 +1380,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackQuery(
             "thread_previews",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 threads: threadRootMessageIndexes,
                 latest_client_thread_update: latestClientThreadUpdate,
             },
@@ -1398,7 +1398,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "register_proposal_vote",
             {
-                channel_id: BigInt(channelId),
+                channel_id: Number(channelId),
                 adopt,
                 message_index: messageIdx,
             },
@@ -1424,7 +1424,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "update_channel",
             {
-                channel_id: BigInt(chatId.channelId),
+                channel_id: Number(chatId.channelId),
                 name: name,
                 description,
                 external_url: externalUrl === undefined ? "NoChange" : { SetToSome: externalUrl },
@@ -1581,7 +1581,7 @@ export class CommunityClient extends CandidService {
         newAchievement: boolean,
     ): Promise<FollowThreadResponse> {
         const args = {
-            channel_id: BigInt(channelId),
+            channel_id: Number(channelId),
             thread_root_message_index: threadRootMessageIndex,
             new_achievement: newAchievement,
         };
@@ -1603,7 +1603,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "report_message",
             {
-                channel_id: BigInt(channelId),
+                channel_id: Number(channelId),
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
                 delete: deleteMessage,
@@ -1624,7 +1624,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "accept_p2p_swap",
             {
-                channel_id: BigInt(channelId),
+                channel_id: Number(channelId),
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
                 pin,
@@ -1644,7 +1644,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "cancel_p2p_swap",
             {
-                channel_id: BigInt(channelId),
+                channel_id: Number(channelId),
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
             },
@@ -1663,7 +1663,7 @@ export class CommunityClient extends CandidService {
             "join_video_call",
             {
                 message_id: messageId,
-                channel_id: BigInt(channelId),
+                channel_id: Number(channelId),
                 new_achievement: newAchievement,
             },
             joinVideoCallResponse,
@@ -1681,7 +1681,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "set_video_call_presence",
             {
-                channel_id: BigInt(channelId),
+                channel_id: Number(channelId),
                 message_id: messageId,
                 presence: apiVideoCallPresence(presence),
                 new_achievement: newAchievement,
@@ -1700,7 +1700,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackQuery(
             "video_call_participants",
             {
-                channel_id: BigInt(channelId),
+                channel_id: Number(channelId),
                 message_id: messageId,
                 updated_since: updatesSince,
             },
@@ -1714,7 +1714,7 @@ export class CommunityClient extends CandidService {
         return this.executeMsgpackUpdate(
             "cancel_invites",
             {
-                channel_id: mapOptional(channelId, (cid) => BigInt(cid)),
+                channel_id: mapOptional(channelId, (cid) => Number(cid)),
                 user_ids: userIds.map(principalStringToBytes),
             },
             (value) => value === "Success",

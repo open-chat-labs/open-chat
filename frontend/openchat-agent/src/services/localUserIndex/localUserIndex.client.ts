@@ -304,7 +304,7 @@ export class LocalUserIndexClient extends CandidService {
             "join_channel",
             {
                 community_id: principalStringToBytes(id.communityId),
-                channel_id: BigInt(id.channelId),
+                channel_id: Number(id.channelId),
                 invite_code: mapOptional(inviteCode, textToCode),
                 verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
                 referred_by: maybePrincipalStringToBytes(referredBy),
@@ -364,7 +364,7 @@ export class LocalUserIndexClient extends CandidService {
             "invite_users_to_channel",
             {
                 community_id: principalStringToBytes(communityId),
-                channel_id: BigInt(channelId),
+                channel_id: Number(channelId),
                 user_ids: userIds.map(principalStringToBytes),
                 caller_username: callerUsername,
             },

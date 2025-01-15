@@ -456,7 +456,7 @@ export const GroupAddBotResponse = Type.Union([
 ]);
 
 export type ChannelId = Static<typeof ChannelId>;
-export const ChannelId = Type.BigInt();
+export const ChannelId = Type.Number();
 
 export type UserManageFavouriteChatsResponse = Static<typeof UserManageFavouriteChatsResponse>;
 export const UserManageFavouriteChatsResponse = Type.Union([

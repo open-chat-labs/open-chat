@@ -913,7 +913,7 @@ export class UserClient extends CandidService {
             mentioned: [],
             message_id: event.event.messageId,
             community_id: principalStringToBytes(id.communityId),
-            channel_id: BigInt(id.channelId),
+            channel_id: Number(id.channelId),
             replies_to: mapOptional(event.event.repliesTo, (replyContext) =>
                 apiReplyContextArgs(id, replyContext),
             ),
@@ -1006,7 +1006,7 @@ export class UserClient extends CandidService {
         dateReadPinned: bigint | undefined,
     ) {
         return {
-            channel_id: BigInt(channelId),
+            channel_id: Number(channelId),
             read_up_to: readUpTo,
             threads: threads.map((t) => ({
                 root_message_index: t.threadRootMessageIndex,
@@ -1270,7 +1270,7 @@ export class UserClient extends CandidService {
                     return {
                         Community: [
                             principalStringToBytes(chatId.communityId),
-                            BigInt(chatId.channelId),
+                            Number(chatId.channelId),
                         ],
                     };
             }

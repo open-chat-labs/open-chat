@@ -198,7 +198,7 @@ function eventsContext(context: MessageContext): LocalUserIndexChatEventsEventsC
             return {
                 Channel: [
                     principalStringToBytes(context.chatId.communityId),
-                    BigInt(context.chatId.channelId),
+                    Number(context.chatId.channelId),
                     context.threadRootMessageIndex ?? null,
                 ],
             };
