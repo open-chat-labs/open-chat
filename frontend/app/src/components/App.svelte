@@ -164,6 +164,7 @@
             stakeNeuronForSubmittingProposals,
             topUpNeuronForSubmittingProposals,
             updateMarketMakerConfig,
+            withdrawFromIcpSwap,
             pauseEventLoop: () => client.pauseEventLoop(),
             resumeEventLoop: () => client.resumeEventLoop(),
         };
@@ -411,6 +412,10 @@
                 console.log("Failed to update market maker config", resp);
             }
         });
+    }
+
+    function withdrawFromIcpSwap(userId: string, swapId: bigint, inputToken: boolean): void {
+        client.withdrawFromIcpSwap(userId, swapId, inputToken)
     }
 
     function calculateHeight() {

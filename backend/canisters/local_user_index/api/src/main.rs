@@ -19,4 +19,5 @@ fn main() {
     generate_ts_method!(local_user_index, join_group);
     generate_ts_method!(local_user_index, register_user);
     generate_ts_method!(local_user_index, report_message_v2);
+    generate_ts_method!(local_user_index, withdraw_from_icpswap);
 }

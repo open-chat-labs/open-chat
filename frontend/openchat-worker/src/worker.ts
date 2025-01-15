@@ -1929,6 +1929,13 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "withdrawFromIcpSwap":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.withdrawFromIcpSwap(payload.userId, payload.swapId, payload.inputToken));
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

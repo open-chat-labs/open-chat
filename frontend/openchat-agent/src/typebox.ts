@@ -657,25 +657,6 @@ export const UserUpdatesArgs = Type.Object({
     updates_since: Type.BigInt(),
 });
 
-export type UserSubmitProposalResponse = Static<typeof UserSubmitProposalResponse>;
-export const UserSubmitProposalResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("GovernanceCanisterNotSupported"),
-    Type.Object({
-        InsufficientPayment: Type.BigInt(),
-    }),
-    Type.Literal("UserSuspended"),
-    Type.Object({
-        TransferFailed: Type.String(),
-    }),
-    Type.Object({
-        Retrying: Type.String(),
-    }),
-    Type.Object({
-        InternalError: Type.String(),
-    }),
-]);
-
 export type UserLeaveGroupResponse = Static<typeof UserLeaveGroupResponse>;
 export const UserLeaveGroupResponse = Type.Union([
     Type.Literal("Success"),
@@ -2435,6 +2416,20 @@ export const LocalUserIndexRegisterUserArgs = Type.Object({
     referral_code: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     public_key: TSBytes,
 });
+
+export type LocalUserIndexWithdrawFromIcpswapResponse = Static<
+    typeof LocalUserIndexWithdrawFromIcpswapResponse
+>;
+export const LocalUserIndexWithdrawFromIcpswapResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("UserNotFound"),
+    Type.Literal("SwapNotFound"),
+    Type.Literal("SwapCompleted"),
+    Type.Literal("NotAuthorized"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
 
 export type LocalUserIndexChatEventsEventsByIndexArgs = Static<
     typeof LocalUserIndexChatEventsEventsByIndexArgs
@@ -5158,6 +5153,17 @@ export const LocalUserIndexRegisterUserSuccessResult = Type.Object({
     ]),
 });
 
+export type LocalUserIndexWithdrawFromIcpswapArgs = Static<
+    typeof LocalUserIndexWithdrawFromIcpswapArgs
+>;
+export const LocalUserIndexWithdrawFromIcpswapArgs = Type.Object({
+    user_id: UserId,
+    swap_id: Type.BigInt(),
+    input_token: Type.Boolean(),
+    amount: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
+    fee: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
+});
+
 export type LocalUserIndexChatEventsEventsContext = Static<
     typeof LocalUserIndexChatEventsEventsContext
 >;
@@ -7214,16 +7220,6 @@ export type UserUpdatesFavouriteChatsUpdates = Static<typeof UserUpdatesFavourit
 export const UserUpdatesFavouriteChatsUpdates = Type.Object({
     chats: Type.Optional(Type.Union([Type.Array(Chat), Type.Undefined()])),
     pinned: Type.Optional(Type.Union([Type.Array(Chat), Type.Undefined()])),
-});
-
-export type UserSubmitProposalArgs = Static<typeof UserSubmitProposalArgs>;
-export const UserSubmitProposalArgs = Type.Object({
-    governance_canister_id: TSBytes,
-    proposal: ProposalsBotProposalToSubmit,
-    ledger: TSBytes,
-    token: Cryptocurrency,
-    proposal_rejection_fee: Type.BigInt(),
-    transaction_fee: Type.BigInt(),
 });
 
 export type UserSendMessageWithTransferToGroupSuccessResult = Static<
