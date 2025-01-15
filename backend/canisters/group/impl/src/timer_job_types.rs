@@ -16,7 +16,7 @@ pub enum TimerJob {
     DeleteFileReferences(DeleteFileReferencesJob),
     EndPoll(EndPollJob),
     FinalPrizePayments(FinalPrizePaymentsJob),
-    MakeTransfer(MakeTransferJob),
+    MakeTransfer(Box<MakeTransferJob>),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
@@ -166,10 +166,10 @@ impl Job for HardDeleteMessageContentJob {
                                 .is_some()
                             {
                                 for pending_transaction in prize.final_payments(sender, state.env.now_nanos()) {
-                                    follow_on_jobs.push(TimerJob::MakeTransfer(MakeTransferJob {
+                                    follow_on_jobs.push(TimerJob::MakeTransfer(Box::new(MakeTransferJob {
                                         pending_transaction,
                                         attempt: 0,
-                                    }));
+                                    })));
                                 }
                             }
                         }
@@ -263,10 +263,10 @@ impl Job for MakeTransferJob {
                             pending_transaction.set_created(now * NANOS_PER_MILLISECOND);
                         }
                         state.data.timer_jobs.enqueue_job(
-                            TimerJob::MakeTransfer(MakeTransferJob {
+                            TimerJob::MakeTransfer(Box::new(MakeTransferJob {
                                 pending_transaction,
                                 attempt: attempt + 1,
-                            }),
+                            })),
                             now + MINUTE_IN_MS,
                             now,
                         );
