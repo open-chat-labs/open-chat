@@ -1,7 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::{mutate_state, Data};
-use candid::Principal;
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -27,15 +26,4 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    mutate_state(|state| {
-        let now = state.env.now();
-        for chat in state.data.direct_chats.iter_mut() {
-            chat.events.set_chat(Chat::Direct(Principal::from(chat.them).into()));
-            chat.events.remove_spurious_video_call_in_progress(now);
-
-            let count_removed = chat.events.prune_updated_events(now);
-            info!(count_removed, "Removed old event updates");
-        }
-    });
 }

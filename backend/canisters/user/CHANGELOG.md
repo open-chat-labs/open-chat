@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1571-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1571-user)] - 2025-01-15
+
 ### Added
 
 - Accept calls from the BotApiGateway ([#6846](https://github.com/open-chat-labs/open-chat/pull/6846))
