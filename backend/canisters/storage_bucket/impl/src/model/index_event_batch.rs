@@ -1,15 +1,12 @@
 use crate::model::users::FileStatusInternal;
-use crate::{mutate_state, MAX_EVENTS_TO_SYNC_PER_BATCH};
+use crate::mutate_state;
 use candid::Deserialize;
 use serde::Serialize;
-use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
+use timer_job_queues::{grouped_timer_job, TimerJobItem, TimerJobItemGroup};
 use types::{CanisterId, FileAdded, FileRemoved};
 use utils::canister::should_retry_failed_c2c_call;
 
-pub struct IndexEventBatch {
-    canister_id: CanisterId,
-    events: Vec<(EventToSync, u64)>,
-}
+grouped_timer_job!(IndexEventBatch, CanisterId, (EventToSync, u64), 1000);
 
 #[derive(Serialize, Deserialize)]
 pub enum EventToSync {
@@ -25,7 +22,7 @@ impl TimerJobItem for IndexEventBatch {
             ..Default::default()
         };
 
-        for (event, total_file_bytes) in &self.events {
+        for (event, total_file_bytes) in &self.items {
             match event {
                 EventToSync::FileAdded(file) => {
                     args.files_added.push(file.clone());
@@ -37,7 +34,7 @@ impl TimerJobItem for IndexEventBatch {
             args.total_file_bytes = *total_file_bytes;
         }
 
-        let response = storage_index_canister_c2c_client::c2c_sync_bucket(self.canister_id, &args).await;
+        let response = storage_index_canister_c2c_client::c2c_sync_bucket(self.key, &args).await;
 
         match response {
             Ok(storage_index_canister::c2c_sync_bucket::Response::Success(result)) => {
@@ -71,33 +68,5 @@ impl TimerJobItem for IndexEventBatch {
                 Err(retry)
             }
         }
-    }
-}
-
-impl TimerJobItemGroup for IndexEventBatch {
-    type Key = CanisterId;
-    type Item = (EventToSync, u64);
-
-    fn new(canister_id: Self::Key) -> Self {
-        IndexEventBatch {
-            canister_id,
-            events: Vec::new(),
-        }
-    }
-
-    fn key(&self) -> Self::Key {
-        self.canister_id
-    }
-
-    fn add(&mut self, item: Self::Item) {
-        self.events.push(item);
-    }
-
-    fn into_items(self) -> Vec<Self::Item> {
-        self.events
-    }
-
-    fn is_full(&self) -> bool {
-        self.events.len() >= MAX_EVENTS_TO_SYNC_PER_BATCH
     }
 }

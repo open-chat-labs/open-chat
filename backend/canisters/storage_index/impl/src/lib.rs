@@ -24,7 +24,6 @@ mod queries;
 mod updates;
 
 const DEFAULT_CHUNK_SIZE_BYTES: u32 = 1 << 19; // 1/2 Mb
-const MAX_EVENTS_TO_SYNC_PER_BATCH: usize = 1000;
 const MIN_CYCLES_BALANCE: Cycles = 20_000_000_000_000; // 20T
 const BUCKET_CANISTER_TOP_UP_AMOUNT: Cycles = 5_000_000_000_000; // 5T
 
