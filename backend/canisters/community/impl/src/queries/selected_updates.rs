@@ -120,7 +120,7 @@ struct UserUpdatesHandler<'a> {
     referrals_updated: HashSet<UserId>,
 }
 
-impl<'a> UserUpdatesHandler<'a> {
+impl UserUpdatesHandler<'_> {
     pub fn mark_member_updated(&mut self, result: &mut SuccessResult, user_id: UserId, referral: bool, removed: bool) {
         if self.users_updated.insert(user_id) {
             if removed {

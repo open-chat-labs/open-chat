@@ -35,10 +35,9 @@ fn disappearing_messages_in_group_chats() {
     }
 
     assert!(
-        client::group::happy_path::events_by_index(env, &user, group_id, vec![send_message_response1.event_index])
+        !client::group::happy_path::events_by_index(env, &user, group_id, vec![send_message_response1.event_index])
             .events
-            .first()
-            .is_some()
+            .is_empty()
     );
 
     env.advance_time(Duration::from_millis(2000));
@@ -55,7 +54,7 @@ fn disappearing_messages_in_group_chats() {
 
     let events_by_index_response =
         client::group::happy_path::events_by_index(env, &user, group_id, vec![send_message_response1.event_index]);
-    assert!(events_by_index_response.events.first().is_none());
+    assert!(events_by_index_response.events.is_empty());
     assert_eq!(
         *events_by_index_response.expired_event_ranges.first().unwrap(),
         expected_expired_events_range
@@ -93,10 +92,9 @@ fn disappearing_messages_in_group_chats() {
     env.tick();
 
     assert!(
-        client::group::happy_path::events_by_index(env, &user, group_id, vec![send_message_response2.event_index])
+        !client::group::happy_path::events_by_index(env, &user, group_id, vec![send_message_response2.event_index])
             .events
-            .first()
-            .is_some()
+            .is_empty()
     );
 }
 
