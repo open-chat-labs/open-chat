@@ -2054,7 +2054,7 @@ export type WorkerResult<T> = T extends Init
     : T extends GetUser
     ? UserSummary | undefined
     : T extends GetPublicProfile
-    ? PublicProfile
+    ? PublicProfile | undefined
     : T extends SetUsername
     ? SetUsernameResponse
     : T extends SetDisplayName

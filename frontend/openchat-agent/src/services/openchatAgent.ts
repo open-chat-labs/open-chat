@@ -21,7 +21,7 @@ import {
     setCachedBots,
 } from "../utils/caching";
 import { isMainnet } from "../utils/network";
-import { getAllUsers, clearCache as clearUserCache } from "../utils/userCache";
+import { getAllUsers, clearCache as clearUserCache, isUserIdDeleted } from "../utils/userCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
@@ -2606,11 +2606,22 @@ export class OpenChatAgent extends EventTarget {
         return userClient.getBio();
     }
 
-    getPublicProfile(userId?: string): Promise<PublicProfile> {
-        const userClient = userId
-            ? new UserClient(userId, this.identity, this._agent, this.config, this.db)
-            : this.userClient;
-        return userClient.getPublicProfile();
+    getPublicProfile(userId?: string): Promise<PublicProfile | undefined> {
+        if (userId) {
+            return isUserIdDeleted(userId).then((deleted) => {
+                if (deleted) return undefined;
+                const userClient = new UserClient(
+                    userId,
+                    this.identity,
+                    this._agent,
+                    this.config,
+                    this.db,
+                );
+                return userClient.getPublicProfile();
+            });
+        } else {
+            return this.userClient.getPublicProfile();
+        }
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
@@ -4032,9 +4043,9 @@ export class OpenChatAgent extends EventTarget {
         ];
     }
 
-    // deleteUser(userId: string): Promise<boolean> {
-    //     return this._userIndexClient.deleteUser(userId);
-    // }
+    deleteUser(userId: string): Promise<boolean> {
+        return this._userIndexClient.deleteUser(userId);
+    }
 
     getChannelSummary(channelId: ChannelIdentifier): Promise<ChannelSummaryResponse> {
         return this.communityClient(channelId.communityId)
@@ -4144,9 +4155,17 @@ export class OpenChatAgent extends EventTarget {
         });
     }
 
-    async withdrawFromIcpSwap(userId: string, swapId: bigint, inputToken: boolean): Promise<boolean> {
+    async withdrawFromIcpSwap(
+        userId: string,
+        swapId: bigint,
+        inputToken: boolean,
+    ): Promise<boolean> {
         const localUserIndex = await this.getLocalUserIndexForUser(userId);
-        return this.getLocalUserIndexClient(localUserIndex).withdrawFromIcpSwap(userId, swapId, inputToken);
+        return this.getLocalUserIndexClient(localUserIndex).withdrawFromIcpSwap(
+            userId,
+            swapId,
+            inputToken,
+        );
     }
 }
 

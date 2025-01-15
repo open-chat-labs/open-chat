@@ -128,6 +128,13 @@
     "addedBy": "{changedBy} added {changed} to the {level}",
     "admin": "admin",
     "advanced": "Advanced",
+    "danger": {
+        "title": "Danger",
+        "deleteAccount": "Delete account",
+        "deleteAccountInfo": "Delete your OpenChat account. Warning! This is final and cannot be undone.",
+        "deleteAccountFailed": "Sorry, we were unable to delete your account",
+        "deleteAccountConfirm": "Are you 100% sure that you want to completely delete your OpenChat account and that you understand that this cannot be undone?"
+    },
     "airdropWarning": "In order to qualify for the next Airdrop, you must be a member of the **{channelName}** channel in the **{communityName}** community. [Click here to join.]({url})",
     "alsoCanisterId": "also your canister id",
     "andNMore": ", and {n} more",

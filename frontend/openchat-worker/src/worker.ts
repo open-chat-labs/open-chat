@@ -1889,9 +1889,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            // case "deleteUser":
-            //     executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
-            //     break;
+            case "deleteUser":
+                executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
+                break;
 
             case "addBot":
                 executeThenReply(
@@ -1933,7 +1933,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.withdrawFromIcpSwap(payload.userId, payload.swapId, payload.inputToken));
+                    agent.withdrawFromIcpSwap(payload.userId, payload.swapId, payload.inputToken),
+                );
                 break;
 
             default:

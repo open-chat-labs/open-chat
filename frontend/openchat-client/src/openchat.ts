@@ -622,9 +622,25 @@ export class OpenChat extends EventTarget {
     }
 
     clearCachedData() {
-        this.#sendRequest({
+        return this.#sendRequest({
             kind: "clearCachedData",
-        }).then((_) => window.location.reload());
+        });
+    }
+
+    deleteCurrentUser(): Promise<boolean> {
+        if (!this.#liveState.anonUser) {
+            return this.#sendRequest({
+                kind: "deleteUser",
+                userId: this.#liveState.user.userId,
+            }).then((success) => {
+                if (success) {
+                    this.clearCachedData().then(() => this.logout());
+                }
+                return success;
+            });
+        } else {
+            return Promise.resolve(false);
+        }
     }
 
     #chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
@@ -5317,7 +5333,7 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    getPublicProfile(userId?: string): Promise<PublicProfile> {
+    getPublicProfile(userId?: string): Promise<PublicProfile | undefined> {
         return this.#sendRequest({ kind: "getPublicProfile", userId });
     }
 

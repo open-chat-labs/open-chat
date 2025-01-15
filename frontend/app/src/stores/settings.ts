@@ -29,6 +29,7 @@ export const verificationSectionOpen = createLsBoolStore(configKeys.verification
 export const accountsSectionOpen = createLsBoolStore(configKeys.verificationSectionOpen, false);
 export const statsSectionOpen = createLsBoolStore(configKeys.userStatsSection, false);
 export const advancedSectionOpen = createLsBoolStore(configKeys.userAdvancedSection, false);
+export const dangerSectionOpen = createLsBoolStore(configKeys.userDangerSection, false);
 export const groupInfoOpen = createLsBoolStore(configKeys.groupInfoSection, true);
 export const groupVisibilityOpen = createLsBoolStore(configKeys.groupVisibilitySection, true);
 export const groupRulesOpen = createLsBoolStore(configKeys.groupRulesSection, true);

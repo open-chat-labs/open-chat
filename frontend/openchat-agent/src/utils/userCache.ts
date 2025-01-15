@@ -80,6 +80,11 @@ export async function getCachedDeletedUserIds(): Promise<Set<string>> {
     return getDeletedUserIdsList().then((list) => new Set(list));
 }
 
+export async function isUserIdDeleted(userId: string): Promise<boolean> {
+    const user = await (await lazyOpenUserCache()).get("deletedUserIds", userId);
+    return user !== undefined;
+}
+
 export async function setCachedUsers(users: UserSummary[]): Promise<void> {
     if (users.length === 0) return;
     writeCachedUsersToDatabase(lazyOpenUserCache(), users);

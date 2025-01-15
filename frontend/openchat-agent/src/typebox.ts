@@ -2241,6 +2241,13 @@ export const UserIndexSearchArgs = Type.Object({
     max_results: Type.Number(),
 });
 
+export type UserIndexDeleteUserResponse = Static<typeof UserIndexDeleteUserResponse>;
+export const UserIndexDeleteUserResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserNotFound"),
+]);
+
 export type UserIndexUnsuspendUserResponse = Static<typeof UserIndexUnsuspendUserResponse>;
 export const UserIndexUnsuspendUserResponse = Type.Union([
     Type.Literal("Success"),
@@ -5036,6 +5043,11 @@ export const UserIndexUserArgs = Type.Object({
 export type UserIndexReferralMetricsResponse = Static<typeof UserIndexReferralMetricsResponse>;
 export const UserIndexReferralMetricsResponse = Type.Object({
     Success: UserIndexReferralMetricsReferralMetrics,
+});
+
+export type UserIndexDeleteUserArgs = Static<typeof UserIndexDeleteUserArgs>;
+export const UserIndexDeleteUserArgs = Type.Object({
+    user_id: UserId,
 });
 
 export type UserIndexUnsuspendUserArgs = Static<typeof UserIndexUnsuspendUserArgs>;

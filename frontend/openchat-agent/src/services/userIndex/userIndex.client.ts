@@ -56,7 +56,7 @@ import {
     getCachedUsers,
     getCachedDeletedUserIds,
     getSuspendedUsersSyncedUpTo,
-    // setCachedDeletedUserIds,
+    setCachedDeletedUserIds,
     setCachedUsers,
     setDisplayNameInCache,
     setSuspendedUsersSyncedUpTo,
@@ -83,8 +83,8 @@ import {
     UserIndexCheckUsernameResponse,
     UserIndexChitLeaderboardResponse,
     UserIndexCurrentUserResponse,
-    // UserIndexDeleteUserArgs,
-    // UserIndexDeleteUserResponse,
+    UserIndexDeleteUserArgs,
+    UserIndexDeleteUserResponse,
     UserIndexDiamondMembershipFeesResponse,
     UserIndexExploreBotsArgs,
     UserIndexExploreBotsResponse,
@@ -228,7 +228,7 @@ export class UserIndexClient extends CandidService {
             fromCache,
         );
 
-        // setCachedDeletedUserIds(apiResponse.deletedUserIds);
+        setCachedDeletedUserIds(apiResponse.deletedUserIds);
 
         setCachedUsers(mergedResponse.users).catch((err) =>
             console.error("Failed to save users to the cache", err),
@@ -607,15 +607,15 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    // deleteUser(userId: string): Promise<boolean> {
-    //     return this.executeMsgpackUpdate(
-    //         "delete_user",
-    //         { user_id: principalStringToBytes(userId) },
-    //         (resp) => resp === "Success",
-    //         UserIndexDeleteUserArgs,
-    //         UserIndexDeleteUserResponse,
-    //     );
-    // }
+    deleteUser(userId: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "delete_user",
+            { user_id: principalStringToBytes(userId) },
+            (resp) => resp === "Success",
+            UserIndexDeleteUserArgs,
+            UserIndexDeleteUserResponse,
+        );
+    }
 
     exploreBots(
         searchTerm: string | undefined,

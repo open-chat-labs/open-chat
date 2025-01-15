@@ -15,6 +15,7 @@
     } from "openchat-client";
     import {
         AttachGif,
+        chatIdentifiersEqual,
         CreatePoll,
         CreateTestMessages,
         LEDGER_CANISTER_ICP,
@@ -134,7 +135,7 @@
         if (ev instanceof CreateTestMessages) {
             const [{ chatId, threadRootMessageIndex }, num] = ev.detail;
             if (
-                chatId === messageContext.chatId &&
+                chatIdentifiersEqual(chatId, messageContext.chatId) &&
                 threadRootMessageIndex === messageContext.threadRootMessageIndex
             ) {
                 createTestMessages(num);
