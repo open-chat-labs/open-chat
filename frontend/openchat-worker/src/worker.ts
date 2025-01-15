@@ -814,8 +814,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     correlationId,
                     agent.updateRegisteredBot(
                         payload.id,
+                        payload.principal,
                         payload.ownerId,
-                        payload.name,
                         payload.avatarUrl,
                         payload.endpoint,
                         payload.definition,
@@ -1933,7 +1933,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.withdrawFromIcpSwap(payload.userId, payload.swapId, payload.inputToken));
+                    agent.withdrawFromIcpSwap(payload.userId, payload.swapId, payload.inputToken),
+                );
                 break;
 
             default:

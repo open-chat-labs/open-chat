@@ -180,6 +180,7 @@
             "commandsLabel": "Commands",
             "descLabel": "Bot description",
             "descPlaceholder": "Enter bot description",
+            "editPrincipalPlaceholder": "Leave blank if unchanged",
             "endpointLabel": "Bot endpoint",
             "endpointRules": "Must be a valid origin",
             "errors": {
@@ -339,8 +340,8 @@
             "action": "Update",
             "desc": "Start a proposal to update an existing OpenChat bot",
             "nobots": "Only the owner of a registerd bot can update the bot. You are not the owner of any registered bots.",
-            "select": "Select the bot that you would like to update.",
-            "title": "Update bot"
+            "select": "Select bot to update",
+            "title": "Update {name}"
         },
         "view": {
             "close": "Close",

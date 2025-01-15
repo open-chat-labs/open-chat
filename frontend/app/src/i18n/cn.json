@@ -180,6 +180,7 @@
             "commandsLabel": "命令",
             "descLabel": "机器人描述",
             "descPlaceholder": "输入机器人描述",
+            "editPrincipalPlaceholder": "若不变则留空",
             "endpointLabel": "机器人端点",
             "endpointRules": "必须是有效的来源或 canisterID",
             "errors": {
@@ -339,8 +340,8 @@
             "action": "更新",
             "desc": "发起更新现有 OpenChat 机器人的提案",
             "nobots": "只有已注册机器人的所有者才能更新机器人。您不是任何已注册机器人的所有者。",
-            "select": "选择您想要更新的机器人。",
-            "title": "更新机器人"
+            "select": "选择要更新的机器人",
+            "title": "更新 {name}"
         },
         "view": {
             "close": "关闭",

@@ -183,21 +183,21 @@
             on:imageSelected={botAvatarSelected} />
     </div>
 
-    {#if mode === "register"}
-        <Legend
-            required
-            label={i18nKey("bots.builder.principalLabel")}
-            rules={i18nKey("bots.builder.principalRules")}></Legend>
-        <ValidatingInput
-            autofocus
-            minlength={3}
-            maxlength={100}
-            invalid={errors.has("bot_principal")}
-            placeholder={i18nKey("bots.builder.principalPlaceholder")}
-            error={errors.get("bot_principal")}
-            bind:value={principal}>
-        </ValidatingInput>
-    {/if}
+    <Legend
+        required={mode === "register"}
+        label={i18nKey("bots.builder.principalLabel")}
+        rules={i18nKey("bots.builder.principalRules")}></Legend>
+    <ValidatingInput
+        autofocus
+        minlength={3}
+        maxlength={100}
+        invalid={errors.has("bot_principal")}
+        placeholder={mode === "update"
+            ? i18nKey("bots.builder.editPrincipalPlaceholder")
+            : i18nKey("bots.builder.principalPlaceholder")}
+        error={errors.get("bot_principal")}
+        bind:value={principal}>
+    </ValidatingInput>
 
     <Legend
         required
@@ -215,18 +215,20 @@
         placeholder={"bots.builder.ownerLabel"}
         autofocus={false} />
 
-    <Legend
-        required
-        label={i18nKey("bots.builder.nameLabel")}
-        rules={i18nKey("bots.builder.nameRules")}></Legend>
-    <ValidatingInput
-        minlength={3}
-        maxlength={25}
-        invalid={errors.has("bot_name")}
-        placeholder={i18nKey("bots.builder.namePlaceholder")}
-        error={errors.get("bot_name")}
-        bind:value={candidate.name}>
-    </ValidatingInput>
+    {#if mode === "register"}
+        <Legend
+            required
+            label={i18nKey("bots.builder.nameLabel")}
+            rules={i18nKey("bots.builder.nameRules")}></Legend>
+        <ValidatingInput
+            minlength={3}
+            maxlength={25}
+            invalid={errors.has("bot_name")}
+            placeholder={i18nKey("bots.builder.namePlaceholder")}
+            error={errors.get("bot_name")}
+            bind:value={candidate.name}>
+        </ValidatingInput>
+    {/if}
 
     <Legend
         label={i18nKey("bots.builder.endpointLabel")}

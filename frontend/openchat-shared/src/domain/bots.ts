@@ -370,7 +370,9 @@ export function validBotComponentName(name: string): ResourceKey[] {
     return errors;
 }
 
-function validatePrincipal(p: string): boolean {
+function validatePrincipal(p: string, mode: "register" | "update"): boolean {
+    if (mode === "update" && p === "") return true;
+
     try {
         Principal.fromText(p);
         return true;
@@ -399,7 +401,7 @@ export function validateBot(
         errors.addErrors("bot_endpoint", i18nKey("bots.builder.errors.endpoint"));
     }
 
-    if (mode === "register" && !validatePrincipal(principal)) {
+    if (!validatePrincipal(principal, mode)) {
         errors.addErrors("bot_principal", i18nKey("bots.builder.errors.principal"));
     }
 

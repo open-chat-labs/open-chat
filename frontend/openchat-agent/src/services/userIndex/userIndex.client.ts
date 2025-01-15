@@ -661,18 +661,20 @@ export class UserIndexClient extends CandidService {
 
     updateRegisteredBot(
         id: string,
+        principal?: string,
         ownerId?: string,
-        name?: string,
         avatarUrl?: string,
         endpoint?: string,
         definition?: BotDefinition,
     ): Promise<boolean> {
+        console.log("Updating bot principal: ", principal);
         return this.executeMsgpackUpdate(
             "update_bot",
             {
                 bot_id: principalStringToBytes(id),
+                // principal: mapOptional(principal, principalStringToBytes),
                 owner: mapOptional(ownerId, principalStringToBytes),
-                name: mapOptional(name, identity),
+                name: undefined,
                 avatar:
                     mapOptional(avatarUrl, (url) => ({
                         SetToSome: url,
