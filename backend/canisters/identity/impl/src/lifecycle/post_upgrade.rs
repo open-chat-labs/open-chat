@@ -25,10 +25,5 @@ fn post_upgrade(args: Args) {
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
 
-    mutate_state(|state| {
-        let missing_principal_links = state.data.user_principals.add_missing_principal_links();
-        info!("Missing principal links: {missing_principal_links}");
-    });
-
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }

@@ -1484,7 +1484,7 @@ export function apiMultiUserChat(chatId: ChatIdentifier): TMultiUserChat {
             };
         case "channel":
             return {
-                Channel: [principalStringToBytes(chatId.communityId), Number(chatId.channelId)],
+                Channel: [principalStringToBytes(chatId.communityId), bigintTo32bit(chatId.channelId)],
             };
         default:
             throw new Error("Cannot convert a DirectChatIdentifier into an ApiMultiUserChat");
@@ -2873,7 +2873,7 @@ export function apiChatIdentifier(chatId: ChatIdentifier): TChat {
             return { Direct: principalStringToBytes(chatId.userId) };
         case "channel":
             return {
-                Channel: [principalStringToBytes(chatId.communityId), Number(chatId.channelId)],
+                Channel: [principalStringToBytes(chatId.communityId), bigintTo32bit(chatId.channelId)],
             };
     }
 }
@@ -3474,4 +3474,9 @@ export function principalToIcrcAccount(principal: string): AccountICRC1 {
         owner: principalStringToBytes(principal),
         subaccount: undefined,
     };
+}
+
+export function bigintTo32bit(value: string | bigint): number {
+    // Convert the number to 32bit
+    return Number(BigInt(value) % BigInt(4294967296));
 }

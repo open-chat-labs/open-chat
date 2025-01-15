@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Sync platform operators to LocalUserIndexes ([#7210](https://github.com/open-chat-labs/open-chat/pull/7210))
 - Use macro to create grouped timer job types ([#7224](https://github.com/open-chat-labs/open-chat/pull/7224))
 - Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
+- Reduce channel Ids to 32 bits down from 128 bits ([#7233](https://github.com/open-chat-labs/open-chat/pull/7233))
 
 ### Fixed
 
