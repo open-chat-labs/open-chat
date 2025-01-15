@@ -8,7 +8,6 @@ use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]

@@ -4,9 +4,8 @@ use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
 use crate::*;
-use constants::{HOUR_IN_MS, ONE_MB, OPENCHAT_BOT_USER_ID};
+use constants::{ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
-use event_store_producer_cdk_runtime::CdkRuntime;
 use rand::rngs::StdRng;
 use rand::Rng;
 use search::simple::{Document, Query};
@@ -23,7 +22,7 @@ use types::{
     AcceptP2PSwapResult, BlobReference, BotMessageContext, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType,
     CompleteP2PSwapResult, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex,
     EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen,
-    GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContent, MessageContentInitial, MessageEditedEventPayload,
+    GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageEditedEventPayload,
     MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds,
     MultiUserChat, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
     PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload,

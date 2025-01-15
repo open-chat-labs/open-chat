@@ -6,7 +6,6 @@ use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use tracing::info;
-use types::Chat;
 use user_canister::post_upgrade::Args;
 
 #[post_upgrade]
