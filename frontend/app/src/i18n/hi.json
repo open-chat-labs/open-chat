@@ -1341,6 +1341,7 @@
             "recipientOwner": "प्राप्तकर्ता का खाता मूलधन",
             "recipientSubaccount": "प्राप्तकर्ता का उप-खाता",
             "recipientSubaccountRules": "एक हेक्स स्ट्रिंग होना चाहिए",
+            "selectType": "प्रस्ताव प्रकार चुनें",
             "summary": "सारांश",
             "summaryRules": "मार्कडाउन का समर्थन करता है",
             "title": "शीर्षक",

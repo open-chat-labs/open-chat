@@ -1341,6 +1341,7 @@
             "recipientOwner": "Entità del conto del destinatario",
             "recipientSubaccount": "Sottoconto del destinatario",
             "recipientSubaccountRules": "deve essere una stringa esadecimale",
+            "selectType": "Seleziona un tipo di proposta",
             "summary": "Riepilogo",
             "summaryRules": "supporta il ribasso",
             "title": "Titolo",

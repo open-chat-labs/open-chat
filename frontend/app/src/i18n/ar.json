@@ -1341,6 +1341,7 @@
             "recipientOwner": "رأس مال حساب المستلم",
             "recipientSubaccount": "الحساب الفرعي للمستلم",
             "recipientSubaccountRules": "يجب أن تكون سلسلة سداسية",
+            "selectType": "حدد نوع الاقتراح",
             "summary": "ملخص",
             "summaryRules": "يدعم ترميز Markdown",
             "title": "عنوان",

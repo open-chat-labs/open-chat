@@ -1341,6 +1341,7 @@
             "recipientOwner": "מנהל החשבון של הנמען",
             "recipientSubaccount": "חשבון המשנה של הנמען",
             "recipientSubaccountRules": "חייב להיות מחרוזת משושה",
+            "selectType": "בחר סוג הצעה",
             "summary": "סיכום",
             "summaryRules": "תומך ב-markdown",
             "title": "כותרת",

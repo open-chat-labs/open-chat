@@ -1341,6 +1341,7 @@
             "recipientOwner": "收款人账户本金",
             "recipientSubaccount": "收款人子账户",
             "recipientSubaccountRules": "必须是十六进制字符串",
+            "selectType": "选择提案类型",
             "summary": "概括",
             "summaryRules": "支持降价",
             "title": "标题",

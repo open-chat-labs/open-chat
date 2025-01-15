@@ -1341,6 +1341,7 @@
             "recipientOwner": "Principal du compte du destinataire",
             "recipientSubaccount": "Sous-compte du destinataire",
             "recipientSubaccountRules": "doit être une chaîne hexadécimale",
+            "selectType": "Sélectionnez un type de proposition",
             "summary": "Résumé",
             "summaryRules": "prend en charge la démarque",
             "title": "Titre",

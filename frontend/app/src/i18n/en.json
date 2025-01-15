@@ -1341,6 +1341,7 @@
             "recipientOwner": "Recipient's account principal",
             "recipientSubaccount": "Recipient's sub-account",
             "recipientSubaccountRules": "must be a hex string",
+            "selectType": "Select a proposal type",
             "summary": "Summary",
             "summaryRules": "supports markdown",
             "title": "Title",
