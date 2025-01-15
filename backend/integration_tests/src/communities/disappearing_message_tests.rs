@@ -43,7 +43,7 @@ fn disappearing_messages_in_channel() {
     let send_message_response1 =
         client::community::happy_path::send_text_message(env, &user, community_id, channel_id, None, "abc", None);
 
-    assert!(client::community::happy_path::events_by_index(
+    assert!(!client::community::happy_path::events_by_index(
         env,
         &user,
         community_id,
@@ -51,8 +51,7 @@ fn disappearing_messages_in_channel() {
         vec![send_message_response1.event_index]
     )
     .events
-    .first()
-    .is_some());
+    .is_empty());
 
     env.advance_time(Duration::from_millis(2000));
     env.tick();
@@ -65,8 +64,7 @@ fn disappearing_messages_in_channel() {
         vec![send_message_response1.event_index]
     )
     .events
-    .first()
-    .is_none());
+    .is_empty());
 
     client::community::happy_path::update_channel(
         env,
@@ -93,7 +91,7 @@ fn disappearing_messages_in_channel() {
     env.advance_time(Duration::from_secs(100000));
     env.tick();
 
-    assert!(client::community::happy_path::events_by_index(
+    assert!(!client::community::happy_path::events_by_index(
         env,
         &user,
         community_id,
@@ -101,8 +99,7 @@ fn disappearing_messages_in_channel() {
         vec![send_message_response2.event_index]
     )
     .events
-    .first()
-    .is_some());
+    .is_empty());
 }
 
 #[test]

@@ -264,7 +264,7 @@ pub struct ChatEventsListReader<'r> {
     min_visible_event_index: EventIndex,
 }
 
-impl<'r> Deref for ChatEventsListReader<'r> {
+impl Deref for ChatEventsListReader<'_> {
     type Target = ChatEventsList;
 
     fn deref(&self) -> &Self::Target {
@@ -489,7 +489,7 @@ pub trait Reader {
     }
 }
 
-impl<'r> Reader for ChatEventsListReader<'r> {
+impl Reader for ChatEventsListReader<'_> {
     fn get(&self, event_key: EventKey) -> Option<EventOrExpiredRangeInternal> {
         self.events_list.get(event_key, self.min_visible_event_index)
     }
