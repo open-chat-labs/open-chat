@@ -509,11 +509,19 @@ function validOrigin(origin: string | undefined): boolean {
     }
 }
 
-export type BotCommandResponse = BotCommandSuccess | BotCommandBadRequest | BotCommandInternalError;
+export type BotCommandResponse =
+    | BotCommandSuccess
+    | BotCommandBadRequest
+    | BotCommandTooManyRequests
+    | BotCommandInternalError;
 
 export type BotCommandBadRequest = {
     kind: "bad_request";
     reason: string;
+};
+
+export type BotCommandTooManyRequests = {
+    kind: "too_many_requests";
 };
 
 export type BotCommandInternalError = {

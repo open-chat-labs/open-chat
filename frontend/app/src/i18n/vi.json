@@ -334,6 +334,7 @@
                 }
             }
         },
+        "tooManyRequests": "Có quá nhiều yêu cầu gửi đến bot này. Vui lòng thử lại sau.",
         "update_bot": {
             "action": "Cập nhật",
             "desc": "Bắt đầu đề xuất cập nhật bot OpenChat hiện có",

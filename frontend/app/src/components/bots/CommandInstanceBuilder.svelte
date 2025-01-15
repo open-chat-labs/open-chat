@@ -46,9 +46,11 @@
                 messageContext.threadRootMessageIndex,
                 $state.snapshot(createBotInstance(command, messageContext)),
             )
-            .then((success) => {
-                if (!success) {
+            .then((result) => {
+                if (result === "failure") {
                     toastStore.showFailureToast(i18nKey("bots.failed"));
+                } else if (result === "too_many_requests") {
+                    toastStore.showFailureToast(i18nKey("bots.tooManyRequests"));
                 }
             });
         onCommandSent();
