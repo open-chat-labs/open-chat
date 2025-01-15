@@ -27,6 +27,7 @@ import type {
     LocalUserIndexJoinChannelResponse,
     LocalUserIndexJoinCommunityResponse,
     LocalUserIndexRegisterUserResponse,
+    LocalUserIndexWithdrawFromIcpswapResponse,
     VerifiedCredentialGateArgs as TVerifiedCredentialGateArgs,
     VideoCallType as TVideoCallType,
     BotCommandArg,
@@ -409,4 +410,9 @@ export function apiVerifiedCredentialArgs(
         credential_jwts: domain.credentialJwts,
         credential_jwt: domain.credentialJwts[0],
     };
+}
+
+export function withdrawFromIcpSwapResponse(value: LocalUserIndexWithdrawFromIcpswapResponse): boolean {
+    console.log("Withdraw from ICPSwap response", value);
+    return value === "Success";
 }

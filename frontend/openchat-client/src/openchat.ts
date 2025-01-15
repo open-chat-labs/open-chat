@@ -8236,6 +8236,15 @@ export class OpenChat extends EventTarget {
             .catch(() => false);
     }
 
+    withdrawFromIcpSwap(userId: string, swapId: bigint, inputToken: boolean): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "withdrawFromIcpSwap",
+            userId,
+            swapId,
+            inputToken,
+        });
+    }
+
     isEventKindHidden = isEventKindHidden;
     mergeCombinedUnreadCounts = mergeCombinedUnreadCounts;
 
