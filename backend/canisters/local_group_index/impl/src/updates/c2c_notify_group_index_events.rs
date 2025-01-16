@@ -12,11 +12,11 @@ use local_group_index_canister::GroupIndexEvent;
 
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
 #[trace]
-fn c2c_notify_user_index_events(args: Args) -> Response {
-    mutate_state(|state| c2c_notify_user_index_events_impl(args, state))
+fn c2c_notify_group_index_events(args: Args) -> Response {
+    mutate_state(|state| c2c_notify_group_index_events_impl(args, state))
 }
 
-fn c2c_notify_user_index_events_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn c2c_notify_group_index_events_impl(args: Args, state: &mut RuntimeState) -> Response {
     for event in args.events {
         handle_event(event, state);
     }

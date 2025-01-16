@@ -5,7 +5,7 @@ use group_index_canister::revoke_group_verification::{Response::*, *};
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
-fn revoket_group_verification(args: Args) -> Response {
+fn revoke_group_verification(args: Args) -> Response {
     mutate_state(|state| revoke_group_verification_impl(args, state))
 }
 
