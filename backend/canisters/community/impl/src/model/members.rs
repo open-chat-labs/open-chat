@@ -45,20 +45,29 @@ impl CommunityMembers {
     pub fn remove_dangling_member_channel_links(&mut self) {
         let user_ids: HashSet<_> = self.members_map.user_ids().into_iter().collect();
 
-        let count = self.members_and_channels.len();
-        self.members_and_channels.retain(|user_id, _| user_ids.contains(user_id));
-        let new_count = self.members_and_channels.len();
-        let removed = count - new_count;
+        let to_remove: Vec<_> = self
+            .members_and_channels
+            .keys()
+            .filter(|u| !user_ids.contains(u))
+            .copied()
+            .collect();
 
-        info!(removed, "Removed dangling member-channel links");
+        for user_id in to_remove {
+            let channel_count = self.members_and_channels.remove(&user_id).unwrap().len();
+            info!(%user_id, channel_count, "Removed dangling member channel links");
+        }
 
-        let count = self.member_channel_links_removed.len();
-        self.member_channel_links_removed
-            .retain(|(user_id, _), _| user_ids.contains(user_id));
-        let new_count = self.member_channel_links_removed.len();
-        let removed = count - new_count;
+        let to_remove: Vec<_> = self
+            .member_channel_links_removed
+            .keys()
+            .filter(|(u, _)| !user_ids.contains(u))
+            .copied()
+            .collect();
 
-        info!(removed, "Removed dangling member-channel links removed");
+        for (user_id, channel_id) in to_remove {
+            self.member_channel_links_removed.remove(&(user_id, channel_id));
+            info!(%user_id, "Removed dangling member channel link removed");
+        }
     }
 
     pub fn new(
