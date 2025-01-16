@@ -7,7 +7,9 @@ fn inspect_message() {
 }
 
 fn accept_if_valid(state: &RuntimeState) {
-    let method_name = ic_cdk::api::call::method_name().trim_end_matches("_msgpack").to_string();
+    let method_name = ic_cdk::api::call::method_name()
+        .trim_end_matches("_msgpack")
+        .trim_end_matches("_v2");
 
     // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
     let is_c2c_method = method_name.starts_with("c2c") || method_name == "wallet_receive";
