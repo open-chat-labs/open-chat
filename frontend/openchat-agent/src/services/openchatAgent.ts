@@ -4075,8 +4075,8 @@ export class OpenChatAgent extends EventTarget {
 
     updateRegisteredBot(
         id: string,
+        principal?: string,
         ownerId?: string,
-        name?: string,
         avatarUrl?: string,
         endpoint?: string,
         definition?: BotDefinition,
@@ -4084,8 +4084,8 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve(false);
         return this._userIndexClient.updateRegisteredBot(
             id,
+            principal,
             ownerId,
-            name,
             avatarUrl,
             endpoint,
             definition,

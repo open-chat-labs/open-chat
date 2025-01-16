@@ -75,14 +75,14 @@
     function update() {
         if (botState.current !== undefined && valid) {
             busy = true;
-            const { id, ownerId, name, avatarUrl, endpoint, definition } = $state.snapshot(
+            const { id, ownerId, avatarUrl, endpoint, definition } = $state.snapshot(
                 botState.current,
             );
             client
                 .updateRegisteredBot(
                     id,
+                    principal !== "" ? principal : undefined,
                     ownerDirty ? ownerId : undefined,
-                    nameDirty ? name : undefined,
                     avatarDirty ? avatarUrl : undefined,
                     endpointDirty ? endpoint : undefined,
                     definition,
@@ -109,14 +109,19 @@
             }
         }
     }
+
+    let titleKey = $derived(
+        mode === "update"
+            ? step === "choose"
+                ? i18nKey("bots.update_bot.select")
+                : i18nKey("bots.update_bot.title", { name: botState.current.name })
+            : i18nKey("bots.builder.title"),
+    );
 </script>
 
 <ModalContent on:close={onClose}>
     <div class="header" slot="header">
-        <Translatable
-            resourceKey={mode === "update"
-                ? i18nKey("bots.update_bot.title")
-                : i18nKey("bots.builder.title")}></Translatable>
+        <Translatable resourceKey={titleKey}></Translatable>
     </div>
     <div class="body" slot="body">
         {#if step === "choose"}
@@ -125,9 +130,6 @@
                     <Translatable resourceKey={i18nKey("bots.update_bot.nobots")}></Translatable>
                 </AlertBox>
             {:else}
-                <p class="info">
-                    <Translatable resourceKey={i18nKey("bots.update_bot.select")}></Translatable>
-                </p>
                 <div class="bots">
                     {#each myBots as myBot}
                         <!-- svelte-ignore a11y_click_events_have_key_events -->

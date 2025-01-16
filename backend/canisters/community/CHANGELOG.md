@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
+
+## [[2.0.1570](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1570-community)] - 2025-01-14
+
+### Changed
+
 - Join users to new channels in batches to handle large communities ([#7125](https://github.com/open-chat-labs/open-chat/pull/7125))
 - Log error if tip fails due to recipient mismatch ([#7151](https://github.com/open-chat-labs/open-chat/pull/7151))
 - Log response if `delete_channel` fails ([#7152](https://github.com/open-chat-labs/open-chat/pull/7152))

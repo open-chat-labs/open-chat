@@ -180,6 +180,7 @@
             "commandsLabel": "Lệnh",
             "descLabel": "Mô tả bot",
             "descPlaceholder": "Nhập mô tả bot",
+            "editPrincipalPlaceholder": "Để trống nếu không thay đổi",
             "endpointLabel": "Điểm cuối của Bot",
             "endpointRules": "Phải là nguồn gốc hợp lệ hoặc là một canisterID",
             "errors": {
@@ -339,8 +340,8 @@
             "action": "Cập nhật",
             "desc": "Bắt đầu đề xuất cập nhật bot OpenChat hiện có",
             "nobots": "Chỉ có chủ sở hữu của bot đã đăng ký mới có thể cập nhật bot. Bạn không phải là chủ sở hữu của bất kỳ bot đã đăng ký nào.",
-            "select": "Chọn bot mà bạn muốn cập nhật.",
-            "title": "Cập nhật bot"
+            "select": "Chọn bot để cập nhật",
+            "title": "Cập nhật {name}"
         },
         "view": {
             "close": "Đóng",

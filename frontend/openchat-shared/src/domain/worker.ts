@@ -441,8 +441,8 @@ type GetBotDefinition = {
 type UpdateRegisteredBot = {
     kind: "updateRegisteredBot";
     id: string;
+    principal?: string;
     ownerId?: string;
-    name?: string;
     avatarUrl?: string;
     endpoint?: string;
     definition?: BotDefinition;

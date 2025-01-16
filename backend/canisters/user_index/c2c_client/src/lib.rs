@@ -1,5 +1,5 @@
 use candid::Principal;
-use canister_client::{generate_c2c_call, generate_candid_c2c_call};
+use canister_client::generate_c2c_call;
 use types::{CanisterId, UserDetails};
 use user_index_canister::*;
 
@@ -7,7 +7,7 @@ use user_index_canister::*;
 generate_c2c_call!(c2c_lookup_user);
 generate_c2c_call!(platform_moderators_group);
 generate_c2c_call!(user);
-generate_candid_c2c_call!(users_chit);
+generate_c2c_call!(users_chit);
 
 // Updates
 generate_c2c_call!(add_local_user_index_canister);

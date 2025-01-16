@@ -814,8 +814,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     correlationId,
                     agent.updateRegisteredBot(
                         payload.id,
+                        payload.principal,
                         payload.ownerId,
-                        payload.name,
                         payload.avatarUrl,
                         payload.endpoint,
                         payload.definition,

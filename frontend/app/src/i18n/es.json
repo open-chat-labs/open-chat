@@ -180,6 +180,7 @@
             "commandsLabel": "Comandos",
             "descLabel": "Descripción del bot",
             "descPlaceholder": "Ingresar la descripción del bot",
+            "editPrincipalPlaceholder": "Déjelo en blanco si no se modifica",
             "endpointLabel": "Punto final del bot",
             "endpointRules": "Debe ser un origen válido o un canisterID",
             "errors": {
@@ -339,8 +340,8 @@
             "action": "Actualizar",
             "desc": "Iniciar una propuesta para actualizar un bot de OpenChat existente",
             "nobots": "Solo el propietario de un bot registrado puede actualizarlo. No eres el propietario de ningún bot registrado.",
-            "select": "Seleccione el bot que desea actualizar.",
-            "title": "Actualizar bot"
+            "select": "Seleccione el bot que desea actualizar",
+            "title": "Actualizar {name}"
         },
         "view": {
             "close": "Cerca",

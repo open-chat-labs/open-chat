@@ -180,6 +180,7 @@
             "commandsLabel": "Polecenia",
             "descLabel": "Opis bota",
             "descPlaceholder": "Wprowadź opis bota",
+            "editPrincipalPlaceholder": "Pozostaw puste, jeśli nie zmieniono",
             "endpointLabel": "Punkt końcowy bota",
             "endpointRules": "Musi to być prawidłowe pochodzenie lub canisterID",
             "errors": {
@@ -339,8 +340,8 @@
             "action": "Aktualizacja",
             "desc": "Rozpocznij propozycję aktualizacji istniejącego bota OpenChat",
             "nobots": "Tylko właściciel zarejestrowanego bota może aktualizować bota. Nie jesteś właścicielem żadnego zarejestrowanego bota.",
-            "select": "Wybierz bota, którego chcesz zaktualizować.",
-            "title": "Aktualizacja bota"
+            "select": "Wybierz bota do aktualizacji",
+            "title": "Aktualizacja {name}"
         },
         "view": {
             "close": "Zamknąć",
