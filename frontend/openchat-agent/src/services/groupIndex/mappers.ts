@@ -19,7 +19,7 @@ import type {
 } from "openchat-shared";
 import { UnsupportedValueError } from "openchat-shared";
 import { publicGroupSummary } from "../common/publicSummaryMapperV2";
-import { accessGateConfig, groupSubtype } from "../common/chatMappersV2";
+import { accessGateConfig, groupSubtype, to32bitBigInt } from "../common/chatMappersV2";
 import type {
     CommunityMatch as TCommunityMatch,
     GroupIndexActiveGroupsResponse,
@@ -78,7 +78,7 @@ export function lookupChannelResponse(
         return {
             kind: "channel",
             communityId: principalBytesToString(value.Success.community_id),
-            channelId: value.Success.channel_id.toString(),
+            channelId: Number(to32bitBigInt(value.Success.channel_id)),
         };
     }
     console.warn("ApiLookupChannelByGroupIdResponse failed with ", value);

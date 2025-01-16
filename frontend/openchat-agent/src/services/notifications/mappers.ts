@@ -35,6 +35,7 @@ import type {
     NotificationsIndexSubscriptionExistsResponse,
     UserMuteNotificationsResponse,
 } from "../../typebox";
+import { to32bitBigInt } from "../common/chatMappersV2";
 
 export function toggleNotificationsResponse(
     value:
@@ -99,7 +100,7 @@ export function addedToChannelNotification(
         chatId: {
             kind: "channel",
             communityId: candid.community_id.toString(),
-            channelId: candid.channel_id.toString(),
+            channelId: Number(to32bitBigInt(candid.channel_id)),
         },
         communityName: candid.community_name,
         channelName: candid.channel_name,
@@ -127,7 +128,7 @@ export function channelNotification(
         chatId: {
             kind: "channel",
             communityId: candid.community_id.toString(),
-            channelId: candid.channel_id.toString(),
+            channelId: Number(to32bitBigInt(candid.channel_id)),
         },
         communityName: candid.community_name,
         channelName: candid.channel_name,
@@ -193,7 +194,7 @@ function channelReactionNotification(
         chatId: {
             kind: "channel",
             communityId: candid.community_id.toString(),
-            channelId: candid.channel_id.toString(),
+            channelId: Number(to32bitBigInt(candid.channel_id)),
         },
         communityName: candid.community_name,
         channelName: candid.channel_name,
@@ -256,7 +257,7 @@ function channelMessageTipped(
         chatId: {
             kind: "channel",
             communityId: candid.community_id.toString(),
-            channelId: candid.channel_id.toString(),
+            channelId: Number(to32bitBigInt(candid.channel_id)),
         },
         communityName: candid.community_name,
         channelName: candid.channel_name,

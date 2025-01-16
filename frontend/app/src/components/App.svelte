@@ -254,7 +254,7 @@
 
     function deleteChannelMessage(
         communityId: string,
-        channelId: string,
+        channelId: number,
         messageId: bigint,
         threadRootMessageIndex?: number | undefined,
     ): void {

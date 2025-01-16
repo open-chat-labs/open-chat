@@ -43,11 +43,11 @@ import {
 } from "../../utils/mapping";
 import {
     apiChatIdentifier,
-    bigintTo32bit,
     communityChannelSummary,
     communitySummary,
     eventsSuccessResponse,
     gateCheckFailedReason,
+    to32bitBigInt,
 } from "../common/chatMappersV2";
 import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
 import { communitySummaryUpdates } from "../community/mappersV2";
@@ -199,7 +199,7 @@ function eventsContext(context: MessageContext): LocalUserIndexChatEventsEventsC
             return {
                 Channel: [
                     principalStringToBytes(context.chatId.communityId),
-                    bigintTo32bit(context.chatId.channelId),
+                    to32bitBigInt(context.chatId.channelId),
                     context.threadRootMessageIndex ?? null,
                 ],
             };

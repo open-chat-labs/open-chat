@@ -132,7 +132,7 @@ import {
     joinVideoCallResponse,
     setPinNumberResponse,
     apiMaybeAccessGateConfig,
-    bigintTo32bit,
+    to32bitBigInt,
 } from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import {
@@ -914,7 +914,7 @@ export class UserClient extends CandidService {
             mentioned: [],
             message_id: event.event.messageId,
             community_id: principalStringToBytes(id.communityId),
-            channel_id: bigintTo32bit(id.channelId),
+            channel_id: to32bitBigInt(id.channelId),
             replies_to: mapOptional(event.event.repliesTo, (replyContext) =>
                 apiReplyContextArgs(id, replyContext),
             ),
@@ -1001,13 +1001,13 @@ export class UserClient extends CandidService {
     }
 
     private markChannelMessageArg(
-        channelId: string,
+        channelId: number,
         readUpTo: number | undefined,
         threads: ThreadRead[],
         dateReadPinned: bigint | undefined,
     ) {
         return {
-            channel_id: bigintTo32bit(channelId),
+            channel_id: to32bitBigInt(channelId),
             read_up_to: readUpTo,
             threads: threads.map((t) => ({
                 root_message_index: t.threadRootMessageIndex,
@@ -1271,7 +1271,7 @@ export class UserClient extends CandidService {
                     return {
                         Community: [
                             principalStringToBytes(chatId.communityId),
-                            bigintTo32bit(chatId.channelId),
+                            to32bitBigInt(chatId.channelId),
                         ],
                     };
             }

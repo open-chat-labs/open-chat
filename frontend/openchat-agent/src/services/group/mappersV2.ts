@@ -56,6 +56,7 @@ import {
     messageEvent,
     messagesSuccessResponse,
     threadSyncDetails,
+    to32bitBigInt,
     updatedEvent,
 } from "../common/chatMappersV2";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
@@ -366,7 +367,7 @@ export function convertToCommunityResponse(
             id: {
                 kind: "channel",
                 communityId: principalBytesToString(value.Success.community_id),
-                channelId: value.Success.channel_id.toString(),
+                channelId: Number(to32bitBigInt(value.Success.channel_id)),
             },
         };
     } else {
