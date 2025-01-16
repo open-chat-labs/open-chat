@@ -54,7 +54,7 @@
         renderPreviews,
         verificationSectionOpen,
         accountsSectionOpen,
-        dangerSectionOpen,
+        deleteAccountSectionOpen,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Toggle from "../../Toggle.svelte";
@@ -641,8 +641,8 @@
         {#if !$anonUser}
             <div class="danger">
                 <CollapsibleCard
-                    on:toggle={dangerSectionOpen.toggle}
-                    open={$dangerSectionOpen}
+                    on:toggle={deleteAccountSectionOpen.toggle}
+                    open={$deleteAccountSectionOpen}
                     headerText={i18nKey("danger.deleteAccount")}>
                     <p class="para">
                         <Translatable resourceKey={i18nKey("danger.deleteAccountInfo")} />
