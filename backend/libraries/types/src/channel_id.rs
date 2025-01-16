@@ -34,7 +34,7 @@ impl ChannelId {
 
 struct ChannelIdVisitor;
 
-impl<'de> Visitor<'de> for ChannelIdVisitor {
+impl Visitor<'_> for ChannelIdVisitor {
     type Value = ChannelId;
 
     fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
