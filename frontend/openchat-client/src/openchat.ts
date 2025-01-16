@@ -634,7 +634,7 @@ export class OpenChat extends EventTarget {
                 userId: this.#liveState.user.userId,
             }).then((success) => {
                 if (success) {
-                    this.clearCachedData().then(() => this.logout());
+                    this.clearCachedData().finally(() => this.logout());
                 }
                 return success;
             });
