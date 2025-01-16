@@ -44,7 +44,7 @@ impl Display for MessageId {
 
 struct MessageIdVisitor;
 
-impl<'de> Visitor<'de> for MessageIdVisitor {
+impl Visitor<'_> for MessageIdVisitor {
     type Value = MessageId;
 
     fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
