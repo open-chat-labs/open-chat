@@ -22,3 +22,19 @@ pub enum EventsResponse {
     UserLapsed,
     ReplicaNotUpToDateV2(types::TimestampMillis),
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum LocalGroupIndexEvent {
+    NameChanged(NameChanged),
+    VerifiedChanged(VerifiedChanged),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct NameChanged {
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct VerifiedChanged {
+    pub verified: bool,
+}

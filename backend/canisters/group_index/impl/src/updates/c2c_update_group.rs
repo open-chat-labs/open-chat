@@ -22,9 +22,7 @@ fn c2c_update_group_impl(args: Args, state: &mut RuntimeState) -> Response {
             state
                 .data
                 .public_group_and_community_names
-                .remove(group.name(), chat_id.into());
-
-            state.data.public_group_and_community_names.insert(&args.name, chat_id.into());
+                .rename(group.name(), &args.name, chat_id.into());
         }
 
         state

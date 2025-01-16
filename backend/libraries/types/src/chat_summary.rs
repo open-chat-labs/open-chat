@@ -168,6 +168,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub rules_accepted: bool,
     pub membership: Option<GroupMembership>,
     pub video_call_in_progress: Option<VideoCall>,
+    pub verified: bool,
 }
 
 #[ts_export]
@@ -213,6 +214,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     #[ts(as = "crate::OptionUpdateVideoCall")]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
     pub any_updates_missed: bool,
+    pub verified: Option<bool>,
 }
 
 #[ts_export]

@@ -167,6 +167,8 @@ pub struct PublicGroupInfo {
     hotness_score: u32,
     exclude_from_hotlist: bool,
     gate_config: Option<AccessGateConfigInternal>,
+    #[serde(default)]
+    verified: bool,
 }
 
 pub enum UpdateGroupResult {
@@ -198,6 +200,7 @@ impl PublicGroupInfo {
             hotness_score: 0,
             frozen: None,
             exclude_from_hotlist: false,
+            verified: false,
         }
     }
 
@@ -238,6 +241,18 @@ impl PublicGroupInfo {
         self.frozen.as_ref()
     }
 
+    pub fn verified(&self) -> bool {
+        self.verified
+    }
+
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    pub fn set_verified(&mut self, verified: bool) {
+        self.verified = verified;
+    }
+
     pub fn set_frozen(&mut self, info: Option<FrozenGroupInfo>) {
         self.frozen = info;
     }
@@ -269,6 +284,7 @@ impl From<&PublicGroupInfo> for GroupMatch {
             member_count: group.activity.member_count,
             gate: group.gate_config.as_ref().map(|g| g.gate.clone()),
             subtype: group.subtype.clone(),
+            verified: group.verified(),
         }
     }
 }

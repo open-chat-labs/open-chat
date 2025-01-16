@@ -112,6 +112,52 @@ type LookupChannelByGroupIdResponse = variant {
     NotFound;
 };
 
+type RevokeCommunityVerificationArgs = record {
+    community_id : CommunityId;
+};
+
+type RevokeCommunityVerificationResponse = variant {
+    Success;
+    NotFound;
+};
+
+type RevokeGroupVerificationArgs = record {
+    group_id : ChatId;
+};
+
+type RevokeGroupVerificationResponse = variant {
+    Success;
+    NotFound;
+};
+
+type SetCommunityVerificationArgs = record {
+    community_id : CommunityId;
+    name : text;
+};
+
+type SetCommunityVerificationResponse = variant {
+    Success;
+    NotFound;
+    NameReserved;
+    NameTaken;
+    AlreadyVerified;
+    InternalError : text;
+};
+
+type SetGroupVerificationArgs = record {
+    group_id : ChatId;
+    name : text;
+};
+
+type SetGroupVerificationResponse = variant {
+    Success;
+    NotFound;
+    NameReserved;
+    NameTaken;
+    AlreadyVerified;
+    InternalError : text;
+};
+
 service : {
     active_groups : (ActiveGroupsArgs) -> (ActiveGroupsResponse) query;
     explore_communities : (ExploreCommunitiesArgs) -> (ExploreCommunitiesResponse) query;
@@ -119,4 +165,8 @@ service : {
     lookup_channel_by_group_id : (LookupChannelByGroupIdArgs) -> (LookupChannelByGroupIdResponse) query;
     recommended_groups : (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     search : (SearchArgs) -> (SearchResponse) query;
+    revoke_community_verification : (RevokeCommunityVerificationArgs) -> (RevokeCommunityVerificationResponse);
+    revoke_group_verification : (RevokeGroupVerificationArgs) -> (RevokeGroupVerificationResponse);
+    set_community_verification : (SetCommunityVerificationArgs) -> (SetCommunityVerificationResponse);
+    set_group_verification : (SetGroupVerificationArgs) -> (SetGroupVerificationResponse);
 };
