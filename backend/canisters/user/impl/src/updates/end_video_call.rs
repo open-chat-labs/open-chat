@@ -4,28 +4,35 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{EndVideoCallResult, Reader};
 use ic_cdk::update;
-use user_canister::end_video_call::{Response::*, *};
+use user_canister::end_video_call_v2::{Response::*, *};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
-fn end_video_call(args: Args) -> Response {
+fn end_video_call(args: ArgsV1) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| {
-        state.data.timer_jobs.cancel_job(
-            |job| {
-                if let TimerJob::MarkVideoCallEnded(vc) = job {
-                    vc.0 == args
-                } else {
-                    false
-                }
-            },
-        );
-        end_video_call_impl(args, state)
-    })
+    mutate_state(|state| end_video_call_impl(args.into(), state))
+}
+
+#[update(guard = "caller_is_video_call_operator")]
+#[trace]
+fn end_video_call_v2(args: Args) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| end_video_call_impl(args, state))
 }
 
 pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
+    state.data.timer_jobs.cancel_job(
+        |job| {
+            if let TimerJob::MarkVideoCallEnded(vc) = job {
+                vc.0 == args
+            } else {
+                false
+            }
+        },
+    );
+
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
         let was_started_by_me = chat
             .events
