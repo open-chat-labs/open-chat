@@ -3476,7 +3476,6 @@ export function principalToIcrcAccount(principal: string): AccountICRC1 {
     };
 }
 
-export function bigintTo32bit(value: string | bigint): number {
-    // Convert the number to 32bit
-    return Number(BigInt(value) % BigInt(4294967296));
+export function bigintTo32bit(value: string | bigint): bigint {
+    return BigInt(value) % BigInt(4294967296);
 }
