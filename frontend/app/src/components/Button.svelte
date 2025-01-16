@@ -11,6 +11,7 @@
         title?: string;
         square?: boolean;
         children?: Snippet;
+        danger?: boolean;
     }
 </script>
 

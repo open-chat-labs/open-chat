@@ -580,6 +580,13 @@
         "utcMode": "Mostra in UTC",
         "viewStreak": "Visualizza serie"
     },
+    "danger": {
+        "deleteAccount": "Elimina account",
+        "deleteAccountConfirm": "Se elimini il tuo account, perderai l'accesso al tuo portafoglio OpenChat e non sarai in grado di ripristinarlo. Assicurati di trasferire i fondi prima di procedere. \n\nSei sicuro al 100% di voler eliminare completamente il tuo account OpenChat e di aver capito che questa operazione non può essere annullata?",
+        "deleteAccountFailed": "Spiacenti, non siamo riusciti a eliminare il tuo account",
+        "deleteAccountInfo": "Elimina il tuo account OpenChat. Attenzione! Questa è una decisione definitiva e non può essere annullata.",
+        "title": "Pericolo"
+    },
     "dark": "buio",
     "days": "Giorni",
     "deleteFailed": "Impossibile eliminare il messaggio",

@@ -643,11 +643,15 @@
                 <CollapsibleCard
                     on:toggle={dangerSectionOpen.toggle}
                     open={$dangerSectionOpen}
-                    headerText={i18nKey("danger.title")}>
+                    headerText={i18nKey("danger.deleteAccount")}>
                     <p class="para">
                         <Translatable resourceKey={i18nKey("danger.deleteAccountInfo")} />
                     </p>
-                    <Button disabled={deleting} loading={deleting} on:click={() => deleteAccount()}>
+                    <Button
+                        danger
+                        disabled={deleting}
+                        loading={deleting}
+                        on:click={() => deleteAccount()}>
                         <Translatable resourceKey={i18nKey("danger.deleteAccount")} />
                     </Button>
                 </CollapsibleCard>

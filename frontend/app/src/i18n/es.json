@@ -580,6 +580,13 @@
         "utcMode": "Mostrar en UTC",
         "viewStreak": "Ver racha"
     },
+    "danger": {
+        "deleteAccount": "Eliminar cuenta",
+        "deleteAccountConfirm": "Si elimina su cuenta, perderá el acceso a su billetera OpenChat y no podrá recuperarlo. Asegúrese de transferir fondos antes de continuar. \n\n¿Está 100 % seguro de que desea eliminar por completo su cuenta OpenChat y comprende que esto no se puede deshacer?",
+        "deleteAccountFailed": "Lo sentimos, no pudimos eliminar tu cuenta",
+        "deleteAccountInfo": "Elimina tu cuenta de OpenChat. ¡Atención! Esta acción es definitiva y no se puede deshacer.",
+        "title": "Peligro"
+    },
     "dark": "dark",
     "days": "Días",
     "deleteFailed": "No se puede eliminar tu mensaje",

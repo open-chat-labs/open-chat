@@ -128,13 +128,6 @@
     "addedBy": "{changedBy} added {changed} to the {level}",
     "admin": "admin",
     "advanced": "Advanced",
-    "danger": {
-        "title": "Danger",
-        "deleteAccount": "Delete account",
-        "deleteAccountInfo": "Delete your OpenChat account. Warning! This is final and cannot be undone.",
-        "deleteAccountFailed": "Sorry, we were unable to delete your account",
-        "deleteAccountConfirm": "Are you 100% sure that you want to completely delete your OpenChat account and that you understand that this cannot be undone?"
-    },
     "airdropWarning": "In order to qualify for the next Airdrop, you must be a member of the **{channelName}** channel in the **{communityName}** community. [Click here to join.]({url})",
     "alsoCanisterId": "also your canister id",
     "andNMore": ", and {n} more",
@@ -586,6 +579,13 @@
         "utcInfo": "CHIT streaks and claim windows are represented using UTC so you may find it clearer to view your calendar in UTC rather than your local timezone.",
         "utcMode": "Show in UTC",
         "viewStreak": "View streak"
+    },
+    "danger": {
+        "deleteAccount": "Delete account",
+        "deleteAccountConfirm": "If you delete your account, you will lose access to your OpenChat wallet and will not be able to restore access. Please make sure that you transfer funds out before you proceed. \n\nAre you 100% sure that you want to completely delete your OpenChat account and that you understand that this cannot be undone?",
+        "deleteAccountFailed": "Sorry, we were unable to delete your account",
+        "deleteAccountInfo": "Delete your OpenChat account. Warning! This is final and cannot be undone.",
+        "title": "Danger"
     },
     "dark": "dark",
     "days": "Days",
