@@ -456,7 +456,7 @@ export const GroupAddBotResponse = Type.Union([
 ]);
 
 export type ChannelId = Static<typeof ChannelId>;
-export const ChannelId = Type.Number();
+export const ChannelId = Type.BigInt();
 
 export type UserManageFavouriteChatsResponse = Static<typeof UserManageFavouriteChatsResponse>;
 export const UserManageFavouriteChatsResponse = Type.Union([
@@ -724,13 +724,6 @@ export const UserDeleteGroupResponse = Type.Union([
     }),
 ]);
 
-export type UserEndVideoCallResponse = Static<typeof UserEndVideoCallResponse>;
-export const UserEndVideoCallResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("MessageNotFound"),
-    Type.Literal("AlreadyEnded"),
-]);
-
 export type UserTokenSwapsArgs = Static<typeof UserTokenSwapsArgs>;
 export const UserTokenSwapsArgs = Type.Object({
     start: Type.Number(),
@@ -756,12 +749,6 @@ export const UserBlockUserResponse = Type.Union([
 
 export type UserSetCommunityIndexesResponse = Static<typeof UserSetCommunityIndexesResponse>;
 export const UserSetCommunityIndexesResponse = Type.Literal("Success");
-
-export type UserStartVideoCallResponse = Static<typeof UserStartVideoCallResponse>;
-export const UserStartVideoCallResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("NotAuthorized"),
-]);
 
 export type UserReclaimSwapTokensResponse = Static<typeof UserReclaimSwapTokensResponse>;
 export const UserReclaimSwapTokensResponse = Type.Union([
@@ -5814,12 +5801,6 @@ export const UserDeleteGroupArgs = Type.Object({
     chat_id: ChatId,
 });
 
-export type UserEndVideoCallArgs = Static<typeof UserEndVideoCallArgs>;
-export const UserEndVideoCallArgs = Type.Object({
-    user_id: UserId,
-    message_id: MessageId,
-});
-
 export type UserTokenSwapsTokenSwap = Static<typeof UserTokenSwapsTokenSwap>;
 export const UserTokenSwapsTokenSwap = Type.Object({
     args: UserSwapTokensArgs,
@@ -5928,17 +5909,6 @@ export const UserBlockUserArgs = Type.Object({
 export type UserSetCommunityIndexesArgs = Static<typeof UserSetCommunityIndexesArgs>;
 export const UserSetCommunityIndexesArgs = Type.Object({
     indexes: Type.Array(Type.Tuple([CommunityId, Type.Number()])),
-});
-
-export type UserStartVideoCallArgs = Static<typeof UserStartVideoCallArgs>;
-export const UserStartVideoCallArgs = Type.Object({
-    message_id: MessageId,
-    initiator: UserId,
-    initiator_username: Type.String(),
-    initiator_display_name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
-    initiator_avatar_id: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
-    max_duration: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
-    call_type: VideoCallType,
 });
 
 export type UserSendMessageSuccessResult = Static<typeof UserSendMessageSuccessResult>;

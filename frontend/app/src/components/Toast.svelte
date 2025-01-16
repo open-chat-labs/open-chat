@@ -31,7 +31,7 @@
             const chatId = {
                 kind: "channel",
                 communityId: "dgegb-daaaa-aaaar-arlhq-cai",
-                channelId: "20429314036340368324663327710074551214",
+                channelId: 2235218862,
             } as ChatIdentifier;
             page(routeForChatIdentifier("community", chatId));
             draftMessagesStore.setTextContent({ chatId }, withDetail);
