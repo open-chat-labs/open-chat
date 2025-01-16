@@ -95,12 +95,10 @@
             if (fav.length < showQuickReactionCount) {
                 // If we have less emoji than we want to show, expand with
                 // a default selection of emoji.
-                let res = Promise
+                return Promise
                     .all(defaultReactions.map(em => emojiDb.getEmojiByShortcode(em)))
                     .then(def => def.filter(v => v != null))
                     .then(def => fav.concat(def).slice(0, showQuickReactionCount));
-                
-                return res;
             }
 
             return fav;
