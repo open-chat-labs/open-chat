@@ -33,7 +33,7 @@ fn main() {
     generate_candid_method!(group, delete_messages, update);
     generate_candid_method!(group, disable_invite_code, update);
     generate_candid_method!(group, edit_message_v2, update);
-    generate_candid_method!(group, end_video_call, update);
+    generate_candid_method!(group, end_video_call_v2, update);
     generate_candid_method!(group, enable_invite_code, update);
     generate_candid_method!(group, follow_thread, update);
     generate_candid_method!(group, join_video_call, update);
@@ -47,7 +47,7 @@ fn main() {
     generate_candid_method!(group, reset_invite_code, update);
     generate_candid_method!(group, send_message_v2, update);
     generate_candid_method!(group, set_video_call_presence, update);
-    generate_candid_method!(group, start_video_call, update);
+    generate_candid_method!(group, start_video_call_v2, update);
     generate_candid_method!(group, toggle_mute_notifications, update);
     generate_candid_method!(group, unblock_user, update);
     generate_candid_method!(group, undelete_messages, update);
