@@ -32,8 +32,8 @@ import {
     registerUserResponse,
     withdrawFromIcpSwapResponse,
 } from "./mappers";
-import { joinGroupResponse, apiChatIdentifier, to32bitBigInt } from "../common/chatMappersV2";
-import { MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
+import { joinGroupResponse, apiChatIdentifier } from "../common/chatMappersV2";
+import { to32bitBigInt, MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
 import {
     mapOptional,
     maybePrincipalStringToBytes,

@@ -33,7 +33,7 @@ import type {
     BotCommandArg,
     BotCommandArgValue,
 } from "../../typebox";
-import { CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
+import { to32bitBigInt, CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
 import {
     bytesToHexString,
     identity,
@@ -47,7 +47,6 @@ import {
     communitySummary,
     eventsSuccessResponse,
     gateCheckFailedReason,
-    to32bitBigInt,
 } from "../common/chatMappersV2";
 import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
 import { communitySummaryUpdates } from "../community/mappersV2";

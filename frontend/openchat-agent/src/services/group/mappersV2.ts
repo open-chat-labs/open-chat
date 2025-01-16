@@ -43,7 +43,7 @@ import type {
     OptionalMessagePermissions,
     GroupMembershipUpdates,
 } from "openchat-shared";
-import { CommonResponses, emptyChatMetrics } from "openchat-shared";
+import { to32bitBigInt, CommonResponses, emptyChatMetrics } from "openchat-shared";
 import {
     accessGateConfig,
     apiPermissionRole,
@@ -56,7 +56,6 @@ import {
     messageEvent,
     messagesSuccessResponse,
     threadSyncDetails,
-    to32bitBigInt,
     updatedEvent,
 } from "../common/chatMappersV2";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";

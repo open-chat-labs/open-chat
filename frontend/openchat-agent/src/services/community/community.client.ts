@@ -76,7 +76,6 @@ import {
     addBotResponse,
     updateBotResponse,
     removeBotResponse,
-    to32bitBigInt,
 } from "../common/chatMappersV2";
 import type {
     AddMembersToChannelResponse,
@@ -149,6 +148,7 @@ import type {
 } from "openchat-shared";
 import {
     textToCode,
+    to32bitBigInt,
     DestinationInvalidError,
     offline,
     MAX_EVENTS,

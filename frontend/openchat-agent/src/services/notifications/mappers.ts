@@ -14,6 +14,7 @@ import type {
     DirectMessageTipped,
     CryptoTransferDetails,
 } from "openchat-shared";
+import { to32bitBigInt } from "openchat-shared";
 import { identity, optional } from "../../utils/mapping";
 import type {
     ApiNotification,
@@ -35,7 +36,6 @@ import type {
     NotificationsIndexSubscriptionExistsResponse,
     UserMuteNotificationsResponse,
 } from "../../typebox";
-import { to32bitBigInt } from "../common/chatMappersV2";
 
 export function toggleNotificationsResponse(
     value:

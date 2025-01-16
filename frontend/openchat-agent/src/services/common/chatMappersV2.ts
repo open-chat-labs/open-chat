@@ -137,6 +137,7 @@ import {
     codeToText,
     emptyChatMetrics,
     isAccountIdentifierValid,
+    to32bitBigInt,
     CHAT_SYMBOL,
     CKBTC_SYMBOL,
     ICP_SYMBOL,
@@ -3474,8 +3475,4 @@ export function principalToIcrcAccount(principal: string): AccountICRC1 {
         owner: principalStringToBytes(principal),
         subaccount: undefined,
     };
-}
-
-export function to32bitBigInt(value: string | bigint | number): bigint {
-    return BigInt(value) % BigInt(4294967296);
 }

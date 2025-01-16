@@ -131,7 +131,7 @@ import type {
     MessageActivity,
     MessageActivitySummary,
 } from "openchat-shared";
-import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
+import { nullMembership, to32bitBigInt, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
     bytesToBigint,
     bytesToHexString,
@@ -149,7 +149,6 @@ import {
     messageMatch,
     messageEvent,
     eventsSuccessResponse,
-    to32bitBigInt,
 } from "../common/chatMappersV2";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";

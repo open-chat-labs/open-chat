@@ -17,9 +17,9 @@ import type {
     FreezeCommunityResponse,
     UnfreezeCommunityResponse,
 } from "openchat-shared";
-import { UnsupportedValueError } from "openchat-shared";
+import { to32bitBigInt, UnsupportedValueError } from "openchat-shared";
 import { publicGroupSummary } from "../common/publicSummaryMapperV2";
-import { accessGateConfig, groupSubtype, to32bitBigInt } from "../common/chatMappersV2";
+import { accessGateConfig, groupSubtype } from "../common/chatMappersV2";
 import type {
     CommunityMatch as TCommunityMatch,
     GroupIndexActiveGroupsResponse,

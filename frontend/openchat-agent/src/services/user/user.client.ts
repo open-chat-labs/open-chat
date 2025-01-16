@@ -132,7 +132,6 @@ import {
     joinVideoCallResponse,
     setPinNumberResponse,
     apiMaybeAccessGateConfig,
-    to32bitBigInt,
 } from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import {
@@ -143,7 +142,7 @@ import {
 } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
-import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING, ResponseTooLargeError } from "openchat-shared";
+import { to32bitBigInt, MAX_EVENTS, MAX_MESSAGES, MAX_MISSING, ResponseTooLargeError } from "openchat-shared";
 import {
     chunkedChatEventsFromBackend,
     chunkedChatEventsWindowFromBackend,

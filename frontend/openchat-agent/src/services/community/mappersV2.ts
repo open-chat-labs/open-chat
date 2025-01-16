@@ -28,7 +28,7 @@ import type {
     UserFailedError,
     UserGroupDetails,
 } from "openchat-shared";
-import { CommonResponses, UnsupportedValueError } from "openchat-shared";
+import { to32bitBigInt, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
     ChannelMatch as TChannelMatch,
     CommunityCanisterCommunitySummaryUpdates as TCommunityCanisterCommunitySummaryUpdates,
@@ -80,7 +80,6 @@ import {
     mentions,
     messageEvent,
     threadSyncDetails,
-    to32bitBigInt,
     updatedEvent,
     userGroup,
 } from "../common/chatMappersV2";
