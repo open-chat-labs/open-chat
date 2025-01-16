@@ -5,14 +5,22 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
 use constants::HOUR_IN_MS;
-use group_canister::start_video_call::{Response::*, *};
+use group_canister::start_video_call_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use ic_cdk::update;
 use types::{Caller, GroupMessageNotification, Notification, VideoCallPresence, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
-fn start_video_call(args: Args) -> Response {
+fn start_video_call(args: ArgsV1) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| start_video_call_impl(args.into(), state))
+}
+
+#[update(guard = "caller_is_video_call_operator")]
+#[trace]
+fn start_video_call_v2(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| start_video_call_impl(args, state))
@@ -96,7 +104,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);
     state.data.timer_jobs.enqueue_job(
-        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(group_canister::end_video_call::Args {
+        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(group_canister::end_video_call_v2::Args {
             message_id: args.message_id,
         })),
         now + max_duration,

@@ -25,7 +25,7 @@ generate_msgpack_update_call!(delete_direct_chat);
 generate_msgpack_update_call!(delete_group);
 generate_msgpack_update_call!(delete_messages);
 generate_msgpack_update_call!(edit_message_v2);
-generate_update_call!(end_video_call);
+generate_update_call!(end_video_call_v2);
 generate_msgpack_update_call!(join_video_call);
 generate_msgpack_update_call!(leave_community);
 generate_msgpack_update_call!(leave_group);
@@ -40,7 +40,7 @@ generate_msgpack_update_call!(send_message_with_transfer_to_channel);
 generate_msgpack_update_call!(send_message_with_transfer_to_group);
 generate_msgpack_update_call!(set_message_reminder_v2);
 generate_msgpack_update_call!(set_pin_number);
-generate_update_call!(start_video_call);
+generate_update_call!(start_video_call_v2);
 generate_msgpack_update_call!(tip_message);
 generate_msgpack_update_call!(unblock_user);
 generate_msgpack_update_call!(undelete_messages);
@@ -393,11 +393,11 @@ pub mod happy_path {
         message_id: MessageId,
         max_duration: Option<Milliseconds>,
     ) {
-        let response = super::start_video_call(
+        let response = super::start_video_call_v2(
             env,
             VIDEO_CALL_OPERATOR,
             recipient.into(),
-            &user_canister::start_video_call::Args {
+            &user_canister::start_video_call_v2::Args {
                 message_id,
                 initiator: user.user_id,
                 initiator_username: user.username(),
@@ -408,7 +408,7 @@ pub mod happy_path {
             },
         );
 
-        assert!(matches!(response, user_canister::start_video_call::Response::Success))
+        assert!(matches!(response, user_canister::start_video_call_v2::Response::Success))
     }
 
     pub fn join_video_call(env: &mut PocketIc, joiner: &User, other: UserId, message_id: MessageId) {
@@ -426,17 +426,17 @@ pub mod happy_path {
     }
 
     pub fn end_video_call(env: &mut PocketIc, initiator: UserId, recipient: UserId, message_id: MessageId) {
-        let response = super::end_video_call(
+        let response = super::end_video_call_v2(
             env,
             VIDEO_CALL_OPERATOR,
             recipient.into(),
-            &user_canister::end_video_call::Args {
+            &user_canister::end_video_call_v2::Args {
                 user_id: initiator,
                 message_id,
             },
         );
 
-        assert!(matches!(response, user_canister::end_video_call::Response::Success))
+        assert!(matches!(response, user_canister::end_video_call_v2::Response::Success))
     }
 
     pub fn set_pin_number(env: &mut PocketIc, user: &User, current: Option<String>, new: Option<String>) {

@@ -43,7 +43,7 @@ fn main() {
     generate_candid_method!(community, disable_invite_code, update);
     generate_candid_method!(community, edit_message, update);
     generate_candid_method!(community, enable_invite_code, update);
-    generate_candid_method!(community, end_video_call, update);
+    generate_candid_method!(community, end_video_call_v2, update);
     generate_candid_method!(community, follow_thread, update);
     generate_candid_method!(community, import_group, update);
     generate_candid_method!(community, join_video_call, update);
@@ -60,7 +60,7 @@ fn main() {
     generate_candid_method!(community, send_message, update);
     generate_candid_method!(community, set_member_display_name, update);
     generate_candid_method!(community, set_video_call_presence, update);
-    generate_candid_method!(community, start_video_call, update);
+    generate_candid_method!(community, start_video_call_v2, update);
     generate_candid_method!(community, toggle_mute_notifications, update);
     generate_candid_method!(community, unblock_user, update);
     generate_candid_method!(community, undelete_messages, update);

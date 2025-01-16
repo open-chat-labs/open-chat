@@ -1889,9 +1889,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            // case "deleteUser":
-            //     executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
-            //     break;
+            case "deleteUser":
+                executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
+                break;
 
             case "addBot":
                 executeThenReply(

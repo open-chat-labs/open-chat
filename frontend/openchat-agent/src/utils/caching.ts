@@ -54,8 +54,8 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 123;
-const EARLIEST_SUPPORTED_MIGRATION = 124;
+const CACHE_VERSION = 124;
+const EARLIEST_SUPPORTED_MIGRATION = 125;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -1437,7 +1437,7 @@ export async function clearCache(principal: string): Promise<void> {
             (await db).close();
         }
         await deleteDB(name);
-        console.error("deleted db: ", name);
+        console.log("deleted db: ", name);
     } catch (err) {
         console.error("Unable to delete db: ", name, err);
     }

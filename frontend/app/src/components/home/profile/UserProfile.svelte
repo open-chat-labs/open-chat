@@ -54,6 +54,7 @@
         renderPreviews,
         verificationSectionOpen,
         accountsSectionOpen,
+        deleteAccountSectionOpen,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Toggle from "../../Toggle.svelte";
@@ -73,6 +74,7 @@
     import { uniquePersonGate } from "../../../utils/access";
     import ReferredUsersList from "./ReferredUsersList.svelte";
     import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
+    import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -94,6 +96,8 @@
     let checkingUsername: boolean;
     let view: "global" | "communities" | "chit" = "global";
     let selectedCommunityId = "";
+    let deleting = false;
+    let confirmDelete = false;
 
     $: originalUsername = user?.username ?? "";
     $: originalDisplayName = user?.displayName ?? undefined;
@@ -245,6 +249,10 @@
         });
     }
 </script>
+
+{#if confirmDelete}
+    <ConfirmDeleteAccount bind:deleting onClose={() => (confirmDelete = false)} />
+{/if}
 
 <SectionHeader border={false} flush shadow>
     <h4 class="title"><Translatable resourceKey={i18nKey("profile.title")} /></h4>
@@ -593,12 +601,33 @@
                     <p class="para smallprint">
                         <Translatable resourceKey={i18nKey("clearDataCacheInfo")} />
                     </p>
-                    <Button on:click={() => client.clearCachedData()}>
+                    <Button
+                        on:click={() =>
+                            client.clearCachedData().then(() => window.location.reload())}>
                         <Translatable resourceKey={i18nKey("clearDataCache")} />
                     </Button>
                 </div>
             </CollapsibleCard>
         </div>
+        {#if !$anonUser}
+            <div class="danger">
+                <CollapsibleCard
+                    on:toggle={deleteAccountSectionOpen.toggle}
+                    open={$deleteAccountSectionOpen}
+                    headerText={i18nKey("danger.deleteAccount")}>
+                    <p class="para">
+                        <Translatable resourceKey={i18nKey("danger.deleteAccountInfo")} />
+                    </p>
+                    <Button
+                        danger
+                        disabled={deleting}
+                        loading={deleting}
+                        on:click={() => (confirmDelete = true)}>
+                        <Translatable resourceKey={i18nKey("danger.deleteAccount")} />
+                    </Button>
+                </CollapsibleCard>
+            </div>
+        {/if}
     </form>
 {:else if view === "communities"}
     <div class="community-selector">

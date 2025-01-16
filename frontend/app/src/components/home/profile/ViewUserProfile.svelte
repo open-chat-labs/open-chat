@@ -94,6 +94,9 @@
             lastOnline = await client.getLastOnlineDate(userId, Date.now());
             user = await task2;
             profile = await task1;
+            if (profile === undefined) {
+                onClose();
+            }
         } catch (e: any) {
             client.logError("Failed to load user profile", e);
             onClose();

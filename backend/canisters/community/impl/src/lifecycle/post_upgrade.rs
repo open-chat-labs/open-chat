@@ -38,6 +38,8 @@ fn post_upgrade(args: Args) {
         let now = state.env.now();
         state
             .data
-            .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
+            .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now);
+
+        state.data.members.verify_member_ids();
     });
 }
