@@ -46,7 +46,7 @@ impl CommunityMembers {
         let user_ids: HashSet<_> = self.members_map.user_ids().into_iter().collect();
 
         let count = self.members_and_channels.len();
-        self.members_and_channels.retain(|user_id, _| user_ids.contains(&user_id));
+        self.members_and_channels.retain(|user_id, _| user_ids.contains(user_id));
         let new_count = self.members_and_channels.len();
         let removed = count - new_count;
 
@@ -54,7 +54,7 @@ impl CommunityMembers {
 
         let count = self.member_channel_links_removed.len();
         self.member_channel_links_removed
-            .retain(|(user_id, _), _| user_ids.contains(&user_id));
+            .retain(|(user_id, _), _| user_ids.contains(user_id));
         let new_count = self.member_channel_links_removed.len();
         let removed = count - new_count;
 
