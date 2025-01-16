@@ -18,53 +18,63 @@ use user_canister::{StartVideoCallArgs, UserCanisterEvent};
 fn start_video_call(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| {
-        let sender = args.initiator;
-        let my_user_id = state.env.canister_id().into();
-        if state.data.suspended.value || state.data.blocked_users.contains(&sender) || sender == my_user_id {
-            return NotAuthorized;
-        }
+    mutate_state(|state| start_video_call_impl(args.into(), state))
+}
 
-        if matches!(args.call_type, VideoCallType::Broadcast) {
-            return NotAuthorized;
-        }
+#[update(guard = "caller_is_video_call_operator")]
+#[trace]
+fn start_video_call_v2(args: ArgsV2) -> Response {
+    run_regular_jobs();
 
-        let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);
+    mutate_state(|state| start_video_call_impl(args, state))
+}
 
-        let StartVideoCallResult {
-            message_event,
-            mute_notification,
-        } = handle_start_video_call(args.message_id, None, sender, sender, max_duration, state);
+fn start_video_call_impl(args: ArgsV2, state: &mut RuntimeState) -> Response {
+    let sender = args.initiator;
+    let my_user_id = state.env.canister_id().into();
+    if state.data.suspended.value || state.data.blocked_users.contains(&sender) || sender == my_user_id {
+        return NotAuthorized;
+    }
 
-        if !mute_notification {
-            let notification = Notification::DirectMessage(DirectMessageNotification {
-                sender,
-                thread_root_message_index: None,
-                message_index: message_event.event.message_index,
-                event_index: message_event.index,
-                sender_name: args.initiator_username,
-                sender_display_name: args.initiator_display_name,
-                message_type: message_event.event.content.message_type(),
-                message_text: None,
-                image_url: None,
-                sender_avatar_id: args.initiator_avatar_id,
-                crypto_transfer: None,
-            });
+    if matches!(args.call_type, VideoCallType::Broadcast) {
+        return NotAuthorized;
+    }
 
-            state.push_notification(my_user_id, notification);
-        }
+    let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);
 
-        state.push_user_canister_event(
-            sender.into(),
-            UserCanisterEvent::StartVideoCall(Box::new(StartVideoCallArgs {
-                message_id: args.message_id,
-                message_index: message_event.event.message_index,
-                max_duration: args.max_duration,
-            })),
-        );
+    let StartVideoCallResult {
+        message_event,
+        mute_notification,
+    } = handle_start_video_call(args.message_id, None, sender, sender, max_duration, state);
 
-        Success
-    })
+    if !mute_notification {
+        let notification = Notification::DirectMessage(DirectMessageNotification {
+            sender,
+            thread_root_message_index: None,
+            message_index: message_event.event.message_index,
+            event_index: message_event.index,
+            sender_name: args.initiator_username,
+            sender_display_name: args.initiator_display_name,
+            message_type: message_event.event.content.message_type(),
+            message_text: None,
+            image_url: None,
+            sender_avatar_id: args.initiator_avatar_id,
+            crypto_transfer: None,
+        });
+
+        state.push_notification(my_user_id, notification);
+    }
+
+    state.push_user_canister_event(
+        sender.into(),
+        UserCanisterEvent::StartVideoCall(Box::new(StartVideoCallArgs {
+            message_id: args.message_id,
+            message_index: message_event.event.message_index,
+            max_duration: args.max_duration,
+        })),
+    );
+
+    Success
 }
 
 pub fn handle_start_video_call(
@@ -127,7 +137,7 @@ pub fn handle_start_video_call(
     }
 
     state.data.timer_jobs.enqueue_job(
-        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(user_canister::end_video_call::Args {
+        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(user_canister::end_video_call::ArgsV2 {
             user_id: other,
             message_id,
         })),

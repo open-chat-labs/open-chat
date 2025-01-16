@@ -105,7 +105,7 @@ pub struct MarkP2PSwapExpiredJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct MarkVideoCallEndedJob(pub group_canister::end_video_call::Args);
+pub struct MarkVideoCallEndedJob(pub group_canister::end_video_call::ArgsV2);
 
 impl Job for TimerJob {
     fn execute(self) {

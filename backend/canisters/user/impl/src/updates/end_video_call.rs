@@ -11,21 +11,28 @@ use user_canister::end_video_call::{Response::*, *};
 fn end_video_call(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| {
-        state.data.timer_jobs.cancel_job(
-            |job| {
-                if let TimerJob::MarkVideoCallEnded(vc) = job {
-                    vc.0 == args
-                } else {
-                    false
-                }
-            },
-        );
-        end_video_call_impl(args, state)
-    })
+    mutate_state(|state| end_video_call_impl(args.into(), state))
 }
 
-pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
+#[update(guard = "caller_is_video_call_operator")]
+#[trace]
+fn end_video_call_v2(args: ArgsV2) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| end_video_call_impl(args, state))
+}
+
+pub(crate) fn end_video_call_impl(args: ArgsV2, state: &mut RuntimeState) -> Response {
+    state.data.timer_jobs.cancel_job(
+        |job| {
+            if let TimerJob::MarkVideoCallEnded(vc) = job {
+                vc.0 == args
+            } else {
+                false
+            }
+        },
+    );
+
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
         let was_started_by_me = chat
             .events

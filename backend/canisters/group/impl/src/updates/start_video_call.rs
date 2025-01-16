@@ -15,10 +15,18 @@ use types::{Caller, GroupMessageNotification, Notification, VideoCallPresence, V
 fn start_video_call(args: Args) -> Response {
     run_regular_jobs();
 
+    mutate_state(|state| start_video_call_impl(args.into(), state))
+}
+
+#[update(guard = "caller_is_video_call_operator")]
+#[trace]
+fn start_video_call_v2(args: ArgsV2) -> Response {
+    run_regular_jobs();
+
     mutate_state(|state| start_video_call_impl(args, state))
 }
 
-fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn start_video_call_impl(args: ArgsV2, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return NotAuthorized;
     }
@@ -96,7 +104,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);
     state.data.timer_jobs.enqueue_job(
-        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(group_canister::end_video_call::Args {
+        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(group_canister::end_video_call::ArgsV2 {
             message_id: args.message_id,
         })),
         now + max_duration,

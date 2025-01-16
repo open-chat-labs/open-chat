@@ -12,21 +12,28 @@ use ic_cdk::update;
 fn end_video_call(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| {
-        state.data.timer_jobs.cancel_job(
-            |job| {
-                if let TimerJob::MarkVideoCallEnded(vc) = job {
-                    vc.0 == args
-                } else {
-                    false
-                }
-            },
-        );
-        end_video_call_impl(args, state)
-    })
+    mutate_state(|state| end_video_call_impl(args.into(), state))
 }
 
-pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
+#[update(guard = "caller_is_video_call_operator")]
+#[trace]
+fn end_video_call_v2(args: ArgsV2) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| end_video_call_impl(args.into(), state))
+}
+
+pub(crate) fn end_video_call_impl(args: ArgsV2, state: &mut RuntimeState) -> Response {
+    state.data.timer_jobs.cancel_job(
+        |job| {
+            if let TimerJob::MarkVideoCallEnded(vc) = job {
+                vc.0 == args
+            } else {
+                false
+            }
+        },
+    );
+
     match state.data.chat.events.end_video_call(
         args.message_id.into(),
         state.env.now(),

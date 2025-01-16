@@ -138,7 +138,7 @@ pub struct MarkP2PSwapExpiredJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct MarkVideoCallEndedJob(pub community_canister::end_video_call::Args);
+pub struct MarkVideoCallEndedJob(pub community_canister::end_video_call::ArgsV2);
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct JoinMembersToPublicChannelJob {
