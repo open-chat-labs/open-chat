@@ -40,6 +40,6 @@ fn post_upgrade(args: Args) {
             .data
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now);
 
-        state.data.members.verify_member_ids();
+        state.data.members.remove_dangling_member_channel_links();
     });
 }
