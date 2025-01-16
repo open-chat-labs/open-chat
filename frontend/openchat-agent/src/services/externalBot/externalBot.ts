@@ -1,4 +1,4 @@
-import { type BotCommandResponse, type BotDefinitionResponse } from "openchat-shared";
+import { type BotCommandResponse, type BotDefinitionResponse, toBigInt64 } from "openchat-shared";
 import { Value, AssertError } from "@sinclair/typebox/value";
 import { Type, type Static } from "@sinclair/typebox";
 import { MessageContent, SlashCommandSchema } from "../../typebox";
@@ -108,7 +108,7 @@ function externalBotResponse(value: ApiBotResponse): BotCommandResponse {
             kind: "success",
             message: mapOptional(value.Success.message, ({ id, content, finalised }) => {
                 return {
-                    messageId: BigInt(id),
+                    messageId: toBigInt64(id),
                     messageContent: messageContent(content, ""),
                     finalised: finalised ?? false,
                 };

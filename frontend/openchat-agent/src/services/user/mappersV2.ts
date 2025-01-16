@@ -131,7 +131,13 @@ import type {
     MessageActivity,
     MessageActivitySummary,
 } from "openchat-shared";
-import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
+import {
+    nullMembership,
+    toBigInt32,
+    toBigInt64,
+    CommonResponses,
+    UnsupportedValueError
+} from "openchat-shared";
 import {
     bytesToBigint,
     bytesToHexString,
@@ -181,7 +187,7 @@ export function messageActivityEvent(value: UserMessageActivityEvent): MessageAc
         ),
         eventIndex: value.event_index,
         messageIndex: value.message_index,
-        messageId: value.message_id,
+        messageId: toBigInt64(value.message_id),
         activity: messageActivity(value.activity),
         timestamp: value.timestamp,
         userId: mapOptional(value.user_id, principalBytesToString),
@@ -755,7 +761,7 @@ function userCanisterChannelSummary(
         id: {
             kind: "channel",
             communityId: communityId,
-            channelId: value.channel_id.toString(),
+            channelId: Number(toBigInt32(value.channel_id)),
         },
         readByMeUpTo: value.read_by_me_up_to,
         dateReadPinned: value.date_read_pinned,
@@ -779,7 +785,7 @@ function userCanisterCommunitySummary(value: UserCommunitySummary): UserCanister
         pinned: value.pinned.map((p) => ({
             kind: "channel",
             communityId,
-            channelId: p.toString(),
+            channelId: Number(toBigInt32(p)),
         })),
         archived: value.archived,
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
@@ -803,7 +809,7 @@ function chatIdentifier(value: TChat): ChatIdentifier {
         return {
             kind: "channel",
             communityId: principalBytesToString(value.Channel[0]),
-            channelId: value.Channel[1].toString(),
+            channelId: Number(toBigInt32(value.Channel[1])),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChat type received", value);
@@ -902,7 +908,7 @@ export function userCanisterChannelSummaryUpdates(
     communityId: string,
 ): UserCanisterChannelSummaryUpdates {
     return {
-        id: { kind: "channel", communityId, channelId: value.channel_id.toString() },
+        id: { kind: "channel", communityId, channelId: Number(toBigInt32(value.channel_id)) },
         readByMeUpTo: value.read_by_me_up_to,
         dateReadPinned: value.date_read_pinned,
         threadsRead: Object.entries(value.threads_read).reduce(
@@ -925,7 +931,7 @@ export function userCanisterCommunitySummaryUpdates(
         index: value.index,
         channels: value.channels.map((c) => userCanisterChannelSummaryUpdates(c, communityId)),
         pinned: mapOptional(value.pinned, (p) =>
-            p.map((p) => ({ kind: "channel", communityId, channelId: p.toString() })),
+            p.map((c) => ({ kind: "channel", communityId, channelId: Number(toBigInt32(c)) })),
         ),
         archived: value.archived,
     };

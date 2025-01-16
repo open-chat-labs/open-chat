@@ -1119,7 +1119,7 @@ export function chatIdentifierUnset(id: ChatIdentifier | undefined): boolean {
     if (id === undefined) return true;
     switch (id.kind) {
         case "channel":
-            return id.channelId === "";
+            return id.channelId === 0;
         case "direct_chat":
             return id.userId === "";
         case "group_chat":
@@ -1177,7 +1177,7 @@ export type GroupChatIdentifier = {
 export type ChannelIdentifier = {
     kind: "channel";
     communityId: string;
-    channelId: string;
+    channelId: number;
 };
 
 export type FavouriteChatsInitial = {

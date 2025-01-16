@@ -14,6 +14,7 @@ import type {
     DirectMessageTipped,
     CryptoTransferDetails,
 } from "openchat-shared";
+import { toBigInt32 } from "openchat-shared";
 import { identity, optional } from "../../utils/mapping";
 import type {
     ApiNotification,
@@ -99,7 +100,7 @@ export function addedToChannelNotification(
         chatId: {
             kind: "channel",
             communityId: candid.community_id.toString(),
-            channelId: candid.channel_id.toString(),
+            channelId: Number(toBigInt32(candid.channel_id)),
         },
         communityName: candid.community_name,
         channelName: candid.channel_name,
@@ -127,7 +128,7 @@ export function channelNotification(
         chatId: {
             kind: "channel",
             communityId: candid.community_id.toString(),
-            channelId: candid.channel_id.toString(),
+            channelId: Number(toBigInt32(candid.channel_id)),
         },
         communityName: candid.community_name,
         channelName: candid.channel_name,
@@ -193,7 +194,7 @@ function channelReactionNotification(
         chatId: {
             kind: "channel",
             communityId: candid.community_id.toString(),
-            channelId: candid.channel_id.toString(),
+            channelId: Number(toBigInt32(candid.channel_id)),
         },
         communityName: candid.community_name,
         channelName: candid.channel_name,
@@ -256,7 +257,7 @@ function channelMessageTipped(
         chatId: {
             kind: "channel",
             communityId: candid.community_id.toString(),
-            channelId: candid.channel_id.toString(),
+            channelId: Number(toBigInt32(candid.channel_id)),
         },
         communityName: candid.community_name,
         channelName: candid.channel_name,

@@ -6,6 +6,7 @@ use std::str::FromStr;
 use ts_rs::TS;
 
 #[derive(Serialize, CandidType, TS, Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[ts(as = "u128")]
 pub struct ChannelId(u32);
 
 impl Display for ChannelId {

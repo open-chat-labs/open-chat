@@ -33,7 +33,7 @@ import type {
     BotCommandArg,
     BotCommandArgValue,
 } from "../../typebox";
-import { CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
+import { toBigInt32, CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
 import {
     bytesToHexString,
     identity,
@@ -43,7 +43,6 @@ import {
 } from "../../utils/mapping";
 import {
     apiChatIdentifier,
-    bigintTo32bit,
     communityChannelSummary,
     communitySummary,
     eventsSuccessResponse,
@@ -199,7 +198,7 @@ function eventsContext(context: MessageContext): LocalUserIndexChatEventsEventsC
             return {
                 Channel: [
                     principalStringToBytes(context.chatId.communityId),
-                    bigintTo32bit(context.chatId.channelId),
+                    toBigInt32(context.chatId.channelId),
                     context.threadRootMessageIndex ?? null,
                 ],
             };
