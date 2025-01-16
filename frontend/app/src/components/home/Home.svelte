@@ -1034,7 +1034,7 @@
         }
         const id: MultiUserChatIdentifier =
             level === "channel" && $chatListScope.kind === "community"
-                ? { kind: "channel", communityId: $chatListScope.id.communityId, channelId: "" }
+                ? { kind: "channel", communityId: $chatListScope.id.communityId, channelId: 0 }
                 : { kind: "group_chat", groupId: "" };
 
         modal = {
