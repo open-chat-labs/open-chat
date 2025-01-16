@@ -9,7 +9,7 @@ import type {
     CommunityIdentifier,
     ChatListScope,
 } from "openchat-client";
-import { to32bitBigInt } from "openchat-shared";
+import { toBigInt32 } from "openchat-shared";
 
 export const notFound = writable(false);
 
@@ -172,7 +172,7 @@ export function selectedChannelRoute(fav: boolean) {
             chatId: {
                 kind: "channel",
                 communityId: ctx.params["communityId"],
-                channelId: Number(to32bitBigInt(ctx.params["channelId"])),
+                channelId: Number(toBigInt32(ctx.params["channelId"])),
             },
             communityId: { kind: "community", communityId: ctx.params["communityId"] },
             messageIndex: ctx.params["messageIndex"]

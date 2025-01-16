@@ -17,7 +17,7 @@ import type {
     FreezeCommunityResponse,
     UnfreezeCommunityResponse,
 } from "openchat-shared";
-import { to32bitBigInt, UnsupportedValueError } from "openchat-shared";
+import { toBigInt32, UnsupportedValueError } from "openchat-shared";
 import { publicGroupSummary } from "../common/publicSummaryMapperV2";
 import { accessGateConfig, groupSubtype } from "../common/chatMappersV2";
 import type {
@@ -78,7 +78,7 @@ export function lookupChannelResponse(
         return {
             kind: "channel",
             communityId: principalBytesToString(value.Success.community_id),
-            channelId: Number(to32bitBigInt(value.Success.channel_id)),
+            channelId: Number(toBigInt32(value.Success.channel_id)),
         };
     }
     console.warn("ApiLookupChannelByGroupIdResponse failed with ", value);

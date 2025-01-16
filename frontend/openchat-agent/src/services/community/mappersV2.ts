@@ -28,7 +28,7 @@ import type {
     UserFailedError,
     UserGroupDetails,
 } from "openchat-shared";
-import { to32bitBigInt, CommonResponses, UnsupportedValueError } from "openchat-shared";
+import { toBigInt32, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
     ChannelMatch as TChannelMatch,
     CommunityCanisterCommunitySummaryUpdates as TCommunityCanisterCommunitySummaryUpdates,
@@ -215,7 +215,7 @@ export function exploreChannelsResponse(
 
 export function channelMatch(value: TChannelMatch, communityId: string): ChannelMatch {
     return {
-        id: { kind: "channel", communityId, channelId: Number(to32bitBigInt(value.id)) },
+        id: { kind: "channel", communityId, channelId: Number(toBigInt32(value.id)) },
         gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
             expiry: undefined,
             gate: { kind: "no_gate" },
@@ -254,7 +254,7 @@ export function importGroupResponse(
             channelId: {
                 kind: "channel",
                 communityId,
-                channelId: Number(to32bitBigInt(value.Success.channel_id)),
+                channelId: Number(toBigInt32(value.Success.channel_id)),
             },
         };
     } else {
@@ -304,7 +304,7 @@ export function communitySummaryUpdates(
         channelsRemoved: value.channels_removed.map((c) => ({
             kind: "channel",
             communityId,
-            channelId: Number(to32bitBigInt(c)),
+            channelId: Number(toBigInt32(c)),
         })),
         avatarId: optionUpdateV2(value.avatar_id, identity),
         channelsAdded: value.channels_added.map((c) => communityChannelSummary(c, communityId)),
@@ -335,7 +335,7 @@ export function communityChannelUpdates(
     communityId: string,
 ): CommunityCanisterChannelSummaryUpdates {
     return {
-        id: { kind: "channel", communityId, channelId: Number(to32bitBigInt(value.channel_id)) },
+        id: { kind: "channel", communityId, channelId: Number(toBigInt32(value.channel_id)) },
         public: value.is_public,
         permissions: mapOptional(value.permissions_v2, groupPermissions),
         metrics: mapOptional(value.metrics, chatMetrics),

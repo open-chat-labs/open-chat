@@ -43,7 +43,7 @@ import type {
     OptionalMessagePermissions,
     GroupMembershipUpdates,
 } from "openchat-shared";
-import { to32bitBigInt, CommonResponses, emptyChatMetrics } from "openchat-shared";
+import { toBigInt32, CommonResponses, emptyChatMetrics } from "openchat-shared";
 import {
     accessGateConfig,
     apiPermissionRole,
@@ -366,7 +366,7 @@ export function convertToCommunityResponse(
             id: {
                 kind: "channel",
                 communityId: principalBytesToString(value.Success.community_id),
-                channelId: Number(to32bitBigInt(value.Success.channel_id)),
+                channelId: Number(toBigInt32(value.Success.channel_id)),
             },
         };
     } else {
