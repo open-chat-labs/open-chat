@@ -1,10 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, MessageId, Milliseconds, UserId, VideoCallType};
+use types::{MessageId, Milliseconds, UserId, VideoCallType};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub channel_id: u128,
+pub struct ArgsV1 {
     pub message_id: u128,
     pub initiator: UserId,
     pub initiator_username: String,
@@ -14,8 +13,7 @@ pub struct Args {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct ArgsV2 {
-    pub channel_id: ChannelId,
+pub struct Args {
     pub message_id: MessageId,
     pub initiator: UserId,
     pub initiator_username: String,
@@ -30,10 +28,9 @@ pub enum Response {
     NotAuthorized,
 }
 
-impl From<Args> for ArgsV2 {
-    fn from(value: Args) -> Self {
-        ArgsV2 {
-            channel_id: value.channel_id.into(),
+impl From<ArgsV1> for Args {
+    fn from(value: ArgsV1) -> Self {
+        Args {
             message_id: value.message_id.into(),
             initiator: value.initiator,
             initiator_username: value.initiator_username,

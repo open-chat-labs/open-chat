@@ -10,12 +10,12 @@ use types::{
     DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Notification, UserId, UserType,
     VideoCallPresence, VideoCallType,
 };
-use user_canister::start_video_call::{Response::*, *};
+use user_canister::start_video_call_v2::{Response::*, *};
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
-fn start_video_call(args: Args) -> Response {
+fn start_video_call(args: ArgsV1) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| start_video_call_impl(args.into(), state))
@@ -23,13 +23,13 @@ fn start_video_call(args: Args) -> Response {
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
-fn start_video_call_v2(args: ArgsV2) -> Response {
+fn start_video_call_v2(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| start_video_call_impl(args, state))
 }
 
-fn start_video_call_impl(args: ArgsV2, state: &mut RuntimeState) -> Response {
+fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     let sender = args.initiator;
     let my_user_id = state.env.canister_id().into();
     if state.data.suspended.value || state.data.blocked_users.contains(&sender) || sender == my_user_id {
@@ -137,7 +137,7 @@ pub fn handle_start_video_call(
     }
 
     state.data.timer_jobs.enqueue_job(
-        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(user_canister::end_video_call::ArgsV2 {
+        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(user_canister::end_video_call_v2::Args {
             user_id: other,
             message_id,
         })),

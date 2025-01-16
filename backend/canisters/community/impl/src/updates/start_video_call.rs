@@ -4,7 +4,7 @@ use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
-use community_canister::start_video_call::{Response::*, *};
+use community_canister::start_video_call_v2::{Response::*, *};
 use constants::HOUR_IN_MS;
 use group_chat_core::SendMessageResult;
 use ic_cdk::update;
@@ -12,7 +12,7 @@ use types::{Caller, ChannelMessageNotification, Notification, UserId, VideoCallP
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
-fn start_video_call(args: Args) -> Response {
+fn start_video_call(args: ArgsV1) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| start_video_call_impl(args.into(), state))
@@ -20,13 +20,13 @@ fn start_video_call(args: Args) -> Response {
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
-fn start_video_call_v2(args: ArgsV2) -> Response {
+fn start_video_call_v2(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| start_video_call_impl(args, state))
 }
 
-fn start_video_call_impl(args: ArgsV2, state: &mut RuntimeState) -> Response {
+fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return NotAuthorized;
     }
@@ -115,7 +115,7 @@ fn start_video_call_impl(args: ArgsV2, state: &mut RuntimeState) -> Response {
 
     let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);
     state.data.timer_jobs.enqueue_job(
-        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(community_canister::end_video_call::ArgsV2 {
+        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(community_canister::end_video_call_v2::Args {
             channel_id: args.channel_id,
             message_id: args.message_id,
         })),

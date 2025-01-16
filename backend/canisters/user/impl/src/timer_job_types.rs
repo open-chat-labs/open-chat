@@ -115,7 +115,7 @@ pub struct SendMessageToChannelJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call::ArgsV2);
+pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call_v2::Args);
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ClaimChitInsuranceJob;
@@ -394,7 +394,7 @@ impl Job for SendMessageToChannelJob {
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
         let response = mutate_state(|state| end_video_call_impl(self.0.clone(), state));
-        if !matches!(response, user_canister::end_video_call::Response::Success) {
+        if !matches!(response, user_canister::end_video_call_v2::Response::Success) {
             error!(?response, args = ?self.0, "Failed to mark video call ended");
         }
     }
