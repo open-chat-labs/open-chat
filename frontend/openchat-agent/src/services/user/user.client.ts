@@ -132,7 +132,6 @@ import {
     joinVideoCallResponse,
     setPinNumberResponse,
     apiMaybeAccessGateConfig,
-    bigintTo32bit,
 } from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import {
@@ -143,7 +142,7 @@ import {
 } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
-import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING, ResponseTooLargeError } from "openchat-shared";
+import { toBigInt32, MAX_EVENTS, MAX_MESSAGES, MAX_MISSING, ResponseTooLargeError } from "openchat-shared";
 import {
     chunkedChatEventsFromBackend,
     chunkedChatEventsWindowFromBackend,
@@ -914,7 +913,7 @@ export class UserClient extends CandidService {
             mentioned: [],
             message_id: event.event.messageId,
             community_id: principalStringToBytes(id.communityId),
-            channel_id: bigintTo32bit(id.channelId),
+            channel_id: toBigInt32(id.channelId),
             replies_to: mapOptional(event.event.repliesTo, (replyContext) =>
                 apiReplyContextArgs(id, replyContext),
             ),
@@ -1001,13 +1000,13 @@ export class UserClient extends CandidService {
     }
 
     private markChannelMessageArg(
-        channelId: string,
+        channelId: number,
         readUpTo: number | undefined,
         threads: ThreadRead[],
         dateReadPinned: bigint | undefined,
     ) {
         return {
-            channel_id: bigintTo32bit(channelId),
+            channel_id: toBigInt32(channelId),
             read_up_to: readUpTo,
             threads: threads.map((t) => ({
                 root_message_index: t.threadRootMessageIndex,
@@ -1271,7 +1270,7 @@ export class UserClient extends CandidService {
                     return {
                         Community: [
                             principalStringToBytes(chatId.communityId),
-                            bigintTo32bit(chatId.channelId),
+                            toBigInt32(chatId.channelId),
                         ],
                     };
             }

@@ -137,6 +137,7 @@ import {
     codeToText,
     emptyChatMetrics,
     isAccountIdentifierValid,
+    toBigInt32,
     CHAT_SYMBOL,
     CKBTC_SYMBOL,
     ICP_SYMBOL,
@@ -1283,7 +1284,7 @@ function replySourceContext([chatId, maybeThreadRoot]: [TChat, number | null]): 
             chatId: {
                 kind: "channel",
                 communityId: principalBytesToString(communityId),
-                channelId: channelId.toString(),
+                channelId: Number(toBigInt32(channelId)),
             },
             threadRootMessageIndex: mapOptional(maybeThreadRoot, identity),
         };
@@ -1484,7 +1485,7 @@ export function apiMultiUserChat(chatId: ChatIdentifier): TMultiUserChat {
             };
         case "channel":
             return {
-                Channel: [principalStringToBytes(chatId.communityId), bigintTo32bit(chatId.channelId)],
+                Channel: [principalStringToBytes(chatId.communityId), toBigInt32(chatId.channelId)],
             };
         default:
             throw new Error("Cannot convert a DirectChatIdentifier into an ApiMultiUserChat");
@@ -2240,7 +2241,7 @@ export function communityChannelSummary(
     const latestMessage = mapOptional(value.latest_message, messageEvent);
     return {
         kind: "channel",
-        id: { kind: "channel", communityId, channelId: value.channel_id.toString() },
+        id: { kind: "channel", communityId, channelId: Number(toBigInt32(value.channel_id)) },
         latestMessage,
         name: value.name,
         description: value.description,
@@ -2513,7 +2514,7 @@ export function createGroupResponse(
                 const canisterId: ChannelIdentifier = {
                     kind: "channel",
                     communityId: id.communityId,
-                    channelId: value.Success.channel_id.toString(),
+                    channelId: Number(toBigInt32(value.Success.channel_id)),
                 };
                 return { kind: "success", canisterId };
             }
@@ -2873,7 +2874,7 @@ export function apiChatIdentifier(chatId: ChatIdentifier): TChat {
             return { Direct: principalStringToBytes(chatId.userId) };
         case "channel":
             return {
-                Channel: [principalStringToBytes(chatId.communityId), bigintTo32bit(chatId.channelId)],
+                Channel: [principalStringToBytes(chatId.communityId), toBigInt32(chatId.channelId)],
             };
     }
 }
@@ -3474,9 +3475,4 @@ export function principalToIcrcAccount(principal: string): AccountICRC1 {
         owner: principalStringToBytes(principal),
         subaccount: undefined,
     };
-}
-
-export function bigintTo32bit(value: string | bigint): number {
-    // Convert the number to 32bit
-    return Number(BigInt(value) % BigInt(4294967296));
 }
