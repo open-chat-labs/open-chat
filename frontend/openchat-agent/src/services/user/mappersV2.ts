@@ -131,7 +131,13 @@ import type {
     MessageActivity,
     MessageActivitySummary,
 } from "openchat-shared";
-import { nullMembership, toBigInt32, CommonResponses, UnsupportedValueError } from "openchat-shared";
+import {
+    nullMembership,
+    toBigInt32,
+    toBigInt64,
+    CommonResponses,
+    UnsupportedValueError
+} from "openchat-shared";
 import {
     bytesToBigint,
     bytesToHexString,
@@ -181,7 +187,7 @@ export function messageActivityEvent(value: UserMessageActivityEvent): MessageAc
         ),
         eventIndex: value.event_index,
         messageIndex: value.message_index,
-        messageId: value.message_id,
+        messageId: toBigInt64(value.message_id),
         activity: messageActivity(value.activity),
         timestamp: value.timestamp,
         userId: mapOptional(value.user_id, principalBytesToString),

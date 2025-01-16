@@ -6,6 +6,7 @@ import type {
     MessageContext,
     VideoCallContent,
 } from "openchat-shared";
+import { toBigInt64 } from "openchat-shared";
 
 export class LoadedNewMessages extends CustomEvent<MessageContext> {
     constructor(context: MessageContext) {
@@ -37,7 +38,7 @@ export class ReactionSelected extends CustomEvent<{ messageId: bigint; kind: "ad
 export class RemoteVideoCallEndedEvent extends CustomEvent<{ messageId: bigint }> {
     constructor(messageId: bigint) {
         super("openchat_event", {
-            detail: { messageId: BigInt(messageId) },
+            detail: { messageId: toBigInt64(messageId) },
         });
     }
 }
@@ -60,7 +61,7 @@ export class RemoteVideoCallStartedEvent extends CustomEvent<{
             detail: {
                 chatId,
                 userId,
-                messageId: BigInt(messageId),
+                messageId: toBigInt64(messageId),
                 currentUserIsParticipant,
                 timestamp,
             },
