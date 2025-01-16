@@ -8,7 +8,8 @@ use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
+use tracing::info;
 use types::{
     is_default, ChannelId, CommunityMember, CommunityPermissions, CommunityRole, PushIfNotContains, TimestampMillis,
     Timestamped, UserId, UserType, Version,
@@ -41,6 +42,36 @@ pub struct CommunityMembers {
 }
 
 impl CommunityMembers {
+    pub fn verify_member_ids(&self) {
+        let mut missing_from_members_map: HashSet<_> = self.members_and_channels.keys().copied().collect();
+        let mut missing_from_members_and_channels = Vec::new();
+
+        for user_id in self.members_map.user_ids() {
+            if !missing_from_members_map.remove(&user_id) {
+                missing_from_members_and_channels.push(*user_id);
+            }
+        }
+
+        let missing_from_members_map_count = missing_from_members_and_channels.len();
+        let missing_from_members_and_channels_count = missing_from_members_and_channels.len();
+
+        info!(
+            missing_from_members_map_count,
+            missing_from_members_and_channels_count,
+            missing_from_members_map = ?missing_from_members_map
+                .iter()
+                .take(10)
+                .map(|u| u.to_string())
+                .collect::<Vec<_>>(),
+            missing_from_members_and_channels = ?missing_from_members_and_channels
+                .iter()
+                .take(10)
+                .map(|u| u.to_string())
+                .collect::<Vec<_>>(),
+            "Verified community member Ids"
+        );
+    }
+
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,
