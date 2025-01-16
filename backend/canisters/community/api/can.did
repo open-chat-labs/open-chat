@@ -1179,7 +1179,7 @@ service : {
     disable_invite_code : (EmptyArgs) -> (DisableInviteCodeResponse);
     edit_message : (EditMessageArgs) -> (EditMessageResponse);
     enable_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
-    end_video_call : (EndVideoCallArgs) -> (EndVideoCallResponse);
+    end_video_call_v2 : (EndVideoCallArgs) -> (EndVideoCallResponse);
     import_group : (ImportGroupArgs) -> (ImportGroupResponse);
     join_video_call : (JoinVideoCallArgs) -> (JoinVideoCallResponse);
     leave_channel : (LeaveChannelArgs) -> (LeaveChannelResponse);
@@ -1195,7 +1195,7 @@ service : {
     send_message : (SendMessageArgs) -> (SendMessageResponse);
     set_member_display_name : (SetMemberDisplayNameArgs) -> (SetMemberDisplayNameResponse);
     set_video_call_presence: (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
-    start_video_call : (StartVideoCallArgs) -> (StartVideoCallResponse);
+    start_video_call_v2 : (StartVideoCallArgs) -> (StartVideoCallResponse);
     toggle_mute_notifications : (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
