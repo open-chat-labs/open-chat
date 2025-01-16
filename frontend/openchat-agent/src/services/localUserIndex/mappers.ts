@@ -43,6 +43,7 @@ import {
 } from "../../utils/mapping";
 import {
     apiChatIdentifier,
+    bigintTo32bit,
     communityChannelSummary,
     communitySummary,
     eventsSuccessResponse,
@@ -198,7 +199,7 @@ function eventsContext(context: MessageContext): LocalUserIndexChatEventsEventsC
             return {
                 Channel: [
                     principalStringToBytes(context.chatId.communityId),
-                    BigInt(context.chatId.channelId),
+                    bigintTo32bit(context.chatId.channelId),
                     context.threadRootMessageIndex ?? null,
                 ],
             };
