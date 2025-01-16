@@ -1,4 +1,5 @@
 import { derived, get, writable } from "svelte/store";
+import page from "page";
 import type {
     ChannelIdentifier,
     ChatIdentifier,
@@ -8,8 +9,7 @@ import type {
     CommunityIdentifier,
     ChatListScope,
 } from "openchat-client";
-
-import page from "page";
+import { toBigInt32 } from "openchat-shared";
 
 export const notFound = writable(false);
 
@@ -172,7 +172,7 @@ export function selectedChannelRoute(fav: boolean) {
             chatId: {
                 kind: "channel",
                 communityId: ctx.params["communityId"],
-                channelId: ctx.params["channelId"],
+                channelId: Number(toBigInt32(ctx.params["channelId"])),
             },
             communityId: { kind: "community", communityId: ctx.params["communityId"] },
             messageIndex: ctx.params["messageIndex"]
