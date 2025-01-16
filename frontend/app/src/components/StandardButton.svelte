@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { currentTheme } from "../theme/themes";
+    import { darkenHexColour } from "../theme/utils";
 
     export let cls = "";
     export let loading: boolean = false;
@@ -12,6 +13,7 @@
     export let hollow: boolean = false;
     export let title: string | undefined = undefined;
     export let square: boolean = false;
+    export let danger: boolean = false;
 
     function rand(a: number, b: number) {
         const r = Math.random();
@@ -26,10 +28,12 @@
         height = `${h}px`;
         width = `${h / 2}px`;
     });
+
+    $: darkenedDanger = darkenHexColour($currentTheme.toast.failure.bg, 20);
 </script>
 
 <button
-    style={`--height: ${height}; --width: ${width}`}
+    style={`--height: ${height}; --width: ${width}; --darkened-danger: ${darkenedDanger}`}
     on:click|stopPropagation
     class={cls}
     class:halloween={$currentTheme.name === "halloween"}
@@ -38,6 +42,7 @@
     class:small
     class:tiny
     class:hollow
+    class:danger
     {disabled}
     class:secondary
     class:square
@@ -90,6 +95,16 @@
             &:hover {
                 background: var(--button-hv);
                 color: var(--button-hv-txt);
+            }
+        }
+
+        &.danger {
+            background: var(--toast-failure-bg);
+            color: var(--toast-failure-txt);
+            @media (hover: hover) {
+                &:hover {
+                    background: var(--darkened-danger);
+                }
             }
         }
 

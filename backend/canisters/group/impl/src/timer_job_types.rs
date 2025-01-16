@@ -105,7 +105,7 @@ pub struct MarkP2PSwapExpiredJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct MarkVideoCallEndedJob(pub group_canister::end_video_call::Args);
+pub struct MarkVideoCallEndedJob(pub group_canister::end_video_call_v2::Args);
 
 impl Job for TimerJob {
     fn execute(self) {
@@ -387,7 +387,7 @@ impl Job for MarkP2PSwapExpiredJob {
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
         let response = mutate_state(|state| end_video_call_impl(self.0.clone(), state));
-        if !matches!(response, group_canister::end_video_call::Response::Success) {
+        if !matches!(response, group_canister::end_video_call_v2::Response::Success) {
             error!(?response, args = ?self.0, "Failed to mark video call ended");
         }
     }

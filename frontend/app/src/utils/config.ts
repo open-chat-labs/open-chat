@@ -21,6 +21,7 @@ export const configKeys = {
     accountsSectionOpen: "openchat_accounts_section",
     userStatsSection: "openchat_user_stats_section",
     userAdvancedSection: "openchat_user_advanced_section",
+    userDeleteAccountSection: "openchat_user_delete_account_section",
     groupInfoSection: "openchat_group_info_section",
     groupVisibilitySection: "openchat_group_visibility_section",
     groupRulesSection: "openchat_group_rules_section",

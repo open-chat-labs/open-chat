@@ -806,8 +806,8 @@ service : {
     set_video_call_presence : (SetVideoCallPresenceArgs) -> (SetVideoCallPresenceResponse);
 
     // Video call operator only
-    start_video_call : (StartVideoCallArgs) -> (StartVideoCallResponse);
-    end_video_call : (EndVideoCallArgs) -> (EndVideoCallResponse);
+    start_video_call_v2 : (StartVideoCallArgs) -> (StartVideoCallResponse);
+    end_video_call_v2 : (EndVideoCallArgs) -> (EndVideoCallResponse);
 
     summary : (SummaryArgs) -> (SummaryResponse) query;
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;

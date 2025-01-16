@@ -344,7 +344,6 @@
 
     function openUserProfile(ev: Event) {
         if (sender?.kind === "bot") {
-            console.log("let's show the bot profile");
             botProfile = {
                 botId: sender.userId,
                 chatId,
