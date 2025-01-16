@@ -620,6 +620,12 @@
                         <pre>expiresAt: {expiresAt}</pre>
                         <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
                         <pre>botContext: {JSON.stringify(botContext, null, 4)}</pre>
+                        <pre>inert: {inert}</pre>
+                        <pre>canRevealDeleted: {canRevealDeleted}</pre>
+                        <pre>canlRevealBlocked: {canRevealBlocked}</pre>
+                        <pre>readonly: {readonly}</pre>
+                        <pre>showChatMenu: {showChatMenu}</pre>
+                        <pre>intersecting: {intersecting}</pre>
                     {/if}
 
                     {#if showChatMenu && intersecting}
@@ -652,6 +658,8 @@
                             {crypto}
                             translatable={canTranslate}
                             {translated}
+                            {canReact}
+                            createdUser={user}
                             on:collapseMessage
                             on:forward
                             on:reply={reply}
@@ -723,28 +731,8 @@
     $avatar-width-mob: toRem(43);
 
     @media (hover: hover) {
-        :global(.message-bubble:hover .menu-icon) {
+        :global(.message-bubble:hover .menu) {
             opacity: 1;
-        }
-
-        :global(.message-bubble:hover .menu-icon .wrapper) {
-            background-color: var(--icon-msg-hv);
-        }
-
-        :global(.message-bubble.me:hover .menu-icon .wrapper) {
-            background-color: var(--icon-inverted-hv);
-        }
-
-        :global(.message-bubble.crypto:hover .menu-icon .wrapper) {
-            background-color: rgba(255, 255, 255, 0.3);
-        }
-
-        :global(.me .menu-icon:hover .wrapper) {
-            background-color: var(--icon-inverted-hv);
-        }
-
-        :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
-            background-color: var(--icon-hv);
         }
     }
 
@@ -772,6 +760,10 @@
 
     :global(.message-bubble.crypto a) {
         color: inherit;
+    }
+
+    :global(.message-bubble.first .menu) {
+        top: -24px;
     }
 
     :global(.actions .reaction .wrapper) {
@@ -886,8 +878,6 @@
         border-radius: $radius;
         max-width: var(--max-width);
         min-width: 90px;
-        overflow: hidden;
-        overflow-wrap: break-word;
         border: var(--currentChat-msg-bd);
         box-shadow: var(--currentChat-msg-sh);
 

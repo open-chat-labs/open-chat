@@ -2,7 +2,6 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
@@ -22,6 +21,7 @@
     import CollapseIcon from "svelte-material-icons/ArrowCollapseUp.svelte";
     import EyeArrowRightIcon from "svelte-material-icons/EyeArrowRight.svelte";
     import EyeOffIcon from "svelte-material-icons/EyeOff.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import { _, locale } from "svelte-i18n";
@@ -34,6 +34,7 @@
         type ChatIdentifier,
         type Message,
         type OpenChat,
+        type CreatedUser,
         lastCryptoSent,
         currentUser as user,
         translationStore,
@@ -47,6 +48,7 @@
     import { copyToClipboard } from "../../utils/urls";
     import { isTouchDevice } from "../../utils/devices";
     import Translatable from "../Translatable.svelte";
+    import { Database as EmojiDatabase } from "emoji-picker-element";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -78,8 +80,36 @@
     export let msg: Message;
     export let threadRootMessage: Message | undefined;
     export let canTip: boolean;
+    export let canReact: boolean;
+    export let createdUser: CreatedUser;
 
     let menuIcon: MenuIcon;
+
+    let emojiDb = new EmojiDatabase();
+    let showQuickReactionCount = 3;
+    // New users won't get any default fav emoji
+    let defaultReactions= ["yes", "tears_of_joy", "pray"];
+    let loadedReactions = emojiDb
+        .getTopFavoriteEmoji(showQuickReactionCount)
+        .then(fav => {
+            if (fav.length < showQuickReactionCount) {
+                // If we have less emoji than we want to show, expand with
+                // a default selection of emoji.
+                let res = Promise
+                    .all(defaultReactions.map(em => emojiDb.getEmojiByShortcode(em)))
+                    .then(def => def.filter(v => v != null))
+                    .then(def => fav.concat(def).slice(0, showQuickReactionCount));
+                
+                return res;
+            }
+
+            return fav;
+        })
+        .catch(e => {
+            console.log(e);
+            return [];
+        });
+    
 
     $: canRemind =
         msg.content.kind !== "message_reminder_content" &&
@@ -260,13 +290,66 @@
             }
         });
     }
+
+    // Note: Manually selected reactions do not increment their fav counter!
+    function toggleReaction(reaction: string) {
+        if (canReact) {
+            const kind = client.containsReaction(createdUser.userId, reaction, msg.reactions)
+                ? "remove"
+                : "add";
+
+            client
+                .selectReaction(
+                    chatId,
+                    createdUser.userId,
+                    threadRootMessageIndex,
+                    msg.messageId,
+                    reaction,
+                    createdUser.username,
+                    createdUser.displayName,
+                    kind,
+                )
+                .then((success) => {
+                    if (success && kind === "add") {
+                        client.trackEvent("reacted_to_message");
+                    }
+                });
+        }
+    }
 </script>
 
-<div class="menu" class:rtl={$rtlStore}>
+<div class="menu" class:inert={inert} class:rtl={$rtlStore}>
+    {#await loadedReactions }
+        <div></div>
+    {:then [fst, snd, thrd]}
+        {#if !inert}
+            {#if "unicode" in fst}
+                <HoverIcon compact={true} onclick={() => toggleReaction(fst.unicode)}>
+                    <div class="quick-reaction">
+                        {fst.unicode}
+                    </div>
+                </HoverIcon>
+            {/if}
+            {#if "unicode" in snd}
+                <HoverIcon compact={true} onclick={() => toggleReaction(snd.unicode)}>
+                    <div class="quick-reaction">
+                        {snd.unicode}
+                    </div>
+                </HoverIcon>
+            {/if}
+            {#if "unicode" in thrd}
+                <HoverIcon compact={true} onclick={() => toggleReaction(thrd.unicode)}>
+                    <div class="quick-reaction">
+                        {thrd.unicode}
+                    </div>
+                </HoverIcon>
+            {/if}
+        {/if}
+    {/await}
     <MenuIcon bind:this={menuIcon} centered position={"right"} align={"end"}>
         <div class="menu-icon" slot="icon">
             <HoverIcon compact>
-                <ChevronDown size="1.6em" color={me ? "#fff" : "var(--icon-txt)"} />
+                <DotsVertical size="1.4em" color="#fff" />
             </HoverIcon>
         </div>
         <div slot="menu">
@@ -512,15 +595,52 @@
 </div>
 
 <style lang="scss">
+    // This will align the menu relative to the selected side of the chat
+    // bubble with 0.75rem overflow, or align it to the opposite edge of the
+    // chat bubble if the menu width is larger than the chat bubble's.
+    @mixin calcMenuOffset($property, $menu-width) {
+        #{$property}: calc(100% - min(100%, calc($menu-width - 0.75rem)));
+    }
     .menu {
-        $offset: -2px;
-        position: absolute;
-        top: -4px;
-        right: $offset;
+        // Menu width for 3 reactions and a menu button.
+        &:not(.inert) {
+            $menu-width: 7.75rem;
+        }
 
-        &.rtl {
-            left: $offset;
-            right: unset;
+        &.inert {
+            $menu-width: 2rem;
+        }
+
+        z-index: 1;
+        opacity: 0;
+        display: flex;
+        position: absolute;
+        width: fit-content;
+        background-color: var(--reaction-bg);
+        border: var(--bw) solid var(--menu-bd);
+        transition: opacity ease-in-out 200ms;
+
+        top: -1.5rem;
+        padding: 0.125rem;
+        border-radius: 0.375rem;
+
+        &:not(.inert) {
+            $menu-width: 7.75rem;
+            &:not(.rtl) { @include calcMenuOffset(left, $menu-width); }
+            &.rtl { @include calcMenuOffset(right, $menu-width); }
+        }
+
+        &.inert {
+            // For inert messages we don't display reactions
+            $menu-width: 2rem;
+            &:not(.rtl) { @include calcMenuOffset(left, $menu-width); }
+            &.rtl { @include calcMenuOffset(right, $menu-width); }
+        }
+    }
+
+    @include mobile() {
+        .menu {
+            display: none;
         }
     }
 
@@ -528,8 +648,11 @@
         margin-left: $sp1;
     }
 
-    .menu-icon {
-        transition: opacity ease-in-out 200ms;
-        opacity: 0;
-    }
+    .quick-reaction {
+        width: 1.4rem;
+        height: 1.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }    
 </style>
