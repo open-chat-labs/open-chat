@@ -290,12 +290,7 @@ struct Data {
     pub referrals: Referrals,
     pub message_activity_events: MessageActivityEvents,
     pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
-    #[serde(default = "local_user_index_event_sync_queue")]
     pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
-}
-
-fn local_user_index_event_sync_queue() -> GroupedTimerJobQueue<LocalUserIndexEventBatch> {
-    GroupedTimerJobQueue::new(1, false)
 }
 
 impl Data {

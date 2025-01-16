@@ -4717,8 +4717,8 @@ export class OpenChat extends EventTarget {
 
     updateRegisteredBot(
         id: string,
+        principal?: string,
         ownerId?: string,
-        name?: string,
         avatarUrl?: string,
         endpoint?: string,
         definition?: BotDefinition,
@@ -4726,8 +4726,8 @@ export class OpenChat extends EventTarget {
         return this.#sendRequest({
             kind: "updateRegisteredBot",
             id,
+            principal,
             ownerId,
-            name,
             avatarUrl,
             endpoint,
             definition,

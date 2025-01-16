@@ -339,10 +339,10 @@ impl RuntimeState {
         }
         for pending_transaction in result.final_prize_payments {
             self.data.timer_jobs.enqueue_job(
-                TimerJob::MakeTransfer(MakeTransferJob {
+                TimerJob::MakeTransfer(Box::new(MakeTransferJob {
                     pending_transaction,
                     attempt: 0,
-                }),
+                })),
                 now,
                 now,
             );

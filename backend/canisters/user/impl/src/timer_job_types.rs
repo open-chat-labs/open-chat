@@ -62,7 +62,6 @@ pub struct RemoveExpiredEventsJob;
 pub struct ProcessTokenSwapJob {
     pub token_swap: TokenSwap,
     pub attempt: u32,
-    #[serde(default)]
     pub debug: bool,
 }
 

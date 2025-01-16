@@ -180,6 +180,7 @@
             "commandsLabel": "コマンド",
             "descLabel": "ボットの説明",
             "descPlaceholder": "ボットの説明を入力してください",
+            "editPrincipalPlaceholder": "変更しない場合は空白のままにしてください",
             "endpointLabel": "ボットエンドポイント",
             "endpointRules": "有効なオリジンまたはキャニスターIDである必要があります",
             "errors": {
@@ -339,8 +340,8 @@
             "action": "アップデート",
             "desc": "既存のOpenChatボットを更新する提案を開始する",
             "nobots": "登録されたボットの所有者のみがボットを更新できます。あなたは登録されたボットの所有者ではありません。",
-            "select": "更新するボットを選択します。",
-            "title": "ボットの更新"
+            "select": "更新するボットを選択",
+            "title": "{name} を更新"
         },
         "view": {
             "close": "近い",
