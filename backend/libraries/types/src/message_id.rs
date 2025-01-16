@@ -51,6 +51,14 @@ impl Visitor<'_> for MessageIdVisitor {
         formatter.write_str("a u64, u128 or string")
     }
 
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E> {
+        Ok(v.into())
+    }
+
+    fn visit_u128<E>(self, v: u128) -> Result<Self::Value, E> {
+        Ok(v.into())
+    }
+
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
         E: Error,
@@ -59,14 +67,6 @@ impl Visitor<'_> for MessageIdVisitor {
             Ok(value) => Ok(value.into()),
             Err(error) => Err(E::custom(format!("invalid message id: {v}. Error: {error}"))),
         }
-    }
-
-    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E> {
-        Ok(v.into())
-    }
-
-    fn visit_u128<E>(self, v: u128) -> Result<Self::Value, E> {
-        Ok(v.into())
     }
 }
 
