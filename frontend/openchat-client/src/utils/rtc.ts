@@ -1,6 +1,7 @@
 /* eslint-disable no-case-declarations */
 import {
     chatIdentifiersEqual,
+    toBigInt64,
     type ChatIdentifier,
     type ChatSummary,
     type MessageContent,
@@ -131,7 +132,7 @@ export function parseWebRtcMessage(chatId: ChatIdentifier, msg: WebRtcMessage): 
         return {
             ...msg,
             id: chatId,
-            messageId: BigInt(msg.messageId),
+            messageId: toBigInt64(msg.messageId),
         };
     }
     if (msg.kind === "remote_user_sent_message") {
@@ -139,7 +140,7 @@ export function parseWebRtcMessage(chatId: ChatIdentifier, msg: WebRtcMessage): 
         if (msg.messageEvent.event.repliesTo?.kind === "rehydrated_reply_context") {
             msg.messageEvent.event.repliesTo = {
                 ...msg.messageEvent.event.repliesTo,
-                messageId: BigInt(msg.messageEvent.event.messageId),
+                messageId: toBigInt64(msg.messageEvent.event.messageId),
                 content: hydrateBigIntsInContent(msg.messageEvent.event.repliesTo.content),
             };
         }
@@ -150,7 +151,7 @@ export function parseWebRtcMessage(chatId: ChatIdentifier, msg: WebRtcMessage): 
                 ...msg.messageEvent,
                 event: {
                     ...msg.messageEvent.event,
-                    messageId: BigInt(msg.messageEvent.event.messageId),
+                    messageId: toBigInt64(msg.messageEvent.event.messageId),
                 },
                 timestamp: BigInt(Date.now()),
             },
