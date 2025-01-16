@@ -142,7 +142,10 @@
         }
         if (ev instanceof CreateTestMessages) {
             const [{ chatId, threadRootMessageIndex }, num] = ev.detail;
-            if (chatId === messageContext.chatId && threadRootMessageIndex === undefined) {
+            if (
+                chatIdentifiersEqual(chatId, messageContext.chatId) &&
+                threadRootMessageIndex === undefined
+            ) {
                 createTestMessages(num);
             }
         }

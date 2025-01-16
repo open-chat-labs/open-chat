@@ -19,7 +19,7 @@
 
     let challenge: Challenge | undefined = undefined;
     let error: ResourceKey | undefined = undefined;
-    let chars: string | undefined = undefined;
+    let chars: string = "";
     let submitting = false;
 
     $: valid = challenge !== undefined && chars?.length === 4;

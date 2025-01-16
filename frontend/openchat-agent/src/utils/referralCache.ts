@@ -71,7 +71,7 @@ export async function clearCache(): Promise<void> {
             (await db).close();
         }
         await deleteDB(name);
-        console.error("deleted db: ", name);
+        console.log("deleted db: ", name);
     } catch (err) {
         console.error("Unable to delete db: ", name, err);
     }

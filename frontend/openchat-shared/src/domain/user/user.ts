@@ -31,6 +31,7 @@ export function deletedUser(userId: string): UserSummary {
     return {
         kind: "user",
         userId,
+        blobUrl: "/assets/deletedUser.svg",
         username: "Deleted User",
         displayName: undefined,
         updated: BigInt(Number.MAX_VALUE), // we want to *never* request updates for a deleted user
