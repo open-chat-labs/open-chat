@@ -162,7 +162,7 @@ export interface CanisterWasm {
   'version' : BuildVersion,
   'module' : Uint8Array | number[],
 }
-export type ChannelId = bigint;
+export type ChannelId = number;
 export interface ChannelMatch {
   'id' : ChannelId,
   'gate_config' : [] | [AccessGateConfig],

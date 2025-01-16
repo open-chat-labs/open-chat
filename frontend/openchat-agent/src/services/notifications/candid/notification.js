@@ -15,7 +15,7 @@ export const Notification = IDL.Variant({
   }),
   'ChannelMessageTipped' : IDL.Record({
     'tip' : IDL.Text,
-    'channel_id' : IDL.Nat,
+    'channel_id' : IDL.Nat32,
     'tipped_by_display_name' : IDL.Opt(IDL.Text),
     'community_id' : IDL.Principal,
     'message_event_index' : IDL.Nat32,
@@ -60,7 +60,7 @@ export const Notification = IDL.Variant({
     'message_index' : IDL.Nat32,
   }),
   'ChannelReactionAdded' : IDL.Record({
-    'channel_id' : IDL.Nat,
+    'channel_id' : IDL.Nat32,
     'community_id' : IDL.Principal,
     'added_by_name' : IDL.Text,
     'message_event_index' : IDL.Nat32,
@@ -120,7 +120,7 @@ export const Notification = IDL.Variant({
     'message_index' : IDL.Nat32,
   }),
   'AddedToChannel' : IDL.Record({
-    'channel_id' : IDL.Nat,
+    'channel_id' : IDL.Nat32,
     'community_id' : IDL.Principal,
     'added_by_name' : IDL.Text,
     'added_by' : IDL.Principal,
@@ -131,7 +131,7 @@ export const Notification = IDL.Variant({
     'channel_avatar_id' : IDL.Opt(IDL.Nat),
   }),
   'ChannelMessage' : IDL.Record({
-    'channel_id' : IDL.Nat,
+    'channel_id' : IDL.Nat32,
     'community_id' : IDL.Principal,
     'image_url' : IDL.Opt(IDL.Text),
     'sender_display_name' : IDL.Opt(IDL.Text),

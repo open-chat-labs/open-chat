@@ -32,7 +32,7 @@ import {
     registerUserResponse,
     withdrawFromIcpSwapResponse,
 } from "./mappers";
-import { joinGroupResponse, apiChatIdentifier } from "../common/chatMappersV2";
+import { joinGroupResponse, apiChatIdentifier, bigintTo32bit } from "../common/chatMappersV2";
 import { MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
 import {
     mapOptional,
@@ -304,7 +304,7 @@ export class LocalUserIndexClient extends CandidService {
             "join_channel",
             {
                 community_id: principalStringToBytes(id.communityId),
-                channel_id: BigInt(id.channelId),
+                channel_id: bigintTo32bit(id.channelId),
                 invite_code: mapOptional(inviteCode, textToCode),
                 verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
                 referred_by: maybePrincipalStringToBytes(referredBy),
@@ -364,7 +364,7 @@ export class LocalUserIndexClient extends CandidService {
             "invite_users_to_channel",
             {
                 community_id: principalStringToBytes(communityId),
-                channel_id: BigInt(channelId),
+                channel_id: bigintTo32bit(channelId),
                 user_ids: userIds.map(principalStringToBytes),
                 caller_username: callerUsername,
             },
