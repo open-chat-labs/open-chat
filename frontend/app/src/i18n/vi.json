@@ -583,9 +583,11 @@
     },
     "danger": {
         "deleteAccount": "Xóa tài khoản",
-        "deleteAccountConfirm": "Nếu bạn xóa tài khoản, bạn sẽ mất quyền truy cập vào ví OpenChat của mình và sẽ không thể khôi phục quyền truy cập. Vui lòng đảm bảo rằng bạn chuyển tiền ra trước khi tiếp tục. \n\nBạn có chắc chắn 100% rằng bạn muốn xóa hoàn toàn tài khoản OpenChat của mình và bạn hiểu rằng điều này không thể hoàn tác được không?",
+        "deleteAccountConfirm": "Nếu bạn xóa tài khoản, bạn sẽ mất quyền truy cập vào ví OpenChat của mình và sẽ không thể khôi phục quyền truy cập. Vui lòng đảm bảo rằng bạn đã chuyển tiền ra trước khi tiếp tục. \n\nBạn có chắc chắn 100% rằng bạn muốn xóa hoàn toàn tài khoản OpenChat của mình và bạn hiểu rằng điều này không thể hoàn tác được không?\n\nNhấn Xóa để xác thực lại và xóa tài khoản của bạn.",
         "deleteAccountFailed": "Xin lỗi, chúng tôi không thể xóa tài khoản của bạn",
         "deleteAccountInfo": "Xóa tài khoản OpenChat của bạn. Cảnh báo! Đây là quyết định cuối cùng và không thể hoàn tác.",
+        "deleting": "Xóa bỏ",
+        "reauth": "Vì lý do bảo mật, bạn sẽ cần xác thực lại để xóa tài khoản của mình. Đây là cơ hội cuối cùng để bạn rút lui!",
         "title": "Sự nguy hiểm"
     },
     "dark": "Tối",

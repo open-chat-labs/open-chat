@@ -583,9 +583,11 @@
     },
     "danger": {
         "deleteAccount": "删除帐户",
-        "deleteAccountConfirm": "如果您删除帐户，您将无法访问 OpenChat 钱包，并且无法恢复访问权限。请确保在继续操作之前将资金转出。\n\n您是否 100% 确定要完全删除 OpenChat 帐户，并且您了解此操作无法撤消？",
+        "deleteAccountConfirm": "如果您删除帐户，您将无法访问 OpenChat 钱包，并且无法恢复访问权限。请确保在继续操作之前将资金转出。\n\n您是否 100% 确定要完全删除 OpenChat 帐户，并且您了解此操作无法撤消？\n\n按 Delete 重新验证并删除您的帐户。",
         "deleteAccountFailed": "抱歉，我们无法删除您的帐户",
         "deleteAccountInfo": "删除您的 OpenChat 帐户。警告！此操作不可撤销。",
+        "deleting": "删除",
+        "reauth": "出于安全原因，您需要重新验证身份才能删除您的帐户。这是您最后一次退出的机会！",
         "title": "危险"
     },
     "dark": "深色模式",

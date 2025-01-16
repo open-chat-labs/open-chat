@@ -583,9 +583,11 @@
     },
     "danger": {
         "deleteAccount": "Usuń konto",
-        "deleteAccountConfirm": "Jeśli usuniesz swoje konto, utracisz dostęp do portfela OpenChat i nie będziesz mógł go odzyskać. Upewnij się, że przelałeś środki, zanim przejdziesz dalej. \n\nCzy jesteś w 100% pewien, że chcesz całkowicie usunąć swoje konto OpenChat i rozumiesz, że nie można tego cofnąć?",
+        "deleteAccountConfirm": "Jeśli usuniesz swoje konto, utracisz dostęp do portfela OpenChat i nie będziesz mógł go odzyskać. Upewnij się, że przelałeś środki przed kontynuowaniem. \n\nCzy jesteś w 100% pewien, że chcesz całkowicie usunąć swoje konto OpenChat i rozumiesz, że nie można tego cofnąć?\n\nNaciśnij Delete, aby ponownie uwierzytelnić i usunąć swoje konto.",
         "deleteAccountFailed": "Przepraszamy, nie udało nam się usunąć Twojego konta",
         "deleteAccountInfo": "Usuń swoje konto OpenChat. Ostrzeżenie! To jest ostateczne i nie można tego cofnąć.",
+        "deleting": "Usuwanie",
+        "reauth": "Ze względów bezpieczeństwa, będziesz musiał ponownie się uwierzytelnić, aby usunąć swoje konto. To ostatnia szansa, aby się wycofać!",
         "title": "Niebezpieczeństwo"
     },
     "dark": "ciemny",

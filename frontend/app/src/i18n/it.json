@@ -583,9 +583,11 @@
     },
     "danger": {
         "deleteAccount": "Elimina account",
-        "deleteAccountConfirm": "Se elimini il tuo account, perderai l'accesso al tuo portafoglio OpenChat e non sarai in grado di ripristinarlo. Assicurati di trasferire i fondi prima di procedere. \n\nSei sicuro al 100% di voler eliminare completamente il tuo account OpenChat e di aver capito che questa operazione non può essere annullata?",
+        "deleteAccountConfirm": "Se elimini il tuo account, perderai l'accesso al tuo portafoglio OpenChat e non sarai in grado di ripristinarlo. Assicurati di trasferire i fondi prima di procedere. \n\nSei sicuro al 100% di voler eliminare completamente il tuo account OpenChat e di aver capito che questa operazione non può essere annullata?\n\nPremi Elimina per autenticare nuovamente ed eliminare il tuo account.",
         "deleteAccountFailed": "Spiacenti, non siamo riusciti a eliminare il tuo account",
         "deleteAccountInfo": "Elimina il tuo account OpenChat. Attenzione! Questa è una decisione definitiva e non può essere annullata.",
+        "deleting": "Eliminazione",
+        "reauth": "Per motivi di sicurezza, dovrai autenticarti nuovamente per eliminare il tuo account. Questa è la tua ultima possibilità di tornare indietro!",
         "title": "Pericolo"
     },
     "dark": "buio",

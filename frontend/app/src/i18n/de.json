@@ -583,9 +583,11 @@
     },
     "danger": {
         "deleteAccount": "Konto löschen",
-        "deleteAccountConfirm": "Wenn Sie Ihr Konto löschen, verlieren Sie den Zugriff auf Ihr OpenChat-Wallet und können den Zugriff nicht wiederherstellen. Bitte stellen Sie sicher, dass Sie Geld überweisen, bevor Sie fortfahren. \n\nSind Sie 100 % sicher, dass Sie Ihr OpenChat-Konto vollständig löschen möchten und dass Sie verstehen, dass dies nicht rückgängig gemacht werden kann?",
+        "deleteAccountConfirm": "Wenn Sie Ihr Konto löschen, verlieren Sie den Zugriff auf Ihr OpenChat-Wallet und können den Zugriff nicht wiederherstellen. Bitte stellen Sie sicher, dass Sie Geld überweisen, bevor Sie fortfahren. \n\nSind Sie 100 % sicher, dass Sie Ihr OpenChat-Konto vollständig löschen möchten und dass Sie verstehen, dass dies nicht rückgängig gemacht werden kann?\n\nDrücken Sie die Entf-Taste, um sich erneut zu authentifizieren und Ihr Konto zu löschen.",
         "deleteAccountFailed": "Leider konnten wir Ihr Konto nicht löschen",
         "deleteAccountInfo": "Löschen Sie Ihr OpenChat-Konto. Achtung! Dies ist endgültig und kann nicht rückgängig gemacht werden.",
+        "deleting": "Löschen",
+        "reauth": "Aus Sicherheitsgründen müssen Sie sich erneut authentifizieren, um Ihr Konto zu löschen. Dies ist Ihre letzte Chance, einen Rückzieher zu machen!",
         "title": "Gefahr"
     },
     "dark": "dunkel",

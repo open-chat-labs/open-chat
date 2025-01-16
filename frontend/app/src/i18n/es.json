@@ -583,9 +583,11 @@
     },
     "danger": {
         "deleteAccount": "Eliminar cuenta",
-        "deleteAccountConfirm": "Si elimina su cuenta, perderá el acceso a su billetera OpenChat y no podrá recuperarlo. Asegúrese de transferir fondos antes de continuar. \n\n¿Está 100 % seguro de que desea eliminar por completo su cuenta OpenChat y comprende que esto no se puede deshacer?",
+        "deleteAccountConfirm": "Si elimina su cuenta, perderá el acceso a su billetera OpenChat y no podrá recuperarlo. Asegúrese de transferir fondos antes de continuar. \n\n¿Está 100 % seguro de que desea eliminar por completo su cuenta OpenChat y comprende que esto no se puede deshacer?\n\nPresione Eliminar para volver a autenticarse y eliminar su cuenta.",
         "deleteAccountFailed": "Lo sentimos, no pudimos eliminar tu cuenta",
         "deleteAccountInfo": "Elimina tu cuenta de OpenChat. ¡Atención! Esta acción es definitiva y no se puede deshacer.",
+        "deleting": "Borrando",
+        "reauth": "Por razones de seguridad, deberá volver a autenticarse para eliminar su cuenta. ¡Esta es su última oportunidad de dar marcha atrás!",
         "title": "Peligro"
     },
     "dark": "dark",
