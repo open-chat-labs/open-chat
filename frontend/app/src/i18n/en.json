@@ -583,10 +583,12 @@
     },
     "danger": {
         "deleteAccount": "Delete account",
-        "deleteAccountConfirm": "If you delete your account, you will lose access to your OpenChat wallet and will not be able to restore access. Please make sure that you transfer funds out before you proceed. \n\nAre you 100% sure that you want to completely delete your OpenChat account and that you understand that this cannot be undone?",
+        "deleteAccountConfirm": "If you delete your account, you will lose access to your OpenChat wallet and will not be able to restore access. Please make sure that you transfer funds out before you proceed. \n\nAre you 100% sure that you want to completely delete your OpenChat account and that you understand that this cannot be undone?\n\nPress Delete to re-authenticate and delete your account.",
         "deleteAccountFailed": "Sorry, we were unable to delete your account",
         "deleteAccountInfo": "Delete your OpenChat account. Warning! This is final and cannot be undone.",
-        "title": "Danger"
+        "title": "Danger",
+        "deleting": "Deleting",
+        "reauth": "For security reasons, you will need to re-authenticate in order to delete your account. This is your last chance to back out!"
     },
     "dark": "dark",
     "days": "Days",

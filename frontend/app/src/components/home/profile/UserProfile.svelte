@@ -74,7 +74,7 @@
     import { uniquePersonGate } from "../../../utils/access";
     import ReferredUsersList from "./ReferredUsersList.svelte";
     import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
-    import AreYouSure from "../../AreYouSure.svelte";
+    import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -97,6 +97,7 @@
     let view: "global" | "communities" | "chit" = "global";
     let selectedCommunityId = "";
     let deleting = false;
+    let confirmDelete = false;
 
     $: originalUsername = user?.username ?? "";
     $: originalDisplayName = user?.displayName ?? undefined;
@@ -247,40 +248,10 @@
             toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
         });
     }
-
-    let confirmDelete = false;
-
-    function deleteAccount(confirmed = false) {
-        if (!confirmed) {
-            confirmDelete = true;
-            return Promise.resolve();
-        }
-
-        deleting = true;
-        return client
-            .deleteCurrentUser()
-            .then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast(i18nKey("danger.deleteAccountFailed"));
-                }
-            })
-            .finally(() => (deleting = false));
-    }
-
-    function onConfirmDelete(confirmed: boolean): Promise<void> {
-        confirmDelete = false;
-        if (confirmed) {
-            return deleteAccount(confirmed);
-        }
-        return Promise.resolve();
-    }
 </script>
 
 {#if confirmDelete}
-    <AreYouSure
-        title={i18nKey("danger.deleteAccount")}
-        message={i18nKey("danger.deleteAccountConfirm")}
-        action={onConfirmDelete} />
+    <ConfirmDeleteAccount bind:deleting onClose={() => (confirmDelete = false)} />
 {/if}
 
 <SectionHeader border={false} flush shadow>
@@ -651,7 +622,7 @@
                         danger
                         disabled={deleting}
                         loading={deleting}
-                        on:click={() => deleteAccount()}>
+                        on:click={() => (confirmDelete = true)}>
                         <Translatable resourceKey={i18nKey("danger.deleteAccount")} />
                     </Button>
                 </CollapsibleCard>

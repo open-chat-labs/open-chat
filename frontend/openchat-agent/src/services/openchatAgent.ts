@@ -1438,15 +1438,17 @@ export class OpenChatAgent extends EventTarget {
                     .replace("{blobType}", "avatar")}/${userSummary.userId}/${ref?.blobId}`,
             };
         }
-        return {
-            ...userSummary,
-            blobData: undefined,
-            blobUrl: buildUserAvatarUrl(
-                this.config.blobUrlPattern,
-                userSummary.userId,
-                ref?.blobId ?? undefined,
-            ),
-        };
+        return userSummary.blobUrl
+            ? userSummary
+            : {
+                  ...userSummary,
+                  blobData: undefined,
+                  blobUrl: buildUserAvatarUrl(
+                      this.config.blobUrlPattern,
+                      userSummary.userId,
+                      ref?.blobId ?? undefined,
+                  ),
+              };
     }
 
     private rehydrateDataContent<T extends DataContent>(
