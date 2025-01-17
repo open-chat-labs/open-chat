@@ -66,6 +66,7 @@
     import Badges from "./profile/Badges.svelte";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
+    import { quickReactions } from "../../stores/quickReactions";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -255,10 +256,14 @@
     }
 
     function selectReaction(ev: CustomEvent<string>) {
-        toggleReaction(ev.detail);
+        toggleReaction(false, ev.detail);
     }
 
-    function toggleReaction(reaction: string) {
+    function selectQuickReaction(unicode: string) {
+        toggleReaction(true, unicode);
+    }
+
+    function toggleReaction(isQuickReaction: boolean, reaction: string) {
         if (canReact) {
             const kind = client.containsReaction(user.userId, reaction, msg.reactions)
                 ? "remove"
@@ -278,6 +283,15 @@
                 .then((success) => {
                     if (success && kind === "add") {
                         client.trackEvent("reacted_to_message");
+
+                        if (isQuickReaction) {
+                            // Note: Manually selected reactions do not increment
+                            // their fav counter by default, so we do it manually.
+                            // Also refresh loaded reactions.
+                            quickReactions.incrementFavourite(reaction);
+                        }
+
+                        quickReactions.reload();
                     }
                 });
         }
@@ -655,11 +669,9 @@
                             {canUndelete}
                             {canRevealDeleted}
                             {canRevealBlocked}
-                            {crypto}
                             translatable={canTranslate}
                             {translated}
-                            {canReact}
-                            createdUser={user}
+                            {selectQuickReaction}
                             on:collapseMessage
                             on:forward
                             on:reply={reply}
@@ -705,7 +717,7 @@
                 <div class="message-reactions" class:me class:indent={showAvatar}>
                     {#each msg.reactions as { reaction, userIds } (reaction)}
                         <MessageReaction
-                            on:click={() => toggleReaction(reaction)}
+                            on:click={() => toggleReaction(false, reaction)}
                             {reaction}
                             {userIds}
                             myUserId={user?.userId} />

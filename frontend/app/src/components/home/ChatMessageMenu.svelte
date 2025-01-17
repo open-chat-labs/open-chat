@@ -34,7 +34,6 @@
         type ChatIdentifier,
         type Message,
         type OpenChat,
-        type CreatedUser,
         lastCryptoSent,
         currentUser as user,
         translationStore,
@@ -48,7 +47,7 @@
     import { copyToClipboard } from "../../utils/urls";
     import { isTouchDevice } from "../../utils/devices";
     import Translatable from "../Translatable.svelte";
-    import { Database as EmojiDatabase } from "emoji-picker-element";
+    import { quickReactions } from "../../stores/quickReactions";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -76,36 +75,12 @@
     export let canRevealBlocked: boolean;
     export let translatable: boolean;
     export let translated: boolean;
-    export let crypto: boolean;
     export let msg: Message;
     export let threadRootMessage: Message | undefined;
     export let canTip: boolean;
-    export let canReact: boolean;
-    export let createdUser: CreatedUser;
+    export let selectQuickReaction: (unicode: string) => void;
 
     let menuIcon: MenuIcon;
-
-    let emojiDb = new EmojiDatabase();
-    let showQuickReactionCount = 3;
-    // New users won't get any default fav emoji
-    let defaultReactions = ["yes", "tears_of_joy", "pray"];
-    let loadedReactions = emojiDb
-        .getTopFavoriteEmoji(showQuickReactionCount)
-        .then((fav) => {
-            if (fav.length < showQuickReactionCount) {
-                // If we have less emoji than we want to show, expand with
-                // a default selection of emoji.
-                return Promise.all(defaultReactions.map((em) => emojiDb.getEmojiByShortcode(em)))
-                    .then((def) => def.filter((v) => v != null))
-                    .then((def) => fav.concat(def).slice(0, showQuickReactionCount));
-            }
-
-            return fav;
-        })
-        .catch((e) => {
-            console.log(e);
-            return [];
-        });
 
     $: canRemind =
         msg.content.kind !== "message_reminder_content" &&
@@ -286,56 +261,27 @@
             }
         });
     }
-
-    function toggleReaction(reaction: string) {
-        if (canReact) {
-            const kind = client.containsReaction(createdUser.userId, reaction, msg.reactions)
-                ? "remove"
-                : "add";
-
-            client
-                .selectReaction(
-                    chatId,
-                    createdUser.userId,
-                    threadRootMessageIndex,
-                    msg.messageId,
-                    reaction,
-                    createdUser.username,
-                    createdUser.displayName,
-                    kind,
-                )
-                .then((success) => {
-                    if (success && kind === "add") {
-                        client.trackEvent("reacted_to_message");
-
-                        // Note: Manually selected reactions do not increment
-                        // their fav counter by default, so we do it manually.
-                        emojiDb.incrementFavoriteEmojiCount(reaction);
-                    }
-                });
-        }
-    }
 </script>
 
 <div class="menu" class:inert class:rtl={$rtlStore}>
-    {#await loadedReactions then [fst, snd, thrd]}
+    {#await $quickReactions then [fst, snd, thrd]}
         {#if !inert}
             {#if "unicode" in fst}
-                <HoverIcon compact={true} onclick={() => toggleReaction(fst.unicode)}>
+                <HoverIcon compact={true} onclick={() => selectQuickReaction(fst.unicode)}>
                     <div class="quick-reaction">
                         {fst.unicode}
                     </div>
                 </HoverIcon>
             {/if}
             {#if "unicode" in snd}
-                <HoverIcon compact={true} onclick={() => toggleReaction(snd.unicode)}>
+                <HoverIcon compact={true} onclick={() => selectQuickReaction(snd.unicode)}>
                     <div class="quick-reaction">
                         {snd.unicode}
                     </div>
                 </HoverIcon>
             {/if}
             {#if "unicode" in thrd}
-                <HoverIcon compact={true} onclick={() => toggleReaction(thrd.unicode)}>
+                <HoverIcon compact={true} onclick={() => selectQuickReaction(thrd.unicode)}>
                     <div class="quick-reaction">
                         {thrd.unicode}
                     </div>
