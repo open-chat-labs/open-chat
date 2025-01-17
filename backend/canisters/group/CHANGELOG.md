@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add facility to set/revoke group verification via proposal
+- Add facility to set/revoke group verification via proposal ([#7240](https://github.com/open-chat-labs/open-chat/pull/7240))
 
 ### Changed
 
