@@ -745,21 +745,30 @@
         }
     }
 
-    :global(.message-bubble .menu) {
-        z-index: -1;
-        opacity: 0;
+    @include mobile() {
+        :global(.message-bubble .menu) {
+            display: none;
+        }
     }
 
-    :global(.menu:has(.menu-icon.open)) {
-        border-color: var(--primary);
-        display: flex;
-        z-index: 1;
-        opacity: 1;
-    }
+    @include not-mobile() {
+        :global(.message-bubble .menu) {
+            display: flex;
+            z-index: -1;
+            opacity: 0;
+        }
 
-    @media (hover: hover) {
-        :global(.message-bubble:hover:not(:has(.menu-icon.open)) .menu) {
-            animation: show-bubble-menu 200ms ease-in-out forwards;
+        // Keeps hover menu showing if context menu is clicked!
+        :global(.message-bubble .menu:has(.menu-icon.open)) {
+            border-color: var(--primary);
+            z-index: 1;
+            opacity: 1;
+        }
+
+        @media (hover: hover) {
+            :global(.message-bubble:hover .menu:not(:has(.menu-icon.open))) {
+                animation: show-bubble-menu 200ms ease-in-out forwards;
+            }
         }
     }
 

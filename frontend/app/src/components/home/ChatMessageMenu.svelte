@@ -609,7 +609,6 @@
             $menu-width: 2rem;
         }
 
-        display: flex;
         position: absolute;
         width: fit-content;
         background-color: var(--menu-bg);
@@ -638,12 +637,6 @@
             &.rtl {
                 @include calcMenuOffset(right, $menu-width);
             }
-        }
-    }
-
-    @include mobile() {
-        .menu {
-            display: none;
         }
     }
 
