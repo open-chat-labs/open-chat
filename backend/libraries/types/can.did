@@ -331,6 +331,7 @@ type GroupCanisterGroupChatSummary = record {
     rules_accepted : bool;
     membership : opt GroupMembership;
     video_call_in_progress : opt VideoCall;
+    verified : bool;
 };
 
 type GroupCanisterGroupChatSummaryUpdates = record {
@@ -366,6 +367,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
     any_updates_missed : bool;
+    verified : opt bool;
 };
 
 type CommunityCanisterCommunitySummary = record {
@@ -389,6 +391,7 @@ type CommunityCanisterCommunitySummary = record {
     user_groups : vec UserGroup;
     is_invited : opt bool;
     metrics : ChatMetrics;
+    verified : bool;
 };
 
 type CommunityMembership = record {
@@ -468,6 +471,7 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     user_groups : vec UserGroup;
     user_groups_deleted : vec nat32;
     metrics : opt ChatMetrics;
+    verified : opt bool;
 };
 
 type CommunityMembershipUpdates = record {
@@ -1809,6 +1813,7 @@ type CommunityMatch = record {
     gate_config : opt AccessGateConfig;
     moderation_flags : nat32;
     primary_language : text;
+    verified : bool;
 };
 
 type GroupMatch = record {
@@ -1819,6 +1824,7 @@ type GroupMatch = record {
     member_count : nat32;
     gate : opt AccessGate;
     subtype : opt GroupSubtype;
+    verified : bool;
 };
 
 type ChannelMatch = record {

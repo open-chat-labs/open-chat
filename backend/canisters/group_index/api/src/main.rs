@@ -9,6 +9,10 @@ fn main() {
     generate_candid_method!(group_index, lookup_channel_by_group_id, query);
     generate_candid_method!(group_index, recommended_groups, query);
     generate_candid_method!(group_index, search, query);
+    generate_candid_method!(group_index, revoke_community_verification, update);
+    generate_candid_method!(group_index, revoke_group_verification, update);
+    generate_candid_method!(group_index, set_community_verification, update);
+    generate_candid_method!(group_index, set_group_verification, update);
 
     candid::export_service!();
     std::print!("{}", __export_service());

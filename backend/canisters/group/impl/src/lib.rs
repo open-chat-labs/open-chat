@@ -222,6 +222,7 @@ impl RuntimeState {
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
             video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
+            verified: self.data.verified.value,
         }
     }
 
@@ -495,6 +496,8 @@ struct Data {
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
+    #[serde(default)]
+    verified: Timestamped<bool>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -593,6 +596,7 @@ impl Data {
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
+            verified: Timestamped::default(),
         }
     }
 
