@@ -88,26 +88,24 @@
     let emojiDb = new EmojiDatabase();
     let showQuickReactionCount = 3;
     // New users won't get any default fav emoji
-    let defaultReactions= ["yes", "tears_of_joy", "pray"];
+    let defaultReactions = ["yes", "tears_of_joy", "pray"];
     let loadedReactions = emojiDb
         .getTopFavoriteEmoji(showQuickReactionCount)
-        .then(fav => {
+        .then((fav) => {
             if (fav.length < showQuickReactionCount) {
                 // If we have less emoji than we want to show, expand with
                 // a default selection of emoji.
-                return Promise
-                    .all(defaultReactions.map(em => emojiDb.getEmojiByShortcode(em)))
-                    .then(def => def.filter(v => v != null))
-                    .then(def => fav.concat(def).slice(0, showQuickReactionCount));
+                return Promise.all(defaultReactions.map((em) => emojiDb.getEmojiByShortcode(em)))
+                    .then((def) => def.filter((v) => v != null))
+                    .then((def) => fav.concat(def).slice(0, showQuickReactionCount));
             }
 
             return fav;
         })
-        .catch(e => {
+        .catch((e) => {
             console.log(e);
             return [];
         });
-    
 
     $: canRemind =
         msg.content.kind !== "message_reminder_content" &&
@@ -289,7 +287,6 @@
         });
     }
 
-    // Note: Manually selected reactions do not increment their fav counter!
     function toggleReaction(reaction: string) {
         if (canReact) {
             const kind = client.containsReaction(createdUser.userId, reaction, msg.reactions)
@@ -310,16 +307,18 @@
                 .then((success) => {
                     if (success && kind === "add") {
                         client.trackEvent("reacted_to_message");
+
+                        // Note: Manually selected reactions do not increment
+                        // their fav counter by default, so we do it manually.
+                        emojiDb.incrementFavoriteEmojiCount(reaction);
                     }
                 });
         }
     }
 </script>
 
-<div class="menu" class:inert={inert} class:rtl={$rtlStore}>
-    {#await loadedReactions }
-        <div></div>
-    {:then [fst, snd, thrd]}
+<div class="menu" class:inert class:rtl={$rtlStore}>
+    {#await loadedReactions then [fst, snd, thrd]}
         {#if !inert}
             {#if "unicode" in fst}
                 <HoverIcon compact={true} onclick={() => toggleReaction(fst.unicode)}>
@@ -347,7 +346,7 @@
     <MenuIcon bind:this={menuIcon} centered position={"right"} align={"end"}>
         <div class="menu-icon" slot="icon">
             <HoverIcon compact>
-                <DotsVertical size="1.4em" color="#fff" />
+                <DotsVertical size="1.4em" color="var(--menu-txt)" />
             </HoverIcon>
         </div>
         <div slot="menu">
@@ -599,6 +598,7 @@
     @mixin calcMenuOffset($property, $menu-width) {
         #{$property}: calc(100% - min(100%, calc($menu-width - 0.75rem)));
     }
+
     .menu {
         // Menu width for 3 reactions and a menu button.
         &:not(.inert) {
@@ -609,14 +609,11 @@
             $menu-width: 2rem;
         }
 
-        z-index: 1;
-        opacity: 0;
         display: flex;
         position: absolute;
         width: fit-content;
-        background-color: var(--reaction-bg);
+        background-color: var(--menu-bg);
         border: var(--bw) solid var(--menu-bd);
-        transition: opacity ease-in-out 200ms;
 
         top: -1.5rem;
         padding: 0.125rem;
@@ -624,15 +621,23 @@
 
         &:not(.inert) {
             $menu-width: 7.75rem;
-            &:not(.rtl) { @include calcMenuOffset(left, $menu-width); }
-            &.rtl { @include calcMenuOffset(right, $menu-width); }
+            &:not(.rtl) {
+                @include calcMenuOffset(left, $menu-width);
+            }
+            &.rtl {
+                @include calcMenuOffset(right, $menu-width);
+            }
         }
 
         &.inert {
             // For inert messages we don't display reactions
             $menu-width: 2rem;
-            &:not(.rtl) { @include calcMenuOffset(left, $menu-width); }
-            &.rtl { @include calcMenuOffset(right, $menu-width); }
+            &:not(.rtl) {
+                @include calcMenuOffset(left, $menu-width);
+            }
+            &.rtl {
+                @include calcMenuOffset(right, $menu-width);
+            }
         }
     }
 
@@ -652,5 +657,5 @@
         display: flex;
         align-items: center;
         justify-content: center;
-    }    
+    }
 </style>

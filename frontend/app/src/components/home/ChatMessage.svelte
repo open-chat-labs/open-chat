@@ -730,9 +730,36 @@
     $avatar-width: toRem(56);
     $avatar-width-mob: toRem(43);
 
-    @media (hover: hover) {
-        :global(.message-bubble:hover .menu) {
+    @keyframes show-bubble-menu {
+        0% {
+            z-index: -1;
+            opacity: 0;
+        }
+        1% {
+            z-index: 1;
+            opacity: 0;
+        }
+        100% {
+            z-index: 1;
             opacity: 1;
+        }
+    }
+
+    :global(.message-bubble .menu) {
+        z-index: -1;
+        opacity: 0;
+    }
+
+    :global(.menu:has(.menu-icon.open)) {
+        border-color: var(--primary);
+        display: flex;
+        z-index: 1;
+        opacity: 1;
+    }
+
+    @media (hover: hover) {
+        :global(.message-bubble:hover:not(:has(.menu-icon.open)) .menu) {
+            animation: show-bubble-menu 200ms ease-in-out forwards;
         }
     }
 
