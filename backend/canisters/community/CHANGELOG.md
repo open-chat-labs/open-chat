@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
 - Reduce channel Ids to 32 bits down from 128 bits ([#7233](https://github.com/open-chat-labs/open-chat/pull/7233))
 - Add `start_video_call_v2` and `end_video_call_v2` with reduced arg sizes ([#7236](https://github.com/open-chat-labs/open-chat/pull/7236))
-- Verify member Ids in post upgrade ([#7244](https://github.com/open-chat-labs/open-chat/pull/7244))
+- Remove dangling member <-> channel links ([#7246](https://github.com/open-chat-labs/open-chat/pull/7246))
 
 ## [[2.0.1570](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1570-community)] - 2025-01-14
 
