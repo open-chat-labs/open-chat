@@ -31,6 +31,7 @@ pub struct CommunityCanisterCommunitySummary {
     pub user_groups: Vec<UserGroupSummary>,
     pub is_invited: Option<bool>,
     pub metrics: ChatMetrics,
+    pub verified: bool,
 }
 
 #[ts_export]
@@ -72,6 +73,7 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub user_groups: Vec<UserGroupSummary>,
     pub user_groups_deleted: Vec<u32>,
     pub metrics: Option<ChatMetrics>,
+    pub verified: Option<bool>,
 }
 
 #[ts_export]

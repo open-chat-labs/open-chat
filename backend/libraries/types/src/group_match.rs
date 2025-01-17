@@ -13,6 +13,7 @@ pub struct GroupMatch {
     pub member_count: u32,
     pub gate: Option<AccessGate>,
     pub subtype: Option<GroupSubtype>,
+    pub verified: bool,
 }
 
 #[ts_export]
@@ -30,6 +31,7 @@ pub struct CommunityMatch {
     pub gate_config: Option<AccessGateConfig>,
     pub moderation_flags: u32,
     pub primary_language: String,
+    pub verified: bool,
 }
 
 #[ts_export]

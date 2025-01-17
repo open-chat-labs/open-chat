@@ -228,6 +228,7 @@ impl RuntimeState {
             user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
             is_invited,
             metrics: data.cached_chat_metrics.value.clone(),
+            verified: data.verified.value,
         }
     }
 
@@ -411,6 +412,8 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: GroupBots,
+    #[serde(default)]
+    verified: Timestamped<bool>,
 }
 
 impl Data {
@@ -514,6 +517,7 @@ impl Data {
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: GroupBots::default(),
+            verified: Timestamped::default(),
         }
     }
 

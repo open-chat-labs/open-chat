@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
 use crate::updates::send_message::send_message_impl;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
@@ -30,7 +31,7 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
         unreachable!()
     };
 
-    match args.action {
+    let response = match args.action {
         BotAction::SendMessage(action) => {
             let content = match action.content {
                 MessageContent::Text(text_content) => MessageContentInitial::Text(text_content),
@@ -71,7 +72,13 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                 response => Err(HandleBotActionsError::Other(format!("{response:?}"))),
             }
         }
+    };
+
+    if response.is_ok() {
+        handle_activity_notification(state);
     }
+
+    response
 }
 
 fn is_bot_permitted_to_execute_action(args: &Args, state: &RuntimeState) -> bool {
