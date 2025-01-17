@@ -296,10 +296,7 @@ pub mod happy_path {
             env,
             user.principal,
             user.canister(),
-            &user_canister::leave_group::Args {
-                chat_id: group_id,
-                correlation_id: 0,
-            },
+            &user_canister::leave_group::Args { chat_id: group_id },
         );
 
         assert!(matches!(response, user_canister::leave_group::Response::Success));
