@@ -176,7 +176,7 @@ struct Data {
 }
 
 fn init_local_group_index_event_sync_queue() -> GroupedTimerJobQueue<LocalGroupIndexEventBatch> {
-    GroupedTimerJobQueue::new(3, false)
+    GroupedTimerJobQueue::new(10, false)
 }
 
 impl Data {
@@ -222,7 +222,7 @@ impl Data {
             upload_wasm_chunks_whitelist: HashSet::default(),
             ic_root_key,
             rng_seed: [0; 32],
-            local_group_index_event_sync_queue: GroupedTimerJobQueue::new(3, false),
+            local_group_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
         }
     }
 
@@ -424,7 +424,7 @@ impl Default for Data {
             upload_wasm_chunks_whitelist: HashSet::default(),
             ic_root_key: Vec::new(),
             rng_seed: [0; 32],
-            local_group_index_event_sync_queue: GroupedTimerJobQueue::new(3, false),
+            local_group_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
         }
     }
 }

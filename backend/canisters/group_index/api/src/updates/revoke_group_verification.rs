@@ -4,13 +4,13 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CanisterId, ChatId};
 
-#[ts_export(group_index, verify_community)]
+#[ts_export(group_index, revoke_group_verification)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub group_id: ChatId,
 }
 
-#[ts_export(group_index, verify_community)]
+#[ts_export(group_index, revoke_group_verification)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
