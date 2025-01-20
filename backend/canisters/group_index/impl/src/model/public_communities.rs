@@ -154,6 +154,8 @@ pub struct PublicCommunityInfo {
     gate_config: Option<AccessGateConfigInternal>,
     moderation_flags: ModerationFlags,
     primary_language: String,
+    #[serde(default)]
+    verified: bool,
 }
 
 pub enum UpdateCommunityResult {
@@ -188,6 +190,7 @@ impl PublicCommunityInfo {
             frozen: None,
             moderation_flags: ModerationFlags::default(),
             primary_language,
+            verified: false,
         }
     }
 
@@ -228,6 +231,18 @@ impl PublicCommunityInfo {
         self.frozen.as_ref()
     }
 
+    pub fn verified(&self) -> bool {
+        self.verified
+    }
+
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    pub fn set_verified(&mut self, verified: bool) {
+        self.verified = verified;
+    }
+
     pub fn set_frozen(&mut self, info: Option<FrozenCommunityInfo>) {
         self.frozen = info;
     }
@@ -262,6 +277,7 @@ impl PublicCommunityInfo {
             gate_config: self.gate_config.as_ref().map(|gc| gc.clone().into()),
             moderation_flags: self.moderation_flags.bits(),
             primary_language: self.primary_language.clone(),
+            verified: self.verified,
         }
     }
 }

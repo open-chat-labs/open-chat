@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add facility to set/revoke community/group verification via proposal ([#7240](https://github.com/open-chat-labs/open-chat/pull/7240))
+
 ## [[2.0.1531](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1531-local_group_index)] - 2024-12-19
 
 ### Changed

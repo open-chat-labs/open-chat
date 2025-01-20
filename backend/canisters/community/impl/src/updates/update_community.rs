@@ -205,6 +205,17 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
     let now = state.env.now();
     let events = &mut state.data.events;
 
+    if state.data.verified.value {
+        if let (Some(new_name), Some(new_public)) = (args.name.as_ref(), args.public) {
+            if new_name.to_lowercase() != state.data.name.value.to_lowercase()
+                || ((new_public != state.data.is_public.value) && !new_public)
+            {
+                // If a verified community changes its name or becomes private it loses it's verified status
+                state.data.verified = Timestamped::new(false, now);
+            }
+        }
+    }
+
     if let Some(name) = args.name {
         if state.data.name.value != name {
             events.push_event(

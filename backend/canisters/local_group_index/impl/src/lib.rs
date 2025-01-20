@@ -1,17 +1,23 @@
 use crate::model::local_community_map::LocalCommunityMap;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use community_canister::LocalGroupIndexEvent as CommunityEvent;
 use constants::{CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
+use group_canister::LocalGroupIndexEvent as GroupEvent;
 use local_group_index_canister::ChildCanisterType;
+use model::community_event_batch::CommunityEventBatch;
+use model::group_event_batch::GroupEventBatch;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, VecDeque};
 use std::time::Duration;
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{BuildVersion, CanisterId, ChildCanisterWasms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId};
+//use group_index_canister::LocalGroupIndexEvent as GroupIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -65,6 +71,14 @@ impl RuntimeState {
     pub fn is_caller_notifications_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.notifications_canister_id == caller
+    }
+
+    pub fn push_event_to_group(&mut self, canister_id: CanisterId, event: GroupEvent) {
+        self.data.group_event_sync_queue.push(canister_id, event);
+    }
+
+    pub fn push_event_to_community(&mut self, canister_id: CanisterId, event: CommunityEvent) {
+        self.data.community_event_sync_queue.push(canister_id, event);
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -157,6 +171,18 @@ struct Data {
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
+    #[serde(default = "init_group_event_sync_queue")]
+    pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
+    #[serde(default = "init_community_event_sync_queue")]
+    pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
+}
+
+fn init_group_event_sync_queue() -> GroupedTimerJobQueue<GroupEventBatch> {
+    GroupedTimerJobQueue::new(10, false)
+}
+
+fn init_community_event_sync_queue() -> GroupedTimerJobQueue<CommunityEventBatch> {
+    GroupedTimerJobQueue::new(10, false)
 }
 
 impl Data {
@@ -205,6 +231,8 @@ impl Data {
                 .build(),
             event_deduper: EventDeduper::default(),
             cycles_balance_check_queue: VecDeque::new(),
+            group_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            community_event_sync_queue: GroupedTimerJobQueue::new(10, false),
         }
     }
 }

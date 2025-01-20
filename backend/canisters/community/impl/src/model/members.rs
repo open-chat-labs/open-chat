@@ -42,34 +42,32 @@ pub struct CommunityMembers {
 }
 
 impl CommunityMembers {
-    pub fn verify_member_ids(&self) {
-        let mut missing_from_members_map: HashSet<_> = self.members_and_channels.keys().copied().collect();
-        let mut missing_from_members_and_channels = Vec::new();
+    pub fn remove_dangling_member_channel_links(&mut self) {
+        let user_ids: HashSet<_> = self.members_map.user_ids().into_iter().collect();
 
-        for user_id in self.members_map.user_ids() {
-            if !missing_from_members_map.remove(&user_id) {
-                missing_from_members_and_channels.push(*user_id);
-            }
+        let to_remove: Vec<_> = self
+            .members_and_channels
+            .keys()
+            .filter(|u| !user_ids.contains(u))
+            .copied()
+            .collect();
+
+        for user_id in to_remove {
+            let channel_count = self.members_and_channels.remove(&user_id).unwrap().len();
+            info!(%user_id, channel_count, "Removed dangling member channel links");
         }
 
-        let missing_from_members_map_count = missing_from_members_and_channels.len();
-        let missing_from_members_and_channels_count = missing_from_members_and_channels.len();
+        let to_remove: Vec<_> = self
+            .member_channel_links_removed
+            .keys()
+            .filter(|(u, _)| !user_ids.contains(u))
+            .copied()
+            .collect();
 
-        info!(
-            missing_from_members_map_count,
-            missing_from_members_and_channels_count,
-            missing_from_members_map = ?missing_from_members_map
-                .iter()
-                .take(10)
-                .map(|u| u.to_string())
-                .collect::<Vec<_>>(),
-            missing_from_members_and_channels = ?missing_from_members_and_channels
-                .iter()
-                .take(10)
-                .map(|u| u.to_string())
-                .collect::<Vec<_>>(),
-            "Verified community member Ids"
-        );
+        for (user_id, channel_id) in to_remove {
+            self.member_channel_links_removed.remove(&(user_id, channel_id));
+            info!(%user_id, "Removed dangling member channel link removed");
+        }
     }
 
     pub fn new(

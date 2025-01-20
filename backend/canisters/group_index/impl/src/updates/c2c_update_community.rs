@@ -22,12 +22,7 @@ fn c2c_update_community_impl(args: Args, state: &mut RuntimeState) -> Response {
             state
                 .data
                 .public_group_and_community_names
-                .remove(community.name(), community_id.into());
-
-            state
-                .data
-                .public_group_and_community_names
-                .insert(&args.name, community_id.into());
+                .rename(community.name(), &args.name, community_id.into());
         }
 
         state.data.public_communities.update_community(
