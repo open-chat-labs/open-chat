@@ -233,6 +233,8 @@ pub struct UserDetailsFull {
     pub referred_by: Option<UserId>,
     #[serde(rename = "m", default, skip_serializing_if = "is_default")]
     pub is_platform_moderator: bool,
+    #[serde(rename = "o", default, skip_serializing_if = "is_default")]
+    pub is_platform_operator: bool,
     #[serde(rename = "d", skip_serializing_if = "Option::is_none")]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     #[serde(rename = "u", skip_serializing_if = "Option::is_none")]
