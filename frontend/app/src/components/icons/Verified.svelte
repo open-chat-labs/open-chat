@@ -4,20 +4,28 @@
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import Translatable from "../Translatable.svelte";
 
-    export let verified = false;
-    export let size: "small" | "medium" | "large" = "small";
-    export let tooltip: ResourceKey;
+    interface Props {
+        verified: boolean;
+        size: "small" | "medium" | "large";
+        tooltip?: ResourceKey;
+    }
+
+    let { verified, size, tooltip }: Props = $props();
 </script>
 
 {#if verified}
-    <TooltipWrapper position="top" align="middle">
-        <div slot="target" class={`verified ${size}`}></div>
-        <div let:position let:align slot="tooltip" class="tooltip">
-            <TooltipPopup {position} {align}>
-                <Translatable resourceKey={tooltip} />
-            </TooltipPopup>
-        </div>
-    </TooltipWrapper>
+    {#if tooltip !== undefined}
+        <TooltipWrapper position="top" align="middle">
+            <div slot="target" class={`verified ${size}`}></div>
+            <div let:position let:align slot="tooltip" class="tooltip">
+                <TooltipPopup {position} {align}>
+                    <Translatable resourceKey={tooltip} />
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {:else}
+        <div class={`verified ${size}`}></div>
+    {/if}
 {/if}
 
 <style lang="scss">

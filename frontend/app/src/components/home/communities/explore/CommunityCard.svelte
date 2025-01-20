@@ -88,12 +88,12 @@
     <div class="content">
         <div class="name">
             {name}
-            {#if !verified}
+            {#if verified}
                 <div class="verified">
                     <Verified
                         size={"medium"}
-                        verified={!verified}
-                        tooltip={i18nKey("verifiedCommunity")} />
+                        {verified}
+                        tooltip={i18nKey("verified.verifiedCommunity")} />
                 </div>
             {/if}
         </div>

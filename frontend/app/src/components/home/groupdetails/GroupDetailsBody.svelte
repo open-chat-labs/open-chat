@@ -45,6 +45,7 @@
         : "";
     $: externalUrl = chat.kind === "channel" ? chat.externalUrl : undefined;
     $: externalContent = externalUrl !== undefined;
+    $: verified = chat.kind === "group_chat" && chat.verified;
 
     function description(chat: MultiUserChat): string {
         let description = chat.description;
@@ -64,7 +65,7 @@
             open={$groupInfoOpen}
             headerText={i18nKey("group.groupInfo", undefined, chat.level)}>
             <div class="sub-section photo">
-                <Avatar url={avatarSrc} size={AvatarSize.Large} />
+                <Avatar url={avatarSrc} size={AvatarSize.Large} {verified} />
 
                 <h3 class="group-name">{chat.name}</h3>
                 <p class="members">
