@@ -17,7 +17,7 @@ function initQuickReactions() {
                     return Promise.all(
                         defaultReactions.map((em) => emojiDb.getEmojiByShortcode(em)),
                     )
-                        .then((def) => def.filter((v) => v != null))
+                        .then((def) => def.filter((v) => v != null) as Emoji[])
                         .then((def) => fav.concat(def).slice(0, showQuickReactionCount));
                 }
 
