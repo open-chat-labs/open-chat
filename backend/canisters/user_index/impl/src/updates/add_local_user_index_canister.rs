@@ -123,6 +123,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                     user_type: user.user_type,
                     referred_by: user.referred_by,
                     is_platform_moderator: state.data.platform_moderators.contains(&user.user_id),
+                    is_platform_operator: state.data.platform_operators.contains(&user.user_id),
                     diamond_membership_expires_at: user.diamond_membership_details.expires_at(),
                     unique_person_proof: user.unique_person_proof.clone(),
                 }),
