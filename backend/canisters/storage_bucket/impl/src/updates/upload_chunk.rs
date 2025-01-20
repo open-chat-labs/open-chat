@@ -37,7 +37,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
             FileStatusInternal::Rejected(RejectedReason::FileExpired) => return FileExpired,
             FileStatusInternal::Uploading(c) => index_sync_complete = *c,
         }
-    } else if args.expiry.map_or(false, |e| e < now) {
+    } else if args.expiry.is_some_and(|e| e < now) {
         return FileExpired;
     } else {
         status = Some(FileStatusInternal::Uploading(IndexSyncComplete::No));

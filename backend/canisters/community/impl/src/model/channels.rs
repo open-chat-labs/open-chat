@@ -283,7 +283,7 @@ impl Channel {
             rules_accepted: m
                 .rules_accepted
                 .as_ref()
-                .map_or(false, |version| version.value >= chat.rules.text.version),
+                .is_some_and(|version| version.value >= chat.rules.text.version),
             lapsed: m.lapsed().value,
         });
 

@@ -78,7 +78,7 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
             state.data.bots.add(ev.user_principal, ev.user_id, ev.name, ev.commands);
         }
         UserIndexEvent::BotUpdated(ev) => {
-            state.data.bots.update(ev.user_id, ev.name, ev.commands);
+            state.data.bots.update(ev.user_id, ev.commands);
         }
         UserIndexEvent::PlatformOperatorStatusChanged(ev) => {
             state
@@ -223,6 +223,9 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
 
             if user.is_platform_moderator {
                 state.data.global_users.set_platform_moderator(user.user_id, true);
+            }
+            if user.is_platform_operator {
+                state.data.global_users.set_platform_operator(user.user_id, true);
             }
             if let Some(expires_at) = user.diamond_membership_expires_at {
                 state

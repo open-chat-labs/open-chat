@@ -141,8 +141,7 @@ impl RuntimeState {
         self.data
             .global_users
             .get_by_principal(&caller)
-            // TODO switch to `is_platform_operator` once UserIndex is released
-            .is_some_and(|u| u.is_platform_moderator)
+            .is_some_and(|u| u.is_platform_operator)
     }
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent) {
@@ -248,6 +247,8 @@ impl RuntimeState {
             global_user_count: self.data.global_users.len() as u64,
             bot_user_count: self.data.global_users.legacy_bots().len() as u64,
             oc_controlled_bots: self.data.global_users.oc_controlled_bots().iter().copied().collect(),
+            platform_moderators: self.data.global_users.platform_moderators().len() as u32,
+            platform_operators: self.data.global_users.platform_operators().len() as u32,
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
@@ -417,6 +418,8 @@ pub struct Metrics {
     pub global_user_count: u64,
     pub bot_user_count: u64,
     pub oc_controlled_bots: Vec<UserId>,
+    pub platform_moderators: u32,
+    pub platform_operators: u32,
     pub canisters_in_pool: u16,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_pending: u64,

@@ -66,6 +66,7 @@
     import Badges from "./profile/Badges.svelte";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
+    import { quickReactions } from "../../stores/quickReactions";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -255,10 +256,14 @@
     }
 
     function selectReaction(ev: CustomEvent<string>) {
-        toggleReaction(ev.detail);
+        toggleReaction(false, ev.detail);
     }
 
-    function toggleReaction(reaction: string) {
+    function selectQuickReaction(unicode: string) {
+        toggleReaction(true, unicode);
+    }
+
+    function toggleReaction(isQuickReaction: boolean, reaction: string) {
         if (canReact) {
             const kind = client.containsReaction(user.userId, reaction, msg.reactions)
                 ? "remove"
@@ -278,6 +283,15 @@
                 .then((success) => {
                     if (success && kind === "add") {
                         client.trackEvent("reacted_to_message");
+
+                        if (isQuickReaction) {
+                            // Note: Manually selected reactions do not increment
+                            // their fav counter by default, so we do it manually.
+                            // Also refresh loaded reactions.
+                            quickReactions.incrementFavourite(reaction);
+                        }
+
+                        quickReactions.reload();
                     }
                 });
         }
@@ -425,7 +439,10 @@
                         </HoverIcon>
                     </span>
                 </div>
-                <EmojiPicker on:emojiSelected={selectReaction} mode={"reaction"} />
+                <EmojiPicker
+                    on:emojiSelected={selectReaction}
+                    on:skintoneChanged={(ev) => quickReactions.reload(ev.detail)}
+                    mode={"reaction"} />
             </span>
             <span slot="footer" />
         </ModalContent>
@@ -620,6 +637,12 @@
                         <pre>expiresAt: {expiresAt}</pre>
                         <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
                         <pre>botContext: {JSON.stringify(botContext, null, 4)}</pre>
+                        <pre>inert: {inert}</pre>
+                        <pre>canRevealDeleted: {canRevealDeleted}</pre>
+                        <pre>canlRevealBlocked: {canRevealBlocked}</pre>
+                        <pre>readonly: {readonly}</pre>
+                        <pre>showChatMenu: {showChatMenu}</pre>
+                        <pre>intersecting: {intersecting}</pre>
                     {/if}
 
                     {#if showChatMenu && intersecting}
@@ -649,9 +672,9 @@
                             {canUndelete}
                             {canRevealDeleted}
                             {canRevealBlocked}
-                            {crypto}
                             translatable={canTranslate}
                             {translated}
+                            {selectQuickReaction}
                             on:collapseMessage
                             on:forward
                             on:reply={reply}
@@ -697,7 +720,7 @@
                 <div class="message-reactions" class:me class:indent={showAvatar}>
                     {#each msg.reactions as { reaction, userIds } (reaction)}
                         <MessageReaction
-                            on:click={() => toggleReaction(reaction)}
+                            on:click={() => toggleReaction(false, reaction)}
                             {reaction}
                             {userIds}
                             myUserId={user?.userId} />
@@ -722,29 +745,45 @@
     $avatar-width: toRem(56);
     $avatar-width-mob: toRem(43);
 
-    @media (hover: hover) {
-        :global(.message-bubble:hover .menu-icon) {
+    @keyframes show-bubble-menu {
+        0% {
+            z-index: -1;
+            opacity: 0;
+        }
+        1% {
+            z-index: 1;
+            opacity: 0;
+        }
+        100% {
+            z-index: 1;
+            opacity: 1;
+        }
+    }
+
+    @include mobile() {
+        :global(.message-bubble .menu) {
+            display: none;
+        }
+    }
+
+    @include not-mobile() {
+        :global(.message-bubble .menu) {
+            display: flex;
+            z-index: -1;
+            opacity: 0;
+        }
+
+        // Keeps hover menu showing if context menu is clicked!
+        :global(.message-bubble .menu:has(.menu-icon.open)) {
+            border-color: var(--primary);
+            z-index: 1;
             opacity: 1;
         }
 
-        :global(.message-bubble:hover .menu-icon .wrapper) {
-            background-color: var(--icon-msg-hv);
-        }
-
-        :global(.message-bubble.me:hover .menu-icon .wrapper) {
-            background-color: var(--icon-inverted-hv);
-        }
-
-        :global(.message-bubble.crypto:hover .menu-icon .wrapper) {
-            background-color: rgba(255, 255, 255, 0.3);
-        }
-
-        :global(.me .menu-icon:hover .wrapper) {
-            background-color: var(--icon-inverted-hv);
-        }
-
-        :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
-            background-color: var(--icon-hv);
+        @media (hover: hover) {
+            :global(.message-bubble:hover .menu:not(:has(.menu-icon.open))) {
+                animation: show-bubble-menu 200ms ease-in-out forwards;
+            }
         }
     }
 
@@ -772,6 +811,10 @@
 
     :global(.message-bubble.crypto a) {
         color: inherit;
+    }
+
+    :global(.message-bubble.first .menu) {
+        top: -24px;
     }
 
     :global(.actions .reaction .wrapper) {
@@ -886,8 +929,6 @@
         border-radius: $radius;
         max-width: var(--max-width);
         min-width: 90px;
-        overflow: hidden;
-        overflow-wrap: break-word;
         border: var(--currentChat-msg-bd);
         box-shadow: var(--currentChat-msg-sh);
 

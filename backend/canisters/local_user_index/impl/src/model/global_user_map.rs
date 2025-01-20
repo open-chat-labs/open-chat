@@ -119,6 +119,14 @@ impl GlobalUserMap {
         &self.oc_controlled_bot_users
     }
 
+    pub fn platform_moderators(&self) -> &HashSet<UserId> {
+        &self.platform_moderators
+    }
+
+    pub fn platform_operators(&self) -> &HashSet<UserId> {
+        &self.platform_operators
+    }
+
     pub fn is_diamond_member(&self, user_id: &UserId, now: TimestampMillis) -> bool {
         self.diamond_membership_expiry_date(user_id).is_some_and(|t| t > now)
     }

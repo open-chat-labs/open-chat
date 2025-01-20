@@ -9,7 +9,7 @@ use local_user_index_canister::{BotUpdated, UserIndexEvent};
 use types::OptionUpdate;
 use url::Url;
 use user_index_canister::update_bot::{Response::*, *};
-use utils::{document::try_parse_data_url, text_validation::validate_username};
+use utils::document::try_parse_data_url;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -33,9 +33,8 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     let mut bot = bot.clone();
     let mut user = user.clone();
 
-    if let Some(name) = args.name.as_ref() {
-        bot.name = name.clone();
-        user.username = name.clone();
+    if let Some(principal) = args.principal {
+        user.principal = principal;
     }
 
     if let Some(owner_id) = args.owner {
@@ -67,17 +66,16 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     bot.last_updated = now;
 
-    match state.data.users.update(user, now, true, Some(bot)) {
+    match state.data.users.update(user, now, false, Some(bot)) {
         UpdateUserResult::Success => (),
-        UpdateUserResult::UsernameTaken => return NameAlreadyExists,
+        UpdateUserResult::UsernameTaken => unreachable!(),
         UpdateUserResult::UserNotFound => return BotNotFound,
-        UpdateUserResult::PrincipalTaken => unreachable!(),
+        UpdateUserResult::PrincipalTaken => return PrincipalAlreadyUsed,
     }
 
     state.push_event_to_all_local_user_indexes(
         UserIndexEvent::BotUpdated(BotUpdated {
             user_id: args.bot_id,
-            name: args.name.clone(),
             commands: args.definition.map(|d| d.commands.clone()),
         }),
         None,
@@ -89,13 +87,9 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
 }
 
 fn validate(args: &Args, state: &RuntimeState) -> Result<(), Response> {
-    if let Some(name) = args.name.as_ref() {
-        if validate_username(name).is_err() {
-            return Err(NameInvalid);
-        }
-
-        if state.data.users.does_username_exist(name, true) {
-            return Err(NameAlreadyExists);
+    if let Some(principal) = args.principal {
+        if principal == Principal::anonymous() {
+            return Err(PrincipalInvalid);
         }
     }
 

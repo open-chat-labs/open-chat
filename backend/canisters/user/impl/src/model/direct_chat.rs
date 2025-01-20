@@ -136,7 +136,7 @@ impl DirectChat {
     pub fn to_summary_updates(&self, updates_since: TimestampMillis, my_user_id: UserId) -> DirectChatSummaryUpdates {
         let events_reader = self.events.main_events_reader();
 
-        let has_new_events = events_reader.latest_event_timestamp().map_or(false, |ts| ts > updates_since);
+        let has_new_events = events_reader.latest_event_timestamp().is_some_and(|ts| ts > updates_since);
         let latest_message = events_reader.latest_message_event_if_updated(updates_since, Some(my_user_id));
         let latest_event_index = if has_new_events { events_reader.latest_event_index() } else { None };
         let latest_message_index = if has_new_events { events_reader.latest_message_index() } else { None };

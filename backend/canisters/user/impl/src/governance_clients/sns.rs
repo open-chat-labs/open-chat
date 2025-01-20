@@ -23,7 +23,7 @@ pub async fn list_neurons(
     let neuron_ids = response
         .neurons
         .into_iter()
-        .filter(|n| n.dissolve_state.as_ref().map_or(false, |d| !is_dissolved(d, now)))
+        .filter(|n| n.dissolve_state.as_ref().is_some_and(|d| !is_dissolved(d, now)))
         .filter_map(|n| n.id)
         .filter_map(|n| n.id.try_into().ok())
         .collect();

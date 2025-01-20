@@ -183,7 +183,7 @@ impl RuntimeState {
             rules_accepted: member
                 .rules_accepted
                 .as_ref()
-                .map_or(false, |version| version.value >= chat.rules.text.version),
+                .is_some_and(|version| version.value >= chat.rules.text.version),
             lapsed: member.lapsed().value,
         };
 

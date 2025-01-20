@@ -22,10 +22,7 @@ async fn leave_group(args: Args) -> Response {
         return UserSuspended;
     };
 
-    let c2c_args = c2c_leave_group::Args {
-        principal,
-        correlation_id: args.correlation_id,
-    };
+    let c2c_args = c2c_leave_group::Args { principal };
 
     match group_canister_c2c_client::c2c_leave_group(args.chat_id.into(), &c2c_args).await {
         Ok(result) => match result {

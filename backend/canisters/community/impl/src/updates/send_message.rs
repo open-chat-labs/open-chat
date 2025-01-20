@@ -243,7 +243,7 @@ fn process_send_message_result(
                         .data
                         .members
                         .get_by_user_id(&c.recipient)
-                        .map_or(false, |m| !m.user_type.is_bot());
+                        .is_some_and(|m| !m.user_type.is_bot());
 
                     if recipient_is_human {
                         state
@@ -257,7 +257,7 @@ fn process_send_message_result(
                 if let Some(channel) = state.data.channels.get(&channel_id) {
                     for user_id in users_mentioned.all_users_mentioned {
                         if user_id != caller.initiator()
-                            && channel.chat.members.get(&user_id).map_or(false, |m| !m.user_type().is_bot())
+                            && channel.chat.members.get(&user_id).is_some_and(|m| !m.user_type().is_bot())
                         {
                             activity_events.push((user_id, MessageActivity::Mention));
                         }
@@ -280,7 +280,7 @@ fn process_send_message_result(
                                     .chat
                                     .members
                                     .get(&message.sender)
-                                    .map_or(false, |m| !m.user_type().is_bot())
+                                    .is_some_and(|m| !m.user_type().is_bot())
                             {
                                 activity_events.push((message.sender, MessageActivity::QuoteReply));
                             }
