@@ -78,7 +78,7 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
             state.data.bots.add(ev.user_principal, ev.user_id, ev.name, ev.commands);
         }
         UserIndexEvent::BotUpdated(ev) => {
-            state.data.bots.update(ev.user_id, ev.name, ev.commands);
+            state.data.bots.update(ev.user_id, ev.commands);
         }
         UserIndexEvent::PlatformOperatorStatusChanged(ev) => {
             state

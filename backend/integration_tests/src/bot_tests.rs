@@ -206,16 +206,16 @@ fn e2e_bot_test() {
     assert!(message.bot_context.is_some());
     assert!(message.bot_context.as_ref().unwrap().finalised);
 
-    // Update the bot name
-    let new_bot_name = random_string();
+    // Update the bot endpoint
+    let new_endpoint = "https://123.bot.xyz/".to_string();
     client::user_index::happy_path::update_bot(
         env,
         canister_ids.user_index,
         user.principal,
         bot.id,
         None,
-        Some(new_bot_name.clone()),
         None,
+        Some(new_endpoint.clone()),
         None,
     );
 
@@ -225,7 +225,7 @@ fn e2e_bot_test() {
     assert_eq!(response.added_or_updated.len(), 1);
 
     let bot = &response.added_or_updated[0];
-    assert_eq!(bot.name, new_bot_name);
+    assert_eq!(bot.endpoint, new_endpoint);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

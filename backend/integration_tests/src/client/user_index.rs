@@ -280,8 +280,8 @@ pub mod happy_path {
         user_index_canister_id: CanisterId,
         caller: Principal,
         bot_id: UserId,
+        bot_principal: Option<Principal>,
         owner: Option<UserId>,
-        name: Option<String>,
         endpoint: Option<String>,
         definition: Option<BotDefinition>,
     ) {
@@ -292,7 +292,7 @@ pub mod happy_path {
             &user_index_canister::update_bot::Args {
                 bot_id,
                 owner,
-                name,
+                principal: bot_principal,
                 avatar: OptionUpdate::NoChange,
                 endpoint,
                 definition,
