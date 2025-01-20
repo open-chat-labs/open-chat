@@ -90,7 +90,7 @@ fn summary_updates_impl(
     let is_community_member = member.is_some();
 
     for channel in channels_with_updates {
-        if channel.date_imported.map_or(false, |ts| ts > updates_since) {
+        if channel.date_imported.is_some_and(|ts| ts > updates_since) {
             if let Some(summary) =
                 channel.summary(user_id, is_community_member, state.data.is_public.value, &state.data.members)
             {

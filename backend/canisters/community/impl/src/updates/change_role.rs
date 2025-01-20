@@ -84,7 +84,7 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
                     .data
                     .members
                     .get_by_user_id(&user_id)
-                    .map_or(false, |p| p.role().is_owner()),
+                    .is_some_and(|p| p.role().is_owner()),
             })
         }
     } else {

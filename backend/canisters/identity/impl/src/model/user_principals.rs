@@ -75,7 +75,7 @@ impl UserPrincipals {
     ) -> bool {
         if self
             .get_by_auth_principal(&new_principal)
-            .map_or(false, |u| u.user_id.is_some())
+            .is_some_and(|u| u.user_id.is_some())
         {
             false
         } else if let Some(user_principal) = self.user_principals.get_mut(user_principal_index as usize) {

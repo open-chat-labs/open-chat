@@ -720,10 +720,7 @@ pub struct CommunityMemberInternal {
 
 impl CommunityMemberInternal {
     pub fn accept_rules(&mut self, version: Version, now: TimestampMillis) -> bool {
-        let already_accepted = self
-            .rules_accepted
-            .as_ref()
-            .map_or(false, |accepted| version <= accepted.value);
+        let already_accepted = self.rules_accepted.as_ref().is_some_and(|accepted| version <= accepted.value);
 
         if !already_accepted {
             self.rules_accepted = Some(Timestamped::new(version, now));

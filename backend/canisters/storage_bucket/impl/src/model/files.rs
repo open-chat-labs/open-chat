@@ -85,7 +85,7 @@ impl Files {
             return PutChunkResult::FileAlreadyExists;
         }
 
-        if args.expiry.map_or(false, |e| e < args.now) {
+        if args.expiry.is_some_and(|e| e < args.now) {
             self.pending_files.remove(&args.file_id);
             return PutChunkResult::FileExpired;
         }

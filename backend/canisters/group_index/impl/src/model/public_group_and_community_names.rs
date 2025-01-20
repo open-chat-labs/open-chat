@@ -32,7 +32,7 @@ impl PublicGroupAndCommunityNames {
 
     // Only removes the entry if both the name and canister_id match
     pub fn remove(&mut self, name: &str, canister_id: CanisterId) -> bool {
-        if self.names.get(name).map_or(false, |c| *c == canister_id) {
+        if self.names.get(name).is_some_and(|c| *c == canister_id) {
             self.names.remove(name).is_some()
         } else {
             false
