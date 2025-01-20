@@ -25,6 +25,7 @@ pub enum UserIndexEvent {
     UserRegistered(UserRegistered),
     BotRegistered(BotRegistered),
     BotUpdated(BotUpdated),
+    BotRemoved(BotRemoved),
     PlatformOperatorStatusChanged(PlatformOperatorStatusChanged),
     PlatformModeratorStatusChanged(PlatformModeratorStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
@@ -94,6 +95,12 @@ pub struct BotRegistered {
 pub struct BotUpdated {
     pub user_id: UserId,
     pub commands: Option<Vec<SlashCommandSchema>>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotRemoved {
+    pub user_id: UserId,
+    pub deleted_by: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

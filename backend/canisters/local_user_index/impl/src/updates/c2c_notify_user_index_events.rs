@@ -172,6 +172,9 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                 .global_users
                 .update_user_principal(update.old_principal, update.new_principal);
         }
+        UserIndexEvent::BotRemoved(ev) => {
+            state.data.bots.remove(&ev.user_id);
+        }
         UserIndexEvent::DeleteUser(ev) => {
             if state.data.local_users.contains(&ev.user_id) {
                 state.data.users_to_delete_queue.push_back(UserToDelete {

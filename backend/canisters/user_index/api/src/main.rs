@@ -24,6 +24,7 @@ fn main() {
     generate_candid_method!(user_index, award_external_achievement, update);
     generate_candid_method!(user_index, register_external_achievement, update);
     generate_candid_method!(user_index, register_bot, update);
+    generate_candid_method!(user_index, remove_bot, update);
     generate_candid_method!(user_index, update_bot, update);
 
     candid::export_service!();
