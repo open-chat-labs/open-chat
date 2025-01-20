@@ -93,6 +93,8 @@
         | "update_token"
         | "set_community_verification"
         | "set_group_verification"
+        | "remove_community_verification"
+        | "remove_group_verification"
         | undefined = undefined;
     let error: string | undefined = undefined;
     let depositMessage: ResourceKey | undefined = undefined;
@@ -186,6 +188,14 @@
             depositMessage = defaultMessage();
         }
     }
+
+    $: [summaryLabel, summaryPlaceholder] =
+        selectedProposalType === "set_community_verification" ||
+        selectedProposalType === "set_group_verification" ||
+        selectedProposalType === "remove_community_verification" ||
+        selectedProposalType === "remove_group_verification"
+            ? [i18nKey("verified.evidenceLabel"), i18nKey("verified.evidencePlaceholder")]
+            : [i18nKey("proposal.maker.summary"), i18nKey("proposal.maker.enterSummary")];
 
     function defaultMessage(): ResourceKey {
         const cost = client.formatTokens(requiredFunds, tokenDetails.decimals);
@@ -464,7 +474,7 @@
                     <div class="summary-heading">
                         <Legend
                             required
-                            label={i18nKey("proposal.maker.summary")}
+                            label={summaryLabel}
                             rules={i18nKey("proposal.maker.summaryRules")} />
                         <div
                             role="switch"
@@ -502,7 +512,7 @@
                                 scroll
                                 minlength={MIN_SUMMARY_LENGTH}
                                 maxlength={MAX_SUMMARY_LENGTH}
-                                placeholder={i18nKey("proposal.maker.enterSummary")} />
+                                placeholder={summaryPlaceholder} />
                         {/if}
                     </div>
                 </section>

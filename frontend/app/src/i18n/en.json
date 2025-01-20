@@ -1891,6 +1891,11 @@
     "verified": {
         "verifiedCommunity": "Verified community",
         "verifiedGroup": "Verified group",
-        "nameChangeWarning": "If you change the name of this {level} you will lose your verified status!"
+        "nameChangeWarning": "If you change the name of this {level} you will lose your verified status!",
+        "choose": "Choose the {level} to verify",
+        "rename": "If another {level} is currently using your preferred name, enter that name here. If you already have your preferred name you should leave the name as it is.",
+        "preferredName": "Preferred Name",
+        "evidenceLabel": "Provide your evidence",
+        "evidencePlaceholder": "Please provide your evidence"
     }
 }
