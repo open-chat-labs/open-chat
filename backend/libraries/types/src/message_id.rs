@@ -48,21 +48,29 @@ impl Visitor<'_> for MessageIdVisitor {
     type Value = MessageId;
 
     fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-        formatter.write_str("a u64, u128 or string")
+        formatter.write_str("a positive integer")
     }
 
-    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E> {
+    fn visit_i64<E: Error>(self, v: i64) -> Result<Self::Value, E> {
+        self.visit_i128(v as i128)
+    }
+
+    fn visit_i128<E: Error>(self, v: i128) -> Result<Self::Value, E> {
+        match u128::try_from(v) {
+            Ok(v) => self.visit_u128(v),
+            Err(_) => Err(E::custom(format!("MessageId cannot be negative: {}", v))),
+        }
+    }
+
+    fn visit_u64<E: Error>(self, v: u64) -> Result<Self::Value, E> {
         Ok(v.into())
     }
 
-    fn visit_u128<E>(self, v: u128) -> Result<Self::Value, E> {
+    fn visit_u128<E: Error>(self, v: u128) -> Result<Self::Value, E> {
         Ok(v.into())
     }
 
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: Error,
-    {
+    fn visit_str<E: Error>(self, v: &str) -> Result<Self::Value, E> {
         match u128::from_str(v) {
             Ok(value) => Ok(value.into()),
             Err(error) => Err(E::custom(format!("invalid message id: {v}. Error: {error}"))),
@@ -77,4 +85,16 @@ impl<'de> Deserialize<'de> for MessageId {
     {
         deserializer.deserialize_any(MessageIdVisitor)
     }
+}
+
+#[test]
+fn serde() {
+    let mut bytes = Vec::new();
+    let mut ser = rmp_serde::Serializer::new(&mut bytes)
+        .with_struct_map()
+        .with_large_ints_as_strings();
+
+    u128::MAX.serialize(&mut ser).unwrap();
+
+    let blah: MessageId = rmp_serde::from_slice(&bytes).unwrap();
 }
