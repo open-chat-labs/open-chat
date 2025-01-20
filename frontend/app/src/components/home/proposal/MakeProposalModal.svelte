@@ -1,8 +1,8 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import ModalContent from "../ModalContent.svelte";
+    import { mobileWidth } from "../../../stores/screenDimensions";
+    import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
+    import ModalContent from "../../ModalContent.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import {
         routeForChatIdentifier,
@@ -11,7 +11,6 @@
         type NervousSystemDetails,
         type OpenChat,
         type ResourceKey,
-        type Treasury,
         currentUser as user,
         cryptoBalance as cryptoBalanceStore,
         currentUser,
@@ -19,35 +18,34 @@
     import {
         emptyBotInstance,
         isPrincipalValid,
-        isSubAccountValid,
         isUrl,
         random32,
         type ExternalBot,
     } from "openchat-shared";
-    import { iconSize } from "../../stores/iconSize";
-    import Button from "../Button.svelte";
-    import Legend from "../Legend.svelte";
-    import Input from "../Input.svelte";
-    import TextArea from "../TextArea.svelte";
-    import Select from "../Select.svelte";
-    import Radio from "../Radio.svelte";
+    import { iconSize } from "../../../stores/iconSize";
+    import Button from "../../Button.svelte";
+    import Legend from "../../Legend.svelte";
+    import Input from "../../Input.svelte";
+    import TextArea from "../../TextArea.svelte";
+    import Select from "../../Select.svelte";
     import PencilIcon from "svelte-material-icons/PencilOutline.svelte";
     import EyeIcon from "svelte-material-icons/EyeOutline.svelte";
-    import Markdown from "./Markdown.svelte";
-    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
-    import AccountInfo from "./AccountInfo.svelte";
+    import Markdown from "../Markdown.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import AccountInfo from "../AccountInfo.svelte";
     import {
         createAddTokenPayload,
         createRegisterExternalAchievementPayload,
         createRegisterExternalBotPayload,
         createUpdateTokenPayload,
-    } from "../../utils/sns";
-    import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
-    import DurationPicker from "./DurationPicker.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import BotBuilder from "../bots/AutoBotBuilderWrapper.svelte";
-    import { botsEnabled } from "../../utils/bots";
+    } from "../../../utils/sns";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
+    import DurationPicker from "../DurationPicker.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import BotBuilder from "../../bots/AutoBotBuilderWrapper.svelte";
+    import { botsEnabled } from "../../../utils/bots";
+    import TransferSnsFunds from "./TransferSNSFunds.svelte";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -76,14 +74,10 @@
     let title = "";
     let url = "";
     let summary = "";
-    let treasury: Treasury = "SNS";
-    let amountText = "";
     let achievementExpiry: bigint = BigInt(ONE_MONTH);
     let achievementExpiryValid = true;
     let chitRewardText = "5000";
     let maxAwardsText = "200";
-    let recipientOwner = "";
-    let recipientSubaccount = "";
     let step = -1;
     let actualWidth = 0;
     let summaryPreview = false;
@@ -109,6 +103,8 @@
     let candidateBotValid = false;
     let botSchemaLoaded = false;
     let botPrincipal = "";
+    let transferSnsFunds: TransferSnsFunds | undefined;
+    let transferSnsFundsValid: boolean;
 
     $: errorMessage =
         error !== undefined ? i18nKey("proposal.maker." + error) : $pinNumberErrorMessageStore;
@@ -133,17 +129,11 @@
                 : selectedProposalType === "add_token"
                   ? TOKEN_LISTING_FEE
                   : BigInt(0));
-    $: token = treasury === "SNS" ? symbol : "ICP";
     $: titleValid = title.length >= MIN_TITLE_LENGTH && title.length <= MAX_TITLE_LENGTH;
     $: urlValid = url.length <= MAX_URL_LENGTH;
     $: summaryValid = summary.length >= MIN_SUMMARY_LENGTH && summary.length <= MAX_SUMMARY_LENGTH;
-    $: amount = Number(amountText) * Number(Math.pow(10, tokenDetails.decimals));
-    $: amountValid = amount >= transferFee;
     $: maxAwards = Number(maxAwardsText);
     $: maxAwardsValid = maxAwards >= MIN_AWARDS;
-    $: recipientOwnerValid = isPrincipalValid(recipientOwner);
-    $: recipientSubaccountValid =
-        recipientSubaccount.length === 0 || isSubAccountValid(recipientSubaccount);
     $: achievementNameValid =
         achivementName.length >= MIN_ACHIEVEMENT_NAME_LENGTH &&
         achivementName.length <= MAX_ACHIEVEMENT_NAME_LENGTH;
@@ -164,10 +154,7 @@
         (selectedProposalType === "motion" ||
             selectedProposalType === "advance_sns_target_version" ||
             (selectedProposalType === "register_bot" && candidateBotValid) ||
-            (selectedProposalType === "transfer_sns_funds" &&
-                amountValid &&
-                recipientOwnerValid &&
-                recipientSubaccountValid) ||
+            (selectedProposalType === "transfer_sns_funds" && transferSnsFundsValid) ||
             (selectedProposalType === "register_external_achievement" &&
                 achievementNameValid &&
                 chitRewardValid &&
@@ -272,18 +259,7 @@
             case "advance_sns_target_version":
                 return { kind: selectedProposalType };
             case "transfer_sns_funds": {
-                return {
-                    kind: "transfer_sns_funds",
-                    recipient: {
-                        owner: recipientOwner,
-                        subaccount:
-                            recipientSubaccount.length > 0
-                                ? recipientSubaccount.padStart(64, "0")
-                                : undefined,
-                    },
-                    amount: BigInt(Math.floor(amount)),
-                    treasury,
-                };
+                return transferSnsFunds?.convertAction();
             }
             case "add_token": {
                 return {
@@ -534,62 +510,10 @@
                         bind:schemaLoaded={botSchemaLoaded}
                         bind:valid={candidateBotValid} />
                 {:else if selectedProposalType === "transfer_sns_funds"}
-                    <div>
-                        <section>
-                            <Legend label={i18nKey("proposal.maker.treasury")} required />
-                            <Radio
-                                id="chat_treasury"
-                                group="treasury"
-                                value={symbol}
-                                label={i18nKey(symbol)}
-                                disabled={busy}
-                                checked={treasury === "SNS"}
-                                on:change={() => (treasury = "SNS")} />
-                            <Radio
-                                id="icp_treasury"
-                                group="treasury"
-                                value="ICP"
-                                label={i18nKey("ICP")}
-                                disabled={busy}
-                                checked={treasury === "ICP"}
-                                on:change={() => (treasury = "ICP")} />
-                        </section>
-                        <section>
-                            <Legend label={i18nKey("proposal.maker.recipientOwner")} required />
-                            <Input
-                                disabled={busy}
-                                invalid={recipientOwner.length > 0 && !recipientOwnerValid}
-                                maxlength={63}
-                                bind:value={recipientOwner}
-                                placeholder={i18nKey("proposal.maker.enterRecipientOwner")} />
-                        </section>
-                        <section>
-                            <Legend
-                                label={i18nKey("proposal.maker.recipientSubaccount")}
-                                rules={i18nKey("proposal.maker.recipientSubaccountRules")} />
-                            <Input
-                                disabled={busy}
-                                invalid={!recipientSubaccountValid}
-                                maxlength={64}
-                                bind:value={recipientSubaccount}
-                                placeholder={i18nKey("proposal.maker.enterRecipientSubaccount")} />
-                        </section>
-                        <section>
-                            <Legend
-                                label={i18nKey("proposal.maker.amount")}
-                                rules={i18nKey("proposal.maker.amountRules", { token })}
-                                required />
-                            <Input
-                                disabled={busy}
-                                invalid={amountText.length > 0 && !amountValid}
-                                minlength={1}
-                                maxlength={20}
-                                bind:value={amountText}
-                                placeholder={i18nKey("proposal.maker.enterAmount", {
-                                    token,
-                                })} />
-                        </section>
-                    </div>
+                    <TransferSnsFunds
+                        bind:valid={transferSnsFundsValid}
+                        bind:this={transferSnsFunds}
+                        {nervousSystem} />
                 {:else if selectedProposalType === "register_external_achievement"}
                     <div>
                         <section>

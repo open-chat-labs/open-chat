@@ -109,7 +109,7 @@
     import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
     import HallOfFame from "./ChitHallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
-    import MakeProposalModal from "./MakeProposalModal.svelte";
+    import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
     import { createCandidateCommunity } from "../../stores/community";
     import Convert from "./communities/Convert.svelte";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
