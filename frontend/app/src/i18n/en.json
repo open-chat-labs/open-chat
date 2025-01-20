@@ -1890,6 +1890,7 @@
     "yourRoleChanged": "{changedBy} changed your role to {newRole}",
     "verified": {
         "verifiedCommunity": "Verified community",
-        "verifiedGroup": "Verified group"
+        "verifiedGroup": "Verified group",
+        "nameChangeWarning": "If you change the name of this {level} you will lose your verified status!"
     }
 }
