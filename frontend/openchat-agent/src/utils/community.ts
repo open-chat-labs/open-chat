@@ -152,6 +152,7 @@ export function mergeCommunityUpdates(
             ),
             localUserIndex: community.localUserIndex,
             isInvited: false,
+            verified: c?.verified ?? community.verified,
         };
     });
 }

@@ -8130,6 +8130,7 @@ export const GroupMatch = Type.Object({
     member_count: Type.Number(),
     gate: Type.Optional(Type.Union([AccessGate, Type.Undefined()])),
     subtype: Type.Optional(Type.Union([GroupSubtype, Type.Undefined()])),
+    verified: Type.Boolean(),
 });
 
 export type AccessGateConfig = Static<typeof AccessGateConfig>;
@@ -8523,6 +8524,7 @@ export const CommunityMatch = Type.Object({
     gate_config: Type.Optional(Type.Union([AccessGateConfig, Type.Undefined()])),
     moderation_flags: Type.Number(),
     primary_language: Type.String(),
+    verified: Type.Boolean(),
 });
 
 export type EventWrapperMessage = Static<typeof EventWrapperMessage>;
@@ -8835,6 +8837,7 @@ export const GroupCanisterGroupChatSummary = Type.Object({
     rules_accepted: Type.Boolean(),
     membership: Type.Optional(Type.Union([GroupMembership, Type.Undefined()])),
     video_call_in_progress: Type.Optional(Type.Union([VideoCall, Type.Undefined()])),
+    verified: Type.Boolean(),
 });
 
 export type EventWrapperChatEvent = Static<typeof EventWrapperChatEvent>;
@@ -8891,6 +8894,7 @@ export const GroupCanisterGroupChatSummaryUpdates = Type.Object({
     membership: Type.Optional(Type.Union([GroupMembershipUpdates, Type.Undefined()])),
     video_call_in_progress: OptionUpdateVideoCall,
     any_updates_missed: Type.Boolean(),
+    verified: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
 });
 
 export type DirectChatSummaryUpdates = Static<typeof DirectChatSummaryUpdates>;
@@ -9194,6 +9198,7 @@ export const CommunityCanisterCommunitySummary = Type.Object({
     user_groups: Type.Array(UserGroupSummary),
     is_invited: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
     metrics: ChatMetrics,
+    verified: Type.Boolean(),
 });
 
 export type CommunityCanisterCommunitySummaryUpdates = Static<
@@ -9221,6 +9226,7 @@ export const CommunityCanisterCommunitySummaryUpdates = Type.Object({
     user_groups: Type.Array(UserGroupSummary),
     user_groups_deleted: Type.Array(Type.Number()),
     metrics: Type.Optional(Type.Union([ChatMetrics, Type.Undefined()])),
+    verified: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
 });
 
 export type LocalUserIndexChatEventsEventsResponse = Static<

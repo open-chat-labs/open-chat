@@ -26,7 +26,7 @@
     import Translatable from "../Translatable.svelte";
     import Badges from "./profile/Badges.svelte";
     import Diamond from "../icons/Diamond.svelte";
-    import Human from "../icons/Human.svelte";
+    import Human from "../icons/Verified.svelte";
     import Streak from "./profile/Streak.svelte";
     import SecureButton from "../SecureButton.svelte";
 
@@ -146,7 +146,7 @@
                     {/if}
                     {#if content.uniquePersonOnly}
                         <div on:click={onUniquePersonClick}>
-                            <div><Human uniquePerson={content.uniquePersonOnly} /></div>
+                            <div><Human verified={content.uniquePersonOnly} /></div>
                             <Translatable resourceKey={i18nKey("prizes.uniquePerson")} />
                         </div>
                     {/if}

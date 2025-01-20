@@ -1887,5 +1887,7 @@
     "yourAccountIsSuspended": "Your account is suspended",
     "yourChats": "Your chats",
     "youreBlocked": "Sorry - you have been blocked from this group",
-    "yourRoleChanged": "{changedBy} changed your role to {newRole}"
+    "yourRoleChanged": "{changedBy} changed your role to {newRole}",
+    "verifiedCommunity": "Verified community",
+    "verifiedGroup": "Verified group"
 }

@@ -1,5 +1,3 @@
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-
 <script lang="ts">
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Pound from "svelte-material-icons/Pound.svelte";
@@ -14,22 +12,41 @@
     import AccessGateIcon from "../../access/AccessGateIcon.svelte";
     import { i18nKey, supportedLanguagesByCode } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
+    import Verified from "../../../icons/Verified.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let id: string;
-    export let name: string;
-    export let description: string;
-    export let avatar: DataContent;
-    export let banner: DataContent;
-    export let memberCount: number;
-    export let channelCount: number;
-    export let header = false;
-    export let gateConfig: AccessGateConfig;
-    export let language: string;
-    export let flags: number;
+    interface Props {
+        id: string;
+        name: string;
+        description: string;
+        avatar: DataContent;
+        banner: DataContent;
+        memberCount: number;
+        channelCount: number;
+        header?: boolean;
+        gateConfig: AccessGateConfig;
+        language: string;
+        flags: number;
+        verified: boolean;
+    }
 
-    $: flagsArray = serialiseFlags(flags);
+    let {
+        id,
+        name,
+        description,
+        avatar,
+        banner,
+        memberCount,
+        channelCount,
+        header = false,
+        gateConfig,
+        language,
+        flags,
+        verified,
+    }: Props = $props();
+
+    let flagsArray = $derived(serialiseFlags(flags));
 
     function serialiseFlags(flags: number) {
         const f: string[] = [supportedLanguagesByCode[language]?.name];
@@ -46,7 +63,9 @@
     }
 </script>
 
-<div class:header on:click class="card">
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class:header class="card">
     <IntersectionObserver let:intersecting>
         <CommunityBanner {intersecting} square={header} {banner}>
             <div class="gate">
@@ -67,7 +86,17 @@
         </CommunityBanner>
     </IntersectionObserver>
     <div class="content">
-        <div class="name">{name}</div>
+        <div class="name">
+            {name}
+            {#if !verified}
+                <div class="verified">
+                    <Verified
+                        size={"medium"}
+                        verified={!verified}
+                        tooltip={i18nKey("verifiedCommunity")} />
+                </div>
+            {/if}
+        </div>
         <div class="desc" class:fixed={!header}>
             <Markdown inline={false} text={description} />
         </div>
@@ -128,6 +157,9 @@
             .name {
                 @include font(bold, normal, fs-130);
                 margin-bottom: $sp3;
+                display: flex;
+                gap: $sp2;
+                align-items: center;
             }
 
             .desc {

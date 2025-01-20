@@ -10,6 +10,7 @@ export type GroupMatch = DataContent & {
     name: string;
     description: string;
     subtype: GroupSubtype | undefined;
+    verified: boolean;
 };
 
 export interface CommunityMatch {
@@ -23,6 +24,7 @@ export interface CommunityMatch {
     gateConfig: AccessGateConfig;
     flags: number;
     primaryLanguage: string;
+    verified: boolean;
 }
 
 export type MessageMatch = {

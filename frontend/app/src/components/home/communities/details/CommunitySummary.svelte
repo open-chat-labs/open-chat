@@ -45,7 +45,8 @@
             language={$selectedCommunity.primaryLanguage}
             flags={0}
             channelCount={0}
-            header />
+            header
+            verified={$selectedCommunity.verified} />
         <CommunityDetails
             on:deleteCommunity
             {canDelete}

@@ -144,6 +144,7 @@ export function groupChatSummary(
             rulesAccepted: false,
             lapsed: false,
         },
+        verified: value.verified,
     };
 }
 

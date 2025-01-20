@@ -1530,6 +1530,7 @@ export type GroupChatSummary = DataContent &
         localUserIndex: string;
         isInvited: boolean;
         messagesVisibleToNonMembers: boolean;
+        verified: boolean;
     };
 
 export function nullMembership(): ChatMembership {
@@ -1592,6 +1593,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         videoCallInProgress?: number;
         messagesVisibleToNonMembers: boolean;
         membership: GroupCanisterGroupMembership;
+        verified: boolean;
     };
 
 export type GroupCanisterGroupMembership = {
@@ -1634,6 +1636,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     videoCallInProgress: OptionUpdate<number>;
     messagesVisibleToNonMembers?: boolean;
     membership: GroupMembershipUpdates | undefined;
+    verified?: boolean;
 };
 
 export type GroupMembershipUpdates = {

@@ -346,6 +346,7 @@ function groupMatch(value: TGroupMatch): GroupMatch {
             blobId,
             canisterId: principalBytesToString(value.id),
         })),
+        verified: value.verified,
     };
 }
 
@@ -374,5 +375,6 @@ function communityMatch(value: TCommunityMatch): CommunityMatch {
         },
         flags: value.moderation_flags,
         primaryLanguage: value.primary_language === "" ? "en" : value.primary_language,
+        verified: value.verified,
     };
 }
