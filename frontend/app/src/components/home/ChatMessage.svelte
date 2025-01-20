@@ -439,10 +439,7 @@
                         </HoverIcon>
                     </span>
                 </div>
-                <EmojiPicker
-                    on:emojiSelected={selectReaction}
-                    on:skintoneChanged={(ev) => quickReactions.reload(ev.detail)}
-                    mode={"reaction"} />
+                <EmojiPicker on:emojiSelected={selectReaction} mode={"reaction"} />
             </span>
             <span slot="footer" />
         </ModalContent>

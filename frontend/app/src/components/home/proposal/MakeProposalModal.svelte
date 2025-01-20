@@ -46,6 +46,7 @@
     import BotBuilder from "../../bots/AutoBotBuilderWrapper.svelte";
     import { botsEnabled } from "../../../utils/bots";
     import TransferSnsFunds from "./TransferSNSFunds.svelte";
+    import VerificationProposal from "./VerificationProposal.svelte";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -90,6 +91,8 @@
         | "advance_sns_target_version"
         | "add_token"
         | "update_token"
+        | "set_community_verification"
+        | "set_group_verification"
         | undefined = undefined;
     let error: string | undefined = undefined;
     let depositMessage: ResourceKey | undefined = undefined;
@@ -429,6 +432,8 @@
                                 <option value={"register_bot"}>Register a bot</option>
                             {/if}
                         {/if}
+                        <option value={"set_community_verification"}>Verify a community</option>
+                        <option value={"set_group_verification"}>Verify a group</option>
                     </Select>
                 </section>
                 <section>
@@ -503,7 +508,11 @@
                 </section>
             </div>
             <div class="action hidden" class:visible={step === 2}>
-                {#if selectedProposalType === "register_bot"}
+                {#if selectedProposalType === "set_community_verification"}
+                    <VerificationProposal type="community" />
+                {:else if selectedProposalType === "set_group_verification"}
+                    <VerificationProposal type="group" />
+                {:else if selectedProposalType === "register_bot"}
                     <BotBuilder
                         onUpdate={(bot) => (candidateBot = bot)}
                         bind:principal={botPrincipal}
