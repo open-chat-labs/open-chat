@@ -87,6 +87,12 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
 }
 
 fn validate(args: &Args, state: &RuntimeState) -> Result<(), Response> {
+    if let Some(principal) = args.principal {
+        if principal == Principal::anonymous() {
+            return Err(PrincipalInvalid);
+        }
+    }
+
     if let OptionUpdate::SetToSome(avatar) = args.avatar.as_ref() {
         if avatar.len() > MAX_AVATAR_SIZE {
             return Err(AvatarInvalid);

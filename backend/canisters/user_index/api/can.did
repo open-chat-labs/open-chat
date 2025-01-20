@@ -179,6 +179,7 @@ type UpdateBotArgs = record {
 
 type UpdateBotResponse = variant {
     Success;
+    PrincipalInvalid;
     PrincipalAlreadyUsed;
     AvatarInvalid;
     EndpointInvalid;
