@@ -8,8 +8,14 @@
     const dispatch = createEventDispatcher();
 
     onMount(() => {
-        document.querySelector("emoji-picker")?.addEventListener("emoji-click", (event) => {
+        const emojiPicker = document.querySelector("emoji-picker");
+
+        emojiPicker?.addEventListener("emoji-click", (event) => {
             dispatch("emojiSelected", event.detail.unicode);
+        });
+
+        emojiPicker?.addEventListener("skin-tone-change", (event) => {
+            dispatch("skintoneChanged", event.detail.skinTone);
         });
     });
 </script>

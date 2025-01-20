@@ -7,30 +7,50 @@ let showQuickReactionCount = 3;
 let defaultReactions = ["yes", "tears_of_joy", "pray"];
 
 function initQuickReactions() {
-    function loadQuickReactions() {
+
+    // Filter the reactions by taking into account the appropriate skin tone.
+    function getUnicodeBySkintone(skintone: number, reactions: Emoji[]): string[] {
+        return reactions.map((emoji) => {
+            if ("unicode" in emoji) {
+                return undefined === emoji.skins || 0 === skintone
+                    ? emoji.unicode
+                    : emoji.skins.find((val) => val.tone === skintone ? val.unicode : null)?.unicode
+            }
+        })
+        .filter((u) => u !== undefined);
+    }
+
+    function loadQuickReactions(skintone: number) {
         return emojiDb
             .getTopFavoriteEmoji(showQuickReactionCount)
             .then((fav) => {
+                const favUnicode = getUnicodeBySkintone(skintone, fav);
+                
+                // If we have less emoji than we want to show, expand with
+                // a default selection of emoji.
                 if (fav.length < showQuickReactionCount) {
-                    // If we have less emoji than we want to show, expand with
-                    // a default selection of emoji.
                     return Promise.all(
                         defaultReactions.map((em) => emojiDb.getEmojiByShortcode(em)),
                     )
-                        .then((def) => def.filter((v) => v != null) as Emoji[])
-                        .then((def) => fav.concat(def).slice(0, showQuickReactionCount));
+                        .then((def) => getUnicodeBySkintone(skintone, def.filter((v) => v != null)))
+                        .then((defUnicode) => [...new Set(favUnicode.concat(defUnicode))].slice(0, showQuickReactionCount))
                 }
 
-                return fav;
-            })
-            .catch((e) => {
+                return favUnicode;
+            }).catch((e) => {
                 console.log(e);
-                return [];
+                return ([] as string[]);
             });
     }
 
-    const { subscribe, set } = writable<Emoji[]>([]);
-    loadQuickReactions().then(set);
+    function loadSkintoneAndQuickReactions() {
+        return emojiDb
+            .getPreferredSkinTone()
+            .then(loadQuickReactions);
+    }
+
+    const { subscribe, set } = writable<string[]>([]);
+    loadSkintoneAndQuickReactions().then(set);
 
     return {
         subscribe,
@@ -41,8 +61,11 @@ function initQuickReactions() {
         },
 
         // Reload favourite reactions
-        reload: (): void => {
-            loadQuickReactions().then(set);
+        reload: (skintone?: number): void => {
+            (skintone
+                ? loadQuickReactions(skintone)
+                : loadSkintoneAndQuickReactions()
+            ).then(set);
         },
     };
 }

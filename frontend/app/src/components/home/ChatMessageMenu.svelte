@@ -265,14 +265,12 @@
 
 <div class="menu" class:inert class:rtl={$rtlStore}>
     {#if !inert}
-        {#each $quickReactions as emoji}
-            {#if "unicode" in emoji}
-                <HoverIcon compact={true} onclick={() => selectQuickReaction(emoji.unicode)}>
-                    <div class="quick-reaction">
-                        {emoji.unicode}
-                    </div>
-                </HoverIcon>
-            {/if}
+        {#each $quickReactions as reaction}
+            <HoverIcon compact={true} onclick={() => selectQuickReaction(reaction)}>
+                <div class="quick-reaction">
+                    {reaction}
+                </div>
+            </HoverIcon>
         {/each}
     {/if}
     <MenuIcon bind:this={menuIcon} centered position={"right"} align={"end"}>
