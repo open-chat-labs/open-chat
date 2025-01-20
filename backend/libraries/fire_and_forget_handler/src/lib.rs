@@ -128,7 +128,7 @@ impl FireAndForgetHandlerInner {
         } else {
             let mut results = Vec::new();
             for calls in self.canisters.values_mut().filter(|c| c.in_progress.is_empty()) {
-                while calls.queue.first_key_value().map_or(false, |((ts, _), _)| *ts <= now) {
+                while calls.queue.first_key_value().is_some_and(|((ts, _), _)| *ts <= now) {
                     results.push(calls.queue.pop_first().unwrap().1);
                     if results.len() as u32 == max_count {
                         break;

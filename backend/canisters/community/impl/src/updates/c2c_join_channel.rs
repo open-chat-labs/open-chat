@@ -30,7 +30,7 @@ async fn c2c_join_channel(args: Args) -> Response {
             .data
             .members
             .get_by_user_id(&args.user_id)
-            .map_or(false, |member| !member.lapsed().value)
+            .is_some_and(|member| !member.lapsed().value)
     }) {
         check_gate_then_join_channel(&args).await
     } else {

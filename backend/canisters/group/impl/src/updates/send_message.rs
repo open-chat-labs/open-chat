@@ -171,7 +171,7 @@ fn process_send_message_result(
                         .chat
                         .members
                         .get(&c.recipient)
-                        .map_or(false, |m| !m.user_type().is_bot())
+                        .is_some_and(|m| !m.user_type().is_bot())
                     {
                         state
                             .data
@@ -188,7 +188,7 @@ fn process_send_message_result(
                             .chat
                             .members
                             .get(&user.user_id)
-                            .map_or(false, |m| !m.user_type().is_bot())
+                            .is_some_and(|m| !m.user_type().is_bot())
                     {
                         activity_events.push((user.user_id, MessageActivity::Mention));
                     }
@@ -212,7 +212,7 @@ fn process_send_message_result(
                                 .chat
                                 .members
                                 .get(&message.sender)
-                                .map_or(false, |m| !m.user_type().is_bot())
+                                .is_some_and(|m| !m.user_type().is_bot())
                         {
                             activity_events.push((message.sender, MessageActivity::QuoteReply));
                         }

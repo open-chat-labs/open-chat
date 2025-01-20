@@ -95,7 +95,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
                     }),
                 referred_by_member: args
                     .referred_by
-                    .map_or(false, |user_id| state.data.members.get_by_user_id(&user_id).is_some()),
+                    .is_some_and(|user_id| state.data.members.get_by_user_id(&user_id).is_some()),
                 now: state.env.now(),
             },
         )

@@ -36,7 +36,7 @@ impl DiamondMembershipDetailsInternal {
     }
 
     pub fn is_active(&self, now: TimestampMillis) -> bool {
-        self.expires_at.map_or(false, |ts| now < ts)
+        self.expires_at.is_some_and(|ts| now < ts)
     }
 
     pub fn was_active(&self, timestamp: TimestampMillis) -> bool {
