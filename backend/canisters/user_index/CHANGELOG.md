@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `remove_bot` endpoint callable by proposal or bot owner ([#7254](https://github.com/open-chat-labs/open-chat/pull/7254))
+
 ### Changed
 
 - Allow bots to upload 1GB of file data ([#7131](https://github.com/open-chat-labs/open-chat/pull/7131))
@@ -17,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
 - Reduce channel Ids to 32 bits down from 128 bits ([#7233](https://github.com/open-chat-labs/open-chat/pull/7233))
 - Sync platform moderators/operators to LocalUserIndexes ([#7248](https://github.com/open-chat-labs/open-chat/pull/7248))
-- Support updating bot principal but not name ([#7250](https://github.com/open-chat-labs/open-chat/pull/7250))
+- Support updating bot principal but not name ([#7253](https://github.com/open-chat-labs/open-chat/pull/7253))
 
 ### Fixed
 

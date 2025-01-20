@@ -194,6 +194,16 @@ type UpdateBotResponse = variant {
     TooManyCommands;
 };
 
+type RemoveBotArgs = record {
+    bot_id : UserId;
+};
+
+type RemoveBotResponse = variant {
+    Success;
+    BotNotFound;
+    NotAuthorised;
+};
+
 type BotDefinition = record {
     description : text;
     commands : vec SlashCommandSchema;
@@ -334,4 +344,7 @@ service : {
 
     // Only callable by bot owner
     update_bot : (UpdateBotArgs) -> (UpdateBotResponse);
+
+    // Only callable by SNS governance canister or by bot owner
+    remove_bot : (RemoveBotArgs) -> (RemoveBotResponse);
 };

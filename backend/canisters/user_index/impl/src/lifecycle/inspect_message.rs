@@ -43,6 +43,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "suspected_bots" => state.is_caller_governance_principal(),
         "award_external_achievement" | "modclub_callback" => true,
         "register_bot" => state.data.test_mode || state.is_caller_governance_principal(),
+        "remove_bot" => state.is_caller_governance_principal() || state.is_caller_openchat_user(),
         _ => false,
     };
 
