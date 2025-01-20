@@ -17,7 +17,7 @@ function initQuickReactions() {
                     : emoji.skins.find((val) => val.tone === skintone ? val.unicode : null)?.unicode
             }
         })
-        .filter((u) => u !== undefined);
+        .filter((u) => u !== undefined) as string[];
     }
 
     function loadQuickReactions(skintone: number) {
@@ -32,7 +32,7 @@ function initQuickReactions() {
                     return Promise.all(
                         defaultReactions.map((em) => emojiDb.getEmojiByShortcode(em)),
                     )
-                        .then((def) => getUnicodeBySkintone(skintone, def.filter((v) => v != null)))
+                        .then((def) => getUnicodeBySkintone(skintone, def.filter((v) => v != null) as Emoji[]))
                         .then((defUnicode) => [...new Set(favUnicode.concat(defUnicode))].slice(0, showQuickReactionCount))
                 }
 
@@ -60,7 +60,7 @@ function initQuickReactions() {
             emojiDb.incrementFavoriteEmojiCount(unicode);
         },
 
-        // Reload favourite reactions
+        // Reload reactions
         reload: (skintone?: number): void => {
             (skintone
                 ? loadQuickReactions(skintone)
