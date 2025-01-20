@@ -264,31 +264,17 @@
 </script>
 
 <div class="menu" class:inert class:rtl={$rtlStore}>
-    {#await $quickReactions then [fst, snd, thrd]}
-        {#if !inert}
-            {#if "unicode" in fst}
-                <HoverIcon compact={true} onclick={() => selectQuickReaction(fst.unicode)}>
+    {#if !inert}
+        {#each $quickReactions as emoji}
+            {#if "unicode" in emoji}
+                <HoverIcon compact={true} onclick={() => selectQuickReaction(emoji.unicode)}>
                     <div class="quick-reaction">
-                        {fst.unicode}
+                        {emoji.unicode}
                     </div>
                 </HoverIcon>
             {/if}
-            {#if "unicode" in snd}
-                <HoverIcon compact={true} onclick={() => selectQuickReaction(snd.unicode)}>
-                    <div class="quick-reaction">
-                        {snd.unicode}
-                    </div>
-                </HoverIcon>
-            {/if}
-            {#if "unicode" in thrd}
-                <HoverIcon compact={true} onclick={() => selectQuickReaction(thrd.unicode)}>
-                    <div class="quick-reaction">
-                        {thrd.unicode}
-                    </div>
-                </HoverIcon>
-            {/if}
-        {/if}
-    {/await}
+        {/each}
+    {/if}
     <MenuIcon bind:this={menuIcon} centered position={"right"} align={"end"}>
         <div class="menu-icon" slot="icon">
             <HoverIcon compact>
