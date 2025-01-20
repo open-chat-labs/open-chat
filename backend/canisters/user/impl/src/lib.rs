@@ -375,7 +375,7 @@ impl Data {
     }
 
     pub fn is_diamond_member(&self, now: TimestampMillis) -> bool {
-        self.diamond_membership_expires_at.map_or(false, |ts| now < ts)
+        self.diamond_membership_expires_at.is_some_and(|ts| now < ts)
     }
 
     pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {

@@ -2479,7 +2479,7 @@ lazy_static! {
 fn is_everyone_mentioned(content: &MessageContentInternal) -> bool {
     content
         .text()
-        .map_or(false, |text| text.contains("@everyone") && EVERYONE_REGEX.is_match(text))
+        .is_some_and(|text| text.contains("@everyone") && EVERYONE_REGEX.is_match(text))
 }
 
 enum PrepareSendMessageResult {

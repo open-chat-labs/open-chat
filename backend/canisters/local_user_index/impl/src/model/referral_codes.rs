@@ -95,7 +95,7 @@ impl ReferralCodes {
         }
 
         if let Some(details) = self.codes.get(code) {
-            if details.expiry.as_ref().map_or(false, |ts| *ts < now) {
+            if details.expiry.as_ref().is_some_and(|ts| *ts < now) {
                 Err(ReferralCodeError::Expired)
             } else if details.claimed.is_some() {
                 Err(ReferralCodeError::AlreadyClaimed)

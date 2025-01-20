@@ -35,7 +35,7 @@ impl<J> TimerJobs<J> {
         let timer_id = self
             .jobs
             .iter()
-            .find(|(_, (_, wrapper))| wrapper.deref().borrow().as_ref().map_or(false, |j| filter(j)))
+            .find(|(_, (_, wrapper))| wrapper.deref().borrow().as_ref().is_some_and(|j| filter(j)))
             .map(|(timer_id, _)| *timer_id)?;
 
         ic_cdk_timers::clear_timer(timer_id);

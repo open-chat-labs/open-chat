@@ -672,7 +672,7 @@ impl GroupMemberInternal {
             || (self
                 .rules_accepted
                 .as_ref()
-                .map_or(false, |accepted| accepted.value >= rules.text.version))
+                .is_some_and(|accepted| accepted.value >= rules.text.version))
     }
 
     pub fn iter_proposal_votes_since(
