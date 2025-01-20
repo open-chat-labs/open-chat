@@ -477,7 +477,7 @@ fn multiple_events_on_one_message_and_check_activity_feed(chat_type: ChatType) {
 
     tick_many(env, 3);
 
-    assert!(client::user::happy_path::updates(env, &us, 0).map_or(false, |result| result.message_activity_summary.is_some()));
+    assert!(client::user::happy_path::updates(env, &us, 0).is_some_and(|result| result.message_activity_summary.is_some()));
 
     let feed = client::user::happy_path::message_activity_feed(env, &us, 0);
     assert_eq!(feed.total, 2);
@@ -493,7 +493,7 @@ fn multiple_events_on_one_message_and_check_activity_feed(chat_type: ChatType) {
 }
 
 fn check_updates(env: &mut PocketIc, start: TimestampMillis, us: &User, them: &User, expected_activity: MessageActivity) {
-    assert!(client::user::happy_path::updates(env, us, start).map_or(false, |result| result.message_activity_summary.is_some()));
+    assert!(client::user::happy_path::updates(env, us, start).is_some_and(|result| result.message_activity_summary.is_some()));
 
     let feed = client::user::happy_path::message_activity_feed(env, us, start);
     assert_eq!(feed.total, 1);

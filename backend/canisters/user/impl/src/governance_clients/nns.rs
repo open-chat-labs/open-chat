@@ -23,7 +23,7 @@ pub async fn get_ballots(governance_canister_id: CanisterId, proposal_id: Propos
         .proposal_info
         .into_iter()
         .next()
-        .filter(|p| p.id.as_ref().map_or(false, |id| id.id == proposal_id))
+        .filter(|p| p.id.as_ref().is_some_and(|id| id.id == proposal_id))
         .map(|p| match p.reward_status {
             REWARD_STATUS_ACCEPTING_VOTES => GetBallotsResult::Success(
                 p.ballots

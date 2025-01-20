@@ -17,7 +17,7 @@ impl ExpiringEvents {
     }
 
     pub fn take_next_expired_event(&mut self, now: TimestampMillis) -> Option<EventIndex> {
-        if self.next_event_expiry().map_or(false, |ts| ts <= now) {
+        if self.next_event_expiry().is_some_and(|ts| ts <= now) {
             self.event_expiry_dates.pop_first().map(|(_, i)| i)
         } else {
             None

@@ -30,7 +30,7 @@ pub struct EventWrapperInternal<T> {
 
 impl<T> EventWrapperInternal<T> {
     pub fn is_expired(&self, now: TimestampMillis) -> bool {
-        self.expires_at.map_or(false, |expiry| expiry < now)
+        self.expires_at.is_some_and(|expiry| expiry < now)
     }
 }
 

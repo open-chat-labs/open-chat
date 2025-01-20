@@ -4,7 +4,9 @@ use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
-use local_user_index_canister::{PlatformOperatorStatusChanged, UserDetailsFull, UserIndexEvent};
+use local_user_index_canister::{
+    PlatformModeratorStatusChanged, PlatformOperatorStatusChanged, UserDetailsFull, UserIndexEvent,
+};
 use stable_memory::get_reader;
 use tracing::info;
 use types::CanisterId;
@@ -34,8 +36,21 @@ fn post_upgrade(args: Args) {
                     user_type: user.user_type,
                     referred_by: user.referred_by,
                     is_platform_moderator: data.platform_moderators.contains(&user.user_id),
+                    is_platform_operator: data.platform_operators.contains(&user.user_id),
                     diamond_membership_expires_at: user.diamond_membership_details.expires_at(),
                     unique_person_proof: user.unique_person_proof.clone(),
+                }),
+            )
+        }
+    }
+
+    for platform_moderator in data.platform_moderators.iter() {
+        for local_user_index in local_user_indexes.iter() {
+            data.user_index_event_sync_queue.push(
+                *local_user_index,
+                UserIndexEvent::PlatformModeratorStatusChanged(PlatformModeratorStatusChanged {
+                    user_id: *platform_moderator,
+                    is_platform_moderator: true,
                 }),
             )
         }

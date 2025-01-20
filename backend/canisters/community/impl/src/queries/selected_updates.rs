@@ -67,11 +67,11 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     for (user_id, update) in state.data.members.iter_latest_updates(args.updates_since) {
         match update {
             MemberUpdate::Added => {
-                let referral_added = member.as_ref().map_or(false, |m| m.referrals().contains(&user_id));
+                let referral_added = member.as_ref().is_some_and(|m| m.referrals().contains(&user_id));
                 user_updates_handler.mark_member_updated(&mut result, user_id, referral_added, false);
             }
             MemberUpdate::Removed => {
-                let referral_removed = member.as_ref().map_or(false, |m| m.referrals_removed().contains(&user_id));
+                let referral_removed = member.as_ref().is_some_and(|m| m.referrals_removed().contains(&user_id));
                 user_updates_handler.mark_member_updated(&mut result, user_id, referral_removed, true);
             }
             MemberUpdate::RoleChanged => {

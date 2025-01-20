@@ -8,7 +8,7 @@ use group_chat_core::UpdateResult;
 use group_community_common::{ExpiringMember, Members};
 use group_index_canister::{c2c_make_private, c2c_update_group};
 use tracing::error;
-use types::{AccessGateConfigInternal, CanisterId, ChatId, Document, OptionUpdate, TimestampMillis, UserId};
+use types::{AccessGateConfigInternal, CanisterId, ChatId, Document, OptionUpdate, TimestampMillis, Timestamped, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -153,6 +153,17 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessResult {
     let prev_gate_config = state.data.chat.gate_config.value.clone();
     let now = state.env.now();
+
+    if state.data.verified.value {
+        if let (Some(new_name), Some(new_public)) = (args.name.as_ref(), args.public) {
+            if new_name.to_lowercase() != state.data.chat.name.value.to_lowercase()
+                || (new_public != state.data.chat.is_public.value && !new_public)
+            {
+                // If a verified group changes its name or becomes private it loses it's verified status
+                state.data.verified = Timestamped::new(false, now);
+            }
+        }
+    }
 
     let result = state.data.chat.do_update(
         my_user_id,

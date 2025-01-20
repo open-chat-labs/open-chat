@@ -168,7 +168,7 @@ impl RuntimeState {
                 rules_accepted: m
                     .rules_accepted
                     .as_ref()
-                    .map_or(false, |version| version.value >= self.data.rules.text.version),
+                    .is_some_and(|version| version.value >= self.data.rules.text.version),
                 display_name: m.display_name().value.clone(),
                 lapsed: m.lapsed().value,
             };
@@ -535,7 +535,7 @@ impl Data {
     pub fn is_invited(&self, caller: Principal) -> bool {
         self.members
             .lookup_user_id(caller)
-            .map_or(false, |u| self.invited_users.get(&u).is_some())
+            .is_some_and(|u| self.invited_users.get(&u).is_some())
     }
 
     pub fn build_chat_metrics(&mut self, now: TimestampMillis) {
@@ -631,7 +631,7 @@ impl Data {
         if let Some(channel_id) = channel_id {
             self.channels
                 .get(&channel_id)
-                .map_or(false, |c| c.chat.members.can_member_lapse(user_id))
+                .is_some_and(|c| c.chat.members.can_member_lapse(user_id))
         } else {
             self.members.can_member_lapse(user_id)
         }
