@@ -51,15 +51,42 @@ impl Visitor<'_> for MessageIdVisitor {
         formatter.write_str("a positive integer")
     }
 
+    fn visit_i8<E: Error>(self, v: i8) -> Result<Self::Value, E> {
+        self.visit_i64(v.into())
+    }
+
+    fn visit_i16<E: Error>(self, v: i16) -> Result<Self::Value, E> {
+        self.visit_i64(v.into())
+    }
+
+    fn visit_i32<E: Error>(self, v: i32) -> Result<Self::Value, E> {
+        self.visit_i64(v.into())
+    }
+
     fn visit_i64<E: Error>(self, v: i64) -> Result<Self::Value, E> {
-        self.visit_i128(v as i128)
+        match u64::try_from(v) {
+            Ok(v) => self.visit_u64(v),
+            Err(_) => Err(E::custom(format!("MessageId cannot be negative: {v}"))),
+        }
     }
 
     fn visit_i128<E: Error>(self, v: i128) -> Result<Self::Value, E> {
         match u128::try_from(v) {
             Ok(v) => self.visit_u128(v),
-            Err(_) => Err(E::custom(format!("MessageId cannot be negative: {}", v))),
+            Err(_) => Err(E::custom(format!("MessageId cannot be negative: {v}"))),
         }
+    }
+
+    fn visit_u8<E: Error>(self, v: u8) -> Result<Self::Value, E> {
+        self.visit_u64(v.into())
+    }
+
+    fn visit_u16<E: Error>(self, v: u16) -> Result<Self::Value, E> {
+        self.visit_u64(v.into())
+    }
+
+    fn visit_u32<E: Error>(self, v: u32) -> Result<Self::Value, E> {
+        self.visit_u64(v.into())
     }
 
     fn visit_u64<E: Error>(self, v: u64) -> Result<Self::Value, E> {
