@@ -29,6 +29,10 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_group_upgrade_concurrency"
         | "unfreeze_community"
         | "unfreeze_group" => true,
+        "revoke_community_verification"
+        | "revoke_group_verification"
+        | "set_group_verification"
+        | "set_community_verification" => state.is_caller_governance_principal(),
         _ => false,
     };
 

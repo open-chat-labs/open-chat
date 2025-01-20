@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
 - Reduce channel Ids to 32 bits down from 128 bits ([#7233](https://github.com/open-chat-labs/open-chat/pull/7233))
+- Sync platform moderators/operators to LocalUserIndexes ([#7248](https://github.com/open-chat-labs/open-chat/pull/7248))
+- Support updating bot principal but not name ([#7250](https://github.com/open-chat-labs/open-chat/pull/7250))
 
 ## [[2.0.1567](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1567-local_user_index)] - 2025-01-14
 

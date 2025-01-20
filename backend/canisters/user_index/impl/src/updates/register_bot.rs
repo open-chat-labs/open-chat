@@ -128,7 +128,7 @@ fn validate_request(args: &Args, state: &RuntimeState) -> Result<(), String> {
         Err(UsernameValidationError::Invalid) => return Err("name invalid".to_string()),
     };
 
-    if args.avatar.as_ref().map_or(false, |a| a.len() > MAX_AVATAR_SIZE) {
+    if args.avatar.as_ref().is_some_and(|a| a.len() > MAX_AVATAR_SIZE) {
         return Err("avatar too big".to_string());
     }
 

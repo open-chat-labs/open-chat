@@ -168,7 +168,7 @@ impl RuntimeState {
                 rules_accepted: m
                     .rules_accepted
                     .as_ref()
-                    .map_or(false, |version| version.value >= self.data.rules.text.version),
+                    .is_some_and(|version| version.value >= self.data.rules.text.version),
                 display_name: m.display_name().value.clone(),
                 lapsed: m.lapsed().value,
             };
@@ -228,6 +228,7 @@ impl RuntimeState {
             user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
             is_invited,
             metrics: data.cached_chat_metrics.value.clone(),
+            verified: data.verified.value,
         }
     }
 
@@ -411,6 +412,8 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: GroupBots,
+    #[serde(default)]
+    verified: Timestamped<bool>,
 }
 
 impl Data {
@@ -514,6 +517,7 @@ impl Data {
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: GroupBots::default(),
+            verified: Timestamped::default(),
         }
     }
 
@@ -531,7 +535,7 @@ impl Data {
     pub fn is_invited(&self, caller: Principal) -> bool {
         self.members
             .lookup_user_id(caller)
-            .map_or(false, |u| self.invited_users.get(&u).is_some())
+            .is_some_and(|u| self.invited_users.get(&u).is_some())
     }
 
     pub fn build_chat_metrics(&mut self, now: TimestampMillis) {
@@ -627,7 +631,7 @@ impl Data {
         if let Some(channel_id) = channel_id {
             self.channels
                 .get(&channel_id)
-                .map_or(false, |c| c.chat.members.can_member_lapse(user_id))
+                .is_some_and(|c| c.chat.members.can_member_lapse(user_id))
         } else {
             self.members.can_member_lapse(user_id)
         }

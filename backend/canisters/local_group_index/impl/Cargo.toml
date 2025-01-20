@@ -16,11 +16,13 @@ canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 community_canister = { path = "../../community/api" }
+community_canister_c2c_client = { path = "../../community/c2c_client" }
 constants = { path = "../../../libraries/constants" }
 event_store_producer = { workspace = true }
 event_store_producer_cdk_runtime = { workspace = true }
 event_store_utils = { workspace = true }
 group_canister = { path = "../../group/api" }
+group_canister_c2c_client = { path = "../../group/c2c_client" }
 futures = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
@@ -33,6 +35,7 @@ serde = { workspace = true }
 serde_bytes = { workspace = true }
 sha256 = { path = "../../../libraries/sha256" }
 stable_memory = { path = "../../../libraries/stable_memory" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

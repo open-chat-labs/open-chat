@@ -37,10 +37,11 @@ fn summary_updates_impl(
     }
 
     let member = state.data.members.get(caller);
-    let mut last_updated = max(
+    let mut updated_timestamps = vec![
         state.data.details_last_updated(),
         member.as_ref().map(|m| m.last_updated()).unwrap_or_default(),
-    );
+        state.data.verified.timestamp,
+    ];
 
     let (channels_with_updates, channels_removed) = if let Some(m) = &member {
         let channels_with_updates: Vec<_> = state
@@ -59,7 +60,7 @@ fn summary_updates_impl(
             .channels_removed_for_member(m.user_id)
             .filter(|(_, ts)| *ts > updates_since)
         {
-            last_updated = max(last_updated, timestamp);
+            updated_timestamps.push(timestamp);
             channels_removed.push(channel_id);
         }
 
@@ -76,6 +77,8 @@ fn summary_updates_impl(
         (channels_with_updates, Vec::new())
     };
 
+    let mut last_updated = updated_timestamps.into_iter().max().unwrap_or_default();
+
     if channels_with_updates.is_empty() && channels_removed.is_empty() && last_updated <= updates_since {
         return SuccessNoUpdates;
     }
@@ -87,7 +90,7 @@ fn summary_updates_impl(
     let is_community_member = member.is_some();
 
     for channel in channels_with_updates {
-        if channel.date_imported.map_or(false, |ts| ts > updates_since) {
+        if channel.date_imported.is_some_and(|ts| ts > updates_since) {
             if let Some(summary) =
                 channel.summary(user_id, is_community_member, state.data.is_public.value, &state.data.members)
             {
@@ -195,5 +198,6 @@ fn summary_updates_impl(
             .collect(),
         user_groups_deleted: state.data.members.user_groups_deleted_since(updates_since),
         metrics: state.data.cached_chat_metrics.if_set_after(updates_since).cloned(),
+        verified: state.data.verified.if_set_after(updates_since).copied(),
     })
 }

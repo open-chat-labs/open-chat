@@ -56,13 +56,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
                         args.thread_root_message_index,
                         args.message_index.into(),
                     ) {
-                        if state
-                            .data
-                            .chat
-                            .members
-                            .get(&creator)
-                            .map_or(false, |m| !m.user_type().is_bot())
-                        {
+                        if state.data.chat.members.get(&creator).is_some_and(|m| !m.user_type().is_bot()) {
                             state.data.user_event_sync_queue.push(
                                 creator,
                                 GroupCanisterEvent::MessageActivity(MessageActivityEvent {

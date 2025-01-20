@@ -32,6 +32,14 @@ pub fn caller_is_group_index_or_local_group_index() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_local_group_index() -> Result<(), String> {
+    if read_state(|state| state.is_caller_local_group_index()) {
+        Ok(())
+    } else {
+        Err("Caller is not the local_group_index".to_string())
+    }
+}
+
 pub fn caller_is_proposals_bot() -> Result<(), String> {
     if read_state(|state| state.is_caller_proposals_bot()) {
         Ok(())

@@ -15,6 +15,10 @@ generate_update_call!(upgrade_community_canister_wasm);
 generate_update_call!(upgrade_group_canister_wasm);
 generate_update_call!(upgrade_local_group_index_canister_wasm);
 generate_update_call!(upload_wasm_chunk);
+generate_update_call!(revoke_community_verification);
+generate_update_call!(revoke_group_verification);
+generate_update_call!(set_community_verification);
+generate_update_call!(set_group_verification);
 
 pub mod happy_path {
     use crate::User;

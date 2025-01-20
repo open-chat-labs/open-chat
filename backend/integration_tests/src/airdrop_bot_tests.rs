@@ -24,7 +24,7 @@ fn airdrop_end_to_end(v2: bool) {
     // Setup the environment for the test...
     // Create 1 owner and 5 other users
     // Owner creates the airdrop community
-    // Join each other user to the community
+    // Join other users to the community
     // Owner creates a public airdrop channel gated by diamond
     // The users join the channel
     // Transfer 63,001 CHAT to the airdrop_bot canister

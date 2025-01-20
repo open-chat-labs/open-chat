@@ -368,7 +368,7 @@ impl ThreadSummaryInternal {
     pub fn hydrate(&self, my_user_id: Option<UserId>) -> ThreadSummary {
         ThreadSummary {
             participant_ids: self.participants.clone(),
-            followed_by_me: my_user_id.map_or(false, |u| self.followers.contains(&u)),
+            followed_by_me: my_user_id.is_some_and(|u| self.followers.contains(&u)),
             reply_count: self.reply_count,
             latest_event_index: self.latest_event_index,
             latest_event_timestamp: self.latest_event_timestamp,
