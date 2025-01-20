@@ -1690,6 +1690,7 @@ export type CandidateGroupChat = AccessControlled &
         eventsTTL?: bigint;
         messagesVisibleToNonMembers?: boolean;
         externalUrl?: string;
+        verified: boolean;
     };
 
 export type CandidateChannel = CandidateGroupChat;

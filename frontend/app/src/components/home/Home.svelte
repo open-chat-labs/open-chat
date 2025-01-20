@@ -1075,6 +1075,7 @@
                 },
                 messagesVisibleToNonMembers: false,
                 externalUrl: embeddedContent ? "" : undefined,
+                verified: false,
             },
         };
     }
@@ -1107,6 +1108,7 @@
                 eventsTTL: chat.eventsTTL,
                 messagesVisibleToNonMembers: chat.messagesVisibleToNonMembers,
                 externalUrl: chat.kind === "channel" ? chat.externalUrl : undefined,
+                verified: chat.kind === "group_chat" ? chat.verified : false,
             },
         };
     }
