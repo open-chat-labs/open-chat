@@ -141,8 +141,7 @@ impl RuntimeState {
         self.data
             .global_users
             .get_by_principal(&caller)
-            // TODO switch to `is_platform_operator` once UserIndex is released
-            .is_some_and(|u| u.is_platform_moderator)
+            .is_some_and(|u| u.is_platform_operator)
     }
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent) {
