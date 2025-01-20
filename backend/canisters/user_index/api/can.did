@@ -171,7 +171,7 @@ type RegisterBotResponse = variant {
 type UpdateBotArgs = record {
     bot_id : UserId;
     owner : opt UserId;
-    name : opt text;
+    "principal" : opt principal;
     avatar : TextUpdate; // Image as a data URL
     endpoint : opt text;
     definition : opt BotDefinition;
@@ -179,8 +179,7 @@ type UpdateBotArgs = record {
 
 type UpdateBotResponse = variant {
     Success;
-    NameInvalid;
-    NameAlreadyExists;
+    PrincipalAlreadyUsed;
     AvatarInvalid;
     EndpointInvalid;
     BotNotFound;

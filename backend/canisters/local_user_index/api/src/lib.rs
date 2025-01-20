@@ -93,7 +93,6 @@ pub struct BotRegistered {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BotUpdated {
     pub user_id: UserId,
-    pub name: Option<String>,
     pub commands: Option<Vec<SlashCommandSchema>>,
 }
 

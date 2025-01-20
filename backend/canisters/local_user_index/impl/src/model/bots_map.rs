@@ -32,11 +32,8 @@ impl BotsMap {
         self.principal_to_user_id.insert(user_principal, user_id);
     }
 
-    pub fn update(&mut self, user_id: UserId, name: Option<String>, commands: Option<Vec<SlashCommandSchema>>) {
+    pub fn update(&mut self, user_id: UserId, commands: Option<Vec<SlashCommandSchema>>) {
         self.bots.entry(user_id).and_modify(|bot| {
-            if let Some(name) = name {
-                bot.name = name;
-            }
             if let Some(commands) = commands {
                 bot.commands = commands;
             }
