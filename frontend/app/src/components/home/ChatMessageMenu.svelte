@@ -2,7 +2,6 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
@@ -22,6 +21,7 @@
     import CollapseIcon from "svelte-material-icons/ArrowCollapseUp.svelte";
     import EyeArrowRightIcon from "svelte-material-icons/EyeArrowRight.svelte";
     import EyeOffIcon from "svelte-material-icons/EyeOff.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import { _, locale } from "svelte-i18n";
@@ -47,6 +47,7 @@
     import { copyToClipboard } from "../../utils/urls";
     import { isTouchDevice } from "../../utils/devices";
     import Translatable from "../Translatable.svelte";
+    import { quickReactions } from "../../stores/quickReactions";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -74,10 +75,10 @@
     export let canRevealBlocked: boolean;
     export let translatable: boolean;
     export let translated: boolean;
-    export let crypto: boolean;
     export let msg: Message;
     export let threadRootMessage: Message | undefined;
     export let canTip: boolean;
+    export let selectQuickReaction: (unicode: string) => void;
 
     let menuIcon: MenuIcon;
 
@@ -262,11 +263,20 @@
     }
 </script>
 
-<div class="menu" class:rtl={$rtlStore}>
+<div class="menu" class:inert class:rtl={$rtlStore}>
+    {#if !inert}
+        {#each $quickReactions as reaction}
+            <HoverIcon compact={true} onclick={() => selectQuickReaction(reaction)}>
+                <div class="quick-reaction">
+                    {reaction}
+                </div>
+            </HoverIcon>
+        {/each}
+    {/if}
     <MenuIcon bind:this={menuIcon} centered position={"right"} align={"end"}>
         <div class="menu-icon" slot="icon">
             <HoverIcon compact>
-                <ChevronDown size="1.6em" color={me ? "#fff" : "var(--icon-txt)"} />
+                <DotsVertical size="1.4em" color="var(--menu-txt)" />
             </HoverIcon>
         </div>
         <div slot="menu">
@@ -512,15 +522,51 @@
 </div>
 
 <style lang="scss">
-    .menu {
-        $offset: -2px;
-        position: absolute;
-        top: -4px;
-        right: $offset;
+    // This will align the menu relative to the selected side of the chat
+    // bubble with 0.75rem overflow, or align it to the opposite edge of the
+    // chat bubble if the menu width is larger than the chat bubble's.
+    @mixin calcMenuOffset($property, $menu-width) {
+        #{$property}: calc(100% - min(100%, calc($menu-width - 0.75rem)));
+    }
 
-        &.rtl {
-            left: $offset;
-            right: unset;
+    .menu {
+        // Menu width for 3 reactions and a menu button.
+        &:not(.inert) {
+            $menu-width: 7.75rem;
+        }
+
+        &.inert {
+            $menu-width: 2rem;
+        }
+
+        position: absolute;
+        width: fit-content;
+        background-color: var(--menu-bg);
+        border: var(--bw) solid var(--menu-bd);
+
+        top: -1.5rem;
+        padding: 0.125rem;
+        border-radius: 0.375rem;
+
+        &:not(.inert) {
+            $menu-width: 7.75rem;
+            &:not(.rtl) {
+                @include calcMenuOffset(left, $menu-width);
+            }
+            &.rtl {
+                @include calcMenuOffset(right, $menu-width);
+            }
+        }
+
+        &.inert {
+            // For inert messages we don't display reactions
+            $menu-width: 2rem;
+            &:not(.rtl) {
+                @include calcMenuOffset(left, $menu-width);
+            }
+            &.rtl {
+                @include calcMenuOffset(right, $menu-width);
+            }
         }
     }
 
@@ -528,8 +574,11 @@
         margin-left: $sp1;
     }
 
-    .menu-icon {
-        transition: opacity ease-in-out 200ms;
-        opacity: 0;
+    .quick-reaction {
+        width: 1.4rem;
+        height: 1.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>
