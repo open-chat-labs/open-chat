@@ -924,13 +924,19 @@
         max-width: var(--max-width);
         min-width: 90px;
 
-        &.proposal {
-            max-width: 800px;
-            width: 100%;
-        }
-
         &.p2pSwap {
             width: 350px;
+        }
+
+        &.proposal {
+            max-width: 800px;
+        }
+
+        &.proposal,
+        &.p2pSwap {
+            .message-bubble {
+                width: 100%;
+            }
         }
     }
 
