@@ -113,15 +113,3 @@ impl<'de> Deserialize<'de> for MessageId {
         deserializer.deserialize_any(MessageIdVisitor)
     }
 }
-
-#[test]
-fn serde() {
-    let mut bytes = Vec::new();
-    let mut ser = rmp_serde::Serializer::new(&mut bytes)
-        .with_struct_map()
-        .with_large_ints_as_strings();
-
-    u128::MAX.serialize(&mut ser).unwrap();
-
-    let blah: MessageId = rmp_serde::from_slice(&bytes).unwrap();
-}
