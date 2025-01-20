@@ -1,5 +1,4 @@
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_leave_community::{Response::*, *};
@@ -36,11 +35,10 @@ fn c2c_leave_community_impl(args: Args, state: &mut RuntimeState) -> Response {
         return LastOwnerCannotLeave;
     }
 
-    state.data.remove_user_from_community(
-        member.user_id,
-        if args.principal == Principal::anonymous() { None } else { Some(args.principal) },
-        now,
-    );
+    state
+        .data
+        .remove_user_from_community(member.user_id, Some(args.principal), now);
+
     handle_activity_notification(state);
     Success
 }
