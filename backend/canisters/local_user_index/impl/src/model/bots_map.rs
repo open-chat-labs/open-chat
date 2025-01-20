@@ -14,6 +14,9 @@ pub struct Bot {
     pub user_id: UserId,
     pub name: String,
     pub commands: Vec<SlashCommandSchema>,
+    // TODO: Remove after next release
+    #[serde(default = "Principal::anonymous")]
+    pub principal: Principal,
 }
 
 impl BotsMap {
@@ -28,7 +31,15 @@ impl BotsMap {
     }
 
     pub fn add(&mut self, user_principal: Principal, user_id: UserId, name: String, commands: Vec<SlashCommandSchema>) {
-        self.bots.insert(user_id, Bot { user_id, name, commands });
+        self.bots.insert(
+            user_id,
+            Bot {
+                user_id,
+                name,
+                commands,
+                principal: user_principal,
+            },
+        );
         self.principal_to_user_id.insert(user_principal, user_id);
     }
 
@@ -38,6 +49,12 @@ impl BotsMap {
                 bot.commands = commands;
             }
         });
+    }
+
+    pub fn remove(&mut self, user_id: &UserId) -> Option<Bot> {
+        let bot = self.bots.remove(user_id)?;
+        self.principal_to_user_id.remove(&bot.principal);
+        Some(bot)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Bot> {

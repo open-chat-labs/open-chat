@@ -235,6 +235,10 @@ impl UserMap {
         Some(user)
     }
 
+    pub fn remove_bot(&mut self, bot_id: &UserId) -> Option<Bot> {
+        self.bots.remove(bot_id)
+    }
+
     pub fn is_deleted(&self, user_id: &UserId) -> bool {
         self.deleted_users.contains_key(user_id) && !self.users.contains_key(user_id)
     }
