@@ -257,7 +257,10 @@ impl MessageContentInitial {
     ) -> Result<(), ContentValidationError> {
         if forwarding {
             match self {
-                MessageContentInitial::Crypto(_) | MessageContentInitial::Poll(_) | MessageContentInitial::P2PSwap(_) => {
+                MessageContentInitial::Crypto(_)
+                | MessageContentInitial::Poll(_)
+                | MessageContentInitial::P2PSwap(_)
+                | MessageContentInitial::Prize(_) => {
                     return Err(ContentValidationError::InvalidTypeForForwarding);
                 }
                 _ => {}
