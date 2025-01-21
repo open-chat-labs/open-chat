@@ -109,7 +109,10 @@
     let botSchemaLoaded = false;
     let botPrincipal = "";
     let transferSnsFunds: TransferSnsFunds | undefined;
+    let setVerification: VerificationProposal | undefined;
     let transferSnsFundsValid: boolean;
+    let setCommunityVerificationValid: boolean;
+    let setGroupVerificationValid: boolean;
 
     $: errorMessage =
         error !== undefined ? i18nKey("proposal.maker." + error) : $pinNumberErrorMessageStore;
@@ -160,6 +163,9 @@
             selectedProposalType === "advance_sns_target_version" ||
             (selectedProposalType === "register_bot" && candidateBotValid) ||
             (selectedProposalType === "transfer_sns_funds" && transferSnsFundsValid) ||
+            (selectedProposalType === "set_community_verification" &&
+                setCommunityVerificationValid) ||
+            (selectedProposalType === "set_group_verification" && setGroupVerificationValid) ||
             (selectedProposalType === "register_external_achievement" &&
                 achievementNameValid &&
                 chitRewardValid &&
@@ -273,6 +279,12 @@
                 return { kind: selectedProposalType };
             case "transfer_sns_funds": {
                 return transferSnsFunds?.convertAction();
+            }
+            case "set_community_verification": {
+                return setVerification?.convertAction();
+            }
+            case "set_group_verification": {
+                return setVerification?.convertAction();
             }
             case "add_token": {
                 return {
@@ -519,9 +531,12 @@
             </div>
             <div class="action hidden" class:visible={step === 2}>
                 {#if selectedProposalType === "set_community_verification"}
-                    <VerificationProposal type="community" />
+                    <VerificationProposal
+                        bind:this={setVerification}
+                        bind:valid={setCommunityVerificationValid}
+                        type="community" />
                 {:else if selectedProposalType === "set_group_verification"}
-                    <VerificationProposal type="group" />
+                    <VerificationProposal bind:valid={setGroupVerificationValid} type="group" />
                 {:else if selectedProposalType === "register_bot"}
                     <BotBuilder
                         onUpdate={(bot) => (candidateBot = bot)}

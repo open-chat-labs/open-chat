@@ -2,9 +2,9 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Search from "../../Search.svelte";
-    import { communitySearchState } from "../../../stores/search.svelte";
+    import { groupSearchState } from "../../../stores/search.svelte";
     import { getContext } from "svelte";
-    import { AvatarSize, OpenChat, type CommunityMatch } from "openchat-client";
+    import { AvatarSize, OpenChat, type GroupMatch } from "openchat-client";
     import SelectedMatch from "./SelectedMatch.svelte";
     import Avatar from "../../Avatar.svelte";
     import Menu from "../../Menu.svelte";
@@ -14,8 +14,8 @@
     const PAGE_SIZE = 15;
 
     interface Props {
-        onSelect: (community: CommunityMatch | undefined) => void;
-        selected?: CommunityMatch;
+        onSelect: (group: GroupMatch | undefined) => void;
+        selected?: GroupMatch;
     }
 
     let { onSelect, selected }: Props = $props();
@@ -25,36 +25,28 @@
             reset(true);
             return;
         }
-        communitySearchState.term = term;
-        communitySearchState.reset();
+        groupSearchState.term = term;
+        groupSearchState.reset();
 
-        client
-            .exploreCommunities(
-                communitySearchState.term === "" ? undefined : communitySearchState.term,
-                communitySearchState.index,
-                PAGE_SIZE,
-                0,
-                [],
-            )
-            .then((results) => {
-                if (results.kind === "success") {
-                    communitySearchState.results = results.matches;
-                    communitySearchState.total = results.total;
-                }
-            });
+        client.searchGroups(groupSearchState.term, PAGE_SIZE).then((results) => {
+            if (results.kind === "success") {
+                groupSearchState.results = results.matches;
+                groupSearchState.total = results.total;
+            }
+        });
     }
 
     function reset(clearSelected: boolean) {
-        communitySearchState.results = [];
-        communitySearchState.term = "";
+        groupSearchState.results = [];
+        groupSearchState.term = "";
         if (clearSelected) {
             select(undefined);
         }
     }
 
-    function select(match: CommunityMatch | undefined) {
+    function select(match: GroupMatch | undefined) {
         selected = match;
-        communitySearchState.results = [];
+        groupSearchState.results = [];
         onSelect(match);
     }
 </script>
@@ -65,25 +57,25 @@
     {:else}
         <Search
             fill
-            bind:searchTerm={communitySearchState.term}
+            bind:searchTerm={groupSearchState.term}
             searching={false}
             on:searchEntered={(ev: CustomEvent<string>) => search(ev.detail)}
-            placeholder={i18nKey("communities.search")} />
+            placeholder={i18nKey("searchGroupsPlaceholder")} />
     {/if}
 
-    {#if communitySearchState.results.length > 0}
+    {#if groupSearchState.results.length > 0}
         <div class="menu">
             <Menu fit>
-                {#each communitySearchState.results as community (community.id.communityId)}
-                    <MenuItem on:click={() => select(community)}>
+                {#each groupSearchState.results as group (group.chatId.groupId)}
+                    <MenuItem on:click={() => select(group)}>
                         <Avatar
                             slot="icon"
-                            url={client.communityAvatarUrl(
-                                community.id.communityId,
-                                community.avatar,
-                            )}
+                            url={client.groupAvatarUrl({
+                                ...group,
+                                id: group.chatId,
+                            })}
                             size={AvatarSize.Small} />
-                        <div slot="text">{community.name}</div>
+                        <div slot="text">{group.name}</div>
                     </MenuItem>
                 {/each}
             </Menu>
