@@ -38,7 +38,6 @@
     import { now } from "../../stores/time";
     import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";
     import { dclickReply } from "../../stores/settings";
-    import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
     import UnresolvedReply from "./UnresolvedReply.svelte";
@@ -681,6 +680,10 @@
                             translatable={canTranslate}
                             {translated}
                             {selectQuickReaction}
+                            showEmojiPicker={() => {
+                                showEmojiPicker = true;
+                            }}
+                            {canReact}
                             on:collapseMessage
                             on:forward
                             on:reply={reply}
@@ -696,16 +699,6 @@
                             on:remindMe={remindMe} />
                     {/if}
                 </div>
-
-                {#if !collapsed && !msg.deleted && canReact && !failed}
-                    <div class="actions">
-                        <div class="reaction" on:click={() => (showEmojiPicker = true)}>
-                            <HoverIcon>
-                                <EmoticonLolOutline size={$iconSize} color={"var(--icon-txt)"} />
-                            </HoverIcon>
-                        </div>
-                    </div>
-                {/if}
             </div>
 
             {#if threadSummary !== undefined && !inThread}
@@ -898,25 +891,6 @@
                 cursor: pointer;
             }
         }
-
-        .actions {
-            transition: opacity 200ms ease-in-out;
-            display: flex;
-            opacity: 0;
-            padding: 0 $sp3;
-            justify-content: center;
-            align-items: center;
-
-            @include mobile() {
-                opacity: 0.3;
-            }
-        }
-
-        @media (hover: hover) {
-            &:hover .actions {
-                opacity: 1;
-            }
-        }
     }
 
     .bubble-wrapper {
@@ -1010,7 +984,6 @@
 
         &.fill {
             padding: 0;
-            overflow: hidden;
             border: none;
             line-height: 0;
         }
