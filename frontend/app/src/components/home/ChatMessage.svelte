@@ -110,7 +110,7 @@
     export let supportsReply: boolean;
 
     let msgElement: HTMLElement;
-    let msgBubbleElement: HTMLElement;
+    let msgBubbleWrapperElement: HTMLElement;
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = false;
     let debug = false;
@@ -329,13 +329,13 @@
     }
 
     function recalculateMediaDimensions() {
-        if (mediaDimensions === undefined || !msgBubbleElement) {
+        if (mediaDimensions === undefined || !msgBubbleWrapperElement) {
             return;
         }
 
         let msgBubblePaddingWidth = 0;
         if (!fill) {
-            let msgBubbleStyle = getComputedStyle(msgBubbleElement);
+            let msgBubbleStyle = getComputedStyle(msgBubbleWrapperElement);
             msgBubblePaddingWidth =
                 parseFloat(msgBubbleStyle.paddingLeft) +
                 parseFloat(msgBubbleStyle.paddingRight) +
@@ -343,7 +343,7 @@
                 parseFloat(msgBubbleStyle.borderLeftWidth);
         }
 
-        const messageWrapperWidth = msgBubbleElement.parentElement?.offsetWidth ?? 0;
+        const messageWrapperWidth = msgBubbleWrapperElement.parentElement?.offsetWidth ?? 0;
 
         let targetMediaDimensions = client.calculateMediaDimensions(
             mediaDimensions,
@@ -491,156 +491,162 @@
                     </div>
                 {/if}
 
-                <!-- svelte-ignore a11y-no-static-element-interactions -->
                 <div
-                    bind:this={msgBubbleElement}
+                    bind:this={msgBubbleWrapperElement}
+                    class="bubble-wrapper"
                     style={`--max-width: ${maxWidthFraction * 100}%; ${
                         msgBubbleCalculatedWidth !== undefined
                             ? `flex: 0 0 ${msgBubbleCalculatedWidth}px`
                             : undefined
                     }`}
-                    on:dblclick={doubleClickMessage}
-                    use:longpress={() => messageMenu?.showMenu()}
-                    class="message-bubble"
-                    class:focused
-                    class:editing
-                    class:fill={fill && !inert}
-                    class:me
-                    class:inert
-                    class:collapsed
-                    class:first
-                    class:last
-                    class:readByMe
-                    class:crypto
-                    class:failed
-                    class:bot={botContext !== undefined}
                     class:p2pSwap={isP2PSwap}
-                    class:proposal={isProposal && !inert}
-                    class:thread={inThread}
-                    class:rtl={$rtlStore}>
-                    {#if first && !isProposal && !isPrize}
-                        <div class="sender" class:fill class:rtl={$rtlStore}>
-                            <Link underline={"never"} on:click={openUserProfile}>
-                                <h4 class="username" class:fill class:crypto>
-                                    {senderDisplayName}
-                                </h4>
-                                <Badges
-                                    uniquePerson={sender?.isUniquePerson}
-                                    diamondStatus={sender?.diamondStatus}
-                                    streak={client.getStreak(sender?.userId)} />
-                                {#if sender !== undefined && multiUserChat}
-                                    <WithRole
-                                        userId={sender.userId}
-                                        chatMembers={$chatMembersMap}
-                                        communityMembers={$communityMembers}
-                                        let:chatRole
-                                        let:communityRole>
-                                        <RoleIcon level="community" popup role={communityRole} />
-                                        <RoleIcon
-                                            level={chatType === "channel" ? "channel" : "group"}
-                                            popup
-                                            role={chatRole} />
-                                    </WithRole>
+                    class:proposal={isProposal && !inert}>
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
+                    <div
+                        on:dblclick={doubleClickMessage}
+                        use:longpress={() => messageMenu?.showMenu()}
+                        class="message-bubble"
+                        class:focused
+                        class:editing
+                        class:fill={fill && !inert}
+                        class:me
+                        class:inert
+                        class:collapsed
+                        class:first
+                        class:last
+                        class:readByMe
+                        class:crypto
+                        class:failed
+                        class:bot={botContext !== undefined}
+                        class:thread={inThread}
+                        class:rtl={$rtlStore}>
+                        {#if first && !isProposal && !isPrize}
+                            <div class="sender" class:fill class:rtl={$rtlStore}>
+                                <Link underline={"never"} on:click={openUserProfile}>
+                                    <h4 class="username" class:fill class:crypto>
+                                        {senderDisplayName}
+                                    </h4>
+                                    <Badges
+                                        uniquePerson={sender?.isUniquePerson}
+                                        diamondStatus={sender?.diamondStatus}
+                                        streak={client.getStreak(sender?.userId)} />
+                                    {#if sender !== undefined && multiUserChat}
+                                        <WithRole
+                                            userId={sender.userId}
+                                            chatMembers={$chatMembersMap}
+                                            communityMembers={$communityMembers}
+                                            let:chatRole
+                                            let:communityRole>
+                                            <RoleIcon
+                                                level="community"
+                                                popup
+                                                role={communityRole} />
+                                            <RoleIcon
+                                                level={chatType === "channel" ? "channel" : "group"}
+                                                popup
+                                                role={chatRole} />
+                                        </WithRole>
+                                    {/if}
+                                </Link>
+                                {#if senderTyping}
+                                    <span class="typing">
+                                        <Typing />
+                                    </span>
                                 {/if}
-                            </Link>
-                            {#if senderTyping}
-                                <span class="typing">
-                                    <Typing />
-                                </span>
-                            {/if}
-                        </div>
-                    {/if}
-                    {#if msg.forwarded}
-                        <div class="forwarded">
-                            <div>
-                                <ForwardIcon
-                                    size={$iconSize}
-                                    color={me
-                                        ? "var(--currentChat-msg-me-muted)"
-                                        : "var(--currentChat-msg-muted)"} />
                             </div>
-                            <div class="text">{"Forwarded"}</div>
-                        </div>
-                    {/if}
-                    {#if msg.repliesTo !== undefined && !inert}
-                        {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                            <RepliesTo
-                                {readonly}
-                                {chatId}
-                                {intersecting}
-                                on:goToMessageIndex
-                                repliesTo={msg.repliesTo} />
-                        {:else}
-                            <UnresolvedReply />
                         {/if}
-                    {/if}
+                        {#if msg.forwarded}
+                            <div class="forwarded">
+                                <div>
+                                    <ForwardIcon
+                                        size={$iconSize}
+                                        color={me
+                                            ? "var(--currentChat-msg-me-muted)"
+                                            : "var(--currentChat-msg-muted)"} />
+                                </div>
+                                <div class="text">{"Forwarded"}</div>
+                            </div>
+                        {/if}
+                        {#if msg.repliesTo !== undefined && !inert}
+                            {#if msg.repliesTo.kind === "rehydrated_reply_context"}
+                                <RepliesTo
+                                    {readonly}
+                                    {chatId}
+                                    {intersecting}
+                                    on:goToMessageIndex
+                                    repliesTo={msg.repliesTo} />
+                            {:else}
+                                <UnresolvedReply />
+                            {/if}
+                        {/if}
 
-                    <ChatMessageContent
-                        senderId={msg.sender}
-                        {readonly}
-                        {fill}
-                        {me}
-                        {messageContext}
-                        {collapsed}
-                        {undeleting}
-                        {intersecting}
-                        {failed}
-                        {timestamp}
-                        messageIndex={msg.messageIndex}
-                        messageId={msg.messageId}
-                        myUserId={user.userId}
-                        content={msg.content}
-                        {edited}
-                        height={mediaCalculatedHeight}
-                        blockLevelMarkdown={msg.blockLevelMarkdown}
-                        on:removePreview
-                        on:registerVote={registerVote}
-                        on:upgrade
-                        on:verifyHumanity
-                        on:claimDailyChit
-                        on:startVideoCall
-                        on:expandMessage />
-
-                    {#if !inert && !isPrize}
-                        <TimeAndTicks
-                            {pinned}
+                        <ChatMessageContent
+                            senderId={msg.sender}
+                            {readonly}
                             {fill}
-                            {timestamp}
-                            {expiresAt}
-                            {percentageExpired}
                             {me}
-                            {accepted}
-                            {failed}
-                            deleted={msg.deleted}
+                            {messageContext}
+                            {collapsed}
                             {undeleting}
-                            {readByThem}
-                            {crypto}
-                            {chatType}
-                            {dateFormatter} />
-                    {/if}
+                            {intersecting}
+                            {failed}
+                            {timestamp}
+                            messageIndex={msg.messageIndex}
+                            messageId={msg.messageId}
+                            myUserId={user.userId}
+                            content={msg.content}
+                            {edited}
+                            height={mediaCalculatedHeight}
+                            blockLevelMarkdown={msg.blockLevelMarkdown}
+                            on:removePreview
+                            on:registerVote={registerVote}
+                            on:upgrade
+                            on:verifyHumanity
+                            on:claimDailyChit
+                            on:startVideoCall
+                            on:expandMessage />
 
-                    {#if debug}
-                        <pre>Sender: {msg.sender}</pre>
-                        <pre>EventIdx: {eventIndex}</pre>
-                        <pre>MsgIdx: {msg.messageIndex}</pre>
-                        <pre>MsgId: {msg.messageId}</pre>
-                        <pre>Confirmed: {confirmed}</pre>
-                        <pre>ReadByThem: {readByThem}</pre>
-                        <pre>ReadByUs: {readByMe}</pre>
-                        <pre>Pinned: {pinned}</pre>
-                        <pre>edited: {msg.edited}</pre>
-                        <pre>failed: {failed}</pre>
-                        <pre>timestamp: {timestamp}</pre>
-                        <pre>expiresAt: {expiresAt}</pre>
-                        <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
-                        <pre>botContext: {JSON.stringify(botContext, null, 4)}</pre>
-                        <pre>inert: {inert}</pre>
-                        <pre>canRevealDeleted: {canRevealDeleted}</pre>
-                        <pre>canlRevealBlocked: {canRevealBlocked}</pre>
-                        <pre>readonly: {readonly}</pre>
-                        <pre>showChatMenu: {showChatMenu}</pre>
-                        <pre>intersecting: {intersecting}</pre>
-                    {/if}
+                        {#if !inert && !isPrize}
+                            <TimeAndTicks
+                                {pinned}
+                                {fill}
+                                {timestamp}
+                                {expiresAt}
+                                {percentageExpired}
+                                {me}
+                                {accepted}
+                                {failed}
+                                deleted={msg.deleted}
+                                {undeleting}
+                                {readByThem}
+                                {crypto}
+                                {chatType}
+                                {dateFormatter} />
+                        {/if}
+
+                        {#if debug}
+                            <pre>Sender: {msg.sender}</pre>
+                            <pre>EventIdx: {eventIndex}</pre>
+                            <pre>MsgIdx: {msg.messageIndex}</pre>
+                            <pre>MsgId: {msg.messageId}</pre>
+                            <pre>Confirmed: {confirmed}</pre>
+                            <pre>ReadByThem: {readByThem}</pre>
+                            <pre>ReadByUs: {readByMe}</pre>
+                            <pre>Pinned: {pinned}</pre>
+                            <pre>edited: {msg.edited}</pre>
+                            <pre>failed: {failed}</pre>
+                            <pre>timestamp: {timestamp}</pre>
+                            <pre>expiresAt: {expiresAt}</pre>
+                            <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
+                            <pre>botContext: {JSON.stringify(botContext, null, 4)}</pre>
+                            <pre>inert: {inert}</pre>
+                            <pre>canRevealDeleted: {canRevealDeleted}</pre>
+                            <pre>canlRevealBlocked: {canRevealBlocked}</pre>
+                            <pre>readonly: {readonly}</pre>
+                            <pre>showChatMenu: {showChatMenu}</pre>
+                            <pre>intersecting: {intersecting}</pre>
+                        {/if}
+                    </div>
 
                     {#if showChatMenu && intersecting}
                         <ChatMessageMenu
@@ -758,27 +764,27 @@
     }
 
     @include mobile() {
-        :global(.message-bubble .menu) {
+        :global(.bubble-wrapper .menu) {
             display: none;
         }
     }
 
     @include not-mobile() {
-        :global(.message-bubble .menu) {
+        :global(.bubble-wrapper .menu) {
             display: flex;
             z-index: -1;
             opacity: 0;
         }
 
         // Keeps hover menu showing if context menu is clicked!
-        :global(.message-bubble .menu:has(.menu-icon.open)) {
+        :global(.bubble-wrapper .menu:has(.menu-icon.open)) {
             border-color: var(--primary);
             z-index: 1;
             opacity: 1;
         }
 
         @media (hover: hover) {
-            :global(.message-bubble:hover .menu:not(:has(.menu-icon.open))) {
+            :global(.bubble-wrapper:hover .menu:not(:has(.menu-icon.open))) {
                 animation: show-bubble-menu 200ms ease-in-out forwards;
             }
         }
@@ -910,6 +916,27 @@
         }
     }
 
+    .bubble-wrapper {
+        position: relative;
+        max-width: var(--max-width);
+        min-width: 90px;
+
+        &.p2pSwap {
+            width: 350px;
+        }
+
+        &.proposal {
+            max-width: 800px;
+        }
+
+        &.proposal,
+        &.p2pSwap {
+            .message-bubble {
+                width: 100%;
+            }
+        }
+    }
+
     .message-bubble {
         $radius: var(--currentChat-msg-r1);
         $inner-radius: var(--currentChat-msg-r2);
@@ -924,15 +951,8 @@
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
         border-radius: $radius;
-        max-width: var(--max-width);
-        min-width: 90px;
         border: var(--currentChat-msg-bd);
         box-shadow: var(--currentChat-msg-sh);
-
-        &.proposal {
-            max-width: 800px;
-            width: 100%;
-        }
 
         .username {
             color: inherit;
@@ -1034,10 +1054,6 @@
 
         &.failed {
             background-color: var(--error);
-        }
-
-        &.p2pSwap {
-            width: 350px;
         }
     }
 

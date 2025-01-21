@@ -27,7 +27,7 @@ async fn claim_prize(args: Args) -> Response {
 
     match result {
         Ok(Ok(completed_transaction)) => {
-            // Claim the prize and send a message to the group
+            // Claim the prize and send a message to the community
             if let Some(error_message) =
                 mutate_state(|state| commit(args, prepare_result.user_id, completed_transaction.clone(), state))
             {
