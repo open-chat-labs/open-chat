@@ -93,7 +93,7 @@
                     <Verified
                         size={"medium"}
                         {verified}
-                        tooltip={i18nKey("verified.verifiedCommunity")} />
+                        tooltip={i18nKey("verified.verified", undefined, "community")} />
                 </div>
             {/if}
         </div>

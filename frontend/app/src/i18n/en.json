@@ -1836,6 +1836,17 @@
     "userReferralMessage": "Share this link to OpenChat with friends and family. You earn CHIT rewards for each user you refer who goes on to verify their unique personhood or becomes a Diamond member. If a user you refer goes on to get Diamond membership you will earn 5,000 CHIT, if they prove unique personhood, it is 10,000 CHIT and if they get lifetime Diamond, it is 15,000 CHIT. If they subsequently do a higher value \"verification\" you will be awarded the difference in CHIT.",
     "users": "Users",
     "userSearchFailed": "There was an error searching for users",
+    "verified": {
+        "choose": "Choose the {level} to verify",
+        "evidenceLabel": "Provide your evidence",
+        "evidencePlaceholder": "Please provide your evidence",
+        "nameChangeWarning": "If you change the name of this {level} you will lose your verified status!",
+        "preferredName": "Preferred Name",
+        "rename": "If another {level} is currently using your preferred name, enter that name here. If you already have your preferred name you should leave the name as it is.",
+        "revoke": "Revoke {level} verification",
+        "verified": "Verified {level}",
+        "verify": "Verify {level}"
+    },
     "version": "Version",
     "videoCall": {
         "accessRequest": "{username} would like to speak",
@@ -1887,15 +1898,5 @@
     "yourAccountIsSuspended": "Your account is suspended",
     "yourChats": "Your chats",
     "youreBlocked": "Sorry - you have been blocked from this group",
-    "yourRoleChanged": "{changedBy} changed your role to {newRole}",
-    "verified": {
-        "verifiedCommunity": "Verified community",
-        "verifiedGroup": "Verified group",
-        "nameChangeWarning": "If you change the name of this {level} you will lose your verified status!",
-        "choose": "Choose the {level} to verify",
-        "rename": "If another {level} is currently using your preferred name, enter that name here. If you already have your preferred name you should leave the name as it is.",
-        "preferredName": "Preferred Name",
-        "evidenceLabel": "Provide your evidence",
-        "evidencePlaceholder": "Please provide your evidence"
-    }
+    "yourRoleChanged": "{changedBy} changed your role to {newRole}"
 }

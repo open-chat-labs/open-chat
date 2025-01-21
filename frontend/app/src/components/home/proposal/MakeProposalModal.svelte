@@ -93,8 +93,8 @@
         | "update_token"
         | "set_community_verification"
         | "set_group_verification"
-        | "remove_community_verification"
-        | "remove_group_verification"
+        | "revoke_community_verification"
+        | "revoke_group_verification"
         | undefined = undefined;
     let error: string | undefined = undefined;
     let depositMessage: ResourceKey | undefined = undefined;
@@ -109,10 +109,9 @@
     let botSchemaLoaded = false;
     let botPrincipal = "";
     let transferSnsFunds: TransferSnsFunds | undefined;
-    let setVerification: VerificationProposal | undefined;
+    let verificationComponent: VerificationProposal | undefined;
     let transferSnsFundsValid: boolean;
-    let setCommunityVerificationValid: boolean;
-    let setGroupVerificationValid: boolean;
+    let verificationValid: boolean;
 
     $: errorMessage =
         error !== undefined ? i18nKey("proposal.maker." + error) : $pinNumberErrorMessageStore;
@@ -163,9 +162,8 @@
             selectedProposalType === "advance_sns_target_version" ||
             (selectedProposalType === "register_bot" && candidateBotValid) ||
             (selectedProposalType === "transfer_sns_funds" && transferSnsFundsValid) ||
-            (selectedProposalType === "set_community_verification" &&
-                setCommunityVerificationValid) ||
-            (selectedProposalType === "set_group_verification" && setGroupVerificationValid) ||
+            (selectedProposalType === "set_community_verification" && verificationValid) ||
+            (selectedProposalType === "set_group_verification" && verificationValid) ||
             (selectedProposalType === "register_external_achievement" &&
                 achievementNameValid &&
                 chitRewardValid &&
@@ -198,8 +196,8 @@
     $: [summaryLabel, summaryPlaceholder] =
         selectedProposalType === "set_community_verification" ||
         selectedProposalType === "set_group_verification" ||
-        selectedProposalType === "remove_community_verification" ||
-        selectedProposalType === "remove_group_verification"
+        selectedProposalType === "revoke_community_verification" ||
+        selectedProposalType === "revoke_group_verification"
             ? [i18nKey("verified.evidenceLabel"), i18nKey("verified.evidencePlaceholder")]
             : [i18nKey("proposal.maker.summary"), i18nKey("proposal.maker.enterSummary")];
 
@@ -280,11 +278,11 @@
             case "transfer_sns_funds": {
                 return transferSnsFunds?.convertAction();
             }
-            case "set_community_verification": {
-                return setVerification?.convertAction();
-            }
-            case "set_group_verification": {
-                return setVerification?.convertAction();
+            case "set_community_verification":
+            case "revoke_community_verification":
+            case "set_group_verification":
+            case "revoke_group_verification": {
+                return verificationComponent?.convertAction();
             }
             case "add_token": {
                 return {
@@ -453,9 +451,43 @@
                             {#if botsEnabled}
                                 <option value={"register_bot"}>Register a bot</option>
                             {/if}
+                            <option value={"set_community_verification"}>
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        "verified.verify",
+                                        undefined,
+                                        "community",
+                                        true,
+                                    )}></Translatable>
+                            </option>
+                            <option value={"set_group_verification"}>
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        "verified.verify",
+                                        undefined,
+                                        "group",
+                                        true,
+                                    )}></Translatable>
+                            </option>
+                            <option value={"revoke_community_verification"}>
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        "verified.revoke",
+                                        undefined,
+                                        "community",
+                                        true,
+                                    )}></Translatable>
+                            </option>
+                            <option value={"revoke_group_verification"}>
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        "verified.revoke",
+                                        undefined,
+                                        "group",
+                                        true,
+                                    )}></Translatable>
+                            </option>
                         {/if}
-                        <option value={"set_community_verification"}>Verify a community</option>
-                        <option value={"set_group_verification"}>Verify a group</option>
                     </Select>
                 </section>
                 <section>
@@ -530,13 +562,11 @@
                 </section>
             </div>
             <div class="action hidden" class:visible={step === 2}>
-                {#if selectedProposalType === "set_community_verification"}
+                {#if selectedProposalType === "set_community_verification" || selectedProposalType === "revoke_community_verification" || selectedProposalType === "set_group_verification" || selectedProposalType === "revoke_group_verification"}
                     <VerificationProposal
-                        bind:this={setVerification}
-                        bind:valid={setCommunityVerificationValid}
-                        type="community" />
-                {:else if selectedProposalType === "set_group_verification"}
-                    <VerificationProposal bind:valid={setGroupVerificationValid} type="group" />
+                        bind:this={verificationComponent}
+                        bind:valid={verificationValid}
+                        type={selectedProposalType} />
                 {:else if selectedProposalType === "register_bot"}
                     <BotBuilder
                         onUpdate={(bot) => (candidateBot = bot)}

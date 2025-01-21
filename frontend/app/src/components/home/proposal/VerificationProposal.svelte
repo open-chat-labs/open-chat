@@ -9,6 +9,7 @@
         type CommunityMatch,
         type ExecuteGenericNervousSystemFunction,
         type GroupMatch,
+        type Level,
     } from "openchat-client";
     import CommunityFinder from "./CommunityFinder.svelte";
     import GroupFinder from "./GroupFinder.svelte";
@@ -17,9 +18,14 @@
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
+    type Operation = "set" | "revoke";
 
     interface Props {
-        type: "group" | "community";
+        type:
+            | "set_community_verification"
+            | "revoke_community_verification"
+            | "set_group_verification"
+            | "revoke_group_verification";
         valid: boolean;
     }
 
@@ -28,7 +34,17 @@
     let selected = $state<GroupMatch | CommunityMatch | undefined>();
     let name = $state("");
     let nameValid = $derived(name.length >= MIN_LENGTH && name.length <= MAX_LENGTH);
-    let isValid = $derived(selected !== undefined && nameValid);
+    let level = $derived<Level>(
+        type === "set_community_verification" || type === "revoke_community_verification"
+            ? "community"
+            : "group",
+    );
+    let operation = $derived<Operation>(
+        type === "set_community_verification" || type === "set_group_verification"
+            ? "set"
+            : "revoke",
+    );
+    let isValid = $derived(selected !== undefined && (operation === "revoke" || nameValid));
 
     function selectMatch(match: GroupMatch | CommunityMatch | undefined) {
         selected = match;
@@ -60,6 +76,15 @@
         );
     }
 
+    function revokeCommunityValidityPayload(communityId: string): Uint8Array {
+        return new Uint8Array(
+            IDL.encode(
+                [IDL.Record({ community_id: IDL.Principal })],
+                [{ community_id: Principal.fromText(communityId) }],
+            ),
+        );
+    }
+
     function setGroupValidityPayload(groupId: string, name: string): Uint8Array {
         return new Uint8Array(
             IDL.encode(
@@ -79,35 +104,61 @@
         );
     }
 
+    function revokeGroupValidityPayload(groupId: string): Uint8Array {
+        return new Uint8Array(
+            IDL.encode(
+                [IDL.Record({ group_id: IDL.Principal })],
+                [{ group_id: Principal.fromText(groupId) }],
+            ),
+        );
+    }
+
     export function convertAction(): ExecuteGenericNervousSystemFunction | undefined {
         if (selected === undefined || !isValid) return undefined;
 
-        switch (selected.kind) {
-            case "community_match":
-                return {
-                    kind: "execute_generic_nervous_system_function",
-                    functionId: BigInt(2006),
-                    payload: setCommunityValidityPayload(selected.id.communityId, name),
-                };
-            case "group_match":
-                return {
-                    kind: "execute_generic_nervous_system_function",
-                    functionId: BigInt(2007),
-                    payload: setGroupValidityPayload(selected.chatId.groupId, name),
-                };
+        if (type === "set_community_verification" && selected.kind === "community_match") {
+            return {
+                kind: "execute_generic_nervous_system_function",
+                functionId: BigInt(2006),
+                payload: setCommunityValidityPayload(selected.id.communityId, name),
+            };
+        } else if (type === "set_group_verification" && selected.kind === "group_match") {
+            return {
+                kind: "execute_generic_nervous_system_function",
+                functionId: BigInt(2007),
+                payload: setGroupValidityPayload(selected.chatId.groupId, name),
+            };
+        } else if (
+            type === "revoke_community_verification" &&
+            selected.kind === "community_match"
+        ) {
+            return {
+                kind: "execute_generic_nervous_system_function",
+                functionId: BigInt(2008),
+                payload: revokeCommunityValidityPayload(selected.id.communityId),
+            };
+        } else if (type === "revoke_group_verification" && selected.kind === "group_match") {
+            return {
+                kind: "execute_generic_nervous_system_function",
+                functionId: BigInt(2009),
+                payload: revokeGroupValidityPayload(selected.chatId.groupId),
+            };
         }
+
+        return undefined;
     }
 </script>
 
 <section>
-    <Legend label={i18nKey("verified.choose", undefined, type, true)} />
-    {#if type === "community"}
+    <Legend label={i18nKey("verified.choose", undefined, level, true)} />
+    {#if type === "set_community_verification" || type === "revoke_community_verification"}
         <CommunityFinder onSelect={selectMatch}></CommunityFinder>
-    {:else}
+    {/if}
+    {#if type === "set_group_verification" || type === "revoke_group_verification"}
         <GroupFinder onSelect={selectMatch}></GroupFinder>
     {/if}
 
-    {#if selected !== undefined}
+    {#if selected !== undefined && operation === "set"}
         <section in:fade class="name">
             <Legend label={i18nKey("verified.preferredName")} />
             <Input
@@ -120,7 +171,7 @@
                 countdown
                 placeholder={i18nKey("verified.preferredName")} />
             <p class="info">
-                <Translatable resourceKey={i18nKey("verified.rename", undefined, type, true)}
+                <Translatable resourceKey={i18nKey("verified.rename", undefined, level, true)}
                 ></Translatable>
             </p>
         </section>

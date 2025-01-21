@@ -1836,6 +1836,17 @@
     "userReferralMessage": "この OpenChat へのリンクを友人や家族と共有してください。紹介したユーザーが固有の人物であることを検証するか、ダイヤモンド メンバーになると、CHIT 報酬を獲得できます。紹介したユーザーがダイヤモンド メンバーシップを取得した場合は 5,000 CHIT、固有の人物であることを証明した場合は 10,000 CHIT、生涯ダイヤモンド メンバーシップを取得した場合は 15,000 CHIT を獲得できます。その後、より価値の高い「検証」を行った場合は、CHIT の差額が付与されます。",
     "users": "ユーザー",
     "userSearchFailed": "ユーザーの検索にエラーが発生しました",
+    "verified": {
+        "choose": "確認するには{level}を選択してください",
+        "evidenceLabel": "証拠を提供してください",
+        "evidencePlaceholder": "証拠をご提供ください",
+        "nameChangeWarning": "この {level} の名前を変更すると、認証済みステータスが失われます。",
+        "preferredName": "希望する名前",
+        "rename": "別の {level} が現在あなたの希望する名前を使用している場合は、その名前をここに入力してください。すでに希望する名前がある場合は、名前をそのままにしておいてください。",
+        "revoke": "{level} 認証を取り消す",
+        "verified": "検証済み {level}",
+        "verify": "{level} を確認する"
+    },
     "version": "バージョン",
     "videoCall": {
         "accessRequest": "{username} が話したい",

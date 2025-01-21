@@ -1836,6 +1836,17 @@
     "userReferralMessage": "Condividi questo link su OpenChat con amici e familiari. Guadagni premi CHIT per ogni utente che segnali che verifica la propria identità unica o diventa un membro Diamond. Se un utente che segnali ottiene l'iscrizione Diamond, guadagnerai 5.000 CHIT, se dimostra di essere un'identità unica, sono 10.000 CHIT e se ottiene Diamond a vita, sono 15.000 CHIT. Se in seguito esegue una \"verifica\" di valore superiore, ti verrà assegnata la differenza in CHIT.",
     "users": "Utenti",
     "userSearchFailed": "Si è verificato un errore durante la ricerca degli utenti",
+    "verified": {
+        "choose": "Scegli {level} per verificare",
+        "evidenceLabel": "Fornisci le tue prove",
+        "evidencePlaceholder": "Si prega di fornire le prove",
+        "nameChangeWarning": "Se cambi il nome di questo {level} perderai il tuo stato verificato!",
+        "preferredName": "Nome preferito",
+        "rename": "Se un altro {level} sta attualmente utilizzando il tuo nome preferito, inseriscilo qui. Se hai già il tuo nome preferito, dovresti lasciarlo così com'è.",
+        "revoke": "Revoca verifica {level}",
+        "verified": "Verificato {level}",
+        "verify": "Verifica {level}"
+    },
     "version": "versione",
     "videoCall": {
         "accessRequest": "{username} vorrebbe parlare",
