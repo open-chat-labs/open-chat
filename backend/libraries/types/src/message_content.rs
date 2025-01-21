@@ -256,15 +256,14 @@ impl MessageContentInitial {
         now: TimestampMillis,
     ) -> Result<(), ContentValidationError> {
         if forwarding {
-            match self {
-                MessageContentInitial::Crypto(_)
-                | MessageContentInitial::Poll(_)
-                | MessageContentInitial::P2PSwap(_)
-                | MessageContentInitial::Prize(_) => {
-                    return Err(ContentValidationError::InvalidTypeForForwarding);
-                }
-                _ => {}
-            };
+            if self.contains_crypto_transfer()
+                || matches!(
+                    self,
+                    MessageContentInitial::Poll(_) | MessageContentInitial::GovernanceProposal(_)
+                )
+            {
+                return Err(ContentValidationError::InvalidTypeForForwarding);
+            }
         }
 
         match self {
