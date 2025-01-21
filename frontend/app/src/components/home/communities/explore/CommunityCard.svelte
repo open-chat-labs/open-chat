@@ -91,7 +91,7 @@
             {#if verified}
                 <div class="verified">
                     <Verified
-                        size={"medium"}
+                        size={"large"}
                         {verified}
                         tooltip={i18nKey("verified.verified", undefined, "community")} />
                 </div>

@@ -61,7 +61,7 @@
     {/if}
     {#if verified}
         <div class="verified" class:rtl={$rtlStore}>
-            <Verified size={size === AvatarSize.Large ? "large" : "small"} {verified} />
+            <Verified size={size === AvatarSize.Large ? "large" : "default"} {verified} />
         </div>
     {/if}
 </div>
@@ -144,12 +144,24 @@
 
     .verified {
         position: absolute;
-        top: 0;
+        $offset: $avatar-mod-offset;
+        top: $offset;
         &:not(.rtl) {
-            left: 0;
+            left: $offset;
         }
         &.rtl {
-            right: 0;
+            right: $offset;
+        }
+
+        @include mobile() {
+            $offset: $avatar-mod-offset-small;
+            top: $offset;
+            &:not(.rtl) {
+                left: $offset;
+            }
+            &.rtl {
+                right: $offset;
+            }
         }
     }
 </style>

@@ -6,7 +6,7 @@
 
     interface Props {
         verified: boolean;
-        size: "small" | "medium" | "large";
+        size: "default" | "large";
         tooltip?: ResourceKey;
     }
 
@@ -30,20 +30,22 @@
 
 <style lang="scss">
     .verified {
-        width: 15px;
-        height: 15px;
+        $size: $avatar-mod;
+        width: $size;
+        height: $size;
         background-image: url("/assets/verified.svg");
         background-size: cover;
         background-repeat: no-repeat;
 
-        &.large {
-            width: 32px;
-            height: 32px;
+        @include mobile() {
+            $size: $avatar-mod-small;
+            width: $size;
+            height: $size;
         }
 
-        &.medium {
-            width: 20px;
-            height: 20px;
+        &.large {
+            width: toRem(26);
+            height: toRem(26);
         }
     }
 </style>

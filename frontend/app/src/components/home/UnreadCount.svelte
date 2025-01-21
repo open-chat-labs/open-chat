@@ -30,7 +30,7 @@
 <style lang="scss">
     .unread-count {
         position: absolute;
-        right: $sp3;
+        right: toRem(8);
         @include unread();
         top: 50%;
         transform: translateY(-50%);
@@ -45,10 +45,6 @@
                 background-color: var(--unread-mute-solid);
                 border: 1px solid var(--bd);
             }
-        }
-
-        @include mobile() {
-            right: toRem(6);
         }
     }
 </style>
