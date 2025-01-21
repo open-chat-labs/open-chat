@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
 - Reduce channel Ids to 32 bits down from 128 bits ([#7233](https://github.com/open-chat-labs/open-chat/pull/7233))
 - Add `start_video_call_v2` and `end_video_call_v2` with reduced arg sizes ([#7236](https://github.com/open-chat-labs/open-chat/pull/7236))
+- Disallow forwarding prize messages and governance proposal messages ([#7260](https://github.com/open-chat-labs/open-chat/pull/7260))
 
 ## [[2.0.1571-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1571-user)] - 2025-01-15
 
