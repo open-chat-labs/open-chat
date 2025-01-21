@@ -1,11 +1,11 @@
-use crate::generate_update_call;
+use crate::generate_msgpack_update_call;
 use escrow_canister::*;
 
 // Queries
 
 // Updates
-generate_update_call!(create_swap);
-generate_update_call!(notify_deposit);
+generate_msgpack_update_call!(create_swap);
+generate_msgpack_update_call!(notify_deposit);
 
 pub mod happy_path {
     use candid::Principal;

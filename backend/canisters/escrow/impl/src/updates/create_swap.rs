@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use escrow_canister::create_swap::{Response::*, *};
 use types::TimestampMillis;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn create_swap(args: Args) -> Response {
     mutate_state(|state| create_swap_impl(args, state))
