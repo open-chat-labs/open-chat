@@ -22,6 +22,9 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
+    // Defer processing so that the c2c call isn't attempted during post_upgrade
+    data.index_event_sync_queue.set_defer_processing(true);
+
     // One time hack to push the memory sizes to the StorageIndex
     data.index_event_sync_queue.push(
         data.storage_index_canister_id,
@@ -36,6 +39,8 @@ fn post_upgrade(args: Args) {
             data.files.total_file_bytes(),
         ),
     );
+
+    data.index_event_sync_queue.set_defer_processing(false);
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
