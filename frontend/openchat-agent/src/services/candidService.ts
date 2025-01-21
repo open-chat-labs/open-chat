@@ -144,7 +144,7 @@ export abstract class CandidService {
                     onRequestAccepted();
                 }
 
-                const {reply} = await this.sendRequestToCanister(() =>
+                const { reply } = await this.sendRequestToCanister(() =>
                     polling.pollForResponse(
                         this.agent,
                         canisterId,
