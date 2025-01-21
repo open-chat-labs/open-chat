@@ -1,5 +1,6 @@
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
+use crate::model::storage_index_users_to_remove_batch::StorageIndexUsersToRemoveBatch;
 use crate::model::streak_insurance_logs::StreakInsuranceLogs;
 use crate::model::user_map::UserMap;
 use crate::timer_job_types::TimerJob;
@@ -192,6 +193,10 @@ impl RuntimeState {
 
             self.data.remove_from_online_users_queue.push_back(user.principal);
             jobs::remove_from_online_users_canister::start_job_if_required(self);
+
+            self.data
+                .storage_index_users_to_remove_queue
+                .push(self.data.storage_index_canister_id, user.principal);
         }
     }
 
@@ -350,6 +355,8 @@ struct Data {
     pub registry_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: GroupedTimerJobQueue<StorageIndexUserConfigBatch>,
+    #[serde(default = "storage_index_users_to_remove_queue")]
+    pub storage_index_users_to_remove_queue: GroupedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
@@ -383,6 +390,10 @@ struct Data {
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub streak_insurance_logs: StreakInsuranceLogs,
+}
+
+fn storage_index_users_to_remove_queue() -> GroupedTimerJobQueue<StorageIndexUsersToRemoveBatch> {
+    GroupedTimerJobQueue::new(1, false)
 }
 
 impl Data {
@@ -430,6 +441,7 @@ impl Data {
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
             storage_index_user_sync_queue: GroupedTimerJobQueue::new(1, false),
+            storage_index_users_to_remove_queue: GroupedTimerJobQueue::new(1, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
@@ -541,6 +553,7 @@ impl Default for Data {
             registry_canister_id: Principal::anonymous(),
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
             storage_index_user_sync_queue: GroupedTimerJobQueue::new(1, false),
+            storage_index_users_to_remove_queue: GroupedTimerJobQueue::new(1, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),

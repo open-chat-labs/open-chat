@@ -8,12 +8,6 @@ fn main() {
     generate_candid_method!(storage_index, can_forward, query);
     generate_candid_method!(storage_index, user, query);
 
-    generate_candid_method!(storage_index, add_bucket_canister, update);
-    generate_candid_method!(storage_index, add_or_update_users, update);
-    generate_candid_method!(storage_index, remove_accessor, update);
-    generate_candid_method!(storage_index, remove_user, update);
-    generate_candid_method!(storage_index, set_bucket_full, update);
-
     let directory = env::current_dir().unwrap().join("tsBindings/storageIndex");
     if directory.exists() {
         std::fs::remove_dir_all(&directory).unwrap();

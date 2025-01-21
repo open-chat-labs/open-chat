@@ -7,6 +7,7 @@ pub mod pending_modclub_submissions_queue;
 pub mod pending_payments_queue;
 pub mod reported_messages;
 pub mod storage_index_user_config_batch;
+pub mod storage_index_users_to_remove_batch;
 pub mod streak_insurance_logs;
 pub mod user;
 pub mod user_map;
