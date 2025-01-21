@@ -103,18 +103,19 @@ export abstract class CandidService {
                 }),
             );
             const canisterId = Principal.fromText(this.canisterId);
-            if (!response.ok) {
+            const responseCertificate = response.body?.certificate;
+
+            // If the response is valid it will either contain the certificate or a 202 Accepted response code
+            const rejected = !response.ok || (response.status === 200 && !responseCertificate);
+
+            if (rejected) {
                 throw new UpdateCallRejectedError(canisterId, methodName, requestId, response);
             }
 
-            if (onRequestAccepted !== undefined) {
-                onRequestAccepted();
-            }
-
-            if (response.body && response.body.certificate) {
-                const certTime = (this.agent as HttpAgent).replicaTime;
+            if (responseCertificate) {
+                const certTime = this.agent.replicaTime;
                 const certificate = await Certificate.create({
-                    certificate: bufFromBufLike(response.body.certificate),
+                    certificate: bufFromBufLike(responseCertificate),
                     rootKey: this.agent.rootKey,
                     canisterId: Principal.from(canisterId),
                     certTime,
@@ -146,6 +147,11 @@ export abstract class CandidService {
                             response,
                         );
                 }
+            }
+
+            // If we reach here the response code must be 202 Accepted, so we should start polling
+            if (onRequestAccepted !== undefined) {
+                onRequestAccepted();
             }
 
             const { reply } = await this.sendRequestToCanister(() =>
