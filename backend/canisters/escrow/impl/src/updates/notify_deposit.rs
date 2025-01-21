@@ -7,7 +7,7 @@ use escrow_canister::notify_deposit::{Response::*, *};
 use icrc_ledger_types::icrc1::account::Account;
 use types::{CanisterId, UserId};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn notify_deposit(args: Args) -> Response {
     let PrepareResult {
