@@ -1354,12 +1354,14 @@ export function metricsEqual(a: Metrics, b: Metrics): boolean {
 
 export function canForward(content: MessageContent): boolean {
     return (
+        content.kind !== "bot_placeholder_content" &&
         content.kind !== "crypto_content" &&
-        content.kind !== "poll_content" &&
         content.kind !== "deleted_content" &&
-        content.kind !== "proposal_content" &&
+        content.kind !== "poll_content" &&
         content.kind !== "placeholder_content" &&
-        content.kind !== "bot_placeholder_content"
+        content.kind !== "prize_content" &&
+        content.kind !== "proposal_content" &&
+        content.kind !== "video_call_content"
     );
 }
 
