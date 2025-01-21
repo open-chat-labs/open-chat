@@ -103,19 +103,11 @@ export abstract class CandidService {
                 }),
             );
             const canisterId = Principal.fromText(this.canisterId);
-            const responseCertificate = response.body?.certificate;
 
-            // If the response is valid it will either contain the certificate or a 202 Accepted response code
-            const rejected = !response.ok || (response.status === 200 && !responseCertificate);
-
-            if (rejected) {
-                throw new UpdateCallRejectedError(canisterId, methodName, requestId, response);
-            }
-
-            if (responseCertificate) {
+            if (response.ok && response.body?.certificate) {
                 const certTime = this.agent.replicaTime;
                 const certificate = await Certificate.create({
-                    certificate: bufFromBufLike(responseCertificate),
+                    certificate: bufFromBufLike(response.body?.certificate),
                     rootKey: this.agent.rootKey,
                     canisterId: Principal.from(canisterId),
                     certTime,
@@ -147,24 +139,30 @@ export abstract class CandidService {
                             response,
                         );
                 }
-            }
+            } else if (response.status === 202) {
+                if (onRequestAccepted !== undefined) {
+                    onRequestAccepted();
+                }
 
-            // If we reach here the response code must be 202 Accepted, so we should start polling
-            if (onRequestAccepted !== undefined) {
-                onRequestAccepted();
-            }
-
-            const { reply } = await this.sendRequestToCanister(() =>
-                polling.pollForResponse(
-                    this.agent,
+                const {reply} = await this.sendRequestToCanister(() =>
+                    polling.pollForResponse(
+                        this.agent,
+                        canisterId,
+                        requestId,
+                        polling.defaultStrategy(),
+                    ),
+                );
+                return Promise.resolve(
+                    CandidService.processMsgpackResponse(reply, mapper, responseValidator),
+                );
+            } else {
+                throw new UpdateCallRejectedError(
                     canisterId,
+                    methodName,
                     requestId,
-                    polling.defaultStrategy(),
-                ),
-            );
-            return Promise.resolve(
-                CandidService.processMsgpackResponse(reply, mapper, responseValidator),
-            );
+                    response,
+                );
+            }
         } catch (err) {
             console.log(err, args);
             throw toCanisterResponseError(err as Error, this.identity);
