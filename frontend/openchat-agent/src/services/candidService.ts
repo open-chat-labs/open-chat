@@ -139,7 +139,8 @@ export abstract class CandidService {
                             response,
                         );
                 }
-            } else if (response.status === 202) {
+            }
+            if (response.status === 202) {
                 if (onRequestAccepted !== undefined) {
                     onRequestAccepted();
                 }
