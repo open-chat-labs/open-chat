@@ -270,8 +270,8 @@
     }
 </script>
 
-<div class="menu" class:inert class:rtl={$rtlStore}>
-    {#if !inert}
+<div class="menu" class:touch={isTouchDevice} class:inert class:rtl={$rtlStore}>
+    {#if !inert && !isTouchDevice}
         {#each $quickReactions as reaction}
             <HoverIcon compact onclick={() => selectQuickReaction(reaction)}>
                 <div class="quick-reaction">
@@ -593,6 +593,9 @@
 
     .menu {
         position: absolute;
+    }
+
+    .menu:not(.touch) {
         width: fit-content;
         background-color: var(--menu-bg);
         border: var(--bw) solid var(--menu-bd);
@@ -606,6 +609,11 @@
             height: 2.125rem;
             padding: 0.25rem;
         }
+    }
+
+    .menu.touch {
+        height: 0;
+        overflow: hidden;
     }
 
     @include setMenuOffsetByMenuItemCount(1, 2.5rem);
