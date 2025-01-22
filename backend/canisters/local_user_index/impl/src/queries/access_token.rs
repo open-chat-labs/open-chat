@@ -68,7 +68,7 @@ async fn access_token(args: Args) -> Response {
                 bot: bc.bot,
                 chat: bc.chat.into(),
                 thread_root_message_index: bc.thread_root_message_index,
-                message_id: bc.message_id,
+                message_id: bc.message_id.to_string(),
                 command: bc.command,
                 bot_api_gateway: state.env.canister_id(),
             };
