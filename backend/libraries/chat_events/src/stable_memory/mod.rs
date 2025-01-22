@@ -28,6 +28,10 @@ pub fn read_events_as_bytes(chat: Chat, after: Option<EventContext>, max_bytes: 
                 if !k.matches_chat(&chat) {
                     return false;
                 }
+                if k.thread_root_message_index().is_some() {
+                    total_bytes += size_of::<MessageIndex>();
+                }
+                total_bytes += size_of::<EventIndex>();
                 total_bytes += v.len();
                 total_bytes < max_bytes
             })

@@ -46,7 +46,7 @@ fn update_group_name_succeeds() {
     tick_many(env, 3);
 
     // Find the group in the group_index and check that the name has changed
-    let groups = client::group_index::happy_path::explore_groups(env, &user2, canister_ids.group_index);
+    let groups = client::group_index::happy_path::explore_groups(env, user2.principal, canister_ids.group_index);
     assert!(groups.iter().any(|m| m.id == group_id && m.name == new_group_name));
 }
 
@@ -90,7 +90,7 @@ fn change_casing_of_group_name_succeeds() {
     tick_many(env, 3);
 
     // Find the group in the group_index and check that the name has changed
-    let matches = client::group_index::happy_path::explore_groups(env, &user2, canister_ids.group_index);
+    let matches = client::group_index::happy_path::explore_groups(env, user2.principal, canister_ids.group_index);
     assert!(matches.iter().any(|m| m.id == group_id && m.name == new_group_name));
 }
 
@@ -107,7 +107,7 @@ fn update_group_privacy_succeeds() {
     let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, &random_string());
 
     // Find the group in the group_index
-    let matches = client::group_index::happy_path::explore_groups(env, &user2, canister_ids.group_index);
+    let matches = client::group_index::happy_path::explore_groups(env, user2.principal, canister_ids.group_index);
     assert!(matches.iter().any(|m| m.id == group_id));
 
     // Update the privacy and name
@@ -138,7 +138,7 @@ fn update_group_privacy_succeeds() {
     tick_many(env, 3);
 
     // Confirm the group can now *not* be found in the group_index
-    let matches = client::group_index::happy_path::explore_groups(env, &user2, canister_ids.group_index);
+    let matches = client::group_index::happy_path::explore_groups(env, user2.principal, canister_ids.group_index);
     assert!(!matches.iter().any(|m| m.id == group_id));
 }
 

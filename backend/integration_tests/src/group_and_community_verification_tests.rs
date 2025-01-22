@@ -1,14 +1,13 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{client, TestEnv};
 use candid::Principal;
-use group_index_canister::{
-    revoke_community_verification, revoke_group_verification, set_community_verification, set_group_verification,
-};
+use group_index_canister::{revoke_community_verification, revoke_group_verification, set_group_verification};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
-use types::{ChatId, CommunityId};
+use testing::rng::random_string;
+use types::{CanisterId, ChatId, CommunityId};
 
 #[test]
 fn e2e_group_and_community_verification_test() {
@@ -22,33 +21,31 @@ fn e2e_group_and_community_verification_test() {
     let group_name = "DFINITY".to_string();
     let community_name = "The real DFINITY".to_string();
 
-    let TestData {
-        user,
-        group_id,
-        community_id,
-    } = init_test_data(env, canister_ids, *controller, &community_name, &group_name);
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+
+    let community_id =
+        client::user::happy_path::create_community(env, &user, &community_name, true, vec!["general".to_string()]);
+
+    let group_id = client::user::happy_path::create_group(env, &user, &group_name, true, true);
 
     let initial_time = now_millis(env);
     env.advance_time(Duration::from_secs(10));
 
     // Set community verification and take group name
-    let response = client::group_index::set_community_verification(
+    client::group_index::happy_path::set_community_verification(
         env,
         *controller,
         canister_ids.group_index,
-        &set_community_verification::Args {
-            community_id,
-            name: group_name.clone(),
-        },
+        community_id,
+        group_name.clone(),
     );
-    assert!(matches!(response, set_community_verification::Response::Success));
 
-    let matches = client::group_index::happy_path::explore_communities(env, &user, canister_ids.group_index);
+    let matches = client::group_index::happy_path::explore_communities(env, user.principal, canister_ids.group_index);
     let community_match = matches.into_iter().find(|m| m.id == community_id).unwrap();
     assert!(community_match.verified);
     assert_eq!(&community_match.name, &group_name);
 
-    let matches = client::group_index::happy_path::explore_groups(env, &user, canister_ids.group_index);
+    let matches = client::group_index::happy_path::explore_groups(env, user.principal, canister_ids.group_index);
     let group_match = matches.into_iter().find(|m| m.id == group_id).unwrap();
     assert!(!group_match.verified);
 
@@ -96,9 +93,7 @@ fn e2e_group_and_community_verification_test() {
     );
     assert!(matches!(response, revoke_community_verification::Response::Success));
 
-    let matches = client::group_index::happy_path::explore_communities(env, &user, canister_ids.group_index);
-    let community_match = matches.into_iter().find(|m| m.id == community_id).unwrap();
-    assert!(!community_match.verified);
+    assert_community_verification_status(env, user.principal, community_id, canister_ids.group_index, false);
 
     tick_many(env, 3);
     let time_after_community_unverified = now_millis(env);
@@ -112,23 +107,20 @@ fn e2e_group_and_community_verification_test() {
     assert_eq!(updates.verified, Some(false));
 
     // Set group verification with original group name
-    let response = client::group_index::set_group_verification(
+    client::group_index::happy_path::set_group_verification(
         env,
         *controller,
         canister_ids.group_index,
-        &set_group_verification::Args {
-            group_id,
-            name: group_name.clone(),
-        },
+        group_id,
+        group_name.clone(),
     );
-    assert!(matches!(response, set_group_verification::Response::Success));
 
-    let matches = client::group_index::happy_path::explore_groups(env, &user, canister_ids.group_index);
+    let matches = client::group_index::happy_path::explore_groups(env, user.principal, canister_ids.group_index);
     let group_match = matches.into_iter().find(|m| m.id == group_id).unwrap();
     assert!(group_match.verified);
     assert_eq!(&group_match.name, &group_name);
 
-    let matches = client::group_index::happy_path::explore_communities(env, &user, canister_ids.group_index);
+    let matches = client::group_index::happy_path::explore_communities(env, user.principal, canister_ids.group_index);
     let community_match = matches.into_iter().find(|m| m.id == community_id).unwrap();
     assert!(!community_match.verified);
 
@@ -168,9 +160,7 @@ fn e2e_group_and_community_verification_test() {
     );
     assert!(matches!(response, revoke_group_verification::Response::Success));
 
-    let matches = client::group_index::happy_path::explore_groups(env, &user, canister_ids.group_index);
-    let group_match = matches.into_iter().find(|m| m.id == group_id).unwrap();
-    assert!(!group_match.verified);
+    assert_group_verification_status(env, user.principal, group_id, canister_ids.group_index, false);
 
     tick_many(env, 3);
     env.advance_time(Duration::from_secs(10));
@@ -183,29 +173,108 @@ fn e2e_group_and_community_verification_test() {
     assert_eq!(updates.verified, Some(false));
 }
 
-fn init_test_data(
-    env: &mut PocketIc,
-    canister_ids: &CanisterIds,
-    controller: Principal,
-    community_name: &str,
-    group_name: &str,
-) -> TestData {
-    let user = client::register_diamond_user(env, canister_ids, controller);
+#[test]
+fn group_verification_revoked_if_name_changed() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
 
-    let community_id =
-        client::user::happy_path::create_community(env, &user, community_name, true, vec!["general".to_string()]);
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let group_name = random_string();
+    let group_id = client::user::happy_path::create_group(env, &user, &group_name, true, true);
 
-    let group_id = client::user::happy_path::create_group(env, &user, group_name, true, true);
-
-    TestData {
-        user,
-        community_id,
+    client::group_index::happy_path::set_group_verification(
+        env,
+        *controller,
+        canister_ids.group_index,
         group_id,
-    }
+        group_name.clone(),
+    );
+
+    env.tick();
+
+    assert_group_verification_status(env, user.principal, group_id, canister_ids.group_index, true);
+
+    client::group::happy_path::update_group(
+        env,
+        user.principal,
+        group_id,
+        &group_canister::update_group_v2::Args {
+            name: Some(random_string()),
+            ..Default::default()
+        },
+    );
+
+    assert_group_verification_status(env, user.principal, group_id, canister_ids.group_index, false);
 }
 
-struct TestData {
-    user: User,
-    community_id: CommunityId,
+#[test]
+fn community_verification_revoked_if_name_changed() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let community_name = random_string();
+    let community_id = client::user::happy_path::create_community(env, &user, &community_name, true, vec![random_string()]);
+
+    client::group_index::happy_path::set_community_verification(
+        env,
+        *controller,
+        canister_ids.group_index,
+        community_id,
+        community_name.clone(),
+    );
+
+    env.tick();
+
+    assert_community_verification_status(env, user.principal, community_id, canister_ids.group_index, true);
+
+    client::community::happy_path::update_community(
+        env,
+        user.principal,
+        community_id,
+        &community_canister::update_community::Args {
+            name: Some(random_string()),
+            ..Default::default()
+        },
+    );
+
+    assert_community_verification_status(env, user.principal, community_id, canister_ids.group_index, false);
+}
+
+fn assert_group_verification_status(
+    env: &PocketIc,
+    sender: Principal,
     group_id: ChatId,
+    group_index: CanisterId,
+    verified: bool,
+) {
+    let matches = client::group_index::happy_path::explore_groups(env, sender, group_index);
+    let group_match = matches.into_iter().find(|m| m.id == group_id).unwrap();
+    assert_eq!(group_match.verified, verified);
+
+    let summary = client::group::happy_path::summary(env, sender, group_id);
+    assert_eq!(summary.verified, verified);
+}
+
+fn assert_community_verification_status(
+    env: &PocketIc,
+    sender: Principal,
+    community_id: CommunityId,
+    group_index: CanisterId,
+    verified: bool,
+) {
+    let matches = client::group_index::happy_path::explore_communities(env, sender, group_index);
+    let community_match = matches.into_iter().find(|m| m.id == community_id).unwrap();
+    assert_eq!(community_match.verified, verified);
+
+    let summary = client::community::happy_path::summary(env, sender, community_id);
+    assert_eq!(summary.verified, verified);
 }

@@ -50,11 +50,7 @@ pub struct StreamingCallbackHttpResponse {
 
 impl HttpRequest {
     pub fn header(&self, key: &str) -> Option<&String> {
-        let key_lower = key.to_lowercase();
-        self.headers
-            .iter()
-            .find(|(k, _)| k.to_lowercase() == key_lower)
-            .map(|(_, v)| v)
+        self.headers.iter().find(|(k, _)| k.eq_ignore_ascii_case(key)).map(|(_, v)| v)
     }
 }
 

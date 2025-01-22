@@ -51,7 +51,7 @@ fn change_casing_of_community_name_succeeds() {
     tick_many(env, 3);
 
     // Find the community in the group_index and check that the name has changed
-    let communities = client::group_index::happy_path::explore_communities(env, &user2, canister_ids.group_index);
+    let communities = client::group_index::happy_path::explore_communities(env, user2.principal, canister_ids.group_index);
     assert!(communities
         .iter()
         .any(|m| m.id == community_id && m.name == new_community_name));
@@ -197,7 +197,7 @@ fn make_private_community_public_succeeds() {
     assert!(result.is_public);
 
     assert!(
-        client::group_index::happy_path::explore_communities(env, &user, canister_ids.group_index)
+        client::group_index::happy_path::explore_communities(env, user.principal, canister_ids.group_index)
             .into_iter()
             .any(|c| c.id == community_id)
     );
