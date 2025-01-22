@@ -19,10 +19,10 @@ use utils::time::MonthKey;
 #[serde(from = "UserMapTrimmed")]
 pub struct UserMap {
     users: HashMap<UserId, User>,
-    #[serde(default)]
     bots: HashMap<UserId, Bot>,
     suspected_bots: BTreeSet<UserId>,
     deleted_users: HashMap<UserId, TimestampMillis>,
+    bots_removed: BTreeSet<(TimestampMillis, UserId)>,
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
     unique_person_proofs_submitted: u32,
 
@@ -235,8 +235,18 @@ impl UserMap {
         Some(user)
     }
 
-    pub fn remove_bot(&mut self, bot_id: &UserId) -> Option<Bot> {
-        self.bots.remove(bot_id)
+    pub fn remove_bot(&mut self, bot_id: UserId, now: TimestampMillis) -> Option<Bot> {
+        let bot = self.bots.remove(&bot_id)?;
+        self.bots_removed.insert((now, bot_id));
+        Some(bot)
+    }
+
+    pub fn iter_bots_removed_since(&self, since: TimestampMillis) -> impl Iterator<Item = UserId> + '_ {
+        self.bots_removed
+            .iter()
+            .rev()
+            .take_while(move |(ts, _)| *ts > since)
+            .map(|(_, u)| *u)
     }
 
     pub fn is_deleted(&self, user_id: &UserId) -> bool {
@@ -544,6 +554,8 @@ struct UserMapTrimmed {
     suspected_bots: BTreeSet<UserId>,
     deleted_users: HashMap<UserId, TimestampMillis>,
     #[serde(default)]
+    bots_removed: BTreeSet<(TimestampMillis, UserId)>,
+    #[serde(default)]
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
     #[serde(default)]
     unique_person_proofs_submitted: u32,
@@ -555,6 +567,7 @@ impl From<UserMapTrimmed> for UserMap {
             users: value.users,
             suspected_bots: value.suspected_bots,
             deleted_users: value.deleted_users,
+            bots_removed: value.bots_removed,
             suspended_or_unsuspended_users: value.suspended_or_unsuspended_users,
             unique_person_proofs_submitted: value.unique_person_proofs_submitted,
             bots: value.bots,

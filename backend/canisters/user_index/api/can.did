@@ -26,6 +26,7 @@ type BotUpdatesResponse = variant {
             commands: vec SlashCommandSchema;
             last_updated : TimestampMillis;
         };
+        removed: vec UserId;
         deleted: vec UserId;
         timestamp: TimestampMillis;
     };

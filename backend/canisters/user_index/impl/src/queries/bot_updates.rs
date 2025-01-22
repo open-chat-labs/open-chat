@@ -25,9 +25,12 @@ fn bot_updates_impl(args: Args, state: &RuntimeState) -> Response {
         })
         .collect();
 
+    let removed = state.data.users.iter_bots_removed_since(args.updated_since).collect();
+
     if let Some(timestamp) = added_or_updated.iter().map(|b| b.last_updated).max() {
         Success(SuccessResult {
             added_or_updated,
+            removed,
             deleted: Vec::new(),
             timestamp,
         })
