@@ -68,6 +68,7 @@
         RegisterBot,
         UpdateBot,
         userStore,
+        RemoveBot,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -184,6 +185,7 @@
         | { kind: "select_chat" }
         | { kind: "register_bot" }
         | { kind: "update_bot" }
+        | { kind: "remove_bot" }
         | { kind: "suspended" }
         | { kind: "no_access" }
         | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
@@ -273,6 +275,8 @@
             modal = { kind: "register_bot" };
         } else if (ev instanceof UpdateBot) {
             modal = { kind: "update_bot" };
+        } else if (ev instanceof RemoveBot) {
+            modal = { kind: "remove_bot" };
         } else if (ev instanceof SummonWitch) {
             summonWitch();
         } else if (ev instanceof RemoteVideoCallStartedEvent) {
@@ -1341,6 +1345,8 @@
             <BotBuilderModal mode={"register"} onClose={closeModal} />
         {:else if modal.kind === "update_bot"}
             <BotBuilderModal mode={"update"} onClose={closeModal} />
+        {:else if modal.kind === "remove_bot"}
+            <BotBuilderModal mode={"remove"} onClose={closeModal} />
         {:else if modal.kind === "no_access"}
             <NoAccess on:close={closeNoAccess} />
         {:else if modal.kind === "not_found"}

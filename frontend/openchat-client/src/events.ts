@@ -236,3 +236,9 @@ export class UpdateBot extends Event {
         super("openchat_event");
     }
 }
+
+export class RemoveBot extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}

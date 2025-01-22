@@ -219,6 +219,7 @@ import {
     ReactionSelected,
     RegisterBot,
     RemoteVideoCallStartedEvent,
+    RemoveBot,
     SearchChat,
     SelectedChatInvalid,
     SendingMessage,
@@ -4715,6 +4716,16 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    removeBot(botId: string): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "removeBot",
+            botId,
+        }).catch((err) => {
+            this.#logger.error("Failed to register bot: ", err);
+            return false;
+        });
+    }
+
     updateRegisteredBot(
         id: string,
         principal?: string,
@@ -7804,6 +7815,8 @@ export class OpenChat extends EventTarget {
             this.dispatchEvent(new RegisterBot());
         } else if (bot.command.name === "update_bot") {
             this.dispatchEvent(new UpdateBot());
+        } else if (bot.command.name === "remove_bot") {
+            this.dispatchEvent(new RemoveBot());
         } else if (bot.command.name === "poll") {
             this.dispatchEvent(new CreatePoll(bot.command.messageContext));
         } else if (bot.command.name === "gif") {
@@ -7883,7 +7896,7 @@ export class OpenChat extends EventTarget {
                 if (token === undefined) {
                     throw new Error("Didn't get an access token");
                 }
-                console.log("TOKEN: ", token);
+                console.log("TOKEN: ", token, messageId);
                 return [token, messageId];
             });
         });
@@ -8269,7 +8282,7 @@ export class OpenChat extends EventTarget {
         swapId: bigint,
         inputToken: boolean,
         amount: bigint | undefined,
-        fee: bigint | undefined
+        fee: bigint | undefined,
     ): Promise<boolean> {
         return this.#sendRequest({
             kind: "withdrawFromIcpSwap",

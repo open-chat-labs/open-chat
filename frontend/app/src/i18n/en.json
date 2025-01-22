@@ -338,9 +338,11 @@
         "tooManyRequests": "Too many requests to this bot. Please try again later.",
         "update_bot": {
             "action": "Update",
-            "desc": "Start a proposal to update an existing OpenChat bot",
-            "nobots": "Only the owner of a registerd bot can update the bot. You are not the owner of any registered bots.",
+            "desc": "Update an existing OpenChat bot if you are the owner",
+            "nobots": "Only the owner of a registered bot can update or remove the bot. You are not the owner of any registered bots.",
             "select": "Select bot to update",
+            "remove": "Select bot to remove",
+            "removeDesc": "Remove an existing OpenChat bot if you are the owner",
             "title": "Update {name}"
         },
         "view": {

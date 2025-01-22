@@ -349,6 +349,7 @@ export type WorkerRequest =
     | ExploreCommunities
     | ExploreBots
     | RegisterBot
+    | RemoveBot
     | GetCommunitySummary
     | ExploreChannels
     | GetCommunityDetails
@@ -833,6 +834,11 @@ type RegisterBot = {
     kind: "registerBot";
     principal: string;
     bot: ExternalBot;
+};
+
+type RemoveBot = {
+    kind: "removeBot";
+    botId: string;
 };
 
 type ExploreBots = {
@@ -2034,6 +2040,8 @@ export type WorkerResult<T> = T extends Init
     : T extends ExploreBots
     ? ExploreBotsResponse
     : T extends RegisterBot
+    ? boolean
+    : T extends RemoveBot
     ? boolean
     : T extends UpdateRegisteredBot
     ? boolean

@@ -18,12 +18,13 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import AlertBox from "../AlertBox.svelte";
     import Avatar from "../Avatar.svelte";
+    import FancyLoader from "../icons/FancyLoader.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         onClose: () => void;
-        mode: "register" | "update";
+        mode: "register" | "update" | "remove";
     }
 
     let { onClose, mode = "register" }: Props = $props();
@@ -32,7 +33,9 @@
     let valid = $state(false);
     let schemaLoaded = $state(false);
     let busy = $state(false);
-    let step: "choose" | "edit" = $state(mode === "update" ? "choose" : "edit");
+    let step: "choose" | "edit" = $state(
+        mode === "update" || mode === "remove" ? "choose" : "edit",
+    );
 
     let botState = $state({
         original: emptyBotInstance($currentUser.userId),
@@ -46,7 +49,7 @@
     // let dirty = $derived(ownerDirty || nameDirty || avatarDirty || endpointDirty);
 
     let myBots = $derived(
-        mode === "update"
+        mode === "update" || mode === "remove"
             ? [...$externalBots.values()].filter((b) => b.ownerId === $currentUser.userId)
             : [],
     );
@@ -99,24 +102,48 @@
         }
     }
 
+    function remove(id: string) {
+        busy = true;
+        client
+            .removeBot(id)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("Unable to remove bot"));
+                } else {
+                    console.log("Bot removed");
+                    onClose();
+                }
+            })
+            .finally(() => (busy = false));
+    }
+
     function selectBot({ id }: BotMatch) {
         const b = $externalBots.get(id);
         if (b !== undefined) {
             if (b.ownerId === $currentUser.userId) {
                 botState.original = b;
                 botState.current = structuredClone(b);
-                step = "edit";
+                if (mode === "update") {
+                    step = "edit";
+                } else if (mode === "remove") {
+                    remove(b.id);
+                }
             }
         }
     }
 
-    let titleKey = $derived(
-        mode === "update"
-            ? step === "choose"
-                ? i18nKey("bots.update_bot.select")
-                : i18nKey("bots.update_bot.title", { name: botState.current.name })
-            : i18nKey("bots.builder.title"),
-    );
+    let titleKey = $derived.by(() => {
+        switch (mode) {
+            case "register":
+                return i18nKey("bots.builder.title");
+            case "update":
+                return step === "choose"
+                    ? i18nKey("bots.update_bot.select")
+                    : i18nKey("bots.update_bot.title", { name: botState.current.name });
+            case "remove":
+                return i18nKey("bots.update_bot.remove");
+        }
+    });
 </script>
 
 <ModalContent on:close={onClose}>
@@ -129,6 +156,10 @@
                 <AlertBox>
                     <Translatable resourceKey={i18nKey("bots.update_bot.nobots")}></Translatable>
                 </AlertBox>
+            {:else if mode === "remove" && busy}
+                <div class="loader">
+                    <FancyLoader />
+                </div>
             {:else}
                 <div class="bots">
                     {#each myBots as myBot}
@@ -152,7 +183,7 @@
                     {/each}
                 </div>
             {/if}
-        {:else if step === "edit" && botState.current !== undefined}
+        {:else if step === "edit" && botState.current !== undefined && mode !== "remove"}
             <BotBuilder
                 {nameDirty}
                 {mode}
@@ -168,17 +199,19 @@
             <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}>
                 <Translatable resourceKey={i18nKey("cancel")} />
             </Button>
-            <Button
-                on:click={mode === "update" ? update : register}
-                disabled={!valid || busy}
-                loading={busy}
-                small={!$mobileWidth}
-                tiny={$mobileWidth}>
-                <Translatable
-                    resourceKey={mode === "update"
-                        ? i18nKey("bots.update_bot.action")
-                        : i18nKey("bots.add.action")} />
-            </Button>
+            {#if mode !== "remove"}
+                <Button
+                    on:click={mode === "update" ? update : register}
+                    disabled={!valid || busy}
+                    loading={busy}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}>
+                    <Translatable
+                        resourceKey={mode === "update"
+                            ? i18nKey("bots.update_bot.action")
+                            : i18nKey("bots.add.action")} />
+                </Button>
+            {/if}
         </ButtonGroup>
     </div>
 </ModalContent>
@@ -232,5 +265,11 @@
             color: var(--txt-light);
             @include clamp(2);
         }
+    }
+
+    .loader {
+        width: toRem(80);
+        height: toRem(80);
+        margin: auto;
     }
 </style>

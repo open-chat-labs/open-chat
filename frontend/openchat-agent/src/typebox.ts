@@ -2235,6 +2235,13 @@ export const UserIndexDeleteUserResponse = Type.Union([
     Type.Literal("UserNotFound"),
 ]);
 
+export type UserIndexRemoveBotResponse = Static<typeof UserIndexRemoveBotResponse>;
+export const UserIndexRemoveBotResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("BotNotFound"),
+    Type.Literal("NotAuthorised"),
+]);
+
 export type UserIndexUnsuspendUserResponse = Static<typeof UserIndexUnsuspendUserResponse>;
 export const UserIndexUnsuspendUserResponse = Type.Union([
     Type.Literal("Success"),
@@ -2293,8 +2300,8 @@ export const UserIndexSetUsernameArgs = Type.Object({
 export type UserIndexUpdateBotResponse = Static<typeof UserIndexUpdateBotResponse>;
 export const UserIndexUpdateBotResponse = Type.Union([
     Type.Literal("Success"),
-    Type.Literal("NameInvalid"),
-    Type.Literal("NameAlreadyExists"),
+    Type.Literal("PrincipalInvalid"),
+    Type.Literal("PrincipalAlreadyUsed"),
     Type.Literal("AvatarInvalid"),
     Type.Literal("EndpointInvalid"),
     Type.Literal("BotNotFound"),
@@ -5037,6 +5044,11 @@ export const UserIndexDeleteUserArgs = Type.Object({
     user_id: UserId,
 });
 
+export type UserIndexRemoveBotArgs = Static<typeof UserIndexRemoveBotArgs>;
+export const UserIndexRemoveBotArgs = Type.Object({
+    bot_id: UserId,
+});
+
 export type UserIndexUnsuspendUserArgs = Static<typeof UserIndexUnsuspendUserArgs>;
 export const UserIndexUnsuspendUserArgs = Type.Object({
     user_id: UserId,
@@ -5771,7 +5783,6 @@ export const UserUpdatesCommunitiesUpdates = Type.Object({
 export type UserLeaveGroupArgs = Static<typeof UserLeaveGroupArgs>;
 export const UserLeaveGroupArgs = Type.Object({
     chat_id: ChatId,
-    correlation_id: Type.BigInt(),
 });
 
 export type UserMuteNotificationsArgs = Static<typeof UserMuteNotificationsArgs>;
@@ -6716,7 +6727,7 @@ export type UserIndexUpdateBotArgs = Static<typeof UserIndexUpdateBotArgs>;
 export const UserIndexUpdateBotArgs = Type.Object({
     bot_id: UserId,
     owner: Type.Optional(Type.Union([UserId, Type.Undefined()])),
-    name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    principal: Type.Optional(Type.Union([TSBytes, Type.Undefined()])),
     avatar: OptionUpdateString,
     endpoint: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     definition: Type.Optional(Type.Union([BotDefinition, Type.Undefined()])),
@@ -8130,6 +8141,7 @@ export const GroupMatch = Type.Object({
     member_count: Type.Number(),
     gate: Type.Optional(Type.Union([AccessGate, Type.Undefined()])),
     subtype: Type.Optional(Type.Union([GroupSubtype, Type.Undefined()])),
+    verified: Type.Boolean(),
 });
 
 export type AccessGateConfig = Static<typeof AccessGateConfig>;
@@ -8523,6 +8535,7 @@ export const CommunityMatch = Type.Object({
     gate_config: Type.Optional(Type.Union([AccessGateConfig, Type.Undefined()])),
     moderation_flags: Type.Number(),
     primary_language: Type.String(),
+    verified: Type.Boolean(),
 });
 
 export type EventWrapperMessage = Static<typeof EventWrapperMessage>;
@@ -8835,6 +8848,7 @@ export const GroupCanisterGroupChatSummary = Type.Object({
     rules_accepted: Type.Boolean(),
     membership: Type.Optional(Type.Union([GroupMembership, Type.Undefined()])),
     video_call_in_progress: Type.Optional(Type.Union([VideoCall, Type.Undefined()])),
+    verified: Type.Boolean(),
 });
 
 export type EventWrapperChatEvent = Static<typeof EventWrapperChatEvent>;
@@ -8891,6 +8905,7 @@ export const GroupCanisterGroupChatSummaryUpdates = Type.Object({
     membership: Type.Optional(Type.Union([GroupMembershipUpdates, Type.Undefined()])),
     video_call_in_progress: OptionUpdateVideoCall,
     any_updates_missed: Type.Boolean(),
+    verified: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
 });
 
 export type DirectChatSummaryUpdates = Static<typeof DirectChatSummaryUpdates>;
@@ -9194,6 +9209,7 @@ export const CommunityCanisterCommunitySummary = Type.Object({
     user_groups: Type.Array(UserGroupSummary),
     is_invited: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
     metrics: ChatMetrics,
+    verified: Type.Boolean(),
 });
 
 export type CommunityCanisterCommunitySummaryUpdates = Static<
@@ -9221,6 +9237,7 @@ export const CommunityCanisterCommunitySummaryUpdates = Type.Object({
     user_groups: Type.Array(UserGroupSummary),
     user_groups_deleted: Type.Array(Type.Number()),
     metrics: Type.Optional(Type.Union([ChatMetrics, Type.Undefined()])),
+    verified: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
 });
 
 export type LocalUserIndexChatEventsEventsResponse = Static<

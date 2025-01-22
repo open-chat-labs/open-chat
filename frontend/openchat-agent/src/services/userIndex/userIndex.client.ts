@@ -95,6 +95,8 @@ import {
     UserIndexPlatformModeratorsGroupResponse,
     UserIndexRegisterBotArgs,
     UserIndexRegisterBotResponse,
+    UserIndexRemoveBotArgs,
+    UserIndexRemoveBotResponse,
     UserIndexReportedMessagesArgs,
     UserIndexReportedMessagesResponse,
     UserIndexSearchArgs,
@@ -659,6 +661,21 @@ export class UserIndexClient extends CandidService {
         );
     }
 
+    removeBot(botId: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "remove_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+            },
+            (resp) => {
+                console.log("UserIndex remove bot response: ", resp);
+                return resp === "Success";
+            },
+            UserIndexRemoveBotArgs,
+            UserIndexRemoveBotResponse,
+        );
+    }
+
     updateRegisteredBot(
         id: string,
         principal?: string,
@@ -672,9 +689,8 @@ export class UserIndexClient extends CandidService {
             "update_bot",
             {
                 bot_id: principalStringToBytes(id),
-                // principal: mapOptional(principal, principalStringToBytes),
+                principal: mapOptional(principal, principalStringToBytes),
                 owner: mapOptional(ownerId, principalStringToBytes),
-                name: undefined,
                 avatar:
                     mapOptional(avatarUrl, (url) => ({
                         SetToSome: url,

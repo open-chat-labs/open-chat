@@ -4075,6 +4075,11 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.registerBot(principal, bot);
     }
 
+    removeBot(botId: string): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+        return this._userIndexClient.removeBot(botId);
+    }
+
     updateRegisteredBot(
         id: string,
         principal?: string,
