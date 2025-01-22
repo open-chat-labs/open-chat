@@ -19,10 +19,10 @@ use utils::time::MonthKey;
 #[serde(from = "UserMapTrimmed")]
 pub struct UserMap {
     users: HashMap<UserId, User>,
-    #[serde(default)]
     bots: HashMap<UserId, Bot>,
     suspected_bots: BTreeSet<UserId>,
     deleted_users: HashMap<UserId, TimestampMillis>,
+    bot_updates: BTreeSet<(TimestampMillis, BotUpdate)>,
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
     unique_person_proofs_submitted: u32,
 
@@ -124,6 +124,7 @@ impl UserMap {
 
         if let Some(bot) = bot {
             self.bots.insert(user_id, bot);
+            self.bot_updates.insert((now, BotUpdate::Added(user_id)));
         }
 
         if let Some(ref_by) = referred_by {
@@ -147,7 +148,7 @@ impl UserMap {
 
             let previous_username = &previous.username;
             let username = &user.username;
-            let username_case_insensitive_changed = previous_username.to_uppercase() != username.to_uppercase();
+            let username_case_insensitive_changed = !previous_username.eq_ignore_ascii_case(username);
 
             if principal_changed {
                 if let Some(other) = self.principal_to_user_id.get(&principal) {
@@ -189,6 +190,7 @@ impl UserMap {
 
             if let Some(bot) = bot {
                 self.bots.insert(user_id, bot);
+                self.bot_updates.insert((now, BotUpdate::Updated(user_id)));
             }
 
             UpdateUserResult::Success
@@ -235,8 +237,15 @@ impl UserMap {
         Some(user)
     }
 
-    pub fn remove_bot(&mut self, bot_id: &UserId) -> Option<Bot> {
-        self.bots.remove(bot_id)
+    pub fn remove_bot(&mut self, bot_id: UserId, now: TimestampMillis) -> Option<Bot> {
+        let bot = self.bots.remove(&bot_id)?;
+        self.botname_to_user_id.remove(&bot.name);
+        self.bot_updates.insert((now, BotUpdate::Removed(bot_id)));
+        Some(bot)
+    }
+
+    pub fn iter_bot_updates(&self, since: TimestampMillis) -> impl Iterator<Item = (TimestampMillis, BotUpdate)> + '_ {
+        self.bot_updates.iter().rev().copied().take_while(move |(ts, _)| *ts > since)
     }
 
     pub fn is_deleted(&self, user_id: &UserId) -> bool {
@@ -377,10 +386,6 @@ impl UserMap {
 
     pub fn iter(&self) -> impl Iterator<Item = &User> {
         self.users.values()
-    }
-
-    pub fn iter_bots(&self) -> impl Iterator<Item = (&UserId, &Bot)> {
-        self.bots.iter()
     }
 
     pub fn len(&self) -> usize {
@@ -544,6 +549,8 @@ struct UserMapTrimmed {
     suspected_bots: BTreeSet<UserId>,
     deleted_users: HashMap<UserId, TimestampMillis>,
     #[serde(default)]
+    bot_updates: BTreeSet<(TimestampMillis, BotUpdate)>,
+    #[serde(default)]
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
     #[serde(default)]
     unique_person_proofs_submitted: u32,
@@ -555,6 +562,7 @@ impl From<UserMapTrimmed> for UserMap {
             users: value.users,
             suspected_bots: value.suspected_bots,
             deleted_users: value.deleted_users,
+            bot_updates: value.bot_updates,
             suspended_or_unsuspended_users: value.suspended_or_unsuspended_users,
             unique_person_proofs_submitted: value.unique_person_proofs_submitted,
             bots: value.bots,
@@ -597,6 +605,13 @@ impl From<UserMapTrimmed> for UserMap {
 
         user_map
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Ord, PartialOrd, Eq, PartialEq)]
+pub enum BotUpdate {
+    Added(UserId),
+    Updated(UserId),
+    Removed(UserId),
 }
 
 #[cfg(test)]

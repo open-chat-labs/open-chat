@@ -52,6 +52,7 @@ impl MembersStableStorage {
                     if !k.matches_prefix(&self.prefix) {
                         return false;
                     }
+                    total_bytes += 10; // Doesn't need to be exact and UserIds are usually 10 bytes
                     total_bytes += v.len();
                     total_bytes < max_bytes
                 })

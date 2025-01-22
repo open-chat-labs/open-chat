@@ -2293,8 +2293,8 @@ export const UserIndexSetUsernameArgs = Type.Object({
 export type UserIndexUpdateBotResponse = Static<typeof UserIndexUpdateBotResponse>;
 export const UserIndexUpdateBotResponse = Type.Union([
     Type.Literal("Success"),
-    Type.Literal("NameInvalid"),
-    Type.Literal("NameAlreadyExists"),
+    Type.Literal("PrincipalInvalid"),
+    Type.Literal("PrincipalAlreadyUsed"),
     Type.Literal("AvatarInvalid"),
     Type.Literal("EndpointInvalid"),
     Type.Literal("BotNotFound"),
@@ -5770,7 +5770,6 @@ export const UserUpdatesCommunitiesUpdates = Type.Object({
 export type UserLeaveGroupArgs = Static<typeof UserLeaveGroupArgs>;
 export const UserLeaveGroupArgs = Type.Object({
     chat_id: ChatId,
-    correlation_id: Type.BigInt(),
 });
 
 export type UserMuteNotificationsArgs = Static<typeof UserMuteNotificationsArgs>;
@@ -6715,7 +6714,7 @@ export type UserIndexUpdateBotArgs = Static<typeof UserIndexUpdateBotArgs>;
 export const UserIndexUpdateBotArgs = Type.Object({
     bot_id: UserId,
     owner: Type.Optional(Type.Union([UserId, Type.Undefined()])),
-    name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    principal: Type.Optional(Type.Union([TSBytes, Type.Undefined()])),
     avatar: OptionUpdateString,
     endpoint: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     definition: Type.Optional(Type.Union([BotDefinition, Type.Undefined()])),
@@ -7586,7 +7585,7 @@ export const GroupIndexUnfreezeGroupResponse = Type.Union([
 export type UserIndexBotUpdatesSuccessResult = Static<typeof UserIndexBotUpdatesSuccessResult>;
 export const UserIndexBotUpdatesSuccessResult = Type.Object({
     added_or_updated: Type.Array(UserIndexBotUpdatesBotSchema),
-    deleted: Type.Array(UserId),
+    removed: Type.Array(UserId),
     timestamp: Type.BigInt(),
 });
 

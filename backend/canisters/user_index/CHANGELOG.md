@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Bump user limit to 300k ([#7270](https://github.com/open-chat-labs/open-chat/pull/7270))
+
+## [[2.0.1576](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1576-user_index)] - 2025-01-21
+
 ### Added
 
 - Add `remove_bot` endpoint callable by proposal or bot owner ([#7254](https://github.com/open-chat-labs/open-chat/pull/7254))

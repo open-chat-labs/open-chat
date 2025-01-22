@@ -13,8 +13,9 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
     let caller = state.env.caller();
     if let Some(member) = state.data.get_member(caller) {
         let min_visible_message_index = member.min_visible_message_index();
+        let last_updated = state.data.details_last_updated();
+
         let chat = &state.data.chat;
-        let last_updated = chat.details_last_updated();
 
         let mut non_basic_members = HashSet::new();
         non_basic_members.extend(chat.members.owners().iter().copied());
@@ -34,7 +35,8 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
             }
         }
 
-        let bots = chat
+        let bots = state
+            .data
             .bots
             .iter()
             .map(|(user_id, bot)| BotGroupDetails {
