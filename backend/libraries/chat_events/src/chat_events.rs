@@ -147,7 +147,7 @@ impl ChatEvents {
     }
 
     pub fn read_events_as_bytes_from_stable_memory(&self, after: Option<EventContext>) -> Vec<(EventContext, ByteBuf)> {
-        stable_memory::read_events_as_bytes(self.chat, after, 2 * ONE_MB as usize)
+        stable_memory::read_events_as_bytes(self.chat, after, ONE_MB as usize)
     }
 
     pub fn iter_recently_updated_events(

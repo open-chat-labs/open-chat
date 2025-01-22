@@ -27,7 +27,7 @@ fn add_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotAuthorized;
     }
 
-    if !state.data.chat.add_bot(
+    if !state.data.add_bot(
         member.user_id(),
         args.bot_id,
         BotGroupConfig {

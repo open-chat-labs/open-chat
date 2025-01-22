@@ -22,7 +22,7 @@ fn remove_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotAuthorized;
     }
 
-    state.data.chat.remove_bot(member.user_id(), args.bot_id, state.env.now());
+    state.data.remove_bot(member.user_id(), args.bot_id, state.env.now());
 
     // TODO: Notify UserIndex
 

@@ -5,7 +5,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::Reader;
+use chat_events::{ChatEventInternal, Reader};
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -13,7 +13,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation};
 use group_community_common::{
-    Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
+    Achievements, ExpiringMemberActions, ExpiringMembers, GroupBots, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
@@ -25,16 +25,18 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, StableMemoryMap};
 use std::cell::RefCell;
+use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGateConfigInternal, Achievement, BotCaller, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId,
-    Cryptocurrency, Cycles, Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
-    GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, SlashCommandPermissions,
-    TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotRemoved, BotUpdated, BuildVersion, Caller,
+    CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex, FrozenGroupInfo,
+    GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, MultiUserChat,
+    Notification, Rules, SlashCommandPermissions, TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY,
+    SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -444,7 +446,7 @@ impl RuntimeState {
         }
 
         if let Some(bot_context) = bot_context.take() {
-            if self.data.chat.bots.get(&bot_context.bot).is_some() {
+            if self.data.bots.get(&bot_context.bot).is_some() {
                 Success(Caller::BotV2(bot_context))
             } else {
                 NotFound
@@ -499,6 +501,7 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     #[serde(default)]
     verified: Timestamped<bool>,
+    pub bots: GroupBots,
     #[serde(default)]
     message_ids_deduped: bool,
 }
@@ -600,6 +603,7 @@ impl Data {
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             verified: Timestamped::default(),
+            bots: GroupBots::default(),
             message_ids_deduped: true,
         }
     }
@@ -723,7 +727,7 @@ impl Data {
     }
 
     pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&SlashCommandPermissions> {
-        self.chat.bots.get(bot_user_id).map(|b| &b.permissions)
+        self.bots.get(bot_user_id).map(|b| &b.permissions)
     }
 
     pub fn get_user_permissions_for_bot_commands(&self, user_id: &UserId) -> Option<SlashCommandPermissions> {
@@ -737,6 +741,61 @@ impl Data {
             chat: group_permissions,
             message: message_permissions,
         })
+    }
+
+    pub fn add_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {
+        if !self.bots.add(user_id, owner_id, config.permissions, now) {
+            return false;
+        }
+
+        self.chat.events.push_main_event(
+            ChatEventInternal::BotAdded(Box::new(BotAdded {
+                user_id,
+                added_by: owner_id,
+            })),
+            0,
+            now,
+        );
+
+        true
+    }
+
+    pub fn update_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {
+        if !self.bots.update(user_id, config.permissions, now) {
+            return false;
+        }
+
+        self.chat.events.push_main_event(
+            ChatEventInternal::BotUpdated(Box::new(BotUpdated {
+                user_id,
+                updated_by: owner_id,
+            })),
+            0,
+            now,
+        );
+
+        true
+    }
+
+    pub fn remove_bot(&mut self, owner_id: UserId, user_id: UserId, now: TimestampMillis) -> bool {
+        if !self.bots.remove(user_id, now) {
+            return false;
+        }
+
+        self.chat.events.push_main_event(
+            ChatEventInternal::BotRemoved(Box::new(BotRemoved {
+                user_id,
+                removed_by: owner_id,
+            })),
+            0,
+            now,
+        );
+
+        true
+    }
+
+    pub fn details_last_updated(&self) -> TimestampMillis {
+        max(self.chat.details_last_updated(), self.bots.last_updated())
     }
 }
 
