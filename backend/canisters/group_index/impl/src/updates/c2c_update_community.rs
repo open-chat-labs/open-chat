@@ -14,7 +14,7 @@ fn c2c_update_community_impl(args: Args, state: &mut RuntimeState) -> Response {
     let community_id = CommunityId::from(state.env.caller());
 
     if let Some(community) = state.data.public_communities.get(&community_id) {
-        if community.name().to_uppercase() != args.name.to_uppercase() {
+        if !community.name().eq_ignore_ascii_case(&args.name) {
             if state.data.public_group_and_community_names.is_name_taken(&args.name) {
                 return NameTaken;
             }

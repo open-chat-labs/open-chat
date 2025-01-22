@@ -118,6 +118,9 @@ impl PublicGroups {
         match self.groups.get_mut(chat_id) {
             None => UpdateGroupResult::ChatNotFound,
             Some(group) => {
+                if !name.eq_ignore_ascii_case(&group.name) {
+                    group.verified = false;
+                }
                 group.name = name;
                 group.description = description;
                 group.avatar_id = avatar_id;

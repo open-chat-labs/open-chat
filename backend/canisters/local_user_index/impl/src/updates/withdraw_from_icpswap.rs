@@ -24,6 +24,7 @@ async fn withdraw_from_icpswap(args: Args) -> Response {
     {
         Ok(user_canister::c2c_withdraw_from_icpswap::Response::Success) => Success,
         Ok(user_canister::c2c_withdraw_from_icpswap::Response::SwapNotFound) => SwapNotFound,
+        Ok(user_canister::c2c_withdraw_from_icpswap::Response::AmountNotSpecified) => AmountNotSpecified,
         Ok(user_canister::c2c_withdraw_from_icpswap::Response::InternalError(error)) => InternalError(error),
         Err(error) => InternalError(format!("{error:?}")),
     }

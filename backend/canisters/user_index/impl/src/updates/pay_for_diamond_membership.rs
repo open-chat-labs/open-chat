@@ -1,10 +1,10 @@
 use crate::guards::caller_is_openchat_user;
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
-use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
+use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{DAY_IN_MS, HOUR_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
+use constants::{DAY_IN_MS, HOUR_IN_MS, ONE_GB, SNS_GOVERNANCE_CANISTER_ID};
 use event_store_producer::EventBuilder;
 use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;

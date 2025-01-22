@@ -22,6 +22,7 @@ generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
 generate_msgpack_update_call!(delete_user);
 generate_msgpack_update_call!(pay_for_diamond_membership);
+generate_msgpack_update_call!(remove_bot);
 generate_update_call!(remove_platform_moderator);
 generate_msgpack_update_call!(set_display_name);
 generate_msgpack_update_call!(set_username);
@@ -35,11 +36,13 @@ generate_msgpack_update_call!(register_bot);
 generate_msgpack_update_call!(update_bot);
 
 pub mod happy_path {
+    use crate::User;
     use candid::Principal;
     use event_store_canister::TimestampMillis;
     use pocket_ic::PocketIc;
     use sha256::sha256;
     use std::collections::HashMap;
+    use testing::rng::random_principal;
     use types::{
         BotDefinition, CanisterId, CanisterWasm, Chit, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration,
         Empty, OptionUpdate, UserId, UserSummary,
@@ -274,6 +277,34 @@ pub mod happy_path {
         }
     }
 
+    pub fn register_bot(
+        env: &mut PocketIc,
+        owner: &User,
+        user_index_canister_id: CanisterId,
+        name: String,
+        endpoint: String,
+        definition: BotDefinition,
+    ) -> Principal {
+        let principal = random_principal();
+
+        let response = super::register_bot(
+            env,
+            owner.principal,
+            user_index_canister_id,
+            &user_index_canister::register_bot::Args {
+                principal,
+                owner: owner.user_id,
+                name,
+                avatar: None,
+                endpoint,
+                definition,
+            },
+        );
+
+        assert!(matches!(response, user_index_canister::register_bot::Response::Success));
+        principal
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn update_bot(
         env: &mut PocketIc,
@@ -303,6 +334,17 @@ pub mod happy_path {
             user_index_canister::update_bot::Response::Success => (),
             response => panic!("'update_bot' expected Success: {response:?}"),
         }
+    }
+
+    pub fn remove_bot(env: &mut PocketIc, sender: Principal, user_index_canister_id: CanisterId, bot_id: UserId) {
+        let response = super::remove_bot(
+            env,
+            sender,
+            user_index_canister_id,
+            &user_index_canister::remove_bot::Args { bot_id },
+        );
+
+        assert!(matches!(response, user_index_canister::remove_bot::Response::Success));
     }
 
     pub fn bot_updates(

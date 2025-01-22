@@ -1933,7 +1933,13 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.withdrawFromIcpSwap(payload.userId, payload.swapId, payload.inputToken),
+                    agent.withdrawFromIcpSwap(
+                        payload.userId,
+                        payload.swapId,
+                        payload.inputToken,
+                        payload.amount,
+                        payload.fee
+                    ),
                 );
                 break;
 
