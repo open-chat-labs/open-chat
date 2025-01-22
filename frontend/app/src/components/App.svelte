@@ -414,8 +414,14 @@
         });
     }
 
-    function withdrawFromIcpSwap(userId: string, swapId: bigint, inputToken: boolean): void {
-        client.withdrawFromIcpSwap(userId, swapId, inputToken)
+    function withdrawFromIcpSwap(
+        userId: string,
+        swapId: bigint,
+        inputToken: boolean,
+        amount: bigint | undefined,
+        fee: bigint | undefined
+    ): void {
+        client.withdrawFromIcpSwap(userId, swapId, inputToken, amount, fee)
     }
 
     function calculateHeight() {

@@ -956,6 +956,7 @@
         border-radius: $radius;
         border: var(--currentChat-msg-bd);
         box-shadow: var(--currentChat-msg-sh);
+        word-break: break-word;
 
         .username {
             color: inherit;

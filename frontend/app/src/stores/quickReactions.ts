@@ -2,9 +2,9 @@ import { writable } from "svelte/store";
 import { Database as EmojiDatabase } from "emoji-picker-element";
 import type { Emoji } from "emoji-picker-element/shared";
 
-let emojiDb = new EmojiDatabase();
-let showQuickReactionCount = 3;
-let defaultReactions = ["yes", "tears_of_joy", "pray"];
+const emojiDb = new EmojiDatabase();
+const showQuickReactionCount = 3;
+const defaultReactions = ["yes", "tears_of_joy", "pray"];
 
 function initQuickReactions() {
 

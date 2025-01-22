@@ -97,7 +97,7 @@
 
     function eventKey(e: EventWrapper<ChatEventType>): string {
         if (e.event.kind === "message") {
-            return e.event.messageId.toString();
+            return `${e.index}_${e.event.messageId}`;
         } else {
             return e.index.toString();
         }
@@ -117,13 +117,18 @@
             prefix = sender + "_";
         }
         for (const evt of group) {
-            const key = prefix + (evt.event.kind === "message" ? evt.event.messageId : evt.index);
+            const key =
+                prefix +
+                (evt.event.kind === "message" ? `${evt.index}_${evt.event.messageId}` : evt.index);
             if ($userGroupKeys.has(key)) {
                 return key;
             }
         }
         const firstKey =
-            prefix + (first.event.kind === "message" ? first.event.messageId : first.index);
+            prefix +
+            (first.event.kind === "message"
+                ? `${first.index}_${first.event.messageId}`
+                : first.index);
         chatStateStore.updateProp(chat.id, "userGroupKeys", (keys) => {
             keys.add(firstKey);
             return keys;
