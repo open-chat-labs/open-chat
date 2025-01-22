@@ -19,7 +19,6 @@ pub enum Response {
     Success,
     UserNotFound,
     SwapNotFound,
-    SwapCompleted,
-    NotAuthorized,
+    AmountNotSpecified,
     InternalError(String),
 }
