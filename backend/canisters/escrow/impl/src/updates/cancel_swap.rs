@@ -3,7 +3,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::cancel_swap::{Response::*, *};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn cancel_swap(args: Args) -> Response {
     mutate_state(|state| cancel_swap_impl(args, state))
