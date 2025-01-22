@@ -60,7 +60,7 @@ impl ChatEvents {
                 return Some(false);
             }
         }
-        info!("Finished deduping messageIds");
+        info!(chat = ?self.chat, "Finished deduping messageIds");
         Some(true)
     }
 
