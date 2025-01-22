@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
-use crate::{client, env, CanisterIds, TestEnv, User};
+use crate::{client, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
@@ -9,7 +9,7 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::bot_actions::{BotMessageAction, MessageContent};
 use types::{
-    AccessTokenBotCommand, AccessTokenType, BotAction, BotCommand, BotDefinition, CanisterId, Chat, ChatEvent, ChatId,
+    AccessTokenBotCommand, AccessTokenType, BotAction, BotCommand, BotDefinition, CanisterId, Chat, ChatEvent,
     MessagePermission, SlashCommandPermissions, SlashCommandSchema, TextContent, UserId,
 };
 
@@ -31,7 +31,7 @@ fn e2e_bot_test() {
     // Register a bot
     let bot_name = random_string();
     let command_name = random_string();
-    let (bot_id, bot_principal) = register_bot(env, &user, canister_ids.user_index, bot_name, command_name.clone());
+    let (bot_id, bot_principal) = register_bot(env, &user, canister_ids.user_index, bot_name.clone(), command_name.clone());
 
     let initial_time = now_millis(env);
     println!("initial_time: {initial_time}");
@@ -46,7 +46,7 @@ fn e2e_bot_test() {
 
     // Explore bots and check new bot is returned
     let response = client::user_index::happy_path::explore_bots(env, user.principal, canister_ids.user_index, None);
-    assert_eq!(response.matches.iter().any(|b| b.id == bot_id));
+    assert!(response.matches.iter().any(|b| b.id == bot_id));
 
     // Add bot to group with inadequate permissions
     let mut granted_permissions = SlashCommandPermissions::default();

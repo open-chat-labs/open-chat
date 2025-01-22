@@ -7,8 +7,8 @@ use rand::random;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::time::Duration;
-use testing::rng::{random_internet_identity_principal, random_principal};
-use types::{BotDefinition, CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDelegation};
+use testing::rng::random_internet_identity_principal;
+use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDelegation};
 
 mod macros;
 
