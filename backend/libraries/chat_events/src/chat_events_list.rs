@@ -29,12 +29,12 @@ pub struct ChatEventsList {
 
 impl ChatEventsList {
     pub fn fix_duplicate_message_ids(&mut self, rng: &mut StdRng) -> Option<bool> {
+        if let Some(event_index) = self.message_id_map.remove(&MessageId::from(0u64)) {
+            self.events_with_duplicate_message_ids.insert(event_index);
+        }
+
         if self.message_id_map.len() == self.message_event_indexes.len() {
-            if let Some(event_index) = self.message_id_map.remove(&MessageId::from(0u64)) {
-                self.events_with_duplicate_message_ids.insert(event_index);
-            } else {
-                return Some(true);
-            }
+            return Some(true);
         }
 
         if self.events_with_duplicate_message_ids.is_empty() {
@@ -54,6 +54,7 @@ impl ChatEventsList {
             if let Some(mut event_wrapper) = self.get_event(event_index.into(), EventIndex::default()) {
                 if let ChatEventInternal::Message(m) = &mut event_wrapper.event {
                     m.message_id = self.new_message_id(rng);
+                    self.message_id_map.insert(m.message_id, event_index);
                     self.events_map.insert(event_wrapper);
                     count += 1;
                     continue;
