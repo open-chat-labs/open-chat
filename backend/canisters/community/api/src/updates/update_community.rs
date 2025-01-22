@@ -7,7 +7,7 @@ use types::{
 };
 
 #[ts_export(community, update_community)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct Args {
     pub name: Option<String>,
     pub description: Option<String>,
