@@ -1,7 +1,9 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
+use crate::timer_job_types::DedupeMessageIdsJob;
 use crate::Data;
 use canister_logger::LogEntry;
+use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
@@ -25,4 +27,6 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    DedupeMessageIdsJob.execute();
 }
