@@ -22,10 +22,14 @@
     import EyeArrowRightIcon from "svelte-material-icons/EyeArrowRight.svelte";
     import EyeOffIcon from "svelte-material-icons/EyeOff.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import ChatPlusOutline from "svelte-material-icons/ChatPlusOutline.svelte";
+    import EmoticonOutline from "svelte-material-icons/EmoticonOutline.svelte";
+    import ClockPlusOutline from "svelte-material-icons/ClockPlusOutline.svelte";
+    import ClockRemoveOutline from "svelte-material-icons/ClockRemoveOutline.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import { _, locale } from "svelte-i18n";
-    import { i18nKey, translationCodes } from "../../i18n/i18n";
+    import { translationCodes, i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
@@ -73,14 +77,17 @@
     export let canUndelete: boolean;
     export let canRevealDeleted: boolean;
     export let canRevealBlocked: boolean;
+    export let canReact: boolean;
     export let translatable: boolean;
     export let translated: boolean;
     export let msg: Message;
     export let threadRootMessage: Message | undefined;
     export let canTip: boolean;
     export let selectQuickReaction: (unicode: string) => void;
+    export let showEmojiPicker: () => void;
 
     let menuIcon: MenuIcon;
+    let quickReactionIconSize = "1.2rem";
 
     $: canRemind =
         msg.content.kind !== "message_reminder_content" &&
@@ -266,17 +273,50 @@
 <div class="menu" class:inert class:rtl={$rtlStore}>
     {#if !inert}
         {#each $quickReactions as reaction}
-            <HoverIcon compact={true} onclick={() => selectQuickReaction(reaction)}>
+            <HoverIcon compact onclick={() => selectQuickReaction(reaction)}>
                 <div class="quick-reaction">
                     {reaction}
                 </div>
             </HoverIcon>
         {/each}
+        {#if canReact && !failed}
+            <HoverIcon compact onclick={() => showEmojiPicker()} title={$_("pickEmoji")}>
+                <div class="quick-reaction">
+                    <EmoticonOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
+                </div>
+            </HoverIcon>
+        {/if}
+        {#if confirmed && supportsReply && !failed}
+            {#if !inThread && canStartThread}
+                <HoverIcon compact onclick={() => initiateThread()} title={$_("thread.menu")}>
+                    <div class="quick-reaction">
+                        <ChatPlusOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
+                    </div>
+                </HoverIcon>
+            {/if}
+            {#if canQuoteReply && !me}
+                <HoverIcon compact onclick={() => dispatch("reply")} title={$_("quoteReply")}>
+                    <div class="quick-reaction">
+                        <Reply size={quickReactionIconSize} color={"var(--menu-txt)"} />
+                    </div>
+                </HoverIcon>
+            {/if}
+            {#if canEdit && !failed}
+                <HoverIcon
+                    compact
+                    onclick={() => dispatch("editMessage")}
+                    title={$_("editMessage")}>
+                    <div class="quick-reaction">
+                        <PencilOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
+                    </div>
+                </HoverIcon>
+            {/if}
+        {/if}
     {/if}
     <MenuIcon bind:this={menuIcon} centered position={"right"} align={"end"}>
-        <div class="menu-icon" slot="icon">
+        <div class="quick-reaction" slot="icon">
             <HoverIcon compact>
-                <DotsVertical size="1.4em" color="var(--menu-txt)" />
+                <DotsVertical size="1.625em" color={"var(--menu-txt)"} />
             </HoverIcon>
         </div>
         <div slot="menu">
@@ -344,7 +384,10 @@
                 {/if}
                 {#if canRemind && confirmed && !inert && !failed}
                     <MenuItem on:click={remindMe}>
-                        <span class="emojicon" slot="icon">⏰</span>
+                        <ClockPlusOutline
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
                         <div slot="text">
                             <Translatable resourceKey={i18nKey("reminders.menu")} />
                         </div>
@@ -352,7 +395,10 @@
                 {/if}
                 {#if canCancelRemind && confirmed && !inert && !failed}
                     <MenuItem on:click={cancelReminder}>
-                        <span class="emojicon" slot="icon">⏰</span>
+                        <ClockRemoveOutline
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
                         <div slot="text">
                             <Translatable resourceKey={i18nKey("reminders.cancel")} />
                         </div>
@@ -392,7 +438,10 @@
                     {/if}
                     {#if !inThread && canStartThread}
                         <MenuItem on:click={initiateThread}>
-                            <span class="emojicon" slot="icon">🧵</span>
+                            <ChatPlusOutline
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
                             <div slot="text">
                                 <Translatable resourceKey={i18nKey("thread.menu")} />
                             </div>
@@ -529,16 +578,20 @@
         #{$property}: calc(100% - min(100%, calc($menu-width - 0.75rem)));
     }
 
+    // We're expecting a number of menu items, plus one hidden item, hence the
+    // `$count + 1`
+    @mixin setMenuOffsetByMenuItemCount($count, $menu-width) {
+        :global(.bubble-wrapper > .menu:has(> :nth-child(#{$count + 1}):last-child)) {
+            &:not(.rtl) {
+                @include calcMenuOffset(left, $menu-width);
+            }
+            &.rtl {
+                @include calcMenuOffset(right, $menu-width);
+            }
+        }
+    }
+
     .menu {
-        // Menu width for 3 reactions and a menu button.
-        &:not(.inert) {
-            $menu-width: 7.75rem;
-        }
-
-        &.inert {
-            $menu-width: 2rem;
-        }
-
         position: absolute;
         width: fit-content;
         background-color: var(--menu-bg);
@@ -548,35 +601,29 @@
         padding: 0.125rem;
         border-radius: 0.375rem;
 
-        &:not(.inert) {
-            $menu-width: 7.75rem;
-            &:not(.rtl) {
-                @include calcMenuOffset(left, $menu-width);
-            }
-            &.rtl {
-                @include calcMenuOffset(right, $menu-width);
-            }
-        }
-
-        &.inert {
-            // For inert messages we don't display reactions
-            $menu-width: 2rem;
-            &:not(.rtl) {
-                @include calcMenuOffset(left, $menu-width);
-            }
-            &.rtl {
-                @include calcMenuOffset(right, $menu-width);
-            }
+        :global(.menu-icon) {
+            width: 2.125rem;
+            height: 2.125rem;
+            padding: 0.25rem;
         }
     }
+
+    @include setMenuOffsetByMenuItemCount(1, 2.5rem);
+    @include setMenuOffsetByMenuItemCount(2, 4.625rem);
+    @include setMenuOffsetByMenuItemCount(3, 6.75rem);
+    @include setMenuOffsetByMenuItemCount(4, 8.875rem);
+    @include setMenuOffsetByMenuItemCount(5, 11rem);
+    @include setMenuOffsetByMenuItemCount(6, 13.125rem);
+    @include setMenuOffsetByMenuItemCount(7, 15.25rem);
+    @include setMenuOffsetByMenuItemCount(8, 17.375rem);
 
     .emojicon {
         margin-left: $sp1;
     }
 
     .quick-reaction {
-        width: 1.4rem;
-        height: 1.4rem;
+        width: 1.625rem;
+        height: 1.625rem;
         display: flex;
         align-items: center;
         justify-content: center;
