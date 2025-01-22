@@ -47,12 +47,16 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn fix_duplicate_message_ids(&mut self, rng: &mut StdRng) -> Option<bool> {
-        if !self.main.fix_duplicate_message_ids(rng)? {
+    pub fn fix_duplicate_message_ids(
+        &mut self,
+        rng: &mut StdRng,
+        mut rng_my_messages: Option<(UserId, &mut StdRng)>,
+    ) -> Option<bool> {
+        if !self.main.fix_duplicate_message_ids(rng, rng_my_messages.as_mut())? {
             return Some(false);
         }
         for thread in self.threads.values_mut() {
-            if !thread.fix_duplicate_message_ids(rng)? {
+            if !thread.fix_duplicate_message_ids(rng, rng_my_messages.as_mut())? {
                 return Some(false);
             }
         }

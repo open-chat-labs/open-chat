@@ -407,7 +407,7 @@ impl Job for DedupeMessageIdsJob {
         mutate_state(|state| {
             let seed = state.env.entropy();
             let mut rng = StdRng::from_seed(seed);
-            match state.data.chat.events.fix_duplicate_message_ids(&mut rng) {
+            match state.data.chat.events.fix_duplicate_message_ids(&mut rng, None) {
                 Some(true) => {
                     state.data.message_ids_deduped = true;
                 }

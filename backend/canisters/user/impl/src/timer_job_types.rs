@@ -8,6 +8,7 @@ use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use serde::{Deserialize, Serialize};
+use sha256::sha256;
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 use user_canister::{C2CReplyContext, UserCanisterEvent};
@@ -425,20 +426,15 @@ impl Job for DedupeMessageIdsJob {
     fn execute(mut self) {
         mutate_state(|state| {
             let mut complete = true;
-            let this_canister_id = state.env.canister_id().as_slice().to_vec();
+            let my_user_id: UserId = state.env.canister_id().into();
             for chat in state.data.direct_chats.iter_mut() {
-                // Create a seed which will be the same for this user and the other user, so that
-                // their messageIds match
-                let mut seed = [0; 32];
-                let zipped: Vec<u8> = this_canister_id
-                    .iter()
-                    .zip(chat.them.as_slice())
-                    .map(|(l, r)| l ^ r)
-                    .collect();
-                seed[..zipped.len()].copy_from_slice(&zipped);
+                let mut rng_my_messages = build_rng(my_user_id, chat.them);
+                let mut rng_their_messages = build_rng(chat.them, my_user_id);
 
-                let mut rng = StdRng::from_seed(seed);
-                match chat.events.fix_duplicate_message_ids(&mut rng) {
+                match chat
+                    .events
+                    .fix_duplicate_message_ids(&mut rng_their_messages, Some((my_user_id, &mut rng_my_messages)))
+                {
                     Some(true) => {}
                     Some(false) => {
                         complete = false;
@@ -458,4 +454,12 @@ impl Job for DedupeMessageIdsJob {
             }
         })
     }
+}
+
+fn build_rng(user1: UserId, user2: UserId) -> StdRng {
+    let mut hash_input = Vec::new();
+    hash_input.extend_from_slice(user1.as_slice());
+    hash_input.extend_from_slice(user2.as_slice());
+    let seed = sha256(&hash_input);
+    StdRng::from_seed(seed)
 }
