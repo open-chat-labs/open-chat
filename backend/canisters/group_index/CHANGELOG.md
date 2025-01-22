@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
 
+### Fixed
+
+- Revoke Group/Community verified status if they change name ([#7277](https://github.com/open-chat-labs/open-chat/pull/7277))
+
 ## [[2.0.1541](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1541-group_index)] - 2024-12-19
 
 ### Changed

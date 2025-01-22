@@ -112,6 +112,9 @@ impl PublicCommunities {
         match self.communities.get_mut(community_id) {
             None => UpdateCommunityResult::CommunityNotFound,
             Some(community) => {
+                if !name.eq_ignore_ascii_case(&community.name) {
+                    community.verified = false;
+                }
                 community.name = name;
                 community.description = description;
                 community.avatar_id = avatar_id;

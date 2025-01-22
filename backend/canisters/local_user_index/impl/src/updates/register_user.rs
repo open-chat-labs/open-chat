@@ -3,7 +3,7 @@ use crate::{mutate_state, RuntimeState, UserEvent, UserIndexEvent, USER_CANISTER
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
+use constants::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE, USER_LIMIT};
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
 use local_user_index_canister::ChildCanisterType;
@@ -15,8 +15,6 @@ use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::text_validation::{validate_username, UsernameValidationError};
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
-
-pub const USER_LIMIT: usize = 200_000;
 
 #[update(candid = true, msgpack = true)]
 #[trace]

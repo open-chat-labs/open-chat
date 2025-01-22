@@ -11,7 +11,7 @@ fn check_username(args: Args) -> Response {
 fn check_username_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
     if let Some(user) = state.data.users.get(&caller) {
-        if user.username.to_lowercase() == args.username.to_lowercase() {
+        if user.username.eq_ignore_ascii_case(&args.username) {
             return Success;
         }
     }
