@@ -338,6 +338,7 @@ export function setCommunityModerationFlagsResponse(
 
 function groupMatch(value: TGroupMatch): GroupMatch {
     return {
+        kind: "group_match",
         chatId: { kind: "group_chat", groupId: principalBytesToString(value.id) },
         name: value.name,
         description: value.description,
@@ -352,6 +353,7 @@ function groupMatch(value: TGroupMatch): GroupMatch {
 
 function communityMatch(value: TCommunityMatch): CommunityMatch {
     return {
+        kind: "community_match",
         id: { kind: "community", communityId: principalBytesToString(value.id) },
         name: value.name,
         description: value.description,
