@@ -13,8 +13,7 @@ pub struct UserGroups {
 
 impl UserGroups {
     pub fn create<R: RngCore>(&mut self, name: String, users: Vec<UserId>, rng: &mut R, now: TimestampMillis) -> Option<u32> {
-        let name_upper = name.to_uppercase();
-        if self.groups.iter().any(|g| g.name.to_uppercase() == name_upper) {
+        if self.groups.iter().any(|g| g.name.eq_ignore_ascii_case(&name)) {
             None
         } else {
             let id = self.generate_id(rng);
