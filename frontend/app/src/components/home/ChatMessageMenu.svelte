@@ -87,6 +87,7 @@
     export let showEmojiPicker: () => void;
 
     let menuIcon: MenuIcon;
+    let quickReactionIconSize = "1.2rem";
 
     $: canRemind =
         msg.content.kind !== "message_reminder_content" &&
@@ -272,47 +273,41 @@
 <div class="menu" class:inert class:rtl={$rtlStore}>
     {#if !inert}
         {#each $quickReactions as reaction}
-            <HoverIcon compact={true} onclick={() => selectQuickReaction(reaction)}>
+            <HoverIcon compact onclick={() => selectQuickReaction(reaction)}>
                 <div class="quick-reaction">
                     {reaction}
                 </div>
             </HoverIcon>
         {/each}
         {#if canReact && !failed}
-            <HoverIcon compact={true} onclick={() => showEmojiPicker()} title={$_("pickEmoji")}>
+            <HoverIcon compact onclick={() => showEmojiPicker()} title={$_("pickEmoji")}>
                 <div class="quick-reaction">
-                    <EmoticonOutline size={$iconSize} color={"var(--menu-txt)"} />
+                    <EmoticonOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
                 </div>
             </HoverIcon>
         {/if}
         {#if confirmed && supportsReply && !failed}
             {#if !inThread && canStartThread}
-                <HoverIcon
-                    compact={true}
-                    onclick={() => initiateThread()}
-                    title={$_("thread.menu")}>
+                <HoverIcon compact onclick={() => initiateThread()} title={$_("thread.menu")}>
                     <div class="quick-reaction">
-                        <ChatPlusOutline size={$iconSize} color={"var(--menu-txt)"} />
+                        <ChatPlusOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
                     </div>
                 </HoverIcon>
             {/if}
             {#if canQuoteReply && !me}
-                <HoverIcon
-                    compact={true}
-                    onclick={() => dispatch("reply")}
-                    title={$_("quoteReply")}>
+                <HoverIcon compact onclick={() => dispatch("reply")} title={$_("quoteReply")}>
                     <div class="quick-reaction">
-                        <Reply size={$iconSize} color={"var(--menu-txt)"} />
+                        <Reply size={quickReactionIconSize} color={"var(--menu-txt)"} />
                     </div>
                 </HoverIcon>
             {/if}
             {#if canEdit && !failed}
                 <HoverIcon
-                    compact={true}
+                    compact
                     onclick={() => dispatch("editMessage")}
                     title={$_("editMessage")}>
                     <div class="quick-reaction">
-                        <PencilOutline size={$iconSize} color={"var(--menu-txt)"} />
+                        <PencilOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
                     </div>
                 </HoverIcon>
             {/if}

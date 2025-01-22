@@ -38,6 +38,7 @@
     import { now } from "../../stores/time";
     import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";
     import { dclickReply } from "../../stores/settings";
+    import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
     import UnresolvedReply from "./UnresolvedReply.svelte";
@@ -699,6 +700,16 @@
                             on:remindMe={remindMe} />
                     {/if}
                 </div>
+
+                {#if !collapsed && !msg.deleted && canReact && !failed}
+                    <div class="actions">
+                        <div class="reaction" on:click={() => (showEmojiPicker = true)}>
+                            <HoverIcon>
+                                <EmoticonLolOutline size={$iconSize} color={"var(--icon-txt)"} />
+                            </HoverIcon>
+                        </div>
+                    </div>
+                {/if}
             </div>
 
             {#if threadSummary !== undefined && !inThread}
@@ -889,6 +900,21 @@
 
             .avatar {
                 cursor: pointer;
+            }
+        }
+
+        .actions {
+            display: none;
+        }
+
+        @include mobile() {
+            .actions {
+                transition: opacity 200ms ease-in-out;
+                display: flex;
+                opacity: 0.3;
+                padding: 0 $sp3;
+                justify-content: center;
+                align-items: center;
             }
         }
     }
