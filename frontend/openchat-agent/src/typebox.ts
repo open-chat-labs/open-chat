@@ -2418,8 +2418,7 @@ export const LocalUserIndexWithdrawFromIcpswapResponse = Type.Union([
     Type.Literal("Success"),
     Type.Literal("UserNotFound"),
     Type.Literal("SwapNotFound"),
-    Type.Literal("SwapCompleted"),
-    Type.Literal("NotAuthorized"),
+    Type.Literal("AmountNotSpecified"),
     Type.Object({
         InternalError: Type.String(),
     }),
