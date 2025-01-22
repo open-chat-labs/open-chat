@@ -154,14 +154,24 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
     let prev_gate_config = state.data.chat.gate_config.value.clone();
     let now = state.env.now();
 
+    // If a verified group changes its name or becomes private it loses it's verified status
     if state.data.verified.value {
-        if let (Some(new_name), Some(new_public)) = (args.name.as_ref(), args.public) {
-            if new_name.to_lowercase() != state.data.chat.name.value.to_lowercase()
-                || (new_public != state.data.chat.is_public.value && !new_public)
-            {
-                // If a verified group changes its name or becomes private it loses it's verified status
-                state.data.verified = Timestamped::new(false, now);
+        let mut revoke = false;
+
+        if let Some(new_name) = args.name.as_ref() {
+            if new_name.to_lowercase() != state.data.chat.name.value.to_lowercase() {
+                revoke = true;
             }
+        }
+
+        if let Some(new_public) = args.public {
+            if (new_public != state.data.chat.is_public.value) && !new_public {
+                revoke = true;
+            }
+        }
+
+        if revoke {
+            state.data.verified = Timestamped::new(false, now);
         }
     }
 

@@ -24,6 +24,7 @@ pub struct Files {
     reference_counts: ReferenceCountsStableMap,
     accessors_map: FilesPerAccessorStableMap,
     blobs: StableBlobStorage,
+    #[serde(skip_deserializing)]
     expiration_queue: BTreeSet<(TimestampMillis, FileId)>,
     #[serde(alias = "bytes_used")]
     total_file_bytes: u64,

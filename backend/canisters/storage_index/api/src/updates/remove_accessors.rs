@@ -4,7 +4,7 @@ use types::AccessorId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub accessor_id: AccessorId,
+    pub accessor_ids: Vec<AccessorId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

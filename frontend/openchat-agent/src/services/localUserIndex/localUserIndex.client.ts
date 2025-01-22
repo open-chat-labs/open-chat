@@ -390,13 +390,21 @@ export class LocalUserIndexClient extends CandidService {
         );
     }
 
-    withdrawFromIcpSwap(userId: string, swapId: bigint, inputToken: boolean): Promise<boolean> {
+    withdrawFromIcpSwap(
+        userId: string,
+        swapId: bigint,
+        inputToken: boolean,
+        amount: bigint | undefined,
+        fee: bigint | undefined
+    ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "withdraw_from_icpswap",
             {
                 user_id: principalStringToBytes(userId),
                 swap_id: swapId,
-                input_token: inputToken
+                input_token: inputToken,
+                amount,
+                fee,
             },
             withdrawFromIcpSwapResponse,
             LocalUserIndexWithdrawFromIcpswapArgs,
