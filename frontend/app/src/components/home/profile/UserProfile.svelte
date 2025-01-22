@@ -312,10 +312,7 @@
                             on:imageSelected={userAvatarSelected} />
                     {/if}
                     <div class="human">
-                        <Verified
-                            size={"large"}
-                            verified={!verified}
-                            tooltip={i18nKey("human.verified")} />
+                        <Verified size={"large"} {verified} tooltip={i18nKey("human.verified")} />
                     </div>
                 </div>
                 {#if $anonUser}

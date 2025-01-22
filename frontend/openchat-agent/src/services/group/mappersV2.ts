@@ -198,6 +198,7 @@ export function groupChatSummaryUpdates(
         videoCallInProgress: optionUpdateV2(value.video_call_in_progress, (v) => v.message_index),
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
         membership: mapOptional(value.membership, groupMembershipUpdates),
+        verified: mapOptional(value.verified, identity),
     };
 }
 

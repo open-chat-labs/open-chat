@@ -30,6 +30,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import AccessGateExpiry from "../access/AccessGateExpiry.svelte";
+    import Verified from "../../icons/Verified.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -65,9 +66,15 @@
             open={$groupInfoOpen}
             headerText={i18nKey("group.groupInfo", undefined, chat.level)}>
             <div class="sub-section photo">
-                <Avatar url={avatarSrc} size={AvatarSize.Large} {verified} />
+                <Avatar url={avatarSrc} size={AvatarSize.Large} />
 
-                <h3 class="group-name">{chat.name}</h3>
+                <h3 class="group-name">
+                    {chat.name}
+                    <Verified
+                        size={"large"}
+                        {verified}
+                        tooltip={i18nKey("verified.verified", undefined, chat.level, true)} />
+                </h3>
                 <p class="members">
                     <Translatable resourceKey={i18nKey("memberCount", { count: memberCount })} />
                 </p>
@@ -235,6 +242,10 @@
 
     .group-name {
         margin-top: $sp4;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: $sp3;
     }
 
     .members {
