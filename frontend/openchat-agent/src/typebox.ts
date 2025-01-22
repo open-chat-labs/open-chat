@@ -7586,7 +7586,6 @@ export const GroupIndexUnfreezeGroupResponse = Type.Union([
 export type UserIndexBotUpdatesSuccessResult = Static<typeof UserIndexBotUpdatesSuccessResult>;
 export const UserIndexBotUpdatesSuccessResult = Type.Object({
     added_or_updated: Type.Array(UserIndexBotUpdatesBotSchema),
-    deleted: Type.Array(UserId),
     removed: Type.Array(UserId),
     timestamp: Type.BigInt(),
 });

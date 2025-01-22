@@ -13,7 +13,6 @@ fn bot_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let mut result = SuccessResult {
         added_or_updated: Vec::new(),
         removed: Vec::new(),
-        deleted: Vec::new(),
         timestamp: 0,
     };
 

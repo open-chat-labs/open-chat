@@ -2,4 +2,4 @@
 import type { UserId } from "../../shared/UserId";
 import type { UserIndexBotUpdatesBotSchema } from "./UserIndexBotUpdatesBotSchema";
 
-export type UserIndexBotUpdatesSuccessResult = { added_or_updated: Array<UserIndexBotUpdatesBotSchema>, deleted: Array<UserId>, removed: Array<UserId>, timestamp: bigint, };
+export type UserIndexBotUpdatesSuccessResult = { added_or_updated: Array<UserIndexBotUpdatesBotSchema>, removed: Array<UserId>, timestamp: bigint, };
