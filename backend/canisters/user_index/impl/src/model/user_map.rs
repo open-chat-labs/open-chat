@@ -237,6 +237,7 @@ impl UserMap {
 
     pub fn remove_bot(&mut self, bot_id: UserId, now: TimestampMillis) -> Option<Bot> {
         let bot = self.bots.remove(&bot_id)?;
+        self.botname_to_user_id.remove(&bot.name);
         self.bots_removed.insert((now, bot_id));
         Some(bot)
     }

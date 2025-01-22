@@ -1,6 +1,6 @@
 use crate::env::ENV;
-use crate::utils::now_millis;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::utils::{now_millis, tick_many};
+use crate::{client, env, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
@@ -9,8 +9,8 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::bot_actions::{BotMessageAction, MessageContent};
 use types::{
-    AccessTokenBotCommand, AccessTokenType, BotAction, BotCommand, BotDefinition, Chat, ChatEvent, ChatId, MessagePermission,
-    SlashCommandPermissions, SlashCommandSchema, TextContent,
+    AccessTokenBotCommand, AccessTokenType, BotAction, BotCommand, BotDefinition, CanisterId, Chat, ChatEvent, ChatId,
+    MessagePermission, SlashCommandPermissions, SlashCommandSchema, TextContent, UserId,
 };
 
 #[test]
@@ -23,52 +23,30 @@ fn e2e_bot_test() {
         ..
     } = wrapper.env();
 
-    // Create a user account and a group
-    let TestData { user, group_id } = init_test_data(env, canister_ids, *controller);
+    let start = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), true, true);
 
     // Register a bot
     let bot_name = random_string();
-    let command_name = "greet".to_string();
-    let endpoint = "https://my.bot.xyz/".to_string();
-    let description = "greet".to_string();
-    let commands = vec![SlashCommandSchema {
-        name: command_name.clone(),
-        description: Some("Hello {user}".to_string()),
-        placeholder: None,
-        params: vec![],
-        permissions: SlashCommandPermissions {
-            community: HashSet::new(),
-            chat: HashSet::new(),
-            message: HashSet::from_iter([MessagePermission::Text]),
-        },
-    }];
-
-    let bot_principal = client::register_bot(
-        env,
-        canister_ids,
-        &user,
-        bot_name.clone(),
-        endpoint.clone(),
-        BotDefinition {
-            description: description.clone(),
-            commands: commands.clone(),
-        },
-    );
+    let command_name = random_string();
+    let (bot_id, bot_principal) = register_bot(env, &user, canister_ids.user_index, bot_name, command_name.clone());
 
     let initial_time = now_millis(env);
     println!("initial_time: {initial_time}");
 
     // Confirm bot returned in `bot_updates`
-    let response = client::user_index::happy_path::bot_updates(env, user.principal, canister_ids.user_index, 0);
+    let response = client::user_index::happy_path::bot_updates(env, user.principal, canister_ids.user_index, start);
     assert_eq!(response.added_or_updated.len(), 1);
 
     let bot = &response.added_or_updated[0];
+    assert_eq!(bot.id, bot_id);
     assert_eq!(bot.name, bot_name);
 
-    // Explore bots and pick first one
+    // Explore bots and check new bot is returned
     let response = client::user_index::happy_path::explore_bots(env, user.principal, canister_ids.user_index, None);
-    assert_eq!(response.matches.len(), 1);
-    assert_eq!(response.matches[0].id, bot.id);
+    assert_eq!(response.matches.iter().any(|b| b.id == bot_id));
 
     // Add bot to group with inadequate permissions
     let mut granted_permissions = SlashCommandPermissions::default();
@@ -228,15 +206,68 @@ fn e2e_bot_test() {
     assert_eq!(bot.endpoint, new_endpoint);
 }
 
-fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
-    let user = client::register_diamond_user(env, canister_ids, controller);
+#[test]
+fn remove_bot_e2e() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
 
-    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), true, true);
+    let start = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let bot_name = random_string();
+    let command_name = random_string();
+    let (bot_id, _) = register_bot(env, &user, canister_ids.user_index, bot_name, command_name);
 
-    TestData { user, group_id }
+    tick_many(env, 3);
+
+    client::user_index::happy_path::remove_bot(env, user.principal, canister_ids.user_index, bot_id);
+
+    let updates = client::user_index::happy_path::bot_updates(env, user.principal, canister_ids.user_index, start);
+
+    assert_eq!(updates.removed, vec![bot_id]);
 }
 
-struct TestData {
-    user: User,
-    group_id: ChatId,
+fn register_bot(
+    env: &mut PocketIc,
+    user: &User,
+    user_index_canister_id: CanisterId,
+    bot_name: String,
+    command_name: String,
+) -> (UserId, Principal) {
+    // Register a bot
+    let endpoint = "https://my.bot.xyz/".to_string();
+    let description = "greet".to_string();
+    let commands = vec![SlashCommandSchema {
+        name: command_name,
+        description: Some("Hello {user}".to_string()),
+        placeholder: None,
+        params: vec![],
+        permissions: SlashCommandPermissions {
+            community: HashSet::new(),
+            chat: HashSet::new(),
+            message: HashSet::from_iter([MessagePermission::Text]),
+        },
+    }];
+
+    let bot_principal = client::user_index::happy_path::register_bot(
+        env,
+        user,
+        user_index_canister_id,
+        bot_name.clone(),
+        endpoint.clone(),
+        BotDefinition {
+            description: description.clone(),
+            commands: commands.clone(),
+        },
+    );
+
+    let response = client::user_index::happy_path::explore_bots(env, user.principal, user_index_canister_id, None);
+    let bot_id = response.matches.iter().find(|b| b.name == bot_name).unwrap().id;
+
+    (bot_id, bot_principal)
 }
