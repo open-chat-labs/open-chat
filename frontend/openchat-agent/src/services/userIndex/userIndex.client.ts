@@ -672,9 +672,8 @@ export class UserIndexClient extends CandidService {
             "update_bot",
             {
                 bot_id: principalStringToBytes(id),
-                // principal: mapOptional(principal, principalStringToBytes),
                 owner: mapOptional(ownerId, principalStringToBytes),
-                name: undefined,
+                principal: mapOptional(principal, principalStringToBytes),
                 avatar:
                     mapOptional(avatarUrl, (url) => ({
                         SetToSome: url,

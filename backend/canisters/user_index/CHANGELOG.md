@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Bump user limit to 300k ([#7270](https://github.com/open-chat-labs/open-chat/pull/7270))
+- Only allow user to delete account if they re-authenticated within last 5 minutes ([#7274](https://github.com/open-chat-labs/open-chat/pull/7274))
 
 ## [[2.0.1576](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1576-user_index)] - 2025-01-21
 

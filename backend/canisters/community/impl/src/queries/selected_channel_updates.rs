@@ -21,7 +21,7 @@ fn selected_channel_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
         let user_id = state.data.members.lookup_user_id(caller);
 
-        match channel.chat.selected_group_updates(args.updates_since, user_id) {
+        match channel.chat.selected_group_updates(args.updates_since, last_updated, user_id) {
             Some(updates) if updates.has_updates() => Success(updates),
             Some(_) => SuccessNoUpdates(last_updated),
             None => PrivateChannel,
