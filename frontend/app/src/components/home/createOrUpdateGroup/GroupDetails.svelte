@@ -32,7 +32,7 @@
             }
         }
         valid =
-            candidateGroup.name.length > MIN_LENGTH &&
+            candidateGroup.name.length >= MIN_LENGTH &&
             candidateGroup.name.length <= MAX_LENGTH &&
             urlValid;
     }
