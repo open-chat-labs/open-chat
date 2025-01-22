@@ -8,6 +8,8 @@ use chat_events::MessageContentInternal;
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use group_chat_core::AddResult;
 use ledger_utils::process_transaction;
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 use types::{
@@ -147,8 +149,10 @@ pub struct JoinMembersToPublicChannelJob {
     pub members: Vec<UserId>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-pub struct DedupeMessageIdsJob;
+#[derive(Serialize, Deserialize, Clone, Default)]
+pub struct DedupeMessageIdsJob {
+    iteration: u32,
+}
 
 impl Job for TimerJob {
     fn execute(self) {
@@ -520,11 +524,13 @@ impl JoinMembersToPublicChannelJob {
 }
 
 impl Job for DedupeMessageIdsJob {
-    fn execute(self) {
+    fn execute(mut self) {
         mutate_state(|state| {
             let mut complete = true;
+            let seed = state.env.entropy();
+            let mut rng = StdRng::from_seed(seed);
             for channel in state.data.channels.iter_mut() {
-                match channel.chat.events.fix_duplicate_message_ids() {
+                match channel.chat.events.fix_duplicate_message_ids(&mut rng) {
                     Some(true) => {}
                     Some(false) => {
                         complete = false;
@@ -533,11 +539,14 @@ impl Job for DedupeMessageIdsJob {
                     None => error!("Failed to dedupe messageIds"),
                 }
             }
-            if !complete {
+            if complete {
+                state.data.message_ids_deduped = true;
+            } else if self.iteration < 100 {
+                self.iteration += 1;
                 let now = state.env.now();
                 state.data.timer_jobs.enqueue_job(TimerJob::DedupeMessageIds(self), now, now);
             } else {
-                state.data.message_ids_deduped = true;
+                error!("Failed to dedupe messageIds after 100 iterations");
             }
         })
     }

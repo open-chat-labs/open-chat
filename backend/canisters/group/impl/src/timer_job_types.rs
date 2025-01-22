@@ -6,6 +6,8 @@ use canister_timer_jobs::Job;
 use chat_events::MessageContentInternal;
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use ledger_utils::process_transaction;
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, CanisterId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId};
@@ -108,8 +110,10 @@ pub struct MarkP2PSwapExpiredJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MarkVideoCallEndedJob(pub group_canister::end_video_call_v2::Args);
 
-#[derive(Serialize, Deserialize, Clone)]
-pub struct DedupeMessageIdsJob;
+#[derive(Serialize, Deserialize, Clone, Default)]
+pub struct DedupeMessageIdsJob {
+    iteration: u32,
+}
 
 impl Job for TimerJob {
     fn execute(self) {
@@ -399,16 +403,25 @@ impl Job for MarkVideoCallEndedJob {
 }
 
 impl Job for DedupeMessageIdsJob {
-    fn execute(self) {
-        mutate_state(|state| match state.data.chat.events.fix_duplicate_message_ids() {
-            Some(true) => {
-                state.data.message_ids_deduped = true;
+    fn execute(mut self) {
+        mutate_state(|state| {
+            let seed = state.env.entropy();
+            let mut rng = StdRng::from_seed(seed);
+            match state.data.chat.events.fix_duplicate_message_ids(&mut rng) {
+                Some(true) => {
+                    state.data.message_ids_deduped = true;
+                }
+                Some(false) => {
+                    if self.iteration < 100 {
+                        self.iteration += 1;
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(TimerJob::DedupeMessageIds(self), now, now);
+                    } else {
+                        error!("Failed to dedupe messageIds after 100 iterations");
+                    }
+                }
+                None => error!("Failed to dedupe messageIds"),
             }
-            Some(false) => {
-                let now = state.env.now();
-                state.data.timer_jobs.enqueue_job(TimerJob::DedupeMessageIds(self), now, now);
-            }
-            None => error!("Failed to dedupe messageIds"),
         })
     }
 }

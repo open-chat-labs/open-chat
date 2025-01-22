@@ -28,5 +28,5 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    DedupeMessageIdsJob.execute();
+    DedupeMessageIdsJob::default().execute();
 }

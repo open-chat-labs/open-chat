@@ -3,6 +3,8 @@ use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::stable_memory::ChatEventsStableStorage;
 use crate::{ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
 use itertools::Itertools;
+use rand::rngs::StdRng;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
@@ -26,9 +28,13 @@ pub struct ChatEventsList {
 }
 
 impl ChatEventsList {
-    pub fn fix_duplicate_message_ids(&mut self) -> Option<bool> {
+    pub fn fix_duplicate_message_ids(&mut self, rng: &mut StdRng) -> Option<bool> {
         if self.message_id_map.len() == self.message_event_indexes.len() {
-            return Some(true);
+            if let Some(event_index) = self.message_id_map.remove(&MessageId::from(0)) {
+                self.events_with_duplicate_message_ids.insert(event_index);
+            } else {
+                return Some(true);
+            }
         }
 
         if self.events_with_duplicate_message_ids.is_empty() {
@@ -39,19 +45,15 @@ impl ChatEventsList {
         }
 
         let mut count = 0;
-        for &event_index in self.events_with_duplicate_message_ids.iter() {
-            if ic_cdk::api::instruction_counter() > 2_000_000_000 {
+        while ic_cdk::api::instruction_counter() < 2_000_000_000 {
+            let Some(event_index) = self.events_with_duplicate_message_ids.iter().next().copied() else {
                 break;
-            }
+            };
+            self.events_with_duplicate_message_ids.remove(&event_index);
 
             if let Some(mut event_wrapper) = self.get_event(event_index.into(), EventIndex::default()) {
                 if let ChatEventInternal::Message(m) = &mut event_wrapper.event {
-                    if let Some(message_id) = self.new_message_id(m.message_id, m.message_index) {
-                        m.message_id = message_id;
-                    } else {
-                        error!(message_id = ?m.message_id, message_index = ?m.message_index, "Failed to generate new messageId");
-                        return None;
-                    }
+                    m.message_id = self.new_message_id(rng);
                     self.events_map.insert(event_wrapper);
                     count += 1;
                     continue;
@@ -65,19 +67,13 @@ impl ChatEventsList {
         Some(self.message_id_map.len() == self.message_event_indexes.len())
     }
 
-    // Deterministically generates a new unused messageId
-    fn new_message_id(&self, current: MessageId, message_index: MessageIndex) -> Option<MessageId> {
-        let mut message_id = current;
-        let incr = (u32::from(message_index) + 1) as u64;
-        let mut iter = 0;
-        while iter < 100 {
-            message_id = MessageId::from(message_id.as_u64() + incr);
+    fn new_message_id(&self, rng: &mut StdRng) -> MessageId {
+        loop {
+            let message_id = rng.gen::<MessageId>();
             if !self.message_id_map.contains_key(&message_id) {
-                return Some(message_id);
+                return message_id;
             }
-            iter += 1;
         }
-        None
     }
 
     pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {

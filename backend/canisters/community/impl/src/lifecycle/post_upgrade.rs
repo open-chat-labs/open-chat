@@ -45,5 +45,5 @@ fn post_upgrade(args: Args) {
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now);
     });
 
-    DedupeMessageIdsJob.execute();
+    DedupeMessageIdsJob::default().execute();
 }

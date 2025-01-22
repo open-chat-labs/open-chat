@@ -5,6 +5,8 @@ use crate::{can_borrow_state, mutate_state, openchat_bot, read_state, run_regula
 use canister_timer_jobs::Job;
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
@@ -121,8 +123,10 @@ pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call_v2::Args);
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ClaimChitInsuranceJob;
 
-#[derive(Serialize, Deserialize, Clone)]
-pub struct DedupeMessageIdsJob;
+#[derive(Serialize, Deserialize, Clone, Default)]
+pub struct DedupeMessageIdsJob {
+    iteration: u32,
+}
 
 impl Job for TimerJob {
     fn execute(self) {
@@ -418,11 +422,18 @@ impl Job for ClaimChitInsuranceJob {
 }
 
 impl Job for DedupeMessageIdsJob {
-    fn execute(self) {
+    fn execute(mut self) {
         mutate_state(|state| {
             let mut complete = true;
+            let this_canister_id = state.env.canister_id().as_slice();
             for chat in state.data.direct_chats.iter_mut() {
-                match chat.events.fix_duplicate_message_ids() {
+                let mut seed = [0; 32];
+                let zipped: Vec<u8> = this_canister_id.iter().zip(chat.them.as_slice()).collect();
+                seed[..zipped.len()].copy_from_slice(&zipped);
+                seed.rotate_right(self.iteration as usize);
+
+                let mut rng = StdRng::from_seed(seed);
+                match chat.events.fix_duplicate_message_ids(&mut rng) {
                     Some(true) => {}
                     Some(false) => {
                         complete = false;
@@ -431,11 +442,14 @@ impl Job for DedupeMessageIdsJob {
                     None => error!("Failed to dedupe messageIds"),
                 }
             }
-            if !complete {
+            if complete {
+                state.data.message_ids_deduped = true;
+            } else if self.iteration < 100 {
                 let now = state.env.now();
+                self.iteration += 1;
                 state.data.timer_jobs.enqueue_job(TimerJob::DedupeMessageIds(self), now, now);
             } else {
-                state.data.message_ids_deduped = true;
+                error!("Failed to dedupe messageIds after 100 iterations");
             }
         })
     }
