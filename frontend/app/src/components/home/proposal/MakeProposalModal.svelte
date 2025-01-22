@@ -108,7 +108,9 @@
     let candidateBotValid = false;
     let botSchemaLoaded = false;
     let botPrincipal = "";
+    //@ts-ignore
     let transferSnsFunds: TransferSnsFunds | undefined;
+    //@ts-ignore
     let verificationComponent: VerificationProposal | undefined;
     let transferSnsFundsValid: boolean;
     let verificationValid: boolean;
