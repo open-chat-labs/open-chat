@@ -422,7 +422,7 @@ impl Job for DedupeMessageIdsJob {
         mutate_state(|state| {
             let mut complete = true;
             for chat in state.data.direct_chats.iter_mut() {
-                match chat.events.fix_duplicate_message_ids(state.env.rng()) {
+                match chat.events.fix_duplicate_message_ids() {
                     Some(true) => {}
                     Some(false) => {
                         complete = false;

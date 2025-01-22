@@ -400,17 +400,15 @@ impl Job for MarkVideoCallEndedJob {
 
 impl Job for DedupeMessageIdsJob {
     fn execute(self) {
-        mutate_state(
-            |state| match state.data.chat.events.fix_duplicate_message_ids(state.env.rng()) {
-                Some(true) => {
-                    state.data.message_ids_deduped = true;
-                }
-                Some(false) => {
-                    let now = state.env.now();
-                    state.data.timer_jobs.enqueue_job(TimerJob::DedupeMessageIds(self), now, now);
-                }
-                None => error!("Failed to dedupe messageIds"),
-            },
-        )
+        mutate_state(|state| match state.data.chat.events.fix_duplicate_message_ids() {
+            Some(true) => {
+                state.data.message_ids_deduped = true;
+            }
+            Some(false) => {
+                let now = state.env.now();
+                state.data.timer_jobs.enqueue_job(TimerJob::DedupeMessageIds(self), now, now);
+            }
+            None => error!("Failed to dedupe messageIds"),
+        })
     }
 }
