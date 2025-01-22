@@ -24,6 +24,7 @@
         currentChatBlockedUsers,
         type BotMessageContext as BotMessageContextType,
     } from "openchat-client";
+    import { isTouchDevice } from "../../utils/devices";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -38,7 +39,7 @@
     import { now } from "../../stores/time";
     import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";
     import { dclickReply } from "../../stores/settings";
-    import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
+    import EmoticonOutline from "svelte-material-icons/EmoticonOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
     import UnresolvedReply from "./UnresolvedReply.svelte";
@@ -702,10 +703,10 @@
                 </div>
 
                 {#if !collapsed && !msg.deleted && canReact && !failed}
-                    <div class="actions">
+                    <div class="actions" class:touch={isTouchDevice}>
                         <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                             <HoverIcon>
-                                <EmoticonLolOutline size={$iconSize} color={"var(--icon-txt)"} />
+                                <EmoticonOutline size={$iconSize} color={"var(--icon-txt)"} />
                             </HoverIcon>
                         </div>
                     </div>
@@ -905,16 +906,20 @@
 
         .actions {
             display: none;
+            opacity: 0.3;
+            padding: 0 $sp3;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 200ms ease-in-out;
+        }
+
+        .actions.touch {
+            display: flex;
         }
 
         @include mobile() {
-            .actions {
-                transition: opacity 200ms ease-in-out;
+            .actions:not(.touch) {
                 display: flex;
-                opacity: 0.3;
-                padding: 0 $sp3;
-                justify-content: center;
-                align-items: center;
             }
         }
     }
