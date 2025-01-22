@@ -4161,12 +4161,16 @@ export class OpenChatAgent extends EventTarget {
         userId: string,
         swapId: bigint,
         inputToken: boolean,
+        amount: bigint | undefined,
+        fee: bigint | undefined,
     ): Promise<boolean> {
         const localUserIndex = await this.getLocalUserIndexForUser(userId);
         return this.getLocalUserIndexClient(localUserIndex).withdrawFromIcpSwap(
             userId,
             swapId,
             inputToken,
+            amount,
+            fee,
         );
     }
 }
