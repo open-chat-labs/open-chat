@@ -147,7 +147,7 @@ impl UserMap {
 
             let previous_username = &previous.username;
             let username = &user.username;
-            let username_case_insensitive_changed = previous_username.to_uppercase() != username.to_uppercase();
+            let username_case_insensitive_changed = !previous_username.eq_ignore_ascii_case(username);
 
             if principal_changed {
                 if let Some(other) = self.principal_to_user_id.get(&principal) {
