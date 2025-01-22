@@ -34,11 +34,13 @@ human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true, features = ["transform-closure"] }
 ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
+ic-certificate-verification = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
 identity_canister = { path = "../../identity/api" }
 identity_canister_c2c_client = { path = "../../identity/c2c_client" }
+identity_utils = { path = "../../../libraries/identity_utils" }
 itertools = { workspace = true }
 jwt = { path = "../../../libraries/jwt" }
 local_user_index_canister = { path = "../../local_user_index/api" }
