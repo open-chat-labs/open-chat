@@ -18,7 +18,7 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     if let Some(user) = state.data.users.get_by_principal(&caller) {
         let username = args.username;
-        if username.to_lowercase() != user.username.to_lowercase() {
+        if !username.eq_ignore_ascii_case(&user.username) {
             match validate_username(&username) {
                 Ok(_) => {}
                 Err(UsernameValidationError::TooShort(s)) => return UsernameTooShort(s.min_length as u16),

@@ -681,6 +681,10 @@
                             translatable={canTranslate}
                             {translated}
                             {selectQuickReaction}
+                            showEmojiPicker={() => {
+                                showEmojiPicker = true;
+                            }}
+                            {canReact}
                             on:collapseMessage
                             on:forward
                             on:reply={reply}
@@ -900,21 +904,17 @@
         }
 
         .actions {
-            transition: opacity 200ms ease-in-out;
-            display: flex;
-            opacity: 0;
-            padding: 0 $sp3;
-            justify-content: center;
-            align-items: center;
-
-            @include mobile() {
-                opacity: 0.3;
-            }
+            display: none;
         }
 
-        @media (hover: hover) {
-            &:hover .actions {
-                opacity: 1;
+        @include mobile() {
+            .actions {
+                transition: opacity 200ms ease-in-out;
+                display: flex;
+                opacity: 0.3;
+                padding: 0 $sp3;
+                justify-content: center;
+                align-items: center;
             }
         }
     }
@@ -956,6 +956,7 @@
         border-radius: $radius;
         border: var(--currentChat-msg-bd);
         box-shadow: var(--currentChat-msg-sh);
+        word-break: break-word;
 
         .username {
             color: inherit;
@@ -1010,7 +1011,6 @@
 
         &.fill {
             padding: 0;
-            overflow: hidden;
             border: none;
             line-height: 0;
         }

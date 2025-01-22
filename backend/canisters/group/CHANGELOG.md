@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Disallow forwarding prize messages and governance proposal messages ([#7260](https://github.com/open-chat-labs/open-chat/pull/7260))
 - Move storage of group bots up a level ([#7265](https://github.com/open-chat-labs/open-chat/pull/7265))
 
+### Fixed
+
+- Fix message size limit being exceeded when importing group into community ([#7278](https://github.com/open-chat-labs/open-chat/pull/7278))
+
 ## [[2.0.1569](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1569-group)] - 2025-01-14
 
 ### Changed

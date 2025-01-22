@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Bump user limit to 300k ([#7270](https://github.com/open-chat-labs/open-chat/pull/7270))
+
+## [[2.0.1575](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1575-local_user_index)] - 2025-01-21
+
+### Changed
+
 - Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
 - Reduce channel Ids to 32 bits down from 128 bits ([#7233](https://github.com/open-chat-labs/open-chat/pull/7233))
 - Sync platform moderators/operators to LocalUserIndexes ([#7248](https://github.com/open-chat-labs/open-chat/pull/7248))

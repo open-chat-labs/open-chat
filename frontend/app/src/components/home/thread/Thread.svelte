@@ -264,7 +264,7 @@
 
     function eventKey(e: EventWrapper<ChatEventType>): string {
         if (e.event.kind === "message") {
-            return e.event.messageId.toString();
+            return `${e.index}_${e.event.messageId}`;
         } else {
             return e.index.toString();
         }

@@ -14,7 +14,7 @@ fn c2c_update_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     let chat_id = ChatId::from(state.env.caller());
 
     if let Some(group) = state.data.public_groups.get(&chat_id) {
-        if group.name().to_uppercase() != args.name.to_uppercase() {
+        if !group.name().eq_ignore_ascii_case(&args.name) {
             if state.data.public_group_and_community_names.is_name_taken(&args.name) {
                 return NameTaken;
             }

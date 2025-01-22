@@ -92,7 +92,7 @@ export function botUpdatesResponse(
     }
     if ("Success" in value) {
         const map = toRecord(current?.bots ?? [], (b) => b.id);
-        value.Success.deleted.forEach((d) => {
+        value.Success.removed.forEach((d) => {
             delete map[principalBytesToString(d)];
         });
         return {

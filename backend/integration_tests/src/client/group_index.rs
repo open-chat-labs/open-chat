@@ -21,17 +21,16 @@ generate_update_call!(set_community_verification);
 generate_update_call!(set_group_verification);
 
 pub mod happy_path {
-    use crate::User;
     use candid::Principal;
     use group_index_canister::ChildCanisterType;
     use pocket_ic::PocketIc;
     use sha256::sha256;
-    use types::{CanisterId, CanisterWasm, CommunityMatch, GroupMatch};
+    use types::{CanisterId, CanisterWasm, ChatId, CommunityId, CommunityMatch, GroupMatch};
 
-    pub fn explore_communities(env: &PocketIc, sender: &User, group_index_canister_id: CanisterId) -> Vec<CommunityMatch> {
+    pub fn explore_communities(env: &PocketIc, sender: Principal, group_index_canister_id: CanisterId) -> Vec<CommunityMatch> {
         let response = super::explore_communities(
             env,
-            sender.principal,
+            sender,
             group_index_canister_id,
             &group_index_canister::explore_communities::Args {
                 search_term: None,
@@ -49,10 +48,10 @@ pub mod happy_path {
         }
     }
 
-    pub fn explore_groups(env: &PocketIc, sender: &User, group_index_canister_id: CanisterId) -> Vec<GroupMatch> {
+    pub fn explore_groups(env: &PocketIc, sender: Principal, group_index_canister_id: CanisterId) -> Vec<GroupMatch> {
         let response = super::explore_groups(
             env,
-            sender.principal,
+            sender,
             group_index_canister_id,
             &group_index_canister::explore_groups::Args {
                 search_term: None,
@@ -177,6 +176,46 @@ pub mod happy_path {
         assert!(matches!(
             response,
             group_index_canister::add_local_group_index_canister::Response::Success
+        ));
+    }
+
+    pub fn set_group_verification(
+        env: &mut PocketIc,
+        sender: Principal,
+        group_index_canister_id: CanisterId,
+        group_id: ChatId,
+        name: String,
+    ) {
+        let response = super::set_group_verification(
+            env,
+            sender,
+            group_index_canister_id,
+            &group_index_canister::set_group_verification::Args { group_id, name },
+        );
+
+        assert!(matches!(
+            response,
+            group_index_canister::set_group_verification::Response::Success
+        ));
+    }
+
+    pub fn set_community_verification(
+        env: &mut PocketIc,
+        sender: Principal,
+        group_index_canister_id: CanisterId,
+        community_id: CommunityId,
+        name: String,
+    ) {
+        let response = super::set_community_verification(
+            env,
+            sender,
+            group_index_canister_id,
+            &group_index_canister::set_community_verification::Args { community_id, name },
+        );
+
+        assert!(matches!(
+            response,
+            group_index_canister::set_community_verification::Response::Success
         ));
     }
 

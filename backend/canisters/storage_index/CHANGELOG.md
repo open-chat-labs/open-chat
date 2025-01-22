@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1574](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1574-storage_index)] - 2025-01-21
+
 ### Changed
 
 - Sync StorageBucket heap and stable memory sizes to StorageIndex ([#7192](https://github.com/open-chat-labs/open-chat/pull/7192))

@@ -1,8 +1,9 @@
 use crate::guards::caller_is_local_user_index_canister;
-use crate::{mutate_state, RuntimeState, UserRegisteredEventPayload, ONE_MB};
+use crate::{mutate_state, RuntimeState, UserRegisteredEventPayload};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::ONE_MB;
 use event_store_producer::EventBuilder;
 use local_user_index_canister::{
     DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,

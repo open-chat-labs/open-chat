@@ -159,7 +159,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         let mut revoke = false;
 
         if let Some(new_name) = args.name.as_ref() {
-            if new_name.to_lowercase() != state.data.chat.name.value.to_lowercase() {
+            if !new_name.eq_ignore_ascii_case(&state.data.chat.name.value) {
                 revoke = true;
             }
         }
