@@ -30,7 +30,7 @@ pub struct ChatEventsList {
 impl ChatEventsList {
     pub fn fix_duplicate_message_ids(&mut self, rng: &mut StdRng) -> Option<bool> {
         if self.message_id_map.len() == self.message_event_indexes.len() {
-            if let Some(event_index) = self.message_id_map.remove(&MessageId::from(0)) {
+            if let Some(event_index) = self.message_id_map.remove(&MessageId::from(0u64)) {
                 self.events_with_duplicate_message_ids.insert(event_index);
             } else {
                 return Some(true);

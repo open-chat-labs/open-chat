@@ -425,10 +425,16 @@ impl Job for DedupeMessageIdsJob {
     fn execute(mut self) {
         mutate_state(|state| {
             let mut complete = true;
-            let this_canister_id = state.env.canister_id().as_slice();
+            let this_canister_id = state.env.canister_id().as_slice().to_vec();
             for chat in state.data.direct_chats.iter_mut() {
+                // Create a seed which will be the same for this user and the other user, so that
+                // their messageIds match
                 let mut seed = [0; 32];
-                let zipped: Vec<u8> = this_canister_id.iter().zip(chat.them.as_slice()).collect();
+                let zipped: Vec<u8> = this_canister_id
+                    .iter()
+                    .zip(chat.them.as_slice())
+                    .map(|(l, r)| l ^ r)
+                    .collect();
                 seed[..zipped.len()].copy_from_slice(&zipped);
 
                 let mut rng = StdRng::from_seed(seed);
