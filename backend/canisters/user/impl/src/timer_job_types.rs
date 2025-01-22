@@ -25,6 +25,7 @@ pub enum TimerJob {
     SendMessageToChannel(Box<SendMessageToChannelJob>),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
     ClaimChitInsurance(ClaimChitInsuranceJob),
+    DedupeMessageIds(DedupeMessageIdsJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -120,6 +121,9 @@ pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call_v2::Args);
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ClaimChitInsuranceJob;
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct DedupeMessageIdsJob;
+
 impl Job for TimerJob {
     fn execute(self) {
         if can_borrow_state() {
@@ -140,6 +144,7 @@ impl Job for TimerJob {
             TimerJob::SendMessageToChannel(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
             TimerJob::ClaimChitInsurance(job) => job.execute(),
+            TimerJob::DedupeMessageIds(job) => job.execute(),
         }
     }
 }
@@ -409,5 +414,29 @@ impl Job for ClaimChitInsuranceJob {
                 state.data.notify_user_index_of_chit(now);
             }
         });
+    }
+}
+
+impl Job for DedupeMessageIdsJob {
+    fn execute(self) {
+        mutate_state(|state| {
+            let mut complete = true;
+            for chat in state.data.direct_chats.iter_mut() {
+                match chat.events.fix_duplicate_message_ids(state.env.rng()) {
+                    Some(true) => {}
+                    Some(false) => {
+                        complete = false;
+                        break;
+                    }
+                    None => error!("Failed to dedupe messageIds"),
+                }
+            }
+            if !complete {
+                let now = state.env.now();
+                state.data.timer_jobs.enqueue_job(TimerJob::DedupeMessageIds(self), now, now);
+            } else {
+                state.data.message_ids_deduped = true;
+            }
+        })
     }
 }
