@@ -414,6 +414,8 @@ struct Data {
     bots: GroupBots,
     #[serde(default)]
     verified: Timestamped<bool>,
+    #[serde(default)]
+    message_ids_deduped: bool,
 }
 
 impl Data {
@@ -518,6 +520,7 @@ impl Data {
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: GroupBots::default(),
             verified: Timestamped::default(),
+            message_ids_deduped: true,
         }
     }
 

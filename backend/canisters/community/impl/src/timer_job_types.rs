@@ -30,6 +30,7 @@ pub enum TimerJob {
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
     JoinMembersToPublicChannel(JoinMembersToPublicChannelJob),
+    DedupeMessageIds(DedupeMessageIdsJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -146,6 +147,9 @@ pub struct JoinMembersToPublicChannelJob {
     pub members: Vec<UserId>,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct DedupeMessageIdsJob;
+
 impl Job for TimerJob {
     fn execute(self) {
         if can_borrow_state() {
@@ -167,6 +171,7 @@ impl Job for TimerJob {
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
             TimerJob::JoinMembersToPublicChannel(job) => job.execute(),
+            TimerJob::DedupeMessageIds(job) => job.execute(),
         }
     }
 }
@@ -511,5 +516,29 @@ impl JoinMembersToPublicChannelJob {
                     .enqueue_job(TimerJob::JoinMembersToPublicChannel(self), now, now);
             }
         }
+    }
+}
+
+impl Job for DedupeMessageIdsJob {
+    fn execute(self) {
+        mutate_state(|state| {
+            let mut complete = true;
+            for channel in state.data.channels.iter_mut() {
+                match channel.chat.events.fix_duplicate_message_ids(state.env.rng()) {
+                    Some(true) => {}
+                    Some(false) => {
+                        complete = false;
+                        break;
+                    }
+                    None => error!("Failed to dedupe messageIds"),
+                }
+            }
+            if !complete {
+                let now = state.env.now();
+                state.data.timer_jobs.enqueue_job(TimerJob::DedupeMessageIds(self), now, now);
+            } else {
+                state.data.message_ids_deduped = true;
+            }
+        })
     }
 }

@@ -22,6 +22,7 @@ pub enum TimerJob {
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
+    DedupeMessageIds(DedupeMessageIdsJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -107,6 +108,9 @@ pub struct MarkP2PSwapExpiredJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MarkVideoCallEndedJob(pub group_canister::end_video_call_v2::Args);
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct DedupeMessageIdsJob;
+
 impl Job for TimerJob {
     fn execute(self) {
         if can_borrow_state() {
@@ -124,6 +128,7 @@ impl Job for TimerJob {
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
+            TimerJob::DedupeMessageIds(job) => job.execute(),
         }
     }
 }
@@ -390,5 +395,22 @@ impl Job for MarkVideoCallEndedJob {
         if !matches!(response, group_canister::end_video_call_v2::Response::Success) {
             error!(?response, args = ?self.0, "Failed to mark video call ended");
         }
+    }
+}
+
+impl Job for DedupeMessageIdsJob {
+    fn execute(self) {
+        mutate_state(
+            |state| match state.data.chat.events.fix_duplicate_message_ids(state.env.rng()) {
+                Some(true) => {
+                    state.data.message_ids_deduped = true;
+                }
+                Some(false) => {
+                    let now = state.env.now();
+                    state.data.timer_jobs.enqueue_job(TimerJob::DedupeMessageIds(self), now, now);
+                }
+                None => error!("Failed to dedupe messageIds"),
+            },
+        )
     }
 }

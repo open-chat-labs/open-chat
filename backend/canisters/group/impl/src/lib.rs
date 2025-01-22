@@ -498,6 +498,8 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     #[serde(default)]
     verified: Timestamped<bool>,
+    #[serde(default)]
+    message_ids_deduped: bool,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -597,6 +599,7 @@ impl Data {
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             verified: Timestamped::default(),
+            message_ids_deduped: true,
         }
     }
 
