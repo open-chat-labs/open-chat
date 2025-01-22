@@ -7,7 +7,7 @@ use rand::rngs::StdRng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::ops::Deref;
 use tracing::{error, info};
 use types::{
@@ -24,7 +24,7 @@ pub struct ChatEventsList {
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
     #[serde(skip)]
-    events_with_duplicate_message_ids: HashSet<EventIndex>,
+    events_with_duplicate_message_ids: BTreeSet<EventIndex>,
 }
 
 impl ChatEventsList {
@@ -50,10 +50,9 @@ impl ChatEventsList {
 
         let mut count = 0;
         while ic_cdk::api::instruction_counter() < 2_000_000_000 {
-            let Some(event_index) = self.events_with_duplicate_message_ids.iter().next().copied() else {
+            let Some(event_index) = self.events_with_duplicate_message_ids.pop_first() else {
                 break;
             };
-            self.events_with_duplicate_message_ids.remove(&event_index);
 
             if let Some(mut event_wrapper) = self.get_event(event_index.into(), EventIndex::default()) {
                 if let ChatEventInternal::Message(m) = &mut event_wrapper.event {
@@ -100,7 +99,7 @@ impl ChatEventsList {
             message_event_indexes: Vec::new(),
             latest_event_index: None,
             latest_event_timestamp: None,
-            events_with_duplicate_message_ids: HashSet::new(),
+            events_with_duplicate_message_ids: BTreeSet::new(),
         }
     }
 
