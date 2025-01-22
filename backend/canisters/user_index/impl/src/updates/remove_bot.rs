@@ -41,7 +41,7 @@ fn remove_bot(args: Args) -> Response {
 }
 
 fn remove_bot_impl(args: Args, deleted_by: Option<UserId>, state: &mut RuntimeState) -> Response {
-    if state.data.users.remove_bot(&args.bot_id).is_none() {
+    if state.data.users.remove_bot(args.bot_id, state.env.now()).is_none() {
         return BotNotFound;
     }
 
