@@ -1,12 +1,13 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::UserId;
+use types::{SignedDelegation, UserId};
 
 #[ts_export(user_index, delete_user)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
+    pub delegation: SignedDelegation,
 }
 
 #[ts_export(user_index, delete_user)]
@@ -14,5 +15,7 @@ pub struct Args {
 pub enum Response {
     Success,
     NotAuthorized,
+    MalformedSignature(String),
+    DelegationTooOld,
     UserNotFound,
 }

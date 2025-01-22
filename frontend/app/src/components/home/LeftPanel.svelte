@@ -48,7 +48,7 @@
         overflow: auto;
         overflow-x: hidden;
         max-width: 500px;
-        min-width: 400px;
+        min-width: 300px;
         flex: 7;
         position: relative;
         border-right: var(--bw) solid var(--bd);
