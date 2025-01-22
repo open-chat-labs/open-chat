@@ -8264,12 +8264,20 @@ export class OpenChat extends EventTarget {
             .catch(() => false);
     }
 
-    withdrawFromIcpSwap(userId: string, swapId: bigint, inputToken: boolean): Promise<boolean> {
+    withdrawFromIcpSwap(
+        userId: string,
+        swapId: bigint,
+        inputToken: boolean,
+        amount: bigint | undefined,
+        fee: bigint | undefined
+    ): Promise<boolean> {
         return this.#sendRequest({
             kind: "withdrawFromIcpSwap",
             userId,
             swapId,
             inputToken,
+            amount,
+            fee,
         });
     }
 

@@ -1427,6 +1427,8 @@ type WithdrawFromIcpSwap = {
     userId: string;
     swapId: bigint;
     inputToken: boolean;
+    amount: bigint | undefined;
+    fee: bigint | undefined;
 };
 
 /**
