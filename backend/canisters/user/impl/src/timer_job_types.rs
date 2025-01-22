@@ -430,7 +430,6 @@ impl Job for DedupeMessageIdsJob {
                 let mut seed = [0; 32];
                 let zipped: Vec<u8> = this_canister_id.iter().zip(chat.them.as_slice()).collect();
                 seed[..zipped.len()].copy_from_slice(&zipped);
-                seed.rotate_right(self.iteration as usize);
 
                 let mut rng = StdRng::from_seed(seed);
                 match chat.events.fix_duplicate_message_ids(&mut rng) {
