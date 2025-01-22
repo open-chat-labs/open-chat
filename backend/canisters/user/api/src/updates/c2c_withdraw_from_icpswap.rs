@@ -13,5 +13,6 @@ pub struct Args {
 pub enum Response {
     Success,
     SwapNotFound,
+    AmountNotSpecified,
     InternalError(String),
 }
