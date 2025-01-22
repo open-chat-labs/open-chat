@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Only allow user to delete account if they re-authenticated within last 5 minutes ([#7274](https://github.com/open-chat-labs/open-chat/pull/7274))
+
 ### Added
 
 - Add `remove_bot` endpoint callable by proposal or bot owner ([#7254](https://github.com/open-chat-labs/open-chat/pull/7254))
