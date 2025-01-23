@@ -115,6 +115,7 @@ export type VideoCallPresence = "Default" | "Owner" | "Hidden";
 export type ChatMetrics = { text_messages: bigint, image_messages: bigint, video_messages: bigint, audio_messages: bigint, file_messages: bigint, polls: bigint, poll_votes: bigint, crypto_messages: bigint, icp_messages: bigint, sns1_messages: bigint, ckbtc_messages: bigint, chat_messages: bigint, kinic_messages: bigint, deleted_messages: bigint, giphy_messages: bigint, prize_messages: bigint, prize_winner_messages: bigint, replies: bigint, edits: bigint, reactions: bigint, proposals: bigint, reported_messages: bigint, message_reminders: bigint, custom_type_messages: bigint, last_active: bigint, };
 export type VideoCallType = "Broadcast" | "Default";
 export type MessagePermission = "Text" | "Image" | "Video" | "Audio" | "File" | "Poll" | "Crypto" | "Giphy" | "Prize" | "P2pSwap" | "VideoCall";
+export type SlashCommandOptionChoiceI128 = { name: string, value: bigint, };
 export type VideoCall = { message_index: MessageIndex, call_type: VideoCallType, };
 export type GroupRole = "Owner" | "Admin" | "Moderator" | "Participant";
 export type StringParam = { min_length: number, max_length: number, choices: Array<SlashCommandOptionChoiceString>, };
@@ -185,6 +186,7 @@ export type UpdatedRules = { text: string, enabled: boolean, new_version: boolea
  * @default NoChange
  */
 export type OptionUpdateString = "NoChange" | "SetToNone" | { "SetToSome": string };
+export type DecimalParam = { min_value: number, max_value: number, choices: Array<SlashCommandOptionChoiceF64>, };
 export type DiamondMembershipStatus = "Inactive" | "Active" | "Lifetime";
 export type PollConfig = { text?: string | undefined, options: Array<string>, end_date?: bigint | undefined, anonymous: boolean, show_votes_before_end_date: boolean, allow_multiple_votes_per_user: boolean, allow_user_to_change_vote: boolean, };
 export type Tally = { yes: bigint, no: bigint, total: bigint, timestamp: bigint, };
@@ -448,6 +450,7 @@ export type Delegation = { pubkey: TSBytes, expiration: bigint, };
 export type MessagePermissions = { default: GroupPermissionRole, text?: GroupPermissionRole | undefined, image?: GroupPermissionRole | undefined, video?: GroupPermissionRole | undefined, audio?: GroupPermissionRole | undefined, file?: GroupPermissionRole | undefined, poll?: GroupPermissionRole | undefined, crypto?: GroupPermissionRole | undefined, giphy?: GroupPermissionRole | undefined, prize?: GroupPermissionRole | undefined, p2p_swap?: GroupPermissionRole | undefined, video_call?: GroupPermissionRole | undefined, custom: Array<CustomPermission>, };
 export type ChatId = TSBytes;
 export type CryptoAccountICRC1 = "Mint" | { "Account": AccountICRC1 };
+export type IntegerParam = { min_value: bigint, max_value: bigint, choices: Array<SlashCommandOptionChoiceI128>, };
 export type VerifiedCredentialGate = { issuer_canister_id: TSBytes, issuer_origin: string, credential_type: string, credential_name: string, credential_arguments: Record<string, VerifiedCredentialArgumentValue>, };
 export type NnsProposal = { id: bigint, topic: number, proposer: bigint, created: bigint, title: string, summary: string, url: string, status: ProposalDecisionStatus, reward_status: ProposalRewardStatus, tally: Tally, deadline: bigint, payload_text_rendering?: string | undefined, last_updated: bigint, };
 export type BlobReference = { canister_id: TSBytes, blob_id: bigint, };
@@ -468,7 +471,6 @@ export type CompletedCryptoTransactionNNS = { ledger: TSBytes, token: Cryptocurr
  * @default NoChange
  */
 export type OptionUpdateOptionalMessagePermissions = "NoChange" | "SetToNone" | { "SetToSome": OptionalMessagePermissions };
-export type NumberParam = { min_value: number, max_value: number, choices: Array<SlashCommandOptionChoiceF64>, };
 export type PendingCryptoTransactionICRC2 = { ledger: TSBytes, token: Cryptocurrency, amount: bigint, from: AccountICRC1, to: AccountICRC1, fee: bigint, memo?: TSBytes | undefined, created: bigint, };
 export type AudioContent = { caption?: string | undefined, mime_type: string, blob_reference?: BlobReference | undefined, };
 export type ImageContent = { width: number, height: number, thumbnail_data: ThumbnailData, caption?: string | undefined, mime_type: string, blob_reference?: BlobReference | undefined, };
@@ -640,7 +642,7 @@ export type UserChitEventsSuccessResult = { events: Array<ChitEarned>, total: nu
 export type UserReportMessageArgs = { them: UserId, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, delete: boolean, };
 export type VideoContent = { width: number, height: number, thumbnail_data: ThumbnailData, caption?: string | undefined, mime_type: string, image_blob_reference?: BlobReference | undefined, video_blob_reference?: BlobReference | undefined, };
 export type GroupPermissions = { change_roles: GroupPermissionRole, update_group: GroupPermissionRole, add_members: GroupPermissionRole, invite_users: GroupPermissionRole, remove_members: GroupPermissionRole, delete_messages: GroupPermissionRole, pin_messages: GroupPermissionRole, react_to_messages: GroupPermissionRole, mention_all_members: GroupPermissionRole, start_video_call: GroupPermissionRole, message_permissions: MessagePermissions, thread_permissions?: MessagePermissions | undefined, };
-export type SlashCommandParamType = "UserParam" | "BooleanParam" | { "StringParam": StringParam } | { "NumberParam": NumberParam };
+export type SlashCommandParamType = "UserParam" | "BooleanParam" | { "StringParam": StringParam } | { "IntegerParam": IntegerParam } | { "DecimalParam": DecimalParam };
 export type GroupSubtype = { "GovernanceProposals": GovernanceProposalsSubtype };
 export type SignedDelegation = { delegation: Delegation, signature: TSBytes, };
 export type P2PSwapReserved = { reserved_by: UserId, };

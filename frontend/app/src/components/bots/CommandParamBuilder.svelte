@@ -2,7 +2,8 @@
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import {
         defaultBooleanParam,
-        defaultNumberParam,
+        defaultDecimalParam,
+        defaultIntegerParam,
         defaultStringParam,
         defaultUserParam,
         type ValidationErrors,
@@ -42,8 +43,11 @@
             case "user":
                 param = defaultUserParam(param);
                 break;
-            case "number":
-                param = defaultNumberParam(param);
+            case "integer":
+                param = defaultIntegerParam(param);
+                break;
+            case "decimal":
+                param = defaultDecimalParam(param);
                 break;
             case "boolean":
                 param = defaultBooleanParam(param);

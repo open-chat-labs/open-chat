@@ -37,7 +37,8 @@ pub enum SlashCommandParamType {
     UserParam,
     BooleanParam,
     StringParam(StringParam),
-    NumberParam(NumberParam),
+    IntegerParam(IntegerParam),
+    DecimalParam(DecimalParam),
 }
 
 #[ts_export]
@@ -51,7 +52,16 @@ pub struct StringParam {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct NumberParam {
+pub struct IntegerParam {
+    pub min_value: i128,
+    pub max_value: i128,
+    #[ts(as = "Vec<SlashCommandOptionChoiceI128>")]
+    pub choices: Vec<SlashCommandOptionChoice<i128>>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct DecimalParam {
     pub min_value: f64,
     pub max_value: f64,
     #[ts(as = "Vec<SlashCommandOptionChoiceF64>")]
@@ -107,6 +117,7 @@ macro_rules! slash_command_option_choice {
 
 slash_command_option_choice!(SlashCommandOptionChoiceString, String);
 slash_command_option_choice!(SlashCommandOptionChoiceF64, f64);
+slash_command_option_choice!(SlashCommandOptionChoiceI128, i128);
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]

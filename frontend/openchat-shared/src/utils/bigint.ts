@@ -13,3 +13,9 @@ export function toBigInt32(value: string | bigint | number): bigint {
 export function toBigInt64(value: string | bigint | number): bigint {
     return BigInt(value) % BigInt("18446744073709551616");
 }
+
+const integerRegex = /^[0-9]+$/;
+export function parseBigInt(value: string): bigint | undefined {
+    if (value.length === 0) return BigInt(0);
+    return integerRegex.test(value) ? BigInt(value) : undefined;
+}
