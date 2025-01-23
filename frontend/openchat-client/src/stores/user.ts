@@ -123,7 +123,7 @@ export const userStore = {
     subscribe: allUsers.subscribe,
     set: (users: UserLookup): void => {
         normalUsers.set(users);
-        const [suspended, _] = partitionSuspendedUsers([...users.values()]);
+        const [suspended] = partitionSuspendedUsers([...users.values()]);
         suspendedUsers.set(new Set(suspended));
     },
     add: (user: UserSummary): void => {

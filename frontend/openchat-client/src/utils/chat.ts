@@ -184,8 +184,10 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "group_chat_created":
             return event.created_by;
         case "members_added":
+        case "bot_added":
             return event.addedBy;
         case "members_removed":
+        case "bot_removed":
             return event.removedBy;
         case "users_blocked":
             return event.blockedBy;
@@ -198,15 +200,10 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "events_ttl_updated":
         case "external_url_updated":
         case "gate_updated":
+        case "bot_updated":
             return event.updatedBy;
         case "users_invited":
             return event.invitedBy;
-        case "bot_updated":
-            return event.updatedBy;
-        case "bot_added":
-            return event.addedBy;
-        case "bot_removed":
-            return event.removedBy;
         case "aggregate_common_events":
         case "chat_frozen":
         case "chat_unfrozen":

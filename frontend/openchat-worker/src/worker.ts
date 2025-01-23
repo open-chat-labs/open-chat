@@ -808,6 +808,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "removeBot":
+                executeThenReply(payload, correlationId, agent.removeBot(payload.botId));
+                break;
+
             case "updateRegisteredBot":
                 executeThenReply(
                     payload,
@@ -1938,7 +1942,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.swapId,
                         payload.inputToken,
                         payload.amount,
-                        payload.fee
+                        payload.fee,
                     ),
                 );
                 break;

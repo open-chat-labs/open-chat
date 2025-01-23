@@ -456,7 +456,7 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
             : buildIdenticonUrl(userId);
 }
 
-function buildIdenticonUrl(userId: string): string {
+export function buildIdenticonUrl(userId: string): string {
     const identicon = new Identicon(md5(userId), {
         margin: 0,
         format: "svg",

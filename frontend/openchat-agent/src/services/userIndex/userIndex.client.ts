@@ -95,6 +95,8 @@ import {
     UserIndexPlatformModeratorsGroupResponse,
     UserIndexRegisterBotArgs,
     UserIndexRegisterBotResponse,
+    UserIndexRemoveBotArgs,
+    UserIndexRemoveBotResponse,
     UserIndexReportedMessagesArgs,
     UserIndexReportedMessagesResponse,
     UserIndexSearchArgs,
@@ -656,6 +658,21 @@ export class UserIndexClient extends CandidService {
             },
             UserIndexRegisterBotArgs,
             UserIndexRegisterBotResponse,
+        );
+    }
+
+    removeBot(botId: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "remove_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+            },
+            (resp) => {
+                console.log("UserIndex remove bot response: ", resp);
+                return resp === "Success";
+            },
+            UserIndexRemoveBotArgs,
+            UserIndexRemoveBotResponse,
         );
     }
 
