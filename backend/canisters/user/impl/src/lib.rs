@@ -229,6 +229,7 @@ impl RuntimeState {
             achievements: self.data.achievements.iter().cloned().collect(),
             unique_person_proof: self.data.unique_person_proof.is_some(),
             stable_memory_sizes: memory::memory_sizes(),
+            message_ids_deduped: self.data.message_ids_deduped,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -291,6 +292,8 @@ struct Data {
     pub message_activity_events: MessageActivityEvents,
     pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
+    #[serde(default)]
+    pub message_ids_deduped: bool,
 }
 
 impl Data {
@@ -359,6 +362,7 @@ impl Data {
             message_activity_events: MessageActivityEvents::default(),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             local_user_index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
+            message_ids_deduped: true,
         }
     }
 
@@ -496,6 +500,7 @@ pub struct Metrics {
     pub achievements: Vec<Achievement>,
     pub unique_person_proof: bool,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub message_ids_deduped: bool,
     pub canister_ids: CanisterIds,
 }
 

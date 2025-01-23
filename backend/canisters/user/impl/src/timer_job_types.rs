@@ -5,7 +5,10 @@ use crate::{can_borrow_state, mutate_state, openchat_bot, read_state, run_regula
 use canister_timer_jobs::Job;
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use serde::{Deserialize, Serialize};
+use sha256::sha256;
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 use user_canister::{C2CReplyContext, UserCanisterEvent};
@@ -25,6 +28,7 @@ pub enum TimerJob {
     SendMessageToChannel(Box<SendMessageToChannelJob>),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
     ClaimChitInsurance(ClaimChitInsuranceJob),
+    DedupeMessageIds(DedupeMessageIdsJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -120,6 +124,11 @@ pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call_v2::Args);
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ClaimChitInsuranceJob;
 
+#[derive(Serialize, Deserialize, Clone, Default)]
+pub struct DedupeMessageIdsJob {
+    iteration: u32,
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         if can_borrow_state() {
@@ -140,6 +149,7 @@ impl Job for TimerJob {
             TimerJob::SendMessageToChannel(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
             TimerJob::ClaimChitInsurance(job) => job.execute(),
+            TimerJob::DedupeMessageIds(job) => job.execute(),
         }
     }
 }
@@ -410,4 +420,46 @@ impl Job for ClaimChitInsuranceJob {
             }
         });
     }
+}
+
+impl Job for DedupeMessageIdsJob {
+    fn execute(mut self) {
+        mutate_state(|state| {
+            let mut complete = true;
+            let my_user_id: UserId = state.env.canister_id().into();
+            for chat in state.data.direct_chats.iter_mut() {
+                let mut rng_my_messages = build_rng(my_user_id, chat.them);
+                let mut rng_their_messages = build_rng(chat.them, my_user_id);
+
+                match chat
+                    .events
+                    .fix_duplicate_message_ids(&mut rng_their_messages, Some((my_user_id, &mut rng_my_messages)))
+                {
+                    Some(true) => {}
+                    Some(false) => {
+                        complete = false;
+                        break;
+                    }
+                    None => error!("Failed to dedupe messageIds"),
+                }
+            }
+            if complete {
+                state.data.message_ids_deduped = true;
+            } else if self.iteration < 100 {
+                let now = state.env.now();
+                self.iteration += 1;
+                state.data.timer_jobs.enqueue_job(TimerJob::DedupeMessageIds(self), now, now);
+            } else {
+                error!("Failed to dedupe messageIds after 100 iterations");
+            }
+        })
+    }
+}
+
+fn build_rng(user1: UserId, user2: UserId) -> StdRng {
+    let mut hash_input = Vec::new();
+    hash_input.extend_from_slice(user1.as_slice());
+    hash_input.extend_from_slice(user2.as_slice());
+    let seed = sha256(&hash_input);
+    StdRng::from_seed(seed)
 }
