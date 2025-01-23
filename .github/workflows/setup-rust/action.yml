@@ -1,0 +1,19 @@
+name: Setup Rust
+inputs:
+  cache:
+    description: 'Cache behaviour (use "read", "write", or leave empty)'
+    type: string
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Rust toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        cache: false
+    - name: Setup caching
+      if: ${{ inputs.cache == 'read' || inputs.cache == 'write' }}
+      uses: Swatinem/rust-cache@v2
+      with:
+        shared-key: 'build-debug'
+        save-if: ${{ inputs.cache == 'write' }}
