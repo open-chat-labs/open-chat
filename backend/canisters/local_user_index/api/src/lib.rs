@@ -2,10 +2,10 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    is_default, CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
-    DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, NotifyChit, PhoneNumber,
-    ReferralType, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User,
-    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType,
+    is_default, BotInstallationLocation, CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId,
+    Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, NotifyChit,
+    PhoneNumber, ReferralType, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof,
+    UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType,
 };
 
 mod lifecycle;
@@ -26,6 +26,7 @@ pub enum UserIndexEvent {
     BotRegistered(BotRegistered),
     BotUpdated(BotUpdated),
     BotRemoved(BotRemoved),
+    BotUninstall(BotUninstall),
     PlatformOperatorStatusChanged(PlatformOperatorStatusChanged),
     PlatformModeratorStatusChanged(PlatformModeratorStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
@@ -101,6 +102,12 @@ pub struct BotUpdated {
 pub struct BotRemoved {
     pub user_id: UserId,
     pub deleted_by: UserId,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotUninstall {
+    pub location: BotInstallationLocation,
+    pub bot_id: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

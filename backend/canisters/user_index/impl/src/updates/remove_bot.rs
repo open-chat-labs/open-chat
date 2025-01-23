@@ -1,9 +1,9 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{jobs, mutate_state, read_state, RuntimeState};
 use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
-use local_user_index_canister::{BotRemoved, UserIndexEvent};
+use local_user_index_canister::{BotRemoved, BotUninstall, UserIndexEvent};
 use types::UserId;
 use user_index_canister::remove_bot::{Response::*, *};
 
@@ -41,9 +41,9 @@ fn remove_bot(args: Args) -> Response {
 }
 
 fn remove_bot_impl(args: Args, deleted_by: Option<UserId>, state: &mut RuntimeState) -> Response {
-    if state.data.users.remove_bot(args.bot_id, state.env.now()).is_none() {
+    let Some(bot) = state.data.users.remove_bot(args.bot_id, state.env.now()) else {
         return BotNotFound;
-    }
+    };
 
     state.delete_user(args.bot_id, deleted_by.is_some());
 
@@ -54,5 +54,17 @@ fn remove_bot_impl(args: Args, deleted_by: Option<UserId>, state: &mut RuntimeSt
         }),
         None,
     );
+
+    for (location, details) in bot.installations.iter() {
+        state.data.user_index_event_sync_queue.push(
+            details.local_user_index,
+            UserIndexEvent::BotUninstall(BotUninstall {
+                location: *location,
+                bot_id: args.bot_id,
+            }),
+        );
+    }
+
+    jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
     Success
 }

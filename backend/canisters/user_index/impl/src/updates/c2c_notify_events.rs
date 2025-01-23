@@ -121,6 +121,15 @@ fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMil
         }
         LocalUserIndexEvent::NotifyStreakInsurancePayment(payment) => state.data.streak_insurance_logs.mark_payment(*payment),
         LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim) => state.data.streak_insurance_logs.mark_claim(*claim),
+        LocalUserIndexEvent::BotInstalled(ev) => {
+            state
+                .data
+                .users
+                .add_bot_installation(ev.bot_id, ev.location, caller, ev.installed_by, now);
+        }
+        LocalUserIndexEvent::BotUninstalled(ev) => {
+            state.data.users.remove_bot_installation(ev.bot_id, &ev.location);
+        }
     }
 }
 

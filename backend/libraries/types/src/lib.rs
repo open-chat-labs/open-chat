@@ -10,6 +10,8 @@ pub mod bot_actions;
 mod bots;
 mod build_version;
 pub mod c2c_handle_bot_action;
+pub mod c2c_install_bot;
+pub mod c2c_uninstall_bot;
 mod caller;
 mod canister_upgrade_status;
 mod canister_wasm;
