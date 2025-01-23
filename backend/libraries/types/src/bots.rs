@@ -41,6 +41,7 @@ pub enum SlashCommandParamType {
     BooleanParam,
     StringParam(StringParam),
     IntegerParam(IntegerParam),
+    #[serde(alias = "NumberParam")]
     DecimalParam(DecimalParam),
 }
 
