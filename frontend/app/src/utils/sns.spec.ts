@@ -50,7 +50,7 @@ function createTestBot(): ExternalBot {
                             required: true,
                         },
                         {
-                            kind: "number",
+                            kind: "decimal",
                             name: "param_four",
                             description: "what's your favourite number",
                             placeholder: "what's your favourite number",

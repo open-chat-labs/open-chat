@@ -1,7 +1,7 @@
 import { Principal } from "@dfinity/principal";
 import type { MessageContent, MessageContext } from "./chat";
 import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
-import { type InterpolationValues, parseBigInt, type ResourceKey } from "../utils";
+import type { InterpolationValues, ResourceKey } from "../utils";
 import { ValidationErrors } from "../utils/validation";
 
 export const MIN_NAME_LENGTH = 3;
@@ -43,9 +43,9 @@ export type StringParam = {
 
 export type IntegerParam = {
     kind: "integer";
-    minValue: bigint;
-    maxValue: bigint;
-    choices: SlashCommandOptionChoice<bigint>[];
+    minValue: number;
+    maxValue: number;
+    choices: SlashCommandOptionChoice<number>[];
 };
 
 export type DecimalParam = {
@@ -92,8 +92,8 @@ export function defaultIntegerParam(param?: SlashCommandParam): SlashCommandPara
     return {
         kind: "integer",
         ...defaultCommonParam(param),
-        minValue: BigInt(0),
-        maxValue: BigInt(1000),
+        minValue: 0,
+        maxValue: 1000,
         choices: [],
     };
 }
@@ -293,7 +293,7 @@ export type StringParamInstance = {
 
 export type IntegerParamInstance = {
     kind: "integer";
-    value: bigint | null;
+    value: number | null;
 };
 
 export type DecimalParamInstance = {
@@ -320,20 +320,14 @@ export function createParamInstancesFromSchema(
                 return { kind: "user", name: p.name };
             case "boolean":
                 return { kind: "boolean", name: p.name, value: false };
-            case "integer": {
-                let value = parseBigInt(maybeParams[i]) ?? null;
-                if (p.choices.length > 0) {
-                    value = p.choices.find((c) => c.value === value)?.value ?? null;
-                }
-                return { kind: "integer", name: p.name, value };
-            }
+            case "integer":
             case "decimal": {
                 const numParam = Number(maybeParams[i]);
                 let value = isNaN(numParam) ? null : numParam;
                 if (p.choices.length > 0) {
                     value = p.choices.find((c) => c.value === value)?.value ?? null;
                 }
-                return { kind: "decimal", name: p.name, value };
+                return { kind: p.kind, name: p.name, value };
             }
             case "string": {
                 let strParam = maybeParams[i] ?? "";

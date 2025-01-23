@@ -63,7 +63,13 @@
                     value: "",
                 });
                 break;
-            case "number":
+            case "integer":
+                param.choices.push({
+                    name: "",
+                    value: 0,
+                });
+                break;
+            case "decimal":
                 param.choices.push({
                     name: "",
                     value: 0,
@@ -76,7 +82,10 @@
         if (param.kind === "string") {
             param.choices = param.choices.filter((c) => c !== choice);
         }
-        if (param.kind === "number") {
+        if (param.kind === "integer") {
+            param.choices = param.choices.filter((c) => c !== choice);
+        }
+        if (param.kind === "decimal") {
             param.choices = param.choices.filter((c) => c !== choice);
         }
     }
@@ -177,7 +186,7 @@
                             bind:value={param.maxLength} />
                     </div>
                 </section>
-            {:else if param.kind === "number"}
+            {:else if param.kind === "integer" || param.kind === "decimal"}
                 <section class="minmax">
                     <div class="min">
                         <Legend
@@ -186,7 +195,7 @@
                         ></Legend>
                         <NumberInput
                             min={0}
-                            max={param.maxValue}
+                            max={Number(param.maxValue)}
                             placeholder={i18nKey("bots.builder.minValuePlaceholder")}
                             bind:value={param.minValue} />
                     </div>
@@ -195,7 +204,7 @@
                             label={i18nKey("bots.builder.maxValueLabel")}
                             rules={i18nKey("bots.builder.uptoN", { n: "1000" })}></Legend>
                         <NumberInput
-                            min={param.minValue}
+                            min={Number(param.minValue)}
                             max={1000}
                             placeholder={i18nKey("bots.builder.maxValuePlaceholder")}
                             bind:value={param.maxValue} />
@@ -203,7 +212,7 @@
                 </section>
             {/if}
 
-            {#if param.kind === "string" || param.kind === "number"}
+            {#if param.kind === "string" || param.kind === "integer" || param.kind === "decimal"}
                 <section>
                     <Legend label={i18nKey("bots.builder.choices")}></Legend>
                     <p class="info">

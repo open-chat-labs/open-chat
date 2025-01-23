@@ -68,7 +68,7 @@
             <option value={true}>True</option>
             <option value={false}>False</option>
         </Select>
-    {:else if instance.kind === "number" && param.kind === "number"}
+    {:else if (instance.kind === "integer" && param.kind === "integer") || (instance.kind === "decimal" && param.kind === "decimal")}
         <Legend label={i18nKey(param.name)} required={param.required} />
         {#if param.choices?.length ?? 0 > 0}
             <Select bind:value={instance.value} onchange={onChange}>

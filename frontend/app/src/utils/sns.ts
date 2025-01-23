@@ -174,9 +174,20 @@ function createCommandParamType(param: SlashCommandParam): Record<string, any> {
             };
         case "user":
             return { UserParam: null };
-        case "number":
+        case "integer":
             return {
-                NumberParam: {
+                IntegerParam: {
+                    min_length: param.minValue,
+                    max_length: param.maxValue,
+                    choices: param.choices.map((c) => ({
+                        name: c.name,
+                        value: c.value,
+                    })),
+                },
+            };
+        case "decimal":
+            return {
+                DecimalParam: {
                     min_length: param.minValue,
                     max_length: param.maxValue,
                     choices: param.choices.map((c) => ({

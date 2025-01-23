@@ -103,7 +103,7 @@ export function apiBotCommandArgValue(domain: SlashCommandParamInstance): BotCom
             };
         case "integer":
             return {
-                Integer: domain.value!,
+                Integer: BigInt(Math.trunc(domain.value!)),
             };
         case "decimal":
             return {

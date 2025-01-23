@@ -29,7 +29,7 @@ import type {
     BotsResponse,
     ExternalBot,
 } from "openchat-shared";
-import { CommonResponses, UnsupportedValueError } from "openchat-shared";
+import { CommonResponses, numberToBigInt, UnsupportedValueError } from "openchat-shared";
 import {
     bytesToHexString,
     identity,
@@ -608,9 +608,12 @@ export function apiCustomParamFields(param: SlashCommandParam): ApiSlashCommandP
         case "integer":
             return {
                 IntegerParam: {
-                    min_value: param.minValue,
-                    max_value: param.maxValue,
-                    choices: param.choices,
+                    min_value: numberToBigInt(param.minValue),
+                    max_value: numberToBigInt(param.maxValue),
+                    choices: param.choices.map((c) => ({
+                        name: c.name,
+                        value: numberToBigInt(c.value)
+                    })),
                 },
             };
         case "decimal":

@@ -122,7 +122,7 @@
                             value={param.maxLength} />
                     </div>
                 </section>
-            {:else if param.kind === "number"}
+            {:else if param.kind === "integer" || param.kind === "decimal"}
                 <section class="minmax">
                     <div class="min">
                         <Legend label={i18nKey("bots.builder.minValueLabel")}></Legend>
@@ -145,7 +145,7 @@
                 </section>
             {/if}
 
-            {#if (param.kind === "string" || param.kind === "number") && param.choices.length > 0}
+            {#if (param.kind === "string" || param.kind === "integer" || param.kind === "decimal") && param.choices.length > 0}
                 <section>
                     <Legend label={i18nKey("bots.builder.choices")}></Legend>
                     <p class="info">
