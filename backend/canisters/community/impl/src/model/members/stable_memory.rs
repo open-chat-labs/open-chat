@@ -33,7 +33,7 @@ impl MembersStableStorage {
 
     pub fn user_ids(&self) -> Vec<UserId> {
         with_map(|m| {
-            m.range(self.prefix.create_key(&Principal::anonymous().into())..)
+            m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)
                 .map(|(k, _)| k.user_id())
                 .collect()
         })
