@@ -1,9 +1,10 @@
 name: Setup Rust
 inputs:
-  # Either 'read', 'write' or empty
+  # Use 'read' or 'write' to interact with the cache
   cache:
-    required: false
+    required: true
     type: string
+    default: false
 
 jobs:
   setup:
