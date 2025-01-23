@@ -412,6 +412,7 @@ impl RuntimeState {
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
+            message_ids_deduped: self.data.message_ids_deduped,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -500,8 +501,9 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     #[serde(default)]
     verified: Timestamped<bool>,
-    #[serde(default)]
     pub bots: GroupBots,
+    #[serde(default)]
+    message_ids_deduped: bool,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -602,6 +604,7 @@ impl Data {
             stable_memory_keys_to_garbage_collect: Vec::new(),
             verified: Timestamped::default(),
             bots: GroupBots::default(),
+            message_ids_deduped: true,
         }
     }
 
@@ -824,6 +827,7 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub message_ids_deduped: bool,
     pub canister_ids: CanisterIds,
 }
 
