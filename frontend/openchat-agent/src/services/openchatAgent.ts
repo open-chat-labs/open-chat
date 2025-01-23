@@ -1433,9 +1433,14 @@ export class OpenChatAgent extends EventTarget {
             return {
                 ...userSummary,
                 blobData: undefined,
-                blobUrl: `${this.config.blobUrlPattern
-                    .replace("{canisterId}", this.config.userIndexCanister)
-                    .replace("{blobType}", "avatar")}/${userSummary.userId}/${ref?.blobId}`,
+                blobUrl:
+                    ref?.blobId === undefined
+                        ? "/assets/bot_avatar.svg"
+                        : `${this.config.blobUrlPattern
+                              .replace("{canisterId}", this.config.userIndexCanister)
+                              .replace("{blobType}", "avatar")}/${
+                              userSummary.userId
+                          }/${ref?.blobId}`,
             };
         }
         return userSummary.blobUrl
@@ -4073,6 +4078,11 @@ export class OpenChatAgent extends EventTarget {
     registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
         return this._userIndexClient.registerBot(principal, bot);
+    }
+
+    removeBot(botId: string): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+        return this._userIndexClient.removeBot(botId);
     }
 
     updateRegisteredBot(

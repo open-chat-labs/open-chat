@@ -485,10 +485,13 @@
                 {#if showAvatar}
                     <div class="avatar-col">
                         {#if first}
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
                             <div class="avatar" on:click={openUserProfile}>
                                 <Avatar
                                     url={client.userAvatarUrl(sender)}
                                     userId={msg.sender}
+                                    bot={sender?.kind === "bot"}
                                     size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
                             </div>
                         {/if}

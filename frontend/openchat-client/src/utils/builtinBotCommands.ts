@@ -218,6 +218,12 @@ export const builtinBot: InternalBot = {
                 params: [],
             },
             {
+                name: "remove_bot",
+                description: "bots.update_bot.removeDesc",
+                permissions: emptyPermissions,
+                params: [],
+            },
+            {
                 name: "witch",
                 description: "bots.witch.desc",
                 permissions: emptyPermissions,

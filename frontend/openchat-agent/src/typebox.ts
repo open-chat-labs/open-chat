@@ -2235,6 +2235,13 @@ export const UserIndexDeleteUserResponse = Type.Union([
     Type.Literal("UserNotFound"),
 ]);
 
+export type UserIndexRemoveBotResponse = Static<typeof UserIndexRemoveBotResponse>;
+export const UserIndexRemoveBotResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("BotNotFound"),
+    Type.Literal("NotAuthorised"),
+]);
+
 export type UserIndexUnsuspendUserResponse = Static<typeof UserIndexUnsuspendUserResponse>;
 export const UserIndexUnsuspendUserResponse = Type.Union([
     Type.Literal("Success"),
@@ -5034,6 +5041,11 @@ export const UserIndexReferralMetricsResponse = Type.Object({
 export type UserIndexDeleteUserArgs = Static<typeof UserIndexDeleteUserArgs>;
 export const UserIndexDeleteUserArgs = Type.Object({
     user_id: UserId,
+});
+
+export type UserIndexRemoveBotArgs = Static<typeof UserIndexRemoveBotArgs>;
+export const UserIndexRemoveBotArgs = Type.Object({
+    bot_id: UserId,
 });
 
 export type UserIndexUnsuspendUserArgs = Static<typeof UserIndexUnsuspendUserArgs>;
