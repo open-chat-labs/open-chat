@@ -13,8 +13,7 @@ jobs:
   benchmarks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: ./.github/workflows/setup-rust.yaml
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: "build-debug"

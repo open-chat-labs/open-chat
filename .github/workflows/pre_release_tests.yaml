@@ -15,7 +15,9 @@ jobs:
       - family=m7i
       - run-id=${{ github.run_id }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: ./.github/workflows/setup-rust.yaml
+        with:
+          cache: read
       - name: Wait for wasms to be built
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
@@ -24,10 +26,5 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Download canister wasms
         run: ./scripts/download-all-canister-wasms.sh $GITHUB_REF_NAME
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "build-debug"
-          save-if: "false"
       - name: Run integration tests
         run: ./scripts/run-integration-tests.sh local

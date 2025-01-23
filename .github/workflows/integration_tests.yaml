@@ -23,8 +23,7 @@ jobs:
       - family=m7i
       - run-id=${{ github.run_id }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: ./.github/workflows/setup-rust.yaml
       - uses: arduino/setup-protoc@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
