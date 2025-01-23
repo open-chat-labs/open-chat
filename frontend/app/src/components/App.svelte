@@ -419,9 +419,9 @@
         swapId: bigint,
         inputToken: boolean,
         amount: bigint | undefined,
-        fee: bigint | undefined
+        fee: bigint | undefined,
     ): void {
-        client.withdrawFromIcpSwap(userId, swapId, inputToken, amount, fee)
+        client.withdrawFromIcpSwap(userId, swapId, inputToken, amount, fee);
     }
 
     function calculateHeight() {
@@ -721,6 +721,7 @@
             background: var(--bg);
             color: var(--txt);
             margin: 0;
+            padding: 0;
             box-sizing: border-box;
             font-family: var(--font-fallback);
             font-family: var(--font);
@@ -733,14 +734,6 @@
             height: calc(var(--vh, 1vh) * 100);
             height: 100dvh; // firefox will ignore this
             position: fixed;
-
-            @include size-below(lg) {
-                padding: $sp3;
-            }
-
-            @include mobile() {
-                padding: 0;
-            }
 
             &.fill {
                 transition: none;

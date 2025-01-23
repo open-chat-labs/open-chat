@@ -279,6 +279,7 @@ impl RuntimeState {
                 })
                 .collect(),
             stable_memory_sizes: memory::memory_sizes(),
+            recent_upgrades: canister_upgrades_metrics.recently_competed,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -437,6 +438,7 @@ pub struct Metrics {
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub recent_upgrades: Vec<CanisterId>,
     pub canister_ids: CanisterIds,
 }
 

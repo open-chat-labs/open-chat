@@ -962,7 +962,6 @@ export class UserClient extends CandidService {
             "leave_group",
             {
                 chat_id: principalStringToBytes(chatId),
-                correlation_id: generateUint64(),
             },
             leaveGroupResponse,
             UserLeaveGroupArgs,

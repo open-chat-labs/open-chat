@@ -16,10 +16,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reduce channel Ids to 32 bits down from 128 bits ([#7233](https://github.com/open-chat-labs/open-chat/pull/7233))
 - Add `start_video_call_v2` and `end_video_call_v2` with reduced arg sizes ([#7236](https://github.com/open-chat-labs/open-chat/pull/7236))
 - Disallow forwarding prize messages and governance proposal messages ([#7260](https://github.com/open-chat-labs/open-chat/pull/7260))
+- Move storage of group bots up a level ([#7265](https://github.com/open-chat-labs/open-chat/pull/7265))
 
 ### Fixed
 
 - Fix message size limit being exceeded when importing group into community ([#7278](https://github.com/open-chat-labs/open-chat/pull/7278))
+
+### Fixed
+
+- De-duplicate messageIds using a timer job ([#7275](https://github.com/open-chat-labs/open-chat/pull/7275))
 
 ## [[2.0.1569](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1569-group)] - 2025-01-14
 

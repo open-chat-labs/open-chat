@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove dangling member <-> channel links ([#7246](https://github.com/open-chat-labs/open-chat/pull/7246))
 - Disallow forwarding prize messages and governance proposal messages ([#7260](https://github.com/open-chat-labs/open-chat/pull/7260))
 
+### Fixed
+
+- De-duplicate messageIds using a timer job ([#7275](https://github.com/open-chat-labs/open-chat/pull/7275))
+
 ## [[2.0.1570](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1570-community)] - 2025-01-14
 
 ### Changed

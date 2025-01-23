@@ -18,6 +18,8 @@ pub struct CanistersRequiringUpgrade {
     in_progress: HashSet<CanisterId>,
     failed: VecDeque<FailedUpgrade>,
     completed: u64,
+    #[serde(default)]
+    recently_competed: VecDeque<CanisterId>,
 }
 
 impl CanistersRequiringUpgrade {
@@ -41,6 +43,10 @@ impl CanistersRequiringUpgrade {
 
     pub fn mark_success(&mut self, canister_id: &CanisterId) {
         self.mark_upgrade_no_longer_in_progress(canister_id);
+        while self.recently_competed.len() > 10 {
+            self.recently_competed.pop_front();
+        }
+        self.recently_competed.push_back(*canister_id);
         self.completed += 1;
     }
 
@@ -85,6 +91,7 @@ impl CanistersRequiringUpgrade {
             in_progress: self.in_progress.len(),
             failed,
             completed: self.completed,
+            recently_competed: self.recently_competed.iter().copied().collect(),
         }
     }
 
@@ -100,6 +107,7 @@ pub struct Metrics {
     pub failed: Vec<FailedUpgradeCount>,
     pub pending: usize,
     pub in_progress: usize,
+    pub recently_competed: Vec<CanisterId>,
 }
 
 #[derive(CandidType, Serialize, Debug)]

@@ -8,7 +8,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::time::Duration;
 use testing::rng::random_internet_identity_principal;
-use types::{BotDefinition, CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDelegation};
+use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDelegation};
 
 mod macros;
 
@@ -214,33 +214,6 @@ fn register_user_internal(
     };
 
     (user, delegation)
-}
-
-pub fn register_bot(
-    env: &mut PocketIc,
-    canister_ids: &CanisterIds,
-    owner: &User,
-    name: String,
-    endpoint: String,
-    definition: BotDefinition,
-) -> Principal {
-    let (auth_principal, _) = random_internet_identity_principal();
-
-    user_index::register_bot(
-        env,
-        owner.principal,
-        canister_ids.user_index,
-        &user_index_canister::register_bot::Args {
-            principal: auth_principal,
-            owner: owner.user_id,
-            name,
-            avatar: None,
-            endpoint,
-            definition,
-        },
-    );
-
-    auth_principal
 }
 
 fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
