@@ -1,8 +1,7 @@
 name: Setup Rust
 inputs:
-  # Use 'read' or 'write' to interact with the cache
   cache:
-    required: true
+    description: 'Cache behaviour (use "read", "write", or leave empty)'
     type: string
     default: 'false'
 
