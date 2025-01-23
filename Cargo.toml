@@ -204,7 +204,7 @@ ic-certification = "2.5.0"
 ic-http-certification = "2.5.0"
 ic-ledger-types = "0.14.0"
 ic_principal = "0.1.1"
-ic-stable-structures = "0.6.7"
+ic-stable-structures = { git = "https://github.com/dfinity/stable-structures", rev = "69ed47f9b5001af67d650c714cd56ec3ee0ef2bb" }
 ic-transport-types = "0.39.1"
 ic-utils = "0.39.0"
 ic-verifiable-credentials = "1.0.1"
