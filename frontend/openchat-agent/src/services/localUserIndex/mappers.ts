@@ -13,6 +13,7 @@ import type {
     VerifiedCredentialArgs,
     VideoCallType,
 } from "openchat-shared";
+import { numberToBigInt } from "openchat-shared";
 import type {
     AccessTokenType as TAccessTokenType,
     LocalUserIndexAccessTokenResponse,
@@ -103,7 +104,7 @@ export function apiBotCommandArgValue(domain: SlashCommandParamInstance): BotCom
             };
         case "integer":
             return {
-                Integer: BigInt(Math.trunc(domain.value!)),
+                Integer: numberToBigInt(domain.value!),
             };
         case "decimal":
             return {
