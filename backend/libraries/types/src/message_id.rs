@@ -2,14 +2,14 @@ use candid::CandidType;
 use rand::distributions::{Distribution, Standard};
 use rand::Rng;
 use serde::de::{Error, Visitor};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::str::FromStr;
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Serialize, Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(CandidType, Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct MessageId(u64);
 
 impl MessageId {
@@ -39,6 +39,19 @@ impl From<u64> for MessageId {
 impl Display for MessageId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, f)
+    }
+}
+
+impl Serialize for MessageId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&self.to_string())
+        } else {
+            serializer.serialize_u64(self.0)
+        }
     }
 }
 
