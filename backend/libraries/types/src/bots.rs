@@ -1,4 +1,7 @@
-use crate::{CommunityPermission, GroupPermission, MessageContentInitial, MessageId, MessagePermission, UserId};
+use crate::{
+    CanisterId, ChatId, CommunityId, CommunityPermission, GroupPermission, MessageContentInitial, MessageId, MessagePermission,
+    UserId,
+};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -143,4 +146,20 @@ pub enum BotCommandArgValue {
     Number(f64),
     Boolean(bool),
     User(UserId),
+}
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BotInstallationLocation {
+    Community(CommunityId),
+    Group(ChatId),
+}
+
+impl BotInstallationLocation {
+    pub fn canister_id(&self) -> CanisterId {
+        match self {
+            BotInstallationLocation::Community(c) => (*c).into(),
+            BotInstallationLocation::Group(g) => (*g).into(),
+        }
+    }
 }

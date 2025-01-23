@@ -9,8 +9,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{
-    BotMatch, CyclesTopUp, Document, Milliseconds, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof,
-    UserId, UserType,
+    BotInstallationLocation, BotMatch, CanisterId, CyclesTopUp, Document, Milliseconds, SlashCommandSchema, SuspensionDuration,
+    TimestampMillis, UniquePersonProof, UserId, UserType,
 };
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MonthKey;
@@ -49,6 +49,8 @@ pub struct Bot {
     pub description: String,
     pub commands: Vec<SlashCommandSchema>,
     pub last_updated: TimestampMillis,
+    #[serde(default)]
+    pub installations: HashMap<BotInstallationLocation, AddedBotDetails>,
 }
 
 impl Bot {
@@ -63,6 +65,36 @@ impl Bot {
             commands: self.commands.clone(),
         }
     }
+
+    pub fn add_installation(
+        &mut self,
+        location: BotInstallationLocation,
+        local_user_index: CanisterId,
+        added_by: UserId,
+        added_at: TimestampMillis,
+    ) -> bool {
+        self.installations
+            .insert(
+                location,
+                AddedBotDetails {
+                    local_user_index,
+                    added_by,
+                    added_at,
+                },
+            )
+            .is_none()
+    }
+
+    pub fn remove_installation(&mut self, location: &BotInstallationLocation) -> Option<AddedBotDetails> {
+        self.installations.remove(location)
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct AddedBotDetails {
+    pub local_user_index: CanisterId,
+    pub added_by: UserId,
+    pub added_at: TimestampMillis,
 }
 
 impl UserMap {
@@ -235,6 +267,29 @@ impl UserMap {
         }
         self.deleted_users.insert(user_id, now);
         Some(user)
+    }
+
+    pub fn add_bot_installation(
+        &mut self,
+        bot_id: UserId,
+        location: BotInstallationLocation,
+        local_user_index: CanisterId,
+        added_by: UserId,
+        now: TimestampMillis,
+    ) -> bool {
+        if let Some(bot) = self.bots.get_mut(&bot_id) {
+            bot.add_installation(location, local_user_index, added_by, now)
+        } else {
+            false
+        }
+    }
+
+    pub fn remove_bot_installation(&mut self, bot_id: UserId, location: &BotInstallationLocation) -> bool {
+        if let Some(bot) = self.bots.get_mut(&bot_id) {
+            bot.remove_installation(location).is_some()
+        } else {
+            false
+        }
     }
 
     pub fn remove_bot(&mut self, bot_id: UserId, now: TimestampMillis) -> Option<Bot> {
@@ -479,8 +534,6 @@ impl UserMap {
         self.unique_person_proofs_submitted
     }
 
-    // TODO - When a bot is added/removed to/from a community or group the user_index should be notified
-    // so it can maintain a popularity score and use this for ordering results
     pub fn search_bots(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> (Vec<BotMatch>, u32) {
         let query = search_term.map(Query::parse);
 
@@ -494,11 +547,10 @@ impl UserMap {
                         .add_field(bot.description.clone(), 1.0, true)
                         .calculate_score(query)
                 } else {
-                    bot.commands.len() as u32
+                    bot.installations.len() as u32
                 };
                 (score, user_id, bot)
             })
-            .filter(|(score, _, _)| *score > 0)
             .collect();
 
         let total = matches.len() as u32;

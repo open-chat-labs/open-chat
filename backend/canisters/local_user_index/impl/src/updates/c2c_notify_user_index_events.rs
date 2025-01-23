@@ -4,9 +4,11 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
 use local_user_index_canister::{UserIndexEvent, UserRegistered};
+use msgpack::serialize_then_unwrap;
 use p256_key_pair::P256KeyPair;
 use std::cmp::min;
 use tracing::info;
+use types::c2c_uninstall_bot;
 use user_canister::{
     DiamondMembershipPaymentReceived, DisplayNameChanged, ExternalAchievementAwarded, OpenChatBotMessageV2,
     PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup,
@@ -239,6 +241,16 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
             if let Some(proof) = user.unique_person_proof {
                 state.data.global_users.insert_unique_person_proof(user.user_id, proof);
             }
+        }
+        UserIndexEvent::BotUninstall(ev) => {
+            state.data.fire_and_forget_handler.send(
+                ev.location.canister_id(),
+                "c2c_uninstall_bot_msgpack".to_string(),
+                serialize_then_unwrap(&c2c_uninstall_bot::Args {
+                    bot_id: ev.bot_id,
+                    caller: state.data.user_index_canister_id.into(),
+                }),
+            );
         }
     }
 }

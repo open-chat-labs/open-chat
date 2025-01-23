@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Sync bot installation with UserIndex ([#7291](https://github.com/open-chat-labs/open-chat/pull/7291))
+
 ### Changed
 
 - Bump user limit to 300k ([#7270](https://github.com/open-chat-labs/open-chat/pull/7270))

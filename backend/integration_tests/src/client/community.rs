@@ -19,7 +19,6 @@ generate_msgpack_query_call!(summary_updates);
 
 // Updates
 generate_msgpack_update_call!(accept_p2p_swap);
-generate_msgpack_update_call!(add_bot);
 generate_msgpack_update_call!(add_reaction);
 generate_msgpack_update_call!(block_user);
 generate_msgpack_update_call!(cancel_invites);
@@ -709,29 +708,6 @@ pub mod happy_path {
         match response {
             community_canister::accept_p2p_swap::Response::Success(_) => {}
             response => panic!("'accept_p2p_swap' error: {response:?}"),
-        }
-    }
-
-    pub fn add_bot(
-        env: &mut PocketIc,
-        sender: Principal,
-        community_id: CommunityId,
-        bot_id: UserId,
-        granted_permissions: SlashCommandPermissions,
-    ) {
-        let response = super::add_bot(
-            env,
-            sender,
-            community_id.into(),
-            &community_canister::add_bot::Args {
-                bot_id,
-                granted_permissions,
-            },
-        );
-
-        match response {
-            community_canister::add_bot::Response::Success => {}
-            response => panic!("'add_bot' error: {response:?}"),
         }
     }
 

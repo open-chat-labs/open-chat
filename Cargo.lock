@@ -4623,6 +4623,7 @@ dependencies = [
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "event_store_utils",
+ "fire_and_forget_handler",
  "futures",
  "group_canister",
  "group_canister_c2c_client",

@@ -1,20 +1,15 @@
+use crate::UserId;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use ts_export::ts_export;
-use types::{SlashCommandPermissions, UserId};
 
-#[ts_export(group, add_bot)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub bot_id: UserId,
-    pub granted_permissions: SlashCommandPermissions,
+    pub caller: UserId,
 }
 
-#[ts_export(group, add_bot)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    ChatFrozen,
     NotAuthorized,
-    AlreadyAdded,
 }

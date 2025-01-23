@@ -9,8 +9,8 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::bot_actions::{BotMessageAction, MessageContent};
 use types::{
-    AccessTokenBotCommand, AccessTokenType, BotAction, BotCommand, BotDefinition, CanisterId, Chat, ChatEvent,
-    MessagePermission, SlashCommandPermissions, SlashCommandSchema, TextContent, UserId,
+    AccessTokenBotCommand, AccessTokenType, BotAction, BotCommand, BotDefinition, BotInstallationLocation, CanisterId, Chat,
+    ChatEvent, MessagePermission, SlashCommandPermissions, SlashCommandSchema, TextContent, UserId,
 };
 
 #[test]
@@ -50,7 +50,14 @@ fn e2e_bot_test() {
 
     // Add bot to group with inadequate permissions
     let mut granted_permissions = SlashCommandPermissions::default();
-    client::group::happy_path::add_bot(env, user.principal, group_id, bot.id, granted_permissions.clone());
+    client::local_user_index::happy_path::install_bot(
+        env,
+        user.principal,
+        canister_ids.local_user_index(env, group_id),
+        BotInstallationLocation::Group(group_id),
+        bot.id,
+        granted_permissions.clone(),
+    );
 
     let bot_added_timestamp = now_millis(env);
     env.advance_time(Duration::from_millis(1000));
@@ -207,7 +214,7 @@ fn e2e_bot_test() {
 }
 
 #[test]
-fn remove_bot_e2e() {
+fn remove_bot_test() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -219,17 +226,37 @@ fn remove_bot_e2e() {
     let start = now_millis(env);
     env.advance_time(Duration::from_millis(1));
     let user = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), true, true);
     let bot_name = random_string();
     let command_name = random_string();
     let (bot_id, _) = register_bot(env, &user, canister_ids.user_index, bot_name, command_name);
 
     tick_many(env, 3);
 
+    client::local_user_index::happy_path::install_bot(
+        env,
+        user.principal,
+        canister_ids.local_user_index(env, group_id),
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+        SlashCommandPermissions::default(),
+    );
+
+    let bot_installed_timestamp = now_millis(env);
+    env.advance_time(Duration::from_millis(1000));
+    tick_many(env, 3);
+
     client::user_index::happy_path::remove_bot(env, user.principal, canister_ids.user_index, bot_id);
 
-    let updates = client::user_index::happy_path::bot_updates(env, user.principal, canister_ids.user_index, start);
+    tick_many(env, 5);
 
+    let updates = client::user_index::happy_path::bot_updates(env, user.principal, canister_ids.user_index, start);
     assert_eq!(updates.removed, vec![bot_id]);
+
+    let response = client::group::happy_path::selected_updates(env, user.principal, group_id, bot_installed_timestamp)
+        .expect("Expected `selected_updates`");
+    assert_eq!(response.bots_removed.len(), 1);
+    assert_eq!(response.bots_removed[0], bot_id);
 }
 
 fn register_bot(

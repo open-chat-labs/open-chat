@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::guards::caller_is_governance_principal;
 use crate::model::user_map::Bot;
 use crate::model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN};
@@ -78,6 +80,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             commands: args.definition.commands.clone(),
             last_updated: now,
             avatar,
+            installations: HashMap::new(),
         }),
     );
 
