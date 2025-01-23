@@ -6497,7 +6497,10 @@ export const BotCommandArgValue = Type.Union([
         String: Type.String(),
     }),
     Type.Object({
-        Number: Type.Number(),
+        Integer: Type.BigInt(),
+    }),
+    Type.Object({
+        Decimal: Type.Number(),
     }),
     Type.Object({
         Boolean: Type.Boolean(),

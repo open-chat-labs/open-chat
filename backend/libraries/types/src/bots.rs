@@ -140,7 +140,9 @@ pub struct BotCommandArg {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum BotCommandArgValue {
     String(String),
-    Number(f64),
+    Integer(i128),
+    #[serde(alias = "Number")]
+    Decimal(f64),
     Boolean(bool),
     User(UserId),
 }
