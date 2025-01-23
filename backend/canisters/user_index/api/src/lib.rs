@@ -106,12 +106,12 @@ pub enum ChildCanisterType {
 pub struct BotInstalled {
     pub bot_id: UserId,
     pub location: BotInstallationLocation,
-    pub added_by: UserId,
+    pub installed_by: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BotUninstalled {
     pub bot_id: UserId,
     pub location: BotInstallationLocation,
-    pub removed_by: UserId,
+    pub uninstalled_by: UserId,
 }

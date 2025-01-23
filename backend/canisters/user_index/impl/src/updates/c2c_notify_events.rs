@@ -125,7 +125,7 @@ fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMil
             state
                 .data
                 .users
-                .add_bot_installation(ev.bot_id, ev.location, caller, ev.added_by, now);
+                .add_bot_installation(ev.bot_id, ev.location, caller, ev.installed_by, now);
         }
         LocalUserIndexEvent::BotUninstalled(ev) => {
             state.data.users.remove_bot_installation(ev.bot_id, &ev.location);

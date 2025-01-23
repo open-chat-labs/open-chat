@@ -33,7 +33,7 @@ async fn uninstall_bot(args: Args) -> Response {
             user_index_canister::BotUninstalled {
                 bot_id: args.bot_id,
                 location: args.location,
-                removed_by: user_id,
+                uninstalled_by: user_id,
             },
         )));
     });
