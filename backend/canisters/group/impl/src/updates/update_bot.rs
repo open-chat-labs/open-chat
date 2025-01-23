@@ -27,7 +27,7 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotAuthorized;
     }
 
-    if !state.data.chat.update_bot(
+    if !state.data.update_bot(
         member.user_id(),
         args.bot_id,
         BotGroupConfig {

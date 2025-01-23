@@ -31,6 +31,14 @@ impl ExchangeArgs {
             ExchangeArgs::KongSwap(_) => ExchangeId::KongSwap,
         }
     }
+
+    pub fn swap_canister_id(&self) -> CanisterId {
+        match self {
+            ExchangeArgs::ICPSwap(a) => a.swap_canister_id,
+            ExchangeArgs::Sonic(a) => a.swap_canister_id,
+            ExchangeArgs::KongSwap(a) => a.swap_canister_id,
+        }
+    }
 }
 
 #[ts_export(user, swap_tokens)]

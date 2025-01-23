@@ -20,7 +20,7 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub added_or_updated: Vec<BotSchema>,
-    pub deleted: Vec<UserId>,
+    pub removed: Vec<UserId>,
     pub timestamp: TimestampMillis,
 }
 

@@ -24,6 +24,7 @@
         currentChatBlockedUsers,
         type BotMessageContext as BotMessageContextType,
     } from "openchat-client";
+    import { isTouchDevice } from "../../utils/devices";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -38,7 +39,7 @@
     import { now } from "../../stores/time";
     import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";
     import { dclickReply } from "../../stores/settings";
-    import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
+    import EmoticonOutline from "svelte-material-icons/EmoticonOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
     import UnresolvedReply from "./UnresolvedReply.svelte";
@@ -681,6 +682,10 @@
                             translatable={canTranslate}
                             {translated}
                             {selectQuickReaction}
+                            showEmojiPicker={() => {
+                                showEmojiPicker = true;
+                            }}
+                            {canReact}
                             on:collapseMessage
                             on:forward
                             on:reply={reply}
@@ -698,10 +703,10 @@
                 </div>
 
                 {#if !collapsed && !msg.deleted && canReact && !failed}
-                    <div class="actions">
+                    <div class="actions" class:touch={isTouchDevice}>
                         <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                             <HoverIcon>
-                                <EmoticonLolOutline size={$iconSize} color={"var(--icon-txt)"} />
+                                <EmoticonOutline size={$iconSize} color={"var(--icon-txt)"} />
                             </HoverIcon>
                         </div>
                     </div>
@@ -900,21 +905,21 @@
         }
 
         .actions {
-            transition: opacity 200ms ease-in-out;
-            display: flex;
-            opacity: 0;
+            display: none;
+            opacity: 0.3;
             padding: 0 $sp3;
-            justify-content: center;
             align-items: center;
-
-            @include mobile() {
-                opacity: 0.3;
-            }
+            justify-content: center;
+            transition: opacity 200ms ease-in-out;
         }
 
-        @media (hover: hover) {
-            &:hover .actions {
-                opacity: 1;
+        .actions.touch {
+            display: flex;
+        }
+
+        @include mobile() {
+            .actions:not(.touch) {
+                display: flex;
             }
         }
     }
@@ -1011,7 +1016,6 @@
 
         &.fill {
             padding: 0;
-            overflow: hidden;
             border: none;
             line-height: 0;
         }

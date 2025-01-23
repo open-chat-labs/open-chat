@@ -3,40 +3,61 @@ use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use candid::Principal;
 use std::ops::Deref;
-use types::Empty;
+use std::time::Duration;
+use test_case::test_case;
+use types::{Empty, Milliseconds};
 
-#[test]
-fn delete_user_succeeds() {
+#[test_case(0, true)]
+#[test_case(299_999, true)]
+#[test_case(300_001, false)]
+fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete_user: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::register_user(env, canister_ids);
+    let (user, delegation) = client::register_user_and_include_delegation(env, canister_ids);
 
-    env.tick();
+    env.advance_time(Duration::from_millis(delay));
 
     let delete_user_response = client::user_index::delete_user(
         env,
         user.principal,
         canister_ids.user_index,
-        &user_index_canister::delete_user::Args { user_id: user.user_id },
+        &user_index_canister::delete_user::Args {
+            user_id: user.user_id,
+            delegation,
+        },
     );
 
-    assert!(matches!(
-        delete_user_response,
-        user_index_canister::delete_user::Response::Success
-    ));
+    if should_delete_user {
+        assert!(matches!(
+            delete_user_response,
+            user_index_canister::delete_user::Response::Success
+        ));
+    } else {
+        assert!(matches!(
+            delete_user_response,
+            user_index_canister::delete_user::Response::DelegationTooOld
+        ));
+    }
 
     tick_many(env, 3);
 
     let current_user_response = client::user_index::current_user(env, user.principal, canister_ids.user_index, &Empty {});
 
-    assert!(matches!(
-        current_user_response,
-        user_index_canister::current_user::Response::UserNotFound
-    ));
+    if should_delete_user {
+        assert!(matches!(
+            current_user_response,
+            user_index_canister::current_user::Response::UserNotFound
+        ));
+    } else {
+        assert!(matches!(
+            current_user_response,
+            user_index_canister::current_user::Response::Success(_)
+        ));
+    }
 
     let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
-    assert!(canister_status.module_hash.is_none());
+    assert_eq!(canister_status.module_hash.is_none(), should_delete_user);
 }
 
 #[test]
@@ -44,7 +65,7 @@ fn deleted_user_removed_from_online_users_canister() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::register_user(env, canister_ids);
+    let (user, delegation) = client::register_user_and_include_delegation(env, canister_ids);
 
     env.tick();
 
@@ -59,7 +80,10 @@ fn deleted_user_removed_from_online_users_canister() {
         env,
         user.principal,
         canister_ids.user_index,
-        &user_index_canister::delete_user::Args { user_id: user.user_id },
+        &user_index_canister::delete_user::Args {
+            user_id: user.user_id,
+            delegation,
+        },
     );
 
     assert!(matches!(
@@ -77,7 +101,7 @@ fn deleted_user_removed_from_storage_index_and_files_deleted() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::register_user(env, canister_ids);
+    let (user, delegation) = client::register_user_and_include_delegation(env, canister_ids);
 
     env.tick();
 
@@ -95,7 +119,10 @@ fn deleted_user_removed_from_storage_index_and_files_deleted() {
         env,
         user.principal,
         canister_ids.user_index,
-        &user_index_canister::delete_user::Args { user_id: user.user_id },
+        &user_index_canister::delete_user::Args {
+            user_id: user.user_id,
+            delegation,
+        },
     );
 
     assert!(matches!(

@@ -2425,8 +2425,7 @@ export const LocalUserIndexWithdrawFromIcpswapResponse = Type.Union([
     Type.Literal("Success"),
     Type.Literal("UserNotFound"),
     Type.Literal("SwapNotFound"),
-    Type.Literal("SwapCompleted"),
-    Type.Literal("NotAuthorized"),
+    Type.Literal("AmountNotSpecified"),
     Type.Object({
         InternalError: Type.String(),
     }),
@@ -7598,7 +7597,7 @@ export const GroupIndexUnfreezeGroupResponse = Type.Union([
 export type UserIndexBotUpdatesSuccessResult = Static<typeof UserIndexBotUpdatesSuccessResult>;
 export const UserIndexBotUpdatesSuccessResult = Type.Object({
     added_or_updated: Type.Array(UserIndexBotUpdatesBotSchema),
-    deleted: Type.Array(UserId),
+    removed: Type.Array(UserId),
     timestamp: Type.BigInt(),
 });
 

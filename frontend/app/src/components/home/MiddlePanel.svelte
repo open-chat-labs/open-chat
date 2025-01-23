@@ -137,7 +137,7 @@
     }
 
     section {
-        min-width: 400px;
+        min-width: 390px;
         overflow: auto;
         overflow-x: hidden;
         flex: 13;

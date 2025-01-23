@@ -17,7 +17,7 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
-use tracing::error;
+use tracing::{error, info};
 use types::{
     AcceptP2PSwapResult, BlobReference, BotMessageContext, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType,
     CompleteP2PSwapResult, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex,
@@ -47,6 +47,23 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
+    pub fn fix_duplicate_message_ids(
+        &mut self,
+        rng: &mut StdRng,
+        mut rng_my_messages: Option<(UserId, &mut StdRng)>,
+    ) -> Option<bool> {
+        if !self.main.fix_duplicate_message_ids(rng, rng_my_messages.as_mut())? {
+            return Some(false);
+        }
+        for thread in self.threads.values_mut() {
+            if !thread.fix_duplicate_message_ids(rng, rng_my_messages.as_mut())? {
+                return Some(false);
+            }
+        }
+        info!(chat = ?self.chat, "Finished deduping messageIds");
+        Some(true)
+    }
+
     pub fn prune_updated_events(&mut self, now: TimestampMillis) -> u32 {
         self.last_updated_timestamps.prune(now)
     }
@@ -130,7 +147,7 @@ impl ChatEvents {
     }
 
     pub fn read_events_as_bytes_from_stable_memory(&self, after: Option<EventContext>) -> Vec<(EventContext, ByteBuf)> {
-        stable_memory::read_events_as_bytes(self.chat, after, 2 * ONE_MB as usize)
+        stable_memory::read_events_as_bytes(self.chat, after, ONE_MB as usize)
     }
 
     pub fn iter_recently_updated_events(

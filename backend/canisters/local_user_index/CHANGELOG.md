@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Bump user limit to 300k ([#7270](https://github.com/open-chat-labs/open-chat/pull/7270))
+- Expose most recently upgraded canisters in metrics ([#7283](https://github.com/open-chat-labs/open-chat/pull/7283))
+
+### Fixed
+
+- Return `message_id` as a `String` in bot command access tokens ([#7282](https://github.com/open-chat-labs/open-chat/pull/7282))
+
 ## [[2.0.1575](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1575-local_user_index)] - 2025-01-21
 
 ### Changed
@@ -15,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Sync platform moderators/operators to LocalUserIndexes ([#7248](https://github.com/open-chat-labs/open-chat/pull/7248))
 - Support updating bot principal but not name ([#7253](https://github.com/open-chat-labs/open-chat/pull/7253))
 - Handle `RemoveBot` event ([#7254](https://github.com/open-chat-labs/open-chat/pull/7254))
+- Verified flag added to group/community summary updates ([#7240](https://github.com/open-chat-labs/open-chat/pull/7240))
 
 ## [[2.0.1567](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1567-local_user_index)] - 2025-01-14
 
