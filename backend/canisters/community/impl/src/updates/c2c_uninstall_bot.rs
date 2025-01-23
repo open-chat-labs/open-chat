@@ -2,6 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::OPENCHAT_BOT_USER_ID;
 use types::c2c_uninstall_bot::{Response::*, *};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -13,7 +14,7 @@ fn c2c_uninstall_bot(args: Args) -> Response {
 }
 
 fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if args.caller != state.data.user_index_canister_id.into() {
+    if args.caller != OPENCHAT_BOT_USER_ID {
         let Some(member) = state.data.members.get_by_user_id(&args.caller) else {
             return NotAuthorized;
         };
