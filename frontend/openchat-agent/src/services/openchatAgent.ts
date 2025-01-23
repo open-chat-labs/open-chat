@@ -41,6 +41,7 @@ import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { measure } from "./common/profiling";
 import {
     buildBlobUrl,
+    buildIdenticonUrl,
     buildUserAvatarUrl,
     getUpdatedEvents,
     mergeDirectChatUpdates,
@@ -1433,9 +1434,14 @@ export class OpenChatAgent extends EventTarget {
             return {
                 ...userSummary,
                 blobData: undefined,
-                blobUrl: `${this.config.blobUrlPattern
-                    .replace("{canisterId}", this.config.userIndexCanister)
-                    .replace("{blobType}", "avatar")}/${userSummary.userId}/${ref?.blobId}`,
+                blobUrl:
+                    ref?.blobId === undefined
+                        ? buildIdenticonUrl(userSummary.userId)
+                        : `${this.config.blobUrlPattern
+                              .replace("{canisterId}", this.config.userIndexCanister)
+                              .replace("{blobType}", "avatar")}/${
+                              userSummary.userId
+                          }/${ref?.blobId}`,
             };
         }
         return userSummary.blobUrl
