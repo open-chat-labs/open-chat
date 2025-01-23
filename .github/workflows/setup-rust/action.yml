@@ -3,7 +3,6 @@ inputs:
   cache:
     description: 'Cache behaviour (use "read", "write", or leave empty)'
     type: string
-    default: 'false'
 
 runs:
   using: 'composite'
