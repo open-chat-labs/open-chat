@@ -1436,7 +1436,7 @@ export class OpenChatAgent extends EventTarget {
                 blobData: undefined,
                 blobUrl:
                     ref?.blobId === undefined
-                        ? buildIdenticonUrl(userSummary.userId)
+                        ? "/assets/bot_avatar.svg"
                         : `${this.config.blobUrlPattern
                               .replace("{canisterId}", this.config.userIndexCanister)
                               .replace("{blobType}", "avatar")}/${

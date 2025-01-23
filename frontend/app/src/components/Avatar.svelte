@@ -1,11 +1,14 @@
 <script lang="ts">
     import { AvatarSize, OpenChat, UserStatus } from "openchat-client";
+    import Robot from "svelte-material-icons/Robot.svelte";
     import { rtlStore } from "../stores/rtl";
     import { getContext } from "svelte";
     import { now } from "../stores/time";
     import Verified from "./icons/Verified.svelte";
 
     const client = getContext<OpenChat>("client");
+
+    type Specialisation = "verified" | "bot" | "none";
 
     interface Props {
         url: string | undefined;
@@ -16,6 +19,7 @@
         statusBorder?: string;
         selected?: boolean;
         verified?: boolean;
+        bot?: boolean;
     }
 
     let {
@@ -27,8 +31,10 @@
         statusBorder = "white",
         selected = false,
         verified = false,
+        bot = false,
     }: Props = $props();
 
+    let specialisation: Specialisation = $derived(bot ? "bot" : verified ? "verified" : "none");
     let userStatus = $state(UserStatus.None);
     let userStatusUserId: string | undefined = $state(undefined);
     $effect(() => {
@@ -59,9 +65,15 @@
         <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`}>
         </div>
     {/if}
-    {#if verified}
-        <div class="verified" class:rtl={$rtlStore}>
-            <Verified size={size === AvatarSize.Large ? "large" : "default"} {verified} />
+    {#if specialisation !== "none"}
+        <div class="specialised" class:rtl={$rtlStore}>
+            {#if specialisation === "verified"}
+                <Verified size={size === AvatarSize.Large ? "large" : "default"} verified />
+            {:else if specialisation === "bot"}
+                <div class="robot">
+                    <Robot viewBox={"0 2 24 24"} size={"100%"} color={"rgba(255, 255, 255, 0.9)"} />
+                </div>
+            {/if}
         </div>
     {/if}
 </div>
@@ -142,7 +154,7 @@
         }
     }
 
-    .verified {
+    .specialised {
         position: absolute;
         $offset: $avatar-mod-offset;
         top: $offset;
@@ -162,6 +174,24 @@
             &.rtl {
                 right: $offset;
             }
+        }
+    }
+
+    .robot {
+        $size: $avatar-mod;
+        width: $size;
+        height: $size;
+        border-radius: 50%;
+        background-color: var(--accent);
+        padding: toRem(3);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        @include mobile() {
+            $size: $avatar-mod-small;
+            width: $size;
+            height: $size;
         }
     }
 </style>
