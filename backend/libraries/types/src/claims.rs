@@ -1,4 +1,4 @@
-use crate::{BotCommand, CanisterId, Chat, MessageIndex, UserId, VideoCallType};
+use crate::{BotCommand, CanisterId, Chat, MessageId, MessageIndex, UserId, VideoCallType};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -56,7 +56,7 @@ pub struct BotCommandClaims {
     pub bot: UserId,
     pub chat: StringChat,
     pub thread_root_message_index: Option<MessageIndex>,
-    pub message_id: String,
+    pub message_id: MessageId,
     pub command: BotCommand,
     pub bot_api_gateway: CanisterId,
 }
