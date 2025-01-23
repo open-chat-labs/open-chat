@@ -15,6 +15,7 @@ jobs:
       - family=m7i
       - run-id=${{ github.run_id }}
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-rust.yaml
         with:
           cache: read

@@ -10,6 +10,7 @@ jobs:
     name: Build all in debug mode
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-rust.yaml
         with:
           cache: write
