@@ -15,10 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-rust
-      - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: "build-debug"
-          save-if: "false"
+          cache: read
 
       - name: Benchmark
         run: |

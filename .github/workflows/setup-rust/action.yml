@@ -15,5 +15,5 @@ runs:
       if: ${{ inputs.cache == 'read' || inputs.cache == 'write' }}
       uses: Swatinem/rust-cache@v2
       with:
-        shared-key: "build-debug"
+        shared-key: 'build-debug'
         save-if: ${{ inputs.cache == 'write' }}
