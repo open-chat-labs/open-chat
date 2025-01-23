@@ -28,7 +28,8 @@ cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAG
 echo Optimising wasm
 if ! cargo install --list | grep -Fxq "ic-wasm v0.9.0:"
 then
-  cargo install --version 0.9.0 ic-wasm
+  echo Installing ic-wasm
+  cargo install --version 0.9.0 ic-wasm || exit 1
 fi
 ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink
 
