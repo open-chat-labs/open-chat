@@ -127,6 +127,8 @@ impl RuntimeState {
             community_upgrades_failed: community_upgrades_metrics.failed,
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
+            recent_group_upgrades: group_upgrades_metrics.recently_competed,
+            recent_community_upgrades: community_upgrades_metrics.recently_competed,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -268,6 +270,8 @@ pub struct Metrics {
     pub community_upgrades_failed: Vec<FailedUpgradeCount>,
     pub cycles_balance_check_queue_len: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub recent_group_upgrades: Vec<CanisterId>,
+    pub recent_community_upgrades: Vec<CanisterId>,
     pub canister_ids: CanisterIds,
 }
 
