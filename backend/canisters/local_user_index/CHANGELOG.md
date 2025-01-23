@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Bump user limit to 300k ([#7270](https://github.com/open-chat-labs/open-chat/pull/7270))
 
+### Fixed
+
+- Return `message_id` as a `String` in bot command access tokens ([#7282](https://github.com/open-chat-labs/open-chat/pull/7282))
+
 ## [[2.0.1575](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1575-local_user_index)] - 2025-01-21
 
 ### Changed
