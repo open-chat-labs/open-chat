@@ -16,7 +16,7 @@ jobs:
       - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/workflows/setup-rust.yaml
+      - uses: ./.github/workflows/setup-rust
         with:
           cache: read
       - name: Wait for wasms to be built

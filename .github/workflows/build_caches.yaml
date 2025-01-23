@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/workflows/setup-rust.yaml
+      - uses: ./.github/workflows/setup-rust
         with:
           cache: write
       - uses: actions-rs/cargo@v1

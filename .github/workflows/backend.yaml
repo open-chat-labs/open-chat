@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/workflows/setup-rust.yaml
+      - uses: ./.github/workflows/setup-rust
       - uses: actions-rust-lang/rustfmt@v1
 
   clippy:
@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/workflows/setup-rust.yaml
+      - uses: ./.github/workflows/setup-rust
         with:
           cache: read
       - uses: arduino/setup-protoc@v1
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/workflows/setup-rust.yaml
+      - uses: ./.github/workflows/setup-rust
         with:
           cache: read
       - uses: actions-rs/cargo@v1

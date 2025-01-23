@@ -1,12 +1,9 @@
-on:
-  workflow_call:
-    inputs:
-      # Either 'read', 'write' or empty
-      cache:
-        required: false
-        type: string
-
 name: Setup Rust
+inputs:
+  # Either 'read', 'write' or empty
+  cache:
+    required: false
+    type: string
 
 jobs:
   setup:
