@@ -50,7 +50,7 @@ pub struct Bot {
     pub commands: Vec<SlashCommandSchema>,
     pub last_updated: TimestampMillis,
     #[serde(default)]
-    pub installations: HashMap<BotInstallationLocation, AddedBotDetails>,
+    pub installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
 }
 
 impl Bot {
@@ -70,31 +70,31 @@ impl Bot {
         &mut self,
         location: BotInstallationLocation,
         local_user_index: CanisterId,
-        added_by: UserId,
-        added_at: TimestampMillis,
+        installed_by: UserId,
+        installed_at: TimestampMillis,
     ) -> bool {
         self.installations
             .insert(
                 location,
-                AddedBotDetails {
+                InstalledBotDetails {
                     local_user_index,
-                    added_by,
-                    added_at,
+                    installed_by,
+                    installed_at,
                 },
             )
             .is_none()
     }
 
-    pub fn remove_installation(&mut self, location: &BotInstallationLocation) -> Option<AddedBotDetails> {
+    pub fn remove_installation(&mut self, location: &BotInstallationLocation) -> Option<InstalledBotDetails> {
         self.installations.remove(location)
     }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct AddedBotDetails {
+pub struct InstalledBotDetails {
     pub local_user_index: CanisterId,
-    pub added_by: UserId,
-    pub added_at: TimestampMillis,
+    pub installed_by: UserId,
+    pub installed_at: TimestampMillis,
 }
 
 impl UserMap {
