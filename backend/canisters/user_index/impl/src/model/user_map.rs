@@ -274,11 +274,11 @@ impl UserMap {
         bot_id: UserId,
         location: BotInstallationLocation,
         local_user_index: CanisterId,
-        added_by: UserId,
+        installed_by: UserId,
         now: TimestampMillis,
     ) -> bool {
         if let Some(bot) = self.bots.get_mut(&bot_id) {
-            bot.add_installation(location, local_user_index, added_by, now)
+            bot.add_installation(location, local_user_index, installed_by, now)
         } else {
             false
         }
