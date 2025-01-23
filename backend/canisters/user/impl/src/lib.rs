@@ -9,7 +9,7 @@ use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
-use crate::timer_job_types::{DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{ClaimChitInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
@@ -169,6 +169,7 @@ impl RuntimeState {
                 .with_json_payload(&payment)
                 .build(),
         );
+        self.set_up_streak_insurance_timer_job();
         self.data
             .push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsurancePayment(payment));
     }
@@ -184,6 +185,20 @@ impl RuntimeState {
         );
         self.data
             .push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim));
+    }
+
+    pub fn set_up_streak_insurance_timer_job(&mut self) {
+        if self.data.streak.has_insurance() {
+            self.data
+                .timer_jobs
+                .cancel_jobs(|j| matches!(j, TimerJob::ClaimChitInsurance(_)));
+
+            self.data.timer_jobs.enqueue_job(
+                TimerJob::ClaimChitInsurance(ClaimChitInsuranceJob),
+                self.data.streak.ends(),
+                self.env.now(),
+            );
+        }
     }
 
     pub fn is_empty_and_dormant(&self) -> bool {
