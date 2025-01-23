@@ -44,6 +44,8 @@ pub struct ChatEvents {
     video_call_in_progress: Timestamped<Option<VideoCall>>,
     anonymized_id: String,
     search_index: SearchIndex,
+    #[serde(default)]
+    message_ids_deduped: bool,
 }
 
 impl ChatEvents {
@@ -52,6 +54,9 @@ impl ChatEvents {
         rng: &mut StdRng,
         mut rng_my_messages: Option<(UserId, &mut StdRng)>,
     ) -> Option<bool> {
+        if self.message_ids_deduped {
+            return Some(true);
+        }
         if !self.main.fix_duplicate_message_ids(rng, rng_my_messages.as_mut())? {
             return Some(false);
         }
@@ -61,6 +66,7 @@ impl ChatEvents {
             }
         }
         info!(chat = ?self.chat, "Finished deduping messageIds");
+        self.message_ids_deduped = true;
         Some(true)
     }
 
@@ -92,6 +98,7 @@ impl ChatEvents {
             video_call_in_progress: Timestamped::default(),
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
+            message_ids_deduped: true,
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -122,6 +129,7 @@ impl ChatEvents {
             video_call_in_progress: Timestamped::default(),
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
+            message_ids_deduped: true,
         };
 
         events.push_event(
