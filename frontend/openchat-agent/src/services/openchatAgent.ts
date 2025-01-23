@@ -41,7 +41,6 @@ import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { measure } from "./common/profiling";
 import {
     buildBlobUrl,
-    buildIdenticonUrl,
     buildUserAvatarUrl,
     getUpdatedEvents,
     mergeDirectChatUpdates,
