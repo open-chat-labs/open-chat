@@ -1,8 +1,9 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    NotifyChit, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UniquePersonProof, User, UserId,
+    BotInstallationLocation, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial,
+    MessageId, MessageIndex, NotifyChit, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UniquePersonProof,
+    User, UserId,
 };
 
 mod lifecycle;
@@ -25,6 +26,8 @@ pub enum LocalUserIndexEvent {
     NotifyChit(Box<(UserId, NotifyChit)>),
     NotifyStreakInsurancePayment(Box<StreakInsurancePayment>),
     NotifyStreakInsuranceClaim(Box<StreakInsuranceClaim>),
+    BotInstalled(Box<BotInstalled>),
+    BotUninstalled(Box<BotUninstalled>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -97,4 +100,18 @@ pub struct ExternalAchievementInitial {
 pub enum ChildCanisterType {
     LocalUserIndex,
     User,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotInstalled {
+    pub bot_id: UserId,
+    pub location: BotInstallationLocation,
+    pub installed_by: UserId,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotUninstalled {
+    pub bot_id: UserId,
+    pub location: BotInstallationLocation,
+    pub uninstalled_by: UserId,
 }

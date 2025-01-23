@@ -8,6 +8,7 @@ generate_msgpack_query_call!(group_and_community_summary_updates);
 
 // Updates
 generate_update_call!(execute_bot_action);
+generate_msgpack_update_call!(install_bot);
 generate_msgpack_update_call!(invite_users_to_channel);
 generate_msgpack_update_call!(invite_users_to_community);
 generate_msgpack_update_call!(invite_users_to_group);
@@ -16,13 +17,18 @@ generate_msgpack_update_call!(join_community);
 generate_msgpack_update_call!(join_group);
 generate_msgpack_update_call!(register_user);
 generate_msgpack_update_call!(report_message_v2);
+generate_msgpack_update_call!(uninstall_bot);
 
 pub mod happy_path {
     use crate::utils::{principal_to_username, tick_many};
     use crate::User;
     use candid::Principal;
+    use local_user_index_canister::{install_bot, uninstall_bot};
     use pocket_ic::PocketIc;
-    use types::{AccessTokenType, CanisterId, ChannelId, Chat, ChatId, CommunityCanisterCommunitySummary, CommunityId, UserId};
+    use types::{
+        AccessTokenType, BotInstallationLocation, CanisterId, ChannelId, Chat, ChatId, CommunityCanisterCommunitySummary,
+        CommunityId, SlashCommandPermissions, UserId,
+    };
 
     pub fn register_user(env: &mut PocketIc, principal: Principal, canister_id: CanisterId, public_key: Vec<u8>) -> User {
         register_user_with_referrer(env, principal, canister_id, public_key, None)
@@ -271,6 +277,46 @@ pub mod happy_path {
         match response {
             local_user_index_canister::access_token::Response::Success(token) => token,
             response => panic!("'access_token' error: {response:?}"),
+        }
+    }
+
+    pub fn install_bot(
+        env: &mut PocketIc,
+        sender: Principal,
+        local_user_index: CanisterId,
+        location: BotInstallationLocation,
+        bot_id: UserId,
+        granted_permissions: SlashCommandPermissions,
+    ) {
+        let response = super::install_bot(
+            env,
+            sender,
+            local_user_index,
+            &install_bot::Args {
+                bot_id,
+                granted_permissions,
+                location,
+            },
+        );
+
+        match response {
+            install_bot::Response::Success => {}
+            response => panic!("'install_bot' error: {response:?}"),
+        }
+    }
+
+    pub fn uninstall_bot(
+        env: &mut PocketIc,
+        sender: Principal,
+        local_user_index: CanisterId,
+        location: BotInstallationLocation,
+        bot_id: UserId,
+    ) {
+        let response = super::uninstall_bot(env, sender, local_user_index, &uninstall_bot::Args { bot_id, location });
+
+        match response {
+            uninstall_bot::Response::Success => {}
+            response => panic!("'update_bot' error: {response:?}"),
         }
     }
 }

@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove dangling member <-> channel links ([#7246](https://github.com/open-chat-labs/open-chat/pull/7246))
 - Disallow forwarding prize messages and governance proposal messages ([#7260](https://github.com/open-chat-labs/open-chat/pull/7260))
 - Introduce new `Integer` bot parameter type ([#7290](https://github.com/open-chat-labs/open-chat/pull/7290))
+- Sync bot installation with UserIndex ([#7291](https://github.com/open-chat-labs/open-chat/pull/7291))
 
 ### Fixed
 

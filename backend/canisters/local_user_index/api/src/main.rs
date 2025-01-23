@@ -11,6 +11,7 @@ fn main() {
     generate_ts_method!(local_user_index, chat_events);
     generate_ts_method!(local_user_index, group_and_community_summary_updates);
 
+    generate_ts_method!(local_user_index, install_bot);
     generate_ts_method!(local_user_index, invite_users_to_channel);
     generate_ts_method!(local_user_index, invite_users_to_community);
     generate_ts_method!(local_user_index, invite_users_to_group);
@@ -19,5 +20,6 @@ fn main() {
     generate_ts_method!(local_user_index, join_group);
     generate_ts_method!(local_user_index, register_user);
     generate_ts_method!(local_user_index, report_message_v2);
+    generate_ts_method!(local_user_index, uninstall_bot);
     generate_ts_method!(local_user_index, withdraw_from_icpswap);
 }

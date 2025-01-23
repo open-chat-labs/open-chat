@@ -10,13 +10,15 @@ fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name().trim_end_matches("_msgpack").to_string();
 
     let is_valid = match method_name.as_str() {
-        "invite_users_to_channel"
+        "install_bot"
+        | "invite_users_to_channel"
         | "invite_users_to_community"
         | "invite_users_to_group"
         | "join_channel"
         | "join_community"
         | "join_group"
-        | "report_message_v2" => state.is_caller_openchat_user(),
+        | "report_message_v2"
+        | "uninstall_bot" => state.is_caller_openchat_user(),
         "withdraw_from_icpswap" => state.is_caller_platform_operator(),
         "register_user" | "execute_bot_action" => true,
         _ => false,
