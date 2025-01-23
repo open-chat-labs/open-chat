@@ -6,13 +6,16 @@ import type { DataContent } from "../data/data";
 import type { ChatNotFound, Failure, Offline } from "../response";
 
 export type GroupMatch = DataContent & {
+    kind: "group_match";
     chatId: GroupChatIdentifier;
     name: string;
     description: string;
     subtype: GroupSubtype | undefined;
+    verified: boolean;
 };
 
 export interface CommunityMatch {
+    kind: "community_match";
     id: CommunityIdentifier;
     name: string;
     description: string;
@@ -23,6 +26,7 @@ export interface CommunityMatch {
     gateConfig: AccessGateConfig;
     flags: number;
     primaryLanguage: string;
+    verified: boolean;
 }
 
 export type MessageMatch = {

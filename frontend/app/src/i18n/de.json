@@ -1836,6 +1836,17 @@
     "userReferralMessage": "Teilen Sie diesen Link zu OpenChat mit Freunden und Familie. Sie erhalten CHIT-Belohnungen für jeden von Ihnen geworbenen Benutzer, der seine einzigartige Persönlichkeit verifiziert oder Diamond-Mitglied wird. Wenn ein von Ihnen geworbener Benutzer eine Diamond-Mitgliedschaft erhält, erhalten Sie 5.000 CHIT, wenn er seine einzigartige Persönlichkeit nachweist, sind es 10.000 CHIT und wenn er lebenslange Diamond-Mitgliedschaft erhält, sind es 15.000 CHIT. Wenn er anschließend eine „Verifizierung“ mit höherem Wert durchführt, wird Ihnen die Differenz in CHIT gutgeschrieben.",
     "users": "Benutzer",
     "userSearchFailed": "Bei der Suche nach Benutzern ist ein Fehler aufgetreten",
+    "verified": {
+        "choose": "Wählen Sie {level} zur Überprüfung aus",
+        "evidenceLabel": "Legen Sie Ihre Beweise vor",
+        "evidencePlaceholder": "Bitte legen Sie Ihre Beweise vor",
+        "nameChangeWarning": "Wenn Sie den Namen dieses {level} ändern, verlieren Sie Ihren Verifizierungsstatus!",
+        "preferredName": "Bevorzugter Name",
+        "rename": "Wenn Ihr Wunschname derzeit von einem anderen {level} verwendet wird, geben Sie diesen Namen hier ein. Wenn Sie Ihren Wunschnamen bereits haben, lassen Sie ihn so, wie er ist.",
+        "revoke": "{level}-Verifizierung widerrufen",
+        "verified": "Verifiziert {level}",
+        "verify": "Überprüfen Sie {level}"
+    },
     "version": "Version",
     "videoCall": {
         "accessRequest": "{username} möchte sprechen",

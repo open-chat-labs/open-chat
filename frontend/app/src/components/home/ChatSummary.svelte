@@ -66,6 +66,7 @@
     $: userId = $user.userId;
     $: menuColour = "var(--icon-txt)";
     $: externalContent = chatSummary.kind === "channel" && chatSummary.externalUrl !== undefined;
+    $: verified = chatSummary.kind === "group_chat" && chatSummary.verified;
 
     const dispatch = createEventDispatcher();
     let hovering = false;
@@ -355,7 +356,8 @@
                 url={chat.avatarUrl}
                 showStatus
                 userId={chat.userId?.userId}
-                size={AvatarSize.Default} />
+                size={AvatarSize.Default}
+                {verified} />
             {#if chat.eventsTTL}
                 <div class="expires">
                     <CameraTimer size={"1em"} color={"var(--txt)"} />

@@ -3,6 +3,7 @@
     import { rtlStore } from "../stores/rtl";
     import { getContext } from "svelte";
     import { now } from "../stores/time";
+    import Verified from "./icons/Verified.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -14,6 +15,7 @@
         blocked?: boolean;
         statusBorder?: string;
         selected?: boolean;
+        verified?: boolean;
     }
 
     let {
@@ -24,6 +26,7 @@
         blocked = false,
         statusBorder = "white",
         selected = false,
+        verified = false,
     }: Props = $props();
 
     let userStatus = $state(UserStatus.None);
@@ -54,6 +57,11 @@
     <img alt="Avatar" class="avatar-image" src={url} loading="lazy" />
     {#if userStatus === UserStatus.Online}
         <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`}>
+        </div>
+    {/if}
+    {#if verified}
+        <div class="verified" class:rtl={$rtlStore}>
+            <Verified size={size === AvatarSize.Large ? "large" : "default"} {verified} />
         </div>
     {/if}
 </div>
@@ -131,6 +139,29 @@
             top: 0;
             transform: rotate(45deg);
             transform-origin: 50% 50%;
+        }
+    }
+
+    .verified {
+        position: absolute;
+        $offset: $avatar-mod-offset;
+        top: $offset;
+        &:not(.rtl) {
+            left: $offset;
+        }
+        &.rtl {
+            right: $offset;
+        }
+
+        @include mobile() {
+            $offset: $avatar-mod-offset-small;
+            top: $offset;
+            &:not(.rtl) {
+                left: $offset;
+            }
+            &.rtl {
+                right: $offset;
+            }
         }
     }
 </style>

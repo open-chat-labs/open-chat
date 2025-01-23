@@ -227,7 +227,8 @@
                             channelCount={community.channelCount}
                             gateConfig={community.gateConfig}
                             language={community.primaryLanguage}
-                            flags={community.flags} />
+                            flags={community.flags}
+                            verified={community.verified} />
                     </CommunityCardLink>
                 {/each}
             {/if}

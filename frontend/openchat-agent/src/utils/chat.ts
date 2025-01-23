@@ -308,6 +308,7 @@ export function mergeGroupChatUpdates(
             isInvited: false,
             messagesVisibleToNonMembers:
                 g?.messagesVisibleToNonMembers ?? c.messagesVisibleToNonMembers,
+            verified: g?.verified ?? c.verified,
         };
     });
 }
@@ -365,6 +366,7 @@ export function mergeGroupChats(
             videoCallInProgress: g.videoCallInProgress,
             isInvited: false,
             messagesVisibleToNonMembers: g.messagesVisibleToNonMembers,
+            verified: g.verified,
         };
     });
 }

@@ -54,7 +54,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 124;
+const CACHE_VERSION = 126;
 const EARLIEST_SUPPORTED_MIGRATION = 125;
 const MAX_INDEX = 9999999999;
 
@@ -176,13 +176,13 @@ type MigrationFunction<T> = (
 //     db.createObjectStore("activityFeed");
 // }
 //
-// async function clearChatsStore(
-//     _db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     await tx.objectStore("chats").clear();
-// }
+async function clearChatsStore(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("chats").clear();
+}
 //
 // async function clearGroupDetailsStore(
 //     _db: IDBPDatabase<ChatSchema>,
@@ -233,7 +233,9 @@ type MigrationFunction<T> = (
 //     await tx.objectStore("externalAchievements").clear();
 // }
 
-const migrations: Record<number, MigrationFunction<ChatSchema>> = {};
+const migrations: Record<number, MigrationFunction<ChatSchema>> = {
+    126: clearChatsStore,
+};
 
 async function migrate(
     db: IDBPDatabase<ChatSchema>,
