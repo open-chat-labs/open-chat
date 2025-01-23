@@ -316,6 +316,7 @@ export function communitySummaryUpdates(
         primaryLanguage: value.primary_language,
         userGroups: value.user_groups.map(userGroup).map(([_, g]) => g),
         userGroupsDeleted: new Set(value.user_groups_deleted),
+        verified: mapOptional(value.verified, identity),
     };
 }
 

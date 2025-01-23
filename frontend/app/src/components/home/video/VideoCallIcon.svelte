@@ -13,17 +13,26 @@
 
 <style lang="scss">
     .video-call {
-        $size: 23px;
-        position: absolute;
+        $size: $avatar-mod;
+        $offset: $avatar-mod-offset;
         width: $size;
         height: $size;
+        left: $offset;
+        bottom: $offset;
+        position: absolute;
         border-radius: 50%;
-        left: -4px;
-        bottom: -4px;
         background-image: url("/assets/video_call.svg");
 
         &.muted {
             background-image: url("/assets/video_call_ended.svg");
+        }
+
+        @include mobile() {
+            $size: $avatar-mod-small;
+            $offset: $avatar-mod-offset-small;
+            width: $size;
+            height: $size;
+            left: $offset;
         }
     }
 </style>

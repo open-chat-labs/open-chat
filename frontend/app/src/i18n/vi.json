@@ -1836,6 +1836,17 @@
     "userReferralMessage": "Chia sẻ liên kết này đến OpenChat với bạn bè và gia đình. Bạn sẽ kiếm được phần thưởng CHIT cho mỗi người dùng mà bạn giới thiệu, người tiếp tục xác minh nhân cách độc đáo của họ hoặc trở thành thành viên Diamond. Nếu người dùng mà bạn giới thiệu tiếp tục nhận được tư cách thành viên Diamond, bạn sẽ kiếm được 5.000 CHIT, nếu họ chứng minh được nhân cách độc đáo, thì đó là 10.000 CHIT và nếu họ nhận được Diamond trọn đời, thì đó là 15.000 CHIT. Nếu sau đó họ thực hiện \"xác minh\" có giá trị cao hơn, bạn sẽ được thưởng phần chênh lệch trong CHIT.",
     "users": "Người dùng",
     "userSearchFailed": "Đã xảy ra lỗi khi tìm kiếm người dùng",
+    "verified": {
+        "choose": "Chọn {level} để xác minh",
+        "evidenceLabel": "Cung cấp bằng chứng của bạn",
+        "evidencePlaceholder": "Xin vui lòng cung cấp bằng chứng của bạn",
+        "nameChangeWarning": "Nếu bạn thay đổi tên {level} này, bạn sẽ mất trạng thái đã xác minh!",
+        "preferredName": "Tên ưa thích",
+        "rename": "Nếu {level} khác hiện đang sử dụng tên bạn muốn, hãy nhập tên đó vào đây. Nếu bạn đã có tên bạn muốn, bạn nên để nguyên tên đó.",
+        "revoke": "Thu hồi xác minh {level}",
+        "verified": "Đã xác minh {level}",
+        "verify": "Xác minh {level}"
+    },
     "version": "phiên bản",
     "videoCall": {
         "accessRequest": "{username} muốn nói chuyện",

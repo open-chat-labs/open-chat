@@ -68,6 +68,7 @@ export function publicGroupSummary(
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
         isInvited,
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
+        verified: false, // TODO - this needs to come from the backend
     };
 }
 

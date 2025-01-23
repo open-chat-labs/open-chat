@@ -70,7 +70,7 @@
     import Translatable from "../../Translatable.svelte";
     import VideoCallSettings from "./VideoCallSettings.svelte";
     import ChitEvents from "./ChitEvents.svelte";
-    import Human from "../../icons/Human.svelte";
+    import Verified from "../../icons/Verified.svelte";
     import { uniquePersonGate } from "../../../utils/access";
     import ReferredUsersList from "./ReferredUsersList.svelte";
     import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
@@ -312,7 +312,7 @@
                             on:imageSelected={userAvatarSelected} />
                     {/if}
                     <div class="human">
-                        <Human size={"large"} uniquePerson={verified} />
+                        <Verified size={"large"} {verified} tooltip={i18nKey("human.verified")} />
                     </div>
                 </div>
                 {#if $anonUser}
@@ -383,7 +383,10 @@
                     {#if verified}
                         <div class="verified">
                             <div class="icon">
-                                <Human size={"large"} uniquePerson={verified} />
+                                <Verified
+                                    size={"large"}
+                                    {verified}
+                                    tooltip={i18nKey("human.verified")} />
                             </div>
                             <div class="msg">
                                 <Translatable resourceKey={i18nKey("human.already")} />

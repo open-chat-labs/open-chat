@@ -39,6 +39,7 @@
     export let embeddedContent: boolean;
 
     let confirming = false;
+    let showingVerificationWarning = false;
     let busy = false;
     let step = "details";
     let actualWidth = 0;
@@ -97,6 +98,7 @@
             candidateGroup.permissions.startVideoCall = "admin";
         }
     }
+    $: verificationWarning = nameDirty && editing && originalGroup.verified;
 
     function getSteps(
         editing: boolean,
@@ -204,8 +206,20 @@
 
         const changeVisibility = visDirty && candidateGroup.public !== originalGroup.public;
 
+        if (verificationWarning && !showingVerificationWarning) {
+            showingVerificationWarning = true;
+            return Promise.resolve();
+        }
+
         if (changeVisibility && !confirming) {
             confirming = true;
+            return Promise.resolve();
+        }
+
+        if (verificationWarning && showingVerificationWarning && !yes) {
+            showingVerificationWarning = false;
+            busy = false;
+            candidateGroup.name = originalGroup.name;
             return Promise.resolve();
         }
 
@@ -327,6 +341,12 @@
             candidateGroup.level,
             true,
         )}
+        action={updateGroup} />
+{/if}
+
+{#if showingVerificationWarning}
+    <AreYouSure
+        message={i18nKey("verified.nameChangeWarning", undefined, candidateGroup.level, true)}
         action={updateGroup} />
 {/if}
 

@@ -63,8 +63,12 @@ impl Streak {
     }
 
     pub fn claim_via_insurance(&mut self, now: TimestampMillis) -> Option<UserCanisterStreakInsuranceClaim> {
+        if !self.has_insurance() {
+            return None;
+        }
+
         if let Some(today) = Streak::timestamp_to_day(now) {
-            if today == self.end_day + 2 && self.days_insured > self.days_missed {
+            if today == self.end_day + 2 {
                 self.end_day += 1;
                 self.days_missed += 1;
                 self.insurance_last_updated = now;
@@ -121,7 +125,7 @@ impl Streak {
     }
 
     pub fn has_insurance(&self) -> bool {
-        self.days_insured >= self.days_missed
+        self.days_insured > self.days_missed
     }
 
     // This will return `Some(_)` even if the insurance has been used up, since the price of

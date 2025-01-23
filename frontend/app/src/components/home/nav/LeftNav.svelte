@@ -288,7 +288,8 @@
                             $chatListScope.kind !== "favourite" &&
                             !communityExplorer}
                         url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
-                        size={avatarSize} />
+                        size={avatarSize}
+                        verified={community.verified} />
                 </LeftNavItem>
             </div>
         {/each}

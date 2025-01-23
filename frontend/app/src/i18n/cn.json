@@ -1836,6 +1836,17 @@
     "userReferralMessage": "与亲朋好友分享此 OpenChat 链接。您推荐的每位用户继续验证其独特身份或成为钻石会员，您都将获得 CHIT 奖励。如果您推荐的用户继续成为钻石会员，您将获得 5,000 CHIT，如果他们证明其独特身份，则为 10,000 CHIT，如果他们成为终身钻石会员，则为 15,000 CHIT。如果他们随后进行更高价值的“验证”，您将获得 CHIT 差额。",
     "users": "用户",
     "userSearchFailed": "搜索用户失败",
+    "verified": {
+        "choose": "选择{level}进行验证",
+        "evidenceLabel": "提供证据",
+        "evidencePlaceholder": "请提供你的证据",
+        "nameChangeWarning": "如果您更改此{level}的名称，您将失去已验证状态！",
+        "preferredName": "首选名称",
+        "rename": "如果另一个 {level} 当前正在使用您喜欢的名称，请在此处输入该名称。如果您已经有了喜欢的名称，则应保留原样。",
+        "revoke": "撤销{level}验证",
+        "verified": "已验证 {level}",
+        "verify": "验证 {level}"
+    },
     "version": "版本",
     "videoCall": {
         "accessRequest": "{username} 想发言",

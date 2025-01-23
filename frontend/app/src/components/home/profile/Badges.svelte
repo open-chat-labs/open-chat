@@ -2,7 +2,7 @@
     import type { DiamondMembershipStatus } from "openchat-client";
     import Diamond from "../../icons/Diamond.svelte";
     import Streak from "./Streak.svelte";
-    import Human from "../../icons/Human.svelte";
+    import Verified from "../../icons/Verified.svelte";
 
     export let diamondStatus: DiamondMembershipStatus["kind"] | undefined = undefined;
     export let streak: number = 0;
@@ -10,5 +10,5 @@
 </script>
 
 <Diamond status={diamondStatus} />
-<Human {uniquePerson} />
+<Verified size={"default"} verified={uniquePerson} />
 <Streak days={streak} />

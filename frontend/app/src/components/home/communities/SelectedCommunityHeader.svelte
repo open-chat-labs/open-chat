@@ -32,6 +32,7 @@
             <Avatar
                 url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                 userId={undefined}
+                verified={community.verified}
                 size={AvatarSize.Default} />
         </div>
         <div class="details">
