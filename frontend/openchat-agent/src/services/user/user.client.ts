@@ -142,7 +142,13 @@ import {
 } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
-import { toBigInt32, MAX_EVENTS, MAX_MESSAGES, MAX_MISSING, ResponseTooLargeError } from "openchat-shared";
+import {
+    toBigInt32,
+    MAX_EVENTS,
+    MAX_MESSAGES,
+    MAX_MISSING,
+    ResponseTooLargeError,
+} from "openchat-shared";
 import {
     chunkedChatEventsFromBackend,
     chunkedChatEventsWindowFromBackend,
@@ -962,7 +968,6 @@ export class UserClient extends CandidService {
             "leave_group",
             {
                 chat_id: principalStringToBytes(chatId),
-                correlation_id: generateUint64(),
             },
             leaveGroupResponse,
             UserLeaveGroupArgs,
