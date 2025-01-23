@@ -51,6 +51,7 @@
         selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel";
     $: isBot = $userStore.get(userId)?.kind === "bot";
     $: hasUserProfile = !isMultiUser && !isBot;
+    $: verified = selectedChatSummary.kind === "group_chat" && selectedChatSummary.verified;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -164,7 +165,8 @@
             showStatus
             userId={chat.userId}
             url={chat.avatarUrl}
-            size={AvatarSize.Default} />
+            size={AvatarSize.Default}
+            {verified} />
     </div>
     <div class="chat-details">
         <div class="chat-name">

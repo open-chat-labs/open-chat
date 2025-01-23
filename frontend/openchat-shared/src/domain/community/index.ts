@@ -80,6 +80,7 @@ export type CommunitySummary = AccessControlled &
         userGroups: Map<number, UserGroupSummary>;
         localUserIndex: string;
         isInvited: boolean;
+        verified: boolean;
     };
 
 export type DefaultChannel = {
@@ -207,6 +208,7 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     primaryLanguage: string | undefined;
     userGroups: UserGroupSummary[];
     userGroupsDeleted: Set<number>;
+    verified?: boolean;
 };
 
 export type CommunityCanisterChannelSummaryUpdates = {

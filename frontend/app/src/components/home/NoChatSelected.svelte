@@ -60,7 +60,8 @@
                 flags={0}
                 header
                 gateConfig={$selectedCommunity.gateConfig}
-                avatar={$selectedCommunity.avatar} />
+                avatar={$selectedCommunity.avatar}
+                verified={$selectedCommunity.verified} />
             <div class="join">
                 <Button
                     loading={joiningCommunity}

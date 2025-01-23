@@ -1,4 +1,4 @@
-import type { BotMatch, CommunityMatch } from "openchat-client";
+import type { BotMatch, CommunityMatch, GroupMatch } from "openchat-client";
 import { writable } from "svelte/store";
 
 type Search<T> = {
@@ -46,7 +46,7 @@ function createSearchState<T>() {
     return new SearchState<T>(state);
 }
 
-class SearchState<T> {
+export class SearchState<T> {
     constructor(private state: Search<T>) {}
 
     public reset() {
@@ -103,4 +103,5 @@ class SearchState<T> {
 }
 
 export const communitySearchState = createSearchState<CommunityMatch>();
+export const groupSearchState = createSearchState<GroupMatch>();
 export const botSearchState = createSearchState<BotMatch>();

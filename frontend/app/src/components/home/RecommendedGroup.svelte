@@ -60,7 +60,8 @@
             <div class="avatar">
                 <Avatar
                     url={client.groupAvatarUrl(group, $selectedCommunity)}
-                    size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
+                    size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default}
+                    verified={group.verified} />
             </div>
             <div class="group-title-line">
                 <h3 class="group-name">

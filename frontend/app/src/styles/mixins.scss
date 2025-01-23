@@ -119,6 +119,11 @@ $sp9: 96px;
 $sp10: 144px;
 $sp11: 192px;
 
+$avatar-mod: toRem(22);
+$avatar-mod-small: toRem(18);
+$avatar-mod-offset: toRem(-4);
+$avatar-mod-offset-small: toRem(-3);
+
 @mixin fullScreenImg($img) {
     background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5)), url($img);
     background-position: center;
@@ -425,16 +430,16 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     align-items: center;
     background-color: var(--accent);
     text-shadow: 1px 1px 1px var(--accentDarker);
-    border-radius: 12px;
+    border-radius: toRem(12);
     @include font(bold, normal, fs-50);
     color: #ffffff;
-    min-width: $sp5;
+    min-width: toRem(24);
     padding: 0 $sp2;
-    height: $sp5;
+    height: toRem(24);
 
     @include mobile() {
-        min-width: 18px;
-        height: 18px;
+        min-width: toRem(18);
+        height: toRem(18);
     }
 }
 

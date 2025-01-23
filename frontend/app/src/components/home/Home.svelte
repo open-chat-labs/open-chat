@@ -109,7 +109,7 @@
     import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
     import HallOfFame from "./ChitHallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
-    import MakeProposalModal from "./MakeProposalModal.svelte";
+    import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
     import { createCandidateCommunity } from "../../stores/community";
     import Convert from "./communities/Convert.svelte";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
@@ -225,6 +225,7 @@
             ? selectedMultiUserChat.subtype?.governanceCanisterId
             : undefined;
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
+    // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
     $: {
         if ($identityState.kind === "registering") {
             modal = { kind: "registering" };
@@ -1075,6 +1076,7 @@
                 },
                 messagesVisibleToNonMembers: false,
                 externalUrl: embeddedContent ? "" : undefined,
+                verified: false,
             },
         };
     }
@@ -1107,6 +1109,7 @@
                 eventsTTL: chat.eventsTTL,
                 messagesVisibleToNonMembers: chat.messagesVisibleToNonMembers,
                 externalUrl: chat.kind === "channel" ? chat.externalUrl : undefined,
+                verified: chat.kind === "group_chat" ? chat.verified : false,
             },
         };
     }

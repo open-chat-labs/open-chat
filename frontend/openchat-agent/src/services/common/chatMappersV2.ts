@@ -2161,6 +2161,7 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
         isInvited: false, // this is only applicable when we are not a member
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
+        verified: value.verified,
     };
 }
 
@@ -2212,6 +2213,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         userGroups: new Map(value.user_groups.map(userGroup)),
         localUserIndex,
         isInvited: value.is_invited ?? false,
+        verified: value.verified,
     };
 }
 

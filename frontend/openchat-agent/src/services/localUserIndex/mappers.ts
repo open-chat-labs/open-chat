@@ -33,7 +33,13 @@ import type {
     BotCommandArg,
     BotCommandArgValue,
 } from "../../typebox";
-import { toBigInt32, CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
+import {
+    toBigInt32,
+    CommonResponses,
+    MAX_EVENTS,
+    MAX_MESSAGES,
+    UnsupportedValueError,
+} from "openchat-shared";
 import {
     bytesToHexString,
     identity,
@@ -412,7 +418,9 @@ export function apiVerifiedCredentialArgs(
     };
 }
 
-export function withdrawFromIcpSwapResponse(value: LocalUserIndexWithdrawFromIcpswapResponse): boolean {
+export function withdrawFromIcpSwapResponse(
+    value: LocalUserIndexWithdrawFromIcpswapResponse,
+): boolean {
     console.log("Withdraw from ICPSwap response", value);
     return value === "Success";
 }

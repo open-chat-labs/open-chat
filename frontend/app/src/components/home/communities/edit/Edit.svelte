@@ -39,6 +39,7 @@
     let step = "details";
     let busy = false;
     let confirming = false;
+    let showingVerificationWarning = false;
     let candidate = structuredClone(original);
     let candidateRules = { ...originalRules, newVersion: false };
     let members: CandidateMember[] = [];
@@ -68,6 +69,7 @@
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: stepIndex = steps.findIndex((s) => s.key === step) ?? 0;
     $: valid = detailsValid && channelsValid && rulesValid && visibilityValid;
+    $: verificationWarning = nameDirty && editing && original.verified;
 
     function getSteps(
         editing: boolean,
@@ -131,8 +133,20 @@
         if (editing) {
             const makePrivate = visDirty && !candidate.public && original.public;
 
+            if (verificationWarning && !showingVerificationWarning) {
+                showingVerificationWarning = true;
+                return Promise.resolve();
+            }
+
             if (makePrivate && !confirming) {
                 confirming = true;
+                return Promise.resolve();
+            }
+
+            if (verificationWarning && showingVerificationWarning && !yes) {
+                showingVerificationWarning = false;
+                busy = false;
+                candidate.name = original.name;
                 return Promise.resolve();
             }
 
@@ -144,6 +158,7 @@
             }
 
             confirming = false;
+            showingVerificationWarning = false;
 
             return client
                 .saveCommunity(
@@ -196,6 +211,12 @@
 {#if confirming}
     <AreYouSure
         message={i18nKey("confirmMakeGroupPrivate", undefined, candidate.level, true)}
+        action={save} />
+{/if}
+
+{#if showingVerificationWarning}
+    <AreYouSure
+        message={i18nKey("verified.nameChangeWarning", undefined, candidate.level, true)}
         action={save} />
 {/if}
 

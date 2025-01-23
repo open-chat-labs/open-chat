@@ -338,6 +338,7 @@ export function setCommunityModerationFlagsResponse(
 
 function groupMatch(value: TGroupMatch): GroupMatch {
     return {
+        kind: "group_match",
         chatId: { kind: "group_chat", groupId: principalBytesToString(value.id) },
         name: value.name,
         description: value.description,
@@ -346,11 +347,13 @@ function groupMatch(value: TGroupMatch): GroupMatch {
             blobId,
             canisterId: principalBytesToString(value.id),
         })),
+        verified: value.verified,
     };
 }
 
 function communityMatch(value: TCommunityMatch): CommunityMatch {
     return {
+        kind: "community_match",
         id: { kind: "community", communityId: principalBytesToString(value.id) },
         name: value.name,
         description: value.description,
@@ -374,5 +377,6 @@ function communityMatch(value: TCommunityMatch): CommunityMatch {
         },
         flags: value.moderation_flags,
         primaryLanguage: value.primary_language === "" ? "en" : value.primary_language,
+        verified: value.verified,
     };
 }

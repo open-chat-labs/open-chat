@@ -47,5 +47,6 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
         userGroups: new Map(),
         localUserIndex: "",
         isInvited: false,
+        verified: false,
     };
 }

@@ -76,6 +76,7 @@
             language={community.primaryLanguage}
             flags={0}
             channelCount={0}
+            verified={community.verified}
             header />
         <CommunityDetails
             on:deleteCommunity

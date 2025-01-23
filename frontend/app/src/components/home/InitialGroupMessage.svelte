@@ -16,6 +16,7 @@
     export let group: MultiUserChat;
 
     $: level = $_(`level.${group.level}`).toLowerCase();
+    $: verified = group.kind === "group_chat" && group.verified;
 </script>
 
 <div class="container">
@@ -28,7 +29,10 @@
         </div>
     {/if}
     <div class="pop">
-        <Avatar url={client.groupAvatarUrl(group, $selectedCommunity)} size={AvatarSize.Large} />
+        <Avatar
+            url={client.groupAvatarUrl(group, $selectedCommunity)}
+            size={AvatarSize.Large}
+            {verified} />
     </div>
     <div>
         <Translatable
