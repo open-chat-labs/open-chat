@@ -195,7 +195,7 @@
                         ></Legend>
                         <NumberInput
                             min={0}
-                            max={Number(param.maxValue)}
+                            max={param.maxValue}
                             placeholder={i18nKey("bots.builder.minValuePlaceholder")}
                             bind:value={param.minValue} />
                     </div>
@@ -204,7 +204,7 @@
                             label={i18nKey("bots.builder.maxValueLabel")}
                             rules={i18nKey("bots.builder.uptoN", { n: "1000" })}></Legend>
                         <NumberInput
-                            min={Number(param.minValue)}
+                            min={param.minValue}
                             max={1000}
                             placeholder={i18nKey("bots.builder.maxValuePlaceholder")}
                             bind:value={param.maxValue} />
