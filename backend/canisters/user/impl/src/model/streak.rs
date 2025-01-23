@@ -121,7 +121,7 @@ impl Streak {
     }
 
     pub fn has_insurance(&self) -> bool {
-        self.days_insured >= self.days_missed
+        self.days_insured > self.days_missed
     }
 
     // This will return `Some(_)` even if the insurance has been used up, since the price of
