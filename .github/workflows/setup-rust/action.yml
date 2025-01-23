@@ -13,8 +13,8 @@ runs:
       with:
         cache: false
     - name: Setup caching
-      if: ${{ github.event.inputs.cache == 'read' || github.event.inputs.cache == 'write' }}
+      if: ${{ inputs.cache == 'read' || inputs.cache == 'write' }}
       uses: Swatinem/rust-cache@v2
       with:
         shared-key: "build-debug"
-        save-if: ${{ github.event.inputs.cache == 'write' }}
+        save-if: ${{ inputs.cache == 'write' }}
