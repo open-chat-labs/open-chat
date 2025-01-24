@@ -7,6 +7,7 @@ use constants::{CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
+use fire_and_forget_handler::FireAndForgetHandler;
 use jwt::{verify_jwt, Claims};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::bots_map::BotsMap;
@@ -331,6 +332,8 @@ struct Data {
     pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<UserId>,
+    #[serde(default)]
+    pub fire_and_forget_handler: FireAndForgetHandler,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -402,6 +405,7 @@ impl Data {
             events_for_remote_users: Vec::new(),
             cycles_balance_check_queue: VecDeque::new(),
             bots: BotsMap::default(),
+            fire_and_forget_handler: FireAndForgetHandler::default(),
         }
     }
 }

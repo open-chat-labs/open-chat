@@ -33,11 +33,9 @@ impl ChatEventsList {
         rng: &mut StdRng,
         rng_my_messages: Option<&mut (UserId, &mut StdRng)>,
     ) -> Option<bool> {
-        if let Some(event_index) = self.message_id_map.remove(&MessageId::from(0u64)) {
-            self.events_with_duplicate_message_ids.insert(event_index);
-        }
+        let message_id_zero_event = self.message_id_map.remove(&MessageId::from(0u64));
 
-        if self.message_id_map.len() == self.message_event_indexes.len() {
+        if message_id_zero_event.is_none() && self.message_id_map.len() == self.message_event_indexes.len() {
             return Some(true);
         }
 
@@ -45,6 +43,9 @@ impl ChatEventsList {
             self.events_with_duplicate_message_ids = self.message_event_indexes.iter().copied().collect();
             for event_index in self.message_id_map.values() {
                 self.events_with_duplicate_message_ids.remove(event_index);
+            }
+            if let Some(event_index) = message_id_zero_event {
+                self.events_with_duplicate_message_ids.insert(event_index);
             }
         }
 

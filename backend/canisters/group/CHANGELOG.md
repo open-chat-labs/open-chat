@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `start_video_call_v2` and `end_video_call_v2` with reduced arg sizes ([#7236](https://github.com/open-chat-labs/open-chat/pull/7236))
 - Disallow forwarding prize messages and governance proposal messages ([#7260](https://github.com/open-chat-labs/open-chat/pull/7260))
 - Move storage of group bots up a level ([#7265](https://github.com/open-chat-labs/open-chat/pull/7265))
+- Sync bot installation with UserIndex ([#7291](https://github.com/open-chat-labs/open-chat/pull/7291))
+- Introduce new `Integer` bot parameter type ([#7296](https://github.com/open-chat-labs/open-chat/pull/7296))
 
 ### Fixed
 

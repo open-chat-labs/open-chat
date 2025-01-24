@@ -501,6 +501,7 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     #[serde(default)]
     verified: Timestamped<bool>,
+    #[serde(default)]
     pub bots: GroupBots,
     #[serde(default)]
     message_ids_deduped: bool,
@@ -743,7 +744,7 @@ impl Data {
         })
     }
 
-    pub fn add_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {
+    pub fn install_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {
         if !self.bots.add(user_id, owner_id, config.permissions, now) {
             return false;
         }
@@ -777,7 +778,7 @@ impl Data {
         true
     }
 
-    pub fn remove_bot(&mut self, owner_id: UserId, user_id: UserId, now: TimestampMillis) -> bool {
+    pub fn uninstall_bot(&mut self, owner_id: UserId, user_id: UserId, now: TimestampMillis) -> bool {
         if !self.bots.remove(user_id, now) {
             return false;
         }

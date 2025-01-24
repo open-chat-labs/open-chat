@@ -14,11 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - uses: Swatinem/rust-cache@v2
+      - uses: ./.github/workflows/setup-rust
         with:
-          shared-key: "build-debug"
-          save-if: "false"
+          cache: read
 
       - name: Benchmark
         run: |

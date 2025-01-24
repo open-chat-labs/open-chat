@@ -825,7 +825,7 @@ impl Data {
         }
     }
 
-    pub fn add_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
+    pub fn install_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
         if !self.bots.add(user_id, owner_id, bot_config.permissions, now) {
             return false;
         }
@@ -861,7 +861,7 @@ impl Data {
         true
     }
 
-    pub fn remove_bot(&mut self, owner_id: UserId, user_id: UserId, now: TimestampMillis) -> bool {
+    pub fn uninstall_bot(&mut self, owner_id: UserId, user_id: UserId, now: TimestampMillis) -> bool {
         if !self.bots.remove(user_id, now) {
             return false;
         }

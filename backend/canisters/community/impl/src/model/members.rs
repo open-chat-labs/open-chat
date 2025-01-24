@@ -8,8 +8,7 @@ use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
-use std::collections::{BTreeMap, BTreeSet, HashSet};
-use tracing::info;
+use std::collections::{BTreeMap, BTreeSet};
 use types::{
     is_default, ChannelId, CommunityMember, CommunityPermissions, CommunityRole, PushIfNotContains, TimestampMillis,
     Timestamped, UserId, UserType, Version,
@@ -42,34 +41,6 @@ pub struct CommunityMembers {
 }
 
 impl CommunityMembers {
-    pub fn remove_dangling_member_channel_links(&mut self) {
-        let user_ids: HashSet<_> = self.members_map.user_ids().into_iter().collect();
-
-        let to_remove: Vec<_> = self
-            .members_and_channels
-            .keys()
-            .filter(|u| !user_ids.contains(u))
-            .copied()
-            .collect();
-
-        for user_id in to_remove {
-            let channel_count = self.members_and_channels.remove(&user_id).unwrap().len();
-            info!(%user_id, channel_count, "Removed dangling member channel links");
-        }
-
-        let to_remove: Vec<_> = self
-            .member_channel_links_removed
-            .keys()
-            .filter(|(u, _)| !user_ids.contains(u))
-            .copied()
-            .collect();
-
-        for (user_id, channel_id) in to_remove {
-            self.member_channel_links_removed.remove(&(user_id, channel_id));
-            info!(%user_id, "Removed dangling member channel link removed");
-        }
-    }
-
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,
