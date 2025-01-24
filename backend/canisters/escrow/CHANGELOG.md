@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove unused candid endpoints ([#7264](https://github.com/open-chat-labs/open-chat/pull/7264))
 
+### Fixed
+
+- Avoid retrying c2c call if recipient canister is uninstalled ([#7302](https://github.com/open-chat-labs/open-chat/pull/7302))
+
 ## [[2.0.1526](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1526-escrow)] - 2024-12-19
 
 ### Changed
