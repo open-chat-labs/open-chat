@@ -465,25 +465,18 @@
                         <option value={"transfer_sns_funds"}>Transfer SNS funds</option>
                         <option value={"advance_sns_target_version"}
                             >Advance SNS target version</option>
-                        {#if botsEnabled}
-                            <option value={"register_bot"}>Register a bot</option>
-                            <option value={"remove_bot"}>
-                                <Translatable resourceKey={i18nKey("bots.manage.remove")}
-                                ></Translatable>
-                            </option>
-                        {/if}
                         {#if symbol === "CHAT"}
                             <option value={"register_external_achievement"}
                                 >Register external achievement</option>
                             <option value={"add_token"}>Add token</option>
                             <option value={"update_token"}>Update token</option>
-                            <!-- {#if botsEnabled}
+                            {#if botsEnabled}
                                 <option value={"register_bot"}>Register a bot</option>
                                 <option value={"register_bot"}>
                                     <Translatable resourceKey={i18nKey("bots.manage.remove")}
                                     ></Translatable>
                                 </option>
-                            {/if} -->
+                            {/if}
                             <option value={"set_community_verification"}>
                                 <Translatable
                                     resourceKey={i18nKey(
