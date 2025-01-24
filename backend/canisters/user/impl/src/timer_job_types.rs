@@ -5,10 +5,7 @@ use crate::{can_borrow_state, mutate_state, openchat_bot, read_state, run_regula
 use canister_timer_jobs::Job;
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
-use rand::rngs::StdRng;
-use rand::SeedableRng;
 use serde::{Deserialize, Serialize};
-use sha256::sha256;
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 use user_canister::{C2CReplyContext, UserCanisterEvent};
@@ -428,13 +425,7 @@ impl Job for DedupeMessageIdsJob {
             let mut complete = true;
             let my_user_id: UserId = state.env.canister_id().into();
             for chat in state.data.direct_chats.iter_mut() {
-                let mut rng_my_messages = build_rng(my_user_id, chat.them);
-                let mut rng_their_messages = build_rng(chat.them, my_user_id);
-
-                match chat
-                    .events
-                    .fix_duplicate_message_ids(&mut rng_their_messages, Some((my_user_id, &mut rng_my_messages)))
-                {
+                match chat.events.fix_duplicate_message_ids(my_user_id, chat.them) {
                     Some(true) => {}
                     Some(false) => {
                         complete = false;
@@ -454,12 +445,4 @@ impl Job for DedupeMessageIdsJob {
             }
         })
     }
-}
-
-fn build_rng(user1: UserId, user2: UserId) -> StdRng {
-    let mut hash_input = Vec::new();
-    hash_input.extend_from_slice(user1.as_slice());
-    hash_input.extend_from_slice(user2.as_slice());
-    let seed = sha256(&hash_input);
-    StdRng::from_seed(seed)
 }
