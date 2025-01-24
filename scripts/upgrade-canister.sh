@@ -16,7 +16,7 @@ cd $SCRIPT_DIR/..
 
 if [[ -z "$WASM_SRC" || $WASM_SRC = "build" ]]
 then
-    ./scripts/generate-wasm.sh $CANISTER_NAME
+    ./scripts/generate-wasm.sh $CANISTER_NAME || exit 1
 elif [ $WASM_SRC != "local" ]
 then
     ./scripts/download-canister-wasm.sh $CANISTER_NAME $WASM_SRC || exit 1
