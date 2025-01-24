@@ -1,30 +1,21 @@
 <script lang="ts">
-    import {
-        type BotMatch,
-        type CommunityIdentifier,
-        type GroupChatIdentifier,
-    } from "openchat-client";
-    import BotSummary from "./BotSummary.svelte";
+    import { type BotMatch } from "openchat-client";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
     import BotAvatar from "./BotAvatar.svelte";
 
     interface Props {
         match: BotMatch;
-        id: CommunityIdentifier | GroupChatIdentifier;
+        onClick: (match: BotMatch) => void;
+        showCommands: boolean;
     }
 
-    let { match, id }: Props = $props();
-    let showing = $state(false);
+    let { match, onClick, showCommands }: Props = $props();
 </script>
-
-{#if showing}
-    <BotSummary mode={"adding"} {id} onClose={() => (showing = false)} bot={match} />
-{/if}
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="bot-match" onclick={() => (showing = true)}>
+<div class="bot-match" onclick={() => onClick(match)}>
     <span class="avatar">
         <BotAvatar bot={match} />
     </span>
@@ -35,18 +26,20 @@
         <p title={match.definition.description} class="bot-desc">
             {match.definition.description}
         </p>
-        <div class="commands">
-            {#each match.definition.commands as command}
-                <TooltipWrapper position="bottom" align="middle">
-                    <div slot="target" class="command">{command.name}</div>
-                    <div let:position let:align slot="tooltip">
-                        <TooltipPopup {align} {position}>
-                            {command.description}
-                        </TooltipPopup>
-                    </div>
-                </TooltipWrapper>
-            {/each}
-        </div>
+        {#if showCommands}
+            <div class="commands">
+                {#each match.definition.commands as command}
+                    <TooltipWrapper position="bottom" align="middle">
+                        <div slot="target" class="command">{command.name}</div>
+                        <div let:position let:align slot="tooltip">
+                            <TooltipPopup {align} {position}>
+                                {command.description}
+                            </TooltipPopup>
+                        </div>
+                    </TooltipWrapper>
+                {/each}
+            </div>
+        {/if}
     </div>
 </div>
 

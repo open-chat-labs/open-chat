@@ -311,6 +311,9 @@
         "manage": {
             "remove": "Bot entfernen",
             "removeFailed": "Es ist uns leider nicht gelungen, den Bot zu entfernen.",
+            "removeReason": "Grund für die Entfernung des Bots",
+            "removeReasonPlaceholder": "Bitte geben Sie Gründe/Beweise für die Entfernung des Bots an",
+            "removeSearch": "Suchen Sie nach dem zu entfernenden Bot",
             "review": "Überprüfen Sie die Bot-Berechtigungen",
             "view": "Botdetails anzeigen"
         },
@@ -340,6 +343,8 @@
             "action": "Aktualisieren",
             "desc": "Starten Sie einen Vorschlag zur Aktualisierung eines vorhandenen OpenChat-Bots",
             "nobots": "Nur der Besitzer eines registrierten Bots kann diesen aktualisieren. Sie sind nicht der Besitzer eines registrierten Bots.",
+            "remove": "Zu entfernender Bot auswählen",
+            "removeDesc": "Entfernen Sie einen vorhandenen OpenChat-Bot, wenn Sie der Eigentümer sind",
             "select": "Zum Aktualisieren Bot auswählen",
             "title": "Aktualisieren Sie {name}"
         },

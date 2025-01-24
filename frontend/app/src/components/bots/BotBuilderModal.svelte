@@ -1,12 +1,5 @@
 <script lang="ts">
-    import {
-        AvatarSize,
-        currentUser,
-        emptyBotInstance,
-        externalBots,
-        OpenChat,
-        type BotMatch,
-    } from "openchat-client";
+    import { currentUser, emptyBotInstance, OpenChat, type ExternalBot } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import ModalContent from "../ModalContent.svelte";
     import Translatable from "../Translatable.svelte";
@@ -16,9 +9,8 @@
     import { getContext } from "svelte";
     import { toastStore } from "../../stores/toast";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import AlertBox from "../AlertBox.svelte";
-    import Avatar from "../Avatar.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
+    import ChooseBot from "./ChooseBot.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -47,12 +39,6 @@
     let avatarDirty = $derived(botState.original.avatarUrl !== botState.current.avatarUrl);
     let endpointDirty = $derived(botState.original.endpoint !== botState.current.endpoint);
     // let dirty = $derived(ownerDirty || nameDirty || avatarDirty || endpointDirty);
-
-    let myBots = $derived(
-        mode === "update" || mode === "remove"
-            ? [...$externalBots.values()].filter((b) => b.ownerId === $currentUser.userId)
-            : [],
-    );
 
     function register() {
         if (botState.current !== undefined && valid) {
@@ -117,17 +103,14 @@
             .finally(() => (busy = false));
     }
 
-    function selectBot({ id }: BotMatch) {
-        const b = $externalBots.get(id);
-        if (b !== undefined) {
-            if (b.ownerId === $currentUser.userId) {
-                botState.original = b;
-                botState.current = structuredClone(b);
-                if (mode === "update") {
-                    step = "edit";
-                } else if (mode === "remove") {
-                    remove(b.id);
-                }
+    function selectBot(bot: ExternalBot) {
+        if (bot.ownerId === $currentUser.userId) {
+            botState.original = bot;
+            botState.current = structuredClone(bot);
+            if (mode === "update") {
+                step = "edit";
+            } else if (mode === "remove") {
+                remove(bot.id);
             }
         }
     }
@@ -152,35 +135,12 @@
     </div>
     <div class="body" slot="body">
         {#if step === "choose"}
-            {#if myBots.length === 0}
-                <AlertBox>
-                    <Translatable resourceKey={i18nKey("bots.update_bot.nobots")}></Translatable>
-                </AlertBox>
-            {:else if mode === "remove" && busy}
+            {#if !busy && (mode === "update" || mode === "remove")}
+                <ChooseBot ownedOnly onSelect={selectBot} />
+            {/if}
+            {#if mode === "remove" && busy}
                 <div class="loader">
                     <FancyLoader />
-                </div>
-            {:else}
-                <div class="bots">
-                    {#each myBots as myBot}
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div onclick={() => selectBot(myBot)} class="match">
-                            <span class="avatar">
-                                <Avatar
-                                    url={myBot.avatarUrl ?? "/assets/bot_avatar.svg"}
-                                    size={AvatarSize.Default} />
-                            </span>
-                            <div class="details">
-                                <h4 class="bot-name">
-                                    {myBot.name}
-                                </h4>
-                                <p title={myBot.definition.description} class="bot-desc">
-                                    {myBot.definition.description}
-                                </p>
-                            </div>
-                        </div>
-                    {/each}
                 </div>
             {/if}
         {:else if step === "edit" && botState.current !== undefined && mode !== "remove"}
@@ -217,56 +177,6 @@
 </ModalContent>
 
 <style lang="scss">
-    .bots {
-        max-height: 500px;
-        overflow: auto;
-    }
-
-    .match {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: $sp4;
-        transition:
-            background-color ease-in-out 100ms,
-            border-color ease-in-out 100ms;
-        gap: 12px;
-        cursor: pointer;
-
-        @media (hover: hover) {
-            &:hover {
-                background-color: var(--members-hv);
-            }
-        }
-
-        @include mobile() {
-            padding: $sp3 toRem(10);
-        }
-    }
-    .avatar {
-        flex: 0 0 50px;
-        position: relative;
-        align-self: start;
-    }
-
-    .details {
-        display: flex;
-        gap: $sp2;
-        flex: 1;
-        flex-direction: column;
-        @include font(book, normal, fs-100);
-
-        .bot-name {
-            @include ellipsis();
-        }
-
-        .bot-desc {
-            @include font(light, normal, fs-100);
-            color: var(--txt-light);
-            @include clamp(2);
-        }
-    }
-
     .loader {
         width: toRem(80);
         height: toRem(80);
