@@ -2109,7 +2109,8 @@ type SlashCommandParamType = variant {
     UserParam;
     BooleanParam;
     StringParam : StringParam;
-    NumberParam : NumberParam;
+    IntegerParam : IntegerParam;
+    DecimalParam : DecimalParam;
 };
 
 type StringParam = record {
@@ -2123,13 +2124,24 @@ type StringParamChoice = record {
     value : text;
 };
 
-type NumberParam = record {
-    min_value : float64;
-    max_value : float64;
-    choices : vec NumberParamChoice;
+type IntegerParam = record {
+    min_value : int;
+    max_value : int;
+    choices : vec IntegerParamChoice;
 };
 
-type NumberParamChoice = record {
+type IntegerParamChoice = record {
+    name : text;
+    value : int;
+};
+
+type DecimalParam = record {
+    min_value : float64;
+    max_value : float64;
+    choices : vec DecimalParamChoice;
+};
+
+type DecimalParamChoice = record {
     name : text;
     value : float64;
 };
@@ -2205,7 +2217,8 @@ type BotCommandArg = record {
 
 type BotCommandArgValue = variant {
     String : text;
-    Number : float64;
+    Integer : int;
+    Decimal : float64;
     Boolean : bool;
     User : UserId;
 };
