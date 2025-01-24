@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Use chunked upgrades to upgrade LocalUserIndex canisters ([#7300](https://github.com/open-chat-labs/open-chat/pull/7300))
+
 ## [[2.0.1582](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1582-user_index)] - 2025-01-24
 
 ### Changed
