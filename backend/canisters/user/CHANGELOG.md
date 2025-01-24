@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix calculation of amount to withdraw from ICPSwap ([#7272](https://github.com/open-chat-labs/open-chat/pull/7272))
 - De-duplicate messageIds using a timer job ([#7275](https://github.com/open-chat-labs/open-chat/pull/7275))
 - Fix check to only set up CHIT insurance timer job if required ([#7284](https://github.com/open-chat-labs/open-chat/pull/7284))
+- Avoid retrying c2c call if recipient canister is uninstalled ([#7302](https://github.com/open-chat-labs/open-chat/pull/7302))
 
 ## [[2.0.1571-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1571-user)] - 2025-01-15
 
