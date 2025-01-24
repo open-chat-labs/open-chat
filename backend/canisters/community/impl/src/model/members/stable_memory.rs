@@ -1,7 +1,7 @@
 use crate::CommunityMemberInternal;
-use candid::{Deserialize, Principal};
+use candid::Deserialize;
 use serde::Serialize;
-use stable_memory_map::{with_map, KeyPrefix, MemberKeyPrefix, StableMemoryMap};
+use stable_memory_map::{MemberKeyPrefix, StableMemoryMap};
 use std::collections::BTreeSet;
 use types::{is_default, CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version};
 
@@ -29,14 +29,6 @@ impl MembersStableStorage {
         let mut map = MembersStableStorage::default();
         map.insert(member.user_id, member);
         map
-    }
-
-    pub fn user_ids(&self) -> Vec<UserId> {
-        with_map(|m| {
-            m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)
-                .map(|(k, _)| k.user_id())
-                .collect()
-        })
     }
 
     #[cfg(test)]

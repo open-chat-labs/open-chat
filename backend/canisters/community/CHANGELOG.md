@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Make messageId deduping faster and avoid incorrectly exiting batch early ([#7295](https://github.com/open-chat-labs/open-chat/pull/7295))
+
+## [[2.0.1579](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1579-community)] - 2025-01-23
+
 ### Added
 
 - Add facility to set/revoke community verification via proposal ([#7240](https://github.com/open-chat-labs/open-chat/pull/7240))
