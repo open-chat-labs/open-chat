@@ -311,6 +311,9 @@
         "manage": {
             "remove": "Xóa bot",
             "removeFailed": "Xin lỗi chúng tôi không thể xóa bot",
+            "removeReason": "Lý do xóa bot",
+            "removeReasonPlaceholder": "Vui lòng cung cấp lý do/bằng chứng hỗ trợ việc xóa bot",
+            "removeSearch": "Tìm kiếm bot để loại bỏ",
             "review": "Xem lại quyền của bot",
             "view": "Xem chi tiết bot"
         },
@@ -340,6 +343,8 @@
             "action": "Cập nhật",
             "desc": "Bắt đầu đề xuất cập nhật bot OpenChat hiện có",
             "nobots": "Chỉ có chủ sở hữu của bot đã đăng ký mới có thể cập nhật bot. Bạn không phải là chủ sở hữu của bất kỳ bot đã đăng ký nào.",
+            "remove": "Chọn bot để xóa",
+            "removeDesc": "Xóa bot OpenChat hiện có nếu bạn là chủ sở hữu",
             "select": "Chọn bot để cập nhật",
             "title": "Cập nhật {name}"
         },

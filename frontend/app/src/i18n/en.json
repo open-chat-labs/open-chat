@@ -311,6 +311,9 @@
         "manage": {
             "remove": "Remove bot",
             "removeFailed": "Sorry we were unable to remove the bot",
+            "removeReason": "Reason for removing bot",
+            "removeReasonPlaceholder": "Please provide reasons / evidence supporting the removal of the bot",
+            "removeSearch": "Search for the bot to remove",
             "review": "Review bot permissions",
             "view": "View bot details"
         },
@@ -340,9 +343,9 @@
             "action": "Update",
             "desc": "Update an existing OpenChat bot if you are the owner",
             "nobots": "Only the owner of a registered bot can update or remove the bot. You are not the owner of any registered bots.",
-            "select": "Select bot to update",
             "remove": "Select bot to remove",
             "removeDesc": "Remove an existing OpenChat bot if you are the owner",
+            "select": "Select bot to update",
             "title": "Update {name}"
         },
         "view": {
