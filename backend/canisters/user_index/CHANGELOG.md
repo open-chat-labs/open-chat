@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Bump user limit to 300k ([#7270](https://github.com/open-chat-labs/open-chat/pull/7270))
 - Only allow user to delete account if they re-authenticated within last 5 minutes ([#7274](https://github.com/open-chat-labs/open-chat/pull/7274))
 - Sync bot installation with community/group ([#7291](https://github.com/open-chat-labs/open-chat/pull/7291))
+- For next user upgrade only upgrade users who have claimed CHIT recently ([#7297](https://github.com/open-chat-labs/open-chat/pull/7297))
 
 ## [[2.0.1576](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1576-user_index)] - 2025-01-21
 
