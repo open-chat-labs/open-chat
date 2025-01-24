@@ -1,9 +1,7 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::timer_job_types::DedupeMessageIdsJob;
 use crate::{read_state, Data};
 use canister_logger::LogEntry;
-use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
 use ic_cdk::post_upgrade;
@@ -35,6 +33,4 @@ fn post_upgrade(args: Args) {
             .data
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
     });
-
-    DedupeMessageIdsJob::default().execute();
 }
