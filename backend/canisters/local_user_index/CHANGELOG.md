@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Bump user limit to 300k ([#7270](https://github.com/open-chat-labs/open-chat/pull/7270))
 - Expose most recently upgraded canisters in metrics ([#7283](https://github.com/open-chat-labs/open-chat/pull/7283))
-- Introduce new `Integer` bot parameter type ([#7290](https://github.com/open-chat-labs/open-chat/pull/7290))
+- Introduce new `Integer` bot parameter type ([#7296](https://github.com/open-chat-labs/open-chat/pull/7296))
 
 ### Fixed
 
