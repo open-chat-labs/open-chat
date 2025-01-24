@@ -6,7 +6,7 @@
 
     interface Props {
         verified: boolean;
-        size: "default" | "large";
+        size: "small" | "default" | "large";
         tooltip?: ResourceKey;
     }
 
@@ -41,6 +41,11 @@
             $size: $avatar-mod-small;
             width: $size;
             height: $size;
+        }
+
+        &.small {
+            width: toRem(16);
+            height: toRem(16);
         }
 
         &.large {
