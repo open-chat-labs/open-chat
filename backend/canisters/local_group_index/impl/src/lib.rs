@@ -17,7 +17,6 @@ use std::collections::{BTreeMap, VecDeque};
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{BuildVersion, CanisterId, ChildCanisterWasms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId};
-//use group_index_canister::LocalGroupIndexEvent as GroupIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -173,18 +172,8 @@ struct Data {
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
-    #[serde(default = "init_group_event_sync_queue")]
     pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
-    #[serde(default = "init_community_event_sync_queue")]
     pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
-}
-
-fn init_group_event_sync_queue() -> GroupedTimerJobQueue<GroupEventBatch> {
-    GroupedTimerJobQueue::new(10, false)
-}
-
-fn init_community_event_sync_queue() -> GroupedTimerJobQueue<CommunityEventBatch> {
-    GroupedTimerJobQueue::new(10, false)
 }
 
 impl Data {

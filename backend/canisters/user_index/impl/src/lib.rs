@@ -351,7 +351,6 @@ struct Data {
     pub registry_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: GroupedTimerJobQueue<StorageIndexUserConfigBatch>,
-    #[serde(default = "storage_index_users_to_remove_queue")]
     pub storage_index_users_to_remove_queue: GroupedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub pending_payments_queue: PendingPaymentsQueue,
@@ -386,10 +385,6 @@ struct Data {
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub streak_insurance_logs: StreakInsuranceLogs,
-}
-
-fn storage_index_users_to_remove_queue() -> GroupedTimerJobQueue<StorageIndexUsersToRemoveBatch> {
-    GroupedTimerJobQueue::new(1, false)
 }
 
 impl Data {

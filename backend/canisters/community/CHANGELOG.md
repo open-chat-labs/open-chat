@@ -8,8 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Make messageId deduping faster and avoid incorrectly exiting batch early ([#7295](https://github.com/open-chat-labs/open-chat/pull/7295))
 - Introduce new `Integer` bot parameter type ([#7296](https://github.com/open-chat-labs/open-chat/pull/7296))
+
+## [[2.0.1580](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1580-community)] - 2025-01-24
+
+### Changed
+
+- Make messageId deduping faster and avoid incorrectly exiting batch early ([#7295](https://github.com/open-chat-labs/open-chat/pull/7295))
 
 ## [[2.0.1579](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1579-community)] - 2025-01-23
 

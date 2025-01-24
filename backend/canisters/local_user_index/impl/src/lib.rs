@@ -332,7 +332,6 @@ struct Data {
     pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<UserId>,
-    #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
 }
 
