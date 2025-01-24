@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move storage of group bots up a level ([#7265](https://github.com/open-chat-labs/open-chat/pull/7265))
 - Introduce new `Integer` bot parameter type ([#7290](https://github.com/open-chat-labs/open-chat/pull/7290))
 - Sync bot installation with UserIndex ([#7291](https://github.com/open-chat-labs/open-chat/pull/7291))
+- Introduce new `Integer` bot parameter type ([#7296](https://github.com/open-chat-labs/open-chat/pull/7296))
 
 ### Fixed
 
