@@ -222,12 +222,12 @@
         $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
             ? $selectedChatStore
             : undefined;
-    $: governanceCanisterId =
-        selectedMultiUserChat !== undefined
-            ? selectedMultiUserChat.subtype?.governanceCanisterId
-            : undefined;
-    $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
-    // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
+    // $: governanceCanisterId =
+    //     selectedMultiUserChat !== undefined
+    //         ? selectedMultiUserChat.subtype?.governanceCanisterId
+    //         : undefined;
+    // $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
+    $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
     $: {
         if ($identityState.kind === "registering") {
             modal = { kind: "registering" };
