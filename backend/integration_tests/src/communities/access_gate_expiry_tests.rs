@@ -65,6 +65,24 @@ fn diamond_members_remain_unlapsed_after_expiry(container_type: ContainerType) {
         // Assert that user has not lapsed
         assert!(!has_user_lapsed(env, user, &container));
     }
+
+    // Move the time forward again so that the gate expires again
+    env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
+    tick_many(env, 5);
+
+    for user in users.iter() {
+        // Assert that user has not lapsed
+        assert!(!has_user_lapsed(env, user, &container));
+    }
+
+    // Move the time forward again so that the gate expires and the membership expires
+    env.advance_time(Duration::from_millis(30 * DAY_IN_MS));
+    tick_many(env, 5);
+
+    for user in users.iter() {
+        // Assert that user has lapsed
+        assert!(has_user_lapsed(env, user, &container));
+    }
 }
 
 #[test_case(ContainerType::Community)]
