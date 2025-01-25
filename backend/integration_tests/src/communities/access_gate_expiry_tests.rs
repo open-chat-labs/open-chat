@@ -34,6 +34,42 @@ enum Container {
 #[test_case(ContainerType::Community)]
 #[test_case(ContainerType::Channel)]
 #[test_case(ContainerType::Group)]
+fn diamond_members_remain_unlapsed_after_expiry(container_type: ContainerType) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let gate_config = AccessGateConfig {
+        gate: AccessGate::DiamondMember,
+        expiry: Some(DAY_IN_MS),
+    };
+
+    let num_users = 3;
+
+    // Create n diamond users, a public community with a public channel, and a public group
+    // Update the container with the access gate and join users to the container
+    let TestData {
+        owner: _,
+        users,
+        container,
+    } = init_test_data(env, canister_ids, *controller, gate_config, num_users, container_type, false);
+
+    // Move the time forward so that the gate expires
+    env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
+    tick_many(env, 5);
+
+    for user in users.iter() {
+        // Assert that user has not lapsed
+        assert!(!has_user_lapsed(env, user, &container));
+    }
+}
+
+#[test_case(ContainerType::Community)]
+#[test_case(ContainerType::Channel)]
+#[test_case(ContainerType::Group)]
 fn diamond_member_lapses_and_rejoins_successfully(container_type: ContainerType) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
