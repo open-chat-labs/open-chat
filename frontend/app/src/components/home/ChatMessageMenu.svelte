@@ -49,7 +49,7 @@
     import * as shareFunctions from "../../utils/share";
     import { now } from "../../stores/time";
     import { copyToClipboard } from "../../utils/urls";
-    import { isTouchDevice } from "../../utils/devices";
+    import { isTouchOnlyDevice } from "../../utils/devices";
     import Translatable from "../Translatable.svelte";
     import { quickReactions } from "../../stores/quickReactions";
 
@@ -270,8 +270,8 @@
     }
 </script>
 
-<div class="menu" class:touch={isTouchDevice} class:inert class:rtl={$rtlStore}>
-    {#if !inert && !isTouchDevice}
+<div class="menu" class:touch={isTouchOnlyDevice} class:inert class:rtl={$rtlStore}>
+    {#if !inert && !isTouchOnlyDevice}
         {#each $quickReactions as reaction}
             <HoverIcon compact onclick={() => selectQuickReaction(reaction)}>
                 <div class="quick-reaction">
@@ -373,7 +373,7 @@
                         </div>
                     </MenuItem>
                 {/if}
-                {#if isTouchDevice}
+                {#if isTouchOnlyDevice}
                     <MenuItem on:click={copyMessage}>
                         <ContentCopy
                             size={$iconSize}
@@ -624,10 +624,6 @@
     @include setMenuOffsetByMenuItemCount(6, 13.125rem);
     @include setMenuOffsetByMenuItemCount(7, 15.25rem);
     @include setMenuOffsetByMenuItemCount(8, 17.375rem);
-
-    .emojicon {
-        margin-left: $sp1;
-    }
 
     .quick-reaction {
         width: 1.625rem;
