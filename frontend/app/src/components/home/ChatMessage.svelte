@@ -112,6 +112,7 @@
 
     let msgElement: HTMLElement;
     let msgBubbleWrapperElement: HTMLElement;
+    let msgBubbleElement: HTMLElement;
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = false;
     let debug = false;
@@ -330,13 +331,13 @@
     }
 
     function recalculateMediaDimensions() {
-        if (mediaDimensions === undefined || !msgBubbleWrapperElement) {
+        if (mediaDimensions === undefined || !msgBubbleElement) {
             return;
         }
 
         let msgBubblePaddingWidth = 0;
         if (!fill) {
-            let msgBubbleStyle = getComputedStyle(msgBubbleWrapperElement);
+            let msgBubbleStyle = getComputedStyle(msgBubbleElement);
             msgBubblePaddingWidth =
                 parseFloat(msgBubbleStyle.paddingLeft) +
                 parseFloat(msgBubbleStyle.paddingRight) +
@@ -510,6 +511,7 @@
                     class:proposal={isProposal && !inert}>
                     <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div
+                        bind:this={msgBubbleElement}
                         on:dblclick={doubleClickMessage}
                         use:longpress={() => messageMenu?.showMenu()}
                         class="message-bubble"
