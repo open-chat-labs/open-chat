@@ -400,7 +400,7 @@ import type {
     CaptionedContent,
     ExploreBotsResponse,
     ExternalBot,
-    SlashCommandPermissions,
+    ExternalBotPermissions,
     ConnectToWorkerResponse,
     FromWorker,
     WorkerResponse,
@@ -7906,7 +7906,7 @@ export class OpenChat extends EventTarget {
     addBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
-        grantedPermissions: SlashCommandPermissions,
+        grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
         this.#installBotLocally(id, botId, grantedPermissions);
         return this.#sendRequest({
@@ -7930,7 +7930,7 @@ export class OpenChat extends EventTarget {
     updateInstalledBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
-        grantedPermissions: SlashCommandPermissions,
+        grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
         return this.#sendRequest({
             kind: "updateInstalledBot",
@@ -7946,8 +7946,8 @@ export class OpenChat extends EventTarget {
     #removeInstalledBotLocally(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
-    ): SlashCommandPermissions | undefined {
-        let perm: SlashCommandPermissions | undefined;
+    ): ExternalBotPermissions | undefined {
+        let perm: ExternalBotPermissions | undefined;
         switch (id.kind) {
             case "community":
                 communityStateStore.updateProp(id, "bots", (b) => {
@@ -7970,7 +7970,7 @@ export class OpenChat extends EventTarget {
     #installBotLocally(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
-        perm: SlashCommandPermissions | undefined,
+        perm: ExternalBotPermissions | undefined,
     ): void {
         switch (id.kind) {
             case "community":

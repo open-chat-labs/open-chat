@@ -8,7 +8,7 @@ export const MIN_NAME_LENGTH = 3;
 
 export type BotGroupDetails = {
     id: string;
-    permissions: SlashCommandPermissions;
+    permissions: ExternalBotPermissions;
 };
 
 export type BotsResponse = {
@@ -103,7 +103,7 @@ export function emptySlashCommand(): SlashCommandSchema {
         name: "",
         description: "",
         params: [],
-        permissions: emptySlashCommandPermissions(),
+        permissions: emptyExternalBotPermissions(),
     };
 }
 
@@ -112,11 +112,11 @@ export type SlashCommandSchema = {
     description?: string;
     placeholder?: string;
     params: SlashCommandParam[];
-    permissions: SlashCommandPermissions;
+    permissions: ExternalBotPermissions;
     devmode?: boolean;
 };
 
-export function emptySlashCommandPermissions(): SlashCommandPermissions {
+export function emptyExternalBotPermissions(): ExternalBotPermissions {
     return {
         chatPermissions: [],
         communityPermissions: [],
@@ -124,15 +124,13 @@ export function emptySlashCommandPermissions(): SlashCommandPermissions {
     };
 }
 
-export type SlashCommandPermissionsSet = {
+export type ExternalBotPermissionsSet = {
     chatPermissions: Set<keyof ChatPermissions>;
     communityPermissions: Set<keyof CommunityPermissions>;
     messagePermissions: Set<MessagePermission>;
 };
 
-export function setifyCommandPermissions(
-    perm: SlashCommandPermissions,
-): SlashCommandPermissionsSet {
+export function setifyCommandPermissions(perm: ExternalBotPermissions): ExternalBotPermissionsSet {
     return {
         chatPermissions: new Set(perm.chatPermissions),
         communityPermissions: new Set(perm.communityPermissions),
@@ -140,19 +138,19 @@ export function setifyCommandPermissions(
     };
 }
 
-function hasEveryPermissionOfType<P extends keyof SlashCommandPermissions>(
-    required: SlashCommandPermissions,
-    granted: SlashCommandPermissionsSet,
+function hasEveryPermissionOfType<P extends keyof ExternalBotPermissions>(
+    required: ExternalBotPermissions,
+    granted: ExternalBotPermissionsSet,
     type: P,
 ): boolean {
-    const r = required[type] as SlashCommandPermissions[P][number][];
-    const g = granted[type] as Set<SlashCommandPermissions[P][number]>;
+    const r = required[type] as ExternalBotPermissions[P][number][];
+    const g = granted[type] as Set<ExternalBotPermissions[P][number]>;
     return r.every((p) => g.has(p));
 }
 
 export function hasEveryRequiredPermission(
-    required: SlashCommandPermissions,
-    granted: SlashCommandPermissions,
+    required: ExternalBotPermissions,
+    granted: ExternalBotPermissions,
 ): boolean {
     const grantedSet = setifyCommandPermissions(granted);
     return (
@@ -162,7 +160,7 @@ export function hasEveryRequiredPermission(
     );
 }
 
-export type SlashCommandPermissions = {
+export type ExternalBotPermissions = {
     chatPermissions: (keyof ChatPermissions)[];
     communityPermissions: (keyof CommunityPermissions)[];
     messagePermissions: MessagePermission[];
@@ -213,6 +211,11 @@ export type BotDefinition = {
     kind: "bot_definition";
     description: string;
     commands: SlashCommandSchema[];
+    autonomousConfig?: AutonomousBotConfig;
+};
+
+export type AutonomousBotConfig = {
+    permissions: ExternalBotPermissions;
 };
 
 export type BotDefinitionFailure = {

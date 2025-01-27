@@ -128,11 +128,7 @@ export function botSchema(
         ),
         ownerId: principalBytesToString(bot.owner),
         endpoint: bot.endpoint,
-        definition: {
-            kind: "bot_definition",
-            description: bot.description,
-            commands: bot.commands.map(externalBotCommand),
-        },
+        definition: externalBotDefinition(bot),
     };
 }
 

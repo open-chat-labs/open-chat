@@ -3,7 +3,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    import MoreInfo from "./MoreInfo.svelte";
+    import MoreInfo from "../../InfoIcon.svelte";
 
     export let comingSoon: boolean = false;
     export let freeInfo: ResourceKey | undefined = undefined;

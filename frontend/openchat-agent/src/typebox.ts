@@ -1540,8 +1540,8 @@ export const GroupInviteCodeChange = Type.Union([
     Type.Literal("Reset"),
 ]);
 
-export type SlashCommandPermissions = Static<typeof SlashCommandPermissions>;
-export const SlashCommandPermissions = Type.Object({
+export type ExternalBotPermissions = Static<typeof ExternalBotPermissions>;
+export const ExternalBotPermissions = Type.Object({
     community: Type.Array(CommunityPermission),
     chat: Type.Array(GroupPermission),
     message: Type.Array(MessagePermission),
@@ -5360,7 +5360,7 @@ export const CommunityBlockUserArgs = Type.Object({
 export type CommunityUpdateBotArgs = Static<typeof CommunityUpdateBotArgs>;
 export const CommunityUpdateBotArgs = Type.Object({
     bot_id: UserId,
-    granted_permissions: SlashCommandPermissions,
+    granted_permissions: ExternalBotPermissions,
 });
 
 export type CommunityCreateChannelResponse = Static<typeof CommunityCreateChannelResponse>;
@@ -5446,7 +5446,7 @@ export const CommunityUpdateChannelResponse = Type.Union([
 export type CommunityAddBotArgs = Static<typeof CommunityAddBotArgs>;
 export const CommunityAddBotArgs = Type.Object({
     bot_id: UserId,
-    granted_permissions: SlashCommandPermissions,
+    granted_permissions: ExternalBotPermissions,
 });
 
 export type StorageBucketDeleteFilesResponse = Static<typeof StorageBucketDeleteFilesResponse>;
@@ -5588,13 +5588,13 @@ export const GroupRemoveParticipantArgs = Type.Object({
 export type GroupUpdateBotArgs = Static<typeof GroupUpdateBotArgs>;
 export const GroupUpdateBotArgs = Type.Object({
     bot_id: UserId,
-    granted_permissions: SlashCommandPermissions,
+    granted_permissions: ExternalBotPermissions,
 });
 
 export type GroupAddBotArgs = Static<typeof GroupAddBotArgs>;
 export const GroupAddBotArgs = Type.Object({
     bot_id: UserId,
-    granted_permissions: SlashCommandPermissions,
+    granted_permissions: ExternalBotPermissions,
 });
 
 export type UserSearchMessagesArgs = Static<typeof UserSearchMessagesArgs>;
@@ -6143,7 +6143,7 @@ export type BotGroupDetails = Static<typeof BotGroupDetails>;
 export const BotGroupDetails = Type.Object({
     user_id: UserId,
     added_by: UserId,
-    permissions: SlashCommandPermissions,
+    permissions: ExternalBotPermissions,
 });
 
 export type SwapStatusErrorReserved = Static<typeof SwapStatusErrorReserved>;
@@ -6528,7 +6528,7 @@ export const SlashCommandSchema = Type.Object({
     description: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     placeholder: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     params: Type.Array(SlashCommandParam),
-    permissions: SlashCommandPermissions,
+    permissions: ExternalBotPermissions,
 });
 
 export type RoleChanged = Static<typeof RoleChanged>;

@@ -1,8 +1,5 @@
 <script lang="ts">
     import {
-        chatPermissionsList,
-        communityPermissionsList,
-        messagePermissionsList,
         type SlashCommandParam,
         type SlashCommandSchema,
         ValidationErrors,
@@ -11,17 +8,16 @@
     import { i18nKey } from "../../i18n/i18n";
     import Legend from "../Legend.svelte";
     import Translatable from "../Translatable.svelte";
-    import Checkbox from "../Checkbox.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import ValidatingInput from "./ValidatingInput.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import BotPermissionsTabs from "./BotPermissionsTabs.svelte";
     import CommandParameterViewer from "./CommandParameterViewer.svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import BotPermissionViewer from "./BotPermissionViewer.svelte";
 
     interface Props {
         errors: ValidationErrors;
@@ -114,42 +110,9 @@
             </section>
 
             <section>
-                <Legend label={i18nKey("bots.builder.commandPermissionsLabel")}></Legend>
-                <BotPermissionsTabs>
-                    {#snippet chatTab()}
-                        {#each chatPermissionsList as perm}
-                            <Checkbox
-                                id={`chat_permission_${perm}`}
-                                label={i18nKey(`permissions.${perm}`)}
-                                checked={command.permissions.chatPermissions.includes(perm)}
-                                disabled
-                                align={"start"}>
-                            </Checkbox>
-                        {/each}
-                    {/snippet}
-                    {#snippet communityTab()}
-                        {#each communityPermissionsList as perm}
-                            <Checkbox
-                                id={`community_permission_${perm}`}
-                                label={i18nKey(`permissions.${perm}`)}
-                                checked={command.permissions.communityPermissions.includes(perm)}
-                                disabled
-                                align={"start"}>
-                            </Checkbox>
-                        {/each}
-                    {/snippet}
-                    {#snippet messageTab()}
-                        {#each messagePermissionsList as perm}
-                            <Checkbox
-                                id={`message_permission_${perm}`}
-                                label={i18nKey(`permissions.messagePermissions.${perm}`)}
-                                checked={command.permissions.messagePermissions.includes(perm)}
-                                disabled
-                                align={"start"}>
-                            </Checkbox>
-                        {/each}
-                    {/snippet}
-                </BotPermissionsTabs>
+                <BotPermissionViewer
+                    title={i18nKey("bots.builder.commandPermissionsLabel")}
+                    permissions={command.permissions} />
             </section>
 
             <section>

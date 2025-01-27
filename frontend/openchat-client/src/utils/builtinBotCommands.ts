@@ -1,6 +1,6 @@
-import type { InternalBot, SlashCommandPermissions } from "openchat-shared";
+import type { InternalBot, ExternalBotPermissions } from "openchat-shared";
 
-export const emptyPermissions: SlashCommandPermissions = {
+export const emptyPermissions: ExternalBotPermissions = {
     chatPermissions: [],
     communityPermissions: [],
     messagePermissions: [],

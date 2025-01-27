@@ -50,7 +50,7 @@ import type {
     VideoCallPresence,
     VideoCallParticipantsResponse,
     AccessGateConfig,
-    SlashCommandPermissions,
+    ExternalBotPermissions,
 } from "openchat-shared";
 import {
     DestinationInvalidError,
@@ -1291,7 +1291,7 @@ export class GroupClient extends CandidService {
         );
     }
 
-    addBot(botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
+    addBot(botId: string, grantedPermissions: ExternalBotPermissions): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "add_bot",
             {
@@ -1310,7 +1310,7 @@ export class GroupClient extends CandidService {
 
     updateInstalledBot(
         botId: string,
-        grantedPermissions: SlashCommandPermissions,
+        grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "update_bot",

@@ -288,7 +288,7 @@ export class GroupIndexClient extends CandidService {
         );
     }
 
-    // addBot(botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
+    // addBot(botId: string, grantedPermissions: ExternalBotPermissions): Promise<boolean> {
     //     return this.executeMsgpackUpdate(
     //         "add_bot",
     //         {

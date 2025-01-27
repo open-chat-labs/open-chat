@@ -1,9 +1,9 @@
 <script lang="ts">
     import {
-        emptySlashCommandPermissions,
+        emptyExternalBotPermissions,
         OpenChat,
         type BotMatch,
-        type SlashCommandPermissions,
+        type ExternalBotPermissions,
         hasEveryRequiredPermission,
         type CommunityIdentifier,
         type GroupChatIdentifier,
@@ -32,7 +32,7 @@
         bot: BotMatch;
         onClose: () => void;
         id: CommunityIdentifier | GroupChatIdentifier;
-        currentPermissions?: SlashCommandPermissions;
+        currentPermissions?: ExternalBotPermissions;
     }
 
     let { bot, onClose, id, mode, currentPermissions }: Props = $props();
@@ -64,7 +64,7 @@
     function flattenPermissions() {
         return bot.definition.commands.reduce((p, c) => {
             return mergePermissions(p, c.permissions);
-        }, emptySlashCommandPermissions());
+        }, emptyExternalBotPermissions());
     }
 
     function mergeLists<T>(l1: T[], l2: T[]): T[] {
@@ -72,9 +72,9 @@
     }
 
     function mergePermissions(
-        p1: SlashCommandPermissions,
-        p2: SlashCommandPermissions,
-    ): SlashCommandPermissions {
+        p1: ExternalBotPermissions,
+        p2: ExternalBotPermissions,
+    ): ExternalBotPermissions {
         return {
             chatPermissions: mergeLists(p1.chatPermissions, p2.chatPermissions),
             communityPermissions: mergeLists(p1.communityPermissions, p2.communityPermissions),

@@ -227,7 +227,7 @@ import type {
     ChannelSummaryResponse,
     ExploreBotsResponse,
     ExternalBot,
-    SlashCommandPermissions,
+    ExternalBotPermissions,
     BotsResponse,
     BotDefinition,
 } from "openchat-shared";
@@ -4107,7 +4107,7 @@ export class OpenChatAgent extends EventTarget {
     addBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
-        grantedPermissions: SlashCommandPermissions,
+        grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
         switch (id.kind) {
             case "community":
@@ -4120,7 +4120,7 @@ export class OpenChatAgent extends EventTarget {
     updateInstalledBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
-        grantedPermissions: SlashCommandPermissions,
+        grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
         switch (id.kind) {
             case "community":

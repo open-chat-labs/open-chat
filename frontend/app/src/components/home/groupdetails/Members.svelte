@@ -25,7 +25,7 @@
         currentUser as user,
         type ExternalBot,
         externalBots,
-        type SlashCommandPermissions,
+        type ExternalBotPermissions,
         type BotMatch as BotMatchType,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
@@ -41,7 +41,7 @@
     import BotMember from "../../bots/BotMember.svelte";
     import BotSummary from "../../bots/BotSummary.svelte";
 
-    type EnhancedExternalBot = ExternalBot & { grantedPermissions: SlashCommandPermissions };
+    type EnhancedExternalBot = ExternalBot & { grantedPermissions: ExternalBotPermissions };
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
@@ -52,7 +52,7 @@
     export let members: MemberType[];
     export let blocked: Set<string>;
     export let lapsed: Set<string>;
-    export let installedBots: Map<string, SlashCommandPermissions>;
+    export let installedBots: Map<string, ExternalBotPermissions>;
     export let initialUsergroup: number | undefined = undefined;
     export let showHeader = true;
 
@@ -84,7 +84,7 @@
             : collection.id;
 
     function hydrateBots(
-        bots: Map<string, SlashCommandPermissions>,
+        bots: Map<string, ExternalBotPermissions>,
         allBots: Map<string, ExternalBot>,
     ): EnhancedExternalBot[] {
         return [...bots.entries()].reduce((bots, [id, perm]) => {

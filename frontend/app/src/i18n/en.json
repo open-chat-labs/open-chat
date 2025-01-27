@@ -164,6 +164,7 @@
             "addChoice": "Add a choice",
             "addCommand": "Add command",
             "addParam": "Add a parameter",
+            "autonomousPermissionsLabel": "Autonomous permissions",
             "choiceName": "Choice name",
             "choices": "Choices",
             "choicesInfo": "If you enter a set of choices for your parameter, the user will be presented with a drop down to choose the correct value.",
@@ -314,6 +315,8 @@
             }
         },
         "manage": {
+            "apiKeyInfo": "You will need an API key to allow bots to perform actions independently in this context",
+            "generateApiKey": "Generate an API key",
             "remove": "Remove bot",
             "removeFailed": "Sorry we were unable to remove the bot",
             "removeReason": "Reason for removing bot",

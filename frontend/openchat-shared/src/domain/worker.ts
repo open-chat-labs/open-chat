@@ -207,7 +207,7 @@ import type {
     BotDefinitionResponse,
     BotsResponse,
     ExternalBot,
-    SlashCommandPermissions,
+    ExterlBotPermissions,
 } from "./bots";
 
 /**
@@ -453,14 +453,14 @@ type AddBot = {
     kind: "addBot";
     id: CommunityIdentifier | GroupChatIdentifier;
     botId: string;
-    grantedPermissions: SlashCommandPermissions;
+    grantedPermissions: ExterlBotPermissions;
 };
 
 type UpdateInstalledBot = {
     kind: "updateInstalledBot";
     id: CommunityIdentifier | GroupChatIdentifier;
     botId: string;
-    grantedPermissions: SlashCommandPermissions;
+    grantedPermissions: ExterlBotPermissions;
 };
 
 type RemoveInstalledBot = {

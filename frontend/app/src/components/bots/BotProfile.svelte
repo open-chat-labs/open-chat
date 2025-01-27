@@ -13,7 +13,7 @@
         externalBots,
         currentChatBots,
         currentCommunityBots,
-        emptySlashCommandPermissions,
+        emptyExternalBotPermissions,
     } from "openchat-client";
 
     let { botId, chatId, onClose }: BotProfileProps = $props();
@@ -21,7 +21,7 @@
     let installedBots = $derived(
         chatId.kind === "channel" ? currentCommunityBots : currentChatBots,
     );
-    let grantedPermissions = $derived($installedBots.get(botId) ?? emptySlashCommandPermissions());
+    let grantedPermissions = $derived($installedBots.get(botId) ?? emptyExternalBotPermissions());
     let bot = $derived($externalBots.get(botId));
     let id = $derived.by<CommunityIdentifier | GroupChatIdentifier | undefined>(() => {
         switch (chatId.kind) {
