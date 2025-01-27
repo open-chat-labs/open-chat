@@ -11,28 +11,28 @@ fn remove_identity_link(args: Args) -> Response {
 
 fn remove_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
-    let auth_principal = state.data.user_principals.get_auth_principal(&caller);
-    let user_principal = state
-        .data
-        .user_principals
-        .get_by_auth_principal(&caller)
-        .filter(|u| u.user_id.is_some());
 
-    let principals = auth_principal.zip(user_principal);
-
-    if let Some((auth, user)) = principals {
-        if user.principal == args.linked_principal {
-            Response::CannotUnlinkActivePrincipal
-        } else if state
+    if caller == args.linked_principal {
+        Response::CannotUnlinkActivePrincipal
+    } else {
+        let user_principal = state
             .data
             .user_principals
-            .unlink_auth_principal(args.linked_principal, auth.user_principal_index)
-        {
-            Response::Success
+            .get_by_auth_principal(&caller)
+            .filter(|u| u.user_id.is_some());
+
+        if let Some(user) = user_principal {
+            if state
+                .data
+                .user_principals
+                .unlink_auth_principal(args.linked_principal, user.index)
+            {
+                Response::Success
+            } else {
+                Response::IdentityLinkNotFound
+            }
         } else {
-            Response::IdentityLinkNotFound
+            Response::UserNotFound
         }
-    } else {
-        Response::UserNotFound
     }
 }
