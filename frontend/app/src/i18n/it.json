@@ -237,6 +237,11 @@
             "desc": "Questo bot fornisce i comandi OpenChat integrati",
             "name": "Incorporato"
         },
+        "config": {
+            "failure": "Spiacenti, non siamo riusciti a recuperare i dati di configurazione del bot",
+            "info": "Se stai creando un bot OpenChat, avrai bisogno di alcuni dati di configurazione come descritto nella [documentazione sullo sviluppo del bot](https://github.com/open-chat-labs/open-chat-bots). Fai clic sul pulsante in basso per ottenere la configurazione pertinente per questo ambiente.",
+            "title": "Configurazione del client bot"
+        },
         "crypto": {
             "desc": "Invia criptovalute a un altro utente",
             "params": {
