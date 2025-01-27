@@ -24,7 +24,7 @@
         currentChatBlockedUsers,
         type BotMessageContext as BotMessageContextType,
     } from "openchat-client";
-    import { isTouchDevice } from "../../utils/devices";
+    import { isTouchOnlyDevice } from "../../utils/devices";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -708,7 +708,7 @@
                 </div>
 
                 {#if !collapsed && !msg.deleted && canReact && !failed}
-                    <div class="actions" class:touch={isTouchDevice}>
+                    <div class="actions" class:touch={isTouchOnlyDevice}>
                         <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                             <HoverIcon>
                                 <EmoticonOutline size={$iconSize} color={"var(--icon-txt)"} />

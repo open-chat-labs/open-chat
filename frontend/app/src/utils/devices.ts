@@ -4,6 +4,11 @@ export const isTouchDevice: boolean =
     //@ts-ignore
     ("ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0);
 
+export const supportsHover = window.matchMedia("(hover: hover)").matches;
+
+// Often we *don't* want to include things like touch screen laptops so we want to also check that hover is *not* supported
+export const isTouchOnlyDevice = isTouchDevice && !supportsHover;
+
 export const mobileOperatingSystem = getMobileOperatingSystem();
 export const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
