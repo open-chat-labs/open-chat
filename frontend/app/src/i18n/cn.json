@@ -237,6 +237,11 @@
             "desc": "该机器人提供内置的 OpenChat 命令",
             "name": "内置"
         },
+        "config": {
+            "failure": "抱歉，我们无法检索机器人配置数据",
+            "info": "如果您正在创建 OpenChat 机器人，您将需要某些配置数据，如 [机器人开发文档](https://github.com/open-chat-labs/open-chat-bots) 中所述。单击下面的按钮获取此环境的相关配置。",
+            "title": "机器人客户端配置"
+        },
         "crypto": {
             "desc": "向其他用户发送加密货币",
             "params": {

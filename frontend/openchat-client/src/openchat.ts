@@ -414,6 +414,7 @@ import type {
     BotCommandResponse,
     BotDefinition,
     BotMessageContext,
+    BotClientConfigData,
 } from "openchat-shared";
 import {
     Stream,
@@ -8485,4 +8486,30 @@ export class OpenChat extends EventTarget {
         }
         return this.responseHandler(req, correlationId, timeout);
     }
+
+    getBotConfig(): Promise<BotClientConfigData> {
+        const metricsUrl =
+            process.env.NODE_ENV === "production"
+                ? `https://${this.config.userIndexCanister}.raw.ic0.app/metrics`
+                : `http://${this.config.userIndexCanister}.localhost:8080/metrics`;
+        return fetch(metricsUrl, {
+            headers: { "Content-Type": "application/json" },
+        })
+            .then((res) => {
+                if (res.ok) {
+                    return res.json();
+                }
+            })
+            .then((metrics: UserIndexMetrics) => {
+                return {
+                    ocPublicKey: metrics.oc_public_key,
+                    openStorageIndexCanister: this.config.openStorageIndexCanister,
+                    icHost: this.config.icUrl ?? window.location.origin,
+                };
+            });
+    }
 }
+
+type UserIndexMetrics = {
+    oc_public_key: string;
+};

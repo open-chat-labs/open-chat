@@ -237,6 +237,11 @@
             "desc": "This bot provides the built in OpenChat commands",
             "name": "Built-in"
         },
+        "config": {
+            "failure": "Sorry we were unable to retrieve the bot configuration data",
+            "info": "If you are creating an OpenChat bot you will need certain pieces of configuration data as described in the [bot development documentation](https://github.com/open-chat-labs/open-chat-bots). Click the button below to obtain the relevant config for this environment.",
+            "title": "Bot client config"
+        },
         "crypto": {
             "desc": "Send crypto to another user",
             "params": {

@@ -18,6 +18,7 @@
         isLifetimeDiamond,
         canExtendDiamond,
         globalStateStore as globalState,
+        type BotClientConfigData,
     } from "openchat-client";
     import { isTouchDevice } from "../../../utils/devices";
     import Close from "svelte-material-icons/Close.svelte";
@@ -58,7 +59,13 @@
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Toggle from "../../Toggle.svelte";
-    import { editmode, i18nKey, setLocale, supportedLanguages } from "../../../i18n/i18n";
+    import {
+        editmode,
+        i18nKey,
+        interpolate,
+        setLocale,
+        supportedLanguages,
+    } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ReferUsers from "./ReferUsers.svelte";
@@ -75,6 +82,8 @@
     import ReferredUsersList from "./ReferredUsersList.svelte";
     import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
     import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
+    import BotConfigData from "./BotConfigData.svelte";
+    import Markdown from "../Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -98,6 +107,7 @@
     let selectedCommunityId = "";
     let deleting = false;
     let confirmDelete = false;
+    let botConfigData: BotClientConfigData | undefined = undefined;
 
     $: originalUsername = user?.username ?? "";
     $: originalDisplayName = user?.displayName ?? undefined;
@@ -248,6 +258,15 @@
             toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
         });
     }
+
+    function getBotConfig() {
+        client
+            .getBotConfig()
+            .then((config) => (botConfigData = config))
+            .catch((err) => {
+                toastStore.showFailureToast(i18nKey("bots.config.failure"), err);
+            });
+    }
 </script>
 
 {#if confirmDelete}
@@ -290,6 +309,10 @@
             <Translatable resourceKey={i18nKey("CHIT")} />
         </div>
     </div>
+{/if}
+
+{#if botConfigData !== undefined}
+    <BotConfigData data={botConfigData} onClose={() => (botConfigData = undefined)} />
 {/if}
 
 {#if view === "global"}
@@ -608,6 +631,15 @@
                         on:click={() =>
                             client.clearCachedData().then(() => window.location.reload())}>
                         <Translatable resourceKey={i18nKey("clearDataCache")} />
+                    </Button>
+                </div>
+
+                <div class="para">
+                    <p class="para smallprint">
+                        <Markdown text={interpolate($_, i18nKey("bots.config.info"))}></Markdown>
+                    </p>
+                    <Button on:click={getBotConfig}>
+                        <Translatable resourceKey={i18nKey("bots.config.title")} />
                     </Button>
                 </div>
             </CollapsibleCard>

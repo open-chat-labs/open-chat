@@ -237,6 +237,11 @@
             "desc": "Ten bot zapewnia wbudowane polecenia OpenChat",
             "name": "Wbudowany"
         },
+        "config": {
+            "failure": "Przepraszamy, nie udało nam się pobrać danych konfiguracyjnych bota",
+            "info": "Jeśli tworzysz bota OpenChat, będziesz potrzebować pewnych danych konfiguracyjnych, jak opisano w [dokumentacji rozwoju bota](https://github.com/open-chat-labs/open-chat-bots). Kliknij poniższy przycisk, aby uzyskać odpowiednią konfigurację dla tego środowiska.",
+            "title": "Konfiguracja klienta bota"
+        },
         "crypto": {
             "desc": "Wyślij kryptowalutę innemu użytkownikowi",
             "params": {

@@ -237,6 +237,11 @@
             "desc": "Bot này cung cấp các lệnh OpenChat tích hợp sẵn",
             "name": "Tích hợp sẵn"
         },
+        "config": {
+            "failure": "Xin lỗi, chúng tôi không thể lấy lại dữ liệu cấu hình bot",
+            "info": "Nếu bạn đang tạo bot OpenChat, bạn sẽ cần một số dữ liệu cấu hình nhất định như được mô tả trong [tài liệu phát triển bot](https://github.com/open-chat-labs/open-chat-bots). Nhấp vào nút bên dưới để lấy cấu hình có liên quan cho môi trường này.",
+            "title": "Cấu hình máy khách Bot"
+        },
         "crypto": {
             "desc": "Gửi tiền điện tử cho người dùng khác",
             "params": {
