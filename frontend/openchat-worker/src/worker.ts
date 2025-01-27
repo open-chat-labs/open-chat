@@ -31,6 +31,7 @@ import {
     type CreateOpenChatIdentityError,
     type LinkIdentitiesResponse,
     AuthProvider,
+    type RemoveIdentityLinkResponse,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -1838,6 +1839,16 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "removeIdentityLink":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    removeIdentityLink(
+                        payload.linked_principal,
+                    ),
+                );
+                break;
+
             case "getAuthenticationPrincipals":
                 if (identityAgent === undefined) {
                     throw new Error("IdentityAgent not initialized");
@@ -2000,4 +2011,14 @@ async function linkIdentities(
         return initiateResponse;
     }
     return await approverAgent.approveIdentityLink(initiator);
+}
+
+async function removeIdentityLink(
+    linked_principal: string,
+): Promise<RemoveIdentityLinkResponse> {
+    if(identityAgent) {
+        return identityAgent.removeIdentityLink(linked_principal);
+    }
+
+    throw new Error("IdentityAgent not initialized");
 }

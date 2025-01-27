@@ -838,7 +838,11 @@
             "loginApprover": "Sorry we were unable to sign into your current OpenChat authentication provider",
             "loginInitiator": "Sorry we were unable to sign into your chosen provider",
             "pollingError": "There was an unexpected error waiting for email signin",
-            "principalMismatch": "It seems like you did not re-authenticate with the same provider that you are currently signed in with"
+            "principalMismatch": "It seems like you did not re-authenticate with the same provider that you are currently signed in with",
+            "unlinkActivePrincipal": "It seems like you tried to unlink a provider you're currently logged in with, which is not allowed.",
+            "identityNotFound": "We could not find the linked provider, and therefore cannot continue with the unlinking process.",
+            "userNotFound": "It does not appear that the provider you are currently logged in with is available, and cannot be used for unlinking.",
+            "unexpectedError": "Could not process your request. Please try again later."
         },
         "humanityWarning": "You must have an Internet Identity associated with your OpenChat account to confirm your unique personhood. If you registered using another provider you will need to create and link an Internet Identity to your OpenChat account before proceeding.",
         "link": "Link",
@@ -847,9 +851,15 @@
             "linkAdvice": "To add a new sign-in provider, first sign-in with the new provider you want to add, then sign-in with your current provider and finally link the two together.",
             "linkAnother": "Add another",
             "section": "Sign-in providers",
-            "start": "Get started"
+            "start": "Get started",
+            "unlink": "Unlink this account",
+            "unlinkAdvice": "This will unlink the {provider} account you had linked previously. Are you sure you want to proceed?",
+            "unlinkNote": "Unlinked accounts can be linked again.",
+            "unlinkAction": "Unlink",
+            "unlinkingDone": "Your {provider} account has been unlinked!"
         },
         "linkIdentity": "Link Identity",
+        "unlinkIdentity": "Unlink Identity",
         "linkTwoIdentities": "We are now ready to link the two identities together.",
         "mismatch": "This does not match the principal that you are currently signed in with. Are you sure you used the same authentication provider?",
         "proceed": "Proceed",

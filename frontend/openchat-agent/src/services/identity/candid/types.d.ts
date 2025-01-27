@@ -71,6 +71,13 @@ export interface PrepareDelegationSuccess {
   'expiration' : TimestampNanoseconds,
 }
 export type PublicKey = Uint8Array | number[];
+export interface RemoveIdentityLinkArgs { 'linked_principal' : Principal }
+export type RemoveIdentityLinkResponse = {
+    'CannotUnlinkActivePrincipal' : null
+  } |
+  { 'Success' : null } |
+  { 'IdentityLinkNotFound' : null } |
+  { 'UserNotFound' : null };
 export interface SignedDelegation {
   'signature' : Uint8Array | number[],
   'delegation' : { 'pubkey' : PublicKey, 'expiration' : TimestampNanoseconds },
@@ -93,6 +100,10 @@ export interface _SERVICE {
   'prepare_delegation' : ActorMethod<
     [PrepareDelegationArgs],
     PrepareDelegationResponse
+  >,
+  'remove_identity_link' : ActorMethod<
+    [RemoveIdentityLinkArgs],
+    RemoveIdentityLinkResponse
   >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

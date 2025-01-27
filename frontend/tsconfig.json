@@ -19,6 +19,7 @@
         "target": "ES2022",
         "types": ["jest", "node", "svelte"],
         "verbatimModuleSyntax": true,
-        "useDefineForClassFields": false
-    }
+        "useDefineForClassFields": false,
+    },
+    "exclude": ["build/**/*", "node_modules"]
 }

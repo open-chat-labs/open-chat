@@ -177,6 +177,7 @@ import type {
     GetDelegationResponse,
     GetOpenChatIdentityResponse,
     LinkIdentitiesResponse,
+    RemoveIdentityLinkResponse,
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
@@ -411,6 +412,7 @@ export type WorkerRequest =
     | MarkAchievementsSeen
     | SubmitProofOfUniquePersonhood
     | LinkIdentities
+    | RemoveIdentityLink
     | GetAuthenticationPrincipals
     | ConfigureWallet
     | ClearCachedData
@@ -1423,6 +1425,11 @@ type LinkIdentities = {
     approverDelegation: JsonnableDelegationChain;
 };
 
+type RemoveIdentityLink = {
+    kind: "removeIdentityLink";
+    linked_principal: string;
+}
+
 type DeleteUser = {
     kind: "deleteUser";
     userId: string;
@@ -2294,6 +2301,8 @@ export type WorkerResult<T> = T extends Init
     ? SubmitProofOfUniquePersonhoodResponse
     : T extends LinkIdentities
     ? LinkIdentitiesResponse
+    : T extends RemoveIdentityLink
+    ? RemoveIdentityLinkResponse
     : T extends GetAuthenticationPrincipals
     ? AuthenticationPrincipalsResponse
     : T extends ConfigureWallet

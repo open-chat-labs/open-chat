@@ -94,6 +94,25 @@ impl UserPrincipals {
         }
     }
 
+    pub fn unlink_auth_principal(&mut self, linked_principal: Principal, user_principal_index: u32) -> bool {
+        let exists_user_with_linked_principal = self
+            .get_by_auth_principal(&linked_principal)
+            .is_some_and(|u| u.user_id.is_some());
+
+        if exists_user_with_linked_principal {
+            let current_user = self.user_principals.get_mut(user_principal_index as usize);
+
+            if let Some(user_principal) = current_user {
+                user_principal.auth_principals.retain(|&ap| ap != linked_principal);
+                self.auth_principals.remove(&linked_principal);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     pub fn next_index(&self) -> u32 {
         self.user_principals.len().try_into().unwrap()
     }

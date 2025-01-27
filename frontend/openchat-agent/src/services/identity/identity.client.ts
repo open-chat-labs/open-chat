@@ -11,6 +11,7 @@ import type {
     GetDelegationResponse,
     InitiateIdentityLinkResponse,
     PrepareDelegationResponse,
+    RemoveIdentityLinkResponse,
 } from "openchat-shared";
 import {
     approveIdentityLinkResponse,
@@ -21,6 +22,7 @@ import {
     getDelegationResponse,
     initiateIdentityLinkResponse,
     prepareDelegationResponse,
+    removeIdentityLinkResponse,
 } from "./mappers";
 import type { CreateIdentityArgs } from "./candid/types";
 import { apiOptional } from "../common/chatMappers";
@@ -119,6 +121,15 @@ export class IdentityClient extends CandidService {
                 delegation: signedDelegation((this.identity as DelegationIdentity).getDelegation()),
             }),
             approveIdentityLinkResponse,
+        );
+    }
+
+    removeIdentityLink(linked_principal: string): Promise<RemoveIdentityLinkResponse> {
+        return this.handleResponse(
+            this.service.remove_identity_link({
+                linked_principal: Principal.fromText(linked_principal),
+            }),
+            removeIdentityLinkResponse,
         );
     }
 
