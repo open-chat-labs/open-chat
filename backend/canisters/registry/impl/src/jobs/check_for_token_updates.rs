@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state};
 use constants::HOUR_IN_MS;
 use ic_cdk::api::call::RejectionCode;
 use std::time::Duration;
-use tracing::error;
+use tracing::{error, info};
 use types::CanisterId;
 use utils::canister_timers::run_now_then_interval;
 
@@ -56,6 +56,15 @@ async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), (
 
             if args.has_updates() {
                 state.data.tokens.update(args, state.env.now());
+            }
+
+            if token.enabled && !metadata_helper.is_icrc1_compatible() {
+                state
+                    .data
+                    .tokens
+                    .set_enabled(token.ledger_canister_id, false, state.env.now());
+
+                info!(%token.ledger_canister_id, "Token disabled because it is not ICRC compatible");
             }
         }
     });
