@@ -2,7 +2,6 @@ use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use constants::DAY_IN_MS;
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use tracing::{error, info};
 use types::{CanisterId, CanisterWasm, Hash, UpgradeChunkedCanisterWasmResponse::*, UpgradesFilter};
@@ -57,25 +56,10 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
     let wasm = state.data.child_canister_wasms.wasm_from_chunks(ChildCanisterType::User);
 
     let local_user_index_canister_ids: Vec<_> = state.data.local_index_map.canisters().copied().collect();
-    // Only upgrade users who have claimed CHIT in the last 30 days
-    let streak_cutoff = state.env.now().saturating_sub(30 * DAY_IN_MS);
-    let users_to_upgrade: Vec<_> = state
-        .data
-        .users
-        .iter()
-        .filter(|u| u.streak_ends > streak_cutoff)
-        .map(|u| CanisterId::from(u.user_id))
-        .collect();
 
-    let upgrades_filter = UpgradesFilter {
-        include: users_to_upgrade,
-        exclude: Vec::new(),
-    };
-
-    let local_user_index_canisters =
-        build_filter_map(local_user_index_canister_ids, args.filter.unwrap_or(upgrades_filter), |c| {
-            state.data.local_index_map.get_index_canister(&c.into())
-        });
+    let local_user_index_canisters = build_filter_map(local_user_index_canister_ids, args.filter.unwrap_or_default(), |c| {
+        state.data.local_index_map.get_index_canister(&c.into())
+    });
 
     Ok(PrepareResult {
         wasm: CanisterWasm {
