@@ -15,6 +15,17 @@
         onClose: () => void;
     }
 
+    let properties: (keyof BotClientConfigData)[] = [
+        "ocPublicKey",
+        "openStorageIndexCanister",
+        "icHost",
+    ];
+    let labels: Record<keyof BotClientConfigData, string> = {
+        ocPublicKey: "OpenChat public key",
+        openStorageIndexCanister: "OpenStorage index canister",
+        icHost: "IC host url",
+    };
+
     let { data, onClose }: Props = $props();
 
     function onCopy(txt: string) {
@@ -22,40 +33,28 @@
     }
 </script>
 
-{#snippet copy(txt: string)}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <div role="button" tabindex="0" onclick={() => onCopy(txt)} class="copy">
-        <CopyIcon size={"1rem"} color={"var(--icon-txt)"} />
-    </div>
-{/snippet}
-
 <Overlay>
     <ModalContent>
         <span slot="header">
             <Translatable resourceKey={i18nKey("bots.config.title")} />
         </span>
         <span slot="body">
-            <div class="field">
-                <div class="label">
-                    <Legend label={i18nKey("OpenChat public key")}></Legend>
-                    {@render copy(data.ocPublicKey)}
+            {#each properties as prop}
+                <div class="field">
+                    <div class="label">
+                        <Legend label={i18nKey(labels[prop])}></Legend>
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <div
+                            role="button"
+                            tabindex="0"
+                            onclick={() => onCopy(data[prop])}
+                            class="copy">
+                            <CopyIcon size={"1rem"} color={"var(--icon-txt)"} />
+                        </div>
+                    </div>
+                    <pre>{data[prop]}</pre>
                 </div>
-                <pre>{data.ocPublicKey}</pre>
-            </div>
-            <div class="field">
-                <div class="label">
-                    <Legend label={i18nKey("OpenStorage index canister")}></Legend>
-                    {@render copy(data.openStorageIndexCanister)}
-                </div>
-                <pre>{data.openStorageIndexCanister}</pre>
-            </div>
-            <div class="field">
-                <div class="label">
-                    <Legend label={i18nKey("IC Host Url")}></Legend>
-                    {@render copy(data.icHost)}
-                </div>
-                <pre>{data.icHost}</pre>
-            </div>
+            {/each}
         </span>
         <span slot="footer">
             <ButtonGroup>
