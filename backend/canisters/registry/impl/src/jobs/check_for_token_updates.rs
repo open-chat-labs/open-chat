@@ -57,6 +57,13 @@ async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), (
             if args.has_updates() {
                 state.data.tokens.update(args, state.env.now());
             }
+
+            if token.enabled && !metadata_helper.is_icrc1_compatible() {
+                state
+                    .data
+                    .tokens
+                    .set_enabled(token.ledger_canister_id, false, state.env.now());
+            }
         }
     });
 
