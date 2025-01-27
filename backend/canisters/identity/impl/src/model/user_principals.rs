@@ -110,7 +110,7 @@ impl UserPrincipals {
             }
         }
 
-        return false;
+        false
     }
 
     pub fn next_index(&self) -> u32 {
