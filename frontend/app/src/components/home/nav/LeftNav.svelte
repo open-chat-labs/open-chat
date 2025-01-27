@@ -400,7 +400,7 @@
     .middle {
         flex: auto;
         overflow-x: hidden;
-        @include nice-scrollbar();
+        scrollbar-width: none;
     }
 
     .hover {

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1589-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1589-user)] - 2025-01-24
+
 ### Changed
 
 - Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
@@ -13,12 +15,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `start_video_call_v2` and `end_video_call_v2` with reduced arg sizes ([#7236](https://github.com/open-chat-labs/open-chat/pull/7236))
 - Disallow forwarding prize messages and governance proposal messages ([#7260](https://github.com/open-chat-labs/open-chat/pull/7260))
 - Introduce new `Integer` bot parameter type ([#7296](https://github.com/open-chat-labs/open-chat/pull/7296))
+- Improved algorithm for generating messageIds in direct chats ([#7301](https://github.com/open-chat-labs/open-chat/pull/7301))
 
 ### Fixed
 
 - Fix calculation of amount to withdraw from ICPSwap ([#7272](https://github.com/open-chat-labs/open-chat/pull/7272))
 - De-duplicate messageIds using a timer job ([#7275](https://github.com/open-chat-labs/open-chat/pull/7275))
 - Fix check to only set up CHIT insurance timer job if required ([#7284](https://github.com/open-chat-labs/open-chat/pull/7284))
+- Avoid retrying c2c call if recipient canister is uninstalled ([#7302](https://github.com/open-chat-labs/open-chat/pull/7302))
 
 ## [[2.0.1571-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1571-user)] - 2025-01-15
 

@@ -237,6 +237,11 @@
             "desc": "该机器人提供内置的 OpenChat 命令",
             "name": "内置"
         },
+        "config": {
+            "failure": "抱歉，我们无法检索机器人配置数据",
+            "info": "如果您正在创建 OpenChat 机器人，您将需要某些配置数据，如 [机器人开发文档](https://github.com/open-chat-labs/open-chat-bots) 中所述。单击下面的按钮获取此环境的相关配置。",
+            "title": "机器人客户端配置"
+        },
         "crypto": {
             "desc": "向其他用户发送加密货币",
             "params": {
@@ -311,6 +316,9 @@
         "manage": {
             "remove": "移除机器人",
             "removeFailed": "抱歉，我们无法移除该机器人",
+            "removeReason": "删除机器人的原因",
+            "removeReasonPlaceholder": "请提供支持删除该机器人的理由/证据",
+            "removeSearch": "搜索要删除的机器人",
             "review": "审查机器人权限",
             "view": "查看机器人详细信息"
         },
@@ -340,6 +348,8 @@
             "action": "更新",
             "desc": "发起更新现有 OpenChat 机器人的提案",
             "nobots": "只有已注册机器人的所有者才能更新机器人。您不是任何已注册机器人的所有者。",
+            "remove": "选择要移除的机器人",
+            "removeDesc": "如果您是所有者，请删除现有的 OpenChat 机器人",
             "select": "选择要更新的机器人",
             "title": "更新 {name}"
         },

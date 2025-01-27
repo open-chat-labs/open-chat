@@ -583,3 +583,9 @@ export type BotResponseMessage = {
     messageContent: MessageContent;
     finalised: boolean;
 };
+
+export type BotClientConfigData = {
+    ocPublicKey: string;
+    openStorageIndexCanister: string;
+    icHost: string;
+};

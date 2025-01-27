@@ -237,6 +237,11 @@
             "desc": "Ten bot zapewnia wbudowane polecenia OpenChat",
             "name": "Wbudowany"
         },
+        "config": {
+            "failure": "Przepraszamy, nie udało nam się pobrać danych konfiguracyjnych bota",
+            "info": "Jeśli tworzysz bota OpenChat, będziesz potrzebować pewnych danych konfiguracyjnych, jak opisano w [dokumentacji rozwoju bota](https://github.com/open-chat-labs/open-chat-bots). Kliknij poniższy przycisk, aby uzyskać odpowiednią konfigurację dla tego środowiska.",
+            "title": "Konfiguracja klienta bota"
+        },
         "crypto": {
             "desc": "Wyślij kryptowalutę innemu użytkownikowi",
             "params": {
@@ -311,6 +316,9 @@
         "manage": {
             "remove": "Usuń bota",
             "removeFailed": "Przepraszamy, nie udało nam się usunąć bota",
+            "removeReason": "Powód usunięcia bota",
+            "removeReasonPlaceholder": "Proszę podać powody/dowody uzasadniające usunięcie bota",
+            "removeSearch": "Wyszukaj bota, którego chcesz usunąć",
             "review": "Przejrzyj uprawnienia bota",
             "view": "Wyświetl szczegóły bota"
         },
@@ -340,6 +348,8 @@
             "action": "Aktualizacja",
             "desc": "Rozpocznij propozycję aktualizacji istniejącego bota OpenChat",
             "nobots": "Tylko właściciel zarejestrowanego bota może aktualizować bota. Nie jesteś właścicielem żadnego zarejestrowanego bota.",
+            "remove": "Wybierz bota do usunięcia",
+            "removeDesc": "Usuń istniejącego bota OpenChat, jeśli jesteś jego właścicielem",
             "select": "Wybierz bota do aktualizacji",
             "title": "Aktualizacja {name}"
         },

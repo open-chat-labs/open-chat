@@ -171,12 +171,7 @@ struct Data {
     pub upload_wasm_chunks_whitelist: HashSet<Principal>,
     pub ic_root_key: Vec<u8>,
     pub rng_seed: [u8; 32],
-    #[serde(default = "init_local_group_index_event_sync_queue")]
     pub local_group_index_event_sync_queue: GroupedTimerJobQueue<LocalGroupIndexEventBatch>,
-}
-
-fn init_local_group_index_event_sync_queue() -> GroupedTimerJobQueue<LocalGroupIndexEventBatch> {
-    GroupedTimerJobQueue::new(10, false)
 }
 
 impl Data {

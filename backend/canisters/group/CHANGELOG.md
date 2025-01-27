@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Avoid retrying c2c call if recipient canister is uninstalled ([#7302](https://github.com/open-chat-labs/open-chat/pull/7302))
+
+## [[2.0.1581](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1581-group)] - 2025-01-24
+
 ### Added
 
 - Add facility to set/revoke group verification via proposal ([#7240](https://github.com/open-chat-labs/open-chat/pull/7240))
@@ -22,11 +28,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Fix message size limit being exceeded when importing group into community ([#7278](https://github.com/open-chat-labs/open-chat/pull/7278))
-
-### Fixed
-
 - De-duplicate messageIds using a timer job ([#7275](https://github.com/open-chat-labs/open-chat/pull/7275))
+- Fix message size limit being exceeded when importing group into community ([#7278](https://github.com/open-chat-labs/open-chat/pull/7278))
 
 ## [[2.0.1569](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1569-group)] - 2025-01-14
 

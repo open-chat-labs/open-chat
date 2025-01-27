@@ -39,7 +39,7 @@
     import { botsEnabled } from "../../../utils/bots";
     import BotExplorer from "../../bots/BotExplorer.svelte";
     import BotMember from "../../bots/BotMember.svelte";
-    import BotMatch from "../../bots/BotMatch.svelte";
+    import BotSummary from "../../bots/BotSummary.svelte";
 
     type EnhancedExternalBot = ExternalBot & { grantedPermissions: SlashCommandPermissions };
 
@@ -57,6 +57,7 @@
     export let showHeader = true;
 
     let userGroups: UserGroups | undefined;
+    let showingBotSummary: BotMatchType | undefined = undefined;
 
     $: userId = $user.userId;
     $: knownUsers = getKnownUsers($userStore, members);
@@ -226,6 +227,14 @@
         membersList.reset();
     }
 </script>
+
+{#if showingBotSummary}
+    <BotSummary
+        mode={"adding"}
+        id={botContainer}
+        onClose={() => (showingBotSummary = undefined)}
+        bot={showingBotSummary} />
+{/if}
 
 {#if showHeader}
     <MembersHeader
@@ -418,11 +427,7 @@
     </div>
 {:else if selectedTab === "add-bots" && collection.kind !== "channel"}
     <div class="bot-explorer">
-        <BotExplorer>
-            {#snippet botMatch(match: BotMatchType)}
-                <BotMatch id={botContainer} {match} />
-            {/snippet}
-        </BotExplorer>
+        <BotExplorer onSelect={(match) => (showingBotSummary = match)}></BotExplorer>
     </div>
 {/if}
 
@@ -432,13 +437,6 @@
     }
     :global(.member-section-selector button) {
         padding: $sp2 0 !important;
-    }
-
-    .member-section-selector {
-        margin: 0 $sp4 $sp4 $sp4;
-        @include mobile() {
-            margin: 0 $sp3 $sp3 $sp3;
-        }
     }
 
     .user-list {

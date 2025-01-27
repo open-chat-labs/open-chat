@@ -237,6 +237,11 @@
             "desc": "Bot này cung cấp các lệnh OpenChat tích hợp sẵn",
             "name": "Tích hợp sẵn"
         },
+        "config": {
+            "failure": "Xin lỗi, chúng tôi không thể lấy lại dữ liệu cấu hình bot",
+            "info": "Nếu bạn đang tạo bot OpenChat, bạn sẽ cần một số dữ liệu cấu hình nhất định như được mô tả trong [tài liệu phát triển bot](https://github.com/open-chat-labs/open-chat-bots). Nhấp vào nút bên dưới để lấy cấu hình có liên quan cho môi trường này.",
+            "title": "Cấu hình máy khách Bot"
+        },
         "crypto": {
             "desc": "Gửi tiền điện tử cho người dùng khác",
             "params": {
@@ -311,6 +316,9 @@
         "manage": {
             "remove": "Xóa bot",
             "removeFailed": "Xin lỗi chúng tôi không thể xóa bot",
+            "removeReason": "Lý do xóa bot",
+            "removeReasonPlaceholder": "Vui lòng cung cấp lý do/bằng chứng hỗ trợ việc xóa bot",
+            "removeSearch": "Tìm kiếm bot để loại bỏ",
             "review": "Xem lại quyền của bot",
             "view": "Xem chi tiết bot"
         },
@@ -340,6 +348,8 @@
             "action": "Cập nhật",
             "desc": "Bắt đầu đề xuất cập nhật bot OpenChat hiện có",
             "nobots": "Chỉ có chủ sở hữu của bot đã đăng ký mới có thể cập nhật bot. Bạn không phải là chủ sở hữu của bất kỳ bot đã đăng ký nào.",
+            "remove": "Chọn bot để xóa",
+            "removeDesc": "Xóa bot OpenChat hiện có nếu bạn là chủ sở hữu",
             "select": "Chọn bot để cập nhật",
             "title": "Cập nhật {name}"
         },

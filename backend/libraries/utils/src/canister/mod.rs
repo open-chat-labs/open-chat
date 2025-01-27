@@ -39,6 +39,7 @@ pub fn should_retry_failed_c2c_call(rejection_code: RejectionCode, message: &str
         RejectionCode::DestinationInvalid => false,
         RejectionCode::CanisterReject => false,
         RejectionCode::CanisterError if message.contains("IC0536") => false, // CanisterMethodNotFound
+        RejectionCode::CanisterError if message.contains("IC0537") => false, // CanisterWasmModuleNotFound
         _ => true,
     }
 }

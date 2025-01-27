@@ -237,6 +237,11 @@
             "desc": "Ce bot fournit les commandes OpenChat intégrées",
             "name": "Intégré"
         },
+        "config": {
+            "failure": "Désolé, nous n'avons pas pu récupérer les données de configuration du bot",
+            "info": "Si vous créez un bot OpenChat, vous aurez besoin de certaines données de configuration comme décrit dans la [documentation de développement du bot](https://github.com/open-chat-labs/open-chat-bots). Cliquez sur le bouton ci-dessous pour obtenir la configuration appropriée pour cet environnement.",
+            "title": "Configuration du client bot"
+        },
         "crypto": {
             "desc": "Envoyer des crypto-monnaies à un autre utilisateur",
             "params": {
@@ -311,6 +316,9 @@
         "manage": {
             "remove": "Supprimer le bot",
             "removeFailed": "Désolé, nous n'avons pas pu supprimer le bot",
+            "removeReason": "Raison de la suppression du bot",
+            "removeReasonPlaceholder": "Veuillez fournir des raisons/preuves justifiant la suppression du bot",
+            "removeSearch": "Rechercher le bot à supprimer",
             "review": "Examiner les autorisations du robot",
             "view": "Afficher les détails du bot"
         },
@@ -340,6 +348,8 @@
             "action": "Mise à jour",
             "desc": "Démarrer une proposition pour mettre à jour un bot OpenChat existant",
             "nobots": "Seul le propriétaire d'un bot enregistré peut mettre à jour le bot. Vous n'êtes pas le propriétaire d'un bot enregistré.",
+            "remove": "Sélectionnez le bot à supprimer",
+            "removeDesc": "Supprimer un bot OpenChat existant si vous en êtes le propriétaire",
             "select": "Sélectionnez le bot à mettre à jour",
             "title": "Mise à jour {name}"
         },

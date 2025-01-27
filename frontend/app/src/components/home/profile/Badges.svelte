@@ -10,5 +10,5 @@
 </script>
 
 <Diamond status={diamondStatus} />
-<Verified size={"default"} verified={uniquePerson} />
+<Verified size={"small"} verified={uniquePerson} />
 <Streak days={streak} />

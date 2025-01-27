@@ -24,7 +24,7 @@
         currentChatBlockedUsers,
         type BotMessageContext as BotMessageContextType,
     } from "openchat-client";
-    import { isTouchDevice } from "../../utils/devices";
+    import { isTouchOnlyDevice } from "../../utils/devices";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -112,6 +112,7 @@
 
     let msgElement: HTMLElement;
     let msgBubbleWrapperElement: HTMLElement;
+    let msgBubbleElement: HTMLElement;
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = false;
     let debug = false;
@@ -330,13 +331,13 @@
     }
 
     function recalculateMediaDimensions() {
-        if (mediaDimensions === undefined || !msgBubbleWrapperElement) {
+        if (mediaDimensions === undefined || !msgBubbleElement) {
             return;
         }
 
         let msgBubblePaddingWidth = 0;
         if (!fill) {
-            let msgBubbleStyle = getComputedStyle(msgBubbleWrapperElement);
+            let msgBubbleStyle = getComputedStyle(msgBubbleElement);
             msgBubblePaddingWidth =
                 parseFloat(msgBubbleStyle.paddingLeft) +
                 parseFloat(msgBubbleStyle.paddingRight) +
@@ -510,6 +511,7 @@
                     class:proposal={isProposal && !inert}>
                     <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div
+                        bind:this={msgBubbleElement}
                         on:dblclick={doubleClickMessage}
                         use:longpress={() => messageMenu?.showMenu()}
                         class="message-bubble"
@@ -706,7 +708,7 @@
                 </div>
 
                 {#if !collapsed && !msg.deleted && canReact && !failed}
-                    <div class="actions" class:touch={isTouchDevice}>
+                    <div class="actions" class:touch={isTouchOnlyDevice}>
                         <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                             <HoverIcon>
                                 <EmoticonOutline size={$iconSize} color={"var(--icon-txt)"} />
@@ -964,7 +966,10 @@
         border-radius: $radius;
         border: var(--currentChat-msg-bd);
         box-shadow: var(--currentChat-msg-sh);
-        word-break: break-word;
+
+        :global(.markdown-wrapper) {
+            word-break: break-word;
+        }
 
         .username {
             color: inherit;

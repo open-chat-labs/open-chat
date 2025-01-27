@@ -47,6 +47,7 @@
     import { botsEnabled } from "../../../utils/bots";
     import TransferSnsFunds from "./TransferSNSFunds.svelte";
     import VerificationProposal from "./VerificationProposal.svelte";
+    import RemoveBot from "./RemoveBot.svelte";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -86,6 +87,7 @@
     let selectedProposalType:
         | "motion"
         | "register_bot"
+        | "remove_bot"
         | "transfer_sns_funds"
         | "register_external_achievement"
         | "advance_sns_target_version"
@@ -112,7 +114,10 @@
     let transferSnsFunds: TransferSnsFunds | undefined;
     //@ts-ignore
     let verificationComponent: VerificationProposal | undefined;
+    //@ts-ignore
+    let removeBotComponent: RemoveBot | undefined;
     let transferSnsFundsValid: boolean;
+    let removeBotValid: boolean;
     let verificationValid: boolean;
 
     $: errorMessage =
@@ -163,6 +168,7 @@
         (selectedProposalType === "motion" ||
             selectedProposalType === "advance_sns_target_version" ||
             (selectedProposalType === "register_bot" && candidateBotValid) ||
+            (selectedProposalType === "remove_bot" && removeBotValid) ||
             (selectedProposalType === "transfer_sns_funds" && transferSnsFundsValid) ||
             (selectedProposalType === "set_community_verification" && verificationValid) ||
             (selectedProposalType === "set_group_verification" && verificationValid) ||
@@ -195,13 +201,24 @@
         }
     }
 
-    $: [summaryLabel, summaryPlaceholder] =
-        selectedProposalType === "set_community_verification" ||
-        selectedProposalType === "set_group_verification" ||
-        selectedProposalType === "revoke_community_verification" ||
-        selectedProposalType === "revoke_group_verification"
-            ? [i18nKey("verified.evidenceLabel"), i18nKey("verified.evidencePlaceholder")]
-            : [i18nKey("proposal.maker.summary"), i18nKey("proposal.maker.enterSummary")];
+    $: [summaryLabel, summaryPlaceholder] = summaryDescription(selectedProposalType);
+
+    function summaryDescription(type: typeof selectedProposalType): [ResourceKey, ResourceKey] {
+        switch (type) {
+            case "set_community_verification":
+            case "set_group_verification":
+            case "revoke_community_verification":
+            case "revoke_group_verification":
+                return [i18nKey("verified.evidenceLabel"), i18nKey("verified.evidencePlaceholder")];
+            case "remove_bot":
+                return [
+                    i18nKey("bots.manage.removeReason"),
+                    i18nKey("bots.manage.removeReasonPlaceholder"),
+                ];
+            default:
+                return [i18nKey("proposal.maker.summary"), i18nKey("proposal.maker.enterSummary")];
+        }
+    }
 
     function defaultMessage(): ResourceKey {
         const cost = client.formatTokens(requiredFunds, tokenDetails.decimals);
@@ -280,6 +297,9 @@
             case "transfer_sns_funds": {
                 return transferSnsFunds?.convertAction();
             }
+            case "remove_bot": {
+                return removeBotComponent?.convertAction();
+            }
             case "set_community_verification":
             case "revoke_community_verification":
             case "set_group_verification":
@@ -338,7 +358,7 @@
                 }
                 return {
                     kind: "execute_generic_nervous_system_function",
-                    functionId: BigInt(4004),
+                    functionId: BigInt(1013),
                     payload: createRegisterExternalBotPayload(
                         botPrincipal,
                         $user.userId,
@@ -452,6 +472,10 @@
                             <option value={"update_token"}>Update token</option>
                             {#if botsEnabled}
                                 <option value={"register_bot"}>Register a bot</option>
+                                <option value={"register_bot"}>
+                                    <Translatable resourceKey={i18nKey("bots.manage.remove")}
+                                    ></Translatable>
+                                </option>
                             {/if}
                             <option value={"set_community_verification"}>
                                 <Translatable
@@ -575,6 +599,8 @@
                         bind:principal={botPrincipal}
                         bind:schemaLoaded={botSchemaLoaded}
                         bind:valid={candidateBotValid} />
+                {:else if selectedProposalType === "remove_bot"}
+                    <RemoveBot bind:valid={removeBotValid}></RemoveBot>
                 {:else if selectedProposalType === "transfer_sns_funds"}
                     <TransferSnsFunds
                         bind:valid={transferSnsFundsValid}
