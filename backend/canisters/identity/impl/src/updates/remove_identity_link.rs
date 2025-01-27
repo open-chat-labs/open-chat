@@ -1,6 +1,4 @@
-use crate::model::user_principals::UserPrincipal;
 use crate::{mutate_state, RuntimeState};
-use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use identity_canister::remove_identity_link::{Args, Response};
@@ -25,16 +23,14 @@ fn remove_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some((auth, user)) = principals {
         if user.principal == args.linked_principal {
             Response::CannotUnlinkActivePrincipal
+        } else if state
+            .data
+            .user_principals
+            .unlink_auth_principal(args.linked_principal, auth.user_principal_index)
+        {
+            Response::Success
         } else {
-            if state
-                .data
-                .user_principals
-                .unlink_auth_principal(args.linked_principal, auth.user_principal_index)
-            {
-                Response::Success
-            } else {
-                Response::IdentityLinkNotFound
-            }
+            Response::IdentityLinkNotFound
         }
     } else {
         Response::UserNotFound
