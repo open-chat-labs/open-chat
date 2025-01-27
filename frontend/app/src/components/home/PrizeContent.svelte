@@ -147,7 +147,10 @@
                     {#if content.uniquePersonOnly}
                         <div on:click={onUniquePersonClick}>
                             <div>
-                                <Verified size={"default"} verified={content.uniquePersonOnly} />
+                                <Verified
+                                    size={"small"}
+                                    verified={content.uniquePersonOnly}
+                                    tooltip={i18nKey("prizes.uniquePerson")} />
                             </div>
                             <Translatable resourceKey={i18nKey("prizes.uniquePerson")} />
                         </div>
