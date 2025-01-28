@@ -156,7 +156,6 @@
             "failure": "Désolé, nous n'avons pas pu ajouter le bot",
             "loadDefinition": "Définition de la charge",
             "noPermissions": "Aucune autorisation spéciale requise",
-            "permissionsInfo": "Ce bot recherche les autorisations suivantes. Choisir de limiter les autorisations accordées limitera les commandes disponibles.",
             "title": "Ajouter un bot à la communauté"
         },
         "builder": {

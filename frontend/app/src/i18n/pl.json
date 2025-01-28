@@ -156,7 +156,6 @@
             "failure": "Przepraszamy, nie udało nam się dodać bota",
             "loadDefinition": "Definicja obciążenia",
             "noPermissions": "Nie są wymagane żadne specjalne uprawnienia",
-            "permissionsInfo": "Ten bot szuka następujących uprawnień. Wybór ograniczenia przyznanych uprawnień ograniczy dostępne polecenia.",
             "title": "Dodaj bota do społeczności"
         },
         "builder": {

@@ -156,7 +156,6 @@
             "failure": "抱歉，我们无法添加该机器人",
             "loadDefinition": "荷载定义",
             "noPermissions": "无需特殊权限",
-            "permissionsInfo": "此机器人寻求以下权限。选择限制授予的权限将限制可用的命令。",
             "title": "将机器人添加到社区"
         },
         "builder": {

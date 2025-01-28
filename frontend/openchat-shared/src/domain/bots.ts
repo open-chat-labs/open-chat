@@ -1,8 +1,14 @@
 import { Principal } from "@dfinity/principal";
-import type { MessageContent, MessageContext } from "./chat";
+import type {
+    GroupChatIdentifier,
+    MessageContent,
+    MessageContext,
+    MultiUserChatIdentifier,
+} from "./chat";
 import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
 import type { InterpolationValues, ResourceKey } from "../utils";
 import { ValidationErrors } from "../utils/validation";
+import type { CommunityIdentifier } from "./community";
 
 export const MIN_NAME_LENGTH = 3;
 
@@ -121,6 +127,27 @@ export function emptyExternalBotPermissions(): ExternalBotPermissions {
         chatPermissions: [],
         communityPermissions: [],
         messagePermissions: [],
+    };
+}
+
+export function flattenCommandPermissions(definition: BotDefinition): ExternalBotPermissions {
+    return definition.commands.reduce((p, c) => {
+        return mergePermissions(p, c.permissions);
+    }, emptyExternalBotPermissions());
+}
+
+function mergeLists<T>(l1: T[], l2: T[]): T[] {
+    return [...new Set([...l1, ...l2])];
+}
+
+function mergePermissions(
+    p1: ExternalBotPermissions,
+    p2: ExternalBotPermissions,
+): ExternalBotPermissions {
+    return {
+        chatPermissions: mergeLists(p1.chatPermissions, p2.chatPermissions),
+        communityPermissions: mergeLists(p1.communityPermissions, p2.communityPermissions),
+        messagePermissions: mergeLists(p1.messagePermissions, p2.messagePermissions),
     };
 }
 
@@ -549,4 +576,44 @@ export type BotClientConfigData = {
     ocPublicKey: string;
     openStorageIndexCanister: string;
     icHost: string;
+};
+
+export type BotSummaryMode =
+    | InstallingCommandBot
+    | EditingCommandBot
+    | ViewingCommandBot
+    | AddingApiKey
+    | EditingApiKey;
+
+type BotSummaryModeCommon = {
+    requested: ExternalBotPermissions;
+};
+
+export type InstallingCommandBot = BotSummaryModeCommon & {
+    kind: "installing_command_bot";
+    id: CommunityIdentifier | GroupChatIdentifier;
+};
+
+export type EditingCommandBot = BotSummaryModeCommon & {
+    kind: "editing_command_bot";
+    id: CommunityIdentifier | GroupChatIdentifier;
+    granted: ExternalBotPermissions;
+};
+
+export type ViewingCommandBot = BotSummaryModeCommon & {
+    kind: "viewing_command_bot";
+    id: CommunityIdentifier | GroupChatIdentifier;
+    granted: ExternalBotPermissions;
+};
+
+export type AddingApiKey = BotSummaryModeCommon & {
+    kind: "adding_api_key";
+    id: CommunityIdentifier | MultiUserChatIdentifier;
+};
+
+// Editing will infact amount to generating a new key
+export type EditingApiKey = BotSummaryModeCommon & {
+    kind: "editing_api_key";
+    id: CommunityIdentifier | MultiUserChatIdentifier;
+    granted: ExternalBotPermissions;
 };

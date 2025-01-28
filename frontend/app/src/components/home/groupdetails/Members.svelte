@@ -27,6 +27,7 @@
         externalBots,
         type ExternalBotPermissions,
         type BotMatch as BotMatchType,
+        flattenCommandPermissions,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import InvitedUser from "./InvitedUser.svelte";
@@ -230,8 +231,11 @@
 
 {#if showingBotSummary}
     <BotSummary
-        mode={"adding"}
-        id={botContainer}
+        mode={{
+            kind: "installing_command_bot",
+            id: botContainer,
+            requested: flattenCommandPermissions(showingBotSummary.definition),
+        }}
         onClose={() => (showingBotSummary = undefined)}
         bot={showingBotSummary} />
 {/if}
@@ -353,9 +357,14 @@
             </h4>
             {#each bots as bot}
                 <BotMember
-                    id={botContainer}
+                    {collection}
                     {bot}
-                    grantedPermissions={bot.grantedPermissions}
+                    commandPermissions={bot.grantedPermissions}
+                    apiKeyPermissions={{
+                        messagePermissions: ["text"],
+                        chatPermissions: [],
+                        communityPermissions: [],
+                    }}
                     canManage={canManageBots}
                     {searchTerm} />
             {/each}

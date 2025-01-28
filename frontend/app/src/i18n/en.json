@@ -156,7 +156,7 @@
             "failure": "Sorry we were unable to add the bot",
             "loadDefinition": "Load definition",
             "noPermissions": "No special permissions required",
-            "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the commands available.",
+            "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the bot's capabilities.",
             "title": "Add bot to community"
         },
         "builder": {
@@ -316,7 +316,13 @@
         },
         "manage": {
             "apiKeyInfo": "You will need an API key to allow bots to perform actions independently in this context",
+            "reviewApiKey": "Review API key",
+            "deleteApiKeyInfo": "If you delete the existing API key, any bot that is using that key will no longer have access",
             "generateApiKey": "Generate an API key",
+            "generate": "Generate API key",
+            "generated": "API key generated",
+            "copyKey": "This is your API key. This key provides programmatic access to OpenChat and should be considered **secret**. Do not share this key or commit it to source control. If at any time this key is leaked, you can simply generate a new one to revoke access.<br /><br />Please copy this key now and keep it safe - you will not be able to view this key again.",
+            "regenerate": "Re-generate API key",
             "remove": "Remove bot",
             "removeFailed": "Sorry we were unable to remove the bot",
             "removeReason": "Reason for removing bot",

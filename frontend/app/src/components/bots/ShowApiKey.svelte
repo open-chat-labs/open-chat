@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import AlertBox from "../AlertBox.svelte";
     import Overlay from "../Overlay.svelte";
@@ -8,6 +9,8 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import { interpolate } from "../../i18n/i18n";
+    import Markdown from "../home/Markdown.svelte";
 
     interface Props {
         apiKey: string;
@@ -24,7 +27,7 @@
 <Overlay dismissible>
     <ModalContent closeIcon on:close={onClose}>
         <div class="header" slot="header">
-            <Translatable resourceKey={i18nKey("Api key generated")}></Translatable>
+            <Translatable resourceKey={i18nKey("bots.manage.generated")}></Translatable>
         </div>
         <div class="body" slot="body">
             <div class="key">
@@ -35,9 +38,7 @@
                 </div>
             </div>
             <AlertBox>
-                <Translatable
-                    resourceKey={i18nKey("Keep this key secret because it's important ok?")}
-                ></Translatable>
+                <Markdown text={interpolate($_, i18nKey("bots.manage.copyKey"))} />
             </AlertBox>
         </div>
         <div class="footer" slot="footer">

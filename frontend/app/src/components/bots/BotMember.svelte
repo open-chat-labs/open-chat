@@ -2,7 +2,8 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import TextBoxOutline from "svelte-material-icons/TextBoxOutline.svelte";
-    import KeyVariant from "svelte-material-icons/KeyVariant.svelte";
+    import KeyPlus from "svelte-material-icons/KeyPlus.svelte";
+    import KeyRemove from "svelte-material-icons/KeyRemove.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -11,80 +12,118 @@
     import InfoIcon from "../InfoIcon.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../stores/iconSize";
-    import { random128, type ExternalBot } from "openchat-shared";
+    import {
+        flattenCommandPermissions,
+        type BotSummaryMode,
+        type ExternalBot,
+    } from "openchat-shared";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import FilteredUsername from "../FilteredUsername.svelte";
     import type {
         CommunityIdentifier,
-        GroupChatIdentifier,
         OpenChat,
         ExternalBotPermissions,
+        MultiUserChat,
+        CommunitySummary,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { toastStore } from "../../stores/toast";
     import BotSummary from "./BotSummary.svelte";
     import BotAvatar from "./BotAvatar.svelte";
     import Link from "../Link.svelte";
-    import ShowApiKey from "./ShowApiKey.svelte";
 
     const client = getContext<OpenChat>("client");
 
+    // TODO: we will probably be passed some sort of representation of the current api_key
+    // Something like:
+    /**
+     * type ApiKey = {
+     *     addedBy: bigint;
+     *     userId: string;
+     *     permissions: ExternalBotPermissions
+     * }
+     *
+     * this is analogous to the existing BotGroupDetails type
+     */
+
     interface Props {
-        id: CommunityIdentifier | GroupChatIdentifier;
+        collection: CommunitySummary | MultiUserChat;
         bot: ExternalBot;
         canManage: boolean;
         searchTerm: string;
-        grantedPermissions: ExternalBotPermissions;
+        commandPermissions: ExternalBotPermissions;
+        apiKeyPermissions?: ExternalBotPermissions;
     }
 
-    let { id, bot, canManage, searchTerm, grantedPermissions }: Props = $props();
-    let reviewMode: "editing" | "viewing" | undefined = $state(undefined);
+    let { collection, bot, canManage, searchTerm, commandPermissions, apiKeyPermissions }: Props =
+        $props();
+    let botSummaryMode = $state<BotSummaryMode | undefined>(undefined);
     let generatingKey = $state(false);
-    let showKey = $state<string | undefined>(undefined);
     let canGenerateKey = $derived(canManage && bot.definition.autonomousConfig !== undefined);
+    let commandContextId = $derived(
+        collection.kind === "channel"
+            ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
+            : collection.id,
+    );
 
     function removeBot() {
-        client.removeInstalledBot(id, bot.id).then((success) => {
+        client.removeInstalledBot(commandContextId, bot.id).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
             }
         });
     }
 
-    function reviewPermissions() {
-        reviewMode = "editing";
+    function reviewApiKey() {
+        if (bot.definition.autonomousConfig !== undefined && apiKeyPermissions !== undefined) {
+            botSummaryMode = {
+                kind: "editing_api_key",
+                id: collection.id,
+                requested: bot.definition.autonomousConfig.permissions,
+                granted: apiKeyPermissions,
+            };
+            generatingKey = true;
+        }
+    }
+
+    function reviewCommandPermissions() {
+        botSummaryMode = {
+            kind: "editing_command_bot",
+            id: commandContextId,
+            requested: flattenCommandPermissions(bot.definition),
+            granted: commandPermissions,
+        };
     }
 
     function viewBotDetails() {
-        reviewMode = "viewing";
+        botSummaryMode = {
+            kind: "viewing_command_bot",
+            id: commandContextId,
+            requested: flattenCommandPermissions(bot.definition),
+            granted: commandPermissions,
+        };
     }
 
     function closeModal() {
-        reviewMode = undefined;
+        botSummaryMode = undefined;
+        generatingKey = false;
     }
 
     function generateApiKey() {
-        console.log("Generating api key");
-        generatingKey = true;
-        window.setTimeout(() => {
-            showKey = random128().toString();
-            generatingKey = false;
-        }, 1000);
+        if (bot.definition.autonomousConfig !== undefined) {
+            botSummaryMode = {
+                kind: "adding_api_key",
+                id: collection.id,
+                requested: bot.definition.autonomousConfig.permissions,
+            };
+            generatingKey = true;
+        }
     }
 </script>
 
-{#if showKey !== undefined}
-    <ShowApiKey apiKey={showKey} onClose={() => (showKey = undefined)} />
-{/if}
-
-{#if reviewMode !== undefined}
-    <BotSummary
-        currentPermissions={grantedPermissions}
-        mode={reviewMode}
-        {id}
-        onClose={closeModal}
-        {bot} />
+{#if botSummaryMode !== undefined}
+    <BotSummary mode={botSummaryMode} onClose={closeModal} {bot} />
 {/if}
 
 <div class="bot_member" role="button">
@@ -102,16 +141,22 @@
         </div>
         {#if canGenerateKey}
             <div class="apikey">
-                <Link on:click={generateApiKey} underline="never">
-                    <Translatable resourceKey={i18nKey("bots.manage.generateApiKey")}
-                    ></Translatable>
+                <Link
+                    on:click={apiKeyPermissions !== undefined ? reviewApiKey : generateApiKey}
+                    underline="never">
+                    <Translatable
+                        resourceKey={apiKeyPermissions !== undefined
+                            ? i18nKey("bots.manage.reviewApiKey")
+                            : i18nKey("bots.manage.generateApiKey")}></Translatable>
                 </Link>
                 {#if generatingKey}
                     <div class="spinner"></div>
                 {:else}
                     <InfoIcon>
-                        <Translatable resourceKey={i18nKey("bots.manage.apiKeyInfo")}
-                        ></Translatable>
+                        <Translatable
+                            resourceKey={apiKeyPermissions !== undefined
+                                ? i18nKey("bots.manage.deleteApiKeyInfo")
+                                : i18nKey("bots.manage.apiKeyInfo")}></Translatable>
                     </InfoIcon>
                 {/if}
             </div>
@@ -135,7 +180,7 @@
                             <Translatable resourceKey={i18nKey("bots.manage.remove")} />
                         </div>
                     </MenuItem>
-                    <MenuItem on:click={() => reviewPermissions()}>
+                    <MenuItem on:click={() => reviewCommandPermissions()}>
                         <PencilOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -146,15 +191,27 @@
                     </MenuItem>
                 {/if}
                 {#if canGenerateKey}
-                    <MenuItem on:click={() => generateApiKey()}>
-                        <KeyVariant
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("bots.manage.generateApiKey")} />
-                        </div>
-                    </MenuItem>
+                    {#if apiKeyPermissions !== undefined}
+                        <MenuItem on:click={reviewApiKey}>
+                            <KeyRemove
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("bots.manage.reviewApiKey")} />
+                            </div>
+                        </MenuItem>
+                    {:else}
+                        <MenuItem on:click={() => generateApiKey()}>
+                            <KeyPlus
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("bots.manage.generateApiKey")} />
+                            </div>
+                        </MenuItem>
+                    {/if}
                 {/if}
                 <MenuItem on:click={() => viewBotDetails()}>
                     <TextBoxOutline

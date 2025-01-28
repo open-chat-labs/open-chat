@@ -156,7 +156,6 @@
             "failure": "Es ist uns leider nicht gelungen, den Bot hinzuzufügen.",
             "loadDefinition": "Lastdefinition",
             "noPermissions": "Keine besonderen Berechtigungen erforderlich",
-            "permissionsInfo": "Dieser Bot fordert die folgenden Berechtigungen an. Wenn Sie die erteilten Berechtigungen einschränken, werden auch die verfügbaren Befehle eingeschränkt.",
             "title": "Bot zur Community hinzufügen"
         },
         "builder": {

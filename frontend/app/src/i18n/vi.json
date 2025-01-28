@@ -156,7 +156,6 @@
             "failure": "Xin lỗi chúng tôi không thể thêm bot",
             "loadDefinition": "Tải định nghĩa",
             "noPermissions": "Không cần quyền đặc biệt",
-            "permissionsInfo": "Bot này tìm kiếm các quyền sau. Việc chọn giới hạn các quyền được cấp sẽ giới hạn các lệnh khả dụng.",
             "title": "Thêm bot vào cộng đồng"
         },
         "builder": {

@@ -14,6 +14,7 @@
         currentChatBots,
         currentCommunityBots,
         emptyExternalBotPermissions,
+        flattenCommandPermissions,
     } from "openchat-client";
 
     let { botId, chatId, onClose }: BotProfileProps = $props();
@@ -36,5 +37,13 @@
 </script>
 
 {#if bot !== undefined && id !== undefined}
-    <BotSummary currentPermissions={grantedPermissions} mode={"viewing"} {id} {onClose} {bot} />
+    <BotSummary
+        mode={{
+            kind: "viewing_command_bot",
+            id,
+            requested: flattenCommandPermissions(bot.definition),
+            granted: grantedPermissions,
+        }}
+        {onClose}
+        {bot} />
 {/if}
