@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
     ChatId, CompletedCryptoTransaction, EventIndex, InvalidPollReason, MessageContentInitial, MessageId, MessageIndex,
-    Milliseconds, ReplyContext, TimestampMillis, UserId,
+    Milliseconds, PinNumberWrapper, ReplyContext, TimestampMillis, UserId,
 };
 
 #[ts_export(user, send_message)]
@@ -17,7 +17,7 @@ pub struct Args {
     pub forwarding: bool,
     pub block_level_markdown: bool,
     pub message_filter_failed: Option<u64>,
-    pub pin: Option<String>,
+    pub pin: Option<PinNumberWrapper>,
     pub correlation_id: u64,
 }
 

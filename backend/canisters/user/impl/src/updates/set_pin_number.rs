@@ -66,7 +66,7 @@ fn set_pin_number_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    state.data.pin_number.set(args.new, now);
+    state.data.pin_number.set(args.new.map(|p| p.into()), now);
 
     state.data.award_achievement_and_notify(Achievement::SetPin, now);
 
