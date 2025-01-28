@@ -2094,7 +2094,7 @@ type SlashCommandSchema = record {
     description : opt text;
     placeholder : opt text;
     params : vec SlashCommandParam;
-    permissions : SlashCommandPermissions;
+    permissions : BotPermissions;
 };
 
 type SlashCommandParam = record {
@@ -2146,7 +2146,7 @@ type DecimalParamChoice = record {
     value : float64;
 };
 
-type SlashCommandPermissions = record {
+type BotPermissions = record {
     community: vec CommunityPermission;
     chat: vec GroupPermission;
     message: vec MessagePermission;
@@ -2190,17 +2190,16 @@ type MessagePermission = variant {
 };
 
 type BotGroupConfig = record {
-    permissions : SlashCommandPermissions;
+    permissions : BotPermissions;
 };
 
 type BotGroupDetails = record {
     user_id : UserId;
     added_by : UserId;
-    permissions : SlashCommandPermissions;
+    permissions : BotPermissions;
 };
 
 type BotMessageContext = record {
-    initiator : principal;
     command : BotCommand;
     finalised : bool;
 };
@@ -2208,6 +2207,7 @@ type BotMessageContext = record {
 type BotCommand = record {
     name : text;
     args : vec BotCommandArg;
+    initiator : UserId;
 };
 
 type BotCommandArg = record {
