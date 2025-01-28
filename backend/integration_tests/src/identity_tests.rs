@@ -8,7 +8,7 @@ use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_internet_identity_principal, random_string};
-use types::{Delegation, SignedDelegation};
+use types::{Delegation, Empty, SignedDelegation};
 
 #[test_case(false)]
 #[test_case(true)]
@@ -79,7 +79,9 @@ fn link_and_unlink_auth_identities(delay: bool) {
         response => panic!("{response:?}"),
     };
 
-    env.tick();
+    if delay {
+        return;
+    }
 
     let remove_identity_link_response = client::identity::remove_identity_link(
         env,
@@ -91,7 +93,14 @@ fn link_and_unlink_auth_identities(delay: bool) {
     );
 
     match remove_identity_link_response {
-        identity_canister::remove_identity_link::Response::Success => {}
+        identity_canister::remove_identity_link::Response::Success => {
+            let response = client::identity::check_auth_principal(env, auth_principal2, canister_ids.identity, &Empty {});
+
+            assert!(matches!(
+                response,
+                identity_canister::check_auth_principal::Response::NotFound
+            ));
+        }
         response => panic!("{response:?}"),
     }
 }

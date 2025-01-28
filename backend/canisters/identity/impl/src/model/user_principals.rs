@@ -96,23 +96,27 @@ impl UserPrincipals {
     }
 
     pub fn remove_auth_principal(&mut self, caller: Principal, linked_principal: Principal) -> RemovePrincipalResponse {
-        // Curent UserPrincipal
-        let user_principal = self.get_by_auth_principal(&caller).filter(|u| u.user_id.is_some());
+        if caller == linked_principal {
+            RemovePrincipalResponse::CannotUnlinkActivePrincipal
+        } else {
+            // Curent UserPrincipal
+            let user_principal = self.get_by_auth_principal(&caller);
 
-        if let Some(mut user) = user_principal {
-            // This condition may be redundant, but in combination with the
-            // responses can provide additional context in case of an error.
-            if user.auth_principals.contains(&linked_principal) {
-                user.auth_principals.retain(|&ap| ap != linked_principal);
-                self.auth_principals.remove(&linked_principal);
+            if let Some(mut user) = user_principal {
+                // This condition may be redundant, but in combination with the
+                // responses can provide additional context in case of an error.
+                if user.auth_principals.contains(&linked_principal) {
+                    user.auth_principals.retain(|&ap| ap != linked_principal);
+                    self.auth_principals.remove(&linked_principal);
 
-                return RemovePrincipalResponse::Success;
+                    return RemovePrincipalResponse::Success;
+                }
+
+                return RemovePrincipalResponse::IdentityLinkNotFound;
             }
 
-            return RemovePrincipalResponse::IdentityLinkNotFound;
+            RemovePrincipalResponse::UserNotFound
         }
-
-        RemovePrincipalResponse::UserNotFound
     }
 
     pub fn next_index(&self) -> u32 {

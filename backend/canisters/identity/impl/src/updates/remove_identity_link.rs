@@ -10,14 +10,8 @@ fn remove_identity_link(args: Args) -> Response {
 }
 
 fn remove_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let caller = state.env.caller();
-
-    if caller == args.linked_principal {
-        Response::CannotUnlinkActivePrincipal
-    } else {
-        state
-            .data
-            .user_principals
-            .remove_auth_principal(caller, args.linked_principal)
-    }
+    state
+        .data
+        .user_principals
+        .remove_auth_principal(state.env.caller(), args.linked_principal)
 }
