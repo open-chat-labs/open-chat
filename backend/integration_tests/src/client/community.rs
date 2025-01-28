@@ -56,7 +56,7 @@ pub mod happy_path {
         AccessGate, CanisterId, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, Empty, EventIndex, EventsResponse,
         GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex, PollVotes, Reaction, Rules,
-        SlashCommandPermissions, TextContent, TimestampMillis, UserId, VoteOperation,
+        BotPermissions, TextContent, TimestampMillis, UserId, VoteOperation,
     };
 
     pub fn create_channel(
@@ -716,7 +716,7 @@ pub mod happy_path {
         sender: Principal,
         community_id: CommunityId,
         bot_id: UserId,
-        granted_permissions: SlashCommandPermissions,
+        granted_permissions: BotPermissions,
     ) {
         let response = super::update_bot(
             env,

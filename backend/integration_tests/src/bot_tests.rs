@@ -10,7 +10,7 @@ use testing::rng::{random_from_u128, random_string};
 use types::bot_actions::{BotMessageAction, MessageContent};
 use types::{
     AccessTokenBotCommand, AccessTokenType, BotAction, BotCommand, BotDefinition, BotInstallationLocation, CanisterId, Chat,
-    ChatEvent, MessagePermission, SlashCommandPermissions, SlashCommandSchema, TextContent, UserId,
+    ChatEvent, MessagePermission, BotPermissions, SlashCommandSchema, TextContent, UserId,
 };
 
 #[test]
@@ -49,7 +49,7 @@ fn e2e_bot_test() {
     assert!(response.matches.iter().any(|b| b.id == bot_id));
 
     // Add bot to group with inadequate permissions
-    let mut granted_permissions = SlashCommandPermissions::default();
+    let mut granted_permissions = BotPermissions::default();
     client::local_user_index::happy_path::install_bot(
         env,
         user.principal,
@@ -239,7 +239,7 @@ fn remove_bot_test() {
         canister_ids.local_user_index(env, group_id),
         BotInstallationLocation::Group(group_id),
         bot_id,
-        SlashCommandPermissions::default(),
+        BotPermissions::default(),
     );
 
     let bot_installed_timestamp = now_millis(env);
@@ -274,7 +274,7 @@ fn register_bot(
         description: Some("Hello {user}".to_string()),
         placeholder: None,
         params: vec![],
-        permissions: SlashCommandPermissions {
+        permissions: BotPermissions {
             community: HashSet::new(),
             chat: HashSet::new(),
             message: HashSet::from_iter([MessagePermission::Text]),

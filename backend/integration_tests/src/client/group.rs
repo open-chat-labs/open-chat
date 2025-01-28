@@ -51,7 +51,7 @@ pub mod happy_path {
     use types::{
         CanisterId, ChatId, Empty, EventIndex, EventsResponse, GroupCanisterGroupChatSummary,
         GroupCanisterGroupChatSummaryUpdates, GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex,
-        Milliseconds, PollVotes, Reaction, SlashCommandPermissions, TextContent, TimestampMillis, UserId, VideoCallType,
+        Milliseconds, PollVotes, Reaction, BotPermissions, TextContent, TimestampMillis, UserId, VideoCallType,
         VoteOperation,
     };
 
@@ -565,7 +565,7 @@ pub mod happy_path {
         sender: Principal,
         group_id: ChatId,
         bot_id: UserId,
-        granted_permissions: SlashCommandPermissions,
+        granted_permissions: BotPermissions,
     ) {
         let response = super::update_bot(
             env,

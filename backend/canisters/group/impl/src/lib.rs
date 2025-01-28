@@ -11,7 +11,9 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
-use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation};
+use group_chat_core::{
+    AddResult as AddMemberResult, BotApiKeys, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation,
+};
 use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, GroupBots, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
@@ -32,10 +34,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotRemoved, BotUpdated, BuildVersion, Caller,
-    CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex, FrozenGroupInfo,
-    GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, MultiUserChat,
-    Notification, Rules, SlashCommandPermissions, TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY,
+    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotPermissions, BotRemoved, BotUpdated,
+    BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
+    FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
+    Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY,
     SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
@@ -435,7 +437,7 @@ impl RuntimeState {
             return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
         }
 
-        let user_or_principal = bot_context.as_ref().map(|bc| bc.initiator.into()).unwrap_or(caller);
+        let user_or_principal = bot_context.as_ref().map(|bc| bc.command.initiator.into()).unwrap_or(caller);
 
         let Some(member) = self.data.get_member(user_or_principal) else {
             return NotFound;
@@ -501,6 +503,8 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     verified: Timestamped<bool>,
     pub bots: GroupBots,
+    #[serde(default)]
+    pub bot_api_keys: BotApiKeys,
     message_ids_deduped: bool,
 }
 
@@ -602,6 +606,7 @@ impl Data {
             stable_memory_keys_to_garbage_collect: Vec::new(),
             verified: Timestamped::default(),
             bots: GroupBots::default(),
+            bot_api_keys: BotApiKeys::default(),
             message_ids_deduped: true,
         }
     }
@@ -724,17 +729,17 @@ impl Data {
         }
     }
 
-    pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&SlashCommandPermissions> {
+    pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&BotPermissions> {
         self.bots.get(bot_user_id).map(|b| &b.permissions)
     }
 
-    pub fn get_user_permissions_for_bot_commands(&self, user_id: &UserId) -> Option<SlashCommandPermissions> {
+    pub fn get_user_permissions_for_bot_commands(&self, user_id: &UserId) -> Option<BotPermissions> {
         let member = self.chat.members.get_verified_member(*user_id).ok()?;
 
         let group_permissions = member.role().permissions(&self.chat.permissions);
         let message_permissions = member.role().message_permissions(&self.chat.permissions.message_permissions);
 
-        Some(SlashCommandPermissions {
+        Some(BotPermissions {
             community: HashSet::new(),
             chat: group_permissions,
             message: message_permissions,

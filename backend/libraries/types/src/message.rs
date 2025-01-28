@@ -249,7 +249,6 @@ pub type CustomContentEventPayload = ();
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotMessageContext {
-    pub initiator: UserId,
     pub command: BotCommand,
     pub finalised: bool,
 }
@@ -257,7 +256,6 @@ pub struct BotMessageContext {
 impl From<&BotCaller> for BotMessageContext {
     fn from(caller: &BotCaller) -> Self {
         BotMessageContext {
-            initiator: caller.initiator,
             command: caller.command.clone(),
             finalised: caller.finalised,
         }

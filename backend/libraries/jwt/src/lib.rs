@@ -65,7 +65,7 @@ pub fn sign_and_encode_token<T: Serialize>(
     Ok(token)
 }
 
-pub fn verify_jwt<T: DeserializeOwned>(jwt: &str, public_key_pem: &str) -> Result<T, Box<dyn Error>> {
+pub fn verify(jwt: &str, public_key_pem: &str) -> Result<String, Box<dyn Error>> {
     let mut parts = jwt.split('.');
     let header_json = parts.next().ok_or("Invalid jwt")?;
     let claims_json = parts.next().ok_or("Invalid jwt")?;
@@ -77,7 +77,13 @@ pub fn verify_jwt<T: DeserializeOwned>(jwt: &str, public_key_pem: &str) -> Resul
     let verifying_key = ecdsa::VerifyingKey::from_public_key_pem(public_key_pem)?;
     verifying_key.verify(authenticated.as_bytes(), &signature)?;
 
-    decode_from_json(claims_json)
+    Ok(claims_json.to_string())
+}
+
+pub fn verify_and_decode<T: DeserializeOwned>(jwt: &str, public_key_pem: &str) -> Result<T, Box<dyn Error>> {
+    let claims_json = verify(jwt, public_key_pem)?;
+
+    decode_from_json(&claims_json)
 }
 
 fn sign_token(token: &str, secret_key_der: &[u8], rng: &mut impl CryptoRngCore) -> Result<Vec<u8>, Box<dyn Error>> {
@@ -91,7 +97,7 @@ fn sign_token(token: &str, secret_key_der: &[u8], rng: &mut impl CryptoRngCore) 
     Ok(signature.to_vec())
 }
 
-fn encode_as_json<T: Serialize>(value: &T) -> Result<String, Box<dyn Error>> {
+pub fn encode_as_json<T: Serialize>(value: &T) -> Result<String, Box<dyn Error>> {
     let bytes = serde_json::to_vec(value)?;
     Ok(encode_bytes(&bytes)?)
 }
@@ -100,7 +106,7 @@ fn encode_bytes(bytes: &[u8]) -> Result<String, ct_codecs::Error> {
     Base64UrlSafeNoPadding::encode_to_string(bytes)
 }
 
-fn decode_from_json<T: DeserializeOwned>(s: &str) -> Result<T, Box<dyn Error>> {
+pub fn decode_from_json<T: DeserializeOwned>(s: &str) -> Result<T, Box<dyn Error>> {
     let bytes = decode_to_bytes(s)?;
     Ok(serde_json::from_slice(&bytes)?)
 }
@@ -120,7 +126,7 @@ mod tests {
     use candid::Principal;
     use p256_key_pair::P256KeyPair;
     use std::time::{SystemTime, UNIX_EPOCH};
-    use types::{StartVideoCallClaims, StringChat, VideoCallType};
+    use types::{Chat, StartVideoCallClaims, VideoCallType};
 
     #[test]
     fn sign_and_encode_token_then_verify_succeeds() {
@@ -139,7 +145,7 @@ mod tests {
                 "StartVideoCall".to_string(),
                 StartVideoCallClaims {
                     user_id: Principal::from_text("27eue-hyaaa-aaaaf-aaa4a-cai").unwrap().into(),
-                    chat_id: StringChat::Group("6nb6r-kyaaa-aaaar-asvgq-cai".to_string()),
+                    chat_id: Chat::Group(Principal::from_text("6nb6r-kyaaa-aaaar-asvgq-cai").unwrap().into()),
                     call_type: VideoCallType::Default,
                     is_diamond: true,
                 },
@@ -147,7 +153,7 @@ mod tests {
 
             let jwt = sign_and_encode_token(sk_der, claims, &mut rng).unwrap();
 
-            let claims: Claims<StartVideoCallClaims> = verify_jwt(&jwt, pk_pem).unwrap();
+            let claims: Claims<StartVideoCallClaims> = verify_and_decode(&jwt, pk_pem).unwrap();
 
             assert_eq!(claims.claim_type, "StartVideoCall");
         }

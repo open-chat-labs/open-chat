@@ -3,7 +3,7 @@ use constants::calculate_summary_updates_data_removal_cutoff;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::{btree_map::Entry, BTreeMap, BTreeSet};
-use types::{SlashCommandPermissions, TimestampMillis, UserId};
+use types::{BotPermissions, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupBots {
@@ -17,7 +17,7 @@ impl GroupBots {
         &mut self,
         user_id: UserId,
         added_by: UserId,
-        permissions: SlashCommandPermissions,
+        permissions: BotPermissions,
         now: TimestampMillis,
     ) -> bool {
         if self.bots.contains_key(&user_id) {
@@ -30,7 +30,7 @@ impl GroupBots {
         true
     }
 
-    pub fn update(&mut self, user_id: UserId, permissions: SlashCommandPermissions, now: TimestampMillis) -> bool {
+    pub fn update(&mut self, user_id: UserId, permissions: BotPermissions, now: TimestampMillis) -> bool {
         match self.bots.entry(user_id) {
             Entry::Vacant(_) => false,
             Entry::Occupied(mut o) => {
@@ -104,5 +104,5 @@ pub enum BotUpdate {
 #[derive(Serialize, Deserialize)]
 pub struct BotInternal {
     pub added_by: UserId,
-    pub permissions: SlashCommandPermissions,
+    pub permissions: BotPermissions,
 }

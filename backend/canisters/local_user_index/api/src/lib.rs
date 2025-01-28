@@ -2,9 +2,9 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    is_default, BotInstallationLocation, CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId,
-    Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, NotifyChit,
-    PhoneNumber, ReferralType, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof,
+    is_default, AutonomousConfig, BotInstallationLocation, CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason,
+    CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex,
+    NotifyChit, PhoneNumber, ReferralType, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof,
     UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType,
 };
 
@@ -90,6 +90,7 @@ pub struct BotRegistered {
     pub user_principal: Principal,
     pub name: String,
     pub commands: Vec<SlashCommandSchema>,
+    pub autonomous_config: Option<AutonomousConfig>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

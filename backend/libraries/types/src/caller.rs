@@ -10,7 +10,6 @@ pub enum Caller {
 
 #[derive(Clone)]
 pub struct BotCaller {
-    pub initiator: UserId,
     pub bot: UserId,
     pub command: BotCommand,
     pub finalised: bool,
@@ -30,7 +29,7 @@ impl Caller {
         match self {
             Caller::User(user_id) => *user_id,
             Caller::Bot(user_id) => *user_id,
-            Caller::BotV2(bot_caller) => bot_caller.initiator,
+            Caller::BotV2(bot_caller) => bot_caller.command.initiator,
             Caller::OCBot(user_id) => *user_id,
         }
     }

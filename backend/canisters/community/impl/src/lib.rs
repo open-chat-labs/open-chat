@@ -15,7 +15,7 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
-use group_chat_core::{AccessRulesInternal, AddResult};
+use group_chat_core::{AccessRulesInternal, AddResult, BotApiKeys};
 use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, GroupBots, Members, PaymentReceipts,
     PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
@@ -32,15 +32,15 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotRemoved, BotUpdated,
-    BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
-    CommunityPermissions, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, MembersAdded, Milliseconds, Notification,
-    Rules, SlashCommandPermissions, TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotPermissions, BotRemoved,
+    BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
+    CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, MembersAdded,
+    Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -330,7 +330,7 @@ impl RuntimeState {
             return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
         }
 
-        let user_or_principal = bot_context.as_ref().map(|bc| bc.initiator.into()).unwrap_or(caller);
+        let user_or_principal = bot_context.as_ref().map(|bc| bc.command.initiator.into()).unwrap_or(caller);
 
         let Some(member) = self.data.members.get(user_or_principal) else {
             return NotFound;
@@ -413,6 +413,8 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: GroupBots,
+    #[serde(default)]
+    bot_api_keys: BotApiKeys,
     #[serde(default)]
     verified: Timestamped<bool>,
     #[serde(default)]
@@ -520,6 +522,7 @@ impl Data {
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: GroupBots::default(),
+            bot_api_keys: BotApiKeys::default(),
             verified: Timestamped::default(),
             message_ids_deduped: true,
         }
@@ -880,31 +883,38 @@ impl Data {
         true
     }
 
-    pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&SlashCommandPermissions> {
+    pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&BotPermissions> {
         self.bots.get(bot_user_id).map(|b| &b.permissions)
     }
 
     pub fn get_user_permissions_for_bot_commands(
         &self,
         user_id: &UserId,
-        channel_id: &ChannelId,
-    ) -> Option<SlashCommandPermissions> {
+        channel_id: Option<ChannelId>,
+    ) -> Option<BotPermissions> {
         let community_member = self.members.get_by_user_id(user_id)?;
         let community_permissions = community_member.role().permissions(&self.permissions);
 
-        let channel = self.channels.get(channel_id)?;
-        let channel_member = channel.chat.members.get_verified_member(*user_id).ok()?;
-
-        let channel_permissions = channel_member.role().permissions(&channel.chat.permissions);
-        let message_permissions = channel_member
-            .role()
-            .message_permissions(&channel.chat.permissions.message_permissions);
-
-        Some(SlashCommandPermissions {
+        let mut bot_permissions = BotPermissions {
             community: community_permissions,
-            chat: channel_permissions,
-            message: message_permissions,
-        })
+            chat: HashSet::new(),
+            message: HashSet::new(),
+        };
+
+        if let Some(channel_id) = channel_id {
+            let channel = self.channels.get(&channel_id)?;
+            let channel_member = channel.chat.members.get_verified_member(*user_id).ok()?;
+
+            let channel_permissions = channel_member.role().permissions(&channel.chat.permissions);
+            let message_permissions = channel_member
+                .role()
+                .message_permissions(&channel.chat.permissions.message_permissions);
+
+            bot_permissions.chat = channel_permissions;
+            bot_permissions.message = message_permissions;
+        }
+
+        Some(bot_permissions)
     }
 }
 

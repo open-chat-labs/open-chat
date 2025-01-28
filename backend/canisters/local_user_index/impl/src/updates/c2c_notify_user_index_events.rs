@@ -78,7 +78,10 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
         }
         UserIndexEvent::UserRegistered(ev) => handle_user_registered(ev, state),
         UserIndexEvent::BotRegistered(ev) => {
-            state.data.bots.add(ev.user_principal, ev.user_id, ev.name, ev.commands);
+            state
+                .data
+                .bots
+                .add(ev.user_principal, ev.user_id, ev.name, ev.commands, ev.autonomous_config);
         }
         UserIndexEvent::BotUpdated(ev) => {
             state.data.bots.update(ev.user_id, ev.commands);

@@ -9,7 +9,7 @@ use group_canister::send_message_v2;
 use types::bot_actions::MessageContent;
 use types::HandleBotActionsError;
 use types::{BotAction, BotCaller, MessageContentInitial};
-use utils::bots::can_bot_execute_action;
+use utils::bots::{can_bot_execute_action, intersect_permissions};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -42,8 +42,8 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
 
             match send_message_impl(
                 send_message_v2::Args {
-                    thread_root_message_index: args.thread_root_message_index,
-                    message_id: args.message_id,
+                    thread_root_message_index: args.chat_details.thread_root_message_index,
+                    message_id: args.chat_details.message_id,
                     content,
                     sender_name: args.bot.username.clone(),
                     sender_display_name: None,
@@ -56,10 +56,9 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                     new_achievement: false,
                     correlation_id: 0,
                 },
-                Some(BotCaller {
+                args.command.map(|command| BotCaller {
                     bot: args.bot.user_id,
-                    initiator: args.initiator,
-                    command: args.command,
+                    command,
                     finalised: action.finalised,
                 }),
                 state,
@@ -78,18 +77,24 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
 }
 
 fn is_bot_permitted_to_execute_action(args: &Args, state: &RuntimeState) -> bool {
-    // Get the permissions granted to the bot in this community
+    // Get the permissions granted to the bot in this group
     let Some(granted_to_bot) = state.data.get_bot_permissions(&args.bot.user_id) else {
         return false;
     };
 
-    // Get the permissions granted to the user in this community/channel
-    let Some(granted_to_user) = state.data.get_user_permissions_for_bot_commands(&args.initiator) else {
-        return false;
+    // Get the permissions granted to the user in this group iff there is an initiator
+    let granted = if let Some(initiator) = args.command.as_ref().map(|c| &c.initiator) {
+        if let Some(granted_to_user) = state.data.get_user_permissions_for_bot_commands(initiator) {
+            &intersect_permissions(granted_to_bot, &granted_to_user)
+        } else {
+            return false;
+        }
+    } else {
+        granted_to_bot
     };
 
     // Get the permissions required to execute the given action
     let permissions_required = args.action.permissions_required();
 
-    can_bot_execute_action(&permissions_required, granted_to_bot, &granted_to_user)
+    can_bot_execute_action(&permissions_required, granted)
 }

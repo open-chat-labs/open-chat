@@ -1,6 +1,6 @@
 use crate::{
-    CanisterId, ChatId, CommunityId, CommunityPermission, GroupPermission, MessageContentInitial, MessageId, MessagePermission,
-    UserId,
+    AccessTokenScope, CanisterId, ChatId, CommunityId, CommunityPermission, GroupPermission, MessageContentInitial, MessageId,
+    MessagePermission, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -12,6 +12,7 @@ use ts_export::ts_export;
 pub struct BotDefinition {
     pub description: String,
     pub commands: Vec<SlashCommandSchema>,
+    pub autonomous_config: Option<AutonomousConfig>,
 }
 
 #[ts_export]
@@ -21,7 +22,13 @@ pub struct SlashCommandSchema {
     pub description: Option<String>,
     pub placeholder: Option<String>,
     pub params: Vec<SlashCommandParam>,
-    pub permissions: SlashCommandPermissions,
+    pub permissions: BotPermissions,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct AutonomousConfig {
+    pub permissions: BotPermissions,
 }
 
 #[ts_export]
@@ -81,7 +88,7 @@ pub struct SlashCommandOptionChoice<T> {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
-pub struct SlashCommandPermissions {
+pub struct BotPermissions {
     pub community: HashSet<CommunityPermission>,
     pub chat: HashSet<GroupPermission>,
     pub message: HashSet<MessagePermission>,
@@ -128,20 +135,21 @@ slash_command_option_choice!(SlashCommandOptionChoiceI128, i128);
 pub struct BotGroupDetails {
     pub user_id: UserId,
     pub added_by: UserId,
-    pub permissions: SlashCommandPermissions,
+    pub permissions: BotPermissions,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct BotGroupConfig {
-    pub permissions: SlashCommandPermissions,
+    pub permissions: BotPermissions,
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BotCommand {
     pub name: String,
     pub args: Vec<BotCommandArg>,
+    pub initiator: UserId,
 }
 
 #[ts_export]
@@ -176,4 +184,13 @@ impl BotInstallationLocation {
             BotInstallationLocation::Group(g) => (*g).into(),
         }
     }
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct BotApiKeyToken {
+    pub gateway: CanisterId,
+    pub bot_id: UserId,
+    pub scope: AccessTokenScope,
+    pub secret: String,
 }

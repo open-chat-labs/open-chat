@@ -7,8 +7,8 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_handle_bot_action::*;
 use community_canister::send_message;
 use types::bot_actions::MessageContent;
-use types::{BotAction, BotCaller, Chat, HandleBotActionsError, MessageContentInitial};
-use utils::bots::can_bot_execute_action;
+use types::{BotAction, BotCaller, ChannelId, Chat, HandleBotActionsError, MessageContentInitial, UserId};
+use utils::bots::{can_bot_execute_action, intersect_permissions};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -23,13 +23,19 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
         return Err(HandleBotActionsError::Frozen);
     }
 
-    if !is_bot_permitted_to_execute_action(&args, state) {
+    let Chat::Channel(_, channel_id) = args.chat_details.chat else {
+        return Err(HandleBotActionsError::Other("A chat must be a channel".to_string()));
+    };
+
+    if !is_bot_permitted_to_execute_action(
+        channel_id,
+        &args.bot.user_id,
+        args.command.as_ref().map(|c| &c.initiator),
+        &args.action,
+        state,
+    ) {
         return Err(HandleBotActionsError::NotAuthorized);
     }
-
-    let Chat::Channel(_, channel_id) = args.chat else {
-        unreachable!()
-    };
 
     let response = match args.action {
         BotAction::SendMessage(action) => {
@@ -46,8 +52,8 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
             match send_message_impl(
                 send_message::Args {
                     channel_id,
-                    thread_root_message_index: args.thread_root_message_index,
-                    message_id: args.message_id,
+                    thread_root_message_index: args.chat_details.thread_root_message_index,
+                    message_id: args.chat_details.message_id,
                     content,
                     sender_name: args.bot.username.clone(),
                     sender_display_name: None,
@@ -60,10 +66,9 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                     message_filter_failed: None,
                     new_achievement: false,
                 },
-                Some(BotCaller {
+                args.command.map(|command| BotCaller {
                     bot: args.bot.user_id,
-                    initiator: args.initiator,
-                    command: args.command,
+                    command,
                     finalised: action.finalised,
                 }),
                 state,
@@ -81,23 +86,31 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
     response
 }
 
-fn is_bot_permitted_to_execute_action(args: &Args, state: &RuntimeState) -> bool {
-    let Chat::Channel(_, channel_id) = args.chat else {
-        unreachable!()
-    };
-
+fn is_bot_permitted_to_execute_action(
+    channel_id: ChannelId,
+    bot_id: &UserId,
+    initiator: Option<&UserId>,
+    action: &BotAction,
+    state: &RuntimeState,
+) -> bool {
     // Get the permissions granted to the bot in this community
-    let Some(granted_to_bot) = state.data.get_bot_permissions(&args.bot.user_id) else {
+    let Some(granted_to_bot) = state.data.get_bot_permissions(bot_id) else {
         return false;
     };
 
-    // Get the permissions granted to the user in this community/channel
-    let Some(granted_to_user) = state.data.get_user_permissions_for_bot_commands(&args.initiator, &channel_id) else {
-        return false;
+    // Get the permissions granted to the user in this community/channel iff there is an initiator
+    let granted = if let Some(initiator) = initiator {
+        if let Some(granted_to_user) = state.data.get_user_permissions_for_bot_commands(initiator, Some(channel_id)) {
+            &intersect_permissions(granted_to_bot, &granted_to_user)
+        } else {
+            return false;
+        }
+    } else {
+        granted_to_bot
     };
 
     // Get the permissions required to execute the given action
-    let permissions_required = args.action.permissions_required();
+    let permissions_required = action.permissions_required();
 
-    can_bot_execute_action(&permissions_required, granted_to_bot, &granted_to_user)
+    can_bot_execute_action(&permissions_required, granted)
 }
