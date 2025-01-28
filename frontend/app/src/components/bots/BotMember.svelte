@@ -60,12 +60,46 @@
         $props();
     let botSummaryMode = $state<BotSummaryMode | undefined>(undefined);
     let generatingKey = $state(false);
-    let canGenerateKey = $derived(canManage && bot.definition.autonomousConfig !== undefined);
+    let autonomousPermissionsEmpty = $derived(
+        bot.definition.autonomousConfig === undefined ||
+            permissionsAreEmpty(
+                filterRequestedPermissions(bot.definition.autonomousConfig.permissions, collection),
+            ),
+    );
+    let canGenerateKey = $derived(canManage && !autonomousPermissionsEmpty);
     let commandContextId = $derived(
         collection.kind === "channel"
             ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
             : collection.id,
     );
+
+    function permissionsAreEmpty(perm: ExternalBotPermissions): boolean {
+        const empty =
+            perm.messagePermissions.length === 0 &&
+            perm.chatPermissions.length === 0 &&
+            perm.communityPermissions.length === 0;
+        return empty;
+    }
+
+    function filterRequestedPermissions(
+        perm: ExternalBotPermissions,
+        scope: CommunitySummary | MultiUserChat,
+    ): ExternalBotPermissions {
+        if (scope.kind === "community") {
+            // chat & message permissions don't apply at the community level
+            return {
+                ...perm,
+                chatPermissions: [],
+                messagePermissions: [],
+            };
+        } else {
+            // community permisisons don't apply at the chat level
+            return {
+                ...perm,
+                communityPermissions: [],
+            };
+        }
+    }
 
     function removeBot() {
         client.removeInstalledBot(commandContextId, bot.id).then((success) => {
