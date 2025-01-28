@@ -69,7 +69,7 @@
     });
     let showCommands = $derived(mode.kind !== "adding_api_key" && mode.kind !== "editing_api_key");
     let choosePermissions = $derived(mode.kind !== "viewing_command_bot");
-    let grantedPermissions = getInitialGrantedPermissions(mode);
+    let grantedPermissions = $state(getInitialGrantedPermissions(mode));
     let apiKey = $state<string | undefined>(undefined);
     let confirmingRegeneration = $state(false);
 
@@ -87,7 +87,7 @@
     function installBot(id: CommunityIdentifier | GroupChatIdentifier) {
         busy = true;
         client
-            .installBot(id, bot.id, $state.snapshot(grantedPermissions))
+            .installBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.add.failure"));
@@ -101,7 +101,7 @@
     function updateBot(id: CommunityIdentifier | GroupChatIdentifier) {
         busy = true;
         client
-            .updateInstalledBot(id, bot.id, $state.snapshot(grantedPermissions))
+            .updateInstalledBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.edit.failure"));

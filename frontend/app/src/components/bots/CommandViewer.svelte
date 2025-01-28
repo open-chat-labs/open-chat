@@ -115,21 +115,23 @@
                     permissions={command.permissions} />
             </section>
 
-            <section>
-                <Legend label={i18nKey("bots.builder.paramsLabel")}></Legend>
-                <div class="params">
-                    {#each command.params as param, i}
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div
-                            onclick={() => onSelectParam(param, i)}
-                            class="param"
-                            class:param-error={errors.has(`${errorPath}_param_${i}`)}>
-                            <Translatable resourceKey={i18nKey(param.name)}></Translatable>
-                        </div>
-                    {/each}
-                </div>
-            </section>
+            {#if command.params.length > 0}
+                <section>
+                    <Legend label={i18nKey("bots.builder.paramsLabel")}></Legend>
+                    <div class="params">
+                        {#each command.params as param, i}
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div
+                                onclick={() => onSelectParam(param, i)}
+                                class="param"
+                                class:param-error={errors.has(`${errorPath}_param_${i}`)}>
+                                <Translatable resourceKey={i18nKey(param.name)}></Translatable>
+                            </div>
+                        {/each}
+                    </div>
+                </section>
+            {/if}
 
             {#if errors.has(`${errorPath}_duplicate_params`)}
                 <ErrorMessage>{errors.get(`${errorPath}_duplicate_params`)}</ErrorMessage>
