@@ -7904,21 +7904,21 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    addBot(
+    installBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
         grantedPermissions: SlashCommandPermissions,
     ): Promise<boolean> {
         this.#installBotLocally(id, botId, grantedPermissions);
         return this.#sendRequest({
-            kind: "addBot",
+            kind: "installBot",
             id,
             botId,
             grantedPermissions,
         })
             .then((resp) => {
                 if (!resp) {
-                    this.#removeInstalledBotLocally(id, botId);
+                    this.#uninstallBotLocally(id, botId);
                 }
                 return resp;
             })
@@ -7944,7 +7944,7 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    #removeInstalledBotLocally(
+    #uninstallBotLocally(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
     ): SlashCommandPermissions | undefined {
@@ -7991,13 +7991,13 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    removeInstalledBot(
+    uninstallBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
     ): Promise<boolean> {
-        const perm = this.#removeInstalledBotLocally(id, botId);
+        const perm = this.#uninstallBotLocally(id, botId);
         return this.#sendRequest({
-            kind: "removeInstalledBot",
+            kind: "uninstallBot",
             id,
             botId,
         })

@@ -52,7 +52,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareOk, Response> {
 
     let token_info = if args.input_token { &swap.args.input_token } else { &swap.args.output_token };
     let ledger = token_info.ledger;
-    let fee = token_info.fee;
+    let fee = args.fee.unwrap_or(token_info.fee);
 
     let amount = if let Some(amount) = args.amount {
         amount
