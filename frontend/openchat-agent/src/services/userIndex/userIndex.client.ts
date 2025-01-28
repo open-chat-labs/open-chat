@@ -83,8 +83,8 @@ import {
     UserIndexCheckUsernameResponse,
     UserIndexChitLeaderboardResponse,
     UserIndexCurrentUserResponse,
-    // UserIndexDeleteUserArgs,
-    // UserIndexDeleteUserResponse,
+    UserIndexDeleteUserArgs,
+    UserIndexDeleteUserResponse,
     UserIndexDiamondMembershipFeesResponse,
     UserIndexExploreBotsArgs,
     UserIndexExploreBotsResponse,
@@ -124,6 +124,8 @@ import {
     UserIndexUsersResponse,
 } from "../../typebox";
 import { apiToken } from "../common/chatMappersV2";
+import type { DelegationChain } from "@dfinity/identity";
+import { signedDelegation } from "../../utils/id";
 
 export class UserIndexClient extends CandidService {
     constructor(
@@ -609,15 +611,14 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    deleteUser(_userId: string): Promise<boolean> {
-        return Promise.resolve(true);
-        // return this.executeMsgpackUpdate(
-        //     "delete_user",
-        //     { user_id: principalStringToBytes(userId) },
-        //     (resp) => resp === "Success",
-        //     UserIndexDeleteUserArgs,
-        //     UserIndexDeleteUserResponse,
-        // );
+    deleteUser(userId: string, delegation: DelegationChain): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "delete_user",
+            { user_id: principalStringToBytes(userId), delegation: signedDelegation(delegation) },
+            (resp) => resp === "Success",
+            UserIndexDeleteUserArgs,
+            UserIndexDeleteUserResponse,
+        );
     }
 
     exploreBots(

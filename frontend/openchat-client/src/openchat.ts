@@ -630,11 +630,12 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    deleteCurrentUser(): Promise<boolean> {
+    deleteCurrentUser(delegation: DelegationChain): Promise<boolean> {
         if (!this.#liveState.anonUser) {
             return this.#sendRequest({
                 kind: "deleteUser",
                 userId: this.#liveState.user.userId,
+                delegation,
             }).then((success) => {
                 if (success) {
                     this.clearCachedData().finally(() => this.logout());
@@ -7991,10 +7992,7 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    uninstallBot(
-        id: CommunityIdentifier | GroupChatIdentifier,
-        botId: string,
-    ): Promise<boolean> {
+    uninstallBot(id: CommunityIdentifier | GroupChatIdentifier, botId: string): Promise<boolean> {
         const perm = this.#uninstallBotLocally(id, botId);
         return this.#sendRequest({
             kind: "uninstallBot",
