@@ -192,8 +192,7 @@
                     <div class="min">
                         <Legend
                             label={i18nKey("bots.builder.minValueLabel")}
-                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}
-                        ></Legend>
+                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}></Legend>
                         <IntegerInput
                             min={BigInt(0)}
                             max={param.maxValue}
@@ -216,9 +215,8 @@
                     <div class="min">
                         <Legend
                             label={i18nKey("bots.builder.minValueLabel")}
-                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}
-                    ></Legend>
-                    <NumberInput
+                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}></Legend>
+                        <NumberInput
                             min={0}
                             max={param.maxValue}
                             placeholder={i18nKey("bots.builder.minValuePlaceholder")}
