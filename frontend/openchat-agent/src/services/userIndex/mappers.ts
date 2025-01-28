@@ -605,9 +605,20 @@ export function apiCustomParamFields(param: SlashCommandParam): ApiSlashCommandP
             return "UserParam";
         case "boolean":
             return "BooleanParam";
-        case "number":
+        case "integer":
             return {
-                NumberParam: {
+                IntegerParam: {
+                    min_value: param.minValue,
+                    max_value: param.maxValue,
+                    choices: param.choices.map((c) => ({
+                        name: c.name,
+                        value: c.value,
+                    })),
+                },
+            };
+        case "decimal":
+            return {
+                DecimalParam: {
                     min_value: param.minValue,
                     max_value: param.maxValue,
                     choices: param.choices,

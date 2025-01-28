@@ -582,11 +582,17 @@ export function botCommandArg(api: BotCommandArg): SlashCommandParamInstance {
             name,
             value: value.Boolean,
         };
-    } else if ("Number" in value) {
+    } else if ("Integer" in value) {
         return {
-            kind: "number",
+            kind: "integer",
             name,
-            value: value.Number,
+            value: value.Integer,
+        };
+    } else if ("Decimal" in value) {
+        return {
+            kind: "decimal",
+            name,
+            value: value.Decimal,
         };
     } else if ("String" in value) {
         return {
@@ -3432,12 +3438,22 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
             maxLength: paramType.StringParam.max_length,
             choices: paramType.StringParam.choices,
         };
-    } else if ("NumberParam" in paramType) {
+    } else if ("IntegerParam" in paramType) {
         return {
-            kind: "number",
-            minValue: paramType.NumberParam.min_value,
-            maxValue: paramType.NumberParam.max_value,
-            choices: paramType.NumberParam.choices,
+            kind: "integer",
+            minValue: paramType.IntegerParam.min_value,
+            maxValue: paramType.IntegerParam.max_value,
+            choices: paramType.IntegerParam.choices.map((c) => ({
+               name: c.name,
+               value: c.value,
+            })),
+        };
+    }else if ("DecimalParam" in paramType) {
+        return {
+            kind: "decimal",
+            minValue: paramType.DecimalParam.min_value,
+            maxValue: paramType.DecimalParam.max_value,
+            choices: paramType.DecimalParam.choices,
         };
     }
     throw new UnsupportedValueError("Unexpected ApiSlashCommandParamType value", paramType);

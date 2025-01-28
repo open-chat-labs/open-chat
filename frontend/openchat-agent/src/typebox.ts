@@ -1109,6 +1109,12 @@ export const MessagePermission = Type.Union([
     Type.Literal("VideoCall"),
 ]);
 
+export type SlashCommandOptionChoiceI128 = Static<typeof SlashCommandOptionChoiceI128>;
+export const SlashCommandOptionChoiceI128 = Type.Object({
+    name: Type.String(),
+    value: Type.BigInt(),
+});
+
 export type VideoCall = Static<typeof VideoCall>;
 export const VideoCall = Type.Object({
     message_index: MessageIndex,
@@ -1617,6 +1623,13 @@ export const OptionUpdateString = Type.Union(
     ],
     { default: "NoChange" },
 );
+
+export type DecimalParam = Static<typeof DecimalParam>;
+export const DecimalParam = Type.Object({
+    min_value: Type.Number(),
+    max_value: Type.Number(),
+    choices: Type.Array(SlashCommandOptionChoiceF64),
+});
 
 export type DiamondMembershipStatus = Static<typeof DiamondMembershipStatus>;
 export const DiamondMembershipStatus = Type.Union([
@@ -4265,6 +4278,13 @@ export const CryptoAccountICRC1 = Type.Union([
     }),
 ]);
 
+export type IntegerParam = Static<typeof IntegerParam>;
+export const IntegerParam = Type.Object({
+    min_value: Type.BigInt(),
+    max_value: Type.BigInt(),
+    choices: Type.Array(SlashCommandOptionChoiceI128),
+});
+
 export type VerifiedCredentialGate = Static<typeof VerifiedCredentialGate>;
 export const VerifiedCredentialGate = Type.Object({
     issuer_canister_id: TSBytes,
@@ -4470,13 +4490,6 @@ export const OptionUpdateOptionalMessagePermissions = Type.Union(
     ],
     { default: "NoChange" },
 );
-
-export type NumberParam = Static<typeof NumberParam>;
-export const NumberParam = Type.Object({
-    min_value: Type.Number(),
-    max_value: Type.Number(),
-    choices: Type.Array(SlashCommandOptionChoiceF64),
-});
 
 export type PendingCryptoTransactionICRC2 = Static<typeof PendingCryptoTransactionICRC2>;
 export const PendingCryptoTransactionICRC2 = Type.Object({
@@ -6069,7 +6082,10 @@ export const SlashCommandParamType = Type.Union([
         StringParam: StringParam,
     }),
     Type.Object({
-        NumberParam: NumberParam,
+        IntegerParam: IntegerParam,
+    }),
+    Type.Object({
+        DecimalParam: DecimalParam,
     }),
 ]);
 
@@ -6490,7 +6506,10 @@ export const BotCommandArgValue = Type.Union([
         String: Type.String(),
     }),
     Type.Object({
-        Number: Type.Number(),
+        Integer: Type.BigInt(),
+    }),
+    Type.Object({
+        Decimal: Type.Number(),
     }),
     Type.Object({
         Boolean: Type.Boolean(),

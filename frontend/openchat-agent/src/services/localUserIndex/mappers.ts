@@ -101,9 +101,13 @@ export function apiBotCommandArgValue(domain: SlashCommandParamInstance): BotCom
             return {
                 Boolean: domain.value!,
             };
-        case "number":
+        case "integer":
             return {
-                Number: domain.value!,
+                Integer: domain.value!,
+            };
+        case "decimal":
+            return {
+                Decimal: domain.value!,
             };
         case "string":
             return {

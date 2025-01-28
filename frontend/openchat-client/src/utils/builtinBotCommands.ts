@@ -32,7 +32,7 @@ export const builtinBot: InternalBot = {
                         choices: [],
                     },
                     {
-                        kind: "number",
+                        kind: "decimal",
                         name: "bots.crypto.params.amount.name",
                         minValue: 0,
                         maxValue: Number.MAX_VALUE,
@@ -200,7 +200,7 @@ export const builtinBot: InternalBot = {
                 },
                 params: [
                     {
-                        kind: "number",
+                        kind: "decimal",
                         name: "Number of messages",
                         minValue: 0,
                         maxValue: 50,

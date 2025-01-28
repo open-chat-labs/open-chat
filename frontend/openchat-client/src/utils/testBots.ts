@@ -134,7 +134,7 @@ const multiplyCommand: SlashCommandSchema = {
     permissions: emptyPermissions,
     params: [
         {
-            kind: "number",
+            kind: "decimal",
             name: "Number",
             minValue: 0,
             maxValue: 100,
@@ -157,7 +157,7 @@ const calculateCommand: SlashCommandSchema = {
     permissions: emptyPermissions,
     params: [
         {
-            kind: "number",
+            kind: "decimal",
             name: "Number one",
             minValue: 0,
             maxValue: Number.MAX_VALUE,
@@ -167,7 +167,7 @@ const calculateCommand: SlashCommandSchema = {
             choices: [],
         },
         {
-            kind: "number",
+            kind: "decimal",
             name: "Number two",
             minValue: 0,
             maxValue: Number.MAX_VALUE,

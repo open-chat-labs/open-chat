@@ -156,7 +156,7 @@ import {
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
-import { formatTokens, parseBigInt, validateTokenInput } from "./utils/cryptoFormatter";
+import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
 import {
     formatMessageDate,
     toDateString,
@@ -468,6 +468,7 @@ import {
     AIRDROP_BOT_USER_ID,
     isEditableContent,
     isCaptionedContent,
+    parseBigInt,
     random64,
     random128,
 } from "openchat-shared";
@@ -7832,7 +7833,7 @@ export class OpenChat extends EventTarget {
                 token !== undefined &&
                 token.kind === "string" &&
                 amount !== undefined &&
-                amount.kind === "number" &&
+                amount.kind === "decimal" &&
                 amount.value !== null
             ) {
                 const tokenDetails = Object.values(get(cryptoLookup)).find(
@@ -7849,7 +7850,7 @@ export class OpenChat extends EventTarget {
             this.dispatchEvent(ev);
         } else if (bot.command.name === "test-msg") {
             const param = bot.command.params[0];
-            if (param !== undefined && param.kind === "number" && param.value !== null) {
+            if (param !== undefined && param.kind === "decimal" && param.value !== null) {
                 this.dispatchEvent(
                     new CreateTestMessages([bot.command.messageContext, param.value]),
                 );
