@@ -839,7 +839,7 @@
             "loginInitiator": "Sorry we were unable to sign into your chosen provider",
             "pollingError": "There was an unexpected error waiting for email signin",
             "principalMismatch": "It seems like you did not re-authenticate with the same provider that you are currently signed in with",
-            "unlinkActivePrincipal": "It seems like you tried to unlink a provider you're currently logged in with, which is not allowed.",
+            "unlinkActivePrincipal": "You cannot unlink the provider you are currently logged in with.",
             "identityNotFound": "We could not find the linked provider, and therefore cannot continue with the unlinking process.",
             "userNotFound": "It does not appear that the provider you are currently logged in with is available, and cannot be used for unlinking.",
             "unexpectedError": "Could not process your request. Please try again later."
