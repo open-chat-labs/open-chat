@@ -23,6 +23,12 @@ impl Debug for PinNumberWrapper {
     }
 }
 
+impl From<String> for PinNumberWrapper {
+    fn from(value: String) -> Self {
+        PinNumberWrapper(value)
+    }
+}
+
 impl From<PinNumberWrapper> for String {
     fn from(value: PinNumberWrapper) -> Self {
         value.0

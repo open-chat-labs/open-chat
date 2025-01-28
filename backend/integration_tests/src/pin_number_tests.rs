@@ -92,8 +92,8 @@ fn attempts_blocked_after_incorrect_attempts() {
             user.principal,
             user.canister(),
             &user_canister::set_pin_number::Args {
-                verification: PinNumberVerification::PIN(format!("100{i}")),
-                new: Some("2000".to_string()),
+                verification: PinNumberVerification::PIN(format!("100{i}").into()),
+                new: Some("2000".to_string().into()),
             },
         );
 
@@ -175,8 +175,8 @@ fn transfer_requires_correct_pin(test_case: u32) {
             block_level_markdown: false,
             message_filter_failed: None,
             pin: match test_case {
-                1 => Some("1000".to_string()),
-                2 => Some("2000".to_string()),
+                1 => Some("1000".to_string().into()),
+                2 => Some("2000".to_string().into()),
                 3 => None,
                 _ => unreachable!(),
             },

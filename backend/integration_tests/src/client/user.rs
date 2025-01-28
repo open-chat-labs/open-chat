@@ -437,12 +437,18 @@ pub mod happy_path {
     }
 
     pub fn set_pin_number(env: &mut PocketIc, user: &User, current: Option<String>, new: Option<String>) {
-        let verification = current.map(PinNumberVerification::PIN).unwrap_or(PinNumberVerification::None);
+        let verification = current
+            .map(|p| PinNumberVerification::PIN(p.into()))
+            .unwrap_or(PinNumberVerification::None);
+
         let response = super::set_pin_number(
             env,
             user.principal,
             user.canister(),
-            &user_canister::set_pin_number::Args { verification, new },
+            &user_canister::set_pin_number::Args {
+                verification,
+                new: new.map(|p| p.into()),
+            },
         );
 
         assert!(matches!(response, user_canister::set_pin_number::Response::Success));
