@@ -317,7 +317,7 @@
         "manage": {
             "apiKeyInfo": "You will need an API key to allow bots to perform actions independently in this context",
             "reviewApiKey": "Review API key",
-            "deleteApiKeyInfo": "If you delete the existing API key, any bot that is using that key will no longer have access",
+            "regenerateWarning": "Re-generating the API key will revoke access to the previously generated API key. Are you sure you want to proceed?",
             "generateApiKey": "Generate an API key",
             "generate": "Generate API key",
             "generated": "API key generated",

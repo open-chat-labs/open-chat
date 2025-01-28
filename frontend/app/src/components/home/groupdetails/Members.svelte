@@ -360,11 +360,6 @@
                     {collection}
                     {bot}
                     commandPermissions={bot.grantedPermissions}
-                    apiKeyPermissions={{
-                        messagePermissions: ["text"],
-                        chatPermissions: [],
-                        communityPermissions: [],
-                    }}
                     canManage={canManageBots}
                     {searchTerm} />
             {/each}

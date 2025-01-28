@@ -26,6 +26,7 @@
     import { toastStore } from "../../stores/toast";
     import BotAvatar from "./BotAvatar.svelte";
     import ShowApiKey from "./ShowApiKey.svelte";
+    import AreYouSure from "../AreYouSure.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -70,6 +71,7 @@
     let choosePermissions = $derived(mode.kind !== "viewing_command_bot");
     let grantedPermissions = getInitialGrantedPermissions(mode);
     let apiKey = $state<string | undefined>(undefined);
+    let confirmingRegeneration = $state(false);
 
     function getInitialGrantedPermissions(mode: BotSummaryMode): ExternalBotPermissions {
         switch (mode.kind) {
@@ -110,14 +112,26 @@
             .finally(() => (busy = false));
     }
 
-    function generateApiKey() {
-        if (bot.definition.autonomousConfig !== undefined) {
-            busy = true;
-            window.setTimeout(() => {
-                apiKey = random128().toString();
-                busy = false;
-            });
+    function generateApiKey(confirmed: boolean): Promise<void> {
+        if (!confirmingRegeneration && !confirmed) {
+            confirmingRegeneration = true;
+            return Promise.resolve();
         }
+
+        if (confirmed) {
+            if (bot.definition.autonomousConfig !== undefined) {
+                if (mode.kind === "editing_api_key") {
+                    // are you sure
+                }
+                busy = true;
+                window.setTimeout(() => {
+                    apiKey = random128().toString();
+                    busy = false;
+                });
+            }
+        }
+        confirmingRegeneration = false;
+        return Promise.resolve();
     }
 
     function mainButton() {
@@ -131,11 +145,16 @@
             case "viewing_command_bot":
                 onClose();
             case "adding_api_key":
+                generateApiKey(true);
             case "editing_api_key":
-                generateApiKey();
+                generateApiKey(false);
         }
     }
 </script>
+
+{#if confirmingRegeneration}
+    <AreYouSure message={i18nKey("bots.manage.regenerateWarning")} action={generateApiKey} />
+{/if}
 
 {#if apiKey !== undefined}
     <ShowApiKey {apiKey} {onClose}></ShowApiKey>
