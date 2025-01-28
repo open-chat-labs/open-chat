@@ -8,14 +8,17 @@ import type {
     ChatEventsBatchResponse,
     ChatEventsResponse,
     ChatIdentifier,
+    CommunityIdentifier,
     EventsSuccessResult,
     EventWrapper,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
+    GroupChatIdentifier,
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
     RegisterUserResponse,
+    SlashCommandPermissions,
     VerifiedCredentialArgs,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -32,7 +35,13 @@ import {
     registerUserResponse,
     withdrawFromIcpSwapResponse,
 } from "./mappers";
-import { joinGroupResponse, apiChatIdentifier } from "../common/chatMappersV2";
+import {
+    joinGroupResponse,
+    apiChatIdentifier,
+    apiChatPermission,
+    apiCommunityPermission,
+    apiMessagePermission
+} from "../common/chatMappersV2";
 import { toBigInt32, MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
 import {
     mapOptional,
@@ -54,6 +63,8 @@ import {
     LocalUserIndexChatEventsResponse,
     LocalUserIndexGroupAndCommunitySummaryUpdatesArgs,
     LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
+    LocalUserIndexInstallBotArgs,
+    LocalUserIndexInstallBotResponse,
     LocalUserIndexInviteUsersToChannelArgs,
     LocalUserIndexInviteUsersToChannelResponse,
     LocalUserIndexInviteUsersToCommunityArgs,
@@ -68,6 +79,8 @@ import {
     LocalUserIndexJoinGroupResponse,
     LocalUserIndexRegisterUserArgs,
     LocalUserIndexRegisterUserResponse,
+    LocalUserIndexUninstallBotArgs,
+    LocalUserIndexUninstallBotResponse,
     LocalUserIndexWithdrawFromIcpswapArgs,
     LocalUserIndexWithdrawFromIcpswapResponse,
 } from "../../typebox";
@@ -371,6 +384,41 @@ export class LocalUserIndexClient extends CandidService {
             inviteUsersResponse,
             LocalUserIndexInviteUsersToChannelArgs,
             LocalUserIndexInviteUsersToChannelResponse,
+        );
+    }
+
+    installBot(location: CommunityIdentifier | GroupChatIdentifier, botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "install_bot",
+            {
+                location: location.kind === "community"
+                    ? { Community: principalStringToBytes(location.communityId) }
+                    : { Group: principalStringToBytes(location.groupId) },
+                bot_id: principalStringToBytes(botId),
+                granted_permissions: {
+                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
+                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
+                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                },
+            },
+            (resp) => resp === "Success",
+            LocalUserIndexInstallBotArgs,
+            LocalUserIndexInstallBotResponse,
+        );
+    }
+
+    uninstallBot(location: CommunityIdentifier | GroupChatIdentifier, botId: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "uninstall_bot",
+            {
+                location: location.kind === "community"
+                    ? { Community: principalStringToBytes(location.communityId) }
+                    : { Group: principalStringToBytes(location.groupId) },
+                bot_id: principalStringToBytes(botId),
+            },
+            (resp) => resp === "Success",
+            LocalUserIndexUninstallBotArgs,
+            LocalUserIndexUninstallBotResponse,
         );
     }
 
