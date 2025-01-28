@@ -12,7 +12,7 @@ use types::{Delegation, SignedDelegation};
 
 #[test_case(false)]
 #[test_case(true)]
-fn link_auth_identities(delay: bool) {
+fn link_and_unlink_auth_identities(delay: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
@@ -78,6 +78,24 @@ fn link_auth_identities(delay: bool) {
         identity_canister::approve_identity_link::Response::DelegationTooOld if delay => {}
         response => panic!("{response:?}"),
     };
+
+    env.tick();
+
+    let remove_identity_link_response = client::identity::remove_identity_link(
+        env,
+        auth_principal1,
+        canister_ids.identity,
+        &identity_canister::remove_identity_link::Args {
+            linked_principal: auth_principal2,
+        },
+    );
+
+    match remove_identity_link_response {
+        identity_canister::remove_identity_link::Response::Success => {
+            assert!(true)
+        }
+        response => panic!("{response:?}"),
+    }
 }
 
 #[test_case(false)]

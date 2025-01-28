@@ -11,6 +11,7 @@ generate_update_call!(approve_identity_link);
 generate_update_call!(create_identity);
 generate_update_call!(initiate_identity_link);
 generate_update_call!(prepare_delegation);
+generate_update_call!(remove_identity_link);
 
 pub mod happy_path {
     use candid::Principal;
@@ -135,6 +136,25 @@ pub mod happy_path {
         match response {
             identity_canister::approve_identity_link::Response::Success => (),
             response => panic!("'approve_identity_link' error: {response:?}"),
+        }
+    }
+
+    pub fn remove_identity_link(
+        env: &mut PocketIc,
+        sender: Principal,
+        identity_canister_id: CanisterId,
+        linked_principal: Principal,
+    ) {
+        let response = super::remove_identity_link(
+            env,
+            sender,
+            identity_canister_id,
+            &identity_canister::remove_identity_link::Args { linked_principal },
+        );
+
+        match response {
+            identity_canister::remove_identity_link::Response::Success => (),
+            response => panic!("'remove_identity_link' error: {response:?}"),
         }
     }
 
