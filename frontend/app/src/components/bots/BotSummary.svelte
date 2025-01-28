@@ -120,14 +120,11 @@
 
         if (confirmed) {
             if (bot.definition.autonomousConfig !== undefined) {
-                if (mode.kind === "editing_api_key") {
-                    // are you sure
-                }
                 busy = true;
                 window.setTimeout(() => {
                     apiKey = random128().toString();
                     busy = false;
-                });
+                }, 1000);
             }
         }
         confirmingRegeneration = false;
@@ -144,10 +141,13 @@
                 break;
             case "viewing_command_bot":
                 onClose();
+                break;
             case "adding_api_key":
                 generateApiKey(true);
+                break;
             case "editing_api_key":
                 generateApiKey(false);
+                break;
         }
     }
 </script>
@@ -296,6 +296,7 @@
                 <Button
                     on:click={mainButton}
                     loading={busy}
+                    disabled={busy}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}>
                     <Translatable resourceKey={cta} />
