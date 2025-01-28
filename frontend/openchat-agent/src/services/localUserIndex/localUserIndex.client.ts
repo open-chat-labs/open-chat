@@ -391,7 +391,9 @@ export class LocalUserIndexClient extends CandidService {
         return this.executeMsgpackUpdate(
             "install_bot",
             {
-                location: location.kind === "community" ? { Community: principalStringToBytes(location.communityId) } : { Group: principalStringToBytes(location.groupId) },
+                location: location.kind === "community"
+                    ? { Community: principalStringToBytes(location.communityId) }
+                    : { Group: principalStringToBytes(location.groupId) },
                 bot_id: principalStringToBytes(botId),
                 granted_permissions: {
                     chat: grantedPermissions.chatPermissions.map(apiChatPermission),
