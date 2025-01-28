@@ -832,6 +832,7 @@
         "credentialWarning": "You must have an Internet Identity associated with your OpenChat account to confirm your possession of the {name} credential. The credential issuer must be associated with the same Internet Identity. If you registered using another provider you will need to create and link an Internet Identity to your OpenChat account before proceeding.",
         "failure": {
             "alreadyLinked": "Sorry but it looks like that principal is already linked to an OpenChat account",
+            "identityNotFound": "We could not find the linked provider, and therefore cannot continue with the unlinking process.",
             "link": "Sorry but we were unable to link this principal to your OpenChat account",
             "login_approver": "Sorry we were unable to sign into your current OpenChat authentication provider",
             "login_initiator": "Sorry we were unable to sign into the new authentication provider",
@@ -839,10 +840,9 @@
             "loginInitiator": "Sorry we were unable to sign into your chosen provider",
             "pollingError": "There was an unexpected error waiting for email signin",
             "principalMismatch": "It seems like you did not re-authenticate with the same provider that you are currently signed in with",
+            "unexpectedError": "Could not process your request. Please try again later.",
             "unlinkActivePrincipal": "You cannot unlink the provider you are currently logged in with.",
-            "identityNotFound": "We could not find the linked provider, and therefore cannot continue with the unlinking process.",
-            "userNotFound": "It does not appear that the provider you are currently logged in with is available, and cannot be used for unlinking.",
-            "unexpectedError": "Could not process your request. Please try again later."
+            "userNotFound": "It does not appear that the provider you are currently logged in with is available, and cannot be used for unlinking."
         },
         "humanityWarning": "You must have an Internet Identity associated with your OpenChat account to confirm your unique personhood. If you registered using another provider you will need to create and link an Internet Identity to your OpenChat account before proceeding.",
         "link": "Link",
@@ -853,13 +853,12 @@
             "section": "Sign-in providers",
             "start": "Get started",
             "unlink": "Unlink this account",
-            "unlinkAdvice": "This will unlink the {provider} account you had linked previously. Are you sure you want to proceed?",
-            "unlinkNote": "Unlinked accounts can be linked again.",
             "unlinkAction": "Unlink",
-            "unlinkingDone": "Your {provider} account has been unlinked!"
+            "unlinkAdvice": "This will unlink the {provider} account you had linked previously. Are you sure you want to proceed?",
+            "unlinkingDone": "Your {provider} account has been unlinked!",
+            "unlinkNote": "Unlinked accounts can be linked again."
         },
         "linkIdentity": "Link Identity",
-        "unlinkIdentity": "Unlink Identity",
         "linkTwoIdentities": "We are now ready to link the two identities together.",
         "mismatch": "This does not match the principal that you are currently signed in with. Are you sure you used the same authentication provider?",
         "proceed": "Proceed",
@@ -867,7 +866,8 @@
         "signIn_initiator": "Sign in with the identity provider that you would like to link to your OpenChat account",
         "signInCurrent": "Sign in with the identity provider that you are currently using",
         "signInNext": "Create or signin with the internet identity that you would like to link to your OpenChat account",
-        "tryAgain": "Try again"
+        "tryAgain": "Try again",
+        "unlinkIdentity": "Unlink Identity"
     },
     "identityMigrationMessage": "Please wait while your account is upgraded to our new system. This will allow us to support many more sign-in options going forwards, including optional email recovery in case you lose access to your device.",
     "inheritSystem": "Inherit system theme",

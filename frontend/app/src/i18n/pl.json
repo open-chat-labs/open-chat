@@ -832,13 +832,17 @@
         "credentialWarning": "Aby potwierdzić posiadanie danych uwierzytelniających {name}, musisz mieć tożsamość internetową powiązaną ze swoim kontem OpenChat. Wystawca danych uwierzytelniających musi być powiązany z tą samą tożsamością internetową. Jeśli zarejestrowałeś się przy użyciu innego dostawcy, przed kontynuowaniem będziesz musiał utworzyć tożsamość internetową i połączyć ją ze swoim kontem OpenChat.",
         "failure": {
             "alreadyLinked": "Przepraszamy, ale wygląda na to, że tożsamość internetowa jest już połączona z kontem OpenChat",
+            "identityNotFound": "Nie znaleźliśmy powiązanego dostawcy, dlatego nie możemy kontynuować procesu odłączania.",
             "link": "Przepraszamy, ale nie udało nam się połączyć Twojej tożsamości internetowej z kontem OpenChat",
             "login_approver": "Przepraszamy, nie udało nam się zalogować do Twojego obecnego dostawcy uwierzytelniania OpenChat",
             "login_initiator": "Przepraszamy, nie udało nam się zalogować do nowego dostawcy uwierzytelniania",
             "loginApprover": "Przepraszamy, nie mogliśmy zalogować się do Twojego obecnego dostawcy uwierzytelniania OpenChat",
             "loginInitiator": "Przepraszamy, nie mogliśmy zalogować się do wybranej tożsamości internetowej",
             "pollingError": "Wystąpił nieoczekiwany błąd podczas oczekiwania na logowanie e-mailem",
-            "principalMismatch": "Wygląda na to, że nie dokonałeś ponownego uwierzytelnienia u tego samego dostawcy, u którego jesteś obecnie zalogowany"
+            "principalMismatch": "Wygląda na to, że nie dokonałeś ponownego uwierzytelnienia u tego samego dostawcy, u którego jesteś obecnie zalogowany",
+            "unexpectedError": "Nie można przetworzyć Twojego żądania. Spróbuj ponownie później.",
+            "unlinkActivePrincipal": "Nie możesz odłączyć dostawcy, u którego jesteś aktualnie zalogowany.",
+            "userNotFound": "Wygląda na to, że dostawca, u którego jesteś obecnie zalogowany, jest niedostępny i nie można go użyć do odłączenia."
         },
         "humanityWarning": "Aby potwierdzić swoją wyjątkową osobowość, musisz mieć tożsamość internetową powiązaną z kontem OpenChat. Jeśli zarejestrowałeś się przy użyciu innego dostawcy, przed kontynuowaniem będziesz musiał utworzyć tożsamość internetową i połączyć ją ze swoim kontem OpenChat.",
         "link": "Połączyć",
@@ -847,7 +851,12 @@
             "linkAdvice": "Aby dodać nowego dostawcę usług logowania, najpierw zaloguj się u nowego dostawcy, którego chcesz dodać, następnie u bieżącego dostawcy i na końcu połącz oba dostawcy.",
             "linkAnother": "Dodaj kolejny",
             "section": "Dostawcy logowania",
-            "start": "Zacznij"
+            "start": "Zacznij",
+            "unlink": "Odłącz to konto",
+            "unlinkAction": "Odczepić",
+            "unlinkAdvice": "Spowoduje to odłączenie konta {provider}, które wcześniej połączyłeś. Czy na pewno chcesz kontynuować?",
+            "unlinkingDone": "Twoje konto {provider} zostało odłączone!",
+            "unlinkNote": "Niepołączone konta można połączyć ponownie."
         },
         "linkIdentity": "Tożsamość łącza",
         "linkTwoIdentities": "Jesteśmy teraz gotowi połączyć ze sobą obie tożsamości.",
@@ -857,7 +866,8 @@
         "signIn_initiator": "Zaloguj się przy użyciu dostawcy tożsamości, którego chcesz połączyć ze swoim kontem OpenChat",
         "signInCurrent": "Zaloguj się przy użyciu dostawcy tożsamości, którego aktualnie używasz",
         "signInNext": "Utwórz lub zaloguj się przy użyciu tożsamości internetowej, którą chcesz połączyć ze swoim kontem OpenChat",
-        "tryAgain": "Spróbuj ponownie"
+        "tryAgain": "Spróbuj ponownie",
+        "unlinkIdentity": "Odłącz tożsamość"
     },
     "identityMigrationMessage": "Poczekaj, aż Twoje konto zostanie zaktualizowane do nowego systemu. Dzięki temu będziemy mogli w przyszłości obsługiwać znacznie więcej opcji logowania, w tym opcjonalne odzyskiwanie poczty e-mail w przypadku utraty dostępu do urządzenia.",
     "inheritSystem": "Dziedzicz motyw systemu",

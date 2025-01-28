@@ -832,13 +832,17 @@
         "credentialWarning": "Devi avere un'identità Internet associata al tuo account OpenChat per confermare il tuo possesso delle credenziali {name}. L'emittente delle credenziali deve essere associato alla stessa identità Internet. Se ti sei registrato utilizzando un altro provider dovrai creare e collegare un'identità Internet al tuo account OpenChat prima di procedere.",
         "failure": {
             "alreadyLinked": "Siamo spiacenti ma sembra che l'identità Internet sia già collegata a un account OpenChat",
+            "identityNotFound": "Non siamo riusciti a trovare il provider collegato e pertanto non possiamo procedere con la procedura di scollegamento.",
             "link": "Siamo spiacenti ma non siamo riusciti a collegare la tua identità Internet al tuo account OpenChat",
             "login_approver": "Spiacenti, non siamo riusciti ad accedere al tuo attuale provider di autenticazione OpenChat",
             "login_initiator": "Spiacenti, non siamo riusciti ad accedere al nuovo provider di autenticazione",
             "loginApprover": "Siamo spiacenti, non siamo riusciti ad accedere al tuo attuale provider di autenticazione OpenChat",
             "loginInitiator": "Siamo spiacenti, non siamo riusciti ad accedere all'identità Internet scelta",
             "pollingError": "Si è verificato un errore imprevisto durante l'attesa dell'accesso all'e-mail",
-            "principalMismatch": "Sembra che tu non abbia effettuato nuovamente l'autenticazione con lo stesso provider con cui hai attualmente effettuato l'accesso"
+            "principalMismatch": "Sembra che tu non abbia effettuato nuovamente l'autenticazione con lo stesso provider con cui hai attualmente effettuato l'accesso",
+            "unexpectedError": "Impossibile elaborare la tua richiesta. Riprova più tardi.",
+            "unlinkActivePrincipal": "Non puoi scollegare il provider con cui hai effettuato l'accesso.",
+            "userNotFound": "Sembra che il provider con cui hai effettuato l'accesso non sia disponibile e non può essere utilizzato per la disconnessione."
         },
         "humanityWarning": "Devi avere un'identità Internet associata al tuo account OpenChat per confermare la tua personalità unica. Se ti sei registrato utilizzando un altro provider dovrai creare e collegare un'identità Internet al tuo account OpenChat prima di procedere.",
         "link": "Collegamento",
@@ -847,7 +851,12 @@
             "linkAdvice": "Per aggiungere un nuovo provider di accesso, accedi prima con il nuovo provider che desideri aggiungere, poi accedi con il tuo provider attuale e infine collega i due.",
             "linkAnother": "Aggiungine un altro",
             "section": "Provider di accesso",
-            "start": "Iniziare"
+            "start": "Iniziare",
+            "unlink": "Scollega questo account",
+            "unlinkAction": "Scollegare",
+            "unlinkAdvice": "Questo scollegherà l'account {provider} che avevi collegato in precedenza. Vuoi procedere?",
+            "unlinkingDone": "Il tuo account {provider} è stato scollegato!",
+            "unlinkNote": "Gli account non collegati possono essere nuovamente collegati."
         },
         "linkIdentity": "Collegamento Identità",
         "linkTwoIdentities": "Ora siamo pronti a collegare insieme le due identità.",
@@ -857,7 +866,8 @@
         "signIn_initiator": "Accedi con il provider di identità che desideri collegare al tuo account OpenChat",
         "signInCurrent": "Accedi con il provider di identità che stai attualmente utilizzando",
         "signInNext": "Crea o accedi con l'identità Internet che desideri collegare al tuo account OpenChat",
-        "tryAgain": "Riprova"
+        "tryAgain": "Riprova",
+        "unlinkIdentity": "Scollega identità"
     },
     "identityMigrationMessage": "Attendi mentre il tuo account viene aggiornato al nostro nuovo sistema. Ciò ci consentirà di supportare molte più opzioni di accesso in futuro, incluso il recupero facoltativo della posta elettronica nel caso in cui perdi l'accesso al tuo dispositivo.",
     "inheritSystem": "Eredita il tema del sistema",

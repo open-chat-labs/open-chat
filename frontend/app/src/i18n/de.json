@@ -832,13 +832,17 @@
         "credentialWarning": "Sie müssen über eine Internetidentität verfügen, die mit Ihrem OpenChat-Konto verknüpft ist, um Ihren Besitz der Anmeldeinformationen {name} zu bestätigen. Der Anmeldeinformationsaussteller muss mit derselben Internetidentität verknüpft sein. Wenn Sie sich über einen anderen Anbieter registriert haben, müssen Sie eine Internetidentität erstellen und mit Ihrem OpenChat-Konto verknüpfen, bevor Sie fortfahren können.",
         "failure": {
             "alreadyLinked": "Es tut uns leid, aber es sieht so aus, als ob diese Internetidentität bereits mit einem OpenChat-Konto verknüpft ist.",
+            "identityNotFound": "Wir konnten den verknüpften Anbieter nicht finden und können daher mit der Aufhebung der Verknüpfung nicht fortfahren.",
             "link": "Es ist uns leider nicht gelungen, Ihre Internetidentität mit Ihrem OpenChat-Konto zu verknüpfen.",
             "login_approver": "Leider konnten wir uns nicht bei Ihrem aktuellen OpenChat-Authentifizierungsanbieter anmelden",
             "login_initiator": "Leider konnten wir uns nicht beim neuen Authentifizierungsanbieter anmelden",
             "loginApprover": "Leider konnten wir uns nicht bei Ihrem aktuellen OpenChat-Authentifizierungsanbieter anmelden",
             "loginInitiator": "Leider konnten wir uns nicht mit Ihrer gewählten Internetidentität anmelden",
             "pollingError": "Beim Warten auf die E-Mail-Anmeldung ist ein unerwarteter Fehler aufgetreten",
-            "principalMismatch": "Es scheint, als hätten Sie sich nicht bei demselben Anbieter erneut authentifiziert, bei dem Sie aktuell angemeldet sind"
+            "principalMismatch": "Es scheint, als hätten Sie sich nicht bei demselben Anbieter erneut authentifiziert, bei dem Sie aktuell angemeldet sind",
+            "unexpectedError": "Ihre Anfrage konnte nicht verarbeitet werden. Bitte versuchen Sie es später noch einmal.",
+            "unlinkActivePrincipal": "Sie können die Verknüpfung mit dem Anbieter, bei dem Sie aktuell angemeldet sind, nicht aufheben.",
+            "userNotFound": "Der Anbieter, bei dem Sie aktuell angemeldet sind, scheint nicht verfügbar zu sein und kann nicht zum Aufheben der Verknüpfung verwendet werden."
         },
         "humanityWarning": "Sie müssen über eine Internetidentität verfügen, die mit Ihrem OpenChat-Konto verknüpft ist, um Ihre eindeutige Identität zu bestätigen. Wenn Sie sich über einen anderen Anbieter registriert haben, müssen Sie eine Internetidentität erstellen und mit Ihrem OpenChat-Konto verknüpfen, bevor Sie fortfahren können.",
         "link": "Verknüpfung",
@@ -847,7 +851,12 @@
             "linkAdvice": "Um einen neuen Anmeldeanbieter hinzuzufügen, melden Sie sich zuerst bei dem neuen Anbieter an, den Sie hinzufügen möchten. Melden Sie sich dann bei Ihrem aktuellen Anbieter an und verknüpfen Sie die beiden schließlich miteinander.",
             "linkAnother": "Weitere hinzufügen",
             "section": "Anmeldeanbieter",
-            "start": "Erste Schritte"
+            "start": "Erste Schritte",
+            "unlink": "Verknüpfung dieses Kontos aufheben",
+            "unlinkAction": "Verknüpfung aufheben",
+            "unlinkAdvice": "Dadurch wird die Verknüpfung des zuvor verknüpften {provider}-Kontos aufgehoben. Möchten Sie wirklich fortfahren?",
+            "unlinkingDone": "Die Verknüpfung Ihres {provider}-Kontos wurde aufgehoben!",
+            "unlinkNote": "Nicht verknüpfte Konten können erneut verknüpft werden."
         },
         "linkIdentity": "Link-Identität",
         "linkTwoIdentities": "Jetzt sind wir bereit, die beiden Identitäten miteinander zu verknüpfen.",
@@ -857,7 +866,8 @@
         "signIn_initiator": "Melden Sie sich mit dem Identitätsanbieter an, den Sie mit Ihrem OpenChat-Konto verknüpfen möchten",
         "signInCurrent": "Melden Sie sich mit dem Identitätsanbieter an, den Sie aktuell verwenden",
         "signInNext": "Erstellen Sie die Internetidentität, die Sie mit Ihrem OpenChat-Konto verknüpfen möchten, oder melden Sie sich damit an.",
-        "tryAgain": "Versuchen Sie es erneut"
+        "tryAgain": "Versuchen Sie es erneut",
+        "unlinkIdentity": "Identitätsverknüpfung aufheben"
     },
     "identityMigrationMessage": "Bitte warten Sie, während Ihr Konto auf unser neues System aktualisiert wird. Dadurch können wir in Zukunft viele weitere Anmeldeoptionen unterstützen, einschließlich der optionalen E-Mail-Wiederherstellung für den Fall, dass Sie den Zugriff auf Ihr Gerät verlieren.",
     "inheritSystem": "Systemthema erben",
