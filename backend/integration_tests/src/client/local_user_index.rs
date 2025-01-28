@@ -26,8 +26,8 @@ pub mod happy_path {
     use local_user_index_canister::{install_bot, uninstall_bot};
     use pocket_ic::PocketIc;
     use types::{
-        AccessTokenType, BotInstallationLocation, CanisterId, ChannelId, Chat, ChatId, CommunityCanisterCommunitySummary,
-        CommunityId, BotPermissions, UserId,
+        AccessTokenType, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatId,
+        CommunityCanisterCommunitySummary, CommunityId, UserId,
     };
 
     pub fn register_user(env: &mut PocketIc, principal: Principal, canister_id: CanisterId, public_key: Vec<u8>) -> User {

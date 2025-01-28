@@ -1,6 +1,6 @@
 use crate::{
-    AudioContent, FileContent, GiphyContent, ImageContent, MessagePermission, PollContent, BotPermissions,
-    TextContent, VideoContent,
+    AudioContent, BotPermissions, FileContent, GiphyContent, ImageContent, MessagePermission, PollContent, TextContent,
+    VideoContent,
 };
 use candid::{CandidType, Deserialize};
 use serde::Serialize;

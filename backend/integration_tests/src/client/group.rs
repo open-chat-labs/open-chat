@@ -49,10 +49,9 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
-        CanisterId, ChatId, Empty, EventIndex, EventsResponse, GroupCanisterGroupChatSummary,
+        BotPermissions, CanisterId, ChatId, Empty, EventIndex, EventsResponse, GroupCanisterGroupChatSummary,
         GroupCanisterGroupChatSummaryUpdates, GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex,
-        Milliseconds, PollVotes, Reaction, BotPermissions, TextContent, TimestampMillis, UserId, VideoCallType,
-        VoteOperation,
+        Milliseconds, PollVotes, Reaction, TextContent, TimestampMillis, UserId, VideoCallType, VoteOperation,
     };
 
     pub fn send_text_message(

@@ -13,13 +13,7 @@ pub struct GroupBots {
 }
 
 impl GroupBots {
-    pub fn add(
-        &mut self,
-        user_id: UserId,
-        added_by: UserId,
-        permissions: BotPermissions,
-        now: TimestampMillis,
-    ) -> bool {
+    pub fn add(&mut self, user_id: UserId, added_by: UserId, permissions: BotPermissions, now: TimestampMillis) -> bool {
         if self.bots.contains_key(&user_id) {
             return false;
         }
