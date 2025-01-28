@@ -287,22 +287,4 @@ export class GroupIndexClient extends CandidService {
             GroupIndexMarkLocalGroupIndexFullResponse,
         );
     }
-
-    // addBot(botId: string, grantedPermissions: ExternalBotPermissions): Promise<boolean> {
-    //     return this.executeMsgpackUpdate(
-    //         "add_bot",
-    //         {
-    //             bot_id: principalStringToBytes(botId),
-    //             granted_permissions: {
-    //                 chat: grantedPermissions.chatPermissions.map(apiChatPermission),
-    //                 community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
-    //                 message: grantedPermissions.messagePermissions.map(apiMessagePermission),
-    //                 thread: grantedPermissions.threadPermissions.map(apiMessagePermission),
-    //             },
-    //         },
-    //         addBotResponse,
-    //         GroupAddBotArgs,
-    //         GroupAddBotResponse,
-    //     );
-    // }
 }

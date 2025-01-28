@@ -119,14 +119,23 @@ const ApiExternalBotPermissions = IDL.Record({
     thread: IDL.Vec(ApiMessagePermission),
     message: IDL.Vec(ApiMessagePermission),
 });
-const ApiNumberParamChoice = IDL.Record({
-    value: IDL.Nat16,
+const ApiDecimalParamChoice = IDL.Record({
+    value: IDL.Float64,
     name: IDL.Text,
 });
-const ApiNumberParam = IDL.Record({
-    min_length: IDL.Nat16,
-    max_length: IDL.Nat16,
-    choices: IDL.Vec(ApiNumberParamChoice),
+const ApiDecimalParam = IDL.Record({
+    min_value: IDL.Float64,
+    max_value: IDL.Float64,
+    choices: IDL.Vec(ApiDecimalParamChoice),
+});
+const ApiIntegerParamChoice = IDL.Record({
+    value: IDL.Int,
+    name: IDL.Text,
+});
+const ApiIntegerParam = IDL.Record({
+    min_value: IDL.Int,
+    max_value: IDL.Int,
+    choices: IDL.Vec(ApiIntegerParamChoice),
 });
 const ApiStringParamChoice = IDL.Record({
     value: IDL.Text,
@@ -139,7 +148,8 @@ const ApiStringParam = IDL.Record({
 });
 const ApiSlashCommandParamType = IDL.Variant({
     UserParam: IDL.Null,
-    NumberParam: ApiNumberParam,
+    DecimalParam: ApiDecimalParam,
+    IntegerParam: ApiIntegerParam,
     StringParam: ApiStringParam,
     BooleanParam: IDL.Null,
 });
@@ -174,11 +184,22 @@ function createCommandParamType(param: SlashCommandParam): Record<string, any> {
             };
         case "user":
             return { UserParam: null };
-        case "number":
+        case "integer":
             return {
-                NumberParam: {
-                    min_length: param.minValue,
-                    max_length: param.maxValue,
+                IntegerParam: {
+                    min_value: param.minValue,
+                    max_value: param.maxValue,
+                    choices: param.choices.map((c) => ({
+                        name: c.name,
+                        value: c.value,
+                    })),
+                },
+            };
+        case "decimal":
+            return {
+                DecimalParam: {
+                    min_value: param.minValue,
+                    max_value: param.maxValue,
                     choices: param.choices.map((c) => ({
                         name: c.name,
                         value: c.value,

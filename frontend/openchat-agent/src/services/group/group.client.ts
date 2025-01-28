@@ -92,7 +92,6 @@ import {
 } from "../../utils/caching";
 import {
     acceptP2PSwapResponse,
-    addBotResponse,
     addRemoveReactionResponse,
     apiAccessGateConfig,
     apiChatPermission,
@@ -117,7 +116,6 @@ import {
     pinMessageResponse,
     registerPollVoteResponse,
     registerProposalVoteResponse,
-    removeBotResponse,
     searchGroupChatResponse,
     setVideoCallPresence,
     threadPreviewsResponse,
@@ -229,12 +227,8 @@ import {
     GroupUpdateGroupResponse,
     GroupVideoCallParticipantsArgs,
     GroupVideoCallParticipantsResponse,
-    GroupAddBotArgs,
-    GroupAddBotResponse,
     GroupUpdateBotArgs,
     GroupUpdateBotResponse,
-    GroupRemoveBotArgs,
-    GroupRemoveBotResponse,
 } from "../../typebox";
 
 export class GroupClient extends CandidService {
@@ -1291,23 +1285,6 @@ export class GroupClient extends CandidService {
         );
     }
 
-    addBot(botId: string, grantedPermissions: ExternalBotPermissions): Promise<boolean> {
-        return this.executeMsgpackUpdate(
-            "add_bot",
-            {
-                bot_id: principalStringToBytes(botId),
-                granted_permissions: {
-                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
-                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
-                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
-                },
-            },
-            addBotResponse,
-            GroupAddBotArgs,
-            GroupAddBotResponse,
-        );
-    }
-
     updateInstalledBot(
         botId: string,
         grantedPermissions: ExternalBotPermissions,
@@ -1325,18 +1302,6 @@ export class GroupClient extends CandidService {
             updateBotResponse,
             GroupUpdateBotArgs,
             GroupUpdateBotResponse,
-        );
-    }
-
-    removeInstalledBot(botId: string): Promise<boolean> {
-        return this.executeMsgpackUpdate(
-            "remove_bot",
-            {
-                bot_id: principalStringToBytes(botId),
-            },
-            removeBotResponse,
-            GroupRemoveBotArgs,
-            GroupRemoveBotResponse,
         );
     }
 }

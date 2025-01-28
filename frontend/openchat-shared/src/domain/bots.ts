@@ -6,7 +6,7 @@ import type {
     MultiUserChatIdentifier,
 } from "./chat";
 import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
-import type { InterpolationValues, ResourceKey } from "../utils";
+import {type InterpolationValues, parseBigInt, type ResourceKey} from "../utils";
 import { ValidationErrors } from "../utils/validation";
 import type { CommunityIdentifier } from "./community";
 
@@ -23,7 +23,7 @@ export type BotsResponse = {
 };
 
 // This can be expanded as necessary to include things like ChatParam (e.g. for a /goto bot)
-export type SlashCommandParamType = UserParam | BooleanParam | StringParam | NumberParam;
+export type SlashCommandParamType = UserParam | BooleanParam | StringParam | IntegerParam | DecimalParam;
 
 export type CommandParam = {
     name: string;
@@ -47,8 +47,15 @@ export type StringParam = {
     choices: SlashCommandOptionChoice<string>[];
 };
 
-export type NumberParam = {
-    kind: "number";
+export type IntegerParam = {
+    kind: "integer";
+    minValue: bigint;
+    maxValue: bigint;
+    choices: SlashCommandOptionChoice<bigint>[];
+};
+
+export type DecimalParam = {
+    kind: "decimal";
     minValue: number;
     maxValue: number;
     choices: SlashCommandOptionChoice<number>[];
@@ -87,9 +94,19 @@ export function defaultStringParam(param?: SlashCommandParam): SlashCommandParam
     };
 }
 
-export function defaultNumberParam(param?: SlashCommandParam): SlashCommandParam {
+export function defaultIntegerParam(param?: SlashCommandParam): SlashCommandParam {
     return {
-        kind: "number",
+        kind: "integer",
+        ...defaultCommonParam(param),
+        minValue: BigInt(0),
+        maxValue: BigInt(1000),
+        choices: [],
+    };
+}
+
+export function defaultDecimalParam(param?: SlashCommandParam): SlashCommandParam {
+    return {
+        kind: "decimal",
         ...defaultCommonParam(param),
         minValue: 0,
         maxValue: 1000,
@@ -304,8 +321,13 @@ export type StringParamInstance = {
     value?: string;
 };
 
-export type NumberParamInstance = {
-    kind: "number";
+export type IntegerParamInstance = {
+    kind: "integer";
+    value: bigint | null;
+};
+
+export type DecimalParamInstance = {
+    kind: "decimal";
     value: number | null; // this is to do with how number input binding works
 };
 
@@ -313,7 +335,8 @@ export type SlashCommandParamTypeInstance =
     | UserParamInstance
     | BooleanParamInstance
     | StringParamInstance
-    | NumberParamInstance;
+    | IntegerParamInstance
+    | DecimalParamInstance;
 
 export type SlashCommandParamInstance = CommandParamInstance & SlashCommandParamTypeInstance;
 
@@ -327,13 +350,20 @@ export function createParamInstancesFromSchema(
                 return { kind: "user", name: p.name };
             case "boolean":
                 return { kind: "boolean", name: p.name, value: false };
-            case "number": {
+            case "integer": {
+                let value : bigint | null = parseBigInt(maybeParams[i]) ?? null;
+                if (p.choices.length > 0) {
+                    value = p.choices.find((c) => c.value === value)?.value ?? null;
+                }
+                return { kind: p.kind, name: p.name, value };
+            }
+            case "decimal": {
                 const numParam = Number(maybeParams[i]);
                 let value = isNaN(numParam) ? null : numParam;
                 if (p.choices.length > 0) {
                     value = p.choices.find((c) => c.value === value)?.value ?? null;
                 }
-                return { kind: "number", name: p.name, value };
+                return { kind: p.kind, name: p.name, value };
             }
             case "string": {
                 let strParam = maybeParams[i] ?? "";
@@ -366,7 +396,14 @@ export function paramInstanceIsValid(
                 instance.value.length > schema.minLength &&
                 instance.value.length < schema.maxLength)
         );
-    } else if (schema.kind === "number" && instance.kind === "number") {
+    } else if (schema.kind === "integer" && instance.kind === "integer") {
+        return (
+            (!schema.required && instance.value === null) ||
+            (instance.value !== null &&
+                instance.value >= schema.minValue &&
+                instance.value <= schema.maxValue)
+        );
+    } else if (schema.kind === "decimal" && instance.kind === "decimal") {
         return (
             (!schema.required && instance.value === null) ||
             (instance.value !== null &&
@@ -517,7 +554,18 @@ function validateParameter(
             }
         });
     }
-    if (param.kind === "number") {
+    if (param.kind === "integer") {
+        param.choices.forEach((c, i) => {
+            if (c.name.length < MIN_NAME_LENGTH) {
+                errors.addErrors(
+                    `${errorPath}_choices_${i}_name`,
+                    i18nKey("bots.builder.errors.minLength", { n: 3 }),
+                );
+                valid = false;
+            }
+        });
+    }
+    if (param.kind === "decimal") {
         param.choices.forEach((c, i) => {
             if (c.name.length < MIN_NAME_LENGTH) {
                 errors.addErrors(

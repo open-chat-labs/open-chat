@@ -3,8 +3,4 @@ import type { CommunityPermission } from "./CommunityPermission";
 import type { GroupPermission } from "./GroupPermission";
 import type { MessagePermission } from "./MessagePermission";
 
-export type ExternalBotPermissions = {
-  community: Array<CommunityPermission>;
-  chat: Array<GroupPermission>;
-  message: Array<MessagePermission>;
-};
+export type SlashCommandPermissions = { community: Array<CommunityPermission>, chat: Array<GroupPermission>, message: Array<MessagePermission>, };

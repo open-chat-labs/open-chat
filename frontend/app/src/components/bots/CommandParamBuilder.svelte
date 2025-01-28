@@ -2,7 +2,8 @@
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import {
         defaultBooleanParam,
-        defaultNumberParam,
+        defaultDecimalParam,
+        defaultIntegerParam,
         defaultStringParam,
         defaultUserParam,
         type ValidationErrors,
@@ -24,6 +25,7 @@
     import Link from "../Link.svelte";
     import { iconSize } from "../../stores/iconSize";
     import ValidatingInput from "./ValidatingInput.svelte";
+    import IntegerInput from "../IntegerInput.svelte";
 
     interface Props {
         errorPath: string;
@@ -42,8 +44,11 @@
             case "user":
                 param = defaultUserParam(param);
                 break;
-            case "number":
-                param = defaultNumberParam(param);
+            case "integer":
+                param = defaultIntegerParam(param);
+                break;
+            case "decimal":
+                param = defaultDecimalParam(param);
                 break;
             case "boolean":
                 param = defaultBooleanParam(param);
@@ -59,7 +64,13 @@
                     value: "",
                 });
                 break;
-            case "number":
+            case "integer":
+                param.choices.push({
+                    name: "",
+                    value: BigInt(0),
+                });
+                break;
+            case "decimal":
                 param.choices.push({
                     name: "",
                     value: 0,
@@ -72,7 +83,10 @@
         if (param.kind === "string") {
             param.choices = param.choices.filter((c) => c !== choice);
         }
-        if (param.kind === "number") {
+        if (param.kind === "integer") {
+            param.choices = param.choices.filter((c) => c !== choice);
+        }
+        if (param.kind === "decimal") {
             param.choices = param.choices.filter((c) => c !== choice);
         }
     }
@@ -173,13 +187,35 @@
                             bind:value={param.maxLength} />
                     </div>
                 </section>
-            {:else if param.kind === "number"}
+            {:else if param.kind === "integer"}
                 <section class="minmax">
                     <div class="min">
                         <Legend
                             label={i18nKey("bots.builder.minValueLabel")}
-                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}
-                        ></Legend>
+                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}></Legend>
+                        <IntegerInput
+                            min={BigInt(0)}
+                            max={param.maxValue}
+                            placeholder={i18nKey("bots.builder.minValuePlaceholder")}
+                            bind:value={param.minValue} />
+                    </div>
+                    <div class="max">
+                        <Legend
+                            label={i18nKey("bots.builder.maxValueLabel")}
+                            rules={i18nKey("bots.builder.uptoN", { n: "1000" })}></Legend>
+                        <IntegerInput
+                            min={param.minValue}
+                            max={BigInt(1000)}
+                            placeholder={i18nKey("bots.builder.maxValuePlaceholder")}
+                            bind:value={param.maxValue} />
+                    </div>
+                </section>
+            {:else if param.kind === "decimal"}
+                <section class="minmax">
+                    <div class="min">
+                        <Legend
+                            label={i18nKey("bots.builder.minValueLabel")}
+                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}></Legend>
                         <NumberInput
                             min={0}
                             max={param.maxValue}
@@ -199,7 +235,7 @@
                 </section>
             {/if}
 
-            {#if param.kind === "string" || param.kind === "number"}
+            {#if param.kind === "string" || param.kind === "integer" || param.kind === "decimal"}
                 <section>
                     <Legend label={i18nKey("bots.builder.choices")}></Legend>
                     <p class="info">

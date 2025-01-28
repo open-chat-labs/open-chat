@@ -1,6 +1,7 @@
 import { locale } from "svelte-i18n";
 import { get } from "svelte/store";
 import { getDecimalSeparator } from "./i18n";
+import { parseBigInt } from "openchat-shared";
 
 export function validateTokenInput(value: string, powTenPerWhole: number): ValidatedTokenInput {
     const [replacementText, amount] = validateInput(value, powTenPerWhole);
@@ -49,11 +50,6 @@ function validateInput(value: string, powTenPerWhole: number): [string | undefin
     }
 
     return ["", BigInt(0)];
-}
-
-export function parseBigInt(value: string): bigint | undefined {
-    if (value.length === 0) return BigInt(0);
-    return integerRegex.test(value) ? BigInt(value) : undefined;
 }
 
 export function formatTokens(
@@ -135,4 +131,4 @@ export type ValidatedTokenInput = {
 };
 
 const decimalSeparatorsRegex = /[.,]/;
-const integerRegex = /^[0-9]+$/;
+

@@ -45,7 +45,8 @@
         switch (param.kind) {
             case "boolean":
                 return param.value?.toString() ?? "false";
-            case "number":
+            case "integer":
+            case "decimal":
                 return param.value?.toString() ?? "null";
             case "string":
                 return param.value ?? "null";

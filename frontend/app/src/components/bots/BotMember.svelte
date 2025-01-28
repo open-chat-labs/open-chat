@@ -102,7 +102,7 @@
     }
 
     function removeBot() {
-        client.removeInstalledBot(commandContextId, bot.id).then((success) => {
+        client.uninstallBot(commandContextId, bot.id).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
             }

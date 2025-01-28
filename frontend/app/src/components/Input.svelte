@@ -2,10 +2,10 @@
     export interface InputProps {
         disabled?: boolean;
         invalid?: boolean;
-        value?: string | number;
+        value?: string | number | bigint;
         autofocus?: boolean;
         placeholder?: ResourceKey | undefined;
-        type?: "text" | "number" | "password";
+        type?: "text" | "number" | "password" | "bigint";
         minlength?: number;
         maxlength?: number;
         fontSize?: "small" | "normal" | "large" | "huge";
@@ -25,7 +25,7 @@
     import { createEventDispatcher, onMount, tick, type Snippet } from "svelte";
     import { translatable } from "../actions/translatable";
     import { interpolate } from "../i18n/i18n";
-    import type { ResourceKey } from "openchat-client";
+    import { type ResourceKey, parseBigInt } from "openchat-client";
 
     let {
         disabled = false,
@@ -63,6 +63,9 @@
         }
         if (type === "number") {
             value = parseInt(e.currentTarget.value, 10);
+        }
+        if (type === "bigint") {
+            value = parseBigInt(e.currentTarget.value) ?? BigInt(0);
         }
         dispatch("change", value);
         oninput?.();

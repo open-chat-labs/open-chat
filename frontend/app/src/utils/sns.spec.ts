@@ -50,7 +50,7 @@ function createTestBot(): ExternalBot {
                             required: true,
                         },
                         {
-                            kind: "number",
+                            kind: "decimal",
                             name: "param_four",
                             description: "what's your favourite number",
                             placeholder: "what's your favourite number",
@@ -58,6 +58,29 @@ function createTestBot(): ExternalBot {
                             minValue: 0,
                             maxValue: 100,
                             choices: [],
+                        },
+                        {
+                            kind: "integer",
+                            name: "param_five",
+                            description: "pick a number between 1 and 3",
+                            placeholder: "pick a number between 1 and 3",
+                            required: true,
+                            minValue: BigInt(1),
+                            maxValue: BigInt(5),
+                            choices: [
+                                {
+                                    name: "One",
+                                    value: BigInt(1),
+                                },
+                                {
+                                    name: "Two",
+                                    value: BigInt(2),
+                                },
+                                {
+                                    name: "Three",
+                                    value: BigInt(3),
+                                },
+                            ],
                         },
                     ],
                 },

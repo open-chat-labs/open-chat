@@ -420,8 +420,8 @@ export type WorkerRequest =
     | MessageActivityFeed
     | MarkActivityFeedRead
     | DeleteUser
-    | AddBot
-    | RemoveInstalledBot
+    | InstallBot
+    | UninstallBot
     | UpdateInstalledBot
     | UpdateRegisteredBot
     | GetBotDefinition
@@ -449,8 +449,8 @@ type UpdateRegisteredBot = {
     definition?: BotDefinition;
 };
 
-type AddBot = {
-    kind: "addBot";
+type InstallBot = {
+    kind: "installBot";
     id: CommunityIdentifier | GroupChatIdentifier;
     botId: string;
     grantedPermissions: ExterlBotPermissions;
@@ -463,8 +463,8 @@ type UpdateInstalledBot = {
     grantedPermissions: ExterlBotPermissions;
 };
 
-type RemoveInstalledBot = {
-    kind: "removeInstalledBot";
+type UninstallBot = {
+    kind: "uninstallBot";
     id: CommunityIdentifier | GroupChatIdentifier;
     botId: string;
 };
@@ -2311,13 +2311,13 @@ export type WorkerResult<T> = T extends Init
     ? void
     : T extends DeleteUser
     ? boolean
-    : T extends AddBot
+    : T extends InstallBot
     ? boolean
     : T extends GetBotDefinition
     ? BotDefinitionResponse
     : T extends CallBotCommandEndpoint
     ? BotCommandResponse
-    : T extends RemoveInstalledBot
+    : T extends UninstallBot
     ? boolean
     : T extends UpdateInstalledBot
     ? boolean

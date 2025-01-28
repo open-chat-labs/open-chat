@@ -87,7 +87,7 @@
     function installBot(id: CommunityIdentifier | GroupChatIdentifier) {
         busy = true;
         client
-            .addBot(id, bot.id, $state.snapshot(grantedPermissions))
+            .installBot(id, bot.id, $state.snapshot(grantedPermissions))
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.add.failure"));
