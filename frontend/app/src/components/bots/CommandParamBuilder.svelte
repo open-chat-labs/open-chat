@@ -67,7 +67,7 @@
             case "integer":
                 param.choices.push({
                     name: "",
-                    value: 0,
+                    value: BigInt(0),
                 });
                 break;
             case "decimal":

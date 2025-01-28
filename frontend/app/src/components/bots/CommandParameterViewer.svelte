@@ -14,6 +14,7 @@
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import IntegerInput from "../IntegerInput.svelte";
 
     interface Props {
         errorPath: string;
@@ -122,7 +123,28 @@
                             value={param.maxLength} />
                     </div>
                 </section>
-            {:else if param.kind === "integer" || param.kind === "decimal"}
+            {:else if param.kind === "integer"}
+                <section class="minmax">
+                    <div class="min">
+                        <Legend label={i18nKey("bots.builder.minValueLabel")}></Legend>
+                        <IntegerInput
+                            disabled
+                            min={BigInt(0)}
+                            max={param.maxValue}
+                            placeholder={i18nKey("bots.builder.minValuePlaceholder")}
+                            value={param.minValue} />
+                    </div>
+                    <div class="max">
+                        <Legend label={i18nKey("bots.builder.maxValueLabel")}></Legend>
+                        <IntegerInput
+                            disabled
+                            min={param.minValue}
+                            max={BigInt(1000)}
+                            placeholder={i18nKey("bots.builder.maxValuePlaceholder")}
+                            value={param.maxValue} />
+                    </div>
+                </section>
+            {:else if param.kind === "decimal"}
                 <section class="minmax">
                     <div class="min">
                         <Legend label={i18nKey("bots.builder.minValueLabel")}></Legend>
