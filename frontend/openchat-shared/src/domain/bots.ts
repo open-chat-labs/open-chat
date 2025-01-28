@@ -1,7 +1,7 @@
 import { Principal } from "@dfinity/principal";
 import type { MessageContent, MessageContext } from "./chat";
 import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
-import type { InterpolationValues, ResourceKey } from "../utils";
+import {type InterpolationValues, parseBigInt, type ResourceKey} from "../utils";
 import { ValidationErrors } from "../utils/validation";
 
 export const MIN_NAME_LENGTH = 3;
@@ -321,7 +321,7 @@ export function createParamInstancesFromSchema(
             case "boolean":
                 return { kind: "boolean", name: p.name, value: false };
             case "integer": {
-                let value : bigint | null = BigInt(maybeParams[i]);
+                let value : bigint | null = parseBigInt(maybeParams[i]) ?? null;
                 if (p.choices.length > 0) {
                     value = p.choices.find((c) => c.value === value)?.value ?? null;
                 }

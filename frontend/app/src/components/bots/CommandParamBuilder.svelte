@@ -206,7 +206,7 @@
                             rules={i18nKey("bots.builder.uptoN", { n: "1000" })}></Legend>
                         <IntegerInput
                             min={param.minValue}
-                            max={1000}
+                            max={BigInt(1000)}
                             placeholder={i18nKey("bots.builder.maxValuePlaceholder")}
                             bind:value={param.maxValue} />
                     </div>

@@ -1,114 +1,51 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import type { ResourceKey } from "openchat-client";
-    import { createEventDispatcher } from "svelte";
-    import { onMount } from "svelte";
-    import { interpolate } from "../i18n/i18n";
     import { numberToBigInt } from "openchat-shared";
+    import NumberInput from "./NumberInput.svelte";
 
-    export let disabled: boolean = false;
-    export let autofocus: boolean = false;
-    export let placeholder: ResourceKey | undefined = undefined;
-    export let min: bigint = BigInt(0);
-    export let max: bigint = BigInt(Number.MAX_SAFE_INTEGER);
-    export let value: bigint | null = min;
-    export let align: "left" | "right" | "center" = "left";
-    export let shouldClamp = true;
+    interface Props {
+        disabled: boolean;
+        autofocus: boolean;
+        placeholder: ResourceKey | undefined;
+        min: bigint;
+        max: bigint;
+        value: bigint | null;
+        align: "left" | "right" | "center";
+        shouldClamp: boolean;
+        change: (e: CustomEvent<string>) => void;
+    }
 
-    const dispatch = createEventDispatcher();
+    let {
+        disabled = false,
+        autofocus = false,
+        placeholder = undefined,
+        min = BigInt(0),
+        max = BigInt(1000),
+        value = $bindable(min),
+        align = "left",
+        shouldClamp = true,
+        change,
+    }: Props = $props();
 
-    let inp: HTMLInputElement;
-    $: valueNum = Number(value);
-
-    onMount(() => {
-        if (autofocus) {
-            inp.focus();
+    let valueNum = $state(value != null ? Number(value) : null);
+    $effect(() => {
+        if (valueNum != null) {
+            valueNum = Math.trunc(valueNum);
+            value = BigInt(valueNum);
+        } else {
+            value = null;
         }
+        console.log("Value updated", value);
     });
-
-    function clamp(val: bigint): bigint {
-        if (val > max) return max;
-        if (val < min) return min;
-        return val;
-    }
-
-    function handleInput(e: { currentTarget: { value: string } }) {
-        if (shouldClamp) {
-            value = clamp(numberToBigInt(parseInt(e.currentTarget.value, 10)));
-            inp.value = value.toString();
-        }
-        dispatch("change", inp.value);
-    }
-
-    function keyDown(e: KeyboardEvent) {
-        if (e.key === "Enter") {
-            dispatch("enter");
-        }
-    }
 </script>
 
-<div class="input-wrapper">
-    <input
-        data-gram="false"
-        data-gramm_editor="false"
-        data-enable-grammarly="false"
-        spellcheck="false"
-        {disabled}
-        type="number"
-        min={Number(min)}
-        max={Number(max)}
-        placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
-        on:keydown={keyDown}
-        on:input={handleInput}
-        on:blur
-        bind:this={inp}
-        value={valueNum}
-        class={`textbox ${align}`} />
-</div>
-
-<style lang="scss">
-    .input-wrapper {
-        position: relative;
-        margin-bottom: $sp3;
-
-        @include mobile() {
-            margin-bottom: $sp3;
-        }
-    }
-
-    input[type="number"] {
-        -moz-appearance: textfield;
-        appearance: textfield;
-        margin: 0;
-    }
-
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    .textbox {
-        transition: border ease-in-out 300ms;
-        display: block;
-        width: 100%;
-
-        @include input();
-
-        &.left {
-            text-align: left;
-        }
-
-        &.right {
-            text-align: right;
-        }
-
-        &.center {
-            text-align: center;
-        }
-
-        &::placeholder {
-            color: var(--placeholder);
-        }
-    }
-</style>
+<NumberInput
+    {disabled}
+    {autofocus}
+    {placeholder}
+    min={Number(min)}
+    max={Number(max)}
+    bind:value={valueNum}
+    {align}
+    {shouldClamp}
+    on:change={change} />

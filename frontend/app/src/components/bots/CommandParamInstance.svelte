@@ -10,6 +10,7 @@
     import Input from "../Input.svelte";
     import SingleUserSelector from "../home/SingleUserSelector.svelte";
     import Select from "../Select.svelte";
+    import IntegerInput from "../IntegerInput.svelte";
     import NumberInput from "../NumberInput.svelte";
     import Translatable from "../Translatable.svelte";
 
@@ -79,7 +80,15 @@
                     </option>
                 {/each}
             </Select>
-        {:else}
+        {:else if instance.kind === "integer" && param.kind === "integer"}
+            <IntegerInput
+                min={param.minValue}
+                max={param.maxValue}
+                shouldClamp={false}
+                change={onChange}
+                placeholder={i18nKey(param.placeholder ?? "")}
+                bind:value={instance.value} />
+        {:else if instance.kind === "decimal" && param.kind === "decimal"}
             <NumberInput
                 min={param.minValue}
                 max={param.maxValue}
