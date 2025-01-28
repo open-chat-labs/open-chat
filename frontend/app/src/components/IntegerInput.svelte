@@ -34,7 +34,6 @@
         } else {
             value = null;
         }
-        console.log("Value updated", value);
     });
 </script>
 
