@@ -40,7 +40,6 @@ import {
     apiChatPermission,
     apiCommunityPermission,
     apiMessagePermission,
-    externalBotCommand,
     externalBotDefinition,
     token,
 } from "../common/chatMappersV2";

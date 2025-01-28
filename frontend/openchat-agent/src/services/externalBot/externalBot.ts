@@ -4,7 +4,7 @@ import { Type, type Static } from "@sinclair/typebox";
 import {
     MessageContent,
     SlashCommandSchema,
-    ExternalBotPermissions as ApiExternalBotPermissions,
+    SlashCommandPermissions as ApiExternalBotPermissions,
 } from "../../typebox";
 import { externalBotDefinition, messageContent } from "../common/chatMappersV2";
 import { mapOptional } from "../../utils/mapping";

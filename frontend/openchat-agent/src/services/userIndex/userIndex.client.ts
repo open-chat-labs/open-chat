@@ -83,8 +83,8 @@ import {
     UserIndexCheckUsernameResponse,
     UserIndexChitLeaderboardResponse,
     UserIndexCurrentUserResponse,
-    UserIndexDeleteUserArgs,
-    UserIndexDeleteUserResponse,
+    // UserIndexDeleteUserArgs,
+    // UserIndexDeleteUserResponse,
     UserIndexDiamondMembershipFeesResponse,
     UserIndexExploreBotsArgs,
     UserIndexExploreBotsResponse,
@@ -609,14 +609,15 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    deleteUser(userId: string): Promise<boolean> {
-        return this.executeMsgpackUpdate(
-            "delete_user",
-            { user_id: principalStringToBytes(userId) },
-            (resp) => resp === "Success",
-            UserIndexDeleteUserArgs,
-            UserIndexDeleteUserResponse,
-        );
+    deleteUser(_userId: string): Promise<boolean> {
+        return Promise.resolve(true);
+        // return this.executeMsgpackUpdate(
+        //     "delete_user",
+        //     { user_id: principalStringToBytes(userId) },
+        //     (resp) => resp === "Success",
+        //     UserIndexDeleteUserArgs,
+        //     UserIndexDeleteUserResponse,
+        // );
     }
 
     exploreBots(
