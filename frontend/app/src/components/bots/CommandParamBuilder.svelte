@@ -25,6 +25,7 @@
     import Link from "../Link.svelte";
     import { iconSize } from "../../stores/iconSize";
     import ValidatingInput from "./ValidatingInput.svelte";
+    import IntegerInput from "../IntegerInput.svelte";
 
     interface Props {
         errorPath: string;
@@ -186,14 +187,38 @@
                             bind:value={param.maxLength} />
                     </div>
                 </section>
-            {:else if param.kind === "integer" || param.kind === "decimal"}
+            {:else if param.kind === "integer"}
                 <section class="minmax">
                     <div class="min">
                         <Legend
                             label={i18nKey("bots.builder.minValueLabel")}
                             rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}
                         ></Legend>
-                        <NumberInput
+                        <IntegerInput
+                            min={BigInt(0)}
+                            max={param.maxValue}
+                            placeholder={i18nKey("bots.builder.minValuePlaceholder")}
+                            bind:value={param.minValue} />
+                    </div>
+                    <div class="max">
+                        <Legend
+                            label={i18nKey("bots.builder.maxValueLabel")}
+                            rules={i18nKey("bots.builder.uptoN", { n: "1000" })}></Legend>
+                        <IntegerInput
+                            min={param.minValue}
+                            max={1000}
+                            placeholder={i18nKey("bots.builder.maxValuePlaceholder")}
+                            bind:value={param.maxValue} />
+                    </div>
+                </section>
+            {:else if param.kind === "decimal"}
+                <section class="minmax">
+                    <div class="min">
+                        <Legend
+                            label={i18nKey("bots.builder.minValueLabel")}
+                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}
+                    ></Legend>
+                    <NumberInput
                             min={0}
                             max={param.maxValue}
                             placeholder={i18nKey("bots.builder.minValuePlaceholder")}

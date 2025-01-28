@@ -586,7 +586,7 @@ export function botCommandArg(api: BotCommandArg): SlashCommandParamInstance {
         return {
             kind: "integer",
             name,
-            value: Number(value.Integer),
+            value: value.Integer,
         };
     } else if ("Decimal" in value) {
         return {
@@ -3441,11 +3441,11 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
     } else if ("IntegerParam" in paramType) {
         return {
             kind: "integer",
-            minValue: Number(paramType.IntegerParam.min_value),
-            maxValue: Number(paramType.IntegerParam.max_value),
+            minValue: paramType.IntegerParam.min_value,
+            maxValue: paramType.IntegerParam.max_value,
             choices: paramType.IntegerParam.choices.map((c) => ({
                name: c.name,
-               value: Number(c.value),
+               value: c.value,
             })),
         };
     }else if ("DecimalParam" in paramType) {

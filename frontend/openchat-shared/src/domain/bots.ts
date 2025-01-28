@@ -43,9 +43,9 @@ export type StringParam = {
 
 export type IntegerParam = {
     kind: "integer";
-    minValue: number;
-    maxValue: number;
-    choices: SlashCommandOptionChoice<number>[];
+    minValue: bigint;
+    maxValue: bigint;
+    choices: SlashCommandOptionChoice<bigint>[];
 };
 
 export type DecimalParam = {
@@ -92,8 +92,8 @@ export function defaultIntegerParam(param?: SlashCommandParam): SlashCommandPara
     return {
         kind: "integer",
         ...defaultCommonParam(param),
-        minValue: 0,
-        maxValue: 1000,
+        minValue: BigInt(0),
+        maxValue: BigInt(1000),
         choices: [],
     };
 }
@@ -293,7 +293,7 @@ export type StringParamInstance = {
 
 export type IntegerParamInstance = {
     kind: "integer";
-    value: number | null;
+    value: bigint | null;
 };
 
 export type DecimalParamInstance = {
@@ -320,7 +320,13 @@ export function createParamInstancesFromSchema(
                 return { kind: "user", name: p.name };
             case "boolean":
                 return { kind: "boolean", name: p.name, value: false };
-            case "integer":
+            case "integer": {
+                let value : bigint | null = BigInt(maybeParams[i]);
+                if (p.choices.length > 0) {
+                    value = p.choices.find((c) => c.value === value)?.value ?? null;
+                }
+                return { kind: p.kind, name: p.name, value };
+            }
             case "decimal": {
                 const numParam = Number(maybeParams[i]);
                 let value = isNaN(numParam) ? null : numParam;
