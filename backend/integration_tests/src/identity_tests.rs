@@ -91,9 +91,7 @@ fn link_and_unlink_auth_identities(delay: bool) {
     );
 
     match remove_identity_link_response {
-        identity_canister::remove_identity_link::Response::Success => {
-            assert!(true)
-        }
+        identity_canister::remove_identity_link::Response::Success => {}
         response => panic!("{response:?}"),
     }
 }
