@@ -20,5 +20,7 @@ export function numberToBigInt(value: number): bigint {
 
 const integerRegex = /^[0-9]+$/;
 export function parseBigInt(value: string | null): bigint | undefined {
-    return value != null && integerRegex.test(value) ? BigInt(value) : undefined;
+    if (value == null) return undefined;
+    if (value.length === 0) return BigInt(0);
+    return integerRegex.test(value) ? BigInt(value) : undefined;
 }
