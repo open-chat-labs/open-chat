@@ -2217,7 +2217,7 @@ type BotCommandArg = record {
 
 type BotCommandArgValue = variant {
     String : text;
-    Integer : int;
+    Integer : int64;
     Decimal : float64;
     Boolean : bool;
     User : UserId;
