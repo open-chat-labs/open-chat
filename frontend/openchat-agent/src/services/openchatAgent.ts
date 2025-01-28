@@ -4104,17 +4104,16 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    addBot(
+    async installBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
         grantedPermissions: SlashCommandPermissions,
     ): Promise<boolean> {
-        switch (id.kind) {
-            case "community":
-                return this.communityClient(id.communityId).addBot(botId, grantedPermissions);
-            case "group_chat":
-                return this.getGroupClient(id.groupId).addBot(botId, grantedPermissions);
-        }
+        const localUserIndex = id.kind === "community"
+            ? await this.communityClient(id.communityId).localUserIndex()
+            : await this.getGroupClient(id.groupId).localUserIndex();
+
+        return this.getLocalUserIndexClient(localUserIndex).installBot(id, botId, grantedPermissions);
     }
 
     updateInstalledBot(
@@ -4136,16 +4135,15 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    removeInstalledBot(
+    async uninstallBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
     ): Promise<boolean> {
-        switch (id.kind) {
-            case "community":
-                return this.communityClient(id.communityId).removeInstalledBot(botId);
-            case "group_chat":
-                return this.getGroupClient(id.groupId).removeInstalledBot(botId);
-        }
+        const localUserIndex = id.kind === "community"
+            ? await this.communityClient(id.communityId).localUserIndex()
+            : await this.getGroupClient(id.groupId).localUserIndex();
+
+        return this.getLocalUserIndexClient(localUserIndex).uninstallBot(id, botId);
     }
 
     getBots(initialLoad: boolean): Stream<BotsResponse> {

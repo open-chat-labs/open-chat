@@ -73,9 +73,7 @@ import {
     apiChatPermission,
     apiCommunityPermission,
     apiMessagePermission,
-    addBotResponse,
     updateBotResponse,
-    removeBotResponse,
 } from "../common/chatMappersV2";
 import type {
     AddMembersToChannelResponse,
@@ -293,10 +291,6 @@ import {
     CommunityVideoCallParticipantsArgs,
     CommunityVideoCallParticipantsResponse,
     Empty as TEmpty,
-    CommunityAddBotArgs,
-    CommunityAddBotResponse,
-    CommunityRemoveBotArgs,
-    CommunityRemoveBotResponse,
     CommunityUpdateBotArgs,
     CommunityUpdateBotResponse,
 } from "../../typebox";
@@ -1724,23 +1718,6 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    addBot(botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
-        return this.executeMsgpackUpdate(
-            "add_bot",
-            {
-                bot_id: principalStringToBytes(botId),
-                granted_permissions: {
-                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
-                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
-                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
-                },
-            },
-            addBotResponse,
-            CommunityAddBotArgs,
-            CommunityAddBotResponse,
-        );
-    }
-
     updateInstalledBot(
         botId: string,
         grantedPermissions: SlashCommandPermissions,
@@ -1758,18 +1735,6 @@ export class CommunityClient extends CandidService {
             updateBotResponse,
             CommunityUpdateBotArgs,
             CommunityUpdateBotResponse,
-        );
-    }
-
-    removeInstalledBot(botId: string): Promise<boolean> {
-        return this.executeMsgpackUpdate(
-            "remove_bot",
-            {
-                bot_id: principalStringToBytes(botId),
-            },
-            removeBotResponse,
-            CommunityRemoveBotArgs,
-            CommunityRemoveBotResponse,
         );
     }
 }

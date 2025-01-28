@@ -1897,11 +1897,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
                 break;
 
-            case "addBot":
+            case "installBot":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.addBot(payload.id, payload.botId, payload.grantedPermissions),
+                    agent.installBot(payload.id, payload.botId, payload.grantedPermissions),
                 );
                 break;
 
@@ -1913,11 +1913,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "removeInstalledBot":
+            case "uninstallBot":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.removeInstalledBot(payload.id, payload.botId),
+                    agent.uninstallBot(payload.id, payload.botId),
                 );
                 break;
 
