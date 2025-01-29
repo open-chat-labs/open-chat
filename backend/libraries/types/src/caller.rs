@@ -4,12 +4,28 @@ use crate::{BotCommand, UserId, UserType};
 pub enum Caller {
     User(UserId),
     Bot(UserId),
-    BotV2(BotCaller),
+    BotCommand(BotCommandCaller),
+    BotApiKey(UserId),
     OCBot(UserId),
 }
 
 #[derive(Clone)]
-pub struct BotCaller {
+pub enum BotCaller {
+    Command(BotCommandCaller),
+    ApiKey(UserId),
+}
+
+impl BotCaller {
+    pub fn bot_id(&self) -> UserId {
+        match self {
+            BotCaller::Command(bot_caller) => bot_caller.bot,
+            BotCaller::ApiKey(user_id) => *user_id,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct BotCommandCaller {
     pub bot: UserId,
     pub command: BotCommand,
     pub finalised: bool,
@@ -20,17 +36,19 @@ impl Caller {
         match self {
             Caller::User(user_id) => *user_id,
             Caller::Bot(user_id) => *user_id,
-            Caller::BotV2(bot_caller) => bot_caller.bot,
+            Caller::BotCommand(bot_caller) => bot_caller.bot,
+            Caller::BotApiKey(user_id) => *user_id,
             Caller::OCBot(user_id) => *user_id,
         }
     }
 
-    pub fn initiator(&self) -> UserId {
+    pub fn initiator(&self) -> Option<UserId> {
         match self {
-            Caller::User(user_id) => *user_id,
-            Caller::Bot(user_id) => *user_id,
-            Caller::BotV2(bot_caller) => bot_caller.command.initiator,
-            Caller::OCBot(user_id) => *user_id,
+            Caller::User(user_id) => Some(*user_id),
+            Caller::Bot(user_id) => Some(*user_id),
+            Caller::BotCommand(bot_caller) => Some(bot_caller.command.initiator),
+            Caller::BotApiKey(_) => None,
+            Caller::OCBot(user_id) => Some(*user_id),
         }
     }
 
@@ -44,7 +62,7 @@ impl From<&Caller> for UserType {
         match caller {
             Caller::User(_) => UserType::User,
             Caller::Bot(_) => UserType::Bot,
-            Caller::BotV2(_) => UserType::BotV2,
+            Caller::BotCommand(_) | Caller::BotApiKey(_) => UserType::BotV2,
             Caller::OCBot(_) => UserType::OcControlledBot,
         }
     }

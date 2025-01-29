@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Restructure to handle autonomous bots ([#7318](https://github.com/open-chat-labs/open-chat/pull/7318))
+
 ## [[2.0.1590](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1590-user_index)] - 2025-01-24
 
 ### Changed

@@ -78,6 +78,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             endpoint: args.endpoint.clone(),
             description: args.definition.description.clone(),
             commands: args.definition.commands.clone(),
+            autonomous_config: args.definition.autonomous_config.clone(),
             last_updated: now,
             avatar,
             installations: HashMap::new(),

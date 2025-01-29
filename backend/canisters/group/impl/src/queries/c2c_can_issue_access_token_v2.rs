@@ -5,9 +5,8 @@ use canister_api_macros::query;
 use group_canister::c2c_can_issue_access_token_v2::*;
 use group_chat_core::{GroupChatCore, GroupRoleInternal};
 use types::c2c_can_issue_access_token::AccessTypeArgs;
+use types::BotPermissions;
 use types::VideoCallType;
-use utils::bots::can_bot_execute_action;
-use utils::bots::intersect_permissions;
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_can_issue_access_token_v2(args: Args) -> Response {
@@ -38,9 +37,9 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
             return Response::Failure;
         };
 
-        let available = intersect_permissions(granted_to_bot, &granted_to_user);
+        let available = BotPermissions::intersect(granted_to_bot, &granted_to_user);
 
-        if can_bot_execute_action(&args.requested_permissions, &available) {
+        if args.requested_permissions.is_subset(&available) {
             return Response::SuccessBot(available);
         } else {
             return Response::Failure;

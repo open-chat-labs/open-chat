@@ -427,8 +427,25 @@ impl RuntimeState {
         }
     }
 
-    pub fn verified_caller(&self, mut bot_context: Option<BotCaller>) -> CallerResult {
+    pub fn verified_caller(&self, mut bot_caller: Option<BotCaller>) -> CallerResult {
         use CallerResult::*;
+
+        if let Some(bot_caller) = bot_caller.as_ref() {
+            if self.data.bots.get(&bot_caller.bot_id()).is_none() {
+                return NotFound;
+            }
+
+            if let BotCaller::ApiKey(bot_id) = bot_caller {
+                return Success(Caller::BotApiKey(*bot_id));
+            }
+        }
+
+        let mut bot_caller = if let Some(bc) = bot_caller.take() {
+            let BotCaller::Command(bot_caller) = bc else { unreachable!() };
+            Some(bot_caller)
+        } else {
+            None
+        };
 
         let caller = self.env.caller();
 
@@ -436,7 +453,7 @@ impl RuntimeState {
             return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
         }
 
-        let user_or_principal = bot_context.as_ref().map(|bc| bc.command.initiator.into()).unwrap_or(caller);
+        let user_or_principal = bot_caller.as_ref().map(|bc| bc.command.initiator.into()).unwrap_or(caller);
 
         let Some(member) = self.data.get_member(user_or_principal) else {
             return NotFound;
@@ -446,12 +463,8 @@ impl RuntimeState {
             return Suspended;
         }
 
-        if let Some(bot_context) = bot_context.take() {
-            if self.data.bots.get(&bot_context.bot).is_some() {
-                Success(Caller::BotV2(bot_context))
-            } else {
-                NotFound
-            }
+        if let Some(bot_caller) = bot_caller.take() {
+            Success(Caller::BotCommand(bot_caller))
         } else {
             match member.user_type() {
                 UserType::User => Success(Caller::User(member.user_id())),

@@ -625,7 +625,7 @@ impl GroupChatCore {
             self.events
                 .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
         {
-            if let Caller::BotV2(bot_now) = &caller {
+            if let Caller::BotCommand(bot_now) = &caller {
                 if let Some(bot_message) = message.bot_context {
                     if bot_now.bot == message.sender
                         && bot_now.command.initiator == bot_message.command.initiator
@@ -713,7 +713,7 @@ impl GroupChatCore {
             thread_root_message_index,
             message_id,
             content,
-            bot_context: if let Caller::BotV2(bot) = caller { Some(bot.into()) } else { None },
+            bot_context: if let Caller::BotCommand(bot) = caller { Some(bot.into()) } else { None },
             mentioned: if !suppressed { mentioned.to_vec() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
@@ -725,7 +725,7 @@ impl GroupChatCore {
 
         let message_event = self.events.push_message(push_message_args, Some(event_store_client));
 
-        let unfinalised_bot_message = if let Caller::BotV2(bot) = caller { !bot.finalised } else { false };
+        let unfinalised_bot_message = if let Caller::BotCommand(bot) = caller { !bot.finalised } else { false };
 
         let users_to_notify = if unfinalised_bot_message {
             vec![]
@@ -936,33 +936,42 @@ impl GroupChatCore {
             });
         }
 
-        let member = match self.members.get_verified_member(caller.initiator()) {
-            Ok(member) => member,
-            Err(error) => {
-                return match error {
-                    VerifyMemberError::NotFound => UserNotInGroup,
-                    VerifyMemberError::Lapsed => UserLapsed,
-                    VerifyMemberError::Suspended => UserSuspended,
-                };
+        let (min_visible_event_index, can_mention) = if let Some(initator) = caller.initiator() {
+            let member = match self.members.get_verified_member(initator) {
+                Ok(member) => member,
+                Err(error) => {
+                    return match error {
+                        VerifyMemberError::NotFound => UserNotInGroup,
+                        VerifyMemberError::Lapsed => UserLapsed,
+                        VerifyMemberError::Suspended => UserSuspended,
+                    };
+                }
+            };
+
+            if !matches!(content, MessageContentInternal::VideoCall(_)) && !member.check_rules(&self.rules.value) {
+                return RulesNotAccepted;
             }
+
+            let permissions = &self.permissions;
+
+            if !member
+                .role()
+                .can_send_message(content.into(), thread_root_message_index.is_some(), permissions)
+            {
+                return NotAuthorized;
+            }
+
+            (
+                member.min_visible_event_index(),
+                member.role().can_mention_everyone(permissions),
+            )
+        } else {
+            (EventIndex::default(), true)
         };
 
-        if !matches!(content, MessageContentInternal::VideoCall(_)) && !member.check_rules(&self.rules.value) {
-            return RulesNotAccepted;
-        }
-
-        let permissions = &self.permissions;
-
-        if !member
-            .role()
-            .can_send_message(content.into(), thread_root_message_index.is_some(), permissions)
-        {
-            return NotAuthorized;
-        }
-
         Success(PrepareSendMessageSuccess {
-            min_visible_event_index: member.min_visible_event_index(),
-            everyone_mentioned: member.role().can_mention_everyone(permissions) && is_everyone_mentioned(content),
+            min_visible_event_index,
+            everyone_mentioned: can_mention && is_everyone_mentioned(content),
         })
     }
 

@@ -1,5 +1,5 @@
 use crate::{
-    Achievement, BotCaller, BotCommand, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction,
+    Achievement, BotCommand, BotCommandCaller, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction,
     ThreadSummary, UserId,
 };
 use candid::CandidType;
@@ -253,8 +253,8 @@ pub struct BotMessageContext {
     pub finalised: bool,
 }
 
-impl From<&BotCaller> for BotMessageContext {
-    fn from(caller: &BotCaller) -> Self {
+impl From<&BotCommandCaller> for BotMessageContext {
+    fn from(caller: &BotCommandCaller) -> Self {
         BotMessageContext {
             command: caller.command.clone(),
             finalised: caller.finalised,
