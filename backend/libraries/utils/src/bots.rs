@@ -4,24 +4,6 @@ use std::hash::Hash;
 use types::BotPermissions;
 
 pub fn can_bot_execute_action(required: &BotPermissions, granted: &BotPermissions) -> bool {
-    // fn intersect_permissions(p1: &BotPermissions, p2: &BotPermissions) -> BotPermissions {
-    //     fn intersect<T: Hash + Eq + Clone>(x: &HashSet<T>, y: &HashSet<T>) -> HashSet<T> {
-    //         x.intersection(y).cloned().collect()
-    //     }
-
-    //     BotPermissions {
-    //         community: intersect(&p1.community, &p2.community),
-    //         chat: intersect(&p1.chat, &p2.chat),
-    //         message: intersect(&p1.message, &p2.message),
-    //     }
-    // }
-
-    // let granted = if let Some(granted_to_user) = granted_to_user {
-    //     &intersect_permissions(granted_to_bot, granted_to_user)
-    // } else {
-    //     granted_to_bot
-    // };
-
     required.community.is_subset(&granted.community)
         && required.chat.is_subset(&granted.chat)
         && required.message.is_subset(&granted.message)
@@ -58,7 +40,7 @@ mod tests {
         let (required, granted_to_bot, granted_to_user) = setup(true, false);
         let granted = intersect_permissions(&granted_to_bot, &granted_to_user);
 
-        assert!(can_bot_execute_action(&required, &granted));
+        assert!(!can_bot_execute_action(&required, &granted));
     }
 
     #[test]
@@ -66,7 +48,7 @@ mod tests {
         let (required, granted_to_bot, granted_to_user) = setup(false, true);
         let granted = intersect_permissions(&granted_to_bot, &granted_to_user);
 
-        assert!(can_bot_execute_action(&required, &granted));
+        assert!(!can_bot_execute_action(&required, &granted));
     }
 
     fn setup(bot_missing: bool, user_missing: bool) -> (BotPermissions, BotPermissions, BotPermissions) {
