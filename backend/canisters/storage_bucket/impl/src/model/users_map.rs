@@ -1,16 +1,16 @@
 use crate::model::users::UserRecord;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{LazyValue, StableMemoryMap, UserStorageRecordKeyPrefix};
+use stable_memory_map::{LazyValue, PrincipalKeyPrefix, StableMemoryMap};
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize)]
 pub struct UsersMap {
-    prefix: UserStorageRecordKeyPrefix,
+    prefix: PrincipalKeyPrefix,
     len: usize,
 }
 
-impl StableMemoryMap<UserStorageRecordKeyPrefix, UserRecord> for UsersMap {
-    fn prefix(&self) -> &UserStorageRecordKeyPrefix {
+impl StableMemoryMap<PrincipalKeyPrefix, UserRecord> for UsersMap {
+    fn prefix(&self) -> &PrincipalKeyPrefix {
         &self.prefix
     }
 
@@ -36,6 +36,15 @@ impl StableMemoryMap<UserStorageRecordKeyPrefix, UserRecord> for UsersMap {
 impl UsersMap {
     pub fn len(&self) -> usize {
         self.len
+    }
+}
+
+impl Default for UsersMap {
+    fn default() -> Self {
+        UsersMap {
+            prefix: PrincipalKeyPrefix::new_for_storage_record(),
+            len: 0,
+        }
     }
 }
 
