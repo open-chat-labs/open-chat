@@ -2,7 +2,7 @@
     import Account from "svelte-material-icons/Account.svelte";
     import LinkOff from "svelte-material-icons/LinkOff.svelte";
     import { AuthProvider, OpenChat, type AuthenticationPrincipal } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import TruncatedAccount from "../TruncatedAccount.svelte";
     import AuthProviderLogo from "./AuthProviderLogo.svelte";
     import Button from "../../Button.svelte";
@@ -15,16 +15,19 @@
     import Overlay from "../../Overlay.svelte";
     import LinkAccounts from "./LinkAccounts.svelte";
     import UnlinkAccounts from "./UnlinkAccounts.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
 
     const client = getContext<OpenChat>("client");
 
     type Account = AuthenticationPrincipal & { provider: AuthProvider };
 
-    let accounts: Account[] = [];
-    let linking = false;
-    let unlinking: Account | null = null;
+    let accounts: Account[] = $state([]);
+    let linking = $state(false);
+    let unlinking: Account | null = $state(null);
 
-    onMount(refresh);
+    $effect(() => {
+        (async () => refresh())();
+    });
 
     async function refresh() {
         linking = false;
@@ -49,7 +52,7 @@
 {#if unlinking != null}
     <Overlay>
         <LinkAccountsModal on:close={refresh}>
-            <UnlinkAccounts account={unlinking} on:close={refresh} />
+            <UnlinkAccounts account={unlinking} onClose={refresh} />
         </LinkAccountsModal>
     </Overlay>
 {/if}
@@ -74,9 +77,9 @@
         {:else}
             <div class="unlink">
                 <TooltipWrapper position="top" align="end">
-                    <Button slot="target" cls="btn" hollow on:click={() => (unlinking = account)}>
+                    <HoverIcon slot="target" onclick={() => (unlinking = account)}>
                         <LinkOff size={$iconSize} color={"var(--icon-txt)"} />
-                    </Button>
+                    </HoverIcon>
                     <div let:position let:align slot="tooltip">
                         <TooltipPopup {position} {align}>
                             <Translatable resourceKey={i18nKey("identity.linkedAccounts.unlink")} />
@@ -101,25 +104,6 @@
         .current,
         .unlink {
             margin-inline-start: auto;
-        }
-
-        .unlink :global(.btn) {
-            padding: 0.25rem;
-            width: 4rem;
-            min-width: auto;
-            transition: ease-out 200ms border-color;
-
-            &:hover {
-                border-color: var(--accent);
-            }
-        }
-
-        .unlink :global(.btn path) {
-            transition: ease-out 200ms fill;
-        }
-
-        .unlink :global(.btn:hover path) {
-            fill: var(--accent);
         }
     }
 </style>

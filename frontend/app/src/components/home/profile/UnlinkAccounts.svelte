@@ -7,17 +7,19 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "../../Translatable.svelte";
     import { AuthProvider, type AuthenticationPrincipal, type OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import AlertBox from "../../AlertBox.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let account: AuthenticationPrincipal & { provider: AuthProvider };
+    // TODO reduce duplication, this is repeated from LinkedAuthAccounts
+    type Account = AuthenticationPrincipal & { provider: AuthProvider };
 
-    let error: string | undefined;
-    let step: "unlink" | "error" | "done" = "unlink";
-    let inProgress = false;
+    let { account, onClose }: { account: Account; onClose: () => void } = $props();
+
+    let error: string | undefined = $state();
+    let step: "unlink" | "error" | "done" = $state("unlink");
+    let inProgress = $state(false);
 
     function unlinkAccount() {
         inProgress = true;
@@ -46,7 +48,7 @@
                 inProgress = false;
                 step = "error";
                 error = "identity.failure.unexpectedError";
-                console.error("ERR", e);
+                console.error(e);
             });
     }
 </script>
@@ -94,14 +96,14 @@
 <div class="footer">
     <ButtonGroup>
         {#if step == "unlink"}
-            <Button secondary disabled={inProgress} on:click={() => dispatch("close")}>
+            <Button secondary disabled={inProgress} on:click={onClose}>
                 <Translatable resourceKey={i18nKey("cancel")} />
             </Button>
             <Button disabled={inProgress} loading={inProgress} on:click={() => unlinkAccount()}>
                 <Translatable resourceKey={i18nKey("identity.linkedAccounts.unlinkAction")} />
             </Button>
         {:else}
-            <Button secondary on:click={() => dispatch("close")}>
+            <Button secondary on:click={onClose}>
                 <Translatable resourceKey={i18nKey("close")} />
             </Button>
         {/if}
@@ -119,15 +121,15 @@
 
     .content {
         .unlink-note {
-            padding-left: 3rem;
-            margin-bottom: 2rem;
+            @include font-size(fs-80);
+            padding-left: $sp7;
+            margin-bottom: $sp6;
             margin-top: -0.5rem;
-            font-size: 14px;
             color: var(--warn);
         }
 
         .info {
-            padding: 0.25rem 0 1rem;
+            padding: $sp2 0 $sp4;
         }
     }
 </style>
