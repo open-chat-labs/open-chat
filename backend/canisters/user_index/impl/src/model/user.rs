@@ -31,7 +31,7 @@ pub struct User {
     pub avatar_id: Option<u128>,
     #[serde(rename = "rf", default, skip_serializing_if = "Option::is_none")]
     pub registration_fee: Option<RegistrationFee>,
-    #[serde(rename = "ab")]
+    #[serde(rename = "ab", default, skip_serializing_if = "AccountBilling::is_empty")]
     pub account_billing: AccountBilling,
     #[serde(rename = "ps", default, skip_serializing_if = "is_default")]
     pub phone_status: PhoneStatus,
