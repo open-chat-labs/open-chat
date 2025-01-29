@@ -19,7 +19,7 @@ pub enum Response {
     NotAuthorized,
 }
 
-#[ts_export]
+#[ts_export(group, generate_bot_api_key)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub api_key: String,

@@ -298,6 +298,23 @@ export const GroupDisableInviteCodeArgs = Type.Object({
     correlation_id: Type.BigInt(),
 });
 
+export type GroupGenerateBotApiKeySuccessResult = Static<
+    typeof GroupGenerateBotApiKeySuccessResult
+>;
+export const GroupGenerateBotApiKeySuccessResult = Type.Object({
+    api_key: Type.String(),
+});
+
+export type GroupGenerateBotApiKeyResponse = Static<typeof GroupGenerateBotApiKeyResponse>;
+export const GroupGenerateBotApiKeyResponse = Type.Union([
+    Type.Object({
+        Success: GroupGenerateBotApiKeySuccessResult,
+    }),
+    Type.Literal("BotNotFound"),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("NotAuthorized"),
+]);
+
 export type GroupRegisterProposalVoteV2Response = Static<
     typeof GroupRegisterProposalVoteV2Response
 >;
@@ -1134,11 +1151,6 @@ export const StringParam = Type.Object({
     min_length: Type.Number(),
     max_length: Type.Number(),
     choices: Type.Array(SlashCommandOptionChoiceString),
-});
-
-export type SuccessResult = Static<typeof SuccessResult>;
-export const SuccessResult = Type.Object({
-    api_key: Type.String(),
 });
 
 export type GroupPermissionRole = Static<typeof GroupPermissionRole>;
@@ -2952,6 +2964,13 @@ export const CommunityChannelSummaryArgs = Type.Object({
     invite_code: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
 });
 
+export type CommunityGenerateBotApiKeySuccessResult = Static<
+    typeof CommunityGenerateBotApiKeySuccessResult
+>;
+export const CommunityGenerateBotApiKeySuccessResult = Type.Object({
+    api_key: Type.String(),
+});
+
 export type CommunityChangeChannelRoleResponse = Static<typeof CommunityChangeChannelRoleResponse>;
 export const CommunityChangeChannelRoleResponse = Type.Union([
     Type.Literal("Success"),
@@ -3769,16 +3788,6 @@ export const GroupRegisterProposalVoteArgs = Type.Object({
     message_index: MessageIndex,
     adopt: Type.Boolean(),
 });
-
-export type GroupGenerateBotApiKeyResponse = Static<typeof GroupGenerateBotApiKeyResponse>;
-export const GroupGenerateBotApiKeyResponse = Type.Union([
-    Type.Object({
-        Success: SuccessResult,
-    }),
-    Type.Literal("BotNotFound"),
-    Type.Literal("ChatFrozen"),
-    Type.Literal("NotAuthorized"),
-]);
 
 export type GroupMessagesByMessageIndexArgs = Static<typeof GroupMessagesByMessageIndexArgs>;
 export const GroupMessagesByMessageIndexArgs = Type.Object({
@@ -5410,6 +5419,24 @@ export const CommunityAddMembersToChannelFailedResult = Type.Object({
     users_already_in_channel: Type.Array(UserId),
     users_limit_reached: Type.Array(UserId),
     users_failed_with_error: Type.Array(CommunityAddMembersToChannelUserFailedError),
+});
+
+export type CommunityGenerateBotApiKeyResponse = Static<typeof CommunityGenerateBotApiKeyResponse>;
+export const CommunityGenerateBotApiKeyResponse = Type.Union([
+    Type.Object({
+        Success: CommunityGenerateBotApiKeySuccessResult,
+    }),
+    Type.Literal("BotNotFound"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("NotAuthorized"),
+]);
+
+export type CommunityGenerateBotApiKeyArgs = Static<typeof CommunityGenerateBotApiKeyArgs>;
+export const CommunityGenerateBotApiKeyArgs = Type.Object({
+    bot_id: UserId,
+    requested_permissions: BotPermissions,
+    channel_id: Type.Optional(Type.Union([ChannelId, Type.Undefined()])),
 });
 
 export type CommunityChangeChannelRoleArgs = Static<typeof CommunityChangeChannelRoleArgs>;

@@ -1,25 +1,9 @@
 import { type BotCommandResponse, type BotDefinitionResponse, toBigInt64 } from "openchat-shared";
 import { Value, AssertError } from "@sinclair/typebox/value";
 import { Type, type Static } from "@sinclair/typebox";
-import {
-    MessageContent,
-    SlashCommandSchema,
-    BotPermissions as ApiExternalBotPermissions,
-} from "../../typebox";
+import { BotDefinition, MessageContent } from "../../typebox";
 import { externalBotDefinition, messageContent } from "../common/chatMappersV2";
 import { mapOptional } from "../../utils/mapping";
-
-type ApiAutonomousConfig = Static<typeof ApiAutonomousConfig>;
-const ApiAutonomousConfig = Type.Object({
-    permissions: Type.Array(ApiExternalBotPermissions),
-});
-
-type ApiBotDefinition = Static<typeof ApiBotDefinition>;
-const ApiBotDefinition = Type.Object({
-    description: Type.String(),
-    commands: Type.Array(SlashCommandSchema),
-    autonomous_config: Type.Optional(ApiAutonomousConfig),
-});
 
 const ApiBotSuccess = Type.Object({
     message: Type.Optional(
@@ -78,7 +62,8 @@ export function getBotDefinition(endpoint: string): Promise<BotDefinitionRespons
 
 function validateSchema(json: unknown): BotDefinitionResponse {
     try {
-        const value = Value.Parse(ApiBotDefinition, json);
+        console.log("Validating schema json: ", json);
+        const value = Value.Parse(BotDefinition, json);
         return externalBotDefinition(value);
     } catch (err) {
         return {

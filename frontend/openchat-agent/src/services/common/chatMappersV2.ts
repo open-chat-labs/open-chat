@@ -127,6 +127,7 @@ import type {
     SlashCommandParam,
     BotMessageContext,
     SlashCommandParamInstance,
+    GenerateBotKeyResponse,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -302,9 +303,21 @@ import type {
     SlashCommandParamType as ApiSlashCommandParamType,
     SlashCommandParam as ApiSlashCommandParam,
     BotCommandArg,
+    BotDefinition as ApiBotDefinition,
+    CommunityGenerateBotApiKeyResponse,
+    GroupGenerateBotApiKeyResponse,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
+
+export function generateApiKeyResponse(
+    value: CommunityGenerateBotApiKeyResponse | GroupGenerateBotApiKeyResponse,
+): GenerateBotKeyResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return { kind: "success", apiKey: value.Success.api_key };
+    }
+    return CommonResponses.failure();
+}
 
 export function eventsSuccessResponse(value: TEventsResponse): EventsSuccessResult<ChatEvent> {
     return {
@@ -3368,7 +3381,7 @@ export function messagePermission(perm: ApiMessagePermission): MessagePermission
     }
 }
 
-export function ExternalBotPermissions(value: ApiExternalBotPermissions): ExternalBotPermissions {
+export function externalBotPermissions(value: ApiExternalBotPermissions): ExternalBotPermissions {
     return {
         chatPermissions: value.chat.map(chatPermission),
         communityPermissions: value.community.map(communityPermission),
@@ -3389,26 +3402,18 @@ export function updateBotResponse(
 export function botGroupDetails(value: ApiBotGroupDetails): BotGroupDetails {
     return {
         id: principalBytesToString(value.user_id),
-        permissions: ExternalBotPermissions(value.permissions),
+        permissions: externalBotPermissions(value.permissions),
     };
 }
 
-export function externalBotDefinition(value: {
-    description: string;
-    commands: ApiSlashCommandSchema[];
-}): BotDefinition {
+export function externalBotDefinition(value: ApiBotDefinition): BotDefinition {
     return {
         kind: "bot_definition",
         description: value.description,
         commands: value.commands.map(externalBotCommand),
-        // TODO - fill this in later
-        autonomousConfig: {
-            permissions: {
-                messagePermissions: ["text", "prize", "file", "p2pSwap"],
-                chatPermissions: [],
-                communityPermissions: [],
-            },
-        },
+        autonomousConfig: mapOptional(value.autonomous_config, (c) => ({
+            permissions: externalBotPermissions(c.permissions),
+        })),
     };
 }
 
@@ -3418,7 +3423,7 @@ export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommand
         description: command.description,
         placeholder: mapOptional(command.placeholder, identity),
         params: command.params.map(externalBotParam),
-        permissions: ExternalBotPermissions(command.permissions),
+        permissions: externalBotPermissions(command.permissions),
     };
 }
 

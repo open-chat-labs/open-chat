@@ -1,7 +1,8 @@
 import type { SlashCommandParamInstance } from "./bots";
-import type { ChatIdentifier, MessageContext, VideoCallType } from "./chat";
+import type { ChatIdentifier, VideoCallType } from "./chat";
 import type { CommunityIdentifier } from "./community";
 import type { OptionUpdate } from "./optionUpdate";
+import type { Failure, Success } from "./response";
 
 export const allRoles = ["none", "owner", "admin", "moderator", "member"] as const;
 export const chatRoles = allRoles;
@@ -200,3 +201,5 @@ export type BotActionByCommand = {
     command: BotCommand;
     scope: BotActionScope;
 };
+
+export type GenerateBotKeyResponse = (Success & { apiKey: string }) | Failure;

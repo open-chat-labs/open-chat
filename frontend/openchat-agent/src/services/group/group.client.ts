@@ -51,6 +51,7 @@ import type {
     VideoCallParticipantsResponse,
     AccessGateConfig,
     ExternalBotPermissions,
+    GenerateBotKeyResponse,
 } from "openchat-shared";
 import {
     DestinationInvalidError,
@@ -109,6 +110,7 @@ import {
     disableInviteCodeResponse,
     editMessageResponse,
     enableOrResetInviteCodeResponse,
+    generateApiKeyResponse,
     groupDetailsResponse,
     groupDetailsUpdatesResponse,
     inviteCodeResponse,
@@ -229,6 +231,8 @@ import {
     GroupVideoCallParticipantsResponse,
     GroupUpdateBotArgs,
     GroupUpdateBotResponse,
+    GroupGenerateBotApiKeyArgs,
+    GroupGenerateBotApiKeyResponse,
 } from "../../typebox";
 
 export class GroupClient extends CandidService {
@@ -1302,6 +1306,26 @@ export class GroupClient extends CandidService {
             updateBotResponse,
             GroupUpdateBotArgs,
             GroupUpdateBotResponse,
+        );
+    }
+
+    generateBotApiKey(
+        botId: string,
+        permissions: ExternalBotPermissions,
+    ): Promise<GenerateBotKeyResponse> {
+        return this.executeMsgpackUpdate(
+            "generate_bot_api_key",
+            {
+                bot_id: principalStringToBytes(botId),
+                requested_permissions: {
+                    chat: permissions.chatPermissions.map(apiChatPermission),
+                    community: permissions.communityPermissions.map(apiCommunityPermission),
+                    message: permissions.messagePermissions.map(apiMessagePermission),
+                },
+            },
+            generateApiKeyResponse,
+            GroupGenerateBotApiKeyArgs,
+            GroupGenerateBotApiKeyResponse,
         );
     }
 }

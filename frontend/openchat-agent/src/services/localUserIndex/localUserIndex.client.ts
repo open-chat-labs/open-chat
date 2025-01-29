@@ -7,7 +7,6 @@ import type {
     ChatEventsArgsInner,
     ChatEventsBatchResponse,
     ChatEventsResponse,
-    ChatIdentifier,
     CommunityIdentifier,
     EventsSuccessResult,
     EventWrapper,
@@ -37,7 +36,6 @@ import {
 } from "./mappers";
 import {
     joinGroupResponse,
-    apiChatIdentifier,
     apiChatPermission,
     apiCommunityPermission,
     apiMessagePermission,
@@ -57,8 +55,6 @@ import {
     setCachePrimerTimestamp,
 } from "../../utils/caching";
 import {
-    LocalUserIndexAccessTokenArgs,
-    LocalUserIndexAccessTokenResponse,
     LocalUserIndexAccessTokenV2Args,
     LocalUserIndexAccessTokenV2Response,
     LocalUserIndexChatEventsArgs,

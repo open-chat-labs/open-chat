@@ -15,8 +15,6 @@ import type {
     VideoCallType,
 } from "openchat-shared";
 import type {
-    AccessTokenType as TAccessTokenType,
-    LocalUserIndexAccessTokenResponse,
     LocalUserIndexChatEventsEventsArgsInner,
     LocalUserIndexChatEventsEventsArgs,
     LocalUserIndexChatEventsEventsContext,
@@ -46,8 +44,6 @@ import {
 } from "openchat-shared";
 import {
     bytesToHexString,
-    identity,
-    mapOptional,
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
