@@ -7,6 +7,7 @@ import type {
     ApiGetDelegationResponse,
     ApiInitiateIdentityLinkResponse,
     ApiPrepareDelegationResponse,
+    ApiRemoveIdentityLinkResponse,
 } from "./candid/idl";
 import {
     type ApproveIdentityLinkResponse,
@@ -18,6 +19,7 @@ import {
     type InitiateIdentityLinkResponse,
     type PrepareDelegationResponse,
     type PrepareDelegationSuccess,
+    type RemoveIdentityLinkResponse,
     UnsupportedValueError,
 } from "openchat-shared";
 import { consolidateBytes } from "../../utils/mapping";
@@ -199,6 +201,27 @@ export function approveIdentityLinkResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiApproveIdentityLinkResponse type received",
+        candid,
+    );
+}
+
+export function removeIdentityLinkResponse(
+    candid: ApiRemoveIdentityLinkResponse,
+): RemoveIdentityLinkResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("CannotUnlinkActivePrincipal" in candid) {
+        return "cannot_unlink_active_principal";
+    }
+    if ("IdentityLinkNotFound" in candid) {
+        return "identity_link_not_found";
+    }
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiRemoveIdentityLinkResponse type received",
         candid,
     );
 }

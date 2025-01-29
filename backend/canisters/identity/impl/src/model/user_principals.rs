@@ -1,4 +1,5 @@
 use candid::Principal;
+use identity_canister::remove_identity_link::Response as RemovePrincipalResponse;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{is_default, CanisterId, PushIfNotContains, UserId};
@@ -91,6 +92,30 @@ impl UserPrincipals {
             true
         } else {
             unreachable!()
+        }
+    }
+
+    pub fn remove_auth_principal(&mut self, caller: Principal, linked_principal: Principal) -> RemovePrincipalResponse {
+        if caller == linked_principal {
+            RemovePrincipalResponse::CannotUnlinkActivePrincipal
+        } else {
+            // Curent UserPrincipal
+            let user_principal = self.get_by_auth_principal(&caller);
+
+            if let Some(mut user) = user_principal {
+                // This condition may be redundant, but in combination with the
+                // responses can provide additional context in case of an error.
+                if user.auth_principals.contains(&linked_principal) {
+                    user.auth_principals.retain(|&ap| ap != linked_principal);
+                    self.auth_principals.remove(&linked_principal);
+
+                    return RemovePrincipalResponse::Success;
+                }
+
+                return RemovePrincipalResponse::IdentityLinkNotFound;
+            }
+
+            RemovePrincipalResponse::UserNotFound
         }
     }
 

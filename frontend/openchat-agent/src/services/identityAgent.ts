@@ -8,6 +8,7 @@ import type {
     CreateOpenChatIdentityError,
     GenerateChallengeResponse,
     InitiateIdentityLinkResponse,
+    RemoveIdentityLinkResponse,
 } from "openchat-shared";
 import { buildDelegationIdentity, toDer } from "openchat-shared";
 import { createHttpAgent } from "../utils/httpAgent";
@@ -93,6 +94,10 @@ export class IdentityAgent {
 
     approveIdentityLink(linkInitiatedBy: string): Promise<ApproveIdentityLinkResponse> {
         return this._identityClient.approveIdentityLink(linkInitiatedBy);
+    }
+
+    removeIdentityLink(linked_principal: string): Promise<RemoveIdentityLinkResponse> {
+        return this._identityClient.removeIdentityLink(linked_principal);
     }
 
     getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {

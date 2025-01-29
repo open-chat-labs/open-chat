@@ -8,11 +8,11 @@ use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_internet_identity_principal, random_string};
-use types::{Delegation, SignedDelegation};
+use types::{Delegation, Empty, SignedDelegation};
 
 #[test_case(false)]
 #[test_case(true)]
-fn link_auth_identities(delay: bool) {
+fn link_and_unlink_auth_identities(delay: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
@@ -78,6 +78,31 @@ fn link_auth_identities(delay: bool) {
         identity_canister::approve_identity_link::Response::DelegationTooOld if delay => {}
         response => panic!("{response:?}"),
     };
+
+    if delay {
+        return;
+    }
+
+    let remove_identity_link_response = client::identity::remove_identity_link(
+        env,
+        auth_principal1,
+        canister_ids.identity,
+        &identity_canister::remove_identity_link::Args {
+            linked_principal: auth_principal2,
+        },
+    );
+
+    match remove_identity_link_response {
+        identity_canister::remove_identity_link::Response::Success => {
+            let response = client::identity::check_auth_principal(env, auth_principal2, canister_ids.identity, &Empty {});
+
+            assert!(matches!(
+                response,
+                identity_canister::check_auth_principal::Response::NotFound
+            ));
+        }
+        response => panic!("{response:?}"),
+    }
 }
 
 #[test_case(false)]

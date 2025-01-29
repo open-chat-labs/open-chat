@@ -109,6 +109,17 @@ type PrepareDelegationSuccess = record {
     expiration : TimestampNanoseconds;
 };
 
+type RemoveIdentityLinkArgs = record {
+    linked_principal : principal;
+};
+
+type RemoveIdentityLinkResponse = variant {
+    Success;
+    CannotUnlinkActivePrincipal;
+    IdentityLinkNotFound;
+    UserNotFound;
+};
+
 service : {
     auth_principals : (record {}) -> (AuthPrincipalsResponse) query;
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
@@ -118,4 +129,5 @@ service : {
     generate_challenge : (record {}) -> (GenerateChallengeResponse);
     initiate_identity_link : (InitiateIdentityLinkArgs) -> (InitiateIdentityLinkResponse);
     prepare_delegation : (PrepareDelegationArgs) -> (PrepareDelegationResponse);
+    remove_identity_link: (RemoveIdentityLinkArgs) -> (RemoveIdentityLinkResponse);
 }

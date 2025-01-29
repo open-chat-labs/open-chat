@@ -9,6 +9,7 @@ import {
     PrepareDelegationResponse,
     SignedDelegation,
     AuthPrincipalsResponse,
+    RemoveIdentityLinkResponse,
     _SERVICE,
 } from "./types";
 export {
@@ -21,6 +22,7 @@ export {
     PrepareDelegationResponse as ApiPrepareDelegationResponse,
     SignedDelegation as ApiSignedDelegation,
     AuthPrincipalsResponse as ApiAuthPrincipalsResponse,
+    RemoveIdentityLinkResponse as ApiRemoveIdentityLinkResponse,
     _SERVICE as IdentityService,
 };
 

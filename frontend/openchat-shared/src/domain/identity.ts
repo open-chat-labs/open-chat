@@ -112,3 +112,9 @@ export type AuthenticationPrincipal = {
 };
 
 export type AuthenticationPrincipalsResponse = AuthenticationPrincipal[];
+
+export type RemoveIdentityLinkResponse =
+    | "success"
+    | "cannot_unlink_active_principal"
+    | "identity_link_not_found"
+    | "user_not_found";

@@ -832,13 +832,17 @@
         "credentialWarning": "Vous devez avoir une identité Internet associée à votre compte OpenChat pour confirmer votre possession de l'identifiant {name}. L'émetteur des informations d'identification doit être associé à la même identité Internet. Si vous vous êtes inscrit auprès d'un autre fournisseur, vous devrez créer et lier une identité Internet à votre compte OpenChat avant de continuer.",
         "failure": {
             "alreadyLinked": "Désolé mais il semble que cette identité Internet soit déjà liée à un compte OpenChat",
+            "identityNotFound": "Nous n'avons pas pu trouver le fournisseur lié et ne pouvons donc pas poursuivre le processus de dissociation.",
             "link": "Désolé mais nous n'avons pas pu associer votre identité Internet à votre compte OpenChat",
             "login_approver": "Désolé, nous n'avons pas pu nous connecter à votre fournisseur d'authentification OpenChat actuel",
             "login_initiator": "Désolé, nous n'avons pas pu nous connecter au nouveau fournisseur d'authentification",
             "loginApprover": "Désolé, nous n'avons pas pu nous connecter à votre fournisseur d'authentification OpenChat actuel.",
             "loginInitiator": "Désolé, nous n'avons pas pu vous connecter à l'identité Internet que vous avez choisie.",
             "pollingError": "Une erreur inattendue s'est produite lors de l'attente de la connexion par e-mail",
-            "principalMismatch": "Il semble que vous ne vous soyez pas réauthentifié auprès du même fournisseur avec lequel vous êtes actuellement connecté."
+            "principalMismatch": "Il semble que vous ne vous soyez pas réauthentifié auprès du même fournisseur avec lequel vous êtes actuellement connecté.",
+            "unexpectedError": "Impossible de traiter votre demande. Veuillez réessayer ultérieurement.",
+            "unlinkActivePrincipal": "Vous ne pouvez pas dissocier le fournisseur avec lequel vous êtes actuellement connecté.",
+            "userNotFound": "Il ne semble pas que le fournisseur avec lequel vous êtes actuellement connecté soit disponible et ne puisse pas être utilisé pour la dissociation."
         },
         "humanityWarning": "Vous devez avoir une identité Internet associée à votre compte OpenChat pour confirmer votre personnalité unique. Si vous vous êtes inscrit auprès d'un autre fournisseur, vous devrez créer et lier une identité Internet à votre compte OpenChat avant de continuer.",
         "link": "Lien",
@@ -847,7 +851,12 @@
             "linkAdvice": "Pour ajouter un nouveau fournisseur de connexion, connectez-vous d'abord avec le nouveau fournisseur que vous souhaitez ajouter, puis connectez-vous avec votre fournisseur actuel et enfin associez les deux.",
             "linkAnother": "Ajouter un autre",
             "section": "Fournisseurs de connexion",
-            "start": "Commencer"
+            "start": "Commencer",
+            "unlink": "Dissocier ce compte",
+            "unlinkAction": "Dissocier",
+            "unlinkAdvice": "Cela va dissocier le compte {provider} que vous aviez précédemment lié. Êtes-vous sûr de vouloir continuer ?",
+            "unlinkingDone": "Votre compte {provider} a été dissocié !",
+            "unlinkNote": "Les comptes non liés peuvent être à nouveau liés."
         },
         "linkIdentity": "Identité du lien",
         "linkTwoIdentities": "Nous sommes désormais prêts à lier les deux identités.",
@@ -857,7 +866,8 @@
         "signIn_initiator": "Connectez-vous avec le fournisseur d'identité que vous souhaitez lier à votre compte OpenChat",
         "signInCurrent": "Connectez-vous avec le fournisseur d'identité que vous utilisez actuellement",
         "signInNext": "Créez ou connectez-vous avec l'identité Internet que vous souhaitez associer à votre compte OpenChat",
-        "tryAgain": "Essayer à nouveau"
+        "tryAgain": "Essayer à nouveau",
+        "unlinkIdentity": "Dissocier l'identité"
     },
     "identityMigrationMessage": "Veuillez patienter pendant que votre compte est mis à niveau vers notre nouveau système. Cela nous permettra de prendre en charge de nombreuses autres options de connexion à l'avenir, y compris la récupération facultative des e-mails au cas où vous perdriez l'accès à votre appareil.",
     "inheritSystem": "Hériter du thème système",
