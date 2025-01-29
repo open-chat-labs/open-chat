@@ -6722,16 +6722,6 @@ export const ReportedMessage = Type.Object({
     count: Type.Number(),
 });
 
-export type AccessTokenScope = Static<typeof AccessTokenScope>;
-export const AccessTokenScope = Type.Union([
-    Type.Object({
-        Chat: Chat,
-    }),
-    Type.Object({
-        Community: CommunityId,
-    }),
-]);
-
 export type OptionUpdateAirdropConfig = Static<typeof OptionUpdateAirdropConfig>;
 export const OptionUpdateAirdropConfig = Type.Union(
     [
@@ -6831,6 +6821,7 @@ export const UserIndexBotUpdatesBotSchema = Type.Object({
     endpoint: Type.String(),
     description: Type.String(),
     commands: Type.Array(SlashCommandSchema),
+    autonomous_config: Type.Optional(Type.Union([AutonomousConfig, Type.Undefined()])),
     last_updated: Type.BigInt(),
 });
 
@@ -7660,14 +7651,7 @@ export const BotMatch = Type.Object({
     owner: UserId,
     avatar_id: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
     commands: Type.Array(SlashCommandSchema),
-});
-
-export type BotApiKeyToken = Static<typeof BotApiKeyToken>;
-export const BotApiKeyToken = Type.Object({
-    gateway: TSBytes,
-    bot_id: UserId,
-    scope: AccessTokenScope,
-    secret: Type.String(),
+    autonomous_config: Type.Optional(Type.Union([AutonomousConfig, Type.Undefined()])),
 });
 
 export type BotActionByCommandArgs = Static<typeof BotActionByCommandArgs>;
@@ -7841,7 +7825,7 @@ export const LocalUserIndexAccessTokenV2Args = Type.Union([
         BotActionByCommand: BotActionByCommandArgs,
     }),
     Type.Object({
-        BotActionByApiKey: BotApiKeyToken,
+        BotActionByApiKey: Type.String(),
     }),
 ]);
 

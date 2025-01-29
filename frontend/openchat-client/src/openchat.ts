@@ -416,6 +416,7 @@ import type {
     BotDefinition,
     BotMessageContext,
     BotClientConfigData,
+    GenerateBotKeyResponse,
 } from "openchat-shared";
 import {
     Stream,
@@ -7806,6 +7807,19 @@ export class OpenChat extends EventTarget {
             kind: "callBotCommandEndpoint",
             endpoint,
             token,
+        });
+    }
+
+    generateBotApiKey(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        botId: string,
+        permissions: ExternalBotPermissions,
+    ): Promise<GenerateBotKeyResponse> {
+        return this.#sendRequest({
+            kind: "generateBotApiKey",
+            id,
+            botId,
+            permissions,
         });
     }
 

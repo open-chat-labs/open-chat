@@ -719,7 +719,6 @@ export type ProposalContent = { governance_canister_id: TSBytes, proposal: Propo
 export type ReplyContext = { chat_if_other?: [Chat, MessageIndex | null] | undefined, event_index: EventIndex, };
 export type BotActionChatDetails = { chat: Chat, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, };
 export type ReportedMessage = { reports: Array<MessageReport>, count: number, };
-export type AccessTokenScope = { "Chat": Chat } | { "Community": CommunityId };
 /**
  * @default NoChange
  */
@@ -736,7 +735,7 @@ export type RegistryUpdatesResponse = { "Success": RegistryUpdatesSuccessResult 
 export type UserIndexPlatformModeratorsResponse = { "Success": UserIndexPlatformModeratorsSuccessResult };
 export type UserIndexSuspectedBotsResponse = { "Success": UserIndexSuspectedBotsSuccessResult };
 export type UserIndexUserResponse = { "Success": UserSummary } | "UserNotFound";
-export type UserIndexBotUpdatesBotSchema = { id: UserId, owner: UserId, name: string, avatar_id?: bigint | undefined, endpoint: string, description: string, commands: Array<SlashCommandSchema>, last_updated: bigint, };
+export type UserIndexBotUpdatesBotSchema = { id: UserId, owner: UserId, name: string, avatar_id?: bigint | undefined, endpoint: string, description: string, commands: Array<SlashCommandSchema>, autonomous_config?: AutonomousConfig | undefined, last_updated: bigint, };
 export type UserIndexSearchResult = { users: Array<UserSummary>, timestamp: bigint, };
 export type UserIndexSearchResponse = { "Success": UserIndexSearchResult };
 export type UserIndexDeleteUserArgs = { user_id: UserId, delegation: SignedDelegation, };
@@ -805,8 +804,7 @@ export type CurrentUserSummary = { user_id: UserId, username: string, display_na
 export type BotCommandArg = { name: string, value: BotCommandArgValue, };
 export type BotCommand = { name: string, args: Array<BotCommandArg>, initiator: UserId, };
 export type SwapStatusError = { "Reserved": SwapStatusErrorReserved } | { "Accepted": SwapStatusErrorAccepted } | { "Completed": SwapStatusErrorCompleted } | { "Expired": SwapStatusErrorExpired } | { "Cancelled": SwapStatusErrorCancelled };
-export type BotMatch = { id: UserId, score: number, name: string, description: string, owner: UserId, avatar_id?: bigint | undefined, commands: Array<SlashCommandSchema>, };
-export type BotApiKeyToken = { gateway: TSBytes, bot_id: UserId, scope: AccessTokenScope, secret: string, };
+export type BotMatch = { id: UserId, score: number, name: string, description: string, owner: UserId, avatar_id?: bigint | undefined, commands: Array<SlashCommandSchema>, autonomous_config?: AutonomousConfig | undefined, };
 export type BotActionByCommandArgs = { bot_id: UserId, command: BotCommand, scope: BotActionScope, };
 export type P2PSwapContent = { swap_id: number, token0: TokenInfo, token0_amount: bigint, token1: TokenInfo, token1_amount: bigint, expires_at: bigint, caption?: string | undefined, token0_txn_in: bigint, status: P2PSwapStatus, };
 export type AccessGate = "DiamondMember" | "LifetimeDiamondMember" | "UniquePerson" | { "VerifiedCredential": VerifiedCredentialGate } | { "SnsNeuron": SnsNeuronGate } | { "Payment": PaymentGate } | { "TokenBalance": TokenBalanceGate } | { "Composite": CompositeGate } | "Locked" | "ReferredByMember";
@@ -822,7 +820,7 @@ export type UserIndexUsersResponse = { "Success": UserIndexUsersResult };
 export type UserIndexExploreBotsSuccessResult = { matches: Array<BotMatch>, total: number, };
 export type UserIndexExploreBotsResponse = { "Success": UserIndexExploreBotsSuccessResult } | { "TermTooShort": number } | { "TermTooLong": number } | "InvalidTerm";
 export type LocalUserIndexChatEventsArgs = { requests: Array<LocalUserIndexChatEventsEventsArgs>, };
-export type LocalUserIndexAccessTokenV2Args = { "StartVideoCall": StartVideoCallArgs } | { "JoinVideoCall": JoinVideoCallArgs } | { "MarkVideoCallAsEnded": MarkVideoCallAsEndedArgs } | { "BotActionByCommand": BotActionByCommandArgs } | { "BotActionByApiKey": BotApiKeyToken };
+export type LocalUserIndexAccessTokenV2Args = { "StartVideoCall": StartVideoCallArgs } | { "JoinVideoCall": JoinVideoCallArgs } | { "MarkVideoCallAsEnded": MarkVideoCallAsEndedArgs } | { "BotActionByCommand": BotActionByCommandArgs } | { "BotActionByApiKey": string };
 export type CommunityClaimPrizeResponse = "Success" | "MessageNotFound" | "UserNotInCommunity" | "UserNotInChannel" | "UserSuspended" | "CommunityFrozen" | "ChannelNotFound" | "AlreadyClaimed" | "PrizeFullyClaimed" | "PrizeEnded" | "LedgerError" | { "TransferFailed": [string, FailedCryptoTransaction] } | { "FailedAfterTransfer": [string, CompletedCryptoTransaction] } | { "InternalError": string } | "UserLapsed";
 export type CommunityRegisterPollVoteResponse = { "Success": PollVotes } | "CommunityFrozen" | "UserNotInCommunity" | "UserSuspended" | "ChannelNotFound" | "UserNotInChannel" | "UserCannotChangeVote" | "PollNotFound" | "PollEnded" | "OptionIndexOutOfRange" | "UserLapsed";
 export type CommunityCancelP2pSwapResponse = "Success" | { "StatusError": SwapStatusError } | "SwapNotFound" | "ChannelNotFound" | "UserNotInCommunity" | "UserNotInChannel" | "ChatFrozen";

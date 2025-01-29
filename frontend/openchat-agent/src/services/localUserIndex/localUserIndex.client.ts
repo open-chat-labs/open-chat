@@ -431,7 +431,7 @@ export class LocalUserIndexClient extends CandidService {
 
     getAccessToken(accessType: AccessTokenType): Promise<string | undefined> {
         return this.executeMsgpackQuery(
-            "access_token",
+            "access_token_v2",
             apiAccessTokenType(accessType),
             accessTokenResponse,
             LocalUserIndexAccessTokenV2Args,

@@ -230,6 +230,7 @@ import type {
     ExternalBotPermissions,
     BotsResponse,
     BotDefinition,
+    GenerateBotKeyResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -4186,6 +4187,25 @@ export class OpenChatAgent extends EventTarget {
             amount,
             fee,
         );
+    }
+
+    generateBotApiKey(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        botId: string,
+        permissions: ExternalBotPermissions,
+    ): Promise<GenerateBotKeyResponse> {
+        switch (id.kind) {
+            case "channel":
+                return this.communityClient(id.communityId).generateBotApiKey(
+                    botId,
+                    permissions,
+                    id.channelId,
+                );
+            case "community":
+                return this.communityClient(id.communityId).generateBotApiKey(botId, permissions);
+            case "group_chat":
+                return this.getGroupClient(id.groupId).generateBotApiKey(botId, permissions);
+        }
     }
 }
 
