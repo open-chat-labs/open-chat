@@ -18,7 +18,7 @@ import type {
     JoinGroupResponse,
     MessageContext,
     RegisterUserResponse,
-    SlashCommandPermissions,
+    ExternalBotPermissions,
     VerifiedCredentialArgs,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -40,7 +40,7 @@ import {
     apiChatIdentifier,
     apiChatPermission,
     apiCommunityPermission,
-    apiMessagePermission
+    apiMessagePermission,
 } from "../common/chatMappersV2";
 import { toBigInt32, MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
 import {
@@ -387,13 +387,18 @@ export class LocalUserIndexClient extends CandidService {
         );
     }
 
-    installBot(location: CommunityIdentifier | GroupChatIdentifier, botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
+    installBot(
+        location: CommunityIdentifier | GroupChatIdentifier,
+        botId: string,
+        grantedPermissions: ExternalBotPermissions,
+    ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "install_bot",
             {
-                location: location.kind === "community"
-                    ? { Community: principalStringToBytes(location.communityId) }
-                    : { Group: principalStringToBytes(location.groupId) },
+                location:
+                    location.kind === "community"
+                        ? { Community: principalStringToBytes(location.communityId) }
+                        : { Group: principalStringToBytes(location.groupId) },
                 bot_id: principalStringToBytes(botId),
                 granted_permissions: {
                     chat: grantedPermissions.chatPermissions.map(apiChatPermission),
@@ -407,13 +412,17 @@ export class LocalUserIndexClient extends CandidService {
         );
     }
 
-    uninstallBot(location: CommunityIdentifier | GroupChatIdentifier, botId: string): Promise<boolean> {
+    uninstallBot(
+        location: CommunityIdentifier | GroupChatIdentifier,
+        botId: string,
+    ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "uninstall_bot",
             {
-                location: location.kind === "community"
-                    ? { Community: principalStringToBytes(location.communityId) }
-                    : { Group: principalStringToBytes(location.groupId) },
+                location:
+                    location.kind === "community"
+                        ? { Community: principalStringToBytes(location.communityId) }
+                        : { Group: principalStringToBytes(location.groupId) },
                 bot_id: principalStringToBytes(botId),
             },
             (resp) => resp === "Success",
@@ -443,7 +452,7 @@ export class LocalUserIndexClient extends CandidService {
         swapId: bigint,
         inputToken: boolean,
         amount: bigint | undefined,
-        fee: bigint | undefined
+        fee: bigint | undefined,
     ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "withdraw_from_icpswap",
@@ -456,7 +465,7 @@ export class LocalUserIndexClient extends CandidService {
             },
             withdrawFromIcpSwapResponse,
             LocalUserIndexWithdrawFromIcpswapArgs,
-            LocalUserIndexWithdrawFromIcpswapResponse
+            LocalUserIndexWithdrawFromIcpswapResponse,
         );
     }
 }

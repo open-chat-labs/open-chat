@@ -156,7 +156,7 @@
             "failure": "Sorry we were unable to add the bot",
             "loadDefinition": "Load definition",
             "noPermissions": "No special permissions required",
-            "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the commands available.",
+            "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the bot's capabilities.",
             "title": "Add bot to community"
         },
         "builder": {
@@ -164,6 +164,7 @@
             "addChoice": "Add a choice",
             "addCommand": "Add command",
             "addParam": "Add a parameter",
+            "autonomousPermissionsLabel": "Autonomous permissions",
             "choiceName": "Choice name",
             "choices": "Choices",
             "choicesInfo": "If you enter a set of choices for your parameter, the user will be presented with a drop down to choose the correct value.",
@@ -314,12 +315,20 @@
             }
         },
         "manage": {
+            "apiKeyInfo": "You will need an API key to allow bots to perform actions independently in this context",
+            "copyKey": "This is your API key. This key provides programmatic access to OpenChat and should be considered **secret**. Do not share this key or commit it to source control. If at any time this key is leaked, you can simply generate a new one to revoke access.<br /><br />Please copy this key now and keep it safe - you will not be able to view this key again.",
+            "generate": "Generate API key",
+            "generateApiKey": "Generate an API key",
+            "generated": "API key generated",
+            "regenerate": "Re-generate API key",
+            "regenerateWarning": "Re-generating the API key will revoke access to the previously generated API key. Are you sure you want to proceed?",
             "remove": "Remove bot",
             "removeFailed": "Sorry we were unable to remove the bot",
             "removeReason": "Reason for removing bot",
             "removeReasonPlaceholder": "Please provide reasons / evidence supporting the removal of the bot",
             "removeSearch": "Search for the bot to remove",
             "review": "Review bot permissions",
+            "reviewApiKey": "Review API key",
             "view": "View bot details"
         },
         "matchingCommands": "Matching commands",

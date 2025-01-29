@@ -156,7 +156,7 @@
             "failure": "Przepraszamy, nie udało nam się dodać bota",
             "loadDefinition": "Definicja obciążenia",
             "noPermissions": "Nie są wymagane żadne specjalne uprawnienia",
-            "permissionsInfo": "Ten bot szuka następujących uprawnień. Wybór ograniczenia przyznanych uprawnień ograniczy dostępne polecenia.",
+            "permissionsInfo": "Ten bot szuka następujących uprawnień. Wybór ograniczenia przyznanych uprawnień ograniczy możliwości bota.",
             "title": "Dodaj bota do społeczności"
         },
         "builder": {
@@ -164,6 +164,7 @@
             "addChoice": "Dodaj wybór",
             "addCommand": "Dodaj polecenie",
             "addParam": "Dodaj parametr",
+            "autonomousPermissionsLabel": "Uprawnienia autonomiczne",
             "choiceName": "Nazwa wyboru",
             "choices": "Wybory",
             "choicesInfo": "Jeśli wprowadzisz zestaw wyborów dla swojego parametru, użytkownikowi zostanie wyświetlona lista rozwijana umożliwiająca wybór właściwej wartości.",
@@ -314,12 +315,20 @@
             }
         },
         "manage": {
+            "apiKeyInfo": "W tym kontekście potrzebny będzie klucz API, aby umożliwić botom niezależne wykonywanie działań",
+            "copyKey": "To jest Twój klucz API. Ten klucz zapewnia programowy dostęp do OpenChat i powinien być uważany za **tajny**. Nie udostępniaj tego klucza ani nie przekazuj go do kontroli źródła. Jeśli w dowolnym momencie ten klucz zostanie ujawniony, możesz po prostu wygenerować nowy, aby cofnąć dostęp.<br /><br />Skopiuj ten klucz teraz i przechowuj go w bezpiecznym miejscu — nie będziesz mógł go ponownie wyświetlić.",
+            "generate": "Generuj klucz API",
+            "generateApiKey": "Wygeneruj klucz API",
+            "generated": "Wygenerowano klucz API",
+            "regenerate": "Wygeneruj ponownie klucz API",
+            "regenerateWarning": "Ponowne wygenerowanie klucza API spowoduje cofnięcie dostępu do wcześniej wygenerowanego klucza API. Czy na pewno chcesz kontynuować?",
             "remove": "Usuń bota",
             "removeFailed": "Przepraszamy, nie udało nam się usunąć bota",
             "removeReason": "Powód usunięcia bota",
             "removeReasonPlaceholder": "Proszę podać powody/dowody uzasadniające usunięcie bota",
             "removeSearch": "Wyszukaj bota, którego chcesz usunąć",
             "review": "Przejrzyj uprawnienia bota",
+            "reviewApiKey": "Przejrzyj klucz API",
             "view": "Wyświetl szczegóły bota"
         },
         "matchingCommands": "Dopasowywanie poleceń",

@@ -156,7 +156,7 @@
             "failure": "Es ist uns leider nicht gelungen, den Bot hinzuzufügen.",
             "loadDefinition": "Lastdefinition",
             "noPermissions": "Keine besonderen Berechtigungen erforderlich",
-            "permissionsInfo": "Dieser Bot fordert die folgenden Berechtigungen an. Wenn Sie die erteilten Berechtigungen einschränken, werden auch die verfügbaren Befehle eingeschränkt.",
+            "permissionsInfo": "Dieser Bot benötigt die folgenden Berechtigungen. Wenn Sie die erteilten Berechtigungen einschränken, werden die Fähigkeiten des Bots eingeschränkt.",
             "title": "Bot zur Community hinzufügen"
         },
         "builder": {
@@ -164,6 +164,7 @@
             "addChoice": "Auswahl hinzufügen",
             "addCommand": "Befehl hinzufügen",
             "addParam": "Hinzufügen eines Parameters",
+            "autonomousPermissionsLabel": "Autonome Berechtigungen",
             "choiceName": "Auswahlname",
             "choices": "Auswahlmöglichkeiten",
             "choicesInfo": "Wenn Sie eine Reihe von Auswahlmöglichkeiten für Ihren Parameter eingeben, wird dem Benutzer eine Dropdown-Liste zur Auswahl des richtigen Werts angezeigt.",
@@ -314,12 +315,20 @@
             }
         },
         "manage": {
+            "apiKeyInfo": "Sie benötigen einen API-Schlüssel, damit Bots in diesem Kontext unabhängig Aktionen ausführen können",
+            "copyKey": "Dies ist Ihr API-Schlüssel. Dieser Schlüssel bietet programmgesteuerten Zugriff auf OpenChat und sollte als **geheim** betrachtet werden. Geben Sie diesen Schlüssel nicht weiter und übergeben Sie ihn nicht der Quellcodeverwaltung. Wenn dieser Schlüssel irgendwann durchsickert, können Sie einfach einen neuen generieren, um den Zugriff zu widerrufen.<br /><br />Bitte kopieren Sie diesen Schlüssel jetzt und bewahren Sie ihn sicher auf – Sie können ihn nicht mehr anzeigen.",
+            "generate": "API-Schlüssel generieren",
+            "generateApiKey": "Generieren eines API-Schlüssels",
+            "generated": "API-Schlüssel generiert",
+            "regenerate": "API-Schlüssel neu generieren",
+            "regenerateWarning": "Durch die erneute Generierung des API-Schlüssels wird der Zugriff auf den zuvor generierten API-Schlüssel widerrufen. Möchten Sie wirklich fortfahren?",
             "remove": "Bot entfernen",
             "removeFailed": "Es ist uns leider nicht gelungen, den Bot zu entfernen.",
             "removeReason": "Grund für die Entfernung des Bots",
             "removeReasonPlaceholder": "Bitte geben Sie Gründe/Beweise für die Entfernung des Bots an",
             "removeSearch": "Suchen Sie nach dem zu entfernenden Bot",
             "review": "Überprüfen Sie die Bot-Berechtigungen",
+            "reviewApiKey": "API-Schlüssel überprüfen",
             "view": "Botdetails anzeigen"
         },
         "matchingCommands": "Passende Befehle",
