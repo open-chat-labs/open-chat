@@ -1,13 +1,13 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{CompletedCryptoTransaction, FailedCryptoTransaction, Milliseconds, PendingCryptoTransaction};
+use types::{CompletedCryptoTransaction, FailedCryptoTransaction, Milliseconds, PendingCryptoTransaction, PinNumberWrapper};
 
 #[ts_export(user, withdraw_crypto)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub withdrawal: PendingCryptoTransaction,
-    pub pin: Option<String>,
+    pub pin: Option<PinNumberWrapper>,
 }
 
 #[ts_export(user, withdraw_crypto)]
