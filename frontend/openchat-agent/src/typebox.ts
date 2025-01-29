@@ -2231,6 +2231,10 @@ export type UserIndexDeleteUserResponse = Static<typeof UserIndexDeleteUserRespo
 export const UserIndexDeleteUserResponse = Type.Union([
     Type.Literal("Success"),
     Type.Literal("NotAuthorized"),
+    Type.Object({
+        MalformedSignature: Type.String(),
+    }),
+    Type.Literal("DelegationTooOld"),
     Type.Literal("UserNotFound"),
 ]);
 
@@ -5053,11 +5057,6 @@ export const UserIndexReferralMetricsResponse = Type.Object({
     Success: UserIndexReferralMetricsReferralMetrics,
 });
 
-export type UserIndexDeleteUserArgs = Static<typeof UserIndexDeleteUserArgs>;
-export const UserIndexDeleteUserArgs = Type.Object({
-    user_id: UserId,
-});
-
 export type UserIndexRemoveBotArgs = Static<typeof UserIndexRemoveBotArgs>;
 export const UserIndexRemoveBotArgs = Type.Object({
     bot_id: UserId,
@@ -6718,6 +6717,12 @@ export const UserIndexSearchResult = Type.Object({
 export type UserIndexSearchResponse = Static<typeof UserIndexSearchResponse>;
 export const UserIndexSearchResponse = Type.Object({
     Success: UserIndexSearchResult,
+});
+
+export type UserIndexDeleteUserArgs = Static<typeof UserIndexDeleteUserArgs>;
+export const UserIndexDeleteUserArgs = Type.Object({
+    user_id: UserId,
+    delegation: SignedDelegation,
 });
 
 export type UserIndexChitLeaderboardSuccessResult = Static<

@@ -124,6 +124,8 @@ import {
     UserIndexUsersResponse,
 } from "../../typebox";
 import { apiToken } from "../common/chatMappersV2";
+import type { DelegationChain } from "@dfinity/identity";
+import { signedDelegation } from "../../utils/id";
 
 export class UserIndexClient extends CandidService {
     constructor(
@@ -609,10 +611,10 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    deleteUser(userId: string): Promise<boolean> {
+    deleteUser(userId: string, delegation: DelegationChain): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "delete_user",
-            { user_id: principalStringToBytes(userId) },
+            { user_id: principalStringToBytes(userId), delegation: signedDelegation(delegation) },
             (resp) => resp === "Success",
             UserIndexDeleteUserArgs,
             UserIndexDeleteUserResponse,

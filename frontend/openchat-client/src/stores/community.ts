@@ -14,7 +14,7 @@ import { localCommunitySummaryUpdates } from "./localCommunitySummaryUpdates";
 import { mergeLocalUpdates } from "../utils/community";
 import type {
     Member,
-    SlashCommandPermissions,
+    ExternalBotPermissions,
     UserGroupDetails,
     UserGroupSummary,
 } from "openchat-shared";
@@ -79,7 +79,7 @@ export const communityStateStore = createCommunitySpecificObjectStore<CommunityS
 export const currentCommunityBots = createDerivedPropStore<CommunitySpecificState, "bots">(
     communityStateStore,
     "bots",
-    () => new Map<string, SlashCommandPermissions>(),
+    () => new Map<string, ExternalBotPermissions>(),
 );
 
 export const currentCommunityUserGroups = createDerivedPropStore<

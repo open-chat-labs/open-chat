@@ -156,7 +156,7 @@
             "failure": "Lo sentimos, no pudimos agregar el bot.",
             "loadDefinition": "Definición de carga",
             "noPermissions": "No se requieren permisos especiales",
-            "permissionsInfo": "Este bot solicita los siguientes permisos. Si elige limitar los permisos otorgados, se limitarán los comandos disponibles.",
+            "permissionsInfo": "Este bot solicita los siguientes permisos. Si elige limitar los permisos otorgados, se limitarán las capacidades del bot.",
             "title": "Agregar bot a la comunidad"
         },
         "builder": {
@@ -164,6 +164,7 @@
             "addChoice": "Añadir una opción",
             "addCommand": "Agregar comando",
             "addParam": "Agregar un parámetro",
+            "autonomousPermissionsLabel": "Permisos autónomos",
             "choiceName": "Nombre de elección",
             "choices": "Opciones",
             "choicesInfo": "Si ingresa un conjunto de opciones para su parámetro, se le presentará al usuario un menú desplegable para elegir el valor correcto.",
@@ -314,12 +315,20 @@
             }
         },
         "manage": {
+            "apiKeyInfo": "Necesitará una clave API para permitir que los bots realicen acciones de forma independiente en este contexto",
+            "copyKey": "Esta es su clave API. Esta clave proporciona acceso programático a OpenChat y debe considerarse **secreta**. No comparta esta clave ni la envíe al control de código fuente. Si en algún momento se filtra esta clave, puede simplemente generar una nueva para revocar el acceso.<br /><br />Copie esta clave ahora y guárdela en un lugar seguro; no podrá volver a verla.",
+            "generate": "Generar clave API",
+            "generateApiKey": "Generar una clave API",
+            "generated": "Clave API generada",
+            "regenerate": "Regenerar clave API",
+            "regenerateWarning": "Si vuelve a generar la clave API, se revocará el acceso a la clave API generada anteriormente. ¿Está seguro de que desea continuar?",
             "remove": "Eliminar bot",
             "removeFailed": "Lo sentimos, no pudimos eliminar el bot.",
             "removeReason": "Motivo para eliminar el bot",
             "removeReasonPlaceholder": "Proporcione razones/evidencia que respalden la eliminación del bot.",
             "removeSearch": "Busca el bot a eliminar",
             "review": "Revisar los permisos del bot",
+            "reviewApiKey": "Revisar la clave API",
             "view": "Ver detalles del bot"
         },
         "matchingCommands": "Comandos coincidentes",
