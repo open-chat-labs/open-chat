@@ -37,6 +37,7 @@ pub mod edit_message;
 pub mod enable_invite_code;
 pub mod end_video_call_v2;
 pub mod follow_thread;
+pub mod generate_bot_api_key;
 pub mod import_group;
 pub mod join_video_call;
 pub mod leave_channel;

@@ -3,6 +3,7 @@ use local_user_index_canister::*;
 
 // Queries
 generate_msgpack_query_call!(access_token);
+generate_msgpack_query_call!(access_token_v2);
 generate_msgpack_query_call!(chat_events);
 generate_msgpack_query_call!(group_and_community_summary_updates);
 
@@ -26,8 +27,8 @@ pub mod happy_path {
     use local_user_index_canister::{install_bot, uninstall_bot};
     use pocket_ic::PocketIc;
     use types::{
-        AccessTokenType, BotInstallationLocation, CanisterId, ChannelId, Chat, ChatId, CommunityCanisterCommunitySummary,
-        CommunityId, SlashCommandPermissions, UserId,
+        AccessTokenType, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatId,
+        CommunityCanisterCommunitySummary, CommunityId, UserId,
     };
 
     pub fn register_user(env: &mut PocketIc, principal: Principal, canister_id: CanisterId, public_key: Vec<u8>) -> User {
@@ -286,7 +287,7 @@ pub mod happy_path {
         local_user_index: CanisterId,
         location: BotInstallationLocation,
         bot_id: UserId,
-        granted_permissions: SlashCommandPermissions,
+        granted_permissions: BotPermissions,
     ) {
         let response = super::install_bot(
             env,

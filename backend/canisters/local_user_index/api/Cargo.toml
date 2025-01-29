@@ -17,3 +17,4 @@ ts_export = { path = "../../../libraries/ts_export" }
 ts-rs = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
+utils = { path = "../../../libraries/utils" }

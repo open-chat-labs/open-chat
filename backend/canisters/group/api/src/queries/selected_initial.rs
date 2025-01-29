@@ -1,11 +1,14 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotGroupDetails, Empty, EventIndex, GroupMember, MessageIndex, TimestampMillis, UserId, VersionedRules};
+use types::{
+    BotGroupDetails, Empty, EventIndex, GroupMember, MessageIndex, PublicApiKeyDetails, TimestampMillis, UserId, VersionedRules,
+};
 
 pub type Args = Empty;
 
 #[ts_export(group, selected_initial)]
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -20,6 +23,7 @@ pub struct SuccessResult {
     pub latest_event_index: EventIndex,
     pub participants: Vec<GroupMember>,
     pub bots: Vec<BotGroupDetails>,
+    pub api_keys: Vec<PublicApiKeyDetails>,
     pub basic_members: Vec<UserId>,
     pub blocked_users: Vec<UserId>,
     pub invited_users: Vec<UserId>,

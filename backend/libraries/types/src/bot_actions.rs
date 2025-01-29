@@ -1,6 +1,6 @@
 use crate::{
-    AudioContent, FileContent, GiphyContent, ImageContent, MessagePermission, PollContent, SlashCommandPermissions,
-    TextContent, VideoContent,
+    AudioContent, BotPermissions, FileContent, GiphyContent, ImageContent, MessagePermission, PollContent, TextContent,
+    VideoContent,
 };
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
@@ -28,8 +28,8 @@ pub enum MessageContent {
 }
 
 impl BotAction {
-    pub fn permissions_required(&self) -> SlashCommandPermissions {
-        let mut permissions_required = SlashCommandPermissions::default();
+    pub fn permissions_required(&self) -> BotPermissions {
+        let mut permissions_required = BotPermissions::default();
 
         match self {
             BotAction::SendMessage(action) => {

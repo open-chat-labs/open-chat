@@ -9,6 +9,7 @@ mod avatar;
 pub mod bot_actions;
 mod bots;
 mod build_version;
+pub mod c2c_can_issue_access_token;
 pub mod c2c_handle_bot_action;
 pub mod c2c_install_bot;
 pub mod c2c_uninstall_bot;

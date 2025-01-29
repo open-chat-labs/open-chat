@@ -56,12 +56,15 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
         })
         .collect();
 
+    let api_keys = data.bot_api_keys.generated_since(0);
+
     Success(SuccessResult {
         timestamp: last_updated,
         last_updated,
         latest_event_index: data.events.latest_event_index(),
         members,
         bots,
+        api_keys,
         basic_members,
         blocked_users: data.members.blocked(),
         invited_users: data.invited_users.users(),

@@ -21,10 +21,16 @@ fn selected_channel_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
         let user_id = state.data.members.lookup_user_id(caller);
 
-        match channel.chat.selected_group_updates(args.updates_since, last_updated, user_id) {
-            Some(updates) if updates.has_updates() => Success(updates),
-            Some(_) => SuccessNoUpdates(last_updated),
-            None => PrivateChannel,
+        let Some(mut updates) = channel.chat.selected_group_updates(args.updates_since, last_updated, user_id) else {
+            return PrivateChannel;
+        };
+
+        updates.api_keys_generated = channel.bot_api_keys.generated_since(args.updates_since);
+
+        if updates.has_updates() {
+            Success(updates)
+        } else {
+            SuccessNoUpdates(last_updated)
         }
     } else {
         ChannelNotFound

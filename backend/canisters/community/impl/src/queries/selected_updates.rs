@@ -42,6 +42,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         members_removed: vec![],
         bots_added_or_updated: vec![],
         bots_removed: vec![],
+        api_keys_generated: data.bot_api_keys.generated_since(args.updates_since),
         blocked_users_added: vec![],
         blocked_users_removed: vec![],
         invited_users,

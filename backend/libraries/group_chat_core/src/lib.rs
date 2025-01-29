@@ -29,11 +29,13 @@ use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
 };
 
+mod bots;
 mod invited_users;
 mod members;
 mod mentions;
 mod roles;
 
+pub use bots::*;
 pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
@@ -626,7 +628,7 @@ impl GroupChatCore {
             if let Caller::BotV2(bot_now) = &caller {
                 if let Some(bot_message) = message.bot_context {
                     if bot_now.bot == message.sender
-                        && bot_now.initiator == bot_message.initiator
+                        && bot_now.command.initiator == bot_message.command.initiator
                         && bot_now.command == bot_message.command
                         && bot_now.finalised
                         && !bot_message.finalised

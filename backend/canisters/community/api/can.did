@@ -149,6 +149,7 @@ type SelectedChannelInitialResponse = variant {
         invited_users : vec UserId;
         pinned_messages : vec MessageIndex;
         chat_rules : VersionedRules;
+        api_keys : vec PublicApiKeyDetails;
     };
     PrivateCommunity;
     ChannelNotFound;
@@ -183,6 +184,7 @@ type SelectedInitialSuccess = record {
     latest_event_index : EventIndex;
     members : vec CommunityMember;
     bots : vec BotGroupDetails;
+    api_keys : vec PublicApiKeyDetails;
     basic_members : vec UserId;
     blocked_users : vec UserId;
     invited_users : vec UserId;
@@ -209,6 +211,7 @@ type SelectedUpdatesSuccess = record {
     members_removed : vec UserId;
     bots_added_or_updated : vec BotGroupDetails;
     bots_removed : vec UserId;
+    api_keys_generated : vec PublicApiKeyDetails;
     blocked_users_added : vec UserId;
     blocked_users_removed : vec UserId;
     invited_users : opt vec UserId;

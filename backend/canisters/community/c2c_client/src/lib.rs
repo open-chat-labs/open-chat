@@ -3,6 +3,7 @@ use community_canister::*;
 
 // Queries
 generate_c2c_call!(c2c_can_issue_access_token_for_channel);
+generate_c2c_call!(c2c_can_issue_access_token);
 generate_c2c_call!(c2c_events);
 generate_c2c_call!(c2c_events_by_index);
 generate_c2c_call!(c2c_events_window);

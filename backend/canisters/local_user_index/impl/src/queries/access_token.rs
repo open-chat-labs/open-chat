@@ -8,8 +8,8 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use serde::Serialize;
 use types::{
-    AccessTokenType, BotCommandClaims, ChannelId, Chat, ChatId, CheckAccessTokenBotCommand, CheckAccessTokenType, CommunityId,
-    JoinOrEndVideoCallClaims, StartVideoCallClaims, UserId,
+    AccessTokenType, ChannelId, Chat, ChatId, CheckAccessTokenType, CommunityId, JoinOrEndVideoCallClaims,
+    StartVideoCallClaims, UserId,
 };
 
 #[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
@@ -49,7 +49,7 @@ async fn access_token(args: Args) -> Response {
         AccessTokenType::StartVideoCallV2(vc) => {
             let custom_claims = StartVideoCallClaims {
                 user_id,
-                chat_id: args.chat.into(),
+                chat_id: args.chat,
                 call_type: vc.call_type,
                 is_diamond,
             };
@@ -58,19 +58,7 @@ async fn access_token(args: Args) -> Response {
         AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => {
             let custom_claims = JoinOrEndVideoCallClaims {
                 user_id,
-                chat_id: args.chat.into(),
-            };
-            build_token(token_type_name, custom_claims, state)
-        }
-        AccessTokenType::BotCommand(bc) => {
-            let custom_claims = BotCommandClaims {
-                initiator: bc.user_id,
-                bot: bc.bot,
-                chat: bc.chat.into(),
-                thread_root_message_index: bc.thread_root_message_index,
-                message_id: bc.message_id,
-                command: bc.command,
-                bot_api_gateway: state.env.canister_id(),
+                chat_id: args.chat,
             };
             build_token(token_type_name, custom_claims, state)
         }
@@ -103,26 +91,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         }
         AccessTokenType::JoinVideoCall => CheckAccessTokenType::JoinVideoCall,
         AccessTokenType::MarkVideoCallAsEnded => CheckAccessTokenType::MarkVideoCallAsEnded,
-        AccessTokenType::BotCommand(access_token) => {
-            let Some(permissions) = state
-                .data
-                .bots
-                .get(&access_token.bot)
-                .and_then(|b| b.commands.iter().find(|c| c.name == access_token.command.name))
-                .map(|c| c.permissions.clone())
-            else {
-                return Err(Response::NotAuthorized);
-            };
-
-            CheckAccessTokenType::BotCommand(CheckAccessTokenBotCommand {
-                user_id: access_token.user_id,
-                bot: access_token.bot,
-                chat: access_token.chat,
-                thread_root_message_index: access_token.thread_root_message_index,
-                message_id: access_token.message_id,
-                permissions,
-            })
-        }
     };
 
     Ok(PrepareResult {

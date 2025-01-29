@@ -222,6 +222,7 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                 id: channel_id,
                 chat,
                 date_imported: None, // This is only set once everything is complete
+                bot_api_keys: Default::default(),
             });
 
             state.data.timer_jobs.enqueue_job(

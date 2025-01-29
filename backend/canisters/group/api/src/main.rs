@@ -91,6 +91,7 @@ fn main() {
     generate_ts_method!(group, edit_message_v2);
     generate_ts_method!(group, enable_invite_code);
     generate_ts_method!(group, follow_thread);
+    generate_ts_method!(group, generate_bot_api_key);
     generate_ts_method!(group, join_video_call);
     generate_ts_method!(group, pin_message_v2);
     generate_ts_method!(group, register_poll_vote);

@@ -90,6 +90,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             user_principal: args.principal,
             name: args.name.clone(),
             commands: args.definition.commands.clone(),
+            autonomous_config: args.definition.autonomous_config.clone(),
         }),
         None,
     );

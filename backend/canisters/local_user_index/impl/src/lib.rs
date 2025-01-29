@@ -8,7 +8,7 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use fire_and_forget_handler::FireAndForgetHandler;
-use jwt::{verify_jwt, Claims};
+use jwt::{verify_and_decode, Claims};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;
@@ -103,7 +103,7 @@ impl RuntimeState {
                         .global_users
                         .insert_unique_person_proof(user_id, unique_person_proof);
                 } else if let Ok(claims) =
-                    verify_jwt::<Claims<DiamondMembershipDetails>>(jwt, self.data.oc_key_pair.public_key_pem())
+                    verify_and_decode::<Claims<DiamondMembershipDetails>>(jwt, self.data.oc_key_pair.public_key_pem())
                 {
                     if claims.claim_type() == "diamond_membership" {
                         let expires_at = claims.custom().expires_at;

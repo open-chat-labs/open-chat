@@ -1,6 +1,6 @@
 use super::members::CommunityMembers;
 use chat_events::Reader;
-use group_chat_core::{CanLeaveResult, GroupChatCore, GroupMemberInternal, LeaveResult};
+use group_chat_core::{BotApiKeys, CanLeaveResult, GroupChatCore, GroupMemberInternal, LeaveResult};
 use rand::rngs::StdRng;
 use rand::{Rng, RngCore};
 use search::weighted::*;
@@ -24,6 +24,8 @@ pub struct Channel {
     pub id: ChannelId,
     pub chat: GroupChatCore,
     pub date_imported: Option<TimestampMillis>,
+    #[serde(default)]
+    pub bot_api_keys: BotApiKeys,
 }
 
 impl Channels {
@@ -222,6 +224,7 @@ impl Channel {
                 now,
             ),
             date_imported: None,
+            bot_api_keys: BotApiKeys::default(),
         }
     }
 

@@ -2866,6 +2866,7 @@ dependencies = [
  "lazy_static",
  "msgpack",
  "proptest",
+ "rand 0.8.5",
  "regex-lite",
  "search",
  "serde",
@@ -4591,6 +4592,7 @@ dependencies = [
  "ts_export",
  "types",
  "user_canister",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -8564,6 +8566,7 @@ checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 name = "utils"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "candid",
  "canister_client",
  "canister_time",
@@ -8577,6 +8580,7 @@ dependencies = [
  "msgpack",
  "rand 0.8.5",
  "serde",
+ "serde_json",
  "sha256",
  "sha3",
  "time",

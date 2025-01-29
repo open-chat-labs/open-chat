@@ -30,6 +30,7 @@ pub fn local_bin() -> PathBuf {
     file_path
 }
 
+#[allow(dead_code)]
 pub fn generate_seed() -> Hash {
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
     StdRng::seed_from_u64(now).gen()

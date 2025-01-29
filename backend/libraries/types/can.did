@@ -528,6 +528,7 @@ type SelectedGroupUpdates = record {
     members_removed : vec UserId;
     bots_added_or_updated : vec BotGroupDetails;
     bots_removed : vec UserId;
+    api_keys_generated : vec PublicApiKeyDetails;
     blocked_users_added : vec UserId;
     blocked_users_removed : vec UserId;
     invited_users : opt vec UserId;
@@ -2094,7 +2095,7 @@ type SlashCommandSchema = record {
     description : opt text;
     placeholder : opt text;
     params : vec SlashCommandParam;
-    permissions : SlashCommandPermissions;
+    permissions : BotPermissions;
 };
 
 type SlashCommandParam = record {
@@ -2146,7 +2147,7 @@ type DecimalParamChoice = record {
     value : float64;
 };
 
-type SlashCommandPermissions = record {
+type BotPermissions = record {
     community: vec CommunityPermission;
     chat: vec GroupPermission;
     message: vec MessagePermission;
@@ -2190,17 +2191,23 @@ type MessagePermission = variant {
 };
 
 type BotGroupConfig = record {
-    permissions : SlashCommandPermissions;
+    permissions : BotPermissions;
 };
 
 type BotGroupDetails = record {
     user_id : UserId;
     added_by : UserId;
-    permissions : SlashCommandPermissions;
+    permissions : BotPermissions;
+};
+
+type PublicApiKeyDetails = record {
+    bot_id : UserId;
+    granted_permissions : BotPermissions;
+    generated_by : UserId;
+    generated_at : TimestampMillis;
 };
 
 type BotMessageContext = record {
-    initiator : principal;
     command : BotCommand;
     finalised : bool;
 };
@@ -2208,6 +2215,7 @@ type BotMessageContext = record {
 type BotCommand = record {
     name : text;
     args : vec BotCommandArg;
+    initiator : UserId;
 };
 
 type BotCommandArg = record {

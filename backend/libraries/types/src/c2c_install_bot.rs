@@ -1,4 +1,4 @@
-use crate::{SlashCommandPermissions, UserId};
+use crate::{BotPermissions, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct Args {
     pub bot_id: UserId,
     pub caller: UserId,
-    pub granted_permissions: SlashCommandPermissions,
+    pub granted_permissions: BotPermissions,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

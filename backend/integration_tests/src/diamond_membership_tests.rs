@@ -3,7 +3,7 @@ use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
-use jwt::{verify_jwt, Claims};
+use jwt::{verify_and_decode, Claims};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -58,7 +58,7 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
     assert!(!diamond_response.subscription.is_active());
 
     let public_key = client::user_index::happy_path::public_key(env, canister_ids.user_index);
-    let claims: Claims<DiamondMembershipDetails> = verify_jwt(&diamond_response.proof_jwt, &public_key).unwrap();
+    let claims: Claims<DiamondMembershipDetails> = verify_and_decode(&diamond_response.proof_jwt, &public_key).unwrap();
 
     let claims_expiry = claims.exp_ms();
     assert!(now < claims_expiry && claims_expiry < now + DAY_IN_MS);

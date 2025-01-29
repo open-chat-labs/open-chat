@@ -115,6 +115,7 @@ fn main() {
     generate_ts_method!(community, edit_message);
     generate_ts_method!(community, enable_invite_code);
     generate_ts_method!(community, follow_thread);
+    generate_ts_method!(community, generate_bot_api_key);
     generate_ts_method!(community, import_group);
     generate_ts_method!(community, join_video_call);
     generate_ts_method!(community, leave_channel);

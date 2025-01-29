@@ -58,6 +58,7 @@ fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> Response {
             invited_users: chat.invited_users.users(),
             pinned_messages: chat.pinned_messages(min_visible_message_index),
             chat_rules: chat.rules.value.clone().into(),
+            api_keys: state.data.bot_api_keys.generated_since(0),
         })
     } else {
         ChannelNotFound

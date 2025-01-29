@@ -207,6 +207,11 @@ type RemoveBotResponse = variant {
 type BotDefinition = record {
     description : text;
     commands : vec SlashCommandSchema;
+    autonomous_config : opt AutonomousConfig;
+};
+
+type AutonomousConfig = record {
+    permissions : BotPermissions;
 };
 
 type RegisterExternalAchievementArgs = record {
