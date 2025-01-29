@@ -18,7 +18,7 @@ impl CanisterEnv {
 }
 
 thread_local! {
-    static CANISTER_ID: LazyCell<CanisterId> = LazyCell::new(|| ic_cdk::id());
+    static CANISTER_ID: LazyCell<CanisterId> = LazyCell::new(ic_cdk::id);
 }
 
 impl Environment for CanisterEnv {
