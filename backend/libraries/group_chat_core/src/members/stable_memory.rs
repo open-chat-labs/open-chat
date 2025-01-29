@@ -2,16 +2,16 @@ use crate::{GroupMemberInternal, GroupMemberStableStorage};
 use candid::{Deserialize, Principal};
 use serde::Serialize;
 use serde_bytes::ByteBuf;
-use stable_memory_map::{with_map, with_map_mut, Key, KeyPrefix, MemberKeyPrefix, StableMemoryMap};
+use stable_memory_map::{with_map, with_map_mut, Key, KeyPrefix, StableMemoryMap, UserIdPrefix};
 use types::{MultiUserChat, UserId};
 
 #[derive(Serialize, Deserialize)]
 pub struct MembersStableStorage {
-    prefix: MemberKeyPrefix,
+    prefix: UserIdPrefix,
 }
 
-impl StableMemoryMap<MemberKeyPrefix, GroupMemberInternal> for MembersStableStorage {
-    fn prefix(&self) -> &MemberKeyPrefix {
+impl StableMemoryMap<UserIdPrefix, GroupMemberInternal> for MembersStableStorage {
+    fn prefix(&self) -> &UserIdPrefix {
         &self.prefix
     }
 
@@ -27,14 +27,14 @@ impl StableMemoryMap<MemberKeyPrefix, GroupMemberInternal> for MembersStableStor
 impl MembersStableStorage {
     pub fn new(chat: MultiUserChat, member: GroupMemberInternal) -> Self {
         let mut map = MembersStableStorage {
-            prefix: MemberKeyPrefix::new_from_chat(chat),
+            prefix: UserIdPrefix::new_from_chat(chat),
         };
         map.insert(member.user_id, member);
         map
     }
 
     pub fn set_chat(&mut self, chat: MultiUserChat) {
-        self.prefix = MemberKeyPrefix::new_from_chat(chat);
+        self.prefix = UserIdPrefix::new_from_chat(chat);
     }
 
     // Used to efficiently read all members from stable memory when migrating a group into a community
@@ -74,7 +74,7 @@ impl MembersStableStorage {
 
 // Used to write all members to stable memory when migrating a group into a community
 pub fn write_members_from_bytes(chat: MultiUserChat, members: Vec<(UserId, ByteBuf)>) -> Option<UserId> {
-    let prefix = MemberKeyPrefix::new_from_chat(chat);
+    let prefix = UserIdPrefix::new_from_chat(chat);
     let mut latest = None;
     with_map_mut(|m| {
         for (user_id, byte_buf) in members {
