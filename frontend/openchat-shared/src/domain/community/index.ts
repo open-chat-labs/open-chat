@@ -1,5 +1,5 @@
 import type { AccessControlled, AccessGateConfig, VersionedRules } from "../access";
-import type { BotGroupDetails, ExterlBotPermissions } from "../bots";
+import type { BotGroupDetails, ExternalBotPermissions } from "../bots";
 import type {
     GateCheckFailed,
     GateCheckFailedReason,
@@ -96,7 +96,7 @@ export type CommunitySpecificState = {
     invitedUsers: Set<string>;
     referrals: Set<string>;
     rules?: VersionedRules;
-    bots: Map<string, ExterlBotPermissions>;
+    bots: Map<string, ExternalBotPermissions>;
 };
 
 export interface UserFailedGateCheck {
