@@ -832,13 +832,17 @@
         "credentialWarning": "Debe tener una identidad de Internet asociada con su cuenta de OpenChat para confirmar su posesión de la credencial {name}. El emisor de la credencial debe estar asociado con la misma identidad de Internet. Si se registró con otro proveedor, deberá crear y vincular una identidad de Internet a su cuenta de OpenChat antes de continuar.",
         "failure": {
             "alreadyLinked": "Lo sentimos, pero parece que Internet Identity ya está vinculado a una cuenta de OpenChat.",
+            "identityNotFound": "No pudimos encontrar el proveedor vinculado y, por lo tanto, no podemos continuar con el proceso de desvinculación.",
             "link": "Lo sentimos, pero no pudimos vincular su identidad de Internet a su cuenta de OpenChat.",
             "login_approver": "Lo sentimos, no pudimos iniciar sesión en su proveedor de autenticación OpenChat actual",
             "login_initiator": "Lo sentimos, no pudimos iniciar sesión en el nuevo proveedor de autenticación.",
             "loginApprover": "Lo sentimos, no pudimos iniciar sesión en su proveedor de autenticación OpenChat actual.",
             "loginInitiator": "Lo sentimos, no pudimos iniciar sesión en su identidad de Internet elegida.",
             "pollingError": "Se produjo un error inesperado al esperar el inicio de sesión del correo electrónico.",
-            "principalMismatch": "Parece que no se volvió a autenticar con el mismo proveedor con el que inició sesión actualmente."
+            "principalMismatch": "Parece que no se volvió a autenticar con el mismo proveedor con el que inició sesión actualmente.",
+            "unexpectedError": "No se pudo procesar su solicitud. Inténtelo nuevamente más tarde.",
+            "unlinkActivePrincipal": "No puedes desvincular el proveedor con el que estás conectado actualmente.",
+            "userNotFound": "Parece que el proveedor con el que está conectado actualmente no está disponible y no se puede utilizar para desvincularlo."
         },
         "humanityWarning": "Debe tener una identidad de Internet asociada con su cuenta de OpenChat para confirmar su personalidad única. Si se registró con otro proveedor, deberá crear y vincular una identidad de Internet a su cuenta de OpenChat antes de continuar.",
         "link": "Enlace",
@@ -847,7 +851,12 @@
             "linkAdvice": "Para agregar un nuevo proveedor de inicio de sesión, primero inicie sesión con el nuevo proveedor que desea agregar, luego inicie sesión con su proveedor actual y, finalmente, vincule los dos.",
             "linkAnother": "Agregar otro",
             "section": "Proveedores de inicio de sesión",
-            "start": "Empezar"
+            "start": "Empezar",
+            "unlink": "Desvincular esta cuenta",
+            "unlinkAction": "Desconectar",
+            "unlinkAdvice": "Esto desvinculará la cuenta {provider} que había vinculado anteriormente. ¿Está seguro de que desea continuar?",
+            "unlinkingDone": "¡Tu cuenta {provider} ha sido desvinculada!",
+            "unlinkNote": "Las cuentas no vinculadas se pueden vincular nuevamente."
         },
         "linkIdentity": "Identidad del enlace",
         "linkTwoIdentities": "Ahora estamos listos para vincular las dos identidades.",
@@ -857,7 +866,8 @@
         "signIn_initiator": "Inicie sesión con el proveedor de identidad que desea vincular a su cuenta de OpenChat",
         "signInCurrent": "Inicie sesión con el proveedor de identidad que está utilizando actualmente",
         "signInNext": "Cree o inicie sesión con la identidad de Internet que desea vincular a su cuenta de OpenChat.",
-        "tryAgain": "Intentar otra vez"
+        "tryAgain": "Intentar otra vez",
+        "unlinkIdentity": "Desvincular identidad"
     },
     "identityMigrationMessage": "Espere mientras su cuenta se actualiza a nuestro nuevo sistema. Esto nos permitirá admitir muchas más opciones de inicio de sesión en el futuro, incluida la recuperación de correo electrónico opcional en caso de que pierda el acceso a su dispositivo.",
     "inheritSystem": "Heredar tema del sistema",

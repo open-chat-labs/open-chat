@@ -92,6 +92,15 @@ export const idlFactory = ({ IDL }) => {
     'NotFound' : IDL.Null,
     'Success' : PrepareDelegationSuccess,
   });
+  const RemoveIdentityLinkArgs = IDL.Record({
+    'linked_principal' : IDL.Principal,
+  });
+  const RemoveIdentityLinkResponse = IDL.Variant({
+    'CannotUnlinkActivePrincipal' : IDL.Null,
+    'Success' : IDL.Null,
+    'IdentityLinkNotFound' : IDL.Null,
+    'UserNotFound' : IDL.Null,
+  });
   return IDL.Service({
     'approve_identity_link' : IDL.Func(
         [ApproveIdentityLinkArgs],
@@ -131,6 +140,11 @@ export const idlFactory = ({ IDL }) => {
     'prepare_delegation' : IDL.Func(
         [PrepareDelegationArgs],
         [PrepareDelegationResponse],
+        [],
+      ),
+    'remove_identity_link' : IDL.Func(
+        [RemoveIdentityLinkArgs],
+        [RemoveIdentityLinkResponse],
         [],
       ),
   });

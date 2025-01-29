@@ -1,7 +1,8 @@
 <script lang="ts">
     import Account from "svelte-material-icons/Account.svelte";
+    import LinkOff from "svelte-material-icons/LinkOff.svelte";
     import { AuthProvider, OpenChat, type AuthenticationPrincipal } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import TruncatedAccount from "../TruncatedAccount.svelte";
     import AuthProviderLogo from "./AuthProviderLogo.svelte";
     import Button from "../../Button.svelte";
@@ -13,16 +14,24 @@
     import LinkAccountsModal from "./LinkAccountsModal.svelte";
     import Overlay from "../../Overlay.svelte";
     import LinkAccounts from "./LinkAccounts.svelte";
+    import UnlinkAccounts from "./UnlinkAccounts.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = [];
-    let linking = false;
+    type Account = AuthenticationPrincipal & { provider: AuthProvider };
 
-    onMount(refresh);
+    let accounts: Account[] = $state([]);
+    let linking = $state(false);
+    let unlinking: Account | null = $state(null);
+
+    $effect(() => {
+        (async () => refresh())();
+    });
 
     async function refresh() {
         linking = false;
+        unlinking = null;
         accounts = await client.getAuthenticationPrincipals();
     }
 </script>
@@ -36,6 +45,14 @@
                 linkInternetIdentity={false}
                 onProceed={refresh}
                 on:close={refresh} />
+        </LinkAccountsModal>
+    </Overlay>
+{/if}
+
+{#if unlinking != null}
+    <Overlay>
+        <LinkAccountsModal on:close={refresh}>
+            <UnlinkAccounts account={unlinking} onClose={refresh} />
         </LinkAccountsModal>
     </Overlay>
 {/if}
@@ -57,6 +74,19 @@
                     </div>
                 </TooltipWrapper>
             </div>
+        {:else}
+            <div class="unlink">
+                <TooltipWrapper position="top" align="end">
+                    <HoverIcon slot="target" onclick={() => (unlinking = account)}>
+                        <LinkOff size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                    <div let:position let:align slot="tooltip">
+                        <TooltipPopup {position} {align}>
+                            <Translatable resourceKey={i18nKey("identity.linkedAccounts.unlink")} />
+                        </TooltipPopup>
+                    </div>
+                </TooltipWrapper>
+            </div>
         {/if}
     </div>
 {/each}
@@ -71,7 +101,8 @@
         display: flex;
         align-items: center;
 
-        .current {
+        .current,
+        .unlink {
             margin-inline-start: auto;
         }
     }

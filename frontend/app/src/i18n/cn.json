@@ -832,13 +832,17 @@
         "credentialWarning": "您必须拥有与您的 OpenChat 帐户关联的互联网身份，才能确认您拥有 {name} 凭证。凭证颁发者必须与相同的互联网身份关联。如果您使用其他提供商注册，则需要创建互联网身份并将其链接到您的 OpenChat 帐户，然后才能继续。",
         "failure": {
             "alreadyLinked": "抱歉，但 Internet Identity 似乎已链接到 OpenChat 帐户",
+            "identityNotFound": "我们找不到链接的提供商，因此无法继续取消链接过程。",
             "link": "抱歉，我们无法将您的互联网身份链接到您的 OpenChat 帐户",
             "login_approver": "抱歉，我们无法登录您当前的 OpenChat 身份验证提供商",
             "login_initiator": "抱歉，我们无法登录新的身份验证提供商",
             "loginApprover": "抱歉，我们无法登录您当前的 OpenChat 身份验证提供商",
             "loginInitiator": "抱歉，我们无法登录您选择的互联网身份",
             "pollingError": "等待电子邮件登录时出现意外错误",
-            "principalMismatch": "似乎您没有使用当前登录的同一提供商重新进行身份验证"
+            "principalMismatch": "似乎您没有使用当前登录的同一提供商重新进行身份验证",
+            "unexpectedError": "无法处理您的请求。请稍后重试。",
+            "unlinkActivePrincipal": "您无法取消当前登录的提供商的链接。",
+            "userNotFound": "您当前登录的提供商似乎不可用，并且无法用于取消链接。"
         },
         "humanityWarning": "您必须拥有与您的 OpenChat 帐户关联的互联网身份，以确认您的唯一身份。如果您使用其他提供商注册，则需要创建互联网身份并将其链接到您的 OpenChat 帐户，然后才能继续。",
         "link": "关联",
@@ -847,7 +851,12 @@
             "linkAdvice": "要添加新的登录提供商，请先使用您要添加的新提供商登录，然后使用您当前的提供商登录，最后将两者链接在一起。",
             "linkAnother": "添加另一个",
             "section": "登录提供商",
-            "start": "开始使用"
+            "start": "开始使用",
+            "unlink": "解除此帐号关联",
+            "unlinkAction": "解除链接",
+            "unlinkAdvice": "这将取消您之前链接的 {provider} 帐户。您确定要继续吗？",
+            "unlinkingDone": "您的{provider}帐户已取消链接！",
+            "unlinkNote": "已取消关联的账户可以再次关联。"
         },
         "linkIdentity": "链接标识",
         "linkTwoIdentities": "我们现在准备将这两种身份联系在一起。",
@@ -857,7 +866,8 @@
         "signIn_initiator": "使用您想要链接到 OpenChat 帐户的身份提供商登录",
         "signInCurrent": "使用您当前正在使用的身份提供商登录",
         "signInNext": "创建或使用您想要链接到 OpenChat 帐户的互联网身份登录",
-        "tryAgain": "再试一次"
+        "tryAgain": "再试一次",
+        "unlinkIdentity": "解除身份关联"
     },
     "identityMigrationMessage": "请等待您的帐户升级到我们的新系统。这将使我们能够支持更多登录选项，包括可选的电子邮件恢复，以防您无法访问您的设备。",
     "inheritSystem": "跟随系统主题",

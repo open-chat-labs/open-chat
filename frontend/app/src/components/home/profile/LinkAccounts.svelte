@@ -1,5 +1,5 @@
 <script lang="ts">
-    import LinkVariant from "svelte-material-icons/LinkVariant.svelte";
+    import LinkVariantPlus from "svelte-material-icons/LinkVariantPlus.svelte";
     import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -278,7 +278,7 @@
 </script>
 
 <div class="header">
-    <LinkVariant size={$iconSize} color={"var(--txt)"} />
+    <LinkVariantPlus size={$iconSize} color={"var(--txt)"} />
     <div class="title">
         <Translatable resourceKey={i18nKey("identity.linkIdentity")} />
     </div>

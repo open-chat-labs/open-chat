@@ -382,6 +382,7 @@ import type {
     Achievement,
     PayForDiamondMembershipResponse,
     LinkIdentitiesResponse,
+    RemoveIdentityLinkResponse,
     AddMembersToChannelResponse,
     WalletConfig,
     AirdropChannelDetails,
@@ -8236,6 +8237,15 @@ export class OpenChat extends EventTarget {
             initiatorIsIIPrincipal,
             approverKey: approverKey.getKeyPair(),
             approverDelegation: approverDelegation.toJSON(),
+        });
+    }
+
+    removeIdentityLink(
+        linked_principal: string,
+    ): Promise<RemoveIdentityLinkResponse> {
+        return this.#sendRequest({
+            kind: "removeIdentityLink",
+            linked_principal,
         });
     }
 

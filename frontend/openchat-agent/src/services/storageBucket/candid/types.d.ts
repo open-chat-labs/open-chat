@@ -128,11 +128,32 @@ export interface BlobReference {
   'canister_id' : CanisterId,
 }
 export type BlockIndex = bigint;
+export interface BotAdded { 'added_by' : UserId, 'user_id' : UserId }
+export interface BotCommand { 'args' : Array<BotCommandArg>, 'name' : string }
+export interface BotCommandArg { 'value' : BotCommandArgValue, 'name' : string }
+export type BotCommandArgValue = { 'User' : UserId } |
+  { 'String' : string } |
+  { 'Boolean' : boolean } |
+  { 'Decimal' : number } |
+  { 'Integer' : bigint };
 export interface BotConfig {
   'can_be_added_to_groups' : boolean,
   'is_oc_controlled' : boolean,
   'supports_direct_messages' : boolean,
 }
+export interface BotGroupConfig { 'permissions' : SlashCommandPermissions }
+export interface BotGroupDetails {
+  'permissions' : SlashCommandPermissions,
+  'added_by' : UserId,
+  'user_id' : UserId,
+}
+export interface BotMessageContext {
+  'initiator' : Principal,
+  'command' : BotCommand,
+  'finalised' : boolean,
+}
+export interface BotRemoved { 'user_id' : UserId, 'removed_by' : UserId }
+export interface BotUpdated { 'updated_by' : UserId, 'user_id' : UserId }
 export interface BuildVersion {
   'major' : number,
   'minor' : number,
@@ -150,7 +171,7 @@ export interface CanisterWasm {
   'version' : BuildVersion,
   'module' : Uint8Array | number[],
 }
-export type ChannelId = bigint;
+export type ChannelId = number;
 export interface ChannelMatch {
   'id' : ChannelId,
   'gate_config' : [] | [AccessGateConfig],
@@ -222,6 +243,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'MessageUnpinned' : MessageUnpinned } |
   { 'FailedToDeserialize' : null } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
+  { 'BotUpdated' : BotUpdated } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
   { 'PermissionsChanged' : PermissionsChanged } |
@@ -233,10 +255,12 @@ export type ChatEvent = { 'Empty' : null } |
   { 'ExternalUrlUpdated' : ExternalUrlUpdated } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
+  { 'BotRemoved' : BotRemoved } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'GroupGateUpdated' : GroupGateUpdated } |
   { 'RoleChanged' : RoleChanged } |
   { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
+  { 'BotAdded' : BotAdded } |
   { 'DirectChatCreated' : DirectChatCreated } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
@@ -346,6 +370,7 @@ export interface CommunityCanisterCommunitySummary {
   'is_public' : boolean,
   'permissions' : CommunityPermissions,
   'gate_config' : [] | [AccessGateConfig],
+  'verified' : boolean,
   'community_id' : CommunityId,
   'is_invited' : [] | [boolean],
   'metrics' : ChatMetrics,
@@ -368,6 +393,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'is_public' : [] | [boolean],
   'permissions' : [] | [CommunityPermissions],
   'gate_config' : AccessGateConfigUpdate,
+  'verified' : [] | [boolean],
   'community_id' : CommunityId,
   'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
   'metrics' : [] | [ChatMetrics],
@@ -376,7 +402,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'name' : [] | [string],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
-  'channels_removed' : Array<ChannelId>,
+  'channels_removed' : Uint32Array | number[],
   'user_groups' : Array<UserGroup>,
   'avatar_id' : DocumentIdUpdate,
   'channels_added' : Array<CommunityCanisterChannelSummary>,
@@ -391,6 +417,7 @@ export type CommunityId = CanisterId;
 export interface CommunityMatch {
   'id' : CommunityId,
   'gate_config' : [] | [AccessGateConfig],
+  'verified' : boolean,
   'channel_count' : number,
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -493,6 +520,12 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
+export interface DecimalParam {
+  'max_value' : number,
+  'min_value' : number,
+  'choices' : Array<DecimalParamChoice>,
+}
+export interface DecimalParamChoice { 'value' : number, 'name' : string }
 export interface DeleteFileArgs { 'file_id' : FileId }
 export interface DeleteFileFailure {
   'reason' : DeleteFileFailureReason,
@@ -706,6 +739,7 @@ export interface GovernanceProposalsSubtype {
 export interface GroupCanisterGroupChatSummary {
   'is_public' : boolean,
   'gate_config' : [] | [AccessGateConfig],
+  'verified' : boolean,
   'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
@@ -742,6 +776,7 @@ export interface GroupCanisterGroupChatSummary {
 export interface GroupCanisterGroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
   'gate_config' : AccessGateConfigUpdate,
+  'verified' : [] | [boolean],
   'video_call_in_progress' : VideoCallUpdates,
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
@@ -842,6 +877,7 @@ export interface GroupInviteCodeChanged {
 }
 export interface GroupMatch {
   'id' : ChatId,
+  'verified' : boolean,
   'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -1108,6 +1144,12 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
+export interface IntegerParam {
+  'max_value' : bigint,
+  'min_value' : bigint,
+  'choices' : Array<IntegerParamChoice>,
+}
+export interface IntegerParamChoice { 'value' : bigint, 'name' : string }
 export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'TooFewOptions' : number } |
   { 'TooManyOptions' : number } |
@@ -1129,6 +1171,7 @@ export interface Message {
   'block_level_markdown' : boolean,
   'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
   'sender' : UserId,
+  'bot_context' : [] | [BotMessageContext],
   'thread_summary' : [] | [ThreadSummary],
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],
@@ -1321,12 +1364,6 @@ export interface NotificationEnvelope {
   'recipients' : Array<UserId>,
   'timestamp' : TimestampMillis,
 }
-export interface NumberParam {
-  'min_length' : number,
-  'max_length' : number,
-  'choices' : Array<NumberParamChoice>,
-}
-export interface NumberParamChoice { 'value' : number, 'name' : string }
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
   'manage_user_groups' : [] | [CommunityPermissionRole],
@@ -1575,10 +1612,12 @@ export interface RoleChanged {
 export interface Rules { 'text' : string, 'enabled' : boolean }
 export interface SelectedGroupUpdates {
   'blocked_users_removed' : Array<UserId>,
+  'bots_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],
   'invited_users' : [] | [Array<UserId>],
   'last_updated' : TimestampMillis,
   'members_added_or_updated' : Array<Participant>,
+  'bots_added_or_updated' : Array<BotGroupDetails>,
   'pinned_messages_added' : Uint32Array | number[],
   'chat_rules' : [] | [VersionedRules],
   'members_removed' : Array<UserId>,
@@ -1594,19 +1633,20 @@ export interface SlashCommandParam {
   'param_type' : SlashCommandParamType,
 }
 export type SlashCommandParamType = { 'UserParam' : null } |
-  { 'NumberParam' : NumberParam } |
   { 'StringParam' : StringParam } |
+  { 'IntegerParam' : IntegerParam } |
+  { 'DecimalParam' : DecimalParam } |
   { 'BooleanParam' : null };
 export interface SlashCommandPermissions {
   'chat' : Array<GroupPermission>,
   'community' : Array<CommunityPermission>,
-  'thread' : Array<MessagePermission>,
   'message' : Array<MessagePermission>,
 }
 export interface SlashCommandSchema {
   'permissions' : ExternalBotPermissions,
   'name' : string,
   'description' : [] | [string],
+  'placeholder' : [] | [string],
   'params' : Array<SlashCommandParam>,
 }
 export interface SnsNeuronGate {

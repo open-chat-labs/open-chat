@@ -832,13 +832,17 @@
         "credentialWarning": "Bạn phải có Danh tính Internet được liên kết với tài khoản OpenChat của mình để xác nhận việc sở hữu thông tin xác thực {name}. Nhà phát hành thông tin xác thực phải được liên kết với cùng một Danh tính Internet. Nếu bạn đã đăng ký bằng nhà cung cấp khác, bạn sẽ cần tạo và liên kết Nhận dạng Internet với tài khoản OpenChat của mình trước khi tiếp tục.",
         "failure": {
             "alreadyLinked": "Xin lỗi nhưng có vẻ như Internet Identity đã được liên kết với tài khoản OpenChat",
+            "identityNotFound": "Chúng tôi không thể tìm thấy nhà cung cấp được liên kết và do đó không thể tiếp tục quá trình hủy liên kết.",
             "link": "Rất tiếc, chúng tôi không thể liên kết Internet Identity với tài khoản OpenChat của bạn",
             "login_approver": "Xin lỗi, chúng tôi không thể đăng nhập vào nhà cung cấp xác thực OpenChat hiện tại của bạn",
             "login_initiator": "Xin lỗi, chúng tôi không thể đăng nhập vào nhà cung cấp xác thực mới",
             "loginApprover": "Rất tiếc, chúng tôi không thể đăng nhập vào nhà cung cấp xác thực OpenChat hiện tại của bạn",
             "loginInitiator": "Rất tiếc, chúng tôi không thể đăng nhập vào Internet Identity mà bạn đã chọn",
             "pollingError": "Đã xảy ra lỗi không mong muốn khi chờ đăng nhập email",
-            "principalMismatch": "Có vẻ như bạn đã không xác thực lại với cùng một nhà cung cấp mà bạn hiện đang đăng nhập"
+            "principalMismatch": "Có vẻ như bạn đã không xác thực lại với cùng một nhà cung cấp mà bạn hiện đang đăng nhập",
+            "unexpectedError": "Không thể xử lý yêu cầu của bạn. Vui lòng thử lại sau.",
+            "unlinkActivePrincipal": "Bạn không thể hủy liên kết với nhà cung cấp mà bạn hiện đang đăng nhập.",
+            "userNotFound": "Có vẻ như nhà cung cấp mà bạn hiện đang đăng nhập không khả dụng và không thể sử dụng để hủy liên kết."
         },
         "humanityWarning": "Bạn phải có Internet Identity được liên kết với tài khoản OpenChat của mình để xác nhận nhân dạng duy nhất của bạn. Nếu bạn đã đăng ký bằng nhà cung cấp khác, bạn sẽ cần tạo và liên kết Internet Identity với tài khoản OpenChat của mình trước khi tiếp tục.",
         "link": "liên kết",
@@ -847,7 +851,12 @@
             "linkAdvice": "Để thêm nhà cung cấp đăng nhập mới, trước tiên hãy đăng nhập bằng nhà cung cấp mới mà bạn muốn thêm, sau đó đăng nhập bằng nhà cung cấp hiện tại và cuối cùng liên kết cả hai với nhau.",
             "linkAnother": "Thêm một cái nữa",
             "section": "Nhà cung cấp đăng nhập",
-            "start": "Bắt đầu"
+            "start": "Bắt đầu",
+            "unlink": "Hủy liên kết tài khoản này",
+            "unlinkAction": "Hủy liên kết",
+            "unlinkAdvice": "Thao tác này sẽ hủy liên kết tài khoản {provider} mà bạn đã liên kết trước đó. Bạn có chắc chắn muốn tiếp tục không?",
+            "unlinkingDone": "Tài khoản {provider} của bạn đã bị hủy liên kết!",
+            "unlinkNote": "Các tài khoản chưa liên kết có thể được liên kết lại."
         },
         "linkIdentity": "Nhận dạng liên kết",
         "linkTwoIdentities": "Bây giờ chúng ta đã sẵn sàng liên kết hai danh tính với nhau.",
@@ -857,7 +866,8 @@
         "signIn_initiator": "Đăng nhập bằng nhà cung cấp danh tính mà bạn muốn liên kết với tài khoản OpenChat của mình",
         "signInCurrent": "Đăng nhập bằng nhà cung cấp danh tính mà bạn hiện đang sử dụng",
         "signInNext": "Tạo hoặc đăng nhập bằng danh tính internet mà bạn muốn liên kết với tài khoản OpenChat của mình",
-        "tryAgain": "Thử lại"
+        "tryAgain": "Thử lại",
+        "unlinkIdentity": "Hủy liên kết danh tính"
     },
     "identityMigrationMessage": "Vui lòng đợi trong khi tài khoản của bạn được nâng cấp lên hệ thống mới của chúng tôi. Điều này sẽ cho phép chúng tôi hỗ trợ nhiều tùy chọn đăng nhập hơn trong tương lai, bao gồm cả tùy chọn khôi phục email trong trường hợp bạn mất quyền truy cập vào thiết bị của mình.",
     "inheritSystem": "Sử dụng màu nền theo hệ thống",
