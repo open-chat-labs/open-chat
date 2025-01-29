@@ -1,5 +1,5 @@
 use crate::{
-    Achievement, BotCommand, BotCommandCaller, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction,
+    Achievement, BotCommand, BotCaller, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction,
     ThreadSummary, UserId,
 };
 use candid::CandidType;
@@ -249,12 +249,12 @@ pub type CustomContentEventPayload = ();
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotMessageContext {
-    pub command: BotCommand,
+    pub command: Option<BotCommand>,
     pub finalised: bool,
 }
 
-impl From<&BotCommandCaller> for BotMessageContext {
-    fn from(caller: &BotCommandCaller) -> Self {
+impl From<&BotCaller> for BotMessageContext {
+    fn from(caller: &BotCaller) -> Self {
         BotMessageContext {
             command: caller.command.clone(),
             finalised: caller.finalised,

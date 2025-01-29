@@ -7,10 +7,7 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_handle_bot_action::*;
 use community_canister::send_message;
 use types::bot_actions::MessageContent;
-use types::{
-    BotAction, BotCaller, BotCommandCaller, BotPermissions, ChannelId, Chat, HandleBotActionsError, MessageContentInitial,
-    UserId,
-};
+use types::{BotAction, BotCaller, BotPermissions, ChannelId, Chat, HandleBotActionsError, MessageContentInitial, UserId};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -51,15 +48,6 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                 MessageContent::Giphy(giphy_content) => MessageContentInitial::Giphy(giphy_content),
             };
 
-            let bot_caller = match args.command {
-                Some(command) => BotCaller::Command(BotCommandCaller {
-                    bot: args.bot.user_id,
-                    command,
-                    finalised: action.finalised,
-                }),
-                None => BotCaller::ApiKey(args.bot.user_id),
-            };
-
             match send_message_impl(
                 send_message::Args {
                     channel_id,
@@ -77,7 +65,11 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                     message_filter_failed: None,
                     new_achievement: false,
                 },
-                Some(bot_caller),
+                Some(BotCaller {
+                    bot: args.bot.user_id,
+                    command: args.command,
+                    finalised: action.finalised,
+                }),
                 state,
             ) {
                 send_message::Response::Success(_) => Ok(()),
