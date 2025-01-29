@@ -5,11 +5,11 @@ use types::{ChannelId, MultiUserChat, UserId};
 
 key!(
     UserIdKey,
-    UserIdPrefix,
+    UserIdKeyPrefix,
     KeyType::GroupMember | KeyType::ChannelMember | KeyType::CommunityMember
 );
 
-impl UserIdPrefix {
+impl UserIdKeyPrefix {
     pub fn new_from_chat(chat: MultiUserChat) -> Self {
         match chat {
             MultiUserChat::Group(_) => Self::new_from_group(),
@@ -19,7 +19,7 @@ impl UserIdPrefix {
 
     pub fn new_from_group() -> Self {
         // KeyType::GroupMember     1 byte
-        UserIdPrefix(vec![KeyType::GroupMember as u8])
+        UserIdKeyPrefix(vec![KeyType::GroupMember as u8])
     }
 
     pub fn new_from_channel(channel_id: ChannelId) -> Self {
@@ -28,16 +28,16 @@ impl UserIdPrefix {
         let mut bytes = Vec::with_capacity(5);
         bytes.push(KeyType::ChannelMember as u8);
         bytes.extend_from_slice(&channel_id.as_u32().to_be_bytes());
-        UserIdPrefix(bytes)
+        UserIdKeyPrefix(bytes)
     }
 
     pub fn new_from_community() -> Self {
         // KeyType::CommunityMember     1 byte
-        UserIdPrefix(vec![KeyType::CommunityMember as u8])
+        UserIdKeyPrefix(vec![KeyType::CommunityMember as u8])
     }
 }
 
-impl KeyPrefix for UserIdPrefix {
+impl KeyPrefix for UserIdKeyPrefix {
     type Key = UserIdKey;
     type Suffix = UserId;
 
@@ -76,7 +76,7 @@ mod tests {
         for _ in 0..100 {
             let user_id_bytes: [u8; 10] = thread_rng().gen();
             let user_id = UserId::from(Principal::from_slice(&user_id_bytes));
-            let prefix = UserIdPrefix::new_from_group();
+            let prefix = UserIdKeyPrefix::new_from_group();
             let key = BaseKey::from(prefix.create_key(&user_id));
             let member_key = UserIdKey::try_from(key.clone()).unwrap();
 
@@ -99,7 +99,7 @@ mod tests {
             let channel_id = ChannelId::from(thread_rng().next_u32());
             let user_id_bytes: [u8; 10] = thread_rng().gen();
             let user_id = UserId::from(Principal::from_slice(&user_id_bytes));
-            let prefix = UserIdPrefix::new_from_channel(channel_id);
+            let prefix = UserIdKeyPrefix::new_from_channel(channel_id);
             let key = BaseKey::from(prefix.create_key(&user_id));
             let member_key = UserIdKey::try_from(key.clone()).unwrap();
 
@@ -121,7 +121,7 @@ mod tests {
         for _ in 0..100 {
             let user_id_bytes: [u8; 10] = thread_rng().gen();
             let user_id = UserId::from(Principal::from_slice(&user_id_bytes));
-            let prefix = UserIdPrefix::new_from_community();
+            let prefix = UserIdKeyPrefix::new_from_community();
             let key = BaseKey::from(prefix.create_key(&user_id));
             let member_key = UserIdKey::try_from(key.clone()).unwrap();
 

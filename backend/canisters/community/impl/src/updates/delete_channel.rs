@@ -5,7 +5,7 @@ use crate::{
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::delete_channel::{Response::*, *};
-use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, UserIdPrefix};
+use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, UserIdKeyPrefix};
 use tracing::info;
 use types::{ChannelDeleted, ChannelId};
 
@@ -76,7 +76,7 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
     state
         .data
         .stable_memory_keys_to_garbage_collect
-        .push(BaseKeyPrefix::from(UserIdPrefix::new_from_channel(channel_id)));
+        .push(BaseKeyPrefix::from(UserIdKeyPrefix::new_from_channel(channel_id)));
 
     crate::jobs::garbage_collect_stable_memory::start_job_if_required(state);
 
