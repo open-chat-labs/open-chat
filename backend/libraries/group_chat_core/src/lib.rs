@@ -620,7 +620,7 @@ impl GroupChatCore {
         }
 
         // If there is an existing message with the same message id then this is invalid unless
-        // a bot is finalising its unfinalised message
+        // a bot is updating an unfinalised message
         if let Some((message, _)) =
             self.events
                 .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
@@ -630,11 +630,11 @@ impl GroupChatCore {
                     if bot_now.bot == message.sender
                         && bot_now.command.as_ref().map(|c| c.initiator) == bot_message.command.as_ref().map(|c| c.initiator)
                         && bot_now.command == bot_message.command
-                        && bot_now.finalised
                         && !bot_message.finalised
                     {
-                        return self.finalise_bot_message(
+                        return self.update_bot_message(
                             caller,
+                            bot_now.finalised,
                             thread_root_message_index,
                             message_id,
                             content,
@@ -749,9 +749,10 @@ impl GroupChatCore {
         })
     }
 
-    fn finalise_bot_message(
+    fn update_bot_message(
         &mut self,
         caller: &Caller,
+        finalise: bool,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         content: MessageContentInitial,
@@ -789,7 +790,7 @@ impl GroupChatCore {
             message_id,
             content,
             block_level_markdown: Some(block_level_markdown),
-            finalise_bot_message: true,
+            finalise_bot_message: finalise,
             now,
         };
 
@@ -802,21 +803,25 @@ impl GroupChatCore {
 
         let message_event = reader.message_event(message_id.into(), Some(caller.agent())).unwrap();
 
-        let users_to_notify = self.build_users_to_notify(
-            thread_root_message_index,
-            min_visible_event_index,
-            replies_to,
-            &message_event,
-            mentioned,
-            suppressed,
-            everyone_mentioned,
-            now,
-        );
+        let users_to_notify = if finalise {
+            self.build_users_to_notify(
+                thread_root_message_index,
+                min_visible_event_index,
+                replies_to,
+                &message_event,
+                mentioned,
+                suppressed,
+                everyone_mentioned,
+                now,
+            )
+        } else {
+            vec![]
+        };
 
         SendMessageResult::Success(SendMessageSuccess {
             message_event,
             users_to_notify,
-            unfinalised_bot_message: false,
+            unfinalised_bot_message: !finalise,
         })
     }
 
