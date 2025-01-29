@@ -13,7 +13,8 @@
         externalBots,
         currentChatBots,
         currentCommunityBots,
-        emptySlashCommandPermissions,
+        emptyExternalBotPermissions,
+        flattenCommandPermissions,
     } from "openchat-client";
 
     let { botId, chatId, onClose }: BotProfileProps = $props();
@@ -21,7 +22,7 @@
     let installedBots = $derived(
         chatId.kind === "channel" ? currentCommunityBots : currentChatBots,
     );
-    let grantedPermissions = $derived($installedBots.get(botId) ?? emptySlashCommandPermissions());
+    let grantedPermissions = $derived($installedBots.get(botId) ?? emptyExternalBotPermissions());
     let bot = $derived($externalBots.get(botId));
     let id = $derived.by<CommunityIdentifier | GroupChatIdentifier | undefined>(() => {
         switch (chatId.kind) {
@@ -36,5 +37,13 @@
 </script>
 
 {#if bot !== undefined && id !== undefined}
-    <BotSummary currentPermissions={grantedPermissions} mode={"viewing"} {id} {onClose} {bot} />
+    <BotSummary
+        mode={{
+            kind: "viewing_command_bot",
+            id,
+            requested: flattenCommandPermissions(bot.definition),
+            granted: grantedPermissions,
+        }}
+        {onClose}
+        {bot} />
 {/if}

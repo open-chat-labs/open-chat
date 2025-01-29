@@ -227,7 +227,7 @@ import type {
     ChannelSummaryResponse,
     ExploreBotsResponse,
     ExternalBot,
-    SlashCommandPermissions,
+    ExternalBotPermissions,
     BotsResponse,
     BotDefinition,
 } from "openchat-shared";
@@ -276,6 +276,7 @@ import {
     getCommunityReferral,
 } from "../utils/referralCache";
 import { mean } from "../utils/maths";
+import type { DelegationChain } from "@dfinity/identity";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -4050,8 +4051,8 @@ export class OpenChatAgent extends EventTarget {
         ];
     }
 
-    deleteUser(userId: string): Promise<boolean> {
-        return this._userIndexClient.deleteUser(userId);
+    deleteUser(userId: string, delegation: DelegationChain): Promise<boolean> {
+        return this._userIndexClient.deleteUser(userId, delegation);
     }
 
     getChannelSummary(channelId: ChannelIdentifier): Promise<ChannelSummaryResponse> {
@@ -4107,19 +4108,24 @@ export class OpenChatAgent extends EventTarget {
     async installBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
-        grantedPermissions: SlashCommandPermissions,
+        grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
-        const localUserIndex = id.kind === "community"
-            ? await this.communityClient(id.communityId).localUserIndex()
-            : await this.getGroupClient(id.groupId).localUserIndex();
+        const localUserIndex =
+            id.kind === "community"
+                ? await this.communityClient(id.communityId).localUserIndex()
+                : await this.getGroupClient(id.groupId).localUserIndex();
 
-        return this.getLocalUserIndexClient(localUserIndex).installBot(id, botId, grantedPermissions);
+        return this.getLocalUserIndexClient(localUserIndex).installBot(
+            id,
+            botId,
+            grantedPermissions,
+        );
     }
 
     updateInstalledBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
-        grantedPermissions: SlashCommandPermissions,
+        grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
         switch (id.kind) {
             case "community":
@@ -4139,9 +4145,10 @@ export class OpenChatAgent extends EventTarget {
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
     ): Promise<boolean> {
-        const localUserIndex = id.kind === "community"
-            ? await this.communityClient(id.communityId).localUserIndex()
-            : await this.getGroupClient(id.groupId).localUserIndex();
+        const localUserIndex =
+            id.kind === "community"
+                ? await this.communityClient(id.communityId).localUserIndex()
+                : await this.getGroupClient(id.groupId).localUserIndex();
 
         return this.getLocalUserIndexClient(localUserIndex).uninstallBot(id, botId);
     }

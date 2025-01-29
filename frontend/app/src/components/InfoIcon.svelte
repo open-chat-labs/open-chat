@@ -1,6 +1,6 @@
 <script lang="ts">
-    import TooltipWrapper from "../../TooltipWrapper.svelte";
-    import TooltipPopup from "../../TooltipPopup.svelte";
+    import TooltipWrapper from "./TooltipWrapper.svelte";
+    import TooltipPopup from "./TooltipPopup.svelte";
     import Help from "svelte-material-icons/HelpCircleOutline.svelte";
 </script>
 

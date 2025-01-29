@@ -25,7 +25,7 @@
         MessageContext,
         OpenChat,
         PermissionRole,
-        SlashCommandPermissions,
+        ExternalBotPermissions,
     } from "openchat-client";
     import {
         currentCommunityBots,
@@ -115,7 +115,7 @@
 
     function hasPermissionForCommand(
         command: FlattenedCommand,
-        installedBots: Map<string, SlashCommandPermissions>,
+        installedBots: Map<string, ExternalBotPermissions>,
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
     ): boolean {

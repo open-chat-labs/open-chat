@@ -3,7 +3,7 @@ import { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import {
     type ExternalBot,
-    type SlashCommandPermissions,
+    type ExternalBotPermissions,
     type ChatPermissions,
     type CommunityPermissions,
     type MessagePermission,
@@ -113,7 +113,7 @@ const ApiMessagePermission = IDL.Variant({
     Crypto: IDL.Null,
     Video: IDL.Null,
 });
-const ApiSlashCommandPermissions = IDL.Record({
+const ApiExternalBotPermissions = IDL.Record({
     chat: IDL.Vec(ApiGroupPermission),
     community: IDL.Vec(ApiCommunityPermission),
     thread: IDL.Vec(ApiMessagePermission),
@@ -161,7 +161,7 @@ const ApiSlashCommandParam = IDL.Record({
     param_type: ApiSlashCommandParamType,
 });
 const ApiSlashCommandSchema = IDL.Record({
-    permissions: ApiSlashCommandPermissions,
+    permissions: ApiExternalBotPermissions,
     name: IDL.Text,
     description: IDL.Opt(IDL.Text),
     params: IDL.Vec(ApiSlashCommandParam),
@@ -288,7 +288,7 @@ function createMessagePermission(perm: MessagePermission): Record<string, any> {
     }
 }
 
-function createPermissions(perm: SlashCommandPermissions): Record<string, any> {
+function createPermissions(perm: ExternalBotPermissions): Record<string, any> {
     return {
         chat: perm.chatPermissions.map(createGroupPermission),
         community: perm.communityPermissions.map(createCommunityPermission),

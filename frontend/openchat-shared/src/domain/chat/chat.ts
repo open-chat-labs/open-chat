@@ -35,7 +35,7 @@ import type {
 } from "../community";
 import type { ChitEarned } from "../chit";
 import type { WalletConfig } from "../crypto";
-import type { BotGroupDetails, SlashCommandParamInstance, SlashCommandPermissions } from "../bots";
+import type { BotGroupDetails, ExternalBotPermissions, SlashCommandParamInstance } from "../bots";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -1448,7 +1448,7 @@ export type ChatSpecificState = {
     serverEvents: EventWrapper<ChatEvent>[];
     expandedDeletedMessages: Set<number>;
     expiredEventRanges: DRange;
-    bots: Map<string, SlashCommandPermissions>;
+    bots: Map<string, ExternalBotPermissions>;
 };
 
 export type GroupChatDetailsUpdates = {
