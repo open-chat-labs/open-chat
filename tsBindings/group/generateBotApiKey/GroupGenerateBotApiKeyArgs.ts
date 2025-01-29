@@ -2,4 +2,4 @@
 import type { BotPermissions } from "../../shared/BotPermissions";
 import type { UserId } from "../../shared/UserId";
 
-export type GroupUpdateBotArgs = { bot_id: UserId, granted_permissions: BotPermissions, };
+export type GroupGenerateBotApiKeyArgs = { bot_id: UserId, requested_permissions: BotPermissions, };
