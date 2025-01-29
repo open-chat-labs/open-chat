@@ -2,12 +2,12 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use ts_export::ts_export;
-use types::{FieldTooLongResult, FieldTooShortResult, Milliseconds, SignedDelegation};
+use types::{FieldTooLongResult, FieldTooShortResult, Milliseconds, PinNumberWrapper, SignedDelegation};
 
 #[ts_export(user, set_pin_number)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub new: Option<String>,
+    pub new: Option<PinNumberWrapper>,
     pub verification: PinNumberVerification,
 }
 
@@ -15,7 +15,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum PinNumberVerification {
     None,
-    PIN(String),
+    PIN(PinNumberWrapper),
     Delegation(SignedDelegation),
 }
 

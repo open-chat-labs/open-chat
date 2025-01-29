@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{CanisterId, ExchangeId, Milliseconds, TokenInfo};
+use types::{CanisterId, ExchangeId, Milliseconds, PinNumberWrapper, TokenInfo};
 
 #[ts_export(user, swap_tokens)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -12,7 +12,7 @@ pub struct Args {
     pub input_amount: u128,
     pub exchange_args: ExchangeArgs,
     pub min_output_amount: u128,
-    pub pin: Option<String>,
+    pub pin: Option<PinNumberWrapper>,
 }
 
 #[ts_export(user, swap_tokens)]

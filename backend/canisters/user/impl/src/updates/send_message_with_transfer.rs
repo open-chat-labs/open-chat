@@ -43,7 +43,7 @@ async fn send_message_with_transfer_to_channel(
             args.thread_root_message_index,
             args.message_id,
             &args.content,
-            args.pin,
+            args.pin.map(|p| p.into()),
             now,
             state,
         )
@@ -169,7 +169,7 @@ async fn send_message_with_transfer_to_group(
             args.thread_root_message_index,
             args.message_id,
             &args.content,
-            args.pin,
+            args.pin.map(|p| p.into()),
             now,
             state,
         )
