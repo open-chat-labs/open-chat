@@ -144,6 +144,7 @@ pub struct BotMatch {
     pub owner: UserId,
     pub avatar_id: Option<u128>,
     pub commands: Vec<SlashCommandSchema>,
+    pub autonomous_config: Option<AutonomousConfig>,
 }
 
 macro_rules! slash_command_option_choice {

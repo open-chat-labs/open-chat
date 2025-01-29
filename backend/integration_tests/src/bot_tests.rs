@@ -284,9 +284,6 @@ fn e2e_autonomous_bot_test() {
     let command_name = random_string();
     let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, bot_name.clone(), command_name.clone());
 
-    let initial_time = now_millis(env);
-    println!("initial_time: {initial_time}");
-
     // Add bot to community
     client::local_user_index::happy_path::install_bot(
         env,
