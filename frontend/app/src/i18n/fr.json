@@ -156,6 +156,7 @@
             "failure": "Désolé, nous n'avons pas pu ajouter le bot",
             "loadDefinition": "Définition de la charge",
             "noPermissions": "Aucune autorisation spéciale requise",
+            "permissionsInfo": "Ce bot recherche les autorisations suivantes. Choisir de limiter les autorisations accordées limitera les capacités du bot.",
             "title": "Ajouter un bot à la communauté"
         },
         "builder": {
@@ -163,6 +164,7 @@
             "addChoice": "Ajouter un choix",
             "addCommand": "Ajouter une commande",
             "addParam": "Ajouter un paramètre",
+            "autonomousPermissionsLabel": "Autorisations autonomes",
             "choiceName": "Nom de choix",
             "choices": "Choix",
             "choicesInfo": "Si vous entrez un ensemble de choix pour votre paramètre, l'utilisateur se verra présenter une liste déroulante lui permettant de choisir la valeur correcte.",
@@ -313,12 +315,20 @@
             }
         },
         "manage": {
+            "apiKeyInfo": "Vous aurez besoin d'une clé API pour permettre aux robots d'effectuer des actions de manière indépendante dans ce contexte",
+            "copyKey": "Il s'agit de votre clé API. Cette clé fournit un accès programmatique à OpenChat et doit être considérée comme **secrète**. Ne partagez pas cette clé et ne la soumettez pas au contrôle de source. Si à un moment donné cette clé est divulguée, vous pouvez simplement en générer une nouvelle pour révoquer l'accès.<br /><br />Veuillez copier cette clé maintenant et la conserver en lieu sûr ; vous ne pourrez plus la consulter.",
+            "generate": "Générer une clé API",
+            "generateApiKey": "Générer une clé API",
+            "generated": "Clé API générée",
+            "regenerate": "Régénérer la clé API",
+            "regenerateWarning": "La régénération de la clé API révoquera l'accès à la clé API précédemment générée. Êtes-vous sûr de vouloir continuer ?",
             "remove": "Supprimer le bot",
             "removeFailed": "Désolé, nous n'avons pas pu supprimer le bot",
             "removeReason": "Raison de la suppression du bot",
             "removeReasonPlaceholder": "Veuillez fournir des raisons/preuves justifiant la suppression du bot",
             "removeSearch": "Rechercher le bot à supprimer",
             "review": "Examiner les autorisations du robot",
+            "reviewApiKey": "Examen de la clé API",
             "view": "Afficher les détails du bot"
         },
         "matchingCommands": "Commandes correspondantes",

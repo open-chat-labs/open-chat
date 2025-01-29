@@ -156,6 +156,7 @@
             "failure": "抱歉，我们无法添加该机器人",
             "loadDefinition": "荷载定义",
             "noPermissions": "无需特殊权限",
+            "permissionsInfo": "此机器人寻求以下权限。选择限制授予的权限将限制机器人的功能。",
             "title": "将机器人添加到社区"
         },
         "builder": {
@@ -163,6 +164,7 @@
             "addChoice": "添加选择",
             "addCommand": "添加命令",
             "addParam": "添加参数",
+            "autonomousPermissionsLabel": "自主权限",
             "choiceName": "选择名称",
             "choices": "选择",
             "choicesInfo": "如果您为参数输入一组选项，则用户会看到一个下拉菜单来选择正确的值。",
@@ -313,12 +315,20 @@
             }
         },
         "manage": {
+            "apiKeyInfo": "您需要一个 API 密钥来允许机器人在此上下文中独立执行操作",
+            "copyKey": "这是您的 API 密钥。此密钥提供对 OpenChat 的编程访问，应视为**机密**。请勿共享此密钥或将其提交给源代码控制。如果此密钥在任何时候泄露，您只需生成一个新密钥即可撤销访问权限。<br /><br />请立即复制此密钥并妥善保存 - 您将无法再次查看此密钥。",
+            "generate": "生成 API 密钥",
+            "generateApiKey": "生成 API 密钥",
+            "generated": "已生成 API 密钥",
+            "regenerate": "重新生成 API 密钥",
+            "regenerateWarning": "重新生成 API 密钥将撤销对之前生成的 API 密钥的访问权限。您确定要继续吗？",
             "remove": "移除机器人",
             "removeFailed": "抱歉，我们无法移除该机器人",
             "removeReason": "删除机器人的原因",
             "removeReasonPlaceholder": "请提供支持删除该机器人的理由/证据",
             "removeSearch": "搜索要删除的机器人",
             "review": "审查机器人权限",
+            "reviewApiKey": "审核 API 密钥",
             "view": "查看机器人详细信息"
         },
         "matchingCommands": "匹配命令",

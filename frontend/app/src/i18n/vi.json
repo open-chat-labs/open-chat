@@ -156,6 +156,7 @@
             "failure": "Xin lỗi chúng tôi không thể thêm bot",
             "loadDefinition": "Tải định nghĩa",
             "noPermissions": "Không cần quyền đặc biệt",
+            "permissionsInfo": "Bot này tìm kiếm các quyền sau. Việc chọn giới hạn các quyền được cấp sẽ hạn chế khả năng của bot.",
             "title": "Thêm bot vào cộng đồng"
         },
         "builder": {
@@ -163,6 +164,7 @@
             "addChoice": "Thêm một lựa chọn",
             "addCommand": "Thêm lệnh",
             "addParam": "Thêm một tham số",
+            "autonomousPermissionsLabel": "Quyền tự chủ",
             "choiceName": "Tên lựa chọn",
             "choices": "Lựa chọn",
             "choicesInfo": "Nếu bạn nhập một tập hợp các lựa chọn cho tham số của mình, người dùng sẽ thấy danh sách thả xuống để chọn giá trị chính xác.",
@@ -313,12 +315,20 @@
             }
         },
         "manage": {
+            "apiKeyInfo": "Bạn sẽ cần một khóa API để cho phép các bot thực hiện các hành động độc lập trong bối cảnh này",
+            "copyKey": "Đây là khóa API của bạn. Khóa này cung cấp quyền truy cập theo chương trình vào OpenChat và nên được coi là **bí mật**. Không chia sẻ khóa này hoặc cam kết nó với kiểm soát nguồn. Nếu bất kỳ lúc nào khóa này bị rò rỉ, bạn chỉ cần tạo một khóa mới để thu hồi quyền truy cập.<br /><br />Vui lòng sao chép khóa này ngay bây giờ và giữ an toàn - bạn sẽ không thể xem khóa này nữa.",
+            "generate": "Tạo khóa API",
+            "generateApiKey": "Tạo khóa API",
+            "generated": "Khóa API đã được tạo",
+            "regenerate": "Tạo lại khóa API",
+            "regenerateWarning": "Việc tạo lại khóa API sẽ thu hồi quyền truy cập vào khóa API đã tạo trước đó. Bạn có chắc chắn muốn tiếp tục không?",
             "remove": "Xóa bot",
             "removeFailed": "Xin lỗi chúng tôi không thể xóa bot",
             "removeReason": "Lý do xóa bot",
             "removeReasonPlaceholder": "Vui lòng cung cấp lý do/bằng chứng hỗ trợ việc xóa bot",
             "removeSearch": "Tìm kiếm bot để loại bỏ",
             "review": "Xem lại quyền của bot",
+            "reviewApiKey": "Đánh giá khóa API",
             "view": "Xem chi tiết bot"
         },
         "matchingCommands": "Lệnh khớp",

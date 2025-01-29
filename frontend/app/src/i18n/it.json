@@ -156,6 +156,7 @@
             "failure": "Spiacenti, non siamo riusciti ad aggiungere il bot",
             "loadDefinition": "Definizione del carico",
             "noPermissions": "Non sono richieste autorizzazioni speciali",
+            "permissionsInfo": "Questo bot richiede i seguenti permessi. Scegliendo di limitare i permessi concessi si limiteranno le capacità del bot.",
             "title": "Aggiungi bot alla community"
         },
         "builder": {
@@ -163,6 +164,7 @@
             "addChoice": "Aggiungi una scelta",
             "addCommand": "Aggiungi comando",
             "addParam": "Aggiungi un parametro",
+            "autonomousPermissionsLabel": "Permessi autonomi",
             "choiceName": "Nome della scelta",
             "choices": "Scelte",
             "choicesInfo": "Se si immette una serie di scelte per il parametro, all'utente verrà presentato un menu a discesa per scegliere il valore corretto.",
@@ -313,12 +315,20 @@
             }
         },
         "manage": {
+            "apiKeyInfo": "Avrai bisogno di una chiave API per consentire ai bot di eseguire azioni in modo indipendente in questo contesto",
+            "copyKey": "Questa è la tua chiave API. Questa chiave fornisce accesso programmatico a OpenChat e dovrebbe essere considerata **segreta**. Non condividere questa chiave o affidarla al controllo sorgente. Se in qualsiasi momento questa chiave dovesse trapelare, puoi semplicemente generarne una nuova per revocare l'accesso.<br /><br />Copia questa chiave ora e conservala al sicuro: non sarai in grado di visualizzarla di nuovo.",
+            "generate": "Genera chiave API",
+            "generateApiKey": "Genera una chiave API",
+            "generated": "Chiave API generata",
+            "regenerate": "Rigenera la chiave API",
+            "regenerateWarning": "La rigenerazione della chiave API revocherà l'accesso alla chiave API generata in precedenza. Vuoi procedere?",
             "remove": "Rimuovi bot",
             "removeFailed": "Spiacenti, non siamo riusciti a rimuovere il bot",
             "removeReason": "Motivo della rimozione del bot",
             "removeReasonPlaceholder": "Si prega di fornire motivazioni/prove a sostegno della rimozione del bot",
             "removeSearch": "Cerca il bot da rimuovere",
             "review": "Rivedi le autorizzazioni del bot",
+            "reviewApiKey": "Rivedi la chiave API",
             "view": "Visualizza i dettagli del bot"
         },
         "matchingCommands": "Comandi corrispondenti",
