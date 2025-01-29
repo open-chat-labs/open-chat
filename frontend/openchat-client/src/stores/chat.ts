@@ -12,7 +12,7 @@ import type {
     ChatListScope,
     ExpiredEventsRange,
     MessageContext,
-    SlashCommandPermissions,
+    ExternalBotPermissions,
 } from "openchat-shared";
 import {
     compareChats,
@@ -103,7 +103,7 @@ const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvent
 export const currentChatBots = createDerivedPropStore<ChatSpecificState, "bots">(
     chatStateStore,
     "bots",
-    () => new Map<string, SlashCommandPermissions>(),
+    () => new Map<string, ExternalBotPermissions>(),
 );
 
 export const currentChatUserIds = createDerivedPropStore<ChatSpecificState, "userIds">(

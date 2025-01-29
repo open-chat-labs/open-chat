@@ -142,7 +142,7 @@ import type {
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
     AccessGateConfig,
-    SlashCommandPermissions,
+    ExternalBotPermissions,
 } from "openchat-shared";
 import {
     textToCode,
@@ -1720,7 +1720,7 @@ export class CommunityClient extends CandidService {
 
     updateInstalledBot(
         botId: string,
-        grantedPermissions: SlashCommandPermissions,
+        grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "update_bot",

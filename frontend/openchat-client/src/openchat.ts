@@ -400,7 +400,7 @@ import type {
     CaptionedContent,
     ExploreBotsResponse,
     ExternalBot,
-    SlashCommandPermissions,
+    ExternalBotPermissions,
     ConnectToWorkerResponse,
     FromWorker,
     WorkerResponse,
@@ -630,11 +630,12 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    deleteCurrentUser(): Promise<boolean> {
+    deleteCurrentUser(delegation: DelegationChain): Promise<boolean> {
         if (!this.#liveState.anonUser) {
             return this.#sendRequest({
                 kind: "deleteUser",
                 userId: this.#liveState.user.userId,
+                delegation,
             }).then((success) => {
                 if (success) {
                     this.clearCachedData().finally(() => this.logout());
@@ -7907,7 +7908,7 @@ export class OpenChat extends EventTarget {
     installBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
-        grantedPermissions: SlashCommandPermissions,
+        grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
         this.#installBotLocally(id, botId, grantedPermissions);
         return this.#sendRequest({
@@ -7931,7 +7932,7 @@ export class OpenChat extends EventTarget {
     updateInstalledBot(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
-        grantedPermissions: SlashCommandPermissions,
+        grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
         return this.#sendRequest({
             kind: "updateInstalledBot",
@@ -7947,8 +7948,8 @@ export class OpenChat extends EventTarget {
     #uninstallBotLocally(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
-    ): SlashCommandPermissions | undefined {
-        let perm: SlashCommandPermissions | undefined;
+    ): ExternalBotPermissions | undefined {
+        let perm: ExternalBotPermissions | undefined;
         switch (id.kind) {
             case "community":
                 communityStateStore.updateProp(id, "bots", (b) => {
@@ -7971,7 +7972,7 @@ export class OpenChat extends EventTarget {
     #installBotLocally(
         id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
-        perm: SlashCommandPermissions | undefined,
+        perm: ExternalBotPermissions | undefined,
     ): void {
         switch (id.kind) {
             case "community":
@@ -7991,10 +7992,7 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    uninstallBot(
-        id: CommunityIdentifier | GroupChatIdentifier,
-        botId: string,
-    ): Promise<boolean> {
+    uninstallBot(id: CommunityIdentifier | GroupChatIdentifier, botId: string): Promise<boolean> {
         const perm = this.#uninstallBotLocally(id, botId);
         return this.#sendRequest({
             kind: "uninstallBot",

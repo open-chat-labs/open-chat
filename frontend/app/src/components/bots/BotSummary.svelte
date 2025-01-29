@@ -1,12 +1,13 @@
 <script lang="ts">
     import {
-        emptySlashCommandPermissions,
         OpenChat,
         type BotMatch,
-        type SlashCommandPermissions,
         hasEveryRequiredPermission,
         type CommunityIdentifier,
+        type BotSummaryMode,
         type GroupChatIdentifier,
+        type ExternalBotPermissions,
+        random128,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Overlay from "../Overlay.svelte";
@@ -24,68 +25,69 @@
     import { togglePermission } from "../../utils/bots";
     import { toastStore } from "../../stores/toast";
     import BotAvatar from "./BotAvatar.svelte";
+    import ShowApiKey from "./ShowApiKey.svelte";
+    import AreYouSure from "../AreYouSure.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        mode: "adding" | "editing" | "viewing";
+        mode: BotSummaryMode;
         bot: BotMatch;
         onClose: () => void;
-        id: CommunityIdentifier | GroupChatIdentifier;
-        currentPermissions?: SlashCommandPermissions;
     }
 
-    let { bot, onClose, id, mode, currentPermissions }: Props = $props();
+    let { bot, onClose, mode }: Props = $props();
     let busy = $state(false);
-    let requestedPermissions = $derived(flattenPermissions());
-    let grantedPermissions = $state(currentPermissions ?? flattenPermissions());
     let collapsed = $state(true);
     let title = $derived.by(() => {
-        switch (mode) {
-            case "adding":
+        switch (mode.kind) {
+            case "installing_command_bot":
                 return i18nKey("bots.add.title");
-            case "editing":
+            case "editing_command_bot":
                 return i18nKey("bots.edit.title");
-            case "viewing":
+            case "viewing_command_bot":
                 return i18nKey("bots.view.title");
+            case "adding_api_key":
+                return i18nKey("bots.manage.generateApiKey");
+            case "editing_api_key":
+                return i18nKey("bots.manage.reviewApiKey");
         }
     });
     let cta = $derived.by(() => {
-        switch (mode) {
-            case "adding":
+        switch (mode.kind) {
+            case "installing_command_bot":
                 return i18nKey("bots.add.addBot");
-            case "editing":
+            case "editing_command_bot":
                 return i18nKey("bots.edit.updateBot");
-            case "viewing":
+            case "viewing_command_bot":
                 return i18nKey("bots.view.close");
+            case "adding_api_key":
+                return i18nKey("bots.manage.generate");
+            case "editing_api_key":
+                return i18nKey("bots.manage.regenerate");
         }
     });
+    let showCommands = $derived(mode.kind !== "adding_api_key" && mode.kind !== "editing_api_key");
+    let choosePermissions = $derived(mode.kind !== "viewing_command_bot");
+    let grantedPermissions = $state(getInitialGrantedPermissions(mode));
+    let apiKey = $state<string | undefined>(undefined);
+    let confirmingRegeneration = $state(false);
 
-    function flattenPermissions() {
-        return bot.definition.commands.reduce((p, c) => {
-            return mergePermissions(p, c.permissions);
-        }, emptySlashCommandPermissions());
+    function getInitialGrantedPermissions(mode: BotSummaryMode): ExternalBotPermissions {
+        switch (mode.kind) {
+            case "editing_command_bot":
+            case "editing_api_key":
+            case "viewing_command_bot":
+                return mode.granted;
+            default:
+                return mode.requested;
+        }
     }
 
-    function mergeLists<T>(l1: T[], l2: T[]): T[] {
-        return [...new Set([...l1, ...l2])];
-    }
-
-    function mergePermissions(
-        p1: SlashCommandPermissions,
-        p2: SlashCommandPermissions,
-    ): SlashCommandPermissions {
-        return {
-            chatPermissions: mergeLists(p1.chatPermissions, p2.chatPermissions),
-            communityPermissions: mergeLists(p1.communityPermissions, p2.communityPermissions),
-            messagePermissions: mergeLists(p1.messagePermissions, p2.messagePermissions),
-        };
-    }
-
-    function installBot() {
+    function installBot(id: CommunityIdentifier | GroupChatIdentifier) {
         busy = true;
         client
-            .installBot(id, bot.id, $state.snapshot(grantedPermissions))
+            .installBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.add.failure"));
@@ -96,10 +98,10 @@
             .finally(() => (busy = false));
     }
 
-    function updateBot() {
+    function updateBot(id: CommunityIdentifier | GroupChatIdentifier) {
         busy = true;
         client
-            .updateInstalledBot(id, bot.id, $state.snapshot(grantedPermissions))
+            .updateInstalledBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.edit.failure"));
@@ -110,19 +112,53 @@
             .finally(() => (busy = false));
     }
 
+    function generateApiKey(confirmed: boolean): Promise<void> {
+        if (!confirmingRegeneration && !confirmed) {
+            confirmingRegeneration = true;
+            return Promise.resolve();
+        }
+
+        if (confirmed) {
+            if (bot.definition.autonomousConfig !== undefined) {
+                busy = true;
+                window.setTimeout(() => {
+                    apiKey = random128().toString();
+                    busy = false;
+                }, 1000);
+            }
+        }
+        confirmingRegeneration = false;
+        return Promise.resolve();
+    }
+
     function mainButton() {
-        switch (mode) {
-            case "adding":
-                installBot();
+        switch (mode.kind) {
+            case "installing_command_bot":
+                installBot(mode.id);
                 break;
-            case "editing":
-                updateBot();
+            case "editing_command_bot":
+                updateBot(mode.id);
                 break;
-            case "viewing":
+            case "viewing_command_bot":
                 onClose();
+                break;
+            case "adding_api_key":
+                generateApiKey(true);
+                break;
+            case "editing_api_key":
+                generateApiKey(false);
+                break;
         }
     }
 </script>
+
+{#if confirmingRegeneration}
+    <AreYouSure message={i18nKey("bots.manage.regenerateWarning")} action={generateApiKey} />
+{/if}
+
+{#if apiKey !== undefined}
+    <ShowApiKey {apiKey} {onClose}></ShowApiKey>
+{/if}
 
 <Overlay dismissible>
     <ModalContent closeIcon on:close={onClose}>
@@ -146,27 +182,29 @@
                     onclick={() => (collapsed = !collapsed)}>
                     {bot.definition.description}
                 </p>
-                <div class="commands">
-                    {#each bot.definition.commands as command}
-                        <TooltipWrapper position="bottom" align="middle">
-                            <div
-                                slot="target"
-                                class="command"
-                                class:not_permitted={!hasEveryRequiredPermission(
-                                    command.permissions,
-                                    grantedPermissions,
-                                )}>
-                                {command.name}
-                            </div>
-                            <div let:position let:align slot="tooltip">
-                                <TooltipPopup {align} {position}>
-                                    {command.description}
-                                </TooltipPopup>
-                            </div>
-                        </TooltipWrapper>
-                    {/each}
-                </div>
-                {#if mode !== "viewing"}
+                {#if showCommands}
+                    <div class="commands">
+                        {#each bot.definition.commands as command}
+                            <TooltipWrapper position="bottom" align="middle">
+                                <div
+                                    slot="target"
+                                    class="command"
+                                    class:not_permitted={!hasEveryRequiredPermission(
+                                        command.permissions,
+                                        grantedPermissions,
+                                    )}>
+                                    {command.name}
+                                </div>
+                                <div let:position let:align slot="tooltip">
+                                    <TooltipPopup {align} {position}>
+                                        {command.description}
+                                    </TooltipPopup>
+                                </div>
+                            </TooltipWrapper>
+                        {/each}
+                    </div>
+                {/if}
+                {#if choosePermissions}
                     <div class="permissions">
                         <Legend label={i18nKey("bots.add.choosePermissions")}></Legend>
                         <p class="info">
@@ -175,11 +213,11 @@
                         </p>
                         <BotPermissionsTabs>
                             {#snippet chatTab()}
-                                {#if requestedPermissions.chatPermissions.length === 0}
+                                {#if mode.requested.chatPermissions.length === 0}
                                     <Translatable resourceKey={i18nKey("bots.add.noPermissions")}
                                     ></Translatable>
                                 {:else}
-                                    {#each requestedPermissions.chatPermissions as perm}
+                                    {#each mode.requested.chatPermissions as perm}
                                         <Checkbox
                                             id={`chat_permission_${perm}`}
                                             label={i18nKey(`permissions.${perm}`)}
@@ -198,11 +236,11 @@
                                 {/if}
                             {/snippet}
                             {#snippet communityTab()}
-                                {#if requestedPermissions.communityPermissions.length === 0}
+                                {#if mode.requested.communityPermissions.length === 0}
                                     <Translatable resourceKey={i18nKey("bots.add.noPermissions")}
                                     ></Translatable>
                                 {:else}
-                                    {#each requestedPermissions.communityPermissions as perm}
+                                    {#each mode.requested.communityPermissions as perm}
                                         <Checkbox
                                             id={`community_permission_${perm}`}
                                             label={i18nKey(`permissions.${perm}`)}
@@ -221,11 +259,11 @@
                                 {/if}
                             {/snippet}
                             {#snippet messageTab()}
-                                {#if requestedPermissions.messagePermissions.length === 0}
+                                {#if mode.requested.messagePermissions.length === 0}
                                     <Translatable resourceKey={i18nKey("bots.add.noPermissions")}
                                     ></Translatable>
                                 {:else}
-                                    {#each requestedPermissions.messagePermissions as perm}
+                                    {#each mode.requested.messagePermissions as perm}
                                         <Checkbox
                                             id={`message_permission_${perm}`}
                                             label={i18nKey(
@@ -258,6 +296,7 @@
                 <Button
                     on:click={mainButton}
                     loading={busy}
+                    disabled={busy}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}>
                     <Translatable resourceKey={cta} />

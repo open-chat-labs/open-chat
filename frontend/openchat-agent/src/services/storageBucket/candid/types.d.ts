@@ -1604,7 +1604,7 @@ export interface SlashCommandPermissions {
   'message' : Array<MessagePermission>,
 }
 export interface SlashCommandSchema {
-  'permissions' : SlashCommandPermissions,
+  'permissions' : ExternalBotPermissions,
   'name' : string,
   'description' : [] | [string],
   'params' : Array<SlashCommandParam>,

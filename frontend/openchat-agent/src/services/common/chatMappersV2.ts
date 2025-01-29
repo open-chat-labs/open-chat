@@ -119,7 +119,7 @@ import type {
     AccessGateConfig,
     SetPinNumberResponse,
     MessagePermission,
-    SlashCommandPermissions,
+    ExternalBotPermissions,
     BotGroupDetails,
     BotDefinition,
     SlashCommandSchema,
@@ -294,7 +294,7 @@ import type {
     GroupPermission,
     CommunityPermission,
     MessagePermission as ApiMessagePermission,
-    SlashCommandPermissions as ApiSlashCommandPermissions,
+    SlashCommandPermissions as ApiExternalBotPermissions,
     CommunityUpdateBotResponse,
     GroupUpdateBotResponse,
     BotGroupDetails as ApiBotGroupDetails,
@@ -3369,9 +3369,7 @@ export function messagePermission(perm: ApiMessagePermission): MessagePermission
     }
 }
 
-export function slashCommandPermissions(
-    value: ApiSlashCommandPermissions,
-): SlashCommandPermissions {
+export function ExternalBotPermissions(value: ApiExternalBotPermissions): ExternalBotPermissions {
     return {
         chatPermissions: value.chat.map(chatPermission),
         communityPermissions: value.community.map(communityPermission),
@@ -3392,7 +3390,7 @@ export function updateBotResponse(
 export function botGroupDetails(value: ApiBotGroupDetails): BotGroupDetails {
     return {
         id: principalBytesToString(value.user_id),
-        permissions: slashCommandPermissions(value.permissions),
+        permissions: ExternalBotPermissions(value.permissions),
     };
 }
 
@@ -3404,6 +3402,14 @@ export function externalBotDefinition(value: {
         kind: "bot_definition",
         description: value.description,
         commands: value.commands.map(externalBotCommand),
+        // TODO - fill this in later
+        autonomousConfig: {
+            permissions: {
+                messagePermissions: ["text", "prize", "file", "p2pSwap"],
+                chatPermissions: [],
+                communityPermissions: [],
+            },
+        },
     };
 }
 
@@ -3413,7 +3419,7 @@ export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommand
         description: command.description,
         placeholder: mapOptional(command.placeholder, identity),
         params: command.params.map(externalBotParam),
-        permissions: slashCommandPermissions(command.permissions),
+        permissions: ExternalBotPermissions(command.permissions),
     };
 }
 
@@ -3444,11 +3450,11 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
             minValue: paramType.IntegerParam.min_value,
             maxValue: paramType.IntegerParam.max_value,
             choices: paramType.IntegerParam.choices.map((c) => ({
-               name: c.name,
-               value: c.value,
+                name: c.name,
+                value: c.value,
             })),
         };
-    }else if ("DecimalParam" in paramType) {
+    } else if ("DecimalParam" in paramType) {
         return {
             kind: "decimal",
             minValue: paramType.DecimalParam.min_value,

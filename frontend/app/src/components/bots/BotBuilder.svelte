@@ -2,7 +2,7 @@
     import {
         currentUser,
         emptyBotInstance,
-        emptySlashCommandPermissions,
+        emptyExternalBotPermissions,
         OpenChat,
         validateBot,
         ValidationErrors,
@@ -113,7 +113,7 @@
             name: "",
             description: "",
             params: [],
-            permissions: emptySlashCommandPermissions(),
+            permissions: emptyExternalBotPermissions(),
         };
     }
 </script>

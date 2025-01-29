@@ -1,14 +1,20 @@
 import { Principal } from "@dfinity/principal";
-import type { MessageContent, MessageContext } from "./chat";
+import type {
+    GroupChatIdentifier,
+    MessageContent,
+    MessageContext,
+    MultiUserChatIdentifier,
+} from "./chat";
 import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
 import {type InterpolationValues, parseBigInt, type ResourceKey} from "../utils";
 import { ValidationErrors } from "../utils/validation";
+import type { CommunityIdentifier } from "./community";
 
 export const MIN_NAME_LENGTH = 3;
 
 export type BotGroupDetails = {
     id: string;
-    permissions: SlashCommandPermissions;
+    permissions: ExternalBotPermissions;
 };
 
 export type BotsResponse = {
@@ -120,7 +126,7 @@ export function emptySlashCommand(): SlashCommandSchema {
         name: "",
         description: "",
         params: [],
-        permissions: emptySlashCommandPermissions(),
+        permissions: emptyExternalBotPermissions(),
     };
 }
 
@@ -129,11 +135,11 @@ export type SlashCommandSchema = {
     description?: string;
     placeholder?: string;
     params: SlashCommandParam[];
-    permissions: SlashCommandPermissions;
+    permissions: ExternalBotPermissions;
     devmode?: boolean;
 };
 
-export function emptySlashCommandPermissions(): SlashCommandPermissions {
+export function emptyExternalBotPermissions(): ExternalBotPermissions {
     return {
         chatPermissions: [],
         communityPermissions: [],
@@ -141,15 +147,34 @@ export function emptySlashCommandPermissions(): SlashCommandPermissions {
     };
 }
 
-export type SlashCommandPermissionsSet = {
+export function flattenCommandPermissions(definition: BotDefinition): ExternalBotPermissions {
+    return definition.commands.reduce((p, c) => {
+        return mergePermissions(p, c.permissions);
+    }, emptyExternalBotPermissions());
+}
+
+function mergeLists<T>(l1: T[], l2: T[]): T[] {
+    return [...new Set([...l1, ...l2])];
+}
+
+function mergePermissions(
+    p1: ExternalBotPermissions,
+    p2: ExternalBotPermissions,
+): ExternalBotPermissions {
+    return {
+        chatPermissions: mergeLists(p1.chatPermissions, p2.chatPermissions),
+        communityPermissions: mergeLists(p1.communityPermissions, p2.communityPermissions),
+        messagePermissions: mergeLists(p1.messagePermissions, p2.messagePermissions),
+    };
+}
+
+export type ExternalBotPermissionsSet = {
     chatPermissions: Set<keyof ChatPermissions>;
     communityPermissions: Set<keyof CommunityPermissions>;
     messagePermissions: Set<MessagePermission>;
 };
 
-export function setifyCommandPermissions(
-    perm: SlashCommandPermissions,
-): SlashCommandPermissionsSet {
+export function setifyCommandPermissions(perm: ExternalBotPermissions): ExternalBotPermissionsSet {
     return {
         chatPermissions: new Set(perm.chatPermissions),
         communityPermissions: new Set(perm.communityPermissions),
@@ -157,19 +182,19 @@ export function setifyCommandPermissions(
     };
 }
 
-function hasEveryPermissionOfType<P extends keyof SlashCommandPermissions>(
-    required: SlashCommandPermissions,
-    granted: SlashCommandPermissionsSet,
+function hasEveryPermissionOfType<P extends keyof ExternalBotPermissions>(
+    required: ExternalBotPermissions,
+    granted: ExternalBotPermissionsSet,
     type: P,
 ): boolean {
-    const r = required[type] as SlashCommandPermissions[P][number][];
-    const g = granted[type] as Set<SlashCommandPermissions[P][number]>;
+    const r = required[type] as ExternalBotPermissions[P][number][];
+    const g = granted[type] as Set<ExternalBotPermissions[P][number]>;
     return r.every((p) => g.has(p));
 }
 
 export function hasEveryRequiredPermission(
-    required: SlashCommandPermissions,
-    granted: SlashCommandPermissions,
+    required: ExternalBotPermissions,
+    granted: ExternalBotPermissions,
 ): boolean {
     const grantedSet = setifyCommandPermissions(granted);
     return (
@@ -179,7 +204,7 @@ export function hasEveryRequiredPermission(
     );
 }
 
-export type SlashCommandPermissions = {
+export type ExternalBotPermissions = {
     chatPermissions: (keyof ChatPermissions)[];
     communityPermissions: (keyof CommunityPermissions)[];
     messagePermissions: MessagePermission[];
@@ -230,6 +255,11 @@ export type BotDefinition = {
     kind: "bot_definition";
     description: string;
     commands: SlashCommandSchema[];
+    autonomousConfig?: AutonomousBotConfig;
+};
+
+export type AutonomousBotConfig = {
+    permissions: ExternalBotPermissions;
 };
 
 export type BotDefinitionFailure = {
@@ -594,4 +624,44 @@ export type BotClientConfigData = {
     ocPublicKey: string;
     openStorageIndexCanister: string;
     icHost: string;
+};
+
+export type BotSummaryMode =
+    | InstallingCommandBot
+    | EditingCommandBot
+    | ViewingCommandBot
+    | AddingApiKey
+    | EditingApiKey;
+
+type BotSummaryModeCommon = {
+    requested: ExternalBotPermissions;
+};
+
+export type InstallingCommandBot = BotSummaryModeCommon & {
+    kind: "installing_command_bot";
+    id: CommunityIdentifier | GroupChatIdentifier;
+};
+
+export type EditingCommandBot = BotSummaryModeCommon & {
+    kind: "editing_command_bot";
+    id: CommunityIdentifier | GroupChatIdentifier;
+    granted: ExternalBotPermissions;
+};
+
+export type ViewingCommandBot = BotSummaryModeCommon & {
+    kind: "viewing_command_bot";
+    id: CommunityIdentifier | GroupChatIdentifier;
+    granted: ExternalBotPermissions;
+};
+
+export type AddingApiKey = BotSummaryModeCommon & {
+    kind: "adding_api_key";
+    id: CommunityIdentifier | MultiUserChatIdentifier;
+};
+
+// Editing will infact amount to generating a new key
+export type EditingApiKey = BotSummaryModeCommon & {
+    kind: "editing_api_key";
+    id: CommunityIdentifier | MultiUserChatIdentifier;
+    granted: ExternalBotPermissions;
 };

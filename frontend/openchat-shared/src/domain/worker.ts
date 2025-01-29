@@ -199,7 +199,7 @@ import type {
     ClaimDailyChitResponse,
     ExternalAchievement,
 } from "./chit";
-import type { JsonnableDelegationChain } from "@dfinity/identity";
+import type { DelegationChain, JsonnableDelegationChain } from "@dfinity/identity";
 import type { Verification } from "./wallet";
 import type {
     BotCommandResponse,
@@ -207,7 +207,7 @@ import type {
     BotDefinitionResponse,
     BotsResponse,
     ExternalBot,
-    SlashCommandPermissions,
+    ExternalBotPermissions,
 } from "./bots";
 
 /**
@@ -453,14 +453,14 @@ type InstallBot = {
     kind: "installBot";
     id: CommunityIdentifier | GroupChatIdentifier;
     botId: string;
-    grantedPermissions: SlashCommandPermissions;
+    grantedPermissions: ExternalBotPermissions;
 };
 
 type UpdateInstalledBot = {
     kind: "updateInstalledBot";
     id: CommunityIdentifier | GroupChatIdentifier;
     botId: string;
-    grantedPermissions: SlashCommandPermissions;
+    grantedPermissions: ExternalBotPermissions;
 };
 
 type UninstallBot = {
@@ -1426,6 +1426,7 @@ type LinkIdentities = {
 type DeleteUser = {
     kind: "deleteUser";
     userId: string;
+    delegation: DelegationChain;
 };
 
 type WithdrawFromIcpSwap = {

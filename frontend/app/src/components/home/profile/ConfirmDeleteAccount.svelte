@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { i18nKey, OpenChat } from "openchat-client";
+    import { AuthProvider, i18nKey, OpenChat } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -11,6 +11,7 @@
     import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import ReAuthenticate from "./ReAuthenticate.svelte";
+    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
 
     const client = getContext<OpenChat>("client");
 
@@ -23,11 +24,17 @@
 
     let authenticating = $state(false);
 
-    function deleteAccount() {
+    function deleteAccount(
+        ev: CustomEvent<{
+            key: ECDSAKeyIdentity;
+            delegation: DelegationChain;
+            provider: AuthProvider;
+        }>,
+    ) {
         deleting = true;
         authenticating = false;
         return client
-            .deleteCurrentUser()
+            .deleteCurrentUser(ev.detail.delegation)
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("danger.deleteAccountFailed"));
