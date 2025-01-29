@@ -2,6 +2,7 @@ use crate::env::Environment;
 use candid::Principal;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
+use std::cell::LazyCell;
 use types::{CanisterId, Cycles, TimestampNanos};
 
 pub struct CanisterEnv {
@@ -16,6 +17,10 @@ impl CanisterEnv {
     }
 }
 
+thread_local! {
+    static CANISTER_ID: LazyCell<CanisterId> = LazyCell::new(|| ic_cdk::id());
+}
+
 impl Environment for CanisterEnv {
     fn now_nanos(&self) -> TimestampNanos {
         canister_time::now_nanos()
@@ -26,7 +31,7 @@ impl Environment for CanisterEnv {
     }
 
     fn canister_id(&self) -> CanisterId {
-        ic_cdk::id()
+        CANISTER_ID.with(|c| **c)
     }
 
     fn cycles_balance(&self) -> Cycles {
