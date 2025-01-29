@@ -42,7 +42,7 @@ impl PrincipalKey {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{BaseKey, Key, UserStorageRecordKey, UserStorageRecordKeyPrefix};
+    use crate::{BaseKey, Key};
     use rand::{thread_rng, Rng, RngCore};
 
     #[test]
