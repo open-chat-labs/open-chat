@@ -1,5 +1,5 @@
 use crate::{
-    Achievement, BotCommand, BotCaller, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction,
+    Achievement, BotCaller, BotCommand, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction,
     ThreadSummary, UserId,
 };
 use candid::CandidType;
