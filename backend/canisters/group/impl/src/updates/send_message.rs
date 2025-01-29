@@ -81,7 +81,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
     };
 
     // Bots can't call this c2c endpoint since it skips the validation
-    if matches!(caller, Caller::Bot(_) | Caller::BotV2(_)) {
+    if matches!(caller, Caller::Bot(_) | Caller::BotCommand(_)) {
         return NotAuthorized;
     }
 
@@ -182,7 +182,7 @@ fn process_send_message_result(
                 }
 
                 for user in mentioned {
-                    if user.user_id != caller.initiator()
+                    if caller.initiator().map(|i| i != user.user_id).unwrap_or_default()
                         && state
                             .data
                             .chat
@@ -206,7 +206,7 @@ fn process_send_message_result(
                         thread_root_message_index,
                         replying_to_event_index.into(),
                     ) {
-                        if message.sender != caller.initiator()
+                        if caller.initiator().map(|i| i != message.sender).unwrap_or_default()
                             && state
                                 .data
                                 .chat

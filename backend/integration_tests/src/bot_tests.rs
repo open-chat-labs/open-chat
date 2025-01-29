@@ -2,17 +2,20 @@ use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv, User};
 use candid::Principal;
+use community_canister::generate_bot_api_key;
+use local_user_index_canister::access_token_v2::Args::BotActionByApiKey;
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs};
 use pocket_ic::PocketIc;
-use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::bot_actions::{BotMessageAction, MessageContent};
 use types::{
-    BotAction, BotActionChatDetails, BotActionScope, BotCommand, BotDefinition, BotInstallationLocation, BotPermissions,
-    CanisterId, Chat, ChatEvent, MessagePermission, SlashCommandSchema, TextContent, UserId,
+    AccessTokenScope, AutonomousConfig, BotAction, BotActionChatDetails, BotActionScope, BotApiKeyToken, BotCommand,
+    BotDefinition, BotInstallationLocation, BotPermissions, CanisterId, Chat, ChatEvent, MessagePermission, SlashCommandSchema,
+    TextContent, UserId,
 };
+use utils::base64;
 
 #[test]
 fn e2e_command_bot_test() {
@@ -26,19 +29,19 @@ fn e2e_command_bot_test() {
 
     let start = now_millis(env);
     env.advance_time(Duration::from_millis(1));
-    let user = client::register_diamond_user(env, canister_ids, *controller);
-    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), true, true);
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
 
     // Register a bot
     let bot_name = random_string();
     let command_name = random_string();
-    let (bot_id, bot_principal) = register_bot(env, &user, canister_ids.user_index, bot_name.clone(), command_name.clone());
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, bot_name.clone(), command_name.clone());
 
     let initial_time = now_millis(env);
     println!("initial_time: {initial_time}");
 
     // Confirm bot returned in `bot_updates`
-    let response = client::user_index::happy_path::bot_updates(env, user.principal, canister_ids.user_index, start);
+    let response = client::user_index::happy_path::bot_updates(env, owner.principal, canister_ids.user_index, start);
     assert_eq!(response.added_or_updated.len(), 1);
 
     let bot = &response.added_or_updated[0];
@@ -46,14 +49,14 @@ fn e2e_command_bot_test() {
     assert_eq!(bot.name, bot_name);
 
     // Explore bots and check new bot is returned
-    let response = client::user_index::happy_path::explore_bots(env, user.principal, canister_ids.user_index, None);
+    let response = client::user_index::happy_path::explore_bots(env, owner.principal, canister_ids.user_index, None);
     assert!(response.matches.iter().any(|b| b.id == bot_id));
 
     // Add bot to group with inadequate permissions
     let mut granted_permissions = BotPermissions::default();
     client::local_user_index::happy_path::install_bot(
         env,
-        user.principal,
+        owner.principal,
         canister_ids.local_user_index(env, group_id),
         BotInstallationLocation::Group(group_id),
         bot.id,
@@ -65,7 +68,7 @@ fn e2e_command_bot_test() {
     env.tick();
 
     // Confirm bot returned in `selected_initial`
-    let response = client::group::happy_path::selected_initial(env, user.principal, group_id);
+    let response = client::group::happy_path::selected_initial(env, owner.principal, group_id);
     assert_eq!(response.bots.len(), 1);
     assert_eq!(response.bots[0].user_id, bot.id);
 
@@ -77,7 +80,7 @@ fn e2e_command_bot_test() {
         command: BotCommand {
             name: command_name.clone(),
             args: Vec::new(),
-            initiator: user.user_id,
+            initiator: owner.user_id,
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat,
@@ -88,7 +91,7 @@ fn e2e_command_bot_test() {
 
     let response = client::local_user_index::access_token_v2(
         env,
-        user.principal,
+        owner.principal,
         canister_ids.local_user_index(env, group_id),
         &access_token_args,
     );
@@ -101,10 +104,10 @@ fn e2e_command_bot_test() {
 
     // Update the group bot permissions
     granted_permissions.message.insert(MessagePermission::Text);
-    client::group::happy_path::update_bot(env, user.principal, group_id, bot.id, granted_permissions.clone());
+    client::group::happy_path::update_bot(env, owner.principal, group_id, bot.id, granted_permissions.clone());
 
     // Confirm bot returned in `selected_update`
-    let response = client::group::happy_path::selected_updates(env, user.principal, group_id, bot_added_timestamp)
+    let response = client::group::happy_path::selected_updates(env, owner.principal, group_id, bot_added_timestamp)
         .expect("Expected `selected_updates`");
     assert_eq!(response.bots_added_or_updated.len(), 1);
     assert_eq!(response.bots_added_or_updated[0].user_id, bot.id);
@@ -112,7 +115,7 @@ fn e2e_command_bot_test() {
     // Try again to get an access token to call the greet command
     let access_token = match client::local_user_index::access_token_v2(
         env,
-        user.principal,
+        owner.principal,
         canister_ids.local_user_index(env, group_id),
         &access_token_args,
     ) {
@@ -123,7 +126,7 @@ fn e2e_command_bot_test() {
     println!("ACCESS TOKEN: {access_token}");
 
     // Call execute_bot_action as bot - unfinalised message
-    let username = user.username();
+    let username = owner.username();
     let text = format!("Hello {username}");
     let response = client::local_user_index::execute_bot_action(
         env,
@@ -143,7 +146,7 @@ fn e2e_command_bot_test() {
     }
 
     // Call `events` and confirm the latest event is a text message from the bot
-    let response = client::group::happy_path::events(env, &user, group_id, 0.into(), true, 5, 10);
+    let response = client::group::happy_path::events(env, &owner, group_id, 0.into(), true, 5, 10);
 
     let latest_event = response.events.last().expect("Expected some channel events");
     let ChatEvent::Message(message) = &latest_event.event else {
@@ -177,7 +180,7 @@ fn e2e_command_bot_test() {
     }
 
     // Call `events` and confirm the latest event is a text message from the bot
-    let response = client::group::happy_path::events(env, &user, group_id, 0.into(), true, 5, 10);
+    let response = client::group::happy_path::events(env, &owner, group_id, 0.into(), true, 5, 10);
 
     let latest_event = response.events.last().expect("Expected some channel events");
     let ChatEvent::Message(message) = &latest_event.event else {
@@ -197,7 +200,7 @@ fn e2e_command_bot_test() {
     client::user_index::happy_path::update_bot(
         env,
         canister_ids.user_index,
-        user.principal,
+        owner.principal,
         bot.id,
         None,
         None,
@@ -207,7 +210,7 @@ fn e2e_command_bot_test() {
 
     // Confirm bot returned in `bot_updates`
     let response =
-        client::user_index::happy_path::bot_updates(env, user.principal, canister_ids.user_index, bot_added_timestamp);
+        client::user_index::happy_path::bot_updates(env, owner.principal, canister_ids.user_index, bot_added_timestamp);
     assert_eq!(response.added_or_updated.len(), 1);
 
     let bot = &response.added_or_updated[0];
@@ -260,6 +263,100 @@ fn remove_bot_test() {
     assert_eq!(response.bots_removed[0], bot_id);
 }
 
+#[test]
+fn e2e_autonomous_bot_test() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+
+    // Register a bot
+    let bot_name = random_string();
+    let command_name = random_string();
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, bot_name.clone(), command_name.clone());
+
+    // Add bot to community
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        canister_ids.local_user_index(env, community_id),
+        BotInstallationLocation::Community(community_id),
+        bot_id,
+        BotPermissions::text_only(),
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    // Generate an API key for the bot in the channel
+    let api_key = match client::community::generate_bot_api_key(
+        env,
+        owner.principal,
+        community_id.into(),
+        &generate_bot_api_key::Args {
+            bot_id,
+            requested_permissions: BotPermissions::text_only(),
+            channel_id: Some(channel_id),
+        },
+    ) {
+        generate_bot_api_key::Response::Success(result) => result.api_key,
+        response => panic!("'generate_bot_api_key' error: {response:?}"),
+    };
+
+    // Decode the API key and assert expected claims
+    let api_key_token = base64::to_value::<BotApiKeyToken>(&api_key).expect("Expected valid API key");
+    assert_eq!(api_key_token.bot_id, bot_id);
+    assert_eq!(api_key_token.gateway, canister_ids.local_user_index(env, community_id));
+    let AccessTokenScope::Chat(Chat::Channel(token_community_id, token_channel_id)) = api_key_token.scope else {
+        panic!("Expected API key scope to be channel");
+    };
+    assert_eq!(token_community_id, community_id);
+    assert_eq!(token_channel_id, channel_id);
+
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    // Get an access token from the API key
+    let access_token_args = BotActionByApiKey(api_key);
+    let access_token = match client::local_user_index::access_token_v2(
+        env,
+        owner.principal,
+        canister_ids.local_user_index(env, community_id),
+        &access_token_args,
+    ) {
+        local_user_index_canister::access_token_v2::Response::Success(access_token) => access_token,
+        response => panic!("'access_token' error: {response:?}"),
+    };
+
+    // Call execute_bot_action
+    let text = "Hello world".to_string();
+    let response = client::local_user_index::execute_bot_action(
+        env,
+        bot_principal,
+        canister_ids.local_user_index(env, community_id),
+        &local_user_index_canister::execute_bot_action::Args {
+            action: BotAction::SendMessage(BotMessageAction {
+                content: MessageContent::Text(TextContent { text: text.clone() }),
+                finalised: true,
+            }),
+            jwt: access_token,
+        },
+    );
+
+    if response.is_err() {
+        panic!("'execute_bot_action' error: {response:?}");
+    }
+}
+
 fn register_bot(
     env: &mut PocketIc,
     user: &User,
@@ -270,16 +367,13 @@ fn register_bot(
     // Register a bot
     let endpoint = "https://my.bot.xyz/".to_string();
     let description = "greet".to_string();
+
     let commands = vec![SlashCommandSchema {
         name: command_name,
         description: Some("Hello {user}".to_string()),
         placeholder: None,
         params: vec![],
-        permissions: BotPermissions {
-            community: HashSet::new(),
-            chat: HashSet::new(),
-            message: HashSet::from_iter([MessagePermission::Text]),
-        },
+        permissions: BotPermissions::text_only(),
     }];
 
     let bot_principal = client::user_index::happy_path::register_bot(
@@ -291,7 +385,9 @@ fn register_bot(
         BotDefinition {
             description: description.clone(),
             commands: commands.clone(),
-            autonomous_config: None,
+            autonomous_config: Some(AutonomousConfig {
+                permissions: BotPermissions::text_only(),
+            }),
         },
     );
 

@@ -29,6 +29,7 @@ fn bot_updates_impl(args: Args, state: &RuntimeState) -> Response {
                         endpoint: bot.endpoint.clone(),
                         description: bot.description.clone(),
                         commands: bot.commands.clone(),
+                        autonomous_config: bot.autonomous_config.clone(),
                         last_updated: bot.last_updated,
                     });
                 }

@@ -5,6 +5,7 @@ use crate::{
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::hash::Hash;
 use ts_export::ts_export;
 
 #[ts_export]
@@ -94,6 +95,36 @@ pub struct BotPermissions {
     pub message: HashSet<MessagePermission>,
 }
 
+impl BotPermissions {
+    pub fn is_empty(&self) -> bool {
+        self.community.is_empty() && self.chat.is_empty() && self.message.is_empty()
+    }
+
+    pub fn is_subset(&self, other: &Self) -> bool {
+        self.community.is_subset(&other.community) && self.chat.is_subset(&other.chat) && self.message.is_subset(&other.message)
+    }
+
+    pub fn intersect(p1: &Self, p2: &Self) -> Self {
+        fn intersect<T: Hash + Eq + Clone>(x: &HashSet<T>, y: &HashSet<T>) -> HashSet<T> {
+            x.intersection(y).cloned().collect()
+        }
+
+        Self {
+            community: intersect(&p1.community, &p2.community),
+            chat: intersect(&p1.chat, &p2.chat),
+            message: intersect(&p1.message, &p2.message),
+        }
+    }
+
+    pub fn text_only() -> Self {
+        Self {
+            community: HashSet::new(),
+            chat: HashSet::new(),
+            message: HashSet::from_iter([MessagePermission::Text]),
+        }
+    }
+}
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct BotMessage {
@@ -113,6 +144,7 @@ pub struct BotMatch {
     pub owner: UserId,
     pub avatar_id: Option<u128>,
     pub commands: Vec<SlashCommandSchema>,
+    pub autonomous_config: Option<AutonomousConfig>,
 }
 
 macro_rules! slash_command_option_choice {

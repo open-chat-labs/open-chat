@@ -9,8 +9,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{
-    BotInstallationLocation, BotMatch, CanisterId, CyclesTopUp, Document, Milliseconds, SlashCommandSchema, SuspensionDuration,
-    TimestampMillis, UniquePersonProof, UserId, UserType,
+    AutonomousConfig, BotInstallationLocation, BotMatch, CanisterId, CyclesTopUp, Document, Milliseconds, SlashCommandSchema,
+    SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
 };
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MonthKey;
@@ -48,6 +48,8 @@ pub struct Bot {
     pub endpoint: String,
     pub description: String,
     pub commands: Vec<SlashCommandSchema>,
+    #[serde(default)]
+    pub autonomous_config: Option<AutonomousConfig>,
     pub last_updated: TimestampMillis,
     #[serde(default)]
     pub installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
@@ -63,6 +65,7 @@ impl Bot {
             description: self.description.clone(),
             avatar_id: self.avatar.as_ref().map(|a| a.id),
             commands: self.commands.clone(),
+            autonomous_config: self.autonomous_config.clone(),
         }
     }
 
