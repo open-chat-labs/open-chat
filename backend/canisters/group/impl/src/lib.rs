@@ -27,7 +27,6 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, StableMemoryMap};
 use std::cell::RefCell;
-use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
@@ -798,7 +797,13 @@ impl Data {
     }
 
     pub fn details_last_updated(&self) -> TimestampMillis {
-        max(self.chat.details_last_updated(), self.bots.last_updated())
+        let timestamps = vec![
+            self.chat.details_last_updated(),
+            self.bots.last_updated(),
+            self.bot_api_keys.last_updated(),
+        ];
+
+        timestamps.into_iter().max().unwrap_or_default()
     }
 }
 

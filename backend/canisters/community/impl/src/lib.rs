@@ -578,6 +578,7 @@ impl Data {
             self.events.latest_event_timestamp(),
             self.members.last_updated(),
             self.bots.last_updated(),
+            self.bot_api_keys.last_updated(),
         ]
         .into_iter()
         .max()

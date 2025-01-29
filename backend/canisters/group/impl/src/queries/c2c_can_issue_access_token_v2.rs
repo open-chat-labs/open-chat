@@ -16,15 +16,15 @@ fn c2c_can_issue_access_token_v2(args: Args) -> Response {
 
 fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Response {
     if let AccessTypeArgs::BotActionByApiKey(args) = &args_outer {
-        let Some(api_key) = state.data.bot_api_keys.get(&args.bot_id) else {
-            return Response::Failure;
-        };
-
-        if api_key.secret != args.secret {
+        if let Some(granted_permissions) = state
+            .data
+            .bot_api_keys
+            .permissions_if_secret_matches(&args.bot_id, &args.secret)
+        {
+            return Response::SuccessBot(granted_permissions.clone());
+        } else {
             return Response::Failure;
         }
-
-        return Response::SuccessBot(api_key.permissions.clone());
     }
 
     if let AccessTypeArgs::BotActionByCommand(args) = &args_outer {
@@ -38,10 +38,10 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
             return Response::Failure;
         };
 
-        let granted = intersect_permissions(granted_to_bot, &granted_to_user);
+        let available = intersect_permissions(granted_to_bot, &granted_to_user);
 
-        if can_bot_execute_action(&args.requested_permissions, &granted) {
-            return Response::SuccessBot(granted);
+        if can_bot_execute_action(&args.requested_permissions, &available) {
+            return Response::SuccessBot(available);
         } else {
             return Response::Failure;
         }

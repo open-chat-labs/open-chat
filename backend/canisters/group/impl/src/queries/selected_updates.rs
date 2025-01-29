@@ -51,6 +51,8 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         }
     }
 
+    results.api_keys_generated = state.data.bot_api_keys.generated_since(args.updates_since);
+
     if results.has_updates() {
         Success(results)
     } else {

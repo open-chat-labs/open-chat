@@ -528,6 +528,7 @@ type SelectedGroupUpdates = record {
     members_removed : vec UserId;
     bots_added_or_updated : vec BotGroupDetails;
     bots_removed : vec UserId;
+    api_keys_generated : vec PublicApiKeyDetails;
     blocked_users_added : vec UserId;
     blocked_users_removed : vec UserId;
     invited_users : opt vec UserId;
@@ -2197,6 +2198,13 @@ type BotGroupDetails = record {
     user_id : UserId;
     added_by : UserId;
     permissions : BotPermissions;
+};
+
+type PublicApiKeyDetails = record {
+    bot_id : UserId;
+    granted_permissions : BotPermissions;
+    generated_by : UserId;
+    generated_at : TimestampMillis;
 };
 
 type BotMessageContext = record {

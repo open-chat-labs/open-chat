@@ -46,12 +46,15 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
             })
             .collect();
 
+        let api_keys = state.data.bot_api_keys.generated_since(0);
+
         Success(SuccessResult {
             timestamp: last_updated,
             last_updated,
             latest_event_index: chat.events.main_events_reader().latest_event_index().unwrap_or_default(),
             participants: members,
             bots,
+            api_keys,
             basic_members,
             blocked_users: chat.members.blocked(),
             invited_users: chat.invited_users.users(),

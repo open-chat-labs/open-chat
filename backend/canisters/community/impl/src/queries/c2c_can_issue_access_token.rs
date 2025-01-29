@@ -20,28 +20,27 @@ fn c2c_can_issue_access_token(args: Args) -> Response {
 
 fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Response {
     if let AccessTypeArgs::BotActionByApiKey(args) = &args_outer.access_type {
-        let api_key_option = if let Some(channel_id) = args_outer.channel_id {
+        let granted_permissions_opt = if let Some(channel_id) = args_outer.channel_id {
             if let Some(channel) = state.data.channels.get(&channel_id) {
-                channel.bot_api_keys.get(&args.bot_id)
+                channel.bot_api_keys.permissions_if_secret_matches(&args.bot_id, &args.secret)
             } else {
                 return Response::Failure;
             }
         } else {
-            state.data.bot_api_keys.get(&args.bot_id)
+            state
+                .data
+                .bot_api_keys
+                .permissions_if_secret_matches(&args.bot_id, &args.secret)
         };
 
-        let Some(api_key) = api_key_option else {
+        let Some(granted_permissions) = granted_permissions_opt else {
             return Response::Failure;
         };
 
-        if api_key.secret != args.secret {
-            return Response::Failure;
-        }
+        let available = intersect_permissions(granted_permissions, &args.requested_permissions);
 
-        let granted = intersect_permissions(&api_key.permissions, &args.requested_permissions);
-
-        if can_bot_execute_action(&get_text_message_permission(), &granted) {
-            return Response::SuccessBot(granted);
+        if can_bot_execute_action(&get_text_message_permission(), &available) {
+            return Response::SuccessBot(available);
         } else {
             return Response::Failure;
         }

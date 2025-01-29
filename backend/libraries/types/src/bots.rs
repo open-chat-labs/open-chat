@@ -1,6 +1,6 @@
 use crate::{
     AccessTokenScope, CanisterId, ChatId, CommunityId, CommunityPermission, GroupPermission, MessageContentInitial, MessageId,
-    MessagePermission, UserId,
+    MessagePermission, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -136,6 +136,15 @@ pub struct BotGroupDetails {
     pub user_id: UserId,
     pub added_by: UserId,
     pub permissions: BotPermissions,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct PublicApiKeyDetails {
+    pub bot_id: UserId,
+    pub granted_permissions: BotPermissions,
+    pub generated_by: UserId,
+    pub generated_at: TimestampMillis,
 }
 
 #[ts_export]

@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotGroupDetails, CommunityMember, TimestampMillis, UserGroupDetails, UserId, VersionedRules};
+use types::{BotGroupDetails, CommunityMember, PublicApiKeyDetails, TimestampMillis, UserGroupDetails, UserId, VersionedRules};
 
 #[ts_export(community, selected_updates)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -28,6 +28,7 @@ pub struct SuccessResult {
     pub members_removed: Vec<UserId>,
     pub bots_added_or_updated: Vec<BotGroupDetails>,
     pub bots_removed: Vec<UserId>,
+    pub api_keys_generated: Vec<PublicApiKeyDetails>,
     pub blocked_users_added: Vec<UserId>,
     pub blocked_users_removed: Vec<UserId>,
     pub invited_users: Option<Vec<UserId>>,

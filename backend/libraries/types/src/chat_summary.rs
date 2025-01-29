@@ -1,7 +1,7 @@
 use crate::{
     AccessGate, AccessGateConfig, BotGroupDetails, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo,
     GroupMember, GroupPermissions, GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate,
-    TimestampMillis, UserId, Version,
+    PublicApiKeyDetails, TimestampMillis, UserId, Version,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -253,6 +253,7 @@ pub struct SelectedGroupUpdates {
     pub members_removed: Vec<UserId>,
     pub bots_added_or_updated: Vec<BotGroupDetails>,
     pub bots_removed: Vec<UserId>,
+    pub api_keys_generated: Vec<PublicApiKeyDetails>,
     pub blocked_users_added: Vec<UserId>,
     pub blocked_users_removed: Vec<UserId>,
     pub invited_users: Option<Vec<UserId>>,
@@ -266,6 +267,7 @@ impl SelectedGroupUpdates {
         !self.members_added_or_updated.is_empty()
             || !self.members_removed.is_empty()
             || !self.bots_added_or_updated.is_empty()
+            || !self.api_keys_generated.is_empty()
             || !self.bots_removed.is_empty()
             || !self.blocked_users_added.is_empty()
             || !self.blocked_users_removed.is_empty()
