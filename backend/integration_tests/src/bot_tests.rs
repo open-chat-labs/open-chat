@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv, User};
 use candid::Principal;
+use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs};
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -9,12 +10,12 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::bot_actions::{BotMessageAction, MessageContent};
 use types::{
-    AccessTokenBotCommand, AccessTokenType, BotAction, BotCommand, BotDefinition, BotInstallationLocation, CanisterId, Chat,
-    ChatEvent, MessagePermission, BotPermissions, SlashCommandSchema, TextContent, UserId,
+    BotAction, BotActionChatDetails, BotActionScope, BotCommand, BotDefinition, BotInstallationLocation, BotPermissions,
+    CanisterId, Chat, ChatEvent, MessagePermission, SlashCommandSchema, TextContent, UserId,
 };
 
 #[test]
-fn e2e_bot_test() {
+fn e2e_command_bot_test() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -71,21 +72,21 @@ fn e2e_bot_test() {
     // Get an access token to call the greet command
     let chat = Chat::Group(group_id);
     let message_id = random_from_u128();
-    let access_token_args = local_user_index_canister::access_token::Args {
-        token_type: AccessTokenType::BotCommand(AccessTokenBotCommand {
-            user_id: user.user_id,
-            bot: bot.id,
+    let access_token_args = access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
+        bot_id,
+        command: BotCommand {
+            name: command_name.clone(),
+            args: Vec::new(),
+            initiator: user.user_id,
+        },
+        scope: BotActionScope::Chat(BotActionChatDetails {
             chat,
             thread_root_message_index: None,
             message_id,
-            command: BotCommand {
-                name: command_name.clone(),
-                args: Vec::new(),
-            },
         }),
-        chat,
-    };
-    let response = client::local_user_index::access_token(
+    });
+
+    let response = client::local_user_index::access_token_v2(
         env,
         user.principal,
         canister_ids.local_user_index(env, group_id),
@@ -95,7 +96,7 @@ fn e2e_bot_test() {
     // Confirm bot is unauthorised
     assert!(matches!(
         response,
-        local_user_index_canister::access_token::Response::NotAuthorized
+        local_user_index_canister::access_token_v2::Response::NotAuthorized
     ));
 
     // Update the group bot permissions
@@ -109,13 +110,13 @@ fn e2e_bot_test() {
     assert_eq!(response.bots_added_or_updated[0].user_id, bot.id);
 
     // Try again to get an access token to call the greet command
-    let access_token = match client::local_user_index::access_token(
+    let access_token = match client::local_user_index::access_token_v2(
         env,
         user.principal,
         canister_ids.local_user_index(env, group_id),
         &access_token_args,
     ) {
-        local_user_index_canister::access_token::Response::Success(access_token) => access_token,
+        local_user_index_canister::access_token_v2::Response::Success(access_token) => access_token,
         response => panic!("'access_token' error: {response:?}"),
     };
 
@@ -290,6 +291,7 @@ fn register_bot(
         BotDefinition {
             description: description.clone(),
             commands: commands.clone(),
+            autonomous_config: None,
         },
     );
 

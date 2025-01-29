@@ -3,6 +3,7 @@ use local_user_index_canister::*;
 
 // Queries
 generate_msgpack_query_call!(access_token);
+generate_msgpack_query_call!(access_token_v2);
 generate_msgpack_query_call!(chat_events);
 generate_msgpack_query_call!(group_and_community_summary_updates);
 

@@ -6,7 +6,7 @@ use utils::base64;
 
 #[ts_export(local_user_index, access_token_v2)]
 #[allow(clippy::large_enum_variant)]
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Args {
     StartVideoCall(StartVideoCallArgs),
     JoinVideoCall(JoinVideoCallArgs),
@@ -24,7 +24,7 @@ where
 }
 
 #[ts_export(local_user_index, access_token_v2)]
-#[derive(CandidType, Serialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(String),
     NotAuthorized,
