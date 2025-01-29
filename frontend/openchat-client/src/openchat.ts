@@ -7003,8 +7003,7 @@ export class OpenChat extends EventTarget {
         return this.#getLocalUserIndex(chat).then((localUserIndex) => {
             return this.#sendRequest({
                 kind: "getAccessToken",
-                chatId,
-                accessTokenType: { kind: "join_video_call" }, // TODO - this should have it's own token type really
+                accessTokenType: { kind: "join_video_call", chatId }, // TODO - this should have it's own token type really
                 localUserIndex,
             })
                 .then((token) => {
@@ -7887,13 +7886,19 @@ export class OpenChat extends EventTarget {
                 kind: "getAccessToken",
                 chatId: chat.id,
                 accessTokenType: {
-                    kind: "execute_bot_command",
-                    messageContext: { chatId: chat.id, threadRootMessageIndex },
-                    messageId,
-                    commandName: bot.command.name,
-                    arguments: bot.command.params,
+                    kind: "bot_action_by_command",
                     botId: bot.id,
-                    userId: this.#liveState.user.userId,
+                    scope: {
+                        kind: "chat_scope",
+                        chatId: chat.id,
+                        threadRootMessageIndex,
+                        messageId,
+                    },
+                    command: {
+                        initiator: this.#liveState.user.userId,
+                        commandName: bot.command.name,
+                        arguments: bot.command.params,
+                    },
                 },
                 localUserIndex,
             }).then((token) => {
@@ -8240,9 +8245,7 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    removeIdentityLink(
-        linked_principal: string,
-    ): Promise<RemoveIdentityLinkResponse> {
+    removeIdentityLink(linked_principal: string): Promise<RemoveIdentityLinkResponse> {
         return this.#sendRequest({
             kind: "removeIdentityLink",
             linked_principal,

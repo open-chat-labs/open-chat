@@ -294,7 +294,7 @@ import type {
     GroupPermission,
     CommunityPermission,
     MessagePermission as ApiMessagePermission,
-    SlashCommandPermissions as ApiExternalBotPermissions,
+    BotPermissions as ApiExternalBotPermissions,
     CommunityUpdateBotResponse,
     GroupUpdateBotResponse,
     BotGroupDetails as ApiBotGroupDetails,
@@ -565,7 +565,6 @@ export function message(value: TMessage): Message {
 
 export function botMessageContext(value: TBotMessageContext): BotMessageContext {
     return {
-        initiator: principalBytesToString(value.initiator),
         finalised: value.finalised,
         command: {
             name: value.command.name,

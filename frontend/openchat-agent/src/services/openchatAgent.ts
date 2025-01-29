@@ -3708,11 +3708,10 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async getAccessToken(
-        chatId: ChatIdentifier,
         accessTokenType: AccessTokenType,
         localUserIndex: string,
     ): Promise<string | undefined> {
-        return this.getLocalUserIndexClient(localUserIndex).getAccessToken(chatId, accessTokenType);
+        return this.getLocalUserIndexClient(localUserIndex).getAccessToken(accessTokenType);
     }
 
     async getLocalUserIndexForUser(userId: string): Promise<string> {

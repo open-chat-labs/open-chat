@@ -662,7 +662,6 @@ export type Message<T extends MessageContent = MessageContent> = {
 };
 
 export type BotMessageContext = {
-    initiator: string;
     command: {
         name: string;
         args: SlashCommandParamInstance[];

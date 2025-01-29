@@ -59,6 +59,8 @@ import {
 import {
     LocalUserIndexAccessTokenArgs,
     LocalUserIndexAccessTokenResponse,
+    LocalUserIndexAccessTokenV2Args,
+    LocalUserIndexAccessTokenV2Response,
     LocalUserIndexChatEventsArgs,
     LocalUserIndexChatEventsResponse,
     LocalUserIndexGroupAndCommunitySummaryUpdatesArgs,
@@ -431,19 +433,13 @@ export class LocalUserIndexClient extends CandidService {
         );
     }
 
-    getAccessToken(
-        chatId: ChatIdentifier,
-        accessType: AccessTokenType,
-    ): Promise<string | undefined> {
+    getAccessToken(accessType: AccessTokenType): Promise<string | undefined> {
         return this.executeMsgpackQuery(
             "access_token",
-            {
-                chat: apiChatIdentifier(chatId),
-                token_type: apiAccessTokenType(accessType),
-            },
+            apiAccessTokenType(accessType),
             accessTokenResponse,
-            LocalUserIndexAccessTokenArgs,
-            LocalUserIndexAccessTokenResponse,
+            LocalUserIndexAccessTokenV2Args,
+            LocalUserIndexAccessTokenV2Response,
         );
     }
 

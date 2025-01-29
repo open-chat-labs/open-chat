@@ -535,7 +535,6 @@ type GetLocalUserIndexForUser = {
 
 type GetAccessToken = {
     kind: "getAccessToken";
-    chatId: ChatIdentifier;
     accessTokenType: AccessTokenType;
     localUserIndex: string;
 };
@@ -1428,7 +1427,7 @@ type LinkIdentities = {
 type RemoveIdentityLink = {
     kind: "removeIdentityLink";
     linked_principal: string;
-}
+};
 
 type DeleteUser = {
     kind: "deleteUser";

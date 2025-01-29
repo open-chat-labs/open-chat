@@ -1719,11 +1719,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getAccessToken(
-                        payload.chatId,
-                        payload.accessTokenType,
-                        payload.localUserIndex,
-                    ),
+                    agent.getAccessToken(payload.accessTokenType, payload.localUserIndex),
                 );
                 break;
 
@@ -1843,9 +1839,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    removeIdentityLink(
-                        payload.linked_principal,
-                    ),
+                    removeIdentityLink(payload.linked_principal),
                 );
                 break;
 
@@ -2013,10 +2007,8 @@ async function linkIdentities(
     return await approverAgent.approveIdentityLink(initiator);
 }
 
-async function removeIdentityLink(
-    linked_principal: string,
-): Promise<RemoveIdentityLinkResponse> {
-    if(identityAgent) {
+async function removeIdentityLink(linked_principal: string): Promise<RemoveIdentityLinkResponse> {
+    if (identityAgent) {
         return identityAgent.removeIdentityLink(linked_principal);
     }
 

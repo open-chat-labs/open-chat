@@ -1,5 +1,6 @@
 import type { SlashCommandParamInstance } from "./bots";
-import type { MessageContext, VideoCallType } from "./chat";
+import type { ChatIdentifier, MessageContext, VideoCallType } from "./chat";
+import type { CommunityIdentifier } from "./community";
 import type { OptionUpdate } from "./optionUpdate";
 
 export const allRoles = ["none", "owner", "admin", "moderator", "member"] as const;
@@ -160,23 +161,42 @@ export function defaultOptionalMessagePermissions(): OptionalMessagePermissions 
 
 export type PermissionsByRole = Record<ChatPermissionRole, Set<string>>;
 
-export type AccessTokenType = JoinVideoCall | StartVideoCall | ExecuteBotCommand;
+export type AccessTokenType = JoinVideoCall | StartVideoCall | BotActionByCommand;
 
 export type JoinVideoCall = {
     kind: "join_video_call";
+    chatId: ChatIdentifier;
 };
 
 export type StartVideoCall = {
     kind: "start_video_call";
     callType: VideoCallType;
+    chatId: ChatIdentifier;
 };
 
-export type ExecuteBotCommand = {
-    kind: "execute_bot_command";
-    messageContext: MessageContext;
-    messageId: bigint;
+export type BotCommand = {
+    initiator: string;
     commandName: string;
     arguments: SlashCommandParamInstance[];
+};
+
+export type BotActionChatScope = {
+    kind: "chat_scope";
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageId: bigint;
+};
+
+export type BotActionCommunityScope = {
+    kind: "community_scope";
+    communityId: CommunityIdentifier;
+};
+
+export type BotActionScope = BotActionChatScope | BotActionCommunityScope;
+
+export type BotActionByCommand = {
+    kind: "bot_action_by_command";
     botId: string;
-    userId: string;
+    command: BotCommand;
+    scope: BotActionScope;
 };
