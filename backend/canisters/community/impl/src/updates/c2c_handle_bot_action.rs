@@ -7,8 +7,10 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_handle_bot_action::*;
 use community_canister::send_message;
 use types::bot_actions::MessageContent;
-use types::{BotAction, BotCaller, ChannelId, Chat, HandleBotActionsError, MessageContentInitial, UserId};
-use utils::bots::{can_bot_execute_action, intersect_permissions};
+use types::{
+    BotAction, BotCaller, BotCommandCaller, BotPermissions, ChannelId, Chat, HandleBotActionsError, MessageContentInitial,
+    UserId,
+};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -49,6 +51,15 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                 MessageContent::Giphy(giphy_content) => MessageContentInitial::Giphy(giphy_content),
             };
 
+            let bot_caller = match args.command {
+                Some(command) => BotCaller::Command(BotCommandCaller {
+                    bot: args.bot.user_id,
+                    command,
+                    finalised: action.finalised,
+                }),
+                None => BotCaller::ApiKey(args.bot.user_id),
+            };
+
             match send_message_impl(
                 send_message::Args {
                     channel_id,
@@ -66,11 +77,7 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                     message_filter_failed: None,
                     new_achievement: false,
                 },
-                args.command.map(|command| BotCaller {
-                    bot: args.bot.user_id,
-                    command,
-                    finalised: action.finalised,
-                }),
+                Some(bot_caller),
                 state,
             ) {
                 send_message::Response::Success(_) => Ok(()),
@@ -101,7 +108,7 @@ fn is_bot_permitted_to_execute_action(
     // Get the permissions granted to the user in this community/channel iff there is an initiator
     let granted = if let Some(initiator) = initiator {
         if let Some(granted_to_user) = state.data.get_user_permissions_for_bot_commands(initiator, Some(channel_id)) {
-            &intersect_permissions(granted_to_bot, &granted_to_user)
+            &BotPermissions::intersect(granted_to_bot, &granted_to_user)
         } else {
             return false;
         }
@@ -109,8 +116,6 @@ fn is_bot_permitted_to_execute_action(
         granted_to_bot
     };
 
-    // Get the permissions required to execute the given action
-    let permissions_required = action.permissions_required();
-
-    can_bot_execute_action(&permissions_required, granted)
+    // The permissions required for the action must be a subset of the permissions granted to the bot
+    action.permissions_required().is_subset(granted)
 }
