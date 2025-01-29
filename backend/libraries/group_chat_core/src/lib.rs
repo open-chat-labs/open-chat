@@ -625,10 +625,10 @@ impl GroupChatCore {
             self.events
                 .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
         {
-            if let Caller::BotCommand(bot_now) = &caller {
+            if let Caller::BotV2(bot_now) = &caller {
                 if let Some(bot_message) = message.bot_context {
                     if bot_now.bot == message.sender
-                        && bot_now.command.initiator == bot_message.command.initiator
+                        && bot_now.command.as_ref().map(|c| c.initiator) == bot_message.command.as_ref().map(|c| c.initiator)
                         && bot_now.command == bot_message.command
                         && bot_now.finalised
                         && !bot_message.finalised
@@ -713,7 +713,7 @@ impl GroupChatCore {
             thread_root_message_index,
             message_id,
             content,
-            bot_context: if let Caller::BotCommand(bot) = caller { Some(bot.into()) } else { None },
+            bot_context: if let Caller::BotV2(bot) = caller { Some(bot.into()) } else { None },
             mentioned: if !suppressed { mentioned.to_vec() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
@@ -725,7 +725,7 @@ impl GroupChatCore {
 
         let message_event = self.events.push_message(push_message_args, Some(event_store_client));
 
-        let unfinalised_bot_message = if let Caller::BotCommand(bot) = caller { !bot.finalised } else { false };
+        let unfinalised_bot_message = if let Caller::BotV2(bot) = caller { !bot.finalised } else { false };
 
         let users_to_notify = if unfinalised_bot_message {
             vec![]

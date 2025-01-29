@@ -2208,7 +2208,7 @@ type PublicApiKeyDetails = record {
 };
 
 type BotMessageContext = record {
-    command : BotCommand;
+    command : opt BotCommand;
     finalised : bool;
 };
 
