@@ -9,7 +9,7 @@ use std::error::Error;
 use std::ops::Deref;
 use std::time::SystemTime;
 use testing::rng::random_string;
-use types::{AccessTokenType, ChannelId, CommunityId, StartVideoCallArgs, StartVideoCallClaims, VideoCallType};
+use types::{AccessTokenType, ChannelId, CommunityId, StartVideoCallClaims, VideoCallAccessTokenArgs, VideoCallType};
 
 #[test]
 fn access_token_valid() {
@@ -43,7 +43,7 @@ fn access_token_valid() {
         canister_ids.local_user_index(env, community_id),
         community_id,
         channel_id,
-        AccessTokenType::StartVideoCallV2(StartVideoCallArgs {
+        AccessTokenType::StartVideoCallV2(VideoCallAccessTokenArgs {
             call_type: VideoCallType::Broadcast,
         }),
     );
