@@ -581,11 +581,11 @@ export function message(value: TMessage): Message {
 export function botMessageContext(value: TBotMessageContext): BotMessageContext {
     return {
         finalised: value.finalised,
-        command: {
-            name: value.command.name,
-            args: value.command.args.map(botCommandArg),
-            initiator: principalBytesToString(value.command.initiator),
-        },
+        command: mapOptional(value.command, (command) => ({
+            name: command.name,
+            args: command.args.map(botCommandArg),
+            initiator: principalBytesToString(command.initiator),
+        })),
     };
 }
 

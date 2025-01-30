@@ -470,9 +470,12 @@
 
 {#if expiresAt === undefined || percentageExpired < 100}
     <div out:fade|local={{ duration: 1000 }} class="message-wrapper" class:last>
-        {#if botContext !== undefined}
+        {#if botContext !== undefined && botContext.command !== undefined}
             <div class="bot-context">
-                <BotMessageContext botName={senderDisplayName} {botContext} />
+                <BotMessageContext
+                    botName={senderDisplayName}
+                    botCommand={botContext.command}
+                    finalised={botContext.finalised} />
             </div>
         {/if}
         <IntersectionObserverComponent let:intersecting>

@@ -662,12 +662,14 @@ export type Message<T extends MessageContent = MessageContent> = {
     botContext?: BotMessageContext;
 };
 
+export type BotContextCommand = {
+    name: string;
+    args: SlashCommandParamInstance[];
+    initiator: string;
+};
+
 export type BotMessageContext = {
-    command: {
-        name: string;
-        args: SlashCommandParamInstance[];
-        initiator: string;
-    };
+    command?: BotContextCommand;
     finalised: boolean;
 };
 

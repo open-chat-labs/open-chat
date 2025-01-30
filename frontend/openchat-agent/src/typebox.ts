@@ -8216,7 +8216,7 @@ export const PrizeContentInitial = Type.Object({
 
 export type BotMessageContext = Static<typeof BotMessageContext>;
 export const BotMessageContext = Type.Object({
-    command: BotCommand,
+    command: Type.Optional(Type.Union([BotCommand, Type.Undefined()])),
     finalised: Type.Boolean(),
 });
 

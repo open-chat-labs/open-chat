@@ -842,7 +842,7 @@ export type UserAcceptP2pSwapResponse = { "Success": AcceptSwapSuccess } | "Chat
 export type PollContent = { config: PollConfig, votes: PollVotes, ended: boolean, };
 export type CryptoContent = { recipient: UserId, transfer: CryptoTransaction, caption?: string | undefined, };
 export type PrizeContentInitial = { prizes_v2: Array<bigint>, transfer: CryptoTransaction, end_date: bigint, caption?: string | undefined, diamond_only: boolean, lifetime_diamond_only: boolean, unique_person_only: boolean, streak_only: number, };
-export type BotMessageContext = { command: BotCommand, finalised: boolean, };
+export type BotMessageContext = { command?: BotCommand | undefined, finalised: boolean, };
 /**
  * @default NoChange
  */

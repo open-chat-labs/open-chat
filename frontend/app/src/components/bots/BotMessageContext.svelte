@@ -3,7 +3,6 @@
         AvatarSize,
         OpenChat,
         userStore,
-        type BotMessageContext,
         type SlashCommandParamInstance,
     } from "openchat-client";
     import Markdown from "../home/Markdown.svelte";
@@ -14,32 +13,33 @@
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import type { BotContextCommand } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        botContext: BotMessageContext;
+        botCommand: BotContextCommand;
         botName: string;
+        finalised: boolean;
     }
 
-    let { botContext }: Props = $props();
-    let commandInstance = botContext.command;
+    let { botCommand, finalised }: Props = $props();
     let MAX_COMMAND_LENGTH = $derived($mobileWidth ? 50 : 150);
-    let paramValues = $derived(commandInstance.args.map(paramValue));
+    let paramValues = $derived(botCommand.args.map(paramValue));
     let paramsLength = $derived(paramValues.reduce((total, p) => total + p.length, 0));
     let paramMode: "truncated" | "full" = $derived(
         paramsLength > MAX_COMMAND_LENGTH ? "truncated" : "full",
     );
     let text = $derived.by(() => {
         if (paramMode === "truncated") {
-            return `@UserId(${botContext.command.initiator}) used **/${commandInstance.name}**${
-                commandInstance.args.length > 0 ? " with " : ""
+            return `@UserId(${botCommand.initiator}) used **/${botCommand.name}**${
+                botCommand.args.length > 0 ? " with " : ""
             }`;
         } else {
-            return `@UserId(${botContext.command.initiator}) used **/${commandInstance.name}**`;
+            return `@UserId(${botCommand.initiator}) used **/${botCommand.name}**`;
         }
     });
-    let user = $derived($userStore.get(botContext.command.initiator));
+    let user = $derived($userStore.get(botCommand.initiator));
 
     function paramValue(param: SlashCommandParamInstance): string {
         switch (param.kind) {
@@ -61,7 +61,7 @@
         <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Tiny} />
     {/if}
     <Markdown {text} />
-    {#if commandInstance.args.length > 0}
+    {#if botCommand.args.length > 0}
         {#if paramMode === "truncated"}
             <TooltipWrapper position="right" align="middle">
                 <div class="cog" slot="target">
@@ -70,7 +70,7 @@
                 <div let:position let:align slot="tooltip">
                     <TooltipPopup {align} {position}>
                         <div class="command-params">
-                            {#each commandInstance.args as param}
+                            {#each botCommand.args as param}
                                 <div class="param">
                                     <div class="name">{param.name}:</div>
                                     <div class="value">{paramValue(param)}</div>
@@ -86,7 +86,7 @@
             {/each}
         {/if}
     {/if}
-    {#if !botContext.finalised}
+    {#if !finalised}
         <Typing />
     {/if}
 </div>
