@@ -109,9 +109,10 @@ impl RuntimeState {
         }
     }
 
-    pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
+    pub fn push_notification(&mut self, sender: Option<UserId>, recipients: Vec<UserId>, notification: Notification) {
         if !recipients.is_empty() {
             let args = c2c_push_notification::Args {
+                sender,
                 recipients,
                 authorizer: Some(self.data.local_group_index_canister_id),
                 notification_bytes: ByteBuf::from(candid::encode_one(notification).unwrap()),
@@ -427,38 +428,46 @@ impl RuntimeState {
         }
     }
 
-    pub fn verified_caller(&self, mut bot_context: Option<BotCaller>) -> CallerResult {
+    pub fn verified_caller(&self, mut bot_caller: Option<BotCaller>) -> CallerResult {
         use CallerResult::*;
 
-        let caller = self.env.caller();
+        let user_or_principal: Option<Principal> = if let Some(bot_caller) = bot_caller.as_ref() {
+            if self.data.bots.get(&bot_caller.bot).is_none() {
+                return NotFound;
+            }
 
-        if caller == self.data.user_index_canister_id {
-            return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
-        }
+            bot_caller.command.as_ref().map(|c| c.initiator.into())
+        } else {
+            let caller = self.env.caller();
 
-        let user_or_principal = bot_context.as_ref().map(|bc| bc.command.initiator.into()).unwrap_or(caller);
+            if caller == self.data.user_index_canister_id {
+                return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
+            }
 
-        let Some(member) = self.data.get_member(user_or_principal) else {
-            return NotFound;
+            Some(caller)
         };
 
-        if member.suspended().value {
-            return Suspended;
-        }
+        if let Some(user_or_principal) = user_or_principal {
+            let Some(member) = self.data.get_member(user_or_principal) else {
+                return NotFound;
+            };
 
-        if let Some(bot_context) = bot_context.take() {
-            if self.data.bots.get(&bot_context.bot).is_some() {
-                Success(Caller::BotV2(bot_context))
+            if member.suspended().value {
+                return Suspended;
+            }
+
+            if let Some(bot_caller) = bot_caller.take() {
+                Success(Caller::BotV2(bot_caller))
             } else {
-                NotFound
+                match member.user_type() {
+                    UserType::User => Success(Caller::User(member.user_id())),
+                    UserType::BotV2 => NotFound,
+                    UserType::Bot => Success(Caller::Bot(member.user_id())),
+                    UserType::OcControlledBot => Success(Caller::OCBot(member.user_id())),
+                }
             }
         } else {
-            match member.user_type() {
-                UserType::User => Success(Caller::User(member.user_id())),
-                UserType::BotV2 => NotFound,
-                UserType::Bot => Success(Caller::Bot(member.user_id())),
-                UserType::OcControlledBot => Success(Caller::OCBot(member.user_id())),
-            }
+            Success(Caller::BotV2(bot_caller.unwrap()))
         }
     }
 }

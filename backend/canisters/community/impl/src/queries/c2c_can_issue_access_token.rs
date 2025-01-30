@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::guards::caller_is_local_user_index;
 use crate::read_state;
 use crate::RuntimeState;
@@ -8,10 +6,7 @@ use community_canister::c2c_can_issue_access_token::*;
 use group_chat_core::{GroupChatCore, GroupRoleInternal};
 use types::c2c_can_issue_access_token::AccessTypeArgs;
 use types::BotPermissions;
-use types::MessagePermission;
 use types::VideoCallType;
-use utils::bots::can_bot_execute_action;
-use utils::bots::intersect_permissions;
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_can_issue_access_token(args: Args) -> Response {
@@ -37,9 +32,9 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
             return Response::Failure;
         };
 
-        let available = intersect_permissions(granted_permissions, &args.requested_permissions);
+        let available = BotPermissions::intersect(granted_permissions, &args.requested_permissions);
 
-        if can_bot_execute_action(&get_text_message_permission(), &available) {
+        if BotPermissions::text_only().is_subset(&available) {
             return Response::SuccessBot(available);
         } else {
             return Response::Failure;
@@ -60,10 +55,10 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
             return Response::Failure;
         };
 
-        let granted = intersect_permissions(granted_to_bot, &granted_to_user);
-        let granted = intersect_permissions(&granted, &args.requested_permissions);
+        let granted = BotPermissions::intersect(granted_to_bot, &granted_to_user);
+        let available = BotPermissions::intersect(&granted, &args.requested_permissions);
 
-        if can_bot_execute_action(&get_text_message_permission(), &granted) {
+        if BotPermissions::text_only().is_subset(&available) {
             return Response::SuccessBot(granted);
         } else {
             return Response::Failure;
@@ -107,12 +102,4 @@ fn can_start_video_call(member_role: GroupRoleInternal, call_type: VideoCallType
     }
 
     !chat.is_public.value || matches!(call_type, VideoCallType::Broadcast)
-}
-
-fn get_text_message_permission() -> BotPermissions {
-    BotPermissions {
-        community: HashSet::new(),
-        chat: HashSet::new(),
-        message: HashSet::from_iter(vec![MessagePermission::Text]),
-    }
 }

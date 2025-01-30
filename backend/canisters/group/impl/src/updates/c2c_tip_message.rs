@@ -52,6 +52,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         let chat_id = state.env.canister_id().into();
 
                         state.push_notification(
+                            Some(user_id),
                             vec![message.sender],
                             Notification::GroupMessageTipped(GroupMessageTipped {
                                 chat_id,

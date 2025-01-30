@@ -17,17 +17,18 @@ type BotUpdatesArgs = record {
 type BotUpdatesResponse = variant {
     Success : record {
         added_or_updated: vec record {
-            id: UserId;
-            owner: UserId;
-            name: text;
-            avatar_id: opt nat;
-            endpoint: text;
-            description: text;
-            commands: vec SlashCommandSchema;
+            id : UserId;
+            owner : UserId;
+            name : text;
+            avatar_id : opt nat;
+            endpoint : text;
+            description : text;
+            commands : vec SlashCommandSchema;
+            autonomous_config : opt AutonomousConfig;
             last_updated : TimestampMillis;
         };
-        removed: vec UserId;
-        timestamp: TimestampMillis;
+        removed : vec UserId;
+        timestamp : TimestampMillis;
     };
     SuccessNoUpdates;
 };
@@ -118,7 +119,8 @@ type BotMatch = record {
     name : text;
     description : text;
     avatar_id : opt nat;
-    commands: vec SlashCommandSchema;
+    commands : vec SlashCommandSchema;
+    autonomous_config : opt AutonomousConfig;
 };
 
 type SearchArgs = record {

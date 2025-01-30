@@ -63,7 +63,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
             .iter()
             .flat_map(|(user_id, subs)| subs.iter().map(|s| (*user_id, s.clone())))
         {
-            state.data.notifications_index_event_sync_queue.push(
+            state.data.notification_canisters_event_sync_queue.push(
                 canister_id,
                 NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded { user_id, subscription }),
             );

@@ -249,7 +249,7 @@ pub type CustomContentEventPayload = ();
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotMessageContext {
-    pub command: BotCommand,
+    pub command: Option<BotCommand>,
     pub finalised: bool,
 }
 

@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{SlashCommandSchema, TimestampMillis, UserId};
+use types::{AutonomousConfig, SlashCommandSchema, TimestampMillis, UserId};
 
 #[ts_export(user_index, bot_updates)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -34,5 +34,6 @@ pub struct BotSchema {
     pub endpoint: String,
     pub description: String,
     pub commands: Vec<SlashCommandSchema>,
+    pub autonomous_config: Option<AutonomousConfig>,
     pub last_updated: TimestampMillis,
 }

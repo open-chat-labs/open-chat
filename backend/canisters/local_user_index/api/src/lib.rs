@@ -2,10 +2,11 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    is_default, AutonomousConfig, BotInstallationLocation, CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason,
-    CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    NotifyChit, PhoneNumber, ReferralType, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof,
-    UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType,
+    is_default, AutonomousConfig, BotDefinition, BotInstallationLocation, CanisterId, ChannelLatestMessageIndex, ChatId,
+    ChitEarnedReason, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageContentInitial,
+    MessageId, MessageIndex, NotifyChit, PhoneNumber, ReferralType, SlashCommandSchema, SuspensionDuration, TimestampMillis,
+    UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
+    UserId, UserType,
 };
 
 mod lifecycle;
@@ -96,7 +97,7 @@ pub struct BotRegistered {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BotUpdated {
     pub user_id: UserId,
-    pub commands: Option<Vec<SlashCommandSchema>>,
+    pub definition: BotDefinition,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

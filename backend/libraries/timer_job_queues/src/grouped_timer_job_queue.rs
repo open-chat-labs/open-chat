@@ -246,7 +246,7 @@ macro_rules! grouped_timer_job_batch {
             items: Vec<$item_type>,
         }
 
-        impl TimerJobItemGroup for $name {
+        impl timer_job_queues::TimerJobItemGroup for $name {
             type Key = $key_type;
             type Item = $item_type;
 

@@ -151,16 +151,17 @@ fn prepare(
     }
 
     let now = state.env.now();
+    let sender = caller.agent();
 
     if let Some(version) = community_rules_accepted {
-        state.data.members.mark_rules_accepted(&caller.agent(), version, now);
+        state.data.members.mark_rules_accepted(&sender, version, now);
     }
 
     if caller.is_bot() {
         return Ok(None);
     }
 
-    if let Some(member) = state.data.members.get_by_user_id(&caller.agent()) {
+    if let Some(member) = state.data.members.get_by_user_id(&sender) {
         if state.data.rules.enabled
             && !member.user_type.is_bot()
             && member
@@ -205,6 +206,7 @@ fn process_send_message_result(
             register_timer_jobs(channel_id, thread_root_message_index, message_event, now, &mut state.data);
 
             if !result.unfinalised_bot_message {
+                let sender = caller.agent();
                 let notification = Notification::ChannelMessage(ChannelMessageNotification {
                     community_id,
                     channel_id,
@@ -213,7 +215,7 @@ fn process_send_message_result(
                     event_index: message_event.index,
                     community_name: state.data.name.value.clone(),
                     channel_name,
-                    sender: caller.agent(),
+                    sender,
                     sender_name: sender_username,
                     sender_display_name,
                     message_type: content.message_type(),
@@ -224,7 +226,7 @@ fn process_send_message_result(
                     channel_avatar_id,
                     crypto_transfer: content.notification_crypto_transfer_details(&users_mentioned.mentioned_directly),
                 });
-                state.push_notification(result.users_to_notify, notification);
+                state.push_notification(Some(sender), result.users_to_notify, notification);
 
                 if new_achievement && !caller.is_bot() {
                     for a in result
@@ -232,7 +234,7 @@ fn process_send_message_result(
                         .event
                         .achievements(false, thread_root_message_index.is_some())
                     {
-                        state.data.notify_user_of_achievement(caller.agent(), a);
+                        state.data.notify_user_of_achievement(sender, a);
                     }
                 }
 
@@ -256,7 +258,7 @@ fn process_send_message_result(
 
                 if let Some(channel) = state.data.channels.get(&channel_id) {
                     for user_id in users_mentioned.all_users_mentioned {
-                        if user_id != caller.initiator()
+                        if caller.initiator().map(|i| i != user_id).unwrap_or_default()
                             && channel.chat.members.get(&user_id).is_some_and(|m| !m.user_type().is_bot())
                         {
                             activity_events.push((user_id, MessageActivity::Mention));
@@ -275,7 +277,7 @@ fn process_send_message_result(
                             thread_root_message_index,
                             replying_to_event_index.into(),
                         ) {
-                            if message.sender != caller.initiator()
+                            if caller.initiator().map(|i| i != message.sender).unwrap_or_default()
                                 && channel
                                     .chat
                                     .members
@@ -299,7 +301,7 @@ fn process_send_message_result(
                             event_index,
                             activity,
                             timestamp: now,
-                            user_id: Some(caller.agent()),
+                            user_id: Some(sender),
                         }),
                     );
                 }

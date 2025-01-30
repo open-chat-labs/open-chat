@@ -11,7 +11,7 @@ pub enum Caller {
 #[derive(Clone)]
 pub struct BotCaller {
     pub bot: UserId,
-    pub command: BotCommand,
+    pub command: Option<BotCommand>,
     pub finalised: bool,
 }
 
@@ -25,12 +25,12 @@ impl Caller {
         }
     }
 
-    pub fn initiator(&self) -> UserId {
+    pub fn initiator(&self) -> Option<UserId> {
         match self {
-            Caller::User(user_id) => *user_id,
-            Caller::Bot(user_id) => *user_id,
-            Caller::BotV2(bot_caller) => bot_caller.command.initiator,
-            Caller::OCBot(user_id) => *user_id,
+            Caller::User(user_id) => Some(*user_id),
+            Caller::Bot(user_id) => Some(*user_id),
+            Caller::BotV2(bot_caller) => bot_caller.command.as_ref().map(|command| command.initiator),
+            Caller::OCBot(user_id) => Some(*user_id),
         }
     }
 

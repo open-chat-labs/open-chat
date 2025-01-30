@@ -1,10 +1,9 @@
-use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use community_canister::c2c_can_issue_access_token;
 use jwt::Claims;
-use local_user_index_canister::access_token_v2::{Response::*, *};
+use local_user_index_canister::access_token_v2::{self, Response::*, *};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use serde::Serialize;
@@ -13,13 +12,19 @@ use types::c2c_can_issue_access_token::{
     StartVideoCallArgs,
 };
 use types::{
-    AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, Chat, JoinOrEndVideoCallClaims, StartVideoCallClaims,
+    AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, Chat, JoinOrEndVideoCallClaims,
+    StartVideoCallClaims,
 };
+use utils::base64;
 
-#[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
+#[query(composite = true, candid = true, msgpack = true)]
 #[trace]
-async fn access_token_v2(args_outer: Args) -> Response {
-    let PrepareResult { scope, access_type_args } = match read_state(|state| prepare(&args_outer, state)) {
+async fn access_token_v2(args_wrapper: Args) -> Response {
+    let Ok(args_wrapper) = ArgsInternal::from(args_wrapper) else {
+        return InternalError("Failed to parse arguments".to_string());
+    };
+
+    let PrepareResult { scope, access_type_args } = match read_state(|state| prepare(&args_wrapper, state)) {
         Ok(r) => r,
         Err(response) => return response,
     };
@@ -60,11 +65,11 @@ async fn access_token_v2(args_outer: Args) -> Response {
         Err(err) => return InternalError(format!("{err:?}")),
     };
 
-    let token_type_name = args_outer.type_name().to_string();
+    let token_type_name = args_wrapper.type_name().to_string();
 
     mutate_state(|state| {
-        let chat = match &args_outer {
-            Args::BotActionByCommand(args) => {
+        let chat = match &args_wrapper {
+            ArgsInternal::BotActionByCommand(args) => {
                 let custom_claims = BotActionByCommandClaims {
                     bot: args.bot_id,
                     scope: args.scope.clone(),
@@ -74,7 +79,7 @@ async fn access_token_v2(args_outer: Args) -> Response {
                 };
                 return build_token(token_type_name, custom_claims, state);
             }
-            Args::BotActionByApiKey(args) => {
+            ArgsInternal::BotActionByApiKey(args) => {
                 let custom_claims = BotActionByApiKeyClaims {
                     bot: args.bot_id,
                     scope: args.scope.clone(),
@@ -83,9 +88,9 @@ async fn access_token_v2(args_outer: Args) -> Response {
                 };
                 return build_token(token_type_name, custom_claims, state);
             }
-            Args::StartVideoCall(args) => args.chat,
-            Args::JoinVideoCall(args) => args.chat,
-            Args::MarkVideoCallAsEnded(args) => args.chat,
+            ArgsInternal::StartVideoCall(args) => args.chat,
+            ArgsInternal::JoinVideoCall(args) => args.chat,
+            ArgsInternal::MarkVideoCallAsEnded(args) => args.chat,
         };
 
         match access_type_args {
@@ -122,8 +127,8 @@ struct PrepareResult {
     access_type_args: AccessTypeArgs,
 }
 
-fn prepare(args_outer: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if let Args::BotActionByApiKey(args) = args_outer {
+fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if let ArgsInternal::BotActionByApiKey(args) = args_outer {
         let Some(permissions) = state
             .data
             .bots
@@ -144,7 +149,16 @@ fn prepare(args_outer: &Args, state: &RuntimeState) -> Result<PrepareResult, Res
         });
     }
 
-    if let Args::BotActionByCommand(args) = args_outer {
+    let Some(user) = state
+        .data
+        .global_users
+        .get_by_principal(&state.env.caller())
+        .filter(|u| !u.user_type.is_bot())
+    else {
+        return Err(Response::NotAuthorized);
+    };
+
+    if let ArgsInternal::BotActionByCommand(args) = args_outer {
         let Some(permissions) = state
             .data
             .bots
@@ -167,20 +181,11 @@ fn prepare(args_outer: &Args, state: &RuntimeState) -> Result<PrepareResult, Res
         });
     }
 
-    let Some(user) = state
-        .data
-        .global_users
-        .get_by_principal(&state.env.caller())
-        .filter(|u| !u.user_type.is_bot())
-    else {
-        return Err(Response::NotAuthorized);
-    };
-
     let user_id = user.user_id;
     let is_diamond = state.data.global_users.is_diamond_member(&user_id, state.env.now());
 
     let result = match args_outer {
-        Args::StartVideoCall(args) => PrepareResult {
+        ArgsInternal::StartVideoCall(args) => PrepareResult {
             scope: AccessTokenScope::Chat(args.chat),
             access_type_args: AccessTypeArgs::StartVideoCall(StartVideoCallArgs {
                 initiator: user_id,
@@ -188,14 +193,14 @@ fn prepare(args_outer: &Args, state: &RuntimeState) -> Result<PrepareResult, Res
                 is_diamond,
             }),
         },
-        Args::JoinVideoCall(args) => PrepareResult {
+        ArgsInternal::JoinVideoCall(args) => PrepareResult {
             scope: AccessTokenScope::Chat(args.chat),
             access_type_args: AccessTypeArgs::JoinVideoCall(JoinVideoCallArgs {
                 initiator: user_id,
                 is_diamond,
             }),
         },
-        Args::MarkVideoCallAsEnded(args) => PrepareResult {
+        ArgsInternal::MarkVideoCallAsEnded(args) => PrepareResult {
             scope: AccessTokenScope::Chat(args.chat),
             access_type_args: AccessTypeArgs::MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs { initiator: user_id }),
         },
@@ -221,5 +226,40 @@ fn build_token<T: Serialize>(token_type_name: String, custom_claims: T, state: &
     match jwt::sign_and_encode_token(state.data.oc_key_pair.secret_key_der(), claims, &mut rng) {
         Ok(token) => Success(token),
         Err(err) => InternalError(format!("{err:?}")),
+    }
+}
+
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug)]
+enum ArgsInternal {
+    StartVideoCall(access_token_v2::StartVideoCallArgs),
+    JoinVideoCall(access_token_v2::JoinVideoCallArgs),
+    MarkVideoCallAsEnded(access_token_v2::MarkVideoCallAsEndedArgs),
+    BotActionByCommand(access_token_v2::BotActionByCommandArgs),
+    BotActionByApiKey(BotApiKeyToken),
+}
+
+impl ArgsInternal {
+    pub fn from(value: Args) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        match value {
+            Args::StartVideoCall(args) => Ok(ArgsInternal::StartVideoCall(args)),
+            Args::JoinVideoCall(args) => Ok(ArgsInternal::JoinVideoCall(args)),
+            Args::MarkVideoCallAsEnded(args) => Ok(ArgsInternal::MarkVideoCallAsEnded(args)),
+            Args::BotActionByCommand(args) => Ok(ArgsInternal::BotActionByCommand(args)),
+            Args::BotActionByApiKey(args) => {
+                let token: BotApiKeyToken = base64::to_value(&args)?;
+                Ok(ArgsInternal::BotActionByApiKey(token))
+            }
+        }
+    }
+
+    pub fn type_name(&self) -> &str {
+        match self {
+            Self::StartVideoCall(_) => "StartVideoCall",
+            Self::JoinVideoCall(_) => "JoinVideoCall",
+            Self::MarkVideoCallAsEnded(_) => "MarkVideoCallAsEnded",
+            Self::BotActionByCommand(_) => "BotActionByCommand",
+            Self::BotActionByApiKey(_) => "BotActionByApiKey",
+        }
     }
 }
