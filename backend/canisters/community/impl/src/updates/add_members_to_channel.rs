@@ -135,7 +135,7 @@ fn commit(
         channel_avatar_id,
     });
 
-    state.push_notification(users_added.clone(), notification);
+    state.push_notification(Some(added_by), users_added.clone(), notification);
 
     jobs::expire_members::start_job_if_required(state);
 

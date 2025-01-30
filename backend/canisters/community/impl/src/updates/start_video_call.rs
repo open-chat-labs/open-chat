@@ -106,7 +106,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
     });
 
-    state.push_notification(users_to_notify, notification);
+    state.push_notification(Some(sender), users_to_notify, notification);
     handle_activity_notification(state);
 
     if let Some(expiry) = expires_at {

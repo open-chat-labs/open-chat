@@ -104,9 +104,10 @@ impl RuntimeState {
         self.data.video_call_operators.iter().any(|o| *o == caller)
     }
 
-    pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
+    pub fn push_notification(&mut self, sender: Option<UserId>, recipients: Vec<UserId>, notification: Notification) {
         if !recipients.is_empty() {
             let args = c2c_push_notification::Args {
+                sender,
                 recipients,
                 authorizer: Some(self.data.local_group_index_canister_id),
                 notification_bytes: ByteBuf::from(candid::encode_one(notification).unwrap()),
