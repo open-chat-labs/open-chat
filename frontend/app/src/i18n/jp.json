@@ -320,6 +320,7 @@
             "generate": "APIキーを生成する",
             "generateApiKey": "APIキーを生成する",
             "generated": "APIキーが生成されました",
+            "generateFailed": "申し訳ありませんが、APIキーを生成できませんでした",
             "regenerate": "APIキーを再生成する",
             "regenerateWarning": "API キーを再生成すると、以前に生成された API キーへのアクセスが取り消されます。続行してもよろしいですか?",
             "remove": "ボットを削除",

@@ -320,6 +320,7 @@
             "generate": "Genera chiave API",
             "generateApiKey": "Genera una chiave API",
             "generated": "Chiave API generata",
+            "generateFailed": "Spiacenti, non siamo riusciti a generare una chiave API",
             "regenerate": "Rigenera la chiave API",
             "regenerateWarning": "La rigenerazione della chiave API revocherà l'accesso alla chiave API generata in precedenza. Vuoi procedere?",
             "remove": "Rimuovi bot",

@@ -320,6 +320,7 @@
             "generate": "Tạo khóa API",
             "generateApiKey": "Tạo khóa API",
             "generated": "Khóa API đã được tạo",
+            "generateFailed": "Xin lỗi, chúng tôi không thể tạo khóa api",
             "regenerate": "Tạo lại khóa API",
             "regenerateWarning": "Việc tạo lại khóa API sẽ thu hồi quyền truy cập vào khóa API đã tạo trước đó. Bạn có chắc chắn muốn tiếp tục không?",
             "remove": "Xóa bot",
