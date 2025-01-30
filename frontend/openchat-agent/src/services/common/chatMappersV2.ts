@@ -128,6 +128,7 @@ import type {
     BotMessageContext,
     SlashCommandParamInstance,
     GenerateBotKeyResponse,
+    PublicApiKeyDetails,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -306,6 +307,7 @@ import type {
     BotDefinition as ApiBotDefinition,
     CommunityGenerateBotApiKeyResponse,
     GroupGenerateBotApiKeyResponse,
+    PublicApiKeyDetails as ApiPublicApiKeyDetails,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -2687,9 +2689,19 @@ export function groupDetailsResponse(
             rules: value.Success.chat_rules,
             timestamp: value.Success.timestamp,
             bots: bots.map(botGroupDetails),
+            apiKeys: value.Success.api_keys.map(publicApiKeyDetails),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
+}
+
+export function publicApiKeyDetails(value: ApiPublicApiKeyDetails): PublicApiKeyDetails {
+    return {
+        botId: principalBytesToString(value.bot_id),
+        grantedPermissions: externalBotPermissions(value.granted_permissions),
+        generatedBy: principalBytesToString(value.generated_by),
+        generatedAt: value.generated_at,
+    };
 }
 
 export function groupDetailsUpdatesResponse(
@@ -2717,6 +2729,7 @@ export function groupDetailsUpdatesResponse(
                 timestamp: value.Success.timestamp,
                 botsAddedOrUpdated: value.Success.bots_added_or_updated.map(botGroupDetails),
                 botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
+                apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {

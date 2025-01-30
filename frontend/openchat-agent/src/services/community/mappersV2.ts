@@ -79,6 +79,7 @@ import {
     memberRole,
     mentions,
     messageEvent,
+    publicApiKeyDetails,
     threadSyncDetails,
     updatedEvent,
     userGroup,
@@ -470,6 +471,7 @@ export function communityDetailsResponse(
             userGroups: new Map(value.Success.user_groups.map(userGroupDetails)),
             referrals: new Set(value.Success.referrals.map(principalBytesToString)),
             bots: value.Success.bots.map(botGroupDetails),
+            apiKeys: value.Success.api_keys.map(publicApiKeyDetails),
         };
     } else {
         console.warn("CommunityDetails failed with", value);
@@ -523,6 +525,7 @@ export function communityDetailsUpdatesResponse(
                 referralsAdded: new Set(value.Success.referrals_added.map(principalBytesToString)),
                 botsAddedOrUpdated: value.Success.bots_added_or_updated.map(botGroupDetails),
                 botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
+                apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {

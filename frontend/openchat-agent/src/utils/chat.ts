@@ -112,6 +112,7 @@ export function mergeCommunityDetails(
                 removed: updates.botsRemoved,
             },
         ),
+        apiKeys: [...previous.apiKeys, ...updates.apiKeysGenerated],
     };
 }
 
@@ -160,6 +161,7 @@ export function mergeGroupChatDetails(
                 removed: updates.botsRemoved,
             },
         ),
+        apiKeys: [...previous.apiKeys, ...updates.apiKeysGenerated],
     };
 }
 

@@ -23,6 +23,7 @@ import type {
     HasMembershipRole,
     MemberRole,
     Permissioned,
+    PublicApiKeyDetails,
 } from "../permission";
 import type {
     ChannelNotFound,
@@ -97,6 +98,7 @@ export type CommunitySpecificState = {
     referrals: Set<string>;
     rules?: VersionedRules;
     bots: Map<string, ExternalBotPermissions>;
+    apiKeys: PublicApiKeyDetails[];
 };
 
 export interface UserFailedGateCheck {
@@ -273,6 +275,7 @@ export type CommunityDetails = {
     userGroups: Map<number, UserGroupDetails>;
     referrals: Set<string>;
     bots: BotGroupDetails[];
+    apiKeys: PublicApiKeyDetails[];
 };
 
 export type CommunityDetailsUpdates = {
@@ -289,6 +292,7 @@ export type CommunityDetailsUpdates = {
     referralsAdded: Set<string>;
     botsAddedOrUpdated: BotGroupDetails[];
     botsRemoved: Set<string>;
+    apiKeysGenerated: PublicApiKeyDetails[];
 };
 
 export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;

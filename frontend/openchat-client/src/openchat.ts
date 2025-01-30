@@ -3166,6 +3166,7 @@ export class OpenChat extends EventTarget {
                 "bots",
                 resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
             );
+            communityStateStore.setProp(community.id, "apiKeys", resp.apiKeys);
         }
         await this.#updateUserStoreFromCommunityState(community.id);
     }
@@ -3200,6 +3201,7 @@ export class OpenChat extends EventTarget {
                     "bots",
                     resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
                 );
+                chatStateStore.setProp(serverChat.id, "apiKeys", resp.apiKeys);
             }
             await this.#updateUserStoreFromEvents(serverChat.id, []);
         }

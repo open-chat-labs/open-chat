@@ -28,6 +28,7 @@
         type ExternalBotPermissions,
         type BotMatch as BotMatchType,
         flattenCommandPermissions,
+        type PublicApiKeyDetails,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import InvitedUser from "./InvitedUser.svelte";
@@ -56,6 +57,7 @@
     export let installedBots: Map<string, ExternalBotPermissions>;
     export let initialUsergroup: number | undefined = undefined;
     export let showHeader = true;
+    export let apiKeys: PublicApiKeyDetails[];
 
     let userGroups: UserGroups | undefined;
     let showingBotSummary: BotMatchType | undefined = undefined;
@@ -357,6 +359,7 @@
             </h4>
             {#each bots as bot}
                 <BotMember
+                    {apiKeys}
                     {collection}
                     {bot}
                     commandPermissions={bot.grantedPermissions}

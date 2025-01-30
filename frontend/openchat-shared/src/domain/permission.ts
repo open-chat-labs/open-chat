@@ -1,4 +1,4 @@
-import type { SlashCommandParamInstance } from "./bots";
+import type { ExternalBotPermissions, SlashCommandParamInstance } from "./bots";
 import type { ChatIdentifier, VideoCallType } from "./chat";
 import type { CommunityIdentifier } from "./community";
 import type { OptionUpdate } from "./optionUpdate";
@@ -203,3 +203,10 @@ export type BotActionByCommand = {
 };
 
 export type GenerateBotKeyResponse = (Success & { apiKey: string }) | Failure;
+
+export type PublicApiKeyDetails = {
+    botId: string;
+    grantedPermissions: ExternalBotPermissions;
+    generatedBy: string;
+    generatedAt: bigint;
+};
