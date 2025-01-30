@@ -117,6 +117,7 @@ import {
     cryptoBalance,
     cryptoLookup,
     exchangeRatesLookupStore,
+    lastCryptoSent,
     nervousSystemLookup,
     swappableTokensStore,
 } from "./stores/crypto";
@@ -3759,6 +3760,7 @@ export class OpenChat extends EventTarget {
         return searchPromise.then((resp) => {
             if (resp.kind === "success" || resp.kind === "transfer_success") {
                 if (ledger !== undefined) {
+                    lastCryptoSent.set(ledger);
                     this.refreshAccountBalance(ledger);
                 }
                 if (threadRootMessageIndex !== undefined) {

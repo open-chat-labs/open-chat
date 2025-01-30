@@ -111,7 +111,6 @@
             .sendMessageWithContent(messageContext, content, false)
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
-                    lastCryptoSent.set(fromLedger);
                     dispatch("close");
                 } else if ($pinNumberErrorMessageStore === undefined) {
                     error = "errorSendingMessage";
