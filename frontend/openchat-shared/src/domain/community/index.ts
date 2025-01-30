@@ -98,7 +98,7 @@ export type CommunitySpecificState = {
     referrals: Set<string>;
     rules?: VersionedRules;
     bots: Map<string, ExternalBotPermissions>;
-    apiKeys: PublicApiKeyDetails[];
+    apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
 export interface UserFailedGateCheck {
@@ -275,7 +275,7 @@ export type CommunityDetails = {
     userGroups: Map<number, UserGroupDetails>;
     referrals: Set<string>;
     bots: BotGroupDetails[];
-    apiKeys: PublicApiKeyDetails[];
+    apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
 export type CommunityDetailsUpdates = {

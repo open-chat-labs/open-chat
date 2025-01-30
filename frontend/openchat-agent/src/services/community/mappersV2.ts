@@ -19,6 +19,7 @@ import type {
     GroupMembershipUpdates,
     ImportGroupResponse,
     MemberRole,
+    PublicApiKeyDetails,
     RemoveMemberResponse,
     SendMessageResponse,
     SetMemberDisplayNameResponse,
@@ -448,6 +449,7 @@ export function communityDetailsResponse(
     value: CommunitySelectedInitialResponse,
 ): CommunityDetailsResponse {
     if (typeof value === "object" && "Success" in value) {
+        console.log("Community details: ", value.Success);
         return {
             members: value.Success.members
                 .map((m) => ({
@@ -471,7 +473,10 @@ export function communityDetailsResponse(
             userGroups: new Map(value.Success.user_groups.map(userGroupDetails)),
             referrals: new Set(value.Success.referrals.map(principalBytesToString)),
             bots: value.Success.bots.map(botGroupDetails),
-            apiKeys: value.Success.api_keys.map(publicApiKeyDetails),
+            apiKeys: value.Success.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
+                m.set(k.botId, k);
+                return m;
+            }, new Map<string, PublicApiKeyDetails>()),
         };
     } else {
         console.warn("CommunityDetails failed with", value);

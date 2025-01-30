@@ -2662,6 +2662,7 @@ export function groupDetailsResponse(
         return "failure";
     }
     if ("Success" in value) {
+        console.log("Group details: ", value.Success);
         const members = (
             "participants" in value.Success ? value.Success.participants : value.Success.members
         ).map(member);
@@ -2689,7 +2690,10 @@ export function groupDetailsResponse(
             rules: value.Success.chat_rules,
             timestamp: value.Success.timestamp,
             bots: bots.map(botGroupDetails),
-            apiKeys: value.Success.api_keys.map(publicApiKeyDetails),
+            apiKeys: value.Success.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
+                m.set(k.botId, k);
+                return m;
+            }, new Map<string, PublicApiKeyDetails>()),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);

@@ -1427,7 +1427,7 @@ export type GroupChatDetails = {
     rules: VersionedRules;
     timestamp: bigint;
     bots: BotGroupDetails[];
-    apiKeys: PublicApiKeyDetails[];
+    apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
 /**
@@ -1451,7 +1451,7 @@ export type ChatSpecificState = {
     expandedDeletedMessages: Set<number>;
     expiredEventRanges: DRange;
     bots: Map<string, ExternalBotPermissions>;
-    apiKeys: PublicApiKeyDetails[];
+    apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
 export type GroupChatDetailsUpdates = {

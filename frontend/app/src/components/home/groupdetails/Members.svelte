@@ -57,7 +57,7 @@
     export let installedBots: Map<string, ExternalBotPermissions>;
     export let initialUsergroup: number | undefined = undefined;
     export let showHeader = true;
-    export let apiKeys: PublicApiKeyDetails[];
+    export let apiKeys: Map<string, PublicApiKeyDetails>;
 
     let userGroups: UserGroups | undefined;
     let showingBotSummary: BotMatchType | undefined = undefined;
@@ -359,7 +359,7 @@
             </h4>
             {#each bots as bot}
                 <BotMember
-                    {apiKeys}
+                    apiKey={apiKeys.get(bot.id)}
                     {collection}
                     {bot}
                     commandPermissions={bot.grantedPermissions}

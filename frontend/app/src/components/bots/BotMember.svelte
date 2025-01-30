@@ -42,10 +42,10 @@
         canManage: boolean;
         searchTerm: string;
         commandPermissions: ExternalBotPermissions;
-        apiKeys: PublicApiKeyDetails[];
+        apiKey: PublicApiKeyDetails | undefined;
     }
 
-    let { collection, bot, canManage, searchTerm, commandPermissions, apiKeys }: Props = $props();
+    let { collection, bot, canManage, searchTerm, commandPermissions, apiKey }: Props = $props();
     let botSummaryMode = $state<BotSummaryMode | undefined>(undefined);
     let generatingKey = $state(false);
     let autonomousPermissionsEmpty = $derived(
@@ -60,12 +60,7 @@
             ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
             : collection.id,
     );
-    let apiKeyPermissions = $derived.by(() => {
-        if (apiKeys.length > 0) {
-            apiKeys.sort((a, b) => Number(b.generatedAt) - Number(a.generatedAt));
-            return apiKeys[0].grantedPermissions;
-        }
-    });
+    let apiKeyPermissions = $derived(apiKey?.grantedPermissions);
 
     function permissionsAreEmpty(perm: ExternalBotPermissions): boolean {
         const empty =
