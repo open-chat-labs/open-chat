@@ -5,7 +5,6 @@
     import {
         userStore,
         currentUser as user,
-        lastCryptoSent,
         cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
     } from "openchat-client";

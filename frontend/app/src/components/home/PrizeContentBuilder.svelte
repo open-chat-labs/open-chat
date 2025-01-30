@@ -30,7 +30,6 @@
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import {
         currentUser as user,
-        lastCryptoSent,
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
     } from "openchat-client";
