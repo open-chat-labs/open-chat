@@ -60,6 +60,7 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(definition) = args.definition.as_ref() {
         bot.description = definition.description.clone();
         bot.commands = definition.commands.clone();
+        bot.autonomous_config = definition.autonomous_config.clone();
     }
 
     let now = state.env.now();
@@ -73,13 +74,15 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         UpdateUserResult::PrincipalTaken => return PrincipalAlreadyUsed,
     }
 
-    state.push_event_to_all_local_user_indexes(
-        UserIndexEvent::BotUpdated(BotUpdated {
-            user_id: args.bot_id,
-            commands: args.definition.map(|d| d.commands.clone()),
-        }),
-        None,
-    );
+    if let Some(definition) = args.definition {
+        state.push_event_to_all_local_user_indexes(
+            UserIndexEvent::BotUpdated(BotUpdated {
+                user_id: args.bot_id,
+                definition,
+            }),
+            None,
+        );
+    }
 
     // TODO: If there are any new commands or the required permissions have increased for any existing commands,
     // then notify all the group/communities that have added this bot
