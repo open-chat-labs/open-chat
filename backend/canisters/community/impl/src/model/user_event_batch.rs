@@ -1,5 +1,5 @@
 use crate::{can_borrow_state, run_regular_jobs};
-use timer_job_queues::{grouped_timer_job_batch, TimerJobItem, TimerJobItemGroup};
+use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
 use types::UserId;
 use user_canister::CommunityCanisterEvent;
 use utils::canister::should_retry_failed_c2c_call;

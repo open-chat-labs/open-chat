@@ -32,6 +32,7 @@ rand = { workspace = true }
 serde = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
 stable_memory_map = { path = "../../../libraries/stable_memory_map" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_index_canister = { path = "../../user_index/api" }
