@@ -7820,6 +7820,9 @@ export class OpenChat extends EventTarget {
             id,
             botId,
             permissions,
+        }).catch((err) => {
+            this.#logger.error("Failed to generate api key", err);
+            return { kind: "failure" };
         });
     }
 
@@ -8077,11 +8080,11 @@ export class OpenChat extends EventTarget {
         bot: BotCommandInstance,
     ): Promise<"success" | "failure" | "too_many_requests"> {
         const botContext = {
-            initiator: this.#liveState.user.userId,
             finalised: false,
             command: {
                 name: bot.command.name,
                 args: bot.command.params,
+                initiator: this.#liveState.user.userId,
             },
         };
         let removePlaceholder: (() => void) | undefined = undefined;

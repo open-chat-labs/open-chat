@@ -32,14 +32,14 @@
     );
     let text = $derived.by(() => {
         if (paramMode === "truncated") {
-            return `@UserId(${botContext.initiator}) used **/${commandInstance.name}**${
+            return `@UserId(${botContext.command.initiator}) used **/${commandInstance.name}**${
                 commandInstance.args.length > 0 ? " with " : ""
             }`;
         } else {
-            return `@UserId(${botContext.initiator}) used **/${commandInstance.name}**`;
+            return `@UserId(${botContext.command.initiator}) used **/${commandInstance.name}**`;
         }
     });
-    let user = $derived($userStore.get(botContext.initiator));
+    let user = $derived($userStore.get(botContext.command.initiator));
 
     function paramValue(param: SlashCommandParamInstance): string {
         switch (param.kind) {

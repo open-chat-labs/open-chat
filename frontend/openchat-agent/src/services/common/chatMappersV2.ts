@@ -582,6 +582,7 @@ export function botMessageContext(value: TBotMessageContext): BotMessageContext 
         command: {
             name: value.command.name,
             args: value.command.args.map(botCommandArg),
+            initiator: principalBytesToString(value.command.initiator),
         },
     };
 }

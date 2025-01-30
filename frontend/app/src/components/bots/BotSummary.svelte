@@ -7,7 +7,7 @@
         type BotSummaryMode,
         type GroupChatIdentifier,
         type ExternalBotPermissions,
-        random128,
+        type MultiUserChatIdentifier,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Overlay from "../Overlay.svelte";
@@ -112,23 +112,37 @@
             .finally(() => (busy = false));
     }
 
-    function generateApiKey(confirmed: boolean): Promise<void> {
-        if (!confirmingRegeneration && !confirmed) {
-            confirmingRegeneration = true;
-            return Promise.resolve();
-        }
-
-        if (confirmed) {
-            if (bot.definition.autonomousConfig !== undefined) {
-                busy = true;
-                window.setTimeout(() => {
-                    apiKey = random128().toString();
-                    busy = false;
-                }, 1000);
+    function generateApiKey(
+        id: CommunityIdentifier | MultiUserChatIdentifier,
+    ): (confirmed: boolean) => Promise<void> {
+        return (confirmed: boolean) => {
+            if (!confirmingRegeneration && !confirmed) {
+                confirmingRegeneration = true;
+                return Promise.resolve();
             }
-        }
-        confirmingRegeneration = false;
-        return Promise.resolve();
+
+            if (confirmed) {
+                if (bot.definition.autonomousConfig !== undefined) {
+                    busy = true;
+                    client
+                        .generateBotApiKey(
+                            $state.snapshot(id),
+                            bot.id,
+                            $state.snapshot(grantedPermissions),
+                        )
+                        .then((resp) => {
+                            if (resp.kind === "success") {
+                                apiKey = resp.apiKey;
+                            } else {
+                                toastStore.showFailureToast(i18nKey("bots.manage.generateFailed"));
+                            }
+                        })
+                        .finally(() => (busy = false));
+                }
+            }
+            confirmingRegeneration = false;
+            return Promise.resolve();
+        };
     }
 
     function mainButton() {
@@ -143,17 +157,19 @@
                 onClose();
                 break;
             case "adding_api_key":
-                generateApiKey(true);
+                generateApiKey(mode.id)(true);
                 break;
             case "editing_api_key":
-                generateApiKey(false);
+                generateApiKey(mode.id)(false);
                 break;
         }
     }
 </script>
 
-{#if confirmingRegeneration}
-    <AreYouSure message={i18nKey("bots.manage.regenerateWarning")} action={generateApiKey} />
+{#if confirmingRegeneration && (mode.kind === "adding_api_key" || mode.kind === "editing_api_key")}
+    <AreYouSure
+        message={i18nKey("bots.manage.regenerateWarning")}
+        action={generateApiKey(mode.id)} />
 {/if}
 
 {#if apiKey !== undefined}

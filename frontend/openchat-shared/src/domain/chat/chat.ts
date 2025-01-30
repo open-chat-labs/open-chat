@@ -665,6 +665,7 @@ export type BotMessageContext = {
     command: {
         name: string;
         args: SlashCommandParamInstance[];
+        initiator: string;
     };
     finalised: boolean;
 };
