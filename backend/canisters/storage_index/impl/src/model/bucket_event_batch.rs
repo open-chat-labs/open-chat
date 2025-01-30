@@ -1,6 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use timer_job_queues::{grouped_timer_job_batch, TimerJobItem, TimerJobItemGroup};
+use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
 use types::{AccessorId, CanisterId, FileId};
 use utils::canister::should_retry_failed_c2c_call;
 

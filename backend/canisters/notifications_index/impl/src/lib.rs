@@ -1,3 +1,4 @@
+use crate::model::notification_canisters_event_batch::NotificationCanistersEventBatch;
 use crate::model::notifications_canister::NotificationsCanister;
 use crate::model::subscriptions::Subscriptions;
 use candid::Principal;
@@ -7,6 +8,7 @@ use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, SubscriptionInfo, TimestampMillis, Timestamped, UserId};
 use utils::canister::CanistersRequiringUpgrade;
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -109,10 +111,9 @@ impl RuntimeState {
     fn push_event_to_notifications_canisters(&mut self, event: NotificationsIndexEvent) {
         for canister_id in self.data.notifications_canisters.keys().copied() {
             self.data
-                .notifications_index_event_sync_queue
+                .notification_canisters_event_sync_queue
                 .push(canister_id, event.clone());
         }
-        jobs::sync_notifications_canisters::start_job_if_required(self);
     }
 }
 
@@ -129,9 +130,16 @@ struct Data {
     pub notifications_canister_wasm_for_new_canisters: CanisterWasm,
     pub notifications_canister_wasm_for_upgrades: CanisterWasm,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
+    #[deprecated]
     pub notifications_index_event_sync_queue: CanisterEventSyncQueue<NotificationsIndexEvent>,
+    #[serde(default = "notification_canisters_event_sync_queue")]
+    pub notification_canisters_event_sync_queue: GroupedTimerJobQueue<NotificationCanistersEventBatch>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn notification_canisters_event_sync_queue() -> GroupedTimerJobQueue<NotificationCanistersEventBatch> {
+    GroupedTimerJobQueue::new(5, false)
 }
 
 impl Data {
@@ -143,6 +151,7 @@ impl Data {
         registry_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
+        #[allow(deprecated)]
         Data {
             governance_principals: governance_principals.into_iter().collect(),
             notifications_canisters: HashMap::default(),
@@ -156,6 +165,7 @@ impl Data {
             notifications_canister_wasm_for_upgrades: CanisterWasm::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             notifications_index_event_sync_queue: CanisterEventSyncQueue::default(),
+            notification_canisters_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             rng_seed: [0; 32],
             test_mode,
         }
