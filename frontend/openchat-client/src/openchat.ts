@@ -416,6 +416,7 @@ import type {
     BotDefinition,
     BotMessageContext,
     BotClientConfigData,
+    CompletedCryptocurrencyTransfer,
 } from "openchat-shared";
 import {
     Stream,
@@ -579,6 +580,7 @@ export class OpenChat extends EventTarget {
     #userUpdatePoller: Poller | undefined = undefined;
     #exchangeRatePoller: Poller | undefined = undefined;
     #recentlyActiveUsersTracker: RecentlyActiveUsersTracker = new RecentlyActiveUsersTracker();
+    #inflightMessagePromises: Map<bigint, (response: SendMessageSuccess | TransferSuccess) => void> = new Map();
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
@@ -3451,19 +3453,6 @@ export class OpenChat extends EventTarget {
         );
     }
 
-    #onSendMessageSuccess(
-        chatId: ChatIdentifier,
-        resp: SendMessageSuccess | TransferSuccess,
-        msg: Message,
-        threadRootMessageIndex: number | undefined,
-    ) {
-        const event = mergeSendMessageResponse(msg, resp);
-        this.#addServerEventsToStores(chatId, [event], threadRootMessageIndex, []);
-        if (threadRootMessageIndex === undefined) {
-            updateSummaryWithConfirmedMessage(chatId, event);
-        }
-    }
-
     #addServerEventsToStores(
         chatId: ChatIdentifier,
         newEvents: EventWrapper<ChatEvent>[],
@@ -3502,7 +3491,7 @@ export class OpenChat extends EventTarget {
 
         for (const event of newEvents) {
             if (event.event.kind === "message") {
-                const { messageIndex, messageId } = event.event;
+                const { content, messageIndex, messageId } = event.event;
                 if (anyFailedMessages && failedMessagesStore.delete(context, messageId)) {
                     this.#sendRequest({
                         kind: "deleteFailedMessage",
@@ -3510,6 +3499,28 @@ export class OpenChat extends EventTarget {
                         messageId,
                         threadRootMessageIndex,
                     });
+                }
+                const promiseResolve = this.#inflightMessagePromises.get(messageId);
+                if (promiseResolve !== undefined) {
+                    this.#inflightMessagePromises.delete(messageId);
+
+                    const sendResult: SendMessageSuccess | TransferSuccess = content.kind === "crypto_content"
+                        ? {
+                            kind: "transfer_success",
+                            timestamp: event.timestamp,
+                            messageIndex: event.event.messageIndex,
+                            eventIndex: event.index,
+                            transfer: content.transfer as CompletedCryptocurrencyTransfer,
+                            expiresAt: event.expiresAt,
+                        }
+                        : {
+                            kind: "success",
+                            timestamp: event.timestamp,
+                            messageIndex: event.event.messageIndex,
+                            eventIndex: event.index,
+                            expiresAt: event.expiresAt,
+                        };
+                    promiseResolve(sendResult);
                 }
                 if (unconfirmed.delete(context, messageId)) {
                     messagesRead.confirmMessage(context, messageIndex, messageId);
@@ -3676,13 +3687,15 @@ export class OpenChat extends EventTarget {
             get(messageFiltersStore),
         );
 
+        const messageId = eventWrapper.event.messageId;
         const newAchievement = this.#isNewSendMessageAchievement(
             messageContext,
             eventWrapper.event,
         );
         const ledger = this.#extractLedgerFromContent(eventWrapper.event.content);
 
-        return new Promise((resolve) => {
+        const searchPromise: Promise<SendMessageResponse> = new Promise((resolve) => {
+            this.#inflightMessagePromises.set(messageId, resolve);
             this.#sendStreamRequest(
                 {
                     kind: "sendMessage",
@@ -3701,38 +3714,16 @@ export class OpenChat extends EventTarget {
             ).subscribe({
                 onResult: (response) => {
                     if (response === "accepted") {
-                        unconfirmed.markAccepted(messageContext, eventWrapper.event.messageId);
+                        unconfirmed.markAccepted(messageContext, messageId);
                         return;
                     }
                     const [resp, msg] = response;
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
-                        this.#onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
-                        if (ledger !== undefined) {
-                            this.refreshAccountBalance(ledger);
-                        }
-                        if (threadRootMessageIndex !== undefined) {
-                            trackEvent("sent_threaded_message");
-                        } else {
-                            if (chat.kind === "direct_chat") {
-                                trackEvent("sent_direct_message");
-                            } else {
-                                if (chat.public) {
-                                    trackEvent("sent_public_group_message");
-                                } else {
-                                    trackEvent("sent_private_group_message");
-                                }
-                            }
-                        }
-                        if (msg.repliesTo !== undefined) {
-                            // double counting here which I think is OK since we are limited to string events
-                            trackEvent("replied_to_message");
-                        }
-
-                        if (acceptedRules?.chat !== undefined) {
-                            this.#markChatRulesAcceptedLocally(true);
-                        }
-                        if (acceptedRules?.community !== undefined) {
-                            this.#markCommunityRulesAcceptedLocally(true);
+                        this.#inflightMessagePromises.delete(messageId, resolve);
+                        const event = mergeSendMessageResponse(msg, resp);
+                        this.#addServerEventsToStores(chat.id, [event], threadRootMessageIndex, []);
+                        if (threadRootMessageIndex === undefined) {
+                            updateSummaryWithConfirmedMessage(chatId, event);
                         }
                     } else {
                         if (resp.kind == "rules_not_accepted") {
@@ -3762,7 +3753,7 @@ export class OpenChat extends EventTarget {
                 onError: () => {
                     this.#onSendMessageFailure(
                         chatId,
-                        eventWrapper.event.messageId,
+                        messageId,
                         threadRootMessageIndex,
                         eventWrapper,
                         canRetry,
@@ -3773,6 +3764,41 @@ export class OpenChat extends EventTarget {
                 },
             });
         });
+
+        // `searchPromise` is resolved either when the update call which initially sent the message completes, or if the
+        // message is found when reading new events
+        return searchPromise.then((resp) => {
+            if (resp.kind === "success" || resp.kind === "transfer_success") {
+                if (ledger !== undefined) {
+                    this.refreshAccountBalance(ledger);
+                }
+                if (threadRootMessageIndex !== undefined) {
+                    trackEvent("sent_threaded_message");
+                } else {
+                    if (chat.kind === "direct_chat") {
+                        trackEvent("sent_direct_message");
+                    } else {
+                        if (chat.public) {
+                            trackEvent("sent_public_group_message");
+                        } else {
+                            trackEvent("sent_private_group_message");
+                        }
+                    }
+                }
+                if (eventWrapper.event.repliesTo !== undefined) {
+                    // double counting here which I think is OK since we are limited to string events
+                    trackEvent("replied_to_message");
+                }
+
+                if (acceptedRules?.chat !== undefined) {
+                    this.#markChatRulesAcceptedLocally(true);
+                }
+                if (acceptedRules?.community !== undefined) {
+                    this.#markCommunityRulesAcceptedLocally(true);
+                }
+            }
+            return resp;
+        })
     }
 
     #extractLedgerFromContent(content: MessageContent): string | undefined {
@@ -3781,6 +3807,10 @@ export class OpenChat extends EventTarget {
             case "prize_content_initial":
                 return content.transfer.ledger;
 
+            case "prize_content":
+                return content.token;
+
+            case "p2p_swap_content":
             case "p2p_swap_content_initial":
                 return content.token0.ledger;
 

@@ -1396,12 +1396,20 @@ export function mergeSendMessageResponse(
     msg: Message,
     resp: SendMessageSuccess | TransferSuccess,
 ): EventWrapper<Message> {
+    const content = resp.kind === "transfer_success" && msg.content.kind === "crypto_content"
+        ? {
+            ...msg.content,
+            transfer: resp.transfer,
+        }
+        : msg.content;
+
     return {
         index: resp.eventIndex,
         timestamp: resp.timestamp,
         expiresAt: resp.expiresAt,
         event: {
             ...msg,
+            content,
             messageIndex: resp.messageIndex,
         },
     };
