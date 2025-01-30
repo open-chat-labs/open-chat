@@ -88,7 +88,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                                     community_avatar_id: state.data.avatar.as_ref().map(|a| a.id),
                                     channel_avatar_id: channel.chat.avatar.as_ref().map(|a| a.id),
                                 });
-                                state.push_notification(vec![message.sender], notification);
+                                state.push_notification(Some(user_id), vec![message.sender], notification);
 
                                 state
                                     .data
