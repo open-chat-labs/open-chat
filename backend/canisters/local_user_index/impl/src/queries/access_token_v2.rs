@@ -1,4 +1,3 @@
-use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;
@@ -18,7 +17,7 @@ use types::{
 };
 use utils::base64;
 
-#[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
+#[query(composite = true, candid = true, msgpack = true)]
 #[trace]
 async fn access_token_v2(args_wrapper: Args) -> Response {
     let Ok(args_wrapper) = ArgsInternal::from(args_wrapper) else {
@@ -150,6 +149,15 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
         });
     }
 
+    let Some(user) = state
+        .data
+        .global_users
+        .get_by_principal(&state.env.caller())
+        .filter(|u| !u.user_type.is_bot())
+    else {
+        return Err(Response::NotAuthorized);
+    };
+
     if let ArgsInternal::BotActionByCommand(args) = args_outer {
         let Some(permissions) = state
             .data
@@ -172,15 +180,6 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
             }),
         });
     }
-
-    let Some(user) = state
-        .data
-        .global_users
-        .get_by_principal(&state.env.caller())
-        .filter(|u| !u.user_type.is_bot())
-    else {
-        return Err(Response::NotAuthorized);
-    };
 
     let user_id = user.user_id;
     let is_diamond = state.data.global_users.is_diamond_member(&user_id, state.env.now());
