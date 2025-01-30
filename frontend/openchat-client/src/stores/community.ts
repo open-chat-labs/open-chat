@@ -73,7 +73,7 @@ export const communityStateStore = createCommunitySpecificObjectStore<CommunityS
         userGroups: new Map<number, UserGroupDetails>(),
         rules: emptyRules(),
         bots: new Map(),
-        apiKeys: [],
+        apiKeys: new Map(),
     }),
 );
 
@@ -86,7 +86,7 @@ export const currentCommunityBots = createDerivedPropStore<CommunitySpecificStat
 export const currentCommunityApiKeys = createDerivedPropStore<CommunitySpecificState, "apiKeys">(
     communityStateStore,
     "apiKeys",
-    () => [],
+    () => new Map(),
 );
 
 export const currentCommunityUserGroups = createDerivedPropStore<
