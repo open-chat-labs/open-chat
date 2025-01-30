@@ -3719,7 +3719,7 @@ export class OpenChat extends EventTarget {
                     }
                     const [resp, msg] = response;
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
-                        this.#inflightMessagePromises.delete(messageId, resolve);
+                        this.#inflightMessagePromises.delete(messageId);
                         const event = mergeSendMessageResponse(msg, resp);
                         this.#addServerEventsToStores(chat.id, [event], threadRootMessageIndex, []);
                         if (threadRootMessageIndex === undefined) {
