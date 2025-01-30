@@ -99,7 +99,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
         crypto_transfer: None,
     });
-    state.push_notification(result.users_to_notify, notification);
+    state.push_notification(Some(sender), result.users_to_notify, notification);
     handle_activity_notification(state);
 
     let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);
