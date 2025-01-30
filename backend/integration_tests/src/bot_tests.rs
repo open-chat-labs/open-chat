@@ -171,7 +171,7 @@ fn e2e_command_bot_test() {
                 content: MessageContent::Text(TextContent { text: text.clone() }),
                 finalised: true,
             }),
-            jwt: access_token,
+            jwt: access_token.clone(),
         },
     );
 
@@ -418,7 +418,7 @@ fn send_multiple_updates_to_same_message() {
         response => panic!("'access_token' error: {response:?}"),
     };
 
-    // Call execute_bot_action as bot - unfinalised message 1
+    // Send message - unfinalised
     let username = owner.username();
     let text = format!("Hello 1 {username}");
     let response = client::local_user_index::execute_bot_action(
@@ -438,7 +438,7 @@ fn send_multiple_updates_to_same_message() {
         panic!("'execute_bot_action' error: {response:?}");
     }
 
-    // Call execute_bot_action as bot - unfinalised message 2
+    // Update message - unfinalised
     let text = format!("Hello 2 {username}");
     let response = client::local_user_index::execute_bot_action(
         env,
@@ -457,8 +457,8 @@ fn send_multiple_updates_to_same_message() {
         panic!("'execute_bot_action' error: {response:?}");
     }
 
-    // Call execute_bot_action as bot - finalised message
-    let text = "Hello world".to_string();
+    // Update message - finalised
+    let text = format!("Hello 3 {username}");
     let response = client::local_user_index::execute_bot_action(
         env,
         bot_principal,
@@ -468,7 +468,7 @@ fn send_multiple_updates_to_same_message() {
                 content: MessageContent::Text(TextContent { text: text.clone() }),
                 finalised: true,
             }),
-            jwt: access_token,
+            jwt: access_token.clone(),
         },
     );
 
@@ -491,6 +491,23 @@ fn send_multiple_updates_to_same_message() {
     assert!(message.edited);
     assert!(message.bot_context.is_some());
     assert!(message.bot_context.as_ref().unwrap().finalised);
+
+    // Try updating the same message again but expect it to fail
+    let text = format!("Hello 4 {username}");
+    let response = client::local_user_index::execute_bot_action(
+        env,
+        bot_principal,
+        canister_ids.local_user_index(env, group_id),
+        &local_user_index_canister::execute_bot_action::Args {
+            action: BotAction::SendMessage(BotMessageAction {
+                content: MessageContent::Text(TextContent { text: text.clone() }),
+                finalised: true,
+            }),
+            jwt: access_token,
+        },
+    );
+
+    assert!(response.is_err());
 }
 
 fn register_bot(
