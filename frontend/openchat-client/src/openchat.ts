@@ -3680,7 +3680,7 @@ export class OpenChat extends EventTarget {
             messageContext,
             eventWrapper.event,
         );
-        const isCryptoMessage = eventWrapper.event.content.kind === "crypto_content";
+        const ledger = this.#extractLedgerFromContent(eventWrapper.event.content);
 
         return new Promise((resolve) => {
             this.#sendStreamRequest(
@@ -3697,7 +3697,7 @@ export class OpenChat extends EventTarget {
                     newAchievement,
                 },
                 undefined,
-                isCryptoMessage ? 2 * DEFAULT_WORKER_TIMEOUT : undefined,
+                ledger !== undefined ? 2 * DEFAULT_WORKER_TIMEOUT : undefined,
             ).subscribe({
                 onResult: (response) => {
                     if (response === "accepted") {
@@ -3707,8 +3707,8 @@ export class OpenChat extends EventTarget {
                     const [resp, msg] = response;
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         this.#onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
-                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            this.refreshAccountBalance(msg.content.transfer.ledger);
+                        if (ledger !== undefined) {
+                            this.refreshAccountBalance(ledger);
                         }
                         if (threadRootMessageIndex !== undefined) {
                             trackEvent("sent_threaded_message");
@@ -3773,6 +3773,20 @@ export class OpenChat extends EventTarget {
                 },
             });
         });
+    }
+
+    #extractLedgerFromContent(content: MessageContent): string | undefined {
+        switch (content.kind) {
+            case "crypto_content":
+            case "prize_content_initial":
+                return content.transfer.ledger;
+
+            case "p2p_swap_content_initial":
+                return content.token0.ledger;
+
+            default:
+                return undefined;
+        }
     }
 
     #isNewSendMessageAchievement(message_context: MessageContext, message: Message): boolean {
