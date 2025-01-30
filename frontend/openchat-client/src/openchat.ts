@@ -3486,8 +3486,11 @@ export class OpenChat extends EventTarget {
                         threadRootMessageIndex,
                     });
                 }
-                const promiseResolve = this.#inflightMessagePromises.get(messageId);
-                if (promiseResolve !== undefined) {
+                const sendMessagePromiseResolve = this.#inflightMessagePromises.get(messageId);
+                if (sendMessagePromiseResolve !== undefined) {
+                    // If we reach here, then a message is currently being sent but the update call is yet to complete.
+                    // So given that we have received the message from the backend we know that the message has
+                    // successfully been sent, so we resolve the promise early.
                     this.#inflightMessagePromises.delete(messageId);
 
                     const sendResult: SendMessageSuccess | TransferSuccess = content.kind === "crypto_content"
@@ -3506,7 +3509,7 @@ export class OpenChat extends EventTarget {
                             eventIndex: event.index,
                             expiresAt: event.expiresAt,
                         };
-                    promiseResolve(sendResult);
+                    sendMessagePromiseResolve(sendResult);
                 }
                 if (unconfirmed.delete(context, messageId)) {
                     messagesRead.confirmMessage(context, messageIndex, messageId);
