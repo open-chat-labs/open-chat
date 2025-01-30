@@ -1,17 +1,17 @@
 use crate::CommunityMemberInternal;
 use candid::Deserialize;
 use serde::Serialize;
-use stable_memory_map::{MemberKeyPrefix, StableMemoryMap};
+use stable_memory_map::{StableMemoryMap, UserIdKeyPrefix};
 use std::collections::BTreeSet;
 use types::{is_default, CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version};
 
 #[derive(Serialize, Deserialize)]
 pub struct MembersStableStorage {
-    prefix: MemberKeyPrefix,
+    prefix: UserIdKeyPrefix,
 }
 
-impl StableMemoryMap<MemberKeyPrefix, CommunityMemberInternal> for MembersStableStorage {
-    fn prefix(&self) -> &MemberKeyPrefix {
+impl StableMemoryMap<UserIdKeyPrefix, CommunityMemberInternal> for MembersStableStorage {
+    fn prefix(&self) -> &UserIdKeyPrefix {
         &self.prefix
     }
 
@@ -48,7 +48,7 @@ impl MembersStableStorage {
 impl Default for MembersStableStorage {
     fn default() -> Self {
         MembersStableStorage {
-            prefix: MemberKeyPrefix::new_from_community(),
+            prefix: UserIdKeyPrefix::new_from_community(),
         }
     }
 }
