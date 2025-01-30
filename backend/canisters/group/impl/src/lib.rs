@@ -430,48 +430,43 @@ impl RuntimeState {
     pub fn verified_caller(&self, mut bot_caller: Option<BotCaller>) -> CallerResult {
         use CallerResult::*;
 
-        if let Some(bot_caller) = bot_caller.as_ref() {
-            if self.data.bots.get(&bot_caller.bot_id()).is_none() {
+        let user_or_principal: Option<Principal> = if let Some(bot_caller) = bot_caller.as_ref() {
+            if self.data.bots.get(&bot_caller.bot).is_none() {
                 return NotFound;
             }
 
-            if let BotCaller::ApiKey(bot_id) = bot_caller {
-                return Success(Caller::BotApiKey(*bot_id));
-            }
-        }
-
-        let mut bot_caller = if let Some(bc) = bot_caller.take() {
-            let BotCaller::Command(bot_caller) = bc else { unreachable!() };
-            Some(bot_caller)
+            bot_caller.command.as_ref().map(|c| c.initiator.into())
         } else {
-            None
+            let caller = self.env.caller();
+
+            if caller == self.data.user_index_canister_id {
+                return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
+            }
+
+            Some(caller)
         };
 
-        let caller = self.env.caller();
+        if let Some(user_or_principal) = user_or_principal {
+            let Some(member) = self.data.get_member(user_or_principal) else {
+                return NotFound;
+            };
 
-        if caller == self.data.user_index_canister_id {
-            return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
-        }
-
-        let user_or_principal = bot_caller.as_ref().map(|bc| bc.command.initiator.into()).unwrap_or(caller);
-
-        let Some(member) = self.data.get_member(user_or_principal) else {
-            return NotFound;
-        };
-
-        if member.suspended().value {
-            return Suspended;
-        }
-
-        if let Some(bot_caller) = bot_caller.take() {
-            Success(Caller::BotCommand(bot_caller))
-        } else {
-            match member.user_type() {
-                UserType::User => Success(Caller::User(member.user_id())),
-                UserType::BotV2 => NotFound,
-                UserType::Bot => Success(Caller::Bot(member.user_id())),
-                UserType::OcControlledBot => Success(Caller::OCBot(member.user_id())),
+            if member.suspended().value {
+                return Suspended;
             }
+
+            if let Some(bot_caller) = bot_caller.take() {
+                Success(Caller::BotV2(bot_caller))
+            } else {
+                match member.user_type() {
+                    UserType::User => Success(Caller::User(member.user_id())),
+                    UserType::BotV2 => NotFound,
+                    UserType::Bot => Success(Caller::Bot(member.user_id())),
+                    UserType::OcControlledBot => Success(Caller::OCBot(member.user_id())),
+                }
+            }
+        } else {
+            Success(Caller::BotV2(bot_caller.unwrap()))
         }
     }
 }

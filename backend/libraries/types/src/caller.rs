@@ -4,30 +4,14 @@ use crate::{BotCommand, UserId, UserType};
 pub enum Caller {
     User(UserId),
     Bot(UserId),
-    BotCommand(BotCommandCaller),
-    BotApiKey(UserId),
+    BotV2(BotCaller),
     OCBot(UserId),
 }
 
 #[derive(Clone)]
-pub enum BotCaller {
-    Command(BotCommandCaller),
-    ApiKey(UserId),
-}
-
-impl BotCaller {
-    pub fn bot_id(&self) -> UserId {
-        match self {
-            BotCaller::Command(bot_caller) => bot_caller.bot,
-            BotCaller::ApiKey(user_id) => *user_id,
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct BotCommandCaller {
+pub struct BotCaller {
     pub bot: UserId,
-    pub command: BotCommand,
+    pub command: Option<BotCommand>,
     pub finalised: bool,
 }
 
@@ -36,8 +20,7 @@ impl Caller {
         match self {
             Caller::User(user_id) => *user_id,
             Caller::Bot(user_id) => *user_id,
-            Caller::BotCommand(bot_caller) => bot_caller.bot,
-            Caller::BotApiKey(user_id) => *user_id,
+            Caller::BotV2(bot_caller) => bot_caller.bot,
             Caller::OCBot(user_id) => *user_id,
         }
     }
@@ -46,8 +29,7 @@ impl Caller {
         match self {
             Caller::User(user_id) => Some(*user_id),
             Caller::Bot(user_id) => Some(*user_id),
-            Caller::BotCommand(bot_caller) => Some(bot_caller.command.initiator),
-            Caller::BotApiKey(_) => None,
+            Caller::BotV2(bot_caller) => bot_caller.command.as_ref().map(|command| command.initiator),
             Caller::OCBot(user_id) => Some(*user_id),
         }
     }
@@ -62,7 +44,7 @@ impl From<&Caller> for UserType {
         match caller {
             Caller::User(_) => UserType::User,
             Caller::Bot(_) => UserType::Bot,
-            Caller::BotCommand(_) | Caller::BotApiKey(_) => UserType::BotV2,
+            Caller::BotV2(_) => UserType::BotV2,
             Caller::OCBot(_) => UserType::OcControlledBot,
         }
     }
