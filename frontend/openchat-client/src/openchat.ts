@@ -168,7 +168,6 @@ import {
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
 import {
-    findLast,
     groupBy,
     groupWhile,
     keepMax,
@@ -3049,11 +3048,11 @@ export class OpenChat extends EventTarget {
     async loadNewMessages(
         chatId: ChatIdentifier,
         threadRootEvent?: EventWrapper<Message>,
-    ): Promise<boolean> {
+    ): Promise<void> {
         const serverChat = this.#liveState.serverChatSummaries.get(chatId);
 
         if (serverChat === undefined || this.#isPrivatePreview(serverChat)) {
-            return Promise.resolve(false);
+            return Promise.resolve();
         }
 
         if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
@@ -3066,7 +3065,7 @@ export class OpenChat extends EventTarget {
                 ascending,
                 threadRootEvent.event.messageIndex,
                 false,
-            ).then(() => false);
+            );
         }
 
         const criteria = this.#newMessageCriteria(serverChat);
@@ -3076,22 +3075,10 @@ export class OpenChat extends EventTarget {
             : undefined;
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
-            return false;
+            return;
         }
 
         await this.#handleEventsResponse(serverChat, eventsResponse);
-        // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
-        // if so, we update the chat summary to show the correct latest message.
-        const latestMessage = findLast(eventsResponse.events, (e) => e.event.kind === "message");
-        const newLatestMessage =
-            latestMessage !== undefined && latestMessage.index > serverChat.latestEventIndex;
-
-        if (newLatestMessage) {
-            updateSummaryWithConfirmedMessage(
-                serverChat.id,
-                latestMessage as EventWrapper<Message>,
-            );
-        }
 
         this.dispatchEvent(
             new LoadedNewMessages({
@@ -3099,7 +3086,6 @@ export class OpenChat extends EventTarget {
                 threadRootMessageIndex: threadRootEvent?.event.messageIndex,
             }),
         );
-        return newLatestMessage;
     }
 
     morePreviousMessagesAvailable(
@@ -3550,7 +3536,10 @@ export class OpenChat extends EventTarget {
                 mergeServerEvents(events, newEvents, context),
             );
             if (newLatestMessage !== undefined) {
-                localChatSummaryUpdates.markUpdated(chatId, { latestMessage: newLatestMessage });
+                updateSummaryWithConfirmedMessage(
+                    chatId,
+                    newLatestMessage,
+                );
             }
             const selectedThreadRootMessageIndex = this.#liveState.selectedThreadRootMessageIndex;
             if (selectedThreadRootMessageIndex !== undefined) {
@@ -3722,9 +3711,6 @@ export class OpenChat extends EventTarget {
                         this.#inflightMessagePromises.delete(messageId);
                         const event = mergeSendMessageResponse(msg, resp);
                         this.#addServerEventsToStores(chat.id, [event], threadRootMessageIndex, []);
-                        if (threadRootMessageIndex === undefined) {
-                            updateSummaryWithConfirmedMessage(chatId, event);
-                        }
                     } else {
                         if (resp.kind == "rules_not_accepted") {
                             this.#markChatRulesAcceptedLocally(false);
