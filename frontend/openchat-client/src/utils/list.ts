@@ -80,14 +80,6 @@ export function chunk<T>(array: T[], size: number): T[][] {
     return chunks;
 }
 
-export function findLast<T>(array: T[], predicate: (item: T) => boolean): T | undefined {
-    for (let i = array.length - 1; i >= 0; i--) {
-        const item = array[i];
-        if (predicate(item)) return item;
-    }
-    return undefined;
-}
-
 export function toRecord<T, K extends string | number | symbol>(
     xs: T[],
     keyFn: (x: T) => K,
