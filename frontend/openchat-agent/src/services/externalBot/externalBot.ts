@@ -62,7 +62,6 @@ export function getBotDefinition(endpoint: string): Promise<BotDefinitionRespons
 
 function validateSchema(json: unknown): BotDefinitionResponse {
     try {
-        console.log("Validating schema json: ", json);
         const value = Value.Parse(BotDefinition, json);
         return externalBotDefinition(value);
     } catch (err) {
@@ -82,7 +81,6 @@ function formatError(err: unknown) {
 
 function validateBotResponse(json: unknown): BotCommandResponse {
     try {
-        console.log("Bot command response json", json);
         const value = Value.Parse(ApiBotResponse, json);
         return externalBotResponse(value);
     } catch (err) {

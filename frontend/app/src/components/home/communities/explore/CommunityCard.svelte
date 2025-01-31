@@ -12,7 +12,7 @@
     import AccessGateIcon from "../../access/AccessGateIcon.svelte";
     import { i18nKey, supportedLanguagesByCode } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
-    import Verified from "../../../icons/Verified.svelte";
+    import WithVerifiedBadge from "../../../icons/WithVerifiedBadge.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -86,17 +86,14 @@
         </CommunityBanner>
     </IntersectionObserver>
     <div class="content">
-        <div class="name">
-            {name}
-            {#if verified}
-                <div class="verified">
-                    <Verified
-                        size={"large"}
-                        {verified}
-                        tooltip={i18nKey("verified.verified", undefined, "community")} />
-                </div>
-            {/if}
-        </div>
+        <WithVerifiedBadge
+            {verified}
+            size={"small"}
+            tooltip={i18nKey("verified.verified", undefined, "community")}>
+            <div class="name">
+                {name}
+            </div>
+        </WithVerifiedBadge>
         <div class="desc" class:fixed={!header}>
             <Markdown inline={false} text={description} />
         </div>
@@ -156,10 +153,6 @@
 
             .name {
                 @include font(bold, normal, fs-130);
-                margin-bottom: $sp3;
-                display: flex;
-                gap: $sp2;
-                align-items: center;
             }
 
             .desc {

@@ -35,6 +35,7 @@
     import ActiveBroadcastSummary from "./video/ActiveBroadcastSummary.svelte";
     import Badges from "./profile/Badges.svelte";
     import ActiveVideoCallResume from "./video/ActiveVideoCallResume.svelte";
+    import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -165,25 +166,26 @@
             showStatus
             userId={chat.userId}
             url={chat.avatarUrl}
-            size={AvatarSize.Default}
-            {verified} />
+            size={AvatarSize.Default} />
     </div>
     <div class="chat-details">
         <div class="chat-name">
             {#if isMultiUser && !readonly}
-                <div class="title">
-                    {#if $selectedCommunity !== undefined && $chatListScope.kind === "favourite"}
-                        <span on:click={navigateToCommunity} class="pointer">
-                            {$selectedCommunity.name}
-                        </span>
-                        <span>{">"}</span>
-                        <span on:click={navigateToChannel} class="pointer">
+                <WithVerifiedBadge {verified} size={"small"}>
+                    <div class="title">
+                        {#if $selectedCommunity !== undefined && $chatListScope.kind === "favourite"}
+                            <span on:click={navigateToCommunity} class="pointer">
+                                {$selectedCommunity.name}
+                            </span>
+                            <span>{">"}</span>
+                            <span on:click={navigateToChannel} class="pointer">
+                                {chat.name}
+                            </span>
+                        {:else}
                             {chat.name}
-                        </span>
-                    {:else}
-                        {chat.name}
-                    {/if}
-                </div>
+                        {/if}
+                    </div>
+                </WithVerifiedBadge>
             {:else if hasUserProfile}
                 <span on:click={openUserProfile} class="user-link">
                     {chat.name}
