@@ -268,6 +268,7 @@ import {
     UserMessageActivityFeedResponse,
 } from "../../typebox";
 import { toggleNotificationsResponse } from "../notifications/mappers";
+import { profile } from "../common/profiling";
 
 export class UserClient extends CanisterAgent {
     userId: string;
@@ -347,6 +348,7 @@ export class UserClient extends CanisterAgent {
         );
     }
 
+    @profile("UserClient")
     getUpdates(updatesSince: bigint): Promise<UpdatesResponse> {
         const args = {
             updates_since: updatesSince,

@@ -56,7 +56,7 @@ export const profile =
 
             const end = () => {
                 const duration = performance.now() - start;
-                console.log(`Method ${key} executed in ${duration.toFixed(2)} ms`);
+                console.debug(`PROFILE: Method ${key} executed in ${duration.toFixed(2)} ms`);
             };
 
             if (result instanceof Promise) {
