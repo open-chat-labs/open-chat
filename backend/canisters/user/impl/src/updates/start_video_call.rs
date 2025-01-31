@@ -62,7 +62,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
             crypto_transfer: None,
         });
 
-        state.push_notification(my_user_id, notification);
+        state.push_notification(Some(sender), my_user_id, notification);
     }
 
     state.push_user_canister_event(

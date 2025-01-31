@@ -10,6 +10,7 @@ import type {
     MemberRole,
     OptionalChatPermissions,
     Permissioned,
+    PublicApiKeyDetails,
 } from "../permission";
 import type { ChatListScope, HasLevel } from "../structure";
 import type {
@@ -661,12 +662,14 @@ export type Message<T extends MessageContent = MessageContent> = {
     botContext?: BotMessageContext;
 };
 
-export type BotMessageContext = {
+export type BotContextCommand = {
+    name: string;
+    args: SlashCommandParamInstance[];
     initiator: string;
-    command: {
-        name: string;
-        args: SlashCommandParamInstance[];
-    };
+};
+
+export type BotMessageContext = {
+    command?: BotContextCommand;
     finalised: boolean;
 };
 
@@ -1424,6 +1427,7 @@ export type GroupChatDetails = {
     rules: VersionedRules;
     timestamp: bigint;
     bots: BotGroupDetails[];
+    apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
 /**
@@ -1447,6 +1451,7 @@ export type ChatSpecificState = {
     expandedDeletedMessages: Set<number>;
     expiredEventRanges: DRange;
     bots: Map<string, ExternalBotPermissions>;
+    apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
 export type GroupChatDetailsUpdates = {
@@ -1461,6 +1466,7 @@ export type GroupChatDetailsUpdates = {
     timestamp: bigint;
     botsAddedOrUpdated: BotGroupDetails[];
     botsRemoved: Set<string>;
+    apiKeysGenerated: PublicApiKeyDetails[];
 };
 
 export type ChatSummary = DirectChatSummary | MultiUserChat;

@@ -5146,6 +5146,7 @@ dependencies = [
  "serde",
  "stable_memory",
  "stable_memory_map",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_index_canister",

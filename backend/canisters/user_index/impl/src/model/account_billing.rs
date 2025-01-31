@@ -5,7 +5,14 @@ use types::{TimestampMillis, ICP};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub struct AccountBilling {
+    #[serde(rename = "c", alias = "charges")]
     charges: Vec<AccountCharge>,
+}
+
+impl AccountBilling {
+    pub fn is_empty(&self) -> bool {
+        self.charges.is_empty()
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]

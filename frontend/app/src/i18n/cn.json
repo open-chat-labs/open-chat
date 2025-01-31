@@ -320,6 +320,7 @@
             "generate": "生成 API 密钥",
             "generateApiKey": "生成 API 密钥",
             "generated": "已生成 API 密钥",
+            "generateFailed": "抱歉，我们无法生成 API 密钥",
             "regenerate": "重新生成 API 密钥",
             "regenerateWarning": "重新生成 API 密钥将撤销对之前生成的 API 密钥的访问权限。您确定要继续吗？",
             "remove": "移除机器人",

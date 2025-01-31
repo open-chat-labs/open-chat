@@ -320,6 +320,7 @@
             "generate": "צור מפתח API",
             "generateApiKey": "צור מפתח API",
             "generated": "מפתח API נוצר",
+            "generateFailed": "מצטערים שלא הצלחנו ליצור מפתח API",
             "regenerate": "צור מחדש מפתח API",
             "regenerateWarning": "יצירה מחדש של מפתח ה-API תבטל את הגישה למפתח ה-API שנוצר קודם לכן. האם אתה בטוח שאתה רוצה להמשיך?",
             "remove": "הסר בוט",

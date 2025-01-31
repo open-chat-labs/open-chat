@@ -186,7 +186,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         });
         let recipient = state.env.canister_id().into();
 
-        state.push_notification(recipient, notification);
+        state.push_notification(Some(args.sender), recipient, notification);
     }
 
     if matches!(content, MessageContent::Crypto(_)) {

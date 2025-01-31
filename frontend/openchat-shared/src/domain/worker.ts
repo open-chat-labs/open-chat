@@ -122,6 +122,7 @@ import type { GroupInvite, CommunityInvite } from "./inviteCodes";
 import type {
     AccessTokenType,
     CommunityPermissions,
+    GenerateBotKeyResponse,
     MemberRole,
     OptionalChatPermissions,
 } from "./permission";
@@ -428,7 +429,15 @@ export type WorkerRequest =
     | UpdateRegisteredBot
     | GetBotDefinition
     | CallBotCommandEndpoint
-    | WithdrawFromIcpSwap;
+    | WithdrawFromIcpSwap
+    | GenerateBotApiKey;
+
+type GenerateBotApiKey = {
+    kind: "generateBotApiKey";
+    id: MultiUserChatIdentifier | CommunityIdentifier;
+    botId: string;
+    permissions: ExternalBotPermissions;
+};
 
 type CallBotCommandEndpoint = {
     kind: "callBotCommandEndpoint";
@@ -535,7 +544,6 @@ type GetLocalUserIndexForUser = {
 
 type GetAccessToken = {
     kind: "getAccessToken";
-    chatId: ChatIdentifier;
     accessTokenType: AccessTokenType;
     localUserIndex: string;
 };
@@ -1428,7 +1436,7 @@ type LinkIdentities = {
 type RemoveIdentityLink = {
     kind: "removeIdentityLink";
     linked_principal: string;
-}
+};
 
 type DeleteUser = {
     kind: "deleteUser";
@@ -1608,7 +1616,8 @@ export type WorkerResponseInner =
     | MessageActivityFeedResponse
     | ExploreBotsResponse
     | BotDefinitionResponse
-    | BotCommandResponse;
+    | BotCommandResponse
+    | GenerateBotKeyResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2333,4 +2342,6 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends WithdrawFromIcpSwap
     ? boolean
+    : T extends GenerateBotApiKey
+    ? GenerateBotKeyResponse
     : never;

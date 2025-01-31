@@ -28,6 +28,8 @@ import type {
     SlashCommandParam,
     BotsResponse,
     ExternalBot,
+    BotDefinition,
+    AutonomousBotConfig,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -75,8 +77,10 @@ import type {
     SlashCommandSchema as ApiSlashCommandSchema,
     SlashCommandParam as ApiSlashCommandParam,
     SlashCommandParamType as ApiSlashCommandParamType,
+    BotDefinition as ApiBotDefinition,
     UserIndexBotUpdatesResponse,
     UserIndexBotUpdatesBotSchema,
+    AutonomousConfig,
 } from "../../typebox";
 import { toRecord } from "../../utils/list";
 
@@ -634,6 +638,24 @@ export function apiExternalBotParam(param: SlashCommandParam): ApiSlashCommandPa
     return {
         ...param,
         param_type: apiCustomParamFields(param),
+    };
+}
+
+export function apiBotDefinition(domain: BotDefinition): ApiBotDefinition {
+    return {
+        description: domain.description ?? "",
+        commands: domain.commands.map(apiExternalBotCommand),
+        autonomous_config: mapOptional(domain.autonomousConfig, apiAutonomousConfig),
+    };
+}
+
+export function apiAutonomousConfig(domain: AutonomousBotConfig): AutonomousConfig {
+    return {
+        permissions: {
+            chat: domain.permissions.chatPermissions.map(apiChatPermission),
+            community: domain.permissions.communityPermissions.map(apiCommunityPermission),
+            message: domain.permissions.messagePermissions.map(apiMessagePermission),
+        },
     };
 }
 

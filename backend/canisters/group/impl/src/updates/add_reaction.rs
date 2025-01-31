@@ -52,6 +52,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
 
                             if !notifications_muted {
                                 state.push_notification(
+                                    Some(user_id),
                                     vec![message.sender],
                                     Notification::GroupReactionAdded(GroupReactionAddedNotification {
                                         chat_id,

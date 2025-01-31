@@ -25,6 +25,7 @@
     import page from "page";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -60,13 +61,14 @@
             <div class="avatar">
                 <Avatar
                     url={client.groupAvatarUrl(group, $selectedCommunity)}
-                    size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default}
-                    verified={group.verified} />
+                    size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
             </div>
             <div class="group-title-line">
-                <h3 class="group-name">
-                    {group.name}
-                </h3>
+                <WithVerifiedBadge verified={group.verified} size={"small"}>
+                    <h3 class="group-name">
+                        {group.name}
+                    </h3>
+                </WithVerifiedBadge>
                 <p class="user-count">
                     <Translatable
                         resourceKey={i18nKey("groupWithN", {

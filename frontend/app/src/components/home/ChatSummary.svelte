@@ -56,6 +56,7 @@
     import Translatable from "../Translatable.svelte";
     import VideoCallIcon from "./video/VideoCallIcon.svelte";
     import Badges from "./profile/Badges.svelte";
+    import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -356,8 +357,7 @@
                 url={chat.avatarUrl}
                 showStatus
                 userId={chat.userId?.userId}
-                size={AvatarSize.Default}
-                {verified} />
+                size={AvatarSize.Default} />
             {#if chat.eventsTTL}
                 <div class="expires">
                     <CameraTimer size={"1em"} color={"var(--txt)"} />
@@ -371,17 +371,19 @@
                     {#if chat.private}
                         <div class="private"></div>
                     {/if}
-                    <h4>
-                        {#if community !== undefined && $chatListScope.kind === "favourite"}
-                            <span>{community.name}</span>
-                            <span>{">"}</span>
-                        {/if}
-                        <span>{chat.name}</span>
-                    </h4>
-                    <Badges
-                        uniquePerson={chat.uniquePerson}
-                        diamondStatus={chat.diamondStatus}
-                        streak={chat.streak} />
+                    <WithVerifiedBadge {verified} size={"small"}>
+                        <h4>
+                            {#if community !== undefined && $chatListScope.kind === "favourite"}
+                                <span>{community.name}</span>
+                                <span>{">"}</span>
+                            {/if}
+                            <span>{chat.name}</span>
+                        </h4>
+                        <Badges
+                            uniquePerson={chat.uniquePerson}
+                            diamondStatus={chat.diamondStatus}
+                            streak={chat.streak} />
+                    </WithVerifiedBadge>
                 </div>
             </div>
             <div class="chat-msg">

@@ -7,7 +7,6 @@ import type {
     ChatEventsArgsInner,
     ChatEventsBatchResponse,
     ChatEventsResponse,
-    ChatIdentifier,
     CommunityIdentifier,
     EventsSuccessResult,
     EventWrapper,
@@ -37,7 +36,6 @@ import {
 } from "./mappers";
 import {
     joinGroupResponse,
-    apiChatIdentifier,
     apiChatPermission,
     apiCommunityPermission,
     apiMessagePermission,
@@ -57,8 +55,8 @@ import {
     setCachePrimerTimestamp,
 } from "../../utils/caching";
 import {
-    LocalUserIndexAccessTokenArgs,
-    LocalUserIndexAccessTokenResponse,
+    LocalUserIndexAccessTokenV2Args,
+    LocalUserIndexAccessTokenV2Response,
     LocalUserIndexChatEventsArgs,
     LocalUserIndexChatEventsResponse,
     LocalUserIndexGroupAndCommunitySummaryUpdatesArgs,
@@ -431,19 +429,13 @@ export class LocalUserIndexClient extends CandidService {
         );
     }
 
-    getAccessToken(
-        chatId: ChatIdentifier,
-        accessType: AccessTokenType,
-    ): Promise<string | undefined> {
+    getAccessToken(accessType: AccessTokenType): Promise<string | undefined> {
         return this.executeMsgpackQuery(
-            "access_token",
-            {
-                chat: apiChatIdentifier(chatId),
-                token_type: apiAccessTokenType(accessType),
-            },
+            "access_token_v2",
+            apiAccessTokenType(accessType),
             accessTokenResponse,
-            LocalUserIndexAccessTokenArgs,
-            LocalUserIndexAccessTokenResponse,
+            LocalUserIndexAccessTokenV2Args,
+            LocalUserIndexAccessTokenV2Response,
         );
     }
 

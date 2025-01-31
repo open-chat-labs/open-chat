@@ -91,6 +91,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
         expandedDeletedMessages: new Set(),
         expiredEventRanges: new DRange(),
         bots: new Map(),
+        apiKeys: new Map(),
     }),
 );
 
@@ -104,6 +105,12 @@ export const currentChatBots = createDerivedPropStore<ChatSpecificState, "bots">
     chatStateStore,
     "bots",
     () => new Map<string, ExternalBotPermissions>(),
+);
+
+export const currentChatApiKeys = createDerivedPropStore<ChatSpecificState, "apiKeys">(
+    chatStateStore,
+    "apiKeys",
+    () => new Map(),
 );
 
 export const currentChatUserIds = createDerivedPropStore<ChatSpecificState, "userIds">(

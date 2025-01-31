@@ -1,16 +1,16 @@
 use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{LazyValue, PrincipalToUserIdKeyPrefix, StableMemoryMap};
+use stable_memory_map::{LazyValue, PrincipalKeyPrefix, StableMemoryMap};
 use types::UserId;
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize)]
 pub struct PrincipalToUserIdMap {
-    prefix: PrincipalToUserIdKeyPrefix,
+    prefix: PrincipalKeyPrefix,
     count: u32,
 }
 
-impl StableMemoryMap<PrincipalToUserIdKeyPrefix, UserId> for PrincipalToUserIdMap {
-    fn prefix(&self) -> &PrincipalToUserIdKeyPrefix {
+impl StableMemoryMap<PrincipalKeyPrefix, UserId> for PrincipalToUserIdMap {
+    fn prefix(&self) -> &PrincipalKeyPrefix {
         &self.prefix
     }
 
@@ -40,5 +40,14 @@ impl PrincipalToUserIdMap {
 
     pub fn is_empty(&self) -> bool {
         self.count == 0
+    }
+}
+
+impl Default for PrincipalToUserIdMap {
+    fn default() -> Self {
+        PrincipalToUserIdMap {
+            prefix: PrincipalKeyPrefix::new_for_principal_to_user_id_map(),
+            count: 0,
+        }
     }
 }

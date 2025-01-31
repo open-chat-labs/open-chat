@@ -9,6 +9,7 @@
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -32,11 +33,14 @@
             <Avatar
                 url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                 userId={undefined}
-                verified={community.verified}
                 size={AvatarSize.Default} />
         </div>
         <div class="details">
-            <h4 class="name">{community.name}</h4>
+            <WithVerifiedBadge verified={community.verified} size={"small"}>
+                <h4 class="name">
+                    {community.name}
+                </h4>
+            </WithVerifiedBadge>
             <div class="wrapper">
                 <VisibilityLabel isPublic={community.public} />
                 <div class="members">

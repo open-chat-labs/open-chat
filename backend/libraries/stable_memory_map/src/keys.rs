@@ -6,15 +6,15 @@ use std::borrow::Cow;
 mod chat_event;
 mod community_event;
 mod macros;
-mod member;
-mod principal_to_user_id;
+mod principal;
 mod storage;
+mod user_id;
 
 pub use chat_event::*;
 pub use community_event::*;
-pub use member::*;
-pub use principal_to_user_id::*;
+pub use principal::*;
 pub use storage::*;
+pub use user_id::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(transparent)]

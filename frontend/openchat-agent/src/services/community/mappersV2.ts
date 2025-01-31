@@ -19,6 +19,7 @@ import type {
     GroupMembershipUpdates,
     ImportGroupResponse,
     MemberRole,
+    PublicApiKeyDetails,
     RemoveMemberResponse,
     SendMessageResponse,
     SetMemberDisplayNameResponse,
@@ -79,6 +80,7 @@ import {
     memberRole,
     mentions,
     messageEvent,
+    publicApiKeyDetails,
     threadSyncDetails,
     updatedEvent,
     userGroup,
@@ -447,6 +449,7 @@ export function communityDetailsResponse(
     value: CommunitySelectedInitialResponse,
 ): CommunityDetailsResponse {
     if (typeof value === "object" && "Success" in value) {
+        console.log("Community details: ", value.Success);
         return {
             members: value.Success.members
                 .map((m) => ({
@@ -470,6 +473,10 @@ export function communityDetailsResponse(
             userGroups: new Map(value.Success.user_groups.map(userGroupDetails)),
             referrals: new Set(value.Success.referrals.map(principalBytesToString)),
             bots: value.Success.bots.map(botGroupDetails),
+            apiKeys: value.Success.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
+                m.set(k.botId, k);
+                return m;
+            }, new Map<string, PublicApiKeyDetails>()),
         };
     } else {
         console.warn("CommunityDetails failed with", value);
@@ -523,6 +530,7 @@ export function communityDetailsUpdatesResponse(
                 referralsAdded: new Set(value.Success.referrals_added.map(principalBytesToString)),
                 botsAddedOrUpdated: value.Success.bots_added_or_updated.map(botGroupDetails),
                 botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
+                apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {

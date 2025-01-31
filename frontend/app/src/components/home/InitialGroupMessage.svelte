@@ -10,6 +10,7 @@
     import Markdown from "./Markdown.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -20,19 +21,18 @@
 </script>
 
 <div class="container">
-    <h4 class="welcome">
-        <Translatable resourceKey={i18nKey("group.welcome", { groupName: group.name })} />
-    </h4>
+    <WithVerifiedBadge {verified} size={"small"}>
+        <h4 class="welcome">
+            <Translatable resourceKey={i18nKey("group.welcome", { groupName: group.name })} />
+        </h4>
+    </WithVerifiedBadge>
     {#if group.description.length > 0}
         <div>
             <Markdown inline={false} text={group.description} />
         </div>
     {/if}
     <div class="pop">
-        <Avatar
-            url={client.groupAvatarUrl(group, $selectedCommunity)}
-            size={AvatarSize.Large}
-            {verified} />
+        <Avatar url={client.groupAvatarUrl(group, $selectedCommunity)} size={AvatarSize.Large} />
     </div>
     <div>
         <Translatable

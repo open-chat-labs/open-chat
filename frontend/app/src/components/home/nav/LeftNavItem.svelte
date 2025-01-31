@@ -5,23 +5,47 @@
     import type { ResourceKey } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
     import VideoCallIcon from "../video/VideoCallIcon.svelte";
+    import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
 
-    export let label: ResourceKey;
-    export let selected: boolean = false;
-    export let separator: boolean = false;
-    export let unread = emptyUnreadCounts();
-    export let video = { muted: 0, unmuted: 0 };
-    export let disabled = false;
+    interface Props {
+        label: ResourceKey;
+        selected?: boolean;
+        separator?: boolean;
+        unread?: any;
+        video?: any;
+        children?: import("svelte").Snippet;
+        onClick?: () => void;
+        verified?: boolean;
+    }
+
+    let {
+        label,
+        selected = false,
+        separator = false,
+        unread = emptyUnreadCounts(),
+        video = { muted: 0, unmuted: 0 },
+        children,
+        onClick,
+        verified = false,
+    }: Props = $props();
 </script>
 
-<div role="button" tabindex="0" class:separator class:selected class="left-nav-item" on:click>
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div
+    role="button"
+    tabindex="0"
+    class:separator
+    class:selected
+    class="left-nav-item"
+    onclick={onClick}>
     <div class="icon" title={$_(label.key, label.params)}>
-        <slot />
+        {@render children?.()}
         <UnreadCount {unread} />
         <VideoCallIcon {video} />
     </div>
-    <div class="label"><Translatable resourceKey={label} /></div>
-    <div class="menu"><slot name="menu" /></div>
+    <WithVerifiedBadge {verified} size={"small"}>
+        <div class="label"><Translatable resourceKey={label} /></div>
+    </WithVerifiedBadge>
 </div>
 
 <style lang="scss">
@@ -80,10 +104,6 @@
         .label {
             flex: auto;
             white-space: nowrap;
-        }
-
-        .menu {
-            flex: 0 0 toRem(30);
         }
     }
 </style>

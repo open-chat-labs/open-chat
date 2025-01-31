@@ -74,6 +74,7 @@ import {
     apiCommunityPermission,
     apiMessagePermission,
     updateBotResponse,
+    generateApiKeyResponse,
 } from "../common/chatMappersV2";
 import type {
     AddMembersToChannelResponse,
@@ -143,6 +144,7 @@ import type {
     VideoCallParticipantsResponse,
     AccessGateConfig,
     ExternalBotPermissions,
+    GenerateBotKeyResponse,
 } from "openchat-shared";
 import {
     textToCode,
@@ -293,6 +295,8 @@ import {
     Empty as TEmpty,
     CommunityUpdateBotArgs,
     CommunityUpdateBotResponse,
+    CommunityGenerateBotApiKeyArgs,
+    CommunityGenerateBotApiKeyResponse,
 } from "../../typebox";
 
 export class CommunityClient extends CandidService {
@@ -1735,6 +1739,28 @@ export class CommunityClient extends CandidService {
             updateBotResponse,
             CommunityUpdateBotArgs,
             CommunityUpdateBotResponse,
+        );
+    }
+
+    generateBotApiKey(
+        botId: string,
+        permissions: ExternalBotPermissions,
+        channelId?: number,
+    ): Promise<GenerateBotKeyResponse> {
+        return this.executeMsgpackUpdate(
+            "generate_bot_api_key",
+            {
+                bot_id: principalStringToBytes(botId),
+                requested_permissions: {
+                    chat: permissions.chatPermissions.map(apiChatPermission),
+                    community: permissions.communityPermissions.map(apiCommunityPermission),
+                    message: permissions.messagePermissions.map(apiMessagePermission),
+                },
+                channel_id: mapOptional(channelId, toBigInt32),
+            },
+            generateApiKeyResponse,
+            CommunityGenerateBotApiKeyArgs,
+            CommunityGenerateBotApiKeyResponse,
         );
     }
 }

@@ -124,8 +124,8 @@
             activeVideoCall.joining(chat.id, callType);
 
             const accessType: AccessTokenType = join
-                ? { kind: "join_video_call" }
-                : { kind: "start_video_call", callType };
+                ? { kind: "join_video_call", chatId: chat.id }
+                : { kind: "start_video_call", callType, chatId: chat.id };
 
             // first we need to get access jwt from the oc backend
             const { token, roomName, messageId, joining } = await client.getVideoChatAccessToken(

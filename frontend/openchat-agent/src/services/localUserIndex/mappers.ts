@@ -1,6 +1,7 @@
 import { Principal } from "@dfinity/principal";
 import type {
     AccessTokenType,
+    BotActionScope,
     ChatEventsArgs,
     ChatEventsBatchResponse,
     ChatEventsResponse,
@@ -14,8 +15,6 @@ import type {
     VideoCallType,
 } from "openchat-shared";
 import type {
-    AccessTokenType as TAccessTokenType,
-    LocalUserIndexAccessTokenResponse,
     LocalUserIndexChatEventsEventsArgsInner,
     LocalUserIndexChatEventsEventsArgs,
     LocalUserIndexChatEventsEventsContext,
@@ -32,6 +31,9 @@ import type {
     VideoCallType as TVideoCallType,
     BotCommandArg,
     BotCommandArgValue,
+    LocalUserIndexAccessTokenV2Response,
+    LocalUserIndexAccessTokenV2Args,
+    BotActionScope as ApiBotActionScope,
 } from "../../typebox";
 import {
     toBigInt32,
@@ -42,8 +44,6 @@ import {
 } from "openchat-shared";
 import {
     bytesToHexString,
-    identity,
-    mapOptional,
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
@@ -58,31 +58,47 @@ import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
 import { communitySummaryUpdates } from "../community/mappersV2";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 
-export function apiAccessTokenType(domain: AccessTokenType): TAccessTokenType {
+export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAccessTokenV2Args {
     switch (domain.kind) {
         case "join_video_call":
-            return "JoinVideoCall";
+            return { JoinVideoCall: { chat: apiChatIdentifier(domain.chatId) } };
         case "start_video_call":
             return {
-                StartVideoCallV2: {
+                StartVideoCall: {
                     call_type: apiCallType(domain.callType),
+                    chat: apiChatIdentifier(domain.chatId),
                 },
             };
-        case "execute_bot_command":
+
+        case "bot_action_by_command":
             return {
-                BotCommand: {
-                    user_id: principalStringToBytes(domain.userId),
-                    bot: principalStringToBytes(domain.botId),
-                    chat: apiChatIdentifier(domain.messageContext.chatId),
-                    thread_root_message_index: mapOptional(
-                        domain.messageContext.threadRootMessageIndex,
-                        identity,
-                    ),
-                    message_id: domain.messageId,
+                BotActionByCommand: {
+                    bot_id: principalStringToBytes(domain.botId),
+                    scope: apiBotActionScope(domain.scope),
                     command: {
-                        name: domain.commandName,
-                        args: domain.arguments.map(apiBotCommandArg),
+                        initiator: principalStringToBytes(domain.command.initiator),
+                        name: domain.command.commandName,
+                        args: domain.command.arguments.map(apiBotCommandArg),
                     },
+                },
+            };
+    }
+}
+
+export function apiBotActionScope(domain: BotActionScope): ApiBotActionScope {
+    switch (domain.kind) {
+        case "chat_scope":
+            return {
+                Chat: {
+                    chat: apiChatIdentifier(domain.chatId),
+                    thread_root_message_index: domain.threadRootMessageIndex,
+                    message_id: domain.messageId,
+                },
+            };
+        case "community_scope":
+            return {
+                Community: {
+                    community_id: principalStringToBytes(domain.communityId.communityId),
                 },
             };
     }
@@ -126,7 +142,9 @@ export function apiCallType(domain: VideoCallType): TVideoCallType {
     throw new UnsupportedValueError("Unexpected VideoCallType received", domain);
 }
 
-export function accessTokenResponse(value: LocalUserIndexAccessTokenResponse): string | undefined {
+export function accessTokenResponse(
+    value: LocalUserIndexAccessTokenV2Response,
+): string | undefined {
     if (typeof value === "object" && "Success" in value) {
         return value.Success;
     }

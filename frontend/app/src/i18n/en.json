@@ -320,6 +320,7 @@
             "generate": "Generate API key",
             "generateApiKey": "Generate an API key",
             "generated": "API key generated",
+            "generateFailed": "Sorry we were unable to generate an api key",
             "regenerate": "Re-generate API key",
             "regenerateWarning": "Re-generating the API key will revoke access to the previously generated API key. Are you sure you want to proceed?",
             "remove": "Remove bot",

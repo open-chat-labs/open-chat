@@ -112,6 +112,10 @@ export function mergeCommunityDetails(
                 removed: updates.botsRemoved,
             },
         ),
+        apiKeys: updates.apiKeysGenerated.reduce((m, k) => {
+            m.set(k.botId, k);
+            return m;
+        }, previous.apiKeys),
     };
 }
 
@@ -160,6 +164,10 @@ export function mergeGroupChatDetails(
                 removed: updates.botsRemoved,
             },
         ),
+        apiKeys: updates.apiKeysGenerated.reduce((m, k) => {
+            m.set(k.botId, k);
+            return m;
+        }, previous.apiKeys),
     };
 }
 
