@@ -26,6 +26,7 @@
         ExternalBotPermissions,
         MultiUserChat,
         CommunitySummary,
+        PublicApiKeyDetails,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { toastStore } from "../../stores/toast";
@@ -35,29 +36,16 @@
 
     const client = getContext<OpenChat>("client");
 
-    // TODO: we will probably be passed some sort of representation of the current api_key
-    // Something like:
-    /**
-     * type ApiKey = {
-     *     addedBy: bigint;
-     *     userId: string;
-     *     permissions: ExternalBotPermissions
-     * }
-     *
-     * this is analogous to the existing BotGroupDetails type
-     */
-
     interface Props {
         collection: CommunitySummary | MultiUserChat;
         bot: ExternalBot;
         canManage: boolean;
         searchTerm: string;
         commandPermissions: ExternalBotPermissions;
-        apiKeyPermissions?: ExternalBotPermissions;
+        apiKey: PublicApiKeyDetails | undefined;
     }
 
-    let { collection, bot, canManage, searchTerm, commandPermissions, apiKeyPermissions }: Props =
-        $props();
+    let { collection, bot, canManage, searchTerm, commandPermissions, apiKey }: Props = $props();
     let botSummaryMode = $state<BotSummaryMode | undefined>(undefined);
     let generatingKey = $state(false);
     let autonomousPermissionsEmpty = $derived(
@@ -72,6 +60,7 @@
             ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
             : collection.id,
     );
+    let apiKeyPermissions = $derived(apiKey?.grantedPermissions);
 
     function permissionsAreEmpty(perm: ExternalBotPermissions): boolean {
         const empty =

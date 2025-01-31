@@ -49,8 +49,8 @@ import {
     apiJsonDiamondDuration,
     externalAchievementsResponse,
     exploreBotsResponse,
-    apiExternalBotCommand,
     botUpdatesResponse,
+    apiBotDefinition,
 } from "./mappers";
 import {
     getCachedUsers,
@@ -649,10 +649,7 @@ export class UserIndexClient extends CandidService {
                 name: bot.name,
                 avatar: mapOptional(bot.avatarUrl, identity),
                 endpoint: bot.endpoint,
-                definition: {
-                    description: bot.definition.description ?? "",
-                    commands: bot.definition.commands.map(apiExternalBotCommand),
-                },
+                definition: apiBotDefinition(bot.definition),
             },
             (resp) => {
                 console.log("UserIndex register bot response: ", resp);
@@ -686,7 +683,7 @@ export class UserIndexClient extends CandidService {
         endpoint?: string,
         definition?: BotDefinition,
     ): Promise<boolean> {
-        console.log("Updating bot principal: ", principal);
+        console.log("Updating definition: ", definition);
         return this.executeMsgpackUpdate(
             "update_bot",
             {
@@ -698,10 +695,7 @@ export class UserIndexClient extends CandidService {
                         SetToSome: url,
                     })) ?? "NoChange",
                 endpoint: mapOptional(endpoint, identity),
-                definition: mapOptional(definition, (d) => ({
-                    description: d.description,
-                    commands: d.commands.map(apiExternalBotCommand),
-                })),
+                definition: mapOptional(definition, apiBotDefinition),
             },
             (resp) => {
                 console.log("UserIndex update bot response: ", resp);

@@ -74,5 +74,14 @@
         display: flex;
         gap: $sp2;
         align-items: center;
+        width: 100%;
+
+        pre {
+            word-break: break-all;
+            flex: 1;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            margin: 0;
+        }
     }
 </style>

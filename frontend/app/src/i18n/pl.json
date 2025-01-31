@@ -320,6 +320,7 @@
             "generate": "Generuj klucz API",
             "generateApiKey": "Wygeneruj klucz API",
             "generated": "Wygenerowano klucz API",
+            "generateFailed": "Przepraszamy, nie udało nam się wygenerować klucza API",
             "regenerate": "Wygeneruj ponownie klucz API",
             "regenerateWarning": "Ponowne wygenerowanie klucza API spowoduje cofnięcie dostępu do wcześniej wygenerowanego klucza API. Czy na pewno chcesz kontynuować?",
             "remove": "Usuń bota",

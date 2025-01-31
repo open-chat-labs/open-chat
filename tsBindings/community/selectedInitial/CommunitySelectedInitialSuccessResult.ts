@@ -2,8 +2,9 @@
 import type { BotGroupDetails } from "../../shared/BotGroupDetails";
 import type { CommunityMember } from "../../shared/CommunityMember";
 import type { EventIndex } from "../../shared/EventIndex";
+import type { PublicApiKeyDetails } from "../../shared/PublicApiKeyDetails";
 import type { UserGroupDetails } from "../../shared/UserGroupDetails";
 import type { UserId } from "../../shared/UserId";
 import type { VersionedRules } from "../../shared/VersionedRules";
 
-export type CommunitySelectedInitialSuccessResult = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, members: Array<CommunityMember>, bots: Array<BotGroupDetails>, basic_members: Array<UserId>, blocked_users: Array<UserId>, invited_users: Array<UserId>, chat_rules: VersionedRules, user_groups: Array<UserGroupDetails>, referrals: Array<UserId>, };
+export type CommunitySelectedInitialSuccessResult = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, members: Array<CommunityMember>, bots: Array<BotGroupDetails>, api_keys: Array<PublicApiKeyDetails>, basic_members: Array<UserId>, blocked_users: Array<UserId>, invited_users: Array<UserId>, chat_rules: VersionedRules, user_groups: Array<UserGroupDetails>, referrals: Array<UserId>, };

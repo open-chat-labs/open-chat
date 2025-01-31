@@ -416,6 +416,7 @@ import type {
     BotDefinition,
     BotMessageContext,
     BotClientConfigData,
+    GenerateBotKeyResponse,
 } from "openchat-shared";
 import {
     Stream,
@@ -3165,6 +3166,7 @@ export class OpenChat extends EventTarget {
                 "bots",
                 resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
             );
+            communityStateStore.setProp(community.id, "apiKeys", resp.apiKeys);
         }
         await this.#updateUserStoreFromCommunityState(community.id);
     }
@@ -3199,6 +3201,7 @@ export class OpenChat extends EventTarget {
                     "bots",
                     resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
                 );
+                chatStateStore.setProp(serverChat.id, "apiKeys", resp.apiKeys);
             }
             await this.#updateUserStoreFromEvents(serverChat.id, []);
         }
@@ -7017,8 +7020,7 @@ export class OpenChat extends EventTarget {
         return this.#getLocalUserIndex(chat).then((localUserIndex) => {
             return this.#sendRequest({
                 kind: "getAccessToken",
-                chatId,
-                accessTokenType: { kind: "join_video_call" }, // TODO - this should have it's own token type really
+                accessTokenType: { kind: "join_video_call", chatId }, // TODO - this should have it's own token type really
                 localUserIndex,
             })
                 .then((token) => {
@@ -7824,6 +7826,22 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    generateBotApiKey(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        botId: string,
+        permissions: ExternalBotPermissions,
+    ): Promise<GenerateBotKeyResponse> {
+        return this.#sendRequest({
+            kind: "generateBotApiKey",
+            id,
+            botId,
+            permissions,
+        }).catch((err) => {
+            this.#logger.error("Failed to generate api key", err);
+            return { kind: "failure" };
+        });
+    }
+
     executeInternalBotCommand(
         bot: InternalBotCommandInstance,
     ): Promise<"success" | "failure" | "too_many_requests"> {
@@ -7901,13 +7919,19 @@ export class OpenChat extends EventTarget {
                 kind: "getAccessToken",
                 chatId: chat.id,
                 accessTokenType: {
-                    kind: "execute_bot_command",
-                    messageContext: { chatId: chat.id, threadRootMessageIndex },
-                    messageId,
-                    commandName: bot.command.name,
-                    arguments: bot.command.params,
+                    kind: "bot_action_by_command",
                     botId: bot.id,
-                    userId: this.#liveState.user.userId,
+                    scope: {
+                        kind: "chat_scope",
+                        chatId: chat.id,
+                        threadRootMessageIndex,
+                        messageId,
+                    },
+                    command: {
+                        initiator: this.#liveState.user.userId,
+                        commandName: bot.command.name,
+                        arguments: bot.command.params,
+                    },
                 },
                 localUserIndex,
             }).then((token) => {
@@ -8072,11 +8096,11 @@ export class OpenChat extends EventTarget {
         bot: BotCommandInstance,
     ): Promise<"success" | "failure" | "too_many_requests"> {
         const botContext = {
-            initiator: this.#liveState.user.userId,
             finalised: false,
             command: {
                 name: bot.command.name,
                 args: bot.command.params,
+                initiator: this.#liveState.user.userId,
             },
         };
         let removePlaceholder: (() => void) | undefined = undefined;
@@ -8254,9 +8278,7 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    removeIdentityLink(
-        linked_principal: string,
-    ): Promise<RemoveIdentityLinkResponse> {
+    removeIdentityLink(linked_principal: string): Promise<RemoveIdentityLinkResponse> {
         return this.#sendRequest({
             kind: "removeIdentityLink",
             linked_principal,

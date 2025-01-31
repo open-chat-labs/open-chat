@@ -320,6 +320,7 @@
             "generate": "API-Schlüssel generieren",
             "generateApiKey": "Generieren eines API-Schlüssels",
             "generated": "API-Schlüssel generiert",
+            "generateFailed": "Es ist uns leider nicht gelungen, einen API-Schlüssel zu generieren",
             "regenerate": "API-Schlüssel neu generieren",
             "regenerateWarning": "Durch die erneute Generierung des API-Schlüssels wird der Zugriff auf den zuvor generierten API-Schlüssel widerrufen. Möchten Sie wirklich fortfahren?",
             "remove": "Bot entfernen",
