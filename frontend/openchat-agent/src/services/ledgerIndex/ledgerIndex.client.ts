@@ -11,7 +11,7 @@ export class LedgerIndexClient extends CanisterAgent {
     private service: LedgerIndexService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "LedgerIndex");
 
         this.service = this.createServiceClient<LedgerIndexService>(idlFactory);
     }
@@ -24,6 +24,7 @@ export class LedgerIndexClient extends CanisterAgent {
                     start: apiOptional(identity, fromId),
                     account: { owner: Principal.fromText(principal), subaccount: [] },
                 }),
+            "get_account_transactions",
             accountTransactions,
         );
     }

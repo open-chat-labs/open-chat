@@ -308,7 +308,7 @@ export class CommunityClient extends CanisterAgent {
         private db: Database,
         private inviteCode: string | undefined,
     ) {
-        super(identity, agent, communityId);
+        super(identity, agent, communityId, "Community");
     }
 
     claimPrize(channelId: number, messageId: bigint): Promise<ClaimPrizeResponse> {

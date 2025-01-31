@@ -12,7 +12,7 @@ export class IcpSwapIndexClient extends CanisterAgent implements SwapIndexClient
     private service: IcpSwapIndexService;
 
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, ICPSWAP_INDEX_CANISTER_ID);
+        super(identity, agent, ICPSWAP_INDEX_CANISTER_ID, "IcpSwapIndex");
 
         this.service = this.createServiceClient<IcpSwapIndexService>(idlFactory);
     }
@@ -22,6 +22,6 @@ export class IcpSwapIndexClient extends CanisterAgent implements SwapIndexClient
     }
 
     getPools(): Promise<TokenSwapPool[]> {
-        return this.handleQueryResponse(this.service.getPools, getPoolsResponse);
+        return this.handleQueryResponse(this.service.getPools, "getPools", getPoolsResponse);
     }
 }

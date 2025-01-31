@@ -7,14 +7,15 @@ export class LedgerClient extends CanisterAgent {
     private service: LedgerService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "Ledger");
 
         this.service = this.createServiceClient<LedgerService>(idlFactory);
     }
 
     accountBalance(principal: string): Promise<bigint> {
-        return this.handleResponse(
-            this.service.icrc1_balance_of({ owner: Principal.fromText(principal), subaccount: [] }),
+        return this.handleQueryResponse(
+            () => this.service.icrc1_balance_of({ owner: Principal.fromText(principal), subaccount: [] }),
+            "icrc1_balance_of",
             (balance) => {
                 return balance;
             },

@@ -10,7 +10,7 @@ export class NnsGovernanceClient extends CanisterAgent {
     private service: NnsGovernanceService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "NnsGovernance");
 
         this.service = this.createServiceClient<NnsGovernanceService>(idlFactory);
     }
@@ -29,7 +29,7 @@ export class NnsGovernanceClient extends CanisterAgent {
                 },
             }),
         };
-        return this.handleResponse(this.service.manage_neuron(args), manageNeuronResponse);
+        return this.handleResponse(this.service.manage_neuron(args), "manage_neuron", manageNeuronResponse);
     }
 
     getProposalVoteDetails(proposalId: bigint): Promise<ProposalVoteDetails> {
@@ -42,6 +42,7 @@ export class NnsGovernanceClient extends CanisterAgent {
         };
         return this.handleQueryResponse(
             () => this.service.list_proposals(args),
+            "list_proposals",
             getProposalVoteDetails,
         );
     }

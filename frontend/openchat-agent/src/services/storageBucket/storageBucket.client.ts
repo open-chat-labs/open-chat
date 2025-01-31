@@ -19,7 +19,7 @@ export class StorageBucketClient extends CanisterAgent {
     private service: StorageBucketService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "StorageBucket");
 
         this.service = this.createServiceClient<StorageBucketService>(idlFactory);
     }
@@ -47,6 +47,7 @@ export class StorageBucketClient extends CanisterAgent {
                 chunk_size: chunkSize,
                 expiry: expiryTimestampMillis !== undefined ? [expiryTimestampMillis] : [],
             }),
+            "upload_chunk_v2",
             uploadChunkResponse,
         );
     }
@@ -54,6 +55,7 @@ export class StorageBucketClient extends CanisterAgent {
     forwardFile(fileId: bigint, accessors: Array<Principal>): Promise<ForwardFileResponse> {
         return this.handleResponse(
             this.service.forward_file({ file_id: fileId, accessors }),
+            "forward_file",
             forwardFileResponse,
         );
     }
@@ -61,11 +63,12 @@ export class StorageBucketClient extends CanisterAgent {
     deleteFile(fileId: bigint): Promise<DeleteFileResponse> {
         return this.handleResponse(
             this.service.delete_file({ file_id: fileId }),
+            "delete_file",
             deleteFileResponse,
         );
     }
 
     fileInfo(fileId: bigint): Promise<FileInfoResponse> {
-        return this.handleResponse(this.service.file_info({ file_id: fileId }), fileInfoResponse);
+        return this.handleResponse(this.service.file_info({ file_id: fileId }), "file_info", fileInfoResponse);
     }
 }

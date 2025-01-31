@@ -11,7 +11,7 @@ import {
 
 export class OnlineClient extends CanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "OnlineUsers");
     }
 
     lastOnline(userIds: string[]): Promise<Record<string, number>> {

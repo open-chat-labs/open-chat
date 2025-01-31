@@ -10,7 +10,7 @@ export class MarketMakerClient extends CanisterAgent {
     private service: MarketMakerService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "MarketMaker");
 
         this.service = this.createServiceClient<MarketMakerService>(idlFactory);
     }
@@ -36,6 +36,6 @@ export class MarketMakerClient extends CanisterAgent {
                 config.maxOrdersToCancelPerIteration,
             ),
         };
-        return this.handleResponse(this.service.update_config(args), updateConfigResponse);
+        return this.handleResponse(this.service.update_config(args), "update_config", updateConfigResponse);
     }
 }

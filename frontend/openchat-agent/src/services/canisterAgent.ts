@@ -63,6 +63,7 @@ export abstract class CanisterAgent {
                     methodName: methodName + "_msgpack",
                     arg: payload,
                 }),
+            methodName,
             (resp) => {
                 if (resp.status === "replied") {
                     return Promise.resolve(
@@ -90,92 +91,95 @@ export abstract class CanisterAgent {
         mapper: (from: Static<Resp>) => Out | Promise<Out>,
         requestValidator: In,
         responseValidator: Resp,
-        onRequestAccepted?: () => void,
+        onRequestAccepted?: () => void
     ): Promise<Out> {
         const payload = CanisterAgent.prepareMsgpackArgs(args, requestValidator);
 
         try {
-            const { requestId, response } = await this.sendRequestToCanister(() =>
-                this.agent.call(this.canisterId, {
-                    methodName: methodName + "_msgpack",
-                    arg: payload,
-                    callSync: onRequestAccepted === undefined,
-                }),
+            const reply = await this.traceCanisterCall(methodName, true, this.executeMsgpackUpdateInner(payload, methodName, onRequestAccepted));
+            return Promise.resolve(
+                CanisterAgent.processMsgpackResponse(
+                    reply,
+                    mapper,
+                    responseValidator,
+                ),
             );
-            const canisterId = Principal.fromText(this.canisterId);
-
-            if (response.ok && response.body?.certificate) {
-                const certTime = this.agent.replicaTime;
-                const certificate = await Certificate.create({
-                    certificate: bufFromBufLike(response.body?.certificate),
-                    rootKey: this.agent.rootKey,
-                    canisterId: Principal.from(canisterId),
-                    certTime,
-                });
-                const path = [new TextEncoder().encode("request_status"), requestId];
-                const status = new TextDecoder().decode(
-                    lookupResultToBuffer(certificate.lookup([...path, "status"])),
-                );
-
-                switch (status) {
-                    case "replied": {
-                        const reply = lookupResultToBuffer(certificate.lookup([...path, "reply"]));
-                        if (reply) {
-                            return Promise.resolve(
-                                CanisterAgent.processMsgpackResponse(
-                                    reply,
-                                    mapper,
-                                    responseValidator,
-                                ),
-                            );
-                        }
-                        break;
-                    }
-                    case "rejected":
-                        throw new UpdateCallRejectedError(
-                            canisterId,
-                            methodName,
-                            requestId,
-                            response,
-                        );
-                }
-            }
-            if (response.status === 202) {
-                if (onRequestAccepted !== undefined) {
-                    onRequestAccepted();
-                }
-
-                const { reply } = await this.sendRequestToCanister(() =>
-                    polling.pollForResponse(
-                        this.agent,
-                        canisterId,
-                        requestId,
-                        polling.defaultStrategy(),
-                    ),
-                );
-                return Promise.resolve(
-                    CanisterAgent.processMsgpackResponse(reply, mapper, responseValidator),
-                );
-            } else {
-                throw new UpdateCallRejectedError(
-                    canisterId,
-                    methodName,
-                    requestId,
-                    response,
-                );
-            }
         } catch (err) {
-            console.log(err, args);
             throw toCanisterResponseError(err as Error, this.identity);
+        }
+    }
+
+    private async executeMsgpackUpdateInner(payload: ArrayBuffer, methodName: string, onRequestAccepted?: () => void): Promise<ArrayBuffer> {
+        const { requestId, response } = await this.handleReplicaTimeError(() =>
+            this.agent.call(this.canisterId, {
+                methodName: methodName + "_msgpack",
+                arg: payload,
+                callSync: onRequestAccepted === undefined,
+            }),
+        );
+        const canisterId = Principal.fromText(this.canisterId);
+
+        if (response.ok && response.body?.certificate) {
+            const certTime = this.agent.replicaTime;
+            const certificate = await Certificate.create({
+                certificate: bufFromBufLike(response.body?.certificate),
+                rootKey: this.agent.rootKey,
+                canisterId: Principal.from(canisterId),
+                certTime,
+            });
+            const path = [new TextEncoder().encode("request_status"), requestId];
+            const status = new TextDecoder().decode(
+                lookupResultToBuffer(certificate.lookup([...path, "status"])),
+            );
+
+            switch (status) {
+                case "replied": {
+                    const reply = lookupResultToBuffer(certificate.lookup([...path, "reply"]));
+                    if (reply) {
+                        return reply;
+                    }
+                    break;
+                }
+                case "rejected":
+                    throw new UpdateCallRejectedError(
+                        canisterId,
+                        methodName,
+                        requestId,
+                        response,
+                    );
+            }
+        }
+        if (response.status === 202) {
+            if (onRequestAccepted !== undefined) {
+                onRequestAccepted();
+            }
+
+            const { reply } = await this.handleReplicaTimeError(() =>
+                polling.pollForResponse(
+                    this.agent,
+                    canisterId,
+                    requestId,
+                    polling.defaultStrategy(),
+                ),
+            );
+            return reply;
+        } else {
+            throw new UpdateCallRejectedError(
+                canisterId,
+                methodName,
+                requestId,
+                response,
+            );
         }
     }
 
     protected handleResponse<From, To>(
         service: Promise<From>,
+        methodName: string,
         mapper: (from: From) => To,
         args?: unknown,
     ): Promise<To> {
-        return service.then(mapper).catch((err) => {
+        return this.traceCanisterCall(methodName, true, service).then(mapper).catch((err) => {
             console.log(err, args);
             throw toCanisterResponseError(err as Error, this.identity);
         });
@@ -183,11 +187,12 @@ export abstract class CanisterAgent {
 
     protected handleQueryResponse<From, To>(
         serviceCall: () => Promise<From>,
+        methodName: string,
         mapper: (from: From) => To | Promise<To>,
         args?: unknown,
         retries = 0,
     ): Promise<To> {
-        return this.sendRequestToCanister(() => serviceCall())
+        return this.traceCanisterCall(methodName, false, this.handleReplicaTimeError(() => serviceCall()))
             .then(mapper)
             .catch((err) => {
                 const responseErr = toCanisterResponseError(err as Error, this.identity);
@@ -216,7 +221,7 @@ export abstract class CanisterAgent {
 
                     return new Promise((resolve, reject) => {
                         setTimeout(() => {
-                            this.handleQueryResponse(serviceCall, mapper, args, retries + 1)
+                            this.handleQueryResponse(serviceCall, methodName, mapper, args, retries + 1)
                                 .then(resolve)
                                 .catch(reject);
                         }, delay);
@@ -230,7 +235,7 @@ export abstract class CanisterAgent {
             });
     }
 
-    private async sendRequestToCanister<T>(
+    private async handleReplicaTimeError<T>(
         requestFn: () => Promise<T>,
         isRetry = false,
     ): Promise<T> {
@@ -240,7 +245,7 @@ export abstract class CanisterAgent {
             if (!isRetry && err instanceof ReplicaTimeError) {
                 this.agent.replicaTime = err.replicaTime;
                 console.log("Set replica time to " + err.replicaTime);
-                return await this.sendRequestToCanister(requestFn, true);
+                return await this.handleReplicaTimeError(requestFn, true);
             }
             throw err;
         }
@@ -281,5 +286,17 @@ export abstract class CanisterAgent {
         protected identity: Identity,
         protected agent: HttpAgent,
         protected canisterId: string,
+        private canisterName: string,
     ) {}
+
+    private async traceCanisterCall<T>(methodName: string, update: boolean, canisterCallPromise: Promise<T>): Promise<T> {
+        const start = performance.now();
+
+        try {
+            return await canisterCallPromise;
+        }  finally {
+            const duration = performance.now() - start;
+            console.debug(`Tracing: ${update ? "Update" : "Query"} call to ${this.canisterName}.${methodName} took ${Math.trunc(duration)}ms`);
+        }
+    }
 }

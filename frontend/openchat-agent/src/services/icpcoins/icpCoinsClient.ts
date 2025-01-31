@@ -11,7 +11,7 @@ export class IcpCoinsClient extends CanisterAgent implements ExchangeRateClient 
     private service: ICPCoinsService;
 
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, ICPCOINS_CANISTER_ID);
+        super(identity, agent, ICPCOINS_CANISTER_ID, "IcpCoins");
 
         this.service = this.createServiceClient<ICPCoinsService>(idlFactory);
     }
@@ -21,6 +21,7 @@ export class IcpCoinsClient extends CanisterAgent implements ExchangeRateClient 
     ): Promise<Record<string, TokenExchangeRates>> {
         return this.handleQueryResponse(
             () => this.service.get_latest(),
+            "get_latest",
             (resp) => getLatestResponse(resp, supportedTokens),
         );
     }

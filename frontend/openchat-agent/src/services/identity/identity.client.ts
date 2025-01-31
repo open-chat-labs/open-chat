@@ -35,7 +35,7 @@ export class IdentityClient extends CanisterAgent {
     private service: IdentityService;
 
     constructor(identity: Identity, agent: HttpAgent, identityCanister: string) {
-        super(identity, agent, identityCanister);
+        super(identity, agent, identityCanister, "Identity");
 
         this.service = this.createServiceClient<IdentityService>(idlFactory);
     }
@@ -54,6 +54,7 @@ export class IdentityClient extends CanisterAgent {
         };
         return this.handleResponse(
             this.service.create_identity(args),
+            "create_identity",
             createIdentityResponse,
             args,
         );
@@ -62,6 +63,7 @@ export class IdentityClient extends CanisterAgent {
     checkAuthPrincipal(): Promise<CheckAuthPrincipalResponse> {
         return this.handleQueryResponse(
             () => this.service.check_auth_principal({}),
+            "check_auth_principal",
             checkAuthPrincipalResponse,
             {},
         );
@@ -78,6 +80,7 @@ export class IdentityClient extends CanisterAgent {
         };
         return this.handleResponse(
             this.service.prepare_delegation(args),
+            "prepare_delegation",
             prepareDelegationResponse,
             args,
         );
@@ -90,13 +93,14 @@ export class IdentityClient extends CanisterAgent {
         };
         return this.handleQueryResponse(
             () => this.service.get_delegation(args),
+            "get_delegation",
             getDelegationResponse,
             args,
         );
     }
 
     generateChallenge(): Promise<GenerateChallengeResponse> {
-        return this.handleResponse(this.service.generate_challenge({}), generateChallengeResponse);
+        return this.handleResponse(this.service.generate_challenge({}), "generate_challenge", generateChallengeResponse);
     }
 
     initiateIdentityLink(
@@ -109,6 +113,7 @@ export class IdentityClient extends CanisterAgent {
                 public_key: this.publicKey(),
                 is_ii_principal: apiOptional(identity, isIIPrincipal),
             }),
+            "initiate_identity_link",
             initiateIdentityLinkResponse,
         );
     }
@@ -120,6 +125,7 @@ export class IdentityClient extends CanisterAgent {
                 public_key: this.publicKey(),
                 delegation: signedDelegation((this.identity as DelegationIdentity).getDelegation()),
             }),
+            "approve_identity_link",
             approveIdentityLinkResponse,
         );
     }
@@ -129,6 +135,7 @@ export class IdentityClient extends CanisterAgent {
             this.service.remove_identity_link({
                 linked_principal: Principal.fromText(linked_principal),
             }),
+            "remove_identity_link",
             removeIdentityLinkResponse,
         );
     }
@@ -136,6 +143,7 @@ export class IdentityClient extends CanisterAgent {
     getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
         return this.handleQueryResponse(
             () => this.service.auth_principals({}),
+            "auth_principals",
             authPrincipalsResponse,
         );
     }

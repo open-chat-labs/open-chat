@@ -12,7 +12,7 @@ export class CkbtcMinterClient extends CanisterAgent {
     private service: CkbtcMinterService;
 
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, CKBTC_MINTER_CANISTER_ID);
+        super(identity, agent, CKBTC_MINTER_CANISTER_ID, "CkbtcMinter");
 
         this.service = this.createServiceClient<CkbtcMinterService>(idlFactory);
     }
@@ -23,6 +23,7 @@ export class CkbtcMinterClient extends CanisterAgent {
                 owner: apiOptional((u) => Principal.fromText(u), userId),
                 subaccount: [],
             }),
+            "update_balance",
             updateBtcBalanceResponse,
         );
     }

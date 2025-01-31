@@ -20,7 +20,7 @@ export class RegistryClient extends CanisterAgent {
     private readonly blobUrlPattern: string;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string, blobUrlPattern: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "Registry");
 
         this.blobUrlPattern = blobUrlPattern;
     }

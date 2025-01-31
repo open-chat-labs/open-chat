@@ -11,7 +11,7 @@ export class IcpSwapClient extends CanisterAgent implements ExchangeRateClient {
     private service: ICPSwapService;
 
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, ICPSWAP_CANISTER_ID);
+        super(identity, agent, ICPSWAP_CANISTER_ID, "IcpSwapExchangeRates");
 
         this.service = this.createServiceClient<ICPSwapService>(idlFactory);
     }
@@ -21,6 +21,7 @@ export class IcpSwapClient extends CanisterAgent implements ExchangeRateClient {
     ): Promise<Record<string, TokenExchangeRates>> {
         return this.handleQueryResponse(
             () => this.service.getAllTokens(),
+            "getAllTokens",
             (resp) => getAllTokensResponse(resp, supportedTokens),
         );
     }

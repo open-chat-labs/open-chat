@@ -11,7 +11,7 @@ export class IcpLedgerIndexClient extends CanisterAgent {
     private service: IcpLedgerIndexService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "IcpLedgerIndex");
 
         this.service = this.createServiceClient<IcpLedgerIndexService>(idlFactory);
     }
@@ -24,6 +24,7 @@ export class IcpLedgerIndexClient extends CanisterAgent {
                     start: apiOptional(identity, fromId),
                     account: { owner: Principal.fromText(principal), subaccount: [] },
                 }),
+            "get_account_transactions",
             accountTransactions,
         );
     }

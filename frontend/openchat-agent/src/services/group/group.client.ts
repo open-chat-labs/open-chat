@@ -244,7 +244,7 @@ export class GroupClient extends CanisterAgent {
         private db: Database,
         private inviteCode: string | undefined,
     ) {
-        super(identity, agent, chatId.groupId);
+        super(identity, agent, chatId.groupId, "Group");
     }
 
     summary(): Promise<GroupCanisterSummaryResponse> {

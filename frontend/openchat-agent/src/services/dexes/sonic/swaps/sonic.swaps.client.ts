@@ -12,7 +12,7 @@ export class SonicSwapsClient extends CanisterAgent implements SwapIndexClient, 
     private service: SonicSwapsService;
 
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, SONIC_INDEX_CANISTER_ID);
+        super(identity, agent, SONIC_INDEX_CANISTER_ID, "Sonic");
 
         this.service = this.createServiceClient<SonicSwapsService>(idlFactory);
     }
@@ -22,7 +22,7 @@ export class SonicSwapsClient extends CanisterAgent implements SwapIndexClient, 
     }
 
     getPools(): Promise<TokenSwapPool[]> {
-        return this.handleQueryResponse(this.service.getAllPairs, (resp) =>
+        return this.handleQueryResponse(this.service.getAllPairs, "getAllPairs", (resp) =>
             getAllPairsResponse(resp, SONIC_INDEX_CANISTER_ID),
         );
     }
@@ -34,6 +34,7 @@ export class SonicSwapsClient extends CanisterAgent implements SwapIndexClient, 
                     Principal.fromText(inputToken),
                     Principal.fromText(outputToken),
                 ),
+            "getPair",
             getPairResponse,
         );
         if (pair === undefined) return BigInt(0);

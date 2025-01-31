@@ -9,7 +9,7 @@ export class SignInWithEmailClient extends CanisterAgent {
     private service: SignInWithEmailService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "SignInWithEmail");
 
         this.service = this.createServiceClient<SignInWithEmailService>(idlFactory);
     }
@@ -18,6 +18,7 @@ export class SignInWithEmailClient extends CanisterAgent {
         const args = { email, session_key: sessionKey, max_time_to_live: [] as [] | [bigint] };
         return this.handleResponse(
             this.service.generate_magic_link(args),
+            "generate_magic_link",
             generateMagicLinkResponse,
             args,
         );
@@ -35,6 +36,7 @@ export class SignInWithEmailClient extends CanisterAgent {
         };
         return this.handleQueryResponse(
             () => this.service.get_delegation(args),
+            "get_delegation",
             getDelegationResponse,
             args,
         );

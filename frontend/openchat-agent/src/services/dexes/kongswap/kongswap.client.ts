@@ -13,7 +13,7 @@ export class KongSwapClient extends CanisterAgent implements SwapIndexClient, Sw
     private icrc2Tokens: Set<string>;
 
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, KONG_SWAP_CANISTER_ID);
+        super(identity, agent, KONG_SWAP_CANISTER_ID, "KongSwap");
 
         this.service = this.createServiceClient<KongSwapService>(idlFactory);
         this.icrc2Tokens = new Set<string>();
@@ -34,6 +34,7 @@ export class KongSwapClient extends CanisterAgent implements SwapIndexClient, Sw
     async getPools(): Promise<TokenSwapPool[]> {
         const tokens = await this.handleQueryResponse(
             () => this.service.tokens([]),
+            "tokens",
             tokensResponse,
         );
 
@@ -59,6 +60,7 @@ export class KongSwapClient extends CanisterAgent implements SwapIndexClient, Sw
     quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint> {
         return this.handleQueryResponse(
             () => this.service.swap_amounts(`IC.${inputToken}`, amountIn, `IC.${outputToken}`),
+            "swap_amounts",
             swapAmountsResponse,
         );
     }

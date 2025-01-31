@@ -13,7 +13,7 @@ export class SignInWithSolanaClient extends CanisterAgent {
     private service: SignInWithSolanaService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "SignInWithSolana");
 
         this.service = this.createServiceClient<SignInWithSolanaService>(idlFactory);
     }
@@ -21,6 +21,7 @@ export class SignInWithSolanaClient extends CanisterAgent {
     prepareLogin(address: string): Promise<SiwsPrepareLoginResponse> {
         return this.handleResponse(
             this.service.siws_prepare_login(address),
+            "siws_prepare_login",
             prepareLoginResponse,
             address,
         );
@@ -33,6 +34,7 @@ export class SignInWithSolanaClient extends CanisterAgent {
     ): Promise<PrepareDelegationResponse> {
         return this.handleResponse(
             this.service.siws_login(signature, address, sessionKey),
+            "siws_login",
             loginResponse,
             [signature, address, sessionKey],
         );
@@ -45,6 +47,7 @@ export class SignInWithSolanaClient extends CanisterAgent {
     ): Promise<GetDelegationResponse> {
         return this.handleQueryResponse(
             () => this.service.siws_get_delegation(address, sessionKey, expiration),
+            "siws_get_delegation",
             getDelegationResponse,
             [address, sessionKey, expiration],
         );

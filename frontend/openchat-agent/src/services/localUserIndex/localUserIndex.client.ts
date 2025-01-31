@@ -90,7 +90,7 @@ export class LocalUserIndexClient extends CanisterAgent {
         canisterId: string,
         private db: Database,
     ) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "LocalUserIndex");
     }
 
     groupAndCommunitySummaryUpdates(

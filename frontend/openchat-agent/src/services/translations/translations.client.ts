@@ -24,7 +24,7 @@ export class TranslationsClient extends CanisterAgent {
     private translationService: TranslationsService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "Translations");
 
         this.translationService = this.createServiceClient<TranslationsService>(idlFactory);
     }
@@ -36,6 +36,7 @@ export class TranslationsClient extends CanisterAgent {
                 locale,
                 value,
             }),
+            "propose",
             proposeResponse,
         );
     }
@@ -45,6 +46,7 @@ export class TranslationsClient extends CanisterAgent {
             this.translationService.approve({
                 id,
             }),
+            "approve",
             approveResponse,
         );
     }
@@ -55,6 +57,7 @@ export class TranslationsClient extends CanisterAgent {
                 id,
                 reason: apiRejectReason(reason),
             }),
+            "reject",
             rejectResponse,
         );
     }
@@ -64,6 +67,7 @@ export class TranslationsClient extends CanisterAgent {
             this.translationService.mark_deployed({
                 latest_approval: BigInt(Date.now()),
             }),
+            "mark_deployed",
             markDeployedResponse,
         );
     }
@@ -71,6 +75,7 @@ export class TranslationsClient extends CanisterAgent {
     proposed(): Promise<ProposedResponse> {
         return this.handleQueryResponse(
             () => this.translationService.proposed({}),
+            "proposed",
             proposedResponse,
         );
     }
@@ -78,6 +83,7 @@ export class TranslationsClient extends CanisterAgent {
     pendingDeployment(): Promise<PendingDeploymentResponse> {
         return this.handleQueryResponse(
             () => this.translationService.pending_deployment({}),
+            "pending_deployment",
             pendingDeploymentResponse,
         );
     }

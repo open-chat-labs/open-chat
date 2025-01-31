@@ -14,7 +14,7 @@ export class IcpSwapPoolClient extends CanisterAgent implements SwapPoolClient {
         private token0: string,
         private token1: string,
     ) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "IcpSwapPool");
 
         this.service = this.createServiceClient<IcpSwapPoolService>(idlFactory);
     }
@@ -27,7 +27,7 @@ export class IcpSwapPoolClient extends CanisterAgent implements SwapPoolClient {
             zeroForOne,
         };
 
-        return this.handleQueryResponse(() => this.service.quoteForAll(args), quoteResponse, args);
+        return this.handleQueryResponse(() => this.service.quoteForAll(args), "quoteForAll", quoteResponse, args);
     }
 
     private zeroForOne(inputToken: string, outputToken: string): boolean {

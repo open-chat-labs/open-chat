@@ -26,7 +26,7 @@ import { apiToken, principalToIcrcAccount } from "../common/chatMappersV2";
 
 export class ProposalsBotClient extends CanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "ProposalsBot");
     }
 
     submitProposal(
