@@ -88,7 +88,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                                         channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
                                     });
 
-                                    state.push_notification(vec![message.sender], notification);
+                                    state.push_notification(Some(user_id), vec![message.sender], notification);
                                 }
 
                                 state

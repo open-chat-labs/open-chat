@@ -17,10 +17,19 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
+
+    // Move all queued events from the previous queue to the new one
+    #[allow(deprecated)]
+    let previous_queue = std::mem::take(&mut data.notifications_index_event_sync_queue);
+    data.notification_canisters_event_sync_queue.set_defer_processing(true);
+    for (canister_id, events) in previous_queue.take_all() {
+        data.notification_canisters_event_sync_queue.push_many(canister_id, events);
+    }
+    data.notification_canisters_event_sync_queue.set_defer_processing(false);
 
     let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);

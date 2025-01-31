@@ -290,7 +290,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                             user_avatar_id: args.user_avatar_id,
                         });
 
-                        state.push_notification(message_event.event.sender, notification);
+                        state.push_notification(Some(caller_user_id), message_event.event.sender, notification);
                     }
 
                     state.data.push_message_activity(
@@ -388,7 +388,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                     tip: format_crypto_amount_with_symbol(args.amount, args.decimals, args.token.token_symbol()),
                     user_avatar_id: args.user_avatar_id,
                 });
-                state.push_notification(my_user_id, notification);
+                state.push_notification(Some(caller_user_id), my_user_id, notification);
 
                 state.data.push_message_activity(
                     MessageActivityEvent {

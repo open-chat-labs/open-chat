@@ -137,6 +137,7 @@ fn process_send_message_result(
             register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
 
             if !result.unfinalised_bot_message {
+                let sender = caller.agent();
                 let content = &message_event.event.content;
                 let chat_id = state.env.canister_id().into();
 
@@ -146,7 +147,7 @@ fn process_send_message_result(
                     message_index,
                     event_index,
                     group_name: state.data.chat.name.value.clone(),
-                    sender: caller.agent(),
+                    sender,
                     sender_name: sender_username,
                     sender_display_name,
                     message_type: content.message_type(),
@@ -155,11 +156,11 @@ fn process_send_message_result(
                     group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
                     crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
                 });
-                state.push_notification(result.users_to_notify, notification);
+                state.push_notification(Some(sender), result.users_to_notify, notification);
 
                 if new_achievement && !caller.is_bot() {
                     for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
-                        state.data.notify_user_of_achievement(caller.agent(), a);
+                        state.data.notify_user_of_achievement(sender, a);
                     }
                 }
 
@@ -230,7 +231,7 @@ fn process_send_message_result(
                             event_index,
                             activity,
                             timestamp: now,
-                            user_id: Some(caller.agent()),
+                            user_id: Some(sender),
                         }),
                     );
                 }
