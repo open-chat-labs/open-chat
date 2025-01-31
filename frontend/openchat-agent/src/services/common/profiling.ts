@@ -24,24 +24,46 @@ export function measure<T>(key: string, fn: () => Promise<T>): Promise<T> {
 //     return self.WorkerGlobalScope;
 // }
 
-export const profile =
-    (service: string) =>
-    (_target: Object, _propertyKey: string, descriptor: PropertyDescriptor) => {
-        return descriptor;
+// export const profile =
+//     (service: string) =>
+//     (_target: Object, _propertyKey: string, descriptor: PropertyDescriptor) => {
 
-        // FIXME - we can't access local storage in a worker
-        // if (inWorker()) return descriptor;
-        // if (!localStorage.getItem("openchat_profile")) return descriptor;
+//         const originalMethod = descriptor.value;
+
+//         descriptor.value = function (...args: any): any {
+//             const start = performance.now();
+//             const key = `${service}.${originalMethod.name}`;
+//             const result = originalMethod.apply(this, args);
+//             if (result instanceof Promise) {
+//                 return result.then(end(start, key));
+//             } else {
+//                 return end(start, key)(result);
+//             }
+//         };
+
+//         return descriptor;
+//     };
+
+export const profile =
+    (service: string) => (_target: Object, propertyKey: string, descriptor: PropertyDescriptor) => {
         const originalMethod = descriptor.value;
 
         descriptor.value = function (...args: any): any {
             const start = performance.now();
-            const key = `${service}.${originalMethod.name}`;
+            const key = `${service}.${propertyKey}`;
+
             const result = originalMethod.apply(this, args);
+
+            const end = () => {
+                const duration = performance.now() - start;
+                console.log(`Method ${key} executed in ${duration.toFixed(2)} ms`);
+            };
+
             if (result instanceof Promise) {
-                return result.then(end(start, key));
+                return result.finally(end);
             } else {
-                return end(start, key)(result);
+                end();
+                return result;
             }
         };
 
