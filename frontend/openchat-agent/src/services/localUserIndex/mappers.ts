@@ -8,9 +8,11 @@ import type {
     GroupAndCommunitySummaryUpdatesResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
+    JoinVideoCall,
     MessageContext,
     RegisterUserResponse,
     SlashCommandParamInstance,
+    StartVideoCall,
     VerifiedCredentialArgs,
     VideoCallType,
 } from "openchat-shared";
@@ -34,6 +36,7 @@ import type {
     LocalUserIndexAccessTokenV2Response,
     LocalUserIndexAccessTokenV2Args,
     BotActionScope as ApiBotActionScope,
+    AccessTokenType as TAccessTokenType,
 } from "../../typebox";
 import {
     toBigInt32,
@@ -57,6 +60,19 @@ import {
 import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
 import { communitySummaryUpdates } from "../community/mappersV2";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
+
+export function apiAccessTokenTypeLegacy(domain: JoinVideoCall | StartVideoCall): TAccessTokenType {
+    switch (domain.kind) {
+        case "join_video_call":
+            return "JoinVideoCall";
+        case "start_video_call":
+            return {
+                StartVideoCallV2: {
+                    call_type: apiCallType(domain.callType),
+                },
+            };
+    }
+}
 
 export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAccessTokenV2Args {
     switch (domain.kind) {
