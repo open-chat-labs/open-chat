@@ -209,6 +209,8 @@
             "nameLabel": "Nazwa bota",
             "namePlaceholder": "Wprowadź nazwę bota",
             "nameRules": "Musi być unikalny i zawierać wyłącznie znaki alfanumeryczne oraz podkreślenia",
+            "noAutonomousConfig": "Nie zdefiniowano konfiguracji autonomicznej",
+            "noCommands": "Brak zdefiniowanych poleceń",
             "optional": "fakultatywny",
             "ownerLabel": "Właściciel bota",
             "ownerRules": "Kto jest osobą kontaktową dla tego bota",

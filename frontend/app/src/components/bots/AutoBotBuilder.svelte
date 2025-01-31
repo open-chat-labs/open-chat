@@ -166,26 +166,38 @@
 </script>
 
 {#snippet commands()}
-    <div class="commands">
-        {#each candidate.definition.commands as command, i}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div
-                onclick={() => onSelectCommand(command, i)}
-                class="command"
-                class:command-error={errors.has(`command_${i}`)}>
-                <Translatable
-                    resourceKey={i18nKey("bots.builder.commandLabel", {
-                        name: command.name,
-                    })}></Translatable>
-            </div>
-        {/each}
-    </div>
+    {#if candidate.definition.commands.length > 0}
+        <div class="commands">
+            {#each candidate.definition.commands as command, i}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <div
+                    onclick={() => onSelectCommand(command, i)}
+                    class="command"
+                    class:command-error={errors.has(`command_${i}`)}>
+                    <Translatable
+                        resourceKey={i18nKey("bots.builder.commandLabel", {
+                            name: command.name,
+                        })}></Translatable>
+                </div>
+            {/each}
+        </div>
+    {:else}
+        <div class="smallprint">
+            <Translatable resourceKey={i18nKey("bots.builder.noCommands")}></Translatable>
+        </div>
+    {/if}
 {/snippet}
 
 {#snippet autonomousPermissions()}
     {#if candidate.definition.autonomousConfig !== undefined}
-        <BotPermissionViewer permissions={candidate.definition.autonomousConfig.permissions} />
+        <BotPermissionViewer
+            nested
+            permissions={candidate.definition.autonomousConfig.permissions} />
+    {:else}
+        <div class="smallprint">
+            <Translatable resourceKey={i18nKey("bots.builder.noAutonomousConfig")}></Translatable>
+        </div>
     {/if}
 {/snippet}
 
@@ -286,10 +298,6 @@
     {#if schemaLoaded}
         <Legend label={i18nKey("bots.builder.descLabel")}></Legend>
         <Input disabled={true} value={candidate.definition.description} />
-
-        <!-- {#if candidate.definition.commands.length > 0}{/if}
-
-        {#if candidate.definition.autonomousConfig !== undefined}{/if} -->
 
         <Tabs
             tabs={[
@@ -395,5 +403,10 @@
         .icon {
             flex: 0 0 40px;
         }
+    }
+
+    .smallprint {
+        @include font(light, normal, fs-80);
+        color: var(--txt-light);
     }
 </style>

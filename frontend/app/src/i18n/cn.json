@@ -209,6 +209,8 @@
             "nameLabel": "机器人名称",
             "namePlaceholder": "输入机器人名称",
             "nameRules": "必须是唯一的，并且仅包含字母数字字符和下划线",
+            "noAutonomousConfig": "未定义自主配置",
+            "noCommands": "没有定义命令",
             "optional": "选修的",
             "ownerLabel": "机器人所有者",
             "ownerRules": "该机器人的联系人是谁",

@@ -209,6 +209,8 @@
             "nameLabel": "Bot name",
             "namePlaceholder": "Enter bot name",
             "nameRules": "Must be unique and contain alphanumeric characters and underscores only",
+            "noAutonomousConfig": "No autonomous config defined",
+            "noCommands": "No commands defined",
             "optional": "optional",
             "ownerLabel": "Bot owner",
             "ownerRules": "Who is the point of contact for this bot",

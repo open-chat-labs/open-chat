@@ -16,9 +16,10 @@
     interface Props {
         permissions: ExternalBotPermissions;
         title?: ResourceKey;
+        nested?: boolean;
     }
 
-    let { permissions, title }: Props = $props();
+    let { permissions, title, nested = false }: Props = $props();
 </script>
 
 {#snippet check(label: ResourceKey, requested: boolean)}
@@ -62,6 +63,7 @@
     <Legend label={title}></Legend>
 {/if}
 <Tabs
+    {nested}
     initialIndex={2}
     tabs={[
         {
