@@ -5080,8 +5080,10 @@ dependencies = [
  "serde",
  "serde_bytes",
  "stable_memory",
+ "stable_memory_map",
  "tracing",
  "types",
+ "user_ids_set",
  "utils 0.1.0",
 ]
 
@@ -5149,6 +5151,7 @@ dependencies = [
  "timer_job_queues",
  "tracing",
  "types",
+ "user_ids_set",
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils 0.1.0",
@@ -8450,6 +8453,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "user_ids_set"
+version = "0.1.0"
+dependencies = [
+ "ic_principal",
+ "serde",
+ "stable_memory_map",
+ "types",
+]
+
+[[package]]
 name = "user_index_canister"
 version = "0.1.0"
 dependencies = [
@@ -8532,6 +8545,8 @@ dependencies = [
  "modclub_canister",
  "modclub_canister_c2c_client",
  "msgpack",
+ "notifications_index_canister",
+ "notifications_index_canister_c2c_client",
  "online_users_canister",
  "online_users_canister_c2c_client",
  "p256_key_pair",

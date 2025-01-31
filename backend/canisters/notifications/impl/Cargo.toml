@@ -27,6 +27,8 @@ rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
+stable_memory_map = { path = "../../../libraries/stable_memory_map" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
+user_ids_set = { path = "../../../libraries/user_ids_set" }
 utils = { path = "../../../libraries/utils" }

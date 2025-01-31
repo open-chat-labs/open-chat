@@ -18,6 +18,6 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let now = state.env.now();
-    state.data.unblock_user(&args.user_id, now);
+    state.data.unblock_user(args.user_id, now);
     Success
 }

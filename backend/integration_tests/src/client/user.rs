@@ -515,4 +515,26 @@ pub mod happy_path {
             response => panic!("'approve_transfer' error: {response:?}"),
         };
     }
+
+    pub fn block_user(env: &mut PocketIc, user: &User, blocked: UserId) {
+        let response = super::block_user(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::block_user::Args { user_id: blocked },
+        );
+
+        assert!(matches!(response, user_canister::block_user::Response::Success));
+    }
+
+    pub fn unblock_user(env: &mut PocketIc, user: &User, unblocked: UserId) {
+        let response = super::unblock_user(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::unblock_user::Args { user_id: unblocked },
+        );
+
+        assert!(matches!(response, user_canister::unblock_user::Response::Success));
+    }
 }

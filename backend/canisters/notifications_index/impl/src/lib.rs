@@ -6,10 +6,12 @@ use canister_state_macros::canister_state;
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, SubscriptionRemoved};
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, SubscriptionInfo, TimestampMillis, Timestamped, UserId};
+use user_ids_set::UserIdsSet;
 use utils::canister::CanistersRequiringUpgrade;
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
@@ -41,6 +43,10 @@ impl RuntimeState {
     pub fn is_caller_governance_principal(&self) -> bool {
         let caller = self.env.caller();
         self.data.governance_principals.contains(&caller)
+    }
+
+    pub fn is_caller_user_index_canister(&self) -> bool {
+        self.env.caller() == self.data.user_index_canister_id
     }
 
     pub fn is_caller_registry_canister(&self) -> bool {
@@ -134,12 +140,18 @@ struct Data {
     pub notifications_index_event_sync_queue: CanisterEventSyncQueue<NotificationsIndexEvent>,
     #[serde(default = "notification_canisters_event_sync_queue")]
     pub notification_canisters_event_sync_queue: GroupedTimerJobQueue<NotificationCanistersEventBatch>,
+    #[serde(default = "blocked_users")]
+    pub blocked_users: UserIdsSet,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
 fn notification_canisters_event_sync_queue() -> GroupedTimerJobQueue<NotificationCanistersEventBatch> {
     GroupedTimerJobQueue::new(5, false)
+}
+
+fn blocked_users() -> UserIdsSet {
+    UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users())
 }
 
 impl Data {
@@ -166,6 +178,7 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             notifications_index_event_sync_queue: CanisterEventSyncQueue::default(),
             notification_canisters_event_sync_queue: GroupedTimerJobQueue::new(5, false),
+            blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             rng_seed: [0; 32],
             test_mode,
         }

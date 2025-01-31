@@ -153,6 +153,7 @@ members = [
     "backend/libraries/ts_export",
     "backend/libraries/ts_export_macros",
     "backend/libraries/types",
+    "backend/libraries/user_ids_set",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",

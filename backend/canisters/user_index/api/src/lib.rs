@@ -28,6 +28,8 @@ pub enum LocalUserIndexEvent {
     NotifyStreakInsuranceClaim(Box<StreakInsuranceClaim>),
     BotInstalled(Box<BotInstalled>),
     BotUninstalled(Box<BotUninstalled>),
+    UserBlocked(UserId, UserId),
+    UserUnblocked(UserId, UserId),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

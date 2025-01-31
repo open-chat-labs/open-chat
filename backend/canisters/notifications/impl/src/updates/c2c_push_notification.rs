@@ -4,6 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use notifications_canister::c2c_push_notification::{Response::*, *};
 use serde_bytes::ByteBuf;
+use std::collections::HashSet;
 use types::{CanPushNotificationsArgs, CanPushNotificationsResponse, CanisterId, NotificationEnvelope, UserId};
 
 #[update(msgpack = true)]
@@ -25,7 +26,7 @@ async fn c2c_push_notification(args: Args) -> Response {
         _ => {}
     }
 
-    mutate_state(|state| c2c_push_notification_impl(args.recipients, args.notification_bytes, state))
+    mutate_state(|state| c2c_push_notification_impl(args.sender, args.recipients, args.notification_bytes, state))
 }
 
 enum CanPushNotificationsResult {
@@ -48,10 +49,19 @@ fn can_push_notifications(args: &Args, state: &RuntimeState) -> CanPushNotificat
     CanPushNotificationsResult::Blocked
 }
 
-fn c2c_push_notification_impl(recipients: Vec<UserId>, notification_bytes: ByteBuf, state: &mut RuntimeState) -> Response {
+fn c2c_push_notification_impl(
+    sender: Option<UserId>,
+    recipients: Vec<UserId>,
+    notification_bytes: ByteBuf,
+    state: &mut RuntimeState,
+) -> Response {
+    let users_who_have_blocked_sender: HashSet<_> = sender
+        .map(|s| state.data.blocked_users.all_linked_users(s))
+        .unwrap_or_default();
+
     let filtered_recipients: Vec<_> = recipients
         .into_iter()
-        .filter(|u| state.data.subscriptions.any_for_user(u))
+        .filter(|u| state.data.subscriptions.any_for_user(u) && !users_who_have_blocked_sender.contains(u))
         .collect();
 
     if !filtered_recipients.is_empty() {

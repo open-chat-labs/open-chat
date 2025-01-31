@@ -4,6 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use notifications_canister::c2c_sync_index::{Response::*, *};
 use notifications_index_canister::NotificationsIndexEvent;
+use stable_memory_map::StableMemoryMap;
 
 #[update(guard = "caller_is_notifications_index", msgpack = true)]
 #[trace]
@@ -22,6 +23,12 @@ fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
             }
             NotificationsIndexEvent::AllSubscriptionsRemoved(u) => {
                 state.data.subscriptions.remove_all(u);
+            }
+            NotificationsIndexEvent::UserBlocked(user_id, blocked) => {
+                state.data.blocked_users.insert((blocked, user_id), ());
+            }
+            NotificationsIndexEvent::UserUnblocked(user_id, unblocked) => {
+                state.data.blocked_users.remove(&(unblocked, user_id));
             }
         }
     }
