@@ -10,7 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Allow overriding the fee when withdrawing from ICPSwap ([#7314](https://github.com/open-chat-labs/open-chat/pull/7314))
 - Restructure to handle autonomous bots ([#7318](https://github.com/open-chat-labs/open-chat/pull/7318))
-- Add `sender` to notifications to prevent notifications from blocked users ([#7330](https://github.com/open-chat-labs/open-chat/pull/7330))
+- Add `sender` to notifications to support blocking notifications from blocked users ([#7330](https://github.com/open-chat-labs/open-chat/pull/7330))
+- Sync blocked users to LocalUserIndex ([#7333](https://github.com/open-chat-labs/open-chat/pull/7333))
 
 ## [[2.0.1589-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1589-user)] - 2025-01-24
 

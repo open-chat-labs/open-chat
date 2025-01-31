@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
 - Use `GroupedTimerJobQueue` to push events to notification canisters ([#7331](https://github.com/open-chat-labs/open-chat/pull/7331))
+- Sync blocked users to notification canisters ([#7333](https://github.com/open-chat-labs/open-chat/pull/7333))
 
 ## [[2.0.1529](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1529-notifications_index)] - 2024-12-19
 
