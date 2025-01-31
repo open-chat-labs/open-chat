@@ -91,7 +91,7 @@ export abstract class CanisterAgent {
         mapper: (from: Static<Resp>) => Out | Promise<Out>,
         requestValidator: In,
         responseValidator: Resp,
-        onRequestAccepted?: () => void
+        onRequestAccepted?: () => void,
     ): Promise<Out> {
         const payload = CanisterAgent.prepareMsgpackArgs(args, requestValidator);
 
