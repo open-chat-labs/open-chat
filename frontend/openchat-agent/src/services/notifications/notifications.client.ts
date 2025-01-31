@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { HttpAgent, Identity } from "@dfinity/agent";
-import { CanisterAgent } from "../canisterAgent";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import { subscriptionExistsResponse } from "./mappers";
 import { toVoid } from "../../utils/mapping";
 import {
@@ -12,7 +12,7 @@ import {
     NotificationsIndexSubscriptionExistsResponse,
 } from "../../typebox";
 
-export class NotificationsClient extends CanisterAgent {
+export class NotificationsClient extends MsgpackCanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId);
     }

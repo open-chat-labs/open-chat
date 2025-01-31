@@ -1,15 +1,11 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type LedgerService } from "./candid/idl";
-import { CanisterAgent } from "../canisterAgent";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { Principal } from "@dfinity/principal";
 
-export class LedgerClient extends CanisterAgent {
-    private service: LedgerService;
-
+export class LedgerClient extends CandidCanisterAgent<LedgerService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
-
-        this.service = this.createServiceClient<LedgerService>(idlFactory);
+        super(identity, agent, canisterId, idlFactory);
     }
 
     accountBalance(principal: string): Promise<bigint> {

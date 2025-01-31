@@ -1,6 +1,6 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import type { DexId, RegistryUpdatesResponse } from "openchat-shared";
-import { CanisterAgent } from "../canisterAgent";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import { updatesResponse } from "./mappers";
 import { principalStringToBytes } from "../../utils/mapping";
 import {
@@ -16,7 +16,7 @@ import {
 } from "../../typebox";
 import { apiDexId } from "../common/chatMappersV2";
 
-export class RegistryClient extends CanisterAgent {
+export class RegistryClient extends MsgpackCanisterAgent {
     private readonly blobUrlPattern: string;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string, blobUrlPattern: string) {

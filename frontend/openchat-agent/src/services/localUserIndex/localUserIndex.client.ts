@@ -20,7 +20,7 @@ import type {
     ExternalBotPermissions,
     VerifiedCredentialArgs,
 } from "openchat-shared";
-import { CanisterAgent } from "../canisterAgent";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
     accessTokenResponse,
     apiAccessTokenType,
@@ -87,7 +87,7 @@ import {
     LocalUserIndexWithdrawFromIcpswapResponse,
 } from "../../typebox";
 
-export class LocalUserIndexClient extends CanisterAgent {
+export class LocalUserIndexClient extends MsgpackCanisterAgent {
     constructor(
         identity: Identity,
         agent: HttpAgent,
