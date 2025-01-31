@@ -3487,30 +3487,28 @@ export class OpenChat extends EventTarget {
                         threadRootMessageIndex,
                     });
                 }
-                const sendMessagePromiseResolve = this.#inflightMessagePromises.get(messageId);
-                if (sendMessagePromiseResolve !== undefined) {
+                const inflightMessagePromise = this.#inflightMessagePromises.get(messageId);
+                if (inflightMessagePromise !== undefined) {
                     // If we reach here, then a message is currently being sent but the update call is yet to complete.
                     // So given that we have received the message from the backend we know that the message has
                     // successfully been sent, so we resolve the promise early.
                     this.#inflightMessagePromises.delete(messageId);
 
-                    const sendResult: SendMessageSuccess | TransferSuccess = content.kind === "crypto_content"
-                        ? {
+                    let result: SendMessageSuccess | TransferSuccess = {
+                        kind: "success",
+                        timestamp: event.timestamp,
+                        messageIndex: event.event.messageIndex,
+                        eventIndex: event.index,
+                        expiresAt: event.expiresAt,
+                    };
+                    if (content.kind === "crypto_content") {
+                        result = {
+                            ...result,
                             kind: "transfer_success",
-                            timestamp: event.timestamp,
-                            messageIndex: event.event.messageIndex,
-                            eventIndex: event.index,
                             transfer: content.transfer as CompletedCryptocurrencyTransfer,
-                            expiresAt: event.expiresAt,
                         }
-                        : {
-                            kind: "success",
-                            timestamp: event.timestamp,
-                            messageIndex: event.event.messageIndex,
-                            eventIndex: event.index,
-                            expiresAt: event.expiresAt,
-                        };
-                    sendMessagePromiseResolve(sendResult);
+                    };
+                    inflightMessagePromise(result);
                 }
                 if (unconfirmed.delete(context, messageId)) {
                     messagesRead.confirmMessage(context, messageIndex, messageId);
@@ -3687,7 +3685,7 @@ export class OpenChat extends EventTarget {
         );
         const ledger = this.#extractLedgerFromContent(eventWrapper.event.content);
 
-        const searchPromise: Promise<SendMessageResponse> = new Promise((resolve) => {
+        const sendMessagePromise: Promise<SendMessageResponse> = new Promise((resolve) => {
             this.#inflightMessagePromises.set(messageId, resolve);
             this.#sendStreamRequest(
                 {
@@ -3710,9 +3708,9 @@ export class OpenChat extends EventTarget {
                         unconfirmed.markAccepted(messageContext, messageId);
                         return;
                     }
+                    this.#inflightMessagePromises.delete(messageId);
                     const [resp, msg] = response;
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
-                        this.#inflightMessagePromises.delete(messageId);
                         const event = mergeSendMessageResponse(msg, resp);
                         this.#addServerEventsToStores(chat.id, [event], threadRootMessageIndex, []);
                     } else {
@@ -3741,6 +3739,7 @@ export class OpenChat extends EventTarget {
                     resolve(resp);
                 },
                 onError: () => {
+                    this.#inflightMessagePromises.delete(messageId);
                     this.#onSendMessageFailure(
                         chatId,
                         messageId,
@@ -3755,9 +3754,9 @@ export class OpenChat extends EventTarget {
             });
         });
 
-        // `searchPromise` is resolved either when the update call which initially sent the message completes, or if the
-        // message is found when reading new events
-        return searchPromise.then((resp) => {
+        // `sendMessagePromise` is resolved either when the update call which initially sent the message completes, or
+        // if the message is found when reading new events
+        return sendMessagePromise.then((resp) => {
             if (resp.kind === "success" || resp.kind === "transfer_success") {
                 if (ledger !== undefined) {
                     lastCryptoSent.set(ledger);
