@@ -115,6 +115,7 @@ impl Default for Data {
             cycles_dispenser_canister_id: CanisterId::anonymous(),
             notifications: EventStream::default(),
             subscriptions: Subscriptions::default(),
+            blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             rng_seed: [0; 32],
             test_mode: true,
         }
