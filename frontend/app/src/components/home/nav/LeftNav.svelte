@@ -190,17 +190,16 @@
             </div>
         </LeftNavItem>
         {#if user !== undefined}
-            <LeftNavItem label={i18nKey("profile.title")} on:click={viewProfile}>
+            <LeftNavItem label={i18nKey("profile.title")} onClick={viewProfile}>
                 <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
             </LeftNavItem>
         {/if}
         <LeftNavItem
             selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
             label={i18nKey("communities.directChats")}
-            disabled={$anonUser}
             unread={$unreadDirectCounts.chats}
             video={$directVideoCallCounts}
-            on:click={directChats}>
+            onClick={directChats}>
             <div class="hover direct">
                 <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
@@ -210,7 +209,7 @@
             label={i18nKey("communities.groupChats")}
             unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
             video={$groupVideoCallCounts}
-            on:click={groupChats}>
+            onClick={groupChats}>
             <div class="hover direct">
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
@@ -218,11 +217,10 @@
         {#if $favouritesStore.size > 0}
             <LeftNavItem
                 selected={$chatListScope.kind === "favourite" && !communityExplorer}
-                disabled={$anonUser}
                 label={i18nKey("communities.favourites")}
                 unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
                 video={$favouritesVideoCallCounts}
-                on:click={favouriteChats}>
+                onClick={favouriteChats}>
                 <div class="hover favs">
                     <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
                 </div>
@@ -234,7 +232,7 @@
                     label={i18nKey(
                         claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
                     )}
-                    on:click={() => dispatch("claimDailyChit")}>
+                    onClick={() => dispatch("claimDailyChit")}>
                     <div class="hover streak">
                         <LighteningBolt enabled={claimChitAvailable} />
                     </div>
@@ -246,7 +244,7 @@
                     selected={$activityFeedShowing}
                     label={i18nKey("activity.navLabel")}
                     unread={{ muted: 0, unmuted: $unreadActivityCount, mentions: false }}
-                    on:click={showActivityFeed}>
+                    onClick={showActivityFeed}>
                     <div class="hover activity">
                         <BellRingOutline size={iconSize} color={"var(--icon-txt)"} />
                     </div>
@@ -282,14 +280,14 @@
                             emptyCombinedUnreadCounts(),
                     )}
                     label={i18nKey(community.name)}
-                    on:click={() => selectCommunity(community)}>
+                    verified={community.verified}
+                    onClick={() => selectCommunity(community)}>
                     <Avatar
                         selected={community.id.communityId === selectedCommunityId &&
                             $chatListScope.kind !== "favourite" &&
                             !communityExplorer}
                         url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
-                        size={avatarSize}
-                        verified={community.verified} />
+                        size={avatarSize} />
                 </LeftNavItem>
             </div>
         {/each}
@@ -299,7 +297,7 @@
         <LeftNavItem
             selected={communityExplorer}
             label={i18nKey("communities.explore")}
-            on:click={exploreCommunities}>
+            onClick={exploreCommunities}>
             <div class="explore hover">
                 <Compass size={iconSize} color={"var(--icon-txt)"} />
             </div>

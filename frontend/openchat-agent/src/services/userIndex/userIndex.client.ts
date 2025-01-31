@@ -626,7 +626,6 @@ export class UserIndexClient extends CandidService {
         pageIndex: number,
         pageSize: number,
     ): Promise<ExploreBotsResponse> {
-        console.log("Explore bots: ", searchTerm, pageIndex, pageSize);
         return this.executeMsgpackQuery(
             "explore_bots",
             {
@@ -683,7 +682,6 @@ export class UserIndexClient extends CandidService {
         endpoint?: string,
         definition?: BotDefinition,
     ): Promise<boolean> {
-        console.log("Updating definition: ", definition);
         return this.executeMsgpackUpdate(
             "update_bot",
             {

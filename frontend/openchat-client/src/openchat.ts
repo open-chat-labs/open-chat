@@ -2566,7 +2566,6 @@ export class OpenChat extends EventTarget {
         this.#blockCommunityUserLocally(id, userId);
         return this.#sendRequest({ kind: "blockCommunityUser", id, userId })
             .then((resp) => {
-                console.log("blockUser result", resp);
                 if (resp.kind !== "success") {
                     this.#unblockCommunityUserLocally(id, userId, true);
                     return false;
@@ -2599,7 +2598,6 @@ export class OpenChat extends EventTarget {
         this.#blockUserLocally(chatId, userId);
         return this.#sendRequest({ kind: "blockUserFromGroupChat", chatId, userId })
             .then((resp) => {
-                console.log("blockUser result", resp);
                 if (resp !== "success") {
                     this.#unblockUserLocally(chatId, userId, true);
                     return false;
@@ -4800,7 +4798,6 @@ export class OpenChat extends EventTarget {
     getCurrentUser(): Promise<CurrentUserResponse> {
         return new Promise((resolve, reject) => {
             let resolved = false;
-            console.log("About to get the user");
             this.#sendStreamRequest({ kind: "getCurrentUser" }).subscribe({
                 onResult: (user) => {
                     if (user.kind === "created_user") {
