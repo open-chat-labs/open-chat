@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { HttpAgent, Identity } from "@dfinity/agent";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import {
     apiOptionUpdateV2,
     identity,
@@ -299,7 +299,7 @@ import {
     CommunityGenerateBotApiKeyResponse,
 } from "../../typebox";
 
-export class CommunityClient extends CandidService {
+export class CommunityClient extends CanisterAgent {
     constructor(
         identity: Identity,
         agent: HttpAgent,

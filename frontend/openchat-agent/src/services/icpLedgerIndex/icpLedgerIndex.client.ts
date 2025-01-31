@@ -1,13 +1,13 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type IcpLedgerIndexService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import { Principal } from "@dfinity/principal";
 import { accountTransactions } from "./mappers";
 import type { AccountTransactionResult } from "openchat-shared";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
-export class IcpLedgerIndexClient extends CandidService {
+export class IcpLedgerIndexClient extends CanisterAgent {
     private service: IcpLedgerIndexService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {

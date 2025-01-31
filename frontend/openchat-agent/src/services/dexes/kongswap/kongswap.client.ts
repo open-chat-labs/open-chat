@@ -1,6 +1,6 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type KongSwapService } from "./candid/idl";
-import { CandidService } from "../../candidService";
+import { CanisterAgent } from "../../canisterAgent";
 import type { TokenSwapPool } from "openchat-shared";
 import { swapAmountsResponse, tokensResponse } from "./mappers";
 import type { SwapIndexClient, SwapPoolClient } from "../index";
@@ -8,7 +8,7 @@ import type { CryptocurrencyDetails } from "openchat-shared/lib/domain/crypto";
 
 const KONG_SWAP_CANISTER_ID = "2ipq2-uqaaa-aaaar-qailq-cai";
 
-export class KongSwapClient extends CandidService implements SwapIndexClient, SwapPoolClient {
+export class KongSwapClient extends CanisterAgent implements SwapIndexClient, SwapPoolClient {
     private service: KongSwapService;
     private icrc2Tokens: Set<string>;
 

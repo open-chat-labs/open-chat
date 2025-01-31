@@ -1,6 +1,6 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type StorageIndexService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import { allocatedBucketResponse, canForwardResponse, userResponse } from "./mappers";
 import type {
     AllocatedBucketResponse,
@@ -8,7 +8,7 @@ import type {
     StorageUserResponse,
 } from "openchat-shared";
 
-export class StorageIndexClient extends CandidService {
+export class StorageIndexClient extends CanisterAgent {
     private service: StorageIndexService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {

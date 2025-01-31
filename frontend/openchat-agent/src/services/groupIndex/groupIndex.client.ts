@@ -17,7 +17,7 @@ import type {
     FreezeCommunityResponse,
     UnfreezeCommunityResponse,
 } from "openchat-shared";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import {
     addHotGroupExclusionResponse,
     deleteFrozenGroupResponse,
@@ -70,7 +70,7 @@ import {
 } from "../../typebox";
 import { principalStringToBytes } from "../../utils/mapping";
 
-export class GroupIndexClient extends CandidService {
+export class GroupIndexClient extends CanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId);
     }
