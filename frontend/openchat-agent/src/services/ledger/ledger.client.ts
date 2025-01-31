@@ -1,9 +1,9 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type LedgerService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import { Principal } from "@dfinity/principal";
 
-export class LedgerClient extends CandidService {
+export class LedgerClient extends CanisterAgent {
     private service: LedgerService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {

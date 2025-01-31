@@ -1,6 +1,6 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type SignInWithSolanaService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import type {
     GetDelegationResponse,
     PrepareDelegationResponse,
@@ -9,7 +9,7 @@ import type {
 import { prepareLoginResponse } from "./mappers";
 import { getDelegationResponse, loginResponse } from "../signInWithEthereum/mappers";
 
-export class SignInWithSolanaClient extends CandidService {
+export class SignInWithSolanaClient extends CanisterAgent {
     private service: SignInWithSolanaService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {

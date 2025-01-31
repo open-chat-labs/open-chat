@@ -30,7 +30,6 @@
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import {
         currentUser as user,
-        lastCryptoSent,
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
     } from "openchat-client";
@@ -158,8 +157,7 @@
         client
             .sendMessageWithContent(context, content, false)
             .then((resp) => {
-                if (resp.kind === "transfer_success") {
-                    lastCryptoSent.set(ledger);
+                if (resp.kind === "success" || resp.kind === "transfer_success") {
                     dispatch("close");
                 } else if ($pinNumberErrorMessageStore === undefined) {
                     error = "errorSendingMessage";

@@ -1,12 +1,12 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import type { ManageNeuronResponse, ProposalVoteDetails } from "openchat-shared";
 import { idlFactory, type NnsGovernanceService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import { getProposalVoteDetails, manageNeuronResponse } from "./mappers";
 import { apiOptional, apiProposalVote } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
-export class NnsGovernanceClient extends CandidService {
+export class NnsGovernanceClient extends CanisterAgent {
     private service: NnsGovernanceService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {

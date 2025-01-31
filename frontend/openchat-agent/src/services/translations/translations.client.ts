@@ -1,6 +1,6 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type TranslationsService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import type {
     ApproveResponse,
     MarkDeployedResponse,
@@ -20,7 +20,7 @@ import {
     rejectResponse,
 } from "./mappers";
 
-export class TranslationsClient extends CandidService {
+export class TranslationsClient extends CanisterAgent {
     private translationService: TranslationsService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {

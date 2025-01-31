@@ -31,7 +31,7 @@ import {
     Stream,
     userSummaryFromCurrentUserSummary,
 } from "openchat-shared";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import {
     checkUsernameResponse,
     setUsernameResponse,
@@ -127,7 +127,7 @@ import { apiToken } from "../common/chatMappersV2";
 import type { DelegationChain } from "@dfinity/identity";
 import { signedDelegation } from "../../utils/id";
 
-export class UserIndexClient extends CandidService {
+export class UserIndexClient extends CanisterAgent {
     constructor(
         identity: Identity,
         agent: HttpAgent,

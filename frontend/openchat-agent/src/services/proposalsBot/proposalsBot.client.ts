@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import {
     type CandidateProposal,
     nowNanos,
@@ -24,7 +24,7 @@ import {
 } from "../../typebox";
 import { apiToken, principalToIcrcAccount } from "../common/chatMappersV2";
 
-export class ProposalsBotClient extends CandidService {
+export class ProposalsBotClient extends CanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId);
     }

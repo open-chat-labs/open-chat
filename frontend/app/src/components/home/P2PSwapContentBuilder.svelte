@@ -18,11 +18,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import {
-        enhancedCryptoLookup as cryptoLookup,
-        lastCryptoSent,
-        isDiamond,
-    } from "openchat-client";
+    import { enhancedCryptoLookup as cryptoLookup, isDiamond } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -110,8 +106,7 @@
         return client
             .sendMessageWithContent(messageContext, content, false)
             .then((resp) => {
-                if (resp.kind === "transfer_success") {
-                    lastCryptoSent.set(fromLedger);
+                if (resp.kind === "success" || resp.kind === "transfer_success") {
                     dispatch("close");
                 } else if ($pinNumberErrorMessageStore === undefined) {
                     error = "errorSendingMessage";
