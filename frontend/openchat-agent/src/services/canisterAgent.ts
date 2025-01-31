@@ -36,7 +36,7 @@ const Packer = new Packr({
     largeBigIntToString: true,
 } as unknown as Options);
 
-export abstract class CandidService {
+export abstract class CanisterAgent {
     protected createServiceClient<T>(factory: IDL.InterfaceFactory): T {
         return Actor.createActor<T>(factory, {
             agent: this.agent,
@@ -55,7 +55,7 @@ export abstract class CandidService {
         requestValidator: In,
         responseValidator: Resp,
     ): Promise<Out> {
-        const payload = CandidService.prepareMsgpackArgs(args, requestValidator);
+        const payload = CanisterAgent.prepareMsgpackArgs(args, requestValidator);
 
         return await this.handleQueryResponse(
             () =>
@@ -66,7 +66,7 @@ export abstract class CandidService {
             (resp) => {
                 if (resp.status === "replied") {
                     return Promise.resolve(
-                        CandidService.processMsgpackResponse(
+                        CanisterAgent.processMsgpackResponse(
                             resp.reply.arg,
                             mapper,
                             responseValidator,
@@ -92,7 +92,7 @@ export abstract class CandidService {
         responseValidator: Resp,
         onRequestAccepted?: () => void,
     ): Promise<Out> {
-        const payload = CandidService.prepareMsgpackArgs(args, requestValidator);
+        const payload = CanisterAgent.prepareMsgpackArgs(args, requestValidator);
 
         try {
             const { requestId, response } = await this.sendRequestToCanister(() =>
@@ -122,7 +122,7 @@ export abstract class CandidService {
                         const reply = lookupResultToBuffer(certificate.lookup([...path, "reply"]));
                         if (reply) {
                             return Promise.resolve(
-                                CandidService.processMsgpackResponse(
+                                CanisterAgent.processMsgpackResponse(
                                     reply,
                                     mapper,
                                     responseValidator,
@@ -154,7 +154,7 @@ export abstract class CandidService {
                     ),
                 );
                 return Promise.resolve(
-                    CandidService.processMsgpackResponse(reply, mapper, responseValidator),
+                    CanisterAgent.processMsgpackResponse(reply, mapper, responseValidator),
                 );
             } else {
                 throw new UpdateCallRejectedError(
@@ -254,7 +254,7 @@ export abstract class CandidService {
         value: Static<T>,
         validator: T,
     ): ArrayBuffer {
-        const validated = CandidService.validate(value, validator);
+        const validated = CanisterAgent.validate(value, validator);
         return Packer.pack(validated);
     }
 
@@ -265,7 +265,7 @@ export abstract class CandidService {
     ): Out {
         const response = Packer.unpack(new Uint8Array(responseBytes));
         try {
-            const validated = CandidService.validate(response, validator);
+            const validated = CanisterAgent.validate(response, validator);
             return mapper(validated);
         } catch (err) {
             console.error(

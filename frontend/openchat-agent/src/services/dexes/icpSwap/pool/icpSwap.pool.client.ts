@@ -1,10 +1,10 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type IcpSwapPoolService } from "./candid/idl";
-import { CandidService } from "../../../candidService";
+import { CanisterAgent } from "../../../canisterAgent";
 import { quoteResponse } from "./mappers";
 import type { SwapPoolClient } from "../../index";
 
-export class IcpSwapPoolClient extends CandidService implements SwapPoolClient {
+export class IcpSwapPoolClient extends CanisterAgent implements SwapPoolClient {
     private service: IcpSwapPoolService;
 
     constructor(

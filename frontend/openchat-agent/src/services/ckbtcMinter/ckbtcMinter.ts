@@ -2,13 +2,13 @@ import type { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import type { UpdateBtcBalanceResponse } from "openchat-shared";
 import { idlFactory, type CkbtcMinterService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import { updateBtcBalanceResponse } from "./mappers";
 import { apiOptional } from "../common/chatMappers";
 
 const CKBTC_MINTER_CANISTER_ID = "mqygn-kiaaa-aaaar-qaadq-cai";
 
-export class CkbtcMinterClient extends CandidService {
+export class CkbtcMinterClient extends CanisterAgent {
     private service: CkbtcMinterService;
 
     constructor(identity: Identity, agent: HttpAgent) {

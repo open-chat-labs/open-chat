@@ -20,7 +20,7 @@ import type {
     ExternalBotPermissions,
     VerifiedCredentialArgs,
 } from "openchat-shared";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import {
     accessTokenResponse,
     apiAccessTokenType,
@@ -83,7 +83,7 @@ import {
     LocalUserIndexWithdrawFromIcpswapResponse,
 } from "../../typebox";
 
-export class LocalUserIndexClient extends CandidService {
+export class LocalUserIndexClient extends CanisterAgent {
     constructor(
         identity: Identity,
         agent: HttpAgent,

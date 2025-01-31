@@ -5,13 +5,13 @@ import type {
     ProposalVoteDetails,
 } from "openchat-shared";
 import { idlFactory, type SnsGovernanceService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import { getProposalVoteDetails, manageNeuronResponse, nervousSystemFunctions } from "./mappers";
 import { apiOptional, apiProposalVote } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 import { toUint8Array } from "../../utils/base64";
 
-export class SnsGovernanceClient extends CandidService {
+export class SnsGovernanceClient extends CanisterAgent {
     private service: SnsGovernanceService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {

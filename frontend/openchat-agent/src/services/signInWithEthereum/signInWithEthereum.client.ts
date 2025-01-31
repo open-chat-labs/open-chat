@@ -1,6 +1,6 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type SignInWithEthereumService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import type {
     GetDelegationResponse,
     PrepareDelegationResponse,
@@ -8,7 +8,7 @@ import type {
 } from "openchat-shared";
 import { getDelegationResponse, loginResponse, prepareLoginResponse } from "./mappers";
 
-export class SignInWithEthereumClient extends CandidService {
+export class SignInWithEthereumClient extends CanisterAgent {
     private service: SignInWithEthereumService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {

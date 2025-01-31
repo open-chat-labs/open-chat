@@ -1,11 +1,11 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type SignInWithEmailService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CanisterAgent } from "../canisterAgent";
 import type { GenerateMagicLinkResponse, GetDelegationResponse } from "openchat-shared";
 import { generateMagicLinkResponse } from "./mappers";
 import { getDelegationResponse } from "../identity/mappers";
 
-export class SignInWithEmailClient extends CandidService {
+export class SignInWithEmailClient extends CanisterAgent {
     private service: SignInWithEmailService;
 
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
