@@ -10,12 +10,12 @@
     } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import Legend from "../Legend.svelte";
-    import BotPermissionsTabs from "./BotPermissionsTabs.svelte";
     import Translatable from "../Translatable.svelte";
+    import Tabs from "../Tabs.svelte";
 
     interface Props {
         permissions: ExternalBotPermissions;
-        title: ResourceKey;
+        title?: ResourceKey;
     }
 
     let { permissions, title }: Props = $props();
@@ -36,33 +36,47 @@
     </div>
 {/snippet}
 
-<Legend label={title}></Legend>
-<BotPermissionsTabs>
-    {#snippet chatTab()}
-        {#each chatPermissionsList as perm}
-            {@render check(
-                i18nKey(`permissions.${perm}`),
-                permissions.chatPermissions.includes(perm),
-            )}
-        {/each}
-    {/snippet}
-    {#snippet communityTab()}
-        {#each communityPermissionsList as perm}
-            {@render check(
-                i18nKey(`permissions.${perm}`),
-                permissions.communityPermissions.includes(perm),
-            )}
-        {/each}
-    {/snippet}
-    {#snippet messageTab()}
-        {#each messagePermissionsList as perm}
-            {@render check(
-                i18nKey(`permissions.messagePermissions.${perm}`),
-                permissions.messagePermissions.includes(perm),
-            )}
-        {/each}
-    {/snippet}
-</BotPermissionsTabs>
+{#snippet chatTab()}
+    {#each chatPermissionsList as perm}
+        {@render check(i18nKey(`permissions.${perm}`), permissions.chatPermissions.includes(perm))}
+    {/each}
+{/snippet}
+{#snippet communityTab()}
+    {#each communityPermissionsList as perm}
+        {@render check(
+            i18nKey(`permissions.${perm}`),
+            permissions.communityPermissions.includes(perm),
+        )}
+    {/each}
+{/snippet}
+{#snippet messageTab()}
+    {#each messagePermissionsList as perm}
+        {@render check(
+            i18nKey(`permissions.messagePermissions.${perm}`),
+            permissions.messagePermissions.includes(perm),
+        )}
+    {/each}
+{/snippet}
+
+{#if title !== undefined}
+    <Legend label={title}></Legend>
+{/if}
+<Tabs
+    initialIndex={2}
+    tabs={[
+        {
+            title: i18nKey("bots.builder.permScopeCommunity"),
+            snippet: communityTab,
+        },
+        {
+            title: i18nKey("bots.builder.permScopeChat"),
+            snippet: chatTab,
+        },
+        {
+            title: i18nKey("bots.builder.permScopeMessage"),
+            snippet: messageTab,
+        },
+    ]}></Tabs>
 
 <style lang="scss">
     .perm {

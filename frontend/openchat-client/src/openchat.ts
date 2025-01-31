@@ -8135,6 +8135,8 @@ export class OpenChat extends EventTarget {
                                     resp.message.messageId,
                                     bot.id,
                                 );
+                            } else {
+                                removePlaceholder?.();
                             }
                             return "success";
                         }
