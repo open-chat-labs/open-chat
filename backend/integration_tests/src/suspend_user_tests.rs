@@ -86,10 +86,13 @@ fn suspend_user() {
             correlation_id: 0,
         },
     );
-    assert!(matches!(
+
+    if !matches!(
         group_message_response1,
         group_canister::send_message_v2::Response::UserSuspended
-    ));
+    ) {
+        panic!("'send_message_v2' error: {group_message_response1:?}");
+    }
 
     let community_message_response1 = client::community::send_message(
         env,

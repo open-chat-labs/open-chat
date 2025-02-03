@@ -115,7 +115,12 @@ type BotSendMessageArgs = record {
     content : MessageContent;
     block_level_markdown : bool;
     finalised : bool;
-    access_token: text;
+    auth_token: AuthToken;
+};
+
+type AuthToken = variant {
+    Jwt : text;
+    ApiKey : text;
 };
 
 type BotSendMessageResponse = variant {

@@ -73,6 +73,7 @@ pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, state: &mut 
         CallerResult::Success(caller) => caller,
         CallerResult::NotFound => return CallerNotInGroup,
         CallerResult::Suspended => return UserSuspended,
+        CallerResult::Lapsed => return UserLapsed,
     };
 
     let now = state.env.now();
@@ -114,6 +115,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
         CallerResult::Success(caller) => caller,
         CallerResult::NotFound => return CallerNotInGroup,
         CallerResult::Suspended => return UserSuspended,
+        CallerResult::Lapsed => return UserLapsed,
     };
 
     // Bots can't call this c2c endpoint since it skips the validation

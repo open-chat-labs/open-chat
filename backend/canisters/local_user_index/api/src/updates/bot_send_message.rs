@@ -9,7 +9,13 @@ pub struct Args {
     pub content: BotMessageContent,
     pub block_level_markdown: bool,
     pub finalised: bool,
-    pub access_token: String,
+    pub auth_token: AuthToken,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum AuthToken {
+    Jwt(String),
+    ApiKey(String),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

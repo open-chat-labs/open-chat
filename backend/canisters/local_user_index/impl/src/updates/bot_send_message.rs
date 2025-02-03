@@ -10,7 +10,7 @@ use crate::{bots::extract_access_context, mutate_state};
 async fn bot_send_message(args: Args) -> Response {
     use Response::*;
 
-    let context = match mutate_state(|state| extract_access_context(&args.access_token, state)) {
+    let context = match mutate_state(|state| extract_access_context(args.auth_token, state)) {
         Ok(context) => context,
         Err(error) => return InvalidRequest(error),
     };

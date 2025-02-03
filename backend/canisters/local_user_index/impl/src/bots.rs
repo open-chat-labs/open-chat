@@ -1,5 +1,6 @@
 use crate::RuntimeState;
 use jwt::Claims;
+use local_user_index_canister::bot_send_message::AuthToken;
 use rand::Rng;
 use types::{
     AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotActionChatDetails, BotActionCommunityDetails,
@@ -14,7 +15,7 @@ pub struct BotAccessContext {
     pub scope: BotActionScope,
 }
 
-pub fn extract_access_context(access_token: &str, state: &mut RuntimeState) -> Result<BotAccessContext, String> {
+pub fn extract_access_context(auth_token: AuthToken, state: &mut RuntimeState) -> Result<BotAccessContext, String> {
     let caller = state.env.caller();
 
     let Some(bot) = state.data.bots.get_by_caller(&caller) else {
@@ -26,8 +27,10 @@ pub fn extract_access_context(access_token: &str, state: &mut RuntimeState) -> R
         username: bot.name.clone(),
     };
 
-    try_extract_access_context_from_apikey(access_token, &user, state)
-        .or_else(|_| try_extract_access_context_from_jwt(access_token, &user, state))
+    match auth_token {
+        AuthToken::Jwt(str) => try_extract_access_context_from_jwt(&str, &user, state),
+        AuthToken::ApiKey(str) => try_extract_access_context_from_apikey(&str, &user, state),
+    }
 }
 
 fn try_extract_access_context_from_apikey(

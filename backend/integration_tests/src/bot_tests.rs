@@ -3,8 +3,8 @@ use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv, User};
 use candid::Principal;
 use community_canister::generate_bot_api_key;
-use local_user_index_canister::access_token_v2::Args::BotActionByApiKey;
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs};
+use local_user_index_canister::bot_send_message::AuthToken;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
@@ -137,7 +137,7 @@ fn e2e_command_bot_test() {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: false,
-            access_token: access_token.clone(),
+            auth_token: AuthToken::Jwt(access_token.clone()),
         },
     );
 
@@ -173,7 +173,7 @@ fn e2e_command_bot_test() {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: true,
-            access_token: access_token.clone(),
+            auth_token: AuthToken::Jwt(access_token.clone()),
         },
     );
 
@@ -327,18 +327,6 @@ fn e2e_autonomous_bot_test() {
     env.advance_time(Duration::from_millis(1000));
     env.tick();
 
-    // Get an access token from the API key
-    let access_token_args = BotActionByApiKey(api_key);
-    let access_token = match client::local_user_index::access_token_v2(
-        env,
-        owner.principal,
-        canister_ids.local_user_index(env, community_id),
-        &access_token_args,
-    ) {
-        local_user_index_canister::access_token_v2::Response::Success(access_token) => access_token,
-        response => panic!("'access_token' error: {response:?}"),
-    };
-
     // Call execute_bot_action
     let text = "Hello world".to_string();
     let response = client::local_user_index::bot_send_message(
@@ -351,7 +339,7 @@ fn e2e_autonomous_bot_test() {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: true,
-            access_token: access_token.clone(),
+            auth_token: AuthToken::ApiKey(api_key),
         },
     );
 
@@ -434,7 +422,7 @@ fn send_multiple_updates_to_same_message() {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: false,
-            access_token: access_token.clone(),
+            auth_token: AuthToken::Jwt(access_token.clone()),
         },
     );
 
@@ -454,7 +442,7 @@ fn send_multiple_updates_to_same_message() {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: false,
-            access_token: access_token.clone(),
+            auth_token: AuthToken::Jwt(access_token.clone()),
         },
     );
 
@@ -474,7 +462,7 @@ fn send_multiple_updates_to_same_message() {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: true,
-            access_token: access_token.clone(),
+            auth_token: AuthToken::Jwt(access_token.clone()),
         },
     );
 
@@ -510,7 +498,7 @@ fn send_multiple_updates_to_same_message() {
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
             finalised: true,
-            access_token: access_token.clone(),
+            auth_token: AuthToken::Jwt(access_token.clone()),
         },
     );
 

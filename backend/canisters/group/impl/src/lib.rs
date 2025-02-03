@@ -13,6 +13,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
 use group_chat_core::{
     AddResult as AddMemberResult, BotApiKeys, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation,
+    VerifyMemberError,
 };
 use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, GroupBots, PaymentReceipts, PaymentRecipient, PendingPayment,
@@ -445,8 +446,11 @@ impl RuntimeState {
             return NotFound;
         };
 
-        let Some(member) = self.data.chat.members.get_verified_member(user_id).ok() else {
-            return NotFound;
+        let member = match self.data.chat.members.get_verified_member(user_id) {
+            Ok(member) => member,
+            Err(VerifyMemberError::NotFound) => return NotFound,
+            Err(VerifyMemberError::Lapsed) => return Lapsed,
+            Err(VerifyMemberError::Suspended) => return Suspended,
         };
 
         match member.user_type() {
@@ -913,5 +917,6 @@ pub struct StartImportIntoCommunityResultSuccess {
 pub enum CallerResult {
     Success(Caller),
     NotFound,
+    Lapsed,
     Suspended,
 }
