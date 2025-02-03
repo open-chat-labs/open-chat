@@ -209,6 +209,8 @@
             "nameLabel": "Tên bot",
             "namePlaceholder": "Nhập tên bot",
             "nameRules": "Phải là duy nhất và chỉ chứa các ký tự chữ và số và dấu gạch dưới",
+            "noAutonomousConfig": "Không có cấu hình tự động nào được xác định",
+            "noCommands": "Không có lệnh nào được xác định",
             "optional": "không bắt buộc",
             "ownerLabel": "Chủ sở hữu bot",
             "ownerRules": "Ai là người liên hệ cho bot này",

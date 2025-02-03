@@ -209,6 +209,8 @@
             "nameLabel": "Bot-Name",
             "namePlaceholder": "Geben Sie den Bot-Namen ein",
             "nameRules": "Muss eindeutig sein und darf nur alphanumerische Zeichen und Unterstriche enthalten",
+            "noAutonomousConfig": "Keine autonome Konfiguration definiert",
+            "noCommands": "Keine Befehle definiert",
             "optional": "optional",
             "ownerLabel": "Bot-Besitzer",
             "ownerRules": "Wer ist der Ansprechpartner für diesen Bot",
