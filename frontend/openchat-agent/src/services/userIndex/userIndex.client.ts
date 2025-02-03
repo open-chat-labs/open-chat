@@ -134,7 +134,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         canisterId: string,
         private blobUrlPattern: string,
     ) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "UserIndex");
     }
 
     getCurrentUser(): Stream<CurrentUserResponse> {

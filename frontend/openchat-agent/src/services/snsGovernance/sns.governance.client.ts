@@ -13,7 +13,7 @@ import { toUint8Array } from "../../utils/base64";
 
 export class SnsGovernanceClient extends CandidCanisterAgent<SnsGovernanceService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId, idlFactory);
+        super(identity, agent, canisterId, idlFactory, "SnsGovernance");
     }
 
     registerVote(

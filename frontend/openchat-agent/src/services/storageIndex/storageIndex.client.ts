@@ -10,11 +10,11 @@ import type {
 
 export class StorageIndexClient extends CandidCanisterAgent<StorageIndexService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId, idlFactory);
+        super(identity, agent, canisterId, idlFactory, "StorageIndex");
     }
 
     user(): Promise<StorageUserResponse> {
-        return this.handleResponse(this.service.user({}), userResponse);
+        return this.handleQueryResponse(() => this.service.user({}), userResponse);
     }
 
     allocatedBucket(
@@ -22,8 +22,8 @@ export class StorageIndexClient extends CandidCanisterAgent<StorageIndexService>
         fileSize: bigint,
         fileIdSeed: bigint | undefined,
     ): Promise<AllocatedBucketResponse> {
-        return this.handleResponse(
-            this.service.allocated_bucket_v2({
+        return this.handleQueryResponse(
+            () => this.service.allocated_bucket_v2({
                 file_hash: fileHash,
                 file_size: fileSize,
                 file_id_seed: fileIdSeed === undefined ? [] : [fileIdSeed],

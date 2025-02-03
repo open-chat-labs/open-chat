@@ -10,7 +10,7 @@ const ICPSWAP_INDEX_CANISTER_ID = "4mmnk-kiaaa-aaaag-qbllq-cai";
 
 export class IcpSwapIndexClient extends CandidCanisterAgent<IcpSwapIndexService> implements SwapIndexClient {
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, ICPSWAP_INDEX_CANISTER_ID, idlFactory);
+        super(identity, agent, ICPSWAP_INDEX_CANISTER_ID, idlFactory, "IcpSwapIndex");
     }
 
     getPoolClient(canisterId: string, token0: string, token1: string): SwapPoolClient {

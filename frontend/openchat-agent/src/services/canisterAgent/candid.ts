@@ -15,8 +15,9 @@ export abstract class CandidCanisterAgent<T> extends CanisterAgent {
         agent: HttpAgent,
         canisterId: string,
         factory: IDL.InterfaceFactory,
+        canisterName: string,
     ) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, canisterName);
 
         this.service = Actor.createActor<T>(factory, {
             agent,
