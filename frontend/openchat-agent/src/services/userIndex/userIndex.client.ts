@@ -31,7 +31,7 @@ import {
     Stream,
     userSummaryFromCurrentUserSummary,
 } from "openchat-shared";
-import { CandidService } from "../candidService";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
     checkUsernameResponse,
     setUsernameResponse,
@@ -127,14 +127,14 @@ import { apiToken } from "../common/chatMappersV2";
 import type { DelegationChain } from "@dfinity/identity";
 import { signedDelegation } from "../../utils/id";
 
-export class UserIndexClient extends CandidService {
+export class UserIndexClient extends MsgpackCanisterAgent {
     constructor(
         identity: Identity,
         agent: HttpAgent,
         canisterId: string,
         private blobUrlPattern: string,
     ) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "UserIndex");
     }
 
     getCurrentUser(): Stream<CurrentUserResponse> {
@@ -626,7 +626,6 @@ export class UserIndexClient extends CandidService {
         pageIndex: number,
         pageSize: number,
     ): Promise<ExploreBotsResponse> {
-        console.log("Explore bots: ", searchTerm, pageIndex, pageSize);
         return this.executeMsgpackQuery(
             "explore_bots",
             {
@@ -683,7 +682,6 @@ export class UserIndexClient extends CandidService {
         endpoint?: string,
         definition?: BotDefinition,
     ): Promise<boolean> {
-        console.log("Updating definition: ", definition);
         return this.executeMsgpackUpdate(
             "update_bot",
             {

@@ -1,8 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency,
-    MessageIndex, Milliseconds, P2PSwapStatus, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, UserType,
-    VideoCallType,
+    MessageIndex, MessagePermission, Milliseconds, P2PSwapStatus, ProposalContent, TimestampMillis, TokenInfo, TotalVotes,
+    User, UserId, UserType, VideoCallType,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -351,6 +351,24 @@ impl MessageContentInitial {
             self,
             MessageContentInitial::Crypto(_) | MessageContentInitial::Prize(_) | MessageContentInitial::P2PSwap(_)
         )
+    }
+}
+
+impl From<&MessageContentInitial> for MessagePermission {
+    fn from(value: &MessageContentInitial) -> Self {
+        match value {
+            MessageContentInitial::Text(_) => MessagePermission::Text,
+            MessageContentInitial::Image(_) => MessagePermission::Image,
+            MessageContentInitial::Video(_) => MessagePermission::Video,
+            MessageContentInitial::Audio(_) => MessagePermission::Audio,
+            MessageContentInitial::File(_) => MessagePermission::File,
+            MessageContentInitial::Poll(_) => MessagePermission::Poll,
+            MessageContentInitial::Crypto(_) => MessagePermission::Crypto,
+            MessageContentInitial::Giphy(_) => MessagePermission::Giphy,
+            MessageContentInitial::Prize(_) => MessagePermission::Prize,
+            MessageContentInitial::P2PSwap(_) => MessagePermission::P2pSwap,
+            _ => unreachable!(),
+        }
     }
 }
 

@@ -3,12 +3,12 @@ use crate::model::files::ForwardFileResult;
 use crate::model::index_event_batch::EventToSync;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use rand::Rng;
 use storage_bucket_canister::forward_file::{Response::*, *};
 
-#[update(guard = "caller_is_known_user")]
+#[update(guard = "caller_is_known_user", candid = true, msgpack = true)]
 #[trace]
 fn forward_file(args: Args) -> Response {
     mutate_state(|state| forward_file_impl(args, state))

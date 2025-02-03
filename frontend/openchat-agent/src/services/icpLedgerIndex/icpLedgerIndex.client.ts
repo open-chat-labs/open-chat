@@ -1,19 +1,15 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type IcpLedgerIndexService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { Principal } from "@dfinity/principal";
 import { accountTransactions } from "./mappers";
 import type { AccountTransactionResult } from "openchat-shared";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
-export class IcpLedgerIndexClient extends CandidService {
-    private service: IcpLedgerIndexService;
-
+export class IcpLedgerIndexClient extends CandidCanisterAgent<IcpLedgerIndexService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
-
-        this.service = this.createServiceClient<IcpLedgerIndexService>(idlFactory);
+        super(identity, agent, canisterId, idlFactory, "IcpLedgerIndex");
     }
 
     getAccountTransactions(principal: string, fromId?: bigint): Promise<AccountTransactionResult> {

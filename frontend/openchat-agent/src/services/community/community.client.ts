@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { HttpAgent, Identity } from "@dfinity/agent";
-import { CandidService } from "../candidService";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
     apiOptionUpdateV2,
     identity,
@@ -299,7 +299,7 @@ import {
     CommunityGenerateBotApiKeyResponse,
 } from "../../typebox";
 
-export class CommunityClient extends CandidService {
+export class CommunityClient extends MsgpackCanisterAgent {
     constructor(
         identity: Identity,
         agent: HttpAgent,
@@ -308,7 +308,7 @@ export class CommunityClient extends CandidService {
         private db: Database,
         private inviteCode: string | undefined,
     ) {
-        super(identity, agent, communityId);
+        super(identity, agent, communityId, "Community");
     }
 
     claimPrize(channelId: number, messageId: bigint): Promise<ClaimPrizeResponse> {

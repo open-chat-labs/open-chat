@@ -1,12 +1,10 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type IcpSwapPoolService } from "./candid/idl";
-import { CandidService } from "../../../candidService";
+import { CandidCanisterAgent } from "../../../canisterAgent/candid";
 import { quoteResponse } from "./mappers";
 import type { SwapPoolClient } from "../../index";
 
-export class IcpSwapPoolClient extends CandidService implements SwapPoolClient {
-    private service: IcpSwapPoolService;
-
+export class IcpSwapPoolClient extends CandidCanisterAgent<IcpSwapPoolService> implements SwapPoolClient {
     constructor(
         identity: Identity,
         agent: HttpAgent,
@@ -14,9 +12,7 @@ export class IcpSwapPoolClient extends CandidService implements SwapPoolClient {
         private token0: string,
         private token1: string,
     ) {
-        super(identity, agent, canisterId);
-
-        this.service = this.createServiceClient<IcpSwapPoolService>(idlFactory);
+        super(identity, agent, canisterId, idlFactory, "IcpSwapPool");
     }
 
     quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint> {

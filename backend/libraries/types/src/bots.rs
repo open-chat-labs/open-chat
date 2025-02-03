@@ -1,6 +1,7 @@
 use crate::{
-    AccessTokenScope, CanisterId, ChatId, CommunityId, CommunityPermission, GroupPermission, MessageContentInitial, MessageId,
-    MessagePermission, TimestampMillis, UserId,
+    AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
+    GroupPermission, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
+    TimestampMillis, UserId, VideoContent,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -117,10 +118,14 @@ impl BotPermissions {
     }
 
     pub fn text_only() -> Self {
+        Self::from_message_permission(MessagePermission::Text)
+    }
+
+    pub fn from_message_permission(permission: MessagePermission) -> Self {
         Self {
             community: HashSet::new(),
             chat: HashSet::new(),
-            message: HashSet::from_iter([MessagePermission::Text]),
+            message: HashSet::from_iter([permission]),
         }
     }
 }
@@ -234,4 +239,37 @@ pub struct BotApiKeyToken {
     pub bot_id: UserId,
     pub scope: AccessTokenScope,
     pub secret: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum BotMessageContent {
+    Text(TextContent),
+    Image(ImageContent),
+    Video(VideoContent),
+    Audio(AudioContent),
+    File(FileContent),
+    Poll(PollContent),
+    Giphy(GiphyContent),
+}
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum BotInitiator {
+    Command(BotCommand),
+    ApiKeySecret(String),
+    ApiKeyPermissions(BotPermissions),
+}
+
+impl From<BotMessageContent> for MessageContentInitial {
+    fn from(value: BotMessageContent) -> Self {
+        match value {
+            BotMessageContent::Text(c) => MessageContentInitial::Text(c),
+            BotMessageContent::Image(c) => MessageContentInitial::Image(c),
+            BotMessageContent::Video(c) => MessageContentInitial::Video(c),
+            BotMessageContent::Audio(c) => MessageContentInitial::Audio(c),
+            BotMessageContent::File(c) => MessageContentInitial::File(c),
+            BotMessageContent::Poll(c) => MessageContentInitial::Poll(c),
+            BotMessageContent::Giphy(c) => MessageContentInitial::Giphy(c),
+        }
+    }
 }

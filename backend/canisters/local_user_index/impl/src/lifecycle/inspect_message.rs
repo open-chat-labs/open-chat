@@ -20,9 +20,9 @@ fn accept_if_valid(state: &RuntimeState) {
         | "report_message_v2"
         | "uninstall_bot" => state.is_caller_openchat_user(),
         "withdraw_from_icpswap" => state.is_caller_platform_operator(),
-        "register_user" | "execute_bot_action" => true,
+        "register_user" => true,
         _ => false,
-    };
+    } || method_name.starts_with("bot_");
 
     if is_valid {
         ic_cdk::api::call::accept_message();

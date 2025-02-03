@@ -209,6 +209,8 @@
             "nameLabel": "Nome del bot",
             "namePlaceholder": "Inserisci il nome del bot",
             "nameRules": "Deve essere univoco e contenere solo caratteri alfanumerici e caratteri di sottolineatura",
+            "noAutonomousConfig": "Nessuna configurazione autonoma definita",
+            "noCommands": "Nessun comando definito",
             "optional": "opzionale",
             "ownerLabel": "Proprietario del bot",
             "ownerRules": "Chi è il punto di contatto per questo bot?",

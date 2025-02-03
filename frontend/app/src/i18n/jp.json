@@ -209,6 +209,8 @@
             "nameLabel": "ボット名",
             "namePlaceholder": "ボット名を入力",
             "nameRules": "一意であり、英数字とアンダースコアのみを含む必要があります",
+            "noAutonomousConfig": "自律構成が定義されていません",
+            "noCommands": "コマンドが定義されていません",
             "optional": "オプション",
             "ownerLabel": "ボット所有者",
             "ownerRules": "このボットの連絡先は誰ですか",

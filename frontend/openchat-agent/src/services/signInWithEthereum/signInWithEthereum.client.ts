@@ -1,6 +1,6 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type SignInWithEthereumService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import type {
     GetDelegationResponse,
     PrepareDelegationResponse,
@@ -8,13 +8,9 @@ import type {
 } from "openchat-shared";
 import { getDelegationResponse, loginResponse, prepareLoginResponse } from "./mappers";
 
-export class SignInWithEthereumClient extends CandidService {
-    private service: SignInWithEthereumService;
-
+export class SignInWithEthereumClient extends CandidCanisterAgent<SignInWithEthereumService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
-
-        this.service = this.createServiceClient<SignInWithEthereumService>(idlFactory);
+        super(identity, agent, canisterId, idlFactory, "SignInWithEthereum");
     }
 
     prepareLogin(address: string): Promise<SiwePrepareLoginResponse> {

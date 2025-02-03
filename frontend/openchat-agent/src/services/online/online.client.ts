@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
-import { CandidService } from "../candidService";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import { principalStringToBytes, toVoid } from "../../utils/mapping";
 import { lastOnlineResponse } from "./mappers";
 import {
@@ -9,9 +9,9 @@ import {
     OnlineUsersMarkAsOnlineResponse,
 } from "../../typebox";
 
-export class OnlineClient extends CandidService {
+export class OnlineClient extends MsgpackCanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "OnlineUsers");
     }
 
     lastOnline(userIds: string[]): Promise<Record<string, number>> {

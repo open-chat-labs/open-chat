@@ -1,18 +1,14 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "openchat-shared";
 import { idlFactory, type MarketMakerService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { updateConfigResponse } from "./mappers";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
-export class MarketMakerClient extends CandidService {
-    private service: MarketMakerService;
-
+export class MarketMakerClient extends CandidCanisterAgent<MarketMakerService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
-
-        this.service = this.createServiceClient<MarketMakerService>(idlFactory);
+        super(identity, agent, canisterId, idlFactory, "MarketMaker");
     }
 
     updateConfig(config: UpdateMarketMakerConfigArgs): Promise<UpdateMarketMakerConfigResponse> {

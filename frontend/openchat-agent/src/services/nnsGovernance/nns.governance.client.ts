@@ -1,18 +1,14 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import type { ManageNeuronResponse, ProposalVoteDetails } from "openchat-shared";
 import { idlFactory, type NnsGovernanceService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { getProposalVoteDetails, manageNeuronResponse } from "./mappers";
 import { apiOptional, apiProposalVote } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
-export class NnsGovernanceClient extends CandidService {
-    private service: NnsGovernanceService;
-
+export class NnsGovernanceClient extends CandidCanisterAgent<NnsGovernanceService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
-
-        this.service = this.createServiceClient<NnsGovernanceService>(idlFactory);
+        super(identity, agent, canisterId, idlFactory, "NnsGovernance");
     }
 
     registerVote(

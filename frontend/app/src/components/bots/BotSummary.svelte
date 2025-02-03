@@ -20,13 +20,13 @@
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
     import Legend from "../Legend.svelte";
-    import BotPermissionsTabs from "./BotPermissionsTabs.svelte";
     import Checkbox from "../Checkbox.svelte";
     import { togglePermission } from "../../utils/bots";
     import { toastStore } from "../../stores/toast";
     import BotAvatar from "./BotAvatar.svelte";
     import ShowApiKey from "./ShowApiKey.svelte";
     import AreYouSure from "../AreYouSure.svelte";
+    import Tabs from "../Tabs.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -176,6 +176,52 @@
     <ShowApiKey {apiKey} {onClose}></ShowApiKey>
 {/if}
 
+{#snippet chatTab()}
+    {#if mode.requested.chatPermissions.length === 0}
+        <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
+    {:else}
+        {#each mode.requested.chatPermissions as perm}
+            <Checkbox
+                id={`chat_permission_${perm}`}
+                label={i18nKey(`permissions.${perm}`)}
+                checked={grantedPermissions.chatPermissions.includes(perm)}
+                on:change={() => togglePermission(grantedPermissions, "chatPermissions", perm)}
+                align={"start"}>
+            </Checkbox>
+        {/each}
+    {/if}
+{/snippet}
+{#snippet communityTab()}
+    {#if mode.requested.communityPermissions.length === 0}
+        <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
+    {:else}
+        {#each mode.requested.communityPermissions as perm}
+            <Checkbox
+                id={`community_permission_${perm}`}
+                label={i18nKey(`permissions.${perm}`)}
+                checked={grantedPermissions.communityPermissions.includes(perm)}
+                on:change={() => togglePermission(grantedPermissions, "communityPermissions", perm)}
+                align={"start"}>
+            </Checkbox>
+        {/each}
+    {/if}
+{/snippet}
+{#snippet messageTab()}
+    {#if mode.requested.messagePermissions.length === 0}
+        <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
+    {:else}
+        {#each mode.requested.messagePermissions as perm}
+            <Checkbox
+                id={`message_permission_${perm}`}
+                label={i18nKey(`permissions.messagePermissions.${perm}`)}
+                checked={grantedPermissions.messagePermissions.includes(perm)}
+                on:change={() => togglePermission(grantedPermissions, "messagePermissions", perm)}
+                align={"start"}>
+            </Checkbox>
+        {/each}
+    {/if}
+{/snippet}
+
 <Overlay dismissible>
     <ModalContent closeIcon on:close={onClose}>
         <div class="header" slot="header">
@@ -227,79 +273,23 @@
                             <Translatable resourceKey={i18nKey("bots.add.permissionsInfo")}
                             ></Translatable>
                         </p>
-                        <BotPermissionsTabs>
-                            {#snippet chatTab()}
-                                {#if mode.requested.chatPermissions.length === 0}
-                                    <Translatable resourceKey={i18nKey("bots.add.noPermissions")}
-                                    ></Translatable>
-                                {:else}
-                                    {#each mode.requested.chatPermissions as perm}
-                                        <Checkbox
-                                            id={`chat_permission_${perm}`}
-                                            label={i18nKey(`permissions.${perm}`)}
-                                            checked={grantedPermissions.chatPermissions.includes(
-                                                perm,
-                                            )}
-                                            on:change={() =>
-                                                togglePermission(
-                                                    grantedPermissions,
-                                                    "chatPermissions",
-                                                    perm,
-                                                )}
-                                            align={"start"}>
-                                        </Checkbox>
-                                    {/each}
-                                {/if}
-                            {/snippet}
-                            {#snippet communityTab()}
-                                {#if mode.requested.communityPermissions.length === 0}
-                                    <Translatable resourceKey={i18nKey("bots.add.noPermissions")}
-                                    ></Translatable>
-                                {:else}
-                                    {#each mode.requested.communityPermissions as perm}
-                                        <Checkbox
-                                            id={`community_permission_${perm}`}
-                                            label={i18nKey(`permissions.${perm}`)}
-                                            checked={grantedPermissions.communityPermissions.includes(
-                                                perm,
-                                            )}
-                                            on:change={() =>
-                                                togglePermission(
-                                                    grantedPermissions,
-                                                    "communityPermissions",
-                                                    perm,
-                                                )}
-                                            align={"start"}>
-                                        </Checkbox>
-                                    {/each}
-                                {/if}
-                            {/snippet}
-                            {#snippet messageTab()}
-                                {#if mode.requested.messagePermissions.length === 0}
-                                    <Translatable resourceKey={i18nKey("bots.add.noPermissions")}
-                                    ></Translatable>
-                                {:else}
-                                    {#each mode.requested.messagePermissions as perm}
-                                        <Checkbox
-                                            id={`message_permission_${perm}`}
-                                            label={i18nKey(
-                                                `permissions.messagePermissions.${perm}`,
-                                            )}
-                                            checked={grantedPermissions.messagePermissions.includes(
-                                                perm,
-                                            )}
-                                            on:change={() =>
-                                                togglePermission(
-                                                    grantedPermissions,
-                                                    "messagePermissions",
-                                                    perm,
-                                                )}
-                                            align={"start"}>
-                                        </Checkbox>
-                                    {/each}
-                                {/if}
-                            {/snippet}
-                        </BotPermissionsTabs>
+                        <Legend label={title}></Legend>
+                        <Tabs
+                            initialIndex={2}
+                            tabs={[
+                                {
+                                    title: i18nKey("bots.builder.permScopeCommunity"),
+                                    snippet: communityTab,
+                                },
+                                {
+                                    title: i18nKey("bots.builder.permScopeChat"),
+                                    snippet: chatTab,
+                                },
+                                {
+                                    title: i18nKey("bots.builder.permScopeMessage"),
+                                    snippet: messageTab,
+                                },
+                            ]}></Tabs>
                     </div>
                 {/if}
             </div>

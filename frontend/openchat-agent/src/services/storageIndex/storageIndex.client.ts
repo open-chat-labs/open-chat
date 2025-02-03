@@ -1,6 +1,6 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type StorageIndexService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { allocatedBucketResponse, canForwardResponse, userResponse } from "./mappers";
 import type {
     AllocatedBucketResponse,
@@ -8,17 +8,13 @@ import type {
     StorageUserResponse,
 } from "openchat-shared";
 
-export class StorageIndexClient extends CandidService {
-    private service: StorageIndexService;
-
+export class StorageIndexClient extends CandidCanisterAgent<StorageIndexService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
-
-        this.service = this.createServiceClient<StorageIndexService>(idlFactory);
+        super(identity, agent, canisterId, idlFactory, "StorageIndex");
     }
 
     user(): Promise<StorageUserResponse> {
-        return this.handleResponse(this.service.user({}), userResponse);
+        return this.handleQueryResponse(() => this.service.user({}), userResponse);
     }
 
     allocatedBucket(
@@ -26,8 +22,8 @@ export class StorageIndexClient extends CandidService {
         fileSize: bigint,
         fileIdSeed: bigint | undefined,
     ): Promise<AllocatedBucketResponse> {
-        return this.handleResponse(
-            this.service.allocated_bucket_v2({
+        return this.handleQueryResponse(
+            () => this.service.allocated_bucket_v2({
                 file_hash: fileHash,
                 file_size: fileSize,
                 file_id_seed: fileIdSeed === undefined ? [] : [fileIdSeed],

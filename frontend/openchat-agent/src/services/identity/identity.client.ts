@@ -1,6 +1,6 @@
 import type { HttpAgent, Identity, SignIdentity } from "@dfinity/agent";
 import { idlFactory, type IdentityService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import type {
     ApproveIdentityLinkResponse,
     AuthenticationPrincipalsResponse,
@@ -31,13 +31,9 @@ import { Principal } from "@dfinity/principal";
 import type { DelegationIdentity } from "@dfinity/identity";
 import { signedDelegation } from "../../utils/id";
 
-export class IdentityClient extends CandidService {
-    private service: IdentityService;
-
+export class IdentityClient extends CandidCanisterAgent<IdentityService> {
     constructor(identity: Identity, agent: HttpAgent, identityCanister: string) {
-        super(identity, agent, identityCanister);
-
-        this.service = this.createServiceClient<IdentityService>(idlFactory);
+        super(identity, agent, identityCanister, idlFactory, "Identity");
     }
 
     createIdentity(

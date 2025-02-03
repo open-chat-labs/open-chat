@@ -23,8 +23,8 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import ValidatingInput from "./ValidatingInput.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import BotPermissionsTabs from "./BotPermissionsTabs.svelte";
     import { togglePermission } from "../../utils/bots";
+    import Tabs from "../Tabs.svelte";
 
     interface Props {
         errors: ValidationErrors;
@@ -63,6 +63,40 @@
         onAddAnother={addParameter}></CommandParamBuilder>
 {/if}
 
+{#snippet chatTab()}
+    {#each chatPermissionsList as perm}
+        <Checkbox
+            id={`chat_permission_${perm}`}
+            label={i18nKey(`permissions.${perm}`)}
+            checked={command.permissions.chatPermissions.includes(perm)}
+            on:change={() => togglePermission(command.permissions, "chatPermissions", perm)}
+            align={"start"}>
+        </Checkbox>
+    {/each}
+{/snippet}
+{#snippet communityTab()}
+    {#each communityPermissionsList as perm}
+        <Checkbox
+            id={`community_permission_${perm}`}
+            label={i18nKey(`permissions.${perm}`)}
+            checked={command.permissions.communityPermissions.includes(perm)}
+            on:change={() => togglePermission(command.permissions, "communityPermissions", perm)}
+            align={"start"}>
+        </Checkbox>
+    {/each}
+{/snippet}
+{#snippet messageTab()}
+    {#each messagePermissionsList as perm}
+        <Checkbox
+            id={`message_permission_${perm}`}
+            label={i18nKey(`permissions.messagePermissions.${perm}`)}
+            checked={command.permissions.messagePermissions.includes(perm)}
+            on:change={() => togglePermission(command.permissions, "messagePermissions", perm)}
+            align={"start"}>
+        </Checkbox>
+    {/each}
+{/snippet}
+
 <Overlay>
     <ModalContent on:close>
         <div slot="header">
@@ -100,52 +134,23 @@
                 <Legend
                     label={i18nKey("bots.builder.commandPermissionsLabel")}
                     rules={i18nKey("bots.builder.commandPermissionsDesc")}></Legend>
-                <BotPermissionsTabs>
-                    {#snippet chatTab()}
-                        {#each chatPermissionsList as perm}
-                            <Checkbox
-                                id={`chat_permission_${perm}`}
-                                label={i18nKey(`permissions.${perm}`)}
-                                checked={command.permissions.chatPermissions.includes(perm)}
-                                on:change={() =>
-                                    togglePermission(command.permissions, "chatPermissions", perm)}
-                                align={"start"}>
-                            </Checkbox>
-                        {/each}
-                    {/snippet}
-                    {#snippet communityTab()}
-                        {#each communityPermissionsList as perm}
-                            <Checkbox
-                                id={`community_permission_${perm}`}
-                                label={i18nKey(`permissions.${perm}`)}
-                                checked={command.permissions.communityPermissions.includes(perm)}
-                                on:change={() =>
-                                    togglePermission(
-                                        command.permissions,
-                                        "communityPermissions",
-                                        perm,
-                                    )}
-                                align={"start"}>
-                            </Checkbox>
-                        {/each}
-                    {/snippet}
-                    {#snippet messageTab()}
-                        {#each messagePermissionsList as perm}
-                            <Checkbox
-                                id={`message_permission_${perm}`}
-                                label={i18nKey(`permissions.messagePermissions.${perm}`)}
-                                checked={command.permissions.messagePermissions.includes(perm)}
-                                on:change={() =>
-                                    togglePermission(
-                                        command.permissions,
-                                        "messagePermissions",
-                                        perm,
-                                    )}
-                                align={"start"}>
-                            </Checkbox>
-                        {/each}
-                    {/snippet}
-                </BotPermissionsTabs>
+
+                <Tabs
+                    initialIndex={2}
+                    tabs={[
+                        {
+                            title: i18nKey("bots.builder.permScopeCommunity"),
+                            snippet: communityTab,
+                        },
+                        {
+                            title: i18nKey("bots.builder.permScopeChat"),
+                            snippet: chatTab,
+                        },
+                        {
+                            title: i18nKey("bots.builder.permScopeMessage"),
+                            snippet: messageTab,
+                        },
+                    ]}></Tabs>
             </section>
 
             <section>

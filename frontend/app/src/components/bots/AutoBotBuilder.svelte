@@ -25,6 +25,7 @@
     import CommandViewer from "./CommandViewer.svelte";
     import SingleUserSelector from "../home/SingleUserSelector.svelte";
     import BotPermissionViewer from "./BotPermissionViewer.svelte";
+    import Tabs from "../Tabs.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -164,6 +165,42 @@
     }
 </script>
 
+{#snippet commands()}
+    {#if candidate.definition.commands.length > 0}
+        <div class="commands">
+            {#each candidate.definition.commands as command, i}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <div
+                    onclick={() => onSelectCommand(command, i)}
+                    class="command"
+                    class:command-error={errors.has(`command_${i}`)}>
+                    <Translatable
+                        resourceKey={i18nKey("bots.builder.commandLabel", {
+                            name: command.name,
+                        })}></Translatable>
+                </div>
+            {/each}
+        </div>
+    {:else}
+        <div class="smallprint">
+            <Translatable resourceKey={i18nKey("bots.builder.noCommands")}></Translatable>
+        </div>
+    {/if}
+{/snippet}
+
+{#snippet autonomousPermissions()}
+    {#if candidate.definition.autonomousConfig !== undefined}
+        <BotPermissionViewer
+            nested
+            permissions={candidate.definition.autonomousConfig.permissions} />
+    {:else}
+        <div class="smallprint">
+            <Translatable resourceKey={i18nKey("bots.builder.noAutonomousConfig")}></Translatable>
+        </div>
+    {/if}
+{/snippet}
+
 {#if selectedCommand !== undefined && selectedCommandIndex !== undefined}
     <CommandViewer
         on:close={() => (selectedCommand = undefined)}
@@ -262,30 +299,17 @@
         <Legend label={i18nKey("bots.builder.descLabel")}></Legend>
         <Input disabled={true} value={candidate.definition.description} />
 
-        {#if candidate.definition.commands.length > 0}
-            <Legend label={i18nKey("bots.builder.commandsLabel")}></Legend>
-            <div class="commands">
-                {#each candidate.definition.commands as command, i}
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                    <div
-                        onclick={() => onSelectCommand(command, i)}
-                        class="command"
-                        class:command-error={errors.has(`command_${i}`)}>
-                        <Translatable
-                            resourceKey={i18nKey("bots.builder.commandLabel", {
-                                name: command.name,
-                            })}></Translatable>
-                    </div>
-                {/each}
-            </div>
-        {/if}
-
-        {#if candidate.definition.autonomousConfig !== undefined}
-            <BotPermissionViewer
-                title={i18nKey("bots.builder.autonomousPermissionsLabel")}
-                permissions={candidate.definition.autonomousConfig.permissions} />
-        {/if}
+        <Tabs
+            tabs={[
+                {
+                    title: i18nKey("bots.builder.commandsLabel"),
+                    snippet: commands,
+                },
+                {
+                    title: i18nKey("bots.builder.autonomousPermissionsLabel"),
+                    snippet: autonomousPermissions,
+                },
+            ]}></Tabs>
 
         <div class="error">
             {#if errors.has("duplicate_commands")}
@@ -379,5 +403,10 @@
         .icon {
             flex: 0 0 40px;
         }
+    }
+
+    .smallprint {
+        @include font(light, normal, fs-80);
+        color: var(--txt-light);
     }
 </style>

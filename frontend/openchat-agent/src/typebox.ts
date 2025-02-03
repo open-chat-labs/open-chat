@@ -6673,7 +6673,6 @@ export const SelectedGroupUpdates = Type.Object({
     members_removed: Type.Array(UserId),
     bots_added_or_updated: Type.Array(BotGroupDetails),
     bots_removed: Type.Array(UserId),
-    api_keys_generated: Type.Array(PublicApiKeyDetails),
     blocked_users_added: Type.Array(UserId),
     blocked_users_removed: Type.Array(UserId),
     invited_users: Type.Optional(Type.Union([Type.Array(UserId), Type.Undefined()])),
@@ -7043,7 +7042,6 @@ export const CommunitySelectedChannelInitialSuccessResult = Type.Object({
     invited_users: Type.Array(UserId),
     pinned_messages: Type.Array(MessageIndex),
     chat_rules: VersionedRules,
-    api_keys: Type.Array(PublicApiKeyDetails),
 });
 
 export type CommunityCommunityMembersResponse = Static<typeof CommunityCommunityMembersResponse>;
@@ -7090,7 +7088,6 @@ export const CommunitySelectedInitialSuccessResult = Type.Object({
     latest_event_index: EventIndex,
     members: Type.Array(CommunityMember),
     bots: Type.Array(BotGroupDetails),
-    api_keys: Type.Array(PublicApiKeyDetails),
     basic_members: Type.Array(UserId),
     blocked_users: Type.Array(UserId),
     invited_users: Type.Array(UserId),
@@ -7122,7 +7119,6 @@ export const CommunitySelectedUpdatesSuccessResult = Type.Object({
     members_removed: Type.Array(UserId),
     bots_added_or_updated: Type.Array(BotGroupDetails),
     bots_removed: Type.Array(UserId),
-    api_keys_generated: Type.Array(PublicApiKeyDetails),
     blocked_users_added: Type.Array(UserId),
     blocked_users_removed: Type.Array(UserId),
     invited_users: Type.Optional(Type.Union([Type.Array(UserId), Type.Undefined()])),
@@ -7183,7 +7179,6 @@ export const GroupSelectedInitialSuccessResult = Type.Object({
     latest_event_index: EventIndex,
     participants: Type.Array(GroupMember),
     bots: Type.Array(BotGroupDetails),
-    api_keys: Type.Array(PublicApiKeyDetails),
     basic_members: Type.Array(UserId),
     blocked_users: Type.Array(UserId),
     invited_users: Type.Array(UserId),

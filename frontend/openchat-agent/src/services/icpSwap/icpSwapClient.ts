@@ -1,19 +1,15 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import type { CryptocurrencyDetails, TokenExchangeRates } from "openchat-shared";
 import { idlFactory, type ICPSwapService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { getAllTokensResponse } from "./mappers";
 import type { ExchangeRateClient } from "../openchatAgent";
 
 const ICPSWAP_CANISTER_ID = "ggzvv-5qaaa-aaaag-qck7a-cai";
 
-export class IcpSwapClient extends CandidService implements ExchangeRateClient {
-    private service: ICPSwapService;
-
+export class IcpSwapClient extends CandidCanisterAgent<ICPSwapService> implements ExchangeRateClient {
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, ICPSWAP_CANISTER_ID);
-
-        this.service = this.createServiceClient<ICPSwapService>(idlFactory);
+        super(identity, agent, ICPSWAP_CANISTER_ID, idlFactory, "IcpSwapExchangeRates");
     }
 
     exchangeRates(
