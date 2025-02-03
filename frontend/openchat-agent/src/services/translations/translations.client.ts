@@ -1,6 +1,6 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type TranslationsService } from "./candid/idl";
-import { CanisterAgent } from "../canisterAgent";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import type {
     ApproveResponse,
     MarkDeployedResponse,
@@ -20,18 +20,14 @@ import {
     rejectResponse,
 } from "./mappers";
 
-export class TranslationsClient extends CanisterAgent {
-    private translationService: TranslationsService;
-
+export class TranslationsClient extends CandidCanisterAgent<TranslationsService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
-
-        this.translationService = this.createServiceClient<TranslationsService>(idlFactory);
+        super(identity, agent, canisterId, idlFactory);
     }
 
     propose(locale: string, key: string, value: string): Promise<ProposeResponse> {
         return this.handleResponse(
-            this.translationService.propose({
+            this.service.propose({
                 key,
                 locale,
                 value,
@@ -42,7 +38,7 @@ export class TranslationsClient extends CanisterAgent {
 
     approve(id: bigint): Promise<ApproveResponse> {
         return this.handleResponse(
-            this.translationService.approve({
+            this.service.approve({
                 id,
             }),
             approveResponse,
@@ -51,7 +47,7 @@ export class TranslationsClient extends CanisterAgent {
 
     reject(id: bigint, reason: RejectReason): Promise<RejectResponse> {
         return this.handleResponse(
-            this.translationService.reject({
+            this.service.reject({
                 id,
                 reason: apiRejectReason(reason),
             }),
@@ -61,7 +57,7 @@ export class TranslationsClient extends CanisterAgent {
 
     markDeployed(): Promise<MarkDeployedResponse> {
         return this.handleResponse(
-            this.translationService.mark_deployed({
+            this.service.mark_deployed({
                 latest_approval: BigInt(Date.now()),
             }),
             markDeployedResponse,
@@ -70,14 +66,14 @@ export class TranslationsClient extends CanisterAgent {
 
     proposed(): Promise<ProposedResponse> {
         return this.handleQueryResponse(
-            () => this.translationService.proposed({}),
+            () => this.service.proposed({}),
             proposedResponse,
         );
     }
 
     pendingDeployment(): Promise<PendingDeploymentResponse> {
         return this.handleQueryResponse(
-            () => this.translationService.pending_deployment({}),
+            () => this.service.pending_deployment({}),
             pendingDeploymentResponse,
         );
     }
