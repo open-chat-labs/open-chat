@@ -83,7 +83,7 @@
 
 <style lang="scss">
     :global(.roadmap a.link) {
-        z-index: 99;
+        z-index: 1;
     }
 
     .header {
