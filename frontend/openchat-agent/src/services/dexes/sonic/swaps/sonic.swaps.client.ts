@@ -10,7 +10,7 @@ const SONIC_INDEX_CANISTER_ID = "3xwpq-ziaaa-aaaah-qcn4a-cai";
 
 export class SonicSwapsClient extends CandidCanisterAgent<SonicSwapsService> implements SwapIndexClient, SwapPoolClient {
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, SONIC_INDEX_CANISTER_ID, idlFactory);
+        super(identity, agent, SONIC_INDEX_CANISTER_ID, idlFactory, "Sonic");
     }
 
     getPoolClient(_canisterId: string, _token0: string, _token1: string): SwapPoolClient {

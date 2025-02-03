@@ -7,7 +7,7 @@ import { getDelegationResponse } from "../identity/mappers";
 
 export class SignInWithEmailClient extends CandidCanisterAgent<SignInWithEmailService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId, idlFactory);
+        super(identity, agent, canisterId, idlFactory, "SignInWithEmail");
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {

@@ -5,12 +5,12 @@ import { Principal } from "@dfinity/principal";
 
 export class LedgerClient extends CandidCanisterAgent<LedgerService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId, idlFactory);
+        super(identity, agent, canisterId, idlFactory, "Ledger");
     }
 
     accountBalance(principal: string): Promise<bigint> {
-        return this.handleResponse(
-            this.service.icrc1_balance_of({ owner: Principal.fromText(principal), subaccount: [] }),
+        return this.handleQueryResponse(
+            () => this.service.icrc1_balance_of({ owner: Principal.fromText(principal), subaccount: [] }),
             (balance) => {
                 return balance;
             },

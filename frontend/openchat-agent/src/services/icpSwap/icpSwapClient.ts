@@ -9,7 +9,7 @@ const ICPSWAP_CANISTER_ID = "ggzvv-5qaaa-aaaag-qck7a-cai";
 
 export class IcpSwapClient extends CandidCanisterAgent<ICPSwapService> implements ExchangeRateClient {
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, ICPSWAP_CANISTER_ID, idlFactory);
+        super(identity, agent, ICPSWAP_CANISTER_ID, idlFactory, "IcpSwapExchangeRates");
     }
 
     exchangeRates(

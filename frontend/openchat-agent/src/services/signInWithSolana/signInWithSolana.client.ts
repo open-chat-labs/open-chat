@@ -11,7 +11,7 @@ import { getDelegationResponse, loginResponse } from "../signInWithEthereum/mapp
 
 export class SignInWithSolanaClient extends CandidCanisterAgent<SignInWithSolanaService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId, idlFactory);
+        super(identity, agent, canisterId, idlFactory, "SignInWithSolana");
     }
 
     prepareLogin(address: string): Promise<SiwsPrepareLoginResponse> {
