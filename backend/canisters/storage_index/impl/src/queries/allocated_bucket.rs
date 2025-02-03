@@ -1,11 +1,11 @@
 use crate::{read_state, RuntimeState, DEFAULT_CHUNK_SIZE_BYTES};
+use canister_api_macros::query;
 use canister_tracing_macros::trace;
-use ic_cdk::query;
 use storage_index_canister::allocated_bucket_v2::{Response::*, *};
 use storage_index_canister::ProjectedAllowance;
 use utils::file_id::generate_file_id;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 #[trace]
 fn allocated_bucket_v2(args: Args) -> Response {
     read_state(|state| allocated_bucket_impl(args, state))

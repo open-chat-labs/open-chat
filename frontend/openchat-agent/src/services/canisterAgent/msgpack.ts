@@ -26,8 +26,9 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
         identity: Identity,
         agent: HttpAgent,
         canisterId: string,
+        canisterName: string,
     ) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, canisterName);
     }
 
     protected async executeMsgpackQuery<In extends TSchema, Resp extends TSchema, Out>(
@@ -37,33 +38,43 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
         requestValidator: In,
         responseValidator: Resp,
     ): Promise<Out> {
-        const payload = MsgpackCanisterAgent.prepareMsgpackArgs(args, requestValidator);
+        const start = performance.now();
+        let isError = false;
+        try {
+            const payload = MsgpackCanisterAgent.prepareMsgpackArgs(args, requestValidator);
 
-        return await this.executeQuery(
-            () =>
-                this.agent.query(this.canisterId, {
-                    methodName: methodName + "_msgpack",
-                    arg: payload,
-                }),
-            (resp) => {
-                if (resp.status === "replied") {
-                    return Promise.resolve(
-                        MsgpackCanisterAgent.processMsgpackResponse(
-                            resp.reply.arg,
-                            mapper,
-                            responseValidator,
-                        ),
-                    );
-                } else {
-                    throw new QueryCallRejectedError(
-                        Principal.fromText(this.canisterId),
-                        methodName,
-                        resp,
-                    );
-                }
-            },
-            args,
-        );
+            return await this.executeQuery(
+                () =>
+                    this.agent.query(this.canisterId, {
+                        methodName: methodName + "_msgpack",
+                        arg: payload,
+                    }),
+                (resp) => {
+                    if (resp.status === "replied") {
+                        return Promise.resolve(
+                            MsgpackCanisterAgent.processMsgpackResponse(
+                                resp.reply.arg,
+                                mapper,
+                                responseValidator,
+                            ),
+                        );
+                    } else {
+                        throw new QueryCallRejectedError(
+                            Principal.fromText(this.canisterId),
+                            methodName,
+                            resp,
+                        );
+                    }
+                },
+                args,
+            );
+        }
+        catch (err) {
+            isError = true;
+            throw err;
+        } finally {
+            this.writeTrace(methodName, false, performance.now() - start, isError);
+        }
     }
 
     protected async executeMsgpackUpdate<In extends TSchema, Resp extends TSchema, Out>(
@@ -74,9 +85,11 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
         responseValidator: Resp,
         onRequestAccepted?: () => void,
     ): Promise<Out> {
-        const payload = MsgpackCanisterAgent.prepareMsgpackArgs(args, requestValidator);
-
+        const start = performance.now();
+        let isError = false;
         try {
+            const payload = MsgpackCanisterAgent.prepareMsgpackArgs(args, requestValidator);
+
             const { requestId, response } = await this.sendRequestToCanister(() =>
                 this.agent.call(this.canisterId, {
                     methodName: methodName + "_msgpack",
@@ -147,8 +160,11 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                 );
             }
         } catch (err) {
+            isError = true;
             console.log(err, args);
             throw toCanisterResponseError(err as Error, this.identity);
+        } finally {
+            this.writeTrace(methodName, true, performance.now() - start, isError);
         }
     }
 

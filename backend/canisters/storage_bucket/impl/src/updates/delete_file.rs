@@ -1,10 +1,10 @@
 use crate::model::files::RemoveFileResult;
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use storage_bucket_canister::delete_file::{Response::*, *};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn delete_file(args: Args) -> Response {
     mutate_state(|state| delete_file_impl(args, state))

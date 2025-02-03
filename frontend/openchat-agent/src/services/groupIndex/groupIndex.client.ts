@@ -72,7 +72,7 @@ import { principalStringToBytes } from "../../utils/mapping";
 
 export class GroupIndexClient extends MsgpackCanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "GroupIndex");
     }
 
     activeGroups(

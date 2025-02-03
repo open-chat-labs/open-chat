@@ -24,6 +24,7 @@ export abstract class CanisterAgent {
         protected identity: Identity,
         protected agent: HttpAgent,
         protected canisterId: string,
+        protected canisterName: string,
     ) {}
 
     protected get principal(): Principal {
@@ -92,6 +93,12 @@ export abstract class CanisterAgent {
                 return await this.sendRequestToCanister(requestFn, true);
             }
             throw err;
+        }
+    }
+
+    protected writeTrace(methodName: string, update: boolean, duration: number, isError: boolean) {
+        if (!isError) {
+            console.debug(`TRACE: ${update ? "Update" : "Query"} call to ${this.canisterName}.${methodName} took ${Math.trunc(duration)}ms`);
         }
     }
 }

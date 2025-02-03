@@ -8,7 +8,7 @@ import { identity } from "../../utils/mapping";
 
 export class NnsGovernanceClient extends CandidCanisterAgent<NnsGovernanceService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId, idlFactory);
+        super(identity, agent, canisterId, idlFactory, "NnsGovernance");
     }
 
     registerVote(

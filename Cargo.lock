@@ -7427,6 +7427,7 @@ name = "storage_bucket_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -8141,6 +8142,7 @@ name = "translations_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",

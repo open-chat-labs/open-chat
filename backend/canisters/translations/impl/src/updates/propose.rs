@@ -1,10 +1,10 @@
 use crate::{model::translations::ProposeArgs, mutate_state, read_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use translations_canister::propose::{Response::*, *};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn propose(args: Args) -> Response {
     let args = args.trimmed();
