@@ -137,6 +137,7 @@ async fn push_channel_proposal(
         community_rules_accepted: None,
         channel_rules_accepted: None,
         message_filter_failed: None,
+        finalised: true,
     };
 
     let canister_id = community_id.into();

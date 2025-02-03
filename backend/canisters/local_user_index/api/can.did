@@ -1,0 +1,132 @@
+type CanisterId = principal;
+type ChannelId = nat32;
+type MessageId = nat64;
+type TimestampMillis = nat64;
+type UserId = CanisterId;
+
+type BlobReference = record {
+    canister_id : CanisterId;
+    blob_id : nat;
+};
+
+type BotAccessTypeSerialized = variant {
+    AccessToken : text;
+    ApiKey : text;
+};
+
+type MessageContent = variant {
+    Text : TextContent;
+    Image : ImageContent;
+    Video : VideoContent;
+    Audio : AudioContent;
+    File : FileContent;
+    Poll : PollContent;
+    Giphy : GiphyContent;
+};
+
+type TextContent = record {
+    text : text;
+};
+
+type ImageContent = record {
+    width : nat32;
+    height : nat32;
+    thumbnail_data : text;
+    caption : opt text;
+    mime_type : text;
+    blob_reference : opt BlobReference;
+};
+
+type VideoContent = record {
+    width : nat32;
+    height : nat32;
+    thumbnail_data : text;
+    caption : opt text;
+    mime_type : text;
+    image_blob_reference : opt BlobReference;
+    video_blob_reference : opt BlobReference;
+};
+
+type AudioContent = record {
+    caption : opt text;
+    mime_type : text;
+    blob_reference : opt BlobReference;
+};
+
+type FileContent = record {
+    name : text;
+    caption : opt text;
+    mime_type : text;
+    file_size : nat32;
+    blob_reference : opt BlobReference;
+};
+
+type PollContent = record {
+    config : PollConfig;
+    votes : PollVotes;
+    ended : bool;
+};
+
+type PollConfig = record {
+    text : opt text;
+    options : vec text;
+    end_date : opt TimestampMillis;
+    anonymous : bool;
+    show_votes_before_end_date : bool;
+    allow_multiple_votes_per_user : bool;
+    allow_user_to_change_vote : bool;
+};
+
+type PollVotes = record {
+    total : TotalPollVotes;
+    user : vec nat32;
+};
+
+type TotalPollVotes = variant {
+    Visible : vec record { nat32; vec UserId };
+    Anonymous : vec record { nat32; nat32 };
+    Hidden : nat32;
+};
+
+type GiphyContent = record {
+    caption : opt text;
+    title : text;
+    desktop : GiphyImageVariant;
+    mobile : GiphyImageVariant;
+};
+
+type GiphyImageVariant = record {
+    width : nat32;
+    height : nat32;
+    url : text;
+    mime_type : text;
+};
+
+type BotApiCallError = variant {
+    Invalid : text;
+    CanisterError : variant {
+        NotAuthorized;
+        Frozen;
+        Other : text;
+    };
+    C2CError: record {int32; text};
+};
+
+type BotSendMessageArgs = record {
+    channel_id : opt ChannelId;
+    message_id : opt MessageId;
+    content : MessageContent;
+    finalised : bool;
+    access_type : BotAccessTypeSerialized;
+};
+
+type BotSendMessageResponse = variant {
+    Ok : record {
+        message_id : MessageId;
+    };
+    Err : BotApiCallError;
+};
+
+service : {
+    bot_send_message : (BotSendMessageArgs) -> (BotSendMessageResponse);
+};

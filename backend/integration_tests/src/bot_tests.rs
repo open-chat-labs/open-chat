@@ -9,11 +9,10 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::bot_actions::{BotMessageAction, MessageContent};
 use types::{
-    AccessTokenScope, AutonomousConfig, BotAction, BotActionChatDetails, BotActionScope, BotApiKeyToken, BotCommand,
-    BotDefinition, BotInstallationLocation, BotPermissions, CanisterId, Chat, ChatEvent, MessagePermission, SlashCommandSchema,
-    TextContent, UserId,
+    AccessTokenScope, AutonomousConfig, BotActionChatDetails, BotActionScope, BotApiKeyToken, BotCommand, BotDefinition,
+    BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, MessageContent, MessagePermission,
+    SlashCommandSchema, TextContent, UserId,
 };
 use utils::base64;
 
@@ -128,21 +127,22 @@ fn e2e_command_bot_test() {
     // Call execute_bot_action as bot - unfinalised message
     let username = owner.username();
     let text = format!("Hello {username}");
-    let response = client::local_user_index::execute_bot_action(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         canister_ids.local_user_index(env, group_id),
-        &local_user_index_canister::execute_bot_action::Args {
-            action: BotAction::SendMessage(BotMessageAction {
-                content: MessageContent::Text(TextContent { text: text.clone() }),
-                finalised: false,
-            }),
-            jwt: access_token.clone(),
+        &local_user_index_canister::bot_send_message::Args {
+            channel_id: None,
+            message_id: None,
+            content: BotMessageContent::Text(TextContent { text: text.clone() }),
+            block_level_markdown: false,
+            finalised: false,
+            access_token: access_token.clone(),
         },
     );
 
-    if response.is_err() {
-        panic!("'execute_bot_action' error: {response:?}");
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
+        panic!("'bot_send_message' error: {response:?}");
     }
 
     // Call `events` and confirm the latest event is a text message from the bot
@@ -152,7 +152,7 @@ fn e2e_command_bot_test() {
     let ChatEvent::Message(message) = &latest_event.event else {
         panic!("Expected latest event to be a message: {latest_event:?}");
     };
-    let types::MessageContent::Text(text_content) = &message.content else {
+    let MessageContent::Text(text_content) = &message.content else {
         panic!("Expected message to be text");
     };
     assert_eq!(text_content.text, text);
@@ -162,21 +162,23 @@ fn e2e_command_bot_test() {
 
     // Call execute_bot_action as bot - finalised message
     let text = "Hello world".to_string();
-    let response = client::local_user_index::execute_bot_action(
+
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         canister_ids.local_user_index(env, group_id),
-        &local_user_index_canister::execute_bot_action::Args {
-            action: BotAction::SendMessage(BotMessageAction {
-                content: MessageContent::Text(TextContent { text: text.clone() }),
-                finalised: true,
-            }),
-            jwt: access_token.clone(),
+        &local_user_index_canister::bot_send_message::Args {
+            channel_id: None,
+            message_id: None,
+            content: BotMessageContent::Text(TextContent { text: text.clone() }),
+            block_level_markdown: false,
+            finalised: true,
+            access_token: access_token.clone(),
         },
     );
 
-    if response.is_err() {
-        panic!("'execute_bot_action' error: {response:?}");
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
+        panic!("'bot_send_message' error: {response:?}");
     }
 
     // Call `events` and confirm the latest event is a text message from the bot
@@ -186,7 +188,7 @@ fn e2e_command_bot_test() {
     let ChatEvent::Message(message) = &latest_event.event else {
         panic!("Expected latest event to be a message: {latest_event:?}");
     };
-    let types::MessageContent::Text(text_content) = &message.content else {
+    let MessageContent::Text(text_content) = &message.content else {
         panic!("Expected message to be text");
     };
     assert_eq!(text_content.text, text);
@@ -339,21 +341,22 @@ fn e2e_autonomous_bot_test() {
 
     // Call execute_bot_action
     let text = "Hello world".to_string();
-    let response = client::local_user_index::execute_bot_action(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         canister_ids.local_user_index(env, community_id),
-        &local_user_index_canister::execute_bot_action::Args {
-            action: BotAction::SendMessage(BotMessageAction {
-                content: MessageContent::Text(TextContent { text: text.clone() }),
-                finalised: true,
-            }),
-            jwt: access_token,
+        &local_user_index_canister::bot_send_message::Args {
+            channel_id: None,
+            message_id: None,
+            content: BotMessageContent::Text(TextContent { text: text.clone() }),
+            block_level_markdown: false,
+            finalised: true,
+            access_token: access_token.clone(),
         },
     );
 
-    if response.is_err() {
-        panic!("'execute_bot_action' error: {response:?}");
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
+        panic!("'bot_send_message' error: {response:?}");
     }
 }
 
@@ -421,59 +424,62 @@ fn send_multiple_updates_to_same_message() {
     // Send message - unfinalised
     let username = owner.username();
     let text = format!("Hello 1 {username}");
-    let response = client::local_user_index::execute_bot_action(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         canister_ids.local_user_index(env, group_id),
-        &local_user_index_canister::execute_bot_action::Args {
-            action: BotAction::SendMessage(BotMessageAction {
-                content: MessageContent::Text(TextContent { text: text.clone() }),
-                finalised: false,
-            }),
-            jwt: access_token.clone(),
+        &local_user_index_canister::bot_send_message::Args {
+            channel_id: None,
+            message_id: None,
+            content: BotMessageContent::Text(TextContent { text: text.clone() }),
+            block_level_markdown: false,
+            finalised: false,
+            access_token: access_token.clone(),
         },
     );
 
-    if response.is_err() {
-        panic!("'execute_bot_action' error: {response:?}");
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
+        panic!("'bot_send_message' error: {response:?}");
     }
 
     // Update message - unfinalised
     let text = format!("Hello 2 {username}");
-    let response = client::local_user_index::execute_bot_action(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         canister_ids.local_user_index(env, group_id),
-        &local_user_index_canister::execute_bot_action::Args {
-            action: BotAction::SendMessage(BotMessageAction {
-                content: MessageContent::Text(TextContent { text: text.clone() }),
-                finalised: false,
-            }),
-            jwt: access_token.clone(),
+        &local_user_index_canister::bot_send_message::Args {
+            channel_id: None,
+            message_id: None,
+            content: BotMessageContent::Text(TextContent { text: text.clone() }),
+            block_level_markdown: false,
+            finalised: false,
+            access_token: access_token.clone(),
         },
     );
 
-    if response.is_err() {
-        panic!("'execute_bot_action' error: {response:?}");
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
+        panic!("'bot_send_message' error: {response:?}");
     }
 
     // Update message - finalised
     let text = format!("Hello 3 {username}");
-    let response = client::local_user_index::execute_bot_action(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         canister_ids.local_user_index(env, group_id),
-        &local_user_index_canister::execute_bot_action::Args {
-            action: BotAction::SendMessage(BotMessageAction {
-                content: MessageContent::Text(TextContent { text: text.clone() }),
-                finalised: true,
-            }),
-            jwt: access_token.clone(),
+        &local_user_index_canister::bot_send_message::Args {
+            channel_id: None,
+            message_id: None,
+            content: BotMessageContent::Text(TextContent { text: text.clone() }),
+            block_level_markdown: false,
+            finalised: true,
+            access_token: access_token.clone(),
         },
     );
 
-    if response.is_err() {
-        panic!("'execute_bot_action' error: {response:?}");
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
+        panic!("'bot_send_message' error: {response:?}");
     }
 
     // Call `events` and confirm the latest event is a text message from the bot
@@ -483,7 +489,7 @@ fn send_multiple_updates_to_same_message() {
     let ChatEvent::Message(message) = &latest_event.event else {
         panic!("Expected latest event to be a message: {latest_event:?}");
     };
-    let types::MessageContent::Text(text_content) = &message.content else {
+    let MessageContent::Text(text_content) = &message.content else {
         panic!("Expected message to be text");
     };
     assert_eq!(text_content.text, text);
@@ -494,20 +500,24 @@ fn send_multiple_updates_to_same_message() {
 
     // Try updating the same message again but expect it to fail
     let text = format!("Hello 4 {username}");
-    let response = client::local_user_index::execute_bot_action(
+    let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
         canister_ids.local_user_index(env, group_id),
-        &local_user_index_canister::execute_bot_action::Args {
-            action: BotAction::SendMessage(BotMessageAction {
-                content: MessageContent::Text(TextContent { text: text.clone() }),
-                finalised: true,
-            }),
-            jwt: access_token,
+        &local_user_index_canister::bot_send_message::Args {
+            channel_id: None,
+            message_id: None,
+            content: BotMessageContent::Text(TextContent { text: text.clone() }),
+            block_level_markdown: false,
+            finalised: true,
+            access_token: access_token.clone(),
         },
     );
 
-    assert!(response.is_err());
+    assert!(!matches!(
+        response,
+        local_user_index_canister::bot_send_message::Response::Success(_)
+    ));
 }
 
 fn register_bot(

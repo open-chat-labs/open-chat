@@ -93,6 +93,7 @@ async fn send_message_with_transfer_to_channel(
         community_rules_accepted: args.community_rules_accepted,
         channel_rules_accepted: args.channel_rules_accepted,
         message_filter_failed: args.message_filter_failed,
+        finalised: true,
     };
 
     // Send the message to the community

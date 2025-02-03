@@ -33,9 +33,9 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotPermissions, BotRemoved, BotUpdated,
-    BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
-    FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
+    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotInitiator, BotPermissions, BotRemoved,
+    BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty,
+    EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
     Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY,
     SNS_FEE_SHARE_PERCENT,
 };
@@ -428,46 +428,28 @@ impl RuntimeState {
         }
     }
 
-    pub fn verified_caller(&self, mut bot_caller: Option<BotCaller>) -> CallerResult {
+    pub fn verified_caller(&self, bot_caller: Option<BotCaller>) -> CallerResult {
         use CallerResult::*;
 
-        let user_or_principal: Option<Principal> = if let Some(bot_caller) = bot_caller.as_ref() {
-            if self.data.bots.get(&bot_caller.bot).is_none() {
-                return NotFound;
-            }
+        if let Some(bot_caller) = bot_caller {
+            return Success(Caller::BotV2(bot_caller));
+        }
 
-            bot_caller.command.as_ref().map(|c| c.initiator.into())
-        } else {
-            let caller = self.env.caller();
+        let caller = self.env.caller();
 
-            if caller == self.data.user_index_canister_id {
-                return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
-            }
-
-            Some(caller)
+        let Some(user_id) = self.data.lookup_user_id(caller) else {
+            return NotFound;
         };
 
-        if let Some(user_or_principal) = user_or_principal {
-            let Some(member) = self.data.get_member(user_or_principal) else {
-                return NotFound;
-            };
+        let Some(member) = self.data.chat.members.get_verified_member(user_id).ok() else {
+            return NotFound;
+        };
 
-            if member.suspended().value {
-                return Suspended;
-            }
-
-            if let Some(bot_caller) = bot_caller.take() {
-                Success(Caller::BotV2(bot_caller))
-            } else {
-                match member.user_type() {
-                    UserType::User => Success(Caller::User(member.user_id())),
-                    UserType::BotV2 => NotFound,
-                    UserType::Bot => Success(Caller::Bot(member.user_id())),
-                    UserType::OcControlledBot => Success(Caller::OCBot(member.user_id())),
-                }
-            }
-        } else {
-            Success(Caller::BotV2(bot_caller.unwrap()))
+        match member.user_type() {
+            UserType::User => Success(Caller::User(member.user_id())),
+            UserType::BotV2 => NotFound,
+            UserType::Bot => Success(Caller::Bot(member.user_id())),
+            UserType::OcControlledBot => Success(Caller::OCBot(member.user_id())),
         }
     }
 }
@@ -741,7 +723,7 @@ impl Data {
         self.bots.get(bot_user_id).map(|b| &b.permissions)
     }
 
-    pub fn get_user_permissions_for_bot_commands(&self, user_id: &UserId) -> Option<BotPermissions> {
+    pub fn get_user_permissions(&self, user_id: &UserId) -> Option<BotPermissions> {
         let member = self.chat.members.get_verified_member(*user_id).ok()?;
 
         let group_permissions = member.role().permissions(&self.chat.permissions);
@@ -752,6 +734,29 @@ impl Data {
             chat: group_permissions,
             message: message_permissions,
         })
+    }
+
+    pub fn is_bot_permitted(&self, bot_id: &UserId, initiator: &BotInitiator, required: BotPermissions) -> bool {
+        // Try to get the installed bot
+        let Some(bot) = self.bots.get(bot_id) else {
+            return false;
+        };
+
+        // Get the granted permissions when initiated by command or API key
+        let granted = match initiator {
+            BotInitiator::Command(command) => match self.get_user_permissions(&command.initiator) {
+                Some(user_permissions) => &BotPermissions::intersect(&bot.permissions, &user_permissions),
+                None => return false,
+            },
+            BotInitiator::ApiKeySecret(secret) => match self.bot_api_keys.permissions_if_secret_matches(bot_id, secret) {
+                Some(bot_permissions) => bot_permissions,
+                None => return false,
+            },
+            BotInitiator::ApiKeyPermissions(permissions) => permissions,
+        };
+
+        // The permissions required must be a subset of the permissions granted to the bot
+        required.is_subset(granted)
     }
 
     pub fn install_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {

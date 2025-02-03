@@ -4582,6 +4582,7 @@ name = "local_user_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "community_canister",
  "event_store_canister",
  "group_canister",
@@ -4618,6 +4619,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "chat_events",
  "community_canister",
  "community_canister_c2c_client",
  "constants",
