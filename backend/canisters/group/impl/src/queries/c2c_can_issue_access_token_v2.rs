@@ -33,7 +33,7 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         };
 
         // Get the permissions granted to the user in this group
-        let Some(granted_to_user) = state.data.get_user_permissions_for_bot_commands(&args.initiator) else {
+        let Some(granted_to_user) = state.data.get_user_permissions(&args.initiator) else {
             return Response::Failure;
         };
 

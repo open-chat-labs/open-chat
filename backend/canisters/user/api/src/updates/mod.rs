@@ -8,7 +8,6 @@ pub mod btc_address;
 pub mod c2c_accept_p2p_swap;
 pub mod c2c_charge_user_account;
 pub mod c2c_grant_super_admin;
-pub mod c2c_handle_bot_action;
 pub mod c2c_handle_bot_messages;
 pub mod c2c_mark_community_updated_for_user;
 pub mod c2c_mark_group_updated_for_user;

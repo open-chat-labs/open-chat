@@ -32,6 +32,7 @@ use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
 use utils::iterator_extensions::IteratorExtensions;
 
+mod bots;
 mod guards;
 mod jobs;
 mod lifecycle;
