@@ -6,10 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1594](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1594-identity)] - 2025-01-31
+
 ### Added
 
 - Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
-- Add an ability to unlink previously linked sign-in identities ([#7313](https://github.com/open-chat-labs/open-chat/pull/7313))
+- Add ability to unlink previously linked sign-in identities ([#7313](https://github.com/open-chat-labs/open-chat/pull/7313))
 
 ### Changed
 
