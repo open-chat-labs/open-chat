@@ -26,8 +26,8 @@ export function updatesResponse(
     }
     if ("Success" in value) {
         const communityId = "txydz-jyaaa-aaaaf-bifea-cai";
-        const channelId = 1530379559;
-        const channelName = "January airdrop";
+        const channelId = 3388879138;
+        const channelName = "February airdrop";
         const communityName = "CHIT for CHAT";
 
         return {
