@@ -1,6 +1,6 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type IcpSwapIndexService } from "./candid/idl";
-import { CanisterAgent } from "../../../canisterAgent";
+import { CandidCanisterAgent } from "../../../canisterAgent/candid";
 import type { TokenSwapPool } from "openchat-shared";
 import { getPoolsResponse } from "./mappers";
 import type { SwapIndexClient, SwapPoolClient } from "../../index";
@@ -8,13 +8,9 @@ import { IcpSwapPoolClient } from "../pool/icpSwap.pool.client";
 
 const ICPSWAP_INDEX_CANISTER_ID = "4mmnk-kiaaa-aaaag-qbllq-cai";
 
-export class IcpSwapIndexClient extends CanisterAgent implements SwapIndexClient {
-    private service: IcpSwapIndexService;
-
+export class IcpSwapIndexClient extends CandidCanisterAgent<IcpSwapIndexService> implements SwapIndexClient {
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, ICPSWAP_INDEX_CANISTER_ID);
-
-        this.service = this.createServiceClient<IcpSwapIndexService>(idlFactory);
+        super(identity, agent, ICPSWAP_INDEX_CANISTER_ID, idlFactory);
     }
 
     getPoolClient(canisterId: string, token0: string, token1: string): SwapPoolClient {

@@ -66,7 +66,7 @@ import type {
     Verification,
     MessageActivityFeedResponse,
 } from "openchat-shared";
-import { CanisterAgent } from "../canisterAgent";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
     deleteMessageResponse,
     undeleteMessageResponse,
@@ -269,7 +269,7 @@ import {
 } from "../../typebox";
 import { toggleNotificationsResponse } from "../notifications/mappers";
 
-export class UserClient extends CanisterAgent {
+export class UserClient extends MsgpackCanisterAgent {
     userId: string;
     private chatId: DirectChatIdentifier;
 

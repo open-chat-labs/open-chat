@@ -61,7 +61,7 @@ import {
     MAX_MESSAGES,
     MAX_MISSING,
 } from "openchat-shared";
-import { CanisterAgent } from "../canisterAgent";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
     apiRole,
     getEventsResponse,
@@ -235,7 +235,7 @@ import {
     GroupGenerateBotApiKeyResponse,
 } from "../../typebox";
 
-export class GroupClient extends CanisterAgent {
+export class GroupClient extends MsgpackCanisterAgent {
     constructor(
         identity: Identity,
         agent: HttpAgent,

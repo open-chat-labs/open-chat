@@ -1,7 +1,7 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
 import { idlFactory, type StorageBucketService } from "./candid/idl";
-import { CanisterAgent } from "../canisterAgent";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import {
     deleteFileResponse,
     fileInfoResponse,
@@ -15,13 +15,9 @@ import type {
     UploadChunkResponse,
 } from "openchat-shared";
 
-export class StorageBucketClient extends CanisterAgent {
-    private service: StorageBucketService;
-
+export class StorageBucketClient extends CandidCanisterAgent<StorageBucketService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
-
-        this.service = this.createServiceClient<StorageBucketService>(idlFactory);
+        super(identity, agent, canisterId, idlFactory);
     }
 
     uploadChunk(
