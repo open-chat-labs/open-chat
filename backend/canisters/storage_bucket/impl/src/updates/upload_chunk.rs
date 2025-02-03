@@ -3,13 +3,13 @@ use crate::model::files::{PutChunkArgs, PutChunkResult};
 use crate::model::index_event_batch::EventToSync;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use storage_bucket_canister::upload_chunk_v2::{Response::*, *};
 use types::{FileRemoved, RejectedReason};
 use utils::file_id::validate_file_id;
 
-#[update(guard = "caller_is_known_user")]
+#[update(guard = "caller_is_known_user", candid = true, msgpack = true)]
 #[trace]
 fn upload_chunk_v2(args: Args) -> Response {
     mutate_state(|state| upload_chunk_impl(args, state))

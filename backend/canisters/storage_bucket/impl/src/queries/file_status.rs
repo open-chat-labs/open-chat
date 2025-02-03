@@ -1,12 +1,12 @@
 use crate::guards::caller_is_known_user;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use storage_bucket_canister::file_status::{Response::*, *};
 use types::{FileStatus, FileStatusCompleted, FileStatusRejected, FileStatusUploading};
 
-#[update(guard = "caller_is_known_user")]
+#[query(guard = "caller_is_known_user", candid = true, msgpack = true)]
 #[trace]
 fn file_status(args: Args) -> Response {
     read_state(|state| file_status_impl(args, state))

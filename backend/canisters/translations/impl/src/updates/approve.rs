@@ -5,13 +5,13 @@ use crate::{
     },
     mutate_state, read_state,
 };
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use translations_canister::approve::{Response::*, *};
 use types::Cryptocurrency;
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn approve(args: Args) -> Response {
     let (user_index_canister_id, caller, now) =

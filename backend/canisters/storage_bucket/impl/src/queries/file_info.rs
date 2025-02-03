@@ -1,9 +1,9 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use canister_tracing_macros::trace;
-use ic_cdk::query;
 use storage_bucket_canister::file_info::{Response::*, *};
 
-#[query]
+#[query(candid = true, msgpack = true)]
 #[trace]
 fn file_info(args: Args) -> Response {
     read_state(|state| file_info_impl(args, state))
