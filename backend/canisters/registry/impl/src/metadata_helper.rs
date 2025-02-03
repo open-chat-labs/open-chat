@@ -26,7 +26,7 @@ impl MetadataHelper {
                 ("icrc1:decimals", MetadataValue::Nat(n)) => decimals = u8::try_from(n.0).ok(),
                 ("icrc1:fee", MetadataValue::Nat(n)) => fee = u128::try_from(n.0).ok(),
                 ("icrc1:logo", MetadataValue::Text(s)) => logo = Some(s),
-                ("icrc1:burn_fee | icrc1:transfer_fee_rate" | "icrc1:burn_fee_rate", MetadataValue::Nat(n))
+                ("icrc1:burn_fee" | "icrc1:burn_fee_rate" | "icrc1:transfer_fee_rate", MetadataValue::Nat(n))
                     if n > Nat::default() =>
                 {
                     is_icrc1_compatible = false
