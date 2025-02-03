@@ -30,7 +30,7 @@ export abstract class CanisterAgent {
         return this.identity.getPrincipal();
     }
 
-    protected handleQueryResponse<From, To>(
+    protected executeQuery<From, To>(
         serviceCall: () => Promise<From>,
         mapper: (from: From) => To | Promise<To>,
         args?: unknown,
@@ -65,7 +65,7 @@ export abstract class CanisterAgent {
 
                     return new Promise((resolve, reject) => {
                         setTimeout(() => {
-                            this.handleQueryResponse(serviceCall, mapper, args, retries + 1)
+                            this.executeQuery(serviceCall, mapper, args, retries + 1)
                                 .then(resolve)
                                 .catch(reject);
                         }, delay);

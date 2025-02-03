@@ -24,6 +24,14 @@ export abstract class CandidCanisterAgent<T> extends CanisterAgent {
         });
     }
 
+    protected handleQueryResponse<From, To>(
+        serviceCall: () => Promise<From>,
+        mapper: (from: From) => To | Promise<To>,
+        args?: unknown,
+    ): Promise<To> {
+        return this.executeQuery(() => serviceCall(), mapper, args, 0)
+    }
+
     protected handleResponse<From, To>(
         service: Promise<From>,
         mapper: (from: From) => To,

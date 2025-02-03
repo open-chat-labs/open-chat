@@ -39,7 +39,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
     ): Promise<Out> {
         const payload = MsgpackCanisterAgent.prepareMsgpackArgs(args, requestValidator);
 
-        return await this.handleQueryResponse(
+        return await this.executeQuery(
             () =>
                 this.agent.query(this.canisterId, {
                     methodName: methodName + "_msgpack",
