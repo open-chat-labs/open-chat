@@ -12,7 +12,7 @@ export class KongSwapClient extends CandidCanisterAgent<KongSwapService> impleme
     private icrc2Tokens: Set<string>;
 
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, KONG_SWAP_CANISTER_ID, idlFactory);
+        super(identity, agent, KONG_SWAP_CANISTER_ID, idlFactory, "KongSwap");
 
         this.icrc2Tokens = new Set<string>();
     }

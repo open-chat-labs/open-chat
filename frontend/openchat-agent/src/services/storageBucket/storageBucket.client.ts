@@ -17,7 +17,7 @@ import type {
 
 export class StorageBucketClient extends CandidCanisterAgent<StorageBucketService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId, idlFactory);
+        super(identity, agent, canisterId, idlFactory, "StorageBucket");
     }
 
     uploadChunk(

@@ -10,7 +10,7 @@ const CKBTC_MINTER_CANISTER_ID = "mqygn-kiaaa-aaaar-qaadq-cai";
 
 export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
     constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, CKBTC_MINTER_CANISTER_ID, idlFactory);
+        super(identity, agent, CKBTC_MINTER_CANISTER_ID, idlFactory, "CkbtcMinter");
     }
 
     updateBalance(userId: string): Promise<UpdateBtcBalanceResponse> {

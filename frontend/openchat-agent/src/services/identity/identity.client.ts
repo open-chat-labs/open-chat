@@ -33,7 +33,7 @@ import { signedDelegation } from "../../utils/id";
 
 export class IdentityClient extends CandidCanisterAgent<IdentityService> {
     constructor(identity: Identity, agent: HttpAgent, identityCanister: string) {
-        super(identity, agent, identityCanister, idlFactory);
+        super(identity, agent, identityCanister, idlFactory, "Identity");
     }
 
     createIdentity(

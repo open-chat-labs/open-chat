@@ -10,7 +10,7 @@ import { getDelegationResponse, loginResponse, prepareLoginResponse } from "./ma
 
 export class SignInWithEthereumClient extends CandidCanisterAgent<SignInWithEthereumService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId, idlFactory);
+        super(identity, agent, canisterId, idlFactory, "SignInWithEthereum");
     }
 
     prepareLogin(address: string): Promise<SiwePrepareLoginResponse> {

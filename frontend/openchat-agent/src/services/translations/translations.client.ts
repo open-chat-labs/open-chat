@@ -22,7 +22,7 @@ import {
 
 export class TranslationsClient extends CandidCanisterAgent<TranslationsService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId, idlFactory);
+        super(identity, agent, canisterId, idlFactory, "Translations");
     }
 
     propose(locale: string, key: string, value: string): Promise<ProposeResponse> {

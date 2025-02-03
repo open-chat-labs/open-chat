@@ -280,7 +280,7 @@ export class UserClient extends MsgpackCanisterAgent {
         private config: AgentConfig,
         private db: Database,
     ) {
-        super(identity, agent, userId);
+        super(identity, agent, userId, "User");
         this.userId = userId;
         this.chatId = { kind: "direct_chat", userId: userId };
     }

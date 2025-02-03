@@ -9,7 +9,7 @@ import { identity } from "../../utils/mapping";
 
 export class IcpLedgerIndexClient extends CandidCanisterAgent<IcpLedgerIndexService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId, idlFactory);
+        super(identity, agent, canisterId, idlFactory, "IcpLedgerIndex");
     }
 
     getAccountTransactions(principal: string, fromId?: bigint): Promise<AccountTransactionResult> {

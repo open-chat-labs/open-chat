@@ -12,7 +12,7 @@ export class IcpSwapPoolClient extends CandidCanisterAgent<IcpSwapPoolService> i
         private token0: string,
         private token1: string,
     ) {
-        super(identity, agent, canisterId, idlFactory);
+        super(identity, agent, canisterId, idlFactory, "IcpSwapPool");
     }
 
     quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint> {

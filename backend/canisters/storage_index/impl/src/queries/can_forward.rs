@@ -1,12 +1,12 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use canister_tracing_macros::trace;
-use ic_cdk::query;
 use storage_index_canister::{
     can_forward::{Response::*, *},
     ProjectedAllowance,
 };
 
-#[query]
+#[query(candid = true, msgpack = true)]
 #[trace]
 fn can_forward(args: Args) -> Response {
     read_state(|state| can_forward_impl(args, state))

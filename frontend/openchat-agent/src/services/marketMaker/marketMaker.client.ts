@@ -8,7 +8,7 @@ import { identity } from "../../utils/mapping";
 
 export class MarketMakerClient extends CandidCanisterAgent<MarketMakerService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId, idlFactory);
+        super(identity, agent, canisterId, idlFactory, "MarketMaker");
     }
 
     updateConfig(config: UpdateMarketMakerConfigArgs): Promise<UpdateMarketMakerConfigResponse> {

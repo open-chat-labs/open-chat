@@ -2,13 +2,13 @@ use crate::guards::caller_is_deployment_operator;
 use crate::model::translations::DecisionSummary;
 use crate::mutate_state;
 use crate::RuntimeState;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use translations_canister::mark_deployed::{Response::*, *};
 use user_index_canister::c2c_send_openchat_bot_messages;
 use user_index_canister::c2c_send_openchat_bot_messages::Message;
 
-#[update(guard = "caller_is_deployment_operator")]
+#[update(guard = "caller_is_deployment_operator", candid = true, msgpack = true)]
 #[trace]
 fn mark_deployed(args: Args) -> Response {
     mutate_state(|state| mark_deployed_impl(args, state))

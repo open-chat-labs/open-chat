@@ -14,7 +14,7 @@ import {
 
 export class NotificationsClient extends MsgpackCanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
-        super(identity, agent, canisterId);
+        super(identity, agent, canisterId, "Notifications");
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {
