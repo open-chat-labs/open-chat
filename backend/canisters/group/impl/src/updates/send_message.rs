@@ -1,14 +1,16 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::guards::caller_is_local_user_index;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaymentsJob, MarkP2PSwapExpiredJob};
-use crate::{mutate_state, run_regular_jobs, CallerResult, Data, RuntimeState, TimerJob};
+use crate::{mutate_state, read_state, run_regular_jobs, CallerResult, Data, RuntimeState, TimerJob};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use group_canister::c2c_bot_send_message;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use types::{
-    Achievement, BotCaller, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message, MessageContent,
-    MessageIndex, Notification, TimestampMillis, User,
+    Achievement, BotCaller, BotInitiator, BotPermissions, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification,
+    Message, MessageContent, MessageIndex, Notification, TimestampMillis, User,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -28,6 +30,40 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     mutate_state(|state| c2c_send_message_impl(args, state))
 }
 
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_message::Response {
+    run_regular_jobs();
+
+    let bot_id = args.bot_id;
+    let finalised = args.finalised;
+    let initiator = args.initiator.clone();
+    let args: Args = args.into();
+
+    if !read_state(|state| {
+        state.data.is_bot_permitted(
+            &bot_id,
+            &initiator,
+            BotPermissions::from_message_permission((&args.content).into()),
+        )
+    }) {
+        return c2c_bot_send_message::Response::NotAuthorized;
+    }
+
+    let command = match initiator {
+        BotInitiator::Command(bot_command) => Some(bot_command),
+        _ => None,
+    };
+
+    let bot_caller = BotCaller {
+        bot: bot_id,
+        command,
+        finalised,
+    };
+
+    mutate_state(|state| send_message_impl(args, Some(bot_caller), state)).into()
+}
+
 pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return ChatFrozen;
@@ -37,6 +73,7 @@ pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, state: &mut 
         CallerResult::Success(caller) => caller,
         CallerResult::NotFound => return CallerNotInGroup,
         CallerResult::Suspended => return UserSuspended,
+        CallerResult::Lapsed => return UserLapsed,
     };
 
     let now = state.env.now();
@@ -78,6 +115,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
         CallerResult::Success(caller) => caller,
         CallerResult::NotFound => return CallerNotInGroup,
         CallerResult::Suspended => return UserSuspended,
+        CallerResult::Lapsed => return UserLapsed,
     };
 
     // Bots can't call this c2c endpoint since it skips the validation

@@ -43,15 +43,12 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
 
     if let AccessTypeArgs::BotActionByCommand(args) = &args_outer.access_type {
         // Get the permissions granted to the bot in this community
-        let Some(granted_to_bot) = state.data.get_bot_permissions(&args.bot_id) else {
+        let Some(granted_to_bot) = state.data.bots.get(&args.bot_id).map(|b| &b.permissions) else {
             return Response::Failure;
         };
 
         // Get the permissions granted to the user in this group
-        let Some(granted_to_user) = state
-            .data
-            .get_user_permissions_for_bot_commands(&args.initiator, args_outer.channel_id)
-        else {
+        let Some(granted_to_user) = state.data.get_user_permissions(&args.initiator, args_outer.channel_id) else {
             return Response::Failure;
         };
 

@@ -1,10 +1,12 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::guards::caller_is_local_user_index;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaymentsJob, MarkP2PSwapExpiredJob, TimerJob};
-use crate::{mutate_state, run_regular_jobs, CallerResult, Data, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, CallerResult, Data, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use community_canister::c2c_bot_send_message;
 use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageResult;
@@ -13,8 +15,8 @@ use lazy_static::lazy_static;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
-    Achievement, BotCaller, Caller, ChannelId, ChannelMessageNotification, Chat, EventIndex, EventWrapper, Message,
-    MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId, Version,
+    Achievement, BotCaller, BotInitiator, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, EventIndex,
+    EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -32,6 +34,41 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     run_regular_jobs();
 
     mutate_state(|state| c2c_send_message_impl(args, state))
+}
+
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_message::Response {
+    run_regular_jobs();
+
+    let bot_id = args.bot_id;
+    let finalised = args.finalised;
+    let initiator = args.initiator.clone();
+    let args: Args = args.into();
+
+    if !read_state(|state| {
+        state.data.is_bot_permitted(
+            &bot_id,
+            Some(args.channel_id),
+            &initiator,
+            BotPermissions::from_message_permission((&args.content).into()),
+        )
+    }) {
+        return c2c_bot_send_message::Response::NotAuthorized;
+    }
+
+    let command = match initiator {
+        BotInitiator::Command(bot_command) => Some(bot_command),
+        _ => None,
+    };
+
+    let bot_caller = BotCaller {
+        bot: bot_id,
+        command,
+        finalised,
+    };
+
+    mutate_state(|state| send_message_impl(args, Some(bot_caller), state)).into()
 }
 
 pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, state: &mut RuntimeState) -> Response {
