@@ -1,9 +1,9 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use canister_tracing_macros::trace;
-use ic_cdk::query;
 use storage_index_canister::user::{Response::*, *};
 
-#[query]
+#[query(candid = true, msgpack = true)]
 #[trace]
 fn user(_args: Args) -> Response {
     read_state(user_impl)

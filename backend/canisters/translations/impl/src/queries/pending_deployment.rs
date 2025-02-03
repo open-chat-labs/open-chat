@@ -1,11 +1,11 @@
 use crate::guards::caller_is_deployment_operator;
 use crate::RuntimeState;
 use crate::{model::translations::TranslationStatus, read_state};
+use canister_api_macros::query;
 use canister_tracing_macros::trace;
-use ic_cdk::query;
 use translations_canister::pending_deployment::{Response::*, *};
 
-#[query(guard = "caller_is_deployment_operator")]
+#[query(guard = "caller_is_deployment_operator", candid = true, msgpack = true)]
 #[trace]
 fn pending_deployment(_args: Args) -> Response {
     read_state(pending_deployment_impl)
