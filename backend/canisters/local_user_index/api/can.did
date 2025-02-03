@@ -1,17 +1,14 @@
 type CanisterId = principal;
 type ChannelId = nat32;
+type EventIndex = nat32;
 type MessageId = nat64;
+type MessageIndex = nat32;
 type TimestampMillis = nat64;
 type UserId = CanisterId;
 
 type BlobReference = record {
     canister_id : CanisterId;
     blob_id : nat;
-};
-
-type BotAccessTypeSerialized = variant {
-    AccessToken : text;
-    ApiKey : text;
 };
 
 type MessageContent = variant {
@@ -116,15 +113,27 @@ type BotSendMessageArgs = record {
     channel_id : opt ChannelId;
     message_id : opt MessageId;
     content : MessageContent;
+    block_level_markdown : bool;
     finalised : bool;
-    access_type : BotAccessTypeSerialized;
+    access_token: text;
 };
 
 type BotSendMessageResponse = variant {
-    Ok : record {
-        message_id : MessageId;
-    };
-    Err : BotApiCallError;
+    Success : SuccessResult;
+    InvalidRequest : text;
+    NotAuthorized;
+    Frozen;
+    ThreadNotFound;
+    MessageAlreadyFinalised;
+    C2CError : record {int32; text};
+};
+
+type SuccessResult = record {
+    message_id : MessageId;
+    event_index : EventIndex;
+    message_index : MessageIndex;
+    timestamp : TimestampMillis;
+    expires_at : opt TimestampMillis;
 };
 
 service : {
