@@ -20,7 +20,7 @@ async fn bot_send_message(args: Args) -> Response {
     };
 
     match chat_details.chat {
-        Chat::Direct(_) => unreachable!(),
+        Chat::Direct(_) => InvalidRequest("Cannot yet send messages directly to users".to_string()),
         Chat::Group(chat_id) => {
             send_message_to_group(
                 context.bot_id,
