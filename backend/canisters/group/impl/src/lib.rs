@@ -437,6 +437,10 @@ impl RuntimeState {
 
         let caller = self.env.caller();
 
+        if caller == self.data.user_index_canister_id {
+            return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
+        }
+
         let Some(user_id) = self.data.lookup_user_id(caller) else {
             return NotFound;
         };

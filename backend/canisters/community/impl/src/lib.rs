@@ -10,7 +10,7 @@ use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, ChatMetricsInternal};
 use community_canister::add_members_to_channel::UserFailedError;
 use community_canister::EventsResponse;
-use constants::{MINUTE_IN_MS, SNS_LEDGER_CANISTER_ID};
+use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -330,6 +330,11 @@ impl RuntimeState {
         }
 
         let caller = self.env.caller();
+
+        if caller == self.data.user_index_canister_id {
+            return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
+        }
+
         let Some(member) = self.data.members.get(caller) else {
             return NotFound;
         };
