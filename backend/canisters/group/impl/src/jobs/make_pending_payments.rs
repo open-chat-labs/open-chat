@@ -1,6 +1,8 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
-use constants::{MEMO_GROUP_IMPORT_INTO_COMMUNITY, MEMO_JOINING_FEE, SNS_GOVERNANCE_CANISTER_ID};
+use constants::{
+    MEMO_GROUP_IMPORT_INTO_COMMUNITY, MEMO_JOINING_FEE, OPENCHAT_TREASURY_CANISTER_ID, SNS_GOVERNANCE_CANISTER_ID,
+};
 use group_community_common::{PaymentRecipient, PendingPayment, PendingPaymentReason};
 use ic_cdk_timers::TimerId;
 use icrc_ledger_types::icrc1::transfer::{Memo, TransferArg};
@@ -39,7 +41,8 @@ pub fn run() {
 async fn process_payment(pending_payment: PendingPayment, now_nanos: TimestampNanos) {
     let to = match pending_payment.recipient {
         // Note in the case of CHAT this will cause the tokens to be burned
-        PaymentRecipient::Treasury => SNS_GOVERNANCE_CANISTER_ID.into(),
+        PaymentRecipient::SnsTreasury => SNS_GOVERNANCE_CANISTER_ID.into(),
+        PaymentRecipient::TreasuryCanister => OPENCHAT_TREASURY_CANISTER_ID.into(),
         PaymentRecipient::Member(user_id) => Principal::from(user_id).into(),
         PaymentRecipient::Account(account) => account,
     };
