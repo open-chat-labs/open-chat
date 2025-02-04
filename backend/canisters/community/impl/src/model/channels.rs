@@ -7,7 +7,7 @@ use search::weighted::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
@@ -18,7 +18,7 @@ use types::{
 pub struct Channels {
     channels: HashMap<ChannelId, Channel>,
     #[serde(default)]
-    channels_deleted: BTreeMap<TimestampMillis, ChannelId>,
+    channels_deleted: BTreeSet<(TimestampMillis, ChannelId)>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -72,7 +72,7 @@ impl Channels {
 
         Channels {
             channels,
-            channels_deleted: BTreeMap::new(),
+            channels_deleted: BTreeSet::new(),
         }
     }
 
@@ -85,7 +85,7 @@ impl Channels {
 
     pub fn delete(&mut self, channel_id: ChannelId, now: TimestampMillis) -> Option<Channel> {
         let channel = self.channels.remove(&channel_id)?;
-        self.channels_deleted.insert(now, channel_id);
+        self.channels_deleted.insert((now, channel_id));
         Some(channel)
     }
 
