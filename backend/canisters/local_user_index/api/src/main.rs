@@ -3,6 +3,7 @@ use std::env;
 use ts_export::generate_ts_method;
 
 fn main() {
+    generate_candid_method!(local_user_index, bot_create_channel, update);
     generate_candid_method!(local_user_index, bot_send_message, update);
 
     candid::export_service!();

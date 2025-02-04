@@ -8,6 +8,7 @@ generate_msgpack_query_call!(chat_events);
 generate_msgpack_query_call!(group_and_community_summary_updates);
 
 // Updates
+generate_update_call!(bot_create_channel);
 generate_update_call!(bot_send_message);
 generate_msgpack_update_call!(install_bot);
 generate_msgpack_update_call!(invite_users_to_channel);

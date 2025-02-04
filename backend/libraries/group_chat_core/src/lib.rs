@@ -14,15 +14,15 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
-    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, Caller, ContentValidationError, CustomPermission,
-    Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult,
-    FieldTooShortResult, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext,
-    GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft,
-    MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions,
-    MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions,
-    OptionalMessagePermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates,
-    ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version,
-    Versioned, VersionedRules, VideoCall, MAX_RETURNED_MENTIONS,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, ContentValidationError,
+    CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated,
+    FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
+    GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason,
+    MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch,
+    MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate,
+    OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules,
+    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked,
+    UsersInvited, Version, Versioned, VersionedRules, VideoCall, MAX_RETURNED_MENTIONS,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -593,6 +593,7 @@ impl GroupChatCore {
         suppressed: bool,
         block_level_markdown: bool,
         event_store_client: &mut EventStoreClient<R>,
+        finalised: bool,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
@@ -634,7 +635,7 @@ impl GroupChatCore {
                     {
                         return self.update_bot_message(
                             caller,
-                            bot_now.finalised,
+                            finalised,
                             thread_root_message_index,
                             message_id,
                             content,
@@ -664,6 +665,7 @@ impl GroupChatCore {
             suppressed,
             block_level_markdown,
             event_store_client,
+            finalised,
             now,
         )
     }
@@ -681,6 +683,7 @@ impl GroupChatCore {
         suppressed: bool,
         block_level_markdown: bool,
         event_store_client: &mut EventStoreClient<R>,
+        finalised: bool,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
@@ -713,7 +716,7 @@ impl GroupChatCore {
             thread_root_message_index,
             message_id,
             content,
-            bot_context: if let Caller::BotV2(bot) = caller { Some(bot.into()) } else { None },
+            bot_context: if let Caller::BotV2(bot) = caller { Some(BotMessageContext::from(bot, finalised)) } else { None },
             mentioned: if !suppressed { mentioned.to_vec() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
@@ -725,7 +728,7 @@ impl GroupChatCore {
 
         let message_event = self.events.push_message(push_message_args, Some(event_store_client));
 
-        let unfinalised_bot_message = if let Caller::BotV2(bot) = caller { !bot.finalised } else { false };
+        let unfinalised_bot_message = if let Caller::BotV2(_) = caller { !finalised } else { false };
 
         let users_to_notify = if unfinalised_bot_message {
             vec![]

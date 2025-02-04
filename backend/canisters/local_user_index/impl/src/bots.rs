@@ -1,10 +1,9 @@
 use crate::RuntimeState;
 use jwt::Claims;
-use local_user_index_canister::bot_send_message::AuthToken;
 use rand::Rng;
 use types::{
-    AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotActionChatDetails, BotActionCommunityDetails,
-    BotActionScope, BotApiKeyToken, BotInitiator, User, UserId,
+    AccessTokenScope, AuthToken, BotActionByApiKeyClaims, BotActionByCommandClaims, BotActionChatDetails,
+    BotActionCommunityDetails, BotActionScope, BotApiKeyToken, BotInitiator, User, UserId,
 };
 use utils::base64;
 
@@ -15,7 +14,7 @@ pub struct BotAccessContext {
     pub scope: BotActionScope,
 }
 
-pub fn extract_access_context(auth_token: AuthToken, state: &mut RuntimeState) -> Result<BotAccessContext, String> {
+pub fn extract_access_context(auth_token: &AuthToken, state: &mut RuntimeState) -> Result<BotAccessContext, String> {
     let caller = state.env.caller();
 
     let Some(bot) = state.data.bots.get_by_caller(&caller) else {
@@ -28,8 +27,8 @@ pub fn extract_access_context(auth_token: AuthToken, state: &mut RuntimeState) -
     };
 
     match auth_token {
-        AuthToken::Jwt(str) => try_extract_access_context_from_jwt(&str, &user, state),
-        AuthToken::ApiKey(str) => try_extract_access_context_from_apikey(&str, &user, state),
+        AuthToken::Jwt(str) => try_extract_access_context_from_jwt(str, &user, state),
+        AuthToken::ApiKey(str) => try_extract_access_context_from_apikey(str, &user, state),
     }
 }
 
@@ -105,7 +104,7 @@ fn to_bot_action_scope(scope: AccessTokenScope, state: &mut RuntimeState) -> Bot
     match scope {
         AccessTokenScope::Chat(chat) => BotActionScope::Chat(BotActionChatDetails {
             chat,
-            thread_root_message_index: None,
+            thread: None,
             message_id: state.env.rng().gen::<u64>().into(),
         }),
         AccessTokenScope::Community(community_id) => BotActionScope::Community(BotActionCommunityDetails { community_id }),

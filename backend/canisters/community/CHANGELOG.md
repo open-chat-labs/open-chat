@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_bot_create_channel` endpoint ([#7354](https://github.com/open-chat-labs/open-chat/pull/7354))
+
 ### Changed
 
 - Introduce new `Integer` bot parameter type ([#7296](https://github.com/open-chat-labs/open-chat/pull/7296))
@@ -13,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `sender` to notifications to support blocking notifications from blocked users ([#7330](https://github.com/open-chat-labs/open-chat/pull/7330))
 - Expose each bot action as a separate endpoint ([#7345](https://github.com/open-chat-labs/open-chat/pull/7345))
 - Send OC's share of access gate joining fees to the treasury canister ([#7353](https://github.com/open-chat-labs/open-chat/pull/7353))
+- Ensure message Ids have successfully been deduped ([#7355](https://github.com/open-chat-labs/open-chat/pull/7355))
 - Avoid storing achievements for users who leave the group ([#7356](https://github.com/open-chat-labs/open-chat/pull/7356))
 
 ### Fixed

@@ -128,6 +128,14 @@ impl BotPermissions {
             message: HashSet::from_iter([permission]),
         }
     }
+
+    pub fn from_community_permission(permission: CommunityPermission) -> Self {
+        Self {
+            community: HashSet::from_iter([permission]),
+            chat: HashSet::new(),
+            message: HashSet::new(),
+        }
+    }
 }
 
 #[ts_export]
@@ -272,4 +280,10 @@ impl From<BotMessageContent> for MessageContentInitial {
             BotMessageContent::Giphy(c) => MessageContentInitial::Giphy(c),
         }
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum AuthToken {
+    Jwt(String),
+    ApiKey(String),
 }

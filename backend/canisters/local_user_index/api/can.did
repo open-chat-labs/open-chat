@@ -3,12 +3,134 @@ type ChannelId = nat32;
 type EventIndex = nat32;
 type MessageId = nat64;
 type MessageIndex = nat32;
+type Milliseconds = nat64;
 type TimestampMillis = nat64;
 type UserId = CanisterId;
 
 type BlobReference = record {
     canister_id : CanisterId;
     blob_id : nat;
+};
+
+type Document = record {
+    id : nat;
+    mime_type : text;
+    data : blob;
+};
+
+type Rules = record {
+    text : text;
+    enabled : bool;
+};
+
+type PermissionRole = variant {
+    None;
+    Owner;
+    Admins;
+    Moderators;
+    Members;
+};
+
+type GroupPermissions = record {
+    change_roles : PermissionRole;
+    remove_members : PermissionRole;
+    delete_messages : PermissionRole;
+    update_group : PermissionRole;
+    pin_messages : PermissionRole;
+    invite_users : PermissionRole;
+    add_members : PermissionRole;
+    react_to_messages : PermissionRole;
+    mention_all_members : PermissionRole;
+    start_video_call : PermissionRole;
+    message_permissions : MessagePermissions;
+    thread_permissions : opt MessagePermissions;
+};
+
+type MessagePermissions = record {
+    default : PermissionRole;
+    text : opt PermissionRole;
+    image : opt PermissionRole;
+    video : opt PermissionRole;
+    audio : opt PermissionRole;
+    file : opt PermissionRole;
+    poll : opt PermissionRole;
+    crypto : opt PermissionRole;
+    giphy : opt PermissionRole;
+    prize : opt PermissionRole;
+    p2p_swap : opt PermissionRole;
+    video_call : opt PermissionRole;
+    custom : vec CustomPermission;
+};
+
+type CustomPermission = record {
+    subtype : text;
+    role : PermissionRole;
+};
+
+type AccessGateConfig = record {
+    gate : AccessGate;
+    expiry : opt Milliseconds;
+};
+
+type AccessGate = variant {
+    DiamondMember;
+    LifetimeDiamondMember;
+    UniquePerson;
+    VerifiedCredential : VerifiedCredentialGate;
+    SnsNeuron : SnsNeuronGate;
+    Payment : PaymentGate;
+    TokenBalance : TokenBalanceGate;
+    Composite : record {
+        inner : vec AccessGateNonComposite;
+        and : bool;
+    };
+    Locked;
+    ReferredByMember;
+};
+
+type AccessGateNonComposite = variant {
+    DiamondMember;
+    LifetimeDiamondMember;
+    UniquePerson;
+    VerifiedCredential : VerifiedCredentialGate;
+    SnsNeuron : SnsNeuronGate;
+    Payment : PaymentGate;
+    TokenBalance : TokenBalanceGate;
+    Locked;
+    ReferredByMember;
+};
+
+type VerifiedCredentialGate = record {
+    issuer_canister_id : CanisterId;
+    issuer_origin : text;
+    credential_type : text;
+    credential_name : text;
+    credential_arguments : vec record {
+        text;
+        variant { String : text; Int : int32 };
+    };
+};
+
+type SnsNeuronGate = record {
+    governance_canister_id : CanisterId;
+    min_stake_e8s : opt nat64;
+    min_dissolve_delay : opt Milliseconds;
+};
+
+type PaymentGate = record {
+    ledger_canister_id : CanisterId;
+    amount : nat;
+    fee : nat;
+};
+
+type TokenBalanceGate = record {
+    ledger_canister_id : CanisterId;
+    min_balance : nat;
+};
+
+type AuthToken = variant {
+    Jwt : text;
+    ApiKey : text;
 };
 
 type MessageContent = variant {
@@ -99,15 +221,31 @@ type GiphyImageVariant = record {
     mime_type : text;
 };
 
-type BotApiCallError = variant {
-    Invalid : text;
-    CanisterError : variant {
-        NotAuthorized;
-        Frozen;
-        Other : text;
-    };
-    C2CError: record {int32; text};
+type BotCreateChannelArgs = record {
+    is_public : bool;
+    name : text;
+    description : text;
+    rules : Rules;
+    avatar : opt Document;
+    history_visible_to_new_joiners : bool;
+    messages_visible_to_non_members : bool;
+    permissions : opt GroupPermissions;
+    events_ttl : opt Milliseconds;
+    gate_config : opt AccessGateConfig;
+    external_url : opt text;
+    auth_token : AuthToken;
 };
+
+type BotCreateChannelResponse = variant {
+    Success : record {
+        channel_id : ChannelId;
+    };
+    InvalidRequest : text;
+    NotAuthorized;
+    Frozen;
+    C2CError : record {int32; text};
+};
+
 
 type BotSendMessageArgs = record {
     channel_id : opt ChannelId;
@@ -118,13 +256,14 @@ type BotSendMessageArgs = record {
     auth_token: AuthToken;
 };
 
-type AuthToken = variant {
-    Jwt : text;
-    ApiKey : text;
-};
-
 type BotSendMessageResponse = variant {
-    Success : SuccessResult;
+    Success : record {
+        message_id : MessageId;
+        event_index : EventIndex;
+        message_index : MessageIndex;
+        timestamp : TimestampMillis;
+        expires_at : opt TimestampMillis;
+    };
     InvalidRequest : text;
     NotAuthorized;
     Frozen;
@@ -133,14 +272,7 @@ type BotSendMessageResponse = variant {
     C2CError : record {int32; text};
 };
 
-type SuccessResult = record {
-    message_id : MessageId;
-    event_index : EventIndex;
-    message_index : MessageIndex;
-    timestamp : TimestampMillis;
-    expires_at : opt TimestampMillis;
-};
-
 service : {
+    bot_create_channel : (BotCreateChannelArgs) -> (BotCreateChannelResponse);
     bot_send_message : (BotSendMessageArgs) -> (BotSendMessageResponse);
 };
