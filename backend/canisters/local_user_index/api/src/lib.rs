@@ -261,6 +261,8 @@ pub enum UserEvent {
     NotifyChit(NotifyChit),
     NotifyStreakInsurancePayment(UserCanisterStreakInsurancePayment),
     NotifyStreakInsuranceClaim(UserCanisterStreakInsuranceClaim),
+    UserBlocked(UserId),
+    UserUnblocked(UserId),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]

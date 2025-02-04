@@ -385,12 +385,14 @@ impl Data {
     pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) {
         if self.blocked_users.value.insert(user_id) {
             self.blocked_users.timestamp = now;
+            self.push_local_user_index_canister_event(LocalUserIndexEvent::UserBlocked(user_id));
         }
     }
 
-    pub fn unblock_user(&mut self, user_id: &UserId, now: TimestampMillis) {
-        if self.blocked_users.value.remove(user_id) {
+    pub fn unblock_user(&mut self, user_id: UserId, now: TimestampMillis) {
+        if self.blocked_users.value.remove(&user_id) {
             self.blocked_users.timestamp = now;
+            self.push_local_user_index_canister_event(LocalUserIndexEvent::UserUnblocked(user_id));
         }
     }
 

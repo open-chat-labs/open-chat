@@ -97,6 +97,7 @@ pub enum KeyType {
     FileReferenceCount = 13,
     FilesPerAccessor = 14,
     UserStorageRecord = 15,
+    BlockedUsers = 16,
 }
 
 fn extract_key_type(bytes: &[u8]) -> Option<KeyType> {
@@ -123,6 +124,7 @@ impl TryFrom<u8> for KeyType {
             13 => Ok(KeyType::FileReferenceCount),
             14 => Ok(KeyType::FilesPerAccessor),
             15 => Ok(KeyType::UserStorageRecord),
+            16 => Ok(KeyType::BlockedUsers),
             _ => Err(()),
         }
     }

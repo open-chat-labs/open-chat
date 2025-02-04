@@ -45,5 +45,11 @@ fn handle_event(user_id: UserId, event: UserEvent, state: &mut RuntimeState) {
                 new_days_claimed: claim.new_days_claimed,
             })));
         }
+        UserEvent::UserBlocked(blocked) => {
+            state.push_event_to_user_index(UserIndexEvent::UserBlocked(user_id, blocked));
+        }
+        UserEvent::UserUnblocked(unblocked) => {
+            state.push_event_to_user_index(UserIndexEvent::UserUnblocked(user_id, unblocked));
+        }
     }
 }

@@ -130,6 +130,14 @@ fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMil
         LocalUserIndexEvent::BotUninstalled(ev) => {
             state.data.users.remove_bot_installation(ev.bot_id, &ev.location);
         }
+        LocalUserIndexEvent::UserBlocked(user_id, blocked) => state.data.notifications_index_event_sync_queue.push(
+            state.data.notifications_index_canister_id,
+            notifications_index_canister::UserIndexEvent::UserBlocked(user_id, blocked),
+        ),
+        LocalUserIndexEvent::UserUnblocked(user_id, unblocked) => state.data.notifications_index_event_sync_queue.push(
+            state.data.notifications_index_canister_id,
+            notifications_index_canister::UserIndexEvent::UserUnblocked(user_id, unblocked),
+        ),
     }
 }
 

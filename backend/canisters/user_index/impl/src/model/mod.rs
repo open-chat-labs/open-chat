@@ -3,6 +3,7 @@ pub mod chit_leaderboard;
 pub mod diamond_membership_details;
 pub mod external_achievements;
 pub mod local_user_index_map;
+pub mod notifications_index_event_batch;
 pub mod pending_modclub_submissions_queue;
 pub mod pending_payments_queue;
 pub mod reported_messages;

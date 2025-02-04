@@ -65,6 +65,41 @@ impl UserIdKey {
     }
 }
 
+key!(UserIdsKey, UserIdsKeyPrefix, KeyType::BlockedUsers);
+
+impl UserIdsKeyPrefix {
+    pub fn new_for_blocked_users() -> Self {
+        // KeyType::BlockedUsers     1 byte
+        UserIdsKeyPrefix(vec![KeyType::BlockedUsers as u8])
+    }
+}
+
+impl KeyPrefix for UserIdsKeyPrefix {
+    type Key = UserIdsKey;
+    type Suffix = (UserId, UserId);
+
+    fn create_key(&self, (user_id1, user_id2): &(UserId, UserId)) -> Self::Key {
+        let user_id1_bytes = user_id1.as_slice();
+        let user_id2_bytes = user_id2.as_slice();
+        let mut bytes = Vec::with_capacity(self.0.len() + 1 + user_id1_bytes.len() + user_id2_bytes.len());
+        bytes.extend_from_slice(self.0.as_slice());
+        bytes.push(user_id1_bytes.len() as u8);
+        bytes.extend_from_slice(user_id1_bytes);
+        bytes.extend_from_slice(user_id2_bytes);
+        UserIdsKey(bytes)
+    }
+}
+
+impl UserIdsKey {
+    pub fn user_ids(&self) -> (UserId, UserId) {
+        let user_id1_len = self.0[1] as usize;
+        let user_id1_end = 2 + user_id1_len;
+        let user_id1 = Principal::from_slice(&self.0[2..user_id1_end]).into();
+        let user_id2 = Principal::from_slice(&self.0[user_id1_end..]).into();
+        (user_id1, user_id2)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -134,6 +169,30 @@ mod tests {
             assert_eq!(serialized.len(), member_key.0.len() + 2);
             let deserialized: UserIdKey = msgpack::deserialize_then_unwrap(&serialized);
             assert_eq!(deserialized, member_key);
+            assert_eq!(deserialized.0, key.0);
+        }
+    }
+
+    #[test]
+    fn blocked_users_key_e2e() {
+        for _ in 0..100 {
+            let user_id1_bytes: [u8; 10] = thread_rng().gen();
+            let user_id1 = UserId::from(Principal::from_slice(&user_id1_bytes));
+            let user_id2_bytes: [u8; 10] = thread_rng().gen();
+            let user_id2 = UserId::from(Principal::from_slice(&user_id2_bytes));
+            let prefix = UserIdsKeyPrefix::new_for_blocked_users();
+            let key = BaseKey::from(prefix.create_key(&(user_id1, user_id2)));
+            let blocked_users_key = UserIdsKey::try_from(key.clone()).unwrap();
+
+            assert_eq!(*blocked_users_key.0.first().unwrap(), KeyType::BlockedUsers as u8);
+            assert_eq!(blocked_users_key.0.len(), 22);
+            assert!(blocked_users_key.matches_prefix(&prefix));
+            assert_eq!(blocked_users_key.user_ids(), (user_id1, user_id2));
+
+            let serialized = msgpack::serialize_then_unwrap(&blocked_users_key);
+            assert_eq!(serialized.len(), blocked_users_key.0.len() + 2);
+            let deserialized: UserIdsKey = msgpack::deserialize_then_unwrap(&serialized);
+            assert_eq!(deserialized, blocked_users_key);
             assert_eq!(deserialized.0, key.0);
         }
     }

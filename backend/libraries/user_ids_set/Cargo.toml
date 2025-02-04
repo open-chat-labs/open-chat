@@ -1,0 +1,10 @@
+[package]
+name = "user_ids_set"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ic_principal = { workspace = true }
+stable_memory_map = { path = "../stable_memory_map" }
+types = { path = "../types" }
+serde = { workspace = true }

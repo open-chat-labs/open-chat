@@ -3,9 +3,11 @@ use crate::model::subscriptions::Subscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use types::{BuildVersion, CanisterId, Cycles, NotificationEnvelope, TimestampMillis, Timestamped};
+use user_ids_set::UserIdsSet;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 
@@ -71,8 +73,14 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub notifications: EventStream<NotificationEnvelope>,
     pub subscriptions: Subscriptions,
+    #[serde(default = "blocked_users")]
+    pub blocked_users: UserIdsSet,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn blocked_users() -> UserIdsSet {
+    UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users())
 }
 
 impl Data {
@@ -90,6 +98,7 @@ impl Data {
             cycles_dispenser_canister_id,
             notifications: EventStream::default(),
             subscriptions: Subscriptions::default(),
+            blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -106,6 +115,7 @@ impl Default for Data {
             cycles_dispenser_canister_id: CanisterId::anonymous(),
             notifications: EventStream::default(),
             subscriptions: Subscriptions::default(),
+            blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             rng_seed: [0; 32],
             test_mode: true,
         }

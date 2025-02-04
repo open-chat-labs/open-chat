@@ -35,6 +35,7 @@ stable_memory_map = { path = "../../../libraries/stable_memory_map" }
 timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
+user_ids_set = { path = "../../../libraries/user_ids_set" }
 user_index_canister = { path = "../../user_index/api" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }
