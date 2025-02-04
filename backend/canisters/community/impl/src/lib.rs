@@ -621,6 +621,7 @@ impl Data {
         self.channels.leave_all_channels(user_id, now);
         self.expiring_members.remove_member(user_id, None);
         self.expiring_member_actions.remove_member(user_id, None);
+        self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
         removed
     }

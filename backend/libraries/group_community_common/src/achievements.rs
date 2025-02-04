@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 use types::{Achievement, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Achievements {
-    achievements: HashMap<UserId, HashSet<Achievement>>,
+    achievements: BTreeMap<UserId, BTreeSet<Achievement>>,
 }
 
 impl Achievements {
@@ -14,5 +14,9 @@ impl Achievements {
             .or_default()
             .insert(achievement)
             .then_some(achievement)
+    }
+
+    pub fn remove_user(&mut self, user_id: &UserId) {
+        self.achievements.remove(user_id);
     }
 }
