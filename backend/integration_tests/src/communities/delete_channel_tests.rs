@@ -56,8 +56,7 @@ fn delete_channel_succeeds(as_owner: bool) {
         assert!(summary_updates
             .unwrap()
             .channels_removed
-            .iter()
-            .next()
+            .first()
             .is_some_and(|c| *c == channel_id1));
     } else {
         assert!(summary_updates.is_none());

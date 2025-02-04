@@ -7,7 +7,7 @@ use search::weighted::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
@@ -194,7 +194,7 @@ impl Channels {
         self.channels_deleted
             .iter()
             .rev()
-            .take_while(move |(ts, _)| **ts > since)
+            .take_while(move |(ts, _)| *ts > since)
             .map(|(ts, c)| (*c, *ts))
     }
 }
