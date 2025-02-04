@@ -56,7 +56,7 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
     }
 
     let now = state.env.now();
-    let channel = state.data.channels.delete(channel_id).expect("Channel should exist");
+    let channel = state.data.channels.delete(channel_id, now).expect("Channel should exist");
 
     state
         .data
