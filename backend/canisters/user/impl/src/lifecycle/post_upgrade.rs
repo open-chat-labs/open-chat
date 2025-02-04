@@ -6,6 +6,7 @@ use canister_logger::LogEntry;
 use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
+use local_user_index_canister::UserEvent;
 use stable_memory::get_reader;
 use tracing::info;
 use user_canister::post_upgrade::Args;
@@ -18,10 +19,17 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
+
+    data.local_user_index_event_sync_queue.set_defer_processing(true);
+    for user_id in data.blocked_users.iter() {
+        data.local_user_index_event_sync_queue
+            .push(data.local_user_index_canister_id, UserEvent::UserBlocked(*user_id));
+    }
+    data.local_user_index_event_sync_queue.set_defer_processing(false);
 
     let env = init_env(data.rng_seed);
     init_state(env, data, args.wasm_version);
