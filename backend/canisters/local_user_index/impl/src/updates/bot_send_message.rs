@@ -64,6 +64,13 @@ fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Resu
 
     let (chat, thread, message_id) = match context.scope {
         BotActionScope::Chat(details) => {
+            if let Some(message_id) = args.message_id {
+                if matches!(context.initiator, BotInitiator::Command(_)) {
+                    if message_id != details.message_id {
+                        return Err("Message id is already specified in the command access token".to_string());
+                    }
+                }
+            }
             let message_id = args.message_id.unwrap_or(details.message_id);
             (details.chat, details.thread, message_id)
         }
