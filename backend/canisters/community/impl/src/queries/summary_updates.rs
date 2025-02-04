@@ -37,47 +37,53 @@ fn summary_updates_impl(
     }
 
     let member = state.data.members.get(caller);
-    let mut updated_timestamps = vec![
+    let mut last_updated = [
         state.data.details_last_updated(),
         member.as_ref().map(|m| m.last_updated()).unwrap_or_default(),
         state.data.verified.timestamp,
-    ];
+    ]
+    .into_iter()
+    .max()
+    .unwrap();
 
-    let (channels_with_updates, channels_removed) = if let Some(m) = &member {
-        let channels_with_updates: Vec<_> = state
-            .data
-            .members
-            .channels_for_member(m.user_id)
-            .iter()
-            .filter_map(|c| state.data.channels.get(c))
-            .filter(|c| c.last_updated(Some(m.user_id)) > updates_since)
-            .collect();
+    let mut channels_with_updates = Vec::new();
+    let mut channels_removed = Vec::new();
 
-        let mut channels_removed = Vec::new();
+    if let Some(m) = &member {
+        channels_with_updates.extend(
+            state
+                .data
+                .members
+                .channels_for_member(m.user_id)
+                .iter()
+                .filter_map(|c| state.data.channels.get(c))
+                .filter(|c| c.last_updated(Some(m.user_id)) > updates_since),
+        );
+
         for (channel_id, timestamp) in state
             .data
             .members
             .channels_removed_for_member(m.user_id)
             .filter(|(_, ts)| *ts > updates_since)
         {
-            updated_timestamps.push(timestamp);
+            last_updated = max(last_updated, timestamp);
             channels_removed.push(channel_id);
         }
-
-        (channels_with_updates, channels_removed)
     } else {
-        let channels_with_updates: Vec<_> = state
-            .data
-            .channels
-            .public_channels()
-            .into_iter()
-            .filter(|c| c.last_updated(None) > updates_since)
-            .collect();
-
-        (channels_with_updates, Vec::new())
+        channels_with_updates.extend(
+            state
+                .data
+                .channels
+                .public_channels()
+                .into_iter()
+                .filter(|c| c.last_updated(None) > updates_since),
+        );
     };
 
-    let mut last_updated = updated_timestamps.into_iter().max().unwrap_or_default();
+    for (channel_id, timestamp) in state.data.channels.channels_deleted_since(updates_since) {
+        channels_removed.push(channel_id);
+        last_updated = max(last_updated, timestamp);
+    }
 
     if channels_with_updates.is_empty() && channels_removed.is_empty() && last_updated <= updates_since {
         return SuccessNoUpdates;

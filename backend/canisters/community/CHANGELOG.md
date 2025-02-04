@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Avoid retrying c2c call if recipient canister is uninstalled ([#7302](https://github.com/open-chat-labs/open-chat/pull/7302))
+- Fix channels still appearing in channel list after being deleted ([#7351](https://github.com/open-chat-labs/open-chat/pull/7351))
 
 ## [[2.0.1580](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1580-community)] - 2025-01-24
 

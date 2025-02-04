@@ -1,6 +1,7 @@
 use crate::client::community::STABLE_MEMORY_MAP_MEMORY_ID;
 use crate::env::ENV;
 use crate::stable_memory::get_stable_memory_map;
+use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
@@ -29,6 +30,9 @@ fn delete_channel_succeeds(as_owner: bool) {
         ..
     } = init_test_data(env, canister_ids, *controller);
 
+    let start = now_millis(env);
+    env.advance_time(Duration::from_secs(1));
+
     let response = client::community::delete_channel(
         env,
         if as_owner { user1.principal } else { user2.principal },
@@ -43,8 +47,20 @@ fn delete_channel_succeeds(as_owner: bool) {
             community_canister::delete_channel::Response::NotAuthorized
         ));
     }
+
     let summary = client::community::happy_path::summary(env, user1.principal, community_id);
     assert_ne!(summary.channels.iter().any(|c| c.channel_id == channel_id1), as_owner);
+
+    let summary_updates = client::community::happy_path::summary_updates(env, user1.principal, community_id, start);
+    if as_owner {
+        assert!(summary_updates
+            .unwrap()
+            .channels_removed
+            .first()
+            .is_some_and(|c| *c == channel_id1));
+    } else {
+        assert!(summary_updates.is_none());
+    }
 }
 
 #[test]
