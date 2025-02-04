@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Expose each bot action as a separate endpoint ([#7345](https://github.com/open-chat-labs/open-chat/pull/7345))
 - Send OC's share of access gate joining fees to the treasury canister ([#7353](https://github.com/open-chat-labs/open-chat/pull/7353))
 - Ensure message Ids have successfully been deduped ([#7355](https://github.com/open-chat-labs/open-chat/pull/7355))
+- Avoid storing achievements for users who leave the group ([#7356](https://github.com/open-chat-labs/open-chat/pull/7356))
 
 ### Fixed
 
