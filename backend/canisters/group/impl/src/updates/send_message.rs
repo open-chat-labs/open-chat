@@ -19,7 +19,7 @@ use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 fn send_message_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| send_message_impl(args, None, state))
+    mutate_state(|state| send_message_impl(args, None, true, state))
 }
 
 #[update(msgpack = true)]
@@ -55,16 +55,12 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
         _ => None,
     };
 
-    let bot_caller = BotCaller {
-        bot: bot_id,
-        command,
-        finalised,
-    };
+    let bot_caller = BotCaller { bot: bot_id, command };
 
-    mutate_state(|state| send_message_impl(args, Some(bot_caller), state)).into()
+    mutate_state(|state| send_message_impl(args, Some(bot_caller), finalised, state)).into()
 }
 
-pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, state: &mut RuntimeState) -> Response {
+pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, finalised: bool, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return ChatFrozen;
     }
@@ -90,6 +86,7 @@ pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, state: &mut 
         args.message_filter_failed.is_some(),
         args.block_level_markdown,
         &mut state.data.event_store_client,
+        finalised,
         now,
     );
 
@@ -137,6 +134,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
         args.message_filter_failed.is_some(),
         args.block_level_markdown,
         &mut state.data.event_store_client,
+        true,
         now,
     );
     process_send_message_result(

@@ -253,11 +253,11 @@ pub struct BotMessageContext {
     pub finalised: bool,
 }
 
-impl From<&BotCaller> for BotMessageContext {
-    fn from(caller: &BotCaller) -> Self {
+impl BotMessageContext {
+    pub fn from(caller: &BotCaller, finalised: bool) -> Self {
         BotMessageContext {
             command: caller.command.clone(),
-            finalised: caller.finalised,
+            finalised,
         }
     }
 }

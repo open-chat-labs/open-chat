@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{BotMessageContent, ChannelId, EventIndex, MessageId, MessageIndex, TimestampMillis};
+use types::{AuthToken, BotMessageContent, ChannelId, EventIndex, MessageId, MessageIndex, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -10,12 +10,6 @@ pub struct Args {
     pub block_level_markdown: bool,
     pub finalised: bool,
     pub auth_token: AuthToken,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum AuthToken {
-    Jwt(String),
-    ApiKey(String),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
