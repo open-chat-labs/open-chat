@@ -56,7 +56,7 @@ impl From<BotActionScope> for AccessTokenScope {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct BotActionChatDetails {
     pub chat: Chat,
-    pub thread_root_message_index: Option<MessageIndex>,
+    pub thread: Option<MessageIndex>,
     pub message_id: MessageId,
 }
 

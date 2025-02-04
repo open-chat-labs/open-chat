@@ -1,3 +1,4 @@
+pub mod bot_create_channel;
 pub mod bot_send_message;
 pub mod c2c_notify_low_balance;
 pub mod c2c_notify_user_events;

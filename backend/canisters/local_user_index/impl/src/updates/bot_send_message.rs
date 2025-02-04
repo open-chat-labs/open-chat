@@ -1,25 +1,22 @@
 use canister_api_macros::update;
 use local_user_index_canister::bot_send_message::*;
+use rand::Rng;
 use types::{
     BotActionScope, BotInitiator, BotMessageContent, ChannelId, Chat, ChatId, CommunityId, MessageId, MessageIndex, UserId,
 };
 
-use crate::{bots::extract_access_context, mutate_state};
+use crate::{bots::extract_access_context, mutate_state, RuntimeState};
 
 #[update(candid = true)]
 async fn bot_send_message(args: Args) -> Response {
     use Response::*;
 
-    let context = match mutate_state(|state| extract_access_context(args.auth_token, state)) {
+    let context = match mutate_state(|state| extract_message_access_context(&args, state)) {
         Ok(context) => context,
         Err(error) => return InvalidRequest(error),
     };
 
-    let BotActionScope::Chat(chat_details) = context.scope else {
-        return InvalidRequest("Cannot send a message to community scope".to_string());
-    };
-
-    match chat_details.chat {
+    match context.chat {
         Chat::Direct(_) => InvalidRequest("Cannot yet send messages directly to users".to_string()),
         Chat::Group(chat_id) => {
             send_message_to_group(
@@ -27,8 +24,8 @@ async fn bot_send_message(args: Args) -> Response {
                 context.bot_name,
                 context.initiator,
                 chat_id,
-                chat_details.thread_root_message_index,
-                chat_details.message_id,
+                context.thread,
+                context.message_id,
                 args.content,
                 args.block_level_markdown,
                 args.finalised,
@@ -42,8 +39,8 @@ async fn bot_send_message(args: Args) -> Response {
                 context.initiator,
                 community_id,
                 channel_id,
-                chat_details.thread_root_message_index,
-                chat_details.message_id,
+                context.thread,
+                context.message_id,
                 args.content,
                 args.block_level_markdown,
                 args.finalised,
@@ -51,6 +48,43 @@ async fn bot_send_message(args: Args) -> Response {
             .await
         }
     }
+}
+
+struct MessageAccessContext {
+    bot_id: UserId,
+    bot_name: String,
+    initiator: BotInitiator,
+    chat: Chat,
+    thread: Option<MessageIndex>,
+    message_id: MessageId,
+}
+
+fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Result<MessageAccessContext, String> {
+    let context = extract_access_context(&args.auth_token, state)?;
+
+    let (chat, thread, message_id) = match context.scope {
+        BotActionScope::Chat(details) => {
+            let message_id = args.message_id.unwrap_or(details.message_id);
+            (details.chat, details.thread, message_id)
+        }
+        BotActionScope::Community(details) => {
+            let Some(channel_id) = args.channel_id else {
+                return Err("Channel must be specified for community scope".to_string());
+            };
+            let chat = Chat::Channel(details.community_id, channel_id);
+            let message_id = args.message_id.unwrap_or_else(|| state.env.rng().gen::<u64>().into());
+            (chat, None, message_id)
+        }
+    };
+
+    Ok(MessageAccessContext {
+        bot_id: context.bot_id,
+        bot_name: context.bot_name,
+        initiator: context.initiator,
+        chat,
+        thread,
+        message_id,
+    })
 }
 
 #[allow(clippy::too_many_arguments)]

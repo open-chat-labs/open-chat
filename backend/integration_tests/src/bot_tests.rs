@@ -4,15 +4,15 @@ use crate::{client, TestEnv, User};
 use candid::Principal;
 use community_canister::generate_bot_api_key;
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs};
-use local_user_index_canister::bot_send_message::AuthToken;
 use pocket_ic::PocketIc;
+use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    AccessTokenScope, AutonomousConfig, BotActionChatDetails, BotActionScope, BotApiKeyToken, BotCommand, BotDefinition,
-    BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, MessageContent, MessagePermission,
-    SlashCommandSchema, TextContent, UserId,
+    AccessTokenScope, AuthToken, AutonomousConfig, BotActionChatDetails, BotActionScope, BotApiKeyToken, BotCommand,
+    BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent,
+    CommunityPermission, MessageContent, MessagePermission, Rules, SlashCommandSchema, TextContent, UserId,
 };
 use utils::base64;
 
@@ -83,7 +83,7 @@ fn e2e_command_bot_test() {
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat,
-            thread_root_message_index: None,
+            thread: None,
             message_id,
         }),
     });
@@ -349,6 +349,108 @@ fn e2e_autonomous_bot_test() {
 }
 
 #[test]
+fn create_channel_by_api_key() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+
+    // Register a bot
+    let bot_name = random_string();
+    let command_name = random_string();
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, bot_name.clone(), command_name.clone());
+
+    // Add bot to community
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        canister_ids.local_user_index(env, community_id),
+        BotInstallationLocation::Community(community_id),
+        bot_id,
+        BotPermissions::text_only(),
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    // Generate an API key for the bot in the community
+    let api_key = match client::community::generate_bot_api_key(
+        env,
+        owner.principal,
+        community_id.into(),
+        &generate_bot_api_key::Args {
+            bot_id,
+            requested_permissions: BotPermissions {
+                community: HashSet::from_iter(vec![CommunityPermission::CreatePublicChannel]),
+                chat: HashSet::new(),
+                message: HashSet::from_iter(vec![MessagePermission::Text]),
+            },
+            channel_id: None,
+        },
+    ) {
+        generate_bot_api_key::Response::Success(result) => result.api_key,
+        response => panic!("'generate_bot_api_key' error: {response:?}"),
+    };
+
+    // The bot creates a channel
+    let response = client::local_user_index::bot_create_channel(
+        env,
+        bot_principal,
+        canister_ids.local_user_index(env, community_id),
+        &local_user_index_canister::bot_create_channel::Args {
+            is_public: true,
+            name: "My channel".to_string(),
+            description: "For stuff".to_string(),
+            rules: Rules {
+                text: "Some rules".to_string(),
+                enabled: false,
+            },
+            avatar: None,
+            history_visible_to_new_joiners: true,
+            messages_visible_to_non_members: true,
+            permissions: None,
+            events_ttl: None,
+            gate_config: None,
+            external_url: None,
+            auth_token: AuthToken::ApiKey(api_key.clone()),
+        },
+    );
+
+    let local_user_index_canister::bot_create_channel::Response::Success(result) = response else {
+        panic!("'bot_send_message' error: {response:?}");
+    };
+
+    // Bot sends a message to the channel
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        canister_ids.local_user_index(env, community_id),
+        &local_user_index_canister::bot_send_message::Args {
+            channel_id: Some(result.channel_id),
+            message_id: None,
+            content: BotMessageContent::Text(TextContent {
+                text: "I'm sorry, Dave. I'm afraid I can't do that.".to_string(),
+            }),
+            block_level_markdown: false,
+            finalised: true,
+            auth_token: AuthToken::ApiKey(api_key),
+        },
+    );
+
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
+        panic!("'bot_send_message' error: {response:?}");
+    }
+}
+
+#[test]
 fn send_multiple_updates_to_same_message() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -395,7 +497,7 @@ fn send_multiple_updates_to_same_message() {
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat,
-            thread_root_message_index: None,
+            thread: None,
             message_id,
         }),
     });

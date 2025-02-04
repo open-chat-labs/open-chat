@@ -12,7 +12,6 @@ pub enum Caller {
 pub struct BotCaller {
     pub bot: UserId,
     pub command: Option<BotCommand>,
-    pub finalised: bool,
 }
 
 impl Caller {

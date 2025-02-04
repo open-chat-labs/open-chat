@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_bot_create_channel` endpoint ([#7354](https://github.com/open-chat-labs/open-chat/pull/7354))
+
 ### Changed
 
 - Introduce new `Integer` bot parameter type ([#7296](https://github.com/open-chat-labs/open-chat/pull/7296))

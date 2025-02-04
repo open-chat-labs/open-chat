@@ -25,7 +25,7 @@ use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEven
 fn send_message(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| send_message_impl(args, None, state))
+    mutate_state(|state| send_message_impl(args, None, true, state))
 }
 
 #[update(msgpack = true)]
@@ -62,16 +62,12 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
         _ => None,
     };
 
-    let bot_caller = BotCaller {
-        bot: bot_id,
-        command,
-        finalised,
-    };
+    let bot_caller = BotCaller { bot: bot_id, command };
 
-    mutate_state(|state| send_message_impl(args, Some(bot_caller), state)).into()
+    mutate_state(|state| send_message_impl(args, Some(bot_caller), finalised, state)).into()
 }
 
-pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, state: &mut RuntimeState) -> Response {
+pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, finalised: bool, state: &mut RuntimeState) -> Response {
     let caller = match state.verified_caller(bot) {
         CallerResult::Success(caller) => caller,
         CallerResult::NotFound => return UserNotInCommunity,
@@ -100,6 +96,7 @@ pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, state: &mut 
             args.message_filter_failed.is_some(),
             args.block_level_markdown,
             &mut state.data.event_store_client,
+            finalised,
             now,
         );
 
@@ -156,6 +153,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             args.message_filter_failed.is_some(),
             args.block_level_markdown,
             &mut state.data.event_store_client,
+            true,
             now,
         );
 

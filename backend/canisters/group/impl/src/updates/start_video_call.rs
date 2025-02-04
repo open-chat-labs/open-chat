@@ -66,6 +66,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         false,
         false,
         &mut state.data.event_store_client,
+        true,
         now,
     ) {
         SendMessageResult::Success(r) => r,
