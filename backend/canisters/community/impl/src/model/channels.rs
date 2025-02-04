@@ -7,7 +7,7 @@ use search::weighted::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
@@ -17,6 +17,8 @@ use types::{
 #[derive(Serialize, Deserialize, Default)]
 pub struct Channels {
     channels: HashMap<ChannelId, Channel>,
+    #[serde(default)]
+    channels_deleted: BTreeMap<TimestampMillis, ChannelId>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -68,7 +70,10 @@ impl Channels {
             })
             .collect();
 
-        Channels { channels }
+        Channels {
+            channels,
+            channels_deleted: BTreeMap::new(),
+        }
     }
 
     pub fn add(&mut self, channel: Channel) {
@@ -78,8 +83,10 @@ impl Channels {
         };
     }
 
-    pub fn delete(&mut self, channel_id: ChannelId) -> Option<Channel> {
-        self.channels.remove(&channel_id)
+    pub fn delete(&mut self, channel_id: ChannelId, now: TimestampMillis) -> Option<Channel> {
+        let channel = self.channels.remove(&channel_id)?;
+        self.channels_deleted.insert(now, channel_id);
+        Some(channel)
     }
 
     pub fn get(&self, channel_id: &ChannelId) -> Option<&Channel> {
@@ -181,6 +188,14 @@ impl Channels {
             .values()
             .filter(|c| current_channel_id != Some(c.id))
             .any(|c| c.chat.name.eq_ignore_ascii_case(name))
+    }
+
+    pub fn channels_deleted_since(&self, since: TimestampMillis) -> impl Iterator<Item = (ChannelId, TimestampMillis)> + '_ {
+        self.channels_deleted
+            .iter()
+            .rev()
+            .take_while(move |(ts, _)| **ts > since)
+            .map(|(ts, c)| (*c, *ts))
     }
 }
 
