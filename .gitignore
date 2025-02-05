@@ -22,3 +22,6 @@ temp.did
 website_release.md
 frontend/app/src/stores/timeline.ts
 /Makefile
+
+**/public/worker.js
+**/public/service_worker.js

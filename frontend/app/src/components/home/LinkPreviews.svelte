@@ -33,10 +33,6 @@
         regexMatch: RegExpMatchArray;
     };
 
-    type GenericPreview = PreviewBase & {
-        kind: "generic";
-    };
-
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 

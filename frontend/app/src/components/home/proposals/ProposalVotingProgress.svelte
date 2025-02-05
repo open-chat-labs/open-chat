@@ -30,10 +30,10 @@
         </svg>
     </div>
     <div class="progress">
-        <div class="adopt" style="width: {adoptPercent}%" />
-        <div class="reject" style="width: {rejectPercent}%" />
-        <div class="vertical-line" style="{rtl}: {minYesPercentageOfTotal}%" />
-        <div class="vertical-line" style="{rtl}: {minYesPercentageOfExercised}%" />
+        <div class="adopt" style="width: {adoptPercent}%"></div>
+        <div class="reject" style="width: {rejectPercent}%"></div>
+        <div class="vertical-line" style="{rtl}: {minYesPercentageOfTotal}%"></div>
+        <div class="vertical-line" style="{rtl}: {minYesPercentageOfExercised}%"></div>
     </div>
 
     <div class="remaining">
@@ -52,6 +52,8 @@
 </div>
 
 <style lang="scss">
+    @use "../../../styles/mixins.scss" as *;
+
     .wrapper {
         flex: auto;
         position: relative;

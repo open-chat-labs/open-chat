@@ -10,7 +10,7 @@
 
     let poller = new Poller(checkVersion, VERSION_INTERVAL);
     // @ts-ignore
-    let clientVersion = Version.parse(window.OPENCHAT_WEBSITE_VERSION);
+    let clientVersion = Version.parse(window.OC_WEBSITE_VERSION);
     let countdown = $state(30);
     let showBanner = $state(false);
     let errorCount = 0;
@@ -18,7 +18,7 @@
     onDestroy(() => poller.stop());
 
     function checkVersion(): Promise<void> {
-        if (process.env.NODE_ENV !== "production" || $activeVideoCall !== undefined)
+        if (import.meta.env.OC_NODE_ENV !== "production" || $activeVideoCall !== undefined)
             return Promise.resolve();
         return getServerVersion().then((serverVersion) => {
             if (serverVersion.isGreaterThan(clientVersion)) {

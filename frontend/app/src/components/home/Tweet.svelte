@@ -16,7 +16,7 @@
     let rendering: Promise<any> | undefined = undefined;
 
     onMount(() => {
-        supported = (<any>window).twttr !== undefined;
+        supported = (window as any).twttr !== undefined;
     });
 
     $: {
@@ -29,7 +29,7 @@
         ) {
             tweetWrapper.innerHTML = "";
 
-            rendering = (<any>window).twttr?.widgets.createTweet(tweetId, tweetWrapper, {
+            rendering = (window as any).twttr?.widgets.createTweet(tweetId, tweetWrapper, {
                 conversation: "none",
                 theme: $currentTheme.mode,
             }) as Promise<any>;
@@ -46,4 +46,4 @@
     }
 </script>
 
-<div bind:this={tweetWrapper} />
+<div bind:this={tweetWrapper}></div>

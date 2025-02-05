@@ -18,7 +18,7 @@
         connectors: [
             metaMask(),
             coinbaseWallet({ appName: "OpenChat" }),
-            walletConnect({ projectId: process.env.WALLET_CONNECT_PROJECT_ID! }),
+            walletConnect({ projectId: import.meta.env.OC_WALLET_CONNECT_PROJECT_ID! }),
         ],
         transports: {
             [mainnet.id]: http(),

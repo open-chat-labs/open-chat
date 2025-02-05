@@ -1,7 +1,7 @@
 <script lang="ts">
     import Account from "svelte-material-icons/Account.svelte";
     import LinkOff from "svelte-material-icons/LinkOff.svelte";
-    import { AuthProvider, OpenChat, type AuthenticationPrincipal } from "openchat-client";
+    import { OpenChat, type AuthenticationPrincipal, AuthProvider } from "openchat-client";
     import { getContext } from "svelte";
     import TruncatedAccount from "../TruncatedAccount.svelte";
     import AuthProviderLogo from "./AuthProviderLogo.svelte";
@@ -19,11 +19,11 @@
 
     const client = getContext<OpenChat>("client");
 
-    type Account = AuthenticationPrincipal & { provider: AuthProvider };
+    type AccountType = AuthenticationPrincipal & { provider: AuthProvider };
 
-    let accounts: Account[] = $state([]);
+    let accounts: AccountType[] = $state([]);
     let linking = $state(false);
-    let unlinking: Account | null = $state(null);
+    let unlinking: AccountType | null = $state(null);
 
     $effect(() => {
         (async () => refresh())();
@@ -96,6 +96,8 @@
 </Button>
 
 <style lang="scss">
+    @use "../../../styles/mixins.scss" as *;
+
     .account {
         margin-bottom: $sp3;
         display: flex;
