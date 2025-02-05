@@ -1,8 +1,4 @@
-import {
-    HttpAgent,
-    type Identity,
-    ReplicaTimeError,
-} from "@dfinity/agent";
+import { HttpAgent, type Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import {
     AuthError,
@@ -37,7 +33,7 @@ export abstract class CanisterAgent {
         args?: unknown,
         retries = 0,
     ): Promise<To> {
-        return this.sendRequestToCanister(() => serviceCall())
+        return serviceCall()
             .then(mapper)
             .catch((err) => {
                 const responseErr = toCanisterResponseError(err as Error, this.identity);
@@ -80,25 +76,13 @@ export abstract class CanisterAgent {
             });
     }
 
-    protected async sendRequestToCanister<T>(
-        requestFn: () => Promise<T>,
-        isRetry = false,
-    ): Promise<T> {
-        try {
-            return await requestFn();
-        } catch (err) {
-            if (!isRetry && err instanceof ReplicaTimeError) {
-                this.agent.replicaTime = err.replicaTime;
-                console.log("Set replica time to " + err.replicaTime);
-                return await this.sendRequestToCanister(requestFn, true);
-            }
-            throw err;
-        }
-    }
-
     protected writeTrace(methodName: string, update: boolean, duration: number, isError: boolean) {
         if (!isError) {
-            console.debug(`TRACE: ${update ? "Update" : "Query"} call to ${this.canisterName}.${methodName} took ${Math.trunc(duration)}ms`);
+            console.debug(
+                `TRACE: ${update ? "Update" : "Query"} call to ${
+                    this.canisterName
+                }.${methodName} took ${Math.trunc(duration)}ms`,
+            );
         }
     }
 }
