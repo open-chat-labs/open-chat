@@ -3197,7 +3197,7 @@ export function apiVideoCallPresence(domain: VideoCallPresence): TVideoCallPrese
 export function setVideoCallPresence(
     value: GroupSetVideoCallPresenceResponse | CommunitySetVideoCallPresenceResponse,
 ): SetVideoCallPresenceResponse {
-    if (typeof value === "object" && "Success" in value) return "success";
+    if (value === "Success") return "success";
     console.warn("SetVideoCallPresence failed with: ", value);
     return "failure";
 }
