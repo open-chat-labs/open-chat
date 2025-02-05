@@ -17,7 +17,7 @@ async fn bot_delete_channel(args: Args) -> Response {
         BotActionScope::Chat(details) => match details.chat {
             types::Chat::Channel(community_id, channel_id) => {
                 if channel_id != args.channel_id {
-                    return InvalidRequest("Channel ID does not access token".to_string());
+                    return InvalidRequest("Channel ID does not match access token".to_string());
                 }
                 community_id
             }
