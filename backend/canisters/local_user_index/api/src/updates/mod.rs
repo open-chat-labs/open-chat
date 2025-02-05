@@ -1,4 +1,5 @@
 pub mod bot_create_channel;
+pub mod bot_delete_channel;
 pub mod bot_send_message;
 pub mod c2c_create_user;
 pub mod c2c_mark_events_migrated_to_stable_memory;

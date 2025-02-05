@@ -1,57 +1,62 @@
+use crate::guards::caller_is_local_user_index;
+use crate::CallerResult;
 use crate::{
     activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
     run_regular_jobs, RuntimeState,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use community_canister::c2c_bot_delete_channel;
 use community_canister::delete_channel::{Response::*, *};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, UserIdKeyPrefix};
-use tracing::info;
-use types::{ChannelDeleted, ChannelId};
+use types::{BotCaller, ChannelDeleted, ChannelId};
 
 #[update(msgpack = true)]
 #[trace]
 fn delete_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    let response = mutate_state(|state| delete_channel_impl(args.channel_id, state));
-
-    if !matches!(response, Success) {
-        info!(channel_id = ?args.channel_id, ?response, "Delete channel failed");
-    }
-
-    response
+    mutate_state(|state| delete_channel_impl(args.channel_id, None, state))
 }
 
-fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Response {
-    let caller = state.env.caller();
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_bot_delete_channel(args: c2c_bot_delete_channel::Args) -> c2c_bot_delete_channel::Response {
+    run_regular_jobs();
 
+    let bot_caller = BotCaller {
+        bot: args.bot_id,
+        initiator: args.initiator.clone(),
+    };
+
+    mutate_state(|state| delete_channel_impl(args.channel_id, Some(bot_caller), state)).into()
+}
+
+fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return CommunityFrozen;
     }
 
-    let Some(member) = state.data.members.get(caller) else {
-        return UserNotInCommunity;
+    let caller = match state.verified_caller(bot_caller) {
+        CallerResult::Success(caller) => caller,
+        CallerResult::NotFound => return NotAuthorized,
+        CallerResult::Suspended => return UserSuspended,
+        CallerResult::Lapsed => return UserLapsed,
     };
-
-    if member.suspended().value {
-        return UserSuspended;
-    } else if member.lapsed().value {
-        return UserLapsed;
-    }
 
     let Some(channel) = state.data.channels.get(&channel_id) else {
         return ChannelNotFound;
     };
 
-    let user_id = member.user_id;
-    let Some(channel_member) = channel.chat.members.get(&user_id) else {
+    let Some(channel_member) = channel.chat.members.get(&caller.agent()) else {
         return UserNotInChannel;
     };
 
     if channel_member.lapsed().value {
         return UserLapsed;
-    } else if !channel_member.role().can_delete_group() {
+    }
+
+    if !channel_member.role().can_delete_group() {
         return NotAuthorized;
     }
 
@@ -84,7 +89,8 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
         CommunityEventInternal::ChannelDeleted(Box::new(ChannelDeleted {
             channel_id,
             name: channel.chat.name.value,
-            deleted_by: user_id,
+            deleted_by: caller.agent(),
+            bot_command: caller.bot_command().cloned(),
         })),
         now,
     );

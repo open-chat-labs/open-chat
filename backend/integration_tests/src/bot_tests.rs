@@ -381,7 +381,9 @@ fn create_channel_by_api_key() {
     env.advance_time(Duration::from_millis(1000));
     env.tick();
 
-    // Generate an API key for the bot in the community
+    // Generate an API key for the bot in the community.
+    // It doesn't need send message permissions (which applies to all channels) because it
+    // will be the owner of the channel it creates.
     let api_key = match client::community::generate_bot_api_key(
         env,
         owner.principal,
@@ -391,7 +393,7 @@ fn create_channel_by_api_key() {
             requested_permissions: BotPermissions {
                 community: HashSet::from_iter(vec![CommunityPermission::CreatePublicChannel]),
                 chat: HashSet::new(),
-                message: HashSet::from_iter(vec![MessagePermission::Text]),
+                message: HashSet::new(),
             },
             channel_id: None,
         },
@@ -441,12 +443,27 @@ fn create_channel_by_api_key() {
             }),
             block_level_markdown: false,
             finalised: true,
-            auth_token: AuthToken::ApiKey(api_key),
+            auth_token: AuthToken::ApiKey(api_key.clone()),
         },
     );
 
     if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
         panic!("'bot_send_message' error: {response:?}");
+    }
+
+    // Bot removes the channel
+    let response = client::local_user_index::bot_delete_channel(
+        env,
+        bot_principal,
+        canister_ids.local_user_index(env, community_id),
+        &local_user_index_canister::bot_delete_channel::Args {
+            channel_id: result.channel_id,
+            auth_token: AuthToken::ApiKey(api_key),
+        },
+    );
+
+    if !matches!(response, local_user_index_canister::bot_delete_channel::Response::Success) {
+        panic!("'bot_delete_channel' error: {response:?}");
     }
 }
 

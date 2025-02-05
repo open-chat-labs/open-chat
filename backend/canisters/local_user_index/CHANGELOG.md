@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `bot_create_channel` endpoint ([#7354](https://github.com/open-chat-labs/open-chat/pull/7354))
+- Add `bot_create_channel` endpoint ([#7359](https://github.com/open-chat-labs/open-chat/pull/7359))
 
 ### Changed
 

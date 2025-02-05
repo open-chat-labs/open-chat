@@ -1,6 +1,6 @@
 use crate::{
-    AccessGate, AccessGateConfig, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions,
-    GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
+    AccessGate, AccessGateConfig, BotCommand, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper,
+    GroupPermissions, GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -369,6 +369,7 @@ pub struct ChannelDeleted {
     pub channel_id: ChannelId,
     pub name: String,
     pub deleted_by: UserId,
+    pub bot_command: Option<BotCommand>,
 }
 
 #[ts_export]

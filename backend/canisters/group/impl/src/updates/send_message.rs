@@ -9,8 +9,8 @@ use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse}
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use types::{
-    Achievement, BotCaller, BotInitiator, BotPermissions, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification,
-    Message, MessageContent, MessageIndex, Notification, TimestampMillis, User,
+    Achievement, BotCaller, BotPermissions, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message,
+    MessageContent, MessageIndex, Notification, TimestampMillis, User,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -35,27 +35,22 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
 fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_message::Response {
     run_regular_jobs();
 
-    let bot_id = args.bot_id;
     let finalised = args.finalised;
-    let initiator = args.initiator.clone();
+    let bot_caller = BotCaller {
+        bot: args.bot_id,
+        initiator: args.initiator.clone(),
+    };
     let args: Args = args.into();
 
     if !read_state(|state| {
         state.data.is_bot_permitted(
-            &bot_id,
-            &initiator,
+            &bot_caller.bot,
+            &bot_caller.initiator,
             BotPermissions::from_message_permission((&args.content).into()),
         )
     }) {
         return c2c_bot_send_message::Response::NotAuthorized;
     }
-
-    let command = match initiator {
-        BotInitiator::Command(bot_command) => Some(bot_command),
-        _ => None,
-    };
-
-    let bot_caller = BotCaller { bot: bot_id, command };
 
     mutate_state(|state| send_message_impl(args, Some(bot_caller), finalised, state)).into()
 }

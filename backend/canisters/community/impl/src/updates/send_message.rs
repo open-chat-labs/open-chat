@@ -15,8 +15,8 @@ use lazy_static::lazy_static;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
-    Achievement, BotCaller, BotInitiator, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, EventIndex,
-    EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId, Version,
+    Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, EventIndex, EventWrapper,
+    Message, MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -41,28 +41,23 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
 fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_message::Response {
     run_regular_jobs();
 
-    let bot_id = args.bot_id;
     let finalised = args.finalised;
-    let initiator = args.initiator.clone();
+    let bot_caller = BotCaller {
+        bot: args.bot_id,
+        initiator: args.initiator.clone(),
+    };
     let args: Args = args.into();
 
     if !read_state(|state| {
         state.data.is_bot_permitted(
-            &bot_id,
+            &bot_caller.bot,
             Some(args.channel_id),
-            &initiator,
+            &bot_caller.initiator,
             BotPermissions::from_message_permission((&args.content).into()),
         )
     }) {
         return c2c_bot_send_message::Response::NotAuthorized;
     }
-
-    let command = match initiator {
-        BotInitiator::Command(bot_command) => Some(bot_command),
-        _ => None,
-    };
-
-    let bot_caller = BotCaller { bot: bot_id, command };
 
     mutate_state(|state| send_message_impl(args, Some(bot_caller), finalised, state)).into()
 }

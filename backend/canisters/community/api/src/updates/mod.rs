@@ -3,6 +3,7 @@ pub mod add_members_to_channel;
 pub mod add_reaction;
 pub mod block_user;
 pub mod c2c_bot_create_channel;
+pub mod c2c_bot_delete_channel;
 pub mod c2c_bot_send_message;
 pub mod c2c_create_proposals_channel;
 pub mod c2c_delete_community;

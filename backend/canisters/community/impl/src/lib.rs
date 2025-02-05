@@ -327,6 +327,19 @@ impl RuntimeState {
         use CallerResult::*;
 
         if let Some(bot_caller) = bot_caller {
+            if let Some(initiator) = &bot_caller.initiator.user() {
+                // Check the user who initiated the command is a valid member
+                let Some(member) = self.data.members.get_by_user_id(initiator) else {
+                    return NotFound;
+                };
+
+                if member.suspended().value {
+                    return Suspended;
+                } else if member.lapsed().value {
+                    return Lapsed;
+                }
+            }
+
             return Success(Caller::BotV2(bot_caller));
         }
 
@@ -840,8 +853,6 @@ impl Data {
             now,
         );
 
-        // TODO: Notify UserIndex
-
         true
     }
 
@@ -953,8 +964,22 @@ impl Data {
             BotInitiator::ApiKeyPermissions(permissions) => permissions,
         };
 
+        // If the bot is the owner of the channel then grant chat owner permissions
+        let granted = if channel_id.is_some_and(|channel_id| self.is_channel_owner(bot_id, &channel_id)) {
+            &BotPermissions::union(granted, &BotPermissions::chat_owner())
+        } else {
+            granted
+        };
+
         // The permissions required must be a subset of the permissions granted to the bot
         required.is_subset(granted)
+    }
+
+    pub fn is_channel_owner(&self, user_id: &UserId, channel_id: &ChannelId) -> bool {
+        self.channels
+            .get(channel_id)
+            .and_then(|channel| channel.chat.members.get(user_id))
+            .is_some_and(|member| member.role().is_owner())
     }
 }
 

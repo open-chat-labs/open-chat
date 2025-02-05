@@ -1,4 +1,4 @@
-use crate::{BotCommand, UserId, UserType};
+use crate::{BotCommand, BotInitiator, UserId, UserType};
 
 #[derive(Clone)]
 pub enum Caller {
@@ -11,7 +11,7 @@ pub enum Caller {
 #[derive(Clone)]
 pub struct BotCaller {
     pub bot: UserId,
-    pub command: Option<BotCommand>,
+    pub initiator: BotInitiator,
 }
 
 impl Caller {
@@ -28,13 +28,20 @@ impl Caller {
         match self {
             Caller::User(user_id) => Some(*user_id),
             Caller::Bot(user_id) => Some(*user_id),
-            Caller::BotV2(bot_caller) => bot_caller.command.as_ref().map(|command| command.initiator),
+            Caller::BotV2(bot_caller) => bot_caller.initiator.user(),
             Caller::OCBot(user_id) => Some(*user_id),
         }
     }
 
     pub fn is_bot(&self) -> bool {
         !matches!(self, Caller::User(_))
+    }
+
+    pub fn bot_command(&self) -> Option<&BotCommand> {
+        match self {
+            Caller::BotV2(bot_caller) => bot_caller.initiator.command(),
+            _ => None,
+        }
     }
 }
 
