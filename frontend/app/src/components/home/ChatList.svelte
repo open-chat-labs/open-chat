@@ -4,7 +4,6 @@
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
     import ChatSummary from "./ChatSummary.svelte";
-    import { _ } from "svelte-i18n";
     import {
         type ChatListScope,
         type ChatSummary as ChatSummaryType,
@@ -35,6 +34,7 @@
     import Button from "../Button.svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
+    import { chatListView } from "../../stores/chatListView";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
     import { exploreGroupsDismissed } from "../../stores/settings";
@@ -59,8 +59,8 @@
     let searchTerm: string = "";
     let searchResultsAvailable: boolean = false;
     let chatsScrollTop: number = 0;
-    let previousScope: ChatListScope | undefined = undefined;
-    let previousView: "chats" | "threads" = "chats";
+    let previousScope: ChatListScope | undefined = $chatListScope;
+    let previousView: "chats" | "threads" = $chatListView;
 
     const dispatch = createEventDispatcher();
 
@@ -75,7 +75,6 @@
         !$exploreGroupsDismissed &&
         !searchResultsAvailable;
     $: showBrowseChannnels = $chatListScope.kind === "community";
-    $: view = "chats" as "chats" | "threads";
 
     let unreadCounts = emptyCombinedUnreadCounts();
     $: {
@@ -104,10 +103,14 @@
     }
 
     $: canMarkAllRead = anythingUnread(unreadCounts);
-
     $: {
-        if (view === "threads" && searchTerm !== "") {
-            view = "chats";
+        if ($numberOfThreadsStore === 0) {
+            chatListView.set("chats");
+        }
+    }
+    $: {
+        if ($chatListView === "threads" && searchTerm !== "") {
+            chatListView.set("chats");
         }
     }
 
@@ -178,7 +181,7 @@
     let chatListElement: HTMLElement;
 
     beforeUpdate(() => {
-        if (previousScope === $chatListScope && view !== "chats" && previousView === "chats") {
+        if (previousScope === $chatListScope && $chatListView !== "chats" && previousView === "chats") {
             chatsScrollTop = chatListElement?.scrollTop;
         }
     });
@@ -186,13 +189,13 @@
     afterUpdate(() => {
         if (previousScope !== $chatListScope) {
             onScopeChanged();
-        } else if (previousView !== view) {
+        } else if (previousView !== $chatListView) {
             onViewChanged();
         }
     });
 
-    function setView(v: "chats" | "threads"): void {
-        view = v;
+    function setView(view: "chats" | "threads"): void {
+        chatListView.set(view);
 
         if (view === "threads") {
             searchTerm = "";
@@ -201,14 +204,14 @@
 
     function onScopeChanged() {
         previousScope = $chatListScope;
-        view = "chats";
+        chatListView.set("chats");
         chatsScrollTop = 0;
         onViewChanged();
     }
 
     function onViewChanged() {
-        previousView = view;
-        const scrollTop = view === "chats" ? chatsScrollTop : 0;
+        previousView = $chatListView;
+        const scrollTop = previousView === "chats" ? chatsScrollTop : 0;
         tick().then(() => {
             if (chatListElement !== undefined) {
                 chatListElement.scrollTop = scrollTop;
@@ -253,17 +256,17 @@
                 on:click={() => setView("chats")}
                 unread={unreadCounts.chats}
                 title={i18nKey("chats")}
-                selected={view === "chats"} />
+                selected={$chatListView === "chats"} />
             <ChatListSectionButton
                 unread={unreadCounts.threads}
                 on:click={() => setView("threads")}
                 title={i18nKey("thread.previewTitle")}
-                selected={view === "threads"} />
+                selected={$chatListView === "threads"} />
         </div>
     {/if}
 
     <div use:menuCloser bind:this={chatListElement} class="body">
-        {#if view === "threads"}
+        {#if $chatListView === "threads"}
             <ThreadPreviews />
         {:else}
             <div class="chat-summaries">

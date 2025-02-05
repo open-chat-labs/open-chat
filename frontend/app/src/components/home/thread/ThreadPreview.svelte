@@ -6,7 +6,6 @@
         OpenChat,
         routeForChatIdentifier,
         type MultiUserChat,
-        routeForMessageContext,
         userStore,
         currentUser as user,
         chatListScopeStore as chatListScope,
@@ -89,12 +88,6 @@
     });
 
     function selectThread() {
-        // we want to preserve the right history so we will insert a history entry to represent the URL for the message context
-        const url = routeForMessageContext($chatListScope.kind, {
-            chatId: thread.chatId,
-            threadRootMessageIndex: thread.rootMessage.event.messageIndex,
-        });
-        window.history.pushState(null, "", url);
         page(
             `${routeForChatIdentifier($chatListScope.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
