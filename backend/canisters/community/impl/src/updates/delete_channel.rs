@@ -67,7 +67,7 @@ fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, sta
                 .chat
                 .members
                 .get(&initiator)
-                .map_or(false, |member| member.role().can_delete_group())
+                .is_some_and(|member| member.role().can_delete_group())
             {
                 return NotAuthorized;
             }
