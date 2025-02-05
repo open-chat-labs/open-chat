@@ -117,6 +117,18 @@ impl BotPermissions {
         }
     }
 
+    pub fn union(p1: &Self, p2: &Self) -> Self {
+        fn union<T: Hash + Eq + Clone>(x: &HashSet<T>, y: &HashSet<T>) -> HashSet<T> {
+            x.union(y).cloned().collect()
+        }
+
+        Self {
+            community: union(&p1.community, &p2.community),
+            chat: union(&p1.chat, &p2.chat),
+            message: union(&p1.message, &p2.message),
+        }
+    }
+
     pub fn text_only() -> Self {
         Self::from_message_permission(MessagePermission::Text)
     }
@@ -134,6 +146,37 @@ impl BotPermissions {
             community: HashSet::from_iter([permission]),
             chat: HashSet::new(),
             message: HashSet::new(),
+        }
+    }
+
+    pub fn chat_owner() -> Self {
+        Self {
+            community: HashSet::new(),
+            chat: HashSet::from_iter(vec![
+                GroupPermission::ChangeRoles,
+                GroupPermission::UpdateGroup,
+                GroupPermission::AddMembers,
+                GroupPermission::InviteUsers,
+                GroupPermission::RemoveMembers,
+                GroupPermission::DeleteMessages,
+                GroupPermission::PinMessages,
+                GroupPermission::ReactToMessages,
+                GroupPermission::MentionAllMembers,
+                GroupPermission::StartVideoCall,
+            ]),
+            message: HashSet::from_iter(vec![
+                MessagePermission::Text,
+                MessagePermission::Image,
+                MessagePermission::Video,
+                MessagePermission::Audio,
+                MessagePermission::File,
+                MessagePermission::Poll,
+                MessagePermission::Crypto,
+                MessagePermission::Giphy,
+                MessagePermission::Prize,
+                MessagePermission::P2pSwap,
+                MessagePermission::VideoCall,
+            ]),
         }
     }
 }
@@ -266,6 +309,22 @@ pub enum BotInitiator {
     Command(BotCommand),
     ApiKeySecret(String),
     ApiKeyPermissions(BotPermissions),
+}
+
+impl BotInitiator {
+    pub fn user(&self) -> Option<UserId> {
+        match self {
+            BotInitiator::Command(bot_command) => Some(bot_command.initiator),
+            _ => None,
+        }
+    }
+
+    pub fn command(&self) -> Option<&BotCommand> {
+        match self {
+            BotInitiator::Command(bot_command) => Some(bot_command),
+            _ => None,
+        }
+    }
 }
 
 impl From<BotMessageContent> for MessageContentInitial {

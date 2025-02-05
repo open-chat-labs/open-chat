@@ -241,11 +241,26 @@ type BotCreateChannelResponse = variant {
         channel_id : ChannelId;
     };
     InvalidRequest : text;
+    FailedAuthentication : text;
     NotAuthorized;
     Frozen;
     C2CError : record {int32; text};
 };
 
+type BotDeleteChannelArgs = record {
+    channel_id : ChannelId;
+    auth_token : AuthToken;
+};
+
+type BotDeleteChannelResponse = variant {
+    Success;
+    FailedAuthentication : text;
+    NotAuthorized;
+    InvalidRequest : text;
+    ChannelNotFound;
+    Frozen;
+    C2CError : record {int32; text};
+};
 
 type BotSendMessageArgs = record {
     channel_id : opt ChannelId;
@@ -265,6 +280,7 @@ type BotSendMessageResponse = variant {
         expires_at : opt TimestampMillis;
     };
     InvalidRequest : text;
+    FailedAuthentication : text;
     NotAuthorized;
     Frozen;
     ThreadNotFound;
@@ -274,5 +290,6 @@ type BotSendMessageResponse = variant {
 
 service : {
     bot_create_channel : (BotCreateChannelArgs) -> (BotCreateChannelResponse);
+    bot_delete_channel : (BotDeleteChannelArgs) -> (BotDeleteChannelResponse);
     bot_send_message : (BotSendMessageArgs) -> (BotSendMessageResponse);
 };

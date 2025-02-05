@@ -629,8 +629,8 @@ impl GroupChatCore {
             if let Caller::BotV2(bot_now) = &caller {
                 if let Some(bot_message) = message.bot_context {
                     if bot_now.bot == message.sender
-                        && bot_now.command.as_ref().map(|c| c.initiator) == bot_message.command.as_ref().map(|c| c.initiator)
-                        && bot_now.command == bot_message.command
+                        && bot_now.initiator.user() == bot_message.command.as_ref().map(|c| c.initiator)
+                        && bot_now.initiator.command() == bot_message.command.as_ref()
                         && !bot_message.finalised
                     {
                         return self.update_bot_message(

@@ -3,14 +3,14 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::{caller_is_local_user_index, caller_is_proposals_bot};
 use crate::model::channels::Channel;
 use crate::timer_job_types::JoinMembersToPublicChannelJob;
-use crate::{mutate_state, read_state, run_regular_jobs, CallerResult, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, CallerResult, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::create_channel::{Response::*, *};
 use community_canister::{c2c_bot_create_channel, c2c_join_community};
 use group_chat_core::GroupChatCore;
 use rand::Rng;
-use types::{BotCaller, BotInitiator, BotPermissions, Caller, CommunityPermission, MultiUserChat, UserType};
+use types::{BotCaller, BotPermissions, Caller, CommunityPermission, MultiUserChat, UserType};
 use url::Url;
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -30,33 +30,12 @@ fn create_channel(args: Args) -> Response {
 fn c2c_bot_create_channel(args: c2c_bot_create_channel::Args) -> c2c_bot_create_channel::Response {
     run_regular_jobs();
 
-    let bot_id = args.bot_id;
-    let initiator = args.initiator.clone();
-    let args: Args = args.into();
-
-    if !read_state(|state| {
-        state.data.is_bot_permitted(
-            &bot_id,
-            None,
-            &initiator,
-            BotPermissions::from_community_permission(if args.is_public {
-                CommunityPermission::CreatePublicChannel
-            } else {
-                CommunityPermission::CreatePrivateChannel
-            }),
-        )
-    }) {
-        return c2c_bot_create_channel::Response::NotAuthorized;
-    }
-
-    let command = match initiator {
-        BotInitiator::Command(bot_command) => Some(bot_command),
-        _ => None,
+    let bot_caller = BotCaller {
+        bot: args.bot_id,
+        initiator: args.initiator.clone(),
     };
 
-    let bot_caller = BotCaller { bot: bot_id, command };
-
-    mutate_state(|state| create_channel_impl(args, false, Some(bot_caller), state)).into()
+    mutate_state(|state| create_channel_impl(args.into(), false, Some(bot_caller), state)).into()
 }
 
 #[update(guard = "caller_is_proposals_bot", msgpack = true)]
@@ -126,21 +105,32 @@ fn create_channel_impl(
     let channel_id = state.generate_channel_id();
     let subtype = is_proposals_channel.then_some(args.subtype).flatten();
 
-    // Check permissions unless the caller is a BotV2 in which case we have already done so
-    if !is_proposals_channel && !matches!(caller, Caller::BotV2(_)) {
-        let is_authorized = if let Some(member) = state.data.members.get_by_user_id(&caller.agent()) {
-            if args.is_public {
-                member.role().can_create_public_channel(&state.data.permissions)
-            } else {
-                member.role().can_create_private_channel(&state.data.permissions)
+    if !is_proposals_channel
+        && !match &caller {
+            Caller::BotV2(bot_caller) => state.data.is_bot_permitted(
+                &bot_caller.bot,
+                None,
+                &bot_caller.initiator,
+                BotPermissions::from_community_permission(if args.is_public {
+                    CommunityPermission::CreatePublicChannel
+                } else {
+                    CommunityPermission::CreatePrivateChannel
+                }),
+            ),
+            _ => {
+                if let Some(member) = state.data.members.get_by_user_id(&caller.agent()) {
+                    if args.is_public {
+                        member.role().can_create_public_channel(&state.data.permissions)
+                    } else {
+                        member.role().can_create_private_channel(&state.data.permissions)
+                    }
+                } else {
+                    false
+                }
             }
-        } else {
-            false
-        };
-
-        if !is_authorized {
-            return NotAuthorized;
         }
+    {
+        return NotAuthorized;
     }
 
     if let Err(error) = validate_group_name(&args.name, args.is_public, subtype.as_ref()) {
