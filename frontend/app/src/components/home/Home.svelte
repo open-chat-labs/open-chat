@@ -490,9 +490,11 @@
                 return;
             }
 
+            // first close any open thread
+            closeThread();
+
             if (pathParams.kind === "home_route") {
                 client.clearSelectedChat();
-                closeThread();
                 filterChatSpecificRightPanelStates();
             } else if (pathParams.kind === "communities_route") {
                 client.clearSelectedChat();
@@ -514,9 +516,6 @@
                     communityLoaded = false;
                 }
 
-                // first close any open thread
-                closeThread();
-
                 // if the chat in the url is different from the chat we already have selected
                 if (!chatIdentifiersEqual(pathParams.chatId, $selectedChatId)) {
                     newChatSelected(
@@ -536,7 +535,6 @@
                 if ($selectedChatId !== undefined) {
                     client.clearSelectedChat();
                 }
-                closeThread();
                 filterChatSpecificRightPanelStates();
 
                 if (pathParams.kind === "share_route") {
