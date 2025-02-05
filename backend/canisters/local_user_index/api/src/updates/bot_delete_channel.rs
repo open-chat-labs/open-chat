@@ -12,7 +12,7 @@ pub struct Args {
 pub enum Response {
     Success,
     ChannelNotFound,
-    NotAuthenticated(String),
+    FailedAuthentication(String),
     InvalidRequest(String),
     NotAuthorized,
     Frozen,

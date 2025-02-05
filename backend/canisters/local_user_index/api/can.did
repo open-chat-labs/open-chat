@@ -241,7 +241,7 @@ type BotCreateChannelResponse = variant {
         channel_id : ChannelId;
     };
     InvalidRequest : text;
-    NotAuthenticated : text;
+    FailedAuthentication : text;
     NotAuthorized;
     Frozen;
     C2CError : record {int32; text};
@@ -254,7 +254,7 @@ type BotDeleteChannelArgs = record {
 
 type BotDeleteChannelResponse = variant {
     Success;
-    NotAuthenticated : text;
+    FailedAuthentication : text;
     NotAuthorized;
     InvalidRequest : text;
     ChannelNotFound;
@@ -280,7 +280,7 @@ type BotSendMessageResponse = variant {
         expires_at : opt TimestampMillis;
     };
     InvalidRequest : text;
-    NotAuthenticated : text;
+    FailedAuthentication : text;
     NotAuthorized;
     Frozen;
     ThreadNotFound;

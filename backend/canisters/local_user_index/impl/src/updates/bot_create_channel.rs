@@ -10,7 +10,7 @@ async fn bot_create_channel(args: Args) -> Response {
 
     let context = match mutate_state(|state| extract_access_context(&args.auth_token, state)) {
         Ok(context) => context,
-        Err(error) => return NotAuthenticated(error),
+        Err(error) => return FailedAuthentication(error),
     };
 
     let BotActionScope::Community(details) = context.scope else {

@@ -62,7 +62,7 @@ struct MessageAccessContext {
 fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Result<MessageAccessContext, Response> {
     use Response::*;
 
-    let context = extract_access_context(&args.auth_token, state).map_err(NotAuthenticated)?;
+    let context = extract_access_context(&args.auth_token, state).map_err(FailedAuthentication)?;
 
     let (chat, thread, message_id) = match context.scope {
         BotActionScope::Chat(details) => {
