@@ -951,12 +951,9 @@ impl Data {
             return false;
         };
 
-        // Get the granted permissions when initiated by command or API key
-        let granted = match initiator {
-            BotInitiator::Command(command) => match self.get_user_permissions(&command.initiator, channel_id) {
-                Some(user_permissions) => &BotPermissions::intersect(&bot.permissions, &user_permissions),
-                None => return false,
-            },
+        // Get the permissions granted to the bot when initiated by command or API key
+        let granted_to_bot = match &initiator {
+            BotInitiator::Command(_) => &bot.permissions,
             BotInitiator::ApiKeySecret(secret) => match self.get_api_key_permissions(bot_id, secret, channel_id) {
                 Some(bot_permissions) => bot_permissions,
                 None => return false,
@@ -964,11 +961,20 @@ impl Data {
             BotInitiator::ApiKeyPermissions(permissions) => permissions,
         };
 
-        // If the bot is the owner of the channel then grant chat owner permissions
-        let granted = if channel_id.is_some_and(|channel_id| self.is_channel_owner(bot_id, &channel_id)) {
-            &BotPermissions::union(granted, &BotPermissions::chat_owner())
+        // If the bot is the owner of the channel then grant all chat permissions
+        let granted_to_bot = if channel_id.is_some_and(|channel_id| self.is_channel_owner(bot_id, &channel_id)) {
+            &BotPermissions::union(granted_to_bot, &BotPermissions::chat_owner())
         } else {
-            granted
+            granted_to_bot
+        };
+
+        // If this is a command initiated by a user then intersect the permissions granted to the bot with the user's permissions
+        let granted = match initiator {
+            BotInitiator::Command(command) => match self.get_user_permissions(&command.initiator, channel_id) {
+                Some(user_permissions) => &BotPermissions::intersect(granted_to_bot, &user_permissions),
+                None => return false,
+            },
+            _ => granted_to_bot,
         };
 
         // The permissions required must be a subset of the permissions granted to the bot
