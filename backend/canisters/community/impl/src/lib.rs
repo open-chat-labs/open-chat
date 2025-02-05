@@ -952,7 +952,7 @@ impl Data {
         };
 
         // Get the permissions granted to the bot when initiated by command or API key
-        let granted_to_bot = match &initiator {
+        let granted_to_bot = match initiator {
             BotInitiator::Command(_) => &bot.permissions,
             BotInitiator::ApiKeySecret(secret) => match self.get_api_key_permissions(bot_id, secret, channel_id) {
                 Some(bot_permissions) => bot_permissions,

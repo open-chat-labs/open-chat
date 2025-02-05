@@ -9,7 +9,7 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_bot_delete_channel;
 use community_canister::delete_channel::{Response::*, *};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, UserIdKeyPrefix};
-use types::{BotCaller, ChannelDeleted, ChannelId};
+use types::{BotCaller, Caller, ChannelDeleted, ChannelId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -58,6 +58,20 @@ fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, sta
 
     if !channel_member.role().can_delete_group() {
         return NotAuthorized;
+    }
+
+    // If the agent is a bot and the initiator is a user (by command), then also check the user has permission
+    if let Caller::BotV2(bot_caller) = &caller {
+        if let Some(initiator) = bot_caller.initiator.user() {
+            if !channel
+                .chat
+                .members
+                .get(&initiator)
+                .map_or(false, |member| member.role().can_delete_group())
+            {
+                return NotAuthorized;
+            }
+        }
     }
 
     let now = state.env.now();
