@@ -121,7 +121,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                         }
                         break;
                     }
-                    case "rejected":
+                    case "rejected": {
                         // Find rejection details in the certificate
                         const rejectCode = new Uint8Array(
                             lookupResultToBuffer(certificate.lookup([...path, "reject_code"]))!,
@@ -144,6 +144,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                             rejectMessage,
                             error_code,
                         );
+                    }
                 }
             }
             if (response.status === 202) {
