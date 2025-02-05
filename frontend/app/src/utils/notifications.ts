@@ -111,7 +111,7 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
     await unregisterOldServiceWorker();
 
     try {
-        return await navigator.serviceWorker.register("process.env.SERVICE_WORKER_PATH", {
+        return await navigator.serviceWorker.register(import.meta.env.OC_SERVICE_WORKER_PATH, {
             type: "module",
         });
     } catch (e) {
@@ -208,5 +208,5 @@ export async function unsubscribeNotifications(client: OpenChat): Promise<void> 
 
 async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
     if (!notificationsSupported) return undefined;
-    return await navigator.serviceWorker.getRegistration("process.env.SERVICE_WORKER_PATH");
+    return await navigator.serviceWorker.getRegistration(import.meta.env.OC_SERVICE_WORKER_PATH);
 }

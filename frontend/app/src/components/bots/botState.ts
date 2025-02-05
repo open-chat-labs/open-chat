@@ -20,7 +20,7 @@ function filterCommand(
     parsedPrefix: string,
     prefixParts: string[],
 ): boolean {
-    if (c.devmode && process.env.NODE_ENV === "production") return false;
+    if (c.devmode && import.meta.env.OC_NODE_ENV === "production") return false;
 
     if (selectedCommand !== undefined) {
         return commandsMatch(selectedCommand, c);

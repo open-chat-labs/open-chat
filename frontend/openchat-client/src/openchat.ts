@@ -8369,7 +8369,8 @@ export class OpenChat extends EventTarget {
         authProvider: AuthProvider | undefined,
     ): Promise<ConnectToWorkerResponse> {
         console.debug("WORKER_CLIENT: loading worker with version: ", this.config.websiteVersion);
-        this.#worker = new Worker(`/worker.js?v=${this.config.websiteVersion}`, {
+        const workerUrl = `/worker.js?v=${this.config.websiteVersion}`;
+        this.#worker = new Worker(new URL(workerUrl, import.meta.url), {
             type: "module",
         });
         const initResponse = new Promise<ConnectToWorkerResponse>((resolve) => {

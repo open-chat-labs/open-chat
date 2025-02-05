@@ -237,7 +237,7 @@
         params.append("q", text);
         params.append("target", translationCodes[$locale || "en"] || "en");
         params.append("format", "text");
-        params.append("key", process.env.PUBLIC_TRANSLATE_API_KEY!);
+        params.append("key", import.meta.env.OC_PUBLIC_TRANSLATE_API_KEY!);
         fetch(`https://translation.googleapis.com/language/translate/v2?${params}`, {
             method: "POST",
         })

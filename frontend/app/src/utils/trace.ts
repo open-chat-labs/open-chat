@@ -1,6 +1,6 @@
 import { load as botCheck } from "@fingerprintjs/botd";
 
-const suspiciousUserIds = process.env.SUSPICIOUS_USERIDS!;
+const suspiciousUserIds = import.meta.env.OC_SUSPICIOUS_USERIDS! ?? [];
 
 export async function trace(ev: MouseEvent, userId: string, username: string, json: object) {
     if (!suspiciousUserIds.includes(userId)) return;

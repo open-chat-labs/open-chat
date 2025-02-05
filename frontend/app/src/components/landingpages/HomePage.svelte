@@ -55,6 +55,8 @@
 {/if}
 
 <style lang="scss">
+    @use "../../styles/mixins.scss" as *;
+
     .headline {
         display: grid;
         gap: $sp5;

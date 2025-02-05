@@ -1,3 +1,6 @@
+@use 'sass:math';
+@use 'sass:map';
+
 @function toRem($value: 16) {
     $remValue: math.div($value, 16) + rem;
     @return $remValue;
@@ -146,8 +149,8 @@ $avatar-mod-offset-small: toRem(-3);
 /* Media query stuff */
 
 @mixin size-above($breakpoint) {
-    @if map-has-key($breakpoints, $breakpoint) {
-        $breakpoint-value: map-get($breakpoints, $breakpoint);
+    @if map.has-key($breakpoints, $breakpoint) {
+        $breakpoint-value: map.get($breakpoints, $breakpoint);
         @media (min-width: $breakpoint-value) {
             @content;
         }
@@ -175,8 +178,8 @@ $avatar-mod-offset-small: toRem(-3);
 }
 
 @mixin size-below($breakpoint) {
-    @if map-has-key($breakpoints, $breakpoint) {
-        $breakpoint-value: map-get($breakpoints, $breakpoint);
+    @if map.has-key($breakpoints, $breakpoint) {
+        $breakpoint-value: map.get($breakpoints, $breakpoint);
         @media (max-width: ($breakpoint-value - 1)) {
             @content;
         }
@@ -305,7 +308,7 @@ $z-index-map: ();
     $counter: 1;
     $group-map: ();
     @each $item in $group-list {
-        $group-map: map-merge(
+        $group-map: map.merge(
             $group-map,
             (
                 $item: $counter,
@@ -313,7 +316,7 @@ $z-index-map: ();
         );
         $counter: $counter + 1;
     }
-    $z-index-map: map-merge(
+    $z-index-map: map.merge(
         $z-index-map,
         (
             $group-name: $group-map,
@@ -322,9 +325,9 @@ $z-index-map: ();
 }
 
 @mixin z-index($key, $group: "global") {
-    @if map-has-key($z-index-map, $group) {
-        @if map-has-key(map-get($z-index-map, $group), $key) {
-            z-index: map-get(map-get($z-index-map, $group), $key);
+    @if map.has-key($z-index-map, $group) {
+        @if map.has-key(map.get($z-index-map, $group), $key) {
+            z-index: map.get(map.get($z-index-map, $group), $key);
         } @else {
             @error ('@include z-index() expects $key to be found in map z-indexed-items #{$group}, given `#{$key}`');
         }
@@ -351,20 +354,20 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
 
 @mixin font-size($type: fs-100, $line-height: null) {
     // Generating mixins below: Do not change
-    $type: map-get($font-sizes, $type);
+    $type: map.get($font-sizes, $type);
 
     // LINE-HEIGHTS
-    @if map-has-key($type, line-height) {
+    @if map.has-key($type, line-height) {
         @if $line-height {
             line-height: toRem($line-height);
         } @else {
-            line-height: map-get($type, line-height);
+            line-height: map.get($type, line-height);
         }
     }
 
     // FONT-SIZES
-    @if map-has-key($type, font-size) {
-        font-size: map-get($type, font-size);
+    @if map.has-key($type, font-size) {
+        font-size: map.get($type, font-size);
     }
 }
 
@@ -388,8 +391,8 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
 
 @mixin font($weight: book, $style: null, $size: null, $line-height: null) {
     // Error handling
-    @if map-has-key($font-weights, $weight) {
-        font-weight: map-get($font-weights, $weight);
+    @if map.has-key($font-weights, $weight) {
+        font-weight: map.get($font-weights, $weight);
         @include font-family($weight);
     } @else {
         @error ('@include font() expects $weight to be found in map font, given `#{$weight}`');
