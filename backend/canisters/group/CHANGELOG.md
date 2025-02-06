@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix messageId deduplication to cater for disappearing messages ([#7369](https://github.com/open-chat-labs/open-chat/pull/7369))
+
+## [[2.0.1602](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1602-group)] - 2025-02-06
+
 ### Changed
 
 - Restructure to handle autonomous bots ([#7318](https://github.com/open-chat-labs/open-chat/pull/7318))
