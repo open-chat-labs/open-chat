@@ -12,6 +12,7 @@ use types::{
     AutonomousConfig, BotInstallationLocation, BotMatch, CanisterId, CyclesTopUp, Document, Milliseconds, SlashCommandSchema,
     SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
 };
+use user_index_canister::bot_updates::BotSchema;
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MonthKey;
 
@@ -90,6 +91,20 @@ impl Bot {
 
     pub fn remove_installation(&mut self, location: &BotInstallationLocation) -> Option<InstalledBotDetails> {
         self.installations.remove(location)
+    }
+
+    pub fn to_schema(&self, id: UserId) -> BotSchema {
+        BotSchema {
+            id,
+            owner: self.owner,
+            name: self.name.clone(),
+            avatar_id: self.avatar.as_ref().map(|a| a.id),
+            endpoint: self.endpoint.clone(),
+            description: self.description.clone(),
+            commands: self.commands.clone(),
+            autonomous_config: self.autonomous_config.clone(),
+            last_updated: self.last_updated,
+        }
     }
 }
 
@@ -300,6 +315,10 @@ impl UserMap {
         self.botname_to_user_id.remove(&bot.name);
         self.bot_updates.insert((now, BotUpdate::Removed(bot_id)));
         Some(bot)
+    }
+
+    pub fn iter_bots(&self) -> impl Iterator<Item = (&UserId, &Bot)> {
+        self.bots.iter()
     }
 
     pub fn iter_bot_updates(&self, since: TimestampMillis) -> impl Iterator<Item = (TimestampMillis, BotUpdate)> + '_ {
