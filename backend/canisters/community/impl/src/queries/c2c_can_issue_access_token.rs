@@ -32,10 +32,10 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
             return Response::Failure;
         };
 
-        let available = BotPermissions::intersect(granted_permissions, &args.requested_permissions);
+        let granted = BotPermissions::intersect(granted_permissions, &args.requested_permissions);
 
-        if args.requested_permissions.is_subset(&available) {
-            return Response::SuccessBot(available);
+        if args.requested_permissions.is_subset(&granted) {
+            return Response::SuccessBot(granted);
         } else {
             return Response::Failure;
         }
@@ -53,10 +53,10 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         };
 
         let granted = BotPermissions::intersect(granted_to_bot, &granted_to_user);
-        let available = BotPermissions::intersect(&granted, &args.requested_permissions);
 
-        if args.requested_permissions.is_subset(&available) {
-            return Response::SuccessBot(granted);
+        if args.requested_permissions.is_subset(&granted) {
+            let available = BotPermissions::intersect(&granted, &args.requested_permissions);
+            return Response::SuccessBot(available);
         } else {
             return Response::Failure;
         }
