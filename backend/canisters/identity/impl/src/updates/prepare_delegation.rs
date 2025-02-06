@@ -51,5 +51,6 @@ pub(crate) fn prepare_delegation_inner(
     SuccessResult {
         user_key: state.der_encode_canister_sig_key(seed),
         expiration,
+        seed,
     }
 }
