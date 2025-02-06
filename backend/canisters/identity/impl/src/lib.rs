@@ -2,16 +2,21 @@ use crate::model::challenges::Challenges;
 use crate::model::identity_link_requests::IdentityLinkRequests;
 use crate::model::salt::Salt;
 use crate::model::user_principals::UserPrincipals;
+use crate::model::webauthn_keys::WebAuthnKeys;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use ic_canister_sig_creation::signature_map::{SignatureMap, LABEL_SIG};
-use ic_canister_sig_creation::CanisterSigPublicKey;
+use constants::{DAY_IN_MS, NANOS_PER_MILLISECOND};
+use ic_canister_sig_creation::signature_map::{CanisterSigInputs, SignatureMap, LABEL_SIG};
+use ic_canister_sig_creation::{delegation_signature_msg, CanisterSigPublicKey, DELEGATION_SIG_DOMAIN};
 use ic_cdk::api::set_certified_data;
+use identity_canister::prepare_delegation::SuccessResult;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
+use types::{
+    BuildVersion, CanisterId, Cycles, Delegation, Nanoseconds, SignedDelegation, TimestampMillis, TimestampNanos, Timestamped,
+};
 use utils::env::Environment;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
@@ -21,6 +26,9 @@ mod memory;
 mod model;
 mod queries;
 mod updates;
+
+const DEFAULT_DELEGATION_EXPIRATION_PERIOD: Nanoseconds = 30 * DAY_IN_MS * NANOS_PER_MILLISECOND;
+const MAX_DELEGATION_EXPIRATION_PERIOD: Nanoseconds = 90 * DAY_IN_MS * NANOS_PER_MILLISECOND;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -66,6 +74,31 @@ impl RuntimeState {
         seed
     }
 
+    pub fn prepare_delegation(
+        &mut self,
+        seed: [u8; 32],
+        session_key: Vec<u8>,
+        max_time_to_live: Option<Nanoseconds>,
+    ) -> SuccessResult {
+        let delta = Nanoseconds::min(
+            max_time_to_live.unwrap_or(DEFAULT_DELEGATION_EXPIRATION_PERIOD),
+            MAX_DELEGATION_EXPIRATION_PERIOD,
+        );
+        let expiration = self.env.now_nanos().saturating_add(delta);
+
+        self.data.signature_map.add_signature(&CanisterSigInputs {
+            domain: DELEGATION_SIG_DOMAIN,
+            seed: &seed,
+            message: &delegation_signature_msg(&session_key, expiration, None),
+        });
+        self.data.update_root_hash();
+
+        SuccessResult {
+            user_key: self.der_encode_canister_sig_key(seed),
+            expiration,
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -99,6 +132,8 @@ struct Data {
     signature_map: SignatureMap,
     #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
+    #[serde(default)]
+    webauthn_keys: WebAuthnKeys,
     salt: Salt,
     rng_seed: [u8; 32],
     challenges: Challenges,
@@ -125,6 +160,7 @@ impl Data {
             identity_link_requests: IdentityLinkRequests::default(),
             signature_map: SignatureMap::default(),
             ic_root_key,
+            webauthn_keys: WebAuthnKeys::default(),
             salt: Salt::default(),
             rng_seed: [0; 32],
             challenges: Challenges::default(),
@@ -147,6 +183,17 @@ impl Data {
         sha256(&bytes)
     }
 
+    pub fn calculate_webauthn_seed(&self, credential_id: &[u8]) -> [u8; 32] {
+        let salt = self.salt.get();
+
+        let mut bytes: Vec<u8> = vec![];
+        bytes.push(salt.len() as u8);
+        bytes.extend_from_slice(&salt);
+        bytes.extend_from_slice(credential_id);
+
+        sha256(&bytes)
+    }
+
     pub fn update_root_hash(&mut self) {
         let prefixed_root_hash = ic_certification::labeled_hash(LABEL_SIG, &self.signature_map.root_hash());
         set_certified_data(&prefixed_root_hash[..]);
@@ -155,17 +202,43 @@ impl Data {
     pub fn requires_captcha(&self, originating_canister_id: &CanisterId) -> bool {
         !self.skip_captcha_whitelist.contains(originating_canister_id)
     }
+
+    pub fn get_delegation(&self, session_key: Vec<u8>, expiration: TimestampNanos, seed: [u8; 32]) -> Option<SignedDelegation> {
+        let signature = self
+            .signature_map
+            .get_signature_as_cbor(
+                &CanisterSigInputs {
+                    domain: DELEGATION_SIG_DOMAIN,
+                    seed: &seed,
+                    message: &delegation_signature_msg(&session_key, expiration, None),
+                },
+                None,
+            )
+            .ok()?;
+
+        let delegation = Delegation {
+            pubkey: session_key,
+            expiration,
+        };
+
+        Some(SignedDelegation { delegation, signature })
+    }
 }
 
 fn extract_originating_canister(caller: Principal, public_key: &[u8]) -> Result<CanisterId, String> {
+    check_public_key(caller, public_key)?;
+
     let key_info = SubjectPublicKeyInfo::from_der(public_key).map_err(|e| format!("{e:?}"))?.1;
     let canister_id_length = key_info.subject_public_key.data[0];
 
     let canister_id = CanisterId::from_slice(&key_info.subject_public_key.data[1..=(canister_id_length as usize)]);
+    Ok(canister_id)
+}
 
+fn check_public_key(caller: Principal, public_key: &[u8]) -> Result<(), String> {
     let expected_caller = Principal::self_authenticating(public_key);
     if caller == expected_caller {
-        Ok(canister_id)
+        Ok(())
     } else {
         Err("PublicKey does not match caller".to_string())
     }

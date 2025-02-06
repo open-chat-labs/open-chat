@@ -26,6 +26,12 @@ type GetDelegationResponse = variant {
     NotFound;
 };
 
+type GetWebAuthnDelegationArgs = record {
+    credential_id : PublicKey;
+    session_key : PublicKey;
+    expiration : TimestampNanoseconds;
+};
+
 type SignedDelegation = record {
     delegation : record {
         pubkey : PublicKey;
@@ -79,6 +85,25 @@ type CreateIdentityResponse = variant {
     ChallengeFailed;
 };
 
+type CreateWebAuthnIdentityArgs = record {
+    public_key : PublicKey;
+    credential_id : PublicKey;
+    auth_session_key : PublicKey;
+    session_key : PublicKey;
+    max_time_to_live : opt Nanoseconds;
+    challenge_attempt : record {
+        key : nat32;
+        chars : text;
+    };
+};
+
+type CreateWebAuthnIdentityResponse = variant {
+    Success : PrepareWebAuthnDelegationSuccess;
+    AlreadyRegistered;
+    PublicKeyInvalid : text;
+    ChallengeFailed;
+};
+
 type InitiateIdentityLinkArgs = record {
     public_key : blob;
     is_ii_principal : opt bool;
@@ -109,6 +134,26 @@ type PrepareDelegationSuccess = record {
     expiration : TimestampNanoseconds;
 };
 
+type PrepareWebAuthnDelegationArgs = record {
+    credential_id : PublicKey;
+    auth_session_key : PublicKey;
+    session_key : PublicKey;
+    max_time_to_live : opt Nanoseconds;
+};
+
+type PrepareWebAuthnDelegationResponse = variant {
+    Success : PrepareWebAuthnDelegationSuccess;
+    NotFound;
+    CredentialNotFound;
+    PublicKeyInvalid : text;
+};
+
+type PrepareWebAuthnDelegationSuccess = record {
+    auth_session : PrepareDelegationSuccess;
+    user_session : PrepareDelegationSuccess;
+};
+
+
 type RemoveIdentityLinkArgs = record {
     linked_principal : principal;
 };
@@ -124,10 +169,13 @@ service : {
     auth_principals : (record {}) -> (AuthPrincipalsResponse) query;
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
+    get_webauthn_delegation : (GetWebAuthnDelegationArgs) -> (GetDelegationResponse) query;
     approve_identity_link : (ApproveIdentityLinkArgs) -> (ApproveIdentityLinkResponse);
     create_identity : (CreateIdentityArgs) -> (CreateIdentityResponse);
+    create_webauthn_identity : (CreateWebAuthnIdentityArgs) -> (CreateWebAuthnIdentityResponse);
     generate_challenge : (record {}) -> (GenerateChallengeResponse);
     initiate_identity_link : (InitiateIdentityLinkArgs) -> (InitiateIdentityLinkResponse);
     prepare_delegation : (PrepareDelegationArgs) -> (PrepareDelegationResponse);
+    prepare_webauthn_delegation : (PrepareWebAuthnDelegationArgs) -> (PrepareWebAuthnDelegationResponse);
     remove_identity_link: (RemoveIdentityLinkArgs) -> (RemoveIdentityLinkResponse);
 }

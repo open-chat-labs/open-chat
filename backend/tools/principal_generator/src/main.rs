@@ -1,5 +1,6 @@
 use ic_principal::Principal;
 
+// Input should be of the form "openc-hatbo-t"
 fn main() {
     let args = std::env::args().collect::<Vec<_>>();
     let Some(target_name) = args.get(1).cloned() else {
