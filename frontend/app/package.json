@@ -56,11 +56,11 @@
     },
     "dependencies": {
         "@daily-co/daily-js": "^0.72.0",
-        "@dfinity/agent": "^2.1.1",
-        "@dfinity/auth-client": "^2.1.1",
-        "@dfinity/candid": "^2.1.1",
-        "@dfinity/identity": "^2.1.1",
-        "@dfinity/principal": "^2.1.1",
+        "@dfinity/agent": "^2.2.0",
+        "@dfinity/auth-client": "^2.2.0",
+        "@dfinity/candid": "^2.2.0",
+        "@dfinity/identity": "^2.2.0",
+        "@dfinity/principal": "^2.2.0",
         "@fingerprintjs/botd": "^1.9.1",
         "@fortawesome/free-solid-svg-icons": "^6.4.2",
         "@memefighter/maker-core": "^0.0.17",
@@ -88,7 +88,7 @@
         "svelte-easy-crop": "^3.0.0",
         "svelte-material-icons": "^3.0.5",
         "svelte-qrcode-image": "^1.0.0-rc.2",
-        "usergeek-ic-js": "hpeebles/usergeek-ic-js#3626834a09277d803e857d5968c0767771511047",
+        "usergeek-ic-js": "^1.0.6",
         "wavesurfer.js": "^7.7.5"
     }
 }

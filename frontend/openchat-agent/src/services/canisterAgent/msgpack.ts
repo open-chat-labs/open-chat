@@ -6,7 +6,9 @@ import {
     lookupResultToBuffer,
     polling,
     QueryCallRejectedError,
+    ReplicaRejectCode,
     UpdateCallRejectedError,
+    type v3ResponseBody,
 } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { toCanisterResponseError } from "../error";
@@ -22,12 +24,7 @@ const Packer = new Packr({
 } as unknown as Options);
 
 export abstract class MsgpackCanisterAgent extends CanisterAgent {
-    constructor(
-        identity: Identity,
-        agent: HttpAgent,
-        canisterId: string,
-        canisterName: string,
-    ) {
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string, canisterName: string) {
         super(identity, agent, canisterId, canisterName);
     }
 
@@ -68,8 +65,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                 },
                 args,
             );
-        }
-        catch (err) {
+        } catch (err) {
             isError = true;
             throw err;
         } finally {
@@ -90,22 +86,21 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
         try {
             const payload = MsgpackCanisterAgent.prepareMsgpackArgs(args, requestValidator);
 
-            const { requestId, response } = await this.sendRequestToCanister(() =>
-                this.agent.call(this.canisterId, {
-                    methodName: methodName + "_msgpack",
-                    arg: payload,
-                    callSync: onRequestAccepted === undefined,
-                }),
-            );
+            const { requestId, response } = await this.agent.call(this.canisterId, {
+                methodName: methodName + "_msgpack",
+                arg: payload,
+                callSync: onRequestAccepted === undefined,
+            });
             const canisterId = Principal.fromText(this.canisterId);
 
-            if (response.ok && response.body?.certificate) {
-                const certTime = this.agent.replicaTime;
+            if (response.ok && (response.body as v3ResponseBody)?.certificate) {
+                const cert = (response.body as v3ResponseBody).certificate;
+                // const certTime = this.agent.replicaTime;
                 const certificate = await Certificate.create({
-                    certificate: bufFromBufLike(response.body?.certificate),
+                    certificate: bufFromBufLike(cert),
                     rootKey: this.agent.rootKey,
                     canisterId: Principal.from(canisterId),
-                    certTime,
+                    blsVerify: undefined,
                 });
                 const path = [new TextEncoder().encode("request_status"), requestId];
                 const status = new TextDecoder().decode(
@@ -126,13 +121,30 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                         }
                         break;
                     }
-                    case "rejected":
+                    case "rejected": {
+                        // Find rejection details in the certificate
+                        const rejectCode = new Uint8Array(
+                            lookupResultToBuffer(certificate.lookup([...path, "reject_code"]))!,
+                        )[0];
+                        const rejectMessage = new TextDecoder().decode(
+                            lookupResultToBuffer(certificate.lookup([...path, "reject_message"]))!,
+                        );
+                        const error_code_buf = lookupResultToBuffer(
+                            certificate.lookup([...path, "error_code"]),
+                        );
+                        const error_code = error_code_buf
+                            ? new TextDecoder().decode(error_code_buf)
+                            : undefined;
                         throw new UpdateCallRejectedError(
                             canisterId,
                             methodName,
                             requestId,
                             response,
+                            rejectCode,
+                            rejectMessage,
+                            error_code,
                         );
+                    }
                 }
             }
             if (response.status === 202) {
@@ -140,13 +152,11 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                     onRequestAccepted();
                 }
 
-                const { reply } = await this.sendRequestToCanister(() =>
-                    polling.pollForResponse(
-                        this.agent,
-                        canisterId,
-                        requestId,
-                        polling.defaultStrategy(),
-                    ),
+                const { reply } = await polling.pollForResponse(
+                    this.agent,
+                    canisterId,
+                    requestId,
+                    polling.defaultStrategy(),
                 );
                 return Promise.resolve(
                     MsgpackCanisterAgent.processMsgpackResponse(reply, mapper, responseValidator),
@@ -157,6 +167,8 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
                     methodName,
                     requestId,
                     response,
+                    ReplicaRejectCode.CanisterReject,
+                    "",
                 );
             }
         } catch (err) {
