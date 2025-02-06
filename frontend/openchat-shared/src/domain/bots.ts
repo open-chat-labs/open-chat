@@ -6,7 +6,7 @@ import type {
     MultiUserChatIdentifier,
 } from "./chat";
 import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
-import {type InterpolationValues, parseBigInt, type ResourceKey} from "../utils";
+import { type InterpolationValues, parseBigInt, type ResourceKey } from "../utils";
 import { ValidationErrors } from "../utils/validation";
 import type { CommunityIdentifier } from "./community";
 
@@ -23,7 +23,12 @@ export type BotsResponse = {
 };
 
 // This can be expanded as necessary to include things like ChatParam (e.g. for a /goto bot)
-export type SlashCommandParamType = UserParam | BooleanParam | StringParam | IntegerParam | DecimalParam;
+export type SlashCommandParamType =
+    | UserParam
+    | BooleanParam
+    | StringParam
+    | IntegerParam
+    | DecimalParam;
 
 export type CommandParam = {
     name: string;
@@ -351,7 +356,7 @@ export function createParamInstancesFromSchema(
             case "boolean":
                 return { kind: "boolean", name: p.name, value: false };
             case "integer": {
-                let value : bigint | null = parseBigInt(maybeParams[i]) ?? null;
+                let value: bigint | null = parseBigInt(maybeParams[i]) ?? null;
                 if (p.choices.length > 0) {
                     value = p.choices.find((c) => c.value === value)?.value ?? null;
                 }
@@ -618,6 +623,7 @@ export type BotResponseMessage = {
     messageId: bigint;
     messageContent: MessageContent;
     finalised: boolean;
+    blockLevelMarkdown: boolean;
 };
 
 export type BotClientConfigData = {

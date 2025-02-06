@@ -99,7 +99,7 @@ export function botUpdatesResponse(
             delete map[principalBytesToString(d)];
         });
         return {
-            timestamp: 0n,
+            timestamp: value.Success.timestamp,
             bots: Object.values(
                 value.Success.added_or_updated.reduce((all, bot) => {
                     const mapped = botSchema(bot, blobUrlPattern, canisterId);
