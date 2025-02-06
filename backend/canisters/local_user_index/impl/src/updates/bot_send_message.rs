@@ -7,7 +7,7 @@ use types::{
 
 use crate::{bots::extract_access_context, mutate_state, RuntimeState};
 
-#[update(candid = true)]
+#[update(candid = true, json = true)]
 async fn bot_send_message(args: Args) -> Response {
     use Response::*;
 
