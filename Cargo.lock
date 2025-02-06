@@ -4634,6 +4634,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "itertools 0.13.0",
+ "json",
  "jwt",
  "ledger_utils",
  "local_user_index_canister",
