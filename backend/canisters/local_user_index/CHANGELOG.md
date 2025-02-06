@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Restructure to handle autonomous bots ([#7318](https://github.com/open-chat-labs/open-chat/pull/7318))
 - Sync blocked users to UserIndex ([#7333](https://github.com/open-chat-labs/open-chat/pull/7333))
 - Expose each bot action as a separate endpoint ([#7345](https://github.com/open-chat-labs/open-chat/pull/7345))
+- Return requested permissions in bot access tokens ([#7366](https://github.com/open-chat-labs/open-chat/pull/7366))
+- Allow bots to execute actions using JSON ([#7367](https://github.com/open-chat-labs/open-chat/pull/7367))
 
 ### Fixed
 

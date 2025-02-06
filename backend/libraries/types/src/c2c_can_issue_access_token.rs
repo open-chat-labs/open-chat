@@ -10,10 +10,19 @@ pub enum AccessTypeArgs {
     BotActionByApiKey(BotActionByApiKeyArgs),
 }
 
+impl AccessTypeArgs {
+    pub fn requested_permissions(&self) -> Option<BotPermissions> {
+        match self {
+            AccessTypeArgs::BotActionByCommand(args) => Some(args.requested_permissions.clone()),
+            AccessTypeArgs::BotActionByApiKey(args) => Some(args.requested_permissions.clone()),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    SuccessBot(BotPermissions),
     Failure,
 }
 

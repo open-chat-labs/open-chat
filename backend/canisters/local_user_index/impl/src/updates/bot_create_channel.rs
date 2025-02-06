@@ -4,7 +4,7 @@ use types::BotActionScope;
 
 use crate::{bots::extract_access_context, mutate_state};
 
-#[update(candid = true)]
+#[update(candid = true, json = true)]
 async fn bot_create_channel(args: Args) -> Response {
     use Response::*;
 
