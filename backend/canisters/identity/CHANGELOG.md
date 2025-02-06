@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Return seed in `prepare_delegation` response in preparation for WebAuthn ([#7370](https://github.com/open-chat-labs/open-chat/pull/7370))
+
 ## [[2.0.1594](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1594-identity)] - 2025-01-31
 
 ### Added
