@@ -15,12 +15,13 @@ fn c2c_can_issue_access_token_v2(args: Args) -> Response {
 
 fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Response {
     if let AccessTypeArgs::BotActionByApiKey(args) = &args_outer {
-        if let Some(granted_permissions) = state
+        let granted_opt = state
             .data
             .bot_api_keys
-            .permissions_if_secret_matches(&args.bot_id, &args.secret)
-        {
-            return Response::SuccessBot(granted_permissions.clone());
+            .permissions_if_secret_matches(&args.bot_id, &args.secret);
+
+        if granted_opt.is_some_and(|granted| args.requested_permissions.is_subset(granted)) {
+            return Response::Success;
         } else {
             return Response::Failure;
         }
@@ -40,8 +41,7 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         let granted = BotPermissions::intersect(granted_to_bot, &granted_to_user);
 
         if args.requested_permissions.is_subset(&granted) {
-            let available = BotPermissions::intersect(&granted, &args.requested_permissions);
-            return Response::SuccessBot(available);
+            return Response::Success;
         } else {
             return Response::Failure;
         }

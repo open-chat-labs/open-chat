@@ -58,23 +58,25 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
         }
     };
 
-    let granted_permissions = match c2c_response {
-        Ok(c2c_can_issue_access_token::Response::Success) => None,
-        Ok(c2c_can_issue_access_token::Response::SuccessBot(permissions)) => Some(permissions),
+    match c2c_response {
+        Ok(c2c_can_issue_access_token::Response::Success) => (),
         Ok(c2c_can_issue_access_token::Response::Failure) => return NotAuthorized,
         Err(err) => return InternalError(format!("{err:?}")),
-    };
+    }
 
     let token_type_name = args_wrapper.type_name().to_string();
 
     mutate_state(|state| {
-        let chat = match &args_wrapper {
+        let chat = args_wrapper.chat();
+        let requested_permissions = access_type_args.requested_permissions();
+
+        match &args_wrapper {
             ArgsInternal::BotActionByCommand(args) => {
                 let custom_claims = BotActionByCommandClaims {
                     bot: args.bot_id,
                     scope: args.scope.clone(),
                     bot_api_gateway: state.env.canister_id(),
-                    granted_permissions: granted_permissions.unwrap(),
+                    granted_permissions: requested_permissions.unwrap(),
                     command: args.command.clone(),
                 };
                 return build_token(token_type_name, custom_claims, state);
@@ -84,20 +86,18 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                     bot: args.bot_id,
                     scope: args.scope.clone(),
                     bot_api_gateway: state.env.canister_id(),
-                    granted_permissions: granted_permissions.unwrap(),
+                    granted_permissions: requested_permissions.unwrap(),
                 };
                 return build_token(token_type_name, custom_claims, state);
             }
-            ArgsInternal::StartVideoCall(args) => args.chat,
-            ArgsInternal::JoinVideoCall(args) => args.chat,
-            ArgsInternal::MarkVideoCallAsEnded(args) => args.chat,
-        };
+            _ => (),
+        }
 
         match access_type_args {
             AccessTypeArgs::StartVideoCall(args) => {
                 let custom_claims = StartVideoCallClaims {
                     user_id: args.initiator,
-                    chat_id: chat,
+                    chat_id: chat.unwrap(),
                     call_type: args.call_type,
                     is_diamond: args.is_diamond,
                 };
@@ -106,14 +106,14 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
             AccessTypeArgs::JoinVideoCall(args) => {
                 let custom_claims = JoinOrEndVideoCallClaims {
                     user_id: args.initiator,
-                    chat_id: chat,
+                    chat_id: chat.unwrap(),
                 };
                 build_token(token_type_name, custom_claims, state)
             }
             AccessTypeArgs::MarkVideoCallAsEnded(args) => {
                 let custom_claims = JoinOrEndVideoCallClaims {
                     user_id: args.initiator,
-                    chat_id: chat,
+                    chat_id: chat.unwrap(),
                 };
                 build_token(token_type_name, custom_claims, state)
             }
@@ -260,6 +260,16 @@ impl ArgsInternal {
             Self::MarkVideoCallAsEnded(_) => "MarkVideoCallAsEnded",
             Self::BotActionByCommand(_) => "BotActionByCommand",
             Self::BotActionByApiKey(_) => "BotActionByApiKey",
+        }
+    }
+
+    pub fn chat(&self) -> Option<Chat> {
+        match self {
+            Self::StartVideoCall(args) => Some(args.chat),
+            Self::JoinVideoCall(args) => Some(args.chat),
+            Self::MarkVideoCallAsEnded(args) => Some(args.chat),
+            Self::BotActionByCommand(args) => args.scope.chat(),
+            Self::BotActionByApiKey(args) => args.scope.chat(),
         }
     }
 }

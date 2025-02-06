@@ -15,7 +15,7 @@ fn c2c_can_issue_access_token(args: Args) -> Response {
 
 fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Response {
     if let AccessTypeArgs::BotActionByApiKey(args) = &args_outer.access_type {
-        let granted_permissions_opt = if let Some(channel_id) = args_outer.channel_id {
+        let granted_opt = if let Some(channel_id) = args_outer.channel_id {
             if let Some(channel) = state.data.channels.get(&channel_id) {
                 channel.bot_api_keys.permissions_if_secret_matches(&args.bot_id, &args.secret)
             } else {
@@ -28,14 +28,8 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
                 .permissions_if_secret_matches(&args.bot_id, &args.secret)
         };
 
-        let Some(granted_permissions) = granted_permissions_opt else {
-            return Response::Failure;
-        };
-
-        let granted = BotPermissions::intersect(granted_permissions, &args.requested_permissions);
-
-        if args.requested_permissions.is_subset(&granted) {
-            return Response::SuccessBot(granted);
+        if granted_opt.is_some_and(|granted| args.requested_permissions.is_subset(granted)) {
+            return Response::Success;
         } else {
             return Response::Failure;
         }
@@ -55,8 +49,7 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         let granted = BotPermissions::intersect(granted_to_bot, &granted_to_user);
 
         if args.requested_permissions.is_subset(&granted) {
-            let available = BotPermissions::intersect(&granted, &args.requested_permissions);
-            return Response::SuccessBot(available);
+            return Response::Success;
         } else {
             return Response::Failure;
         }

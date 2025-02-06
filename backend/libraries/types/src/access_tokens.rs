@@ -41,6 +41,13 @@ impl BotActionScope {
             BotActionScope::Community(scope) => scope.community_id.into(),
         }
     }
+
+    pub fn chat(&self) -> Option<Chat> {
+        match self {
+            BotActionScope::Chat(details) => Some(details.chat),
+            _ => None,
+        }
+    }
 }
 
 impl From<BotActionScope> for AccessTokenScope {
@@ -116,6 +123,13 @@ impl AccessTokenScope {
         match self {
             AccessTokenScope::Chat(chat) => chat.canister_id(),
             AccessTokenScope::Community(community_id) => (*community_id).into(),
+        }
+    }
+
+    pub fn chat(&self) -> Option<Chat> {
+        match self {
+            AccessTokenScope::Chat(chat) => Some(*chat),
+            _ => None,
         }
     }
 }
