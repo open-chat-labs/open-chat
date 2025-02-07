@@ -1,5 +1,6 @@
 type Nanoseconds = nat64;
 type PublicKey = blob;
+type TimestampMillis = nat64;
 type TimestampNanoseconds = nat64;
 
 type AuthPrincipalsResponse = variant {
@@ -7,6 +8,7 @@ type AuthPrincipalsResponse = variant {
         "principal" : principal;
         originating_canister : principal;
         is_ii_principal : bool;
+        last_used : TimestampMillis;
     };
     NotFound;
 };

@@ -59,9 +59,14 @@ impl RuntimeState {
         let public_key = self.der_encode_canister_sig_key(seed);
         let principal = Principal::self_authenticating(public_key);
 
-        self.data
-            .user_principals
-            .push(index, principal, auth_principal, originating_canister, is_ii_principal);
+        self.data.user_principals.push(
+            index,
+            principal,
+            auth_principal,
+            originating_canister,
+            is_ii_principal,
+            self.env.now(),
+        );
 
         seed
     }
