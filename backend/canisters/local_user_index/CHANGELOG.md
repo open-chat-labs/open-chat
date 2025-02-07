@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Expose each bot action as a separate endpoint ([#7345](https://github.com/open-chat-labs/open-chat/pull/7345))
 - Return requested permissions in bot access tokens ([#7366](https://github.com/open-chat-labs/open-chat/pull/7366))
 - Allow bots to execute actions using JSON ([#7367](https://github.com/open-chat-labs/open-chat/pull/7367))
+- Allow bots to execute actions using msgpack ([#7371](https://github.com/open-chat-labs/open-chat/pull/7371))
 
 ### Fixed
 
