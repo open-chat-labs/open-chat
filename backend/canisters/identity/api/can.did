@@ -107,6 +107,7 @@ type PrepareDelegationResponse = variant {
 type PrepareDelegationSuccess = record {
     user_key : PublicKey;
     expiration : TimestampNanoseconds;
+    seed: blob;
 };
 
 type RemoveIdentityLinkArgs = record {
