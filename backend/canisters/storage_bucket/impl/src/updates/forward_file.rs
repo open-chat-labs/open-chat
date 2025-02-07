@@ -8,7 +8,7 @@ use canister_tracing_macros::trace;
 use rand::Rng;
 use storage_bucket_canister::forward_file::{Response::*, *};
 
-#[update(guard = "caller_is_known_user", candid = true, msgpack = true)]
+#[update(guard = "caller_is_known_user", candid = true, json = true, msgpack = true)]
 #[trace]
 fn forward_file(args: Args) -> Response {
     mutate_state(|state| forward_file_impl(args, state))
