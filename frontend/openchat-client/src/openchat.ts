@@ -168,14 +168,7 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import {
-    groupBy,
-    groupWhile,
-    keepMax,
-    partition,
-    toRecord,
-    toRecord2,
-} from "./utils/list";
+import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -468,13 +461,13 @@ import {
     shouldPreprocessGate,
     deletedUser,
     OPENCHAT_BOT_USER_ID,
-    AIRDROP_BOT_USER_ID,
     isEditableContent,
     isCaptionedContent,
     parseBigInt,
     random64,
     random128,
 } from "openchat-shared";
+import { AIRDROP_BOT_USER_ID } from "./constants";
 import { failedMessagesStore } from "./stores/failedMessages";
 import { diamondDurationToMs } from "./stores/diamond";
 import {
@@ -581,7 +574,10 @@ export class OpenChat extends EventTarget {
     #userUpdatePoller: Poller | undefined = undefined;
     #exchangeRatePoller: Poller | undefined = undefined;
     #recentlyActiveUsersTracker: RecentlyActiveUsersTracker = new RecentlyActiveUsersTracker();
-    #inflightMessagePromises: Map<bigint, (response: SendMessageSuccess | TransferSuccess) => void> = new Map();
+    #inflightMessagePromises: Map<
+        bigint,
+        (response: SendMessageSuccess | TransferSuccess) => void
+    > = new Map();
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
@@ -3507,8 +3503,8 @@ export class OpenChat extends EventTarget {
                             ...result,
                             kind: "transfer_success",
                             transfer: content.transfer as CompletedCryptocurrencyTransfer,
-                        }
-                    };
+                        };
+                    }
                     inflightMessagePromise(result);
                 }
                 if (unconfirmed.delete(context, messageId)) {
@@ -3539,10 +3535,7 @@ export class OpenChat extends EventTarget {
                 mergeServerEvents(events, newEvents, context),
             );
             if (newLatestMessage !== undefined) {
-                updateSummaryWithConfirmedMessage(
-                    chatId,
-                    newLatestMessage,
-                );
+                updateSummaryWithConfirmedMessage(chatId, newLatestMessage);
             }
             const selectedThreadRootMessageIndex = this.#liveState.selectedThreadRootMessageIndex;
             if (selectedThreadRootMessageIndex !== undefined) {
@@ -3789,7 +3782,7 @@ export class OpenChat extends EventTarget {
                 }
             }
             return resp;
-        })
+        });
     }
 
     #extractLedgerFromContent(content: MessageContent): string | undefined {
@@ -8369,7 +8362,8 @@ export class OpenChat extends EventTarget {
         authProvider: AuthProvider | undefined,
     ): Promise<ConnectToWorkerResponse> {
         console.debug("WORKER_CLIENT: loading worker with version: ", this.config.websiteVersion);
-        this.#worker = new Worker(`/worker.js?v=${this.config.websiteVersion}`, {
+        const workerUrl = `/worker.js?v=${this.config.websiteVersion}`;
+        this.#worker = new Worker(new URL(workerUrl, import.meta.url), {
             type: "module",
         });
         const initResponse = new Promise<ConnectToWorkerResponse>((resolve) => {

@@ -19,11 +19,11 @@
 
     const client = getContext<OpenChat>("client");
 
-    type Account = AuthenticationPrincipal & { provider: AuthProvider };
+    type AccountType = AuthenticationPrincipal & { provider: AuthProvider };
 
-    let accounts: Account[] = $state([]);
+    let accounts: AccountType[] = $state([]);
     let linking = $state(false);
-    let unlinking: Account | null = $state(null);
+    let unlinking: AccountType | null = $state(null);
 
     $effect(() => {
         (async () => refresh())();

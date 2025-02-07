@@ -19,7 +19,7 @@
     import { i18nKey } from "../../../i18n/i18n";
 
     let ledger: string =
-        process.env.NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP;
+        import.meta.env.OC_NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP;
 
     let step: "features" | "payment" = "features";
     let error: string | undefined;
