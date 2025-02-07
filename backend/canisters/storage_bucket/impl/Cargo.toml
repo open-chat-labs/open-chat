@@ -20,6 +20,7 @@ http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
+json = { path = "../../../libraries/json" }
 msgpack = { path = "../../../libraries/msgpack" }
 num-traits = { workspace = true }
 rand = { workspace = true }

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add MessagePack versions of canister endpoints ([#7347](https://github.com/open-chat-labs/open-chat/pull/7347))
+- Add JSON versions of canister endpoints ([#7374](https://github.com/open-chat-labs/open-chat/pull/7374))
 
 ## [[2.0.1573](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1573-storage_bucket)] - 2025-01-21
 

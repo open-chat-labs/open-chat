@@ -5,7 +5,7 @@ use storage_index_canister::allocated_bucket_v2::{Response::*, *};
 use storage_index_canister::ProjectedAllowance;
 use utils::file_id::generate_file_id;
 
-#[query(candid = true, msgpack = true)]
+#[query(candid = true, json = true, msgpack = true)]
 #[trace]
 fn allocated_bucket_v2(args: Args) -> Response {
     read_state(|state| allocated_bucket_impl(args, state))

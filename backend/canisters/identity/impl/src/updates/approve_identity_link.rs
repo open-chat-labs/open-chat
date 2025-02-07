@@ -49,6 +49,7 @@ fn approve_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response 
             originating_canister,
             is_ii_principal,
             auth_principal.user_principal_index,
+            now,
         ) {
             Success
         } else {

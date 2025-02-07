@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use storage_bucket_canister::delete_file::{Response::*, *};
 
-#[update(candid = true, msgpack = true)]
+#[update(candid = true, json = true, msgpack = true)]
 #[trace]
 fn delete_file(args: Args) -> Response {
     mutate_state(|state| delete_file_impl(args, state))
