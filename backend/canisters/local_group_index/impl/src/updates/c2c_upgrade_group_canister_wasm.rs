@@ -72,11 +72,17 @@ fn commit(args: Args, wasm: CanisterWasm, chunks: Vec<Hash>, state: &mut Runtime
     let include_all = include.is_empty();
     let exclude: HashSet<_> = filter.exclude.into_iter().collect();
 
+    let version_with_failures = BuildVersion {
+        major: 2,
+        minor: 0,
+        patch: 1581,
+    };
+
     for canister_id in state
         .data
         .local_groups
         .iter()
-        .filter(|(_, group)| should_perform_upgrade(group.wasm_version, version, state.data.test_mode))
+        .filter(|(_, group)| group.wasm_version == version_with_failures)
         .map(|(chat_id, _)| CanisterId::from(*chat_id))
         .filter(|c| include_all || include.contains(c))
         .filter(|c| !exclude.contains(c))
