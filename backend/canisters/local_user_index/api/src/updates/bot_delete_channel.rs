@@ -1,6 +1,6 @@
 use candid::CandidType;
-use ts_export::ts_export;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{AuthToken, ChannelId};
 
 #[ts_export(local_user_index, bot_delete_channel)]

@@ -1,6 +1,6 @@
 use candid::CandidType;
-use ts_export::ts_export;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{AccessGateConfig, AuthToken, ChannelId, Document, GroupPermissions, Milliseconds, Rules};
 
 #[ts_export(local_user_index, bot_create_channel)]

@@ -1,6 +1,6 @@
 use candid::CandidType;
-use ts_export::ts_export;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{AuthToken, BotMessageContent, ChannelId, EventIndex, MessageId, MessageIndex, TimestampMillis};
 
 #[ts_export(local_user_index, bot_send_message)]
