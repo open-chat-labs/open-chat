@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, Empty};
+use types::{CanisterId, Empty, TimestampMillis};
 
 pub type Args = Empty;
 
@@ -15,4 +15,5 @@ pub struct UserPrincipal {
     pub principal: Principal,
     pub originating_canister: CanisterId,
     pub is_ii_principal: bool,
+    pub last_used: TimestampMillis,
 }

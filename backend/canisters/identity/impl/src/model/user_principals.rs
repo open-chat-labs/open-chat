@@ -2,7 +2,7 @@ use candid::Principal;
 use identity_canister::remove_identity_link::Response as RemovePrincipalResponse;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{is_default, CanisterId, PushIfNotContains, UserId};
+use types::{is_default, CanisterId, PushIfNotContains, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserPrincipals {
@@ -37,6 +37,8 @@ struct AuthPrincipalInternal {
     user_principal_index: u32,
     #[serde(rename = "i", default, skip_serializing_if = "is_default")]
     is_ii_principal: bool,
+    #[serde(rename = "l", default, skip_serializing_if = "is_default")]
+    last_used: TimestampMillis,
 }
 
 impl UserPrincipals {
@@ -47,6 +49,7 @@ impl UserPrincipals {
         auth_principal: Principal,
         originating_canister: CanisterId,
         is_ii_principal: bool,
+        now: TimestampMillis,
     ) {
         assert_eq!(index, self.next_index());
         assert!(!self.auth_principals.contains_key(&auth_principal));
@@ -62,6 +65,7 @@ impl UserPrincipals {
                 originating_canister,
                 user_principal_index: index,
                 is_ii_principal,
+                last_used: now,
             },
         );
         *self.originating_canisters.entry(originating_canister).or_default() += 1;
@@ -73,6 +77,7 @@ impl UserPrincipals {
         originating_canister: CanisterId,
         is_ii_principal: bool,
         user_principal_index: u32,
+        now: TimestampMillis,
     ) -> bool {
         if self
             .get_by_auth_principal(&new_principal)
@@ -87,6 +92,7 @@ impl UserPrincipals {
                     originating_canister,
                     user_principal_index,
                     is_ii_principal,
+                    last_used: now,
                 },
             );
             true
@@ -156,6 +162,12 @@ impl UserPrincipals {
         }
     }
 
+    pub fn bump_last_used(&mut self, auth_principal: &Principal, now: TimestampMillis) {
+        if let Some(principal) = self.auth_principals.get_mut(auth_principal) {
+            principal.last_used = now;
+        }
+    }
+
     pub fn set_ii_principal(&mut self, principal: &Principal) {
         if let Some(a) = self.auth_principals.get_mut(principal) {
             a.is_ii_principal = true;
@@ -178,6 +190,7 @@ pub struct AuthPrincipal {
     pub originating_canister: CanisterId,
     pub user_principal_index: u32,
     pub is_ii_principal: bool,
+    pub last_used: TimestampMillis,
 }
 
 impl From<&AuthPrincipalInternal> for AuthPrincipal {
@@ -186,6 +199,7 @@ impl From<&AuthPrincipalInternal> for AuthPrincipal {
             originating_canister: value.originating_canister,
             user_principal_index: value.user_principal_index,
             is_ii_principal: value.is_ii_principal,
+            last_used: value.last_used,
         }
     }
 }

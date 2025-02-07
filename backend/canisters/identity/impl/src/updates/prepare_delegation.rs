@@ -22,6 +22,7 @@ fn prepare_delegation_impl(args: Args, state: &mut RuntimeState) -> Response {
     let Some(user) = state.data.user_principals.get_by_auth_principal(&caller) else {
         return NotFound;
     };
+    state.data.user_principals.bump_last_used(&caller, state.env.now());
 
     if args.is_ii_principal.unwrap_or_default() {
         state.data.user_principals.set_ii_principal(&caller);
