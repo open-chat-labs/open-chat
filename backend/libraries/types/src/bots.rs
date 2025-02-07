@@ -292,6 +292,7 @@ pub struct BotApiKeyToken {
     pub secret: String,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotMessageContent {
     Text(TextContent),
@@ -341,6 +342,7 @@ impl From<BotMessageContent> for MessageContentInitial {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum AuthToken {
     Jwt(String),

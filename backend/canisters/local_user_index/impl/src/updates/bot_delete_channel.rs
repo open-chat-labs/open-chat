@@ -4,7 +4,7 @@ use types::BotActionScope;
 
 use crate::{bots::extract_access_context, mutate_state};
 
-#[update(candid = true, json = true)]
+#[update(candid = true, json = true, msgpack = true)]
 async fn bot_delete_channel(args: Args) -> Response {
     use Response::*;
 

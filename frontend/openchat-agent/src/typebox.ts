@@ -1146,6 +1146,16 @@ export const GroupRole = Type.Union([
     Type.Literal("Participant"),
 ]);
 
+export type AuthToken = Static<typeof AuthToken>;
+export const AuthToken = Type.Union([
+    Type.Object({
+        Jwt: Type.String(),
+    }),
+    Type.Object({
+        ApiKey: Type.String(),
+    }),
+]);
+
 export type StringParam = Static<typeof StringParam>;
 export const StringParam = Type.Object({
     min_length: Type.Number(),
@@ -2439,6 +2449,33 @@ export const LocalUserIndexInviteUsersToGroupResponse = Type.Union([
     }),
 ]);
 
+export type LocalUserIndexBotCreateChannelSuccessResult = Static<
+    typeof LocalUserIndexBotCreateChannelSuccessResult
+>;
+export const LocalUserIndexBotCreateChannelSuccessResult = Type.Object({
+    channel_id: ChannelId,
+});
+
+export type LocalUserIndexBotCreateChannelResponse = Static<
+    typeof LocalUserIndexBotCreateChannelResponse
+>;
+export const LocalUserIndexBotCreateChannelResponse = Type.Union([
+    Type.Object({
+        Success: LocalUserIndexBotCreateChannelSuccessResult,
+    }),
+    Type.Object({
+        FailedAuthentication: Type.String(),
+    }),
+    Type.Object({
+        InvalidRequest: Type.String(),
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("Frozen"),
+    Type.Object({
+        C2CError: Type.Tuple([Type.Number(), Type.String()]),
+    }),
+]);
+
 export type LocalUserIndexAccessTokenResponse = Static<typeof LocalUserIndexAccessTokenResponse>;
 export const LocalUserIndexAccessTokenResponse = Type.Union([
     Type.Object({
@@ -2447,6 +2484,31 @@ export const LocalUserIndexAccessTokenResponse = Type.Union([
     Type.Literal("NotAuthorized"),
     Type.Object({
         InternalError: Type.String(),
+    }),
+]);
+
+export type LocalUserIndexBotDeleteChannelArgs = Static<typeof LocalUserIndexBotDeleteChannelArgs>;
+export const LocalUserIndexBotDeleteChannelArgs = Type.Object({
+    channel_id: ChannelId,
+    auth_token: AuthToken,
+});
+
+export type LocalUserIndexBotDeleteChannelResponse = Static<
+    typeof LocalUserIndexBotDeleteChannelResponse
+>;
+export const LocalUserIndexBotDeleteChannelResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("ChannelNotFound"),
+    Type.Object({
+        FailedAuthentication: Type.String(),
+    }),
+    Type.Object({
+        InvalidRequest: Type.String(),
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("Frozen"),
+    Type.Object({
+        C2CError: Type.Tuple([Type.Number(), Type.String()]),
     }),
 ]);
 
@@ -2542,6 +2604,17 @@ export const LocalUserIndexReportMessageResponse = Type.Union([
         InternalError: Type.String(),
     }),
 ]);
+
+export type LocalUserIndexBotSendMessageSuccessResult = Static<
+    typeof LocalUserIndexBotSendMessageSuccessResult
+>;
+export const LocalUserIndexBotSendMessageSuccessResult = Type.Object({
+    message_id: MessageId,
+    event_index: EventIndex,
+    message_index: MessageIndex,
+    timestamp: Type.BigInt(),
+    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
+});
 
 export type LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesArgs = Static<
     typeof LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesArgs
@@ -5315,6 +5388,28 @@ export const LocalUserIndexInviteUsersToChannelArgs = Type.Object({
     caller_username: Type.String(),
 });
 
+export type LocalUserIndexBotSendMessageResponse = Static<
+    typeof LocalUserIndexBotSendMessageResponse
+>;
+export const LocalUserIndexBotSendMessageResponse = Type.Union([
+    Type.Object({
+        Success: LocalUserIndexBotSendMessageSuccessResult,
+    }),
+    Type.Object({
+        FailedAuthentication: Type.String(),
+    }),
+    Type.Object({
+        InvalidRequest: Type.String(),
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("Frozen"),
+    Type.Literal("ThreadNotFound"),
+    Type.Literal("MessageAlreadyFinalised"),
+    Type.Object({
+        C2CError: Type.Tuple([Type.Number(), Type.String()]),
+    }),
+]);
+
 export type LocalUserIndexGroupAndCommunitySummaryUpdatesArgs = Static<
     typeof LocalUserIndexGroupAndCommunitySummaryUpdatesArgs
 >;
@@ -6673,6 +6768,7 @@ export const SelectedGroupUpdates = Type.Object({
     members_removed: Type.Array(UserId),
     bots_added_or_updated: Type.Array(BotGroupDetails),
     bots_removed: Type.Array(UserId),
+    api_keys_generated: Type.Array(PublicApiKeyDetails),
     blocked_users_added: Type.Array(UserId),
     blocked_users_removed: Type.Array(UserId),
     invited_users: Type.Optional(Type.Union([Type.Array(UserId), Type.Undefined()])),
@@ -6711,7 +6807,7 @@ export const ReplyContext = Type.Object({
 export type BotActionChatDetails = Static<typeof BotActionChatDetails>;
 export const BotActionChatDetails = Type.Object({
     chat: Chat,
-    thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
+    thread: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_id: MessageId,
 });
 
@@ -7042,6 +7138,7 @@ export const CommunitySelectedChannelInitialSuccessResult = Type.Object({
     invited_users: Type.Array(UserId),
     pinned_messages: Type.Array(MessageIndex),
     chat_rules: VersionedRules,
+    api_keys: Type.Array(PublicApiKeyDetails),
 });
 
 export type CommunityCommunityMembersResponse = Static<typeof CommunityCommunityMembersResponse>;
@@ -7088,6 +7185,7 @@ export const CommunitySelectedInitialSuccessResult = Type.Object({
     latest_event_index: EventIndex,
     members: Type.Array(CommunityMember),
     bots: Type.Array(BotGroupDetails),
+    api_keys: Type.Array(PublicApiKeyDetails),
     basic_members: Type.Array(UserId),
     blocked_users: Type.Array(UserId),
     invited_users: Type.Array(UserId),
@@ -7119,6 +7217,7 @@ export const CommunitySelectedUpdatesSuccessResult = Type.Object({
     members_removed: Type.Array(UserId),
     bots_added_or_updated: Type.Array(BotGroupDetails),
     bots_removed: Type.Array(UserId),
+    api_keys_generated: Type.Array(PublicApiKeyDetails),
     blocked_users_added: Type.Array(UserId),
     blocked_users_removed: Type.Array(UserId),
     invited_users: Type.Optional(Type.Union([Type.Array(UserId), Type.Undefined()])),
@@ -7179,6 +7278,7 @@ export const GroupSelectedInitialSuccessResult = Type.Object({
     latest_event_index: EventIndex,
     participants: Type.Array(GroupMember),
     bots: Type.Array(BotGroupDetails),
+    api_keys: Type.Array(PublicApiKeyDetails),
     basic_members: Type.Array(UserId),
     blocked_users: Type.Array(UserId),
     invited_users: Type.Array(UserId),
@@ -8215,6 +8315,31 @@ export const BotMessageContext = Type.Object({
     finalised: Type.Boolean(),
 });
 
+export type BotMessageContent = Static<typeof BotMessageContent>;
+export const BotMessageContent = Type.Union([
+    Type.Object({
+        Text: TextContent,
+    }),
+    Type.Object({
+        Image: ImageContent,
+    }),
+    Type.Object({
+        Video: VideoContent,
+    }),
+    Type.Object({
+        Audio: AudioContent,
+    }),
+    Type.Object({
+        File: FileContent,
+    }),
+    Type.Object({
+        Poll: PollContent,
+    }),
+    Type.Object({
+        Giphy: GiphyContent,
+    }),
+]);
+
 export type OptionUpdateAccessGate = Static<typeof OptionUpdateAccessGate>;
 export const OptionUpdateAccessGate = Type.Union(
     [
@@ -8392,6 +8517,32 @@ export const GroupIndexExploreGroupsResponse = Type.Union([
     }),
     Type.Literal("InvalidTerm"),
 ]);
+
+export type LocalUserIndexBotCreateChannelArgs = Static<typeof LocalUserIndexBotCreateChannelArgs>;
+export const LocalUserIndexBotCreateChannelArgs = Type.Object({
+    is_public: Type.Boolean(),
+    name: Type.String(),
+    description: Type.String(),
+    rules: Rules,
+    avatar: Type.Optional(Type.Union([Document, Type.Undefined()])),
+    history_visible_to_new_joiners: Type.Boolean(),
+    messages_visible_to_non_members: Type.Boolean(),
+    permissions: Type.Optional(Type.Union([GroupPermissions, Type.Undefined()])),
+    events_ttl: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
+    gate_config: Type.Optional(Type.Union([AccessGateConfig, Type.Undefined()])),
+    external_url: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    auth_token: AuthToken,
+});
+
+export type LocalUserIndexBotSendMessageArgs = Static<typeof LocalUserIndexBotSendMessageArgs>;
+export const LocalUserIndexBotSendMessageArgs = Type.Object({
+    channel_id: Type.Optional(Type.Union([ChannelId, Type.Undefined()])),
+    message_id: Type.Optional(Type.Union([MessageId, Type.Undefined()])),
+    content: BotMessageContent,
+    block_level_markdown: Type.Boolean(),
+    finalised: Type.Boolean(),
+    auth_token: AuthToken,
+});
 
 export type CommunityDeletedMessageSuccessResult = Static<
     typeof CommunityDeletedMessageSuccessResult

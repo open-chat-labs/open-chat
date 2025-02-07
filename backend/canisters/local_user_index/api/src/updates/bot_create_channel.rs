@@ -1,7 +1,9 @@
 use candid::CandidType;
+use ts_export::ts_export;
 use serde::{Deserialize, Serialize};
 use types::{AccessGateConfig, AuthToken, ChannelId, Document, GroupPermissions, Milliseconds, Rules};
 
+#[ts_export(local_user_index, bot_create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub is_public: bool,
@@ -18,6 +20,7 @@ pub struct Args {
     pub auth_token: AuthToken,
 }
 
+#[ts_export(local_user_index, bot_create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -28,6 +31,7 @@ pub enum Response {
     C2CError(i32, String),
 }
 
+#[ts_export(local_user_index, bot_create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct SuccessResult {
     pub channel_id: ChannelId,

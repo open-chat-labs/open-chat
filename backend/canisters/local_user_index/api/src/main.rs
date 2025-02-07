@@ -17,6 +17,9 @@ fn main() {
 
     generate_ts_method!(local_user_index, access_token);
     generate_ts_method!(local_user_index, access_token_v2);
+    generate_ts_method!(local_user_index, bot_create_channel);
+    generate_ts_method!(local_user_index, bot_delete_channel);
+    generate_ts_method!(local_user_index, bot_send_message);
     generate_ts_method!(local_user_index, chat_events);
     generate_ts_method!(local_user_index, group_and_community_summary_updates);
 
