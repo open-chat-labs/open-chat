@@ -46,8 +46,11 @@
                     <option value={"boolean"}>
                         <Translatable resourceKey={i18nKey("Boolean")}></Translatable>
                     </option>
-                    <option value={"number"}>
-                        <Translatable resourceKey={i18nKey("Number")}></Translatable>
+                    <option value={"integer"}>
+                        <Translatable resourceKey={i18nKey("Integer")}></Translatable>
+                    </option>
+                    <option value={"decimal"}>
+                        <Translatable resourceKey={i18nKey("Decimal")}></Translatable>
                     </option>
                 </Select>
             </section>
