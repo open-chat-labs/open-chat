@@ -107,7 +107,7 @@ export function apiBotActionScope(domain: BotActionScope): ApiBotActionScope {
             return {
                 Chat: {
                     chat: apiChatIdentifier(domain.chatId),
-                    thread_root_message_index: domain.threadRootMessageIndex,
+                    thread: domain.threadRootMessageIndex,
                     message_id: domain.messageId,
                 },
             };
