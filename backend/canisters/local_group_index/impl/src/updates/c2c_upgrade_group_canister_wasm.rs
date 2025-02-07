@@ -8,7 +8,7 @@ use sha256::sha256;
 use std::collections::HashSet;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, ChunkedCanisterWasm, Hash, UpgradeChunkedCanisterWasmResponse::*};
-use utils::canister::{should_perform_upgrade, upload_wasm_in_chunks};
+use utils::canister::upload_wasm_in_chunks;
 
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
 #[trace]
