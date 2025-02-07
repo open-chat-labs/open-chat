@@ -20,6 +20,7 @@ fn auth_principals_impl(state: &RuntimeState) -> Response {
                         principal: p,
                         originating_canister: a.originating_canister,
                         is_ii_principal: a.is_ii_principal,
+                        last_used: a.last_used,
                     })
                 })
                 .collect(),
