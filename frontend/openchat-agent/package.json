@@ -28,7 +28,7 @@
         "identicon.js": "^2.3.3",
         "js-sha3": "^0.8.0",
         "md5": "^2.3.0",
-        "msgpackr": "hpeebles/msgpackr#c90582f7cee6c4676b90b00f6c0228949b317aef",
+        "msgpackr": "^1.11.2",
         "openchat-shared": "*"
     },
     "devDependencies": {
