@@ -1,4 +1,5 @@
 /* eslint-disable no-case-declarations */
+import { callBotCommandEndpoint } from "openchat-agent/lib/services/externalBot/externalBot";
 import { HttpAgent, type Identity } from "@dfinity/agent";
 import {
     type Database,
@@ -231,6 +232,7 @@ import type {
     BotsResponse,
     BotDefinition,
     GenerateBotKeyResponse,
+    BotCommandResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -1456,6 +1458,21 @@ export class OpenChatAgent extends EventTarget {
                       ref?.blobId ?? undefined,
                   ),
               };
+    }
+
+    callBotCommandEndpoint(endpoint: string, token: string): Promise<BotCommandResponse> {
+        return callBotCommandEndpoint(endpoint, token).then((resp) => {
+            if (resp.kind === "success" && resp.message !== undefined) {
+                return {
+                    ...resp,
+                    message: {
+                        ...resp.message,
+                        messageContent: this.rehydrateMessageContent(resp.message.messageContent),
+                    },
+                };
+            }
+            return resp;
+        });
     }
 
     private rehydrateDataContent<T extends DataContent>(
