@@ -10,9 +10,9 @@ export default {
         scss: {
             prependData: sassModulesAndMixins,
         },
-        onwarn: (warning, handler) => {
-            if (warning.code.startsWith("a11y-")) return;
-            handler(warning);
-        },
     }),
+    onwarn: (warning, handler) => {
+        if (warning.code.startsWith("a11y_")) return;
+        handler(warning);
+    },
 };

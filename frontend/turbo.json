@@ -1,15 +1,16 @@
 {
     "$schema": "https://turborepo.org/schema.json",
     "globalEnv": [
-        "DFX_NETWORK",
         "NODE_ENV",
-        "USERGEEK_APIKEY",
-        "METERED_APIKEY",
-        "ROLLBAR_ACCESS_TOKEN",
-        "TRANSLATE_API_KEY",
-        "PUBLIC_TRANSLATE_API_KEY",
-        "TENOR_APIKEY",
-        "CORS_APIKEY"
+        "OC_NODE_ENV",
+        "OC_DFX_NETWORK",
+        "OC_USERGEEK_APIKEY",
+        "OC_METERED_APIKEY",
+        "OC_ROLLBAR_ACCESS_TOKEN",
+        "OC_TRANSLATE_API_KEY",
+        "OC_PUBLIC_TRANSLATE_API_KEY",
+        "OC_TENOR_APIKEY",
+        "OC_CORS_APIKEY"
     ],
     "tasks": {
         "deploy:prod": {
