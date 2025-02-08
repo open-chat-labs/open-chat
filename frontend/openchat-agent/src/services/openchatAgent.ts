@@ -1,5 +1,4 @@
 /* eslint-disable no-case-declarations */
-import { callBotCommandEndpoint } from "openchat-agent/lib/services/externalBot/externalBot";
 import { HttpAgent, type Identity } from "@dfinity/agent";
 import {
     type Database,
@@ -280,6 +279,7 @@ import {
 } from "../utils/referralCache";
 import { mean } from "../utils/maths";
 import type { DelegationChain } from "@dfinity/identity";
+import { callBotCommandEndpoint } from "./externalBot/externalBot";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
