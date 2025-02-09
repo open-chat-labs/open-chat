@@ -80,32 +80,8 @@ function formatError(err: unknown) {
     return err;
 }
 
-// this is *awful*
-// PS - we also need to rehydrate data content
-// function deserialize(data: unknown): unknown {
-//     if (Array.isArray(data)) {
-//         return data.map((item) => deserialize(item));
-//     } else if (data !== null && typeof data === "object") {
-//         if (
-//             "bytes" in data &&
-//             "type" in data &&
-//             data.type === "Uint8Array" &&
-//             Array.isArray(data.bytes)
-//         ) {
-//             return new Uint8Array(data.bytes);
-//         }
-//         const deserializedObject: Record<string, unknown> = {};
-//         for (const key in data) {
-//             deserializedObject[key] = deserialize((data as Record<string, unknown>)[key]);
-//         }
-//         return deserializedObject;
-//     }
-//     return data;
-// }
-
 function validateBotResponse(json: unknown): BotCommandResponse {
     try {
-        // const deserialised = deserialize(json);
         const value = Value.Parse(ApiBotResponse, json);
         return externalBotResponse(value);
     } catch (err) {
