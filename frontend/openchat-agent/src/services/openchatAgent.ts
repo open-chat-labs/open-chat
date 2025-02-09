@@ -231,6 +231,7 @@ import type {
     BotsResponse,
     BotDefinition,
     GenerateBotKeyResponse,
+    BotCommandResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -278,6 +279,7 @@ import {
 } from "../utils/referralCache";
 import { mean } from "../utils/maths";
 import type { DelegationChain } from "@dfinity/identity";
+import { callBotCommandEndpoint } from "./externalBot/externalBot";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -1456,6 +1458,21 @@ export class OpenChatAgent extends EventTarget {
                       ref?.blobId ?? undefined,
                   ),
               };
+    }
+
+    callBotCommandEndpoint(endpoint: string, token: string): Promise<BotCommandResponse> {
+        return callBotCommandEndpoint(endpoint, token).then((resp) => {
+            if (resp.kind === "success" && resp.message !== undefined) {
+                return {
+                    ...resp,
+                    message: {
+                        ...resp.message,
+                        messageContent: this.rehydrateMessageContent(resp.message.messageContent),
+                    },
+                };
+            }
+            return resp;
+        });
     }
 
     private rehydrateDataContent<T extends DataContent>(
