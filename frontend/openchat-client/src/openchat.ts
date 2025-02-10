@@ -1034,7 +1034,7 @@ export class OpenChat extends EventTarget {
 
     async previouslySignedIn(): Promise<boolean> {
         const KEY_STORAGE_IDENTITY = "identity";
-        const identity = await this.#authIdentityStorage.get(KEY_STORAGE_IDENTITY);
+        const identity = await this.#authIdentityStorage.storage.get(KEY_STORAGE_IDENTITY);
         return this.#liveState.userCreated && identity !== null;
     }
 
