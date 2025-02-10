@@ -197,6 +197,10 @@ impl Channels {
             .take_while(move |(ts, _)| *ts > since)
             .map(|(ts, c)| (*c, *ts))
     }
+
+    pub fn len(&self) -> usize {
+        self.channels.len()
+    }
 }
 
 impl Channel {
