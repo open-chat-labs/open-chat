@@ -1,5 +1,5 @@
 export function deepRemoveNullishFields(value: unknown, depth = 0): unknown {
-    if (depth >= 100) throw new Error("Failed to remove null fields after 100 loops");
+    if (depth >= 100) throw new Error("Failed to remove nullish fields after 100 loops");
     if (value == null) return undefined;
 
     if (typeof value === "object") {
