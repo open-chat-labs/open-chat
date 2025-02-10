@@ -70,7 +70,7 @@
                 new WalletConnectWalletAdapter({
                     network: WalletAdapterNetwork.Mainnet,
                     options: {
-                        projectId: process.env.WALLET_CONNECT_PROJECT_ID!,
+                        projectId: import.meta.env.OC_WALLET_CONNECT_PROJECT_ID!,
                     },
                 }),
             ],

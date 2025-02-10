@@ -149,7 +149,7 @@
         params.append("q", correction.value);
         params.append("target", "en");
         params.append("format", "text");
-        params.append("key", process.env.PUBLIC_TRANSLATE_API_KEY!);
+        params.append("key", import.meta.env.OC_PUBLIC_TRANSLATE_API_KEY!);
         return fetch(`https://translation.googleapis.com/language/translate/v2?${params}`, {
             method: "POST",
         })

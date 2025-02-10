@@ -42,8 +42,12 @@
               ? { ...selectedGif.media_formats.tinygif }
               : { ...selectedGif.media_formats.mediumgif };
 
-    const TRENDING_API_URL = `https://tenor.googleapis.com/v2/featured?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${process.env.TENOR_APIKEY}&limit=${pageSize}`;
-    const SEARCH_API_URL = `https://tenor.googleapis.com/v2/search?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${process.env.TENOR_APIKEY}&limit=${pageSize}&q=`;
+    const TRENDING_API_URL = `https://tenor.googleapis.com/v2/featured?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
+        import.meta.env.OC_TENOR_APIKEY
+    }&limit=${pageSize}`;
+    const SEARCH_API_URL = `https://tenor.googleapis.com/v2/search?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
+        import.meta.env.OC_TENOR_APIKEY
+    }&limit=${pageSize}&q=`;
 
     $: {
         let containerWidth = containerElement?.clientWidth ?? 0;
