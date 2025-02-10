@@ -63,9 +63,9 @@
     const ONE_MONTH = 1000 * 60 * 60 * 24 * 7 * 4;
     const TOKEN_LISTING_FEE: bigint = 50_000_100_000n; // 500 CHAT + transfer fee
 
-    const PROPOSALS_BOT_CANISTER = process.env.PROPOSALS_BOT_CANISTER!;
-    const REGISTRY_CANISTER = process.env.REGISTRY_CANISTER!;
-    const USER_INDEX_CANISTER = process.env.USER_INDEX_CANISTER!;
+    const PROPOSALS_BOT_CANISTER = import.meta.env.OC_PROPOSALS_BOT_CANISTER!;
+    const REGISTRY_CANISTER = import.meta.env.OC_REGISTRY_CANISTER!;
+    const USER_INDEX_CANISTER = import.meta.env.OC_USER_INDEX_CANISTER!;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();

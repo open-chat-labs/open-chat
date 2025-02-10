@@ -10,13 +10,13 @@ import {
     OPENCHAT_VIDEO_CALL_USER_ID,
     OPENCHAT_VIDEO_CALL_USERNAME,
     OPENCHAT_VIDEO_CALL_AVATAR_URL,
-    AIRDROP_BOT_USER_ID,
     AIRDROP_BOT_USERNAME,
     AIRDROP_BOT_AVATAR_URL,
     OPENCHAT_BOT_USER_ID,
     OPENCHAT_BOT_USERNAME,
     OPENCHAT_BOT_AVATAR_URL,
 } from "openchat-shared";
+import { AIRDROP_BOT_USER_ID } from "../constants";
 import { derived, writable } from "svelte/store";
 import { createSetStore } from "./setStore";
 
