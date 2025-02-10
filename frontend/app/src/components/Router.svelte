@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount, SvelteComponent } from "svelte";
+    import { onDestroy, onMount, type SvelteComponent } from "svelte";
     import page from "page";
     import Home from "./home/HomeRoute.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";

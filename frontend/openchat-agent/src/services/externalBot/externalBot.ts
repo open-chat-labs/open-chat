@@ -1,9 +1,10 @@
 import { type BotCommandResponse, type BotDefinitionResponse, toBigInt64 } from "openchat-shared";
-import { Value, AssertError } from "@sinclair/typebox/value";
+import { AssertError } from "@sinclair/typebox/value";
 import { Type, type Static } from "@sinclair/typebox";
 import { BotDefinition, BotMessageContent as MessageContent } from "../../typebox";
 import { externalBotDefinition, messageContent } from "../common/chatMappersV2";
 import { mapOptional } from "../../utils/mapping";
+import { typeboxValidate } from "../../utils/typebox";
 
 const ApiBotSuccess = Type.Object({
     message: Type.Optional(
@@ -63,7 +64,7 @@ export function getBotDefinition(endpoint: string): Promise<BotDefinitionRespons
 
 function validateSchema(json: unknown): BotDefinitionResponse {
     try {
-        const value = Value.Parse(BotDefinition, json);
+        const value = typeboxValidate(json, BotDefinition);
         return externalBotDefinition(value);
     } catch (err) {
         return {
@@ -82,7 +83,7 @@ function formatError(err: unknown) {
 
 function validateBotResponse(json: unknown): BotCommandResponse {
     try {
-        const value = Value.Parse(ApiBotResponse, json);
+        const value = typeboxValidate(json, ApiBotResponse);
         return externalBotResponse(value);
     } catch (err) {
         console.error("Parse error: ", JSON.stringify(err));

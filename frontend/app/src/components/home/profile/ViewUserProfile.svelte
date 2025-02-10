@@ -60,7 +60,11 @@
             : ["", false];
     $: avatarUrl =
         profile !== undefined
-            ? client.buildUserAvatarUrl(process.env.BLOB_URL_PATTERN!, userId, profile.avatarId)
+            ? client.buildUserAvatarUrl(
+                  import.meta.env.OC_BLOB_URL_PATTERN!,
+                  userId,
+                  profile.avatarId,
+              )
             : "/assets/unknownUserAvatar.svg";
     $: joined =
         profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined;

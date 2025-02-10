@@ -1,25 +1,26 @@
 {
+    "extends": "@tsconfig/svelte/tsconfig.json",
     "compilerOptions": {
+        "outDir": "build", // prevents "cannot overwrite file" errors in IDE
+        "module": "ES2022",
         "allowJs": true,
         "checkJs": false,
         "declaration": true,
-        "esModuleInterop": true,
         "experimentalDecorators": true,
-        "forceConsistentCasingInFileNames": true,
         "lib": ["DOM", "DOM.Iterable", "es2020", "WebWorker"],
-        "module": "es2020",
         "moduleResolution": "node",
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "paths": {},
         "resolveJsonModule": true,
-        "skipLibCheck": true,
         "sourceMap": false,
-        "strict": true,
         "target": "ES2022",
         "types": ["jest", "node", "svelte"],
-        "verbatimModuleSyntax": true,
         "useDefineForClassFields": false,
+        "verbatimModuleSyntax": true,
     },
-    "exclude": ["build/**/*", "node_modules"]
+    "exclude": [
+        "build/**/*",
+        "lib/**/*",
+        "node_modules",
+    ]
 }

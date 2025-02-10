@@ -41,7 +41,7 @@
 
     async function loadPreview(url: string): Promise<LinkInfo> {
         const response = await fetch(
-            `${process.env.PREVIEW_PROXY_URL}/preview?url=${encodeURIComponent(url)}`,
+            `${import.meta.env.OC_PREVIEW_PROXY_URL}/preview?url=${encodeURIComponent(url)}`,
         );
         if (response.ok) {
             const meta = await response.json();

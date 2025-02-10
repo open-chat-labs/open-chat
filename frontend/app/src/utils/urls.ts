@@ -9,7 +9,7 @@ export function isAbsoluteUrl(url: string): boolean {
 }
 
 export const openChatFriendlyUrl =
-    process.env.DFX_NETWORK === "ic_test" ? "https://test.oc.app" : "https://oc.app";
+    import.meta.env.OC_DFX_NETWORK === "ic_test" ? "https://test.oc.app" : "https://oc.app";
 export const synonymousUrlRegex = new RegExp(`^(${window.location.origin}|${openChatFriendlyUrl})`);
 
 // detect whether the user is on a canister based url of the form https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/

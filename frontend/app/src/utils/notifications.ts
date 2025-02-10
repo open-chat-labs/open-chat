@@ -26,13 +26,15 @@ export async function subscribeToNotifications(
         return false;
     }
 
-    // Register a service worker if it hasn't already been done
-    const registration = await registerServiceWorker();
-    if (registration == null) {
-        return false;
+    if (import.meta.env.OC_BUILD_ENV !== "development") {
+        // Register a service worker if it hasn't already been done
+        const registration = await registerServiceWorker();
+        if (registration == null) {
+            return false;
+        }
+        // Ensure the service worker is updated to the latest version
+        registration.update();
     }
-    // Ensure the service worker is updated to the latest version
-    registration.update();
 
     navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data.type === "NOTIFICATION_RECEIVED") {
@@ -111,7 +113,7 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
     await unregisterOldServiceWorker();
 
     try {
-        return await navigator.serviceWorker.register("process.env.SERVICE_WORKER_PATH", {
+        return await navigator.serviceWorker.register(import.meta.env.OC_SERVICE_WORKER_PATH, {
             type: "module",
         });
     } catch (e) {
@@ -208,5 +210,5 @@ export async function unsubscribeNotifications(client: OpenChat): Promise<void> 
 
 async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
     if (!notificationsSupported) return undefined;
-    return await navigator.serviceWorker.getRegistration("process.env.SERVICE_WORKER_PATH");
+    return await navigator.serviceWorker.getRegistration(import.meta.env.OC_SERVICE_WORKER_PATH);
 }
