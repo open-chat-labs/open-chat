@@ -2,4 +2,4 @@
 import type { CommunityRole } from "./CommunityRole";
 import type { OptionUpdateString } from "./OptionUpdateString";
 
-export type CommunityMembershipUpdates = { role?: CommunityRole | undefined, rules_accepted?: boolean | undefined, display_name: OptionUpdateString, lapsed?: boolean | undefined, };
+export type CommunityMembershipUpdates = { role?: CommunityRole, rules_accepted?: boolean, display_name: OptionUpdateString, lapsed?: boolean, };

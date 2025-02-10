@@ -3,4 +3,4 @@ import type { EventIndex } from "../../shared/EventIndex";
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 
-export type LocalUserIndexBotSendMessageSuccessResult = { message_id: MessageId, event_index: EventIndex, message_index: MessageIndex, timestamp: bigint, expires_at?: bigint | undefined, };
+export type LocalUserIndexBotSendMessageSuccessResult = { message_id: MessageId, event_index: EventIndex, message_index: MessageIndex, timestamp: bigint, expires_at?: bigint, };

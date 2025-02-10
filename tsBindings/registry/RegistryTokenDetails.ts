@@ -2,4 +2,4 @@
 import type { RegistryPayment } from "./RegistryPayment";
 import type { TSBytes } from "../shared/TSBytes";
 
-export type RegistryTokenDetails = { ledger_canister_id: TSBytes, name: string, symbol: string, decimals: number, fee: bigint, logo: string, logo_id?: bigint | undefined, info_url: string, how_to_buy_url: string, transaction_url_format: string, supported_standards: Array<string>, added: bigint, enabled: boolean, last_updated: bigint, payments: Array<RegistryPayment>, };
+export type RegistryTokenDetails = { ledger_canister_id: TSBytes, name: string, symbol: string, decimals: number, fee: bigint, logo: string, logo_id?: bigint, info_url: string, how_to_buy_url: string, transaction_url_format: string, supported_standards: Array<string>, added: bigint, enabled: boolean, last_updated: bigint, payments: Array<RegistryPayment>, };

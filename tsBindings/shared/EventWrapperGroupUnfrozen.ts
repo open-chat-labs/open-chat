@@ -2,4 +2,4 @@
 import type { EventIndex } from "./EventIndex";
 import type { GroupUnfrozen } from "./GroupUnfrozen";
 
-export type EventWrapperGroupUnfrozen = { index: EventIndex, timestamp: bigint, correlation_id: bigint, expires_at?: bigint | undefined, event: GroupUnfrozen, };
+export type EventWrapperGroupUnfrozen = { index: EventIndex, timestamp: bigint, correlation_id: bigint, expires_at?: bigint, event: GroupUnfrozen, };

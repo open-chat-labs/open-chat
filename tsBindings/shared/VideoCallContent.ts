@@ -2,4 +2,4 @@
 import type { CallParticipant } from "./CallParticipant";
 import type { VideoCallType } from "./VideoCallType";
 
-export type VideoCallContent = { call_type: VideoCallType, ended?: bigint | undefined, participants: Array<CallParticipant>, hidden_participants: number, };
+export type VideoCallContent = { call_type: VideoCallType, ended?: bigint, participants: Array<CallParticipant>, hidden_participants: number, };

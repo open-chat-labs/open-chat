@@ -2,4 +2,4 @@
 import type { BotPermissions } from "./BotPermissions";
 import type { SlashCommandParam } from "./SlashCommandParam";
 
-export type SlashCommandSchema = { name: string, description?: string | undefined, placeholder?: string | undefined, params: Array<SlashCommandParam>, permissions: BotPermissions, };
+export type SlashCommandSchema = { name: string, description?: string, placeholder?: string, params: Array<SlashCommandParam>, permissions: BotPermissions, };

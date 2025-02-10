@@ -8,4 +8,4 @@ import type { PinNumberWrapper } from "../../shared/PinNumberWrapper";
 import type { User } from "../../shared/User";
 import type { Version } from "../../shared/Version";
 
-export type UserSendMessageWithTransferToGroupArgs = { group_id: ChatId, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, sender_name: string, sender_display_name?: string | undefined, replies_to?: GroupReplyContext | undefined, mentioned: Array<User>, block_level_markdown: boolean, correlation_id: bigint, rules_accepted?: Version | undefined, message_filter_failed?: bigint | undefined, pin?: PinNumberWrapper | undefined, };
+export type UserSendMessageWithTransferToGroupArgs = { group_id: ChatId, thread_root_message_index?: MessageIndex, message_id: MessageId, content: MessageContentInitial, sender_name: string, sender_display_name?: string, replies_to?: GroupReplyContext, mentioned: Array<User>, block_level_markdown: boolean, correlation_id: bigint, rules_accepted?: Version, message_filter_failed?: bigint, pin?: PinNumberWrapper, };

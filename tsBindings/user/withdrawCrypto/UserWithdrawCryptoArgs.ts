@@ -2,4 +2,4 @@
 import type { PendingCryptoTransaction } from "../../shared/PendingCryptoTransaction";
 import type { PinNumberWrapper } from "../../shared/PinNumberWrapper";
 
-export type UserWithdrawCryptoArgs = { withdrawal: PendingCryptoTransaction, pin?: PinNumberWrapper | undefined, };
+export type UserWithdrawCryptoArgs = { withdrawal: PendingCryptoTransaction, pin?: PinNumberWrapper, };
