@@ -2,6 +2,7 @@ import {
     bigintToBytes,
     bytesToBigint,
     bytesToHexString,
+    consolidateBytes,
     hexStringToBytes,
     identity,
     mapOptional,
@@ -309,6 +310,7 @@ import type {
     GroupGenerateBotApiKeyResponse,
     // PublicApiKeyDetails as ApiPublicApiKeyDetails,
 } from "../../typebox";
+import type { ApiPrincipal } from "../index";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -625,7 +627,7 @@ export function botCommandArg(api: BotCommandArg): SlashCommandParamInstance {
     throw new Error(`Unexpected ApiBotCommandArg type received, ${api}`);
 }
 
-export function tips(value: [Uint8Array, [Uint8Array, bigint][]][]): TipsReceived {
+export function tips(value: [ApiPrincipal, [ApiPrincipal, bigint][]][]): TipsReceived {
     return value.reduce((agg, [ledger, tips]) => {
         agg[principalBytesToString(ledger)] = tips.reduce(
             (userTips, [userId, amount]) => {
@@ -722,7 +724,7 @@ function reportedMessage(value: TReportedMessage): ReportedMessageContent {
 function customContent(value: TCustomContent): MessageContent {
     if (value.kind === "meme_fighter") {
         const decoder = new TextDecoder();
-        const json = decoder.decode(value.data);
+        const json = decoder.decode(consolidateBytes(value.data));
         const decoded = JSON.parse(json) as { url: string; width: number; height: number };
         return {
             kind: "meme_fighter_content",
@@ -1302,7 +1304,7 @@ function replySourceContext([chatId, maybeThreadRoot]: [TChat, number | null]): 
     throw new UnsupportedValueError("Unexpected ApiMultiUserChat type received", chatId);
 }
 
-function reactions(value: [string, Uint8Array[]][]): Reaction[] {
+function reactions(value: [string, ApiPrincipal[]][]): Reaction[] {
     return value.map(([reaction, userIds]) => ({
         reaction,
         userIds: new Set(userIds.map(principalBytesToString)),

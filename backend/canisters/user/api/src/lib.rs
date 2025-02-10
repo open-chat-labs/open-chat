@@ -333,7 +333,7 @@ pub struct AutoWallet {
 #[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ManualWallet {
-    #[ts(as = "Vec<ts_export::TSBytes>")]
+    #[ts(as = "Vec<ts_export::TSPrincipal>")]
     pub tokens: Vec<CanisterId>,
 }
 
