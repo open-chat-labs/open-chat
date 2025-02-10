@@ -12,6 +12,7 @@ import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
 import filesize from "rollup-plugin-filesize";
 import styles from "rollup-styles";
+import alias from "@rollup/plugin-alias";
 import autoprefixer from "autoprefixer";
 import replace from "@rollup/plugin-replace";
 import fs from "fs-extra";
@@ -89,6 +90,19 @@ export default {
             },
         }),
 
+        alias({
+            entries: [
+                { find: "@src", replacement: path.resolve(__dirname, "src") },
+                { find: "@actions", replacement: path.resolve(__dirname, "src/actions") },
+                { find: "@components", replacement: path.resolve(__dirname, "src/components") },
+                { find: "@i18n", replacement: path.resolve(__dirname, "src/i18n") },
+                { find: "@stores", replacement: path.resolve(__dirname, "src/stores") },
+                { find: "@theme", replacement: path.resolve(__dirname, "src/theme") },
+                { find: "@utils", replacement: path.resolve(__dirname, "src/utils") },
+                { find: "@styles", replacement: path.resolve(__dirname, "src/styles") },
+            ],
+        }),
+
         styles({ mode: "inject", plugins: [autoprefixer()] }),
 
         resolve({
@@ -108,6 +122,7 @@ export default {
 
         replace({
             preventAssignment: true,
+            "import.meta.env.OC_BUILD_ENV": JSON.stringify(process.env.OC_BUILD_ENV),
             "import.meta.env.OC_INTERNET_IDENTITY_URL": JSON.stringify(process.env.OC_INTERNET_IDENTITY_URL),
             "import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID": JSON.stringify(
                 process.env.OC_INTERNET_IDENTITY_CANISTER_ID,
@@ -115,7 +130,7 @@ export default {
             "import.meta.env.OC_NFID_URL": JSON.stringify(process.env.OC_NFID_URL),
             "import.meta.env.OC_DFX_NETWORK": JSON.stringify(process.env.OC_DFX_NETWORK),
             "import.meta.env.OC_NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? "production"),
-            "import.meta.env.OC_OC_WEBSITE_VERSION": JSON.stringify(process.env.OC_WEBSITE_VERSION),
+            "import.meta.env.OC_WEBSITE_VERSION": JSON.stringify(process.env.OC_WEBSITE_VERSION),
             "import.meta.env.OC_ROLLBAR_ACCESS_TOKEN": JSON.stringify(process.env.OC_ROLLBAR_ACCESS_TOKEN),
             "import.meta.env.OC_IC_URL": maybeStringify(process.env.OC_IC_URL),
             "import.meta.env.OC_II_DERIVATION_ORIGIN": maybeStringify(process.env.OC_II_DERIVATION_ORIGIN),
@@ -127,7 +142,7 @@ export default {
             ),
             "import.meta.env.OC_IDENTITY_CANISTER": JSON.stringify(process.env.OC_IDENTITY_CANISTER),
             "import.meta.env.OC_ONLINE_CANISTER": JSON.stringify(process.env.OC_ONLINE_CANISTER),
-            "import.meta.env.OC_PROPOSALS_BOT_CANpath._CANISTER": JSON.stringify(
+            "import.meta.env.OC_PROPOSALS_BOT_CANISTER": JSON.stringify(
                 process.env.OC_PROPOSALS_BOT_CANISTER,
             ),
             "import.meta.env.OC_AIRDROP_BOT_CANISTER": JSON.stringify(process.env.OC_AIRDROP_BOT_CANISTER),

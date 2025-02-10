@@ -20,6 +20,7 @@
     },
     "devDependencies": {
         "@google-cloud/translate": "^8.0.1",
+        "@rollup/plugin-alias": "^5.1.1",
         "@sveltejs/vite-plugin-svelte": "^5.0.3",
         "@tsconfig/svelte": "^5.0.0",
         "@types/chokidar": "^1.7.5",

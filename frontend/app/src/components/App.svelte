@@ -58,8 +58,6 @@
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
-    console.log("CONFIG APP", import.meta.env);
-
     const logger = inititaliseLogger(
         import.meta.env.OC_ROLLBAR_ACCESS_TOKEN!,
         import.meta.env.OC_WEBSITE_VERSION!,
