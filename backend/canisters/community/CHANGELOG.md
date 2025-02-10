@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1605](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1605-community)] - 2025-02-10
+
 ### Fixed
 
 - Fix community member role change ([#7381](https://github.com/open-chat-labs/open-chat/pull/7381))
