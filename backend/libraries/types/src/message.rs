@@ -5,7 +5,7 @@ use crate::{
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
-use ts_export::{ts_export, TSBytes};
+use ts_export::{ts_export, TSPrincipal};
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -135,7 +135,7 @@ impl Tips {
 #[allow(dead_code)]
 #[ts_export]
 #[derive(Serialize, Deserialize)]
-pub struct TipsTS(Vec<(TSBytes, Vec<(UserId, u128)>)>);
+pub struct TipsTS(Vec<(TSPrincipal, Vec<(UserId, u128)>)>);
 
 #[derive(Serialize)]
 #[serde(untagged)]

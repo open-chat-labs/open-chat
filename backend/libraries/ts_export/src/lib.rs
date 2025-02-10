@@ -5,8 +5,13 @@ pub use ts_export_macros::ts_export;
 
 #[ts_export]
 #[derive(Serialize, Deserialize)]
-#[ts(type = "Uint8Array")]
+#[ts(type = "Uint8Array | number[]")]
 pub struct TSBytes {}
+
+#[ts_export]
+#[derive(Serialize, Deserialize)]
+#[ts(type = "Uint8Array | number[] | string")]
+pub struct TSPrincipal {}
 
 #[ts_export]
 #[doc = " @default 0"]
