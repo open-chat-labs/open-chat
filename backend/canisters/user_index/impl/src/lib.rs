@@ -354,7 +354,6 @@ struct Data {
     pub storage_index_user_sync_queue: GroupedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub storage_index_users_to_remove_queue: GroupedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    #[serde(default = "notifications_index_event_sync_queue")]
     pub notifications_index_event_sync_queue: GroupedTimerJobQueue<NotificationsIndexEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
@@ -388,10 +387,6 @@ struct Data {
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub streak_insurance_logs: StreakInsuranceLogs,
-}
-
-fn notifications_index_event_sync_queue() -> GroupedTimerJobQueue<NotificationsIndexEventBatch> {
-    GroupedTimerJobQueue::new(1, false)
 }
 
 impl Data {

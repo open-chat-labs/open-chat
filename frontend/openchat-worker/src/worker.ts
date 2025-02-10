@@ -1,5 +1,4 @@
 import { AnonymousIdentity, SignIdentity } from "@dfinity/agent";
-import { AuthClient, IdbStorage } from "@dfinity/auth-client";
 import {
     DelegationChain,
     DelegationIdentity,
@@ -39,14 +38,8 @@ BigInt.prototype.toJSON = function () {
     return this.toString();
 };
 
-const authClient = AuthClient.create({
-    idleOptions: {
-        disableIdle: true,
-    },
-    storage: new IdbStorage(),
-});
-
-const ocIdentityStorage = new IdentityStorage();
+const authIdentityStorage = IdentityStorage.createForAuthIdentity();
+const ocIdentityStorage = IdentityStorage.createForOcIdentity();
 
 let initPayload: Init | undefined = undefined;
 let identityAgent: IdentityAgent | undefined = undefined;
@@ -65,7 +58,7 @@ async function initialize(
     identityCanister = _identityCanister;
     icUrl = _icUrl;
 
-    const authProviderIdentity = await authClient.then((a) => a.getIdentity());
+    const authProviderIdentity = await authIdentityStorage.get() ?? new AnonymousIdentity();
     const authPrincipal = authProviderIdentity.getPrincipal();
     authPrincipalString = authPrincipal.toString();
 
@@ -92,7 +85,7 @@ async function initialize(
         const identity = await identityAgent.getOpenChatIdentity(sessionKey);
 
         if (identity !== undefined && typeof identity !== "string") {
-            await ocIdentityStorage.set(authPrincipalString, sessionKey, identity.getDelegation());
+            await ocIdentityStorage.set(sessionKey, identity.getDelegation(), authPrincipalString);
             return { kind: "success", identity };
         }
     }
@@ -112,7 +105,7 @@ async function createOpenChatIdentity(
     const response = await identityAgent.createOpenChatIdentity(sessionKey, challengeAttempt);
 
     if (typeof response !== "string") {
-        await ocIdentityStorage.set(authPrincipalString, sessionKey, response.getDelegation());
+        await ocIdentityStorage.set(sessionKey, response.getDelegation(), authPrincipalString);
     }
 
     return response;

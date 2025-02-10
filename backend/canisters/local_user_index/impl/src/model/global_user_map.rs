@@ -11,7 +11,6 @@ pub struct GlobalUserMap {
     user_id_to_principal: HashMap<UserId, Principal>,
     principal_to_user_id: PrincipalToUserIdMap,
     unique_person_proofs: HashMap<UserId, UniquePersonProof>,
-    #[serde(default)]
     platform_operators: HashSet<UserId>,
     platform_moderators: HashSet<UserId>,
     legacy_bots: HashSet<UserId>,
