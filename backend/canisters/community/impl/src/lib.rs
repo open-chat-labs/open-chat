@@ -422,11 +422,8 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: GroupBots,
-    #[serde(default)]
     bot_api_keys: BotApiKeys,
-    #[serde(default)]
     verified: Timestamped<bool>,
-    #[serde(default)]
     message_ids_deduped: bool,
 }
 

@@ -49,10 +49,8 @@ pub struct Bot {
     pub endpoint: String,
     pub description: String,
     pub commands: Vec<SlashCommandSchema>,
-    #[serde(default)]
     pub autonomous_config: Option<AutonomousConfig>,
     pub last_updated: TimestampMillis,
-    #[serde(default)]
     pub installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
 }
 
