@@ -7,7 +7,7 @@ use types::{AccessorId, FileId};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub file_id: FileId,
-    #[ts(as = "Vec<ts_export::TSBytes>")]
+    #[ts(as = "Vec<ts_export::TSPrincipal>")]
     pub accessors: Vec<AccessorId>,
 }
 
