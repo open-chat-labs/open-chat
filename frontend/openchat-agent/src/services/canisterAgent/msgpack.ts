@@ -14,9 +14,9 @@ import { Principal } from "@dfinity/principal";
 import { toCanisterResponseError } from "../error";
 import { type Options, Packr } from "msgpackr";
 import type { Static, TSchema } from "@sinclair/typebox";
-import { AssertError, Value } from "@sinclair/typebox/value";
+import { AssertError } from "@sinclair/typebox/value";
 import { CanisterAgent } from "./base";
-import {deepRemoveNullishFields} from "../../utils/nullish";
+import { typeboxValidate } from "../../utils/typebox";
 
 const Packer = new Packr({
     useRecords: false,
@@ -181,15 +181,11 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
         }
     }
 
-    private static validate<T extends TSchema>(value: unknown, validator: T): Static<T> {
-        return Value.Parse(validator, deepRemoveNullishFields(value));
-    }
-
     private static prepareMsgpackArgs<T extends TSchema>(
-        value: Static<T>,
+        value: unknown,
         validator: T,
     ): ArrayBuffer {
-        const validated = MsgpackCanisterAgent.validate(value, validator);
+        const validated = typeboxValidate(value, validator);
         return Packer.pack(validated);
     }
 
@@ -200,7 +196,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
     ): Out {
         const response = Packer.unpack(new Uint8Array(responseBytes));
         try {
-            const validated = MsgpackCanisterAgent.validate(response, validator);
+            const validated = typeboxValidate(response, validator);
             return mapper(validated);
         } catch (err) {
             console.error(
