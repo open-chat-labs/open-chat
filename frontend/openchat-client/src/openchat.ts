@@ -1,12 +1,7 @@
 /* eslint-disable no-case-declarations */
 import { gaTrack } from "./utils/ga";
-import { type Identity } from "@dfinity/agent";
-import {
-    AuthClient,
-    type AuthClientLoginOptions,
-    type AuthClientStorage,
-    IdbStorage,
-} from "@dfinity/auth-client";
+import { AnonymousIdentity, type Identity } from "@dfinity/agent";
+import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
 import { get } from "svelte/store";
 import DRange from "drange";
 import {
@@ -461,7 +456,6 @@ import {
     featureRestricted,
     buildDelegationIdentity,
     toDer,
-    storeIdentity,
     updateCreatedUser,
     LARGE_GROUP_THRESHOLD,
     isCompositeGate,
@@ -560,13 +554,11 @@ export class OpenChat extends EventTarget {
     #pending: Map<string, PromiseResolver<any>> = new Map(); // in-flight requests
     #unresolved: Map<string, UnresolvedRequest> = new Map(); // requests that never resolved
     #connectedToWorker = false;
-    #ocIdentityStorage: IdentityStorage;
-
-    #userLocation: string | undefined;
-    #authClientStorage: AuthClientStorage = new IdbStorage();
-    #authClient: Promise<AuthClient>;
+    #authIdentityStorage: IdentityStorage;
     #authPrincipal: string | undefined;
+    #ocIdentityStorage: IdentityStorage;
     #ocIdentity: Identity | undefined;
+    #userLocation: string | undefined;
     #liveState: LiveState;
     #logger: Logger;
     #lastOnlineDatesPending = new Set<string>();
@@ -603,22 +595,16 @@ export class OpenChat extends EventTarget {
             ]),
         );
 
-        localStorage.removeItem("ic-delegation");
-        localStorage.removeItem("ic-identity");
         initialiseTracking(config);
 
-        this.#ocIdentityStorage = new IdentityStorage();
-        this.#authClient = AuthClient.create({
-            idleOptions: {
-                disableIdle: true,
-                disableDefaultIdleCallback: true,
-            },
-            storage: this.#authClientStorage,
-        });
+        this.#authIdentityStorage = IdentityStorage.createForAuthIdentity();
+        this.#ocIdentityStorage = IdentityStorage.createForOcIdentity();
 
-        this.#authClient
-            .then((c) => c.getIdentity())
-            .then((authIdentity) => this.#loadedAuthenticationIdentity(authIdentity, undefined));
+        this.#authIdentityStorage
+            .get()
+            .then((authIdentity) => {
+                this.#loadedAuthenticationIdentity(authIdentity ?? new AnonymousIdentity(), undefined);
+            });
     }
 
     public get AuthPrincipal(): string {
@@ -742,7 +728,14 @@ export class OpenChat extends EventTarget {
     login(): void {
         this.updateIdentityState({ kind: "logging_in" });
         const authProvider = this.#liveState.selectedAuthProvider!;
-        this.#authClient.then((c) => {
+        const authClient = AuthClient.create({
+            idleOptions: {
+                disableIdle: true,
+                disableDefaultIdleCallback: true,
+            },
+            storage: this.#authIdentityStorage.storage,
+        });
+        authClient.then((c) => {
             c.login({
                 ...this.getAuthClientOptions(authProvider),
                 onSuccess: () => this.#loadedAuthenticationIdentity(c.getIdentity(), authProvider),
@@ -1034,14 +1027,14 @@ export class OpenChat extends EventTarget {
 
     async logout(): Promise<void> {
         await Promise.all([
+            this.#authIdentityStorage.remove(),
             this.#ocIdentityStorage.remove(),
-            this.#authClient.then((c) => c.logout()),
         ]).then(() => window.location.replace("/"));
     }
 
     async previouslySignedIn(): Promise<boolean> {
         const KEY_STORAGE_IDENTITY = "identity";
-        const identity = await this.#authClientStorage.get(KEY_STORAGE_IDENTITY);
+        const identity = await this.#authIdentityStorage.get(KEY_STORAGE_IDENTITY);
         return this.#liveState.userCreated && identity !== null;
     }
 
@@ -7103,14 +7096,14 @@ export class OpenChat extends EventTarget {
         );
 
         if (resp.kind === "success") {
-            await storeEmailSignInSession(this.#authClientStorage, {
+            await storeEmailSignInSession(this.#authIdentityStorage.storage, {
                 key: sessionKey,
                 email,
                 userKey: resp.userKey,
                 expiration: resp.expiration,
             });
         } else {
-            await removeEmailSignInSession(this.#authClientStorage);
+            await removeEmailSignInSession(this.#authIdentityStorage.storage);
         }
 
         return resp;
@@ -7135,7 +7128,7 @@ export class OpenChat extends EventTarget {
         const response = await fetch(`https://${signInWithEmailCanister}.raw.icp0.io/auth${qs}`);
 
         if (response.ok) {
-            const session = await getEmailSignInSession(this.#authClientStorage);
+            const session = await getEmailSignInSession(this.#authIdentityStorage.storage);
             if (session === undefined) {
                 return { kind: "session_not_found" };
             }
@@ -7189,7 +7182,7 @@ export class OpenChat extends EventTarget {
             );
             const delegation = identity.getDelegation();
             if (assumeIdentity) {
-                await storeIdentity(this.#authClientStorage, sessionKey, delegation);
+                this.#authIdentityStorage.set(sessionKey, delegation);
                 this.#loadedAuthenticationIdentity(identity, AuthProvider.EMAIL);
             }
             return {
@@ -7251,7 +7244,7 @@ export class OpenChat extends EventTarget {
                 );
                 const delegation = identity.getDelegation();
                 if (assumeIdentity) {
-                    await storeIdentity(this.#authClientStorage, sessionKey, delegation);
+                    await this.#authIdentityStorage.set(sessionKey, delegation);
                     this.#loadedAuthenticationIdentity(
                         identity,
                         token === "eth" ? AuthProvider.ETH : AuthProvider.SOL,
