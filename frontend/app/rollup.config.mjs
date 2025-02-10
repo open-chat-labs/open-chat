@@ -174,8 +174,8 @@ export default {
             "import.meta.env.OC_WALLET_CONNECT_PROJECT_ID": JSON.stringify(
                 process.env.OC_WALLET_CONNECT_PROJECT_ID,
             ),
-            "import.meta.env.OC_SERVICE_WORKER_PATH": process.env.OC_SERVICE_WORKER_PATH,
-            "import.meta.env.OC_SUSPICIOUS_USERIDS": process.env.OC_SUSPICIOUS_USERIDS,
+            "import.meta.env.OC_SERVICE_WORKER_PATH": JSON.stringify(process.env.OC_SERVICE_WORKER_PATH),
+            "import.meta.env.OC_SUSPICIOUS_USERIDS": JSON.stringify(process.env.OC_SUSPICIOUS_USERIDS),
         }),
 
         html({
