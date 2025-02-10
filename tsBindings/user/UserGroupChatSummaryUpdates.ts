@@ -2,4 +2,4 @@
 import type { ChatId } from "../shared/ChatId";
 import type { MessageIndex } from "../shared/MessageIndex";
 
-export type UserGroupChatSummaryUpdates = { chat_id: ChatId, read_by_me_up_to?: MessageIndex | undefined, threads_read: Record<MessageIndex, MessageIndex>, archived?: boolean | undefined, date_read_pinned?: bigint | undefined, };
+export type UserGroupChatSummaryUpdates = { chat_id: ChatId, read_by_me_up_to?: MessageIndex, threads_read: Record<MessageIndex, MessageIndex>, archived?: boolean, date_read_pinned?: bigint, };

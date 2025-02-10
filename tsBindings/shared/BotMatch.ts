@@ -3,4 +3,4 @@ import type { AutonomousConfig } from "./AutonomousConfig";
 import type { SlashCommandSchema } from "./SlashCommandSchema";
 import type { UserId } from "./UserId";
 
-export type BotMatch = { id: UserId, score: number, name: string, description: string, owner: UserId, avatar_id?: bigint | undefined, commands: Array<SlashCommandSchema>, autonomous_config?: AutonomousConfig | undefined, };
+export type BotMatch = { id: UserId, score: number, name: string, description: string, owner: UserId, avatar_id?: bigint, commands: Array<SlashCommandSchema>, autonomous_config?: AutonomousConfig, };

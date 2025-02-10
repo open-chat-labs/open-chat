@@ -6,4 +6,4 @@ import type { MessageIndex } from "../shared/MessageIndex";
 import type { UserId } from "../shared/UserId";
 import type { UserMessageActivity } from "./UserMessageActivity";
 
-export type UserMessageActivityEvent = { chat: Chat, thread_root_message_index?: MessageIndex | undefined, message_index: MessageIndex, message_id: MessageId, event_index: EventIndex, activity: UserMessageActivity, timestamp: bigint, user_id?: UserId | undefined, };
+export type UserMessageActivityEvent = { chat: Chat, thread_root_message_index?: MessageIndex, message_index: MessageIndex, message_id: MessageId, event_index: EventIndex, activity: UserMessageActivity, timestamp: bigint, user_id?: UserId, };

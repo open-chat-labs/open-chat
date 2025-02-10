@@ -16,10 +16,11 @@ import { type Options, Packr } from "msgpackr";
 import type { Static, TSchema } from "@sinclair/typebox";
 import { AssertError, Value } from "@sinclair/typebox/value";
 import { CanisterAgent } from "./base";
+import {deepRemoveNullishFields} from "../../utils/nullish";
 
 const Packer = new Packr({
     useRecords: false,
-    skipValues: [undefined],
+    skipValues: [null, undefined],
     largeBigIntToString: true,
 } as unknown as Options);
 
@@ -181,7 +182,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
     }
 
     private static validate<T extends TSchema>(value: unknown, validator: T): Static<T> {
-        return Value.Parse(validator, value);
+        return Value.Parse(validator, deepRemoveNullishFields(value));
     }
 
     private static prepareMsgpackArgs<T extends TSchema>(

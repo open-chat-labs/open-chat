@@ -3,4 +3,4 @@ import type { Chat } from "../../shared/Chat";
 import type { EventIndex } from "../../shared/EventIndex";
 import type { MessageIndex } from "../../shared/MessageIndex";
 
-export type UserSetMessageReminderArgs = { chat: Chat, thread_root_message_index?: MessageIndex | undefined, event_index: EventIndex, notes?: string | undefined, remind_at: bigint, };
+export type UserSetMessageReminderArgs = { chat: Chat, thread_root_message_index?: MessageIndex, event_index: EventIndex, notes?: string, remind_at: bigint, };

@@ -4,4 +4,4 @@ import type { Cryptocurrency } from "./Cryptocurrency";
 import type { TSBytes } from "./TSBytes";
 import type { UserId } from "./UserId";
 
-export type FailedCryptoTransactionICRC2 = { ledger: TSBytes, token: Cryptocurrency, amount: bigint, fee: bigint, spender: UserId, from: CryptoAccountICRC1, to: CryptoAccountICRC1, memo?: TSBytes | undefined, created: bigint, error_message: string, };
+export type FailedCryptoTransactionICRC2 = { ledger: TSBytes, token: Cryptocurrency, amount: bigint, fee: bigint, spender: UserId, from: CryptoAccountICRC1, to: CryptoAccountICRC1, memo?: TSBytes, created: bigint, error_message: string, };

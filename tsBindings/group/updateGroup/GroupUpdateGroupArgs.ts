@@ -5,4 +5,4 @@ import type { OptionUpdateU64 } from "../../shared/OptionUpdateU64";
 import type { OptionalGroupPermissions } from "../../shared/OptionalGroupPermissions";
 import type { UpdatedRules } from "../../shared/UpdatedRules";
 
-export type GroupUpdateGroupArgs = { name?: string | undefined, description?: string | undefined, rules?: UpdatedRules | undefined, avatar: OptionUpdateDocument, permissions_v2?: OptionalGroupPermissions | undefined, events_ttl: OptionUpdateU64, gate_config: OptionUpdateAccessGateConfig, public?: boolean | undefined, messages_visible_to_non_members?: boolean | undefined, correlation_id: bigint, };
+export type GroupUpdateGroupArgs = { name?: string, description?: string, rules?: UpdatedRules, avatar: OptionUpdateDocument, permissions_v2?: OptionalGroupPermissions, events_ttl: OptionUpdateU64, gate_config: OptionUpdateAccessGateConfig, public?: boolean, messages_visible_to_non_members?: boolean, correlation_id: bigint, };

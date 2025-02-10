@@ -4,4 +4,4 @@ import type { OptionUpdateString } from "../../shared/OptionUpdateString";
 import type { TSBytes } from "../../shared/TSBytes";
 import type { UserId } from "../../shared/UserId";
 
-export type UserIndexUpdateBotArgs = { bot_id: UserId, owner?: UserId | undefined, principal?: TSBytes | undefined, avatar: OptionUpdateString, endpoint?: string | undefined, definition?: BotDefinition | undefined, };
+export type UserIndexUpdateBotArgs = { bot_id: UserId, owner?: UserId, principal?: TSBytes, avatar: OptionUpdateString, endpoint?: string, definition?: BotDefinition, };

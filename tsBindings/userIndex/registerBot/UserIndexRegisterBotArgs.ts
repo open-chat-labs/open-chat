@@ -3,4 +3,4 @@ import type { BotDefinition } from "../../shared/BotDefinition";
 import type { TSBytes } from "../../shared/TSBytes";
 import type { UserId } from "../../shared/UserId";
 
-export type UserIndexRegisterBotArgs = { principal: TSBytes, owner: UserId, name: string, avatar?: string | undefined, endpoint: string, definition: BotDefinition, };
+export type UserIndexRegisterBotArgs = { principal: TSBytes, owner: UserId, name: string, avatar?: string, endpoint: string, definition: BotDefinition, };

@@ -1,7 +1,7 @@
 use crate::Achievement;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
+use ts_export::ts_export;
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum ReferralType {
@@ -9,7 +9,8 @@ pub enum ReferralType {
     User,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Default, TS)]
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Default)]
 pub enum ReferralStatus {
     #[default]
     Registered,

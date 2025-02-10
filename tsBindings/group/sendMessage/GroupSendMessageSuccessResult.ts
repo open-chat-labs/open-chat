@@ -2,4 +2,4 @@
 import type { EventIndex } from "../../shared/EventIndex";
 import type { MessageIndex } from "../../shared/MessageIndex";
 
-export type GroupSendMessageSuccessResult = { event_index: EventIndex, message_index: MessageIndex, timestamp: bigint, expires_at?: bigint | undefined, };
+export type GroupSendMessageSuccessResult = { event_index: EventIndex, message_index: MessageIndex, timestamp: bigint, expires_at?: bigint, };

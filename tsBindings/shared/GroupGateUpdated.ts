@@ -3,4 +3,4 @@ import type { AccessGate } from "./AccessGate";
 import type { AccessGateConfig } from "./AccessGateConfig";
 import type { UserId } from "./UserId";
 
-export type GroupGateUpdated = { updated_by: UserId, new_gate?: AccessGate | undefined, new_gate_config?: AccessGateConfig | undefined, };
+export type GroupGateUpdated = { updated_by: UserId, new_gate?: AccessGate, new_gate_config?: AccessGateConfig, };
