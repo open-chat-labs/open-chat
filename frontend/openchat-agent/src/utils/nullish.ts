@@ -1,6 +1,7 @@
 export function deepRemoveNullishFields(value: unknown, depth = 0): unknown {
     if (depth >= 100) throw new Error("Failed to remove nullish fields after 100 loops");
-
+    if (value == null) return value;
+    
     if (typeof value === "object") {
         for (const [k, v] of Object.entries(value)) {
             if (v == null) {
