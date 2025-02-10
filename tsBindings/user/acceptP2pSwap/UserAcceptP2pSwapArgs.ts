@@ -4,4 +4,4 @@ import type { MessageIndex } from "../../shared/MessageIndex";
 import type { PinNumberWrapper } from "../../shared/PinNumberWrapper";
 import type { UserId } from "../../shared/UserId";
 
-export type UserAcceptP2pSwapArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, pin?: PinNumberWrapper | undefined, };
+export type UserAcceptP2pSwapArgs = { user_id: UserId, thread_root_message_index?: MessageIndex, message_id: MessageId, pin?: PinNumberWrapper, };

@@ -4,4 +4,4 @@ import type { TSBytes } from "./TSBytes";
 import type { Tokens } from "./Tokens";
 import type { UserOrAccount } from "./UserOrAccount";
 
-export type PendingCryptoTransactionNNS = { ledger: TSBytes, token: Cryptocurrency, amount: Tokens, to: UserOrAccount, fee?: Tokens | undefined, memo?: bigint | undefined, created: bigint, };
+export type PendingCryptoTransactionNNS = { ledger: TSBytes, token: Cryptocurrency, amount: Tokens, to: UserOrAccount, fee?: Tokens, memo?: bigint, created: bigint, };

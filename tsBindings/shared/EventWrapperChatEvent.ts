@@ -2,4 +2,4 @@
 import type { ChatEvent } from "./ChatEvent";
 import type { EventIndex } from "./EventIndex";
 
-export type EventWrapperChatEvent = { index: EventIndex, timestamp: bigint, correlation_id: bigint, expires_at?: bigint | undefined, event: ChatEvent, };
+export type EventWrapperChatEvent = { index: EventIndex, timestamp: bigint, correlation_id: bigint, expires_at?: bigint, event: ChatEvent, };

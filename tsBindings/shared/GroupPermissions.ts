@@ -2,4 +2,4 @@
 import type { GroupPermissionRole } from "./GroupPermissionRole";
 import type { MessagePermissions } from "./MessagePermissions";
 
-export type GroupPermissions = { change_roles: GroupPermissionRole, update_group: GroupPermissionRole, add_members: GroupPermissionRole, invite_users: GroupPermissionRole, remove_members: GroupPermissionRole, delete_messages: GroupPermissionRole, pin_messages: GroupPermissionRole, react_to_messages: GroupPermissionRole, mention_all_members: GroupPermissionRole, start_video_call: GroupPermissionRole, message_permissions: MessagePermissions, thread_permissions?: MessagePermissions | undefined, };
+export type GroupPermissions = { change_roles: GroupPermissionRole, update_group: GroupPermissionRole, add_members: GroupPermissionRole, invite_users: GroupPermissionRole, remove_members: GroupPermissionRole, delete_messages: GroupPermissionRole, pin_messages: GroupPermissionRole, react_to_messages: GroupPermissionRole, mention_all_members: GroupPermissionRole, start_video_call: GroupPermissionRole, message_permissions: MessagePermissions, thread_permissions?: MessagePermissions, };

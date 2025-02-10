@@ -2,4 +2,4 @@
 import type { ChatId } from "../../shared/ChatId";
 import type { GroupIndexFreezeGroupSuspensionDetails } from "./GroupIndexFreezeGroupSuspensionDetails";
 
-export type GroupIndexFreezeGroupArgs = { chat_id: ChatId, reason?: string | undefined, suspend_members?: GroupIndexFreezeGroupSuspensionDetails | undefined, };
+export type GroupIndexFreezeGroupArgs = { chat_id: ChatId, reason?: string, suspend_members?: GroupIndexFreezeGroupSuspensionDetails, };

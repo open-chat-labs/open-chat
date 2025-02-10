@@ -3,4 +3,4 @@ import type { AccountICRC1 } from "../../shared/AccountICRC1";
 import type { PinNumberWrapper } from "../../shared/PinNumberWrapper";
 import type { TSBytes } from "../../shared/TSBytes";
 
-export type UserApproveTransferArgs = { spender: AccountICRC1, ledger_canister_id: TSBytes, amount: bigint, expires_in?: bigint | undefined, pin?: PinNumberWrapper | undefined, };
+export type UserApproveTransferArgs = { spender: AccountICRC1, ledger_canister_id: TSBytes, amount: bigint, expires_in?: bigint, pin?: PinNumberWrapper, };

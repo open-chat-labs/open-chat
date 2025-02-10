@@ -2,4 +2,4 @@
 import type { PinNumberWrapper } from "../../shared/PinNumberWrapper";
 import type { UserSetPinNumberPinNumberVerification } from "./UserSetPinNumberPinNumberVerification";
 
-export type UserSetPinNumberArgs = { new?: PinNumberWrapper | undefined, verification: UserSetPinNumberPinNumberVerification, };
+export type UserSetPinNumberArgs = { new?: PinNumberWrapper, verification: UserSetPinNumberPinNumberVerification, };

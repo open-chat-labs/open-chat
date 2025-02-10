@@ -3,4 +3,4 @@ import type { AutonomousConfig } from "../../shared/AutonomousConfig";
 import type { SlashCommandSchema } from "../../shared/SlashCommandSchema";
 import type { UserId } from "../../shared/UserId";
 
-export type UserIndexBotUpdatesBotSchema = { id: UserId, owner: UserId, name: string, avatar_id?: bigint | undefined, endpoint: string, description: string, commands: Array<SlashCommandSchema>, autonomous_config?: AutonomousConfig | undefined, last_updated: bigint, };
+export type UserIndexBotUpdatesBotSchema = { id: UserId, owner: UserId, name: string, avatar_id?: bigint, endpoint: string, description: string, commands: Array<SlashCommandSchema>, autonomous_config?: AutonomousConfig, last_updated: bigint, };

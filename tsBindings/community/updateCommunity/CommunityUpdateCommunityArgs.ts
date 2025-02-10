@@ -4,4 +4,4 @@ import type { OptionUpdateDocument } from "../../shared/OptionUpdateDocument";
 import type { OptionalCommunityPermissions } from "../../shared/OptionalCommunityPermissions";
 import type { UpdatedRules } from "../../shared/UpdatedRules";
 
-export type CommunityUpdateCommunityArgs = { name?: string | undefined, description?: string | undefined, rules?: UpdatedRules | undefined, avatar: OptionUpdateDocument, banner: OptionUpdateDocument, permissions?: OptionalCommunityPermissions | undefined, gate_config: OptionUpdateAccessGateConfig, public?: boolean | undefined, primary_language?: string | undefined, };
+export type CommunityUpdateCommunityArgs = { name?: string, description?: string, rules?: UpdatedRules, avatar: OptionUpdateDocument, banner: OptionUpdateDocument, permissions?: OptionalCommunityPermissions, gate_config: OptionUpdateAccessGateConfig, public?: boolean, primary_language?: string, };

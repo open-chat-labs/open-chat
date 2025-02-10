@@ -2,4 +2,4 @@
 import type { ChatId } from "../../shared/ChatId";
 import type { VerifiedCredentialGateArgs } from "../../shared/VerifiedCredentialGateArgs";
 
-export type LocalUserIndexJoinGroupArgs = { chat_id: ChatId, invite_code?: bigint | undefined, verified_credential_args?: VerifiedCredentialGateArgs | undefined, correlation_id: bigint, };
+export type LocalUserIndexJoinGroupArgs = { chat_id: ChatId, invite_code?: bigint, verified_credential_args?: VerifiedCredentialGateArgs, correlation_id: bigint, };

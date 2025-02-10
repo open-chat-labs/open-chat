@@ -2,4 +2,4 @@
 import type { CommunityId } from "../../shared/CommunityId";
 import type { GroupIndexFreezeCommunitySuspensionDetails } from "./GroupIndexFreezeCommunitySuspensionDetails";
 
-export type GroupIndexFreezeCommunityArgs = { community_id: CommunityId, reason?: string | undefined, suspend_members?: GroupIndexFreezeCommunitySuspensionDetails | undefined, };
+export type GroupIndexFreezeCommunityArgs = { community_id: CommunityId, reason?: string, suspend_members?: GroupIndexFreezeCommunitySuspensionDetails, };
