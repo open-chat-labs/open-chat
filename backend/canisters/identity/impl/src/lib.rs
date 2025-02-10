@@ -2,6 +2,7 @@ use crate::model::challenges::Challenges;
 use crate::model::identity_link_requests::IdentityLinkRequests;
 use crate::model::salt::Salt;
 use crate::model::user_principals::UserPrincipals;
+use crate::model::webauthn_keys::WebAuthnKeys;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use ic_canister_sig_creation::signature_map::{SignatureMap, LABEL_SIG};
@@ -21,6 +22,9 @@ mod memory;
 mod model;
 mod queries;
 mod updates;
+
+// zzzxd-webau-thnke-yr7oc-cai
+const WEBAUTHN_ORIGINATING_CANISTER: CanisterId = CanisterId::from_slice(&[129, 5, 38, 118, 168, 152, 143, 220, 33, 1]);
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -100,6 +104,8 @@ struct Data {
     skip_captcha_whitelist: HashSet<CanisterId>,
     user_principals: UserPrincipals,
     identity_link_requests: IdentityLinkRequests,
+    #[serde(default)]
+    webauthn_keys: WebAuthnKeys,
     #[serde(skip)]
     signature_map: SignatureMap,
     #[serde(with = "serde_bytes")]
@@ -128,6 +134,7 @@ impl Data {
             skip_captcha_whitelist: skip_captcha_whitelist.into_iter().collect(),
             user_principals: UserPrincipals::default(),
             identity_link_requests: IdentityLinkRequests::default(),
+            webauthn_keys: WebAuthnKeys::default(),
             signature_map: SignatureMap::default(),
             ic_root_key,
             salt: Salt::default(),
@@ -162,18 +169,23 @@ impl Data {
     }
 }
 
+fn check_public_key(caller: Principal, public_key: &[u8]) -> Result<(), String> {
+    let expected_caller = Principal::self_authenticating(public_key);
+    if caller == expected_caller {
+        Ok(())
+    } else {
+        Err("PublicKey does not match caller".to_string())
+    }
+}
+
 fn extract_originating_canister(caller: Principal, public_key: &[u8]) -> Result<CanisterId, String> {
+    check_public_key(caller, public_key)?;
+
     let key_info = SubjectPublicKeyInfo::from_der(public_key).map_err(|e| format!("{e:?}"))?.1;
     let canister_id_length = key_info.subject_public_key.data[0];
 
     let canister_id = CanisterId::from_slice(&key_info.subject_public_key.data[1..=(canister_id_length as usize)]);
-
-    let expected_caller = Principal::self_authenticating(public_key);
-    if caller == expected_caller {
-        Ok(canister_id)
-    } else {
-        Err("PublicKey does not match caller".to_string())
-    }
+    Ok(canister_id)
 }
 
 #[derive(Serialize, Debug)]

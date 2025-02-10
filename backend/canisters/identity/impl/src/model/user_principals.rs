@@ -9,6 +9,8 @@ pub struct UserPrincipals {
     user_principals: Vec<UserPrincipalInternal>,
     auth_principals: HashMap<Principal, AuthPrincipalInternal>,
     originating_canisters: HashMap<CanisterId, u32>,
+    #[serde(default)]
+    temp_keys: HashMap<Principal, TempKey>,
 }
 
 #[allow(dead_code)]
@@ -41,6 +43,16 @@ struct AuthPrincipalInternal {
     last_used: TimestampMillis,
 }
 
+#[derive(Serialize, Deserialize)]
+struct TempKey {
+    #[serde(rename = "c")]
+    created: TimestampMillis,
+    #[serde(rename = "e")]
+    expires: TimestampMillis,
+    #[serde(rename = "p")]
+    auth_principal: Principal,
+}
+
 impl UserPrincipals {
     pub fn push(
         &mut self,
@@ -69,6 +81,23 @@ impl UserPrincipals {
             },
         );
         *self.originating_canisters.entry(originating_canister).or_default() += 1;
+    }
+
+    pub fn add_temp_key(
+        &mut self,
+        temp_key: Principal,
+        auth_principal: Principal,
+        now: TimestampMillis,
+        expires: TimestampMillis,
+    ) {
+        self.temp_keys.insert(
+            temp_key,
+            TempKey {
+                created: now,
+                expires,
+                auth_principal,
+            },
+        );
     }
 
     pub fn link_auth_principal_with_existing_user(
@@ -137,6 +166,12 @@ impl UserPrincipals {
 
     pub fn get_auth_principal(&self, auth_principal: &Principal) -> Option<AuthPrincipal> {
         self.auth_principals.get(auth_principal).map(|a| a.into())
+    }
+
+    // Returns the underlying auth principal if the caller is using a temp key, else returns the
+    // calling principal
+    pub fn unwrap_temp_key(&self, caller: Principal) -> Principal {
+        self.temp_keys.get(&caller).map_or(caller, |k| k.auth_principal)
     }
 
     pub fn user_principals_count(&self) -> u32 {

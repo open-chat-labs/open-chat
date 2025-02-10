@@ -413,6 +413,7 @@ import type {
     BotClientConfigData,
     CompletedCryptocurrencyTransfer,
     GenerateBotKeyResponse,
+    WebAuthnKey,
 } from "openchat-shared";
 import {
     Stream,
@@ -503,7 +504,11 @@ import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 import { isBalanceGate, isCredentialGate } from "openchat-shared";
-import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+import {
+    DelegationChain,
+    DelegationIdentity,
+    ECDSAKeyIdentity,
+} from "@dfinity/identity";
 import {
     capturePinNumberStore,
     pinNumberFailureStore,
@@ -521,6 +526,7 @@ import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
 import { setExternalBots } from "./stores";
+import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -557,6 +563,7 @@ export class OpenChat extends EventTarget {
     #authIdentityStorage: IdentityStorage;
     #authPrincipal: string | undefined;
     #ocIdentityStorage: IdentityStorage;
+    #webAuthnKey: WebAuthnKey | undefined = undefined;
     #ocIdentity: Identity | undefined;
     #userLocation: string | undefined;
     #liveState: LiveState;
@@ -693,6 +700,7 @@ export class OpenChat extends EventTarget {
 
                 await this.#sendRequest({
                     kind: "createOpenChatIdentity",
+                    webAuthnKey: this.#webAuthnKey,
                     challengeAttempt: undefined,
                 });
             }
@@ -819,6 +827,7 @@ export class OpenChat extends EventTarget {
 
         const resp = await this.#sendRequest({
             kind: "createOpenChatIdentity",
+            webAuthnKey: this.#webAuthnKey,
             challengeAttempt,
         }).catch(() => "challenge_failed");
 
@@ -7075,6 +7084,52 @@ export class OpenChat extends EventTarget {
             kind: "updateBtcBalance",
             userId: this.#liveState.user.userId,
         });
+    }
+
+    async signUpWithWebAuthn(): Promise<void> {
+        const webAuthnIdentity = await createWebAuthnIdentity("localhost");
+        const sessionKey = await ECDSAKeyIdentity.generate();
+        this.#webAuthnKey = {
+            pubkey: new Uint8Array(webAuthnIdentity.getPublicKey().toDer()),
+            credentialId: new Uint8Array(webAuthnIdentity.rawId),
+            origin: "localhost",
+            crossPlatform: webAuthnIdentity.getAuthenticatorAttachment() === "cross-platform",
+        };
+        this.#authIdentityStorage.set(sessionKey, undefined);
+        this.#loadedAuthenticationIdentity(sessionKey, AuthProvider.WEBAUTHN);
+    }
+
+    async signInWithWebAuthn(): Promise<void> {
+        const webAuthnIdentity = new MultiWebAuthnIdentity(
+            "localhost",
+            (credentialId) => this.lookupWebAuthnPubKey(credentialId)
+        );
+        const sessionKey = await ECDSAKeyIdentity.generate();
+        const delegationChain = await DelegationChain.create(
+            webAuthnIdentity,
+            sessionKey.getPublicKey(),
+        );
+        const identity = DelegationIdentity.fromDelegation(sessionKey, delegationChain);
+        this.#webAuthnKey = {
+            pubkey: new Uint8Array(webAuthnIdentity.getPublicKey().toDer()),
+            credentialId: new Uint8Array(webAuthnIdentity.innerIdentity().rawId),
+            origin: "localhost",
+            crossPlatform: webAuthnIdentity.innerIdentity().getAuthenticatorAttachment() === "cross-platform",
+        };
+        this.#authIdentityStorage.set(sessionKey, delegationChain);
+        this.#loadedAuthenticationIdentity(identity, AuthProvider.WEBAUTHN);
+    }
+
+    async lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array> {
+        const pubKey = await this.#sendRequest({
+            kind: "lookupWebAuthnPubKey",
+            credentialId,
+        });
+
+        if (pubKey === undefined) {
+            throw new Error("Failed to lookup WebAuthn PubKey");
+        }
+        return pubKey;
     }
 
     async generateMagicLink(

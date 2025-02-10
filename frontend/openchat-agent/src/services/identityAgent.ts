@@ -9,6 +9,7 @@ import type {
     GenerateChallengeResponse,
     InitiateIdentityLinkResponse,
     RemoveIdentityLinkResponse,
+    WebAuthnKey,
 } from "openchat-shared";
 import { buildDelegationIdentity, toDer } from "openchat-shared";
 import { createHttpAgent } from "../utils/httpAgent";
@@ -43,11 +44,13 @@ export class IdentityAgent {
 
     async createOpenChatIdentity(
         sessionKey: SignIdentity,
+        webAuthnKey: WebAuthnKey | undefined,
         challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
         const sessionKeyDer = toDer(sessionKey);
         const createIdentityResponse = await this._identityClient.createIdentity(
             sessionKeyDer,
+            webAuthnKey,
             this._isIIPrincipal,
             challengeAttempt,
         );
@@ -76,11 +79,11 @@ export class IdentityAgent {
 
         return prepareDelegationResponse.kind === "success"
             ? this.getDelegation(
-                  prepareDelegationResponse.userKey,
-                  sessionKey,
-                  sessionKeyDer,
-                  prepareDelegationResponse.expiration,
-              )
+                prepareDelegationResponse.userKey,
+                sessionKey,
+                sessionKeyDer,
+                prepareDelegationResponse.expiration,
+            )
             : undefined;
     }
 
@@ -102,6 +105,10 @@ export class IdentityAgent {
 
     getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
         return this._identityClient.getAuthenticationPrincipals();
+    }
+
+    lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array | undefined> {
+        return this._identityClient.lookupWebAuthnPubKey(credentialId);
     }
 
     private async getDelegation(

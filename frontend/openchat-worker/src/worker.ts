@@ -30,6 +30,7 @@ import {
     type LinkIdentitiesResponse,
     AuthProvider,
     type RemoveIdentityLinkResponse,
+    type WebAuthnKey,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -61,17 +62,16 @@ async function initialize(
     const authProviderIdentity = await authIdentityStorage.get() ?? new AnonymousIdentity();
     const authPrincipal = authProviderIdentity.getPrincipal();
     authPrincipalString = authPrincipal.toString();
-
-    if (authPrincipal.isAnonymous() || authPrincipalString !== expectedAuthPrincipal) {
-        return { kind: "auth_identity_not_found" };
-    }
-
     identityAgent = await IdentityAgent.create(
         authProviderIdentity as SignIdentity,
         identityCanister,
         icUrl,
         authProvider === undefined ? undefined : authProvider === AuthProvider.II,
     );
+
+    if (authPrincipal.isAnonymous() || authPrincipalString !== expectedAuthPrincipal) {
+        return { kind: "auth_identity_not_found" };
+    }
 
     const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
     if (ocIdentity !== undefined) {
@@ -94,6 +94,7 @@ async function initialize(
 }
 
 async function createOpenChatIdentity(
+    webAuthnKey: WebAuthnKey | undefined,
     challengeAttempt: ChallengeAttempt | undefined,
 ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
     if (identityAgent === undefined || authPrincipalString === undefined) {
@@ -102,7 +103,7 @@ async function createOpenChatIdentity(
 
     const sessionKey = await ECDSAKeyIdentity.generate();
 
-    const response = await identityAgent.createOpenChatIdentity(sessionKey, challengeAttempt);
+    const response = await identityAgent.createOpenChatIdentity(sessionKey, webAuthnKey, challengeAttempt);
 
     if (typeof response !== "string") {
         await ocIdentityStorage.set(sessionKey, response.getDelegation(), authPrincipalString);
@@ -263,7 +264,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             executeThenReply(
                 payload,
                 correlationId,
-                createOpenChatIdentity(payload.challengeAttempt).then((resp) => {
+                createOpenChatIdentity(payload.webAuthnKey, payload.challengeAttempt).then((resp) => {
                     const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
                     agent = new OpenChatAgent(id, {
                         ...initPayload!,
@@ -1733,6 +1734,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "updateBtcBalance":
                 executeThenReply(payload, correlationId, agent.updateBtcBalance(payload.userId));
+                break;
+
+            case "lookupWebAuthnPubKey":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    identityAgent?.lookupWebAuthnPubKey(payload.credentialId) ?? Promise.resolve(undefined)
+                );
                 break;
 
             case "generateMagicLink":

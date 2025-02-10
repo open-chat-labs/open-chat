@@ -109,6 +109,12 @@
                     error = "loginDialog.unexpectedError";
                 }
             });
+        } else if (provider === AuthProvider.WEBAUTHN) {
+            if (mode === "signin") {
+                client.signInWithWebAuthn();
+            } else {
+                client.signUpWithWebAuthn();
+            }
         } else if (provider === AuthProvider.ETH) {
             console.log("Logging in with ETH");
         } else if (provider === AuthProvider.SOL) {

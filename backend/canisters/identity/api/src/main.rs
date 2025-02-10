@@ -4,6 +4,7 @@ fn main() {
     generate_candid_method!(identity, auth_principals, query);
     generate_candid_method!(identity, check_auth_principal, query);
     generate_candid_method!(identity, get_delegation, query);
+    generate_candid_method!(identity, lookup_webauthn_pubkey, query);
 
     generate_candid_method!(identity, approve_identity_link, update);
     generate_candid_method!(identity, create_identity, update);

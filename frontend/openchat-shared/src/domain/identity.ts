@@ -118,3 +118,10 @@ export type RemoveIdentityLinkResponse =
     | "cannot_unlink_active_principal"
     | "identity_link_not_found"
     | "user_not_found";
+
+export type WebAuthnKey = {
+    pubkey: Uint8Array;
+    credentialId: Uint8Array;
+    origin: string;
+    crossPlatform: boolean;
+};

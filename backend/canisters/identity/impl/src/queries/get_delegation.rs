@@ -12,8 +12,9 @@ fn get_delegation(args: Args) -> Response {
 
 fn get_delegation_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
+    let auth_principal = state.data.user_principals.unwrap_temp_key(caller);
 
-    let Some(user) = state.data.user_principals.get_by_auth_principal(&caller) else {
+    let Some(user) = state.data.user_principals.get_by_auth_principal(&auth_principal) else {
         panic!("Caller not recognised");
     };
 

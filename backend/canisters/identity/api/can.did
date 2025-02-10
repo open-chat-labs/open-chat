@@ -36,6 +36,17 @@ type SignedDelegation = record {
     signature : blob;
 };
 
+type LookupWebAuthnPubKeyArgs = record {
+    credential_id : blob;
+};
+
+type LookupWebAuthnPubKeyResponse = variant {
+    Success : record {
+        pubkey : blob;
+    };
+    NotFound;
+};
+
 type GenerateChallengeResponse = variant {
     Success : record {
         key : nat32;
@@ -63,6 +74,11 @@ type ApproveIdentityLinkResponse = variant {
 
 type CreateIdentityArgs = record {
     public_key : PublicKey;
+    webauthn_key : opt record {
+        credential_id : blob;
+        origin : text;
+        cross_platform : bool;
+    };
     session_key : PublicKey;
     is_ii_principal : opt bool;
     max_time_to_live : opt Nanoseconds;
@@ -109,7 +125,13 @@ type PrepareDelegationResponse = variant {
 type PrepareDelegationSuccess = record {
     user_key : PublicKey;
     expiration : TimestampNanoseconds;
-    seed: blob;
+};
+
+type StoreWebAuthnKeyArgs = record {
+    credential_id : PublicKey;
+    pubkey : PublicKey;
+    session_key : PublicKey;
+    max_time_to_live : opt Nanoseconds;
 };
 
 type RemoveIdentityLinkArgs = record {
@@ -127,6 +149,7 @@ service : {
     auth_principals : (record {}) -> (AuthPrincipalsResponse) query;
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
+    lookup_webauthn_pubkey : (LookupWebAuthnPubKeyArgs) -> (LookupWebAuthnPubKeyResponse) query;
     approve_identity_link : (ApproveIdentityLinkArgs) -> (ApproveIdentityLinkResponse);
     create_identity : (CreateIdentityArgs) -> (CreateIdentityResponse);
     generate_challenge : (record {}) -> (GenerateChallengeResponse);

@@ -38,6 +38,7 @@
         const supportsII = "PublicKeyCredential" in window;
 
         options.push(AuthProvider.EMAIL);
+        options.push(AuthProvider.WEBAUTHN);
 
         if (supportsII) {
             options.push(AuthProvider.II);

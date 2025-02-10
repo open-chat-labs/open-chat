@@ -12,6 +12,7 @@ import type {
     InitiateIdentityLinkResponse,
     PrepareDelegationResponse,
     RemoveIdentityLinkResponse,
+    WebAuthnKey,
 } from "openchat-shared";
 import {
     approveIdentityLinkResponse,
@@ -26,7 +27,7 @@ import {
 } from "./mappers";
 import type { CreateIdentityArgs } from "./candid/types";
 import { apiOptional } from "../common/chatMappers";
-import { identity } from "../../utils/mapping";
+import { consolidateBytes, identity } from "../../utils/mapping";
 import { Principal } from "@dfinity/principal";
 import type { DelegationIdentity } from "@dfinity/identity";
 import { signedDelegation } from "../../utils/id";
@@ -38,11 +39,17 @@ export class IdentityClient extends CandidCanisterAgent<IdentityService> {
 
     createIdentity(
         sessionKey: Uint8Array,
+        webAuthnKey: WebAuthnKey | undefined,
         isIIPrincipal: boolean | undefined,
         challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<CreateIdentityResponse> {
         const args: CreateIdentityArgs = {
-            public_key: this.publicKey(),
+            public_key: webAuthnKey?.pubkey ?? this.publicKey(),
+            webauthn_key: apiOptional((k) => ({
+                credential_id: k.credentialId,
+                origin: k.origin,
+                cross_platform: k.crossPlatform,
+            }), webAuthnKey),
             session_key: sessionKey,
             is_ii_principal: apiOptional(identity, isIIPrincipal),
             max_time_to_live: [] as [] | [bigint],
@@ -133,6 +140,23 @@ export class IdentityClient extends CandidCanisterAgent<IdentityService> {
         return this.handleQueryResponse(
             () => this.service.auth_principals({}),
             authPrincipalsResponse,
+        );
+    }
+
+    lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array | undefined> {
+        const args = {
+            credential_id: credentialId,
+        };
+        return this.handleQueryResponse(
+            () => this.service.lookup_webauthn_pubkey(args),
+            (resp) => {
+                if ("Success" in resp) {
+                    return consolidateBytes(resp.Success.pubkey);
+                } else {
+                    return undefined;
+                }
+            },
+            args
         );
     }
 

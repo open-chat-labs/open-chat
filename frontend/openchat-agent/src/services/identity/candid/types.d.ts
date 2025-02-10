@@ -21,12 +21,20 @@ export type AuthPrincipalsResponse = { 'NotFound' : null } |
         'principal' : Principal,
         'originating_canister' : Principal,
         'is_ii_principal' : boolean,
+        'last_used' : TimestampMillis,
       }
     >
   };
 export type CheckAuthPrincipalResponse = { 'NotFound' : null } |
   { 'Success' : null };
 export interface CreateIdentityArgs {
+  'webauthn_key' : [] | [
+    {
+      'origin' : string,
+      'cross_platform' : boolean,
+      'credential_id' : Uint8Array | number[],
+    }
+  ],
   'public_key' : PublicKey,
   'session_key' : PublicKey,
   'max_time_to_live' : [] | [Nanoseconds],
@@ -58,6 +66,11 @@ export type InitiateIdentityLinkResponse = { 'AlreadyRegistered' : null } |
   { 'TargetUserNotFound' : null } |
   { 'PublicKeyInvalid' : string } |
   { 'AlreadyLinkedToPrincipal' : null };
+export interface LookupWebAuthnPubKeyArgs {
+  'credential_id' : Uint8Array | number[],
+}
+export type LookupWebAuthnPubKeyResponse = { 'NotFound' : null } |
+  { 'Success' : { 'pubkey' : Uint8Array | number[] } };
 export type Nanoseconds = bigint;
 export interface PrepareDelegationArgs {
   'session_key' : PublicKey,
@@ -82,6 +95,13 @@ export interface SignedDelegation {
   'signature' : Uint8Array | number[],
   'delegation' : { 'pubkey' : PublicKey, 'expiration' : TimestampNanoseconds },
 }
+export interface StoreWebAuthnKeyArgs {
+  'session_key' : PublicKey,
+  'pubkey' : PublicKey,
+  'max_time_to_live' : [] | [Nanoseconds],
+  'credential_id' : PublicKey,
+}
+export type TimestampMillis = bigint;
 export type TimestampNanoseconds = bigint;
 export interface _SERVICE {
   'approve_identity_link' : ActorMethod<
@@ -96,6 +116,10 @@ export interface _SERVICE {
   'initiate_identity_link' : ActorMethod<
     [InitiateIdentityLinkArgs],
     InitiateIdentityLinkResponse
+  >,
+  'lookup_webauthn_pubkey' : ActorMethod<
+    [LookupWebAuthnPubKeyArgs],
+    LookupWebAuthnPubKeyResponse
   >,
   'prepare_delegation' : ActorMethod<
     [PrepareDelegationArgs],
