@@ -24,6 +24,7 @@ import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
     accessTokenResponse,
     apiAccessTokenType,
+    apiAccessTokenTypeLegacy,
     apiVerifiedCredentialArgs,
     chatEventsArgs,
     chatEventsBatchResponse,
@@ -39,6 +40,7 @@ import {
     apiChatPermission,
     apiCommunityPermission,
     apiMessagePermission,
+    apiChatIdentifier,
 } from "../common/chatMappersV2";
 import { toBigInt32, MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
 import {
@@ -55,6 +57,8 @@ import {
     setCachePrimerTimestamp,
 } from "../../utils/caching";
 import {
+    LocalUserIndexAccessTokenArgs,
+    LocalUserIndexAccessTokenResponse,
     LocalUserIndexAccessTokenV2Args,
     LocalUserIndexAccessTokenV2Response,
     LocalUserIndexChatEventsArgs,
@@ -430,13 +434,26 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
     }
 
     getAccessToken(accessType: AccessTokenType): Promise<string | undefined> {
-        return this.executeMsgpackQuery(
-            "access_token_v2",
-            apiAccessTokenType(accessType),
-            accessTokenResponse,
-            LocalUserIndexAccessTokenV2Args,
-            LocalUserIndexAccessTokenV2Response,
-        );
+        if (accessType.kind === "bot_action_by_command") {
+            return this.executeMsgpackQuery(
+                "access_token_v2",
+                apiAccessTokenType(accessType),
+                accessTokenResponse,
+                LocalUserIndexAccessTokenV2Args,
+                LocalUserIndexAccessTokenV2Response,
+            );
+        } else {
+            return this.executeMsgpackQuery(
+                "access_token",
+                {
+                    chat: apiChatIdentifier(accessType.chatId),
+                    token_type: apiAccessTokenTypeLegacy(accessType),
+                },
+                accessTokenResponse,
+                LocalUserIndexAccessTokenArgs,
+                LocalUserIndexAccessTokenResponse,
+            );
+        }
     }
 
     withdrawFromIcpSwap(
