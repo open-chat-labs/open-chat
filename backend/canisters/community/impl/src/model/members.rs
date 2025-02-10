@@ -276,8 +276,8 @@ impl CommunityMembers {
             _ => false,
         };
 
-        self.members_map.insert(member.user_id, member);
-        self.prune_then_insert_member_update(user_id, MemberUpdate::RoleChanged, now);
+        self.members_map.insert(target_user_id, member);
+        self.prune_then_insert_member_update(target_user_id, MemberUpdate::RoleChanged, now);
 
         ChangeRoleResult::Success(ChangeRoleSuccessResult {
             caller_id: user_id,
