@@ -238,6 +238,7 @@ export default {
 
         replace({
             preventAssignment: true,
+            "process.env.WEBAUTHN_ORIGIN": JSON.stringify(process.env.WEBAUTHN_ORIGIN),
             "process.env.INTERNET_IDENTITY_URL": JSON.stringify(process.env.INTERNET_IDENTITY_URL),
             "process.env.INTERNET_IDENTITY_CANISTER_ID": JSON.stringify(
                 process.env.INTERNET_IDENTITY_CANISTER_ID,

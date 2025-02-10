@@ -65,6 +65,7 @@
     function createOpenChatClient(): OpenChat {
         return new OpenChat({
             icUrl: process.env.IC_URL,
+            webAuthnOrigin: process.env.WEBAUTHN_ORIGIN,
             iiDerivationOrigin: process.env.II_DERIVATION_ORIGIN,
             openStorageIndexCanister: process.env.STORAGE_INDEX_CANISTER!,
             groupIndexCanister: process.env.GROUP_INDEX_CANISTER!,

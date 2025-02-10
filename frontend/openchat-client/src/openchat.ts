@@ -7087,12 +7087,15 @@ export class OpenChat extends EventTarget {
     }
 
     async signUpWithWebAuthn(): Promise<void> {
-        const webAuthnIdentity = await createWebAuthnIdentity("localhost");
+        const webAuthnOrigin = this.config.webAuthnOrigin;
+        if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
+
+        const webAuthnIdentity = await createWebAuthnIdentity(webAuthnOrigin);
         const sessionKey = await ECDSAKeyIdentity.generate();
         this.#webAuthnKey = {
             pubkey: new Uint8Array(webAuthnIdentity.getPublicKey().toDer()),
             credentialId: new Uint8Array(webAuthnIdentity.rawId),
-            origin: "localhost",
+            origin: webAuthnOrigin,
             crossPlatform: webAuthnIdentity.getAuthenticatorAttachment() === "cross-platform",
         };
         this.#authIdentityStorage.set(sessionKey, undefined);
@@ -7100,8 +7103,11 @@ export class OpenChat extends EventTarget {
     }
 
     async signInWithWebAuthn(): Promise<void> {
+        const webAuthnOrigin = this.config.webAuthnOrigin;
+        if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
+
         const webAuthnIdentity = new MultiWebAuthnIdentity(
-            "localhost",
+            webAuthnOrigin,
             (credentialId) => this.lookupWebAuthnPubKey(credentialId)
         );
         const sessionKey = await ECDSAKeyIdentity.generate();
@@ -7113,7 +7119,7 @@ export class OpenChat extends EventTarget {
         this.#webAuthnKey = {
             pubkey: new Uint8Array(webAuthnIdentity.getPublicKey().toDer()),
             credentialId: new Uint8Array(webAuthnIdentity.innerIdentity().rawId),
-            origin: "localhost",
+            origin: webAuthnOrigin,
             crossPlatform: webAuthnIdentity.innerIdentity().getAuthenticatorAttachment() === "cross-platform",
         };
         this.#authIdentityStorage.set(sessionKey, delegationChain);
