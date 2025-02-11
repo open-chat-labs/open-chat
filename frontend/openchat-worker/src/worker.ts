@@ -5,6 +5,7 @@ import {
     ECDSAKeyIdentity,
     type JsonnableDelegationChain,
 } from "@dfinity/identity";
+import { Principal } from "@dfinity/principal";
 import {
     IdentityAgent,
     OpenChatAgent,
@@ -1999,7 +2000,6 @@ async function linkIdentities(
         await ECDSAKeyIdentity.fromKeyPair(initiatorKey),
         DelegationChain.fromJSON(initiatorDelegation),
     );
-    const initiator = initiatorIdentity.getPrincipal().toString();
     const initiatorAgent = await IdentityAgent.create(
         initiatorIdentity,
         identityCanister,
@@ -2028,7 +2028,12 @@ async function linkIdentities(
     if (initiateResponse !== "success") {
         return initiateResponse;
     }
-    return await approverAgent.approveIdentityLink(initiator);
+
+    const initiatorPrincipal = initiatorWebAuthnKey !== undefined
+        ? Principal.selfAuthenticating(initiatorWebAuthnKey.publicKey)
+        : initiatorIdentity.getPrincipal();
+
+    return await approverAgent.approveIdentityLink(initiatorPrincipal.toString());
 }
 
 async function removeIdentityLink(linked_principal: string): Promise<RemoveIdentityLinkResponse> {

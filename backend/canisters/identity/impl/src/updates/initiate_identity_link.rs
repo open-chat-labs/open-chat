@@ -23,9 +23,9 @@ fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response
         return TargetUserNotFound;
     }
 
-    let (auth_principal, originating_canister) = if args.webauthn_key.is_some() {
+    let (auth_principal, originating_canister) = if let Some(webauthn_key) = args.webauthn_key.as_ref() {
         (
-            Principal::self_authenticating(&args.public_key),
+            Principal::self_authenticating(&webauthn_key.public_key),
             WEBAUTHN_ORIGINATING_CANISTER,
         )
     } else {
