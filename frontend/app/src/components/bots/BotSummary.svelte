@@ -8,6 +8,7 @@
         type GroupChatIdentifier,
         type ExternalBotPermissions,
         type MultiUserChatIdentifier,
+        type ExternalBot,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Overlay from "../Overlay.svelte";
@@ -32,7 +33,7 @@
 
     interface Props {
         mode: BotSummaryMode;
-        bot: BotMatch;
+        bot: BotMatch | ExternalBot;
         onClose: () => void;
     }
 
@@ -42,6 +43,8 @@
     let title = $derived.by(() => {
         switch (mode.kind) {
             case "installing_command_bot":
+                return i18nKey("bots.add.title");
+            case "installing_direct_command_bot":
                 return i18nKey("bots.add.title");
             case "editing_command_bot":
                 return i18nKey("bots.edit.title");
@@ -56,6 +59,8 @@
     let cta = $derived.by(() => {
         switch (mode.kind) {
             case "installing_command_bot":
+                return i18nKey("bots.add.addBot");
+            case "installing_direct_command_bot":
                 return i18nKey("bots.add.addBot");
             case "editing_command_bot":
                 return i18nKey("bots.edit.updateBot");

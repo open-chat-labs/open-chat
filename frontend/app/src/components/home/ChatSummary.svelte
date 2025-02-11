@@ -87,10 +87,33 @@
         chatSummary.kind === "channel" && chatSummary.externalUrl !== undefined,
     );
     let verified = $derived(chatSummary.kind === "group_chat" && chatSummary.verified);
-
     let hovering = $state(false);
     let unreadMessages: number = $state(0);
     let unreadMentions: number = $state(0);
+    let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
+    let lastMessage = $derived(formatLatestMessage(chatSummary, $userStore));
+    let displayDate = $derived(client.getDisplayDate(chatSummary));
+    let community = $derived(
+        chatSummary.kind === "channel"
+            ? $communities.get({ kind: "community", communityId: chatSummary.id.communityId })
+            : undefined,
+    );
+    let blocked = $derived(
+        chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId),
+    );
+    let readonly = $derived(client.isChatReadOnly(chatSummary.id));
+    let canDelete = $derived(getCanDelete(chatSummary, community));
+    let pinned = $derived(client.pinned($chatListScope.kind, chatSummary.id));
+    let muted = $derived(chatSummary.membership.notificationsMuted);
+    const maxDelOffset = -60;
+    let delOffset = $state(maxDelOffset);
+    let swiped = $state(false);
+
+    $effect(() => updateUnreadCounts(chatSummary));
+
+    onMount(() => {
+        return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
+    });
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
@@ -224,19 +247,6 @@
         delOffset = -60;
     }
 
-    let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
-    let lastMessage = $derived(formatLatestMessage(chatSummary, $userStore));
-
-    $effect(() => updateUnreadCounts(chatSummary));
-
-    onMount(() => {
-        return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
-    });
-
-    const maxDelOffset = -60;
-    let delOffset = $state(maxDelOffset);
-    let swiped = $state(false);
-
     function leftSwipe() {
         if (swiped) return;
         if (delOffset > maxDelOffset / 2) {
@@ -325,20 +335,6 @@
             level: chatSummary.level,
         });
     }
-
-    let displayDate = $derived(client.getDisplayDate(chatSummary));
-    let community = $derived(
-        chatSummary.kind === "channel"
-            ? $communities.get({ kind: "community", communityId: chatSummary.id.communityId })
-            : undefined,
-    );
-    let blocked = $derived(
-        chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId),
-    );
-    let readonly = $derived(client.isChatReadOnly(chatSummary.id));
-    let canDelete = $derived(getCanDelete(chatSummary, community));
-    let pinned = $derived(client.pinned($chatListScope.kind, chatSummary.id));
-    let muted = $derived(chatSummary.membership.notificationsMuted);
 
     function getCanDelete(chat: ChatSummary, community: CommunitySummary | undefined) {
         switch (chat.kind) {
