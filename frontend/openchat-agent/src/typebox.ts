@@ -9166,7 +9166,11 @@ export const GroupCanisterGroupChatSummaryUpdates = Type.Object({
     wasm_version: Type.Optional(BuildVersion),
     permissions_v2: Type.Optional(GroupPermissions),
     updated_events: Type.Array(
-        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()]),
+        Type.Tuple([
+            Type.Union([MessageIndex, Type.Null(), Type.Undefined()]),
+            EventIndex,
+            Type.BigInt(),
+        ]),
     ),
     metrics: Type.Optional(ChatMetrics),
     my_metrics: Type.Optional(ChatMetrics),

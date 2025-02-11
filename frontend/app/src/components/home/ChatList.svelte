@@ -27,6 +27,7 @@
         unreadGroupCounts,
         unreadFavouriteCounts,
         unreadCommunityChannelCounts,
+        type BotMatch,
     } from "openchat-client";
     import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
@@ -55,7 +56,7 @@
     const client = getContext<OpenChat>("client");
 
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
-    let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
+    let userAndBotSearchResults: Promise<(UserSummary | BotMatch)[]> | undefined = undefined;
     let searchTerm: string = "";
     let searchResultsAvailable: boolean = false;
     let chatsScrollTop: number = 0;
@@ -181,7 +182,11 @@
     let chatListElement: HTMLElement;
 
     beforeUpdate(() => {
-        if (previousScope === $chatListScope && $chatListView !== "chats" && previousView === "chats") {
+        if (
+            previousScope === $chatListScope &&
+            $chatListView !== "chats" &&
+            previousView === "chats"
+        ) {
             chatsScrollTop = chatListElement?.scrollTop;
         }
     });
@@ -222,6 +227,15 @@
     function markAllRead() {
         client.markAllReadForCurrentScope();
     }
+
+    function userOrBotKey(match: UserSummary | BotMatch): string {
+        switch (match.kind) {
+            case "bot_match":
+                return match.id;
+            default:
+                return match.userId;
+        }
+    }
 </script>
 
 <!-- svelte-ignore missing-declaration -->
@@ -245,7 +259,7 @@
     {/if}
 
     <ChatListSearch
-        bind:userSearchResults
+        bind:userAndBotsSearchResults={userAndBotSearchResults}
         bind:groupSearchResults
         bind:searchResultsAvailable
         bind:searchTerm />
@@ -286,36 +300,56 @@
                         on:toggleMuteNotifications />
                 {/each}
 
-                {#if userSearchResults !== undefined}
+                {#if userAndBotSearchResults !== undefined}
                     <div class="search-matches">
-                        {#await userSearchResults then resp}
+                        {#await userAndBotSearchResults then resp}
                             {#if resp.length > 0}
                                 <h3 class="search-subtitle">
-                                    <Translatable resourceKey={i18nKey("users")} />
+                                    <Translatable resourceKey={i18nKey("usersAndBots")} />
                                 </h3>
-                                {#each resp as user, i (user.userId)}
-                                    <SearchResult
-                                        index={i}
-                                        avatarUrl={client.userAvatarUrl(user)}
-                                        on:click={() => chatWith(user.userId)}>
-                                        <div class="user-result">
-                                            <h4>
-                                                <FilteredUsername
-                                                    {searchTerm}
-                                                    username={user.displayName ?? user.username} />
-
-                                                <Badges
-                                                    uniquePerson={user.isUniquePerson}
-                                                    diamondStatus={user.diamondStatus}
-                                                    streak={client.getStreak(user.userId)} />
-                                            </h4>
-                                            <div class="username">
-                                                <FilteredUsername
-                                                    {searchTerm}
-                                                    username={"@" + user.username} />
+                                {#each resp as match, i (userOrBotKey(match))}
+                                    {#if match.kind === "bot_match"}
+                                        <SearchResult
+                                            bot
+                                            index={i}
+                                            avatarUrl={match.avatarUrl ?? "/assets/bot_avatar.svg"}
+                                            onclick={() => chatWith(match.id)}>
+                                            <div class="user-result">
+                                                <h4>
+                                                    <FilteredUsername
+                                                        {searchTerm}
+                                                        username={match.name} />
+                                                </h4>
+                                                <div class="username">
+                                                    {match.definition.description}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </SearchResult>
+                                        </SearchResult>
+                                    {:else}
+                                        <SearchResult
+                                            index={i}
+                                            avatarUrl={client.userAvatarUrl(match)}
+                                            onclick={() => chatWith(match.userId)}>
+                                            <div class="user-result">
+                                                <h4>
+                                                    <FilteredUsername
+                                                        {searchTerm}
+                                                        username={match.displayName ??
+                                                            match.username} />
+
+                                                    <Badges
+                                                        uniquePerson={match.isUniquePerson}
+                                                        diamondStatus={match.diamondStatus}
+                                                        streak={client.getStreak(match.userId)} />
+                                                </h4>
+                                                <div class="username">
+                                                    <FilteredUsername
+                                                        {searchTerm}
+                                                        username={"@" + match.username} />
+                                                </div>
+                                            </div>
+                                        </SearchResult>
+                                    {/if}
                                 {/each}
                             {/if}
                         {/await}
@@ -338,7 +372,7 @@
                                             },
                                             $selectedCommunity,
                                         )}
-                                        on:click={() => selectGroup(group)}>
+                                        onclick={() => selectGroup(group)}>
                                         <h4 class="search-item-title">
                                             {group.name}
                                         </h4>
@@ -488,6 +522,7 @@
         .username {
             font-weight: 200;
             color: var(--txt-light);
+            @include clamp();
         }
     }
 </style>

@@ -1578,7 +1578,7 @@
     "searchForUsername": "Search for a username",
     "searchGroupsPlaceholder": "Search for groups...",
     "searchPlaceholder": "Search for users and groups...",
-    "searchUsersPlaceholder": "Search for users...",
+    "searchUsersPlaceholder": "Search for users and bots...",
     "selectAChannel": "Select a channel from the list or search for more channels in this community.",
     "selectAChat": "Search for a friend, create a new group or select a chat.",
     "selectAFavourite": "You can add direct chats, group chats or community channels to your favourites and you will see them here.",
@@ -1867,6 +1867,7 @@
     "usernameRules": "alphanumerics & underscores only",
     "userReferralMessage": "Share this link to OpenChat with friends and family. You earn CHIT rewards for each user you refer who goes on to verify their unique personhood or becomes a Diamond member. If a user you refer goes on to get Diamond membership you will earn 5,000 CHIT, if they prove unique personhood, it is 10,000 CHIT and if they get lifetime Diamond, it is 15,000 CHIT. If they subsequently do a higher value \"verification\" you will be awarded the difference in CHIT.",
     "users": "Users",
+    "usersAndBots": "Users and bots",
     "userSearchFailed": "There was an error searching for users",
     "verified": {
         "choose": "Choose the {level} to verify",
