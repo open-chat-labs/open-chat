@@ -8210,7 +8210,7 @@ export class OpenChat extends EventTarget {
             return AuthProvider.SOL;
         } else if (principal.originatingCanister === this.config.signInWithEmailCanister) {
             return AuthProvider.EMAIL;
-        } else if (principal.originatingCanister === process.env.INTERNET_IDENTITY_CANISTER_ID) {
+        } else if (principal.originatingCanister === import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID) {
             if (principal.isIIPrincipal) {
                 return AuthProvider.II;
             } else {
@@ -8243,7 +8243,7 @@ export class OpenChat extends EventTarget {
                 const iiPrincipals = resp
                     .filter(
                         ({ originatingCanister, isIIPrincipal }) =>
-                            originatingCanister === process.env.INTERNET_IDENTITY_CANISTER_ID &&
+                            originatingCanister === import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID &&
                             isIIPrincipal,
                     )
                     .map((p) => p.principal);
@@ -8540,7 +8540,7 @@ export class OpenChat extends EventTarget {
 
     getBotConfig(): Promise<BotClientConfigData> {
         const metricsUrl =
-            process.env.NODE_ENV === "production"
+            import.meta.env.OC_NODE_ENV === "production"
                 ? `https://${this.config.userIndexCanister}.raw.ic0.app/metrics`
                 : `http://${this.config.userIndexCanister}.localhost:8080/metrics`;
         return fetch(metricsUrl, {
