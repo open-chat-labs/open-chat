@@ -22,7 +22,9 @@ type CheckAuthPrincipalResponse = variant {
 type CheckAuthPrincipalV2Response = variant {
     Success : record {
         user_id : opt UserId;
+        originating_canister : principal;
         webauthn_key : opt WebAuthnKey;
+        is_ii_principal : bool;
     };
     NotFound;
 };

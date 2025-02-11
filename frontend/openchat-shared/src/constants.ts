@@ -12,6 +12,7 @@ export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
 export const OPENCHAT_BOT_AVATAR_URL = "/assets/robot.svg";
 export const AIRDROP_BOT_USERNAME = "AirdropBot";
 export const AIRDROP_BOT_AVATAR_URL = "/assets/airdrop_bot.svg";
+export const WEBAUTHN_ORIGINATING_CANISTER = "zzzxd-webau-thnke-yr7oc-cai";
 
 // downlink is the effective bandwidth estimate in megabits per second, rounded to the nearest multiple of 25 kilobits per seconds.
 export const MIN_DOWNLINK = 0.05;

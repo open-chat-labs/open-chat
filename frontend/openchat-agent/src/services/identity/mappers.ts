@@ -58,7 +58,9 @@ export function checkAuthPrincipalResponse(
         return {
             kind: "success",
             userId: optional(candid.Success.user_id, (p) => p.toString()),
-            webAuthnKey: optional(candid.Success.webauthn_key, webAuthnKey)
+            webAuthnKey: optional(candid.Success.webauthn_key, webAuthnKey),
+            originatingCanister: candid.Success.originating_canister.toString(),
+            isIIPrincipal: candid.Success.is_ii_principal,
         };
     }
     if ("NotFound" in candid) {

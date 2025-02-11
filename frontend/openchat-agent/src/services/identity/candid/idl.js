@@ -50,6 +50,8 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Record({
       'webauthn_key' : IDL.Opt(WebAuthnKey),
       'user_id' : IDL.Opt(UserId),
+      'originating_canister' : IDL.Principal,
+      'is_ii_principal' : IDL.Bool,
     }),
   });
   const Nanoseconds = IDL.Nat64;

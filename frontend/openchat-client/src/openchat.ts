@@ -462,6 +462,7 @@ import {
     parseBigInt,
     random64,
     random128,
+    WEBAUTHN_ORIGINATING_CANISTER,
 } from "openchat-shared";
 import { AIRDROP_BOT_USER_ID } from "./constants";
 import { failedMessagesStore } from "./stores/failedMessages";
@@ -8304,7 +8305,9 @@ export class OpenChat extends EventTarget {
     }
 
     #authProviderFromAuthPrincipal(principal: AuthenticationPrincipal): AuthProvider {
-        if (principal.originatingCanister === this.config.signInWithEthereumCanister) {
+        if (principal.originatingCanister === WEBAUTHN_ORIGINATING_CANISTER) {
+            return AuthProvider.PASSKEY;
+        } else if (principal.originatingCanister === this.config.signInWithEthereumCanister) {
             return AuthProvider.ETH;
         } else if (principal.originatingCanister === this.config.signInWithSolanaCanister) {
             return AuthProvider.SOL;

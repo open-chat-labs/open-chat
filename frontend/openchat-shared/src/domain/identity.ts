@@ -20,7 +20,13 @@ export type CreateIdentityResponse =
     | { kind: "originating_canister_invalid" };
 
 export type CheckAuthPrincipalResponse =
-    | { kind: "success"; userId: string | undefined; webAuthnKey: WebAuthnKey | undefined }
+    | {
+        kind: "success";
+        userId: string | undefined;
+        originatingCanister: string;
+        webAuthnKey: WebAuthnKey | undefined;
+        isIIPrincipal: boolean;
+    }
     | { kind: "not_found" };
 
 export type PrepareDelegationResponse =

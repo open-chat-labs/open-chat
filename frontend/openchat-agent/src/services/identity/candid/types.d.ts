@@ -32,6 +32,8 @@ export type CheckAuthPrincipalV2Response = { 'NotFound' : null } |
     'Success' : {
       'webauthn_key' : [] | [WebAuthnKey],
       'user_id' : [] | [UserId],
+      'originating_canister' : Principal,
+      'is_ii_principal' : boolean,
     }
   };
 export interface CreateIdentityArgs {
