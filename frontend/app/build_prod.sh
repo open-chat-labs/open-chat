@@ -1,12 +1,7 @@
 if [ -z "$OC_WEBSITE_VERSION" ]
 then
-  OC_WEBSITE_VERSION=$1
-
-  if [ -z "$OC_WEBSITE_VERSION" ]
-  then
-    echo 'OC_WEBSITE_VERSION' not set
-    exit 1
-  fi
+  echo 'OC_WEBSITE_VERSION' not set
+  exit 1
 fi
 
 export OC_BUILD_ENV=production
