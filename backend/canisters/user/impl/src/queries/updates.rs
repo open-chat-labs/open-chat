@@ -161,7 +161,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let activity_feed = (state.data.message_activity_events.last_updated() > updates_since)
         .then(|| state.data.message_activity_events.summary());
     let streak_insurance = if streak_insurance_updated {
-        OptionUpdate::from_update(state.data.streak.streak_insurance(now))
+        //OptionUpdate::from_update(state.data.streak.streak_insurance(now))
+        OptionUpdate::NoChange
     } else {
         OptionUpdate::NoChange
     };

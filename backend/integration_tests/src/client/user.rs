@@ -33,7 +33,7 @@ generate_msgpack_update_call!(leave_group);
 generate_msgpack_update_call!(mark_message_activity_feed_read);
 generate_msgpack_update_call!(mark_read);
 generate_msgpack_update_call!(mute_notifications);
-generate_msgpack_update_call!(pay_for_streak_insurance);
+//generate_msgpack_update_call!(pay_for_streak_insurance);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(save_crypto_account);
 generate_msgpack_update_call!(send_message_v2);

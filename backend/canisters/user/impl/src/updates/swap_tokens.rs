@@ -4,7 +4,7 @@ use crate::model::token_swaps::TokenSwap;
 use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
 use crate::token_swaps::icpswap::ICPSwapClient;
 use crate::token_swaps::kongswap::KongSwapClient;
-use crate::token_swaps::sonic::SonicClient;
+//use crate::token_swaps::sonic::SonicClient;
 use crate::token_swaps::swap_client::SwapClient;
 use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
 use canister_api_macros::update;
@@ -263,16 +263,16 @@ fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
                 icpswap.zero_for_one,
             ))
         }
-        ExchangeArgs::Sonic(sonic) => {
-            let (token0, token1) = if sonic.zero_for_one { (input_token, output_token) } else { (output_token, input_token) };
-            Box::new(SonicClient::new(
-                this_canister_id,
-                sonic.swap_canister_id,
-                token0,
-                token1,
-                sonic.zero_for_one,
-            ))
-        }
+        // ExchangeArgs::Sonic(sonic) => {
+        //     let (token0, token1) = if sonic.zero_for_one { (input_token, output_token) } else { (output_token, input_token) };
+        //     Box::new(SonicClient::new(
+        //         this_canister_id,
+        //         sonic.swap_canister_id,
+        //         token0,
+        //         token1,
+        //         sonic.zero_for_one,
+        //     ))
+        // }
         ExchangeArgs::KongSwap(kongswap) => Box::new(KongSwapClient::new(kongswap.swap_canister_id, input_token, output_token)),
     }
 }
