@@ -436,11 +436,12 @@ fn send_message_impl(
         let sender_display_name = state.data.display_name.value.clone();
 
         if recipient_type.user_type().is_bot() {
-            ic_cdk::spawn(send_to_bot_canister(
-                recipient,
-                message_event.event.message_index,
-                legacy_bot_api::handle_direct_message::Args::new(send_message_args, sender_name),
-            ));
+            unimplemented!();
+            // ic_cdk::spawn(send_to_bot_canister(
+            //     recipient,
+            //     message_event.event.message_index,
+            //     legacy_bot_api::handle_direct_message::Args::new(send_message_args, sender_name),
+            // ));
         } else {
             state.push_user_canister_event(
                 recipient.into(),
@@ -495,44 +496,44 @@ fn send_message_impl(
     }
 }
 
-async fn send_to_bot_canister(
-    recipient: UserId,
-    message_index: MessageIndex,
-    args: legacy_bot_api::handle_direct_message::Args,
-) {
-    match legacy_bot_c2c_client::handle_direct_message(recipient.into(), &args).await {
-        Ok(legacy_bot_api::handle_direct_message::Response::Success(result)) => {
-            mutate_state(|state| {
-                if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
-                    let now = state.env.now();
-                    for message in result.messages {
-                        let push_message_args = PushMessageArgs {
-                            sender: recipient,
-                            thread_root_message_index: None,
-                            message_id: message.message_id.unwrap_or_else(|| state.env.rng().gen()),
-                            content: message.content.into(),
-                            mentioned: Vec::new(),
-                            replies_to: None,
-                            forwarded: false,
-                            sender_is_bot: false,
-                            block_level_markdown: args.block_level_markdown,
-                            correlation_id: 0,
-                            now,
-                            bot_context: None,
-                        };
-                        chat.push_message(false, push_message_args, None, Some(&mut state.data.event_store_client));
+// async fn send_to_bot_canister(
+//     recipient: UserId,
+//     message_index: MessageIndex,
+//     args: legacy_bot_api::handle_direct_message::Args,
+// ) {
+//     match legacy_bot_c2c_client::handle_direct_message(recipient.into(), &args).await {
+//         Ok(legacy_bot_api::handle_direct_message::Response::Success(result)) => {
+//             mutate_state(|state| {
+//                 if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
+//                     let now = state.env.now();
+//                     for message in result.messages {
+//                         let push_message_args = PushMessageArgs {
+//                             sender: recipient,
+//                             thread_root_message_index: None,
+//                             message_id: message.message_id.unwrap_or_else(|| state.env.rng().gen()),
+//                             content: message.content.into(),
+//                             mentioned: Vec::new(),
+//                             replies_to: None,
+//                             forwarded: false,
+//                             sender_is_bot: false,
+//                             block_level_markdown: args.block_level_markdown,
+//                             correlation_id: 0,
+//                             now,
+//                             bot_context: None,
+//                         };
+//                         chat.push_message(false, push_message_args, None, Some(&mut state.data.event_store_client));
 
-                        // Mark that the bot has read the message we just sent
-                        chat.mark_read_up_to(message_index, false, now);
-                    }
-                }
-            });
-        }
-        Err(_error) => {
-            // TODO push message saying that the message failed to send
-        }
-    }
-}
+//                         // Mark that the bot has read the message we just sent
+//                         chat.mark_read_up_to(message_index, false, now);
+//                     }
+//                 }
+//             });
+//         }
+//         Err(_error) => {
+//             // TODO push message saying that the message failed to send
+//         }
+//     }
+// }
 
 pub(crate) fn register_timer_jobs(
     chat_id: ChatId,
