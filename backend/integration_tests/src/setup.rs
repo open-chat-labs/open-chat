@@ -7,6 +7,7 @@ use constants::SNS_GOVERNANCE_CANISTER_ID;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
+use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use sha256::sha256;
@@ -200,7 +201,11 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         governance_principals: vec![controller],
         user_index_canister_id,
         cycles_dispenser_canister_id,
-        originating_canisters: vec![NNS_INTERNET_IDENTITY_CANISTER_ID, sign_in_with_email_canister_id],
+        originating_canisters: vec![
+            NNS_INTERNET_IDENTITY_CANISTER_ID,
+            sign_in_with_email_canister_id,
+            WEBAUTHN_ORIGINATING_CANISTER,
+        ],
         skip_captcha_whitelist: vec![NNS_INTERNET_IDENTITY_CANISTER_ID, sign_in_with_email_canister_id],
         ic_root_key: env.root_key().unwrap(),
         wasm_version,

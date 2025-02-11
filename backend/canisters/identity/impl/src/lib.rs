@@ -24,9 +24,6 @@ mod model;
 mod queries;
 mod updates;
 
-// zzzxd-webau-thnke-yr7oc-cai
-const WEBAUTHN_ORIGINATING_CANISTER: CanisterId = CanisterId::from_slice(&[129, 5, 38, 118, 168, 152, 143, 220, 33, 1]);
-
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }

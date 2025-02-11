@@ -7,7 +7,11 @@ mod updates;
 
 pub use lifecycle::*;
 pub use queries::*;
+use types::CanisterId;
 pub use updates::*;
+
+// zzzxd-webau-thnke-yr7oc-cai
+pub const WEBAUTHN_ORIGINATING_CANISTER: CanisterId = CanisterId::from_slice(&[129, 5, 38, 118, 168, 152, 143, 220, 33, 1]);
 
 pub type ChallengeKey = u32;
 

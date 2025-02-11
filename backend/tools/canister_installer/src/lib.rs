@@ -3,6 +3,7 @@ use canister_agent_utils::{build_ic_agent, get_canister_wasm, install_wasm, set_
 use constants::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
+use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
 use sha256::sha256;
 use types::{BuildVersion, Cycles};
 
@@ -161,6 +162,7 @@ async fn install_service_canisters_impl(
             canister_ids.sign_in_with_email,
             canister_ids.sign_in_with_ethereum,
             canister_ids.sign_in_with_solana,
+            WEBAUTHN_ORIGINATING_CANISTER,
         ],
         skip_captcha_whitelist: vec![canister_ids.nns_internet_identity, canister_ids.sign_in_with_email],
         ic_root_key: agent.read_root_key(),
