@@ -1,0 +1,15 @@
+[package]
+name = "group_community_user"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+constants = { path = "../constants" }
+rand = { workspace = true }
+serde = { workspace = true }
+serde_repr = { workspace = true }
+types = { path = "../types" }
+utils = { path = "../utils" }

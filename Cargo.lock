@@ -1567,6 +1567,7 @@ dependencies = [
  "group_canister_c2c_client",
  "group_chat_core",
  "group_community_common",
+ "group_community_user",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
@@ -2817,6 +2818,7 @@ dependencies = [
  "group_canister",
  "group_chat_core",
  "group_community_common",
+ "group_community_user",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
@@ -2884,6 +2886,19 @@ dependencies = [
  "candid",
  "constants",
  "icrc-ledger-types",
+ "serde",
+ "serde_repr",
+ "types",
+ "utils 0.1.0",
+]
+
+[[package]]
+name = "group_community_user"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "constants",
+ "rand 0.8.5",
  "serde",
  "serde_repr",
  "types",
@@ -8429,6 +8444,7 @@ dependencies = [
  "futures",
  "group_canister",
  "group_canister_c2c_client",
+ "group_community_user",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",

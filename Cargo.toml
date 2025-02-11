@@ -129,6 +129,7 @@ members = [
     "backend/libraries/gated_groups",
     "backend/libraries/group_chat_core",
     "backend/libraries/group_community_common",
+    "backend/libraries/group_community_user",
     "backend/libraries/http_request",
     "backend/libraries/human_readable",
     "backend/libraries/human_readable_derive",

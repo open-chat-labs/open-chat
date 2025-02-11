@@ -34,6 +34,7 @@ fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" 
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
+group_community_user = { path = "../../../libraries/group_community_user" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }

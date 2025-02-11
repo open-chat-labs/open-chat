@@ -1791,10 +1791,17 @@ impl ChatEvents {
             .map(|(m, e)| (e, m.message_index, m.message_id))
     }
 
-    pub fn contains_message_id(&self, thread_root_message_index: Option<MessageIndex>, message_id: MessageId) -> bool {
-        self.events_list(EventIndex::default(), thread_root_message_index)
-            .map(|e| e.contains_message_id(message_id))
-            .unwrap_or_default()
+    pub fn message_already_finalised(
+        &self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        is_v2_bot: bool,
+    ) -> bool {
+        if let Some((message, _)) = self.message_internal(EventIndex::default(), thread_root_message_index, message_id.into()) {
+            !is_v2_bot || message.bot_context.is_none_or(|b| b.finalised)
+        } else {
+            false
+        }
     }
 
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResult {

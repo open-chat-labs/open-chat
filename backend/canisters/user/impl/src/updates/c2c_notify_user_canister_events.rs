@@ -152,7 +152,10 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
         if let Some(chat) = state.data.direct_chats.get(&sender.into()) {
             let thread_root_message_index = message.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
-            if chat.events.contains_message_id(thread_root_message_index, message.message_id) {
+            if chat
+                .events
+                .message_already_finalised(thread_root_message_index, message.message_id, false)
+            {
                 continue;
             }
         }
@@ -176,6 +179,8 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
                 block_level_markdown: message.block_level_markdown,
                 now,
             },
+            None,
+            false,
             state,
         );
     }
