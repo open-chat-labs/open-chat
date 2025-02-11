@@ -5,6 +5,7 @@ import {
     UnsupportedValueError,
 } from "openchat-shared";
 import { Principal } from "@dfinity/principal";
+import type { ApiPrincipal } from "../services";
 
 // takes a type of the form [] | [A] and a mapper from A -> B and returns a B or undefined
 export function optional<A, B>(candid: [] | [A], mapper: (a: A) => B): B | undefined {
@@ -81,8 +82,12 @@ export function bytesToHexString(bytes: Uint8Array | number[]): string {
     );
 }
 
-export function principalBytesToString(bytes: Uint8Array): string {
-    return Principal.fromUint8Array(bytes).toString();
+export function principalBytesToString(value: ApiPrincipal): string {
+    // When serialized to JSON principals become strings, in all other cases they are serialized as byte arrays
+    if (typeof value === "string") {
+        return value;
+    }
+    return Principal.fromUint8Array(consolidateBytes(value)).toString();
 }
 
 export function principalStringToBytes(principal: string): Uint8Array {

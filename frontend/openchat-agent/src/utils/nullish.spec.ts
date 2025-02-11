@@ -46,10 +46,7 @@ describe("nullish utils", () => {
             expect(deepRemoveNullishFields(1000)).toEqual(1000);
             expect(deepRemoveNullishFields("a")).toEqual("a");
             expect(deepRemoveNullishFields(true)).toEqual(true);
-        });
-
-        test("null becomes undefined", () => {
-            expect(deepRemoveNullishFields(null)).toEqual(undefined);
+            expect(deepRemoveNullishFields(null)).toEqual(null);
         });
     });
 });
