@@ -1,3 +1,14 @@
+if [ -z "$OC_WEBSITE_VERSION" ]
+then
+  OC_WEBSITE_VERSION=$1
+
+  if [ -z "$OC_WEBSITE_VERSION" ]
+  then
+    echo 'OC_WEBSITE_VERSION' not set
+    exit 1
+  fi
+fi
+
 export OC_BUILD_ENV=production
 export OC_NODE_ENV=$NODE_ENV
 export OC_INTERNET_IDENTITY_CANISTER_ID=rdmx6-jaaaa-aaaaa-aaadq-cai
@@ -12,5 +23,6 @@ export OC_BLOB_URL_PATTERN=https://{canisterId}.raw.icp0.io/{blobType}
 export OC_ACHIEVEMENT_URL_PATH=https://{canisterId}.raw.icp0.io
 export OC_WALLET_CONNECT_PROJECT_ID=adf8b4a7c5514a8229981aabdee2e246
 export OC_PREVIEW_PROXY_URL=https://dy7sqxe9if6te.cloudfront.net
+export OC_WEBSITE_VERSION
 
 npx rollup -c

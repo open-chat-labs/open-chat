@@ -4,7 +4,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "sh ./build_prod.sh",
+        "build": "sh ./build_prod.sh 1.0.0",
         "build:prod": "sh ./build_prod.sh",
         "build:prod_test": "sh ./build_prod_test.sh",
         "build:testnet": "sh ./build_testnet.sh",
