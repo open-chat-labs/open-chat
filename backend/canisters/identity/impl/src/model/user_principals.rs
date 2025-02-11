@@ -209,6 +209,10 @@ impl UserPrincipals {
         }
     }
 
+    pub fn remove_expired_temp_keys(&mut self, now: TimestampMillis) {
+        self.temp_keys.retain(|_, k| k.expires > now);
+    }
+
     fn user_principal_by_index(&self, user_principal_index: u32) -> Option<UserPrincipal> {
         self.user_principals
             .get(usize::try_from(user_principal_index).unwrap())

@@ -17,6 +17,7 @@ use utils::env::Environment;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
