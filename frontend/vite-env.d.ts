@@ -35,6 +35,7 @@ interface ImportMetaEnv {
     readonly OC_USERGEEK_APIKEY: string;
     readonly OC_VIDEO_BRIDGE_URL: string;
     readonly OC_WALLET_CONNECT_PROJECT_ID: string;
+    readonly OC_WEBAUTHN_ORIGIN: string;
 }
 
 interface ImportMeta {

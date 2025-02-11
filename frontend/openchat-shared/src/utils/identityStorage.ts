@@ -34,24 +34,19 @@ export class IdentityStorage {
         const key = await this.storage.get<CryptoKeyPair>(KEY_STORAGE_KEY);
         if (key == null) return undefined;
 
-        const id = await ECDSAKeyIdentity.fromKeyPair(key);
-
         const chain = await this.storage.get<string>(KEY_STORAGE_DELEGATION);
-        if (chain == null) return id;
+        if (chain == null) return undefined;
 
+        const id = await ECDSAKeyIdentity.fromKeyPair(key);
         return DelegationIdentity.fromDelegation(id, DelegationChain.fromJSON(chain));
     }
 
-    async set(key: ECDSAKeyIdentity, chain?: DelegationChain, authPrincipal?: string): Promise<void> {
+    async set(key: ECDSAKeyIdentity, chain: DelegationChain, authPrincipal?: string): Promise<void> {
         if (authPrincipal !== undefined) {
             await this.storage.set(KEY_STORAGE_AUTH_PRINCIPAL, authPrincipal);
         }
         await this.storage.set(KEY_STORAGE_KEY, key.getKeyPair());
-        if (chain === undefined) {
-            this.storage.remove(KEY_STORAGE_DELEGATION);
-        } else {
-            await this.storage.set(KEY_STORAGE_DELEGATION, JSON.stringify(chain.toJSON()));
-        }
+        await this.storage.set(KEY_STORAGE_DELEGATION, JSON.stringify(chain.toJSON()));
     }
 
     async remove(): Promise<void> {

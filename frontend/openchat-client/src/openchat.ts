@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { gaTrack } from "./utils/ga";
-import { AnonymousIdentity, type Identity } from "@dfinity/agent";
+import { AnonymousIdentity, type Identity, type SignIdentity } from "@dfinity/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
 import { get } from "svelte/store";
 import DRange from "drange";
@@ -441,6 +441,7 @@ import {
     anonymousUser,
     ANON_USER_ID,
     isPaymentGate,
+    ONE_DAY,
     ONE_MINUTE_MILLIS,
     ONE_HOUR,
     LEDGER_CANISTER_CHAT,
@@ -501,6 +502,7 @@ import {
     DelegationChain,
     DelegationIdentity,
     ECDSAKeyIdentity,
+    type WebAuthnIdentity,
 } from "@dfinity/identity";
 import {
     capturePinNumberStore,
@@ -7079,23 +7081,19 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    async signUpWithWebAuthn(): Promise<void> {
+    async signUpWithWebAuthn() {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
 
         const webAuthnIdentity = await createWebAuthnIdentity(webAuthnOrigin);
-        const sessionKey = await ECDSAKeyIdentity.generate();
-        this.#webAuthnKey = {
-            pubkey: new Uint8Array(webAuthnIdentity.getPublicKey().toDer()),
-            credentialId: new Uint8Array(webAuthnIdentity.rawId),
-            origin: webAuthnOrigin,
-            crossPlatform: webAuthnIdentity.getAuthenticatorAttachment() === "cross-platform",
-        };
-        this.#authIdentityStorage.set(sessionKey, undefined);
-        this.#loadedAuthenticationIdentity(sessionKey, AuthProvider.WEBAUTHN);
+
+        // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
+        // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
+        const tempKey = await ECDSAKeyIdentity.generate();
+        await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, webAuthnOrigin);
     }
 
-    async signInWithWebAuthn(): Promise<void> {
+    async signInWithWebAuthn() {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
 
@@ -7103,17 +7101,25 @@ export class OpenChat extends EventTarget {
             webAuthnOrigin,
             (credentialId) => this.lookupWebAuthnPubKey(credentialId)
         );
+        await this.#finaliseWebAuthnSignin(webAuthnIdentity, () => webAuthnIdentity.innerIdentity(), webAuthnOrigin);
+    }
+
+    async #finaliseWebAuthnSignin(initialKey: SignIdentity, webAuthnIdentityFn: () => WebAuthnIdentity, webAuthnOrigin: string) {
         const sessionKey = await ECDSAKeyIdentity.generate();
         const delegationChain = await DelegationChain.create(
-            webAuthnIdentity,
+            initialKey,
             sessionKey.getPublicKey(),
+            new Date(Date.now() + 30 * ONE_DAY),
         );
         const identity = DelegationIdentity.fromDelegation(sessionKey, delegationChain);
+        // In the sign in case, we must defer getting the webAuthnIdentity until after it has been used to sign the
+        // delegation, before that point we don't know which identity the user will choose.
+        const webAuthnIdentity = webAuthnIdentityFn();
         this.#webAuthnKey = {
             pubkey: new Uint8Array(webAuthnIdentity.getPublicKey().toDer()),
-            credentialId: new Uint8Array(webAuthnIdentity.innerIdentity().rawId),
+            credentialId: new Uint8Array(webAuthnIdentity.rawId),
             origin: webAuthnOrigin,
-            crossPlatform: webAuthnIdentity.innerIdentity().getAuthenticatorAttachment() === "cross-platform",
+            crossPlatform: webAuthnIdentity.getAuthenticatorAttachment() === "cross-platform",
         };
         this.#authIdentityStorage.set(sessionKey, delegationChain);
         this.#loadedAuthenticationIdentity(identity, AuthProvider.WEBAUTHN);
