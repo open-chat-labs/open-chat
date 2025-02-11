@@ -596,11 +596,9 @@ export class OpenChat extends EventTarget {
         this.#authIdentityStorage = IdentityStorage.createForAuthIdentity();
         this.#ocIdentityStorage = IdentityStorage.createForOcIdentity();
 
-        this.#authIdentityStorage
-            .get()
-            .then((authIdentity) => {
-                this.#loadedAuthenticationIdentity(authIdentity ?? new AnonymousIdentity(), undefined);
-            });
+        this.#authIdentityStorage.get().then((authIdentity) => {
+            this.#loadedAuthenticationIdentity(authIdentity ?? new AnonymousIdentity(), undefined);
+        });
     }
 
     public get AuthPrincipal(): string {

@@ -9,6 +9,7 @@
         type ExternalBotPermissions,
         type MultiUserChatIdentifier,
         type ExternalBot,
+        type DirectChatIdentifier,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Overlay from "../Overlay.svelte";
@@ -45,7 +46,7 @@
             case "installing_command_bot":
                 return i18nKey("bots.add.title");
             case "installing_direct_command_bot":
-                return i18nKey("bots.add.title");
+                return i18nKey("bots.add.titleDirect");
             case "editing_command_bot":
                 return i18nKey("bots.edit.title");
             case "viewing_command_bot":
@@ -61,7 +62,7 @@
             case "installing_command_bot":
                 return i18nKey("bots.add.addBot");
             case "installing_direct_command_bot":
-                return i18nKey("bots.add.addBot");
+                return i18nKey("bots.add.continue");
             case "editing_command_bot":
                 return i18nKey("bots.edit.updateBot");
             case "viewing_command_bot":
@@ -87,6 +88,10 @@
             default:
                 return mode.requested;
         }
+    }
+
+    function installDirectBot(id: DirectChatIdentifier) {
+        console.log("Install direct chat bot", id);
     }
 
     function installBot(id: CommunityIdentifier | GroupChatIdentifier) {
@@ -154,6 +159,9 @@
         switch (mode.kind) {
             case "installing_command_bot":
                 installBot(mode.id);
+                break;
+            case "installing_direct_command_bot":
+                installDirectBot(mode.id);
                 break;
             case "editing_command_bot":
                 updateBot(mode.id);
@@ -278,7 +286,6 @@
                             <Translatable resourceKey={i18nKey("bots.add.permissionsInfo")}
                             ></Translatable>
                         </p>
-                        <Legend label={title}></Legend>
                         <Tabs
                             initialIndex={2}
                             tabs={[
