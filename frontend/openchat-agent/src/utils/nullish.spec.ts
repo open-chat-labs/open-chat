@@ -36,17 +36,23 @@ describe("nullish utils", () => {
             expect(deepRemoveNullishFields(value)).toEqual(expected);
         });
 
-        test("undefined fields are removed from array values", () => {
+        test("nullish fields are removed from objects in arrays", () => {
             const value = [1, true, { a: null, b: 2 }, { c: undefined }];
             const expected = [1, true, { b: 2 }, { }];
-            expect(deepRemoveNullishFields(value)).toEqual(expected);
+            expect(deepRemoveNullishFields(value)).toStrictEqual(expected);
+        });
+
+        test("null values in arrays are untouched", () => {
+            const value = [null, 1, true];
+            const expected = [null, 1, true];
+            expect(deepRemoveNullishFields(value)).toStrictEqual(expected);
         });
 
         test("non-objects are untouched", () => {
-            expect(deepRemoveNullishFields(1000)).toEqual(1000);
-            expect(deepRemoveNullishFields("a")).toEqual("a");
-            expect(deepRemoveNullishFields(true)).toEqual(true);
-            expect(deepRemoveNullishFields(null)).toEqual(null);
+            expect(deepRemoveNullishFields(1000)).toStrictEqual(1000);
+            expect(deepRemoveNullishFields("a")).toStrictEqual("a");
+            expect(deepRemoveNullishFields(true)).toStrictEqual(true);
+            expect(deepRemoveNullishFields(null)).toStrictEqual(null);
         });
     });
 });
