@@ -1,5 +1,5 @@
 use crate::{
-    AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
+    AccessTokenScope, AudioContent, CanisterId, Chat, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
     GroupPermission, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
     TimestampMillis, UserId, VideoContent,
 };
@@ -272,6 +272,7 @@ pub enum BotCommandArgValue {
 pub enum BotInstallationLocation {
     Community(CommunityId),
     Group(ChatId),
+    User(ChatId),
 }
 
 impl BotInstallationLocation {
@@ -279,6 +280,17 @@ impl BotInstallationLocation {
         match self {
             BotInstallationLocation::Community(c) => (*c).into(),
             BotInstallationLocation::Group(g) => (*g).into(),
+            BotInstallationLocation::User(u) => (*u).into(),
+        }
+    }
+}
+
+impl From<Chat> for BotInstallationLocation {
+    fn from(value: Chat) -> Self {
+        match value {
+            Chat::Channel(community_id, _) => BotInstallationLocation::Community(community_id),
+            Chat::Group(g) => BotInstallationLocation::Group(g),
+            Chat::Direct(u) => BotInstallationLocation::User(u),
         }
     }
 }
