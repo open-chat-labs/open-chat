@@ -7,9 +7,9 @@ use types::{CanisterId, Nanoseconds};
 pub struct Args {
     #[serde(with = "serde_bytes")]
     pub public_key: Vec<u8>,
-    pub webauthn_key: Option<WebAuthnKey>,
     #[serde(with = "serde_bytes")]
     pub session_key: Vec<u8>,
+    pub webauthn_key: Option<WebAuthnKey>,
     pub is_ii_principal: Option<bool>,
     pub max_time_to_live: Option<Nanoseconds>,
     pub challenge_attempt: Option<ChallengeAttempt>,

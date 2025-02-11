@@ -1736,6 +1736,16 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.updateBtcBalance(payload.userId));
                 break;
 
+            case "currentUserWebAuthnKey":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    identityAgent?.checkAuthPrincipal().then((res) => {
+                        return res.kind === "success" ? res.webAuthnKey : undefined
+                    }) ?? Promise.resolve(undefined)
+                );
+                break;
+
             case "lookupWebAuthnPubKey":
                 executeThenReply(
                     payload,
@@ -1835,9 +1845,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     linkIdentities(
+                        payload.userId,
                         payload.initiatorKey,
                         payload.initiatorDelegation,
                         payload.initiatorIsIIPrincipal,
+                        payload.initiatorWebAuthnKey,
                         payload.approverKey,
                         payload.approverDelegation,
                     ),
@@ -1975,9 +1987,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 });
 
 async function linkIdentities(
+    userId: string,
     initiatorKey: CryptoKeyPair,
     initiatorDelegation: JsonnableDelegationChain,
     initiatorIsIIPrincipal: boolean,
+    initiatorWebAuthnKey: WebAuthnKey | undefined,
     approverKey: CryptoKeyPair,
     approverDelegation: JsonnableDelegationChain,
 ): Promise<LinkIdentitiesResponse> {
@@ -1997,7 +2011,6 @@ async function linkIdentities(
         await ECDSAKeyIdentity.fromKeyPair(approverKey),
         DelegationChain.fromJSON(approverDelegation),
     );
-    const approver = approverIdentity.getPrincipal().toString();
     const approverAgent = await IdentityAgent.create(
         approverIdentity,
         identityCanister,
@@ -2005,11 +2018,13 @@ async function linkIdentities(
         undefined,
     );
 
-    if (approver != authPrincipalString) {
+    const approverAuthDetails = await approverAgent.checkAuthPrincipal();
+    if (approverAuthDetails.kind !== "success" || approverAuthDetails.userId !== userId) {
         return "principal_mismatch";
     }
 
-    const initiateResponse = await initiatorAgent.initiateIdentityLink(approver);
+    const approver = approverIdentity.getPrincipal().toString();
+    const initiateResponse = await initiatorAgent.initiateIdentityLink(approver, initiatorWebAuthnKey);
     if (initiateResponse !== "success") {
         return initiateResponse;
     }

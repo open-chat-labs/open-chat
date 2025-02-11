@@ -1,6 +1,7 @@
 use candid::Principal;
 use identity_canister::remove_identity_link::Response as RemovePrincipalResponse;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use std::collections::HashMap;
 use types::{is_default, CanisterId, PushIfNotContains, TimestampMillis, UserId};
 
@@ -37,6 +38,8 @@ struct AuthPrincipalInternal {
     originating_canister: CanisterId,
     #[serde(rename = "u")]
     user_principal_index: u32,
+    #[serde(rename = "w", default, skip_serializing_if = "is_default")]
+    webauthn_credential_id: Option<ByteBuf>,
     #[serde(rename = "i", default, skip_serializing_if = "is_default")]
     is_ii_principal: bool,
     #[serde(rename = "l", default, skip_serializing_if = "is_default")]
@@ -54,12 +57,14 @@ struct TempKey {
 }
 
 impl UserPrincipals {
+    #[allow(clippy::too_many_arguments)]
     pub fn push(
         &mut self,
         index: u32,
         principal: Principal,
         auth_principal: Principal,
         originating_canister: CanisterId,
+        webauthn_credential_id: Option<ByteBuf>,
         is_ii_principal: bool,
         now: TimestampMillis,
     ) {
@@ -76,6 +81,7 @@ impl UserPrincipals {
             AuthPrincipalInternal {
                 originating_canister,
                 user_principal_index: index,
+                webauthn_credential_id,
                 is_ii_principal,
                 last_used: now,
             },
@@ -104,6 +110,7 @@ impl UserPrincipals {
         &mut self,
         new_principal: Principal,
         originating_canister: CanisterId,
+        webauthn_credential_id: Option<ByteBuf>,
         is_ii_principal: bool,
         user_principal_index: u32,
         now: TimestampMillis,
@@ -120,6 +127,7 @@ impl UserPrincipals {
                 AuthPrincipalInternal {
                     originating_canister,
                     user_principal_index,
+                    webauthn_credential_id,
                     is_ii_principal,
                     last_used: now,
                 },
@@ -228,6 +236,7 @@ impl UserPrincipals {
 pub struct AuthPrincipal {
     pub originating_canister: CanisterId,
     pub user_principal_index: u32,
+    pub webauthn_credential_id: Option<Vec<u8>>,
     pub is_ii_principal: bool,
     pub last_used: TimestampMillis,
 }
@@ -237,6 +246,7 @@ impl From<&AuthPrincipalInternal> for AuthPrincipal {
         AuthPrincipal {
             originating_canister: value.originating_canister,
             user_principal_index: value.user_principal_index,
+            webauthn_credential_id: value.webauthn_credential_id.as_ref().map(|c| c.to_vec()),
             is_ii_principal: value.is_ii_principal,
             last_used: value.last_used,
         }

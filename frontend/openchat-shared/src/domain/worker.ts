@@ -399,6 +399,7 @@ export type WorkerRequest =
     | GetAccessToken
     | GetLocalUserIndexForUser
     | UpdateBtcBalance
+    | CurrentUserWebAuthnKey
     | LookupWebAuthnPubKey
     | GenerateMagicLink
     | GetSignInWithEmailDelegation
@@ -1388,6 +1389,10 @@ type UpdateBtcBalance = {
     kind: "updateBtcBalance";
 };
 
+type CurrentUserWebAuthnKey = {
+    kind: "currentUserWebAuthnKey";
+};
+
 type LookupWebAuthnPubKey = {
     credentialId: Uint8Array;
     kind: "lookupWebAuthnPubKey";
@@ -1434,9 +1439,11 @@ type GetDelegationWithWallet = {
 
 type LinkIdentities = {
     kind: "linkIdentities";
+    userId: string;
     initiatorKey: CryptoKeyPair;
     initiatorDelegation: JsonnableDelegationChain;
     initiatorIsIIPrincipal: boolean;
+    initiatorWebAuthnKey: WebAuthnKey | undefined;
     approverKey: CryptoKeyPair;
     approverDelegation: JsonnableDelegationChain;
 };
@@ -1610,6 +1617,7 @@ export type WorkerResponseInner =
     | PendingDeploymentResponse
     | JoinVideoCallResponse
     | UpdateBtcBalanceResponse
+    | WebAuthnKey
     | GenerateMagicLinkResponse
     | SiwePrepareLoginResponse
     | SiwsPrepareLoginResponse
@@ -2293,6 +2301,8 @@ export type WorkerResult<T> = T extends Init
     ? string
     : T extends UpdateBtcBalance
     ? UpdateBtcBalanceResponse
+    : T extends CurrentUserWebAuthnKey
+    ? WebAuthnKey | undefined
     : T extends LookupWebAuthnPubKey
     ? Uint8Array | undefined
     : T extends GenerateMagicLink

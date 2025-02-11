@@ -9,6 +9,7 @@ use ic_canister_sig_creation::signature_map::{SignatureMap, LABEL_SIG};
 use ic_canister_sig_creation::CanisterSigPublicKey;
 use ic_cdk::api::set_certified_data;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use sha256::sha256;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -54,6 +55,7 @@ impl RuntimeState {
         &mut self,
         auth_principal: Principal,
         originating_canister: CanisterId,
+        webauthn_credential_id: Option<ByteBuf>,
         is_ii_principal: bool,
     ) -> [u8; 32] {
         let index = self.data.user_principals.next_index();
@@ -66,6 +68,7 @@ impl RuntimeState {
             principal,
             auth_principal,
             originating_canister,
+            webauthn_credential_id,
             is_ii_principal,
             self.env.now(),
         );

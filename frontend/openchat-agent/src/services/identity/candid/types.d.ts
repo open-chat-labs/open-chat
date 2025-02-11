@@ -27,14 +27,15 @@ export type AuthPrincipalsResponse = { 'NotFound' : null } |
   };
 export type CheckAuthPrincipalResponse = { 'NotFound' : null } |
   { 'Success' : null };
-export interface CreateIdentityArgs {
-  'webauthn_key' : [] | [
-    {
-      'origin' : string,
-      'cross_platform' : boolean,
-      'credential_id' : Uint8Array | number[],
+export type CheckAuthPrincipalV2Response = { 'NotFound' : null } |
+  {
+    'Success' : {
+      'webauthn_key' : [] | [WebAuthnKey],
+      'user_id' : [] | [UserId],
     }
-  ],
+  };
+export interface CreateIdentityArgs {
+  'webauthn_key' : [] | [WebAuthnKey],
   'public_key' : PublicKey,
   'session_key' : PublicKey,
   'max_time_to_live' : [] | [Nanoseconds],
@@ -57,6 +58,7 @@ export interface GetDelegationArgs {
 export type GetDelegationResponse = { 'NotFound' : null } |
   { 'Success' : SignedDelegation };
 export interface InitiateIdentityLinkArgs {
+  'webauthn_key' : [] | [WebAuthnKey],
   'public_key' : Uint8Array | number[],
   'link_to_principal' : Principal,
   'is_ii_principal' : [] | [boolean],
@@ -95,14 +97,15 @@ export interface SignedDelegation {
   'signature' : Uint8Array | number[],
   'delegation' : { 'pubkey' : PublicKey, 'expiration' : TimestampNanoseconds },
 }
-export interface StoreWebAuthnKeyArgs {
-  'session_key' : PublicKey,
-  'pubkey' : PublicKey,
-  'max_time_to_live' : [] | [Nanoseconds],
-  'credential_id' : PublicKey,
-}
 export type TimestampMillis = bigint;
 export type TimestampNanoseconds = bigint;
+export type UserId = Principal;
+export interface WebAuthnKey {
+  'public_key' : Uint8Array | number[],
+  'origin' : string,
+  'cross_platform' : boolean,
+  'credential_id' : Uint8Array | number[],
+}
 export interface _SERVICE {
   'approve_identity_link' : ActorMethod<
     [ApproveIdentityLinkArgs],
@@ -110,6 +113,7 @@ export interface _SERVICE {
   >,
   'auth_principals' : ActorMethod<[{}], AuthPrincipalsResponse>,
   'check_auth_principal' : ActorMethod<[{}], CheckAuthPrincipalResponse>,
+  'check_auth_principal_v2' : ActorMethod<[{}], CheckAuthPrincipalV2Response>,
   'create_identity' : ActorMethod<[CreateIdentityArgs], CreateIdentityResponse>,
   'generate_challenge' : ActorMethod<[{}], GenerateChallengeResponse>,
   'get_delegation' : ActorMethod<[GetDelegationArgs], GetDelegationResponse>,

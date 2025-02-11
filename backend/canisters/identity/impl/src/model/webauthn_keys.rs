@@ -1,20 +1,21 @@
 use candid::Deserialize;
 use identity_canister::WebAuthnKey;
 use serde::Serialize;
+use serde_bytes::ByteBuf;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::TimestampMillis;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct WebAuthnKeys {
-    keys: HashMap<Vec<u8>, WebAuthnKeyInternal>,
+    keys: HashMap<ByteBuf, WebAuthnKeyInternal>,
 }
 
 impl WebAuthnKeys {
-    pub fn add(&mut self, key: WebAuthnKey, public_key: Vec<u8>, now: TimestampMillis) {
-        if let Vacant(e) = self.keys.entry(key.credential_id) {
+    pub fn add(&mut self, key: WebAuthnKey, now: TimestampMillis) {
+        if let Vacant(e) = self.keys.entry(key.credential_id.into()) {
             e.insert(WebAuthnKeyInternal {
-                public_key,
+                public_key: key.public_key,
                 origin: key.origin,
                 cross_platform: key.cross_platform,
                 created: now,
@@ -24,8 +25,8 @@ impl WebAuthnKeys {
         }
     }
 
-    pub fn get_pubkey(&self, credential_id: &[u8]) -> Option<&[u8]> {
-        self.keys.get(credential_id).map(|k| k.public_key.as_ref())
+    pub fn get(&self, credential_id: Vec<u8>) -> Option<&WebAuthnKeyInternal> {
+        self.keys.get(&ByteBuf::from(credential_id))
     }
 }
 
@@ -39,4 +40,15 @@ pub struct WebAuthnKeyInternal {
     pub cross_platform: bool,
     #[serde(rename = "c")]
     pub created: TimestampMillis,
+}
+
+impl WebAuthnKeyInternal {
+    pub fn hydrate(&self, credential_id: Vec<u8>) -> WebAuthnKey {
+        WebAuthnKey {
+            public_key: self.public_key.clone(),
+            credential_id,
+            origin: self.origin.clone(),
+            cross_platform: self.cross_platform,
+        }
+    }
 }

@@ -5,6 +5,7 @@ import type {
     ApproveIdentityLinkResponse,
     AuthenticationPrincipalsResponse,
     ChallengeAttempt,
+    CheckAuthPrincipalResponse,
     CreateOpenChatIdentityError,
     GenerateChallengeResponse,
     InitiateIdentityLinkResponse,
@@ -40,6 +41,10 @@ export class IdentityAgent {
 
     checkOpenChatIdentityExists(): Promise<boolean> {
         return this._identityClient.checkAuthPrincipal().then((resp) => resp.kind === "success");
+    }
+
+    checkAuthPrincipal(): Promise<CheckAuthPrincipalResponse> {
+        return this._identityClient.checkAuthPrincipal();
     }
 
     async createOpenChatIdentity(
@@ -91,8 +96,11 @@ export class IdentityAgent {
         return this._identityClient.generateChallenge();
     }
 
-    initiateIdentityLink(linkToPrincipal: string): Promise<InitiateIdentityLinkResponse> {
-        return this._identityClient.initiateIdentityLink(linkToPrincipal, this._isIIPrincipal);
+    initiateIdentityLink(
+        linkToPrincipal: string,
+        webAuthnKey: WebAuthnKey | undefined
+    ): Promise<InitiateIdentityLinkResponse> {
+        return this._identityClient.initiateIdentityLink(linkToPrincipal, webAuthnKey, this._isIIPrincipal);
     }
 
     approveIdentityLink(linkInitiatedBy: string): Promise<ApproveIdentityLinkResponse> {

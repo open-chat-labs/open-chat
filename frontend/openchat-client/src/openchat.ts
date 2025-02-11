@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { gaTrack } from "./utils/ga";
-import { AnonymousIdentity, type Identity, type SignIdentity } from "@dfinity/agent";
+import { AnonymousIdentity, DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@dfinity/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
 import { get } from "svelte/store";
 import DRange from "drange";
@@ -502,7 +502,7 @@ import {
     DelegationChain,
     DelegationIdentity,
     ECDSAKeyIdentity,
-    type WebAuthnIdentity,
+    WebAuthnIdentity,
 } from "@dfinity/identity";
 import {
     capturePinNumberStore,
@@ -7081,7 +7081,7 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    async signUpWithWebAuthn() {
+    async signUpWithWebAuthn(assumeIdentity: boolean): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
 
@@ -7090,7 +7090,7 @@ export class OpenChat extends EventTarget {
         // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
-        await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, webAuthnOrigin);
+        return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, webAuthnOrigin, assumeIdentity);
     }
 
     async signInWithWebAuthn() {
@@ -7101,10 +7101,39 @@ export class OpenChat extends EventTarget {
             webAuthnOrigin,
             (credentialId) => this.lookupWebAuthnPubKey(credentialId)
         );
-        await this.#finaliseWebAuthnSignin(webAuthnIdentity, () => webAuthnIdentity.innerIdentity(), webAuthnOrigin);
+        await this.#finaliseWebAuthnSignin(
+            webAuthnIdentity,
+            () => webAuthnIdentity.innerIdentity(),
+            webAuthnOrigin,
+            true,
+        );
     }
 
-    async #finaliseWebAuthnSignin(initialKey: SignIdentity, webAuthnIdentityFn: () => WebAuthnIdentity, webAuthnOrigin: string) {
+    async reSignInWithCurrentWebAuthnIdentity(): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
+        const webAuthnKey = this.#webAuthnKey ?? await this.#sendRequest({
+            kind: "currentUserWebAuthnKey",
+        });
+        if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
+
+        const webAuthnIdentity = new WebAuthnIdentity(
+            webAuthnKey.credentialId,
+            unwrapDER(webAuthnKey.publicKey, DER_COSE_OID),
+            undefined
+        );
+        return await this.#finaliseWebAuthnSignin(
+            webAuthnIdentity,
+            () => webAuthnIdentity,
+            webAuthnKey.origin,
+            false,
+        );
+    }
+
+    async #finaliseWebAuthnSignin(
+        initialKey: SignIdentity,
+        webAuthnIdentityFn: () => WebAuthnIdentity,
+        webAuthnOrigin: string,
+        assumeIdentity: boolean,
+    ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const sessionKey = await ECDSAKeyIdentity.generate();
         const delegationChain = await DelegationChain.create(
             initialKey,
@@ -7115,14 +7144,18 @@ export class OpenChat extends EventTarget {
         // In the sign in case, we must defer getting the webAuthnIdentity until after it has been used to sign the
         // delegation, before that point we don't know which identity the user will choose.
         const webAuthnIdentity = webAuthnIdentityFn();
-        this.#webAuthnKey = {
-            pubkey: new Uint8Array(webAuthnIdentity.getPublicKey().toDer()),
+        const webAuthnKey = {
+            publicKey: new Uint8Array(webAuthnIdentity.getPublicKey().toDer()),
             credentialId: new Uint8Array(webAuthnIdentity.rawId),
             origin: webAuthnOrigin,
             crossPlatform: webAuthnIdentity.getAuthenticatorAttachment() === "cross-platform",
         };
-        this.#authIdentityStorage.set(sessionKey, delegationChain);
-        this.#loadedAuthenticationIdentity(identity, AuthProvider.WEBAUTHN);
+        if (assumeIdentity) {
+            this.#webAuthnKey = webAuthnKey;
+            this.#authIdentityStorage.set(sessionKey, delegationChain);
+            this.#loadedAuthenticationIdentity(identity, AuthProvider.PASSKEY);
+        }
+        return [sessionKey, delegationChain, webAuthnKey]
     }
 
     async lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array> {
@@ -8337,14 +8370,17 @@ export class OpenChat extends EventTarget {
         initiatorKey: ECDSAKeyIdentity,
         initiatorDelegation: DelegationChain,
         initiatorIsIIPrincipal: boolean,
+        initiatorWebAuthnKey: WebAuthnKey | undefined,
         approverKey: ECDSAKeyIdentity,
         approverDelegation: DelegationChain,
     ): Promise<LinkIdentitiesResponse> {
         return this.#sendRequest({
             kind: "linkIdentities",
+            userId: this.#liveState.user.userId,
             initiatorKey: initiatorKey.getKeyPair(),
             initiatorDelegation: initiatorDelegation.toJSON(),
             initiatorIsIIPrincipal,
+            initiatorWebAuthnKey,
             approverKey: approverKey.getKeyPair(),
             approverDelegation: approverDelegation.toJSON(),
         });

@@ -7,6 +7,7 @@ import {
     SignIdentity,
     unwrapDER,
 } from "@dfinity/agent";
+import {random32} from "openchat-shared";
 
 export async function createWebAuthnIdentity(origin: string): Promise<WebAuthnIdentity> {
     const opts = webAuthnCreationOptions(origin);
@@ -85,6 +86,7 @@ export class MultiWebAuthnIdentity extends SignIdentity {
 }
 
 function webAuthnCreationOptions(rpId?: string): PublicKeyCredentialCreationOptions {
+    const randomId = (random32() % 1000000).toString().padStart(6, "0");
     return {
         authenticatorSelection: {
             userVerification: "preferred",
@@ -111,7 +113,7 @@ function webAuthnCreationOptions(rpId?: string): PublicKeyCredentialCreationOpti
         user: {
             id: window.crypto.getRandomValues(new Uint8Array(16)),
             name: "OpenChat",
-            displayName: "OpenChat",
+            displayName: `OpenChat-${randomId}`,
         },
     };
 }

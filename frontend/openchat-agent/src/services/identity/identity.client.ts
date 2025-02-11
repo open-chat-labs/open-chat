@@ -15,6 +15,7 @@ import type {
     WebAuthnKey,
 } from "openchat-shared";
 import {
+    apiWebAuthnKey,
     approveIdentityLinkResponse,
     authPrincipalsResponse,
     checkAuthPrincipalResponse,
@@ -44,12 +45,8 @@ export class IdentityClient extends CandidCanisterAgent<IdentityService> {
         challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<CreateIdentityResponse> {
         const args: CreateIdentityArgs = {
-            public_key: webAuthnKey?.pubkey ?? this.publicKey(),
-            webauthn_key: apiOptional((k) => ({
-                credential_id: k.credentialId,
-                origin: k.origin,
-                cross_platform: k.crossPlatform,
-            }), webAuthnKey),
+            public_key: this.publicKey(),
+            webauthn_key: apiOptional(apiWebAuthnKey, webAuthnKey),
             session_key: sessionKey,
             is_ii_principal: apiOptional(identity, isIIPrincipal),
             max_time_to_live: [] as [] | [bigint],
@@ -64,7 +61,7 @@ export class IdentityClient extends CandidCanisterAgent<IdentityService> {
 
     checkAuthPrincipal(): Promise<CheckAuthPrincipalResponse> {
         return this.handleQueryResponse(
-            () => this.service.check_auth_principal({}),
+            () => this.service.check_auth_principal_v2({}),
             checkAuthPrincipalResponse,
             {},
         );
@@ -104,11 +101,13 @@ export class IdentityClient extends CandidCanisterAgent<IdentityService> {
 
     initiateIdentityLink(
         linkToPrincipal: string,
+        webAuthnKey: WebAuthnKey | undefined,
         isIIPrincipal: boolean | undefined,
     ): Promise<InitiateIdentityLinkResponse> {
         return this.handleResponse(
             this.service.initiate_identity_link({
                 link_to_principal: Principal.fromText(linkToPrincipal),
+                webauthn_key: apiOptional(apiWebAuthnKey, webAuthnKey),
                 public_key: this.publicKey(),
                 is_ii_principal: apiOptional(identity, isIIPrincipal),
             }),

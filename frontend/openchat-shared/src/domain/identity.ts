@@ -19,7 +19,9 @@ export type CreateIdentityResponse =
     | { kind: "public_key_invalid" }
     | { kind: "originating_canister_invalid" };
 
-export type CheckAuthPrincipalResponse = { kind: "success" } | { kind: "not_found" };
+export type CheckAuthPrincipalResponse =
+    | { kind: "success"; userId: string | undefined; webAuthnKey: WebAuthnKey | undefined }
+    | { kind: "not_found" };
 
 export type PrepareDelegationResponse =
     | PrepareDelegationSuccess
@@ -120,7 +122,7 @@ export type RemoveIdentityLinkResponse =
     | "user_not_found";
 
 export type WebAuthnKey = {
-    pubkey: Uint8Array;
+    publicKey: Uint8Array;
     credentialId: Uint8Array;
     origin: string;
     crossPlatform: boolean;

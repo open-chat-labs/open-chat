@@ -2,6 +2,7 @@ type Nanoseconds = nat64;
 type PublicKey = blob;
 type TimestampMillis = nat64;
 type TimestampNanoseconds = nat64;
+type UserId = principal;
 
 type AuthPrincipalsResponse = variant {
     Success : vec record {
@@ -15,6 +16,14 @@ type AuthPrincipalsResponse = variant {
 
 type CheckAuthPrincipalResponse = variant {
     Success;
+    NotFound;
+};
+
+type CheckAuthPrincipalV2Response = variant {
+    Success : record {
+        user_id : opt UserId;
+        webauthn_key : opt WebAuthnKey;
+    };
     NotFound;
 };
 
@@ -74,11 +83,7 @@ type ApproveIdentityLinkResponse = variant {
 
 type CreateIdentityArgs = record {
     public_key : PublicKey;
-    webauthn_key : opt record {
-        credential_id : blob;
-        origin : text;
-        cross_platform : bool;
-    };
+    webauthn_key : opt WebAuthnKey;
     session_key : PublicKey;
     is_ii_principal : opt bool;
     max_time_to_live : opt Nanoseconds;
@@ -99,6 +104,7 @@ type CreateIdentityResponse = variant {
 
 type InitiateIdentityLinkArgs = record {
     public_key : blob;
+    webauthn_key : opt WebAuthnKey;
     is_ii_principal : opt bool;
     link_to_principal : principal;
 };
@@ -138,9 +144,17 @@ type RemoveIdentityLinkResponse = variant {
     UserNotFound;
 };
 
+type WebAuthnKey = record {
+    public_key : blob;
+    credential_id : blob;
+    origin : text;
+    cross_platform : bool;
+};
+
 service : {
     auth_principals : (record {}) -> (AuthPrincipalsResponse) query;
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
+    check_auth_principal_v2 : (record {}) -> (CheckAuthPrincipalV2Response) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
     lookup_webauthn_pubkey : (LookupWebAuthnPubKeyArgs) -> (LookupWebAuthnPubKeyResponse) query;
     approve_identity_link : (ApproveIdentityLinkArgs) -> (ApproveIdentityLinkResponse);

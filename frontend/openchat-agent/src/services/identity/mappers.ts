@@ -8,6 +8,7 @@ import type {
     ApiInitiateIdentityLinkResponse,
     ApiPrepareDelegationResponse,
     ApiRemoveIdentityLinkResponse,
+    ApiWebAuthnKey,
 } from "./candid/idl";
 import {
     type ApproveIdentityLinkResponse,
@@ -20,9 +21,10 @@ import {
     type PrepareDelegationResponse,
     type PrepareDelegationSuccess,
     type RemoveIdentityLinkResponse,
+    type WebAuthnKey,
     UnsupportedValueError,
 } from "openchat-shared";
-import { consolidateBytes } from "../../utils/mapping";
+import { consolidateBytes, optional } from "../../utils/mapping";
 import type { Signature } from "@dfinity/agent";
 import { Delegation } from "@dfinity/identity";
 import type { PublicKey, SignedDelegation } from "./candid/types";
@@ -53,7 +55,11 @@ export function checkAuthPrincipalResponse(
     candid: ApiCheckAuthPrincipalResponse,
 ): CheckAuthPrincipalResponse {
     if ("Success" in candid) {
-        return { kind: "success" };
+        return {
+            kind: "success",
+            userId: optional(candid.Success.user_id, (p) => p.toString()),
+            webAuthnKey: optional(candid.Success.webauthn_key, webAuthnKey)
+        };
     }
     if ("NotFound" in candid) {
         return { kind: "not_found" };
@@ -224,4 +230,22 @@ export function removeIdentityLinkResponse(
         "Unexpected ApiRemoveIdentityLinkResponse type received",
         candid,
     );
+}
+
+function webAuthnKey(key: ApiWebAuthnKey): WebAuthnKey {
+    return {
+        publicKey: consolidateBytes(key.public_key),
+        credentialId: consolidateBytes(key.credential_id),
+        origin: key.origin,
+        crossPlatform: key.cross_platform,
+    };
+}
+
+export function apiWebAuthnKey(key: WebAuthnKey): ApiWebAuthnKey {
+    return {
+        public_key: key.publicKey,
+        credential_id: key.credentialId,
+        origin: key.origin,
+        cross_platform: key.crossPlatform,
+    };
 }
