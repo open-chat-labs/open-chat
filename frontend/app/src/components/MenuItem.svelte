@@ -1,10 +1,23 @@
 <script lang="ts">
-    export let href: string | undefined = undefined;
-    export let disabled: boolean = false;
-    export let selected: boolean = false;
-    export let warning: boolean = false;
-    export let separator: boolean = false;
-    export let unpadded: boolean = false;
+    interface Props {
+        href?: string;
+        disabled?: boolean;
+        selected?: boolean;
+        warning?: boolean;
+        separator?: boolean;
+        unpadded?: boolean;
+        onclick?: () => void;
+    }
+
+    let {
+        href,
+        disabled = false,
+        selected = false,
+        warning = false,
+        separator = false,
+        unpadded = false,
+        onclick,
+    }: Props = $props();
 </script>
 
 {#if disabled}
@@ -24,7 +37,7 @@
         class:unpadded
         tabindex="0"
         class="menu-item"
-        on:click
+        {onclick}
         role="menuitem"
         class:selected
         class:warning>

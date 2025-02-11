@@ -194,7 +194,7 @@
         <span slot="menu">
             <Menu>
                 {#if canManage}
-                    <MenuItem on:click={() => removeBot()}>
+                    <MenuItem onclick={() => removeBot()}>
                         <DeleteOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -203,7 +203,7 @@
                             <Translatable resourceKey={i18nKey("bots.manage.remove")} />
                         </div>
                     </MenuItem>
-                    <MenuItem on:click={() => reviewCommandPermissions()}>
+                    <MenuItem onclick={() => reviewCommandPermissions()}>
                         <PencilOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -215,7 +215,7 @@
                 {/if}
                 {#if canGenerateKey}
                     {#if apiKeyPermissions !== undefined}
-                        <MenuItem on:click={reviewApiKey}>
+                        <MenuItem onclick={reviewApiKey}>
                             <KeyRemove
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -225,7 +225,7 @@
                             </div>
                         </MenuItem>
                     {:else}
-                        <MenuItem on:click={() => generateApiKey()}>
+                        <MenuItem onclick={() => generateApiKey()}>
                             <KeyPlus
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -236,7 +236,7 @@
                         </MenuItem>
                     {/if}
                 {/if}
-                <MenuItem on:click={() => viewBotDetails()}>
+                <MenuItem onclick={() => viewBotDetails()}>
                     <TextBoxOutline
                         size={$iconSize}
                         color={"var(--icon-inverted-txt)"}

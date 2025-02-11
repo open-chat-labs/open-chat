@@ -51,7 +51,7 @@
         <span slot="menu">
             <Menu>
                 {#if defaultRole !== undefined}
-                    <MenuItem on:click={() => select(undefined)}>
+                    <MenuItem onclick={() => select(undefined)}>
                         <Check
                             viewBox={"0 -3 24 24"}
                             size={$iconSize}
@@ -65,7 +65,7 @@
                     </MenuItem>
                 {/if}
                 {#each roles as r (r)}
-                    <MenuItem on:click={() => select(r)}>
+                    <MenuItem onclick={() => select(r)}>
                         <Check
                             viewBox={"0 -3 24 24"}
                             size={$iconSize}

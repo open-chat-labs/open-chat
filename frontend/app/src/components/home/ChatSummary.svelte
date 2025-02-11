@@ -7,6 +7,8 @@
         TypersByKey,
         CommunitySummary,
         DiamondMembershipStatus,
+        ChatIdentifier,
+        Level,
     } from "openchat-client";
     import {
         userStore,
@@ -40,7 +42,7 @@
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -60,19 +62,35 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let chatSummary: ChatSummary;
-    export let selected: boolean;
-    export let visible: boolean;
+    interface Props {
+        chatSummary: ChatSummary;
+        selected: boolean;
+        visible: boolean;
+        onToggleMuteNotifications: (chatId: ChatIdentifier, mute: boolean) => void;
+        onChatSelected: (chat: ChatSummary) => void;
+        onUnarchiveChat: (chatId: ChatIdentifier) => void;
+        onLeaveGroup: (group: { kind: "leave"; chatId: ChatIdentifier; level: Level }) => void;
+    }
 
-    $: userId = $user.userId;
-    $: menuColour = "var(--icon-txt)";
-    $: externalContent = chatSummary.kind === "channel" && chatSummary.externalUrl !== undefined;
-    $: verified = chatSummary.kind === "group_chat" && chatSummary.verified;
+    let {
+        chatSummary,
+        selected,
+        visible,
+        onToggleMuteNotifications,
+        onChatSelected,
+        onUnarchiveChat,
+        onLeaveGroup,
+    }: Props = $props();
 
-    const dispatch = createEventDispatcher();
-    let hovering = false;
-    let unreadMessages: number;
-    let unreadMentions: number;
+    let userId = $derived($user.userId);
+    let externalContent = $derived(
+        chatSummary.kind === "channel" && chatSummary.externalUrl !== undefined,
+    );
+    let verified = $derived(chatSummary.kind === "group_chat" && chatSummary.verified);
+
+    let hovering = $state(false);
+    let unreadMessages: number = $state(0);
+    let unreadMentions: number = $state(0);
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const fav = $chatListScope.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
@@ -100,6 +118,7 @@
                     video,
                     private: false,
                     uniquePerson: them?.isUniquePerson ?? false,
+                    bot: them?.kind === "bot",
                 };
             default:
                 return {
@@ -119,6 +138,7 @@
                     video,
                     private: !chatSummary.public,
                     uniquePerson: false,
+                    bot: false,
                 };
         }
     }
@@ -191,7 +211,9 @@
         }
     }
 
-    function deleteDirectChat() {
+    function deleteDirectChat(e: Event) {
+        e.stopPropagation();
+        e.preventDefault();
         if (
             $pathParams.kind === "global_chat_selected_route" &&
             chatIdentifiersEqual(chatSummary.id, $pathParams.chatId)
@@ -202,21 +224,18 @@
         delOffset = -60;
     }
 
-    $: chat = normaliseChatSummary($now, chatSummary, $typersByContext);
-    $: lastMessage = formatLatestMessage(chatSummary, $userStore);
+    let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
+    let lastMessage = $derived(formatLatestMessage(chatSummary, $userStore));
 
-    $: {
-        // we are passing chatSummary into the function to force a reaction
-        updateUnreadCounts(chatSummary);
-    }
+    $effect(() => updateUnreadCounts(chatSummary));
 
     onMount(() => {
         return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
     });
 
-    let maxDelOffset = -60;
-    let delOffset = maxDelOffset;
-    let swiped = false;
+    const maxDelOffset = -60;
+    let delOffset = $state(maxDelOffset);
+    let swiped = $state(false);
 
     function leftSwipe() {
         if (swiped) return;
@@ -267,7 +286,7 @@
     }
 
     function toggleMuteNotifications(mute: boolean) {
-        dispatch("toggleMuteNotifications", { chatId: chatSummary.id, mute });
+        onToggleMuteNotifications(chatSummary.id, mute);
     }
 
     function archiveChat() {
@@ -283,7 +302,7 @@
     }
 
     function selectChat() {
-        dispatch("chatSelected", chatSummary);
+        onChatSelected(chatSummary);
     }
 
     function addToFavourites() {
@@ -295,28 +314,31 @@
     }
 
     function unarchiveChat() {
-        dispatch("unarchiveChat", chatSummary.id);
+        onUnarchiveChat(chatSummary.id);
     }
 
     function leaveGroup() {
         if (chatSummary.kind === "direct_chat") return;
-        dispatch("leaveGroup", {
+        onLeaveGroup({
             kind: "leave",
             chatId: chatSummary.id,
             level: chatSummary.level,
         });
     }
 
-    $: displayDate = client.getDisplayDate(chatSummary);
-    $: community =
+    let displayDate = $derived(client.getDisplayDate(chatSummary));
+    let community = $derived(
         chatSummary.kind === "channel"
             ? $communities.get({ kind: "community", communityId: chatSummary.id.communityId })
-            : undefined;
-    $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId);
-    $: readonly = client.isChatReadOnly(chatSummary.id);
-    $: canDelete = getCanDelete(chatSummary, community);
-    $: pinned = client.pinned($chatListScope.kind, chatSummary.id);
-    $: muted = chatSummary.membership.notificationsMuted;
+            : undefined,
+    );
+    let blocked = $derived(
+        chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId),
+    );
+    let readonly = $derived(client.isChatReadOnly(chatSummary.id));
+    let canDelete = $derived(getCanDelete(chatSummary, community));
+    let pinned = $derived(client.pinned($chatListScope.kind, chatSummary.id));
+    let muted = $derived(chatSummary.membership.notificationsMuted);
 
     function getCanDelete(chat: ChatSummary, community: CommunitySummary | undefined) {
         switch (chat.kind) {
@@ -342,18 +364,19 @@
         class:selected
         tabindex="0"
         use:swipe={{ threshold: 20 }}
-        on:swiping={swiping}
-        on:leftswipe={leftSwipe}
-        on:rightswipe={rightSwipe}
+        onswiping={swiping}
+        onleftswipe={leftSwipe}
+        onrightswipe={rightSwipe}
         class:empty={canDelete}
         class:rtl={$rtlStore}
-        on:mouseenter={() => (hovering = true)}
-        on:mouseleave={() => (hovering = false)}
-        on:click={selectChat}>
+        onmouseenter={() => (hovering = true)}
+        onmouseleave={() => (hovering = false)}
+        onclick={selectChat}>
         <div class="avatar">
             <Avatar
                 statusBorder={selected || hovering ? "var(--chatSummary-hv)" : "transparent"}
                 {blocked}
+                bot={chat.bot}
                 url={chat.avatarUrl}
                 showStatus
                 userId={chat.userId?.userId}
@@ -446,12 +469,12 @@
                                 <DotsVertical
                                     viewBox="0 -3 24 24"
                                     size="1.6em"
-                                    color={menuColour} />
+                                    color={"var(--icon-txt)"} />
                             </div>
                             <div slot="menu">
                                 <Menu>
                                     {#if !$favouritesStore.has(chatSummary.id)}
-                                        <MenuItem on:click={addToFavourites}>
+                                        <MenuItem onclick={addToFavourites}>
                                             <HeartPlus
                                                 size={$iconSize}
                                                 color={"var(--menu-warn)"}
@@ -464,7 +487,7 @@
                                             </div>
                                         </MenuItem>
                                     {:else}
-                                        <MenuItem on:click={removeFromFavourites}>
+                                        <MenuItem onclick={removeFromFavourites}>
                                             <HeartMinus
                                                 size={$iconSize}
                                                 color={"var(--menu-warn)"}
@@ -478,7 +501,7 @@
                                         </MenuItem>
                                     {/if}
                                     {#if !pinned}
-                                        <MenuItem on:click={pinChat}>
+                                        <MenuItem onclick={pinChat}>
                                             <PinIcon
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
@@ -489,7 +512,7 @@
                                             </div>
                                         </MenuItem>
                                     {:else}
-                                        <MenuItem on:click={unpinChat}>
+                                        <MenuItem onclick={unpinChat}>
                                             <PinOffIcon
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
@@ -505,7 +528,7 @@
                                     {#if notificationsSupported && !externalContent}
                                         {#if muted}
                                             <MenuItem
-                                                on:click={() => toggleMuteNotifications(false)}>
+                                                onclick={() => toggleMuteNotifications(false)}>
                                                 <BellIcon
                                                     size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"}
@@ -518,8 +541,7 @@
                                                 </div>
                                             </MenuItem>
                                         {:else}
-                                            <MenuItem
-                                                on:click={() => toggleMuteNotifications(true)}>
+                                            <MenuItem onclick={() => toggleMuteNotifications(true)}>
                                                 <MutedIcon
                                                     size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"}
@@ -536,7 +558,7 @@
                                     {#if !externalContent}
                                         <MenuItem
                                             disabled={unreadMessages === 0}
-                                            on:click={() => client.markAllRead(chatSummary)}>
+                                            onclick={() => client.markAllRead(chatSummary)}>
                                             <CheckboxMultipleMarked
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
@@ -548,7 +570,7 @@
                                         </MenuItem>
                                     {/if}
                                     {#if chatSummary.membership.archived}
-                                        <MenuItem on:click={selectChat}>
+                                        <MenuItem onclick={selectChat}>
                                             <ArchiveOffIcon
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
@@ -559,7 +581,7 @@
                                             </div>
                                         </MenuItem>
                                     {:else}
-                                        <MenuItem on:click={archiveChat}>
+                                        <MenuItem onclick={archiveChat}>
                                             <ArchiveIcon
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
@@ -571,7 +593,7 @@
                                         </MenuItem>
                                     {/if}
                                     {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
-                                        <MenuItem warning on:click={leaveGroup}>
+                                        <MenuItem warning onclick={leaveGroup}>
                                             <LocationExit
                                                 size={$iconSize}
                                                 color={"var(--menu-warn)"}
@@ -605,7 +627,7 @@
                         ? `left: ${delOffset}px`
                         : `right: ${delOffset}px`
                     : ""}
-                on:click|stopPropagation|preventDefault={deleteDirectChat}
+                onclick={deleteDirectChat}
                 class:rtl={$rtlStore}
                 class="delete-chat">
                 <Delete size={$iconSize} color={"#fff"} />

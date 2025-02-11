@@ -75,7 +75,7 @@
         <div class="menu">
             <Menu fit>
                 {#each communitySearchState.results as community (community.id.communityId)}
-                    <MenuItem on:click={() => select(community)}>
+                    <MenuItem onclick={() => select(community)}>
                         <Avatar
                             slot="icon"
                             url={client.communityAvatarUrl(

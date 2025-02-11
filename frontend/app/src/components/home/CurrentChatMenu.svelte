@@ -318,7 +318,7 @@
         <div slot="menu">
             <Menu>
                 {#if canStartOrJoinVideoCall}
-                    <MenuItem on:click={startVideoCall}>
+                    <MenuItem onclick={startVideoCall}>
                         <Headphones
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -329,14 +329,14 @@
                     </MenuItem>
                 {/if}
                 {#if !$favouritesStore.has(selectedChatSummary.id)}
-                    <MenuItem on:click={addToFavourites}>
+                    <MenuItem onclick={addToFavourites}>
                         <HeartPlus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                         <div slot="text">
                             <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
                         </div>
                     </MenuItem>
                 {:else}
-                    <MenuItem on:click={removeFromFavourites}>
+                    <MenuItem onclick={removeFromFavourites}>
                         <HeartMinus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                         <div slot="text">
                             <Translatable
@@ -346,14 +346,14 @@
                 {/if}
                 {#if $mobileWidth}
                     {#if $isProposalGroup}
-                        <MenuItem on:click={showProposalFilters}>
+                        <MenuItem onclick={showProposalFilters}>
                             <Tune size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                             <div slot="text">
                                 <Translatable resourceKey={i18nKey("proposal.filter")} />
                             </div>
                         </MenuItem>
                     {/if}
-                    <MenuItem on:click={searchChat}>
+                    <MenuItem onclick={searchChat}>
                         <Magnify size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <div slot="text"><Translatable resourceKey={i18nKey("searchChat")} /></div>
                     </MenuItem>
@@ -361,7 +361,7 @@
                 {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
                     {#if $mobileWidth}
                         {#if hasPinned}
-                            <MenuItem on:click={showPinned}>
+                            <MenuItem onclick={showPinned}>
                                 <Pin
                                     size={$iconSize}
                                     color={hasUnreadPinned
@@ -373,7 +373,7 @@
                                 </div>
                             </MenuItem>
                         {/if}
-                        <MenuItem on:click={showGroupDetails}>
+                        <MenuItem onclick={showGroupDetails}>
                             <FileDocument
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -387,7 +387,7 @@
                                     )} />
                             </div>
                         </MenuItem>
-                        <MenuItem on:click={showGroupMembers}>
+                        <MenuItem onclick={showGroupMembers}>
                             <AccountMultiple
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -395,7 +395,7 @@
                             <div slot="text"><Translatable resourceKey={i18nKey("members")} /></div>
                         </MenuItem>
                         {#if client.canInviteUsers(selectedChatSummary.id)}
-                            <MenuItem on:click={showInviteGroupUsers}>
+                            <MenuItem onclick={showInviteGroupUsers}>
                                 <AccountMultiplePlus
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -415,7 +415,7 @@
 
                     {#if notificationsSupported}
                         {#if selectedChatSummary.membership.notificationsMuted === true}
-                            <MenuItem on:click={() => toggleMuteNotifications(false)}>
+                            <MenuItem onclick={() => toggleMuteNotifications(false)}>
                                 <Bell
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -425,7 +425,7 @@
                                 </div>
                             </MenuItem>
                         {:else}
-                            <MenuItem on:click={() => toggleMuteNotifications(true)}>
+                            <MenuItem onclick={() => toggleMuteNotifications(true)}>
                                 <BellOff
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -438,7 +438,7 @@
                     {/if}
 
                     {#if canMakeProposals}
-                        <MenuItem on:click={makeProposal}>
+                        <MenuItem onclick={makeProposal}>
                             <ChatQuestionIcon
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -451,14 +451,14 @@
 
                     {#if $platformModerator && selectedChatSummary.kind === "group_chat"}
                         {#if client.isChatFrozen(selectedChatSummary.id)}
-                            <MenuItem warning on:click={unfreezeGroup}>
+                            <MenuItem warning onclick={unfreezeGroup}>
                                 <TickIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
                                 <div slot="text">
                                     <Translatable resourceKey={i18nKey("unfreezeGroup")} />
                                 </div>
                             </MenuItem>
                         {:else}
-                            <MenuItem warning on:click={freezeGroup}>
+                            <MenuItem warning onclick={freezeGroup}>
                                 <CancelIcon
                                     size={$iconSize}
                                     color={"var(--menu-warn"}
@@ -471,7 +471,7 @@
                     {/if}
 
                     {#if client.canLeaveGroup(selectedChatSummary.id)}
-                        <MenuItem warning on:click={leaveGroup}>
+                        <MenuItem warning onclick={leaveGroup}>
                             <LocationExit size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                             <div slot="text">
                                 <Translatable
@@ -485,7 +485,7 @@
                         </MenuItem>
                     {/if}
                     {#if canConvert}
-                        <MenuItem warning on:click={convertToCommunity}>
+                        <MenuItem warning onclick={convertToCommunity}>
                             <ConvertToCommunity
                                 size={$iconSize}
                                 color={"var(--menu-warn)"}
@@ -496,7 +496,7 @@
                         </MenuItem>
                     {/if}
                     {#if canImportToCommunity}
-                        <MenuItem warning on:click={importToCommunity}>
+                        <MenuItem warning onclick={importToCommunity}>
                             <Import size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                             <div slot="text">
                                 <Translatable resourceKey={i18nKey("communities.import")} />
@@ -506,7 +506,7 @@
                 {/if}
                 {#if selectedChatSummary.kind === "direct_chat" && !isBot}
                     {#if hasPinned}
-                        <MenuItem on:click={showPinned}>
+                        <MenuItem onclick={showPinned}>
                             <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                             <div slot="text">
                                 <Translatable resourceKey={i18nKey("showPinned")} />
@@ -515,7 +515,7 @@
                     {/if}
                     {#if notificationsSupported}
                         {#if selectedChatSummary.membership.notificationsMuted === true}
-                            <MenuItem on:click={() => toggleMuteNotifications(false)}>
+                            <MenuItem onclick={() => toggleMuteNotifications(false)}>
                                 <Bell
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -525,7 +525,7 @@
                                 </div>
                             </MenuItem>
                         {:else}
-                            <MenuItem on:click={() => toggleMuteNotifications(true)}>
+                            <MenuItem onclick={() => toggleMuteNotifications(true)}>
                                 <BellOff
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -537,7 +537,7 @@
                         {/if}
                     {/if}
                     {#if blocked}
-                        <MenuItem on:click={unblockUser}>
+                        <MenuItem onclick={unblockUser}>
                             <CancelIcon
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -547,7 +547,7 @@
                             </div>
                         </MenuItem>
                     {:else}
-                        <MenuItem on:click={blockUser}>
+                        <MenuItem onclick={blockUser}>
                             <CancelIcon
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -559,7 +559,7 @@
                     {/if}
                     {#if $platformModerator}
                         {#if isSuspended}
-                            <MenuItem on:click={unsuspendUser}>
+                            <MenuItem onclick={unsuspendUser}>
                                 <TickIcon
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -569,7 +569,7 @@
                                 </div>
                             </MenuItem>
                         {:else}
-                            <MenuItem on:click={onSuspendUser}>
+                            <MenuItem onclick={onSuspendUser}>
                                 <CancelIcon
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}

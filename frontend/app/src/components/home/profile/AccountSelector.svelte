@@ -49,7 +49,7 @@
             <div slot="menu">
                 <Menu>
                     {#each accounts as namedAccount}
-                        <MenuItem unpadded on:click={() => selectAccount(namedAccount)}>
+                        <MenuItem unpadded onclick={() => selectAccount(namedAccount)}>
                             <div slot="text" class="named-account">
                                 <div class="name">
                                     {namedAccount.name}

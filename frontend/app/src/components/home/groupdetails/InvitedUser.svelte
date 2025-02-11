@@ -37,7 +37,7 @@
                 </span>
                 <span slot="menu">
                     <Menu>
-                        <MenuItem on:click={cancelInvite}>
+                        <MenuItem onclick={cancelInvite}>
                             <Cancel
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}

@@ -55,7 +55,7 @@
                 <div slot="menu">
                     <Menu>
                         {#if !$pinNumberRequiredStore}
-                            <MenuItem on:click={() => (pinAction = { kind: "set" })}>
+                            <MenuItem onclick={() => (pinAction = { kind: "set" })}>
                                 <ShieldPlusIcon
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -65,7 +65,7 @@
                                 </div>
                             </MenuItem>
                         {:else}
-                            <MenuItem on:click={() => (pinAction = { kind: "change" })}>
+                            <MenuItem onclick={() => (pinAction = { kind: "change" })}>
                                 <ShieldRefreshIcon
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -74,7 +74,7 @@
                                     <Translatable resourceKey={i18nKey("pinNumber.changePin")} />
                                 </div>
                             </MenuItem>
-                            <MenuItem on:click={() => (pinAction = { kind: "clear" })}>
+                            <MenuItem onclick={() => (pinAction = { kind: "clear" })}>
                                 <ShieldRemoveIcon
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -84,7 +84,7 @@
                                 </div>
                             </MenuItem>
                         {/if}
-                        <MenuItem on:click={() => (managing = true)}>
+                        <MenuItem onclick={() => (managing = true)}>
                             <TuneVertical
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}

@@ -47,7 +47,7 @@
         </span>
         <span slot="menu">
             <Menu>
-                <MenuItem on:click={showMembers}>
+                <MenuItem onclick={showMembers}>
                     <AccountMultiple
                         size={$iconSize}
                         color={"var(--icon-inverted-txt)"}
@@ -56,7 +56,7 @@
                         <Translatable resourceKey={i18nKey("communities.members")} />
                     </div>
                 </MenuItem>
-                <MenuItem on:click={invite}>
+                <MenuItem onclick={invite}>
                     <AccountMultiplePlus
                         size={$iconSize}
                         color={"var(--icon-inverted-txt)"}
@@ -66,7 +66,7 @@
                     </div>
                 </MenuItem>
                 {#if canEdit}
-                    <MenuItem on:click={editCommunity}>
+                    <MenuItem onclick={editCommunity}>
                         <PencilOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}

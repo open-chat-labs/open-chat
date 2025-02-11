@@ -45,7 +45,7 @@
         <span slot="menu">
             <Menu>
                 {#each otherThemes.sort() as theme}
-                    <MenuItem on:click={() => onSelect(theme.name)}>
+                    <MenuItem onclick={() => onSelect(theme.name)}>
                         <div class="theme-item" slot="text">
                             <div class="label">{theme.label}</div>
                             {#if theme.author !== undefined && $userStore.get(theme.author) !== undefined}

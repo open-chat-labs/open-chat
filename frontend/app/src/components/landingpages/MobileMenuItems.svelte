@@ -43,39 +43,39 @@
             </a>
         </div>
     </MenuItem>
-    <MenuItem selected={path === "/features"} on:click={() => page("/features")}>
+    <MenuItem selected={path === "/features"} onclick={() => page("/features")}>
         <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <div slot="text">{"Features"}</div>
     </MenuItem>
-    <MenuItem selected={path === "/roadmap"} on:click={() => page("/roadmap")}>
+    <MenuItem selected={path === "/roadmap"} onclick={() => page("/roadmap")}>
         <Road size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <div slot="text">{"Roadmap"}</div>
     </MenuItem>
-    <MenuItem selected={path === "/whitepaper"} on:click={() => page("/whitepaper")}>
+    <MenuItem selected={path === "/whitepaper"} onclick={() => page("/whitepaper")}>
         <Note size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <div slot="text">{"Whitepaper"}</div>
     </MenuItem>
-    <MenuItem selected={path === "/architecture"} on:click={() => page("/architecture")}>
+    <MenuItem selected={path === "/architecture"} onclick={() => page("/architecture")}>
         <Graph size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <div slot="text">{"Architecture"}</div>
     </MenuItem>
     {#if showBlog}
-        <MenuItem selected={path.startsWith("/blog")} on:click={() => page("/blog")}>
+        <MenuItem selected={path.startsWith("/blog")} onclick={() => page("/blog")}>
             <Blog size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <div slot="text">{"Blog"}</div>
         </MenuItem>
     {/if}
-    <MenuItem selected={path.startsWith("/faq")} on:click={() => page("/faq")}>
+    <MenuItem selected={path.startsWith("/faq")} onclick={() => page("/faq")}>
         <Help size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <div slot="text">{"FAQs"}</div>
     </MenuItem>
-    <MenuItem on:click={launch}>
+    <MenuItem onclick={launch}>
         <div class="rocket" slot="icon">🚀</div>
         <div slot="text">{"Launch app"}</div>
     </MenuItem>
     {#if $identityState.kind === "logged_in"}
         <MenuItem separator />
-        <MenuItem on:click={() => dispatch("logout")}>
+        <MenuItem onclick={() => dispatch("logout")}>
             <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <div slot="text">{"Logout"}</div>
         </MenuItem>

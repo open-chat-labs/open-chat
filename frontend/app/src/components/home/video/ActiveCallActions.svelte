@@ -86,7 +86,7 @@
             <div slot="menu">
                 <Menu>
                     {#if !$hasPresence}
-                        <MenuItem on:click={onAskToSpeak}>
+                        <MenuItem onclick={onAskToSpeak}>
                             <HandFrontLeft
                                 slot="icon"
                                 title={$_("videoCall.askToSpeak")}
@@ -98,7 +98,7 @@
                         </MenuItem>
                     {/if}
                     {#if $activeVideoCall?.messageId !== undefined && $activeVideoCall.chatId.kind !== "direct_chat"}
-                        <MenuItem on:click={toggleParticipants}>
+                        <MenuItem onclick={toggleParticipants}>
                             <AccountMultiple
                                 slot="icon"
                                 size={$iconSize}
@@ -111,7 +111,7 @@
                         </MenuItem>
                     {/if}
                     {#if chat.chatId && chat.messageIndex !== undefined}
-                        <MenuItem on:click={toggleThread}>
+                        <MenuItem onclick={toggleThread}>
                             <MessageOutline
                                 slot="icon"
                                 size={$iconSize}
@@ -119,11 +119,11 @@
                             <Translatable slot="text" resourceKey={i18nKey("videoCall.chat")} />
                         </MenuItem>
                     {/if}
-                    <MenuItem on:click={onMinimise}>
+                    <MenuItem onclick={onMinimise}>
                         <WindowMinimize slot="icon" size={$iconSize} color={"var(--icon-txt)"} />
                         <Translatable slot="text" resourceKey={i18nKey("videoCall.minimise")} />
                     </MenuItem>
-                    <MenuItem on:click={onHangup}>
+                    <MenuItem onclick={onHangup}>
                         <PhoneHangup slot="icon" size={$iconSize} color={"var(--vote-no-color)"} />
                         <Translatable slot="text" resourceKey={i18nKey("videoCall.leave")} />
                     </MenuItem>

@@ -221,6 +221,7 @@ export const testBots: Bot[] = [
 
 export const testMatches: BotMatch[] = [
     {
+        kind: "bot_match",
         id: "one",
         name: "Kitten bot",
         ownerId: "owner",
@@ -231,6 +232,7 @@ export const testMatches: BotMatch[] = [
         },
     },
     {
+        kind: "bot_match",
         id: "two",
         name: "Puppy bot",
         ownerId: "owner",

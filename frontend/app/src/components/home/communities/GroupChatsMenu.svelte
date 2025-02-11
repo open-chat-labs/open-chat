@@ -50,18 +50,18 @@
     </span>
     <span slot="menu">
         <Menu>
-            <MenuItem on:click={newGroup}>
+            <MenuItem onclick={newGroup}>
                 <AccountMultiplePlus
                     size={$iconSize}
                     color={"var(--icon-inverted-txt)"}
                     slot="icon" />
                 <span slot="text"><Translatable resourceKey={i18nKey("newGroup")} /></span>
             </MenuItem>
-            <MenuItem on:click={() => page("/groups")}>
+            <MenuItem onclick={() => page("/groups")}>
                 <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                 <span slot="text"><Translatable resourceKey={i18nKey("exploreGroups")} /></span>
             </MenuItem>
-            <MenuItem disabled={!canMarkAllRead} on:click={() => dispatch("markAllRead")}>
+            <MenuItem disabled={!canMarkAllRead} onclick={() => dispatch("markAllRead")}>
                 <CheckboxMultipleMarked
                     size={$iconSize}
                     color={"var(--icon-inverted-txt)"}

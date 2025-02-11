@@ -36,7 +36,7 @@
                     <Menu>
                         <MenuItem
                             disabled={!canMarkAllRead}
-                            on:click={() => dispatch("markAllRead")}>
+                            onclick={() => dispatch("markAllRead")}>
                             <CheckboxMultipleMarked
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}

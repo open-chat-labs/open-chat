@@ -173,8 +173,8 @@
         searchTerm = "";
     }
 
-    function chatSelected(ev: CustomEvent<ChatSummaryType>): void {
-        const url = routeForChatIdentifier($chatListScope.kind, ev.detail.id);
+    function chatSelected({ id }: ChatSummaryType): void {
+        const url = routeForChatIdentifier($chatListScope.kind, id);
         page(url);
         searchTerm = "";
     }
@@ -294,10 +294,11 @@
                         {chatSummary}
                         selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
-                        on:chatSelected={chatSelected}
-                        on:leaveGroup
-                        on:unarchiveChat
-                        on:toggleMuteNotifications />
+                        onChatSelected={chatSelected}
+                        onLeaveGroup={(ev) => dispatch("leaveGroup", ev)}
+                        onUnarchiveChat={(chatId) => dispatch("unarchiveChat", chatId)}
+                        onToggleMuteNotifications={(chatId, mute) =>
+                            dispatch("toggleMuteNotifications", { chatId, mute })} />
                 {/each}
 
                 {#if userAndBotSearchResults !== undefined}

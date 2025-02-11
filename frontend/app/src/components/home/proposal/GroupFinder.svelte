@@ -67,7 +67,7 @@
         <div class="menu">
             <Menu fit>
                 {#each groupSearchState.results as group (group.chatId.groupId)}
-                    <MenuItem on:click={() => select(group)}>
+                    <MenuItem onclick={() => select(group)}>
                         <Avatar
                             slot="icon"
                             url={client.groupAvatarUrl({

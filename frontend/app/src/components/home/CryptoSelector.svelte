@@ -56,7 +56,7 @@
         <div slot="menu">
             <Menu centered>
                 {#each cryptoTokensFiltered as token}
-                    <MenuItem on:click={() => selectToken(token.ledger, token.urlFormat)}>
+                    <MenuItem onclick={() => selectToken(token.ledger, token.urlFormat)}>
                         <img slot="icon" class="token-icon" src={token.logo} />
                         <div class="token-text" slot="text">
                             <div class="name">
