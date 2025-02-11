@@ -122,7 +122,7 @@
     $: verified = user.isUniquePerson;
 
     //@ts-ignore
-    let version = window.OPENCHAT_WEBSITE_VERSION;
+    let version = window.OC_WEBSITE_VERSION;
 
     $: {
         setLocale(selectedLocale);

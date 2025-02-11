@@ -3,4 +3,4 @@ import type { EventIndex } from "../../shared/EventIndex";
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { MultiUserChat } from "../../shared/MultiUserChat";
 
-export type LocalUserIndexReportMessageArgs = { chat_id: MultiUserChat, thread_root_message_index?: MessageIndex | undefined, event_index: EventIndex, reason_code: number, notes?: string | undefined, };
+export type LocalUserIndexReportMessageArgs = { chat_id: MultiUserChat, thread_root_message_index?: MessageIndex, event_index: EventIndex, reason_code: number, notes?: string, };

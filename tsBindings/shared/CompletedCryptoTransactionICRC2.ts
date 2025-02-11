@@ -2,6 +2,7 @@
 import type { CryptoAccountICRC1 } from "./CryptoAccountICRC1";
 import type { Cryptocurrency } from "./Cryptocurrency";
 import type { TSBytes } from "./TSBytes";
+import type { TSPrincipal } from "./TSPrincipal";
 import type { UserId } from "./UserId";
 
-export type CompletedCryptoTransactionICRC2 = { ledger: TSBytes, token: Cryptocurrency, amount: bigint, spender: UserId, from: CryptoAccountICRC1, to: CryptoAccountICRC1, fee: bigint, memo?: TSBytes | undefined, created: bigint, block_index: bigint, };
+export type CompletedCryptoTransactionICRC2 = { ledger: TSPrincipal, token: Cryptocurrency, amount: bigint, spender: UserId, from: CryptoAccountICRC1, to: CryptoAccountICRC1, fee: bigint, memo?: TSBytes, created: bigint, block_index: bigint, };

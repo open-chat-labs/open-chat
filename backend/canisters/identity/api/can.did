@@ -127,13 +127,6 @@ type PrepareDelegationSuccess = record {
     expiration : TimestampNanoseconds;
 };
 
-type StoreWebAuthnKeyArgs = record {
-    credential_id : PublicKey;
-    pubkey : PublicKey;
-    session_key : PublicKey;
-    max_time_to_live : opt Nanoseconds;
-};
-
 type RemoveIdentityLinkArgs = record {
     linked_principal : principal;
 };

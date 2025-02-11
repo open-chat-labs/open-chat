@@ -1,17 +1,19 @@
 <script lang="ts">
+    import "@styles/global.scss";
+
     import { setContext } from "svelte";
-    import "../i18n/i18n";
-    import "../utils/markdown";
-    import "../utils/scream";
-    import { rtlStore } from "../stores/rtl";
+    import "@i18n/i18n";
+    import "@utils/markdown";
+    import "@utils/scream";
+    import { rtlStore } from "@stores/rtl";
     import { _, isLoading } from "svelte-i18n";
-    import Router from "./Router.svelte";
-    import { notFound, pageReplace, pathParams, routeForScope } from "../routes";
+    import Router from "@components/Router.svelte";
+    import { notFound, pageReplace, pathParams, routeForScope } from "@src/routes";
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
-    import { currentTheme } from "../theme/themes";
-    import "../stores/fontSize";
+    import { currentTheme } from "@theme/themes";
+    import "@stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import {
         OpenChat,
@@ -35,63 +37,63 @@
         isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
         removeQueryStringParam,
-    } from "../utils/urls";
-    import "../components/web-components/profileLink";
+    } from "@utils/urls";
+    import "@components/web-components/profileLink";
     import page from "page";
-    import { menuStore } from "../stores/menu";
-    import { framed, broadcastLoggedInUser } from "../stores/xframe";
+    import { menuStore } from "@stores/menu";
+    import { framed, broadcastLoggedInUser } from "@stores/xframe";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import Witch from "./Witch.svelte";
     import Head from "./Head.svelte";
-    import { snowing } from "../stores/snow";
+    import { snowing } from "@stores/snow";
     import Snow from "./Snow.svelte";
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
-    import { incomingVideoCall } from "../stores/video";
+    import { incomingVideoCall } from "@stores/video";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import InstallPrompt from "./home/InstallPrompt.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
-    import { reviewingTranslations } from "../i18n/i18n";
-    import { trackMouseMovement } from "../utils/trace";
+    import { reviewingTranslations } from "@i18n/i18n";
+    import { trackMouseMovement } from "@utils/trace";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     const logger = inititaliseLogger(
-        process.env.ROLLBAR_ACCESS_TOKEN!,
-        process.env.OPENCHAT_WEBSITE_VERSION!,
-        process.env.NODE_ENV!,
+        import.meta.env.OC_ROLLBAR_ACCESS_TOKEN!,
+        import.meta.env.OC_WEBSITE_VERSION!,
+        import.meta.env.OC_BUILD_ENV!,
     );
 
     function createOpenChatClient(): OpenChat {
         return new OpenChat({
-            icUrl: process.env.IC_URL,
-            webAuthnOrigin: process.env.WEBAUTHN_ORIGIN,
-            iiDerivationOrigin: process.env.II_DERIVATION_ORIGIN,
-            openStorageIndexCanister: process.env.STORAGE_INDEX_CANISTER!,
-            groupIndexCanister: process.env.GROUP_INDEX_CANISTER!,
-            notificationsCanister: process.env.NOTIFICATIONS_CANISTER!,
-            identityCanister: process.env.IDENTITY_CANISTER!,
-            onlineCanister: process.env.ONLINE_CANISTER!,
-            userIndexCanister: process.env.USER_INDEX_CANISTER!,
-            translationsCanister: process.env.TRANSLATIONS_CANISTER!,
-            registryCanister: process.env.REGISTRY_CANISTER!,
-            internetIdentityUrl: process.env.INTERNET_IDENTITY_URL!,
-            nfidUrl: process.env.NFID_URL!,
-            userGeekApiKey: process.env.USERGEEK_APIKEY!,
-            videoBridgeUrl: process.env.VIDEO_BRIDGE_URL!,
-            meteredApiKey: process.env.METERED_APIKEY!,
-            blobUrlPattern: process.env.BLOB_URL_PATTERN!,
-            achievementUrlPath: process.env.ACHIEVEMENT_URL_PATH!,
-            proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
-            marketMakerCanister: process.env.MARKET_MAKER_CANISTER!,
-            signInWithEmailCanister: process.env.SIGN_IN_WITH_EMAIL_CANISTER!,
-            signInWithEthereumCanister: process.env.SIGN_IN_WITH_ETHEREUM_CANISTER!,
-            signInWithSolanaCanister: process.env.SIGN_IN_WITH_SOLANA_CANISTER!,
+            icUrl: import.meta.env.OC_IC_URL,
+            webAuthnOrigin: process.env.OC_WEBAUTHN_ORIGIN,
+            iiDerivationOrigin: import.meta.env.OC_II_DERIVATION_ORIGIN,
+            openStorageIndexCanister: import.meta.env.OC_STORAGE_INDEX_CANISTER!,
+            groupIndexCanister: import.meta.env.OC_GROUP_INDEX_CANISTER!,
+            notificationsCanister: import.meta.env.OC_NOTIFICATIONS_CANISTER!,
+            identityCanister: import.meta.env.OC_IDENTITY_CANISTER!,
+            onlineCanister: import.meta.env.OC_ONLINE_CANISTER!,
+            userIndexCanister: import.meta.env.OC_USER_INDEX_CANISTER!,
+            translationsCanister: import.meta.env.OC_TRANSLATIONS_CANISTER!,
+            registryCanister: import.meta.env.OC_REGISTRY_CANISTER!,
+            internetIdentityUrl: import.meta.env.OC_INTERNET_IDENTITY_URL!,
+            nfidUrl: import.meta.env.OC_NFID_URL!,
+            userGeekApiKey: import.meta.env.OC_USERGEEK_APIKEY!,
+            videoBridgeUrl: import.meta.env.OC_VIDEO_BRIDGE_URL!,
+            meteredApiKey: import.meta.env.OC_METERED_APIKEY!,
+            blobUrlPattern: import.meta.env.OC_BLOB_URL_PATTERN!,
+            achievementUrlPath: import.meta.env.OC_ACHIEVEMENT_URL_PATH!,
+            proposalBotCanister: import.meta.env.OC_PROPOSALS_BOT_CANISTER!,
+            marketMakerCanister: import.meta.env.OC_MARKET_MAKER_CANISTER!,
+            signInWithEmailCanister: import.meta.env.OC_SIGN_IN_WITH_EMAIL_CANISTER!,
+            signInWithEthereumCanister: import.meta.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER!,
+            signInWithSolanaCanister: import.meta.env.OC_SIGN_IN_WITH_SOLANA_CANISTER!,
             i18nFormatter: $_,
             logger,
-            websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,
-            rollbarApiKey: process.env.ROLLBAR_ACCESS_TOKEN!,
-            env: process.env.NODE_ENV!,
+            websiteVersion: import.meta.env.OC_WEBSITE_VERSION!,
+            rollbarApiKey: import.meta.env.OC_ROLLBAR_ACCESS_TOKEN!,
+            env: import.meta.env.OC_BUILD_ENV!,
         });
     }
 
@@ -523,283 +525,6 @@
 <svelte:body onclick={() => menuStore.hideMenu()} />
 
 <style lang="scss">
-    :global {
-        html,
-        body,
-        div,
-        span,
-        object,
-        iframe,
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        p,
-        blockquote,
-        pre,
-        abbr,
-        address,
-        cite,
-        code,
-        del,
-        dfn,
-        em,
-        img,
-        ins,
-        kbd,
-        q,
-        samp,
-        small,
-        strong,
-        sub,
-        sup,
-        var,
-        b,
-        i,
-        dl,
-        dt,
-        dd,
-        ol,
-        ul,
-        li,
-        fieldset,
-        form,
-        label,
-        legend,
-        table,
-        caption,
-        tbody,
-        tfoot,
-        thead,
-        tr,
-        th,
-        td,
-        article,
-        aside,
-        canvas,
-        details,
-        figcaption,
-        figure,
-        footer,
-        header,
-        hgroup,
-        menu,
-        nav,
-        section,
-        summary,
-        time,
-        mark,
-        audio,
-        video {
-            margin: 0;
-            outline: 0;
-            border: 0;
-            background: transparent;
-            padding: 0;
-            vertical-align: baseline;
-            font-size: 100%;
-        }
-
-        article,
-        aside,
-        details,
-        figcaption,
-        figure,
-        footer,
-        header,
-        hgroup,
-        menu,
-        nav,
-        section {
-            display: block;
-        }
-
-        nav ul {
-            list-style: none;
-        }
-
-        blockquote,
-        q {
-            quotes: none;
-        }
-
-        blockquote::before,
-        blockquote::after,
-        q::before,
-        q::after {
-            content: "";
-        }
-
-        a {
-            margin: 0;
-            background: transparent;
-            cursor: pointer;
-            padding: 0;
-            vertical-align: baseline;
-            text-decoration: none;
-            color: inherit;
-            font-size: inherit;
-        }
-
-        ins {
-            background-color: none;
-            text-decoration: none;
-            color: currentColor;
-        }
-
-        mark {
-            background-color: none;
-            color: inherit;
-            font-weight: bold;
-        }
-
-        del {
-            text-decoration: line-through;
-        }
-
-        abbr[title],
-        dfn[title] {
-            border: none;
-            cursor: help;
-        }
-
-        table {
-            border-collapse: collapse;
-            border-spacing: 0;
-        }
-
-        hr {
-            display: block;
-            margin: 0;
-            border: 0;
-            border-top: 1px solid currentColor;
-            padding: 0;
-            height: 1px;
-        }
-
-        input,
-        select {
-            vertical-align: middle;
-        }
-
-        html,
-        body {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-
-        :root {
-            --font-size: 16px;
-        }
-
-        html {
-            box-sizing: border-box;
-            font-size: var(--font-size);
-        }
-        *,
-        *:before,
-        *:after {
-            box-sizing: inherit;
-        }
-
-        :root {
-            --bg: #121212;
-            --prize: #f79413;
-            --font-fallback: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans,
-                Ubuntu, Cantarell, "Helvetica Neue", sans-serif --font: "Roboto", sans-serif;
-            --font: "Roboto", sans-serif;
-            --font-bold: "Manrope", sans-serif;
-        }
-
-        body {
-            transition:
-                background ease-in-out 300ms,
-                color ease-in-out 150ms,
-                padding ease-in-out 150ms;
-            background: var(--bg);
-            color: var(--txt);
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: var(--font-fallback);
-            font-family: var(--font);
-            font-weight: 400;
-            font-size: toRem(16);
-            line-height: 135%;
-
-            display: flex;
-            height: 100vh;
-            height: calc(var(--vh, 1vh) * 100);
-            height: 100dvh; // firefox will ignore this
-            position: fixed;
-
-            &.fill {
-                transition: none;
-                padding: 0;
-            }
-
-            &.landing-page {
-                display: block;
-                line-height: toRem(28);
-                background: var(--landing-bg);
-                color: var(--landing-txt);
-                min-height: 100vh;
-                height: unset;
-                position: unset;
-            }
-
-            @media (hover: none) {
-                @include no_user_select();
-            }
-        }
-
-        h1,
-        h2,
-        h3,
-        h4 {
-            font-family: var(--font-bold);
-            font-weight: 700;
-        }
-
-        textarea {
-            font-family: var(--font-fallback);
-            font-family: var(--font);
-        }
-
-        a {
-            color: #22a7f2;
-            color: var(--primary);
-        }
-
-        .iti__flag {
-            background-image: url("assets/flags.png") !important;
-        }
-
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            .iti__flag {
-                background-image: url("assets/flags@2x.png") !important;
-            }
-        }
-
-        .tip-dollar {
-            @include font-size(fs-260);
-            position: absolute;
-            pointer-events: none;
-            transform-origin: 50% 50%;
-            top: -1000px;
-            left: -1000px;
-            @include z-index("dollar");
-        }
-
-        .is-translatable {
-            position: relative;
-            top: 4px;
-        }
-    }
-
     .burst-wrapper {
         overflow: hidden;
         max-width: 100%;

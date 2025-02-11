@@ -10,7 +10,6 @@ export const OPENCHAT_VIDEO_CALL_AVATAR_URL = "/assets/video_call.svg";
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
 export const OPENCHAT_BOT_AVATAR_URL = "/assets/robot.svg";
-export const AIRDROP_BOT_USER_ID = process.env.AIRDROP_BOT_CANISTER!;
 export const AIRDROP_BOT_USERNAME = "AirdropBot";
 export const AIRDROP_BOT_AVATAR_URL = "/assets/airdrop_bot.svg";
 

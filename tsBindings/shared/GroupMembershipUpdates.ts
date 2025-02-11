@@ -5,4 +5,4 @@ import type { GroupRole } from "./GroupRole";
 import type { HydratedMention } from "./HydratedMention";
 import type { MessageIndex } from "./MessageIndex";
 
-export type GroupMembershipUpdates = { role?: GroupRole | undefined, mentions: Array<HydratedMention>, notifications_muted?: boolean | undefined, my_metrics?: ChatMetrics | undefined, latest_threads: Array<GroupCanisterThreadDetails>, unfollowed_threads: Array<MessageIndex>, rules_accepted?: boolean | undefined, lapsed?: boolean | undefined, };
+export type GroupMembershipUpdates = { role?: GroupRole, mentions: Array<HydratedMention>, notifications_muted?: boolean, my_metrics?: ChatMetrics, latest_threads: Array<GroupCanisterThreadDetails>, unfollowed_threads: Array<MessageIndex>, rules_accepted?: boolean, lapsed?: boolean, };

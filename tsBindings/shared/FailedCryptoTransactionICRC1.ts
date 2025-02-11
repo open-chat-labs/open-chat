@@ -2,5 +2,6 @@
 import type { CryptoAccountICRC1 } from "./CryptoAccountICRC1";
 import type { Cryptocurrency } from "./Cryptocurrency";
 import type { TSBytes } from "./TSBytes";
+import type { TSPrincipal } from "./TSPrincipal";
 
-export type FailedCryptoTransactionICRC1 = { ledger: TSBytes, token: Cryptocurrency, amount: bigint, fee: bigint, from: CryptoAccountICRC1, to: CryptoAccountICRC1, memo?: TSBytes | undefined, created: bigint, error_message: string, };
+export type FailedCryptoTransactionICRC1 = { ledger: TSPrincipal, token: Cryptocurrency, amount: bigint, fee: bigint, from: CryptoAccountICRC1, to: CryptoAccountICRC1, memo?: TSBytes, created: bigint, error_message: string, };

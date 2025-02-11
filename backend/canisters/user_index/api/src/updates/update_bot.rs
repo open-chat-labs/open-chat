@@ -8,7 +8,7 @@ use types::{BotDefinition, OptionUpdate, UserId};
 pub struct Args {
     pub bot_id: UserId,
     pub owner: Option<UserId>,
-    #[ts(as = "Option::<ts_export::TSBytes>")]
+    #[ts(as = "Option::<ts_export::TSPrincipal>")]
     pub principal: Option<Principal>,
     #[ts(as = "types::OptionUpdateString")]
     pub avatar: OptionUpdate<String>, // Image as a data URL

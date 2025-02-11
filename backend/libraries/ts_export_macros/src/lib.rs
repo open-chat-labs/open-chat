@@ -104,9 +104,9 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool, derives_serde: boo
                         .attrs
                         .push(parse_quote!( #[serde(skip_serializing_if = "Option::is_none")] ));
                 }
-            } else if field.attrs.iter().any(is_using_serde_bytes)
-                || PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a)
-            {
+            } else if PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a) {
+                field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSPrincipal")] ));
+            } else if field.attrs.iter().any(is_using_serde_bytes) {
                 field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSBytes")] ));
             } else if let Some(Defaults {
                 func: _,

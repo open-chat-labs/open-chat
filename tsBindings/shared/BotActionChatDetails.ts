@@ -3,4 +3,4 @@ import type { Chat } from "./Chat";
 import type { MessageId } from "./MessageId";
 import type { MessageIndex } from "./MessageIndex";
 
-export type BotActionChatDetails = { chat: Chat, thread?: MessageIndex | undefined, message_id: MessageId, };
+export type BotActionChatDetails = { chat: Chat, thread?: MessageIndex, message_id: MessageId, };

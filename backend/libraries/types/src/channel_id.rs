@@ -3,9 +3,10 @@ use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use ts_rs::TS;
+use ts_export::ts_export;
 
-#[derive(Serialize, CandidType, TS, Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[ts_export]
+#[derive(Serialize, CandidType, Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[ts(as = "u128")]
 pub struct ChannelId(u32);
 

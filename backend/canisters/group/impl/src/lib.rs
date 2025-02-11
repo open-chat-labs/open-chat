@@ -502,7 +502,6 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     verified: Timestamped<bool>,
     pub bots: GroupBots,
-    #[serde(default)]
     pub bot_api_keys: BotApiKeys,
     message_ids_deduped: bool,
 }

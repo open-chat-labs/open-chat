@@ -2,4 +2,4 @@
 import type { AutonomousConfig } from "./AutonomousConfig";
 import type { SlashCommandSchema } from "./SlashCommandSchema";
 
-export type BotDefinition = { description: string, commands: Array<SlashCommandSchema>, autonomous_config?: AutonomousConfig | undefined, };
+export type BotDefinition = { description: string, commands: Array<SlashCommandSchema>, autonomous_config?: AutonomousConfig, };

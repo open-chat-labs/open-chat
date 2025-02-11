@@ -5,139 +5,28 @@ import commonjs from "@rollup/plugin-commonjs";
 import html from "@rollup/plugin-html";
 import resolve from "@rollup/plugin-node-resolve";
 import copy from "rollup-plugin-copy";
-import livereload from "rollup-plugin-livereload";
 import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
-import dfxJson from "../../dfx.json" assert { type: "json" };
 import inject from "rollup-plugin-inject";
-import dev from "rollup-plugin-dev";
 import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
 import filesize from "rollup-plugin-filesize";
 import styles from "rollup-styles";
+import alias from "@rollup/plugin-alias";
 import autoprefixer from "autoprefixer";
-import { sha256 } from "js-sha256";
-import dotenv from "dotenv";
 import replace from "@rollup/plugin-replace";
 import fs from "fs-extra";
 import path from "path";
 import rimraf from "rimraf";
-import { fileURLToPath } from "url";
 import { sourcemapNewline } from "../sourcemapNewline.mjs";
-
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-
-dotenv.config({ path: path.join(dirname, "../.env") });
-
-const dfxNetwork = process.env.DFX_NETWORK;
-
-console.log("DFX_NETWORK: ", dfxNetwork);
-
-if (dfxNetwork) {
-    const dfxJsonPath = path.join(dirname, "../..", "dfx.json");
-    const dfxJson = JSON.parse(fs.readFileSync(dfxJsonPath));
-    const canisterPath =
-        dfxJson["networks"][dfxNetwork]["type"] === "persistent"
-            ? path.join(dirname, "../..", "canister_ids.json")
-            : path.join(dirname, "../..", ".dfx", dfxNetwork, "canister_ids.json");
-
-    if (fs.existsSync(canisterPath)) {
-        const canisters = JSON.parse(fs.readFileSync(canisterPath));
-        process.env.TRANSLATIONS_CANISTER = canisters.translations[dfxNetwork];
-        process.env.USER_INDEX_CANISTER = canisters.user_index[dfxNetwork];
-        process.env.GROUP_INDEX_CANISTER = canisters.group_index[dfxNetwork];
-        process.env.NOTIFICATIONS_CANISTER = canisters.notifications_index[dfxNetwork];
-        process.env.IDENTITY_CANISTER = canisters.identity[dfxNetwork];
-        process.env.ONLINE_CANISTER = canisters.online_users[dfxNetwork];
-        process.env.PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
-        process.env.AIRDROP_BOT_CANISTER = canisters.airdrop_bot[dfxNetwork];
-        process.env.STORAGE_INDEX_CANISTER = canisters.storage_index[dfxNetwork];
-        process.env.REGISTRY_CANISTER = canisters.registry[dfxNetwork];
-        process.env.MARKET_MAKER_CANISTER = canisters.market_maker[dfxNetwork];
-        process.env.SIGN_IN_WITH_EMAIL_CANISTER = canisters.sign_in_with_email[dfxNetwork];
-        process.env.SIGN_IN_WITH_ETHEREUM_CANISTER = canisters.sign_in_with_ethereum[dfxNetwork];
-        process.env.SIGN_IN_WITH_SOLANA_CANISTER = canisters.sign_in_with_solana[dfxNetwork];
-
-        console.log("TranslationsCanisterId: ", process.env.TRANSLATIONS_CANISTER);
-        console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
-        console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
-        console.log("NotificationsCanisterId: ", process.env.NOTIFICATIONS_CANISTER);
-        console.log("IdentityCanisterId: ", process.env.IDENTITY_CANISTER);
-        console.log("OnlineCanisterId: ", process.env.ONLINE_CANISTER);
-        console.log("ProposalsBotCanisterId: ", process.env.PROPOSALS_BOT_CANISTER);
-        console.log("AirdropBotCanisterId: ", process.env.AIRDROP_BOT_CANISTER);
-        console.log("StorageIndex: ", process.env.STORAGE_INDEX_CANISTER);
-        console.log("Registry: ", process.env.REGISTRY_CANISTER);
-        console.log("MarketMaker: ", process.env.MARKET_MAKER_CANISTER);
-        console.log("SignInWithEmail: ", process.env.SIGN_IN_WITH_EMAIL_CANISTER);
-        console.log("SignInWithEthereum: ", process.env.SIGN_IN_WITH_ETHEREUM_CANISTER);
-        console.log("SignInWithSolana: ", process.env.SIGN_IN_WITH_SOLANA_CANISTER);
-    } else {
-        console.log(
-            "Couldn't find canisters JSON at: ",
-            canisterPath,
-            ". Falling back to original env vars.",
-        );
-    }
-} else {
-    console.log(
-        "DFX_NETWORK env var not set, cannot load correct canisterIds, falling back to original env vars.",
-    );
-}
-
-const build_env = process.env.BUILD_ENV;
-const production = build_env === "production";
-const development = build_env === "development";
-const testnet = !development && !production;
-const watch = process.env.ROLLUP_WATCH;
-
-const env = process.env.NODE_ENV ?? (development ? "development" : "production");
-const version = process.env.OPENCHAT_WEBSITE_VERSION;
-if (!development && !version) {
-    throw Error("OPENCHAT_WEBSITE_VERSION environment variable not set");
-}
-if (production && !process.env.ROLLBAR_ACCESS_TOKEN) {
-    throw Error("ROLLBAR_ACCESS_TOKEN environment variable not set");
-}
-if (production && !process.env.USERGEEK_APIKEY) {
-    throw Error("USERGEEK_APIKEY environment variable not set");
-}
-if (production && !process.env.METERED_APIKEY) {
-    throw Error("METERED_APIKEY environment variable not set");
-}
-const SERVICE_WORKER_PATH = `/service_worker.js?v=${version}`;
-
-console.log("BUILD_ENV", build_env);
-console.log("ENV", env);
-console.log("INTERNET IDENTITY URL", process.env.INTERNET_IDENTITY_URL);
-console.log("INTERNET IDENTITY CANISTER", process.env.INTERNET_IDENTITY_CANISTER_ID);
-console.log("NFID URL", process.env.NFID_URL);
-console.log("VERSION", version ?? "undefined");
-
-function serve() {
-    return dev({
-        dirs: ["./build", "./public"],
-        proxy: [
-            {
-                from: "/api/*",
-                to: `http://${dfxJson.networks.local.bind}`,
-            },
-        ],
-        spa: "./index.html",
-        port: process.env.DEV_PORT || 5000,
-    });
-}
-
-function copyFile(fromPath, toPath, file) {
-    const from = path.join(dirname, fromPath, file);
-    const to = path.join(dirname, toPath, file);
-    if (fs.existsSync(from)) {
-        console.log("Copying file -> : ", from, to);
-        fs.copySync(from, to, {
-            recursive: true,
-        });
-    }
-}
+import {
+    initEnv,
+    manualChunks,
+    copyFile,
+    generateCspForScripts,
+    maybeStringify,
+    __dirname,
+} from "./rollup.extras.mjs";
 
 // this is a bit ridiculous but there we are ...
 function clean() {
@@ -145,12 +34,12 @@ function clean() {
         name: "clean-build",
         renderStart() {
             console.log("cleaning up the build directory");
-            rimraf.sync(path.join(dirname, "build"));
+            rimraf.sync(path.join(__dirname, "build"));
             fs.mkdirSync("build");
             if (version) {
                 fs.writeFileSync("build/version", JSON.stringify({ version }));
             }
-            const customDomains = process.env.CUSTOM_DOMAINS;
+            const customDomains = process.env.OC_CUSTOM_DOMAINS;
             if (customDomains !== undefined) {
                 fs.mkdirSync("build/.well-known");
                 fs.writeFileSync(
@@ -169,28 +58,7 @@ function clean() {
     };
 }
 
-// Put external dependencies into their own bundle so that they get cached separately
-function manualChunks(id) {
-    if (id.includes("node_modules")) {
-        return "vendor";
-    }
-}
-
-function transformSourceMappingUrl(contents) {
-    return contents.toString().replace("//# sourceMappingURL=", "//# sourceMappingURL=./_/raw/");
-}
-
-function watchExternalFiles() {
-    return {
-        name: "watch-external-files",
-        buildStart() {
-            this.addWatchFile(
-                path.resolve(dirname, "../openchat-service-worker/lib/service_worker.js"),
-            );
-            this.addWatchFile(path.resolve(dirname, "../openchat-worker/lib/worker.js"));
-        },
-    };
-}
+const { version } = initEnv();
 
 export default {
     input: `./src/main.ts`,
@@ -208,17 +76,29 @@ export default {
             preprocess: sveltePreprocess({
                 sourceMap: true,
                 scss: {
-                    prependData: `@use 'sass:math'; @import 'src/styles/mixins.scss';`,
+                    prependData: `@use 'sass:math'; @use 'src/styles/mixins.scss' as *;`,
                 },
             }),
             compilerOptions: {
-                dev: development,
                 // immutable: true, // this could be a great optimisation, but we need to plan for it a bit
             },
             onwarn: (warning, handler) => {
                 if (warning.code.startsWith("a11y-")) return;
                 handler(warning);
             },
+        }),
+
+        alias({
+            entries: [
+                { find: "@src", replacement: path.resolve(__dirname, "src") },
+                { find: "@actions", replacement: path.resolve(__dirname, "src/actions") },
+                { find: "@components", replacement: path.resolve(__dirname, "src/components") },
+                { find: "@i18n", replacement: path.resolve(__dirname, "src/i18n") },
+                { find: "@stores", replacement: path.resolve(__dirname, "src/stores") },
+                { find: "@theme", replacement: path.resolve(__dirname, "src/theme") },
+                { find: "@utils", replacement: path.resolve(__dirname, "src/utils") },
+                { find: "@styles", replacement: path.resolve(__dirname, "src/styles") },
+            ],
         }),
 
         styles({ mode: "inject", plugins: [autoprefixer()] }),
@@ -229,7 +109,9 @@ export default {
             dedupe: ["svelte"],
         }),
         commonjs(),
-        typescript(),
+        typescript({
+            include: ["./src/**/*", "../vite-env.d.ts"],
+        }),
         inject({
             Buffer: ["buffer", "Buffer"],
             process: "process/browser",
@@ -238,92 +120,102 @@ export default {
 
         replace({
             preventAssignment: true,
-            "process.env.WEBAUTHN_ORIGIN": JSON.stringify(process.env.WEBAUTHN_ORIGIN),
-            "process.env.INTERNET_IDENTITY_URL": JSON.stringify(process.env.INTERNET_IDENTITY_URL),
-            "process.env.INTERNET_IDENTITY_CANISTER_ID": JSON.stringify(
-                process.env.INTERNET_IDENTITY_CANISTER_ID,
+            "import.meta.env.OC_BUILD_ENV": JSON.stringify(process.env.OC_BUILD_ENV),
+            "import.meta.env.OC_WEBAUTHN_ORIGIN": JSON.stringify(process.env.OC_WEBAUTHN_ORIGIN),
+            "import.meta.env.OC_INTERNET_IDENTITY_URL": JSON.stringify(
+                process.env.OC_INTERNET_IDENTITY_URL,
             ),
-            "process.env.NFID_URL": JSON.stringify(process.env.NFID_URL),
-            "process.env.DFX_NETWORK": JSON.stringify(dfxNetwork),
-            "process.env.NODE_ENV": JSON.stringify(env),
-            "process.env.OPENCHAT_WEBSITE_VERSION": JSON.stringify(version),
-            "process.env.ROLLBAR_ACCESS_TOKEN": JSON.stringify(process.env.ROLLBAR_ACCESS_TOKEN),
-            "process.env.IC_URL": maybeStringify(process.env.IC_URL),
-            "process.env.II_DERIVATION_ORIGIN": maybeStringify(process.env.II_DERIVATION_ORIGIN),
-            "process.env.USER_INDEX_CANISTER": JSON.stringify(process.env.USER_INDEX_CANISTER),
-            "process.env.TRANSLATIONS_CANISTER": JSON.stringify(process.env.TRANSLATIONS_CANISTER),
-            "process.env.GROUP_INDEX_CANISTER": JSON.stringify(process.env.GROUP_INDEX_CANISTER),
-            "process.env.NOTIFICATIONS_CANISTER": JSON.stringify(
-                process.env.NOTIFICATIONS_CANISTER,
+            "import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID": JSON.stringify(
+                process.env.OC_INTERNET_IDENTITY_CANISTER_ID,
             ),
-            "process.env.IDENTITY_CANISTER": JSON.stringify(process.env.IDENTITY_CANISTER),
-            "process.env.ONLINE_CANISTER": JSON.stringify(process.env.ONLINE_CANISTER),
-            "process.env.PROPOSALS_BOT_CANISTER": JSON.stringify(
-                process.env.PROPOSALS_BOT_CANISTER,
+            "import.meta.env.OC_NFID_URL": JSON.stringify(process.env.OC_NFID_URL),
+            "import.meta.env.OC_DFX_NETWORK": JSON.stringify(process.env.OC_DFX_NETWORK),
+            "import.meta.env.OC_NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? "production"),
+            "import.meta.env.OC_WEBSITE_VERSION": JSON.stringify(process.env.OC_WEBSITE_VERSION),
+            "import.meta.env.OC_ROLLBAR_ACCESS_TOKEN": JSON.stringify(
+                process.env.OC_ROLLBAR_ACCESS_TOKEN,
             ),
-            "process.env.AIRDROP_BOT_CANISTER": JSON.stringify(process.env.AIRDROP_BOT_CANISTER),
-            "process.env.STORAGE_INDEX_CANISTER": JSON.stringify(
-                process.env.STORAGE_INDEX_CANISTER,
+            "import.meta.env.OC_IC_URL": maybeStringify(process.env.OC_IC_URL),
+            "import.meta.env.OC_II_DERIVATION_ORIGIN": maybeStringify(
+                process.env.OC_II_DERIVATION_ORIGIN,
             ),
-            "process.env.REGISTRY_CANISTER": JSON.stringify(process.env.REGISTRY_CANISTER),
-            "process.env.MARKET_MAKER_CANISTER": JSON.stringify(process.env.MARKET_MAKER_CANISTER),
-            "process.env.SIGN_IN_WITH_EMAIL_CANISTER": JSON.stringify(
-                process.env.SIGN_IN_WITH_EMAIL_CANISTER,
+            "import.meta.env.OC_USER_INDEX_CANISTER": JSON.stringify(
+                process.env.OC_USER_INDEX_CANISTER,
             ),
-            "process.env.SIGN_IN_WITH_ETHEREUM_CANISTER": JSON.stringify(
-                process.env.SIGN_IN_WITH_ETHEREUM_CANISTER,
+            "import.meta.env.OC_TRANSLATIONS_CANISTER": JSON.stringify(
+                process.env.OC_TRANSLATIONS_CANISTER,
             ),
-            "process.env.SIGN_IN_WITH_SOLANA_CANISTER": JSON.stringify(
-                process.env.SIGN_IN_WITH_SOLANA_CANISTER,
+            "import.meta.env.OC_GROUP_INDEX_CANISTER": JSON.stringify(
+                process.env.OC_GROUP_INDEX_CANISTER,
             ),
-            "process.env.BLOB_URL_PATTERN": JSON.stringify(process.env.BLOB_URL_PATTERN),
-            "process.env.ACHIEVEMENT_URL_PATH": JSON.stringify(process.env.ACHIEVEMENT_URL_PATH),
-            "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
-            "process.env.VIDEO_BRIDGE_URL": JSON.stringify(process.env.VIDEO_BRIDGE_URL),
-            "process.env.PREVIEW_PROXY_URL": JSON.stringify(process.env.PREVIEW_PROXY_URL),
-            "process.env.METERED_APIKEY": JSON.stringify(process.env.METERED_APIKEY),
-            "process.env.TENOR_APIKEY": JSON.stringify(process.env.TENOR_APIKEY),
-            "process.env.CORS_APIKEY": JSON.stringify(process.env.CORS_APIKEY),
-            "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
-                process.env.PUBLIC_TRANSLATE_API_KEY,
+            "import.meta.env.OC_NOTIFICATIONS_CANISTER": JSON.stringify(
+                process.env.OC_NOTIFICATIONS_CANISTER,
             ),
-            "process.env.WALLET_CONNECT_PROJECT_ID": JSON.stringify(
-                process.env.WALLET_CONNECT_PROJECT_ID,
+            "import.meta.env.OC_IDENTITY_CANISTER": JSON.stringify(
+                process.env.OC_IDENTITY_CANISTER,
             ),
-            "process.env.SERVICE_WORKER_PATH": SERVICE_WORKER_PATH,
-            "process.env.SUSPICIOUS_USERIDS": process.env.SUSPICIOUS_USERIDS,
+            "import.meta.env.OC_ONLINE_CANISTER": JSON.stringify(process.env.OC_ONLINE_CANISTER),
+            "import.meta.env.OC_PROPOSALS_BOT_CANISTER": JSON.stringify(
+                process.env.OC_PROPOSALS_BOT_CANISTER,
+            ),
+            "import.meta.env.OC_AIRDROP_BOT_CANISTER": JSON.stringify(
+                process.env.OC_AIRDROP_BOT_CANISTER,
+            ),
+            "import.meta.env.OC_STORAGE_INDEX_CANISTER": JSON.stringify(
+                process.env.OC_STORAGE_INDEX_CANISTER,
+            ),
+            "import.meta.env.OC_REGISTRY_CANISTER": JSON.stringify(
+                process.env.OC_REGISTRY_CANISTER,
+            ),
+            "import.meta.env.OC_MARKET_MAKER_CANISTER": JSON.stringify(
+                process.env.OC_MARKET_MAKER_CANISTER,
+            ),
+            "import.meta.env.OC_SIGN_IN_WITH_EMAIL_CANISTER": JSON.stringify(
+                process.env.OC_SIGN_IN_WITH_EMAIL_CANISTER,
+            ),
+            "import.meta.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER": JSON.stringify(
+                process.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER,
+            ),
+            "import.meta.env.OC_SIGN_IN_WITH_SOLANA_CANISTER": JSON.stringify(
+                process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER,
+            ),
+            "import.meta.env.OC_BLOB_URL_PATTERN": JSON.stringify(process.env.OC_BLOB_URL_PATTERN),
+            "import.meta.env.OC_ACHIEVEMENT_URL_PATH": JSON.stringify(
+                process.env.OC_ACHIEVEMENT_URL_PATH,
+            ),
+            "import.meta.env.OC_USERGEEK_APIKEY": JSON.stringify(process.env.OC_USERGEEK_APIKEY),
+            "import.meta.env.OC_VIDEO_BRIDGE_URL": JSON.stringify(process.env.OC_VIDEO_BRIDGE_URL),
+            "import.meta.env.OC_PREVIEW_PROXY_URL": JSON.stringify(
+                process.env.OC_PREVIEW_PROXY_URL,
+            ),
+            "import.meta.env.OC_METERED_APIKEY": JSON.stringify(process.env.OC_METERED_APIKEY),
+            "import.meta.env.OC_TENOR_APIKEY": JSON.stringify(process.env.OC_TENOR_APIKEY),
+            "import.meta.env.OC_CORS_APIKEY": JSON.stringify(process.env.OC_CORS_APIKEY),
+            "import.meta.env.OC_PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
+                process.env.OC_PUBLIC_TRANSLATE_API_KEY,
+            ),
+            "import.meta.env.OC_WALLET_CONNECT_PROJECT_ID": JSON.stringify(
+                process.env.OC_WALLET_CONNECT_PROJECT_ID,
+            ),
+            "import.meta.env.OC_SERVICE_WORKER_PATH": JSON.stringify(
+                process.env.OC_SERVICE_WORKER_PATH,
+            ),
+            "import.meta.env.OC_SUSPICIOUS_USERIDS": JSON.stringify(
+                process.env.OC_SUSPICIOUS_USERIDS,
+            ),
         }),
 
         html({
             template: ({ files }) => {
                 const jsEntryFile = files.js.find((f) => f.isEntry).fileName;
-
-                function generateCspHashValue(text) {
-                    const hash = sha256.update(text).arrayBuffer();
-                    const base64 = Buffer.from(hash).toString("base64");
-                    return `'sha256-${base64}'`;
-                }
-
                 const inlineScripts = [
-                    `window.OPENCHAT_WEBSITE_VERSION = "${version}";`,
+                    `window.OC_WEBSITE_VERSION = "${version}";`,
                     `var parcelRequire;`,
                 ];
-                const cspHashValues = inlineScripts.map(generateCspHashValue);
-                let csp = `
-                    style-src * 'unsafe-inline'; 
-                    style-src-elem * 'unsafe-inline';
-                    font-src 'self' https://fonts.gstatic.com/;
-                    object-src 'none';
-                    base-uri 'self';
-                    form-action 'self';
-                    upgrade-insecure-requests;
-                    script-src 'self' 'unsafe-eval' https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
-                        " ",
-                    )}`;
-                if (development) {
-                    csp += " http://localhost:* http://127.0.0.1:*";
-                }
+                const csp = generateCspForScripts(inlineScripts);
 
+                // TODO this is a duplicate of the index.html file, we should
+                // have only one source for our index html.
                 return `
                         <!DOCTYPE html>
                         <html lang="en">
@@ -389,28 +281,11 @@ export default {
             },
         }),
 
-        // In dev mode, watch for changes to the worker and push sw
-        watch && watchExternalFiles(),
-
-        // In dev mode, call `npm run start` once
-        // the bundle has been generated
-        watch && serve(),
-
-        // Watch the `public` directory and refresh the
-        // browser on changes when not in production
-        watch &&
-            livereload({
-                watch: "build",
-                delay: 1000,
-            }),
-
-        // If we're building for production (npm run build
+        // We're building for production (npm run build
         // instead of npm run dev), minify
-        production && terser(),
-
-        production && analyze({ summaryOnly: true }),
-
-        production && filesize(),
+        terser(),
+        analyze({ summaryOnly: true }),
+        filesize(),
 
         // Pull in the worker and service worker
         copy({
@@ -432,7 +307,3 @@ export default {
         clearScreen: false,
     },
 };
-
-function maybeStringify(value) {
-    return value !== undefined ? JSON.stringify(value) : undefined;
-}

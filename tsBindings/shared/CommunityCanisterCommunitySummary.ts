@@ -8,7 +8,7 @@ import type { CommunityMembership } from "./CommunityMembership";
 import type { CommunityPermissions } from "./CommunityPermissions";
 import type { EventIndex } from "./EventIndex";
 import type { FrozenGroupInfo } from "./FrozenGroupInfo";
-import type { TSBytes } from "./TSBytes";
+import type { TSPrincipal } from "./TSPrincipal";
 import type { UserGroupSummary } from "./UserGroupSummary";
 
-export type CommunityCanisterCommunitySummary = { community_id: CommunityId, local_user_index_canister_id: TSBytes, last_updated: bigint, name: string, description: string, avatar_id?: bigint | undefined, banner_id?: bigint | undefined, is_public: boolean, member_count: number, permissions: CommunityPermissions, frozen?: FrozenGroupInfo | undefined, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, primary_language: string, latest_event_index: EventIndex, channels: Array<CommunityCanisterChannelSummary>, membership?: CommunityMembership | undefined, user_groups: Array<UserGroupSummary>, is_invited?: boolean | undefined, metrics: ChatMetrics, verified: boolean, };
+export type CommunityCanisterCommunitySummary = { community_id: CommunityId, local_user_index_canister_id: TSPrincipal, last_updated: bigint, name: string, description: string, avatar_id?: bigint, banner_id?: bigint, is_public: boolean, member_count: number, permissions: CommunityPermissions, frozen?: FrozenGroupInfo, gate?: AccessGate, gate_config?: AccessGateConfig, primary_language: string, latest_event_index: EventIndex, channels: Array<CommunityCanisterChannelSummary>, membership?: CommunityMembership, user_groups: Array<UserGroupSummary>, is_invited?: boolean, metrics: ChatMetrics, verified: boolean, };

@@ -297,6 +297,7 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             public: self.data.is_public.value,
             date_created: self.data.date_created,
+            channels: self.data.channels.len() as u32,
             members: self.data.members.len() as u32,
             admins: self.data.members.admins().len() as u32,
             owners: self.data.members.owners().len() as u32,
@@ -308,7 +309,6 @@ impl RuntimeState {
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
-            message_ids_deduped: self.data.message_ids_deduped,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -422,12 +422,8 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: GroupBots,
-    #[serde(default)]
     bot_api_keys: BotApiKeys,
-    #[serde(default)]
     verified: Timestamped<bool>,
-    #[serde(default)]
-    message_ids_deduped: bool,
 }
 
 impl Data {
@@ -533,7 +529,6 @@ impl Data {
             bots: GroupBots::default(),
             bot_api_keys: BotApiKeys::default(),
             verified: Timestamped::default(),
-            message_ids_deduped: true,
         }
     }
 
@@ -1003,6 +998,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub public: bool,
     pub date_created: TimestampMillis,
+    pub channels: u32,
     pub members: u32,
     pub admins: u32,
     pub owners: u32,
@@ -1014,7 +1010,6 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
-    pub message_ids_deduped: bool,
     pub canister_ids: CanisterIds,
 }
 

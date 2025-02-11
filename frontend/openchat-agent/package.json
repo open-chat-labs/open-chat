@@ -23,7 +23,7 @@
         "@dfinity/candid": "^2.2.0",
         "@dfinity/identity": "^2.2.0",
         "@dfinity/principal": "^2.2.0",
-        "@sinclair/typebox": "^0.33.14",
+        "@sinclair/typebox": "^0.34.16",
         "idb": "^7.1.1",
         "identicon.js": "^2.3.3",
         "js-sha3": "^0.8.0",

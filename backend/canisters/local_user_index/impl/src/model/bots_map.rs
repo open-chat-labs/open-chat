@@ -14,10 +14,7 @@ pub struct Bot {
     pub user_id: UserId,
     pub name: String,
     pub commands: Vec<SlashCommandSchema>,
-    #[serde(default)]
     pub autonomous_config: Option<AutonomousConfig>,
-    // TODO: Remove after next release
-    #[serde(default = "Principal::anonymous")]
     pub principal: Principal,
 }
 

@@ -27,7 +27,7 @@ function getMessagePermissionsForSelectedChat(
                     permittedMessagesInDirectChat(
                         recipient,
                         mode,
-                        process.env.PROPOSALS_BOT_CANISTER!,
+                        import.meta.env.OC_PROPOSALS_BOT_CANISTER!,
                     ),
                 );
             }
