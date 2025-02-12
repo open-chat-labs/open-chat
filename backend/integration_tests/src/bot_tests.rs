@@ -568,45 +568,45 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
         panic!("'bot_send_message' error: {response:?}");
     }
 
-    // // Update message - unfinalised
-    // let text = format!("Hello 2 {username}");
-    // let response = client::local_user_index::bot_send_message(
-    //     env,
-    //     bot_principal,
-    //     canister_ids.local_user_index(env, chat.canister_id()),
-    //     &local_user_index_canister::bot_send_message::Args {
-    //         channel_id: None,
-    //         message_id: None,
-    //         content: BotMessageContent::Text(TextContent { text: text.clone() }),
-    //         block_level_markdown: false,
-    //         finalised: false,
-    //         auth_token: AuthToken::Jwt(access_token.clone()),
-    //     },
-    // );
+    // Update message - unfinalised
+    let text = format!("Hello 2 {username}");
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        canister_ids.local_user_index(env, chat.canister_id()),
+        &local_user_index_canister::bot_send_message::Args {
+            channel_id: None,
+            message_id: None,
+            content: BotMessageContent::Text(TextContent { text: text.clone() }),
+            block_level_markdown: false,
+            finalised: false,
+            auth_token: AuthToken::Jwt(access_token.clone()),
+        },
+    );
 
-    // if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
-    //     panic!("'bot_send_message' error: {response:?}");
-    // }
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
+        panic!("'bot_send_message' error: {response:?}");
+    }
 
-    // // Update message - finalised
-    // let text = format!("Hello 3 {username}");
-    // let response = client::local_user_index::bot_send_message(
-    //     env,
-    //     bot_principal,
-    //     canister_ids.local_user_index(env, chat.canister_id()),
-    //     &local_user_index_canister::bot_send_message::Args {
-    //         channel_id: None,
-    //         message_id: None,
-    //         content: BotMessageContent::Text(TextContent { text: text.clone() }),
-    //         block_level_markdown: false,
-    //         finalised: true,
-    //         auth_token: AuthToken::Jwt(access_token.clone()),
-    //     },
-    // );
+    // Update message - finalised
+    let text = format!("Hello 3 {username}");
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        canister_ids.local_user_index(env, chat.canister_id()),
+        &local_user_index_canister::bot_send_message::Args {
+            channel_id: None,
+            message_id: None,
+            content: BotMessageContent::Text(TextContent { text: text.clone() }),
+            block_level_markdown: false,
+            finalised: true,
+            auth_token: AuthToken::Jwt(access_token.clone()),
+        },
+    );
 
-    // if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
-    //     panic!("'bot_send_message' error: {response:?}");
-    // }
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
+        panic!("'bot_send_message' error: {response:?}");
+    }
 
     // Call `events` and confirm the latest event is a text message from the bot
     let response = match chat {
@@ -626,30 +626,30 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
     };
     assert_eq!(text_content.text, text);
 
-    //assert!(message.edited);
+    assert!(message.edited);
     assert!(message.bot_context.is_some());
     assert!(message.bot_context.as_ref().unwrap().finalised);
 
-    // // Try updating the same message again but expect it to fail
-    // let text = format!("Hello 4 {username}");
-    // let response = client::local_user_index::bot_send_message(
-    //     env,
-    //     bot_principal,
-    //     canister_ids.local_user_index(env, chat.canister_id()),
-    //     &local_user_index_canister::bot_send_message::Args {
-    //         channel_id: None,
-    //         message_id: None,
-    //         content: BotMessageContent::Text(TextContent { text: text.clone() }),
-    //         block_level_markdown: false,
-    //         finalised: true,
-    //         auth_token: AuthToken::Jwt(access_token.clone()),
-    //     },
-    // );
+    // Try updating the same message again but expect it to fail
+    let text = format!("Hello 4 {username}");
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        canister_ids.local_user_index(env, chat.canister_id()),
+        &local_user_index_canister::bot_send_message::Args {
+            channel_id: None,
+            message_id: None,
+            content: BotMessageContent::Text(TextContent { text: text.clone() }),
+            block_level_markdown: false,
+            finalised: true,
+            auth_token: AuthToken::Jwt(access_token.clone()),
+        },
+    );
 
-    // assert!(!matches!(
-    //     response,
-    //     local_user_index_canister::bot_send_message::Response::Success(_)
-    // ));
+    assert!(!matches!(
+        response,
+        local_user_index_canister::bot_send_message::Response::Success(_)
+    ));
 }
 
 fn register_bot(

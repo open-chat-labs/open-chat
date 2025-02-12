@@ -21,8 +21,8 @@ use tracing::{error, info};
 use types::{
     AcceptP2PSwapResult, BlobReference, BotMessageContext, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType,
     CompleteP2PSwapResult, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex,
-    EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen,
-    GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageEditedEventPayload,
+    EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated,
+    GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageEditedEventPayload,
     MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds,
     MultiUserChat, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
     PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload,
@@ -296,9 +296,9 @@ impl ChatEvents {
             args.message_id.into(),
             args.min_visible_event_index,
             Some(now),
-            |message, _| Self::edit_message_inner(message, args, chat, anonymized_id, event_store_client),
+            |message, event| Self::edit_message_inner(message, event, args, chat, anonymized_id, event_store_client),
         ) {
-            Ok((message_index, document)) => {
+            Ok((message_index, event, document)) => {
                 if thread_root_message_index.is_none() {
                     self.search_index.push(message_index, sender, document);
                 }
@@ -310,7 +310,7 @@ impl ChatEvents {
                     |m| m.incr(MetricKey::Edits, 1),
                     now,
                 );
-                EditMessageResult::Success
+                EditMessageResult::Success(message_index, event)
             }
             Err(UpdateEventError::NoChange(result)) => result,
             Err(UpdateEventError::NotFound) => EditMessageResult::NotFound,
@@ -319,11 +319,12 @@ impl ChatEvents {
 
     fn edit_message_inner<R: Runtime + Send + 'static>(
         message: &mut MessageInternal,
+        event: EventMetaData,
         args: EditMessageArgs,
         chat: Chat,
         anonymized_id: String,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> Result<(MessageIndex, Document), UpdateEventError<EditMessageResult>> {
+    ) -> Result<(MessageIndex, EventMetaData, Document), UpdateEventError<EditMessageResult>> {
         if message.sender != args.sender || matches!(message.content, MessageContentInternal::Deleted(_)) {
             return Err(UpdateEventError::NoChange(EditMessageResult::NotAuthorized));
         }
@@ -378,10 +379,13 @@ impl ChatEvents {
                     )
                 }
             }
-            return Ok((message_index, document));
+            return Ok((message_index, event, document));
         }
 
-        Err(UpdateEventError::NoChange(EditMessageResult::Success))
+        Err(UpdateEventError::NoChange(EditMessageResult::Success(
+            message.message_index,
+            event,
+        )))
     }
 
     pub fn last_updated(&self) -> Option<TimestampMillis> {
@@ -1173,7 +1177,7 @@ impl ChatEvents {
             message_id.into(),
             min_visible_event_index,
             Some(now),
-            |message, message_timestamp| Self::reserve_p2p_swap_inner(message, message_timestamp, user_id, now),
+            |message, event| Self::reserve_p2p_swap_inner(message, event.timestamp, user_id, now),
         ) {
             Ok(success) => ReserveP2PSwapResult::Success(success),
             Err(UpdateEventError::NoChange(status)) => ReserveP2PSwapResult::Failure(status),
@@ -1941,15 +1945,9 @@ impl ChatEvents {
         let chat = self.chat;
         let anonymized_id = self.anonymized_id.clone();
 
-        match self.update_message(
-            None,
-            event_key,
-            EventIndex::default(),
-            Some(now),
-            |message, message_timestamp| {
-                Self::end_video_call_inner(message, message_timestamp, now, chat, anonymized_id, event_store_client)
-            },
-        ) {
+        match self.update_message(None, event_key, EventIndex::default(), Some(now), |message, event| {
+            Self::end_video_call_inner(message, event.timestamp, now, chat, anonymized_id, event_store_client)
+        }) {
             Ok(..) => {
                 self.video_call_in_progress = Timestamped::new(None, now);
                 EndVideoCallResult::Success
@@ -2197,7 +2195,7 @@ impl ChatEvents {
         result.map(|(r, _)| r)
     }
 
-    fn update_message<F: FnOnce(&mut MessageInternal, TimestampMillis) -> Result<T, UpdateEventError<E>>, T, E>(
+    fn update_message<F: FnOnce(&mut MessageInternal, EventMetaData) -> Result<T, UpdateEventError<E>>, T, E>(
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         event_key: EventKey,
@@ -2214,12 +2212,19 @@ impl ChatEvents {
         )
     }
 
-    fn update_message_inner<F: FnOnce(&mut MessageInternal, TimestampMillis) -> Result<T, UpdateEventError<E>>, T, E>(
+    fn update_message_inner<F: FnOnce(&mut MessageInternal, EventMetaData) -> Result<T, UpdateEventError<E>>, T, E>(
         event: &mut EventWrapperInternal<ChatEventInternal>,
         update_message_fn: F,
     ) -> Result<T, UpdateEventError<E>> {
         if let ChatEventInternal::Message(m) = &mut event.event {
-            update_message_fn(m.deref_mut(), event.timestamp)
+            update_message_fn(
+                m.deref_mut(),
+                EventMetaData {
+                    index: event.index,
+                    timestamp: event.timestamp,
+                    expires_at: event.expires_at,
+                },
+            )
         } else {
             Err(UpdateEventError::NotFound)
         }
@@ -2272,7 +2277,7 @@ pub struct EditMessageArgs {
 }
 
 pub enum EditMessageResult {
-    Success,
+    Success(MessageIndex, EventMetaData),
     NotAuthorized,
     NotFound,
 }

@@ -146,9 +146,11 @@ pub(crate) fn handle_message_impl(
         None
     };
 
+    let message_id = args.message_id.unwrap_or_else(|| state.env.rng().gen());
+
     let push_message_args = PushMessageArgs {
         thread_root_message_index,
-        message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
+        message_id,
         sender: args.sender,
         content: args.content,
         mentioned: Vec::new(),
@@ -160,8 +162,6 @@ pub(crate) fn handle_message_impl(
         now: args.now,
         bot_context: bot_caller.map(|bot| BotMessageContext::from(&bot, finalised)),
     };
-
-    let message_id = push_message_args.message_id;
 
     let message_event = chat.push_message(
         false,
