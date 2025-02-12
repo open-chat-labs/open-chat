@@ -25,12 +25,14 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let (auth_principal, originating_canister) = if let Some(webauthn_key) = args.webauthn_key.as_ref() {
+        state.assert_key_not_generated_by_this_canister(&args.public_key);
+
         (
             Principal::self_authenticating(&webauthn_key.public_key),
             WEBAUTHN_ORIGINATING_CANISTER,
         )
     } else {
-        match extract_originating_canister(caller, &args.public_key) {
+        match extract_originating_canister(&args.public_key) {
             Ok(canister_id) => (caller, canister_id),
             Err(error) => return PublicKeyInvalid(error),
         }
