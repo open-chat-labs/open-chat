@@ -3,31 +3,33 @@
     import { cryptoLookup, cryptoTokensSorted } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { createEventDispatcher } from "svelte";
-    import MenuIcon from "../MenuIconLegacy.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItemLegacy.svelte";
+    import MenuItem from "../MenuItem.svelte";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        ledger: string | undefined;
+        filter?: (details: EnhancedTokenDetails) => boolean;
+        onSelect: (ledger: string, urlFormat: string) => void;
+    }
 
-    export let ledger: string | undefined;
-    export let filter: (details: EnhancedTokenDetails) => boolean = (_) => true;
+    let { ledger = $bindable(), filter = (_) => true, onSelect }: Props = $props();
 
     let selecting = false;
     let ignoreClick = false;
 
-    $: cryptoTokensFiltered = $cryptoTokensSorted.filter((t) => t.enabled && filter(t));
+    let cryptoTokensFiltered = $derived($cryptoTokensSorted.filter((t) => t.enabled && filter(t)));
 
-    $: {
+    $effect(() => {
         if (ledger === undefined && cryptoTokensFiltered.length > 0) {
             ledger = cryptoTokensFiltered[0].ledger;
         }
-    }
+    });
 
     function selectToken(selectedLedger: string, urlFormat: string) {
         selecting = false;
         ledger = selectedLedger;
-        dispatch("select", { ledger, urlFormat });
+        onSelect(ledger, urlFormat);
     }
 
     function onKeyDown(ev: KeyboardEvent) {
@@ -46,34 +48,42 @@
 
 {#if cryptoTokensFiltered.length > 0 && ledger !== undefined}
     <MenuIcon centered position={"bottom"} align={"start"}>
-        <div class="token-selector-trigger" slot="icon">
-            <div class="symbol">
-                {$cryptoLookup[ledger].symbol}
+        {#snippet menuIcon()}
+            <div class="token-selector-trigger">
+                <div class="symbol">
+                    {$cryptoLookup[ledger ?? ""]?.symbol}
+                </div>
+                <ChevronDown viewBox={"0 0 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
             </div>
-            <ChevronDown viewBox={"0 0 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
-        </div>
+        {/snippet}
 
-        <div slot="menu">
-            <Menu centered>
-                {#each cryptoTokensFiltered as token}
-                    <MenuItem onclick={() => selectToken(token.ledger, token.urlFormat)}>
-                        <img slot="icon" class="token-icon" src={token.logo} />
-                        <div class="token-text" slot="text">
-                            <div class="name">
-                                {token.name}
-                            </div>
-                            <div class="symbol">
-                                {token.symbol}
-                            </div>
-                        </div>
-                    </MenuItem>
-                {/each}
-            </Menu>
-        </div>
+        {#snippet menuItems()}
+            <div>
+                <Menu centered>
+                    {#each cryptoTokensFiltered as token}
+                        <MenuItem onclick={() => selectToken(token.ledger, token.urlFormat)}>
+                            {#snippet icon()}
+                                <img class="token-icon" src={token.logo} />
+                            {/snippet}
+                            {#snippet text()}
+                                <div class="token-text">
+                                    <div class="name">
+                                        {token.name}
+                                    </div>
+                                    <div class="symbol">
+                                        {token.symbol}
+                                    </div>
+                                </div>
+                            {/snippet}
+                        </MenuItem>
+                    {/each}
+                </Menu>
+            </div>
+        {/snippet}
     </MenuIcon>
 {/if}
 
-<svelte:window on:click={windowClick} on:keydown={onKeyDown} />
+<svelte:window onclick={windowClick} onkeydown={onKeyDown} />
 
 <style lang="scss">
     :global(.token-selector-trigger .menu-icon.open) {

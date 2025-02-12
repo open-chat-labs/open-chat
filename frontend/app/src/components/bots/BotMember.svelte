@@ -32,6 +32,7 @@
     import BotSummary from "./BotSummary.svelte";
     import BotAvatar from "./BotAvatar.svelte";
     import Link from "../Link.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -186,7 +187,9 @@
     </div>
     <MenuIcon position={"bottom"} align={"end"}>
         {#snippet menuIcon()}
-            <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
+            <HoverIcon>
+                <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
+            </HoverIcon>
         {/snippet}
         {#snippet menuItems()}
             <Menu>

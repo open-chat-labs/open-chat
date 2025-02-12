@@ -46,9 +46,9 @@
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import MenuIcon from "../MenuIconLegacy.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItemLegacy.svelte";
+    import MenuItem from "../MenuItem.svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
     import { routeForScope, pathParams } from "../../routes";
@@ -461,93 +461,101 @@
                 {#if !$suspendedUser}
                     <div class="menu">
                         <MenuIcon position={"bottom"} align={"end"}>
-                            <div class="menu-icon" class:rtl={$rtlStore} slot="icon">
-                                <DotsVertical
-                                    viewBox="0 -3 24 24"
-                                    size="1.6em"
-                                    color={"var(--icon-txt)"} />
-                            </div>
-                            <div slot="menu">
+                            {#snippet menuIcon()}
+                                <div class="menu-icon" class:rtl={$rtlStore}>
+                                    <DotsVertical
+                                        viewBox="0 -3 24 24"
+                                        size="1.6em"
+                                        color={"var(--icon-txt)"} />
+                                </div>
+                            {/snippet}
+                            {#snippet menuItems()}
                                 <Menu>
                                     {#if !$favouritesStore.has(chatSummary.id)}
                                         <MenuItem onclick={addToFavourites}>
-                                            <HeartPlus
-                                                size={$iconSize}
-                                                color={"var(--menu-warn)"}
-                                                slot="icon" />
-                                            <div slot="text">
+                                            {#snippet icon()}
+                                                <HeartPlus
+                                                    size={$iconSize}
+                                                    color={"var(--menu-warn)"} />
+                                            {/snippet}
+                                            {#snippet text()}
                                                 <Translatable
                                                     resourceKey={i18nKey(
                                                         "communities.addToFavourites",
                                                     )} />
-                                            </div>
+                                            {/snippet}
                                         </MenuItem>
                                     {:else}
                                         <MenuItem onclick={removeFromFavourites}>
-                                            <HeartMinus
-                                                size={$iconSize}
-                                                color={"var(--menu-warn)"}
-                                                slot="icon" />
-                                            <div slot="text">
+                                            {#snippet icon()}
+                                                <HeartMinus
+                                                    size={$iconSize}
+                                                    color={"var(--menu-warn)"} />
+                                            {/snippet}
+                                            {#snippet text()}
                                                 <Translatable
                                                     resourceKey={i18nKey(
                                                         "communities.removeFromFavourites",
                                                     )} />
-                                            </div>
+                                            {/snippet}
                                         </MenuItem>
                                     {/if}
                                     {#if !pinned}
                                         <MenuItem onclick={pinChat}>
-                                            <PinIcon
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">
+                                            {#snippet icon()}
+                                                <PinIcon
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
                                                 <Translatable
                                                     resourceKey={i18nKey("pinChat.menuItem")} />
-                                            </div>
+                                            {/snippet}
                                         </MenuItem>
                                     {:else}
                                         <MenuItem onclick={unpinChat}>
-                                            <PinOffIcon
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">
+                                            {#snippet icon()}
+                                                <PinOffIcon
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
                                                 <Translatable
                                                     resourceKey={i18nKey(
                                                         "pinChat.unpinMenuItem",
                                                     )} />
-                                            </div>
+                                            {/snippet}
                                         </MenuItem>
                                     {/if}
                                     {#if notificationsSupported && !externalContent}
                                         {#if muted}
                                             <MenuItem
                                                 onclick={() => toggleMuteNotifications(false)}>
-                                                <BellIcon
-                                                    size={$iconSize}
-                                                    color={"var(--icon-inverted-txt)"}
-                                                    slot="icon" />
-                                                <div slot="text">
+                                                {#snippet icon()}
+                                                    <BellIcon
+                                                        size={$iconSize}
+                                                        color={"var(--icon-inverted-txt)"} />
+                                                {/snippet}
+                                                {#snippet text()}
                                                     <Translatable
                                                         resourceKey={i18nKey(
                                                             "unmuteNotifications",
                                                         )} />
-                                                </div>
+                                                {/snippet}
                                             </MenuItem>
                                         {:else}
                                             <MenuItem onclick={() => toggleMuteNotifications(true)}>
-                                                <MutedIcon
-                                                    size={$iconSize}
-                                                    color={"var(--icon-inverted-txt)"}
-                                                    slot="icon" />
-                                                <div slot="text">
+                                                {#snippet icon()}
+                                                    <MutedIcon
+                                                        size={$iconSize}
+                                                        color={"var(--icon-inverted-txt)"} />
+                                                {/snippet}
+                                                {#snippet text()}
                                                     <Translatable
                                                         resourceKey={i18nKey(
                                                             "muteNotifications",
                                                         )} />
-                                                </div>
+                                                {/snippet}
                                             </MenuItem>
                                         {/if}
                                     {/if}
@@ -555,46 +563,50 @@
                                         <MenuItem
                                             disabled={unreadMessages === 0}
                                             onclick={() => client.markAllRead(chatSummary)}>
-                                            <CheckboxMultipleMarked
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">
+                                            {#snippet icon()}
+                                                <CheckboxMultipleMarked
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
                                                 <Translatable
                                                     resourceKey={i18nKey("markAllRead")} />
-                                            </div>
+                                            {/snippet}
                                         </MenuItem>
                                     {/if}
                                     {#if chatSummary.membership.archived}
                                         <MenuItem onclick={selectChat}>
-                                            <ArchiveOffIcon
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">
+                                            {#snippet icon()}
+                                                <ArchiveOffIcon
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
                                                 <Translatable
                                                     resourceKey={i18nKey("unarchiveChat")} />
-                                            </div>
+                                            {/snippet}
                                         </MenuItem>
                                     {:else}
                                         <MenuItem onclick={archiveChat}>
-                                            <ArchiveIcon
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">
+                                            {#snippet icon()}
+                                                <ArchiveIcon
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
                                                 <Translatable
                                                     resourceKey={i18nKey("archiveChat")} />
-                                            </div>
+                                            {/snippet}
                                         </MenuItem>
                                     {/if}
                                     {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
                                         <MenuItem warning onclick={leaveGroup}>
-                                            <LocationExit
-                                                size={$iconSize}
-                                                color={"var(--menu-warn)"}
-                                                slot="icon" />
-                                            <div slot="text">
+                                            {#snippet icon()}
+                                                <LocationExit
+                                                    size={$iconSize}
+                                                    color={"var(--menu-warn)"} />
+                                            {/snippet}
+                                            {#snippet text()}
                                                 {interpolate(
                                                     $_,
                                                     i18nKey(
@@ -604,11 +616,11 @@
                                                         true,
                                                     ),
                                                 )}
-                                            </div>
+                                            {/snippet}
                                         </MenuItem>
                                     {/if}
                                 </Menu>
-                            </div>
+                            {/snippet}
                         </MenuIcon>
                     </div>
                 {/if}

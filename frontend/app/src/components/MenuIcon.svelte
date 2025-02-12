@@ -3,7 +3,6 @@
     import { menuStore } from "../stores/menu";
     import { tick } from "svelte";
     import type { Alignment, Position } from "../utils/alignment";
-    import HoverIcon from "./HoverIcon.svelte";
 
     interface Props {
         centered?: boolean;
@@ -59,9 +58,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class:open class="menu-icon" bind:this={menu} onclick={onShowMenu}>
-    <HoverIcon>
-        {@render menuIcon()}
-    </HoverIcon>
+    {@render menuIcon()}
 </div>
 
 <div class="menu-blueprint">
