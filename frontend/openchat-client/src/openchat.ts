@@ -8079,9 +8079,16 @@ export class OpenChat extends EventTarget {
         content: MessageContent,
         msgId: bigint,
         senderId: string,
+        blockLevelMarkdown: boolean,
     ): () => void {
         if (unconfirmed.contains(msgContext, msgId)) {
-            unconfirmed.overwriteContent(msgContext, msgId, content, botContext);
+            unconfirmed.overwriteContent(
+                msgContext,
+                msgId,
+                content,
+                botContext,
+                blockLevelMarkdown,
+            );
         } else {
             const currentEvents = this.#eventsForMessageContext(msgContext);
             const [eventIndex, messageIndex] =
@@ -8103,7 +8110,7 @@ export class OpenChat extends EventTarget {
                     edited: false,
                     forwarded: false,
                     deleted: false,
-                    blockLevelMarkdown: false,
+                    blockLevelMarkdown: blockLevelMarkdown,
                     botContext,
                 },
             };
@@ -8139,6 +8146,7 @@ export class OpenChat extends EventTarget {
                                 : { kind: "bot_placeholder_content" },
                             msgId,
                             bot.id,
+                            false,
                         );
                         return this.#callBotCommandEndpoint(bot.endpoint, token);
                     })
@@ -8160,6 +8168,7 @@ export class OpenChat extends EventTarget {
                                     resp.message.messageContent,
                                     resp.message.messageId,
                                     bot.id,
+                                    resp.message.blockLevelMarkdown,
                                 );
                             } else {
                                 removePlaceholder?.();
