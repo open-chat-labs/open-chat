@@ -220,7 +220,7 @@ slash_command_option_choice!(SlashCommandOptionChoiceI128, i128);
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct BotGroupDetails {
+pub struct InstalledBotDetails {
     pub user_id: UserId,
     pub added_by: UserId,
     pub permissions: BotPermissions,
