@@ -43,6 +43,11 @@ struct AuthPrincipalInternal {
 }
 
 impl UserPrincipals {
+    // Due to an earlier bug, when users unlinked AuthPrincipals from their UserPrincipal, the
+    // AuthPrincipal was removed from the `auth_principals` map, but it wasn't removed from the
+    // `UserPrincipalInternal::auth_principals` field.
+    // So we've ended up with a few UserPrincipalInternal records that contain AuthPrincipals which
+    // either no longer exist, or are now linked to a different UserPrincipalInternal.
     pub fn remove_dangling_auth_principal_links(&mut self) {
         let mut total_removed = 0;
         for (index, user_principal) in self.user_principals.iter_mut().enumerate() {
