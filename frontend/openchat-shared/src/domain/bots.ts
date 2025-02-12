@@ -143,6 +143,7 @@ export type SlashCommandSchema = {
     params: SlashCommandParam[];
     permissions: ExternalBotPermissions;
     devmode?: boolean;
+    directBotDisabled?: boolean;
 };
 
 export function emptyExternalBotPermissions(): ExternalBotPermissions {

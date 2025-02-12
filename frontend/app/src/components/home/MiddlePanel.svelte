@@ -16,6 +16,7 @@
         eventsStore,
         filteredProposalsStore,
         userStore,
+        currentChatBots,
     } from "openchat-client";
     import { pathParams } from "../../routes";
     import { tick } from "svelte";
@@ -39,7 +40,7 @@
         if ($selectedChatStore.kind !== "direct_chat") return false;
         const them = $userStore.get($selectedChatStore.them.userId);
         if (them === undefined) return false;
-        return them.kind === "bot" && $selectedChatStore.latestMessage === undefined
+        return them.kind === "bot" && $currentChatBots.get(them.userId) === undefined
             ? them.userId
             : undefined;
     });

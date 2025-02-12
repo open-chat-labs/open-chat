@@ -513,7 +513,7 @@ import { removeEmailSignInSession } from "openchat-shared";
 import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
-import { setExternalBots } from "./stores";
+import { externalBots, setExternalBots } from "./stores";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -2165,6 +2165,12 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    directChatWithBot(chat: ChatSummary): string | undefined {
+        if (chat.kind !== "direct_chat") return undefined;
+        const them = this.#liveState.userStore.get(chat.them.userId);
+        return them?.kind === "bot" ? them.userId : undefined;
+    }
+
     undeleteMessage(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
@@ -3178,6 +3184,22 @@ export class OpenChat extends EventTarget {
                 chatStateStore.setProp(serverChat.id, "apiKeys", resp.apiKeys);
             }
             await this.#updateUserStoreFromEvents(serverChat.id, []);
+        } else if (serverChat.kind === "direct_chat") {
+            // TODO fix this when we have the apis
+            chatStateStore.setProp(
+                serverChat.id,
+                "bots",
+                new Map<string, ExternalBotPermissions>([
+                    [
+                        "p2zjm-6obya-fjjpk-mqlfa",
+                        {
+                            messagePermissions: ["text", "file", "image"],
+                            chatPermissions: [],
+                            communityPermissions: [],
+                        },
+                    ],
+                ]),
+            );
         }
     }
 

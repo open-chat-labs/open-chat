@@ -65,7 +65,6 @@ export const parsedPrefix = derived(
     (prefixParts) => prefixParts[0]?.slice(1)?.toLocaleLowerCase() ?? "",
 );
 
-// TODO - we need to account for the context here to filter out any commands that are not permitted
 export const commands = derived(
     [_, externalBots, selectedCommand, parsedPrefix, prefixParts],
     ([$_, externalBots, selectedCommand, parsedPrefix, prefixParts]) => {

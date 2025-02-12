@@ -149,6 +149,11 @@
     "blockUserFailed": "Unable to block user",
     "blockUserSucceeded": "User has been blocked",
     "bots": {
+        "direct": {
+            "placeholder": "Enter \"/\" to select a command ...",
+            "warningTitle": "Direct chat with bot",
+            "warning": "You can only send slash commands to bots. \n\nPlease enter \"/\" to see what commands are available."
+        },
         "add": {
             "action": "Register",
             "addBot": "Add bot",

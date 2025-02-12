@@ -45,6 +45,7 @@
     import BotAvatar from "./BotAvatar.svelte";
 
     interface Props {
+        selectedBotId?: string; // this will be the botId if we are in a direct chat with a bot
         onCancel: () => void;
         onNoMatches: () => void;
         onCommandSent: () => void;
@@ -54,22 +55,33 @@
 
     const client = getContext<OpenChat>("client");
 
-    let { onCancel, onNoMatches, onCommandSent, mode, messageContext }: Props = $props();
+    let { onCancel, onNoMatches, onCommandSent, mode, messageContext, selectedBotId }: Props =
+        $props();
 
-    let installedBots = $derived(
-        messageContext.chatId.kind === "channel" ? $currentCommunityBots : $currentChatBots,
-    );
+    let installedBots = $derived.by(() => {
+        switch (messageContext.chatId.kind) {
+            case "channel":
+                return $currentCommunityBots;
+            default:
+                return $currentChatBots;
+        }
+    });
 
-    let commands = $derived.by(() =>
-        $commandsStore.filter((c) => {
-            return hasPermissionForCommand(
-                c,
-                installedBots,
-                $selectedChatStore,
-                $selectedCommunity,
+    let commands = $derived.by(() => {
+        return $commandsStore.filter((c) => {
+            return (
+                restrictByBotIfNecessary(c) &&
+                hasPermissionForCommand(c, installedBots, $selectedChatStore, $selectedCommunity)
             );
-        }),
-    );
+        });
+    });
+
+    function restrictByBotIfNecessary(command: FlattenedCommand): boolean {
+        return (
+            selectedBotId === undefined ||
+            (command.kind === "external_bot" && command.botId === selectedBotId)
+        );
+    }
 
     function userHasPermissionForCommand(
         command: FlattenedCommand,
