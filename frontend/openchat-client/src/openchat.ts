@@ -3193,7 +3193,7 @@ export class OpenChat extends EventTarget {
                     [
                         "p2zjm-6obya-fjjpk-mqlfa",
                         {
-                            messagePermissions: ["text", "file", "image"],
+                            messagePermissions: ["text"],
                             chatPermissions: [],
                             communityPermissions: [],
                         },

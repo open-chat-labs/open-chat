@@ -2,10 +2,14 @@
     import Avatar from "../Avatar.svelte";
     import {
         AvatarSize,
+        currentChatBots,
+        emptyExternalBotPermissions,
         externalBots,
         isProposalGroup,
         selectedCommunity,
+        type ExternalBotPermissions,
         type ResourceKey,
+        type SlashCommandSchema,
     } from "openchat-client";
     import { type ChatSummary, type OpenChat, userStore } from "openchat-client";
     import { _ } from "svelte-i18n";
@@ -16,8 +20,14 @@
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
     import ProposalBot from "../ProposalBot.svelte";
     import Robot from "../Robot.svelte";
+    import BotCommands from "../bots/BotCommands.svelte";
 
     const client = getContext<OpenChat>("client");
+
+    type BotState = {
+        commands: SlashCommandSchema[];
+        grantedPermissions: ExternalBotPermissions;
+    };
 
     type State = {
         title: ResourceKey;
@@ -25,7 +35,7 @@
         description?: string;
         avatarUrl: string;
         subtitle?: ResourceKey;
-        bot: boolean;
+        bot?: BotState;
     };
 
     interface Props {
@@ -37,19 +47,24 @@
     let state = $derived.by<State>(() => {
         switch (chat.kind) {
             case "direct_chat":
+                const them = $userStore.get(chat.them.userId);
                 const s: State = {
-                    title: i18nKey($userStore.get(chat.them.userId)?.username ?? "unknownUser"),
+                    title: i18nKey(client.displayName(them)),
                     verified: false,
                     avatarUrl: client.userAvatarUrl($userStore.get(chat.them.userId)),
-                    bot: false,
                 };
                 const bot = $externalBots.get(chat.them.userId);
+                const perm =
+                    $currentChatBots.get(chat.them.userId) ?? emptyExternalBotPermissions();
                 return bot === undefined
                     ? s
                     : {
                           ...s,
                           description: bot.definition.description,
-                          bot: true,
+                          bot: {
+                              commands: bot.definition.commands,
+                              grantedPermissions: perm,
+                          },
                       };
             default:
                 return {
@@ -63,7 +78,7 @@
                         chat.level,
                         true,
                     ),
-                    bot: false,
+                    bot: undefined,
                 };
         }
     });
@@ -81,17 +96,16 @@
             </h4>
         </WithVerifiedBadge>
         <div class="pop">
-            <Avatar bot={state.bot} url={state.avatarUrl} size={AvatarSize.Large} />
+            <Avatar bot={state.bot !== undefined} url={state.avatarUrl} size={AvatarSize.Large} />
         </div>
         {#if state.description && state.description.length > 0}
-            <div>
-                <Markdown inline={false} text={state.description} />
-            </div>
+            <Markdown inline={false} text={state.description} />
+        {/if}
+        {#if state.bot !== undefined}
+            <BotCommands centered {...state.bot} />
         {/if}
         {#if state.subtitle}
-            <div>
-                <Translatable resourceKey={state.subtitle} />
-            </div>
+            <Translatable resourceKey={state.subtitle} />
         {/if}
     {/if}
 </div>
