@@ -200,7 +200,7 @@ impl UserPrincipals {
 
     // Returns the underlying auth principal if the caller is using a temp key, else returns the
     // calling principal
-    pub fn unwrap_temp_key(&self, caller: Principal) -> Principal {
+    pub fn unwrap_temp_key_or(&self, caller: Principal) -> Principal {
         self.temp_keys.get(&caller).map_or(caller, |k| k.auth_principal)
     }
 
