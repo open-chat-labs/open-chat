@@ -6,10 +6,10 @@
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../../stores/iconSize";

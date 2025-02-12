@@ -8,7 +8,7 @@
     import SelectedMatch from "./SelectedMatch.svelte";
     import Avatar from "../../Avatar.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
 
     const client = getContext<OpenChat>("client");
     const PAGE_SIZE = 15;

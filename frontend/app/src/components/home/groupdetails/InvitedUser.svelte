@@ -3,10 +3,10 @@
 <script lang="ts">
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import type { UserSummary } from "openchat-shared";

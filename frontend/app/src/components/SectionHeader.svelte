@@ -2,13 +2,29 @@
     import { rtlStore } from "../stores/rtl";
     import { currentTheme } from "../theme/themes";
 
-    export let flush: boolean = false;
-    export let shadow: boolean = false;
-    export let slim: boolean = false;
-    export let entry = false;
-    export let gap = false;
-    export let border = true;
-    export let height: number = 0;
+    interface Props {
+        flush?: boolean;
+        shadow?: boolean;
+        slim?: boolean;
+        entry?: boolean;
+        gap?: boolean;
+        border?: boolean;
+        height?: number;
+        children?: import("svelte").Snippet;
+    }
+
+    let {
+        flush = false,
+        shadow = false,
+        slim = false,
+        entry = false,
+        gap = false,
+        border = true,
+        height = $bindable(0),
+        children,
+    }: Props = $props();
+
+    height; //this is a hack to keep the compiler happy
 </script>
 
 <div
@@ -22,7 +38,7 @@
     class:halloween={$currentTheme.name === "halloween"}
     class:rtl={$rtlStore}
     bind:clientHeight={height}>
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">

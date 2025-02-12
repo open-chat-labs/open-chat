@@ -6,9 +6,9 @@
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import HoverIcon from "../../../HoverIcon.svelte";
-    import MenuIcon from "../../../MenuIcon.svelte";
+    import MenuIcon from "../../../MenuIconLegacy.svelte";
     import Menu from "../../../Menu.svelte";
-    import MenuItem from "../../../MenuItem.svelte";
+    import MenuItem from "../../../MenuItemLegacy.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../../stores/iconSize";

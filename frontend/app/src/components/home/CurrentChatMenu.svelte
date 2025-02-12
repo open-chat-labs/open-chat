@@ -16,10 +16,10 @@
     import BellOff from "svelte-material-icons/BellOff.svelte";
     import FileDocument from "svelte-material-icons/FileDocument.svelte";
     import ChatQuestionIcon from "svelte-material-icons/ChatQuestion.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
+    import MenuIcon from "../MenuIconLegacy.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
+    import MenuItem from "../MenuItemLegacy.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { _ } from "svelte-i18n";
     import {

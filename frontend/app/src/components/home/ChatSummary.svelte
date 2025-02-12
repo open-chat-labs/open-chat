@@ -46,9 +46,9 @@
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import MenuIcon from "../MenuIcon.svelte";
+    import MenuIcon from "../MenuIconLegacy.svelte";
     import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
+    import MenuItem from "../MenuItemLegacy.svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
     import { routeForScope, pathParams } from "../../routes";

@@ -6,7 +6,6 @@
     import KeyRemove from "svelte-material-icons/KeyRemove.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import InfoIcon from "../InfoIcon.svelte";
@@ -186,67 +185,60 @@
         {/if}
     </div>
     <MenuIcon position={"bottom"} align={"end"}>
-        <span slot="icon">
-            <HoverIcon>
-                <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
-            </HoverIcon>
-        </span>
-        <span slot="menu">
+        {#snippet menuIcon()}
+            <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
+        {/snippet}
+        {#snippet menuItems()}
             <Menu>
                 {#if canManage}
                     <MenuItem onclick={() => removeBot()}>
-                        <DeleteOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">
+                        {#snippet icon()}
+                            <DeleteOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
                             <Translatable resourceKey={i18nKey("bots.manage.remove")} />
-                        </div>
+                        {/snippet}
                     </MenuItem>
                     <MenuItem onclick={() => reviewCommandPermissions()}>
-                        <PencilOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">
+                        {#snippet icon()}
+                            <PencilOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
                             <Translatable resourceKey={i18nKey("bots.manage.review")} />
-                        </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if canGenerateKey}
                     {#if apiKeyPermissions !== undefined}
                         <MenuItem onclick={reviewApiKey}>
-                            <KeyRemove
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
+                            {#snippet icon()}
+                                <KeyRemove size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
                                 <Translatable resourceKey={i18nKey("bots.manage.reviewApiKey")} />
-                            </div>
+                            {/snippet}
                         </MenuItem>
                     {:else}
                         <MenuItem onclick={() => generateApiKey()}>
-                            <KeyPlus
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
+                            {#snippet icon()}
+                                <KeyPlus size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
                                 <Translatable resourceKey={i18nKey("bots.manage.generateApiKey")} />
-                            </div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
                 {/if}
                 <MenuItem onclick={() => viewBotDetails()}>
-                    <TextBoxOutline
-                        size={$iconSize}
-                        color={"var(--icon-inverted-txt)"}
-                        slot="icon" />
-                    <div slot="text">
+                    {#snippet icon()}
+                        <TextBoxOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                    {/snippet}
+                    {#snippet text()}
                         <Translatable resourceKey={i18nKey("bots.manage.view")} />
-                    </div>
+                    {/snippet}
                 </MenuItem>
             </Menu>
-        </span>
+        {/snippet}
     </MenuIcon>
 </div>
 

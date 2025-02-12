@@ -1,5 +1,5 @@
 <script lang="ts">
-    import MenuItem from "../MenuItem.svelte";
+    import MenuItem from "../MenuItemLegacy.svelte";
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
     import type { OpenChat, UserOrUserGroup } from "openchat-client";

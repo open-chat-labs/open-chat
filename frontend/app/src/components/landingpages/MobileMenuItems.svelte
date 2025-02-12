@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import { identityState, chatListScopeStore as chatListScope } from "openchat-client";
-    import MenuItem from "../MenuItem.svelte";
+    import MenuItem from "../MenuItemLegacy.svelte";
     import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
     import Note from "svelte-material-icons/NoteTextOutline.svelte";

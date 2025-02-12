@@ -1,9 +1,9 @@
 <script lang="ts">
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Legend from "../../Legend.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { AvatarSize, OpenChat, userStore } from "openchat-client";
     import Avatar from "../../Avatar.svelte";

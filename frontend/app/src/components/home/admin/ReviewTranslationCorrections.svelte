@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _, locale } from "svelte-i18n";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
@@ -9,7 +9,7 @@
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import type {
         CandidateTranslations,
         OpenChat,

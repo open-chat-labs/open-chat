@@ -1,7 +1,7 @@
 <script lang="ts">
     import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
+    import MenuItem from "../MenuItemLegacy.svelte";
+    import MenuIcon from "../MenuIconLegacy.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";

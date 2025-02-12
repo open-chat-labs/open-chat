@@ -1,7 +1,7 @@
 <script lang="ts">
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import TickIcon from "svelte-material-icons/Check.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
@@ -16,7 +16,7 @@
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import type { CommunitySummary, OpenChat } from "openchat-client";
     import { chatSummariesListStore, platformModerator } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";

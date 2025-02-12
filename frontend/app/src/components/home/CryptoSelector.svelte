@@ -4,9 +4,9 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher } from "svelte";
-    import MenuIcon from "../MenuIcon.svelte";
+    import MenuIcon from "../MenuIconLegacy.svelte";
     import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
+    import MenuItem from "../MenuItemLegacy.svelte";
 
     const dispatch = createEventDispatcher();
 

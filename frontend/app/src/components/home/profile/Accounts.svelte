@@ -19,9 +19,9 @@
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import AccountTransactions from "./AccountTransactions.svelte";
     import Overlay from "../../Overlay.svelte";
     import SwapCrypto from "./SwapCrypto.svelte";
