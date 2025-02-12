@@ -16,7 +16,9 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use rand::Rng;
 use types::BotCaller;
 use types::BotPermissions;
+use types::DirectMessageNotification;
 use types::EventIndex;
+use types::Notification;
 use types::{
     BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
     EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, TimestampMillis,
@@ -174,6 +176,26 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                             // Shouldn't happen
                             return c2c_bot_send_message::Response::NotAuthorized;
                         };
+
+                        if finalised && !chat.notifications_muted.value {
+                            let content: MessageContent = args.content.into();
+                            let notification = Notification::DirectMessage(DirectMessageNotification {
+                                sender: bot_id,
+                                thread_root_message_index: args.thread_root_message_index,
+                                message_index,
+                                event_index: event.index,
+                                sender_name: bot_name,
+                                sender_display_name: None,
+                                message_type: content.message_type(),
+                                message_text: content.notification_text(&[], &[]),
+                                image_url: content.notification_image_url(),
+                                sender_avatar_id: None,
+                                crypto_transfer: content.notification_crypto_transfer_details(&[]),
+                            });
+                            let recipient = state.env.canister_id().into();
+
+                            state.push_notification(Some(bot_id), recipient, notification);
+                        }
 
                         return c2c_bot_send_message::Response::Success(SuccessResult {
                             chat_id: bot_id.into(),
