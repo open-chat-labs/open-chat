@@ -43,13 +43,18 @@ struct AuthPrincipalInternal {
 
 impl UserPrincipals {
     pub fn remove_dangling_auth_principal_links(&mut self) {
+        let mut total_removed = 0;
         for (index, user_principal) in self.user_principals.iter_mut().enumerate() {
+            let previous_count = user_principal.auth_principals.len();
             user_principal.auth_principals.retain(|principal| {
                 self.auth_principals
                     .get(principal)
                     .is_some_and(|p| p.user_principal_index == index as u32)
             });
+            let removed = previous_count.saturating_sub(user_principal.auth_principals.len());
+            total_removed += removed;
         }
+        info!("Removed {total_removed} dangling auth principal links");
     }
 
     pub fn push(
