@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Expose channel count in metrics ([#7390](https://github.com/open-chat-labs/open-chat/pull/7390))
 
+### Removed
+
+- Remove the old `start_video_call` and `end_video_call` endpoints ([#7399](https://github.com/open-chat-labs/open-chat/pull/7399))
+
 ## [[2.0.1605](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1605-community)] - 2025-02-10
 
 ### Fixed
