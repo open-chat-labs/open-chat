@@ -22,6 +22,7 @@ fn post_upgrade(args: Args) {
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     data.originating_canisters.insert(WEBAUTHN_ORIGINATING_CANISTER);
+    data.skip_captcha_whitelist.insert(WEBAUTHN_ORIGINATING_CANISTER);
 
     let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);

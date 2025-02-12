@@ -206,7 +206,11 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
             sign_in_with_email_canister_id,
             WEBAUTHN_ORIGINATING_CANISTER,
         ],
-        skip_captcha_whitelist: vec![NNS_INTERNET_IDENTITY_CANISTER_ID, sign_in_with_email_canister_id],
+        skip_captcha_whitelist: vec![
+            NNS_INTERNET_IDENTITY_CANISTER_ID,
+            sign_in_with_email_canister_id,
+            WEBAUTHN_ORIGINATING_CANISTER,
+        ],
         ic_root_key: env.root_key().unwrap(),
         wasm_version,
         test_mode,

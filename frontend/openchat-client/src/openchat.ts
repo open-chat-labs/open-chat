@@ -692,7 +692,10 @@ export class OpenChat extends EventTarget {
 
         if (!anon) {
             if (connectToWorkerResponse === "oc_identity_not_found") {
-                if (authProvider !== AuthProvider.II && authProvider !== AuthProvider.EMAIL) {
+                if (authProvider !== AuthProvider.II &&
+                    authProvider !== AuthProvider.EMAIL &&
+                    authProvider !== AuthProvider.PASSKEY)
+                {
                     this.updateIdentityState({ kind: "challenging" });
                     return;
                 }

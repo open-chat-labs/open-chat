@@ -164,7 +164,11 @@ async fn install_service_canisters_impl(
             canister_ids.sign_in_with_solana,
             WEBAUTHN_ORIGINATING_CANISTER,
         ],
-        skip_captcha_whitelist: vec![canister_ids.nns_internet_identity, canister_ids.sign_in_with_email],
+        skip_captcha_whitelist: vec![
+            canister_ids.nns_internet_identity,
+            canister_ids.sign_in_with_email,
+            WEBAUTHN_ORIGINATING_CANISTER,
+        ],
         ic_root_key: agent.read_root_key(),
         wasm_version: version,
         test_mode,

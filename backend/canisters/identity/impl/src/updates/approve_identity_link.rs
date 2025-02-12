@@ -21,6 +21,8 @@ fn approve_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response 
     };
 
     let now = state.env.now();
+    state.data.user_principals.bump_last_used(&caller, now);
+
     if auth_principal.originating_canister != WEBAUTHN_ORIGINATING_CANISTER {
         let certificate = match extract_certificate(&args.delegation.signature) {
             Ok(c) => c,
