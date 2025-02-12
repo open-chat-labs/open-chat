@@ -1,6 +1,6 @@
 use crate::{
-    AccessGate, AccessGateConfig, InstalledBotDetails, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo,
-    GroupMember, GroupPermissions, GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate,
+    AccessGate, AccessGateConfig, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember,
+    GroupPermissions, GroupRole, HydratedMention, InstalledBotDetails, Message, MessageIndex, Milliseconds, OptionUpdate,
     PublicApiKeyDetails, TimestampMillis, UserId, Version,
 };
 use candid::CandidType;

@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{InstalledBotDetails, CommunityMember, PublicApiKeyDetails, TimestampMillis, UserGroupDetails, UserId, VersionedRules};
+use types::{
+    CommunityMember, InstalledBotDetails, PublicApiKeyDetails, TimestampMillis, UserGroupDetails, UserId, VersionedRules,
+};
 
 #[ts_export(community, selected_updates)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]

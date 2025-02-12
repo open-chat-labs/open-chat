@@ -2,7 +2,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    InstalledBotDetails, Empty, EventIndex, GroupMember, MessageIndex, PublicApiKeyDetails, TimestampMillis, UserId, VersionedRules,
+    Empty, EventIndex, GroupMember, InstalledBotDetails, MessageIndex, PublicApiKeyDetails, TimestampMillis, UserId,
+    VersionedRules,
 };
 
 pub type Args = Empty;

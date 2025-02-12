@@ -2,7 +2,7 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use group_canister::selected_initial::{Response::*, *};
 use std::collections::HashSet;
-use types::{InstalledBotDetails, GroupMember};
+use types::{GroupMember, InstalledBotDetails};
 
 #[query(candid = true, msgpack = true)]
 fn selected_initial(_args: Args) -> Response {
