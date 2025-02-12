@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Sync blocked users to LocalUserIndex ([#7333](https://github.com/open-chat-labs/open-chat/pull/7333))
 - One time job to sync existing blocked users to LocalUserIndex ([#7352](https://github.com/open-chat-labs/open-chat/pull/7352))
 
+### Removed
+
+- Remove the old `start_video_call` and `end_video_call` endpoints ([#7399](https://github.com/open-chat-labs/open-chat/pull/7399))
+
 ## [[2.0.1589-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1589-user)] - 2025-01-24
 
 ### Changed

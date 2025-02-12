@@ -8,14 +8,6 @@ use user_canister::end_video_call_v2::{Response::*, *};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
-fn end_video_call(args: ArgsV1) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| end_video_call_impl(args.into(), state))
-}
-
-#[update(guard = "caller_is_video_call_operator")]
-#[trace]
 fn end_video_call_v2(args: Args) -> Response {
     run_regular_jobs();
 
