@@ -3,6 +3,7 @@ import type { GroupInvite, MessageFormatter } from "openchat-shared";
 
 export type OpenChatConfig = {
     icUrl?: string;
+    webAuthnOrigin: string | undefined;
     iiDerivationOrigin?: string;
     openStorageIndexCanister: string;
     groupIndexCanister: string;

@@ -5,6 +5,7 @@ use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use identity_canister::post_upgrade::Args;
+use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
 use stable_memory::get_reader;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
@@ -21,6 +22,8 @@ fn post_upgrade(args: Args) {
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     data.user_principals.remove_dangling_auth_principal_links();
+    data.originating_canisters.insert(WEBAUTHN_ORIGINATING_CANISTER);
+    data.skip_captcha_whitelist.insert(WEBAUTHN_ORIGINATING_CANISTER);
 
     let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);

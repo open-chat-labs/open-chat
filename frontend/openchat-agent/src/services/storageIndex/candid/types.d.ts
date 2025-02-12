@@ -149,7 +149,11 @@ export interface BlobReference {
 }
 export type BlockIndex = bigint;
 export interface BotAdded { 'added_by' : UserId, 'user_id' : UserId }
-export interface BotCommand { 'args' : Array<BotCommandArg>, 'name' : string }
+export interface BotCommand {
+  'initiator' : UserId,
+  'args' : Array<BotCommandArg>,
+  'name' : string,
+}
 export interface BotCommandArg { 'value' : BotCommandArgValue, 'name' : string }
 export type BotCommandArgValue = { 'User' : UserId } |
   { 'String' : string } |
@@ -161,16 +165,20 @@ export interface BotConfig {
   'is_oc_controlled' : boolean,
   'supports_direct_messages' : boolean,
 }
-export interface BotGroupConfig { 'permissions' : SlashCommandPermissions }
+export interface BotGroupConfig { 'permissions' : BotPermissions }
 export interface BotGroupDetails {
-  'permissions' : SlashCommandPermissions,
+  'permissions' : BotPermissions,
   'added_by' : UserId,
   'user_id' : UserId,
 }
 export interface BotMessageContext {
-  'initiator' : Principal,
-  'command' : BotCommand,
+  'command' : [] | [BotCommand],
   'finalised' : boolean,
+}
+export interface BotPermissions {
+  'chat' : Array<GroupPermission>,
+  'community' : Array<CommunityPermission>,
+  'message' : Array<MessagePermission>,
 }
 export interface BotRemoved { 'user_id' : UserId, 'removed_by' : UserId }
 export interface BotUpdated { 'updated_by' : UserId, 'user_id' : UserId }
@@ -1553,6 +1561,12 @@ export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
   { 'AcceptVotes' : null } |
   { 'Unspecified' : null } |
   { 'Settled' : null };
+export interface PublicApiKeyDetails {
+  'generated_at' : TimestampMillis,
+  'generated_by' : UserId,
+  'bot_id' : UserId,
+  'granted_permissions' : BotPermissions,
+}
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'gate_config' : [] | [AccessGateConfig],
@@ -1611,6 +1625,7 @@ export interface RoleChanged {
 }
 export interface Rules { 'text' : string, 'enabled' : boolean }
 export interface SelectedGroupUpdates {
+  'api_keys_generated' : Array<PublicApiKeyDetails>,
   'blocked_users_removed' : Array<UserId>,
   'bots_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],
@@ -1637,13 +1652,8 @@ export type SlashCommandParamType = { 'UserParam' : null } |
   { 'IntegerParam' : IntegerParam } |
   { 'DecimalParam' : DecimalParam } |
   { 'BooleanParam' : null };
-export interface SlashCommandPermissions {
-  'chat' : Array<GroupPermission>,
-  'community' : Array<CommunityPermission>,
-  'message' : Array<MessagePermission>,
-}
 export interface SlashCommandSchema {
-  'permissions' : SlashCommandPermissions,
+  'permissions' : BotPermissions,
   'name' : string,
   'description' : [] | [string],
   'placeholder' : [] | [string],

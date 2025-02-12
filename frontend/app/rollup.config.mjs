@@ -25,9 +25,8 @@ import {
     copyFile,
     generateCspForScripts,
     maybeStringify,
-    __dirname
+    __dirname,
 } from "./rollup.extras.mjs";
-
 
 // this is a bit ridiculous but there we are ...
 function clean() {
@@ -58,7 +57,6 @@ function clean() {
         },
     };
 }
-
 
 const { version } = initEnv();
 
@@ -123,7 +121,10 @@ export default {
         replace({
             preventAssignment: true,
             "import.meta.env.OC_BUILD_ENV": JSON.stringify(process.env.OC_BUILD_ENV),
-            "import.meta.env.OC_INTERNET_IDENTITY_URL": JSON.stringify(process.env.OC_INTERNET_IDENTITY_URL),
+            "import.meta.env.OC_WEBAUTHN_ORIGIN": JSON.stringify(process.env.OC_WEBAUTHN_ORIGIN),
+            "import.meta.env.OC_INTERNET_IDENTITY_URL": JSON.stringify(
+                process.env.OC_INTERNET_IDENTITY_URL,
+            ),
             "import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID": JSON.stringify(
                 process.env.OC_INTERNET_IDENTITY_CANISTER_ID,
             ),
@@ -131,26 +132,44 @@ export default {
             "import.meta.env.OC_DFX_NETWORK": JSON.stringify(process.env.OC_DFX_NETWORK),
             "import.meta.env.OC_NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? "production"),
             "import.meta.env.OC_WEBSITE_VERSION": JSON.stringify(process.env.OC_WEBSITE_VERSION),
-            "import.meta.env.OC_ROLLBAR_ACCESS_TOKEN": JSON.stringify(process.env.OC_ROLLBAR_ACCESS_TOKEN),
+            "import.meta.env.OC_ROLLBAR_ACCESS_TOKEN": JSON.stringify(
+                process.env.OC_ROLLBAR_ACCESS_TOKEN,
+            ),
             "import.meta.env.OC_IC_URL": maybeStringify(process.env.OC_IC_URL),
-            "import.meta.env.OC_II_DERIVATION_ORIGIN": maybeStringify(process.env.OC_II_DERIVATION_ORIGIN),
-            "import.meta.env.OC_USER_INDEX_CANISTER": JSON.stringify(process.env.OC_USER_INDEX_CANISTER),
-            "import.meta.env.OC_TRANSLATIONS_CANISTER": JSON.stringify(process.env.OC_TRANSLATIONS_CANISTER),
-            "import.meta.env.OC_GROUP_INDEX_CANISTER": JSON.stringify(process.env.OC_GROUP_INDEX_CANISTER),
+            "import.meta.env.OC_II_DERIVATION_ORIGIN": maybeStringify(
+                process.env.OC_II_DERIVATION_ORIGIN,
+            ),
+            "import.meta.env.OC_USER_INDEX_CANISTER": JSON.stringify(
+                process.env.OC_USER_INDEX_CANISTER,
+            ),
+            "import.meta.env.OC_TRANSLATIONS_CANISTER": JSON.stringify(
+                process.env.OC_TRANSLATIONS_CANISTER,
+            ),
+            "import.meta.env.OC_GROUP_INDEX_CANISTER": JSON.stringify(
+                process.env.OC_GROUP_INDEX_CANISTER,
+            ),
             "import.meta.env.OC_NOTIFICATIONS_CANISTER": JSON.stringify(
                 process.env.OC_NOTIFICATIONS_CANISTER,
             ),
-            "import.meta.env.OC_IDENTITY_CANISTER": JSON.stringify(process.env.OC_IDENTITY_CANISTER),
+            "import.meta.env.OC_IDENTITY_CANISTER": JSON.stringify(
+                process.env.OC_IDENTITY_CANISTER,
+            ),
             "import.meta.env.OC_ONLINE_CANISTER": JSON.stringify(process.env.OC_ONLINE_CANISTER),
             "import.meta.env.OC_PROPOSALS_BOT_CANISTER": JSON.stringify(
                 process.env.OC_PROPOSALS_BOT_CANISTER,
             ),
-            "import.meta.env.OC_AIRDROP_BOT_CANISTER": JSON.stringify(process.env.OC_AIRDROP_BOT_CANISTER),
+            "import.meta.env.OC_AIRDROP_BOT_CANISTER": JSON.stringify(
+                process.env.OC_AIRDROP_BOT_CANISTER,
+            ),
             "import.meta.env.OC_STORAGE_INDEX_CANISTER": JSON.stringify(
                 process.env.OC_STORAGE_INDEX_CANISTER,
             ),
-            "import.meta.env.OC_REGISTRY_CANISTER": JSON.stringify(process.env.OC_REGISTRY_CANISTER),
-            "import.meta.env.OC_MARKET_MAKER_CANISTER": JSON.stringify(process.env.OC_MARKET_MAKER_CANISTER),
+            "import.meta.env.OC_REGISTRY_CANISTER": JSON.stringify(
+                process.env.OC_REGISTRY_CANISTER,
+            ),
+            "import.meta.env.OC_MARKET_MAKER_CANISTER": JSON.stringify(
+                process.env.OC_MARKET_MAKER_CANISTER,
+            ),
             "import.meta.env.OC_SIGN_IN_WITH_EMAIL_CANISTER": JSON.stringify(
                 process.env.OC_SIGN_IN_WITH_EMAIL_CANISTER,
             ),
@@ -161,10 +180,14 @@ export default {
                 process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER,
             ),
             "import.meta.env.OC_BLOB_URL_PATTERN": JSON.stringify(process.env.OC_BLOB_URL_PATTERN),
-            "import.meta.env.OC_ACHIEVEMENT_URL_PATH": JSON.stringify(process.env.OC_ACHIEVEMENT_URL_PATH),
+            "import.meta.env.OC_ACHIEVEMENT_URL_PATH": JSON.stringify(
+                process.env.OC_ACHIEVEMENT_URL_PATH,
+            ),
             "import.meta.env.OC_USERGEEK_APIKEY": JSON.stringify(process.env.OC_USERGEEK_APIKEY),
             "import.meta.env.OC_VIDEO_BRIDGE_URL": JSON.stringify(process.env.OC_VIDEO_BRIDGE_URL),
-            "import.meta.env.OC_PREVIEW_PROXY_URL": JSON.stringify(process.env.OC_PREVIEW_PROXY_URL),
+            "import.meta.env.OC_PREVIEW_PROXY_URL": JSON.stringify(
+                process.env.OC_PREVIEW_PROXY_URL,
+            ),
             "import.meta.env.OC_METERED_APIKEY": JSON.stringify(process.env.OC_METERED_APIKEY),
             "import.meta.env.OC_TENOR_APIKEY": JSON.stringify(process.env.OC_TENOR_APIKEY),
             "import.meta.env.OC_CORS_APIKEY": JSON.stringify(process.env.OC_CORS_APIKEY),
@@ -174,8 +197,12 @@ export default {
             "import.meta.env.OC_WALLET_CONNECT_PROJECT_ID": JSON.stringify(
                 process.env.OC_WALLET_CONNECT_PROJECT_ID,
             ),
-            "import.meta.env.OC_SERVICE_WORKER_PATH": JSON.stringify(process.env.OC_SERVICE_WORKER_PATH),
-            "import.meta.env.OC_SUSPICIOUS_USERIDS": JSON.stringify(process.env.OC_SUSPICIOUS_USERIDS),
+            "import.meta.env.OC_SERVICE_WORKER_PATH": JSON.stringify(
+                process.env.OC_SERVICE_WORKER_PATH,
+            ),
+            "import.meta.env.OC_SUSPICIOUS_USERIDS": JSON.stringify(
+                process.env.OC_SUSPICIOUS_USERIDS,
+            ),
         }),
 
         html({

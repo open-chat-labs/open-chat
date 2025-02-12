@@ -182,6 +182,7 @@ import type {
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
+    WebAuthnKey,
 } from "./identity";
 import type { GenerateMagicLinkResponse } from "./email";
 import type {
@@ -398,6 +399,8 @@ export type WorkerRequest =
     | GetAccessToken
     | GetLocalUserIndexForUser
     | UpdateBtcBalance
+    | CurrentUserWebAuthnKey
+    | LookupWebAuthnPubKey
     | GenerateMagicLink
     | GetSignInWithEmailDelegation
     | SiwePrepareLogin
@@ -1164,6 +1167,7 @@ type GenerateIdentityChallenge = {
 
 type CreateOpenChatIdentity = {
     kind: "createOpenChatIdentity";
+    webAuthnKey: WebAuthnKey | undefined;
     challengeAttempt: ChallengeAttempt | undefined;
 };
 
@@ -1385,6 +1389,15 @@ type UpdateBtcBalance = {
     kind: "updateBtcBalance";
 };
 
+type CurrentUserWebAuthnKey = {
+    kind: "currentUserWebAuthnKey";
+};
+
+type LookupWebAuthnPubKey = {
+    credentialId: Uint8Array;
+    kind: "lookupWebAuthnPubKey";
+};
+
 type GenerateMagicLink = {
     email: string;
     sessionKey: Uint8Array;
@@ -1426,9 +1439,11 @@ type GetDelegationWithWallet = {
 
 type LinkIdentities = {
     kind: "linkIdentities";
+    userId: string;
     initiatorKey: CryptoKeyPair;
     initiatorDelegation: JsonnableDelegationChain;
     initiatorIsIIPrincipal: boolean;
+    initiatorWebAuthnKey: WebAuthnKey | undefined;
     approverKey: CryptoKeyPair;
     approverDelegation: JsonnableDelegationChain;
 };
@@ -1471,6 +1486,7 @@ export type WorkerResponseInner =
     | boolean
     | string
     | string[]
+    | Uint8Array
     | undefined
     | [number, number]
     | GenerateChallengeResponse
@@ -1601,6 +1617,7 @@ export type WorkerResponseInner =
     | PendingDeploymentResponse
     | JoinVideoCallResponse
     | UpdateBtcBalanceResponse
+    | WebAuthnKey
     | GenerateMagicLinkResponse
     | SiwePrepareLoginResponse
     | SiwsPrepareLoginResponse
@@ -2284,6 +2301,10 @@ export type WorkerResult<T> = T extends Init
     ? string
     : T extends UpdateBtcBalance
     ? UpdateBtcBalanceResponse
+    : T extends CurrentUserWebAuthnKey
+    ? WebAuthnKey | undefined
+    : T extends LookupWebAuthnPubKey
+    ? Uint8Array | undefined
     : T extends GenerateMagicLink
     ? GenerateMagicLinkResponse
     : T extends GetSignInWithEmailDelegation

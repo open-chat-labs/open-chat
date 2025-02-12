@@ -12,6 +12,8 @@
         <InternetIdentityLogo />
     {:else if provider === AuthProvider.EMAIL}
         <EmailIcon size={"1.5em"} color={"var(--txt-light)"} />
+    {:else if provider === AuthProvider.PASSKEY}
+        <img class="passkey-img" src="/assets/passkey.svg" alt="passkey" />
     {:else if provider === AuthProvider.ETH}
         <img class="eth-img" src="/assets/ethereum.svg" alt="ethereum" />
     {:else if provider === AuthProvider.SOL}
@@ -50,6 +52,7 @@
             width: 40px;
         }
 
+        .passkey-img,
         .eth-img,
         .sol-img {
             width: 30px;

@@ -33,6 +33,7 @@ pub mod happy_path {
             identity_canister_id,
             &identity_canister::create_identity::Args {
                 public_key,
+                webauthn_key: None,
                 session_key,
                 is_ii_principal: Some(is_ii_principal),
                 max_time_to_live: None,
@@ -103,6 +104,7 @@ pub mod happy_path {
             identity_canister_id,
             &identity_canister::initiate_identity_link::Args {
                 public_key,
+                webauthn_key: None,
                 is_ii_principal: Some(is_ii_principal),
                 link_to_principal,
             },

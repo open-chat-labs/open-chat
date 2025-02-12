@@ -9,8 +9,9 @@ fn auth_principals() -> Response {
 
 fn auth_principals_impl(state: &RuntimeState) -> Response {
     let caller = state.env.caller();
+    let auth_principal = state.data.user_principals.unwrap_temp_key_or(caller);
 
-    if let Some(user_principal) = state.data.user_principals.get_by_auth_principal(&caller) {
+    if let Some(user_principal) = state.data.user_principals.get_by_auth_principal(&auth_principal) {
         Success(
             user_principal
                 .auth_principals
