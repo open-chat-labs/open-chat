@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the old `start_video_call` and `end_video_call` endpoints ([#7399](https://github.com/open-chat-labs/open-chat/pull/7399))
+
 ## [[2.0.1604](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1604-group)] - 2025-02-10
 
 ### Fixed
