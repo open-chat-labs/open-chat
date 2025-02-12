@@ -11,13 +11,7 @@ import { random64 } from "openchat-shared";
 
 export async function createWebAuthnIdentity(origin: string): Promise<WebAuthnIdentity> {
     const opts = webAuthnCreationOptions(origin);
-    return WebAuthnIdentity.create({ publicKey: opts }).then((id) => {
-        console.log(
-            "WebAuthn identity created",
-            id.getPrincipal().toString(),
-        );
-        return id;
-    });
+    return WebAuthnIdentity.create({ publicKey: opts });
 }
 
 export class MultiWebAuthnIdentity extends SignIdentity {
@@ -86,7 +80,13 @@ export class MultiWebAuthnIdentity extends SignIdentity {
 }
 
 function webAuthnCreationOptions(rpId?: string): PublicKeyCredentialCreationOptions {
-    const randomId = (random64() % BigInt(100000000)).toString().padStart(8, "0");
+    const now = new Date();
+    const year = now.getFullYear().toString().substring(2);
+    const month = (now.getMonth() + 1).toString().padStart(2, "0");
+    const day = now.getDate().toString().padStart(2, "0");
+    const hour = now.getHours().toString().padStart(2, "0");
+    const minutes = now.getMinutes().toString().padStart(2, "0");
+    const suffix = year + month + day + hour + minutes;
     return {
         authenticatorSelection: {
             userVerification: "preferred",
@@ -112,8 +112,8 @@ function webAuthnCreationOptions(rpId?: string): PublicKeyCredentialCreationOpti
         },
         user: {
             id: window.crypto.getRandomValues(new Uint8Array(16)),
-            name: `OpenChat-${randomId}`,
-            displayName: `OpenChat-${randomId}`,
+            name: `OpenChat-${suffix}`,
+            displayName: `OpenChat-${suffix}`,
         },
     };
 }
