@@ -7,7 +7,6 @@ import {
     SignIdentity,
     unwrapDER,
 } from "@dfinity/agent";
-import { random64 } from "openchat-shared";
 
 export async function createWebAuthnIdentity(origin: string): Promise<WebAuthnIdentity> {
     const opts = webAuthnCreationOptions(origin);
