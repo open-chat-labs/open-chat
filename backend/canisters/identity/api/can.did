@@ -117,6 +117,7 @@ type InitiateIdentityLinkResponse = variant {
     AlreadyRegistered;
     TargetUserNotFound;
     PublicKeyInvalid : text;
+    OriginatingCanisterInvalid : principal;
 };
 
 type PrepareDelegationArgs = record {

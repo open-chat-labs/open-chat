@@ -159,6 +159,9 @@ export function initiateIdentityLinkResponse(
     if ("PublicKeyInvalid" in candid) {
         return "public_key_invalid";
     }
+    if ("OriginatingCanisterInvalid" in candid) {
+        return "originating_canister_invalid";
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiInitiateIdentityLinkResponse type received",
         candid,

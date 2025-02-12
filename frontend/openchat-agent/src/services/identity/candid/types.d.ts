@@ -66,6 +66,7 @@ export interface InitiateIdentityLinkArgs {
   'is_ii_principal' : [] | [boolean],
 }
 export type InitiateIdentityLinkResponse = { 'AlreadyRegistered' : null } |
+  { 'OriginatingCanisterInvalid' : Principal } |
   { 'Success' : null } |
   { 'TargetUserNotFound' : null } |
   { 'PublicKeyInvalid' : string } |

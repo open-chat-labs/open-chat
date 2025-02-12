@@ -98,6 +98,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const InitiateIdentityLinkResponse = IDL.Variant({
     'AlreadyRegistered' : IDL.Null,
+    'OriginatingCanisterInvalid' : IDL.Principal,
     'Success' : IDL.Null,
     'TargetUserNotFound' : IDL.Null,
     'PublicKeyInvalid' : IDL.Text,
