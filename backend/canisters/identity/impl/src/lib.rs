@@ -233,9 +233,16 @@ fn check_public_key(caller: Principal, public_key: &[u8]) -> Result<(), String> 
 
 fn extract_originating_canister(public_key: &[u8]) -> Result<CanisterId, String> {
     let key_info = SubjectPublicKeyInfo::from_der(public_key).map_err(|e| format!("{e:?}"))?.1;
-    let canister_id_length = key_info.subject_public_key.data[0];
+    if key_info.subject_public_key.data.is_empty() {
+        return Err("subject_public_key.data is empty".to_string());
+    }
 
-    let canister_id = CanisterId::from_slice(&key_info.subject_public_key.data[1..=(canister_id_length as usize)]);
+    let canister_id_length = key_info.subject_public_key.data[0] as usize;
+    if canister_id_length >= key_info.subject_public_key.data.len() || canister_id_length > CanisterId::MAX_LENGTH_IN_BYTES {
+        return Err("subject_public_key.data does not contain a canisterId".to_string());
+    }
+
+    let canister_id = CanisterId::from_slice(&key_info.subject_public_key.data[1..=canister_id_length]);
     Ok(canister_id)
 }
 
