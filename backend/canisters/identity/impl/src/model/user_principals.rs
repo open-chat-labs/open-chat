@@ -3,6 +3,7 @@ use identity_canister::remove_identity_link::Response as RemovePrincipalResponse
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
+use tracing::info;
 use types::{is_default, CanisterId, PushIfNotContains, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -57,6 +58,26 @@ struct TempKey {
 }
 
 impl UserPrincipals {
+    // Due to an earlier bug, when users unlinked AuthPrincipals from their UserPrincipal, the
+    // AuthPrincipal was removed from the `auth_principals` map, but it wasn't removed from the
+    // `UserPrincipalInternal::auth_principals` field.
+    // So we've ended up with a few UserPrincipalInternal records that contain AuthPrincipals which
+    // either no longer exist, or are now linked to a different UserPrincipalInternal.
+    pub fn remove_dangling_auth_principal_links(&mut self) {
+        let mut total_removed = 0;
+        for (index, user_principal) in self.user_principals.iter_mut().enumerate() {
+            let previous_count = user_principal.auth_principals.len();
+            user_principal.auth_principals.retain(|principal| {
+                self.auth_principals
+                    .get(principal)
+                    .is_some_and(|p| p.user_principal_index == index as u32)
+            });
+            let removed = previous_count.saturating_sub(user_principal.auth_principals.len());
+            total_removed += removed;
+        }
+        info!("Removed {total_removed} dangling auth principal links");
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn push(
         &mut self,
@@ -142,10 +163,7 @@ impl UserPrincipals {
         if caller == linked_principal {
             RemovePrincipalResponse::CannotUnlinkActivePrincipal
         } else {
-            // Curent UserPrincipal
-            let user_principal = self.get_by_auth_principal(&caller);
-
-            if let Some(mut user) = user_principal {
+            if let Some(user) = self.user_principal_mut(&caller) {
                 // This condition may be redundant, but in combination with the
                 // responses can provide additional context in case of an error.
                 if user.auth_principals.contains(&linked_principal) {
@@ -223,6 +241,12 @@ impl UserPrincipals {
 
     pub fn remove_expired_temp_keys(&mut self, now: TimestampMillis) {
         self.temp_keys.retain(|_, k| k.expires > now);
+    }
+
+    fn user_principal_mut(&mut self, auth_principal: &Principal) -> Option<&mut UserPrincipalInternal> {
+        self.auth_principals
+            .get(auth_principal)
+            .and_then(|p| self.user_principals.get_mut(p.user_principal_index as usize))
     }
 
     fn user_principal_by_index(&self, user_principal_index: u32) -> Option<UserPrincipal> {
