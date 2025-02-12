@@ -559,7 +559,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             message_id: None,
             content: BotMessageContent::Text(TextContent { text: text.clone() }),
             block_level_markdown: false,
-            finalised: true,
+            finalised: false,
             auth_token: AuthToken::Jwt(access_token.clone()),
         },
     );

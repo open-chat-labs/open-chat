@@ -164,7 +164,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                             message_id: args.message_id,
                             content: args.content.clone(),
                             block_level_markdown: Some(args.block_level_markdown),
-                            finalise_bot_message: false,
+                            finalise_bot_message: finalised,
                             now,
                         };
 
