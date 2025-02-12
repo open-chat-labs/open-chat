@@ -1,11 +1,9 @@
 use crate::updates::prepare_delegation::prepare_delegation_inner;
-use crate::{check_public_key, extract_originating_canister, mutate_state, RuntimeState};
-use candid::Principal;
+use crate::{mutate_state, RuntimeState, VerifyNewIdentityArgs, VerifyNewIdentityError, VerifyNewIdentitySuccess};
 use canister_tracing_macros::trace;
 use constants::DAY_IN_MS;
 use ic_cdk::update;
 use identity_canister::create_identity::{Response::*, *};
-use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
 
 #[update]
 #[trace]
@@ -14,37 +12,24 @@ fn create_identity(args: Args) -> Response {
 }
 
 fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let caller = state.env.caller();
-
-    if state.data.user_principals.get_by_auth_principal(&caller).is_some() {
-        return AlreadyRegistered;
-    }
-
-    if let Err(error) = check_public_key(caller, &args.public_key) {
-        return PublicKeyInvalid(error);
-    }
-
-    let (auth_principal, originating_canister) = if let Some(webauthn_key) = args.webauthn_key.as_ref() {
-        state.assert_key_not_generated_by_this_canister(&args.public_key);
-
-        (
-            Principal::self_authenticating(&webauthn_key.public_key),
-            WEBAUTHN_ORIGINATING_CANISTER,
-        )
-    } else {
-        match extract_originating_canister(&args.public_key) {
-            Ok(canister_id) => (caller, canister_id),
-            Err(error) => return PublicKeyInvalid(error),
+    let VerifyNewIdentitySuccess {
+        caller,
+        auth_principal,
+        originating_canister,
+        webauthn_key,
+    } = match state.verify_new_identity(VerifyNewIdentityArgs {
+        public_key: args.public_key,
+        webauthn_key: args.webauthn_key,
+    }) {
+        Ok(ok) => ok,
+        Err(error) => {
+            return match error {
+                VerifyNewIdentityError::AlreadyRegistered => AlreadyRegistered,
+                VerifyNewIdentityError::PublicKeyInvalid(e) => PublicKeyInvalid(e),
+                VerifyNewIdentityError::OriginatingCanisterInvalid(c) => OriginatingCanisterInvalid(c),
+            }
         }
     };
-
-    if !state.data.originating_canisters.contains(&originating_canister) {
-        return OriginatingCanisterInvalid(originating_canister);
-    }
-
-    if state.data.user_principals.get_by_auth_principal(&auth_principal).is_some() {
-        return AlreadyRegistered;
-    }
 
     let now = state.env.now();
     if state.data.requires_captcha(&originating_canister) {
@@ -57,7 +42,7 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    let webauthn_credential_id = if let Some(webauthn_key) = args.webauthn_key {
+    let webauthn_credential_id = if let Some(webauthn_key) = webauthn_key {
         let now = state.env.now();
         let credential_id = webauthn_key.credential_id.clone();
         state.data.webauthn_keys.add(webauthn_key, now);
