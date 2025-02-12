@@ -43,10 +43,12 @@ struct AuthPrincipalInternal {
 
 impl UserPrincipals {
     pub fn remove_dangling_auth_principal_links(&mut self) {
-        for user_principal in self.user_principals.iter_mut() {
-            user_principal
-                .auth_principals
-                .retain(|principal| self.auth_principals.contains_key(principal));
+        for (index, user_principal) in self.user_principals.iter_mut().enumerate() {
+            user_principal.auth_principals.retain(|principal| {
+                self.auth_principals
+                    .get(principal)
+                    .is_some_and(|p| p.user_principal_index == index as u32)
+            });
         }
     }
 
