@@ -1,4 +1,5 @@
 use candid::Principal;
+use identity_canister::remove_identity_link::Response as RemovePrincipalResponse;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
@@ -158,29 +159,24 @@ impl UserPrincipals {
         }
     }
 
-    pub fn remove_auth_principal(&mut self, caller: Principal, linked_principal: Principal) -> RemoveAuthPrincipalResult {
-        use RemoveAuthPrincipalResult::*;
-
+    pub fn remove_auth_principal(&mut self, caller: Principal, linked_principal: Principal) -> RemovePrincipalResponse {
         if caller == linked_principal {
-            CannotUnlinkActivePrincipal
+            RemovePrincipalResponse::CannotUnlinkActivePrincipal
         } else {
             if let Some(user) = self.user_principal_mut(&caller) {
                 // This condition may be redundant, but in combination with the
                 // responses can provide additional context in case of an error.
                 if user.auth_principals.contains(&linked_principal) {
                     user.auth_principals.retain(|&ap| ap != linked_principal);
-                    let webauthn_credential_id = self
-                        .auth_principals
-                        .remove(&linked_principal)
-                        .and_then(|a| a.webauthn_credential_id.map(|c| c.into_vec()));
+                    self.auth_principals.remove(&linked_principal);
 
-                    return Success(webauthn_credential_id);
+                    return RemovePrincipalResponse::Success;
                 }
 
-                return IdentityLinkNotFound;
+                return RemovePrincipalResponse::IdentityLinkNotFound;
             }
 
-            UserNotFound
+            RemovePrincipalResponse::UserNotFound
         }
     }
 
@@ -283,11 +279,4 @@ impl From<&AuthPrincipalInternal> for AuthPrincipal {
             last_used: value.last_used,
         }
     }
-}
-
-pub enum RemoveAuthPrincipalResult {
-    Success(Option<Vec<u8>>), // The WebAuthn credential Id (if any)
-    CannotUnlinkActivePrincipal,
-    IdentityLinkNotFound,
-    UserNotFound,
 }

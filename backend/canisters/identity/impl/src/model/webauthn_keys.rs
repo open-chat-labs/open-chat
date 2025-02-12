@@ -28,10 +28,6 @@ impl WebAuthnKeys {
     pub fn get(&self, credential_id: Vec<u8>) -> Option<&WebAuthnKeyInternal> {
         self.keys.get(&ByteBuf::from(credential_id))
     }
-
-    pub fn remove(&mut self, credential_id: Vec<u8>) {
-        self.keys.remove(&ByteBuf::from(credential_id));
-    }
 }
 
 #[derive(Serialize, Deserialize)]
