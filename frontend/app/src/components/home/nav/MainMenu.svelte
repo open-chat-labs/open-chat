@@ -17,31 +17,38 @@
     import Login from "svelte-material-icons/Login.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import page from "page";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { anonUser, platformOperator, canExtendDiamond } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
-    const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
+    interface Props {
+        onProfile: () => void;
+        onWallet: () => void;
+        onUpgrade: () => void;
+    }
 
-    $: admin = $platformOperator;
+    let { onProfile, onWallet, onUpgrade }: Props = $props();
+
+    const client = getContext<OpenChat>("client");
+
+    let admin = $derived($platformOperator);
 </script>
 
 <Menu>
     {#if !$anonUser}
-        <MenuItem onclick={() => dispatch("wallet")}>
+        <MenuItem onclick={onWallet}>
             <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text">
                 <Translatable resourceKey={i18nKey("wallet")} />
             </span>
         </MenuItem>
-        <MenuItem onclick={() => dispatch("profile")}>
+        <MenuItem onclick={onProfile}>
             <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text"><Translatable resourceKey={i18nKey("profile.title")} /></span>
         </MenuItem>
-        <MenuItem onclick={() => dispatch("upgrade")}>
+        <MenuItem onclick={onUpgrade}>
             <span class="diamond-icon" slot="icon"></span>
             <span slot="text"
                 ><Translatable

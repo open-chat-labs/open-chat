@@ -1,10 +1,10 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
 
-    export let video = { muted: 0, unmuted: 0 };
+    let { video = { muted: 0, unmuted: 0 } } = $props();
 
-    $: muted = video.unmuted <= 0;
-    $: count = muted ? video.muted : video.unmuted;
+    let muted = $derived(video.unmuted <= 0);
+    let count = $derived(muted ? video.muted : video.unmuted);
 </script>
 
 {#if count > 0}

@@ -13,7 +13,7 @@
     import { communityListScrollTop } from "../../../stores/scrollPos";
     import { pathParams } from "../../../routes";
     import page from "page";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
@@ -52,14 +52,22 @@
     } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
     const flipDurationMs = 300;
 
-    $: user = $userStore.get($createdUser.userId);
-    $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
-    $: communityExplorer = $pathParams.kind === "communities_route";
-    $: selectedCommunityId = $selectedCommunity?.id.communityId;
-    $: claimChitAvailable = $chitState.nextDailyChitClaim < $now;
+    interface Props {
+        onProfile: () => void;
+        onClaimDailyChit: () => void;
+        onWallet: () => void;
+        onUpgrade: () => void;
+    }
+
+    let { onProfile, onClaimDailyChit, ...rest }: Props = $props();
+
+    let user = $derived($userStore.get($createdUser.userId));
+    let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
+    let communityExplorer = $derived($pathParams.kind === "communities_route");
+    let selectedCommunityId = $derived($selectedCommunity?.id.communityId);
+    let claimChitAvailable = $derived($chitState.nextDailyChitClaim < $now);
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
@@ -67,7 +75,7 @@
 
     // we don't want drag n drop to monkey around with the key
     type CommunityItem = CommunitySummary & { _id: string };
-    let communityItems: CommunityItem[] = [];
+    let communityItems: CommunityItem[] = $state([]);
     let dragging = false;
 
     onMount(() => {
@@ -119,7 +127,8 @@
         client.updateCommunityIndexes(reindex(e.detail.items));
     }
 
-    function toggleNav() {
+    function toggleNav(e: Event) {
+        e.stopPropagation();
         if ($navOpen) {
             navOpen.set(false);
         } else {
@@ -129,7 +138,7 @@
 
     function viewProfile() {
         activityFeedShowing.set(false);
-        dispatch("profile");
+        onProfile();
     }
 
     function exploreCommunities() {
@@ -171,7 +180,7 @@
     }
 </script>
 
-<svelte:body on:click={closeIfOpen} />
+<svelte:body onclick={closeIfOpen} />
 
 <section bind:this={navWrapper} class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
     <div class="top">
@@ -184,7 +193,7 @@
                         </HoverIcon>
                     </span>
                     <span slot="menu">
-                        <MainMenu on:wallet on:halloffame on:upgrade on:profile />
+                        <MainMenu {...rest} {onProfile} />
                     </span>
                 </MenuIcon>
             </div>
@@ -232,7 +241,7 @@
                     label={i18nKey(
                         claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
                     )}
-                    onClick={() => dispatch("claimDailyChit")}>
+                    onClick={onClaimDailyChit}>
                     <div class="hover streak">
                         <LighteningBolt enabled={claimChitAvailable} />
                     </div>
@@ -260,10 +269,10 @@
             dropTargetStyle: { outline: "var(--accent) solid 2px" },
             dragDisabled: isTouchDevice,
         }}
-        on:scroll={onScroll}
+        onscroll={onScroll}
         bind:this={scrollingSection}
-        on:consider={handleDndConsider}
-        on:finalize={handleDndFinalize}
+        onconsider={handleDndConsider}
+        onfinalize={handleDndFinalize}
         class="middle">
         {#each communityItems as community (community._id)}
             <div animate:flip={{ duration: flipDurationMs }}>
@@ -303,7 +312,9 @@
             </div>
         </LeftNavItem>
         <LeftNavItem label={$navOpen ? i18nKey("collapse") : i18nKey("expand")}>
-            <div class:open={$navOpen} on:click|stopPropagation={toggleNav} class="expand hover">
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div class:open={$navOpen} onclick={toggleNav} class="expand hover">
                 <ArrowRight size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
