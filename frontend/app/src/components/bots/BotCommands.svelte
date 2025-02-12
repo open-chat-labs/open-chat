@@ -18,14 +18,9 @@
 
 <div class="commands" class:centered>
     {#each commands as command}
-        <TooltipWrapper position="bottom" align="middle">
-            <div
-                slot="target"
-                class="command"
-                class:not_permitted={!hasEveryRequiredPermission(
-                    command.permissions,
-                    grantedPermissions,
-                )}>
+        {@const permitted = hasEveryRequiredPermission(command.permissions, grantedPermissions)}
+        <TooltipWrapper enable={permitted} position="bottom" align="middle">
+            <div slot="target" class="command" class:not_permitted={!permitted}>
                 {command.name}
             </div>
             <div let:position let:align slot="tooltip">
