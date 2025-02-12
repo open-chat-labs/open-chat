@@ -176,6 +176,10 @@ impl UserPrincipals {
         self.auth_principals.get(auth_principal).map(|a| a.into())
     }
 
+    pub fn auth_principal_exists(&self, auth_principal: &Principal) -> bool {
+        self.auth_principals.contains_key(auth_principal)
+    }
+
     // Returns the underlying auth principal if the caller is using a temp key, else returns the
     // calling principal
     pub fn unwrap_temp_key(&self, caller: Principal) -> Principal {

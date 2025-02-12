@@ -82,7 +82,7 @@ impl RuntimeState {
 
         let caller = self.env.caller();
 
-        if self.data.user_principals.get_by_auth_principal(&caller).is_some() {
+        if self.data.user_principals.auth_principal_exists(&caller) {
             return Err(AlreadyRegistered);
         }
 
@@ -108,7 +108,7 @@ impl RuntimeState {
             return Err(OriginatingCanisterInvalid(originating_canister));
         }
 
-        if self.data.user_principals.get_by_auth_principal(&auth_principal).is_some() {
+        if self.data.user_principals.auth_principal_exists(&auth_principal) {
             return Err(AlreadyRegistered);
         }
 

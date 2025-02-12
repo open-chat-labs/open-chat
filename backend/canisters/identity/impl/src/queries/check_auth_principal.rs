@@ -11,7 +11,7 @@ fn check_auth_principal_impl(state: &RuntimeState) -> Response {
     let caller = state.env.caller();
     let auth_principal = state.data.user_principals.unwrap_temp_key(caller);
 
-    if state.data.user_principals.get_by_auth_principal(&auth_principal).is_some() {
+    if state.data.user_principals.auth_principal_exists(&auth_principal) {
         Success
     } else {
         NotFound
