@@ -7,6 +7,7 @@ export NODE_ENV=development
 export OC_ACHIEVEMENT_URL_PATH=http://{canisterId}.localhost:8080
 export OC_BLOB_URL_PATTERN=http://{canisterId}.localhost:8080/{blobType}
 export OC_BUILD_ENV=$NODE_ENV
+export OC_WEBAUTHN_ORIGIN=localhost
 export OC_DEV_PORT=5001
 export OC_DFX_NETWORK=local
 export OC_INTERNET_IDENTITY_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai

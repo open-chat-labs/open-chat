@@ -1,5 +1,6 @@
 export OC_BUILD_ENV=production
 export OC_NODE_ENV=$NODE_ENV
+export OC_WEBAUTHN_ORIGIN=oc.app
 export OC_INTERNET_IDENTITY_CANISTER_ID=rdmx6-jaaaa-aaaaa-aaadq-cai
 export OC_INTERNET_IDENTITY_URL=https://identity.ic0.app
 export OC_NFID_URL=https://nfid.one/authenticate/?applicationName=OpenChat
