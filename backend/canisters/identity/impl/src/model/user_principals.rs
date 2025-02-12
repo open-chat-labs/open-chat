@@ -105,10 +105,7 @@ impl UserPrincipals {
         if caller == linked_principal {
             RemovePrincipalResponse::CannotUnlinkActivePrincipal
         } else {
-            // Curent UserPrincipal
-            let user_principal = self.get_by_auth_principal(&caller);
-
-            if let Some(mut user) = user_principal {
+            if let Some(user) = self.user_principal_mut(&caller) {
                 // This condition may be redundant, but in combination with the
                 // responses can provide additional context in case of an error.
                 if user.auth_principals.contains(&linked_principal) {
@@ -172,6 +169,12 @@ impl UserPrincipals {
         if let Some(a) = self.auth_principals.get_mut(principal) {
             a.is_ii_principal = true;
         }
+    }
+
+    fn user_principal_mut(&mut self, auth_principal: &Principal) -> Option<&mut UserPrincipalInternal> {
+        self.auth_principals
+            .get(auth_principal)
+            .and_then(|p| self.user_principals.get_mut(p.user_principal_index as usize))
     }
 
     fn user_principal_by_index(&self, user_principal_index: u32) -> Option<UserPrincipal> {
