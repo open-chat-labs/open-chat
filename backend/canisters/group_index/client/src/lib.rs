@@ -1,19 +1,19 @@
-use canister_client::{generate_query_call, generate_update_call};
+use canister_client::{generate_candid_query_call, generate_candid_update_call};
 use group_index_canister::*;
 use ic_agent::Agent;
 use types::CanisterId;
 
 // Queries
-generate_query_call!(explore_groups);
-generate_query_call!(recommended_groups);
-generate_query_call!(search);
+generate_candid_query_call!(explore_groups);
+generate_candid_query_call!(recommended_groups);
+generate_candid_query_call!(search);
 
 // Updates
-generate_update_call!(add_local_group_index_canister);
-generate_update_call!(upgrade_community_canister_wasm);
-generate_update_call!(upgrade_group_canister_wasm);
-generate_update_call!(upgrade_local_group_index_canister_wasm);
-generate_update_call!(upload_wasm_chunk);
+generate_candid_update_call!(add_local_group_index_canister);
+generate_candid_update_call!(upgrade_community_canister_wasm);
+generate_candid_update_call!(upgrade_group_canister_wasm);
+generate_candid_update_call!(upgrade_local_group_index_canister_wasm);
+generate_candid_update_call!(upload_wasm_chunk);
 
 pub async fn upload_wasm_in_chunks(
     agent: &Agent,
