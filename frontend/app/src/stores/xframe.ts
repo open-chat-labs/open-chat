@@ -31,8 +31,9 @@ const FRAME_ANCESTORS = [
     "https://y7mum-taaaa-aaaag-qklxq-cai.icp0.io", // konecta pre-register test env
     "https://e4tvt-6yaaa-aaaao-a3sdq-cai.icp0.io", // dragon paladin wizard
     "https://dragonwizards.club", // dragon paladin wizard web2 test
-    "https://ic-vc.com", // ICVC via domain
+    "https://ic-vc.com", // ICVC homepage
     "https://mnc6b-aaaaa-aaaap-qhnrq-cai.icp0.io", // ICVC via canister ID
+    "https://platform.ic-vc.com", // ICVC platform
     "https://mitchkurtzman.com", //Mitch's portfolio POC Domain
     "https://wk3k3-vaaaa-aaaak-adtza-cai.icp0.io", //Mitch's portfilio POC canister ID
     "https://fantasyextreme.org", //fantasyextreme prod
