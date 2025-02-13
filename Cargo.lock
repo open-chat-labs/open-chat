@@ -2114,6 +2114,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
 
 [[package]]
+name = "dupe_deps_detector"
+version = "0.1.0"
+
+[[package]]
 name = "dyn-clone"
 version = "1.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8411,9 +8415,10 @@ dependencies = [
 name = "user_canister_client"
 version = "0.1.0"
 dependencies = [
- "candid",
  "canister_client",
  "ic-agent",
+ "ic_principal",
+ "msgpack",
  "types",
  "user_canister",
 ]
