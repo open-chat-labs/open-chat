@@ -76,6 +76,9 @@
 
     $: currentIdentity = accounts.find((a) => a.isCurrentIdentity);
     $: currentProvider = currentIdentity?.provider ?? $selectedAuthProviderStore;
+    $: restrictTo = substep.kind === "initiator" || currentProvider === undefined
+        ? new Set()
+        : new Set([currentProvider]);
 
     onMount(() => {
         client.getAuthenticationPrincipals().then((a) => (accounts = a));
@@ -367,6 +370,7 @@
             </div>
             <ChooseSignInOption
                 mode={"signin"}
+                {restrictTo}
                 {currentProvider}
                 showMore={substep.kind === "initiator"}
                 bind:emailInvalid
