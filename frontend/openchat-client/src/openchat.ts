@@ -7115,16 +7115,18 @@ export class OpenChat extends EventTarget {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
 
-        const webAuthnIdentity = await createWebAuthnIdentity(webAuthnOrigin);
+        const [webAuthnIdentity, aaguid] = await createWebAuthnIdentity(webAuthnOrigin);
 
         // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
+        
         return await this.#finaliseWebAuthnSignin(
             tempKey,
             () => webAuthnIdentity,
             webAuthnOrigin,
             assumeIdentity,
+            aaguid,
         );
     }
 
@@ -7140,6 +7142,7 @@ export class OpenChat extends EventTarget {
             () => webAuthnIdentity.innerIdentity(),
             webAuthnOrigin,
             true,
+            undefined,
         );
     }
 
@@ -7163,6 +7166,7 @@ export class OpenChat extends EventTarget {
             () => webAuthnIdentity,
             webAuthnKey.origin,
             false,
+            undefined,
         );
     }
 
@@ -7171,6 +7175,7 @@ export class OpenChat extends EventTarget {
         webAuthnIdentityFn: () => WebAuthnIdentity,
         webAuthnOrigin: string,
         assumeIdentity: boolean,
+        aaguid: Uint8Array | undefined,
     ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const sessionKey = await ECDSAKeyIdentity.generate();
         const delegationChain = await DelegationChain.create(
@@ -7187,6 +7192,7 @@ export class OpenChat extends EventTarget {
             credentialId: new Uint8Array(webAuthnIdentity.rawId),
             origin: webAuthnOrigin,
             crossPlatform: webAuthnIdentity.getAuthenticatorAttachment() === "cross-platform",
+            aaguid: aaguid ?? new Uint8Array(),
         };
         if (assumeIdentity) {
             this.#webAuthnKey = webAuthnKey;

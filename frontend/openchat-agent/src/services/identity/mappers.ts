@@ -243,6 +243,7 @@ function webAuthnKey(key: ApiWebAuthnKey): WebAuthnKey {
         credentialId: consolidateBytes(key.credential_id),
         origin: key.origin,
         crossPlatform: key.cross_platform,
+        aaguid: consolidateBytes(key.aaguid),
     };
 }
 
@@ -252,5 +253,6 @@ export function apiWebAuthnKey(key: WebAuthnKey): ApiWebAuthnKey {
         credential_id: key.credentialId,
         origin: key.origin,
         cross_platform: key.crossPlatform,
+        aaguid: key.aaguid,
     };
 }

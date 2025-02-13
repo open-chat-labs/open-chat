@@ -18,6 +18,7 @@ impl WebAuthnKeys {
                 public_key: key.public_key,
                 origin: key.origin,
                 cross_platform: key.cross_platform,
+                aaguid: key.aaguid,
                 created: now,
             });
         } else {
@@ -38,6 +39,8 @@ pub struct WebAuthnKeyInternal {
     pub origin: String,
     #[serde(rename = "x")]
     pub cross_platform: bool,
+    #[serde(rename = "g")]
+    pub aaguid: [u8; 16],
     #[serde(rename = "c")]
     pub created: TimestampMillis,
 }
@@ -49,6 +52,7 @@ impl WebAuthnKeyInternal {
             credential_id,
             origin: self.origin.clone(),
             cross_platform: self.cross_platform,
+            aaguid: self.aaguid,
         }
     }
 }

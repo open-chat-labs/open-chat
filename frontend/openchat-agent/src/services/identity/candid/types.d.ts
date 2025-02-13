@@ -107,6 +107,7 @@ export interface WebAuthnKey {
   'public_key' : Uint8Array | number[],
   'origin' : string,
   'cross_platform' : boolean,
+  'aaguid' : Uint8Array | number[],
   'credential_id' : Uint8Array | number[],
 }
 export interface _SERVICE {
