@@ -2,9 +2,9 @@
     import Avatar from "../Avatar.svelte";
     import {
         AvatarSize,
-        currentChatBots,
         emptyExternalBotPermissions,
         externalBots,
+        installedDirectBots,
         isProposalGroup,
         selectedCommunity,
         type ExternalBotPermissions,
@@ -55,7 +55,7 @@
                 };
                 const bot = $externalBots.get(chat.them.userId);
                 const perm =
-                    $currentChatBots.get(chat.them.userId) ?? emptyExternalBotPermissions();
+                    $installedDirectBots.get(chat.them.userId) ?? emptyExternalBotPermissions();
                 return bot === undefined
                     ? s
                     : {
