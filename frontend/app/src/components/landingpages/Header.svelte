@@ -1,6 +1,6 @@
 <script lang="ts">
     import { mobileWidth } from "../../stores/screenDimensions";
-    import MenuIcon from "../MenuIcon.svelte";
+    import MenuIcon from "../MenuIconLegacy.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuItems from "./MenuItems.svelte";
     import MobileMenuItems from "./MobileMenuItems.svelte";

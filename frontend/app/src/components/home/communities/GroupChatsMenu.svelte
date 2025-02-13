@@ -1,5 +1,5 @@
 <script lang="ts">
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -7,7 +7,7 @@
     import Compass from "svelte-material-icons/CompassOutline.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
     import page from "page";
     import type { OpenChat } from "openchat-client";
@@ -50,18 +50,18 @@
     </span>
     <span slot="menu">
         <Menu>
-            <MenuItem on:click={newGroup}>
+            <MenuItem onclick={newGroup}>
                 <AccountMultiplePlus
                     size={$iconSize}
                     color={"var(--icon-inverted-txt)"}
                     slot="icon" />
                 <span slot="text"><Translatable resourceKey={i18nKey("newGroup")} /></span>
             </MenuItem>
-            <MenuItem on:click={() => page("/groups")}>
+            <MenuItem onclick={() => page("/groups")}>
                 <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                 <span slot="text"><Translatable resourceKey={i18nKey("exploreGroups")} /></span>
             </MenuItem>
-            <MenuItem disabled={!canMarkAllRead} on:click={() => dispatch("markAllRead")}>
+            <MenuItem disabled={!canMarkAllRead} onclick={() => dispatch("markAllRead")}>
                 <CheckboxMultipleMarked
                     size={$iconSize}
                     color={"var(--icon-inverted-txt)"}

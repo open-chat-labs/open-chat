@@ -3,11 +3,15 @@
     import { pop } from "../../utils/transition";
     import { emptyUnreadCounts } from "openchat-client";
 
-    export let unread = emptyUnreadCounts();
-    export let solid = true;
+    interface Props {
+        unread?: any;
+        solid?: boolean;
+    }
 
-    $: muted = !unread.mentions && unread.unmuted <= 0;
-    $: count = muted ? unread.muted : unread.unmuted;
+    let { unread = emptyUnreadCounts(), solid = true }: Props = $props();
+
+    let muted = $derived(!unread.mentions && unread.unmuted <= 0);
+    let count = $derived(muted ? unread.muted : unread.unmuted);
 </script>
 
 {#if count > 0 || unread.mentions}

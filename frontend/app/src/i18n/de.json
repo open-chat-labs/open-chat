@@ -153,11 +153,13 @@
             "action": "Registrieren",
             "addBot": "Bot hinzufügen",
             "choosePermissions": "Berechtigungen",
+            "continue": "Weitermachen",
             "failure": "Es ist uns leider nicht gelungen, den Bot hinzuzufügen.",
             "loadDefinition": "Lastdefinition",
             "noPermissions": "Keine besonderen Berechtigungen erforderlich",
             "permissionsInfo": "Dieser Bot benötigt die folgenden Berechtigungen. Wenn Sie die erteilten Berechtigungen einschränken, werden die Fähigkeiten des Bots eingeschränkt.",
-            "title": "Bot zur Community hinzufügen"
+            "title": "Bot zur Community hinzufügen",
+            "titleDirect": "Wählen Sie Berechtigungen zur Interaktion mit diesem Bot"
         },
         "builder": {
             "addAnother": "Weitere hinzufügen",
@@ -262,6 +264,11 @@
         },
         "diamond": {
             "desc": "Posten Sie einen Link, um die Diamond-Mitgliedschaft zu erklären"
+        },
+        "direct": {
+            "placeholder": "Geben Sie \"/\" ein, um einen Befehl auszuwählen ...",
+            "warning": "Sie können nur Schrägstrichbefehle an Bots senden. \n\nGeben Sie \"/\" ein, um zu sehen, welche Befehle verfügbar sind.",
+            "warningTitle": "Direkter Chat mit Bot"
         },
         "edit": {
             "failure": "Leider konnten wir die Bot-Berechtigungen nicht aktualisieren",
@@ -1578,7 +1585,7 @@
     "searchForUsername": "Suchen Sie nach einem Benutzernamen",
     "searchGroupsPlaceholder": "Nach Gruppen suchen...",
     "searchPlaceholder": "Nach Benutzern und Gruppen suchen...",
-    "searchUsersPlaceholder": "Nach Benutzern suchen...",
+    "searchUsersPlaceholder": "Suche nach Benutzern und Bots...",
     "selectAChannel": "Wählen Sie einen Kanal aus der Liste aus oder suchen Sie nach weiteren Kanälen in dieser Community.",
     "selectAChat": "Suchen Sie nach einem Freund, erstellen Sie eine neue Gruppe oder wählen Sie einen Chat aus.",
     "selectAFavourite": "Sie können Direktchats, Gruppenchats oder Community-Kanäle zu Ihren Favoriten hinzufügen und sehen diese hier.",
@@ -1867,6 +1874,7 @@
     "usernameRules": "Nur alphanumerische Zeichen und Unterstrich",
     "userReferralMessage": "Teilen Sie diesen Link zu OpenChat mit Freunden und Familie. Sie erhalten CHIT-Belohnungen für jeden von Ihnen geworbenen Benutzer, der seine einzigartige Persönlichkeit verifiziert oder Diamond-Mitglied wird. Wenn ein von Ihnen geworbener Benutzer eine Diamond-Mitgliedschaft erhält, erhalten Sie 5.000 CHIT, wenn er seine einzigartige Persönlichkeit nachweist, sind es 10.000 CHIT und wenn er lebenslange Diamond-Mitgliedschaft erhält, sind es 15.000 CHIT. Wenn er anschließend eine „Verifizierung“ mit höherem Wert durchführt, wird Ihnen die Differenz in CHIT gutgeschrieben.",
     "users": "Benutzer",
+    "usersAndBots": "Benutzer und Bots",
     "userSearchFailed": "Bei der Suche nach Benutzern ist ein Fehler aufgetreten",
     "verified": {
         "choose": "Wählen Sie {level} zur Überprüfung aus",

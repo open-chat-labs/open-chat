@@ -8,7 +8,7 @@
     import SelectedMatch from "./SelectedMatch.svelte";
     import Avatar from "../../Avatar.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
 
     const client = getContext<OpenChat>("client");
     const PAGE_SIZE = 15;
@@ -75,7 +75,7 @@
         <div class="menu">
             <Menu fit>
                 {#each communitySearchState.results as community (community.id.communityId)}
-                    <MenuItem on:click={() => select(community)}>
+                    <MenuItem onclick={() => select(community)}>
                         <Avatar
                             slot="icon"
                             url={client.communityAvatarUrl(

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import MenuItem from "../MenuItem.svelte";
+    import MenuItem from "../MenuItemLegacy.svelte";
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
@@ -147,7 +147,7 @@
         {style}>
         <Menu fit>
             <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
-                <MenuItem selected={itemIndex === index} on:click={() => mention(item)}>
+                <MenuItem selected={itemIndex === index} onclick={() => mention(item)}>
                     <div class="avatar" slot="icon">
                         {#if item.kind === "user_group" || item.kind === "everyone"}
                             <div class="group-icon">

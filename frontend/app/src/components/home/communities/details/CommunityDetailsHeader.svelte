@@ -6,9 +6,9 @@
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import HoverIcon from "../../../HoverIcon.svelte";
-    import MenuIcon from "../../../MenuIcon.svelte";
+    import MenuIcon from "../../../MenuIconLegacy.svelte";
     import Menu from "../../../Menu.svelte";
-    import MenuItem from "../../../MenuItem.svelte";
+    import MenuItem from "../../../MenuItemLegacy.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../../stores/iconSize";
@@ -47,7 +47,7 @@
         </span>
         <span slot="menu">
             <Menu>
-                <MenuItem on:click={showMembers}>
+                <MenuItem onclick={showMembers}>
                     <AccountMultiple
                         size={$iconSize}
                         color={"var(--icon-inverted-txt)"}
@@ -56,7 +56,7 @@
                         <Translatable resourceKey={i18nKey("communities.members")} />
                     </div>
                 </MenuItem>
-                <MenuItem on:click={invite}>
+                <MenuItem onclick={invite}>
                     <AccountMultiplePlus
                         size={$iconSize}
                         color={"var(--icon-inverted-txt)"}
@@ -66,7 +66,7 @@
                     </div>
                 </MenuItem>
                 {#if canEdit}
-                    <MenuItem on:click={editCommunity}>
+                    <MenuItem onclick={editCommunity}>
                         <PencilOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}

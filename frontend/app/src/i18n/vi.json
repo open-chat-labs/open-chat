@@ -153,11 +153,13 @@
             "action": "Đăng ký",
             "addBot": "Thêm bot",
             "choosePermissions": "Quyền",
+            "continue": "Tiếp tục",
             "failure": "Xin lỗi chúng tôi không thể thêm bot",
             "loadDefinition": "Tải định nghĩa",
             "noPermissions": "Không cần quyền đặc biệt",
             "permissionsInfo": "Bot này tìm kiếm các quyền sau. Việc chọn giới hạn các quyền được cấp sẽ hạn chế khả năng của bot.",
-            "title": "Thêm bot vào cộng đồng"
+            "title": "Thêm bot vào cộng đồng",
+            "titleDirect": "Chọn quyền để tương tác với bot này"
         },
         "builder": {
             "addAnother": "Thêm một cái nữa",
@@ -262,6 +264,11 @@
         },
         "diamond": {
             "desc": "Đăng liên kết để giải thích về tư cách thành viên Kim cương"
+        },
+        "direct": {
+            "placeholder": "Nhập \"/\" để chọn lệnh ...",
+            "warning": "Bạn chỉ có thể gửi lệnh slash đến bot. \n\nVui lòng nhập \"/\" để xem những lệnh nào khả dụng.",
+            "warningTitle": "Trò chuyện trực tiếp với bot"
         },
         "edit": {
             "failure": "Xin lỗi, chúng tôi không thể cập nhật quyền của bot",
@@ -1578,7 +1585,7 @@
     "searchForUsername": "Tìm kiếm tên người dùng",
     "searchGroupsPlaceholder": "Tìm kiếm các nhóm...",
     "searchPlaceholder": "Tìm kiếm người dùng và nhóm...",
-    "searchUsersPlaceholder": "Tìm kiếm người dùng...",
+    "searchUsersPlaceholder": "Tìm kiếm người dùng và bot...",
     "selectAChannel": "Chọn một kênh từ danh sách hoặc tìm kiếm các kênh khác trong cộng đồng này.",
     "selectAChat": "Tìm kiếm bạn, tạo nhóm mới hoặc chọn một cuộc trò chuyện",
     "selectAFavourite": "Bạn có thể thêm các cuộc trò chuyện trực tiếp, trò chuyện nhóm hoặc các kênh cộng đồng vào mục yêu thích của mình và bạn sẽ thấy chúng ở đây.",
@@ -1867,6 +1874,7 @@
     "usernameRules": "Chỉ bao gồm chữ cái và gạch dưới",
     "userReferralMessage": "Chia sẻ liên kết này đến OpenChat với bạn bè và gia đình. Bạn sẽ kiếm được phần thưởng CHIT cho mỗi người dùng mà bạn giới thiệu, người tiếp tục xác minh nhân cách độc đáo của họ hoặc trở thành thành viên Diamond. Nếu người dùng mà bạn giới thiệu tiếp tục nhận được tư cách thành viên Diamond, bạn sẽ kiếm được 5.000 CHIT, nếu họ chứng minh được nhân cách độc đáo, thì đó là 10.000 CHIT và nếu họ nhận được Diamond trọn đời, thì đó là 15.000 CHIT. Nếu sau đó họ thực hiện \"xác minh\" có giá trị cao hơn, bạn sẽ được thưởng phần chênh lệch trong CHIT.",
     "users": "Người dùng",
+    "usersAndBots": "Người dùng và bot",
     "userSearchFailed": "Đã xảy ra lỗi khi tìm kiếm người dùng",
     "verified": {
         "choose": "Chọn {level} để xác minh",

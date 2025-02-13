@@ -153,11 +153,13 @@
             "action": "登记",
             "addBot": "添加机器人",
             "choosePermissions": "权限",
+            "continue": "继续",
             "failure": "抱歉，我们无法添加该机器人",
             "loadDefinition": "荷载定义",
             "noPermissions": "无需特殊权限",
             "permissionsInfo": "此机器人寻求以下权限。选择限制授予的权限将限制机器人的功能。",
-            "title": "将机器人添加到社区"
+            "title": "将机器人添加到社区",
+            "titleDirect": "选择与此机器人互动的权限"
         },
         "builder": {
             "addAnother": "添加另一个",
@@ -262,6 +264,11 @@
         },
         "diamond": {
             "desc": "发布链接解释钻石会员资格"
+        },
+        "direct": {
+            "placeholder": "输入“/”选择命令...",
+            "warning": "您只能向机器人发送斜线命令。\n\n请输入“/”查看可用的命令。",
+            "warningTitle": "直接与机器人聊天"
         },
         "edit": {
             "failure": "抱歉，我们无法更新机器人权限",
@@ -1578,7 +1585,7 @@
     "searchForUsername": "搜索用户名",
     "searchGroupsPlaceholder": "搜索群组...",
     "searchPlaceholder": "搜索用户和群聊...",
-    "searchUsersPlaceholder": "搜索用户...",
+    "searchUsersPlaceholder": "搜索用户和机器人...",
     "selectAChannel": "从列表中选择一个频道或搜索该社区中的更多频道。",
     "selectAChat": "搜索好友，创建群聊或选择一个聊天",
     "selectAFavourite": "您可以将直接聊天、群聊或社区频道添加到您的收藏夹中，您将在此处看到它们。",
@@ -1867,6 +1874,7 @@
     "usernameRules": "仅支持字母，数字和下划线",
     "userReferralMessage": "与亲朋好友分享此 OpenChat 链接。您推荐的每位用户继续验证其独特身份或成为钻石会员，您都将获得 CHIT 奖励。如果您推荐的用户继续成为钻石会员，您将获得 5,000 CHIT，如果他们证明其独特身份，则为 10,000 CHIT，如果他们成为终身钻石会员，则为 15,000 CHIT。如果他们随后进行更高价值的“验证”，您将获得 CHIT 差额。",
     "users": "用户",
+    "usersAndBots": "用户和机器人",
     "userSearchFailed": "搜索用户失败",
     "verified": {
         "choose": "选择{level}进行验证",

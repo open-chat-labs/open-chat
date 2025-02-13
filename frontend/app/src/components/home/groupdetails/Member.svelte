@@ -6,10 +6,10 @@
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
@@ -86,7 +86,7 @@
                 <span slot="menu">
                     <Menu>
                         {#if canPromoteToOwner}
-                            <MenuItem on:click={() => changeRole("owner")}>
+                            <MenuItem onclick={() => changeRole("owner")}>
                                 <AccountPlusOutline
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -98,7 +98,7 @@
                             </MenuItem>
                         {/if}
                         {#if canPromoteToAdmin}
-                            <MenuItem on:click={() => changeRole("admin")}>
+                            <MenuItem onclick={() => changeRole("admin")}>
                                 <AccountPlusOutline
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -110,7 +110,7 @@
                             </MenuItem>
                         {/if}
                         {#if canDemoteToAdmin}
-                            <MenuItem on:click={() => changeRole("admin")}>
+                            <MenuItem onclick={() => changeRole("admin")}>
                                 <AccountRemoveOutline
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -122,7 +122,7 @@
                             </MenuItem>
                         {/if}
                         {#if canPromoteToModerator}
-                            <MenuItem on:click={() => changeRole("moderator")}>
+                            <MenuItem onclick={() => changeRole("moderator")}>
                                 <AccountPlusOutline
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -136,7 +136,7 @@
                             </MenuItem>
                         {/if}
                         {#if canDemoteToModerator}
-                            <MenuItem on:click={() => changeRole("moderator")}>
+                            <MenuItem onclick={() => changeRole("moderator")}>
                                 <AccountRemoveOutline
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -150,7 +150,7 @@
                             </MenuItem>
                         {/if}
                         {#if canDemoteToMember}
-                            <MenuItem on:click={() => changeRole("member")}>
+                            <MenuItem onclick={() => changeRole("member")}>
                                 <AccountRemoveOutline
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -162,7 +162,7 @@
                             </MenuItem>
                         {/if}
                         {#if canBlockUser}
-                            <MenuItem on:click={blockUser}>
+                            <MenuItem onclick={blockUser}>
                                 <Cancel
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -173,7 +173,7 @@
                             </MenuItem>
                         {/if}
                         {#if canRemoveMember}
-                            <MenuItem on:click={removeUser}>
+                            <MenuItem onclick={removeUser}>
                                 <MinusCircleOutline
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}

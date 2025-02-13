@@ -680,6 +680,7 @@ export function externalBotMatch(
 ): BotMatch {
     const botId = principalBytesToString(match.id);
     return {
+        kind: "bot_match",
         name: match.name,
         avatarUrl: mapOptional(
             match.avatar_id,

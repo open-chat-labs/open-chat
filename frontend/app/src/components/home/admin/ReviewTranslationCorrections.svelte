@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _, locale } from "svelte-i18n";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
@@ -9,7 +9,7 @@
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import type {
         CandidateTranslations,
         OpenChat,
@@ -220,7 +220,7 @@
                             </span>
                             <span slot="menu">
                                 <Menu>
-                                    <MenuItem on:click={() => previewCorrection(correction)}>
+                                    <MenuItem onclick={() => previewCorrection(correction)}>
                                         <EyeOutline
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
@@ -228,7 +228,7 @@
                                         <span slot="text">Preview</span>
                                     </MenuItem>
                                     {#if verifying !== undefined && verifying.id === correction.id}
-                                        <MenuItem on:click={() => (verifying = undefined)}>
+                                        <MenuItem onclick={() => (verifying = undefined)}>
                                             <Translate
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
@@ -236,7 +236,7 @@
                                             <span slot="text">Show proposed</span>
                                         </MenuItem>
                                     {:else}
-                                        <MenuItem on:click={() => verifyCorrection(correction)}>
+                                        <MenuItem onclick={() => verifyCorrection(correction)}>
                                             <Translate
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
@@ -244,7 +244,7 @@
                                             <span slot="text">Show suggestion in English</span>
                                         </MenuItem>
                                     {/if}
-                                    <MenuItem on:click={() => approveCorrection(correction)}>
+                                    <MenuItem onclick={() => approveCorrection(correction)}>
                                         <Check
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
@@ -252,7 +252,7 @@
                                         <span slot="text">Approve</span>
                                     </MenuItem>
                                     <MenuItem
-                                        on:click={() =>
+                                        onclick={() =>
                                             rejectCorrection(correction, "incorrect_meaning")}>
                                         <Close
                                             size={$iconSize}
@@ -261,7 +261,7 @@
                                         <span slot="text">Reject (meaning)</span>
                                     </MenuItem>
                                     <MenuItem
-                                        on:click={() => rejectCorrection(correction, "too_long")}>
+                                        onclick={() => rejectCorrection(correction, "too_long")}>
                                         <Close
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
