@@ -2,6 +2,7 @@
     import { getContext, onMount } from "svelte";
     import Search from "../Search.svelte";
     import type {
+        BotMatch,
         ChatListScope,
         GroupSearchResponse,
         OpenChat,
@@ -14,27 +15,27 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let searchTerm: string = "";
-    export let searchResultsAvailable: boolean = false;
-    export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
-    export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
+    interface Props {
+        searchTerm: string;
+        searchResultsAvailable: boolean;
+        groupSearchResults?: Promise<GroupSearchResponse> | undefined;
+        userAndBotsSearchResults?: Promise<(UserSummary | BotMatch)[]> | undefined;
+    }
 
-    let searching: boolean = false;
+    let {
+        searchTerm = $bindable(""),
+        searchResultsAvailable = $bindable(false),
+        groupSearchResults = $bindable(undefined),
+        userAndBotsSearchResults = $bindable(undefined),
+    }: Props = $props();
 
-    $: placeholder = getPlaceholder($chatListScope.kind);
+    searchResultsAvailable;
+
+    let searching: boolean = $state(false);
 
     onMount(() => {
         return chatListScope.subscribe((_) => clearSearch());
     });
-
-    $: {
-        if (searchTerm === "") {
-            searching = false;
-            searchResultsAvailable = false;
-            groupSearchResults = undefined;
-            userSearchResults = undefined;
-        }
-    }
 
     function getPlaceholder(scope: ChatListScope["kind"]): ResourceKey {
         switch (scope) {
@@ -75,7 +76,7 @@
                         groupSearch(term);
                         break;
                     case "direct_chat":
-                        userSearch(term);
+                        userAndBotSearch(term);
                         break;
                 }
             } catch (err) {
@@ -97,21 +98,46 @@
         }
     }
 
-    async function userSearch(term: string) {
-        userSearchResults = client.searchUsers(term, 10);
-        await userSearchResults.then(postSearch);
+    function sortUsersOrBots(_a: UserSummary | BotMatch, _b: UserSummary | BotMatch): number {
+        return 0;
+    }
+
+    async function userAndBotSearch(term: string) {
+        userAndBotsSearchResults = Promise.all([searchUsers(term), searchBots(term)]).then(
+            ([users, bots]) => [...users, ...bots].sort(sortUsersOrBots),
+        );
+        await userAndBotsSearchResults.then(postSearch);
+    }
+
+    function searchBots(term: string): Promise<BotMatch[]> {
+        return client.exploreBots(term, 0, 10).then((result) => {
+            return result.kind === "success" ? result.matches : [];
+        });
+    }
+
+    function searchUsers(term: string): Promise<UserSummary[]> {
+        return client.searchUsers(term, 10);
     }
 
     async function groupSearch(term: string) {
         groupSearchResults = client.searchGroups(term, 10);
-        await groupSearchResults.then(postSearch);
+        groupSearchResults.then(postSearch);
     }
 
     async function legacySearch(term: string) {
         groupSearchResults = client.searchGroups(term, 10);
-        userSearchResults = client.searchUsers(term, 10);
-        await Promise.all([groupSearchResults, userSearchResults]).then(postSearch);
+        userAndBotsSearchResults = client.searchUsers(term, 10);
+        Promise.all([groupSearchResults, userAndBotsSearchResults]).then(postSearch);
     }
+    let placeholder = $derived(getPlaceholder($chatListScope.kind));
+    $effect(() => {
+        if (searchTerm === "") {
+            searching = false;
+            searchResultsAvailable = false;
+            groupSearchResults = undefined;
+            userAndBotsSearchResults = undefined;
+        }
+    });
 </script>
 
 <Search {placeholder} {searching} {searchTerm} on:searchEntered={performSearch} />

@@ -1,7 +1,16 @@
-<script lang="ts">
-    import type { Snippet } from "svelte";
-    import type { MenuItemProps } from "./MenuItemLegacy.svelte";
+<script lang="ts" module>
+    export interface MenuItemProps {
+        href?: string;
+        disabled?: boolean;
+        selected?: boolean;
+        warning?: boolean;
+        separator?: boolean;
+        unpadded?: boolean;
+        onclick?: () => void;
+    }
+</script>
 
+<script lang="ts">
     let {
         href,
         disabled = false,
@@ -9,21 +18,19 @@
         warning = false,
         separator = false,
         unpadded = false,
-        icon,
-        text,
         onclick,
-    }: MenuItemProps & { icon?: Snippet; text?: Snippet } = $props();
+    }: MenuItemProps = $props();
 </script>
 
 {#if disabled}
     <div class:unpadded class:disabled class="menu-item" role="menuitem">
         <span class="icon">
-            {@render icon?.()}
+            <slot name="icon" />
         </span>
-        {@render text?.()}
+        <slot name="text" />
     </div>
 {:else if separator}
-    <hr class="menu-item-separator" />
+    <hr class="separator" />
 {:else}
     <a
         {href}
@@ -37,14 +44,14 @@
         class:selected
         class:warning>
         <span class="icon">
-            {@render icon?.()}
+            <slot name="icon" />
         </span>
-        {@render text?.()}
+        <slot name="text" />
     </a>
 {/if}
 
 <style lang="scss">
-    :global(.menu-item) {
+    .menu-item {
         display: flex;
         cursor: pointer;
         color: var(--menu-txt);
@@ -88,7 +95,7 @@
         }
     }
 
-    :global(.menu-item-separator) {
+    .separator {
         border: 1px solid var(--menu-separator);
 
         &:last-child {

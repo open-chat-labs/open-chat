@@ -1,9 +1,9 @@
 <script lang="ts">
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Legend from "../../Legend.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { AvatarSize, OpenChat, userStore } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
@@ -45,7 +45,7 @@
         <span slot="menu">
             <Menu>
                 {#each otherThemes.sort() as theme}
-                    <MenuItem on:click={() => onSelect(theme.name)}>
+                    <MenuItem onclick={() => onSelect(theme.name)}>
                         <div class="theme-item" slot="text">
                             <div class="label">{theme.label}</div>
                             {#if theme.author !== undefined && $userStore.get(theme.author) !== undefined}

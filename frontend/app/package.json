@@ -14,7 +14,7 @@
         "lint": "eslint ./src --fix",
         "format": "prettier --config .prettierrc './src/**/*.ts' --write",
         "typecheck": "tsc --noEmit",
-        "sync_lang": "node ./generate.js",
+        "sync_lang": "node ./generate.cjs",
         "test": "vitest --run",
         "test:watch": "vitest"
     },
