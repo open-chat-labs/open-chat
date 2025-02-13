@@ -232,6 +232,9 @@ import type {
     BotDefinition,
     GenerateBotKeyResponse,
     BotCommandResponse,
+    BotInstallationLocation,
+    InstalledBotDetails,
+    PublicApiKeyDetails,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -1718,6 +1721,8 @@ export class OpenChatAgent extends EventTarget {
         let referrals: Referral[];
         let walletConfig: WalletConfig;
         let messageActivitySummary: MessageActivitySummary;
+        let installedBots: Map<string, InstalledBotDetails>;
+        let apiKeys: Map<string, PublicApiKeyDetails>;
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1765,11 +1770,15 @@ export class OpenChatAgent extends EventTarget {
             walletConfig = userResponse.walletConfig;
             messageActivitySummary = userResponse.messageActivitySummary;
             anyUpdates = true;
+            installedBots = userResponse.bots;
+            apiKeys = userResponse.apiKeys;
         } else {
             directChats = current.directChats;
             currentGroups = current.groupChats;
             currentCommunities = current.communities;
             latestActiveGroupsCheck = current.latestActiveGroupsCheck;
+            installedBots = current.installedBots;
+            apiKeys = current.apiKeys;
 
             const userResponse = await this.userClient.getUpdates(
                 current.latestUserCanisterUpdates,
@@ -1796,6 +1805,9 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary = current.messageActivitySummary;
 
             if (userResponse.kind === "success") {
+                userResponse.botsAddedOrUpdated.forEach((b) => installedBots.set(b.id, b));
+                userResponse.botsRemoved.forEach((b) => installedBots.delete(b));
+                userResponse.apiKeysGenerated.forEach((api) => apiKeys.set(api.botId, api));
                 directChats = userResponse.directChats.added.concat(
                     mergeDirectChatUpdates(directChats, userResponse.directChats.updated),
                 );
@@ -2032,6 +2044,8 @@ export class OpenChatAgent extends EventTarget {
             referrals,
             walletConfig,
             messageActivitySummary,
+            installedBots,
+            apiKeys,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -4122,16 +4136,23 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
+    #localUserIndexForBotContext(id: BotInstallationLocation): Promise<string> {
+        switch (id.kind) {
+            case "community":
+                return this.communityClient(id.communityId).localUserIndex();
+            case "group_chat":
+                return this.getGroupClient(id.groupId).localUserIndex();
+            case "direct_chat":
+                return this.getLocalUserIndexForUser(this.userClient.userId);
+        }
+    }
+
     async installBot(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
         grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
-        const localUserIndex =
-            id.kind === "community"
-                ? await this.communityClient(id.communityId).localUserIndex()
-                : await this.getGroupClient(id.groupId).localUserIndex();
-
+        const localUserIndex = await this.#localUserIndexForBotContext(id);
         return this.getLocalUserIndexClient(localUserIndex).installBot(
             id,
             botId,
@@ -4140,7 +4161,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     updateInstalledBot(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
         grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
@@ -4155,18 +4176,13 @@ export class OpenChatAgent extends EventTarget {
                     botId,
                     grantedPermissions,
                 );
+            case "direct_chat":
+                return this.userClient.updateInstalledBot(botId, grantedPermissions);
         }
     }
 
-    async uninstallBot(
-        id: CommunityIdentifier | GroupChatIdentifier,
-        botId: string,
-    ): Promise<boolean> {
-        const localUserIndex =
-            id.kind === "community"
-                ? await this.communityClient(id.communityId).localUserIndex()
-                : await this.getGroupClient(id.groupId).localUserIndex();
-
+    async uninstallBot(id: BotInstallationLocation, botId: string): Promise<boolean> {
+        const localUserIndex = await this.#localUserIndexForBotContext(id);
         return this.getLocalUserIndexClient(localUserIndex).uninstallBot(id, botId);
     }
 

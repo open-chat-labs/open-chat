@@ -65,6 +65,7 @@ import type {
     WalletConfig,
     Verification,
     MessageActivityFeedResponse,
+    ExternalBotPermissions,
 } from "openchat-shared";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
@@ -132,6 +133,10 @@ import {
     joinVideoCallResponse,
     setPinNumberResponse,
     apiMaybeAccessGateConfig,
+    apiChatPermission,
+    apiCommunityPermission,
+    apiMessagePermission,
+    updateBotResponse,
 } from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import {
@@ -266,6 +271,8 @@ import {
     UserMarkMessageActivityFeedReadResponse,
     UserMessageActivityFeedArgs,
     UserMessageActivityFeedResponse,
+    UserUpdateBotArgs,
+    UserUpdateBotResponse,
 } from "../../typebox";
 import { toggleNotificationsResponse } from "../notifications/mappers";
 
@@ -1646,6 +1653,26 @@ export class UserClient extends MsgpackCanisterAgent {
             messageActivityFeedResponse,
             UserMessageActivityFeedArgs,
             UserMessageActivityFeedResponse,
+        );
+    }
+
+    updateInstalledBot(
+        botId: string,
+        grantedPermissions: ExternalBotPermissions,
+    ): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+                granted_permissions: {
+                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
+                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
+                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                },
+            },
+            updateBotResponse,
+            UserUpdateBotArgs,
+            UserUpdateBotResponse,
         );
     }
 }
