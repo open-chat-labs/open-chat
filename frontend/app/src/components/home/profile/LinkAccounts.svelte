@@ -77,8 +77,8 @@
     $: currentIdentity = accounts.find((a) => a.isCurrentIdentity);
     $: currentProvider = currentIdentity?.provider ?? $selectedAuthProviderStore;
     $: restrictTo = substep.kind === "approver" && currentProvider !== undefined
-        ? new Set([currentProvider])
-        : new Set();
+        ? new Set<string>([currentProvider])
+        : new Set<string>();
 
     onMount(() => {
         client.getAuthenticationPrincipals().then((a) => (accounts = a));
