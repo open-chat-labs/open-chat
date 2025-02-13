@@ -52,7 +52,7 @@
 
         if (restrictTo.size > 0) {
             options = options.filter((o) => {
-                return (
+                return restrictTo.has(o) || (
                     (o === AuthProvider.II && restrictTo.has("II")) ||
                     (o === AuthProvider.EMAIL && restrictTo.has("EMAIL")) ||
                     (o === AuthProvider.PASSKEY && restrictTo.has("PASSKEY")) ||
