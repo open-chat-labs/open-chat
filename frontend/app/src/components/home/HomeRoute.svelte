@@ -4,12 +4,17 @@
     import FancyLoader from "../icons/FancyLoader.svelte";
     import LandingPage from "../landingpages/LandingPage.svelte";
 
-    export let showLandingPage: boolean;
+    interface Props {
+        showLandingPage: boolean;
+    }
 
-    $: showLoader =
+    let { showLandingPage }: Props = $props();
+
+    let showLoader = $derived(
         $identityState.kind !== "registering" &&
-        $identityState.kind !== "challenging" &&
-        ($chatsLoading || $identityState.kind === "loading_user");
+            $identityState.kind !== "challenging" &&
+            ($chatsLoading || $identityState.kind === "loading_user"),
+    );
 </script>
 
 {#if showLandingPage}

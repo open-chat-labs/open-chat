@@ -136,8 +136,8 @@
         }
     }
 
-    function onSelectFromToken(ev: CustomEvent<{ ledger: string; urlFormat: string }>) {
-        if (ev.detail.ledger === toLedger) {
+    function onSelectFromToken(ledger: string, _: string) {
+        if (ledger === toLedger) {
             toLedger =
                 Object.values($cryptoLookup)
                     .map((t) => t.ledger)
@@ -177,7 +177,7 @@
                         <CryptoSelector
                             filter={(t) => t.balance > 0}
                             bind:ledger={fromLedger}
-                            on:select={onSelectFromToken} />
+                            onSelect={onSelectFromToken} />
                     </div>
                 </div>
                 <div class="amount">

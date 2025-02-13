@@ -2,12 +2,8 @@
 
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
-    import Avatar from "../Avatar.svelte";
     import ChatEvent from "./ChatEvent.svelte";
-    import Robot from "../Robot.svelte";
-    import ProposalBot from "../ProposalBot.svelte";
     import {
-        AvatarSize,
         type EventWrapper,
         type EnhancedReplyContext,
         type ChatEvent as ChatEventType,
@@ -19,9 +15,7 @@
         chatIdentifiersEqual,
         type ChatIdentifier,
         routeForChatIdentifier,
-        userStore,
         currentUser as user,
-        isProposalGroup,
         currentChatEditingEvent,
         currentChatPinnedMessages,
         messagesRead,
@@ -36,7 +30,7 @@
         selectedCommunity,
         expandedDeletedMessages,
     } from "openchat-client";
-    import InitialGroupMessage from "./InitialGroupMessage.svelte";
+    import InitialChatMessage from "./InitialChatMessage.svelte";
     import page from "page";
     import ChatEventList from "./ChatEventList.svelte";
     import PrivatePreview from "./PrivatePreview.svelte";
@@ -291,20 +285,7 @@
     let:labelObserver>
     {#if !$reverseScroll}
         {#if showAvatar}
-            {#if $isProposalGroup}
-                <ProposalBot />
-            {:else if chat.kind === "group_chat" || chat.kind === "channel"}
-                <InitialGroupMessage group={chat} />
-            {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
-                <Robot />
-            {:else if chat.kind === "direct_chat"}
-                <div class="big-avatar">
-                    <Avatar
-                        url={client.userAvatarUrl($userStore.get(chat.them.userId))}
-                        userId={chat.them.userId}
-                        size={AvatarSize.Large} />
-                </div>
-            {/if}
+            <InitialChatMessage {chat} />
         {/if}
         {#if privatePreview}
             <PrivatePreview />
@@ -374,26 +355,7 @@
             <PrivatePreview />
         {/if}
         {#if showAvatar}
-            {#if $isProposalGroup}
-                <ProposalBot />
-            {:else if chat.kind === "group_chat" || chat.kind === "channel"}
-                <InitialGroupMessage group={chat} />
-            {:else if chat.kind === "direct_chat" && client.isOpenChatBot(chat.them.userId)}
-                <Robot />
-            {:else if chat.kind === "direct_chat"}
-                <div class="big-avatar">
-                    <Avatar
-                        url={client.userAvatarUrl($userStore.get(chat.them.userId))}
-                        userId={chat.them.userId}
-                        size={AvatarSize.Large} />
-                </div>
-            {/if}
+            <InitialChatMessage {chat} />
         {/if}
     {/if}
 </ChatEventList>
-
-<style lang="scss">
-    .big-avatar {
-        margin: 16px auto;
-    }
-</style>

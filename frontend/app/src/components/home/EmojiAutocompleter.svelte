@@ -1,5 +1,5 @@
 <script lang="ts">
-    import MenuItem from "../MenuItem.svelte";
+    import MenuItem from "../MenuItemLegacy.svelte";
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
     import { createEventDispatcher } from "svelte";
@@ -79,7 +79,7 @@
 <div class="picker" style={`bottom: ${offset}px; height: ${matches.length * ITEM_HEIGHT}px`}>
     <Menu>
         <VirtualList keyFn={(e) => e.unicode} items={matches} let:item let:itemIndex>
-            <MenuItem selected={itemIndex === index} on:click={() => select(item.unicode)}>
+            <MenuItem selected={itemIndex === index} onclick={() => select(item.unicode)}>
                 <div class="emoji" slot="icon">
                     {item.unicode}
                 </div>

@@ -153,11 +153,13 @@
             "action": "Registre",
             "addBot": "Ajouter un bot",
             "choosePermissions": "Autorisations",
+            "continue": "Continuer",
             "failure": "Désolé, nous n'avons pas pu ajouter le bot",
             "loadDefinition": "Définition de la charge",
             "noPermissions": "Aucune autorisation spéciale requise",
             "permissionsInfo": "Ce bot recherche les autorisations suivantes. Choisir de limiter les autorisations accordées limitera les capacités du bot.",
-            "title": "Ajouter un bot à la communauté"
+            "title": "Ajouter un bot à la communauté",
+            "titleDirect": "Choisissez les autorisations pour interagir avec ce bot"
         },
         "builder": {
             "addAnother": "Ajouter un autre",
@@ -262,6 +264,11 @@
         },
         "diamond": {
             "desc": "Postez un lien pour expliquer l'adhésion Diamond"
+        },
+        "direct": {
+            "placeholder": "Entrez \"/\" pour sélectionner une commande...",
+            "warning": "Vous ne pouvez envoyer que des commandes slash aux robots.\n\nVeuillez saisir « / » pour voir quelles commandes sont disponibles.",
+            "warningTitle": "Chat direct avec bot"
         },
         "edit": {
             "failure": "Désolé, nous n'avons pas pu mettre à jour les autorisations du bot",
@@ -1578,7 +1585,7 @@
     "searchForUsername": "Rechercher un nom d'utilisateur",
     "searchGroupsPlaceholder": "Rechercher des groupes...",
     "searchPlaceholder": "Rechercher des utilisateurs et des groupes...",
-    "searchUsersPlaceholder": "Rechercher des utilisateurs...",
+    "searchUsersPlaceholder": "Rechercher des utilisateurs et des robots...",
     "selectAChannel": "Sélectionnez une chaîne dans la liste ou recherchez d'autres chaînes dans cette communauté.",
     "selectAChat": "Recherchez un ami, créez un nouveau groupe ou sélectionnez un chat.",
     "selectAFavourite": "Vous pouvez ajouter des chats directs, des chats de groupe ou des canaux communautaires à vos favoris et vous les verrez ici.",
@@ -1867,6 +1874,7 @@
     "usernameRules": "caractères alphanumériques et traits de soulignement uniquement",
     "userReferralMessage": "Partagez ce lien vers OpenChat avec vos amis et votre famille. Vous gagnez des récompenses CHIT pour chaque utilisateur que vous parrainez qui continue à vérifier sa personnalité unique ou devient membre Diamond. Si un utilisateur que vous parrainez devient membre Diamond, vous gagnerez 5 000 CHIT, s'il prouve sa personnalité unique, ce sera 10 000 CHIT et s'il obtient le statut Diamond à vie, ce sera 15 000 CHIT. S'il effectue ensuite une « vérification » de valeur supérieure, vous recevrez la différence en CHIT.",
     "users": "Utilisateurs",
+    "usersAndBots": "Utilisateurs et robots",
     "userSearchFailed": "Une erreur s'est produite lors de la recherche d'utilisateurs",
     "verified": {
         "choose": "Choisissez le {level} pour vérifier",

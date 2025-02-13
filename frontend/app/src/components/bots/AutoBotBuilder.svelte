@@ -44,7 +44,7 @@
         schemaLoaded = $bindable(),
         onUpdate,
         principal = $bindable(),
-        candidate,
+        candidate = $bindable(),
         nameDirty,
         mode,
     }: Props = $props();

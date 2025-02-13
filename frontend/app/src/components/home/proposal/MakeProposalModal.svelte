@@ -44,7 +44,6 @@
     import DurationPicker from "../DurationPicker.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import BotBuilder from "../../bots/AutoBotBuilderWrapper.svelte";
-    import { botsEnabled } from "../../../utils/bots";
     import TransferSnsFunds from "./TransferSNSFunds.svelte";
     import VerificationProposal from "./VerificationProposal.svelte";
     import RemoveBot from "./RemoveBot.svelte";
@@ -470,13 +469,11 @@
                                 >Register external achievement</option>
                             <option value={"add_token"}>Add token</option>
                             <option value={"update_token"}>Update token</option>
-                            {#if botsEnabled}
-                                <option value={"register_bot"}>Register a bot</option>
-                                <option value={"register_bot"}>
-                                    <Translatable resourceKey={i18nKey("bots.manage.remove")}
-                                    ></Translatable>
-                                </option>
-                            {/if}
+                            <option value={"register_bot"}>Register a bot</option>
+                            <option value={"register_bot"}>
+                                <Translatable resourceKey={i18nKey("bots.manage.remove")}
+                                ></Translatable>
+                            </option>
                             <option value={"set_community_verification"}>
                                 <Translatable
                                     resourceKey={i18nKey(

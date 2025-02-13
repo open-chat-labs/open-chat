@@ -79,13 +79,22 @@ function createUnconfirmedStore() {
             messageId: bigint,
             content: MessageContent,
             botContext?: BotMessageContext,
+            blockLevelMarkdown?: boolean,
         ): void => {
             store.update((state) => {
                 const s = state.get(key);
                 if (s !== undefined) {
                     s.messages = s.messages.map((m) =>
                         m.event.messageId === messageId
-                            ? { ...m, event: { ...m.event, content, botContext } }
+                            ? {
+                                  ...m,
+                                  event: {
+                                      ...m.event,
+                                      content,
+                                      botContext,
+                                      blockLevelMarkdown: blockLevelMarkdown ?? false,
+                                  },
+                              }
                             : m,
                     );
                     state.set(key, s);

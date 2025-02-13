@@ -28,6 +28,7 @@
     export let actualWidth: number = 0;
     export let closeIcon: boolean = false;
     export let square: boolean = false;
+    export let backgroundImage: string | undefined = undefined;
 
     // if your modal *definitely* overflows on mobile you might need to set height explicitly
     export let overflows: boolean = false;
@@ -35,7 +36,8 @@
     let divElement: HTMLElement;
 
     $: useAlignTo = alignTo !== undefined && !$mobileWidth;
-    $: style = useAlignTo ? "visibility: hidden;" : "visibility: visible;";
+    $: bgStyle = backgroundImage ? `--custom-bg: url(${backgroundImage});` : "";
+    $: style = useAlignTo ? `${bgStyle} visibility: hidden;` : `${bgStyle} visibility: visible;`;
 
     function closeMenus() {
         menuStore.hideMenu();
@@ -86,6 +88,7 @@
 <div
     bind:this={divElement}
     {style}
+    class:custom-bg={backgroundImage !== undefined}
     class="modal-content"
     class:square
     class:large
@@ -126,6 +129,20 @@
 </div>
 
 <style lang="scss">
+    .modal-content.custom-bg::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: var(--custom-bg);
+        background-size: cover;
+        filter: contrast(0.8) sepia(0.5) grayscale(0.5);
+        z-index: -1;
+        border-radius: var(--modal-rd);
+    }
+
     .modal-content {
         @include font-size(fs-100);
         display: flex;
@@ -137,6 +154,9 @@
         position: relative;
         max-height: 100%;
         box-shadow: var(--modal-sh);
+        background-repeat: no-repeat;
+        background-size: cover;
+        z-index: 1;
 
         &.halloween::after {
             @include cobweb();

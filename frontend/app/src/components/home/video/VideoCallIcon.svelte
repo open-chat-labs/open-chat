@@ -1,10 +1,15 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
+    import type { VideoCallCounts } from "openchat-client";
 
-    export let video = { muted: 0, unmuted: 0 };
+    interface Props {
+        video: VideoCallCounts;
+    }
 
-    $: muted = video.unmuted <= 0;
-    $: count = muted ? video.muted : video.unmuted;
+    let { video = { muted: 0, unmuted: 0 } }: Props = $props();
+
+    let muted = $derived(video.unmuted <= 0);
+    let count = $derived(muted ? video.muted : video.unmuted);
 </script>
 
 {#if count > 0}

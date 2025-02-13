@@ -15,33 +15,40 @@
     import Menu from "../../Menu.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import Login from "svelte-material-icons/Login.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import page from "page";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { anonUser, platformOperator, canExtendDiamond } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
-    const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
+    interface Props {
+        onProfile: () => void;
+        onWallet: () => void;
+        onUpgrade: () => void;
+    }
 
-    $: admin = $platformOperator;
+    let { onProfile, onWallet, onUpgrade }: Props = $props();
+
+    const client = getContext<OpenChat>("client");
+
+    let admin = $derived($platformOperator);
 </script>
 
 <Menu>
     {#if !$anonUser}
-        <MenuItem on:click={() => dispatch("wallet")}>
+        <MenuItem onclick={onWallet}>
             <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text">
                 <Translatable resourceKey={i18nKey("wallet")} />
             </span>
         </MenuItem>
-        <MenuItem on:click={() => dispatch("profile")}>
+        <MenuItem onclick={onProfile}>
             <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text"><Translatable resourceKey={i18nKey("profile.title")} /></span>
         </MenuItem>
-        <MenuItem on:click={() => dispatch("upgrade")}>
+        <MenuItem onclick={onUpgrade}>
             <span class="diamond-icon" slot="icon"></span>
             <span slot="text"
                 ><Translatable
@@ -51,35 +58,35 @@
         </MenuItem>
         <MenuItem separator />
     {/if}
-    <MenuItem on:click={() => page("/home")}>
+    <MenuItem onclick={() => page("/home")}>
         <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Home page</span>
     </MenuItem>
-    <MenuItem on:click={() => page("/features")}>
+    <MenuItem onclick={() => page("/features")}>
         <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Features</span>
     </MenuItem>
-    <MenuItem on:click={() => page("/roadmap")}>
+    <MenuItem onclick={() => page("/roadmap")}>
         <Road size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Roadmap</span>
     </MenuItem>
-    <MenuItem on:click={() => page("/whitepaper")}>
+    <MenuItem onclick={() => page("/whitepaper")}>
         <Note size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Whitepaper</span>
     </MenuItem>
-    <MenuItem on:click={() => page("/architecture")}>
+    <MenuItem onclick={() => page("/architecture")}>
         <Graph size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Architecture</span>
     </MenuItem>
-    <MenuItem on:click={() => page("/blog")}>
+    <MenuItem onclick={() => page("/blog")}>
         <Blog size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Blog</span>
     </MenuItem>
-    <MenuItem on:click={() => page("/faq")}>
+    <MenuItem onclick={() => page("/faq")}>
         <Help size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">FAQs</span>
     </MenuItem>
-    <MenuItem on:click={() => page("/guidelines")}>
+    <MenuItem onclick={() => page("/guidelines")}>
         <Security size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Guidelines</span>
     </MenuItem>
@@ -89,19 +96,19 @@
     </MenuItem>
     {#if admin}
         <MenuItem separator />
-        <MenuItem on:click={() => page("/admin")}>
+        <MenuItem onclick={() => page("/admin")}>
             <CogOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text">{"Admin"}</span>
         </MenuItem>
     {/if}
     <MenuItem separator />
     {#if !$anonUser}
-        <MenuItem on:click={() => client.logout()}>
+        <MenuItem onclick={() => client.logout()}>
             <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text"><Translatable resourceKey={i18nKey("logout")} /></span>
         </MenuItem>
     {:else}
-        <MenuItem on:click={() => client.updateIdentityState({ kind: "logging_in" })}>
+        <MenuItem onclick={() => client.updateIdentityState({ kind: "logging_in" })}>
             <Login size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text"><Translatable resourceKey={i18nKey("login")} /></span>
         </MenuItem>

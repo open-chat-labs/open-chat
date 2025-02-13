@@ -51,6 +51,7 @@
         showingBuilder,
     } from "../bots/botState";
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
+    import AlertBoxModal from "../AlertBoxModal.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -94,10 +95,12 @@
     let rangeToReplace: [Node, number, number] | undefined = undefined;
     let previousChatId = chat.id;
     let containsMarkdown = false;
+    let showDirectBotChatWarning = false;
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
 
+    $: directChatBotId = client.directChatWithBot(chat);
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && attachment === undefined;
     $: canSendAny = !$anonUser && client.canSendMessage(chat.id, mode);
     $: permittedMessages = client.permittedMessages(chat.id, mode);
@@ -170,7 +173,9 @@
           ? i18nKey("enterCaption")
           : dragging
             ? i18nKey("dropFile")
-            : i18nKey("enterMessage");
+            : directChatBotId
+              ? i18nKey("bots.direct.placeholder")
+              : i18nKey("enterMessage");
 
     export function replaceSelection(text: string) {
         restoreSelection();
@@ -281,12 +286,14 @@
     }
 
     function keyPress(e: KeyboardEvent) {
-        if (e.key === "Enter" && $enterSend && !e.shiftKey && !showCommandSelector) {
-            sendMessage();
+        if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-        }
-        if (e.key === "Enter" && showCommandSelector) {
-            e.preventDefault();
+
+            if ($enterSend && !e.shiftKey && !showCommandSelector && !directChatBotId) {
+                sendMessage();
+            } else if (directChatBotId && !showCommandSelector) {
+                showDirectBotChatWarning = true;
+            }
         }
     }
 
@@ -477,6 +484,13 @@
     }
 </script>
 
+{#if showDirectBotChatWarning}
+    <AlertBoxModal
+        onClose={() => (showDirectBotChatWarning = false)}
+        title={i18nKey("bots.direct.warningTitle")}
+        warning={i18nKey("bots.direct.warning")} />
+{/if}
+
 {#if $selectedCommand && $showingBuilder}
     <CommandBuilder
         {chat}
@@ -497,6 +511,7 @@
 
 {#if showCommandSelector}
     <CommandSelector
+        selectedBotId={directChatBotId}
         {messageContext}
         {mode}
         onCommandSent={() => cancelCommandSelector(true)}
@@ -566,6 +581,7 @@
                         class="textbox"
                         class:recording
                         class:dragging
+                        class:empty={messageIsEmpty}
                         contenteditable
                         on:paste
                         placeholder={interpolate($_, placeholder)}
@@ -594,54 +610,56 @@
             </div>
         {/if}
 
-        <div class="icons">
-            {#if editingEvent === undefined}
-                {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
-                    <div class="record">
-                        <AudioAttacher
-                            mimeType={audioMimeType}
-                            bind:percentRecorded
-                            bind:recording
-                            bind:supported={audioSupported}
-                            on:audioCaptured />
-                    </div>
-                {:else if canEnterText}
+        {#if directChatBotId === undefined}
+            <div class="icons">
+                {#if editingEvent === undefined}
+                    {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
+                        <div class="record">
+                            <AudioAttacher
+                                mimeType={audioMimeType}
+                                bind:percentRecorded
+                                bind:recording
+                                bind:supported={audioSupported}
+                                on:audioCaptured />
+                        </div>
+                    {:else if canEnterText}
+                        <div class="send" on:click={sendMessage}>
+                            <HoverIcon title={$_("sendMessage")}>
+                                <Send size={$iconSize} color={"var(--icon-txt)"} />
+                            </HoverIcon>
+                        </div>
+                    {/if}
+                    <!-- we might need this if we are editing too -->
+                    <MessageActions
+                        bind:this={messageActions}
+                        bind:messageAction
+                        {permittedMessages}
+                        {attachment}
+                        {mode}
+                        editing={editingEvent !== undefined}
+                        on:tokenTransfer
+                        on:createPrizeMessage
+                        on:createP2PSwapMessage
+                        on:attachGif
+                        on:makeMeme
+                        on:createPoll
+                        on:upgrade
+                        on:clearAttachment
+                        on:fileSelected />
+                {:else}
                     <div class="send" on:click={sendMessage}>
-                        <HoverIcon title={$_("sendMessage")}>
-                            <Send size={$iconSize} color={"var(--icon-txt)"} />
+                        <HoverIcon>
+                            <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
+                        </HoverIcon>
+                    </div>
+                    <div class="send" on:click={cancelEdit}>
+                        <HoverIcon>
+                            <Close size={$iconSize} color={"var(--button-txt)"} />
                         </HoverIcon>
                     </div>
                 {/if}
-                <!-- we might need this if we are editing too -->
-                <MessageActions
-                    bind:this={messageActions}
-                    bind:messageAction
-                    {permittedMessages}
-                    {attachment}
-                    {mode}
-                    editing={editingEvent !== undefined}
-                    on:tokenTransfer
-                    on:createPrizeMessage
-                    on:createP2PSwapMessage
-                    on:attachGif
-                    on:makeMeme
-                    on:createPoll
-                    on:upgrade
-                    on:clearAttachment
-                    on:fileSelected />
-            {:else}
-                <div class="send" on:click={sendMessage}>
-                    <HoverIcon>
-                        <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
-                    </HoverIcon>
-                </div>
-                <div class="send" on:click={cancelEdit}>
-                    <HoverIcon>
-                        <Close size={$iconSize} color={"var(--button-txt)"} />
-                    </HoverIcon>
-                </div>
-            {/if}
-        </div>
+            </div>
+        {/if}
     {/if}
 </div>
 
@@ -691,11 +709,12 @@
         border: var(--bw) solid var(--entry-input-bd);
         box-shadow: var(--entry-input-sh);
 
-        &:empty:before {
+        &.empty:before {
             content: attr(placeholder);
             color: var(--placeholder);
             pointer-events: none;
             display: block; /* For Firefox */
+            position: absolute;
         }
 
         &.dragging {

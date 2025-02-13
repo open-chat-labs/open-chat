@@ -36,6 +36,7 @@ export type MessageMatch = {
 };
 
 export type BotMatch = {
+    kind: "bot_match";
     id: string;
     name: string;
     ownerId: string;

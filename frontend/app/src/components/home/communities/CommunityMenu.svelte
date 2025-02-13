@@ -1,7 +1,7 @@
 <script lang="ts">
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import TickIcon from "svelte-material-icons/Check.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
@@ -16,7 +16,7 @@
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import type { CommunitySummary, OpenChat } from "openchat-client";
     import { chatSummariesListStore, platformModerator } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
@@ -121,16 +121,16 @@
     </span>
     <span slot="menu">
         <Menu>
-            <MenuItem on:click={communityDetails}>
+            <MenuItem onclick={communityDetails}>
                 <FileDocument size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                 <div slot="text"><Translatable resourceKey={i18nKey("communities.details")} /></div>
             </MenuItem>
-            <MenuItem on:click={showMembers}>
+            <MenuItem onclick={showMembers}>
                 <AccountMultiple size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                 <div slot="text"><Translatable resourceKey={i18nKey("communities.members")} /></div>
             </MenuItem>
             {#if canInvite}
-                <MenuItem on:click={invite}>
+                <MenuItem onclick={invite}>
                     <AccountMultiplePlus
                         size={$iconSize}
                         color={"var(--icon-inverted-txt)"}
@@ -141,7 +141,7 @@
                 </MenuItem>
             {/if}
             {#if canEdit}
-                <MenuItem on:click={editCommunity}>
+                <MenuItem onclick={editCommunity}>
                     <PencilOutline
                         size={$iconSize}
                         color={"var(--icon-inverted-txt)"}
@@ -152,20 +152,20 @@
                 </MenuItem>
             {/if}
             {#if canCreateChannel}
-                <MenuItem on:click={newChannel}>
+                <MenuItem onclick={newChannel}>
                     <PlaylistPlus size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                     <span slot="text"
                         ><Translatable resourceKey={i18nKey("communities.createChannel")} /></span>
                 </MenuItem>
             {/if}
             {#if canCreateChannel}
-                <MenuItem on:click={embedContent}>
+                <MenuItem onclick={embedContent}>
                     <Contain size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                     <span slot="text"
                         ><Translatable resourceKey={i18nKey("communities.embed")} /></span>
                 </MenuItem>
             {/if}
-            <MenuItem disabled={!canMarkAllRead} on:click={markAllRead}>
+            <MenuItem disabled={!canMarkAllRead} onclick={markAllRead}>
                 <CheckboxMultipleMarked
                     size={$iconSize}
                     color={"var(--icon-inverted-txt)"}
@@ -173,7 +173,7 @@
                 <span slot="text"><Translatable resourceKey={i18nKey("markAllRead")} /></span>
             </MenuItem>
             {#if notificationsSupported && !isCommunityMuted}
-                <MenuItem on:click={muteAllChannels}>
+                <MenuItem onclick={muteAllChannels}>
                     <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                     <span slot="text"
                         ><Translatable
@@ -183,7 +183,7 @@
             {#if member}
                 <MenuItem separator />
                 {#if canDelete}
-                    <MenuItem warning on:click={deleteCommunity}>
+                    <MenuItem warning onclick={deleteCommunity}>
                         <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                         <div slot="text">
                             <Translatable resourceKey={i18nKey("communities.delete")} />
@@ -191,7 +191,7 @@
                     </MenuItem>
                 {/if}
                 {#if canLeave}
-                    <MenuItem warning on:click={leaveCommunity}>
+                    <MenuItem warning onclick={leaveCommunity}>
                         <LocationExit size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                         <div slot="text">
                             <Translatable resourceKey={i18nKey("communities.leave")} />
@@ -201,14 +201,14 @@
             {/if}
             {#if $platformModerator}
                 {#if client.isCommunityFrozen(community.id)}
-                    <MenuItem warning on:click={unfreezeCommunity}>
+                    <MenuItem warning onclick={unfreezeCommunity}>
                         <TickIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
                         <div slot="text">
                             <Translatable resourceKey={i18nKey("unfreezeCommunity")} />
                         </div>
                     </MenuItem>
                 {:else}
-                    <MenuItem warning on:click={freezeCommunity}>
+                    <MenuItem warning onclick={freezeCommunity}>
                         <CancelIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
                         <div slot="text">
                             <Translatable resourceKey={i18nKey("freezeCommunity")} />

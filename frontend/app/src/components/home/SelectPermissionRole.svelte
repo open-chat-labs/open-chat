@@ -3,9 +3,9 @@
     import { _ } from "svelte-i18n";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Check from "svelte-material-icons/Check.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
+    import MenuIcon from "../MenuIconLegacy.svelte";
     import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
+    import MenuItem from "../MenuItemLegacy.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
@@ -51,7 +51,7 @@
         <span slot="menu">
             <Menu>
                 {#if defaultRole !== undefined}
-                    <MenuItem on:click={() => select(undefined)}>
+                    <MenuItem onclick={() => select(undefined)}>
                         <Check
                             viewBox={"0 -3 24 24"}
                             size={$iconSize}
@@ -65,7 +65,7 @@
                     </MenuItem>
                 {/if}
                 {#each roles as r (r)}
-                    <MenuItem on:click={() => select(r)}>
+                    <MenuItem onclick={() => select(r)}>
                         <Check
                             viewBox={"0 -3 24 24"}
                             size={$iconSize}

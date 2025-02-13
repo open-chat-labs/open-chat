@@ -1,6 +1,12 @@
 /* eslint-disable no-case-declarations */
 import { gaTrack } from "./utils/ga";
-import { AnonymousIdentity, DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@dfinity/agent";
+import {
+    AnonymousIdentity,
+    DER_COSE_OID,
+    type Identity,
+    type SignIdentity,
+    unwrapDER,
+} from "@dfinity/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
 import { get } from "svelte/store";
 import DRange from "drange";
@@ -606,11 +612,9 @@ export class OpenChat extends EventTarget {
         this.#authIdentityStorage = IdentityStorage.createForAuthIdentity();
         this.#ocIdentityStorage = IdentityStorage.createForOcIdentity();
 
-        this.#authIdentityStorage
-            .get()
-            .then((authIdentity) => {
-                this.#loadedAuthenticationIdentity(authIdentity ?? new AnonymousIdentity(), undefined);
-            });
+        this.#authIdentityStorage.get().then((authIdentity) => {
+            this.#loadedAuthenticationIdentity(authIdentity ?? new AnonymousIdentity(), undefined);
+        });
     }
 
     public get AuthPrincipal(): string {
@@ -692,10 +696,11 @@ export class OpenChat extends EventTarget {
 
         if (!anon) {
             if (connectToWorkerResponse === "oc_identity_not_found") {
-                if (authProvider !== AuthProvider.II &&
+                if (
+                    authProvider !== AuthProvider.II &&
                     authProvider !== AuthProvider.EMAIL &&
-                    authProvider !== AuthProvider.PASSKEY)
-                {
+                    authProvider !== AuthProvider.PASSKEY
+                ) {
                     this.updateIdentityState({ kind: "challenging" });
                     return;
                 }
@@ -978,16 +983,13 @@ export class OpenChat extends EventTarget {
     }
 
     #startBotsPoller() {
-        const enabled = localStorage.getItem("openchat_bots_enabled") === "true";
-        if (enabled) {
-            this.#botsPoller?.stop();
-            this.#botsPoller = new Poller(
-                () => this.#loadBots(),
-                BOT_UPDATE_INTERVAL,
-                BOT_UPDATE_IDLE_INTERVAL,
-                true,
-            );
-        }
+        this.#botsPoller?.stop();
+        this.#botsPoller = new Poller(
+            () => this.#loadBots(),
+            BOT_UPDATE_INTERVAL,
+            BOT_UPDATE_IDLE_INTERVAL,
+            true,
+        );
     }
 
     #startChatsPoller() {
@@ -2182,6 +2184,12 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    directChatWithBot(chat: ChatSummary): string | undefined {
+        if (chat.kind !== "direct_chat") return undefined;
+        const them = this.#liveState.userStore.get(chat.them.userId);
+        return them?.kind === "bot" ? them.userId : undefined;
+    }
+
     undeleteMessage(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
@@ -3195,6 +3203,22 @@ export class OpenChat extends EventTarget {
                 chatStateStore.setProp(serverChat.id, "apiKeys", resp.apiKeys);
             }
             await this.#updateUserStoreFromEvents(serverChat.id, []);
+        } else if (serverChat.kind === "direct_chat") {
+            // TODO fix this when we have the apis
+            // chatStateStore.setProp(
+            //     serverChat.id,
+            //     "bots",
+            //     new Map<string, ExternalBotPermissions>([
+            //         [
+            //             "p2zjm-6obya-fjjpk-mqlfa",
+            //             {
+            //                 messagePermissions: ["text"],
+            //                 chatPermissions: [],
+            //                 communityPermissions: [],
+            //             },
+            //         ],
+            //     ]),
+            // );
         }
     }
 
@@ -7085,7 +7109,9 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    async signUpWithWebAuthn(assumeIdentity: boolean): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
+    async signUpWithWebAuthn(
+        assumeIdentity: boolean,
+    ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
 
@@ -7094,16 +7120,22 @@ export class OpenChat extends EventTarget {
         // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
-        return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, webAuthnOrigin, assumeIdentity, aaguid);
+        
+        return await this.#finaliseWebAuthnSignin(
+            tempKey,
+            () => webAuthnIdentity,
+            webAuthnOrigin,
+            assumeIdentity,
+            aaguid,
+        );
     }
 
     async signInWithWebAuthn() {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
 
-        const webAuthnIdentity = new MultiWebAuthnIdentity(
-            webAuthnOrigin,
-            (credentialId) => this.lookupWebAuthnPubKey(credentialId)
+        const webAuthnIdentity = new MultiWebAuthnIdentity(webAuthnOrigin, (credentialId) =>
+            this.lookupWebAuthnPubKey(credentialId),
         );
         await this.#finaliseWebAuthnSignin(
             webAuthnIdentity,
@@ -7114,16 +7146,20 @@ export class OpenChat extends EventTarget {
         );
     }
 
-    async reSignInWithCurrentWebAuthnIdentity(): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
-        const webAuthnKey = this.#webAuthnKey ?? await this.#sendRequest({
-            kind: "currentUserWebAuthnKey",
-        });
+    async reSignInWithCurrentWebAuthnIdentity(): Promise<
+        [ECDSAKeyIdentity, DelegationChain, WebAuthnKey]
+    > {
+        const webAuthnKey =
+            this.#webAuthnKey ??
+            (await this.#sendRequest({
+                kind: "currentUserWebAuthnKey",
+            }));
         if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
 
         const webAuthnIdentity = new WebAuthnIdentity(
             webAuthnKey.credentialId,
             unwrapDER(webAuthnKey.publicKey, DER_COSE_OID),
-            undefined
+            undefined,
         );
         return await this.#finaliseWebAuthnSignin(
             webAuthnIdentity,
@@ -7163,7 +7199,7 @@ export class OpenChat extends EventTarget {
             this.#authIdentityStorage.set(sessionKey, delegationChain);
             this.#loadedAuthenticationIdentity(identity, AuthProvider.PASSKEY);
         }
-        return [sessionKey, delegationChain, webAuthnKey]
+        return [sessionKey, delegationChain, webAuthnKey];
     }
 
     async lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array> {
@@ -8167,9 +8203,16 @@ export class OpenChat extends EventTarget {
         content: MessageContent,
         msgId: bigint,
         senderId: string,
+        blockLevelMarkdown: boolean,
     ): () => void {
         if (unconfirmed.contains(msgContext, msgId)) {
-            unconfirmed.overwriteContent(msgContext, msgId, content, botContext);
+            unconfirmed.overwriteContent(
+                msgContext,
+                msgId,
+                content,
+                botContext,
+                blockLevelMarkdown,
+            );
         } else {
             const currentEvents = this.#eventsForMessageContext(msgContext);
             const [eventIndex, messageIndex] =
@@ -8191,7 +8234,7 @@ export class OpenChat extends EventTarget {
                     edited: false,
                     forwarded: false,
                     deleted: false,
-                    blockLevelMarkdown: false,
+                    blockLevelMarkdown: blockLevelMarkdown,
                     botContext,
                 },
             };
@@ -8227,6 +8270,7 @@ export class OpenChat extends EventTarget {
                                 : { kind: "bot_placeholder_content" },
                             msgId,
                             bot.id,
+                            false,
                         );
                         return this.#callBotCommandEndpoint(bot.endpoint, token);
                     })
@@ -8248,6 +8292,7 @@ export class OpenChat extends EventTarget {
                                     resp.message.messageContent,
                                     resp.message.messageId,
                                     bot.id,
+                                    resp.message.blockLevelMarkdown,
                                 );
                             } else {
                                 removePlaceholder?.();
@@ -8320,7 +8365,9 @@ export class OpenChat extends EventTarget {
             return AuthProvider.SOL;
         } else if (principal.originatingCanister === this.config.signInWithEmailCanister) {
             return AuthProvider.EMAIL;
-        } else if (principal.originatingCanister === import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID) {
+        } else if (
+            principal.originatingCanister === import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID
+        ) {
             if (principal.isIIPrincipal) {
                 return AuthProvider.II;
             } else {
@@ -8353,8 +8400,8 @@ export class OpenChat extends EventTarget {
                 const iiPrincipals = resp
                     .filter(
                         ({ originatingCanister, isIIPrincipal }) =>
-                            originatingCanister === import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID &&
-                            isIIPrincipal,
+                            originatingCanister ===
+                                import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID && isIIPrincipal,
                     )
                     .map((p) => p.principal);
                 if (iiPrincipals.length === 0) {

@@ -1,5 +1,6 @@
 import { Principal } from "@dfinity/principal";
 import type {
+    DirectChatIdentifier,
     GroupChatIdentifier,
     MessageContent,
     MessageContext,
@@ -142,6 +143,7 @@ export type SlashCommandSchema = {
     params: SlashCommandParam[];
     permissions: ExternalBotPermissions;
     devmode?: boolean;
+    directBotDisabled?: boolean;
 };
 
 export function emptyExternalBotPermissions(): ExternalBotPermissions {
@@ -634,6 +636,7 @@ export type BotClientConfigData = {
 
 export type BotSummaryMode =
     | InstallingCommandBot
+    | InstallingDirectCommandBot
     | EditingCommandBot
     | ViewingCommandBot
     | AddingApiKey
@@ -646,6 +649,11 @@ type BotSummaryModeCommon = {
 export type InstallingCommandBot = BotSummaryModeCommon & {
     kind: "installing_command_bot";
     id: CommunityIdentifier | GroupChatIdentifier;
+};
+
+export type InstallingDirectCommandBot = BotSummaryModeCommon & {
+    kind: "installing_direct_command_bot";
+    id: DirectChatIdentifier;
 };
 
 export type EditingCommandBot = BotSummaryModeCommon & {
