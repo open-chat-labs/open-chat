@@ -1,7 +1,5 @@
 import type { ExternalBotPermissions } from "openchat-client";
 
-export const botsEnabled = localStorage.getItem("openchat_bots_enabled") === "true";
-
 export function togglePermission<P extends keyof ExternalBotPermissions>(
     permissions: ExternalBotPermissions,
     prop: P,

@@ -983,16 +983,13 @@ export class OpenChat extends EventTarget {
     }
 
     #startBotsPoller() {
-        const enabled = localStorage.getItem("openchat_bots_enabled") === "true";
-        if (enabled) {
-            this.#botsPoller?.stop();
-            this.#botsPoller = new Poller(
-                () => this.#loadBots(),
-                BOT_UPDATE_INTERVAL,
-                BOT_UPDATE_IDLE_INTERVAL,
-                true,
-            );
-        }
+        this.#botsPoller?.stop();
+        this.#botsPoller = new Poller(
+            () => this.#loadBots(),
+            BOT_UPDATE_INTERVAL,
+            BOT_UPDATE_IDLE_INTERVAL,
+            true,
+        );
     }
 
     #startChatsPoller() {
