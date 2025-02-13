@@ -127,7 +127,7 @@ export class AnonUserClient {
                 latestTimestamp: 0n,
                 unreadCount: 0,
             },
-            bots: [],
+            bots: new Map(),
             apiKeys: new Map(),
         });
     }
