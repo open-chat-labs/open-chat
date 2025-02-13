@@ -19,6 +19,8 @@ export type AuthPrincipalsResponse = { 'NotFound' : null } |
     'Success' : Array<
       {
         'principal' : Principal,
+        'webauthn_key' : [] | [WebAuthnKey],
+        'is_current_identity' : boolean,
         'originating_canister' : Principal,
         'is_ii_principal' : boolean,
         'last_used' : TimestampMillis,
