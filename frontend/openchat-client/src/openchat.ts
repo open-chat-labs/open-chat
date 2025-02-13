@@ -8433,7 +8433,6 @@ export class OpenChat extends EventTarget {
     ): Promise<LinkIdentitiesResponse> {
         return this.#sendRequest({
             kind: "linkIdentities",
-            userId: this.#liveState.user.userId,
             initiatorKey: initiatorKey.getKeyPair(),
             initiatorDelegation: initiatorDelegation.toJSON(),
             initiatorIsIIPrincipal,

@@ -23,6 +23,7 @@
     import { AuthClient } from "@dfinity/auth-client";
     import AlertBox from "../../AlertBox.svelte";
     import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+    import { Principal } from "@dfinity/principal";
     import SignInOption from "./SignInOption.svelte";
     import {
         EmailPollerError,
@@ -73,9 +74,8 @@
     let verificationCode: string | undefined = undefined;
     let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = [];
 
-    $: currentProvider =
-        accounts.find((a) => a.isCurrentIdentity)?.provider ??
-        $selectedAuthProviderStore;
+    $: currentIdentity = accounts.find((a) => a.isCurrentIdentity);
+    $: currentProvider = currentIdentity?.provider ?? $selectedAuthProviderStore;
 
     onMount(() => {
         client.getAuthenticationPrincipals().then((a) => (accounts = a));
@@ -255,9 +255,18 @@
 
     // Link the two identities that we have built together
     function linkIdentities() {
-        if (substep.kind !== "ready_to_link") return;
+        if (substep.kind !== "ready_to_link" || currentIdentity === undefined) return;
 
         const { initiator, approver } = substep;
+
+        const approverPrincipal = Principal.selfAuthenticating(new Uint8Array(approver.delegation.publicKey)).toString();
+
+        if (currentIdentity.principal !== approverPrincipal) {
+            console.log("Principal mismatch: ", currentIdentity.principal, approverPrincipal);
+            error = "identity.failure.principalMismatch";
+            substep = { kind: "initiator" };
+            return;
+        }
 
         error = undefined;
         linking = true;
@@ -283,10 +292,6 @@
                 } else if (resp === "principal_linked_to_another_oc_user") {
                     console.log("Identity already linked to another OpenChat account: ", resp);
                     error = "identity.failure.alreadyLinked";
-                    substep = { kind: "initiator" };
-                } else if (resp === "principal_mismatch") {
-                    console.log("Approval principal mismatch: ", resp);
-                    error = "identity.failure.principalMismatch";
                     substep = { kind: "initiator" };
                 } else {
                     console.log("Failed to link identities: ", resp);
