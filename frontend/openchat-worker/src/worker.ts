@@ -1846,7 +1846,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     linkIdentities(
-                        payload.userId,
                         payload.initiatorKey,
                         payload.initiatorDelegation,
                         payload.initiatorIsIIPrincipal,
@@ -1988,7 +1987,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 });
 
 async function linkIdentities(
-    userId: string,
     initiatorKey: CryptoKeyPair,
     initiatorDelegation: JsonnableDelegationChain,
     initiatorIsIIPrincipal: boolean,
@@ -2017,11 +2015,6 @@ async function linkIdentities(
         icUrl,
         undefined,
     );
-
-    const approverAuthDetails = await approverAgent.checkAuthPrincipal();
-    if (approverAuthDetails.kind !== "success" || approverAuthDetails.userId !== userId) {
-        return "principal_mismatch";
-    }
 
     const approver = approverIdentity.getPrincipal().toString();
     const initiateResponse = await initiatorAgent.initiateIdentityLink(approver, initiatorWebAuthnKey);
