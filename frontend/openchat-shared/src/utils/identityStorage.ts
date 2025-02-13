@@ -1,6 +1,6 @@
 import { SignIdentity } from "@dfinity/agent";
 import { IdbStorage } from "@dfinity/auth-client";
-import { DelegationChain, DelegationIdentity, ECDSAKeyIdentity } from "@dfinity/identity";
+import { DelegationChain, DelegationIdentity, ECDSAKeyIdentity, isDelegationValid } from "@dfinity/identity";
 
 const KEY_STORAGE_AUTH_PRINCIPAL = "auth_principal";
 const KEY_STORAGE_KEY = "identity";
@@ -34,11 +34,17 @@ export class IdentityStorage {
         const key = await this.storage.get<CryptoKeyPair>(KEY_STORAGE_KEY);
         if (key == null) return undefined;
 
-        const chain = await this.storage.get<string>(KEY_STORAGE_DELEGATION);
-        if (chain == null) return undefined;
+        const chainJson = await this.storage.get<string>(KEY_STORAGE_DELEGATION);
+        if (chainJson == null) return undefined;
+        const chain = DelegationChain.fromJSON(chainJson);
+
+        if (!isDelegationValid(chain)) {
+            this.remove();
+            return undefined;
+        }
 
         const id = await ECDSAKeyIdentity.fromKeyPair(key);
-        return DelegationIdentity.fromDelegation(id, DelegationChain.fromJSON(chain));
+        return DelegationIdentity.fromDelegation(id, chain);
     }
 
     async set(key: ECDSAKeyIdentity, chain: DelegationChain, authPrincipal?: string): Promise<void> {
