@@ -15,6 +15,7 @@
         type OpenChat,
         type ResourceKey,
         selectedAuthProviderStore,
+        type WebAuthnKey,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
@@ -42,6 +43,7 @@
         key: ECDSAKeyIdentity;
         delegation: DelegationChain;
         provider: AuthProvider;
+        webAuthnKey?: WebAuthnKey;
     };
 
     type ApproverIdentity = { kind: "approver"; initiator: IdentityDetail };
@@ -112,7 +114,33 @@
         localStorage.setItem(configKeys.selectedAuthEmail, email);
         error = undefined;
 
-        if (provider === AuthProvider.EMAIL) {
+        if (provider === AuthProvider.PASSKEY) {
+            if (substep.kind === "initiator") {
+                const [identity, delegation, webAuthnKey] = await client.signUpWithWebAuthn(false);
+                substep = {
+                    kind: "approver",
+                    initiator: {
+                        key: identity,
+                        delegation,
+                        webAuthnKey,
+                        provider: AuthProvider.PASSKEY,
+                    },
+                };
+            } else {
+                const initiator = substep.initiator;
+                const [identity, delegation, webAuthnKey] = await client.reSignInWithCurrentWebAuthnIdentity();
+                substep = {
+                    kind: "ready_to_link",
+                    initiator,
+                    approver: {
+                        key: identity,
+                        delegation,
+                        webAuthnKey,
+                        provider: AuthProvider.PASSKEY,
+                    },
+                };
+            }
+        } else if (provider === AuthProvider.EMAIL) {
             providerStep = "signing_in_with_email";
             emailSigninHandler.generateMagicLink(email).then((resp) => {
                 if (resp.kind === "success") {
@@ -238,6 +266,7 @@
                 initiator.key,
                 initiator.delegation,
                 initiator.provider === AuthProvider.II,
+                initiator.webAuthnKey,
                 approver.key,
                 approver.delegation,
             )

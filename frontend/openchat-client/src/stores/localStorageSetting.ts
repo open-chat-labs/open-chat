@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { writable } from "svelte/store";
 
-const test = process.env.NODE_ENV === "test";
+const test = import.meta.env.OC_NODE_ENV === "test";
 
 export function boolFromLS(key: string, def: boolean): boolean {
     if (test) return def;

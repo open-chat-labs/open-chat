@@ -19,7 +19,15 @@ export type CreateIdentityResponse =
     | { kind: "public_key_invalid" }
     | { kind: "originating_canister_invalid" };
 
-export type CheckAuthPrincipalResponse = { kind: "success" } | { kind: "not_found" };
+export type CheckAuthPrincipalResponse =
+    | {
+        kind: "success";
+        userId: string | undefined;
+        originatingCanister: string;
+        webAuthnKey: WebAuthnKey | undefined;
+        isIIPrincipal: boolean;
+    }
+    | { kind: "not_found" };
 
 export type PrepareDelegationResponse =
     | PrepareDelegationSuccess
@@ -89,7 +97,8 @@ export type InitiateIdentityLinkResponse =
     | "already_registered"
     | "already_linked_to_principal"
     | "target_user_not_found"
-    | "public_key_invalid";
+    | "public_key_invalid"
+    | "originating_canister_invalid";
 
 export type ApproveIdentityLinkResponse =
     | "success"
@@ -118,3 +127,10 @@ export type RemoveIdentityLinkResponse =
     | "cannot_unlink_active_principal"
     | "identity_link_not_found"
     | "user_not_found";
+
+export type WebAuthnKey = {
+    publicKey: Uint8Array;
+    credentialId: Uint8Array;
+    origin: string;
+    crossPlatform: boolean;
+};

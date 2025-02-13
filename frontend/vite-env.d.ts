@@ -10,6 +10,7 @@ interface ImportMetaEnv {
     readonly OC_IC_URL: string;
     readonly OC_II_DERIVATION_ORIGIN: string;
     readonly OC_IDENTITY_CANISTER: string;
+    readonly OC_INTERNET_IDENTITY_CANISTER_ID: string;
     readonly OC_INTERNET_IDENTITY_URL: string;
     readonly OC_MARKET_MAKER_CANISTER: string;
     readonly OC_METERED_APIKEY: string;
@@ -35,6 +36,7 @@ interface ImportMetaEnv {
     readonly OC_USERGEEK_APIKEY: string;
     readonly OC_VIDEO_BRIDGE_URL: string;
     readonly OC_WALLET_CONNECT_PROJECT_ID: string;
+    readonly OC_WEBAUTHN_ORIGIN: string;
 }
 
 interface ImportMeta {

@@ -16,3 +16,5 @@ interface Navigator {
 }
 
 declare function gtag(command: "event", name: string, options?: any): void;
+
+declare module "borc";

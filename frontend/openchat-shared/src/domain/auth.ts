@@ -6,6 +6,7 @@ export enum AuthProvider {
     ETH = "Ethereum",
     SOL = "Solana",
     NFID = "Google via NFID",
+    PASSKEY = "Passkey",
 }
 
 export class InMemoryAuthClientStorage implements AuthClientStorage {
