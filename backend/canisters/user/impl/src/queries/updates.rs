@@ -1,7 +1,10 @@
+use std::collections::HashSet;
+
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
-use types::{OptionUpdate, TimestampMillis, UserId};
+use group_community_user::BotUpdate;
+use types::{InstalledBotDetails, OptionUpdate, TimestampMillis, UserId};
 use user_canister::updates::{Response::*, *};
 use utils::time::{today, tomorrow};
 
@@ -62,7 +65,9 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         || state.data.communities.any_updated(updates_since)
         || state.data.chit_events.last_updated() > updates_since
         || state.data.achievements_last_seen > updates_since
-        || state.data.message_activity_events.last_updated() > updates_since;
+        || state.data.message_activity_events.last_updated() > updates_since
+        || state.data.bots.last_updated() > updates_since
+        || state.data.bot_api_keys.last_updated() > updates_since;
 
     // Short circuit prior to calling `ic0.time()` so that caching works effectively
     if !has_any_updates {
@@ -161,6 +166,31 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         OptionUpdate::NoChange
     };
 
+    let mut bots_changed = HashSet::new();
+    let mut bots_added_or_updated = Vec::new();
+    let mut bots_removed = Vec::new();
+
+    for (user_id, update) in state.data.bots.iter_latest_updates(updates_since) {
+        match update {
+            BotUpdate::Added | BotUpdate::Updated => {
+                if bots_changed.insert(user_id) {
+                    if let Some(bot) = state.data.bots.get(&user_id) {
+                        bots_added_or_updated.push(InstalledBotDetails {
+                            user_id,
+                            permissions: bot.permissions.clone(),
+                            added_by: bot.added_by,
+                        });
+                    }
+                }
+            }
+            BotUpdate::Removed => {
+                if bots_changed.insert(user_id) {
+                    bots_removed.push(user_id);
+                }
+            }
+        }
+    }
+
     Success(SuccessResult {
         timestamp: now,
         username,
@@ -185,5 +215,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         wallet_config,
         referrals,
         message_activity_summary: activity_feed,
+        bots_added_or_updated,
+        bots_removed,
+        api_keys_generated: state.data.bot_api_keys.generated_since(updates_since),
     })
 }
