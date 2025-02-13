@@ -15,9 +15,8 @@
         selectedChatId,
         eventsStore,
         filteredProposalsStore,
-        userStore,
-        currentChatBots,
         externalBots,
+        installedDirectBots,
     } from "openchat-client";
     import { pathParams } from "../../routes";
     import { tick } from "svelte";
@@ -39,11 +38,10 @@
     let uninstalledBotId = $derived.by(() => {
         if ($selectedChatStore === undefined) return false;
         if ($selectedChatStore.kind !== "direct_chat") return false;
-        const them = $userStore.get($selectedChatStore.them.userId);
-        if (them === undefined) return false;
-        const bot = $externalBots.get(them.userId);
-        return bot !== undefined && $currentChatBots.get(them.userId) === undefined
-            ? them.userId
+        const botId = $selectedChatStore.them.userId;
+        const bot = $externalBots.get(botId);
+        return bot !== undefined && $installedDirectBots.get(botId) === undefined
+            ? botId
             : undefined;
     });
 

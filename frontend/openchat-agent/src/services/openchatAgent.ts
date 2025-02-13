@@ -1721,7 +1721,7 @@ export class OpenChatAgent extends EventTarget {
         let referrals: Referral[];
         let walletConfig: WalletConfig;
         let messageActivitySummary: MessageActivitySummary;
-        let installedBots: Map<string, InstalledBotDetails>;
+        let installedBots: Map<string, ExternalBotPermissions>;
         let apiKeys: Map<string, PublicApiKeyDetails>;
 
         let latestActiveGroupsCheck = BigInt(0);
@@ -1805,7 +1805,9 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary = current.messageActivitySummary;
 
             if (userResponse.kind === "success") {
-                userResponse.botsAddedOrUpdated.forEach((b) => installedBots.set(b.id, b));
+                userResponse.botsAddedOrUpdated.forEach((b) =>
+                    installedBots.set(b.id, b.permissions),
+                );
                 userResponse.botsRemoved.forEach((b) => installedBots.delete(b));
                 userResponse.apiKeysGenerated.forEach((api) => apiKeys.set(api.botId, api));
                 directChats = userResponse.directChats.added.concat(

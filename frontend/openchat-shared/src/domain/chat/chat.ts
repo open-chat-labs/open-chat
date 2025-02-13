@@ -1065,7 +1065,7 @@ export type ChatStateFull = {
     referrals: Referral[];
     walletConfig: WalletConfig;
     messageActivitySummary: MessageActivitySummary;
-    installedBots: Map<string, InstalledBotDetails>;
+    installedBots: Map<string, ExternalBotPermissions>;
     apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
@@ -1234,7 +1234,7 @@ export type InitialStateResponse = {
     referrals: Referral[];
     walletConfig: WalletConfig;
     messageActivitySummary: MessageActivitySummary;
-    bots: Map<string, InstalledBotDetails>;
+    bots: Map<string, ExternalBotPermissions>;
     apiKeys: Map<string, PublicApiKeyDetails>;
 };
 

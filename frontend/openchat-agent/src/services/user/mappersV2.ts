@@ -131,7 +131,7 @@ import type {
     MessageActivity,
     MessageActivitySummary,
     PublicApiKeyDetails,
-    InstalledBotDetails,
+    ExternalBotPermissions,
 } from "openchat-shared";
 import {
     nullMembership,
@@ -853,9 +853,9 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
             walletConfig: walletConfig(result.wallet_config),
             messageActivitySummary: messageActivitySummary(result.message_activity_summary),
             bots: result.bots.map(installedBotDetails).reduce((m, b) => {
-                m.set(b.id, b);
+                m.set(b.id, b.permissions);
                 return m;
-            }, new Map<string, InstalledBotDetails>()),
+            }, new Map<string, ExternalBotPermissions>()),
             apiKeys: result.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
                 m.set(k.botId, k);
                 return m;
