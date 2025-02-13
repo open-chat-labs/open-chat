@@ -9,6 +9,7 @@
         chatListScopeStore as chatListScope,
         type BotSummaryMode,
         type DirectChatIdentifier,
+        currentUser,
     } from "openchat-client";
     import BotSummary from "./BotSummary.svelte";
     import { getContext, tick } from "svelte";
@@ -31,7 +32,7 @@
         return bot
             ? {
                   kind: "installing_direct_command_bot",
-                  id: chatId,
+                  id: { kind: "direct_chat", userId: $currentUser.userId },
                   requested: permissions,
                   granted: permissions,
               }

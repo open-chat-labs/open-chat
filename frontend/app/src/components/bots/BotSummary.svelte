@@ -4,11 +4,10 @@
         type BotMatch,
         type CommunityIdentifier,
         type BotSummaryMode,
-        type GroupChatIdentifier,
         type ExternalBotPermissions,
         type MultiUserChatIdentifier,
         type ExternalBot,
-        type DirectChatIdentifier,
+        type BotInstallationLocation,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Overlay from "../Overlay.svelte";
@@ -88,11 +87,7 @@
         }
     }
 
-    function installDirectBot(id: DirectChatIdentifier) {
-        console.log("Install direct chat bot", id);
-    }
-
-    function installBot(id: CommunityIdentifier | GroupChatIdentifier) {
+    function installBot(id: BotInstallationLocation) {
         busy = true;
         client
             .installBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
@@ -106,7 +101,7 @@
             .finally(() => (busy = false));
     }
 
-    function updateBot(id: CommunityIdentifier | GroupChatIdentifier) {
+    function updateBot(id: BotInstallationLocation) {
         busy = true;
         client
             .updateInstalledBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
@@ -159,7 +154,7 @@
                 installBot(mode.id);
                 break;
             case "installing_direct_command_bot":
-                installDirectBot(mode.id);
+                installBot(mode.id);
                 break;
             case "editing_command_bot":
                 updateBot(mode.id);

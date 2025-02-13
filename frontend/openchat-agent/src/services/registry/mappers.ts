@@ -104,7 +104,7 @@ function nervousSystemSummary(value: RegistryNervousSystemSummary): NervousSyste
 
 function swapProvider(value: TExchangeId): DexId {
     if (value === "ICPSwap") return "icpswap";
-    if (value === "Sonic") return "sonic";
+    // if (value === "Sonic") return "sonic";
     if (value === "KongSwap") return "kongswap";
     throw new UnsupportedValueError("Unexpected ApiSwapProvider type received", value);
 }

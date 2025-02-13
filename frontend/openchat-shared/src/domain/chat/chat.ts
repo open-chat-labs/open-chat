@@ -36,7 +36,11 @@ import type {
 } from "../community";
 import type { ChitEarned } from "../chit";
 import type { WalletConfig } from "../crypto";
-import type { BotGroupDetails, ExternalBotPermissions, SlashCommandParamInstance } from "../bots";
+import type {
+    InstalledBotDetails,
+    ExternalBotPermissions,
+    SlashCommandParamInstance,
+} from "../bots";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -1061,6 +1065,8 @@ export type ChatStateFull = {
     referrals: Referral[];
     walletConfig: WalletConfig;
     messageActivitySummary: MessageActivitySummary;
+    installedBots: Map<string, ExternalBotPermissions>;
+    apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
 export type ChitState = {
@@ -1228,6 +1234,8 @@ export type InitialStateResponse = {
     referrals: Referral[];
     walletConfig: WalletConfig;
     messageActivitySummary: MessageActivitySummary;
+    bots: Map<string, ExternalBotPermissions>;
+    apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
 export type MessageActivitySummary = {
@@ -1304,6 +1312,9 @@ export type UpdatesSuccessResponse = {
     referrals: Referral[];
     walletConfig: WalletConfig | undefined;
     messageActivitySummary: MessageActivitySummary | undefined;
+    botsAddedOrUpdated: InstalledBotDetails[];
+    botsRemoved: Set<string>;
+    apiKeysGenerated: PublicApiKeyDetails[];
 };
 
 export type DirectChatsUpdates = {
@@ -1426,7 +1437,7 @@ export type GroupChatDetails = {
     pinnedMessages: Set<number>;
     rules: VersionedRules;
     timestamp: bigint;
-    bots: BotGroupDetails[];
+    bots: InstalledBotDetails[];
     apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
@@ -1464,7 +1475,7 @@ export type GroupChatDetailsUpdates = {
     rules?: VersionedRules;
     invitedUsers?: Set<string>;
     timestamp: bigint;
-    botsAddedOrUpdated: BotGroupDetails[];
+    botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: Set<string>;
     apiKeysGenerated: PublicApiKeyDetails[];
 };

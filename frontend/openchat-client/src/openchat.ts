@@ -413,6 +413,7 @@ import type {
     CompletedCryptocurrencyTransfer,
     GenerateBotKeyResponse,
     WebAuthnKey,
+    BotInstallationLocation,
 } from "openchat-shared";
 import {
     Stream,
@@ -3203,22 +3204,6 @@ export class OpenChat extends EventTarget {
                 chatStateStore.setProp(serverChat.id, "apiKeys", resp.apiKeys);
             }
             await this.#updateUserStoreFromEvents(serverChat.id, []);
-        } else if (serverChat.kind === "direct_chat") {
-            // TODO fix this when we have the apis
-            // chatStateStore.setProp(
-            //     serverChat.id,
-            //     "bots",
-            //     new Map<string, ExternalBotPermissions>([
-            //         [
-            //             "p2zjm-6obya-fjjpk-mqlfa",
-            //             {
-            //                 messagePermissions: ["text"],
-            //                 chatPermissions: [],
-            //                 communityPermissions: [],
-            //             },
-            //         ],
-            //     ]),
-            // );
         }
     }
 
@@ -5949,6 +5934,8 @@ export class OpenChat extends EventTarget {
                 chatsResponse.state.referrals,
                 chatsResponse.state.walletConfig,
                 chatsResponse.state.messageActivitySummary,
+                chatsResponse.state.installedBots,
+                chatsResponse.state.apiKeys,
             );
 
             const selectedChatId = this.#liveState.selectedChatId;
@@ -7008,7 +6995,7 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    #getLocalUserIndex(chat: ChatSummary): Promise<string> {
+    #getLocalUserIndex(chat: ChatSummary, flipDirect: boolean = false): Promise<string> {
         switch (chat.kind) {
             case "group_chat":
                 return Promise.resolve(chat.localUserIndex);
@@ -7025,7 +7012,7 @@ export class OpenChat extends EventTarget {
             case "direct_chat":
                 return this.#sendRequest({
                     kind: "getLocalUserIndexForUser",
-                    userId: chat.them.userId,
+                    userId: flipDirect ? this.#liveState.user.userId : chat.them.userId,
                 });
         }
     }
@@ -8055,13 +8042,20 @@ export class OpenChat extends EventTarget {
         return Promise.resolve("success");
     }
 
+    #getChatIdForBotCommandScope(chatId: ChatIdentifier): ChatIdentifier {
+        if (chatId.kind === "direct_chat") {
+            return { kind: "direct_chat", userId: this.#liveState.user.userId };
+        }
+        return chatId;
+    }
+
     #getAuthTokenForBotCommand(
         chat: ChatSummary,
         threadRootMessageIndex: number | undefined,
         bot: ExternalBotCommandInstance,
     ): Promise<[string, bigint]> {
         const messageId = random64();
-        return this.#getLocalUserIndex(chat).then((localUserIndex) => {
+        return this.#getLocalUserIndex(chat, true).then((localUserIndex) => {
             return this.#sendRequest({
                 kind: "getAccessToken",
                 chatId: chat.id,
@@ -8070,7 +8064,7 @@ export class OpenChat extends EventTarget {
                     botId: bot.id,
                     scope: {
                         kind: "chat_scope",
-                        chatId: chat.id,
+                        chatId: this.#getChatIdForBotCommandScope(chat.id),
                         threadRootMessageIndex,
                         messageId,
                     },
@@ -8092,7 +8086,7 @@ export class OpenChat extends EventTarget {
     }
 
     installBot(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
         grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
@@ -8116,7 +8110,7 @@ export class OpenChat extends EventTarget {
     }
 
     updateInstalledBot(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
         grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
@@ -8132,7 +8126,7 @@ export class OpenChat extends EventTarget {
     }
 
     #uninstallBotLocally(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
     ): ExternalBotPermissions | undefined {
         let perm: ExternalBotPermissions | undefined;
@@ -8151,12 +8145,14 @@ export class OpenChat extends EventTarget {
                     return new Map(b);
                 });
                 break;
+            case "direct_chat": //FIXME
+                break;
         }
         return perm;
     }
 
     #installBotLocally(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
         perm: ExternalBotPermissions | undefined,
     ): void {
@@ -8174,6 +8170,8 @@ export class OpenChat extends EventTarget {
                     b.set(botId, perm);
                     return new Map(b);
                 });
+                break;
+            case "direct_chat": //FIXME
                 break;
         }
     }

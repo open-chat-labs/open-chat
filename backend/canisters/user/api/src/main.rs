@@ -9,7 +9,7 @@ fn main() {
     }
 
     generate_ts_method!(user, bio);
-    generate_ts_method!(user, cached_btc_address);
+    //generate_ts_method!(user, cached_btc_address);
     generate_ts_method!(user, chit_events);
     generate_ts_method!(user, contacts);
     generate_ts_method!(user, deleted_message);
@@ -34,7 +34,7 @@ fn main() {
     generate_ts_method!(user, approve_transfer);
     generate_ts_method!(user, archive_unarchive_chats);
     generate_ts_method!(user, block_user);
-    generate_ts_method!(user, btc_address);
+    //generate_ts_method!(user, btc_address);
     generate_ts_method!(user, cancel_message_reminder);
     generate_ts_method!(user, cancel_p2p_swap);
     generate_ts_method!(user, claim_daily_chit);
@@ -46,6 +46,7 @@ fn main() {
     generate_ts_method!(user, delete_group);
     generate_ts_method!(user, delete_messages);
     generate_ts_method!(user, edit_message_v2);
+    generate_ts_method!(user, generate_bot_api_key);
     generate_ts_method!(user, join_video_call);
     generate_ts_method!(user, leave_community);
     generate_ts_method!(user, leave_group);
@@ -58,7 +59,7 @@ fn main() {
     generate_ts_method!(user, remove_reaction);
     generate_ts_method!(user, reclaim_swap_tokens);
     generate_ts_method!(user, report_message);
-    generate_ts_method!(user, retrieve_btc);
+    //generate_ts_method!(user, retrieve_btc);
     generate_ts_method!(user, save_crypto_account);
     generate_ts_method!(user, send_message_with_transfer_to_channel);
     generate_ts_method!(user, send_message_with_transfer_to_group);
@@ -76,6 +77,7 @@ fn main() {
     generate_ts_method!(user, unmute_notifications);
     generate_ts_method!(user, unpin_chat_v2);
     generate_ts_method!(user, withdraw_crypto_v2);
+    generate_ts_method!(user, update_bot);
 
     candid::export_service!();
     std::print!("{}", __export_service());
