@@ -152,6 +152,7 @@ type WebAuthnKey = record {
     credential_id : blob;
     origin : text;
     cross_platform : bool;
+    aaguid : blob;
 };
 
 service : {

@@ -35,4 +35,5 @@ pub struct WebAuthnKey {
     pub credential_id: Vec<u8>,
     pub origin: String,
     pub cross_platform: bool,
+    pub aaguid: [u8; 16]
 }

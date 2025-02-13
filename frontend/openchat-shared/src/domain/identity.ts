@@ -133,4 +133,5 @@ export type WebAuthnKey = {
     credentialId: Uint8Array;
     origin: string;
     crossPlatform: boolean;
+    aaguid: Uint8Array;
 };

@@ -42,6 +42,7 @@ export const idlFactory = ({ IDL }) => {
     'public_key' : IDL.Vec(IDL.Nat8),
     'origin' : IDL.Text,
     'cross_platform' : IDL.Bool,
+    'aaguid' : IDL.Vec(IDL.Nat8),
     'credential_id' : IDL.Vec(IDL.Nat8),
   });
   const UserId = IDL.Principal;
