@@ -286,7 +286,7 @@
     }
 
     function keyPress(e: KeyboardEvent) {
-        if (e.key === "Enter") {
+        if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
 
             if ($enterSend && !e.shiftKey && !showCommandSelector && !directChatBotId) {
