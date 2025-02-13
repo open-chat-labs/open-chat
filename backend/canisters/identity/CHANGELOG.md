@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement signing in with Passkeys ([#7382](https://github.com/open-chat-labs/open-chat/pull/7382))
+- Store the `aaguid` along with each WebAuthn key ([#7409](https://github.com/open-chat-labs/open-chat/pull/7409))
+
 ### Changed
 
 - Return `last_used` on each authentication principal ([#7372](https://github.com/open-chat-labs/open-chat/pull/7372))
