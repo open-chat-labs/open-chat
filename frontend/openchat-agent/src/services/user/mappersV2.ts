@@ -1394,6 +1394,11 @@ export function apiExchangeArgs(args: ExchangeTokenSwapArgs): UserSwapTokensExch
         return {
             KongSwap: value,
         };
+    } else if (args.dex === "sonic") {
+        throw new Error("Unsupported DEX sonic");
+        // return {
+        //     Sonic: value
+        // }
     }
     throw new UnsupportedValueError("Unexpected dex", args.dex);
 }
