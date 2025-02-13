@@ -130,13 +130,15 @@ import type {
     MessageContext,
     MessageActivity,
     MessageActivitySummary,
+    PublicApiKeyDetails,
+    InstalledBotDetails,
 } from "openchat-shared";
 import {
     nullMembership,
     toBigInt32,
     toBigInt64,
     CommonResponses,
-    UnsupportedValueError
+    UnsupportedValueError,
 } from "openchat-shared";
 import {
     bytesToBigint,
@@ -155,6 +157,8 @@ import {
     messageMatch,
     messageEvent,
     eventsSuccessResponse,
+    installedBotDetails,
+    publicApiKeyDetails,
 } from "../common/chatMappersV2";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -848,6 +852,14 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
             referrals: result.referrals.map(referral),
             walletConfig: walletConfig(result.wallet_config),
             messageActivitySummary: messageActivitySummary(result.message_activity_summary),
+            bots: result.bots.map(installedBotDetails).reduce((m, b) => {
+                m.set(b.id, b);
+                return m;
+            }, new Map<string, InstalledBotDetails>()),
+            apiKeys: result.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
+                m.set(k.botId, k);
+                return m;
+            }, new Map<string, PublicApiKeyDetails>()),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${value}`);
@@ -1018,6 +1030,9 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
                 result.message_activity_summary,
                 messageActivitySummary,
             ),
+            botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
+            botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
+            apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
         };
     }
 
@@ -1378,10 +1393,6 @@ export function apiExchangeArgs(args: ExchangeTokenSwapArgs): UserSwapTokensExch
     } else if (args.dex === "kongswap") {
         return {
             KongSwap: value,
-        };
-    } else if (args.dex === "sonic") {
-        return {
-            Sonic: value,
         };
     }
     throw new UnsupportedValueError("Unexpected dex", args.dex);

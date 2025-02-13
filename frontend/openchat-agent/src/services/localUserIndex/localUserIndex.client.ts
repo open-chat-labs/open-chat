@@ -7,18 +7,17 @@ import type {
     ChatEventsArgsInner,
     ChatEventsBatchResponse,
     ChatEventsResponse,
-    CommunityIdentifier,
     EventsSuccessResult,
     EventWrapper,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
-    GroupChatIdentifier,
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
     RegisterUserResponse,
     ExternalBotPermissions,
     VerifiedCredentialArgs,
+    BotInstallationLocation,
 } from "openchat-shared";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
@@ -57,6 +56,7 @@ import {
     setCachePrimerTimestamp,
 } from "../../utils/caching";
 import {
+    BotInstallationLocation as ApiBotInstallationLocation,
     LocalUserIndexAccessTokenArgs,
     LocalUserIndexAccessTokenResponse,
     LocalUserIndexAccessTokenV2Args,
@@ -389,18 +389,26 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
+    #apiBotInstallationLocation(domain: BotInstallationLocation): ApiBotInstallationLocation {
+        switch (domain.kind) {
+            case "community":
+                return { Community: principalStringToBytes(domain.communityId) };
+            case "group_chat":
+                return { Group: principalStringToBytes(domain.groupId) };
+            case "direct_chat":
+                return { User: principalStringToBytes(domain.userId) };
+        }
+    }
+
     installBot(
-        location: CommunityIdentifier | GroupChatIdentifier,
+        location: BotInstallationLocation,
         botId: string,
         grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "install_bot",
             {
-                location:
-                    location.kind === "community"
-                        ? { Community: principalStringToBytes(location.communityId) }
-                        : { Group: principalStringToBytes(location.groupId) },
+                location: this.#apiBotInstallationLocation(location),
                 bot_id: principalStringToBytes(botId),
                 granted_permissions: {
                     chat: grantedPermissions.chatPermissions.map(apiChatPermission),
@@ -408,23 +416,20 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
                     message: grantedPermissions.messagePermissions.map(apiMessagePermission),
                 },
             },
-            (resp) => resp === "Success",
+            (resp) => {
+                console.log("Install bot response: ", resp);
+                return resp === "Success";
+            },
             LocalUserIndexInstallBotArgs,
             LocalUserIndexInstallBotResponse,
         );
     }
 
-    uninstallBot(
-        location: CommunityIdentifier | GroupChatIdentifier,
-        botId: string,
-    ): Promise<boolean> {
+    uninstallBot(location: BotInstallationLocation, botId: string): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "uninstall_bot",
             {
-                location:
-                    location.kind === "community"
-                        ? { Community: principalStringToBytes(location.communityId) }
-                        : { Group: principalStringToBytes(location.groupId) },
+                location: this.#apiBotInstallationLocation(location),
                 bot_id: principalStringToBytes(botId),
             },
             (resp) => resp === "Success",

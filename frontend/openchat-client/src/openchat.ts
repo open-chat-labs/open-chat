@@ -413,6 +413,7 @@ import type {
     CompletedCryptocurrencyTransfer,
     GenerateBotKeyResponse,
     WebAuthnKey,
+    BotInstallationLocation,
 } from "openchat-shared";
 import {
     Stream,
@@ -8089,7 +8090,7 @@ export class OpenChat extends EventTarget {
     }
 
     installBot(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
         grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
@@ -8113,7 +8114,7 @@ export class OpenChat extends EventTarget {
     }
 
     updateInstalledBot(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
         grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
@@ -8129,7 +8130,7 @@ export class OpenChat extends EventTarget {
     }
 
     #uninstallBotLocally(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
     ): ExternalBotPermissions | undefined {
         let perm: ExternalBotPermissions | undefined;
@@ -8148,12 +8149,14 @@ export class OpenChat extends EventTarget {
                     return new Map(b);
                 });
                 break;
+            case "direct_chat": //FIXME
+                break;
         }
         return perm;
     }
 
     #installBotLocally(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
         perm: ExternalBotPermissions | undefined,
     ): void {
@@ -8171,6 +8174,8 @@ export class OpenChat extends EventTarget {
                     b.set(botId, perm);
                     return new Map(b);
                 });
+                break;
+            case "direct_chat": //FIXME
                 break;
         }
     }

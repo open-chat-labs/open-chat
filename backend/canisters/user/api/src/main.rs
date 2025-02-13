@@ -77,6 +77,7 @@ fn main() {
     generate_ts_method!(user, unmute_notifications);
     generate_ts_method!(user, unpin_chat_v2);
     generate_ts_method!(user, withdraw_crypto_v2);
+    generate_ts_method!(user, update_bot);
 
     candid::export_service!();
     std::print!("{}", __export_service());

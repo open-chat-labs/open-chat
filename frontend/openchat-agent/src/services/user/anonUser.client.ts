@@ -3,6 +3,7 @@ import type {
     ChitEventsRequest,
     ChitEventsResponse,
     ClaimDailyChitResponse,
+    ExternalBotPermissions,
     JoinVideoCallResponse,
     MessageActivityFeedResponse,
     SetPinNumberResponse,
@@ -126,6 +127,8 @@ export class AnonUserClient {
                 latestTimestamp: 0n,
                 unreadCount: 0,
             },
+            bots: [],
+            apiKeys: new Map(),
         });
     }
 
@@ -487,6 +490,13 @@ export class AnonUserClient {
     }
 
     messageActivityFeed(_since: bigint): Promise<MessageActivityFeedResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    updateInstalledBot(
+        _botId: string,
+        _grantedPermissions: ExternalBotPermissions,
+    ): Promise<boolean> {
         throw new AnonymousOperationError();
     }
 }

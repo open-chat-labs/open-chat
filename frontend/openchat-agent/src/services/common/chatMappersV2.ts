@@ -121,7 +121,7 @@ import type {
     SetPinNumberResponse,
     MessagePermission,
     ExternalBotPermissions,
-    BotGroupDetails,
+    InstalledBotDetails,
     BotDefinition,
     SlashCommandSchema,
     SlashCommandParamType,
@@ -129,7 +129,7 @@ import type {
     BotMessageContext,
     SlashCommandParamInstance,
     GenerateBotKeyResponse,
-    // PublicApiKeyDetails,
+    PublicApiKeyDetails,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -300,7 +300,7 @@ import type {
     BotPermissions as ApiExternalBotPermissions,
     CommunityUpdateBotResponse,
     GroupUpdateBotResponse,
-    BotGroupDetails as ApiBotGroupDetails,
+    InstalledBotDetails as ApiInstalledBotDetails,
     SlashCommandSchema as ApiSlashCommandSchema,
     SlashCommandParamType as ApiSlashCommandParamType,
     SlashCommandParam as ApiSlashCommandParam,
@@ -308,7 +308,8 @@ import type {
     BotDefinition as ApiBotDefinition,
     CommunityGenerateBotApiKeyResponse,
     GroupGenerateBotApiKeyResponse,
-    // PublicApiKeyDetails as ApiPublicApiKeyDetails,
+    PublicApiKeyDetails as ApiPublicApiKeyDetails,
+    UserUpdateBotResponse,
 } from "../../typebox";
 import type { ApiPrincipal } from "../index";
 
@@ -2691,25 +2692,24 @@ export function groupDetailsResponse(
             pinnedMessages: new Set(value.Success.pinned_messages),
             rules: value.Success.chat_rules,
             timestamp: value.Success.timestamp,
-            bots: bots.map(botGroupDetails),
-            apiKeys: new Map(),
-            // apiKeys: value.Success.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
-            //     m.set(k.botId, k);
-            //     return m;
-            // }, new Map<string, PublicApiKeyDetails>()),
+            bots: bots.map(installedBotDetails),
+            apiKeys: value.Success.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
+                m.set(k.botId, k);
+                return m;
+            }, new Map<string, PublicApiKeyDetails>()),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
 }
 
-// export function publicApiKeyDetails(value: ApiPublicApiKeyDetails): PublicApiKeyDetails {
-//     return {
-//         botId: principalBytesToString(value.bot_id),
-//         grantedPermissions: externalBotPermissions(value.granted_permissions),
-//         generatedBy: principalBytesToString(value.generated_by),
-//         generatedAt: value.generated_at,
-//     };
-// }
+export function publicApiKeyDetails(value: ApiPublicApiKeyDetails): PublicApiKeyDetails {
+    return {
+        botId: principalBytesToString(value.bot_id),
+        grantedPermissions: externalBotPermissions(value.granted_permissions),
+        generatedBy: principalBytesToString(value.generated_by),
+        generatedAt: value.generated_at,
+    };
+}
 
 export function groupDetailsUpdatesResponse(
     value: GroupSelectedUpdatesResponse | CommunitySelectedChannelUpdatesResponse,
@@ -2734,10 +2734,9 @@ export function groupDetailsUpdatesResponse(
                     (invited_users) => new Set(invited_users.map(principalBytesToString)),
                 ),
                 timestamp: value.Success.timestamp,
-                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(botGroupDetails),
+                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
                 botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
-                apiKeysGenerated: [],
-                // apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
+                apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {
@@ -3254,8 +3253,6 @@ export function apiDexId(dex: DexId): TExchangeId {
             return "ICPSwap";
         case "kongswap":
             return "KongSwap";
-        case "sonic":
-            return "Sonic";
     }
 }
 
@@ -3412,16 +3409,16 @@ export function externalBotPermissions(value: ApiExternalBotPermissions): Extern
 }
 
 export function updateBotResponse(
-    value: CommunityUpdateBotResponse | GroupUpdateBotResponse,
+    value: CommunityUpdateBotResponse | GroupUpdateBotResponse | UserUpdateBotResponse,
 ): boolean {
     if (value === "Success") {
         return true;
     }
-    console.warn("Community|GroupUpdateBotResponse failed with ", value);
+    console.warn("Community|GroupUpdateBotResponse|UserUpdateBotResponse failed with ", value);
     return false;
 }
 
-export function botGroupDetails(value: ApiBotGroupDetails): BotGroupDetails {
+export function installedBotDetails(value: ApiInstalledBotDetails): InstalledBotDetails {
     return {
         id: principalBytesToString(value.user_id),
         permissions: externalBotPermissions(value.permissions),

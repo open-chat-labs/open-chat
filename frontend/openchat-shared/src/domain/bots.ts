@@ -13,10 +13,15 @@ import type { CommunityIdentifier } from "./community";
 
 export const MIN_NAME_LENGTH = 3;
 
-export type BotGroupDetails = {
+export type InstalledBotDetails = {
     id: string;
     permissions: ExternalBotPermissions;
 };
+
+export type BotInstallationLocation =
+    | CommunityIdentifier
+    | GroupChatIdentifier
+    | DirectChatIdentifier;
 
 export type BotsResponse = {
     timestamp: bigint;
