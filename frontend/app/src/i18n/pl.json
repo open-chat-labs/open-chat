@@ -153,11 +153,13 @@
             "action": "Rejestr",
             "addBot": "Dodaj bota",
             "choosePermissions": "Uprawnienia",
+            "continue": "Kontynuować",
             "failure": "Przepraszamy, nie udało nam się dodać bota",
             "loadDefinition": "Definicja obciążenia",
             "noPermissions": "Nie są wymagane żadne specjalne uprawnienia",
             "permissionsInfo": "Ten bot szuka następujących uprawnień. Wybór ograniczenia przyznanych uprawnień ograniczy możliwości bota.",
-            "title": "Dodaj bota do społeczności"
+            "title": "Dodaj bota do społeczności",
+            "titleDirect": "Wybierz uprawnienia do interakcji z tym botem"
         },
         "builder": {
             "addAnother": "Dodaj kolejny",
@@ -262,6 +264,11 @@
         },
         "diamond": {
             "desc": "Opublikuj link wyjaśniający członkostwo Diamond"
+        },
+        "direct": {
+            "placeholder": "Wpisz „/”, aby wybrać polecenie...",
+            "warning": "Możesz wysyłać polecenia slash tylko do botów. \n\nProszę wpisać \"/\", aby zobaczyć, jakie polecenia są dostępne.",
+            "warningTitle": "Bezpośredni czat z botem"
         },
         "edit": {
             "failure": "Przepraszamy, nie udało nam się zaktualizować uprawnień bota",
@@ -1578,6 +1585,7 @@
     "searchForUsername": "Wyszukaj nazwę użytkownika",
     "searchGroupsPlaceholder": "Szukaj grup...",
     "searchPlaceholder": "Wyszukaj użytkowników i grupy...",
+    "searchUsersPlaceholder": "Wyszukaj użytkowników i boty...",
     "selectAChannel": "Wybierz kanał z listy lub wyszukaj więcej kanałów w tej społeczności.",
     "selectAChat": "Wyszukaj znajomego, utwórz nową grupę lub wybierz czat.",
     "selectAFavourite": "Możesz dodać czaty bezpośrednie, czaty grupowe lub kanały społecznościowe do swoich ulubionych, a zobaczysz je tutaj.",
@@ -1866,6 +1874,7 @@
     "usernameRules": "tylko znaki alfanumeryczne i podkreślenia",
     "userReferralMessage": "Udostępnij ten link do OpenChat znajomym i rodzinie. Zyskujesz nagrody CHIT za każdego poleconego użytkownika, który zweryfikuje swoją unikalną osobowość lub zostanie członkiem Diamond. Jeśli polecony przez Ciebie użytkownik uzyska członkostwo Diamond, otrzymasz 5000 CHIT, jeśli udowodni swoją unikalną osobowość, otrzymasz 10 000 CHIT, a jeśli uzyska dożywotni poziom Diamond, otrzymasz 15 000 CHIT. Jeśli następnie przeprowadzi „weryfikację” o wyższej wartości, otrzymasz różnicę w CHIT.",
     "users": "Użytkownicy",
+    "usersAndBots": "Użytkownicy i boty",
     "userSearchFailed": "Wystąpił błąd podczas wyszukiwania użytkowników",
     "verified": {
         "choose": "Wybierz {level}, aby zweryfikować",

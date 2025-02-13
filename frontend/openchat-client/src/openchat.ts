@@ -3208,20 +3208,20 @@ export class OpenChat extends EventTarget {
             await this.#updateUserStoreFromEvents(serverChat.id, []);
         } else if (serverChat.kind === "direct_chat") {
             // TODO fix this when we have the apis
-            chatStateStore.setProp(
-                serverChat.id,
-                "bots",
-                new Map<string, ExternalBotPermissions>([
-                    [
-                        "p2zjm-6obya-fjjpk-mqlfa",
-                        {
-                            messagePermissions: ["text"],
-                            chatPermissions: [],
-                            communityPermissions: [],
-                        },
-                    ],
-                ]),
-            );
+            // chatStateStore.setProp(
+            //     serverChat.id,
+            //     "bots",
+            //     new Map<string, ExternalBotPermissions>([
+            //         [
+            //             "p2zjm-6obya-fjjpk-mqlfa",
+            //             {
+            //                 messagePermissions: ["text"],
+            //                 chatPermissions: [],
+            //                 communityPermissions: [],
+            //             },
+            //         ],
+            //     ]),
+            // );
         }
     }
 

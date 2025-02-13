@@ -153,11 +153,13 @@
             "action": "Registro",
             "addBot": "Agregar bot",
             "choosePermissions": "Permisos",
+            "continue": "Continuar",
             "failure": "Lo sentimos, no pudimos agregar el bot.",
             "loadDefinition": "Definición de carga",
             "noPermissions": "No se requieren permisos especiales",
             "permissionsInfo": "Este bot solicita los siguientes permisos. Si elige limitar los permisos otorgados, se limitarán las capacidades del bot.",
-            "title": "Agregar bot a la comunidad"
+            "title": "Agregar bot a la comunidad",
+            "titleDirect": "Elija permisos para interactuar con este bot"
         },
         "builder": {
             "addAnother": "Agregar otro",
@@ -262,6 +264,11 @@
         },
         "diamond": {
             "desc": "Publica un enlace para explicar la membresía Diamante"
+        },
+        "direct": {
+            "placeholder": "Introduzca \"/\" para seleccionar un comando...",
+            "warning": "Solo puedes enviar comandos de barra a los bots. \n\nIngresa \"/\" para ver qué comandos están disponibles.",
+            "warningTitle": "Chat directo con bot"
         },
         "edit": {
             "failure": "Lo sentimos, no pudimos actualizar los permisos del bot.",
@@ -1578,6 +1585,7 @@
     "searchForUsername": "Buscar un nombre de usuario",
     "searchGroupsPlaceholder": "Buscar grupos...",
     "searchPlaceholder": "Buscar usuarios y grupos...",
+    "searchUsersPlaceholder": "Buscar usuarios y bots...",
     "selectAChannel": "Seleccione un canal de la lista o busque más canales en esta comunidad.",
     "selectAChat": "Busca un amigo, crea un nuevo grupo o selecciona un chat.",
     "selectAFavourite": "Puede agregar chats directos, chats grupales o canales comunitarios a sus favoritos y los verá aquí.",
@@ -1866,6 +1874,7 @@
     "usernameRules": "solo alfanuméricos y guiones bajos",
     "userReferralMessage": "Comparte este enlace a OpenChat con tus amigos y familiares. Ganarás recompensas CHIT por cada usuario que recomiendes y que verifique su personalidad única o se convierta en miembro Diamante. Si un usuario al que recomiendes obtiene la membresía Diamante, ganarás 5000 CHIT; si demuestra su personalidad única, 10 000 CHIT; y si obtiene la membresía Diamante de por vida, 15 000 CHIT. Si posteriormente realiza una \"verificación\" de mayor valor, recibirás la diferencia en CHIT.",
     "users": "Usuarios",
+    "usersAndBots": "Usuarios y bots",
     "userSearchFailed": "Se ha producido un error al buscar usuarios",
     "verified": {
         "choose": "Seleccione {level} para verificar",

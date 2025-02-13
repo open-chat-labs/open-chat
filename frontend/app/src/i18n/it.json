@@ -153,11 +153,13 @@
             "action": "Registro",
             "addBot": "Aggiungi bot",
             "choosePermissions": "Permessi",
+            "continue": "Continuare",
             "failure": "Spiacenti, non siamo riusciti ad aggiungere il bot",
             "loadDefinition": "Definizione del carico",
             "noPermissions": "Non sono richieste autorizzazioni speciali",
             "permissionsInfo": "Questo bot richiede i seguenti permessi. Scegliendo di limitare i permessi concessi si limiteranno le capacità del bot.",
-            "title": "Aggiungi bot alla community"
+            "title": "Aggiungi bot alla community",
+            "titleDirect": "Scegli i permessi per interagire con questo bot"
         },
         "builder": {
             "addAnother": "Aggiungine un altro",
@@ -262,6 +264,11 @@
         },
         "diamond": {
             "desc": "Pubblica un link per spiegare l'appartenenza a Diamond"
+        },
+        "direct": {
+            "placeholder": "Digitare \"/\" per selezionare un comando ...",
+            "warning": "Puoi inviare solo comandi slash ai bot. \n\nInserisci \"/\" per vedere quali comandi sono disponibili.",
+            "warningTitle": "Chat diretta con il bot"
         },
         "edit": {
             "failure": "Spiacenti, non siamo riusciti ad aggiornare le autorizzazioni del bot",
@@ -1578,6 +1585,7 @@
     "searchForUsername": "Cerca un nome utente",
     "searchGroupsPlaceholder": "Cerca gruppi...",
     "searchPlaceholder": "Cerca utenti e gruppi...",
+    "searchUsersPlaceholder": "Cerca utenti e bot...",
     "selectAChannel": "Seleziona un canale dall'elenco o cerca altri canali in questa community.",
     "selectAChat": "Cerca un amico, crea un nuovo gruppo o seleziona una chat.",
     "selectAFavourite": "Puoi aggiungere chat dirette, chat di gruppo o canali della community ai tuoi preferiti e li vedrai qui.",
@@ -1866,6 +1874,7 @@
     "usernameRules": "solo caratteri alfanumerici e trattini bassi",
     "userReferralMessage": "Condividi questo link su OpenChat con amici e familiari. Guadagni premi CHIT per ogni utente che segnali che verifica la propria identità unica o diventa un membro Diamond. Se un utente che segnali ottiene l'iscrizione Diamond, guadagnerai 5.000 CHIT, se dimostra di essere un'identità unica, sono 10.000 CHIT e se ottiene Diamond a vita, sono 15.000 CHIT. Se in seguito esegue una \"verifica\" di valore superiore, ti verrà assegnata la differenza in CHIT.",
     "users": "Utenti",
+    "usersAndBots": "Utenti e bot",
     "userSearchFailed": "Si è verificato un errore durante la ricerca degli utenti",
     "verified": {
         "choose": "Scegli {level} per verificare",
