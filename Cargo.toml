@@ -163,6 +163,7 @@ members = [
     "backend/tools/canister_upgrade_proposal_builder",
     "backend/tools/canister_upgrader",
     "backend/tools/canister_wasm_chunks_uploader",
+    "backend/tools/dupe_deps_detector",
     "backend/tools/principal_generator",
     "backend/tools/translation_tool",
     "backend/tools/ts_exporter",
