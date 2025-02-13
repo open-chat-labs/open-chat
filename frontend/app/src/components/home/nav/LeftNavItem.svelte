@@ -2,7 +2,7 @@
     import { _ } from "svelte-i18n";
     import { emptyUnreadCounts } from "openchat-client";
     import UnreadCount from "../UnreadCount.svelte";
-    import type { ResourceKey } from "openchat-client";
+    import type { ResourceKey, UnreadCounts } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
     import VideoCallIcon from "../video/VideoCallIcon.svelte";
     import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
@@ -11,8 +11,8 @@
         label: ResourceKey;
         selected?: boolean;
         separator?: boolean;
-        unread?: any;
-        video?: any;
+        unread?: UnreadCounts;
+        video?: { muted: 0; unmuted: 0 };
         children?: import("svelte").Snippet;
         onClick?: () => void;
         verified?: boolean;

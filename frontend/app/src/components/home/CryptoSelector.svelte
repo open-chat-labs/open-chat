@@ -10,7 +10,7 @@
     interface Props {
         ledger: string | undefined;
         filter?: (details: EnhancedTokenDetails) => boolean;
-        onSelect: (ledger: string, urlFormat: string) => void;
+        onSelect?: (ledger: string, urlFormat: string) => void;
     }
 
     let { ledger = $bindable(), filter = (_) => true, onSelect }: Props = $props();
@@ -29,7 +29,7 @@
     function selectToken(selectedLedger: string, urlFormat: string) {
         selecting = false;
         ledger = selectedLedger;
-        onSelect(ledger, urlFormat);
+        onSelect?.(ledger, urlFormat);
     }
 
     function onKeyDown(ev: KeyboardEvent) {

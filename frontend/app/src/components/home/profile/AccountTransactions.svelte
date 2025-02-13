@@ -67,10 +67,10 @@
         window.open(url(id), "_blank");
     }
 
-    function ledgerSelected(ev: CustomEvent<{ ledger: string; urlFormat: string }>): void {
+    function ledgerSelected(l: string, u: string): void {
         transactionData = { kind: "idle" };
-        ledger = ev.detail.ledger;
-        urlFormat = ev.detail.urlFormat;
+        ledger = l;
+        urlFormat = u;
         loadTransactions();
     }
 
@@ -153,7 +153,7 @@
             <div>
                 <CryptoSelector
                     filter={(t) => snsLedgers.has(t.ledger)}
-                    on:select={ledgerSelected}
+                    onSelect={ledgerSelected}
                     {ledger} />
             </div>
         </div>

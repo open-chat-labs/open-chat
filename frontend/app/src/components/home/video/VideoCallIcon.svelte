@@ -1,7 +1,11 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
 
-    let { video = { muted: 0, unmuted: 0 } } = $props();
+    interface Props {
+        video: { muted: 0; unmuted: 0 };
+    }
+
+    let { video = { muted: 0, unmuted: 0 } }: Props = $props();
 
     let muted = $derived(video.unmuted <= 0);
     let count = $derived(muted ? video.muted : video.unmuted);

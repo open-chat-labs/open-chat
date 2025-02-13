@@ -230,8 +230,8 @@
         });
     }
 
-    function onLedgerInSelected(ev: CustomEvent<{ ledger: string; urlFormat: string }>): void {
-        loadSwaps(ev.detail.ledger);
+    function onLedgerInSelected(ledger: string, _: string): void {
+        loadSwaps(ledger);
     }
 
     function onSwapFinished(
@@ -292,7 +292,7 @@
                             <CryptoSelector
                                 filter={(t) => t.balance > 0 && $swappableTokensStore.has(t.ledger)}
                                 bind:ledger={ledgerIn}
-                                on:select={onLedgerInSelected} />
+                                onSelect={onLedgerInSelected} />
                         </div>
                     </div>
                     <div class="amount">
