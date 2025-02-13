@@ -6,8 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = { workspace = true }
 canister_client = { path = "../../../libraries/canister_client" }
 ic-agent = { workspace = true }
+ic_principal = { workspace = true }
+msgpack = { path = "../../../libraries/msgpack" }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../api" }

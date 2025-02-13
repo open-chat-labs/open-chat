@@ -1,4 +1,4 @@
-use canister_client::generate_update_call;
+use canister_client::generate_candid_update_call;
 use ic_agent::Agent;
 use openchat_installer_canister::*;
 use types::CanisterId;
@@ -6,9 +6,9 @@ use types::CanisterId;
 // Queries
 
 // Updates
-generate_update_call!(install_canisters);
-generate_update_call!(upgrade_canister);
-generate_update_call!(upload_wasm_chunk);
+generate_candid_update_call!(install_canisters);
+generate_candid_update_call!(upgrade_canister);
+generate_candid_update_call!(upload_wasm_chunk);
 
 pub async fn upload_wasm_in_chunks(
     agent: &Agent,

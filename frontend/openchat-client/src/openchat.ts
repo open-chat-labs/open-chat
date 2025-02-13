@@ -1,6 +1,12 @@
 /* eslint-disable no-case-declarations */
 import { gaTrack } from "./utils/ga";
-import { AnonymousIdentity, type Identity } from "@dfinity/agent";
+import {
+    AnonymousIdentity,
+    DER_COSE_OID,
+    type Identity,
+    type SignIdentity,
+    unwrapDER,
+} from "@dfinity/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
 import { get } from "svelte/store";
 import DRange from "drange";
@@ -406,6 +412,7 @@ import type {
     BotClientConfigData,
     CompletedCryptocurrencyTransfer,
     GenerateBotKeyResponse,
+    WebAuthnKey,
 } from "openchat-shared";
 import {
     Stream,
@@ -440,6 +447,7 @@ import {
     anonymousUser,
     ANON_USER_ID,
     isPaymentGate,
+    ONE_DAY,
     ONE_MINUTE_MILLIS,
     ONE_HOUR,
     LEDGER_CANISTER_CHAT,
@@ -460,6 +468,7 @@ import {
     parseBigInt,
     random64,
     random128,
+    WEBAUTHN_ORIGINATING_CANISTER,
 } from "openchat-shared";
 import { AIRDROP_BOT_USER_ID } from "./constants";
 import { failedMessagesStore } from "./stores/failedMessages";
@@ -496,7 +505,12 @@ import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
 import { isBalanceGate, isCredentialGate } from "openchat-shared";
-import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+import {
+    DelegationChain,
+    DelegationIdentity,
+    ECDSAKeyIdentity,
+    WebAuthnIdentity,
+} from "@dfinity/identity";
 import {
     capturePinNumberStore,
     pinNumberFailureStore,
@@ -513,7 +527,8 @@ import { removeEmailSignInSession } from "openchat-shared";
 import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
-import { externalBots, setExternalBots } from "./stores";
+import { setExternalBots } from "./stores";
+import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -550,6 +565,7 @@ export class OpenChat extends EventTarget {
     #authIdentityStorage: IdentityStorage;
     #authPrincipal: string | undefined;
     #ocIdentityStorage: IdentityStorage;
+    #webAuthnKey: WebAuthnKey | undefined = undefined;
     #ocIdentity: Identity | undefined;
     #userLocation: string | undefined;
     #liveState: LiveState;
@@ -680,13 +696,18 @@ export class OpenChat extends EventTarget {
 
         if (!anon) {
             if (connectToWorkerResponse === "oc_identity_not_found") {
-                if (authProvider !== AuthProvider.II && authProvider !== AuthProvider.EMAIL) {
+                if (
+                    authProvider !== AuthProvider.II &&
+                    authProvider !== AuthProvider.EMAIL &&
+                    authProvider !== AuthProvider.PASSKEY
+                ) {
                     this.updateIdentityState({ kind: "challenging" });
                     return;
                 }
 
                 await this.#sendRequest({
                     kind: "createOpenChatIdentity",
+                    webAuthnKey: this.#webAuthnKey,
                     challengeAttempt: undefined,
                 });
             }
@@ -813,6 +834,7 @@ export class OpenChat extends EventTarget {
 
         const resp = await this.#sendRequest({
             kind: "createOpenChatIdentity",
+            webAuthnKey: this.#webAuthnKey,
             challengeAttempt,
         }).catch(() => "challenge_failed");
 
@@ -7090,6 +7112,105 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    async signUpWithWebAuthn(
+        assumeIdentity: boolean,
+    ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
+        const webAuthnOrigin = this.config.webAuthnOrigin;
+        if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
+
+        const webAuthnIdentity = await createWebAuthnIdentity(webAuthnOrigin);
+
+        // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
+        // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
+        const tempKey = await ECDSAKeyIdentity.generate();
+        return await this.#finaliseWebAuthnSignin(
+            tempKey,
+            () => webAuthnIdentity,
+            webAuthnOrigin,
+            assumeIdentity,
+        );
+    }
+
+    async signInWithWebAuthn() {
+        const webAuthnOrigin = this.config.webAuthnOrigin;
+        if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
+
+        const webAuthnIdentity = new MultiWebAuthnIdentity(webAuthnOrigin, (credentialId) =>
+            this.lookupWebAuthnPubKey(credentialId),
+        );
+        await this.#finaliseWebAuthnSignin(
+            webAuthnIdentity,
+            () => webAuthnIdentity.innerIdentity(),
+            webAuthnOrigin,
+            true,
+        );
+    }
+
+    async reSignInWithCurrentWebAuthnIdentity(): Promise<
+        [ECDSAKeyIdentity, DelegationChain, WebAuthnKey]
+    > {
+        const webAuthnKey =
+            this.#webAuthnKey ??
+            (await this.#sendRequest({
+                kind: "currentUserWebAuthnKey",
+            }));
+        if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
+
+        const webAuthnIdentity = new WebAuthnIdentity(
+            webAuthnKey.credentialId,
+            unwrapDER(webAuthnKey.publicKey, DER_COSE_OID),
+            undefined,
+        );
+        return await this.#finaliseWebAuthnSignin(
+            webAuthnIdentity,
+            () => webAuthnIdentity,
+            webAuthnKey.origin,
+            false,
+        );
+    }
+
+    async #finaliseWebAuthnSignin(
+        initialKey: SignIdentity,
+        webAuthnIdentityFn: () => WebAuthnIdentity,
+        webAuthnOrigin: string,
+        assumeIdentity: boolean,
+    ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
+        const sessionKey = await ECDSAKeyIdentity.generate();
+        const delegationChain = await DelegationChain.create(
+            initialKey,
+            sessionKey.getPublicKey(),
+            new Date(Date.now() + 30 * ONE_DAY),
+        );
+        const identity = DelegationIdentity.fromDelegation(sessionKey, delegationChain);
+        // In the sign in case, we must defer getting the webAuthnIdentity until after it has been used to sign the
+        // delegation, before that point we don't know which identity the user will choose.
+        const webAuthnIdentity = webAuthnIdentityFn();
+        const webAuthnKey = {
+            publicKey: new Uint8Array(webAuthnIdentity.getPublicKey().toDer()),
+            credentialId: new Uint8Array(webAuthnIdentity.rawId),
+            origin: webAuthnOrigin,
+            crossPlatform: webAuthnIdentity.getAuthenticatorAttachment() === "cross-platform",
+        };
+        if (assumeIdentity) {
+            this.#webAuthnKey = webAuthnKey;
+            this.#authIdentityStorage.set(sessionKey, delegationChain);
+            this.#loadedAuthenticationIdentity(identity, AuthProvider.PASSKEY);
+        }
+        return [sessionKey, delegationChain, webAuthnKey];
+    }
+
+    async lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array> {
+        const pubKey = await this.#sendRequest({
+            kind: "lookupWebAuthnPubKey",
+            credentialId,
+        });
+
+        if (pubKey === undefined) {
+            throw new Error("Failed to lookup WebAuthn PubKey");
+        }
+        return pubKey;
+    }
+
     async generateMagicLink(
         email: string,
         sessionKey: ECDSAKeyIdentity,
@@ -8233,13 +8354,17 @@ export class OpenChat extends EventTarget {
     }
 
     #authProviderFromAuthPrincipal(principal: AuthenticationPrincipal): AuthProvider {
-        if (principal.originatingCanister === this.config.signInWithEthereumCanister) {
+        if (principal.originatingCanister === WEBAUTHN_ORIGINATING_CANISTER) {
+            return AuthProvider.PASSKEY;
+        } else if (principal.originatingCanister === this.config.signInWithEthereumCanister) {
             return AuthProvider.ETH;
         } else if (principal.originatingCanister === this.config.signInWithSolanaCanister) {
             return AuthProvider.SOL;
         } else if (principal.originatingCanister === this.config.signInWithEmailCanister) {
             return AuthProvider.EMAIL;
-        } else if (principal.originatingCanister === process.env.INTERNET_IDENTITY_CANISTER_ID) {
+        } else if (
+            principal.originatingCanister === import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID
+        ) {
             if (principal.isIIPrincipal) {
                 return AuthProvider.II;
             } else {
@@ -8272,8 +8397,8 @@ export class OpenChat extends EventTarget {
                 const iiPrincipals = resp
                     .filter(
                         ({ originatingCanister, isIIPrincipal }) =>
-                            originatingCanister === process.env.INTERNET_IDENTITY_CANISTER_ID &&
-                            isIIPrincipal,
+                            originatingCanister ===
+                                import.meta.env.OC_INTERNET_IDENTITY_CANISTER_ID && isIIPrincipal,
                     )
                     .map((p) => p.principal);
                 if (iiPrincipals.length === 0) {
@@ -8299,14 +8424,17 @@ export class OpenChat extends EventTarget {
         initiatorKey: ECDSAKeyIdentity,
         initiatorDelegation: DelegationChain,
         initiatorIsIIPrincipal: boolean,
+        initiatorWebAuthnKey: WebAuthnKey | undefined,
         approverKey: ECDSAKeyIdentity,
         approverDelegation: DelegationChain,
     ): Promise<LinkIdentitiesResponse> {
         return this.#sendRequest({
             kind: "linkIdentities",
+            userId: this.#liveState.user.userId,
             initiatorKey: initiatorKey.getKeyPair(),
             initiatorDelegation: initiatorDelegation.toJSON(),
             initiatorIsIIPrincipal,
+            initiatorWebAuthnKey,
             approverKey: approverKey.getKeyPair(),
             approverDelegation: approverDelegation.toJSON(),
         });
@@ -8569,7 +8697,7 @@ export class OpenChat extends EventTarget {
 
     getBotConfig(): Promise<BotClientConfigData> {
         const metricsUrl =
-            process.env.NODE_ENV === "production"
+            import.meta.env.OC_NODE_ENV === "production"
                 ? `https://${this.config.userIndexCanister}.raw.ic0.app/metrics`
                 : `http://${this.config.userIndexCanister}.localhost:8080/metrics`;
         return fetch(metricsUrl, {

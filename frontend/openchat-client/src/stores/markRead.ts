@@ -117,10 +117,10 @@ export class MessageReadTracker {
 
     start(api: OpenChat): void {
         console.log("starting the mark read poller");
-        if (process.env.NODE_ENV !== "test") {
+        if (import.meta.env.OC_NODE_ENV !== "test") {
             this.triggerLoop(api);
         }
-        if (process.env.NODE_ENV !== "test") {
+        if (import.meta.env.OC_NODE_ENV !== "test") {
             window.onbeforeunload = () => this.sendToServer(api);
         }
     }

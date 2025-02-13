@@ -21,6 +21,7 @@
         "@dfinity/candid": "^2.2.0",
         "@dfinity/identity": "^2.2.0",
         "@dfinity/principal": "^2.2.0",
+        "borc": "^3.0.0",
         "drange": "^2.0.1",
         "identicon.js": "^2.3.3",
         "md5": "^2.3.0",

@@ -22,6 +22,7 @@ export const idlFactory = ({ IDL }) => {
     'DelegationTooOld' : IDL.Null,
     'CallerNotRecognised' : IDL.Null,
   });
+  const TimestampMillis = IDL.Nat64;
   const AuthPrincipalsResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'Success' : IDL.Vec(
@@ -29,6 +30,7 @@ export const idlFactory = ({ IDL }) => {
         'principal' : IDL.Principal,
         'originating_canister' : IDL.Principal,
         'is_ii_principal' : IDL.Bool,
+        'last_used' : TimestampMillis,
       })
     ),
   });
@@ -36,8 +38,25 @@ export const idlFactory = ({ IDL }) => {
     'NotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
+  const WebAuthnKey = IDL.Record({
+    'public_key' : IDL.Vec(IDL.Nat8),
+    'origin' : IDL.Text,
+    'cross_platform' : IDL.Bool,
+    'credential_id' : IDL.Vec(IDL.Nat8),
+  });
+  const UserId = IDL.Principal;
+  const CheckAuthPrincipalV2Response = IDL.Variant({
+    'NotFound' : IDL.Null,
+    'Success' : IDL.Record({
+      'webauthn_key' : IDL.Opt(WebAuthnKey),
+      'user_id' : IDL.Opt(UserId),
+      'originating_canister' : IDL.Principal,
+      'is_ii_principal' : IDL.Bool,
+    }),
+  });
   const Nanoseconds = IDL.Nat64;
   const CreateIdentityArgs = IDL.Record({
+    'webauthn_key' : IDL.Opt(WebAuthnKey),
     'public_key' : PublicKey,
     'session_key' : PublicKey,
     'max_time_to_live' : IDL.Opt(Nanoseconds),
@@ -72,16 +91,25 @@ export const idlFactory = ({ IDL }) => {
     'Success' : SignedDelegation,
   });
   const InitiateIdentityLinkArgs = IDL.Record({
+    'webauthn_key' : IDL.Opt(WebAuthnKey),
     'public_key' : IDL.Vec(IDL.Nat8),
     'link_to_principal' : IDL.Principal,
     'is_ii_principal' : IDL.Opt(IDL.Bool),
   });
   const InitiateIdentityLinkResponse = IDL.Variant({
     'AlreadyRegistered' : IDL.Null,
+    'OriginatingCanisterInvalid' : IDL.Principal,
     'Success' : IDL.Null,
     'TargetUserNotFound' : IDL.Null,
     'PublicKeyInvalid' : IDL.Text,
     'AlreadyLinkedToPrincipal' : IDL.Null,
+  });
+  const LookupWebAuthnPubKeyArgs = IDL.Record({
+    'credential_id' : IDL.Vec(IDL.Nat8),
+  });
+  const LookupWebAuthnPubKeyResponse = IDL.Variant({
+    'NotFound' : IDL.Null,
+    'Success' : IDL.Record({ 'pubkey' : IDL.Vec(IDL.Nat8) }),
   });
   const PrepareDelegationArgs = IDL.Record({
     'session_key' : PublicKey,
@@ -117,6 +145,11 @@ export const idlFactory = ({ IDL }) => {
         [CheckAuthPrincipalResponse],
         ['query'],
       ),
+    'check_auth_principal_v2' : IDL.Func(
+        [IDL.Record({})],
+        [CheckAuthPrincipalV2Response],
+        ['query'],
+      ),
     'create_identity' : IDL.Func(
         [CreateIdentityArgs],
         [CreateIdentityResponse],
@@ -136,6 +169,11 @@ export const idlFactory = ({ IDL }) => {
         [InitiateIdentityLinkArgs],
         [InitiateIdentityLinkResponse],
         [],
+      ),
+    'lookup_webauthn_pubkey' : IDL.Func(
+        [LookupWebAuthnPubKeyArgs],
+        [LookupWebAuthnPubKeyResponse],
+        ['query'],
       ),
     'prepare_delegation' : IDL.Func(
         [PrepareDelegationArgs],
