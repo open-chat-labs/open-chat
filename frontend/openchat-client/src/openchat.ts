@@ -7135,17 +7135,15 @@ export class OpenChat extends EventTarget {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
 
-        const webAuthnIdentity = await createWebAuthnIdentity(webAuthnOrigin, (key) => this.#storeWebAuthnKeyInCache(key));
+        const webAuthnIdentity = await createWebAuthnIdentity(webAuthnOrigin, (key) =>
+            this.#storeWebAuthnKeyInCache(key),
+        );
 
         // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
 
-        return await this.#finaliseWebAuthnSignin(
-            tempKey,
-            () => webAuthnIdentity,
-            assumeIdentity,
-        );
+        return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
     }
 
     async signInWithWebAuthn() {
@@ -7166,9 +7164,10 @@ export class OpenChat extends EventTarget {
         [ECDSAKeyIdentity, DelegationChain, WebAuthnKey]
     > {
         const webAuthnKey =
-            this.#webAuthnKey ?? await this.#sendRequest({
+            this.#webAuthnKey ??
+            (await this.#sendRequest({
                 kind: "currentUserWebAuthnKey",
-            });
+            }));
         if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
 
         const webAuthnIdentity = new WebAuthnIdentity(
@@ -7176,11 +7175,7 @@ export class OpenChat extends EventTarget {
             unwrapDER(webAuthnKey.publicKey, DER_COSE_OID),
             undefined,
         );
-        return await this.#finaliseWebAuthnSignin(
-            webAuthnIdentity,
-            () => webAuthnIdentity,
-            false,
-        );
+        return await this.#finaliseWebAuthnSignin(webAuthnIdentity, () => webAuthnIdentity, false);
     }
 
     async #finaliseWebAuthnSignin(
