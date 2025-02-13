@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onDestroy, type Snippet } from "svelte";
     import { menuStore } from "../stores/menu";
-    import { tick } from "svelte";
     import type { Alignment, Position } from "../utils/alignment";
 
     interface Props {
@@ -22,10 +21,13 @@
         menuItems,
     }: Props = $props();
 
-    let menu: HTMLElement | undefined;
-    let contextMenu: HTMLElement | undefined;
+    let menu: HTMLElement;
+    let contextMenu: HTMLElement;
+    let open = $state(false);
 
-    let open = $derived($menuStore === contextMenu);
+    $effect(() => {
+        open = $menuStore === contextMenu;
+    });
 
     onDestroy(() => menuStore.hideMenu());
 
@@ -36,9 +38,6 @@
             menuStore.hideMenu();
         } else {
             menuStore.showMenu(contextMenu);
-
-            await tick();
-
             menuStore.position(menu, centered, position, align, gutter);
         }
     }
@@ -65,9 +64,7 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <span class="menu" bind:this={contextMenu} onclick={closeMenu}>
-        {#if open}
-            {@render menuItems()}
-        {/if}
+        {@render menuItems()}
     </span>
 </div>
 
