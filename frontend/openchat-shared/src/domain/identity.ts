@@ -118,6 +118,8 @@ export type AuthenticationPrincipal = {
     principal: string;
     originatingCanister: string;
     isIIPrincipal: boolean;
+    isCurrentIdentity: boolean;
+    webAuthnKey: WebAuthnKey | undefined;
 };
 
 export type AuthenticationPrincipalsResponse = AuthenticationPrincipal[];

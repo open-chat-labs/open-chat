@@ -74,7 +74,7 @@
     let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = [];
 
     $: currentProvider =
-        accounts.find((a) => a.principal === client.AuthPrincipal)?.provider ??
+        accounts.find((a) => a.isCurrentIdentity)?.provider ??
         $selectedAuthProviderStore;
 
     onMount(() => {

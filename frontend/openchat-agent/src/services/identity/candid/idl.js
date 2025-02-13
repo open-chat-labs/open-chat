@@ -22,12 +22,21 @@ export const idlFactory = ({ IDL }) => {
     'DelegationTooOld' : IDL.Null,
     'CallerNotRecognised' : IDL.Null,
   });
+  const WebAuthnKey = IDL.Record({
+    'public_key' : IDL.Vec(IDL.Nat8),
+    'origin' : IDL.Text,
+    'cross_platform' : IDL.Bool,
+    'aaguid' : IDL.Vec(IDL.Nat8),
+    'credential_id' : IDL.Vec(IDL.Nat8),
+  });
   const TimestampMillis = IDL.Nat64;
   const AuthPrincipalsResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'Success' : IDL.Vec(
       IDL.Record({
         'principal' : IDL.Principal,
+        'webauthn_key' : IDL.Opt(WebAuthnKey),
+        'is_current_identity' : IDL.Bool,
         'originating_canister' : IDL.Principal,
         'is_ii_principal' : IDL.Bool,
         'last_used' : TimestampMillis,
@@ -37,13 +46,6 @@ export const idlFactory = ({ IDL }) => {
   const CheckAuthPrincipalResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'Success' : IDL.Null,
-  });
-  const WebAuthnKey = IDL.Record({
-    'public_key' : IDL.Vec(IDL.Nat8),
-    'origin' : IDL.Text,
-    'cross_platform' : IDL.Bool,
-    'aaguid' : IDL.Vec(IDL.Nat8),
-    'credential_id' : IDL.Vec(IDL.Nat8),
   });
   const UserId = IDL.Principal;
   const CheckAuthPrincipalV2Response = IDL.Variant({

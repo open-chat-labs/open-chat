@@ -180,6 +180,8 @@ export function authPrincipalsResponse(
             principal: p.principal.toString(),
             originatingCanister: p.originating_canister.toString(),
             isIIPrincipal: p.is_ii_principal,
+            isCurrentIdentity: p.is_current_identity,
+            webAuthnKey: optional(p.webauthn_key, webAuthnKey),
         }));
     }
 

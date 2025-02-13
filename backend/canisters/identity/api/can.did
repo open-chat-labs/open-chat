@@ -9,6 +9,8 @@ type AuthPrincipalsResponse = variant {
         "principal" : principal;
         originating_canister : principal;
         is_ii_principal : bool;
+        is_current_identity : bool;
+        webauthn_key : opt WebAuthnKey;
         last_used : TimestampMillis;
     };
     NotFound;
