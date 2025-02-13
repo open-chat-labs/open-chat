@@ -1,8 +1,9 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
+    import type { VideoCallCounts } from "openchat-client";
 
     interface Props {
-        video: { muted: 0; unmuted: 0 };
+        video: VideoCallCounts;
     }
 
     let { video = { muted: 0, unmuted: 0 } }: Props = $props();
