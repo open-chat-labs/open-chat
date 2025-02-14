@@ -1,7 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { gaTrack } from "./utils/ga";
 import {
-    AnonymousIdentity,
     DER_COSE_OID,
     type Identity,
     type SignIdentity,
@@ -565,6 +564,7 @@ export class OpenChat extends EventTarget {
     #authIdentityStorage: IdentityStorage;
     #authPrincipal: string | undefined;
     #ocIdentityStorage: IdentityStorage;
+    #authClient: Promise<AuthClient>;
     #webAuthnKey: WebAuthnKey | undefined = undefined;
     #ocIdentity: Identity | undefined;
     #userLocation: string | undefined;
@@ -611,10 +611,17 @@ export class OpenChat extends EventTarget {
 
         this.#authIdentityStorage = IdentityStorage.createForAuthIdentity();
         this.#ocIdentityStorage = IdentityStorage.createForOcIdentity();
-
-        this.#authIdentityStorage.get().then((authIdentity) => {
-            this.#loadedAuthenticationIdentity(authIdentity ?? new AnonymousIdentity(), undefined);
+        this.#authClient = AuthClient.create({
+            idleOptions: {
+                disableIdle: true,
+                disableDefaultIdleCallback: true,
+            },
+            storage: this.#authIdentityStorage.storage,
         });
+
+        this.#authClient
+            .then((c) => c.getIdentity())
+            .then((authIdentity) => this.#loadedAuthenticationIdentity(authIdentity, undefined));
     }
 
     public get AuthPrincipal(): string {
@@ -743,14 +750,7 @@ export class OpenChat extends EventTarget {
     login(): void {
         this.updateIdentityState({ kind: "logging_in" });
         const authProvider = this.#liveState.selectedAuthProvider!;
-        const authClient = AuthClient.create({
-            idleOptions: {
-                disableIdle: true,
-                disableDefaultIdleCallback: true,
-            },
-            storage: this.#authIdentityStorage.storage,
-        });
-        authClient.then((c) => {
+        this.#authClient.then((c) => {
             c.login({
                 ...this.getAuthClientOptions(authProvider),
                 onSuccess: () => this.#loadedAuthenticationIdentity(c.getIdentity(), authProvider),
@@ -1040,7 +1040,7 @@ export class OpenChat extends EventTarget {
 
     async logout(): Promise<void> {
         await Promise.all([
-            this.#authIdentityStorage.remove(),
+            this.#authClient.then((c) => c.logout()),
             this.#ocIdentityStorage.remove(),
         ]).then(() => window.location.replace("/"));
     }
