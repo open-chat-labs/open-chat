@@ -1440,7 +1440,6 @@ type GetDelegationWithWallet = {
 
 type LinkIdentities = {
     kind: "linkIdentities";
-    userId: string;
     initiatorKey: CryptoKeyPair;
     initiatorDelegation: JsonnableDelegationChain;
     initiatorIsIIPrincipal: boolean;

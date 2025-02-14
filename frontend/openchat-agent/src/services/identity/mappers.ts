@@ -180,6 +180,8 @@ export function authPrincipalsResponse(
             principal: p.principal.toString(),
             originatingCanister: p.originating_canister.toString(),
             isIIPrincipal: p.is_ii_principal,
+            isCurrentIdentity: p.is_current_identity,
+            webAuthnKey: optional(p.webauthn_key, webAuthnKey),
         }));
     }
 
@@ -243,6 +245,7 @@ function webAuthnKey(key: ApiWebAuthnKey): WebAuthnKey {
         credentialId: consolidateBytes(key.credential_id),
         origin: key.origin,
         crossPlatform: key.cross_platform,
+        aaguid: consolidateBytes(key.aaguid),
     };
 }
 
@@ -252,5 +255,6 @@ export function apiWebAuthnKey(key: WebAuthnKey): ApiWebAuthnKey {
         credential_id: key.credentialId,
         origin: key.origin,
         cross_platform: key.crossPlatform,
+        aaguid: key.aaguid,
     };
 }

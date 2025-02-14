@@ -8,9 +8,31 @@ import {
     unwrapDER,
 } from "@dfinity/agent";
 
-export async function createWebAuthnIdentity(origin: string): Promise<WebAuthnIdentity> {
+export async function createWebAuthnIdentity(origin: string): Promise<[WebAuthnIdentity, Uint8Array]> {
     const opts = webAuthnCreationOptions(origin);
-    return WebAuthnIdentity.create({ publicKey: opts });
+    const credential = await navigator.credentials.create({ publicKey: opts }) as PublicKeyCredential | null;
+    if (credential == null || credential.type !== "public-key") {
+        throw new Error("Failed to create a WebAuthn identity");
+    }
+
+    const response = credential.response as AuthenticatorAttestationResponse;
+    const publicKey = response.getPublicKey();
+    if (response.attestationObject == null || publicKey == null) {
+        throw new Error("Invalid attestation response");
+    }
+
+    const attObject = borc.decodeFirst(new Uint8Array(response.attestationObject));
+
+    const identity = new WebAuthnIdentity(
+        credential.rawId,
+        authDataToCose(attObject.authData),
+        credential.authenticatorAttachment === "platform" ? "platform" : "cross-platform",
+    );
+
+    // A guid identifying the model of the authenticator (eg. fbfc3007-154e-4ecc-8c0b-6e020557d7bd = iCloud Keychain)
+    const aaguid = new Uint8Array(response.getAuthenticatorData().slice(37, 53));
+
+    return [identity, aaguid];
 }
 
 export class MultiWebAuthnIdentity extends SignIdentity {
@@ -115,4 +137,14 @@ function webAuthnCreationOptions(rpId?: string): PublicKeyCredentialCreationOpti
             displayName: `OpenChat-${suffix}`,
         },
     };
+}
+
+function authDataToCose(authData: ArrayBuffer): ArrayBuffer {
+    const dataView = new DataView(new ArrayBuffer(2));
+    const idLenBytes = authData.slice(53, 55);
+    [...new Uint8Array(idLenBytes)].forEach((v, i) => dataView.setUint8(i, v));
+    const credentialIdLength = dataView.getUint16(0);
+
+    // Get the public key object.
+    return authData.slice(55 + credentialIdLength);
 }

@@ -38,7 +38,6 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
     import User from "./User.svelte";
-    import { botsEnabled } from "../../../utils/bots";
     import BotExplorer from "../../bots/BotExplorer.svelte";
     import BotMember from "../../bots/BotMember.svelte";
     import BotSummary from "../../bots/BotSummary.svelte";
@@ -267,7 +266,7 @@
                 <Translatable resourceKey={i18nKey("communities.userGroups")} />
             </button>
         {/if}
-        {#if botsEnabled && canManageBots}
+        {#if canManageBots}
             <button
                 on:click={() => selectTab("add-bots")}
                 class:selected={selectedTab === "add-bots"}

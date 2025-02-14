@@ -91,7 +91,7 @@ impl RuntimeState {
         }
 
         let (auth_principal, originating_canister) = if let Some(webauthn_key) = args.webauthn_key.as_ref() {
-            self.assert_key_not_generated_by_this_canister(&args.public_key);
+            self.assert_key_not_generated_by_this_canister(&webauthn_key.public_key);
 
             (
                 Principal::self_authenticating(&webauthn_key.public_key),
