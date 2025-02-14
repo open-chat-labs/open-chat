@@ -1,17 +1,18 @@
 <script lang="ts">
     import {
+        type BotInstallationLocation,
         flattenCommandPermissions,
         type BotSummaryMode,
         type ExternalBot,
     } from "openchat-shared";
     import { i18nKey } from "../../i18n/i18n";
-    import type {
-        CommunityIdentifier,
-        OpenChat,
-        ExternalBotPermissions,
-        CommunitySummary,
-        PublicApiKeyDetails,
-        ChatSummary,
+    import {
+        type OpenChat,
+        type ExternalBotPermissions,
+        type CommunitySummary,
+        type PublicApiKeyDetails,
+        type ChatSummary,
+        currentUser,
     } from "openchat-client";
     import { getContext, type Snippet } from "svelte";
     import { toastStore } from "../../stores/toast";
@@ -38,11 +39,18 @@
             ),
     );
     let canGenerateKey = $derived(canManage && !autonomousPermissionsEmpty);
-    let commandContextId = $derived(
-        collection.kind === "channel"
-            ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
-            : collection.id,
-    );
+    let commandContextId = $derived.by<BotInstallationLocation>(() => {
+        switch (collection.kind) {
+            case "channel":
+                return { kind: "community", communityId: collection.id.communityId };
+            case "direct_chat":
+                return { kind: "direct_chat", userId: $currentUser.userId };
+            case "group_chat":
+                return collection.id;
+            case "community":
+                return collection.id;
+        }
+    });
     let apiKeyPermissions = $derived(apiKey?.grantedPermissions);
 
     function permissionsAreEmpty(perm: ExternalBotPermissions): boolean {
