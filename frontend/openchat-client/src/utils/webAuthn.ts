@@ -9,9 +9,14 @@ import {
 } from "@dfinity/agent";
 import type { WebAuthnKeyFull } from "openchat-shared";
 
-export async function createWebAuthnIdentity(origin: string, saveKeyInCacheFn: (key: WebAuthnKeyFull) => Promise<void>): Promise<WebAuthnIdentity> {
+export async function createWebAuthnIdentity(
+    origin: string,
+    saveKeyInCacheFn: (key: WebAuthnKeyFull) => Promise<void>,
+): Promise<WebAuthnIdentity> {
     const opts = webAuthnCreationOptions(origin);
-    const credential = await navigator.credentials.create({ publicKey: opts }) as PublicKeyCredential | null;
+    const credential = (await navigator.credentials.create({
+        publicKey: opts,
+    })) as PublicKeyCredential | null;
     if (credential == null || credential.type !== "public-key") {
         throw new Error("Failed to create a WebAuthn identity");
     }
@@ -23,7 +28,8 @@ export async function createWebAuthnIdentity(origin: string, saveKeyInCacheFn: (
     }
 
     const attObject = borc.decodeFirst(new Uint8Array(response.attestationObject));
-    const authenticatorAttachment = credential.authenticatorAttachment === "platform" ? "platform" : "cross-platform";
+    const authenticatorAttachment =
+        credential.authenticatorAttachment === "platform" ? "platform" : "cross-platform";
 
     const identity = new WebAuthnIdentity(
         credential.rawId,
