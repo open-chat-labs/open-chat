@@ -5,6 +5,8 @@ use canister_tracing_macros::trace;
 use ic_cdk::update;
 use identity_canister::initiate_identity_link::{Response::*, *};
 
+const MAX_LINKED_IDENTITIES: usize = 10;
+
 #[update]
 #[trace]
 fn initiate_identity_link(args: Args) -> Response {
@@ -31,9 +33,13 @@ fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response
         }
     };
 
-    if get_user_principal_for_oc_user(&args.link_to_principal, state).is_none() {
-        return TargetUserNotFound;
-    }
+    match get_user_principal_for_oc_user(&args.link_to_principal, state) {
+        Some(user_principal) if user_principal.auth_principals.len() >= MAX_LINKED_IDENTITIES => {
+            return LinkedIdentitiesLimitReached(MAX_LINKED_IDENTITIES as u32);
+        }
+        Some(_) => {}
+        None => return TargetUserNotFound,
+    };
 
     if let Err(response) = check_if_auth_principal_already_exists(&auth_principal, &args.link_to_principal, state) {
         return response;

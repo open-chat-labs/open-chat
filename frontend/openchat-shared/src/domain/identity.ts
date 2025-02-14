@@ -98,7 +98,8 @@ export type InitiateIdentityLinkResponse =
     | "already_linked_to_principal"
     | "target_user_not_found"
     | "public_key_invalid"
-    | "originating_canister_invalid";
+    | "originating_canister_invalid"
+    | "linked_identities_limit_reached";
 
 export type ApproveIdentityLinkResponse =
     | "success"
