@@ -66,7 +66,7 @@ export class MultiWebAuthnIdentity extends SignIdentity {
         const options: CredentialRequestOptions = {
             publicKey: {
                 challenge: blob,
-                userVerification: "discouraged",
+                userVerification: "preferred",
                 rpId: this.rpId,
             },
         };
