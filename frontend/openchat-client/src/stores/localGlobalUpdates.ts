@@ -23,6 +23,7 @@ class LocalGlobalUpdatesStore extends LocalUpdatesStore<"global", LocalGlobalUpd
             if (result.installedDirectBots === undefined) {
                 result.installedDirectBots = new Map();
             }
+            result.removedDirectBots?.delete(botId);
             result.installedDirectBots.set(botId, perm);
             return result;
         });

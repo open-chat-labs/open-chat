@@ -715,6 +715,8 @@ export type LocalChatSummaryUpdates = {
     pinned?: Set<ChatListScope["kind"]>;
     unpinned?: Set<ChatListScope["kind"]>;
     added?: ChatSummary;
+    installedBots?: Map<string, ExternalBotPermissions>;
+    removedBots?: Set<string>;
     updated?:
         | {
               kind?: undefined;

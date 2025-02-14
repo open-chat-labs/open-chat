@@ -107,6 +107,7 @@ import {
     confirmedThreadEventIndexesLoadedStore,
     isContiguousInThread,
     selectedMessageContext,
+    currentChatBots,
 } from "./stores/chat";
 import {
     cryptoBalance,
@@ -8161,11 +8162,8 @@ export class OpenChat extends EventTarget {
                 });
                 break;
             case "group_chat":
-                chatStateStore.updateProp(id, "bots", (b) => {
-                    perm = b.get(botId);
-                    b.delete(botId);
-                    return new Map(b);
-                });
+                perm = get(currentChatBots)?.get(botId);
+                localChatSummaryUpdates.removeBot(id, botId);
                 break;
             case "direct_chat":
                 perm = get(installedDirectBots).get(botId);
@@ -8193,12 +8191,9 @@ export class OpenChat extends EventTarget {
                 });
                 break;
             case "group_chat":
-                chatStateStore.updateProp(id, "bots", (b) => {
-                    previousPermissions = b.get(botId);
-                    if (perm === undefined) return b;
-                    b.set(botId, perm);
-                    return new Map(b);
-                });
+                if (perm === undefined) return perm;
+                previousPermissions = get(currentChatBots)?.get(botId);
+                localChatSummaryUpdates.installBot(id, botId, perm);
                 break;
             case "direct_chat":
                 if (perm === undefined) return perm;
