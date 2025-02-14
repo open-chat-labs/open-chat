@@ -373,15 +373,10 @@
                         </div>
                     </MenuItem>
                 {/if}
-                {#if isTouchOnlyDevice}
-                    <MenuItem onclick={copyMessage}>
-                        <ContentCopy
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text"><Translatable resourceKey={i18nKey("copy")} /></div>
-                    </MenuItem>
-                {/if}
+                <MenuItem onclick={copyMessage}>
+                    <ContentCopy size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                    <div slot="text"><Translatable resourceKey={i18nKey("copy")} /></div>
+                </MenuItem>
                 {#if canRemind && confirmed && !inert && !failed}
                     <MenuItem onclick={remindMe}>
                         <ClockPlusOutline

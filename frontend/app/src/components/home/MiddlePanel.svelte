@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { run } from "svelte/legacy";
-
     import { fade } from "svelte/transition";
     import NoChatSelected from "./NoChatSelected.svelte";
     import RecommendedGroups from "./RecommendedGroups.svelte";
@@ -89,7 +87,7 @@
         alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
     }
     let noChat = $derived($pathParams.kind !== "global_chat_selected_route");
-    run(() => {
+    $effect(() => {
         if (middlePanel) {
             alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
         }

@@ -72,7 +72,8 @@ export type InitiateIdentityLinkResponse = { 'AlreadyRegistered' : null } |
   { 'Success' : null } |
   { 'TargetUserNotFound' : null } |
   { 'PublicKeyInvalid' : string } |
-  { 'AlreadyLinkedToPrincipal' : null };
+  { 'AlreadyLinkedToPrincipal' : null } |
+  { 'LinkedIdentitiesLimitReached' : number };
 export interface LookupWebAuthnPubKeyArgs {
   'credential_id' : Uint8Array | number[],
 }

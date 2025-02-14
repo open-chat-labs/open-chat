@@ -162,6 +162,9 @@ export function initiateIdentityLinkResponse(
     if ("OriginatingCanisterInvalid" in candid) {
         return "originating_canister_invalid";
     }
+    if ("LinkedIdentitiesLimitReached" in candid) {
+        return "linked_identities_limit_reached";
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiInitiateIdentityLinkResponse type received",
         candid,
