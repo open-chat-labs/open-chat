@@ -1323,7 +1323,7 @@
     <Overlay>
         <Register
             on:logout={() => client.logout()}
-            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
+            on:createdUser={(ev) => client.onRegisteredUser(ev.detail)} />
     </Overlay>
 {:else if modal.kind !== "none"}
     <Overlay

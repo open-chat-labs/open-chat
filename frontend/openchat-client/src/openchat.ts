@@ -1,4 +1,6 @@
 /* eslint-disable no-case-declarations */
+import Identicon from "identicon.js";
+import md5 from "md5";
 import { gaTrack } from "./utils/ga";
 import {
     DER_COSE_OID,
@@ -934,6 +936,38 @@ export class OpenChat extends EventTarget {
 
     maxMediaSizes(): MaxMediaSizes {
         return this.#liveState.isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+    }
+
+    buildIdenticonUrl(userId: string): string {
+        const identicon = new Identicon(md5(userId), {
+            margin: 0,
+            format: "svg",
+        });
+        return `data:image/svg+xml;base64,${identicon}`;
+    }
+
+    onRegisteredUser(user: CreatedUser) {
+        this.onCreatedUser(user);
+        userStore.add({
+            kind: user.isBot ? "bot" : "user",
+            userId: user.userId,
+            username: user.username,
+            displayName: user.displayName,
+            updated: user.updated,
+            suspended: user.suspensionDetails !== undefined,
+            diamondStatus: user.diamondStatus.kind,
+            chitBalance: 0,
+            totalChitEarned: 0,
+            streak: 0,
+            blobReference: user.blobReference,
+            blobData: user.blobData,
+            blobUrl: buildUserAvatarUrl(
+                this.config.blobUrlPattern,
+                user.userId,
+                user.blobReference?.blobId ?? undefined,
+            ),
+            isUniquePerson: user.isUniquePerson,
+        });
     }
 
     onCreatedUser(user: CreatedUser): void {
