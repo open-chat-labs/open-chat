@@ -3,7 +3,7 @@
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
     import { closeNotificationsForChat } from "../../utils/notifications";
-    import { getContext, onMount, tick } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import {
         type ChatEvent,
         type ChatSummary,
@@ -40,6 +40,7 @@
         SearchChat,
         AttachGif,
         TokenTransfer,
+        externalBots,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -58,6 +59,9 @@
     import AreYouSure from "../AreYouSure.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import ExternalContent from "./ExternalContent.svelte";
+    import DirectChatHeader from "../bots/DirectChatHeader.svelte";
+
+    const dispatch = createEventDispatcher();
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -102,6 +106,7 @@
     $: readonly = client.isChatReadOnly(chat.id);
     $: externalUrl = chat.kind === "channel" ? chat.externalUrl : undefined;
     $: privateChatPreview = client.maskChatMessages(chat);
+    $: bot = chat.kind === "direct_chat" ? $externalBots.get(chat.them.userId) : undefined;
 
     $: {
         if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
@@ -237,8 +242,12 @@
     }
 
     function searchChat(ev: CustomEvent<string>) {
-        showSearchHeader = true;
-        searchTerm = ev.detail;
+        onSearchChat(ev.detail);
+    }
+
+    function onSearchChat(term: string) {
+        showChatHeader = true;
+        searchTerm = term;
     }
 
     function createTestMessages(total: number): void {
@@ -395,24 +404,32 @@
             on:goToMessageIndex
             on:close={() => (showSearchHeader = false)} />
     {:else if showChatHeader}
-        <CurrentChatHeader
-            on:clearSelection
-            on:toggleMuteNotifications
-            on:showInviteGroupUsers
-            on:showProposalFilters
-            on:makeProposal
-            on:showGroupMembers
-            on:leaveGroup
-            on:upgrade
-            on:startVideoCall
-            on:createPoll={createPoll}
-            on:searchChat={searchChat}
-            on:convertGroupToCommunity
-            on:importToCommunity={importToCommunity}
-            {blocked}
-            {readonly}
-            selectedChatSummary={chat}
-            hasPinned={$currentChatPinnedMessages.size > 0} />
+        {#if bot !== undefined && chat.kind === "direct_chat"}
+            <DirectChatHeader
+                {bot}
+                {chat}
+                onClearSelection={() => dispatch("clearSelection")}
+                {onSearchChat}></DirectChatHeader>
+        {:else}
+            <CurrentChatHeader
+                on:clearSelection
+                on:toggleMuteNotifications
+                on:showInviteGroupUsers
+                on:showProposalFilters
+                on:makeProposal
+                on:showGroupMembers
+                on:leaveGroup
+                on:upgrade
+                on:startVideoCall
+                on:createPoll={createPoll}
+                on:searchChat={searchChat}
+                on:convertGroupToCommunity
+                on:importToCommunity={importToCommunity}
+                {blocked}
+                {readonly}
+                selectedChatSummary={chat}
+                hasPinned={$currentChatPinnedMessages.size > 0} />
+        {/if}
     {/if}
     {#if externalUrl !== undefined}
         <ExternalContent {privateChatPreview} {frozen} {externalUrl} />

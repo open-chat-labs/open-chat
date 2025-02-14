@@ -3,6 +3,7 @@ import {
     type CommunityIdentifier,
     type LocalCommunitySummaryUpdates,
     type CommunitySummary,
+    type ExternalBotPermissions,
 } from "openchat-shared";
 import { LocalUpdatesStore } from "./localUpdatesStore";
 
@@ -12,6 +13,30 @@ class LocalCommunitySummaryUpdatesStore extends LocalUpdatesStore<
 > {
     constructor() {
         super(new CommunityMap<LocalCommunitySummaryUpdates>());
+    }
+
+    installBot(id: CommunityIdentifier, botId: string, perm: ExternalBotPermissions) {
+        this.applyUpdate(id, (current) => {
+            const result = { ...current };
+            if (result.installedBots === undefined) {
+                result.installedBots = new Map();
+            }
+            result.removedBots?.delete(botId);
+            result.installedBots.set(botId, perm);
+            return result;
+        });
+    }
+
+    removeBot(id: CommunityIdentifier, botId: string) {
+        this.applyUpdate(id, (current) => {
+            const result = { ...current };
+            if (result.removedBots === undefined) {
+                result.removedBots = new Set();
+            }
+            result.removedBots.add(botId);
+            result.installedBots?.delete?.(botId);
+            return result;
+        });
     }
 
     updateIndex(id: CommunityIdentifier, index: number): void {

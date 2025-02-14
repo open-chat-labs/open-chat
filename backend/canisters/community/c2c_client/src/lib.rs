@@ -2,9 +2,6 @@ use canister_client::generate_c2c_call;
 use community_canister::*;
 
 // Queries
-generate_c2c_call!(c2c_bot_create_channel);
-generate_c2c_call!(c2c_bot_delete_channel);
-generate_c2c_call!(c2c_bot_send_message);
 generate_c2c_call!(c2c_can_issue_access_token_for_channel);
 generate_c2c_call!(c2c_can_issue_access_token);
 generate_c2c_call!(c2c_events);
@@ -16,6 +13,9 @@ generate_c2c_call!(summary);
 generate_c2c_call!(summary_updates);
 
 // Updates
+generate_c2c_call!(c2c_bot_create_channel);
+generate_c2c_call!(c2c_bot_delete_channel);
+generate_c2c_call!(c2c_bot_send_message);
 generate_c2c_call!(c2c_create_proposals_channel);
 generate_c2c_call!(c2c_delete_community);
 generate_c2c_call!(c2c_freeze_community);

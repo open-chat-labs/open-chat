@@ -34,6 +34,7 @@
         selectedChatStore,
         selectedCommunity,
         selectedMessageContext,
+        installedDirectBots,
     } from "openchat-client";
     import {
         messagePermissionsForSelectedChat,
@@ -62,6 +63,8 @@
         switch (messageContext.chatId.kind) {
             case "channel":
                 return $currentCommunityBots;
+            case "direct_chat":
+                return $installedDirectBots;
             default:
                 return $currentChatBots;
         }
@@ -79,6 +82,7 @@
     function restrictByBotIfNecessary(command: FlattenedCommand): boolean {
         return (
             selectedBotId === undefined ||
+            (command.kind === "internal_bot" && command.directBotDisabled === false) ||
             (command.kind === "external_bot" && command.botId === selectedBotId)
         );
     }

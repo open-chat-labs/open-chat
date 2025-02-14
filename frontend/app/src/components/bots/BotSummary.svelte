@@ -4,11 +4,10 @@
         type BotMatch,
         type CommunityIdentifier,
         type BotSummaryMode,
-        type GroupChatIdentifier,
         type ExternalBotPermissions,
-        type MultiUserChatIdentifier,
         type ExternalBot,
-        type DirectChatIdentifier,
+        type BotInstallationLocation,
+        type ChatIdentifier,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Overlay from "../Overlay.svelte";
@@ -33,7 +32,7 @@
     interface Props {
         mode: BotSummaryMode;
         bot: BotMatch | ExternalBot;
-        onClose: () => void;
+        onClose: (removeDirectChat: boolean) => void;
     }
 
     let { bot, onClose, mode }: Props = $props();
@@ -88,11 +87,7 @@
         }
     }
 
-    function installDirectBot(id: DirectChatIdentifier) {
-        console.log("Install direct chat bot", id);
-    }
-
-    function installBot(id: CommunityIdentifier | GroupChatIdentifier) {
+    function installBot(id: BotInstallationLocation) {
         busy = true;
         client
             .installBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
@@ -100,13 +95,13 @@
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.add.failure"));
                 } else {
-                    onClose();
+                    onClose(false);
                 }
             })
             .finally(() => (busy = false));
     }
 
-    function updateBot(id: CommunityIdentifier | GroupChatIdentifier) {
+    function updateBot(id: BotInstallationLocation) {
         busy = true;
         client
             .updateInstalledBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
@@ -114,14 +109,14 @@
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.edit.failure"));
                 } else {
-                    onClose();
+                    onClose(false);
                 }
             })
             .finally(() => (busy = false));
     }
 
     function generateApiKey(
-        id: CommunityIdentifier | MultiUserChatIdentifier,
+        id: CommunityIdentifier | ChatIdentifier,
     ): (confirmed: boolean) => Promise<void> {
         return (confirmed: boolean) => {
             if (!confirmingRegeneration && !confirmed) {
@@ -159,13 +154,13 @@
                 installBot(mode.id);
                 break;
             case "installing_direct_command_bot":
-                installDirectBot(mode.id);
+                installBot(mode.id);
                 break;
             case "editing_command_bot":
                 updateBot(mode.id);
                 break;
             case "viewing_command_bot":
-                onClose();
+                onClose(false);
                 break;
             case "adding_api_key":
                 generateApiKey(mode.id)(true);
@@ -184,7 +179,7 @@
 {/if}
 
 {#if apiKey !== undefined}
-    <ShowApiKey {apiKey} {onClose}></ShowApiKey>
+    <ShowApiKey {apiKey} onClose={() => onClose(false)}></ShowApiKey>
 {/if}
 
 {#snippet chatTab()}
@@ -234,7 +229,7 @@
 {/snippet}
 
 <Overlay dismissible>
-    <ModalContent closeIcon on:close={onClose}>
+    <ModalContent closeIcon on:close={() => onClose(true)}>
         <div class="header" slot="header">
             <Translatable resourceKey={title}></Translatable>
         </div>
@@ -287,7 +282,11 @@
         </div>
         <div class="footer" slot="footer">
             <ButtonGroup>
-                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}>
+                <Button
+                    secondary
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
+                    on:click={() => onClose(true)}>
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </Button>
                 <Button

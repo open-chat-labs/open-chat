@@ -21,6 +21,8 @@ import type {
     ChitState,
     WalletConfig,
     ObjectSet,
+    ExternalBot,
+    ExternalBotPermissions,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -51,6 +53,7 @@ import {
     currentChatRules,
     pinnedChatsStore,
     favouritesStore,
+    currentChatBots,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -64,6 +67,7 @@ import {
     currentCommunityMembers,
     selectedCommunity,
     currentCommunityRules,
+    currentCommunityBots,
 } from "./stores/community";
 import {
     type GlobalState,
@@ -71,6 +75,7 @@ import {
     globalStateStore,
     chitStateStore,
     type PinnedByScope,
+    installedDirectBots,
 } from "./stores/global";
 import { offlineStore } from "./stores/network";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
@@ -78,6 +83,7 @@ import { locale } from "svelte-i18n";
 import type { PinNumberResolver } from "openchat-shared";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
 import { walletConfigStore } from "./stores/crypto";
+import { externalBots } from "./stores";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -137,8 +143,16 @@ export class LiveState {
     capturePinNumber!: PinNumberResolver | undefined;
     chitState!: ChitState;
     walletConfig!: WalletConfig;
+    externalBots!: Map<string, ExternalBot>;
+    installedDirectBots!: Map<string, ExternalBotPermissions>;
+    currentChatBots!: Map<string, ExternalBotPermissions>;
+    currentCommunityBots!: Map<string, ExternalBotPermissions>;
 
     constructor() {
+        currentChatBots.subscribe((state) => (this.currentChatBots = state));
+        currentCommunityBots.subscribe((state) => (this.currentCommunityBots = state));
+        installedDirectBots.subscribe((state) => (this.installedDirectBots = state));
+        externalBots.subscribe((state) => (this.externalBots = state));
         chitStateStore.subscribe((state) => (this.chitState = state));
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
         currentUser.subscribe((user) => (this.user = user));

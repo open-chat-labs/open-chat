@@ -9,9 +9,11 @@ import type {
     CommunitySummary,
     DirectChatSummary,
     EventWrapper,
+    ExternalBotPermissions,
     GroupChatSummary,
     Message,
     MessageActivitySummary,
+    PublicApiKeyDetails,
     Referral,
     WalletConfig,
 } from "openchat-shared";
@@ -21,6 +23,7 @@ import { derived } from "svelte/store";
 import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { serverWalletConfigStore } from "./crypto";
+import { localGlobalUpdates } from "./localGlobalUpdates";
 
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
 
@@ -35,6 +38,22 @@ export type GlobalState = {
     referrals: Referral[];
     messageActivitySummary: MessageActivitySummary;
 };
+
+const installedServerDirectBots = immutableStore<Map<string, ExternalBotPermissions>>(new Map());
+export const installedDirectBots = derived(
+    [installedServerDirectBots, localGlobalUpdates],
+    ([$serverBots, $local]) => {
+        const clone = new Map($serverBots);
+        const localInstalled = [...($local.get("global")?.installedDirectBots?.entries() ?? [])];
+        const localDeleted = [...($local.get("global")?.removedDirectBots?.values() ?? [])];
+        localInstalled.forEach(([id, perm]) => {
+            clone.set(id, perm);
+        });
+        localDeleted.forEach((id) => clone.delete(id));
+        return clone;
+    },
+);
+export const directApiKeys = immutableStore<Map<string, PublicApiKeyDetails>>(new Map());
 
 export const chitStateStore = immutableStore<ChitState>({
     chitBalance: 0,
@@ -356,6 +375,8 @@ export function setGlobalState(
     referrals: Referral[],
     walletConfig: WalletConfig,
     messageActivitySummary: MessageActivitySummary,
+    installedBots: Map<string, ExternalBotPermissions>,
+    apiKeys: Map<string, PublicApiKeyDetails>,
 ): void {
     const [channels, directChats, groupChats] = partitionChats(allChats);
 
@@ -387,6 +408,8 @@ export function setGlobalState(
         return skipUpdate ? curr : chitState;
     });
     serverWalletConfigStore.set(walletConfig);
+    installedServerDirectBots.set(installedBots);
+    directApiKeys.set(apiKeys);
 }
 
 function partitionChats(

@@ -1,11 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { gaTrack } from "./utils/ga";
-import {
-    DER_COSE_OID,
-    type Identity,
-    type SignIdentity,
-    unwrapDER,
-} from "@dfinity/agent";
+import { DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@dfinity/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
 import { get } from "svelte/store";
 import DRange from "drange";
@@ -412,6 +407,7 @@ import type {
     CompletedCryptocurrencyTransfer,
     GenerateBotKeyResponse,
     WebAuthnKey,
+    BotInstallationLocation,
 } from "openchat-shared";
 import {
     Stream,
@@ -3203,22 +3199,6 @@ export class OpenChat extends EventTarget {
                 chatStateStore.setProp(serverChat.id, "apiKeys", resp.apiKeys);
             }
             await this.#updateUserStoreFromEvents(serverChat.id, []);
-        } else if (serverChat.kind === "direct_chat") {
-            // TODO fix this when we have the apis
-            // chatStateStore.setProp(
-            //     serverChat.id,
-            //     "bots",
-            //     new Map<string, ExternalBotPermissions>([
-            //         [
-            //             "p2zjm-6obya-fjjpk-mqlfa",
-            //             {
-            //                 messagePermissions: ["text"],
-            //                 chatPermissions: [],
-            //                 communityPermissions: [],
-            //             },
-            //         ],
-            //     ]),
-            // );
         }
     }
 
@@ -5812,6 +5792,11 @@ export class OpenChat extends EventTarget {
                 }
             }
 
+            // Update all bot users
+            for (const userId of this.#liveState.externalBots.keys()) {
+                usersToUpdate.add(userId);
+            }
+
             // Update all users we have direct chats with
             for (const chat of this.#liveState.chatSummariesList) {
                 if (chat.kind == "direct_chat") {
@@ -5949,6 +5934,8 @@ export class OpenChat extends EventTarget {
                 chatsResponse.state.referrals,
                 chatsResponse.state.walletConfig,
                 chatsResponse.state.messageActivitySummary,
+                chatsResponse.state.installedBots,
+                chatsResponse.state.apiKeys,
             );
 
             const selectedChatId = this.#liveState.selectedChatId;
@@ -7008,7 +6995,7 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    #getLocalUserIndex(chat: ChatSummary): Promise<string> {
+    #getLocalUserIndex(chat: ChatSummary, flipDirect: boolean = false): Promise<string> {
         switch (chat.kind) {
             case "group_chat":
                 return Promise.resolve(chat.localUserIndex);
@@ -7025,7 +7012,7 @@ export class OpenChat extends EventTarget {
             case "direct_chat":
                 return this.#sendRequest({
                     kind: "getLocalUserIndexForUser",
-                    userId: chat.them.userId,
+                    userId: flipDirect ? this.#liveState.user.userId : chat.them.userId,
                 });
         }
     }
@@ -7120,7 +7107,7 @@ export class OpenChat extends EventTarget {
         // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
-        
+
         return await this.#finaliseWebAuthnSignin(
             tempKey,
             () => webAuthnIdentity,
@@ -7973,8 +7960,20 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    // #addApiKeyLocally(
+    //     id: ChatIdentifier | CommunityIdentifier,
+    //     botId: string,
+    //     permissions: ExternalBotPermissions,
+    // ) {}
+
+    // #removeApiKeyLocally(
+    //     id: ChatIdentifier | CommunityIdentifier,
+    //     botId: string,
+    //     permissions: ExternalBotPermissions,
+    // ) {}
+
     generateBotApiKey(
-        id: MultiUserChatIdentifier | CommunityIdentifier,
+        id: ChatIdentifier | CommunityIdentifier,
         botId: string,
         permissions: ExternalBotPermissions,
     ): Promise<GenerateBotKeyResponse> {
@@ -8055,13 +8054,20 @@ export class OpenChat extends EventTarget {
         return Promise.resolve("success");
     }
 
+    #getChatIdForBotCommandScope(chatId: ChatIdentifier): ChatIdentifier {
+        if (chatId.kind === "direct_chat") {
+            return { kind: "direct_chat", userId: this.#liveState.user.userId };
+        }
+        return chatId;
+    }
+
     #getAuthTokenForBotCommand(
         chat: ChatSummary,
         threadRootMessageIndex: number | undefined,
         bot: ExternalBotCommandInstance,
     ): Promise<[string, bigint]> {
         const messageId = random64();
-        return this.#getLocalUserIndex(chat).then((localUserIndex) => {
+        return this.#getLocalUserIndex(chat, true).then((localUserIndex) => {
             return this.#sendRequest({
                 kind: "getAccessToken",
                 chatId: chat.id,
@@ -8070,7 +8076,7 @@ export class OpenChat extends EventTarget {
                     botId: bot.id,
                     scope: {
                         kind: "chat_scope",
-                        chatId: chat.id,
+                        chatId: this.#getChatIdForBotCommandScope(chat.id),
                         threadRootMessageIndex,
                         messageId,
                     },
@@ -8092,7 +8098,7 @@ export class OpenChat extends EventTarget {
     }
 
     installBot(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
         grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
@@ -8103,11 +8109,11 @@ export class OpenChat extends EventTarget {
             botId,
             grantedPermissions,
         })
-            .then((resp) => {
-                if (!resp) {
+            .then((success) => {
+                if (!success) {
                     this.#uninstallBotLocally(id, botId);
                 }
-                return resp;
+                return success;
             })
             .catch((err) => {
                 this.#logger.error("Error adding bot to group or community", err);
@@ -8116,80 +8122,93 @@ export class OpenChat extends EventTarget {
     }
 
     updateInstalledBot(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
         grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
+        const prev = this.#installBotLocally(id, botId, grantedPermissions);
         return this.#sendRequest({
             kind: "updateInstalledBot",
             id,
             botId,
             grantedPermissions,
-        }).catch((err) => {
-            this.#logger.error("Error adding bot to group or community", err);
-            return false;
-        });
+        })
+            .then((success) => {
+                if (!success) {
+                    this.#installBotLocally(id, botId, prev);
+                }
+                return success;
+            })
+            .catch((err) => {
+                this.#logger.error("Error adding bot to group or community", err);
+                this.#installBotLocally(id, botId, prev);
+                return false;
+            });
     }
 
     #uninstallBotLocally(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
     ): ExternalBotPermissions | undefined {
         let perm: ExternalBotPermissions | undefined;
         switch (id.kind) {
             case "community":
-                communityStateStore.updateProp(id, "bots", (b) => {
-                    perm = b.get(botId);
-                    b.delete(botId);
-                    return new Map(b);
-                });
+                perm = this.#liveState.currentCommunityBots.get(botId);
+                localCommunitySummaryUpdates.removeBot(id, botId);
                 break;
             case "group_chat":
-                chatStateStore.updateProp(id, "bots", (b) => {
-                    perm = b.get(botId);
-                    b.delete(botId);
-                    return new Map(b);
-                });
+                perm = this.#liveState.currentChatBots.get(botId);
+                localChatSummaryUpdates.removeBot(id, botId);
+                break;
+            case "direct_chat":
+                perm = this.#liveState.installedDirectBots.get(botId);
+                localGlobalUpdates.removeBot(botId);
+                this.removeChat({ kind: "direct_chat", userId: botId });
+                this.archiveChat({ kind: "direct_chat", userId: botId });
                 break;
         }
         return perm;
     }
 
     #installBotLocally(
-        id: CommunityIdentifier | GroupChatIdentifier,
+        id: BotInstallationLocation,
         botId: string,
         perm: ExternalBotPermissions | undefined,
-    ): void {
+    ): ExternalBotPermissions | undefined {
+        let previousPermissions: ExternalBotPermissions | undefined = undefined;
         switch (id.kind) {
             case "community":
-                communityStateStore.updateProp(id, "bots", (b) => {
-                    if (perm === undefined) return b;
-                    b.set(botId, perm);
-                    return new Map(b);
-                });
+                if (perm === undefined) return perm;
+                previousPermissions = this.#liveState.currentCommunityBots.get(botId);
+                localCommunitySummaryUpdates.installBot(id, botId, perm);
                 break;
             case "group_chat":
-                chatStateStore.updateProp(id, "bots", (b) => {
-                    if (perm === undefined) return b;
-                    b.set(botId, perm);
-                    return new Map(b);
-                });
+                if (perm === undefined) return perm;
+                previousPermissions = this.#liveState.currentChatBots.get(botId);
+                localChatSummaryUpdates.installBot(id, botId, perm);
+                break;
+            case "direct_chat":
+                if (perm === undefined) return perm;
+                previousPermissions = this.#liveState.installedDirectBots.get(botId);
+                localGlobalUpdates.installBot(botId, perm);
+                this.unarchiveChat({ kind: "direct_chat", userId: botId });
                 break;
         }
+        return previousPermissions;
     }
 
-    uninstallBot(id: CommunityIdentifier | GroupChatIdentifier, botId: string): Promise<boolean> {
+    uninstallBot(id: BotInstallationLocation, botId: string): Promise<boolean> {
         const perm = this.#uninstallBotLocally(id, botId);
         return this.#sendRequest({
             kind: "uninstallBot",
             id,
             botId,
         })
-            .then((res) => {
-                if (!res) {
+            .then((success) => {
+                if (!success) {
                     this.#installBotLocally(id, botId, perm);
                 }
-                return res;
+                return success;
             })
             .catch((err) => {
                 this.#logger.error("Error removing bot from group or community", err);

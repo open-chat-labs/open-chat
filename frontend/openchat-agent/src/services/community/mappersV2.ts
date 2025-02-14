@@ -19,6 +19,7 @@ import type {
     GroupMembershipUpdates,
     ImportGroupResponse,
     MemberRole,
+    PublicApiKeyDetails,
     // PublicApiKeyDetails,
     RemoveMemberResponse,
     SendMessageResponse,
@@ -70,7 +71,7 @@ import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils
 import {
     accessGateConfig,
     apiCommunityPermissionRole,
-    botGroupDetails,
+    installedBotDetails,
     chatMetrics,
     communityChannelSummary,
     communityPermissions,
@@ -80,10 +81,10 @@ import {
     memberRole,
     mentions,
     messageEvent,
-    // publicApiKeyDetails,
     threadSyncDetails,
     updatedEvent,
     userGroup,
+    publicApiKeyDetails,
 } from "../common/chatMappersV2";
 import { identity } from "../../utils/mapping";
 import { mapCommonResponses } from "../common/commonResponseMapper";
@@ -472,12 +473,11 @@ export function communityDetailsResponse(
             lastUpdated: value.Success.timestamp,
             userGroups: new Map(value.Success.user_groups.map(userGroupDetails)),
             referrals: new Set(value.Success.referrals.map(principalBytesToString)),
-            bots: value.Success.bots.map(botGroupDetails),
-            apiKeys: new Map(),
-            // apiKeys: value.Success.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
-            //     m.set(k.botId, k);
-            //     return m;
-            // }, new Map<string, PublicApiKeyDetails>()),
+            bots: value.Success.bots.map(installedBotDetails),
+            apiKeys: value.Success.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
+                m.set(k.botId, k);
+                return m;
+            }, new Map<string, PublicApiKeyDetails>()),
         };
     } else {
         console.warn("CommunityDetails failed with", value);
@@ -529,10 +529,9 @@ export function communityDetailsUpdatesResponse(
                     value.Success.referrals_removed.map(principalBytesToString),
                 ),
                 referralsAdded: new Set(value.Success.referrals_added.map(principalBytesToString)),
-                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(botGroupDetails),
+                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
                 botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
-                apiKeysGenerated: [],
-                // apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
+                apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import Headphones from "svelte-material-icons/Headphones.svelte";
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import TickIcon from "svelte-material-icons/Check.svelte";
@@ -31,6 +32,8 @@
         favouritesStore,
         messagesRead,
         isProposalGroup,
+        currentUser,
+        installedDirectBots,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { notificationsSupported } from "../../utils/notifications";
@@ -63,6 +66,12 @@
 
     showSuspendUserModal;
 
+    let botIdToUninstall = $derived(
+        selectedChatSummary.kind === "direct_chat" &&
+            $installedDirectBots.has(selectedChatSummary.them.userId)
+            ? selectedChatSummary.them.userId
+            : undefined,
+    );
     let governanceCanisterId = $derived(
         selectedChatSummary.kind !== "direct_chat" &&
             selectedChatSummary.subtype?.kind === "governance_proposals"
@@ -262,6 +271,16 @@
             chat: selectedChatSummary,
             join: videoCallInProgress,
         });
+    }
+
+    function removeBot(botId: string) {
+        client
+            .uninstallBot({ kind: "direct_chat", userId: $currentUser.userId }, botId)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
+                }
+            });
     }
 </script>
 
@@ -601,6 +620,16 @@
                             </MenuItem>
                         {/if}
                     {/if}
+                {/if}
+                {#if botIdToUninstall !== undefined}
+                    <MenuItem onclick={() => removeBot(botIdToUninstall)}>
+                        {#snippet icon()}
+                            <DeleteOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <Translatable resourceKey={i18nKey("bots.manage.remove")} />
+                        {/snippet}
+                    </MenuItem>
                 {/if}
             </Menu>
         {/snippet}
