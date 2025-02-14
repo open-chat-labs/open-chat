@@ -3,7 +3,6 @@ use identity_canister::remove_identity_link::Response as RemovePrincipalResponse
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
-use tracing::info;
 use types::{is_default, CanisterId, PushIfNotContains, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]

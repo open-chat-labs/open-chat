@@ -6,6 +6,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use identity_canister::post_upgrade::Args;
 use stable_memory::get_reader;
+use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
