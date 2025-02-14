@@ -293,7 +293,7 @@
 
             if ($enterSend && !e.shiftKey && !showCommandSelector && !directChatBotId) {
                 sendMessage();
-            } else if (directChatBotId && !commandSent) {
+            } else if (directChatBotId && !commandSent && $selectedCommand === undefined) {
                 showDirectBotChatWarning = true;
             }
             commandSent = false;
