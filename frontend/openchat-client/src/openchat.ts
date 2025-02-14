@@ -1,11 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { gaTrack } from "./utils/ga";
-import {
-    DER_COSE_OID,
-    type Identity,
-    type SignIdentity,
-    unwrapDER,
-} from "@dfinity/agent";
+import { DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@dfinity/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
 import { get } from "svelte/store";
 import DRange from "drange";
@@ -8173,11 +8168,8 @@ export class OpenChat extends EventTarget {
                 });
                 break;
             case "direct_chat":
-                installedDirectBots.update((map) => {
-                    perm = map.get(botId);
-                    map.delete(botId);
-                    return new Map(map);
-                });
+                perm = get(installedDirectBots).get(botId);
+                localGlobalUpdates.removeBot(botId);
                 this.removeChat({ kind: "direct_chat", userId: botId });
                 this.archiveChat({ kind: "direct_chat", userId: botId });
                 break;
@@ -8209,12 +8201,9 @@ export class OpenChat extends EventTarget {
                 });
                 break;
             case "direct_chat":
-                installedDirectBots.update((b) => {
-                    previousPermissions = b.get(botId);
-                    if (perm === undefined) return b;
-                    b.set(botId, perm);
-                    return new Map(b);
-                });
+                if (perm === undefined) return perm;
+                previousPermissions = get(installedDirectBots).get(botId);
+                localGlobalUpdates.installBot(botId, perm);
                 this.unarchiveChat({ kind: "direct_chat", userId: botId });
                 break;
         }
