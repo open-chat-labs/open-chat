@@ -8186,7 +8186,7 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    uninstallBot(id: CommunityIdentifier | GroupChatIdentifier, botId: string): Promise<boolean> {
+    uninstallBot(id: BotInstallationLocation, botId: string): Promise<boolean> {
         const perm = this.#uninstallBotLocally(id, botId);
         return this.#sendRequest({
             kind: "uninstallBot",

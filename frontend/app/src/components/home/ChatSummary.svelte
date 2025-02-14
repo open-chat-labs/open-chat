@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, chatIdentifiersEqual, selectedCommunity } from "openchat-client";
+    import {
+        AvatarSize,
+        OpenChat,
+        chatIdentifiersEqual,
+        installedDirectBots,
+        selectedCommunity,
+    } from "openchat-client";
     import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
     import type {
         UserLookup,
@@ -23,6 +29,7 @@
         communities,
     } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Heart from "svelte-material-icons/Heart.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
@@ -108,6 +115,11 @@
     const maxDelOffset = -60;
     let delOffset = $state(maxDelOffset);
     let swiped = $state(false);
+    let botIdToUninstall = $derived(
+        chatSummary.kind === "direct_chat" && $installedDirectBots.has(chatSummary.them.userId)
+            ? chatSummary.them.userId
+            : undefined,
+    );
 
     $effect(() => updateUnreadCounts(chatSummary));
 
@@ -334,6 +346,18 @@
             chatId: chatSummary.id,
             level: chatSummary.level,
         });
+    }
+
+    function removeBot(botId: string) {
+        client
+            .uninstallBot({ kind: "direct_chat", userId: $user.userId }, botId)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
+                } else {
+                    archiveChat();
+                }
+            });
     }
 
     function getCanDelete(chat: ChatSummary, community: CommunitySummary | undefined) {
@@ -596,6 +620,19 @@
                                             {#snippet text()}
                                                 <Translatable
                                                     resourceKey={i18nKey("archiveChat")} />
+                                            {/snippet}
+                                        </MenuItem>
+                                    {/if}
+                                    {#if botIdToUninstall !== undefined}
+                                        <MenuItem onclick={() => removeBot(botIdToUninstall)}>
+                                            {#snippet icon()}
+                                                <DeleteOutline
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
+                                                <Translatable
+                                                    resourceKey={i18nKey("bots.manage.remove")} />
                                             {/snippet}
                                         </MenuItem>
                                     {/if}
