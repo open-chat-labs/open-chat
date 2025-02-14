@@ -32,7 +32,7 @@
     interface Props {
         mode: BotSummaryMode;
         bot: BotMatch | ExternalBot;
-        onClose: () => void;
+        onClose: (removeDirectChat: boolean) => void;
     }
 
     let { bot, onClose, mode }: Props = $props();
@@ -95,7 +95,7 @@
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.add.failure"));
                 } else {
-                    onClose();
+                    onClose(false);
                 }
             })
             .finally(() => (busy = false));
@@ -109,7 +109,7 @@
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.edit.failure"));
                 } else {
-                    onClose();
+                    onClose(false);
                 }
             })
             .finally(() => (busy = false));
@@ -160,7 +160,7 @@
                 updateBot(mode.id);
                 break;
             case "viewing_command_bot":
-                onClose();
+                onClose(false);
                 break;
             case "adding_api_key":
                 generateApiKey(mode.id)(true);
@@ -179,7 +179,7 @@
 {/if}
 
 {#if apiKey !== undefined}
-    <ShowApiKey {apiKey} {onClose}></ShowApiKey>
+    <ShowApiKey {apiKey} onClose={() => onClose(false)}></ShowApiKey>
 {/if}
 
 {#snippet chatTab()}
@@ -229,7 +229,7 @@
 {/snippet}
 
 <Overlay dismissible>
-    <ModalContent closeIcon on:close={onClose}>
+    <ModalContent closeIcon on:close={() => onClose(true)}>
         <div class="header" slot="header">
             <Translatable resourceKey={title}></Translatable>
         </div>
@@ -282,7 +282,11 @@
         </div>
         <div class="footer" slot="footer">
             <ButtonGroup>
-                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}>
+                <Button
+                    secondary
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
+                    on:click={() => onClose(true)}>
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </Button>
                 <Button

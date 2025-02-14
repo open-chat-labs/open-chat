@@ -13,10 +13,13 @@
         type PublicApiKeyDetails,
         type ChatSummary,
         currentUser,
+        chatListScopeStore,
     } from "openchat-client";
-    import { getContext, type Snippet } from "svelte";
+    import { getContext, tick, type Snippet } from "svelte";
     import { toastStore } from "../../stores/toast";
     import BotSummary from "./BotSummary.svelte";
+    import { routeForScope } from "../../routes";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
 
@@ -81,7 +84,11 @@
         }
     }
 
-    function removeBot() {
+    async function removeBot() {
+        if (commandContextId.kind === "direct_chat") {
+            page(routeForScope($chatListScopeStore));
+            await tick();
+        }
         client.uninstallBot(commandContextId, bot.id).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));

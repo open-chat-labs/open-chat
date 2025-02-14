@@ -82,6 +82,7 @@
     function restrictByBotIfNecessary(command: FlattenedCommand): boolean {
         return (
             selectedBotId === undefined ||
+            (command.kind === "internal_bot" && command.directBotDisabled === false) ||
             (command.kind === "external_bot" && command.botId === selectedBotId)
         );
     }

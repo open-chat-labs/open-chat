@@ -488,6 +488,7 @@ import {
     chatListScopeStore,
     chitStateStore,
     mergeCombinedUnreadCounts,
+    installedDirectBots,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag } from "./stores/flagStore";
@@ -5797,6 +5798,11 @@ export class OpenChat extends EventTarget {
                 }
             }
 
+            // Update all bot users
+            for (const userId of this.#liveState.externalBots.keys()) {
+                usersToUpdate.add(userId);
+            }
+
             // Update all users we have direct chats with
             for (const chat of this.#liveState.chatSummariesList) {
                 if (chat.kind == "direct_chat") {
@@ -7960,6 +7966,18 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    // #addApiKeyLocally(
+    //     id: ChatIdentifier | CommunityIdentifier,
+    //     botId: string,
+    //     permissions: ExternalBotPermissions,
+    // ) {}
+
+    // #removeApiKeyLocally(
+    //     id: ChatIdentifier | CommunityIdentifier,
+    //     botId: string,
+    //     permissions: ExternalBotPermissions,
+    // ) {}
+
     generateBotApiKey(
         id: ChatIdentifier | CommunityIdentifier,
         botId: string,
@@ -8097,11 +8115,11 @@ export class OpenChat extends EventTarget {
             botId,
             grantedPermissions,
         })
-            .then((resp) => {
-                if (!resp) {
+            .then((success) => {
+                if (!success) {
                     this.#uninstallBotLocally(id, botId);
                 }
-                return resp;
+                return success;
             })
             .catch((err) => {
                 this.#logger.error("Error adding bot to group or community", err);
@@ -8114,15 +8132,24 @@ export class OpenChat extends EventTarget {
         botId: string,
         grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
+        const prev = this.#installBotLocally(id, botId, grantedPermissions);
         return this.#sendRequest({
             kind: "updateInstalledBot",
             id,
             botId,
             grantedPermissions,
-        }).catch((err) => {
-            this.#logger.error("Error adding bot to group or community", err);
-            return false;
-        });
+        })
+            .then((success) => {
+                if (!success) {
+                    this.#installBotLocally(id, botId, prev);
+                }
+                return success;
+            })
+            .catch((err) => {
+                this.#logger.error("Error adding bot to group or community", err);
+                this.#installBotLocally(id, botId, prev);
+                return false;
+            });
     }
 
     #uninstallBotLocally(
@@ -8145,7 +8172,14 @@ export class OpenChat extends EventTarget {
                     return new Map(b);
                 });
                 break;
-            case "direct_chat": //FIXME
+            case "direct_chat":
+                installedDirectBots.update((map) => {
+                    perm = map.get(botId);
+                    map.delete(botId);
+                    return new Map(map);
+                });
+                this.removeChat({ kind: "direct_chat", userId: botId });
+                this.archiveChat({ kind: "direct_chat", userId: botId });
                 break;
         }
         return perm;
@@ -8155,10 +8189,12 @@ export class OpenChat extends EventTarget {
         id: BotInstallationLocation,
         botId: string,
         perm: ExternalBotPermissions | undefined,
-    ): void {
+    ): ExternalBotPermissions | undefined {
+        let previousPermissions: ExternalBotPermissions | undefined = undefined;
         switch (id.kind) {
             case "community":
                 communityStateStore.updateProp(id, "bots", (b) => {
+                    previousPermissions = b.get(botId);
                     if (perm === undefined) return b;
                     b.set(botId, perm);
                     return new Map(b);
@@ -8166,14 +8202,23 @@ export class OpenChat extends EventTarget {
                 break;
             case "group_chat":
                 chatStateStore.updateProp(id, "bots", (b) => {
+                    previousPermissions = b.get(botId);
                     if (perm === undefined) return b;
                     b.set(botId, perm);
                     return new Map(b);
                 });
                 break;
-            case "direct_chat": //FIXME
+            case "direct_chat":
+                installedDirectBots.update((b) => {
+                    previousPermissions = b.get(botId);
+                    if (perm === undefined) return b;
+                    b.set(botId, perm);
+                    return new Map(b);
+                });
+                this.unarchiveChat({ kind: "direct_chat", userId: botId });
                 break;
         }
+        return previousPermissions;
     }
 
     uninstallBot(id: BotInstallationLocation, botId: string): Promise<boolean> {
@@ -8183,11 +8228,11 @@ export class OpenChat extends EventTarget {
             id,
             botId,
         })
-            .then((res) => {
-                if (!res) {
+            .then((success) => {
+                if (!success) {
                     this.#installBotLocally(id, botId, perm);
                 }
-                return res;
+                return success;
             })
             .catch((err) => {
                 this.#logger.error("Error removing bot from group or community", err);

@@ -39,20 +39,19 @@
             : undefined;
     });
 
-    function deleteDirectChat() {
-        if (
-            $pathParams.kind === "global_chat_selected_route" &&
-            chatIdentifiersEqual(chatId, $pathParams.chatId)
-        ) {
-            page(routeForScope($chatListScope));
+    function onClose(removeDirectChat: boolean) {
+        if (removeDirectChat) {
+            if (
+                $pathParams.kind === "global_chat_selected_route" &&
+                chatIdentifiersEqual(chatId, $pathParams.chatId)
+            ) {
+                page(routeForScope($chatListScope));
+            }
+            tick().then(() => client.removeChat(chatId));
         }
-        tick().then(() => client.removeChat(chatId));
     }
 </script>
 
 {#if bot !== undefined && mode !== undefined}
-    <BotSummary {bot} {mode} onClose={deleteDirectChat} />
+    <BotSummary {bot} {mode} {onClose} />
 {/if}
-
-<style lang="scss">
-</style>
