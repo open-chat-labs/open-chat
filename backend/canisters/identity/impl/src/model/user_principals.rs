@@ -10,7 +10,6 @@ pub struct UserPrincipals {
     user_principals: Vec<UserPrincipalInternal>,
     auth_principals: HashMap<Principal, AuthPrincipalInternal>,
     originating_canisters: HashMap<CanisterId, u32>,
-    #[serde(default)]
     temp_keys: HashMap<Principal, TempKey>,
 }
 
@@ -28,7 +27,7 @@ struct UserPrincipalInternal {
     principal: Principal,
     #[serde(rename = "a")]
     auth_principals: Vec<Principal>,
-    #[serde(rename = "u", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "u", skip_serializing_if = "Option::is_none")]
     user_id: Option<UserId>,
 }
 
@@ -38,7 +37,7 @@ struct AuthPrincipalInternal {
     originating_canister: CanisterId,
     #[serde(rename = "u")]
     user_principal_index: u32,
-    #[serde(rename = "w", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "w", skip_serializing_if = "is_default")]
     webauthn_credential_id: Option<ByteBuf>,
     #[serde(rename = "i", default, skip_serializing_if = "is_default")]
     is_ii_principal: bool,
