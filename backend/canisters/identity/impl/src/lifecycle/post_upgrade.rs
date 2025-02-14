@@ -22,6 +22,7 @@ fn post_upgrade(args: Args) {
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     data.user_principals.remove_dangling_auth_principal_links();
+    data.user_principals.recalculate_originating_canister_counts();
     data.originating_canisters.insert(WEBAUTHN_ORIGINATING_CANISTER);
     data.skip_captcha_whitelist.insert(WEBAUTHN_ORIGINATING_CANISTER);
 

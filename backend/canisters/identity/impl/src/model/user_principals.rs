@@ -78,6 +78,13 @@ impl UserPrincipals {
         info!("Removed {total_removed} dangling auth principal links");
     }
 
+    pub fn recalculate_originating_canister_counts(&mut self) {
+        self.originating_canisters.clear();
+        for canister_id in self.auth_principals.values().map(|p| p.originating_canister) {
+            *self.originating_canisters.entry(canister_id).or_default() += 1;
+        }
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn push(
         &mut self,
@@ -107,7 +114,7 @@ impl UserPrincipals {
                 last_used: now,
             },
         );
-        *self.originating_canisters.entry(originating_canister).or_default() += 1;
+        self.incr_originating_canister(originating_canister);
     }
 
     pub fn add_temp_key(
@@ -153,6 +160,7 @@ impl UserPrincipals {
                     last_used: now,
                 },
             );
+            self.incr_originating_canister(originating_canister);
             true
         } else {
             unreachable!()
@@ -258,6 +266,10 @@ impl UserPrincipals {
                 auth_principals: u.auth_principals.clone(),
                 user_id: u.user_id,
             })
+    }
+
+    fn incr_originating_canister(&mut self, canister_id: CanisterId) {
+        *self.originating_canisters.entry(canister_id).or_default() += 1;
     }
 }
 
