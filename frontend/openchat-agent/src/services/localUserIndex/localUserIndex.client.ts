@@ -432,7 +432,12 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
                 location: this.#apiBotInstallationLocation(location),
                 bot_id: principalStringToBytes(botId),
             },
-            (resp) => resp === "Success",
+            (resp) => {
+                if (resp !== "Success") {
+                    console.log("Error uninstalling bot: ", resp);
+                }
+                return resp === "Success";
+            },
             LocalUserIndexUninstallBotArgs,
             LocalUserIndexUninstallBotResponse,
         );
