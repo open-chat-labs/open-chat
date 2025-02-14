@@ -3,7 +3,6 @@ use identity_canister::remove_identity_link::Response as RemovePrincipalResponse
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
-use tracing::info;
 use types::{is_default, CanisterId, PushIfNotContains, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -11,7 +10,6 @@ pub struct UserPrincipals {
     user_principals: Vec<UserPrincipalInternal>,
     auth_principals: HashMap<Principal, AuthPrincipalInternal>,
     originating_canisters: HashMap<CanisterId, u32>,
-    #[serde(default)]
     temp_keys: HashMap<Principal, TempKey>,
 }
 
@@ -29,7 +27,7 @@ struct UserPrincipalInternal {
     principal: Principal,
     #[serde(rename = "a")]
     auth_principals: Vec<Principal>,
-    #[serde(rename = "u", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "u", skip_serializing_if = "Option::is_none")]
     user_id: Option<UserId>,
 }
 
@@ -39,7 +37,7 @@ struct AuthPrincipalInternal {
     originating_canister: CanisterId,
     #[serde(rename = "u")]
     user_principal_index: u32,
-    #[serde(rename = "w", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "w", skip_serializing_if = "is_default")]
     webauthn_credential_id: Option<ByteBuf>,
     #[serde(rename = "i", default, skip_serializing_if = "is_default")]
     is_ii_principal: bool,
@@ -58,26 +56,6 @@ struct TempKey {
 }
 
 impl UserPrincipals {
-    // Due to an earlier bug, when users unlinked AuthPrincipals from their UserPrincipal, the
-    // AuthPrincipal was removed from the `auth_principals` map, but it wasn't removed from the
-    // `UserPrincipalInternal::auth_principals` field.
-    // So we've ended up with a few UserPrincipalInternal records that contain AuthPrincipals which
-    // either no longer exist, or are now linked to a different UserPrincipalInternal.
-    pub fn remove_dangling_auth_principal_links(&mut self) {
-        let mut total_removed = 0;
-        for (index, user_principal) in self.user_principals.iter_mut().enumerate() {
-            let previous_count = user_principal.auth_principals.len();
-            user_principal.auth_principals.retain(|principal| {
-                self.auth_principals
-                    .get(principal)
-                    .is_some_and(|p| p.user_principal_index == index as u32)
-            });
-            let removed = previous_count.saturating_sub(user_principal.auth_principals.len());
-            total_removed += removed;
-        }
-        info!("Removed {total_removed} dangling auth principal links");
-    }
-
     pub fn recalculate_originating_canister_counts(&mut self) {
         self.originating_canisters.clear();
         for canister_id in self.auth_principals.values().map(|p| p.originating_canister) {
