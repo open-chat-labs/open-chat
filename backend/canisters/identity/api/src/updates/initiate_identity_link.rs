@@ -20,4 +20,5 @@ pub enum Response {
     TargetUserNotFound,
     PublicKeyInvalid(String),
     OriginatingCanisterInvalid(CanisterId),
+    LinkedIdentitiesLimitReached(u32),
 }

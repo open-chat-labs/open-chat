@@ -106,6 +106,7 @@ export const idlFactory = ({ IDL }) => {
     'TargetUserNotFound' : IDL.Null,
     'PublicKeyInvalid' : IDL.Text,
     'AlreadyLinkedToPrincipal' : IDL.Null,
+    'LinkedIdentitiesLimitReached' : IDL.Nat32,
   });
   const LookupWebAuthnPubKeyArgs = IDL.Record({
     'credential_id' : IDL.Vec(IDL.Nat8),

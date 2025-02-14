@@ -120,6 +120,7 @@ type InitiateIdentityLinkResponse = variant {
     TargetUserNotFound;
     PublicKeyInvalid : text;
     OriginatingCanisterInvalid : principal;
+    LinkedIdentitiesLimitReached : nat32;
 };
 
 type PrepareDelegationArgs = record {
