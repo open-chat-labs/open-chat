@@ -107,7 +107,6 @@ import {
     confirmedThreadEventIndexesLoadedStore,
     isContiguousInThread,
     selectedMessageContext,
-    currentChatBots,
 } from "./stores/chat";
 import {
     cryptoBalance,
@@ -483,7 +482,6 @@ import {
     chatListScopeStore,
     chitStateStore,
     mergeCombinedUnreadCounts,
-    installedDirectBots,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag } from "./stores/flagStore";
@@ -8155,18 +8153,15 @@ export class OpenChat extends EventTarget {
         let perm: ExternalBotPermissions | undefined;
         switch (id.kind) {
             case "community":
-                communityStateStore.updateProp(id, "bots", (b) => {
-                    perm = b.get(botId);
-                    b.delete(botId);
-                    return new Map(b);
-                });
+                perm = this.#liveState.currentCommunityBots.get(botId);
+                localCommunitySummaryUpdates.removeBot(id, botId);
                 break;
             case "group_chat":
-                perm = get(currentChatBots)?.get(botId);
+                perm = this.#liveState.currentChatBots.get(botId);
                 localChatSummaryUpdates.removeBot(id, botId);
                 break;
             case "direct_chat":
-                perm = get(installedDirectBots).get(botId);
+                perm = this.#liveState.installedDirectBots.get(botId);
                 localGlobalUpdates.removeBot(botId);
                 this.removeChat({ kind: "direct_chat", userId: botId });
                 this.archiveChat({ kind: "direct_chat", userId: botId });
@@ -8183,21 +8178,18 @@ export class OpenChat extends EventTarget {
         let previousPermissions: ExternalBotPermissions | undefined = undefined;
         switch (id.kind) {
             case "community":
-                communityStateStore.updateProp(id, "bots", (b) => {
-                    previousPermissions = b.get(botId);
-                    if (perm === undefined) return b;
-                    b.set(botId, perm);
-                    return new Map(b);
-                });
+                if (perm === undefined) return perm;
+                previousPermissions = this.#liveState.currentCommunityBots.get(botId);
+                localCommunitySummaryUpdates.installBot(id, botId, perm);
                 break;
             case "group_chat":
                 if (perm === undefined) return perm;
-                previousPermissions = get(currentChatBots)?.get(botId);
+                previousPermissions = this.#liveState.currentChatBots.get(botId);
                 localChatSummaryUpdates.installBot(id, botId, perm);
                 break;
             case "direct_chat":
                 if (perm === undefined) return perm;
-                previousPermissions = get(installedDirectBots).get(botId);
+                previousPermissions = this.#liveState.installedDirectBots.get(botId);
                 localGlobalUpdates.installBot(botId, perm);
                 this.unarchiveChat({ kind: "direct_chat", userId: botId });
                 break;

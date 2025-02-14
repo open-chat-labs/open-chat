@@ -77,7 +77,7 @@ export const communityStateStore = createCommunitySpecificObjectStore<CommunityS
     }),
 );
 
-export const currentCommunityBots = createDerivedPropStore<CommunitySpecificState, "bots">(
+const currentServerCommunityBots = createDerivedPropStore<CommunitySpecificState, "bots">(
     communityStateStore,
     "bots",
     () => new Map<string, ExternalBotPermissions>(),
@@ -136,6 +136,21 @@ export const selectedCommunity = derived(
         } else {
             return undefined;
         }
+    },
+);
+
+export const currentCommunityBots = derived(
+    [selectedCommunity, currentServerCommunityBots, localCommunitySummaryUpdates],
+    ([$community, $serverBots, $local]) => {
+        if ($community === undefined) return $serverBots;
+        const clone = new Map($serverBots);
+        const localInstalled = [...($local.get($community.id)?.installedBots?.entries() ?? [])];
+        const localDeleted = [...($local.get($community.id)?.removedBots?.values() ?? [])];
+        localInstalled.forEach(([id, perm]) => {
+            clone.set(id, perm);
+        });
+        localDeleted.forEach((id) => clone.delete(id));
+        return clone;
     },
 );
 
