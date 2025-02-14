@@ -5,9 +5,9 @@
         type CommunityIdentifier,
         type BotSummaryMode,
         type ExternalBotPermissions,
-        type MultiUserChatIdentifier,
         type ExternalBot,
         type BotInstallationLocation,
+        type ChatIdentifier,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Overlay from "../Overlay.svelte";
@@ -116,7 +116,7 @@
     }
 
     function generateApiKey(
-        id: CommunityIdentifier | MultiUserChatIdentifier,
+        id: CommunityIdentifier | ChatIdentifier,
     ): (confirmed: boolean) => Promise<void> {
         return (confirmed: boolean) => {
             if (!confirmingRegeneration && !confirmed) {

@@ -29,6 +29,7 @@
         type BotMatch as BotMatchType,
         flattenCommandPermissions,
         type PublicApiKeyDetails,
+        type EnhancedExternalBot,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import InvitedUser from "./InvitedUser.svelte";
@@ -41,8 +42,6 @@
     import BotExplorer from "../../bots/BotExplorer.svelte";
     import BotMember from "../../bots/BotMember.svelte";
     import BotSummary from "../../bots/BotSummary.svelte";
-
-    type EnhancedExternalBot = ExternalBot & { grantedPermissions: ExternalBotPermissions };
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
@@ -361,7 +360,7 @@
                     apiKey={apiKeys.get(bot.id)}
                     {collection}
                     {bot}
-                    commandPermissions={bot.grantedPermissions}
+                    grantedPermissions={bot.grantedPermissions}
                     canManage={canManageBots}
                     {searchTerm} />
             {/each}

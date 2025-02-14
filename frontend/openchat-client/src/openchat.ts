@@ -7107,7 +7107,7 @@ export class OpenChat extends EventTarget {
         // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
-        
+
         return await this.#finaliseWebAuthnSignin(
             tempKey,
             () => webAuthnIdentity,
@@ -7961,7 +7961,7 @@ export class OpenChat extends EventTarget {
     }
 
     generateBotApiKey(
-        id: MultiUserChatIdentifier | CommunityIdentifier,
+        id: ChatIdentifier | CommunityIdentifier,
         botId: string,
         permissions: ExternalBotPermissions,
     ): Promise<GenerateBotKeyResponse> {

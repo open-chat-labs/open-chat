@@ -438,7 +438,7 @@ export type WorkerRequest =
 
 type GenerateBotApiKey = {
     kind: "generateBotApiKey";
-    id: MultiUserChatIdentifier | CommunityIdentifier;
+    id: ChatIdentifier | CommunityIdentifier;
     botId: string;
     permissions: ExternalBotPermissions;
 };

@@ -310,13 +310,17 @@ import type {
     GroupGenerateBotApiKeyResponse,
     PublicApiKeyDetails as ApiPublicApiKeyDetails,
     UserUpdateBotResponse,
+    UserGenerateBotApiKeyResponse,
 } from "../../typebox";
 import type { ApiPrincipal } from "../index";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
 export function generateApiKeyResponse(
-    value: CommunityGenerateBotApiKeyResponse | GroupGenerateBotApiKeyResponse,
+    value:
+        | CommunityGenerateBotApiKeyResponse
+        | GroupGenerateBotApiKeyResponse
+        | UserGenerateBotApiKeyResponse,
 ): GenerateBotKeyResponse {
     if (typeof value === "object" && "Success" in value) {
         return { kind: "success", apiKey: value.Success.api_key };
