@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Increment originating canister count when linking new identity ([#7416](https://github.com/open-chat-labs/open-chat/pull/7416))
+
+## [[2.0.1606](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1606-identity)] - 2025-02-14
+
 ### Added
 
 - Implement signing in with Passkeys ([#7382](https://github.com/open-chat-labs/open-chat/pull/7382))
@@ -16,10 +22,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Return `last_used` on each authentication principal ([#7372](https://github.com/open-chat-labs/open-chat/pull/7372))
 - Remove auth principal from user record after unlinking ([#7398](https://github.com/open-chat-labs/open-chat/pull/7398))
 - Add `is_current_identity`+ `webauthn_key` to auth principals response ([#7410](https://github.com/open-chat-labs/open-chat/pull/7410))
-
-### Fixed
-
-- Increment originating canister count when linking new identity ([#7416](https://github.com/open-chat-labs/open-chat/pull/7416))
 
 ## [[2.0.1594](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1594-identity)] - 2025-01-31
 
