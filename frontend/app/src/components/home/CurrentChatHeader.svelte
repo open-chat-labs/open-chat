@@ -40,19 +40,28 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let selectedChatSummary: ChatSummary;
-    export let blocked: boolean;
-    export let readonly: boolean;
-    export let hasPinned: boolean;
+    interface Props {
+        selectedChatSummary: ChatSummary;
+        blocked: boolean;
+        readonly: boolean;
+        hasPinned: boolean;
+    }
 
-    let showSuspendUserModal = false;
+    let { selectedChatSummary, blocked, readonly, hasPinned }: Props = $props();
 
-    $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
-    $: isMultiUser =
-        selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel";
-    $: isBot = $userStore.get(userId)?.kind === "bot";
-    $: hasUserProfile = !isMultiUser && !isBot;
-    $: verified = selectedChatSummary.kind === "group_chat" && selectedChatSummary.verified;
+    let showSuspendUserModal = $state(false);
+
+    let userId = $derived(
+        selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "",
+    );
+    let isMultiUser = $derived(
+        selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel",
+    );
+    let isBot = $derived($userStore.get(userId)?.kind === "bot");
+    let hasUserProfile = $derived(!isMultiUser && !isBot);
+    let verified = $derived(
+        selectedChatSummary.kind === "group_chat" && selectedChatSummary.verified,
+    );
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -139,7 +148,7 @@
         }
     }
 
-    $: chat = normaliseChatSummary($now, selectedChatSummary, $typersByContext);
+    let chat = $derived(normaliseChatSummary($now, selectedChatSummary, $typersByContext));
 </script>
 
 {#if showSuspendUserModal}
@@ -148,7 +157,7 @@
 
 <SectionHeader shadow flush>
     {#if $mobileWidth}
-        <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
+        <div class="back" class:rtl={$rtlStore} onclick={clearSelection}>
             <HoverIcon>
                 {#if $rtlStore}
                     <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
@@ -159,7 +168,7 @@
         </div>
     {/if}
 
-    <div class="avatar" class:has-user-profile={hasUserProfile} on:click={openUserProfile}>
+    <div class="avatar" class:has-user-profile={hasUserProfile} onclick={openUserProfile}>
         <Avatar
             statusBorder={"var(--section-bg)"}
             {blocked}
@@ -174,11 +183,11 @@
                 <WithVerifiedBadge {verified} size={"small"}>
                     <div class="title">
                         {#if $selectedCommunity !== undefined && $chatListScope.kind === "favourite"}
-                            <span on:click={navigateToCommunity} class="pointer">
+                            <span onclick={navigateToCommunity} class="pointer">
                                 {$selectedCommunity.name}
                             </span>
                             <span>{">"}</span>
-                            <span on:click={navigateToChannel} class="pointer">
+                            <span onclick={navigateToChannel} class="pointer">
                                 {chat.name}
                             </span>
                         {:else}
@@ -187,7 +196,7 @@
                     </div>
                 </WithVerifiedBadge>
             {:else if hasUserProfile}
-                <span on:click={openUserProfile} class="user-link">
+                <span onclick={openUserProfile} class="user-link">
                     {chat.name}
                 </span>
                 <Badges

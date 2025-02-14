@@ -7973,7 +7973,7 @@ export class OpenChat extends EventTarget {
     }
 
     generateBotApiKey(
-        id: MultiUserChatIdentifier | CommunityIdentifier,
+        id: ChatIdentifier | CommunityIdentifier,
         botId: string,
         permissions: ExternalBotPermissions,
     ): Promise<GenerateBotKeyResponse> {

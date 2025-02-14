@@ -233,7 +233,6 @@ import type {
     GenerateBotKeyResponse,
     BotCommandResponse,
     BotInstallationLocation,
-    InstalledBotDetails,
     PublicApiKeyDetails,
 } from "openchat-shared";
 import {
@@ -4225,7 +4224,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     generateBotApiKey(
-        id: MultiUserChatIdentifier | CommunityIdentifier,
+        id: ChatIdentifier | CommunityIdentifier,
         botId: string,
         permissions: ExternalBotPermissions,
     ): Promise<GenerateBotKeyResponse> {
@@ -4240,6 +4239,8 @@ export class OpenChatAgent extends EventTarget {
                 return this.communityClient(id.communityId).generateBotApiKey(botId, permissions);
             case "group_chat":
                 return this.getGroupClient(id.groupId).generateBotApiKey(botId, permissions);
+            case "direct_chat":
+                return this.userClient.generateBotApiKey(botId, permissions);
         }
     }
 }
