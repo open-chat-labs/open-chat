@@ -288,41 +288,17 @@
     }
 
     function keyPress(e: KeyboardEvent) {
-        if (
-            e.key === "Enter" &&
-            $enterSend &&
-            !e.shiftKey &&
-            !showCommandSelector &&
-            !directChatBotId
-        ) {
-            sendMessage();
-            e.preventDefault();
-        } else if (e.key === "Enter" && showCommandSelector) {
-            e.preventDefault();
-        } else if (
-            e.key === "Enter" &&
-            directChatBotId &&
-            !commandSent &&
-            $selectedCommand === undefined
-        ) {
-            e.preventDefault();
-            showDirectBotChatWarning = true;
+        if (e.key === "Enter" && !e.shiftKey) {
+            if ($enterSend && !e.shiftKey && !showCommandSelector && !directChatBotId) {
+                e.preventDefault();
+                sendMessage();
+            } else if (directChatBotId && !commandSent && $selectedCommand === undefined) {
+                e.preventDefault();
+                showDirectBotChatWarning = true;
+            }
+            commandSent = false;
         }
-        commandSent = false;
     }
-
-    // function keyPress(e: KeyboardEvent) {
-    //     if (e.key === "Enter" && !e.shiftKey) {
-    //         e.preventDefault();
-
-    //         if ($enterSend && !e.shiftKey && !showCommandSelector && !directChatBotId) {
-    //             sendMessage();
-    //         } else if (directChatBotId && !commandSent && $selectedCommand === undefined) {
-    //             showDirectBotChatWarning = true;
-    //         }
-    //         commandSent = false;
-    //     }
-    // }
 
     function formatUserMentions(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
