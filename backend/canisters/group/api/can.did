@@ -501,7 +501,7 @@ type SelectedInitialSuccess = record {
     last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     participants : vec Participant;
-    bots: vec BotGroupDetails;
+    bots: vec InstalledBotDetails;
     api_keys: vec PublicApiKeyDetails;
     basic_members : vec UserId;
     blocked_users : vec UserId;
