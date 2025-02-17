@@ -2,4 +2,4 @@
 import type { BotPermissions } from "./BotPermissions";
 import type { UserId } from "./UserId";
 
-export type InstalledBotDetails = { user_id: UserId, added_by: UserId, permissions: BotPermissions, };
+export type BotGroupDetails = { user_id: UserId, added_by: UserId, permissions: BotPermissions, };

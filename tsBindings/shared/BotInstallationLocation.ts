@@ -2,4 +2,4 @@
 import type { ChatId } from "./ChatId";
 import type { CommunityId } from "./CommunityId";
 
-export type BotInstallationLocation = { "Community": CommunityId } | { "Group": ChatId } | { "User": ChatId };
+export type BotInstallationLocation = { "Community": CommunityId } | { "Group": ChatId };
