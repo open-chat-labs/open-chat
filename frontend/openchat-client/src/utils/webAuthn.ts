@@ -7,8 +7,9 @@ import {
     SignIdentity,
     unwrapDER,
 } from "@dfinity/agent";
+import type { WebAuthnKeyFull } from "openchat-shared";
 
-export async function createWebAuthnIdentity(origin: string): Promise<[WebAuthnIdentity, Uint8Array]> {
+export async function createWebAuthnIdentity(origin: string, saveKeyInCacheFn: (key: WebAuthnKeyFull) => Promise<void>): Promise<WebAuthnIdentity> {
     const opts = webAuthnCreationOptions(origin);
     const credential = await navigator.credentials.create({ publicKey: opts }) as PublicKeyCredential | null;
     if (credential == null || credential.type !== "public-key") {
@@ -22,17 +23,26 @@ export async function createWebAuthnIdentity(origin: string): Promise<[WebAuthnI
     }
 
     const attObject = borc.decodeFirst(new Uint8Array(response.attestationObject));
+    const authenticatorAttachment = credential.authenticatorAttachment === "platform" ? "platform" : "cross-platform";
 
     const identity = new WebAuthnIdentity(
         credential.rawId,
         authDataToCose(attObject.authData),
-        credential.authenticatorAttachment === "platform" ? "platform" : "cross-platform",
+        authenticatorAttachment,
     );
 
     // A guid identifying the model of the authenticator (eg. fbfc3007-154e-4ecc-8c0b-6e020557d7bd = iCloud Keychain)
     const aaguid = new Uint8Array(response.getAuthenticatorData().slice(37, 53));
 
-    return [identity, aaguid];
+    await saveKeyInCacheFn({
+        publicKey: new Uint8Array(identity.getPublicKey().toDer()),
+        credentialId: new Uint8Array(credential.rawId),
+        origin,
+        crossPlatform: authenticatorAttachment === "cross-platform",
+        aaguid,
+    });
+
+    return identity;
 }
 
 export class MultiWebAuthnIdentity extends SignIdentity {

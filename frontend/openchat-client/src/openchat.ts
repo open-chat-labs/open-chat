@@ -407,6 +407,7 @@ import type {
     CompletedCryptocurrencyTransfer,
     GenerateBotKeyResponse,
     WebAuthnKey,
+    WebAuthnKeyFull,
 } from "openchat-shared";
 import {
     Stream,
@@ -709,7 +710,7 @@ export class OpenChat extends EventTarget {
 
                 await this.#sendRequest({
                     kind: "createOpenChatIdentity",
-                    webAuthnKey: this.#webAuthnKey,
+                    webAuthnCredentialId: this.#webAuthnKey?.credentialId,
                     challengeAttempt: undefined,
                 });
             }
@@ -829,7 +830,7 @@ export class OpenChat extends EventTarget {
 
         const resp = await this.#sendRequest({
             kind: "createOpenChatIdentity",
-            webAuthnKey: this.#webAuthnKey,
+            webAuthnCredentialId: undefined,
             challengeAttempt,
         }).catch(() => "challenge_failed");
 
@@ -7134,7 +7135,7 @@ export class OpenChat extends EventTarget {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
 
-        const [webAuthnIdentity, aaguid] = await createWebAuthnIdentity(webAuthnOrigin);
+        const webAuthnIdentity = await createWebAuthnIdentity(webAuthnOrigin, (key) => this.#storeWebAuthnKeyInCache(key));
 
         // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
@@ -7143,9 +7144,7 @@ export class OpenChat extends EventTarget {
         return await this.#finaliseWebAuthnSignin(
             tempKey,
             () => webAuthnIdentity,
-            webAuthnOrigin,
             assumeIdentity,
-            aaguid,
         );
     }
 
@@ -7159,9 +7158,7 @@ export class OpenChat extends EventTarget {
         await this.#finaliseWebAuthnSignin(
             webAuthnIdentity,
             () => webAuthnIdentity.innerIdentity(),
-            webAuthnOrigin,
             true,
-            undefined,
         );
     }
 
@@ -7169,10 +7166,9 @@ export class OpenChat extends EventTarget {
         [ECDSAKeyIdentity, DelegationChain, WebAuthnKey]
     > {
         const webAuthnKey =
-            this.#webAuthnKey ??
-            (await this.#sendRequest({
+            this.#webAuthnKey ?? await this.#sendRequest({
                 kind: "currentUserWebAuthnKey",
-            }));
+            });
         if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
 
         const webAuthnIdentity = new WebAuthnIdentity(
@@ -7183,18 +7179,14 @@ export class OpenChat extends EventTarget {
         return await this.#finaliseWebAuthnSignin(
             webAuthnIdentity,
             () => webAuthnIdentity,
-            webAuthnKey.origin,
             false,
-            undefined,
         );
     }
 
     async #finaliseWebAuthnSignin(
         initialKey: SignIdentity,
         webAuthnIdentityFn: () => WebAuthnIdentity,
-        webAuthnOrigin: string,
         assumeIdentity: boolean,
-        aaguid: Uint8Array | undefined,
     ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const sessionKey = await ECDSAKeyIdentity.generate();
         const delegationChain = await DelegationChain.create(
@@ -7209,9 +7201,6 @@ export class OpenChat extends EventTarget {
         const webAuthnKey = {
             publicKey: new Uint8Array(webAuthnIdentity.getPublicKey().toDer()),
             credentialId: new Uint8Array(webAuthnIdentity.rawId),
-            origin: webAuthnOrigin,
-            crossPlatform: webAuthnIdentity.getAuthenticatorAttachment() === "cross-platform",
-            aaguid: aaguid ?? new Uint8Array(),
         };
         if (assumeIdentity) {
             this.#webAuthnKey = webAuthnKey;
@@ -7231,6 +7220,13 @@ export class OpenChat extends EventTarget {
             throw new Error("Failed to lookup WebAuthn PubKey");
         }
         return pubKey;
+    }
+
+    #storeWebAuthnKeyInCache(key: WebAuthnKeyFull): Promise<void> {
+        return this.#sendRequest({
+            kind: "setCachedWebAuthnKey",
+            key,
+        });
     }
 
     async generateMagicLink(

@@ -24,7 +24,7 @@ export type CheckAuthPrincipalResponse =
         kind: "success";
         userId: string | undefined;
         originatingCanister: string;
-        webAuthnKey: WebAuthnKey | undefined;
+        webAuthnKey: WebAuthnKeyFull | undefined;
         isIIPrincipal: boolean;
     }
     | { kind: "not_found" };
@@ -120,7 +120,7 @@ export type AuthenticationPrincipal = {
     originatingCanister: string;
     isIIPrincipal: boolean;
     isCurrentIdentity: boolean;
-    webAuthnKey: WebAuthnKey | undefined;
+    webAuthnKey: WebAuthnKeyFull | undefined;
 };
 
 export type AuthenticationPrincipalsResponse = AuthenticationPrincipal[];
@@ -134,6 +134,9 @@ export type RemoveIdentityLinkResponse =
 export type WebAuthnKey = {
     publicKey: Uint8Array;
     credentialId: Uint8Array;
+}
+
+export type WebAuthnKeyFull = WebAuthnKey & {
     origin: string;
     crossPlatform: boolean;
     aaguid: Uint8Array;
