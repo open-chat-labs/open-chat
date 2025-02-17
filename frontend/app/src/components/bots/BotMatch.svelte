@@ -8,9 +8,10 @@
         match: BotMatch;
         onClick: (match: BotMatch) => void;
         showCommands: boolean;
+        installing: boolean;
     }
 
-    let { match, onClick, showCommands }: Props = $props();
+    let { match, onClick, showCommands, installing }: Props = $props();
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -22,6 +23,9 @@
     <div class="details">
         <h4 class="bot-name">
             {match.name}
+            {#if installing}
+                <div class="installing"></div>
+            {/if}
         </h4>
         <p title={match.definition.description} class="bot-desc">
             {match.definition.description}
@@ -71,6 +75,10 @@
         align-self: start;
     }
 
+    .installing {
+        @include loading-spinner(1em, 0.5em, var(--button-spinner), "/assets/plain-spinner.svg");
+    }
+
     .details {
         display: flex;
         gap: $sp2;
@@ -80,6 +88,8 @@
 
         .bot-name {
             @include ellipsis();
+            display: flex;
+            gap: $sp4;
         }
 
         .bot-desc {

@@ -22,13 +22,13 @@ pub struct TokenSwapStatus {
     pub started: TimestampMillis,
     pub icrc2: bool,
     pub auto_withdrawals: bool,
-    pub deposit_account: SwapSubtask<()>,
-    pub transfer: SwapSubtask<u64>,             // Block Index
-    pub transfer_or_approval: SwapSubtask<u64>, // Block Index
-    pub notify_dex: SwapSubtask<()>,
-    pub amount_swapped: SwapSubtask<Result<u128, String>>,
-    pub withdraw_from_dex: SwapSubtask<u128>,
+    pub deposit_account: Option<SwapSubtaskResult<()>>,
+    pub transfer: Option<SwapSubtaskResult<u64>>,             // Block Index
+    pub transfer_or_approval: Option<SwapSubtaskResult<u64>>, // Block Index
+    pub notify_dex: Option<SwapSubtaskResult<()>>,
+    pub amount_swapped: Option<SwapSubtaskResult<Result<u128, String>>>,
+    pub withdraw_from_dex: Option<SwapSubtaskResult<u128>>,
     pub success: Option<bool>,
 }
 
-type SwapSubtask<T = ()> = Option<Result<T, String>>;
+type SwapSubtaskResult<T = ()> = Result<T, String>;

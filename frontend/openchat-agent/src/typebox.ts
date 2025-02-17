@@ -496,67 +496,73 @@ export const UserTokenSwapStatusTokenSwapStatus = Type.Object({
     started: Type.BigInt(),
     icrc2: Type.Boolean(),
     auto_withdrawals: Type.Boolean(),
-    deposit_account: Type.Union([
-        Type.Object({
-            Ok: Type.Null(),
-        }),
-        Type.Object({
-            Err: Type.String(),
-        }),
-        Type.Null(),
-    ]),
-    transfer: Type.Union([
-        Type.Object({
-            Ok: Type.BigInt(),
-        }),
-        Type.Object({
-            Err: Type.String(),
-        }),
-        Type.Null(),
-    ]),
-    transfer_or_approval: Type.Union([
-        Type.Object({
-            Ok: Type.BigInt(),
-        }),
-        Type.Object({
-            Err: Type.String(),
-        }),
-        Type.Null(),
-    ]),
-    notify_dex: Type.Union([
-        Type.Object({
-            Ok: Type.Null(),
-        }),
-        Type.Object({
-            Err: Type.String(),
-        }),
-        Type.Null(),
-    ]),
-    amount_swapped: Type.Union([
-        Type.Object({
-            Ok: Type.Union([
-                Type.Object({
-                    Ok: Type.BigInt(),
-                }),
-                Type.Object({
-                    Err: Type.String(),
-                }),
-            ]),
-        }),
-        Type.Object({
-            Err: Type.String(),
-        }),
-        Type.Null(),
-    ]),
-    withdraw_from_dex: Type.Union([
-        Type.Object({
-            Ok: Type.BigInt(),
-        }),
-        Type.Object({
-            Err: Type.String(),
-        }),
-        Type.Null(),
-    ]),
+    deposit_account: Type.Optional(
+        Type.Union([
+            Type.Object({
+                Ok: Type.Null(),
+            }),
+            Type.Object({
+                Err: Type.String(),
+            }),
+        ]),
+    ),
+    transfer: Type.Optional(
+        Type.Union([
+            Type.Object({
+                Ok: Type.BigInt(),
+            }),
+            Type.Object({
+                Err: Type.String(),
+            }),
+        ]),
+    ),
+    transfer_or_approval: Type.Optional(
+        Type.Union([
+            Type.Object({
+                Ok: Type.BigInt(),
+            }),
+            Type.Object({
+                Err: Type.String(),
+            }),
+        ]),
+    ),
+    notify_dex: Type.Optional(
+        Type.Union([
+            Type.Object({
+                Ok: Type.Null(),
+            }),
+            Type.Object({
+                Err: Type.String(),
+            }),
+        ]),
+    ),
+    amount_swapped: Type.Optional(
+        Type.Union([
+            Type.Object({
+                Ok: Type.Union([
+                    Type.Object({
+                        Ok: Type.BigInt(),
+                    }),
+                    Type.Object({
+                        Err: Type.String(),
+                    }),
+                ]),
+            }),
+            Type.Object({
+                Err: Type.String(),
+            }),
+        ]),
+    ),
+    withdraw_from_dex: Type.Optional(
+        Type.Union([
+            Type.Object({
+                Ok: Type.BigInt(),
+            }),
+            Type.Object({
+                Err: Type.String(),
+            }),
+        ]),
+    ),
     success: Type.Optional(Type.Boolean()),
 });
 

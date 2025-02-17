@@ -289,11 +289,11 @@
 
     function keyPress(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-
             if ($enterSend && !e.shiftKey && !showCommandSelector && !directChatBotId) {
+                e.preventDefault();
                 sendMessage();
             } else if (directChatBotId && !commandSent && $selectedCommand === undefined) {
+                e.preventDefault();
                 showDirectBotChatWarning = true;
             }
             commandSent = false;

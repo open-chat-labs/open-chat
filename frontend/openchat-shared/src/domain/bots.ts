@@ -148,6 +148,7 @@ export type SlashCommandSchema = {
     params: SlashCommandParam[];
     permissions: ExternalBotPermissions;
     devmode?: boolean;
+    ownerOnly?: boolean;
     directBotDisabled?: boolean;
 };
 
@@ -484,7 +485,7 @@ export function validateBot(
         errors.addErrors("bot_principal", i18nKey("bots.builder.errors.principal"));
     }
 
-    if (bot.definition.commands.length === 0) {
+    if (bot.definition.commands.length === 0 && bot.definition.autonomousConfig === undefined) {
         errors.addErrors("no_commands", i18nKey("bots.builder.errors.noCommands"));
     }
 

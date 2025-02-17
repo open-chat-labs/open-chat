@@ -21,7 +21,7 @@ import {
     type PrepareDelegationResponse,
     type PrepareDelegationSuccess,
     type RemoveIdentityLinkResponse,
-    type WebAuthnKey,
+    type WebAuthnKeyFull,
     UnsupportedValueError,
 } from "openchat-shared";
 import { consolidateBytes, optional } from "../../utils/mapping";
@@ -242,7 +242,7 @@ export function removeIdentityLinkResponse(
     );
 }
 
-function webAuthnKey(key: ApiWebAuthnKey): WebAuthnKey {
+function webAuthnKey(key: ApiWebAuthnKey): WebAuthnKeyFull {
     return {
         publicKey: consolidateBytes(key.public_key),
         credentialId: consolidateBytes(key.credential_id),
@@ -252,7 +252,7 @@ function webAuthnKey(key: ApiWebAuthnKey): WebAuthnKey {
     };
 }
 
-export function apiWebAuthnKey(key: WebAuthnKey): ApiWebAuthnKey {
+export function apiWebAuthnKey(key: WebAuthnKeyFull): ApiWebAuthnKey {
     return {
         public_key: key.publicKey,
         credential_id: key.credentialId,

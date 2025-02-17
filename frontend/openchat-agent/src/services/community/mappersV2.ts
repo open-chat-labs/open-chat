@@ -20,7 +20,6 @@ import type {
     ImportGroupResponse,
     MemberRole,
     PublicApiKeyDetails,
-    // PublicApiKeyDetails,
     RemoveMemberResponse,
     SendMessageResponse,
     SetMemberDisplayNameResponse,
@@ -81,10 +80,10 @@ import {
     memberRole,
     mentions,
     messageEvent,
+    publicApiKeyDetails,
     threadSyncDetails,
     updatedEvent,
     userGroup,
-    publicApiKeyDetails,
 } from "../common/chatMappersV2";
 import { identity } from "../../utils/mapping";
 import { mapCommonResponses } from "../common/commonResponseMapper";

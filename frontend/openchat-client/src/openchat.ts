@@ -408,6 +408,7 @@ import type {
     GenerateBotKeyResponse,
     WebAuthnKey,
     BotInstallationLocation,
+    WebAuthnKeyFull,
 } from "openchat-shared";
 import {
     Stream,
@@ -710,7 +711,7 @@ export class OpenChat extends EventTarget {
 
                 await this.#sendRequest({
                     kind: "createOpenChatIdentity",
-                    webAuthnKey: this.#webAuthnKey,
+                    webAuthnCredentialId: this.#webAuthnKey?.credentialId,
                     challengeAttempt: undefined,
                 });
             }
@@ -830,7 +831,7 @@ export class OpenChat extends EventTarget {
 
         const resp = await this.#sendRequest({
             kind: "createOpenChatIdentity",
-            webAuthnKey: this.#webAuthnKey,
+            webAuthnCredentialId: undefined,
             challengeAttempt,
         }).catch(() => "challenge_failed");
 
@@ -930,6 +931,30 @@ export class OpenChat extends EventTarget {
 
     maxMediaSizes(): MaxMediaSizes {
         return this.#liveState.isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+    }
+
+    onRegisteredUser(user: CreatedUser) {
+        this.onCreatedUser(user);
+        userStore.add({
+            kind: user.isBot ? "bot" : "user",
+            userId: user.userId,
+            username: user.username,
+            displayName: user.displayName,
+            updated: user.updated,
+            suspended: user.suspensionDetails !== undefined,
+            diamondStatus: user.diamondStatus.kind,
+            chitBalance: 0,
+            totalChitEarned: 0,
+            streak: 0,
+            blobReference: user.blobReference,
+            blobData: user.blobData,
+            blobUrl: buildUserAvatarUrl(
+                this.config.blobUrlPattern,
+                user.userId,
+                user.blobReference?.blobId ?? undefined,
+            ),
+            isUniquePerson: user.isUniquePerson,
+        });
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -7102,19 +7127,15 @@ export class OpenChat extends EventTarget {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
 
-        const [webAuthnIdentity, aaguid] = await createWebAuthnIdentity(webAuthnOrigin);
+        const webAuthnIdentity = await createWebAuthnIdentity(webAuthnOrigin, (key) =>
+            this.#storeWebAuthnKeyInCache(key),
+        );
 
         // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
 
-        return await this.#finaliseWebAuthnSignin(
-            tempKey,
-            () => webAuthnIdentity,
-            webAuthnOrigin,
-            assumeIdentity,
-            aaguid,
-        );
+        return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
     }
 
     async signInWithWebAuthn() {
@@ -7127,9 +7148,7 @@ export class OpenChat extends EventTarget {
         await this.#finaliseWebAuthnSignin(
             webAuthnIdentity,
             () => webAuthnIdentity.innerIdentity(),
-            webAuthnOrigin,
             true,
-            undefined,
         );
     }
 
@@ -7148,21 +7167,13 @@ export class OpenChat extends EventTarget {
             unwrapDER(webAuthnKey.publicKey, DER_COSE_OID),
             undefined,
         );
-        return await this.#finaliseWebAuthnSignin(
-            webAuthnIdentity,
-            () => webAuthnIdentity,
-            webAuthnKey.origin,
-            false,
-            undefined,
-        );
+        return await this.#finaliseWebAuthnSignin(webAuthnIdentity, () => webAuthnIdentity, false);
     }
 
     async #finaliseWebAuthnSignin(
         initialKey: SignIdentity,
         webAuthnIdentityFn: () => WebAuthnIdentity,
-        webAuthnOrigin: string,
         assumeIdentity: boolean,
-        aaguid: Uint8Array | undefined,
     ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const sessionKey = await ECDSAKeyIdentity.generate();
         const delegationChain = await DelegationChain.create(
@@ -7177,9 +7188,6 @@ export class OpenChat extends EventTarget {
         const webAuthnKey = {
             publicKey: new Uint8Array(webAuthnIdentity.getPublicKey().toDer()),
             credentialId: new Uint8Array(webAuthnIdentity.rawId),
-            origin: webAuthnOrigin,
-            crossPlatform: webAuthnIdentity.getAuthenticatorAttachment() === "cross-platform",
-            aaguid: aaguid ?? new Uint8Array(),
         };
         if (assumeIdentity) {
             this.#webAuthnKey = webAuthnKey;
@@ -7199,6 +7207,13 @@ export class OpenChat extends EventTarget {
             throw new Error("Failed to lookup WebAuthn PubKey");
         }
         return pubKey;
+    }
+
+    #storeWebAuthnKeyInCache(key: WebAuthnKeyFull): Promise<void> {
+        return this.#sendRequest({
+            kind: "setCachedWebAuthnKey",
+            key,
+        });
     }
 
     async generateMagicLink(

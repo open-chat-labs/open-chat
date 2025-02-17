@@ -106,16 +106,18 @@
                                     <Translatable resourceKey={i18nKey("bots.manage.remove")} />
                                 {/snippet}
                             </MenuItem>
-                            <MenuItem onclick={() => reviewCommandPermissions()}>
-                                {#snippet icon()}
-                                    <PencilOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"} />
-                                {/snippet}
-                                {#snippet text()}
-                                    <Translatable resourceKey={i18nKey("bots.manage.review")} />
-                                {/snippet}
-                            </MenuItem>
+                            {#if bot.definition.commands.length > 0}
+                                <MenuItem onclick={() => reviewCommandPermissions()}>
+                                    {#snippet icon()}
+                                        <PencilOutline
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"} />
+                                    {/snippet}
+                                    {#snippet text()}
+                                        <Translatable resourceKey={i18nKey("bots.manage.review")} />
+                                    {/snippet}
+                                </MenuItem>
+                            {/if}
                         {/if}
                         {#if canGenerateKey}
                             {#if apiKeyPermissions !== undefined}
