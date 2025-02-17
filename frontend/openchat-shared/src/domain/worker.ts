@@ -183,6 +183,7 @@ import type {
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
     WebAuthnKey,
+    WebAuthnKeyFull,
 } from "./identity";
 import type { GenerateMagicLinkResponse } from "./email";
 import type {
@@ -401,6 +402,7 @@ export type WorkerRequest =
     | UpdateBtcBalance
     | CurrentUserWebAuthnKey
     | LookupWebAuthnPubKey
+    | SetCachedWebAuthnKey
     | GenerateMagicLink
     | GetSignInWithEmailDelegation
     | SiwePrepareLogin
@@ -1167,7 +1169,7 @@ type GenerateIdentityChallenge = {
 
 type CreateOpenChatIdentity = {
     kind: "createOpenChatIdentity";
-    webAuthnKey: WebAuthnKey | undefined;
+    webAuthnCredentialId: Uint8Array | undefined;
     challengeAttempt: ChallengeAttempt | undefined;
 };
 
@@ -1398,6 +1400,11 @@ type LookupWebAuthnPubKey = {
     kind: "lookupWebAuthnPubKey";
 };
 
+type SetCachedWebAuthnKey = {
+    key: WebAuthnKeyFull;
+    kind: "setCachedWebAuthnKey";
+};
+
 type GenerateMagicLink = {
     email: string;
     sessionKey: Uint8Array;
@@ -1616,7 +1623,7 @@ export type WorkerResponseInner =
     | PendingDeploymentResponse
     | JoinVideoCallResponse
     | UpdateBtcBalanceResponse
-    | WebAuthnKey
+    | WebAuthnKeyFull
     | GenerateMagicLinkResponse
     | SiwePrepareLoginResponse
     | SiwsPrepareLoginResponse
@@ -2301,9 +2308,11 @@ export type WorkerResult<T> = T extends Init
     : T extends UpdateBtcBalance
     ? UpdateBtcBalanceResponse
     : T extends CurrentUserWebAuthnKey
-    ? WebAuthnKey | undefined
+    ? WebAuthnKeyFull | undefined
     : T extends LookupWebAuthnPubKey
     ? Uint8Array | undefined
+    : T extends SetCachedWebAuthnKey
+    ? void
     : T extends GenerateMagicLink
     ? GenerateMagicLinkResponse
     : T extends GetSignInWithEmailDelegation

@@ -12,7 +12,7 @@ import type {
     InitiateIdentityLinkResponse,
     PrepareDelegationResponse,
     RemoveIdentityLinkResponse,
-    WebAuthnKey,
+    WebAuthnKeyFull,
 } from "openchat-shared";
 import {
     apiWebAuthnKey,
@@ -40,7 +40,7 @@ export class IdentityClient extends CandidCanisterAgent<IdentityService> {
 
     createIdentity(
         sessionKey: Uint8Array,
-        webAuthnKey: WebAuthnKey | undefined,
+        webAuthnKey: WebAuthnKeyFull | undefined,
         isIIPrincipal: boolean | undefined,
         challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<CreateIdentityResponse> {
@@ -101,7 +101,7 @@ export class IdentityClient extends CandidCanisterAgent<IdentityService> {
 
     initiateIdentityLink(
         linkToPrincipal: string,
-        webAuthnKey: WebAuthnKey | undefined,
+        webAuthnKey: WebAuthnKeyFull | undefined,
         isIIPrincipal: boolean | undefined,
     ): Promise<InitiateIdentityLinkResponse> {
         return this.handleResponse(

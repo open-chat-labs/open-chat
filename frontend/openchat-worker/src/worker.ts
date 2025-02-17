@@ -11,6 +11,7 @@ import {
     OpenChatAgent,
     setCommunityReferral,
     getBotDefinition,
+    setCachedWebAuthnKey,
 } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
@@ -95,7 +96,7 @@ async function initialize(
 }
 
 async function createOpenChatIdentity(
-    webAuthnKey: WebAuthnKey | undefined,
+    webAuthnCredentialId: Uint8Array | undefined,
     challengeAttempt: ChallengeAttempt | undefined,
 ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
     if (identityAgent === undefined || authPrincipalString === undefined) {
@@ -104,7 +105,7 @@ async function createOpenChatIdentity(
 
     const sessionKey = await ECDSAKeyIdentity.generate();
 
-    const response = await identityAgent.createOpenChatIdentity(sessionKey, webAuthnKey, challengeAttempt);
+    const response = await identityAgent.createOpenChatIdentity(sessionKey, webAuthnCredentialId, challengeAttempt);
 
     if (typeof response !== "string") {
         await ocIdentityStorage.set(sessionKey, response.getDelegation(), authPrincipalString);
@@ -265,7 +266,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             executeThenReply(
                 payload,
                 correlationId,
-                createOpenChatIdentity(payload.webAuthnKey, payload.challengeAttempt).then((resp) => {
+                createOpenChatIdentity(payload.webAuthnCredentialId, payload.challengeAttempt).then((resp) => {
                     const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
                     agent = new OpenChatAgent(id, {
                         ...initPayload!,
@@ -1755,6 +1756,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "setCachedWebAuthnKey":
+                executeThenReply(payload, correlationId, setCachedWebAuthnKey(payload.key));
+                break;
+
             case "generateMagicLink":
                 executeThenReply(
                     payload,
@@ -2017,7 +2022,10 @@ async function linkIdentities(
     );
 
     const approver = approverIdentity.getPrincipal().toString();
-    const initiateResponse = await initiatorAgent.initiateIdentityLink(approver, initiatorWebAuthnKey);
+    const initiateResponse = await initiatorAgent.initiateIdentityLink(
+        approver,
+        initiatorWebAuthnKey?.credentialId
+    );
     if (initiateResponse !== "success") {
         return initiateResponse;
     }

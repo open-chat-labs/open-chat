@@ -10,10 +10,11 @@ import type {
     GenerateChallengeResponse,
     InitiateIdentityLinkResponse,
     RemoveIdentityLinkResponse,
-    WebAuthnKey,
+    WebAuthnKeyFull,
 } from "openchat-shared";
 import { buildDelegationIdentity, toDer } from "openchat-shared";
 import { createHttpAgent } from "../utils/httpAgent";
+import { getCachedWebAuthnKey } from "../utils/webAuthnKeyCache";
 
 export class IdentityAgent {
     private readonly _identityClient: IdentityClient;
@@ -49,9 +50,13 @@ export class IdentityAgent {
 
     async createOpenChatIdentity(
         sessionKey: SignIdentity,
-        webAuthnKey: WebAuthnKey | undefined,
+        webAuthnCredentialId: Uint8Array | undefined,
         challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
+        const webAuthnKey = webAuthnCredentialId !== undefined
+            ? await this.hydrateWebAuthnKey(webAuthnCredentialId)
+            : undefined;
+
         const sessionKeyDer = toDer(sessionKey);
         const createIdentityResponse = await this._identityClient.createIdentity(
             sessionKeyDer,
@@ -96,10 +101,14 @@ export class IdentityAgent {
         return this._identityClient.generateChallenge();
     }
 
-    initiateIdentityLink(
+    async initiateIdentityLink(
         linkToPrincipal: string,
-        webAuthnKey: WebAuthnKey | undefined
+        webAuthnCredentialId: Uint8Array | undefined
     ): Promise<InitiateIdentityLinkResponse> {
+        const webAuthnKey = webAuthnCredentialId !== undefined
+            ? await this.hydrateWebAuthnKey(webAuthnCredentialId)
+            : undefined;
+
         return this._identityClient.initiateIdentityLink(linkToPrincipal, webAuthnKey, this._isIIPrincipal);
     }
 
@@ -115,8 +124,11 @@ export class IdentityAgent {
         return this._identityClient.getAuthenticationPrincipals();
     }
 
-    lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array | undefined> {
-        return this._identityClient.lookupWebAuthnPubKey(credentialId);
+    async lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array | undefined> {
+        const cached = await getCachedWebAuthnKey(credentialId);
+        return cached !== undefined
+            ? cached.publicKey
+            : this._identityClient.lookupWebAuthnPubKey(credentialId);
     }
 
     private async getDelegation(
@@ -140,5 +152,11 @@ export class IdentityAgent {
             getDelegationResponse.delegation,
             getDelegationResponse.signature,
         );
+    }
+
+    private async hydrateWebAuthnKey(credentialId: Uint8Array): Promise<WebAuthnKeyFull> {
+        const key = await getCachedWebAuthnKey(credentialId);
+        if (key === undefined) throw new Error("Failed to find WebAuthnKey details");
+        return key;
     }
 }
