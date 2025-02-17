@@ -129,7 +129,7 @@ import type {
     BotMessageContext,
     SlashCommandParamInstance,
     GenerateBotKeyResponse,
-    // PublicApiKeyDetails,
+    PublicApiKeyDetails,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -308,7 +308,7 @@ import type {
     BotDefinition as ApiBotDefinition,
     CommunityGenerateBotApiKeyResponse,
     GroupGenerateBotApiKeyResponse,
-    // PublicApiKeyDetails as ApiPublicApiKeyDetails,
+    PublicApiKeyDetails as ApiPublicApiKeyDetails,
 } from "../../typebox";
 import type { ApiPrincipal } from "../index";
 
@@ -2692,24 +2692,23 @@ export function groupDetailsResponse(
             rules: value.Success.chat_rules,
             timestamp: value.Success.timestamp,
             bots: bots.map(botGroupDetails),
-            apiKeys: new Map(),
-            // apiKeys: value.Success.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
-            //     m.set(k.botId, k);
-            //     return m;
-            // }, new Map<string, PublicApiKeyDetails>()),
+            apiKeys: value.Success.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
+                m.set(k.botId, k);
+                return m;
+            }, new Map<string, PublicApiKeyDetails>()),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
 }
 
-// export function publicApiKeyDetails(value: ApiPublicApiKeyDetails): PublicApiKeyDetails {
-//     return {
-//         botId: principalBytesToString(value.bot_id),
-//         grantedPermissions: externalBotPermissions(value.granted_permissions),
-//         generatedBy: principalBytesToString(value.generated_by),
-//         generatedAt: value.generated_at,
-//     };
-// }
+export function publicApiKeyDetails(value: ApiPublicApiKeyDetails): PublicApiKeyDetails {
+    return {
+        botId: principalBytesToString(value.bot_id),
+        grantedPermissions: externalBotPermissions(value.granted_permissions),
+        generatedBy: principalBytesToString(value.generated_by),
+        generatedAt: value.generated_at,
+    };
+}
 
 export function groupDetailsUpdatesResponse(
     value: GroupSelectedUpdatesResponse | CommunitySelectedChannelUpdatesResponse,
@@ -2736,8 +2735,7 @@ export function groupDetailsUpdatesResponse(
                 timestamp: value.Success.timestamp,
                 botsAddedOrUpdated: value.Success.bots_added_or_updated.map(botGroupDetails),
                 botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
-                apiKeysGenerated: [],
-                // apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
+                apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {

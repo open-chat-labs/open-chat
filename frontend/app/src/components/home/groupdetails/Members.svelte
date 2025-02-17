@@ -29,6 +29,9 @@
         type BotMatch as BotMatchType,
         flattenCommandPermissions,
         type PublicApiKeyDetails,
+        type BotSummaryMode,
+        type GroupChatIdentifier,
+        emptyExternalBotPermissions,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import InvitedUser from "./InvitedUser.svelte";
@@ -41,6 +44,7 @@
     import BotExplorer from "../../bots/BotExplorer.svelte";
     import BotMember from "../../bots/BotMember.svelte";
     import BotSummary from "../../bots/BotSummary.svelte";
+    import { toastStore } from "../../../stores/toast";
 
     type EnhancedExternalBot = ExternalBot & { grantedPermissions: ExternalBotPermissions };
 
@@ -58,8 +62,14 @@
     export let showHeader = true;
     export let apiKeys: Map<string, PublicApiKeyDetails>;
 
+    type SelectedBot = {
+        bot: BotMatchType;
+        mode: BotSummaryMode;
+    };
+
     let userGroups: UserGroups | undefined;
-    let showingBotSummary: BotMatchType | undefined = undefined;
+    let showingBotSummary: SelectedBot | undefined = undefined;
+    let installingBot: BotMatchType | undefined = undefined;
 
     $: userId = $user.userId;
     $: knownUsers = getKnownUsers($userStore, members);
@@ -228,17 +238,53 @@
         }
         membersList.reset();
     }
+
+    function installBot(bot: BotMatchType, id: CommunityIdentifier | GroupChatIdentifier) {
+        if (installedBots.has(bot.id)) {
+            selectTab("users");
+        } else {
+            installingBot = bot;
+            client
+                .installBot(id, bot.id, emptyExternalBotPermissions())
+                .then((success) => {
+                    if (!success) {
+                        toastStore.showFailureToast(i18nKey("bots.add.failure"));
+                    } else {
+                        selectTab("users");
+                    }
+                })
+                .finally(() => (installingBot = undefined));
+        }
+    }
+
+    function onBotSelected(bot: BotMatchType | undefined) {
+        if (bot === undefined) {
+            showingBotSummary = undefined;
+            return;
+        }
+
+        // if there are no commands then there is no point in showing the bot summary here
+        // we will just go ahead and install it into the relevant context
+        if (bot.definition.commands.length === 0) {
+            installBot(bot, botContainer);
+        } else {
+            showingBotSummary = {
+                bot,
+                mode: {
+                    kind: "installing_command_bot",
+                    id: botContainer,
+                    requested: flattenCommandPermissions(bot.definition),
+                },
+            };
+        }
+    }
 </script>
 
 {#if showingBotSummary}
     <BotSummary
-        mode={{
-            kind: "installing_command_bot",
-            id: botContainer,
-            requested: flattenCommandPermissions(showingBotSummary.definition),
-        }}
+        mode={showingBotSummary.mode}
         onClose={() => (showingBotSummary = undefined)}
-        bot={showingBotSummary} />
+        bot={showingBotSummary.bot} />
 {/if}
 
 {#if showHeader}
@@ -433,7 +479,7 @@
     </div>
 {:else if selectedTab === "add-bots" && collection.kind !== "channel"}
     <div class="bot-explorer">
-        <BotExplorer onSelect={(match) => (showingBotSummary = match)}></BotExplorer>
+        <BotExplorer {installingBot} onSelect={onBotSelected}></BotExplorer>
     </div>
 {/if}
 
