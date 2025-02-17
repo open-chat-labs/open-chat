@@ -1,13 +1,6 @@
 /* eslint-disable no-case-declarations */
-import Identicon from "identicon.js";
-import md5 from "md5";
 import { gaTrack } from "./utils/ga";
-import {
-    DER_COSE_OID,
-    type Identity,
-    type SignIdentity,
-    unwrapDER,
-} from "@dfinity/agent";
+import { DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@dfinity/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
 import { get } from "svelte/store";
 import DRange from "drange";
@@ -936,14 +929,6 @@ export class OpenChat extends EventTarget {
 
     maxMediaSizes(): MaxMediaSizes {
         return this.#liveState.isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
-    }
-
-    buildIdenticonUrl(userId: string): string {
-        const identicon = new Identicon(md5(userId), {
-            margin: 0,
-            format: "svg",
-        });
-        return `data:image/svg+xml;base64,${identicon}`;
     }
 
     onRegisteredUser(user: CreatedUser) {
@@ -7154,7 +7139,7 @@ export class OpenChat extends EventTarget {
         // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
-        
+
         return await this.#finaliseWebAuthnSignin(
             tempKey,
             () => webAuthnIdentity,
