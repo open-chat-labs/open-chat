@@ -7144,7 +7144,6 @@ export class OpenChat extends EventTarget {
             webAuthnIdentity,
             () => webAuthnIdentity.innerIdentity(),
             true,
-            undefined,
         );
     }
 
@@ -7170,7 +7169,6 @@ export class OpenChat extends EventTarget {
         initialKey: SignIdentity,
         webAuthnIdentityFn: () => WebAuthnIdentity,
         assumeIdentity: boolean,
-        aaguid: Uint8Array | undefined,
     ): Promise<[ECDSAKeyIdentity, DelegationChain, WebAuthnKey]> {
         const sessionKey = await ECDSAKeyIdentity.generate();
         const delegationChain = await DelegationChain.create(
