@@ -13,9 +13,10 @@
         fill?: boolean;
         maxHeight?: string;
         showCommands?: boolean;
+        installingBot?: BotMatchType | undefined;
     }
 
-    let { onSelect, fill = false, maxHeight, showCommands = true }: Props = $props();
+    let { onSelect, fill = false, maxHeight, showCommands = true, installingBot }: Props = $props();
 
     let initialised = $state(false);
 
@@ -62,7 +63,7 @@
 
 <div class="matches" style={maxHeight ? `max-height: ${maxHeight}` : ""}>
     {#each botSearchState.results as match}
-        <BotMatch {showCommands} onClick={onSelect} {match} />
+        <BotMatch installing={match === installingBot} {showCommands} onClick={onSelect} {match} />
     {/each}
 </div>
 

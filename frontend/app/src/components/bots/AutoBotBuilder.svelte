@@ -299,18 +299,25 @@
         <Legend label={i18nKey("bots.builder.descLabel")}></Legend>
         <Input disabled={true} value={candidate.definition.description} />
 
-        <Tabs
-            tabs={[
-                {
-                    title: i18nKey("bots.builder.commandsLabel"),
-                    snippet: commands,
-                },
-                {
-                    title: i18nKey("bots.builder.autonomousPermissionsLabel"),
-                    snippet: autonomousPermissions,
-                },
-            ]}></Tabs>
-
+        {#if candidate.definition.commands.length === 0 && candidate.definition.autonomousConfig !== undefined}
+            <Legend label={i18nKey("bots.builder.autonomousPermissionsLabel")}></Legend>
+            {@render autonomousPermissions()}
+        {:else if candidate.definition.commands.length > 0 && candidate.definition.autonomousConfig === undefined}
+            <Legend label={i18nKey("bots.builder.commandsLabel")}></Legend>
+            {@render commands()}
+        {:else}
+            <Tabs
+                tabs={[
+                    {
+                        title: i18nKey("bots.builder.commandsLabel"),
+                        snippet: commands,
+                    },
+                    {
+                        title: i18nKey("bots.builder.autonomousPermissionsLabel"),
+                        snippet: autonomousPermissions,
+                    },
+                ]}></Tabs>
+        {/if}
         <div class="error">
             {#if errors.has("duplicate_commands")}
                 <ErrorMessage>
