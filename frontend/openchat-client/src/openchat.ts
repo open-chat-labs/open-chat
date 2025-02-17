@@ -1,11 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { gaTrack } from "./utils/ga";
-import {
-    DER_COSE_OID,
-    type Identity,
-    type SignIdentity,
-    unwrapDER,
-} from "@dfinity/agent";
+import { DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@dfinity/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
 import { get } from "svelte/store";
 import DRange from "drange";
@@ -934,6 +929,30 @@ export class OpenChat extends EventTarget {
 
     maxMediaSizes(): MaxMediaSizes {
         return this.#liveState.isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+    }
+
+    onRegisteredUser(user: CreatedUser) {
+        this.onCreatedUser(user);
+        userStore.add({
+            kind: user.isBot ? "bot" : "user",
+            userId: user.userId,
+            username: user.username,
+            displayName: user.displayName,
+            updated: user.updated,
+            suspended: user.suspensionDetails !== undefined,
+            diamondStatus: user.diamondStatus.kind,
+            chitBalance: 0,
+            totalChitEarned: 0,
+            streak: 0,
+            blobReference: user.blobReference,
+            blobData: user.blobData,
+            blobUrl: buildUserAvatarUrl(
+                this.config.blobUrlPattern,
+                user.userId,
+                user.blobReference?.blobId ?? undefined,
+            ),
+            isUniquePerson: user.isUniquePerson,
+        });
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -7120,7 +7139,7 @@ export class OpenChat extends EventTarget {
         // We create a temporary key so that the user doesn't have to reauthenticate via WebAuthn, we store this key
         // in IndexedDb, it is valid for 30 days (the same as the other key delegations we use).
         const tempKey = await ECDSAKeyIdentity.generate();
-        
+
         return await this.#finaliseWebAuthnSignin(
             tempKey,
             () => webAuthnIdentity,

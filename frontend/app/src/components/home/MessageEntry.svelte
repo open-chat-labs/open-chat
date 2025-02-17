@@ -96,6 +96,7 @@
     let previousChatId = chat.id;
     let containsMarkdown = false;
     let showDirectBotChatWarning = false;
+    let commandSent = false;
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -259,10 +260,11 @@
         }
     }
 
-    function cancelCommandSelector(clearInput: boolean) {
+    function cancelCommandSelector(sent: boolean) {
+        commandSent = sent;
         showCommandSelector = false;
         cancelCommand();
-        if (clearInput) {
+        if (sent) {
             dispatch("setTextContent", undefined);
         }
     }
@@ -287,13 +289,14 @@
 
     function keyPress(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-
             if ($enterSend && !e.shiftKey && !showCommandSelector && !directChatBotId) {
+                e.preventDefault();
                 sendMessage();
-            } else if (directChatBotId && !showCommandSelector) {
+            } else if (directChatBotId && !commandSent && $selectedCommand === undefined) {
+                e.preventDefault();
                 showDirectBotChatWarning = true;
             }
+            commandSent = false;
         }
     }
 
