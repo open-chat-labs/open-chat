@@ -63,13 +63,6 @@ impl UserPrincipals {
         }
     }
 
-    pub fn recalculate_originating_canister_counts(&mut self) {
-        self.originating_canisters.clear();
-        for canister_id in self.auth_principals.values().map(|p| p.originating_canister) {
-            *self.originating_canisters.entry(canister_id).or_default() += 1;
-        }
-    }
-
     #[allow(clippy::too_many_arguments)]
     pub fn push(
         &mut self,
