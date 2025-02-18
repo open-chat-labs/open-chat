@@ -60,6 +60,7 @@ fn main() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
 
+    generate_ts_method!(group, api_key);
     generate_ts_method!(group, deleted_message);
     generate_ts_method!(group, events);
     generate_ts_method!(group, events_by_index);

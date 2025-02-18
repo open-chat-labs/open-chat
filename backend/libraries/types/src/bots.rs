@@ -348,3 +348,12 @@ pub enum AuthToken {
     Jwt(String),
     ApiKey(String),
 }
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ApiKey {
+    pub secret: String,
+    pub granted_permissions: BotPermissions,
+    pub generated_by: UserId,
+    pub generated_at: TimestampMillis,
+}
