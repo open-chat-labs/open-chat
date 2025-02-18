@@ -1,19 +1,11 @@
 use rand::{rngs::StdRng, Rng};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{BotPermissions, PublicApiKeyDetails, TimestampMillis, UserId};
+use types::{ApiKey, BotPermissions, PublicApiKeyDetails, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct BotApiKeys {
     keys: HashMap<UserId, ApiKey>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ApiKey {
-    secret: String,
-    granted_permissions: BotPermissions,
-    generated_by: UserId,
-    generated_at: TimestampMillis,
 }
 
 impl BotApiKeys {
@@ -35,6 +27,10 @@ impl BotApiKeys {
             },
         );
         key
+    }
+
+    pub fn get(&self, bot_id: &UserId) -> Option<&ApiKey> {
+        self.keys.get(bot_id)
     }
 
     pub fn permissions_if_secret_matches(&self, bot_id: &UserId, secret: &str) -> Option<&BotPermissions> {
