@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Avoid retrying c2c call if recipient canister is uninstalled ([#7302](https://github.com/open-chat-labs/open-chat/pull/7302))
+- Unreserve group/community name if fails to be created ([#7430](https://github.com/open-chat-labs/open-chat/pull/7430))
 
 ## [[2.0.1584](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1584-group_index)] - 2025-01-24
 
