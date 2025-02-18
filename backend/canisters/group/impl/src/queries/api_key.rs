@@ -11,7 +11,7 @@ fn api_key(args: Args) -> Response {
 fn api_key_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if !state.data.get_member(caller).unwrap().role().is_owner() {
+    if !state.data.get_member(caller).is_some_and(|member| member.role().is_owner()) {
         return NotAuthorized;
     }
 
