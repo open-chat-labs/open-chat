@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add api_key query endpoint callable by owner(s) ([#7431](https://github.com/open-chat-labs/open-chat/pull/7431))
 - Request a JWT to allow a bot to read an API Key ([#7432](https://github.com/open-chat-labs/open-chat/pull/7432))
+- Add `bot_api_key` to get an API key given a JWT ([#7433](https://github.com/open-chat-labs/open-chat/pull/7433))
 
 ### Changed
 

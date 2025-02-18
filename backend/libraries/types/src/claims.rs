@@ -36,5 +36,6 @@ pub struct BotActionByApiKeyClaims {
 pub struct BotReadApiKeyClaims {
     pub bot_api_gateway: CanisterId,
     pub bot: UserId,
+    pub initiator: UserId,
     pub scope: AccessTokenScope,
 }

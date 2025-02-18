@@ -99,6 +99,7 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                     bot: args.bot_id,
                     scope: args.scope.clone(),
                     bot_api_gateway: state.env.canister_id(),
+                    initiator: access_type_args.initiator().unwrap(),
                 };
                 return build_token(token_type_name, custom_claims, state);
             }
