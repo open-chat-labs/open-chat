@@ -21,12 +21,12 @@ export type CreateIdentityResponse =
 
 export type CheckAuthPrincipalResponse =
     | {
-        kind: "success";
-        userId: string | undefined;
-        originatingCanister: string;
-        webAuthnKey: WebAuthnKeyFull | undefined;
-        isIIPrincipal: boolean;
-    }
+          kind: "success";
+          userId: string | undefined;
+          originatingCanister: string;
+          webAuthnKey: WebAuthnKeyFull | undefined;
+          isIIPrincipal: boolean;
+      }
     | { kind: "not_found" };
 
 export type PrepareDelegationResponse =
@@ -134,7 +134,7 @@ export type RemoveIdentityLinkResponse =
 export type WebAuthnKey = {
     publicKey: Uint8Array;
     credentialId: Uint8Array;
-}
+};
 
 export type WebAuthnKeyFull = WebAuthnKey & {
     origin: string;

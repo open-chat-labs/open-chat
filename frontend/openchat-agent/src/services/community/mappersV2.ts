@@ -70,7 +70,7 @@ import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils
 import {
     accessGateConfig,
     apiCommunityPermissionRole,
-    botGroupDetails,
+    installedBotDetails,
     chatMetrics,
     communityChannelSummary,
     communityPermissions,
@@ -472,7 +472,7 @@ export function communityDetailsResponse(
             lastUpdated: value.Success.timestamp,
             userGroups: new Map(value.Success.user_groups.map(userGroupDetails)),
             referrals: new Set(value.Success.referrals.map(principalBytesToString)),
-            bots: value.Success.bots.map(botGroupDetails),
+            bots: value.Success.bots.map(installedBotDetails),
             apiKeys: value.Success.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
                 m.set(k.botId, k);
                 return m;
@@ -528,7 +528,7 @@ export function communityDetailsUpdatesResponse(
                     value.Success.referrals_removed.map(principalBytesToString),
                 ),
                 referralsAdded: new Set(value.Success.referrals_added.map(principalBytesToString)),
-                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(botGroupDetails),
+                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
                 botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
                 apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
             };

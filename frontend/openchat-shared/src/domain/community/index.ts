@@ -1,5 +1,5 @@
 import type { AccessControlled, AccessGateConfig, VersionedRules } from "../access";
-import type { BotGroupDetails, ExternalBotPermissions } from "../bots";
+import type { InstalledBotDetails, ExternalBotPermissions } from "../bots";
 import type {
     GateCheckFailed,
     GateCheckFailedReason,
@@ -274,7 +274,7 @@ export type CommunityDetails = {
     lastUpdated: bigint;
     userGroups: Map<number, UserGroupDetails>;
     referrals: Set<string>;
-    bots: BotGroupDetails[];
+    bots: InstalledBotDetails[];
     apiKeys: Map<string, PublicApiKeyDetails>;
 };
 
@@ -290,7 +290,7 @@ export type CommunityDetailsUpdates = {
     userGroupsDeleted: Set<number>;
     referralsRemoved: Set<string>;
     referralsAdded: Set<string>;
-    botsAddedOrUpdated: BotGroupDetails[];
+    botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: Set<string>;
     apiKeysGenerated: PublicApiKeyDetails[];
 };
