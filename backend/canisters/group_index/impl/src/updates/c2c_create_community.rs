@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community::{Response::*, *};
-use types::{AccessGateConfig, CanisterId, CommunityId, Document, UserId};
+use types::{CanisterId, CommunityId, Document, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -54,27 +54,15 @@ pub(crate) async fn create_community_impl(
 ) -> Result<local_group_index_canister::c2c_create_community::SuccessResult, String> {
     match local_group_index_canister_c2c_client::c2c_create_community(local_group_index_canister, &args).await {
         Ok(local_group_index_canister::c2c_create_community::Response::Success(result)) => {
-            mutate_state(|state| {
-                let avatar_id = Document::id(&args.avatar);
-                let banner_id = Document::id(&args.banner);
-
-                commit(
-                    args.is_public,
-                    result.community_id,
-                    args.name,
-                    args.description,
-                    avatar_id,
-                    banner_id,
-                    args.gate_config,
-                    args.primary_language,
-                    local_group_index_canister,
-                    args.default_channels.len() as u32,
-                    state,
-                )
-            });
+            mutate_state(|state| commit(args, result.community_id, local_group_index_canister, state));
             Ok(result)
         }
-        Ok(local_group_index_canister::c2c_create_community::Response::InternalError(error)) => Err(error),
+        Ok(local_group_index_canister::c2c_create_community::Response::InternalError(error)) => {
+            if args.is_public {
+                mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
+            }
+            Err(error)
+        }
         Err(error) => {
             if args.is_public {
                 mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
@@ -124,30 +112,26 @@ fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<Prep
 
 #[allow(clippy::too_many_arguments)]
 fn commit(
-    is_public: bool,
+    args: local_group_index_canister::c2c_create_community::Args,
     community_id: CommunityId,
-    name: String,
-    description: String,
-    avatar_id: Option<u128>,
-    banner_id: Option<u128>,
-    gate_config: Option<AccessGateConfig>,
-    primary_language: String,
     local_group_index_canister: CanisterId,
-    channel_count: u32,
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
-    if is_public {
-        state.data.public_group_and_community_names.insert(&name, community_id.into());
+    if args.is_public {
+        state
+            .data
+            .public_group_and_community_names
+            .insert(&args.name, community_id.into());
         state.data.public_communities.add(
             community_id,
-            name,
-            description,
-            avatar_id,
-            banner_id,
-            gate_config,
-            primary_language,
-            channel_count,
+            args.name,
+            args.description,
+            Document::id(&args.avatar),
+            Document::id(&args.banner),
+            args.gate_config,
+            args.primary_language,
+            args.default_channels.len() as u32,
             now,
         );
     } else {
