@@ -53,7 +53,6 @@ async fn bot_api_key(args: Args) -> Response {
         Ok(types::c2c_bot_api_key::Response::Success(api_key)) => Success(api_key),
         Ok(types::c2c_bot_api_key::Response::NotFound) => NotAuthorized,
         Ok(types::c2c_bot_api_key::Response::NotAuthorized) => NotAuthorized,
-        Ok(types::c2c_bot_api_key::Response::Frozen) => Frozen,
         Err((code, message)) => C2CError(code as i32, message),
     }
 }

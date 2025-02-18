@@ -21,10 +21,6 @@ fn c2c_bot_api_key(args: community_canister::c2c_bot_api_key::Args) -> Response 
 }
 
 fn api_key_impl(args: Args, caller: Principal, state: &RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
-    }
-
     if state.data.is_owner(caller, args.channel_id) {
         return NotAuthorized;
     }

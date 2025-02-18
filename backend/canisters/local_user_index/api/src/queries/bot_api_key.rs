@@ -14,6 +14,5 @@ pub enum Response {
     Success(String),
     FailedAuthentication(String),
     NotAuthorized,
-    Frozen,
     C2CError(i32, String),
 }
