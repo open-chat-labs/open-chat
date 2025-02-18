@@ -12,10 +12,11 @@ fn c2c_update_community(args: Args) -> Response {
 
 fn c2c_update_community_impl(args: Args, state: &mut RuntimeState) -> Response {
     let community_id = CommunityId::from(state.env.caller());
+    let now = state.env.now();
 
     if let Some(community) = state.data.public_communities.get(&community_id) {
         if !community.name().eq_ignore_ascii_case(&args.name) {
-            if state.data.public_group_and_community_names.is_name_taken(&args.name) {
+            if state.data.public_group_and_community_names.is_name_taken(&args.name, now) {
                 return NameTaken;
             }
 
@@ -35,7 +36,7 @@ fn c2c_update_community_impl(args: Args, state: &mut RuntimeState) -> Response {
         );
         Success
     } else if let Some(community) = state.data.private_communities.get(&community_id) {
-        if state.data.public_group_and_community_names.is_name_taken(&args.name) {
+        if state.data.public_group_and_community_names.is_name_taken(&args.name, now) {
             return NameTaken;
         }
 

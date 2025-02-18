@@ -1,3 +1,4 @@
+use constants::HOUR_IN_MS;
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, TimestampMillis};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
@@ -9,8 +10,8 @@ pub struct PublicGroupAndCommunityNames {
 }
 
 impl PublicGroupAndCommunityNames {
-    pub fn check(&self, name: &str) -> CheckNameResult {
-        if self.reserved.contains_key(name) {
+    pub fn check(&self, name: &str, now: TimestampMillis) -> CheckNameResult {
+        if self.is_name_reserved(name, now) {
             return CheckNameResult::Reserved;
         }
 
@@ -21,8 +22,8 @@ impl PublicGroupAndCommunityNames {
         CheckNameResult::Available
     }
 
-    pub fn is_name_taken(&self, name: &str) -> bool {
-        self.names.contains_key(name) || self.reserved.contains_key(name)
+    pub fn is_name_taken(&self, name: &str, now: TimestampMillis) -> bool {
+        self.names.contains_key(name) || self.is_name_reserved(name, now)
     }
 
     pub fn insert(&mut self, name: &str, canister_id: CanisterId) {
@@ -49,7 +50,7 @@ impl PublicGroupAndCommunityNames {
     }
 
     pub fn reserve_name(&mut self, name: &str, now: TimestampMillis) -> bool {
-        if self.is_name_taken(name) {
+        if self.is_name_taken(name, now) {
             false
         } else {
             self.reserved.insert(name, now);
@@ -59,6 +60,10 @@ impl PublicGroupAndCommunityNames {
 
     pub fn unreserve_name(&mut self, name: &str) -> bool {
         self.reserved.remove(name).is_some()
+    }
+
+    fn is_name_reserved(&self, name: &str, now: TimestampMillis) -> bool {
+        self.reserved.get(name).is_some_and(|ts| *ts > now.saturating_sub(HOUR_IN_MS))
     }
 }
 

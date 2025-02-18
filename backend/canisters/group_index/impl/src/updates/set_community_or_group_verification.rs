@@ -91,7 +91,7 @@ fn rename_other_if_name_clashes(name: &str, state: &mut RuntimeState) -> RenameO
     use RenameOtherResult::*;
 
     // If the name has changed check if it is used by another public community/group
-    match state.data.public_group_and_community_names.check(name) {
+    match state.data.public_group_and_community_names.check(name, state.env.now()) {
         CheckNameResult::Available => NoClash,
         CheckNameResult::Reserved => NameReserved,
         CheckNameResult::Taken(canister_id) => {
@@ -130,9 +130,10 @@ fn find_new_name(existing_name: &str, state: &mut RuntimeState) -> Option<String
         format!("{}_{:03}", existing_name, suffix)
     }
 
+    let now = state.env.now();
     for _ in 0..100 {
         let candidate = generate_candidate(existing_name, state);
-        if !state.data.public_group_and_community_names.is_name_taken(&candidate) {
+        if !state.data.public_group_and_community_names.is_name_taken(&candidate, now) {
             return Some(candidate);
         }
     }
