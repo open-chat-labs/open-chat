@@ -8,6 +8,7 @@ pub enum AccessTypeArgs {
     MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs),
     BotActionByCommand(BotActionByCommandArgs),
     BotActionByApiKey(BotActionByApiKeyArgs),
+    BotReadApiKey(BotReadApiKeyArgs),
 }
 
 impl AccessTypeArgs {
@@ -56,4 +57,10 @@ pub struct BotActionByApiKeyArgs {
     pub bot_id: UserId,
     pub secret: String,
     pub requested_permissions: BotPermissions,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct BotReadApiKeyArgs {
+    pub bot_id: UserId,
+    pub initiator: UserId,
 }

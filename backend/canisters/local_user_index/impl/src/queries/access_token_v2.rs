@@ -8,12 +8,12 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use serde::Serialize;
 use types::c2c_can_issue_access_token::{
-    AccessTypeArgs, BotActionByApiKeyArgs, BotActionByCommandArgs, JoinVideoCallArgs, MarkVideoCallAsEndedArgs,
-    StartVideoCallArgs,
+    AccessTypeArgs, BotActionByApiKeyArgs, BotActionByCommandArgs, BotReadApiKeyArgs, JoinVideoCallArgs,
+    MarkVideoCallAsEndedArgs, StartVideoCallArgs,
 };
 use types::{
-    AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, Chat, JoinOrEndVideoCallClaims,
-    StartVideoCallClaims,
+    AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, BotReadApiKeyClaims, Chat,
+    JoinOrEndVideoCallClaims, StartVideoCallClaims,
 };
 use utils::base64;
 
@@ -90,6 +90,14 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                 };
                 return build_token(token_type_name, custom_claims, state);
             }
+            ArgsInternal::BotReadApiKey(args) => {
+                let custom_claims = BotReadApiKeyClaims {
+                    bot: args.bot_id,
+                    scope: args.scope.clone(),
+                    bot_api_gateway: state.env.canister_id(),
+                };
+                return build_token(token_type_name, custom_claims, state);
+            }
             _ => (),
         }
 
@@ -159,6 +167,10 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
     };
 
     if let ArgsInternal::BotActionByCommand(args) = args_outer {
+        if user.user_id != args.command.initiator {
+            return Err(Response::NotAuthorized);
+        }
+
         let Some(permissions) = state
             .data
             .bots
@@ -169,14 +181,24 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
             return Err(Response::NotAuthorized);
         };
 
-        let scope = args.scope.clone().into();
-
         return Ok(PrepareResult {
-            scope,
+            scope: args.scope.clone().into(),
             access_type_args: AccessTypeArgs::BotActionByCommand(BotActionByCommandArgs {
                 bot_id: args.bot_id,
                 initiator: args.command.initiator,
                 requested_permissions: permissions,
+            }),
+        });
+    } else if let ArgsInternal::BotReadApiKey(args) = args_outer {
+        if user.user_id != args.initiator {
+            return Err(Response::NotAuthorized);
+        }
+
+        return Ok(PrepareResult {
+            scope: args.scope.clone(),
+            access_type_args: AccessTypeArgs::BotReadApiKey(BotReadApiKeyArgs {
+                bot_id: args.bot_id,
+                initiator: args.initiator,
             }),
         });
     }
@@ -237,6 +259,7 @@ enum ArgsInternal {
     MarkVideoCallAsEnded(access_token_v2::MarkVideoCallAsEndedArgs),
     BotActionByCommand(access_token_v2::BotActionByCommandArgs),
     BotActionByApiKey(BotApiKeyToken),
+    BotReadApiKey(access_token_v2::BotReadApiKeyArgs),
 }
 
 impl ArgsInternal {
@@ -246,6 +269,7 @@ impl ArgsInternal {
             Args::JoinVideoCall(args) => Ok(ArgsInternal::JoinVideoCall(args)),
             Args::MarkVideoCallAsEnded(args) => Ok(ArgsInternal::MarkVideoCallAsEnded(args)),
             Args::BotActionByCommand(args) => Ok(ArgsInternal::BotActionByCommand(args)),
+            Args::BotReadApiKey(args) => Ok(ArgsInternal::BotReadApiKey(args)),
             Args::BotActionByApiKey(args) => {
                 let token: BotApiKeyToken = base64::to_value(&args)?;
                 Ok(ArgsInternal::BotActionByApiKey(token))
@@ -260,6 +284,7 @@ impl ArgsInternal {
             Self::MarkVideoCallAsEnded(_) => "MarkVideoCallAsEnded",
             Self::BotActionByCommand(_) => "BotActionByCommand",
             Self::BotActionByApiKey(_) => "BotActionByApiKey",
+            Self::BotReadApiKey(_) => "BotReadApiKey",
         }
     }
 
@@ -270,6 +295,7 @@ impl ArgsInternal {
             Self::MarkVideoCallAsEnded(args) => Some(args.chat),
             Self::BotActionByCommand(args) => args.scope.chat(),
             Self::BotActionByApiKey(args) => args.scope.chat(),
+            Self::BotReadApiKey(args) => args.scope.chat(),
         }
     }
 }

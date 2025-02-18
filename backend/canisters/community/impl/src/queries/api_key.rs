@@ -11,36 +11,20 @@ fn api_key(args: Args) -> Response {
 fn api_key_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    let Some(member) = state.data.members.get(caller) else {
+    if state.data.is_owner(caller, args.channel_id) {
         return NotAuthorized;
-    };
+    }
 
-    if let Some(channel_id) = args.channel_id {
+    match if let Some(channel_id) = args.channel_id {
         let Some(channel) = state.data.channels.get(&channel_id) else {
             return ChannelNotFound;
         };
 
-        if !channel
-            .chat
-            .members
-            .get(&member.user_id)
-            .is_some_and(|member| member.role().is_owner())
-        {
-            return NotAuthorized;
-        }
-
-        match channel.bot_api_keys.get(&args.bot_id) {
-            Some(api_key) => Success(api_key.clone()),
-            None => NotFound,
-        }
+        channel.bot_api_keys.get(&args.bot_id)
     } else {
-        if !member.role().is_owner() {
-            return NotAuthorized;
-        }
-
-        match state.data.bot_api_keys.get(&args.bot_id) {
-            Some(api_key) => Success(api_key.clone()),
-            None => NotFound,
-        }
+        state.data.bot_api_keys.get(&args.bot_id)
+    } {
+        Some(api_key) => Success(api_key.clone()),
+        None => NotFound,
     }
 }
