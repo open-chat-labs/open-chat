@@ -2,7 +2,6 @@ use crate::RuntimeState;
 use types::TimestampMillis;
 
 mod api_key;
-mod c2c_bot_api_key;
 mod c2c_can_issue_access_token;
 mod c2c_can_issue_access_token_for_channel;
 mod channel_summary;
