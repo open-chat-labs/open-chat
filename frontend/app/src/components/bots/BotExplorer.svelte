@@ -1,22 +1,27 @@
 <script lang="ts">
-    import { i18nKey, type BotMatch as BotMatchType, type OpenChat } from "openchat-client";
+    import {
+        flattenCommandPermissions,
+        i18nKey,
+        type BotMatch as BotMatchType,
+        type ExternalBot,
+        type OpenChat,
+    } from "openchat-client";
     import Search from "../Search.svelte";
     import { getContext } from "svelte";
     import { botSearchState } from "../../stores/search.svelte";
-    import BotMatch from "./BotMatch.svelte";
+    import BotProperties from "./install/BotProperties.svelte";
 
     const client = getContext<OpenChat>("client");
     const PAGE_SIZE = 50;
 
     interface Props {
-        onSelect: (match: BotMatchType | undefined) => void;
+        onSelect: (match: BotMatchType | ExternalBot | undefined) => void;
         fill?: boolean;
         maxHeight?: string;
-        showCommands?: boolean;
         installingBot?: BotMatchType | undefined;
     }
 
-    let { onSelect, fill = false, maxHeight, showCommands = true, installingBot }: Props = $props();
+    let { onSelect, fill = false, maxHeight, installingBot }: Props = $props();
 
     let initialised = $state(false);
 
@@ -63,7 +68,12 @@
 
 <div class="matches" style={maxHeight ? `max-height: ${maxHeight}` : ""}>
     {#each botSearchState.results as match}
-        <BotMatch installing={match === installingBot} {showCommands} onClick={onSelect} {match} />
+        <BotProperties
+            grantedCommandPermissions={flattenCommandPermissions(match.definition)}
+            padded
+            installing={match === installingBot}
+            onClick={onSelect}
+            bot={match} />
     {/each}
 </div>
 

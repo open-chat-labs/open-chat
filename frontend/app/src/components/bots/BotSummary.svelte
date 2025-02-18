@@ -22,7 +22,7 @@
     import { togglePermission } from "../../utils/bots";
     import { toastStore } from "../../stores/toast";
     import BotAvatar from "./BotAvatar.svelte";
-    import ShowApiKey from "./ShowApiKey.svelte";
+    import ShowApiKeyModal from "./ShowApiKeyModal.svelte";
     import AreYouSure from "../AreYouSure.svelte";
     import Tabs from "../Tabs.svelte";
     import BotCommands from "./BotCommands.svelte";
@@ -179,7 +179,7 @@
 {/if}
 
 {#if apiKey !== undefined}
-    <ShowApiKey {apiKey} {onClose}></ShowApiKey>
+    <ShowApiKeyModal {apiKey} {onClose}></ShowApiKeyModal>
 {/if}
 
 {#snippet chatTab()}

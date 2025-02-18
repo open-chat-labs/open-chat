@@ -150,15 +150,27 @@
     "blockUserSucceeded": "User has been blocked",
     "bots": {
         "add": {
+            "subscribeTitle": "Subscribe to bot?",
+            "subscribe": "Subscribe",
+            "subscribeBlurb": "This bot supports subscription. Would you like to subscribe to the bot now? Subscribing to the the bot will give it access to the api key you generated and allow it to operate autonomously in this context with the permissions you have specified.",
             "action": "Register",
             "addBot": "Add bot",
             "choosePermissions": "Permissions",
+            "chooseCommandPermissions": "Choose command permissions",
+            "chooseAutonomousPermissions": "Choose autonomous permissions",
             "continue": "Continue",
+            "generateApiKey": "Generate api key",
+            "configureNow": "Configure now",
+            "skipAndInstall": "Skip and install",
+            "enableAutonomousAccess": "Would you like to enable autonomous access to this {level}?",
+            "enableAutonomousAccessBlurb": "To allow your bot to interact autonomously with this {level} you will need to configure autonomous permissions and generate an api key. You can do this now or come back and do it later at any time.",
             "failure": "Sorry we were unable to add the bot",
             "loadDefinition": "Load definition",
             "noPermissions": "No special permissions required",
             "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the bot's capabilities.",
-            "title": "Add bot to community",
+            "commandPermissionsInfo": "This bot seeks the following command permissions. Choosing to limit the permissions granted will limit the bot's supported commands.",
+            "autonomousPermissionsInfo": "This bot seeks the following autonomous permissions. Choosing to limit the permissions granted may limit the bot's capabilities.",
+            "title": "Install bot into {level}",
             "titleDirect": "Choose permissions to interact with this bot"
         },
         "builder": {
