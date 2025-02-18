@@ -3443,13 +3443,16 @@ export function externalBotDefinition(value: ApiBotDefinition): BotDefinition {
     };
 }
 
-export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommandSchema {
+export function externalBotCommand(
+    command: ApiSlashCommandSchema & { ownerOnly?: boolean },
+): SlashCommandSchema {
     return {
         name: command.name,
         description: command.description,
         placeholder: mapOptional(command.placeholder, identity),
         params: command.params.map(externalBotParam),
         permissions: externalBotPermissions(command.permissions),
+        ownerOnly: command.ownerOnly,
     };
 }
 

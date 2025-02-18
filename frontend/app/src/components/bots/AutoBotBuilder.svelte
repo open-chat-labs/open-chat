@@ -26,6 +26,7 @@
     import SingleUserSelector from "../home/SingleUserSelector.svelte";
     import BotPermissionViewer from "./BotPermissionViewer.svelte";
     import Tabs from "../Tabs.svelte";
+    import BotCommands from "./BotCommands.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -167,21 +168,7 @@
 
 {#snippet commands()}
     {#if candidate.definition.commands.length > 0}
-        <div class="commands">
-            {#each candidate.definition.commands as command, i}
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div
-                    onclick={() => onSelectCommand(command, i)}
-                    class="command"
-                    class:command-error={errors.has(`command_${i}`)}>
-                    <Translatable
-                        resourceKey={i18nKey("bots.builder.commandLabel", {
-                            name: command.name,
-                        })}></Translatable>
-                </div>
-            {/each}
-        </div>
+        <BotCommands {errors} commands={candidate.definition.commands} onClick={onSelectCommand} />
     {:else}
         <div class="smallprint">
             <Translatable resourceKey={i18nKey("bots.builder.noCommands")}></Translatable>
@@ -347,40 +334,6 @@
     .photo {
         max-width: toRem(100);
         margin-bottom: $sp3;
-    }
-    .commands {
-        margin: 0 0 $sp3 0;
-        display: flex;
-        gap: $sp3;
-        flex-wrap: wrap;
-
-        .command {
-            padding: $sp3 $sp4;
-            cursor: pointer;
-            align-items: center;
-            background-color: var(--button-bg);
-            color: var(--button-txt);
-            transition:
-                background ease-in-out 200ms,
-                color ease-in-out 200ms;
-            border-radius: var(--button-rd);
-
-            @media (hover: hover) {
-                &:hover {
-                    background: var(--button-hv);
-                    color: var(--button-hv-txt);
-                }
-            }
-
-            &.command-error {
-                background-color: var(--error);
-                @media (hover: hover) {
-                    &:hover {
-                        background: var(--error);
-                    }
-                }
-            }
-        }
     }
 
     .error {

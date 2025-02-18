@@ -1,6 +1,5 @@
 <script lang="ts">
     import {
-        flattenCommandPermissions,
         i18nKey,
         type BotMatch as BotMatchType,
         type ExternalBot,
@@ -68,12 +67,7 @@
 
 <div class="matches" style={maxHeight ? `max-height: ${maxHeight}` : ""}>
     {#each botSearchState.results as match}
-        <BotProperties
-            grantedCommandPermissions={flattenCommandPermissions(match.definition)}
-            padded
-            installing={match === installingBot}
-            onClick={onSelect}
-            bot={match} />
+        <BotProperties padded installing={match === installingBot} onClick={onSelect} bot={match} />
     {/each}
 </div>
 

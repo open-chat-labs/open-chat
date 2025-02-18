@@ -6,7 +6,7 @@
 
     interface Props {
         bot: BotMatch | ExternalBot;
-        grantedCommandPermissions: ExternalBotPermissions;
+        grantedCommandPermissions?: ExternalBotPermissions;
         installing: boolean;
         padded?: boolean;
         onClick?: (match: BotMatch | ExternalBot) => void;

@@ -34,6 +34,7 @@
         | "subscribe_info"
         | "subscribing"
         | "show_api_key"
+        | "capturing_subscribe_params"
         | "error";
 
     interface Props {
@@ -56,6 +57,10 @@
     let busy = $state(false);
     let step = $state<Step>(firstStep());
     let apiKey = $state<string | undefined>(undefined);
+    // TODO - we need to also make sure that the bot has the required command permission to run the subscribe command
+    let subscribeCommand = $derived(
+        bot.definition.commands.find((c) => c.name.toLocaleLowerCase() === "subscribe"),
+    );
 
     function firstStep() {
         if (bot.definition.commands.length > 0) {
@@ -85,10 +90,21 @@
                 });
                 break;
             case "show_api_key":
-                step = "subscribe_info";
+                if (subscribeCommand !== undefined) {
+                    step = "subscribe_info";
+                } else {
+                    onClose(true);
+                }
                 break;
             case "subscribe_info":
-                step = "subscribing";
+                if (subscribeCommand?.params?.length ?? 0 > 0) {
+                    step = "capturing_subscribe_params";
+                } else {
+                    // TODO - this is going to be a problem because getAuthTokenForBotCommand currently requires a Chat
+                    // This is wrong - it should really require a BotActionScope which hopefully we can derive from a
+                    // BotInstallLocation
+                    console.log("Execute the subscribe command and close");
+                }
                 break;
             case "error":
             default:
@@ -116,7 +132,11 @@
 
     function install(andThen?: () => void) {
         if (installedBots.has(bot.id)) {
-            onClose(true);
+            if (andThen) {
+                andThen();
+            } else {
+                onClose(true);
+            }
         } else {
             busy = true;
             client
@@ -166,8 +186,13 @@
                     <ShowApiKey {apiKey} />
                 {:else if step === "subscribe_info"}
                     <SubscribeBlurb />
-                {:else if step === "subscribing"}
-                    <h1>Subscribing</h1>
+                {:else if step === "capturing_subscribe_params"}
+                    <h1>Capturing Subscribe params</h1>
+                    <p>
+                        We will see if we can integrate the CommandBuilder component here. Well
+                        actually we only want to be able to fill in the params not the command
+                        details.
+                    </p>
                 {:else if step === "error"}
                     <ErrorMessage>
                         <h1>Oh no something is wrong</h1>
