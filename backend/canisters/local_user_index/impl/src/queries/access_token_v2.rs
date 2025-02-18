@@ -12,7 +12,7 @@ use types::c2c_can_issue_access_token::{
     MarkVideoCallAsEndedArgs, StartVideoCallArgs,
 };
 use types::{
-    AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, BotReadApiKeyClaims, Chat,
+    AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, BotCommand, BotReadApiKeyClaims, Chat,
     JoinOrEndVideoCallClaims, StartVideoCallClaims,
 };
 use utils::base64;
@@ -77,7 +77,11 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                     scope: args.scope.clone(),
                     bot_api_gateway: state.env.canister_id(),
                     granted_permissions: requested_permissions.unwrap(),
-                    command: args.command.clone(),
+                    command: BotCommand {
+                        name: args.command.name.clone(),
+                        args: args.command.args.clone(),
+                        initiator: access_type_args.initiator().unwrap(),
+                    },
                 };
                 return build_token(token_type_name, custom_claims, state);
             }
@@ -167,10 +171,6 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
     };
 
     if let ArgsInternal::BotActionByCommand(args) = args_outer {
-        if user.user_id != args.command.initiator {
-            return Err(Response::NotAuthorized);
-        }
-
         let Some(permissions) = state
             .data
             .bots
@@ -185,20 +185,16 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
             scope: args.scope.clone().into(),
             access_type_args: AccessTypeArgs::BotActionByCommand(BotActionByCommandArgs {
                 bot_id: args.bot_id,
-                initiator: args.command.initiator,
+                initiator: user.user_id,
                 requested_permissions: permissions,
             }),
         });
     } else if let ArgsInternal::BotReadApiKey(args) = args_outer {
-        if user.user_id != args.initiator {
-            return Err(Response::NotAuthorized);
-        }
-
         return Ok(PrepareResult {
             scope: args.scope.clone(),
             access_type_args: AccessTypeArgs::BotReadApiKey(BotReadApiKeyArgs {
                 bot_id: args.bot_id,
-                initiator: args.initiator,
+                initiator: user.user_id,
             }),
         });
     }

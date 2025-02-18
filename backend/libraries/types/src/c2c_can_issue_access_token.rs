@@ -19,6 +19,17 @@ impl AccessTypeArgs {
             _ => None,
         }
     }
+
+    pub fn initiator(&self) -> Option<UserId> {
+        match self {
+            AccessTypeArgs::StartVideoCall(args) => Some(args.initiator),
+            AccessTypeArgs::JoinVideoCall(args) => Some(args.initiator),
+            AccessTypeArgs::MarkVideoCallAsEnded(args) => Some(args.initiator),
+            AccessTypeArgs::BotActionByCommand(args) => Some(args.initiator),
+            AccessTypeArgs::BotReadApiKey(args) => Some(args.initiator),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
