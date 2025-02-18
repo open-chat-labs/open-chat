@@ -20,11 +20,11 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
             .bot_api_keys
             .permissions_if_secret_matches(&args.bot_id, &args.secret);
 
-        if granted_opt.is_some_and(|granted| args.requested_permissions.is_subset(granted)) {
-            return Response::Success;
+        return if granted_opt.is_some_and(|granted| args.requested_permissions.is_subset(granted)) {
+            Response::Success
         } else {
-            return Response::Failure;
-        }
+            Response::Failure
+        };
     } else if let AccessTypeArgs::BotActionByCommand(args) = &args_outer {
         // Get the permissions granted to the bot in this group
         let Some(granted_to_bot) = state.data.get_bot_permissions(&args.bot_id) else {
@@ -38,21 +38,17 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
 
         let granted = BotPermissions::intersect(granted_to_bot, &granted_to_user);
 
-        if args.requested_permissions.is_subset(&granted) {
-            return Response::Success;
-        } else {
-            return Response::Failure;
-        }
+        return if args.requested_permissions.is_subset(&granted) { Response::Success } else { Response::Failure };
     } else if let AccessTypeArgs::BotReadApiKey(args) = &args_outer {
-        if state
+        return if state
             .data
             .get_member(args.initiator.into())
             .is_some_and(|member| member.role().is_owner())
         {
-            return Response::Success;
+            Response::Success
         } else {
-            return Response::Failure;
-        }
+            Response::Failure
+        };
     }
 
     let initiator = match &args_outer {
