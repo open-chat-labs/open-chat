@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1608](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1608-identity)] - 2025-02-17
+
+### Changed
+
+- Limit the max number of linked authentication identities to 10 ([#7422](https://github.com/open-chat-labs/open-chat/pull/7422))
+
 ### Fixed
 
 - Increment originating canister count when linking new identity ([#7416](https://github.com/open-chat-labs/open-chat/pull/7416))
@@ -22,7 +28,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Return `last_used` on each authentication principal ([#7372](https://github.com/open-chat-labs/open-chat/pull/7372))
 - Remove auth principal from user record after unlinking ([#7398](https://github.com/open-chat-labs/open-chat/pull/7398))
 - Add `is_current_identity`+ `webauthn_key` to auth principals response ([#7410](https://github.com/open-chat-labs/open-chat/pull/7410))
-- Limit the max number of linked authentication identities to 10 ([#7422](https://github.com/open-chat-labs/open-chat/pull/7422))
 
 ## [[2.0.1594](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1594-identity)] - 2025-01-31
 
