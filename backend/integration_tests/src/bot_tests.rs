@@ -3,16 +3,16 @@ use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv, User};
 use candid::Principal;
 use community_canister::generate_bot_api_key;
-use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs};
+use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandArgs};
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    AccessTokenScope, AuthToken, AutonomousConfig, BotActionChatDetails, BotActionScope, BotApiKeyToken, BotCommand,
-    BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent,
-    CommunityPermission, MessageContent, MessagePermission, Rules, SlashCommandSchema, TextContent, UserId,
+    AccessTokenScope, AuthToken, AutonomousConfig, BotActionChatDetails, BotActionScope, BotApiKeyToken, BotDefinition,
+    BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, CommunityPermission,
+    MessageContent, MessagePermission, Rules, SlashCommandSchema, TextContent, UserId,
 };
 use utils::base64;
 
@@ -76,10 +76,9 @@ fn e2e_command_bot_test() {
     let message_id = random_from_u128();
     let access_token_args = access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
         bot_id,
-        command: BotCommand {
+        command: BotCommandArgs {
             name: command_name.clone(),
             args: Vec::new(),
-            initiator: owner.user_id,
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat,
@@ -507,10 +506,9 @@ fn send_multiple_updates_to_same_message() {
     let message_id = random_from_u128();
     let access_token_args = access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
         bot_id,
-        command: BotCommand {
+        command: BotCommandArgs {
             name: command_name.clone(),
             args: Vec::new(),
-            initiator: owner.user_id,
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat,

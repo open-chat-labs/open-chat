@@ -8,6 +8,7 @@ pub enum AccessTypeArgs {
     MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs),
     BotActionByCommand(BotActionByCommandArgs),
     BotActionByApiKey(BotActionByApiKeyArgs),
+    BotReadApiKey(BotReadApiKeyArgs),
 }
 
 impl AccessTypeArgs {
@@ -15,6 +16,17 @@ impl AccessTypeArgs {
         match self {
             AccessTypeArgs::BotActionByCommand(args) => Some(args.requested_permissions.clone()),
             AccessTypeArgs::BotActionByApiKey(args) => Some(args.requested_permissions.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn initiator(&self) -> Option<UserId> {
+        match self {
+            AccessTypeArgs::StartVideoCall(args) => Some(args.initiator),
+            AccessTypeArgs::JoinVideoCall(args) => Some(args.initiator),
+            AccessTypeArgs::MarkVideoCallAsEnded(args) => Some(args.initiator),
+            AccessTypeArgs::BotActionByCommand(args) => Some(args.initiator),
+            AccessTypeArgs::BotReadApiKey(args) => Some(args.initiator),
             _ => None,
         }
     }
@@ -56,4 +68,10 @@ pub struct BotActionByApiKeyArgs {
     pub bot_id: UserId,
     pub secret: String,
     pub requested_permissions: BotPermissions,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct BotReadApiKeyArgs {
+    pub bot_id: UserId,
+    pub initiator: UserId,
 }

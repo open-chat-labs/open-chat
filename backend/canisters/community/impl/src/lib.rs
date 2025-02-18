@@ -982,6 +982,18 @@ impl Data {
             .and_then(|channel| channel.chat.members.get(user_id))
             .is_some_and(|member| member.role().is_owner())
     }
+
+    pub fn is_owner(&self, user_id_or_principal: Principal, channel_id: Option<ChannelId>) -> bool {
+        let Some(community_member) = self.members.get(user_id_or_principal) else {
+            return false;
+        };
+
+        if let Some(channel_id) = channel_id {
+            self.is_channel_owner(&community_member.user_id, &channel_id)
+        } else {
+            community_member.role().is_owner()
+        }
+    }
 }
 
 fn run_regular_jobs() {
