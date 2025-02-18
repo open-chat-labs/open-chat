@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add api_key query endpoint callable by owner(s) ([#7431](https://github.com/open-chat-labs/open-chat/pull/7431))
+
 ### Changed
 
 - Expose channel count in metrics ([#7390](https://github.com/open-chat-labs/open-chat/pull/7390))
