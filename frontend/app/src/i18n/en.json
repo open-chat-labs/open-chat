@@ -152,6 +152,7 @@
         "add": {
             "subscribeTitle": "Subscribe to bot?",
             "subscribe": "Subscribe",
+            "subscribeParams": "Enter /subscribe parameters",
             "subscribeBlurb": "This bot supports subscription. Would you like to subscribe to the bot now? Subscribing to the the bot will give it access to the api key you generated and allow it to operate autonomously in this context with the permissions you have specified.",
             "action": "Register",
             "addBot": "Add bot",

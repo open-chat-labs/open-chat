@@ -1,13 +1,16 @@
 <script lang="ts">
     import {
+        type BotActionScope,
         type BotInstallationLocation,
         type BotMatch,
         emptyExternalBotPermissions,
         type ExternalBot,
         type ExternalBotPermissions,
         flattenCommandPermissions,
+        type FlattenedCommand,
         type Level,
         OpenChat,
+        random64,
     } from "openchat-client";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
@@ -24,6 +27,7 @@
     import { toastStore } from "../../../stores/toast";
     import ShowApiKey from "../ShowApiKey.svelte";
     import SubscribeBlurb from "./SubscribeBlurb.svelte";
+    import CaptureSubscribeParams from "./CaptureSubscribeParams.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -58,15 +62,50 @@
     let step = $state<Step>(firstStep());
     let apiKey = $state<string | undefined>(undefined);
     // TODO - we need to also make sure that the bot has the required command permission to run the subscribe command
-    let subscribeCommand = $derived(
-        bot.definition.commands.find((c) => c.name.toLocaleLowerCase() === "subscribe"),
-    );
+    let subscribeCommand = $derived.by<FlattenedCommand | undefined>(() => {
+        const cmd = bot.definition.commands.find((c) => c.name.toLocaleLowerCase() === "subscribe");
+        if (cmd === undefined) return undefined;
+        return {
+            ...cmd,
+            kind: "external_bot",
+            botName: bot.name,
+            avatarUrl: bot.avatarUrl,
+            botId: bot.id,
+            botEndpoint: "",
+            botDescription: bot.definition.description,
+        };
+    });
+    let subscribeCommandValid = $state(false);
 
     function firstStep() {
         if (bot.definition.commands.length > 0) {
             return "choose_command_permissions";
         } else {
             return "error";
+        }
+    }
+
+    function botActionScopeFromInstallLocation(location: BotInstallationLocation): BotActionScope {
+        switch (location.kind) {
+            case "community":
+                return {
+                    kind: "community_scope",
+                    communityId: { kind: "community", communityId: location.communityId },
+                };
+            case "group_chat":
+                return {
+                    kind: "chat_scope",
+                    chatId: location,
+                    messageId: random64(),
+                    threadRootMessageIndex: undefined,
+                };
+            case "direct_chat":
+                return {
+                    kind: "chat_scope",
+                    chatId: location,
+                    messageId: random64(),
+                    threadRootMessageIndex: undefined,
+                };
         }
     }
 
@@ -99,11 +138,21 @@
             case "subscribe_info":
                 if (subscribeCommand?.params?.length ?? 0 > 0) {
                     step = "capturing_subscribe_params";
-                } else {
-                    // TODO - this is going to be a problem because getAuthTokenForBotCommand currently requires a Chat
-                    // This is wrong - it should really require a BotActionScope which hopefully we can derive from a
-                    // BotInstallLocation
-                    console.log("Execute the subscribe command and close");
+                } else if (
+                    subscribeCommand !== undefined &&
+                    subscribeCommand.kind === "external_bot"
+                ) {
+                    client.executeBotCommand(botActionScopeFromInstallLocation(location), {
+                        kind: "external_bot",
+                        id: subscribeCommand.botId,
+                        endpoint: subscribeCommand.botEndpoint,
+                        command: {
+                            name: subscribeCommand.name,
+                            messageContext: context, // TODO - problem! There might not be a message context - probabaly messageContext needs to be made optional
+                            params: [],
+                            placeholder: subscribeCommand.placeholder,
+                        },
+                    });
                 }
                 break;
             case "error":
@@ -186,13 +235,10 @@
                     <ShowApiKey {apiKey} />
                 {:else if step === "subscribe_info"}
                     <SubscribeBlurb />
-                {:else if step === "capturing_subscribe_params"}
-                    <h1>Capturing Subscribe params</h1>
-                    <p>
-                        We will see if we can integrate the CommandBuilder component here. Well
-                        actually we only want to be able to fill in the params not the command
-                        details.
-                    </p>
+                {:else if step === "capturing_subscribe_params" && subscribeCommand !== undefined}
+                    <CaptureSubscribeParams
+                        command={subscribeCommand}
+                        bind:valid={subscribeCommandValid} />
                 {:else if step === "error"}
                     <ErrorMessage>
                         <h1>Oh no something is wrong</h1>

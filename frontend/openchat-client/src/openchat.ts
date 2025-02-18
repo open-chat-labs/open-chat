@@ -409,6 +409,7 @@ import type {
     WebAuthnKey,
     WebAuthnKeyFull,
     BotInstallationLocation,
+    BotActionScope,
 } from "openchat-shared";
 import {
     Stream,
@@ -7015,6 +7016,31 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    #getLocalUserIndexForBotActionScope(scope: BotActionScope): Promise<string> {
+        switch (scope.kind) {
+            case "chat_scope":
+                const chat = this.lookupChatSummary(scope.chatId);
+                if (chat) {
+                    return this.#getLocalUserIndex(chat, true);
+                }
+                throw new Error(`Unable to get the local user index for scope: ${scope}`);
+            case "community_scope":
+                return this.#getLocalUserIndexForCommunity(scope.communityId.communityId);
+        }
+    }
+
+    #getLocalUserIndexForCommunity(communityId: string): Promise<string> {
+        const community = this.#liveState.communities.get({
+            kind: "community",
+            communityId,
+        });
+        if (community) {
+            return Promise.resolve(community.localUserIndex);
+        } else {
+            throw new Error(`Unable to get the local user index for community: ${communityId}`);
+        }
+    }
+
     #getLocalUserIndex(chat: ChatSummary, flipDirect: boolean = false): Promise<string> {
         switch (chat.kind) {
             case "group_chat":
@@ -8052,32 +8078,18 @@ export class OpenChat extends EventTarget {
         return Promise.resolve("success");
     }
 
-    #getChatIdForBotCommandScope(chatId: ChatIdentifier): ChatIdentifier {
-        if (chatId.kind === "direct_chat") {
-            return { kind: "direct_chat", userId: this.#liveState.user.userId };
-        }
-        return chatId;
-    }
-
     #getAuthTokenForBotCommand(
-        chat: ChatSummary,
-        threadRootMessageIndex: number | undefined,
+        scope: BotActionScope,
         bot: ExternalBotCommandInstance,
     ): Promise<[string, bigint]> {
         const messageId = random64();
-        return this.#getLocalUserIndex(chat, true).then((localUserIndex) => {
+        return this.#getLocalUserIndexForBotActionScope(scope).then((localUserIndex) => {
             return this.#sendRequest({
                 kind: "getAccessToken",
-                chatId: chat.id,
                 accessTokenType: {
                     kind: "bot_action_by_command",
                     botId: bot.id,
-                    scope: {
-                        kind: "chat_scope",
-                        chatId: this.#getChatIdForBotCommandScope(chat.id),
-                        threadRootMessageIndex,
-                        messageId,
-                    },
+                    scope,
                     command: {
                         initiator: this.#liveState.user.userId,
                         commandName: bot.command.name,
@@ -8253,8 +8265,7 @@ export class OpenChat extends EventTarget {
     }
 
     executeBotCommand(
-        chat: ChatSummary,
-        threadRootMessageIndex: number | undefined,
+        scope: BotActionScope,
         bot: BotCommandInstance,
     ): Promise<"success" | "failure" | "too_many_requests"> {
         const botContext = {
@@ -8268,7 +8279,7 @@ export class OpenChat extends EventTarget {
         let removePlaceholder: (() => void) | undefined = undefined;
         switch (bot.kind) {
             case "external_bot":
-                return this.#getAuthTokenForBotCommand(chat, threadRootMessageIndex, bot)
+                return this.#getAuthTokenForBotCommand(scope, bot)
                     .then(([token, msgId]) => {
                         removePlaceholder = this.#sendPlaceholderMessage(
                             bot.command.messageContext,

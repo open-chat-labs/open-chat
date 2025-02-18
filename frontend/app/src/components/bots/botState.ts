@@ -108,15 +108,23 @@ export const instanceValid = derived(
     [selectedCommand, selectedCommandParamInstances],
     ([selectedCommand, selectedCommandParamInstances]) => {
         if (selectedCommand === undefined) return false;
-        if (selectedCommandParamInstances.length !== selectedCommand.params.length) {
-            return false;
-        }
-        const pairs: [SlashCommandParam, SlashCommandParamInstance][] = selectedCommand.params.map(
-            (p, i) => [p, selectedCommandParamInstances[i]],
-        );
-        return pairs.every(([p, i]) => paramInstanceIsValid(p, i));
+        return instanceIsValid(selectedCommand, selectedCommandParamInstances);
     },
 );
+
+export function instanceIsValid(
+    command: FlattenedCommand,
+    params: SlashCommandParamInstance[],
+): boolean {
+    if (params.length !== command.params.length) {
+        return false;
+    }
+    const pairs: [SlashCommandParam, SlashCommandParamInstance][] = command.params.map((p, i) => [
+        p,
+        params[i],
+    ]);
+    return pairs.every(([p, i]) => paramInstanceIsValid(p, i));
+}
 
 function commandsMatch(a: FlattenedCommand | undefined, b: FlattenedCommand | undefined): boolean {
     if (a === undefined || b === undefined) return false;

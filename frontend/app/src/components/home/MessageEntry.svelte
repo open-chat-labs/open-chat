@@ -496,7 +496,6 @@
 
 {#if $selectedCommand && $showingBuilder}
     <CommandBuilder
-        {chat}
         {messageContext}
         onCommandSent={() => cancelCommandSelector(true)}
         onCancel={() => cancelCommandSelector(false)}
