@@ -12,6 +12,7 @@
     import { chatListScopeStore as chatListScope } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../utils/user";
+    import { _ } from "svelte-i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -102,9 +103,14 @@
         return 0;
     }
 
+    // TODO - this is temporary
+    function filterOutBots(a: UserSummary | BotMatch): boolean {
+        return a.kind === "user";
+    }
+
     async function userAndBotSearch(term: string) {
         userAndBotsSearchResults = Promise.all([searchUsers(term), searchBots(term)]).then(
-            ([users, bots]) => [...users, ...bots].sort(sortUsersOrBots),
+            ([users, bots]) => [...users, ...bots].filter(filterOutBots).sort(sortUsersOrBots),
         );
         await userAndBotsSearchResults.then(postSearch);
     }
