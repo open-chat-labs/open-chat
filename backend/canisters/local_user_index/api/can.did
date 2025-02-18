@@ -288,7 +288,20 @@ type BotSendMessageResponse = variant {
     C2CError : record {int32; text};
 };
 
+type BotApiKeyArgs = record {
+    jwt : text;
+};
+
+type BotApiKeyResponse = variant {
+    Success : text;
+    FailedAuthentication : text;
+    NotAuthorized;
+    Frozen;
+    C2CError : record {int32; text};
+};
+
 service : {
+    bot_api_key : (BotApiKeyArgs) -> (BotApiKeyResponse) query;
     bot_create_channel : (BotCreateChannelArgs) -> (BotCreateChannelResponse);
     bot_delete_channel : (BotDeleteChannelArgs) -> (BotDeleteChannelResponse);
     bot_send_message : (BotSendMessageArgs) -> (BotSendMessageResponse);
