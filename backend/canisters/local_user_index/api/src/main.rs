@@ -3,6 +3,8 @@ use std::env;
 use ts_export::generate_ts_method;
 
 fn main() {
+    generate_candid_method!(local_user_index, bot_api_key, query);
+
     generate_candid_method!(local_user_index, bot_create_channel, update);
     generate_candid_method!(local_user_index, bot_delete_channel, update);
     generate_candid_method!(local_user_index, bot_send_message, update);
@@ -17,12 +19,13 @@ fn main() {
 
     generate_ts_method!(local_user_index, access_token);
     generate_ts_method!(local_user_index, access_token_v2);
-    generate_ts_method!(local_user_index, bot_create_channel);
-    generate_ts_method!(local_user_index, bot_delete_channel);
-    generate_ts_method!(local_user_index, bot_send_message);
+    generate_ts_method!(local_user_index, bot_api_key);
     generate_ts_method!(local_user_index, chat_events);
     generate_ts_method!(local_user_index, group_and_community_summary_updates);
 
+    generate_ts_method!(local_user_index, bot_create_channel);
+    generate_ts_method!(local_user_index, bot_delete_channel);
+    generate_ts_method!(local_user_index, bot_send_message);
     generate_ts_method!(local_user_index, install_bot);
     generate_ts_method!(local_user_index, invite_users_to_channel);
     generate_ts_method!(local_user_index, invite_users_to_community);

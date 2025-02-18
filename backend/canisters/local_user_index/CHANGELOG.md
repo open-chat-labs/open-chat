@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Request a JWT to allow a bot to read an API Key ([#7432](https://github.com/open-chat-labs/open-chat/pull/7432))
+- Add `bot_api_key` to get an API key given a JWT ([#7433](https://github.com/open-chat-labs/open-chat/pull/7433))
 
 ## [[2.0.1600](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1600-local_user_index)] - 2025-02-06
 

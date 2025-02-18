@@ -17,4 +17,5 @@ pub enum Response {
     NotAuthorized,
     NotFound,
     ChannelNotFound,
+    CommunityFrozen,
 }

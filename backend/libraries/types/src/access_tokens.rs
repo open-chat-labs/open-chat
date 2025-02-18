@@ -1,4 +1,4 @@
-use crate::{BotPermissions, CanisterId, Chat, CommunityId, MessageId, MessageIndex, UserId, VideoCallType};
+use crate::{BotPermissions, CanisterId, ChannelId, Chat, CommunityId, MessageId, MessageIndex, UserId, VideoCallType};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -45,6 +45,16 @@ impl BotActionScope {
     pub fn chat(&self) -> Option<Chat> {
         match self {
             BotActionScope::Chat(details) => Some(details.chat),
+            _ => None,
+        }
+    }
+
+    pub fn channel_id(&self) -> Option<ChannelId> {
+        match self {
+            Self::Chat(details) => match details.chat {
+                Chat::Channel(_, channel_id) => Some(channel_id),
+                _ => None,
+            },
             _ => None,
         }
     }

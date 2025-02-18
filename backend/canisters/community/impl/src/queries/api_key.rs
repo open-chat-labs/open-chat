@@ -11,6 +11,10 @@ fn api_key(args: Args) -> Response {
 fn api_key_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
+    if state.data.is_frozen() {
+        return CommunityFrozen;
+    }
+
     if state.data.is_owner(caller, args.channel_id) {
         return NotAuthorized;
     }
