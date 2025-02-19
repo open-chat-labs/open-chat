@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Include `endpoint` in BotMatch ([#7435](https://github.com/open-chat-labs/open-chat/pull/7435))
+
 ## [[2.0.1599](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1599-user_index)] - 2025-02-06
 
 ### Changed
