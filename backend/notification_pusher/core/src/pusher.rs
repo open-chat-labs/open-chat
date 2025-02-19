@@ -38,12 +38,15 @@ impl Pusher {
             let payload_bytes = message.payload.as_ref().map_or(0, |p| p.content.len()) as u64;
             match self.web_push_client.send(message).await {
                 Ok(_) => {
-                    let latency_ms = timestamp().saturating_sub(notification.timestamp);
+                    let timestamp = timestamp();
+                    let notification_latency = timestamp.saturating_sub(notification.timestamp);
+                    let notification_pusher_latency = timestamp.saturating_sub(notification.first_read_at);
                     write_metrics(|m| {
                         m.incr_total_notifications_pushed();
                         m.incr_total_notification_bytes_pushed(payload_bytes);
                         m.set_latest_notification_index_pushed(notification.index, notification.notifications_canister);
-                        m.set_notification_latency_ms(latency_ms, notification.notifications_canister);
+                        m.observe_notification_latency(notification_latency, notification.notifications_canister);
+                        m.observe_notification_latency_internal(notification_pusher_latency);
                     });
                 }
                 Err(error) => match error {

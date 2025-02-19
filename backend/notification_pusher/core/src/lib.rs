@@ -95,6 +95,7 @@ pub struct Notification {
     recipient: UserId,
     payload: Arc<Vec<u8>>,
     subscription_info: SubscriptionInfo,
+    first_read_at: TimestampMillis,
 }
 
 pub struct NotificationToPush {
