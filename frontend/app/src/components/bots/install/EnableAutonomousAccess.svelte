@@ -3,6 +3,7 @@
     import Translatable from "../../Translatable.svelte";
     import Legend from "../../Legend.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import AlertBox from "@src/components/AlertBox.svelte";
 
     interface Props {
         level: Level;
@@ -17,6 +18,14 @@
         resourceKey={i18nKey("bots.add.enableAutonomousAccessBlurb", undefined, level, true)}
     ></Translatable>
 </p>
+
+{#if level === "community"}
+    <AlertBox>
+        <Translatable
+            resourceKey={i18nKey("bots.add.communityLevelWarning", undefined, level, true)}
+        ></Translatable>
+    </AlertBox>
+{/if}
 
 <style lang="scss">
     .info {

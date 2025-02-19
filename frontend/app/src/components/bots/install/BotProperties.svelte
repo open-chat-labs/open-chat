@@ -1,16 +1,18 @@
 <script lang="ts">
-    import type { BotMatch, ExternalBot, ExternalBotPermissions } from "openchat-client";
+    import type { ExternalBotLike, ExternalBotPermissions } from "openchat-client";
     import BotAvatar from "../BotAvatar.svelte";
     import BotCommands from "../BotCommands.svelte";
     import type { Snippet } from "svelte";
+    import { mobileWidth } from "@src/stores/screenDimensions";
 
     interface Props {
-        bot: BotMatch | ExternalBot;
+        bot: ExternalBotLike;
         grantedCommandPermissions?: ExternalBotPermissions;
         installing: boolean;
         padded?: boolean;
-        onClick?: (match: BotMatch | ExternalBot) => void;
+        onClick?: (match: ExternalBotLike) => void;
         children?: Snippet;
+        showAvatar?: boolean;
     }
 
     let {
@@ -20,6 +22,7 @@
         padded = false,
         onClick,
         children,
+        showAvatar = !$mobileWidth,
     }: Props = $props();
     let collapsed = $state(true);
 </script>
@@ -31,9 +34,11 @@
     class:clickable={onClick !== undefined}
     class:padded
     onclick={() => onClick?.(bot)}>
-    <span class="avatar">
-        <BotAvatar {bot} />
-    </span>
+    {#if showAvatar}
+        <span class="avatar">
+            <BotAvatar {bot} />
+        </span>
+    {/if}
     <div class="details">
         <h4 class="bot-name">
             {bot.name}

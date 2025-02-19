@@ -1,13 +1,13 @@
 <script lang="ts">
     import {
         OpenChat,
-        type BotMatch,
         type CommunityIdentifier,
         type BotSummaryMode,
         type ExternalBotPermissions,
-        type ExternalBot,
         type BotInstallationLocation,
         type ChatIdentifier,
+        type Level,
+        type ExternalBotLike,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Overlay from "../Overlay.svelte";
@@ -17,33 +17,28 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import Legend from "../Legend.svelte";
-    import Checkbox from "../Checkbox.svelte";
-    import { togglePermission } from "../../utils/bots";
     import { toastStore } from "../../stores/toast";
     import BotAvatar from "./BotAvatar.svelte";
     import ShowApiKeyModal from "./ShowApiKeyModal.svelte";
     import AreYouSure from "../AreYouSure.svelte";
-    import Tabs from "../Tabs.svelte";
     import BotCommands from "./BotCommands.svelte";
+    import ChoosePermissions from "./install/ChoosePermissions.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
+        location: BotInstallationLocation;
+        level: Level;
         mode: BotSummaryMode;
-        bot: BotMatch | ExternalBot;
+        bot: ExternalBotLike;
         onClose: () => void;
     }
 
-    let { bot, onClose, mode }: Props = $props();
+    let { location, bot, onClose, mode, level }: Props = $props();
     let busy = $state(false);
     let collapsed = $state(true);
     let title = $derived.by(() => {
         switch (mode.kind) {
-            case "installing_command_bot":
-                return i18nKey("bots.add.title");
-            case "installing_direct_command_bot":
-                return i18nKey("bots.add.titleDirect");
             case "editing_command_bot":
                 return i18nKey("bots.edit.title");
             case "viewing_command_bot":
@@ -56,10 +51,6 @@
     });
     let cta = $derived.by(() => {
         switch (mode.kind) {
-            case "installing_command_bot":
-                return i18nKey("bots.add.addBot");
-            case "installing_direct_command_bot":
-                return i18nKey("bots.add.continue");
             case "editing_command_bot":
                 return i18nKey("bots.edit.updateBot");
             case "viewing_command_bot":
@@ -85,20 +76,6 @@
             default:
                 return mode.requested;
         }
-    }
-
-    function installBot(id: BotInstallationLocation) {
-        busy = true;
-        client
-            .installBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
-            .then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast(i18nKey("bots.add.failure"));
-                } else {
-                    onClose();
-                }
-            })
-            .finally(() => (busy = false));
     }
 
     function updateBot(id: BotInstallationLocation) {
@@ -150,12 +127,6 @@
 
     function mainButton() {
         switch (mode.kind) {
-            case "installing_command_bot":
-                installBot(mode.id);
-                break;
-            case "installing_direct_command_bot":
-                installBot(mode.id);
-                break;
             case "editing_command_bot":
                 updateBot(mode.id);
                 break;
@@ -179,54 +150,8 @@
 {/if}
 
 {#if apiKey !== undefined}
-    <ShowApiKeyModal {apiKey} {onClose}></ShowApiKeyModal>
+    <ShowApiKeyModal {location} {bot} {apiKey} {onClose}></ShowApiKeyModal>
 {/if}
-
-{#snippet chatTab()}
-    {#if mode.requested.chatPermissions.length === 0}
-        <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
-    {:else}
-        {#each mode.requested.chatPermissions as perm}
-            <Checkbox
-                id={`chat_permission_${perm}`}
-                label={i18nKey(`permissions.${perm}`)}
-                checked={grantedPermissions.chatPermissions.includes(perm)}
-                on:change={() => togglePermission(grantedPermissions, "chatPermissions", perm)}
-                align={"start"}>
-            </Checkbox>
-        {/each}
-    {/if}
-{/snippet}
-{#snippet communityTab()}
-    {#if mode.requested.communityPermissions.length === 0}
-        <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
-    {:else}
-        {#each mode.requested.communityPermissions as perm}
-            <Checkbox
-                id={`community_permission_${perm}`}
-                label={i18nKey(`permissions.${perm}`)}
-                checked={grantedPermissions.communityPermissions.includes(perm)}
-                on:change={() => togglePermission(grantedPermissions, "communityPermissions", perm)}
-                align={"start"}>
-            </Checkbox>
-        {/each}
-    {/if}
-{/snippet}
-{#snippet messageTab()}
-    {#if mode.requested.messagePermissions.length === 0}
-        <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
-    {:else}
-        {#each mode.requested.messagePermissions as perm}
-            <Checkbox
-                id={`message_permission_${perm}`}
-                label={i18nKey(`permissions.messagePermissions.${perm}`)}
-                checked={grantedPermissions.messagePermissions.includes(perm)}
-                on:change={() => togglePermission(grantedPermissions, "messagePermissions", perm)}
-                align={"start"}>
-            </Checkbox>
-        {/each}
-    {/if}
-{/snippet}
 
 <Overlay dismissible>
     <ModalContent closeIcon on:close={onClose}>
@@ -254,29 +179,12 @@
                     <BotCommands {grantedPermissions} commands={bot.definition.commands} />
                 {/if}
                 {#if choosePermissions}
-                    <div class="permissions">
-                        <Legend label={i18nKey("bots.add.choosePermissions")}></Legend>
-                        <p class="info">
-                            <Translatable resourceKey={i18nKey("bots.add.permissionsInfo")}
-                            ></Translatable>
-                        </p>
-                        <Tabs
-                            initialIndex={2}
-                            tabs={[
-                                {
-                                    title: i18nKey("bots.builder.permScopeCommunity"),
-                                    snippet: communityTab,
-                                },
-                                {
-                                    title: i18nKey("bots.builder.permScopeChat"),
-                                    snippet: chatTab,
-                                },
-                                {
-                                    title: i18nKey("bots.builder.permScopeMessage"),
-                                    snippet: messageTab,
-                                },
-                            ]}></Tabs>
-                    </div>
+                    <ChoosePermissions
+                        {level}
+                        title={i18nKey("bots.add.choosePermissions")}
+                        subtitle={i18nKey("bots.add.permissionsInfo")}
+                        granted={grantedPermissions}
+                        requested={mode.requested} />
                 {/if}
             </div>
         </div>
@@ -331,11 +239,5 @@
                 @include clamp(4);
             }
         }
-    }
-
-    .info {
-        @include font(book, normal, fs-70);
-        color: var(--txt-light);
-        margin-bottom: $sp4;
     }
 </style>

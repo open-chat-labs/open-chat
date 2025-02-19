@@ -42,7 +42,7 @@
                     threadRootMessageIndex: messageContext.threadRootMessageIndex,
                     messageId: random64(),
                 },
-                $state.snapshot(createBotInstance(command, messageContext)),
+                $state.snapshot(createBotInstance(command)),
             )
             .then((result) => {
                 if (result === "failure") {

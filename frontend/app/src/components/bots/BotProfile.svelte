@@ -38,6 +38,8 @@
 
 {#if bot !== undefined && id !== undefined}
     <BotSummary
+        location={chatId}
+        level={"group"}
         mode={{
             kind: "viewing_command_bot",
             id,

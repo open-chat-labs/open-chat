@@ -5,7 +5,6 @@ import {
     paramInstanceIsValid,
     type BotCommandInstance,
     type FlattenedCommand,
-    type MessageContext,
     type MessageFormatter,
     type SlashCommandParam,
     type SlashCommandParamInstance,
@@ -143,10 +142,7 @@ export function focusNextCommand() {
     });
 }
 
-export function createBotInstance(
-    command: FlattenedCommand,
-    context: MessageContext,
-): BotCommandInstance {
+export function createBotInstance(command: FlattenedCommand): BotCommandInstance {
     switch (command.kind) {
         case "external_bot":
             return {
@@ -155,7 +151,6 @@ export function createBotInstance(
                 endpoint: command.botEndpoint,
                 command: {
                     name: command.name,
-                    messageContext: context,
                     params: get(selectedCommandParamInstances),
                     placeholder: command.placeholder,
                 },
@@ -165,7 +160,6 @@ export function createBotInstance(
                 kind: "internal_bot",
                 command: {
                     name: command.name,
-                    messageContext: context,
                     params: get(selectedCommandParamInstances),
                 },
             };

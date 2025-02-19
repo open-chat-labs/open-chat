@@ -150,7 +150,11 @@
     "blockUserSucceeded": "User has been blocked",
     "bots": {
         "add": {
+            "sendToBot": "Send key to bot",
+            "communityLevelWarning": "This will generate a community level api key which will allow this bot to interact with all channels. If you want to limit this bot's autonomous behaviour to specific channels, skip this step and create an api key at the channel level instead. ",
             "subscribeTitle": "Subscribe to bot?",
+            "sendToBotFailed": "Sorry but we were unable to send the api key to the bot",
+            "sendToBotSucceeded": "You api key has been sent to the bot",
             "subscribe": "Subscribe",
             "subscribeParams": "Enter /subscribe parameters",
             "subscribeBlurb": "This bot supports subscription. Would you like to subscribe to the bot now? Subscribing to the the bot will give it access to the api key you generated and allow it to operate autonomously in this context with the permissions you have specified.",
@@ -162,7 +166,8 @@
             "continue": "Continue",
             "generateApiKey": "Generate api key",
             "configureNow": "Configure now",
-            "skipAndInstall": "Skip and install",
+            "install": "Install",
+            "skip": "Skip",
             "enableAutonomousAccess": "Would you like to enable autonomous access to this {level}?",
             "enableAutonomousAccessBlurb": "To allow your bot to interact autonomously with this {level} you will need to configure autonomous permissions and generate an api key. You can do this now or come back and do it later at any time.",
             "failure": "Sorry we were unable to add the bot",

@@ -8,7 +8,6 @@
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
     import ShieldAccount from "svelte-material-icons/ShieldAccount.svelte";
-    import { iconSize } from "../../stores/iconSize";
 
     interface Props {
         grantedPermissions?: ExternalBotPermissions;
@@ -36,7 +35,7 @@
                 class:command-error={errors?.has(`command_${i}`)}
                 class:not_permitted={!permitted}>
                 {#if command.ownerOnly}
-                    <ShieldAccount size={$iconSize} color={"var(--txt)"} />
+                    <ShieldAccount size={"1rem"} color={"var(--txt)"} />
                 {/if}
                 {`/${command.name}`}
             </div>
@@ -72,6 +71,10 @@
             display: flex;
             align-items: center;
             gap: $sp3;
+
+            @include mobile() {
+                padding: $sp2 $sp3;
+            }
 
             &.not_permitted {
                 background-color: unset;

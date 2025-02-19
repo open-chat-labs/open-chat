@@ -1,16 +1,17 @@
 <script lang="ts">
     import {
-        type BotActionScope,
+        type AutonomousBotConfig,
+        botActionScopeFromInstallLocation,
         type BotInstallationLocation,
-        type BotMatch,
         emptyExternalBotPermissions,
         type ExternalBot,
+        type ExternalBotLike,
         type ExternalBotPermissions,
+        externalBots,
         flattenCommandPermissions,
-        type FlattenedCommand,
         type Level,
         OpenChat,
-        random64,
+        type ResourceKey,
     } from "openchat-client";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
@@ -21,30 +22,24 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import BotProperties from "./BotProperties.svelte";
     import ChoosePermissions from "./ChoosePermissions.svelte";
-    import ErrorMessage from "@src/components/ErrorMessage.svelte";
     import EnableAutonomousAccess from "./EnableAutonomousAccess.svelte";
     import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import ShowApiKey from "../ShowApiKey.svelte";
-    import SubscribeBlurb from "./SubscribeBlurb.svelte";
-    import CaptureSubscribeParams from "./CaptureSubscribeParams.svelte";
 
     const client = getContext<OpenChat>("client");
 
     type Step =
-        | "choose_command_permissions"
-        | "configure_autonomous_access"
-        | "choose_autonomous_permissions"
-        | "subscribe_info"
-        | "subscribing"
-        | "show_api_key"
-        | "capturing_subscribe_params"
-        | "error";
+        | { kind: "choose_command_permissions" }
+        | { kind: "configure_autonomous_access"; config: AutonomousBotConfig }
+        | { kind: "choose_autonomous_permissions"; config: AutonomousBotConfig }
+        | { kind: "show_api_key"; apiKey: string; config: AutonomousBotConfig }
+        | { kind: "unknown" };
 
     interface Props {
         location: BotInstallationLocation;
         level: Level;
-        bot: BotMatch | ExternalBot;
+        bot: ExternalBotLike;
         onClose: (installed: boolean) => void;
         installedBots: Map<string, ExternalBotPermissions>;
     }
@@ -60,117 +55,74 @@
     );
     let busy = $state(false);
     let step = $state<Step>(firstStep());
-    let apiKey = $state<string | undefined>(undefined);
-    // TODO - we need to also make sure that the bot has the required command permission to run the subscribe command
-    let subscribeCommand = $derived.by<FlattenedCommand | undefined>(() => {
-        const cmd = bot.definition.commands.find((c) => c.name.toLocaleLowerCase() === "subscribe");
-        if (cmd === undefined) return undefined;
-        return {
-            ...cmd,
-            kind: "external_bot",
-            botName: bot.name,
-            avatarUrl: bot.avatarUrl,
-            botId: bot.id,
-            botEndpoint: "",
-            botDescription: bot.definition.description,
-        };
-    });
-    let subscribeCommandValid = $state(false);
+    let registeredBot: ExternalBot | undefined = $derived($externalBots.get(bot.id));
 
-    function firstStep() {
+    function firstStep(): Step {
         if (bot.definition.commands.length > 0) {
-            return "choose_command_permissions";
+            return { kind: "choose_command_permissions" };
+        } else if (bot.definition.autonomousConfig !== undefined) {
+            return { kind: "configure_autonomous_access", config: bot.definition.autonomousConfig };
         } else {
-            return "error";
-        }
-    }
-
-    function botActionScopeFromInstallLocation(location: BotInstallationLocation): BotActionScope {
-        switch (location.kind) {
-            case "community":
-                return {
-                    kind: "community_scope",
-                    communityId: { kind: "community", communityId: location.communityId },
-                };
-            case "group_chat":
-                return {
-                    kind: "chat_scope",
-                    chatId: location,
-                    messageId: random64(),
-                    threadRootMessageIndex: undefined,
-                };
-            case "direct_chat":
-                return {
-                    kind: "chat_scope",
-                    chatId: location,
-                    messageId: random64(),
-                    threadRootMessageIndex: undefined,
-                };
+            return { kind: "unknown" };
         }
     }
 
     function nextStep(current: Step) {
-        switch (current) {
+        switch (current.kind) {
             case "choose_command_permissions":
-                if (bot.definition.autonomousConfig !== undefined) {
-                    step = "configure_autonomous_access";
-                } else {
-                    install();
-                }
-                break;
-            case "configure_autonomous_access":
                 install(() => {
-                    step = "choose_autonomous_permissions";
+                    if (bot.definition.autonomousConfig !== undefined) {
+                        step = {
+                            kind: "configure_autonomous_access",
+                            config: bot.definition.autonomousConfig,
+                        };
+                    } else {
+                        onClose(true);
+                    }
                 });
                 break;
+            case "configure_autonomous_access":
+                step = { kind: "choose_autonomous_permissions", config: current.config };
+                break;
             case "choose_autonomous_permissions":
-                generateApiKey(() => {
-                    step = "show_api_key";
+                generateApiKey((apiKey: string) => {
+                    step = { kind: "show_api_key", apiKey, config: current.config };
                 });
                 break;
             case "show_api_key":
-                if (subscribeCommand !== undefined) {
-                    step = "subscribe_info";
-                } else {
-                    onClose(true);
-                }
-                break;
-            case "subscribe_info":
-                if (subscribeCommand?.params?.length ?? 0 > 0) {
-                    step = "capturing_subscribe_params";
-                } else if (
-                    subscribeCommand !== undefined &&
-                    subscribeCommand.kind === "external_bot"
-                ) {
-                    client.executeBotCommand(botActionScopeFromInstallLocation(location), {
-                        kind: "external_bot",
-                        id: subscribeCommand.botId,
-                        endpoint: subscribeCommand.botEndpoint,
-                        command: {
-                            name: subscribeCommand.name,
-                            messageContext: context, // TODO - problem! There might not be a message context - probabaly messageContext needs to be made optional
-                            params: [],
-                            placeholder: subscribeCommand.placeholder,
-                        },
-                    });
-                }
-                break;
-            case "error":
-            default:
-                step = "error";
+                onClose(true);
                 break;
         }
     }
 
-    function generateApiKey(andThen?: () => void) {
+    function sendApiKeyToBot(apiKey: string) {
+        client
+            .executeBotCommand(botActionScopeFromInstallLocation(location), {
+                kind: "external_bot",
+                id: bot.id,
+                endpoint: registeredBot?.endpoint ?? "",
+                command: {
+                    name: "sync_api_key",
+                    params: [{ name: "api_key", kind: "string", value: apiKey }],
+                },
+            })
+            .then((resp) => {
+                if (resp !== "success") {
+                    toastStore.showFailureToast(i18nKey("bots.add.sendToBotFailed"));
+                } else {
+                    toastStore.showSuccessToast(i18nKey("bots.add.sendToBotSucceeded"));
+                }
+            });
+    }
+
+    function generateApiKey(then?: (apiKey: string) => void) {
         if (bot.definition.autonomousConfig !== undefined) {
             busy = true;
             client
                 .generateBotApiKey(location, bot.id, $state.snapshot(grantedAutonomousPermission))
                 .then((resp) => {
                     if (resp.kind === "success") {
-                        apiKey = resp.apiKey;
-                        andThen?.();
+                        then?.(resp.apiKey);
                     } else {
                         toastStore.showFailureToast(i18nKey("bots.manage.generateFailed"));
                     }
@@ -179,10 +131,10 @@
         }
     }
 
-    function install(andThen?: () => void) {
+    function install(then?: () => void) {
         if (installedBots.has(bot.id)) {
-            if (andThen) {
-                andThen();
+            if (then) {
+                then();
             } else {
                 onClose(true);
             }
@@ -194,8 +146,8 @@
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("bots.add.failure"));
                     } else {
-                        if (andThen) {
-                            andThen();
+                        if (then) {
+                            then();
                         } else {
                             onClose(true);
                         }
@@ -215,95 +167,71 @@
         <div class="body" slot="body">
             <BotProperties installing={busy} {grantedCommandPermissions} {bot}>
                 <hr class="separator" />
-                {#if step === "choose_command_permissions"}
+                {#if step.kind === "choose_command_permissions"}
                     <ChoosePermissions
                         {level}
                         title={i18nKey("bots.add.chooseCommandPermissions")}
                         subtitle={i18nKey("bots.add.commandPermissionsInfo")}
                         bind:granted={grantedCommandPermissions}
                         requested={requestedCommandPermissions} />
-                {:else if step === "configure_autonomous_access"}
+                {:else if step.kind === "configure_autonomous_access"}
                     <EnableAutonomousAccess {level} />
-                {:else if step === "choose_autonomous_permissions"}
+                {:else if step.kind === "choose_autonomous_permissions"}
                     <ChoosePermissions
                         {level}
                         title={i18nKey("bots.add.chooseAutonomousPermissions")}
                         subtitle={i18nKey("bots.add.autonomousPermissionsInfo")}
                         bind:granted={grantedAutonomousPermission}
                         requested={requestedAutonomousPermissions} />
-                {:else if step === "show_api_key" && apiKey !== undefined}
-                    <ShowApiKey {apiKey} />
-                {:else if step === "subscribe_info"}
-                    <SubscribeBlurb />
-                {:else if step === "capturing_subscribe_params" && subscribeCommand !== undefined}
-                    <CaptureSubscribeParams
-                        command={subscribeCommand}
-                        bind:valid={subscribeCommandValid} />
-                {:else if step === "error"}
-                    <ErrorMessage>
-                        <h1>Oh no something is wrong</h1>
-                    </ErrorMessage>
+                {:else if step.kind === "show_api_key"}
+                    <ShowApiKey apiKey={step.apiKey} />
                 {/if}
             </BotProperties>
         </div>
         <div class="footer" slot="footer">
             <ButtonGroup>
-                {#if step === "configure_autonomous_access"}
-                    <Button
-                        disabled={busy}
-                        loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        on:click={() => install()}>
-                        <Translatable resourceKey={i18nKey("bots.add.skipAndInstall")} />
-                    </Button>
-                    <Button
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        disabled={busy}
-                        on:click={() => nextStep(step)}>
-                        <Translatable resourceKey={i18nKey("bots.add.configureNow")} />
-                    </Button>
-                {:else if step === "choose_autonomous_permissions"}
-                    <Button
-                        disabled={busy}
-                        loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        on:click={() => nextStep(step)}>
-                        <Translatable resourceKey={i18nKey("bots.add.generateApiKey")} />
-                    </Button>
-                {:else if step === "subscribe_info"}
-                    <Button
-                        disabled={busy}
-                        loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        on:click={() => nextStep(step)}>
-                        <Translatable resourceKey={i18nKey("bots.add.subscribe")} />
-                    </Button>
-                    <Button
-                        disabled={busy}
-                        loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        on:click={() => onClose(true)}>
-                        <Translatable resourceKey={i18nKey("bots.add.skipAndInstall")} />
-                    </Button>
+                {#if step.kind === "configure_autonomous_access"}
+                    {@render button(i18nKey("bots.add.skip"), () => onClose(true), true)}
+                    {@render button(i18nKey("bots.add.configureNow"), () => nextStep(step))}
+                {:else if step.kind === "choose_autonomous_permissions"}
+                    {@render button(i18nKey("bots.add.generateApiKey"), () => nextStep(step))}
+                {:else if step.kind === "show_api_key"}
+                    {@const apiKey = step.apiKey}
+                    {#if step.config.acceptsApiKey}
+                        {@render button(
+                            i18nKey("bots.add.sendToBot"),
+                            () => sendApiKeyToBot(apiKey),
+                            true,
+                            false,
+                            false,
+                        )}
+                    {/if}
+                    {@render button(i18nKey("bots.add.continue"), () => nextStep(step))}
                 {:else}
-                    <Button
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        disabled={busy}
-                        loading={busy}
-                        on:click={() => nextStep(step)}>
-                        <Translatable resourceKey={i18nKey("bots.add.continue")} />
-                    </Button>
+                    {@render button(i18nKey("bots.add.install"), () => nextStep(step))}
                 {/if}
             </ButtonGroup>
         </div>
     </ModalContent>
 </Overlay>
+
+{#snippet button(
+    txt: ResourceKey,
+    click: () => void,
+    secondary = false,
+    disabled = busy,
+    loading = busy,
+)}
+    <Button
+        {secondary}
+        small={!$mobileWidth}
+        tiny={$mobileWidth}
+        {disabled}
+        {loading}
+        on:click={click}>
+        <Translatable resourceKey={txt} />
+    </Button>
+{/snippet}
 
 <style lang="scss">
     .body {

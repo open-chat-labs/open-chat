@@ -3438,13 +3438,14 @@ export function externalBotDefinition(value: ApiBotDefinition): BotDefinition {
         description: value.description,
         commands: value.commands.map(externalBotCommand),
         autonomousConfig: mapOptional(value.autonomous_config, (c) => ({
+            acceptsApiKey: true,
             permissions: externalBotPermissions(c.permissions),
         })),
     };
 }
 
 export function externalBotCommand(
-    command: ApiSlashCommandSchema & { ownerOnly?: boolean },
+    command: ApiSlashCommandSchema & { owner_only?: boolean },
 ): SlashCommandSchema {
     return {
         name: command.name,
@@ -3452,7 +3453,9 @@ export function externalBotCommand(
         placeholder: mapOptional(command.placeholder, identity),
         params: command.params.map(externalBotParam),
         permissions: externalBotPermissions(command.permissions),
-        ownerOnly: command.ownerOnly,
+        ownerOnly:
+            command.owner_only ||
+            ["subscribe", "unsubscribe"].includes(command.name.toLocaleLowerCase()),
     };
 }
 

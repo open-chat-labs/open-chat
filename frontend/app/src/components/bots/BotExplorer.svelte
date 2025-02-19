@@ -67,7 +67,12 @@
 
 <div class="matches" style={maxHeight ? `max-height: ${maxHeight}` : ""}>
     {#each botSearchState.results as match}
-        <BotProperties padded installing={match === installingBot} onClick={onSelect} bot={match} />
+        <BotProperties
+            showAvatar
+            padded
+            installing={match === installingBot}
+            onClick={onSelect}
+            bot={match} />
     {/each}
 </div>
 

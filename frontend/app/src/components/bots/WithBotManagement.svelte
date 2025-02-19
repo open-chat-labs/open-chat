@@ -4,6 +4,7 @@
         flattenCommandPermissions,
         type BotSummaryMode,
         type ExternalBot,
+        type Level,
     } from "openchat-shared";
     import { i18nKey } from "../../i18n/i18n";
     import {
@@ -29,6 +30,16 @@
         contents: Snippet<[BotManagement]>;
     }
 
+    let level: Level = $derived.by(() => {
+        switch (collection.kind) {
+            case "community":
+                return "community";
+            case "channel":
+                return "channel";
+            default:
+                return "group";
+        }
+    });
     let { collection, bot, canManage, grantedPermissions, apiKey, contents }: Props = $props();
     let botSummaryMode = $state<BotSummaryMode | undefined>(undefined);
     let generatingKey = $state(false);
@@ -149,7 +160,12 @@
 </script>
 
 {#if botSummaryMode !== undefined}
-    <BotSummary mode={botSummaryMode} onClose={closeModal} {bot} />
+    <BotSummary
+        location={commandContextId}
+        {level}
+        mode={botSummaryMode}
+        onClose={closeModal}
+        {bot} />
 {/if}
 
 {@render contents({
