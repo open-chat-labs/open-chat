@@ -34,7 +34,7 @@
                 onclick={() => onClick?.(command, i)}
                 class:command-error={errors?.has(`command_${i}`)}
                 class:not_permitted={!permitted}>
-                {#if command.ownerOnly}
+                {#if command.defaultRole === "owner" || command.defaultRole === "admin"}
                     <ShieldAccount size={"1rem"} color={"var(--txt)"} />
                 {/if}
                 {`/${command.name}`}

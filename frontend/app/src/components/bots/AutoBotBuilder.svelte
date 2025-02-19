@@ -27,6 +27,7 @@
     import BotPermissionViewer from "./BotPermissionViewer.svelte";
     import Tabs from "../Tabs.svelte";
     import BotCommands from "./BotCommands.svelte";
+    import Checkbox from "../Checkbox.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -181,6 +182,13 @@
         <BotPermissionViewer
             nested
             permissions={candidate.definition.autonomousConfig.permissions} />
+        <div class="send-key">
+            <Checkbox
+                disabled
+                label={i18nKey("bots.add.sendToBot")}
+                checked={candidate.definition.autonomousConfig.syncApiKey}
+                id={"sync_api_key"}></Checkbox>
+        </div>
     {:else}
         <div class="smallprint">
             <Translatable resourceKey={i18nKey("bots.builder.noAutonomousConfig")}></Translatable>
@@ -368,5 +376,9 @@
     .smallprint {
         @include font(light, normal, fs-80);
         color: var(--txt-light);
+    }
+
+    .send-key {
+        margin-top: $sp4;
     }
 </style>

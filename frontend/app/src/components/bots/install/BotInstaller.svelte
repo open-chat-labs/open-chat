@@ -197,7 +197,7 @@
                     {@render button(i18nKey("bots.add.generateApiKey"), () => nextStep(step))}
                 {:else if step.kind === "show_api_key"}
                     {@const apiKey = step.apiKey}
-                    {#if step.config.acceptsApiKey}
+                    {#if step.config.syncApiKey}
                         {@render button(
                             i18nKey("bots.add.sendToBot"),
                             () => sendApiKeyToBot(apiKey),

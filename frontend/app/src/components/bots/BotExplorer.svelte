@@ -2,7 +2,7 @@
     import {
         i18nKey,
         type BotMatch as BotMatchType,
-        type ExternalBot,
+        type ExternalBotLike,
         type OpenChat,
     } from "openchat-client";
     import Search from "../Search.svelte";
@@ -14,7 +14,7 @@
     const PAGE_SIZE = 50;
 
     interface Props {
-        onSelect: (match: BotMatchType | ExternalBot | undefined) => void;
+        onSelect: (match: ExternalBotLike | undefined) => void;
         fill?: boolean;
         maxHeight?: string;
         installingBot?: BotMatchType | undefined;

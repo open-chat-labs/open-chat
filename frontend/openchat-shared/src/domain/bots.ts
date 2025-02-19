@@ -9,6 +9,7 @@ import type {
     BotActionScope,
     ChatPermissions,
     CommunityPermissions,
+    MemberRole,
     MessagePermission,
 } from "./permission";
 import { type InterpolationValues, parseBigInt, random64, type ResourceKey } from "../utils";
@@ -142,6 +143,7 @@ export function emptySlashCommand(): SlashCommandSchema {
         name: "",
         description: "",
         params: [],
+        defaultRole: "member",
         permissions: emptyExternalBotPermissions(),
     };
 }
@@ -153,7 +155,7 @@ export type SlashCommandSchema = {
     params: SlashCommandParam[];
     permissions: ExternalBotPermissions;
     devmode?: boolean;
-    ownerOnly?: boolean;
+    defaultRole: MemberRole;
     directBotDisabled?: boolean;
 };
 
@@ -278,7 +280,7 @@ export type BotDefinition = {
 };
 
 export type AutonomousBotConfig = {
-    acceptsApiKey: boolean;
+    syncApiKey: boolean;
     permissions: ExternalBotPermissions;
 };
 

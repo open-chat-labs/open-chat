@@ -300,9 +300,9 @@ import type {
     BotPermissions as ApiExternalBotPermissions,
     CommunityUpdateBotResponse,
     GroupUpdateBotResponse,
-    SlashCommandSchema as ApiSlashCommandSchema,
+    BotCommandDefinition as ApiSlashCommandSchema,
     SlashCommandParamType as ApiSlashCommandParamType,
-    SlashCommandParam as ApiSlashCommandParam,
+    BotCommandParam as ApiSlashCommandParam,
     BotCommandArg,
     BotDefinition as ApiBotDefinition,
     CommunityGenerateBotApiKeyResponse,
@@ -3438,24 +3438,20 @@ export function externalBotDefinition(value: ApiBotDefinition): BotDefinition {
         description: value.description,
         commands: value.commands.map(externalBotCommand),
         autonomousConfig: mapOptional(value.autonomous_config, (c) => ({
-            acceptsApiKey: true,
+            syncApiKey: c.sync_api_key,
             permissions: externalBotPermissions(c.permissions),
         })),
     };
 }
 
-export function externalBotCommand(
-    command: ApiSlashCommandSchema & { owner_only?: boolean },
-): SlashCommandSchema {
+export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommandSchema {
     return {
         name: command.name,
         description: command.description,
         placeholder: mapOptional(command.placeholder, identity),
         params: command.params.map(externalBotParam),
         permissions: externalBotPermissions(command.permissions),
-        ownerOnly:
-            command.owner_only ||
-            ["subscribe", "unsubscribe"].includes(command.name.toLocaleLowerCase()),
+        defaultRole: memberRole(command.default_role),
     };
 }
 
