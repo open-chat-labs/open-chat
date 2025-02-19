@@ -1,6 +1,6 @@
 use crate::ic_agent::IcAgent;
 use crate::metrics::write_metrics;
-use crate::Notification;
+use crate::{timestamp, Notification};
 use async_channel::Sender;
 use base64::Engine;
 use index_store::IndexStore;
@@ -78,6 +78,7 @@ impl<I: IndexStore> Reader<I> {
                 break;
             }
 
+            let first_read_at = timestamp();
             let base64 = base64::engine::general_purpose::STANDARD_NO_PAD.encode(notification.notification_bytes);
             let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
 
@@ -94,6 +95,7 @@ impl<I: IndexStore> Reader<I> {
                                 recipient: user_id,
                                 payload: payload.clone(),
                                 subscription_info,
+                                first_read_at,
                             })
                             .await
                             .unwrap();
