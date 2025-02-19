@@ -3,6 +3,7 @@ use crate::{timestamp, NotificationToPush};
 use async_channel::{Receiver, Sender};
 use std::collections::{BinaryHeap, HashMap};
 use std::sync::{Arc, RwLock};
+use std::time::Instant;
 use tracing::info;
 use types::{Milliseconds, TimestampMillis, UserId};
 use web_push::{HyperWebPushClient, WebPushClient, WebPushError};
@@ -36,20 +37,12 @@ impl Pusher {
     pub async fn run(self) {
         while let Ok(NotificationToPush { notification, message }) = self.receiver.recv().await {
             let payload_bytes = message.payload.as_ref().map_or(0, |p| p.content.len()) as u64;
-            match self.web_push_client.send(message).await {
-                Ok(_) => {
-                    let timestamp = timestamp();
-                    let notification_latency = timestamp.saturating_sub(notification.timestamp);
-                    let notification_pusher_latency = timestamp.saturating_sub(notification.first_read_at);
-                    write_metrics(|m| {
-                        m.incr_total_notifications_pushed();
-                        m.incr_total_notification_bytes_pushed(payload_bytes);
-                        m.set_latest_notification_index_pushed(notification.index, notification.notifications_canister);
-                        m.observe_notification_latency(notification_latency, notification.notifications_canister);
-                        m.observe_notification_latency_internal(notification_pusher_latency);
-                    });
-                }
-                Err(error) => match error {
+            let start = Instant::now();
+            let push_result = self.web_push_client.send(message).await;
+            let success = push_result.is_ok();
+
+            if let Err(error) = push_result {
+                match error {
                     WebPushError::EndpointNotValid | WebPushError::InvalidUri | WebPushError::EndpointNotFound => {
                         let _ = self
                             .subscriptions_to_remove_sender
@@ -77,8 +70,24 @@ impl Pusher {
                             map.insert(notification.subscription_info.endpoint.clone(), timestamp + ONE_MINUTE);
                         }
                     }
-                },
+                }
             }
+
+            let end = Instant::now();
+            let push_duration = end.saturating_duration_since(start).as_millis() as u64;
+            let timestamp = timestamp();
+            let end_to_end_latency = timestamp.saturating_sub(notification.timestamp);
+            let end_to_end_internal_latency = end.saturating_duration_since(notification.first_read_at).as_millis() as u64;
+            write_metrics(|m| {
+                if success {
+                    m.incr_total_notifications_pushed();
+                    m.incr_total_notification_bytes_pushed(payload_bytes);
+                    m.set_latest_notification_index_pushed(notification.index, notification.notifications_canister);
+                }
+                m.observe_end_to_end_latency(end_to_end_latency, notification.notifications_canister);
+                m.observe_end_to_end_internal_latency(end_to_end_internal_latency);
+                m.observe_send_web_push_message_duration(push_duration, success);
+            });
         }
     }
 }
