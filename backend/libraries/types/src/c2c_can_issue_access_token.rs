@@ -1,4 +1,4 @@
-use crate::{BotPermissions, UserId, VideoCallType};
+use crate::{BotPermissions, GroupRole, UserId, VideoCallType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -8,7 +8,6 @@ pub enum AccessTypeArgs {
     MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs),
     BotActionByCommand(BotActionByCommandArgs),
     BotActionByApiKey(BotActionByApiKeyArgs),
-    BotReadApiKey(BotReadApiKeyArgs),
 }
 
 impl AccessTypeArgs {
@@ -26,7 +25,6 @@ impl AccessTypeArgs {
             AccessTypeArgs::JoinVideoCall(args) => Some(args.initiator),
             AccessTypeArgs::MarkVideoCallAsEnded(args) => Some(args.initiator),
             AccessTypeArgs::BotActionByCommand(args) => Some(args.initiator),
-            AccessTypeArgs::BotReadApiKey(args) => Some(args.initiator),
             _ => None,
         }
     }
@@ -60,6 +58,7 @@ pub struct MarkVideoCallAsEndedArgs {
 pub struct BotActionByCommandArgs {
     pub bot_id: UserId,
     pub initiator: UserId,
+    pub initiator_role: GroupRole,
     pub requested_permissions: BotPermissions,
 }
 
@@ -68,10 +67,4 @@ pub struct BotActionByApiKeyArgs {
     pub bot_id: UserId,
     pub secret: String,
     pub requested_permissions: BotPermissions,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct BotReadApiKeyArgs {
-    pub bot_id: UserId,
-    pub initiator: UserId,
 }

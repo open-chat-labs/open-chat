@@ -17,7 +17,7 @@ fn api_key(args: Args) -> Response {
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_bot_api_key(args: group_canister::c2c_bot_api_key::Args) -> Response {
     let initiator = args.initiator.into();
-    read_state(|state| api_key_impl(args.into(), initiator, state))
+    read_state(|state| api_key_impl(Args { bot_id: args.bot_id }, initiator, state))
 }
 
 fn api_key_impl(args: Args, caller: Principal, state: &RuntimeState) -> Response {

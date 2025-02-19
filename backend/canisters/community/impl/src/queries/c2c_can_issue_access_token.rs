@@ -34,6 +34,14 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
             Response::Failure
         };
     } else if let AccessTypeArgs::BotActionByCommand(args) = &args_outer.access_type {
+        // Ensure the initiator has the necessary seniority according to required role
+        if !state
+            .data
+            .is_same_or_senior(args.initiator.into(), args_outer.channel_id, args.initiator_role)
+        {
+            return Response::Failure;
+        }
+
         // Get the permissions granted to the bot in this community
         let Some(granted_to_bot) = state.data.bots.get(&args.bot_id).map(|b| &b.permissions) else {
             return Response::Failure;
@@ -47,12 +55,6 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         let granted = BotPermissions::intersect(granted_to_bot, &granted_to_user);
 
         return if args.requested_permissions.is_subset(&granted) { Response::Success } else { Response::Failure };
-    } else if let AccessTypeArgs::BotReadApiKey(args) = &args_outer.access_type {
-        return if state.data.is_owner(args.initiator.into(), args_outer.channel_id) {
-            Response::Success
-        } else {
-            Response::Failure
-        };
     }
 
     let Some(channel) = args_outer

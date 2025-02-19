@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{
-    AutonomousConfig, BotInstallationLocation, BotMatch, CanisterId, CyclesTopUp, Document, Milliseconds, SlashCommandSchema,
+    AutonomousConfig, BotCommandDefinition, BotInstallationLocation, BotMatch, CanisterId, CyclesTopUp, Document, Milliseconds,
     SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
 };
 use user_index_canister::bot_updates::BotSchema;
@@ -48,7 +48,7 @@ pub struct Bot {
     pub owner: UserId,
     pub endpoint: String,
     pub description: String,
-    pub commands: Vec<SlashCommandSchema>,
+    pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
     pub last_updated: TimestampMillis,
     pub installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
@@ -62,6 +62,7 @@ impl Bot {
             owner: self.owner,
             name: self.name.clone(),
             description: self.description.clone(),
+            endpoint: self.endpoint.clone(),
             avatar_id: self.avatar.as_ref().map(|a| a.id),
             commands: self.commands.clone(),
             autonomous_config: self.autonomous_config.clone(),
