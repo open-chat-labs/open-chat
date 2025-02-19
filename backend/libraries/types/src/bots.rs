@@ -13,18 +13,29 @@ use ts_export::ts_export;
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct BotDefinition {
     pub description: String,
-    pub commands: Vec<SlashCommandSchema>,
+    pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct SlashCommandSchema {
+pub struct BotCommandDefinition {
     pub name: String,
     pub description: Option<String>,
     pub placeholder: Option<String>,
-    pub params: Vec<SlashCommandParam>,
+    pub params: Vec<BotCommandParam>,
     pub permissions: BotPermissions,
+    pub owner_only: bool,
+}
+
+impl BotCommandDefinition {
+    pub fn is_owner_only(&self) -> bool {
+        if self.owner_only {
+            return true;
+        }
+        let lower_name = self.name.to_lowercase();
+        lower_name == "subscribe" || lower_name == "unsubscribe"
+    }
 }
 
 #[ts_export]
@@ -35,7 +46,7 @@ pub struct AutonomousConfig {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct SlashCommandParam {
+pub struct BotCommandParam {
     pub name: String,
     pub description: Option<String>,
     pub placeholder: Option<String>,
@@ -199,7 +210,7 @@ pub struct BotMatch {
     pub description: String,
     pub owner: UserId,
     pub avatar_id: Option<u128>,
-    pub commands: Vec<SlashCommandSchema>,
+    pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
 }
 

@@ -27,12 +27,12 @@ pub fn extract_access_context(auth_token: &AuthToken, state: &mut RuntimeState) 
     };
 
     match auth_token {
-        AuthToken::Jwt(str) => try_extract_access_context_from_jwt(str, &user, state),
-        AuthToken::ApiKey(str) => try_extract_access_context_from_apikey(str, &user, state),
+        AuthToken::Jwt(str) => extract_access_context_from_jwt(str, &user, state),
+        AuthToken::ApiKey(str) => extract_access_context_from_apikey(str, &user, state),
     }
 }
 
-fn try_extract_access_context_from_apikey(
+fn extract_access_context_from_apikey(
     access_token: &str,
     bot: &User,
     state: &mut RuntimeState,
@@ -55,7 +55,7 @@ fn try_extract_access_context_from_apikey(
     })
 }
 
-fn try_extract_access_context_from_jwt(jwt: &str, bot: &User, state: &mut RuntimeState) -> Result<BotAccessContext, String> {
+fn extract_access_context_from_jwt(jwt: &str, bot: &User, state: &mut RuntimeState) -> Result<BotAccessContext, String> {
     const INVALID_MESSAGE: &str = "Not a valid access token JWT";
 
     let claims_str = jwt::verify(jwt, state.data.oc_key_pair.public_key_pem()).map_err(|_| INVALID_MESSAGE.to_string())?;

@@ -9,8 +9,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{
-    AutonomousConfig, BotInstallationLocation, BotMatch, CanisterId, CyclesTopUp, Document, Milliseconds, SlashCommandSchema,
-    SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
+    AutonomousConfig, BotInstallationLocation, BotMatch, CanisterId, CyclesTopUp, Document, Milliseconds,
+    BotCommandDefinition, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
 };
 use user_index_canister::bot_updates::BotSchema;
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
@@ -48,7 +48,7 @@ pub struct Bot {
     pub owner: UserId,
     pub endpoint: String,
     pub description: String,
-    pub commands: Vec<SlashCommandSchema>,
+    pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
     pub last_updated: TimestampMillis,
     pub installations: HashMap<BotInstallationLocation, InstalledBotDetails>,

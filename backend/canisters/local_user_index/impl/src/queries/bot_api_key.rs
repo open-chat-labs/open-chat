@@ -1,7 +1,7 @@
 use canister_api_macros::update;
 use jwt::Claims;
 use local_user_index_canister::bot_api_key::*;
-use types::{AccessTokenScope, BotReadApiKeyClaims, Chat};
+use types::{BotActionByCommandClaims, BotActionScope, Chat};
 
 use crate::{read_state, RuntimeState};
 
@@ -14,39 +14,41 @@ async fn bot_api_key(args: Args) -> Response {
     };
 
     let response = match claims.scope {
-        AccessTokenScope::Chat(Chat::Channel(community_id, channel_id)) => {
+        BotActionScope::Chat(details) => match details.chat {
+            Chat::Channel(community_id, channel_id) => {
+                community_canister_c2c_client::c2c_bot_api_key(
+                    community_id.into(),
+                    &community_canister::c2c_bot_api_key::Args {
+                        bot_id: claims.bot,
+                        initiator: claims.command.initiator,
+                        channel_id: Some(channel_id),
+                    },
+                )
+                .await
+            }
+            Chat::Group(chat_id) => {
+                group_canister_c2c_client::c2c_bot_api_key(
+                    chat_id.into(),
+                    &group_canister::c2c_bot_api_key::Args {
+                        bot_id: claims.bot,
+                        initiator: claims.command.initiator,
+                    },
+                )
+                .await
+            }
+            Chat::Direct(_) => unimplemented!("Direct chat not supported in this branch"),
+        },
+        BotActionScope::Community(details) => {
             community_canister_c2c_client::c2c_bot_api_key(
-                community_id.into(),
+                details.community_id.into(),
                 &community_canister::c2c_bot_api_key::Args {
                     bot_id: claims.bot,
-                    initiator: claims.initiator,
-                    channel_id: Some(channel_id),
-                },
-            )
-            .await
-        }
-        AccessTokenScope::Community(community_id) => {
-            community_canister_c2c_client::c2c_bot_api_key(
-                community_id.into(),
-                &community_canister::c2c_bot_api_key::Args {
-                    bot_id: claims.bot,
-                    initiator: claims.initiator,
+                    initiator: claims.command.initiator,
                     channel_id: None,
                 },
             )
             .await
         }
-        AccessTokenScope::Chat(Chat::Group(chat_id)) => {
-            group_canister_c2c_client::c2c_bot_api_key(
-                chat_id.into(),
-                &group_canister::c2c_bot_api_key::Args {
-                    bot_id: claims.bot,
-                    initiator: claims.initiator,
-                },
-            )
-            .await
-        }
-        AccessTokenScope::Chat(Chat::Direct(_)) => unimplemented!("Direct chat not supported in this branch"),
     };
 
     match response {
@@ -57,7 +59,7 @@ async fn bot_api_key(args: Args) -> Response {
     }
 }
 
-fn extract_access_context(jwt: &str, state: &RuntimeState) -> Result<BotReadApiKeyClaims, Response> {
+fn extract_access_context(jwt: &str, state: &RuntimeState) -> Result<BotActionByCommandClaims, Response> {
     use Response::*;
 
     let caller = state.env.caller();
@@ -66,7 +68,7 @@ fn extract_access_context(jwt: &str, state: &RuntimeState) -> Result<BotReadApiK
         return Err(NotAuthorized);
     };
 
-    let claims: Claims<BotReadApiKeyClaims> = jwt::verify_and_decode(jwt, state.data.oc_key_pair.public_key_pem())
+    let claims: Claims<BotActionByCommandClaims> = jwt::verify_and_decode(jwt, state.data.oc_key_pair.public_key_pem())
         .map_err(|error| FailedAuthentication(error.to_string()))?;
 
     if claims.exp_ms() < state.env.now() {

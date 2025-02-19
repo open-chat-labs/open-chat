@@ -4,9 +4,9 @@ use types::nns::CryptoAmount;
 use types::{
     is_default, AutonomousConfig, BotDefinition, BotInstallationLocation, CanisterId, ChannelLatestMessageIndex, ChatId,
     ChitEarnedReason, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageContentInitial,
-    MessageId, MessageIndex, NotifyChit, PhoneNumber, ReferralType, SlashCommandSchema, SuspensionDuration, TimestampMillis,
-    UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
-    UserId, UserType,
+    MessageId, MessageIndex, NotifyChit, PhoneNumber, ReferralType, BotCommandDefinition, SuspensionDuration,
+    TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment, UserId, UserType,
 };
 
 mod lifecycle;
@@ -90,7 +90,7 @@ pub struct BotRegistered {
     pub user_id: UserId,
     pub user_principal: Principal,
     pub name: String,
-    pub commands: Vec<SlashCommandSchema>,
+    pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
 }
 
