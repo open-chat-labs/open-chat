@@ -1,16 +1,21 @@
 use crate::{Notification, NotificationToPush};
 use async_channel::Sender;
 use prometheus::proto::MetricFamily;
-use prometheus::{IntCounter, IntGaugeVec, Opts, PullingGauge, Registry};
+use prometheus::{Histogram, HistogramOpts, HistogramVec, IntCounter, IntGaugeVec, Opts, PullingGauge, Registry};
 use std::sync::OnceLock;
-use types::{CanisterId, UserId};
+use types::{CanisterId, Milliseconds, UserId};
+
+const INTERNAL_LATENCY_BUCKETS: [f64; 13] = [
+    1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0, 2000.0, 5000.0, 10000.0,
+];
 
 pub struct Metrics {
     registry: Registry,
     latest_notification_index_read: IntGaugeVec,
     latest_notification_index_processed: IntGaugeVec,
     latest_notification_index_pushed: IntGaugeVec,
-    notification_latency_ms: IntGaugeVec,
+    notification_latency_ms: HistogramVec,
+    notification_latency_internal_ms: Histogram,
     total_notifications_pushed: IntCounter,
     total_notification_bytes_pushed: IntCounter,
 }
@@ -86,9 +91,15 @@ impl Metrics {
         )
         .unwrap();
 
-        let notification_latency_ms = IntGaugeVec::new(
-            Opts::new("notification_latency", "In milliseconds. Per notifications canister"),
+        let notification_latency_ms = HistogramVec::new(
+            HistogramOpts::new("notification_latency", "In milliseconds. Per notifications canister")
+                .buckets(INTERNAL_LATENCY_BUCKETS.map(|b| b * 100.0).to_vec()),
             &["canisterId"],
+        )
+        .unwrap();
+
+        let notification_latency_internal_ms = Histogram::with_opts(
+            HistogramOpts::new("notification_latency_internal", "In milliseconds").buckets(INTERNAL_LATENCY_BUCKETS.to_vec()),
         )
         .unwrap();
 
@@ -103,6 +114,7 @@ impl Metrics {
             .unwrap();
         registry.register(Box::new(latest_notification_index_pushed.clone())).unwrap();
         registry.register(Box::new(notification_latency_ms.clone())).unwrap();
+        registry.register(Box::new(notification_latency_internal_ms.clone())).unwrap();
         registry.register(Box::new(total_notifications_pushed.clone())).unwrap();
         registry.register(Box::new(total_notification_bytes_pushed.clone())).unwrap();
 
@@ -112,6 +124,7 @@ impl Metrics {
             latest_notification_index_processed,
             latest_notification_index_pushed,
             notification_latency_ms,
+            notification_latency_internal_ms,
             total_notifications_pushed,
             total_notification_bytes_pushed,
         }
@@ -139,10 +152,14 @@ impl Metrics {
             .set(index as i64);
     }
 
-    pub fn set_notification_latency_ms(&self, latency_ms: u64, canister_id: CanisterId) {
+    pub fn observe_notification_latency(&self, latency: Milliseconds, canister_id: CanisterId) {
         self.notification_latency_ms
             .with_label_values(&[&canister_id.to_string()])
-            .set(latency_ms as i64);
+            .observe(latency as f64);
+    }
+
+    pub fn observe_notification_latency_internal(&self, latency: Milliseconds) {
+        self.notification_latency_internal_ms.observe(latency as f64);
     }
 
     pub fn incr_total_notifications_pushed(&self) {
