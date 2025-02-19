@@ -24,6 +24,10 @@ async fn main() -> Result<(), Error> {
     let ic_url = dotenv::var("IC_URL")?;
     let ic_identity_pem = dotenv::var("IC_IDENTITY_PEM")?;
     let is_production = bool::from_str(&dotenv::var("IS_PRODUCTION")?).unwrap();
+    let pusher_count = dotenv::var("PUSHER_COUNT")
+        .ok()
+        .and_then(|s| u32::from_str(&s).ok())
+        .unwrap_or(1);
 
     let ic_agent = IcAgent::build(&ic_url, &ic_identity_pem, !is_production).await?;
 
@@ -37,7 +41,7 @@ async fn main() -> Result<(), Error> {
         vec![notifications_canister_id],
         index_store,
         vapid_private_pem,
-        1,
+        pusher_count,
     )
     .await;
 
