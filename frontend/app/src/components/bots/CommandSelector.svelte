@@ -318,17 +318,6 @@
                 color: var(--txt-light);
             }
 
-            .icon {
-                flex: 0 0 $size;
-                width: $size;
-                height: $size;
-                aspect-ratio: 1 / 1;
-                background-position: center;
-                background-repeat: no-repeat;
-                background-size: cover;
-                border-radius: $sp2;
-            }
-
             .details {
                 flex: auto;
                 display: flex;

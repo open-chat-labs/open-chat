@@ -692,6 +692,7 @@ export function externalBotMatch(
         id: botId,
         ownerId: principalBytesToString(match.owner),
         definition: externalBotDefinition(match),
+        endpoint: "http://localhost:3000", //TODO fill in the endpoint from the response
     };
 }
 

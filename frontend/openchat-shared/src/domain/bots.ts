@@ -679,6 +679,15 @@ export type EditingApiKey = BotSummaryModeCommon & {
 
 export type EnhancedExternalBot = ExternalBot & { grantedPermissions: ExternalBotPermissions };
 
+export function botInstallationLocationForChat(chatId: ChatIdentifier): BotInstallationLocation {
+    switch (chatId.kind) {
+        case "channel":
+            return { kind: "community", communityId: chatId.communityId };
+        default:
+            return chatId;
+    }
+}
+
 export function botActionScopeFromInstallLocation(
     location: BotInstallationLocation,
 ): BotActionScope {
