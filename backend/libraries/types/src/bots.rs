@@ -208,6 +208,7 @@ pub struct BotMatch {
     pub score: u32,
     pub name: String,
     pub description: String,
+    pub endpoint: String,
     pub owner: UserId,
     pub avatar_id: Option<u128>,
     pub commands: Vec<BotCommandDefinition>,

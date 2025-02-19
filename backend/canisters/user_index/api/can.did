@@ -23,7 +23,7 @@ type BotUpdatesResponse = variant {
             avatar_id : opt nat;
             endpoint : text;
             description : text;
-            commands : vec SlashCommandSchema;
+            commands : vec BotCommandDefinition;
             autonomous_config : opt AutonomousConfig;
             last_updated : TimestampMillis;
         };
@@ -118,8 +118,9 @@ type BotMatch = record {
     owner : UserId;
     name : text;
     description : text;
+    endpoint : text;
     avatar_id : opt nat;
-    commands : vec SlashCommandSchema;
+    commands : vec BotCommandDefinition;
     autonomous_config : opt AutonomousConfig;
 };
 
@@ -208,7 +209,7 @@ type RemoveBotResponse = variant {
 
 type BotDefinition = record {
     description : text;
-    commands : vec SlashCommandSchema;
+    commands : vec BotCommandDefinition;
     autonomous_config : opt AutonomousConfig;
 };
 

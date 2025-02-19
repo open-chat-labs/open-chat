@@ -2090,15 +2090,16 @@ type ExchangeId = variant {
     Sonic;
 };
 
-type SlashCommandSchema = record {
+type BotCommandDefinition = record {
     name : text;
     description : opt text;
     placeholder : opt text;
-    params : vec SlashCommandParam;
+    params : vec BotCommandParam;
     permissions : BotPermissions;
+    owner_only : bool;
 };
 
-type SlashCommandParam = record {
+type BotCommandParam = record {
     name : text;
     description : opt text;
     placeholder : opt text;

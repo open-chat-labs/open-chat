@@ -9,8 +9,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{
-    AutonomousConfig, BotInstallationLocation, BotMatch, CanisterId, CyclesTopUp, Document, Milliseconds,
-    BotCommandDefinition, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
+    AutonomousConfig, BotCommandDefinition, BotInstallationLocation, BotMatch, CanisterId, CyclesTopUp, Document, Milliseconds,
+    SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
 };
 use user_index_canister::bot_updates::BotSchema;
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
@@ -62,6 +62,7 @@ impl Bot {
             owner: self.owner,
             name: self.name.clone(),
             description: self.description.clone(),
+            endpoint: self.endpoint.clone(),
             avatar_id: self.avatar.as_ref().map(|a| a.id),
             commands: self.commands.clone(),
             autonomous_config: self.autonomous_config.clone(),

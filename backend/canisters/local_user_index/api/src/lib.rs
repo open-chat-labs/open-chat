@@ -2,9 +2,9 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    is_default, AutonomousConfig, BotDefinition, BotInstallationLocation, CanisterId, ChannelLatestMessageIndex, ChatId,
-    ChitEarnedReason, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageContentInitial,
-    MessageId, MessageIndex, NotifyChit, PhoneNumber, ReferralType, BotCommandDefinition, SuspensionDuration,
+    is_default, AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, CanisterId,
+    ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration,
     TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim,
     UserCanisterStreakInsurancePayment, UserId, UserType,
 };
