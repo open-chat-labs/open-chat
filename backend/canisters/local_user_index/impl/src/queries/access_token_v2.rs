@@ -168,7 +168,7 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
             .bots
             .get(&args.bot_id)
             .and_then(|b| b.commands.iter().find(|c| c.name == args.command.name))
-            .map(|c| (c.permissions.clone(), c.default_role))
+            .map(|c| (c.permissions.clone(), c.default_role.unwrap_or_default()))
         else {
             return Err(Response::NotAuthorized);
         };

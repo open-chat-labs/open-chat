@@ -12,7 +12,7 @@ use testing::rng::{random_from_u128, random_string};
 use types::{
     AccessTokenScope, AuthToken, AutonomousConfig, BotActionChatDetails, BotActionScope, BotApiKeyToken, BotCommandDefinition,
     BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent,
-    CommunityPermission, GroupRole, MessageContent, MessagePermission, Rules, TextContent, UserId,
+    CommunityPermission, MessageContent, MessagePermission, Rules, TextContent, UserId,
 };
 use utils::base64;
 
@@ -642,7 +642,7 @@ fn register_bot(
         placeholder: None,
         params: vec![],
         permissions: BotPermissions::text_only(),
-        default_role: GroupRole::Participant,
+        default_role: None,
     }];
 
     let bot_principal = client::user_index::happy_path::register_bot(
