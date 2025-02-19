@@ -2,8 +2,9 @@ use aws_config::BehaviorVersion;
 use candid::Principal;
 use dynamodb_index_store::DynamoDbIndexStore;
 use notification_pusher_core::ic_agent::IcAgent;
-use notification_pusher_core::run_notifications_pusher;
+use notification_pusher_core::{run_notifications_pusher, write_metrics};
 use std::str::FromStr;
+use tokio::time;
 use tracing::info;
 use types::Error;
 
@@ -20,6 +21,10 @@ async fn main() -> Result<(), Error> {
     let ic_url = dotenv::var("IC_URL")?;
     let ic_identity_pem = dotenv::var("IC_IDENTITY_PEM")?;
     let is_production = bool::from_str(&dotenv::var("IS_PRODUCTION")?).unwrap();
+    let pusher_count = dotenv::var("PUSHER_COUNT")
+        .ok()
+        .and_then(|s| u32::from_str(&s).ok())
+        .unwrap_or(10);
 
     let aws_config = aws_config::load_defaults(BehaviorVersion::latest()).await;
     let dynamodb_index_store = DynamoDbIndexStore::build(&aws_config, "push_notification_stream_indexes".to_string());
@@ -35,15 +40,30 @@ async fn main() -> Result<(), Error> {
         .map(|str| Principal::from_text(str).unwrap())
         .collect();
 
+    tokio::spawn(write_metrics_to_file());
+
     run_notifications_pusher(
         ic_agent,
         index_canister_id,
         notifications_canister_ids,
         dynamodb_index_store,
         vapid_private_pem,
-        10,
+        pusher_count,
     )
     .await;
 
     Ok(())
+}
+
+async fn write_metrics_to_file() {
+    let mut interval = time::interval(time::Duration::from_secs(30));
+
+    loop {
+        interval.tick().await;
+
+        let mut bytes = Vec::new();
+        write_metrics(&mut bytes);
+
+        std::fs::write("metrics.md", bytes).unwrap();
+    }
 }

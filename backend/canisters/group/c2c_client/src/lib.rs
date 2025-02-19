@@ -2,7 +2,7 @@ use canister_client::generate_c2c_call;
 use group_canister::*;
 
 // Queries
-generate_c2c_call!(c2c_bot_send_message);
+generate_c2c_call!(c2c_bot_api_key);
 generate_c2c_call!(c2c_can_issue_access_token);
 generate_c2c_call!(c2c_can_issue_access_token_v2);
 generate_c2c_call!(c2c_events);
@@ -15,6 +15,7 @@ generate_c2c_call!(summary);
 generate_c2c_call!(summary_updates);
 
 // Updates
+generate_c2c_call!(c2c_bot_send_message);
 generate_c2c_call!(c2c_delete_group);
 generate_c2c_call!(c2c_export_group);
 generate_c2c_call!(c2c_export_group_events);

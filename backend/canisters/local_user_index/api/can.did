@@ -289,6 +289,7 @@ type BotSendMessageResponse = variant {
 };
 
 service : {
+    // TODO: Add access_token_v2
     bot_create_channel : (BotCreateChannelArgs) -> (BotCreateChannelResponse);
     bot_delete_channel : (BotDeleteChannelArgs) -> (BotDeleteChannelResponse);
     bot_send_message : (BotSendMessageArgs) -> (BotSendMessageResponse);

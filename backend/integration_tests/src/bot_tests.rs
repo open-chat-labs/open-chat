@@ -3,16 +3,16 @@ use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv, User};
 use candid::Principal;
 use community_canister::generate_bot_api_key;
-use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs};
+use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandInitial};
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    AccessTokenScope, AuthToken, AutonomousConfig, BotActionChatDetails, BotActionScope, BotApiKeyToken, BotCommand,
+    AccessTokenScope, AuthToken, AutonomousConfig, BotActionChatDetails, BotActionScope, BotApiKeyToken, BotCommandDefinition,
     BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent,
-    CommunityPermission, MessageContent, MessagePermission, Rules, SlashCommandSchema, TextContent, UserId,
+    CommunityPermission, GroupRole, MessageContent, MessagePermission, Rules, TextContent, UserId,
 };
 use utils::base64;
 
@@ -76,10 +76,9 @@ fn e2e_command_bot_test() {
     let message_id = random_from_u128();
     let access_token_args = access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
         bot_id,
-        command: BotCommand {
+        command: BotCommandInitial {
             name: command_name.clone(),
             args: Vec::new(),
-            initiator: owner.user_id,
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat,
@@ -507,10 +506,9 @@ fn send_multiple_updates_to_same_message() {
     let message_id = random_from_u128();
     let access_token_args = access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
         bot_id,
-        command: BotCommand {
+        command: BotCommandInitial {
             name: command_name.clone(),
             args: Vec::new(),
-            initiator: owner.user_id,
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat,
@@ -638,12 +636,13 @@ fn register_bot(
     let endpoint = "https://my.bot.xyz/".to_string();
     let description = "greet".to_string();
 
-    let commands = vec![SlashCommandSchema {
+    let commands = vec![BotCommandDefinition {
         name: command_name,
         description: Some("Hello {user}".to_string()),
         placeholder: None,
         params: vec![],
         permissions: BotPermissions::text_only(),
+        default_role: GroupRole::Participant,
     }];
 
     let bot_principal = client::user_index::happy_path::register_bot(
@@ -656,6 +655,7 @@ fn register_bot(
             description: description.clone(),
             commands: commands.clone(),
             autonomous_config: Some(AutonomousConfig {
+                sync_api_key: false,
                 permissions: BotPermissions::text_only(),
             }),
         },

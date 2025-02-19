@@ -1,6 +1,6 @@
 use crate::{
     AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
-    GroupPermission, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
+    GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
     TimestampMillis, UserId, VideoContent,
 };
 use candid::CandidType;
@@ -13,29 +13,31 @@ use ts_export::ts_export;
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct BotDefinition {
     pub description: String,
-    pub commands: Vec<SlashCommandSchema>,
+    pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct SlashCommandSchema {
+pub struct BotCommandDefinition {
     pub name: String,
     pub description: Option<String>,
     pub placeholder: Option<String>,
-    pub params: Vec<SlashCommandParam>,
+    pub params: Vec<BotCommandParam>,
     pub permissions: BotPermissions,
+    pub default_role: GroupRole,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct AutonomousConfig {
     pub permissions: BotPermissions,
+    pub sync_api_key: bool,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct SlashCommandParam {
+pub struct BotCommandParam {
     pub name: String,
     pub description: Option<String>,
     pub placeholder: Option<String>,
@@ -197,9 +199,10 @@ pub struct BotMatch {
     pub score: u32,
     pub name: String,
     pub description: String,
+    pub endpoint: String,
     pub owner: UserId,
     pub avatar_id: Option<u128>,
-    pub commands: Vec<SlashCommandSchema>,
+    pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
 }
 
@@ -347,4 +350,13 @@ impl From<BotMessageContent> for MessageContentInitial {
 pub enum AuthToken {
     Jwt(String),
     ApiKey(String),
+}
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ApiKey {
+    pub secret: String,
+    pub granted_permissions: BotPermissions,
+    pub generated_by: UserId,
+    pub generated_at: TimestampMillis,
 }

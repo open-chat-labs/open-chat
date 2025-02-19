@@ -4,6 +4,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
+use crate::GroupRole;
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum CommunityRole {
@@ -171,5 +173,15 @@ impl CommunityRole {
             .into_iter()
             .filter_map(|(rp, p)| self.is_permitted(rp).then_some(p))
             .collect()
+    }
+}
+
+impl From<GroupRole> for CommunityRole {
+    fn from(value: GroupRole) -> Self {
+        match value {
+            GroupRole::Owner => CommunityRole::Owner,
+            GroupRole::Admin => CommunityRole::Admin,
+            _ => CommunityRole::Member,
+        }
     }
 }
