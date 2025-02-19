@@ -215,6 +215,7 @@ type BotDefinition = record {
 
 type AutonomousConfig = record {
     permissions : BotPermissions;
+    sync_api_key : bool;
 };
 
 type RegisterExternalAchievementArgs = record {

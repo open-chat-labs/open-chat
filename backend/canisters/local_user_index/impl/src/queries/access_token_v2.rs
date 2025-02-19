@@ -12,10 +12,12 @@ use types::c2c_can_issue_access_token::{
     StartVideoCallArgs,
 };
 use types::{
-    AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, BotCommand, Chat,
-    JoinOrEndVideoCallClaims, StartVideoCallClaims,
+    c2c_bot_api_key, AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, BotCommand,
+    BotCommandArg, BotCommandArgValue, Chat, JoinOrEndVideoCallClaims, StartVideoCallClaims,
 };
 use utils::base64;
+
+const SYNC_API_KEY_COMMAND_NAME: &str = "sync_api_key";
 
 #[query(composite = true, candid = true, msgpack = true)]
 #[trace]
@@ -29,40 +31,29 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
         Err(response) => return response,
     };
 
-    let c2c_response = match scope {
-        AccessTokenScope::Chat(Chat::Direct(chat_id)) => {
-            user_canister_c2c_client::c2c_can_issue_access_token_v2(chat_id.into(), &access_type_args).await
-        }
-        AccessTokenScope::Chat(Chat::Group(chat_id)) => {
-            group_canister_c2c_client::c2c_can_issue_access_token_v2(chat_id.into(), &access_type_args).await
-        }
-        AccessTokenScope::Chat(Chat::Channel(community_id, channel_id)) => {
-            community_canister_c2c_client::c2c_can_issue_access_token(
-                community_id.into(),
-                &community_canister::c2c_can_issue_access_token::Args {
-                    channel_id: Some(channel_id),
-                    access_type: access_type_args.clone(),
-                },
-            )
-            .await
-        }
-        AccessTokenScope::Community(community_id) => {
-            community_canister_c2c_client::c2c_can_issue_access_token(
-                community_id.into(),
-                &community_canister::c2c_can_issue_access_token::Args {
-                    channel_id: None,
-                    access_type: access_type_args.clone(),
-                },
-            )
-            .await
+    // If this is a special sync_api_key command, we need to fetch the API key
+    let mut api_key_args = None;
+    if let ArgsInternal::BotActionByCommand(a) = &args_wrapper {
+        if a.command.name.eq_ignore_ascii_case(SYNC_API_KEY_COMMAND_NAME) {
+            api_key_args = Some(c2c_bot_api_key::Args {
+                bot_id: a.bot_id,
+                initiator: access_type_args.initiator().unwrap(),
+            })
         }
     };
 
-    match c2c_response {
-        Ok(c2c_can_issue_access_token::Response::Success) => (),
-        Ok(c2c_can_issue_access_token::Response::Failure) => return NotAuthorized,
-        Err(err) => return InternalError(format!("{err:?}")),
-    }
+    // Either fetch the API key or check if the user can issue an access token for the given scope
+    let api_key = if let Some(api_key_args) = api_key_args {
+        match get_api_key(scope, api_key_args).await {
+            Ok(api_key) => Some(api_key),
+            Err(response) => return response,
+        }
+    } else {
+        match can_issue_access_token(scope, &access_type_args).await {
+            Ok(_) => None,
+            Err(response) => return response,
+        }
+    };
 
     let token_type_name = args_wrapper.type_name().to_string();
 
@@ -72,6 +63,15 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
 
         match &args_wrapper {
             ArgsInternal::BotActionByCommand(args) => {
+                let command_args = if let Some(api_key) = api_key {
+                    vec![BotCommandArg {
+                        name: "api_key".to_string(),
+                        value: BotCommandArgValue::String(api_key),
+                    }]
+                } else {
+                    args.command.args.clone()
+                };
+
                 let custom_claims = BotActionByCommandClaims {
                     bot: args.bot_id,
                     scope: args.scope.clone(),
@@ -79,7 +79,7 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                     granted_permissions: requested_permissions.unwrap(),
                     command: BotCommand {
                         name: args.command.name.clone(),
-                        args: args.command.args.clone(),
+                        args: command_args,
                         initiator: access_type_args.initiator().unwrap(),
                     },
                 };
@@ -163,12 +163,12 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
     };
 
     if let ArgsInternal::BotActionByCommand(args) = args_outer {
-        let Some((permissions, owner_only)) = state
+        let Some((permissions, default_role)) = state
             .data
             .bots
             .get(&args.bot_id)
             .and_then(|b| b.commands.iter().find(|c| c.name == args.command.name))
-            .map(|c| (c.permissions.clone(), c.is_owner_only()))
+            .map(|c| (c.permissions.clone(), c.default_role))
         else {
             return Err(Response::NotAuthorized);
         };
@@ -178,8 +178,8 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
             access_type_args: AccessTypeArgs::BotActionByCommand(BotActionByCommandArgs {
                 bot_id: args.bot_id,
                 initiator: user.user_id,
+                initiator_role: default_role,
                 requested_permissions: permissions,
-                owner_only,
             }),
         });
     }
@@ -274,5 +274,79 @@ impl ArgsInternal {
             Self::BotActionByCommand(args) => args.scope.chat(),
             Self::BotActionByApiKey(args) => args.scope.chat(),
         }
+    }
+}
+
+async fn get_api_key(scope: AccessTokenScope, api_key_args: c2c_bot_api_key::Args) -> Result<String, Response> {
+    let response = match scope {
+        AccessTokenScope::Chat(Chat::Group(chat_id)) => {
+            group_canister_c2c_client::c2c_bot_api_key(chat_id.into(), &api_key_args).await
+        }
+        AccessTokenScope::Chat(Chat::Channel(community_id, channel_id)) => {
+            community_canister_c2c_client::c2c_bot_api_key(
+                community_id.into(),
+                &community_canister::c2c_bot_api_key::Args {
+                    bot_id: api_key_args.bot_id,
+                    initiator: api_key_args.initiator,
+                    channel_id: Some(channel_id),
+                },
+            )
+            .await
+        }
+        AccessTokenScope::Chat(Chat::Direct(_)) => unimplemented!("TODO when the canister memory limit has been raised"),
+        AccessTokenScope::Community(community_id) => {
+            community_canister_c2c_client::c2c_bot_api_key(
+                community_id.into(),
+                &community_canister::c2c_bot_api_key::Args {
+                    bot_id: api_key_args.bot_id,
+                    initiator: api_key_args.initiator,
+                    channel_id: None,
+                },
+            )
+            .await
+        }
+    };
+
+    match response {
+        Ok(c2c_bot_api_key::Response::Success(api_key)) => Ok(api_key),
+        Ok(_) => Err(NotAuthorized),
+        Err((code, message)) => Err(InternalError(format!("{code:?}: {message}"))),
+    }
+}
+
+async fn can_issue_access_token(scope: AccessTokenScope, access_type_args: &AccessTypeArgs) -> Result<(), Response> {
+    let c2c_response = match scope {
+        AccessTokenScope::Chat(Chat::Direct(chat_id)) => {
+            user_canister_c2c_client::c2c_can_issue_access_token_v2(chat_id.into(), access_type_args).await
+        }
+        AccessTokenScope::Chat(Chat::Group(chat_id)) => {
+            group_canister_c2c_client::c2c_can_issue_access_token_v2(chat_id.into(), access_type_args).await
+        }
+        AccessTokenScope::Chat(Chat::Channel(community_id, channel_id)) => {
+            community_canister_c2c_client::c2c_can_issue_access_token(
+                community_id.into(),
+                &community_canister::c2c_can_issue_access_token::Args {
+                    channel_id: Some(channel_id),
+                    access_type: access_type_args.clone(),
+                },
+            )
+            .await
+        }
+        AccessTokenScope::Community(community_id) => {
+            community_canister_c2c_client::c2c_can_issue_access_token(
+                community_id.into(),
+                &community_canister::c2c_can_issue_access_token::Args {
+                    channel_id: None,
+                    access_type: access_type_args.clone(),
+                },
+            )
+            .await
+        }
+    };
+
+    match c2c_response {
+        Ok(c2c_can_issue_access_token::Response::Success) => Ok(()),
+        Ok(c2c_can_issue_access_token::Response::Failure) => Err(NotAuthorized),
+        Err(err) => Err(InternalError(format!("{err:?}"))),
     }
 }

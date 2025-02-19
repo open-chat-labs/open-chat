@@ -2096,7 +2096,7 @@ type BotCommandDefinition = record {
     placeholder : opt text;
     params : vec BotCommandParam;
     permissions : BotPermissions;
-    owner_only : bool;
+    default_role : GroupRole;
 };
 
 type BotCommandParam = record {

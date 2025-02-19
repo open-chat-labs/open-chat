@@ -1,6 +1,6 @@
 use crate::{
     AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
-    GroupPermission, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
+    GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
     TimestampMillis, UserId, VideoContent,
 };
 use candid::CandidType;
@@ -25,23 +25,14 @@ pub struct BotCommandDefinition {
     pub placeholder: Option<String>,
     pub params: Vec<BotCommandParam>,
     pub permissions: BotPermissions,
-    pub owner_only: bool,
-}
-
-impl BotCommandDefinition {
-    pub fn is_owner_only(&self) -> bool {
-        if self.owner_only {
-            return true;
-        }
-        let lower_name = self.name.to_lowercase();
-        lower_name == "subscribe" || lower_name == "unsubscribe"
-    }
+    pub default_role: GroupRole,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct AutonomousConfig {
     pub permissions: BotPermissions,
+    pub sync_api_key: bool,
 }
 
 #[ts_export]

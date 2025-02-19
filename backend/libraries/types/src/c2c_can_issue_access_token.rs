@@ -1,4 +1,4 @@
-use crate::{BotPermissions, UserId, VideoCallType};
+use crate::{BotPermissions, GroupRole, UserId, VideoCallType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -58,7 +58,7 @@ pub struct MarkVideoCallAsEndedArgs {
 pub struct BotActionByCommandArgs {
     pub bot_id: UserId,
     pub initiator: UserId,
-    pub owner_only: bool,
+    pub initiator_role: GroupRole,
     pub requested_permissions: BotPermissions,
 }
 
