@@ -66,7 +66,7 @@ impl Pusher {
                 }
             }
         }
-        if let Err(error) = self.push_notification(&notification).await {
+        if let Err(error) = self.push_notification(notification).await {
             let bytes = notification.payload.len();
             error!(
                 ?error,
