@@ -1,3 +1,4 @@
+use crate::metrics::METRICS;
 use crate::Notification;
 use async_channel::{Receiver, Sender};
 use std::collections::{BinaryHeap, HashMap};
@@ -42,31 +43,41 @@ impl Pusher {
 
     pub async fn run(self) {
         while let Ok(notification) = self.receiver.recv().await {
-            if let Ok(map) = self.invalid_subscriptions.read() {
-                if map.contains_key(&notification.subscription_info.endpoint) {
-                    continue;
-                }
-            }
-            if let Ok(map) = self.throttled_subscriptions.read() {
-                if let Some(until) = map.get(&notification.subscription_info.endpoint) {
-                    let timestamp = timestamp();
-                    if *until > timestamp {
-                        info!("Notification skipped due to subscription being throttled");
-                        continue;
-                    }
-                }
-            }
-            if let Err(error) = self.push_notification(&notification).await {
-                let bytes = notification.payload.len();
-                error!(
-                    ?error,
-                    bytes, notification.subscription_info.endpoint, "Failed to push notification"
-                );
-            }
+            self.process_notification(&notification).await;
+
+            let latency_ms = timestamp().saturating_sub(notification.timestamp);
+            METRICS.set_latest_notification_index_processed(notification.index, notification.notifications_canister);
+            METRICS.set_notification_latency_ms(latency_ms, notification.notifications_canister);
         }
     }
 
-    pub async fn push_notification(&self, notification: &Notification) -> Result<(), Error> {
+    async fn process_notification(&self, notification: &Notification) {
+        if let Ok(map) = self.invalid_subscriptions.read() {
+            if map.contains_key(&notification.subscription_info.endpoint) {
+                return;
+            }
+        }
+        if let Ok(map) = self.throttled_subscriptions.read() {
+            if let Some(until) = map.get(&notification.subscription_info.endpoint) {
+                let timestamp = timestamp();
+                if *until > timestamp {
+                    info!("Notification skipped due to subscription being throttled");
+                    return;
+                }
+            }
+        }
+        if let Err(error) = self.push_notification(notification).await {
+            let bytes = notification.payload.len();
+            error!(
+                ?error,
+                bytes, notification.subscription_info.endpoint, "Failed to push notification"
+            );
+        } else {
+            METRICS.incr_user_notifications_pushed();
+        }
+    }
+
+    async fn push_notification(&self, notification: &Notification) -> Result<(), Error> {
         let payload_bytes = notification.payload.as_ref();
         let subscription = &notification.subscription_info;
         let vapid_signature = self.build_vapid_signature(subscription)?;
@@ -107,6 +118,8 @@ impl Pusher {
                     }
                 }
             } else {
+                METRICS.incr_total_notifications_pushed();
+                METRICS.incr_total_notification_bytes_pushed(length as u64);
                 Ok(())
             }
         } else {

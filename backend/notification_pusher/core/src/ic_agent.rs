@@ -1,4 +1,4 @@
-use ic_agent::identity::BasicIdentity;
+use ic_agent::identity::{BasicIdentity, Secp256k1Identity};
 use ic_agent::{Agent, Identity};
 use notifications_canister::{latest_notification_index, notifications, remove_notifications};
 use notifications_index_canister::remove_subscriptions;
@@ -95,12 +95,12 @@ impl IcAgent {
 
     /// Returns an identity derived from the private key.
     fn get_identity(pem: &str) -> Box<dyn Identity + Sync + Send> {
-        match BasicIdentity::from_pem(pem.as_bytes()) {
-            Ok(identity) => Box::new(identity),
-            Err(error) => {
-                eprintln!("Couldn't load identity from PEM file. {error:?}. Input: {:?}", pem.as_bytes());
-                std::process::exit(1);
-            }
+        if let Ok(identity) = BasicIdentity::from_pem(pem.as_bytes()) {
+            Box::new(identity)
+        } else if let Ok(identity) = Secp256k1Identity::from_pem(pem.as_bytes()) {
+            Box::new(identity)
+        } else {
+            panic!("Failed to create identity from pem");
         }
     }
 }
