@@ -1,4 +1,5 @@
 use crate::ic_agent::IcAgent;
+use crate::metrics::METRICS;
 use crate::Notification;
 use async_channel::Sender;
 use base64::Engine;
@@ -64,6 +65,10 @@ impl<I: IndexStore> Reader<I> {
             .map(|(k, v)| (k, v.into_iter().map(convert_subscription).collect()))
             .collect();
 
+        if let Some(last) = ic_response.notifications.last() {
+            METRICS.set_latest_notification_index_read(last.index, self.notifications_canister_id);
+        }
+
         let mut latest_index_processed = None;
         for indexed_notification in ic_response.notifications.into_iter() {
             let notification = indexed_notification.value;
@@ -87,6 +92,9 @@ impl<I: IndexStore> Reader<I> {
                         // subscriptions to avoid partially processed notifications
                         self.sender
                             .send(Notification {
+                                notifications_canister: self.notifications_canister_id,
+                                index: indexed_notification.index,
+                                timestamp: notification.timestamp,
                                 recipient: user_id,
                                 payload: payload.clone(),
                                 subscription_info,
@@ -101,6 +109,7 @@ impl<I: IndexStore> Reader<I> {
         }
 
         if let Some(latest_index) = latest_index_processed {
+            METRICS.set_latest_notification_index_queued(latest_index, self.notifications_canister_id);
             self.set_index_processed_up_to(latest_index).await?;
         }
 

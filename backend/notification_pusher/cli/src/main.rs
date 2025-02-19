@@ -1,9 +1,10 @@
 use candid::Principal;
 use index_store::DummyStore;
 use notification_pusher_core::ic_agent::IcAgent;
-use notification_pusher_core::run_notifications_pusher;
+use notification_pusher_core::{run_notifications_pusher, write_metrics};
 use std::collections::HashMap;
 use std::str::FromStr;
+use tokio::time;
 use tracing::info;
 use types::Error;
 
@@ -28,6 +29,8 @@ async fn main() -> Result<(), Error> {
 
     info!("Initialization complete");
 
+    tokio::spawn(write_metrics_to_file());
+
     run_notifications_pusher(
         ic_agent,
         index_canister_id,
@@ -39,4 +42,17 @@ async fn main() -> Result<(), Error> {
     .await;
 
     Ok(())
+}
+
+async fn write_metrics_to_file() {
+    let mut interval = time::interval(time::Duration::from_secs(30));
+
+    loop {
+        interval.tick().await;
+
+        let mut bytes = Vec::new();
+        write_metrics(&mut bytes);
+
+        std::fs::write("metrics.md", bytes).unwrap();
+    }
 }
