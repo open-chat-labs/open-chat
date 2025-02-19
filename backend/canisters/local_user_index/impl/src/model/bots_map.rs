@@ -1,7 +1,7 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{AutonomousConfig, BotDefinition, SlashCommandSchema, UserId};
+use types::{AutonomousConfig, BotCommandDefinition, BotDefinition, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct BotsMap {
@@ -13,7 +13,7 @@ pub struct BotsMap {
 pub struct Bot {
     pub user_id: UserId,
     pub name: String,
-    pub commands: Vec<SlashCommandSchema>,
+    pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
     pub principal: Principal,
 }
@@ -34,7 +34,7 @@ impl BotsMap {
         user_principal: Principal,
         user_id: UserId,
         name: String,
-        commands: Vec<SlashCommandSchema>,
+        commands: Vec<BotCommandDefinition>,
         autonomous_config: Option<AutonomousConfig>,
     ) {
         self.bots.insert(

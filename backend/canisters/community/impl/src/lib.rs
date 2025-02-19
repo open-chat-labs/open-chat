@@ -39,8 +39,8 @@ use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotInitiator, BotPermissions,
     BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
-    CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, MembersAdded,
-    Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, GroupRole,
+    MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -957,11 +957,12 @@ impl Data {
         };
 
         // If the bot is the owner of the channel then grant all chat permissions
-        let granted_to_bot = if channel_id.is_some_and(|channel_id| self.is_channel_owner(bot_id, &channel_id)) {
-            &BotPermissions::union(granted_to_bot, &BotPermissions::chat_owner())
-        } else {
-            granted_to_bot
-        };
+        let granted_to_bot =
+            if channel_id.is_some_and(|channel_id| self.is_same_or_senior_in_channel(bot_id, &channel_id, GroupRole::Owner)) {
+                &BotPermissions::union(granted_to_bot, &BotPermissions::chat_owner())
+            } else {
+                granted_to_bot
+            };
 
         // If this is a command initiated by a user then intersect the permissions granted to the bot with the user's permissions
         let granted = match initiator {
@@ -976,22 +977,22 @@ impl Data {
         required.is_subset(granted)
     }
 
-    pub fn is_channel_owner(&self, user_id: &UserId, channel_id: &ChannelId) -> bool {
+    pub fn is_same_or_senior_in_channel(&self, user_id: &UserId, channel_id: &ChannelId, role: GroupRole) -> bool {
         self.channels
             .get(channel_id)
             .and_then(|channel| channel.chat.members.get(user_id))
-            .is_some_and(|member| member.role().is_owner())
+            .is_some_and(|member| member.role().is_same_or_senior(role.into()))
     }
 
-    pub fn is_owner(&self, user_id_or_principal: Principal, channel_id: Option<ChannelId>) -> bool {
+    pub fn is_same_or_senior(&self, user_id_or_principal: Principal, channel_id: Option<ChannelId>, role: GroupRole) -> bool {
         let Some(community_member) = self.members.get(user_id_or_principal) else {
             return false;
         };
 
         if let Some(channel_id) = channel_id {
-            self.is_channel_owner(&community_member.user_id, &channel_id)
+            self.is_same_or_senior_in_channel(&community_member.user_id, &channel_id, role)
         } else {
-            community_member.role().is_owner()
+            community_member.role().is_same_or_senior(role.into())
         }
     }
 }

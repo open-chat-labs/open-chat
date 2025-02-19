@@ -7,6 +7,7 @@ use community_canister::api_key::{Response::*, *};
 use types::AccessTokenScope;
 use types::BotApiKeyToken;
 use types::Chat;
+use types::GroupRole;
 use utils::base64;
 
 #[query(msgpack = true)]
@@ -21,7 +22,7 @@ fn c2c_bot_api_key(args: community_canister::c2c_bot_api_key::Args) -> Response 
 }
 
 fn api_key_impl(args: Args, caller: Principal, state: &RuntimeState) -> Response {
-    if state.data.is_owner(caller, args.channel_id) {
+    if state.data.is_same_or_senior(caller, args.channel_id, GroupRole::Owner) {
         return NotAuthorized;
     }
 
