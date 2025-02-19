@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Throttle notifications to a subscription after any failures ([#6014](https://github.com/open-chat-labs/open-chat/pull/6014))
+- Handle case where notifications pusher queue becomes full ([#7150](https://github.com/open-chat-labs/open-chat/pull/7150))
+- Record notification pusher metrics using Prometheus ([#7434](https://github.com/open-chat-labs/open-chat/pull/7434))
+- Move notification processing to single synchronous thread + more metrics ([#7437](https://github.com/open-chat-labs/open-chat/pull/7437))
+- Allow configuring the number of notification pusher threads ([#7438](https://github.com/open-chat-labs/open-chat/pull/7438))
+
 ## [[2.0.1023](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1023-notifications_pusher)] - 2024-01-24
 
 ### Changed
