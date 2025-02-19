@@ -26,7 +26,7 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
     notifications_canister_ids: Vec<CanisterId>,
     index_store: I,
     vapid_private_pem: String,
-    pusher_count: usize,
+    pusher_count: u32,
 ) {
     info!("Notifications pusher starting");
 
