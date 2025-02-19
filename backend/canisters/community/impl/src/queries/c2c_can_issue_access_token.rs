@@ -34,7 +34,7 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
             Response::Failure
         };
     } else if let AccessTypeArgs::BotActionByCommand(args) = &args_outer.access_type {
-        // If this is an "owner only" command ensure the initiator is an owner of the given scope
+        // Ensure the initiator has the necessary seniority according to required role
         if !state
             .data
             .is_same_or_senior(args.initiator.into(), args_outer.channel_id, args.initiator_role)
