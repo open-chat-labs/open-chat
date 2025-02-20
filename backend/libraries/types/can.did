@@ -2104,10 +2104,10 @@ type BotCommandParam = record {
     description : opt text;
     placeholder : opt text;
     required : bool;
-    param_type : SlashCommandParamType;
+    param_type : BotCommandParamType;
 };
 
-type SlashCommandParamType = variant {
+type BotCommandParamType = variant {
     UserParam;
     BooleanParam;
     StringParam : StringParam;
