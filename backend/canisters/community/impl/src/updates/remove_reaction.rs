@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use community_canister::remove_reaction::{Response::*, *};
 use group_chat_core::AddRemoveReactionResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn remove_reaction(args: Args) -> Response {
     run_regular_jobs();

@@ -22,7 +22,7 @@ fn c2c_bot_api_key(args: community_canister::c2c_bot_api_key::Args) -> Response 
 }
 
 fn api_key_impl(args: Args, caller: Principal, state: &RuntimeState) -> Response {
-    if state.data.is_same_or_senior(caller, args.channel_id, GroupRole::Owner) {
+    if !state.data.is_same_or_senior(caller, args.channel_id, GroupRole::Owner) {
         return NotAuthorized;
     }
 
