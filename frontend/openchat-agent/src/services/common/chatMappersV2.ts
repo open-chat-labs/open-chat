@@ -3451,7 +3451,7 @@ export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommand
         placeholder: mapOptional(command.placeholder, identity),
         params: command.params.map(externalBotParam),
         permissions: externalBotPermissions(command.permissions),
-        defaultRole: memberRole(command.default_role),
+        defaultRole: mapOptional(command.default_role, memberRole) ?? "member",
     };
 }
 
