@@ -2086,8 +2086,8 @@ type ReferralStatus = variant {
 
 type ExchangeId = variant {
     ICPSwap;
+    //Sonic;
     KongSwap;
-    Sonic;
 };
 
 type BotCommandDefinition = record {
