@@ -184,7 +184,7 @@
                         bind:granted={grantedAutonomousPermission}
                         requested={requestedAutonomousPermissions} />
                 {:else if step.kind === "show_api_key"}
-                    <ShowApiKey apiKey={step.apiKey} />
+                    <ShowApiKey {bot} botExecutionContext={location} apiKey={step.apiKey} />
                 {/if}
             </BotProperties>
         </div>
