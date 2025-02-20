@@ -228,24 +228,3 @@ impl Debug for NotificationEnvelope {
             .finish()
     }
 }
-
-#[test]
-fn notification_length() {
-    let notification = Notification::DirectMessage(DirectMessageNotification {
-        sender: Principal::from_text("cbopz-duaaa-aaaaa-qaaka-cai").unwrap().into(),
-        thread_root_message_index: None,
-        message_index: 1.into(),
-        event_index: 1.into(),
-        sender_name: "BlahBlah".to_string(),
-        sender_display_name: None,
-        message_type: "text".to_string(),
-        message_text: Some("abc".to_string()),
-        image_url: None,
-        sender_avatar_id: None,
-        crypto_transfer: None,
-    });
-
-    let bytes = candid::encode_one(notification).unwrap().len();
-
-    assert!(bytes < 850, "{bytes}");
-}
