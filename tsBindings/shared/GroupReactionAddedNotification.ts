@@ -5,4 +5,4 @@ import type { MessageIndex } from "./MessageIndex";
 import type { Reaction } from "./Reaction";
 import type { UserId } from "./UserId";
 
-export type GroupReactionAddedNotification = { chat_id: ChatId, thread_root_message_index?: MessageIndex, message_index: MessageIndex, message_event_index: EventIndex, group_name: string, added_by: UserId, added_by_name: string, added_by_display_name?: string, reaction: Reaction, group_avatar_id?: bigint, };
+export type GroupReactionAddedNotification = { c: ChatId, tr?: MessageIndex, m: MessageIndex, e: EventIndex, g: string, a: UserId, n: string, d?: string, r: Reaction, av?: bigint, };

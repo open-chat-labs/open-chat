@@ -2,4 +2,4 @@
 import type { TSPrincipal } from "./TSPrincipal";
 import type { UserId } from "./UserId";
 
-export type CryptoTransferDetails = { recipient: UserId, recipient_username?: string, ledger: TSPrincipal, symbol: string, amount: bigint, };
+export type CryptoTransferDetails = { r: UserId, u?: string, l: TSPrincipal, s: string, a: bigint, };
