@@ -301,7 +301,7 @@ import type {
     CommunityUpdateBotResponse,
     GroupUpdateBotResponse,
     BotCommandDefinition as ApiSlashCommandSchema,
-    SlashCommandParamType as ApiSlashCommandParamType,
+    BotCommandParamType as ApiSlashCommandParamType,
     BotCommandParam as ApiSlashCommandParam,
     BotCommandArg,
     BotDefinition as ApiBotDefinition,

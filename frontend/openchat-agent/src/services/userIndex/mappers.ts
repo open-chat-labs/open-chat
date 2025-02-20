@@ -76,7 +76,7 @@ import type {
     BotMatch as ApiBotMatch,
     BotCommandDefinition as ApiSlashCommandSchema,
     BotCommandParam as ApiSlashCommandParam,
-    SlashCommandParamType as ApiSlashCommandParamType,
+    BotCommandParamType as ApiSlashCommandParamType,
     BotDefinition as ApiBotDefinition,
     UserIndexBotUpdatesResponse,
     UserIndexBotUpdatesBotSchema,
