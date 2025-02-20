@@ -287,7 +287,7 @@ impl MessageContentInitial {
         };
 
         if let CryptoTransaction::Pending(pending) = transfer {
-            Some(&pending)
+            Some(pending)
         } else {
             None
         }

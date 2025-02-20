@@ -338,7 +338,7 @@ impl ChatEvents {
                 || block_level_markdown_update.is_some();
 
             let old_length = message.content.text_length();
-            message.content = args.content.into();
+            message.content = args.content;
 
             let message_index = message.message_index;
             let document = Document::from(&message.content);

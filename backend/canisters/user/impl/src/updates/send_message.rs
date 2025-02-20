@@ -30,7 +30,7 @@ async fn send_message_v2(args: Args) -> Response {
         maybe_recipient_type,
     } = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(response) => return *response,
     };
 
     let recipient_type = if let Some(recipient_type) = maybe_recipient_type {
@@ -58,8 +58,13 @@ async fn send_message_v2(args: Args) -> Response {
                 if !pending_transfer.validate_recipient(args.recipient) {
                     return InvalidRequest("Transaction is not to the user's account".to_string());
                 }
-                if let Err(response) = mutate_state(|state| verify_pin(args.pin.as_deref(), state)) {
-                    return response;
+
+                if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_deref(), now)) {
+                    return match error {
+                        VerifyPinError::PinRequired => PinRequired,
+                        VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
+                        VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
+                    };
                 }
 
                 // When transferring to bot users, each user transfers to their own subaccount, this way it
@@ -188,19 +193,19 @@ struct PrepareOk {
     maybe_recipient_type: Option<RecipientType>,
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareOk, Response> {
+fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareOk, Box<Response>> {
     if state.data.suspended.value {
-        return Err(UserSuspended);
+        return Err(Box::new(UserSuspended));
     }
 
     if state.data.blocked_users.contains(&args.recipient) {
-        return Err(RecipientBlocked);
+        return Err(Box::new(RecipientBlocked));
     }
 
     if args.recipient == OPENCHAT_BOT_USER_ID {
-        return Err(InvalidRequest(
+        return Err(Box::new(InvalidRequest(
             "Messaging the OpenChat Bot is not currently supported".to_string(),
-        ));
+        )));
     }
 
     let my_user_id = state.env.canister_id().into();
@@ -209,7 +214,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareOk, Response> {
             .events
             .contains_message_id(args.thread_root_message_index, args.message_id)
         {
-            return Err(DuplicateMessageId);
+            return Err(Box::new(DuplicateMessageId));
         }
         Some(if args.recipient == my_user_id {
             RecipientType::_Self
@@ -228,6 +233,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareOk, Response> {
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn send_message_impl(
     my_user_id: UserId,
     recipient: UserId,
@@ -435,16 +441,4 @@ pub(crate) fn register_timer_jobs(
             now,
         );
     }
-}
-
-fn verify_pin(attempt: Option<&str>, state: &mut RuntimeState) -> Result<(), Response> {
-    state
-        .data
-        .pin_number
-        .verify(attempt, state.env.now())
-        .map_err(|error| match error {
-            VerifyPinError::PinRequired => PinRequired,
-            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-        })
 }
