@@ -23,7 +23,7 @@
         <pre>{apiKey}</pre>
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div role="button" tabindex="0" onclick={onCopy} class="copy">
-            <CopyIcon size={"1rem"} color={"var(--icon-txt)"} />
+            <CopyIcon size={"1.2rem"} color={"var(--icon-txt)"} />
         </div>
     </div>
 </AlertBox>
@@ -34,7 +34,7 @@
         transition: transform 0.2s ease;
 
         &:active {
-            transform: scale(0.9);
+            transform: scale(0.8);
         }
     }
 

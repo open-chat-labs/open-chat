@@ -357,6 +357,8 @@
             "removeSearch": "Search for the bot to remove",
             "review": "Review bot permissions",
             "reviewApiKey": "Review API key",
+            "reviewApiKeyInfo": "Retrieve your existing api key or generate a new one",
+            "currentApiKey": "Current API key",
             "view": "View bot details"
         },
         "matchingCommands": "Matching commands",

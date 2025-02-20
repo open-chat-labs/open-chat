@@ -1,4 +1,5 @@
 <script lang="ts">
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import {
         OpenChat,
         type CommunityIdentifier,
@@ -18,11 +19,11 @@
     import Button from "../Button.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import { toastStore } from "../../stores/toast";
-    import BotAvatar from "./BotAvatar.svelte";
     import ShowApiKeyModal from "./ShowApiKeyModal.svelte";
     import AreYouSure from "../AreYouSure.svelte";
-    import BotCommands from "./BotCommands.svelte";
     import ChoosePermissions from "./install/ChoosePermissions.svelte";
+    import BotProperties from "./install/BotProperties.svelte";
+    import Legend from "../Legend.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -36,7 +37,6 @@
 
     let { location, bot, onClose, mode, level }: Props = $props();
     let busy = $state(false);
-    let collapsed = $state(true);
     let title = $derived.by(() => {
         switch (mode.kind) {
             case "editing_command_bot":
@@ -64,8 +64,21 @@
     let showCommands = $derived(mode.kind !== "adding_api_key" && mode.kind !== "editing_api_key");
     let choosePermissions = $derived(mode.kind !== "viewing_command_bot");
     let grantedPermissions = $state(getInitialGrantedPermissions(mode));
-    let apiKey = $state<string | undefined>(undefined);
+    let newApiKey = $state<string | undefined>(undefined);
+    let currentApiKey = $state<string | undefined>(getExistingApiKey(mode));
     let confirmingRegeneration = $state(false);
+
+    function getExistingApiKey(mode: BotSummaryMode): string | undefined {
+        if (mode.kind === "editing_api_key") {
+            return mode.apiKey;
+        }
+    }
+
+    function onCopy(key?: string) {
+        if (key) {
+            navigator.clipboard.writeText(key);
+        }
+    }
 
     function getInitialGrantedPermissions(mode: BotSummaryMode): ExternalBotPermissions {
         switch (mode.kind) {
@@ -112,7 +125,7 @@
                         )
                         .then((resp) => {
                             if (resp.kind === "success") {
-                                apiKey = resp.apiKey;
+                                newApiKey = currentApiKey = resp.apiKey;
                             } else {
                                 toastStore.showFailureToast(i18nKey("bots.manage.generateFailed"));
                             }
@@ -149,8 +162,8 @@
         action={generateApiKey(mode.id)} />
 {/if}
 
-{#if apiKey !== undefined}
-    <ShowApiKeyModal {location} {bot} {apiKey} {onClose}></ShowApiKeyModal>
+{#if newApiKey !== undefined}
+    <ShowApiKeyModal {location} {bot} apiKey={newApiKey} {onClose}></ShowApiKeyModal>
 {/if}
 
 <Overlay dismissible>
@@ -159,24 +172,24 @@
             <Translatable resourceKey={title}></Translatable>
         </div>
         <div class="body" slot="body">
-            <span class="avatar">
-                <BotAvatar {bot} />
-            </span>
-            <div class="details">
-                <h4 class="bot-name">
-                    {bot.name}
-                </h4>
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-                <p
-                    title={bot.definition.description}
-                    class="bot-desc"
-                    class:collapsed
-                    onclick={() => (collapsed = !collapsed)}>
-                    {bot.definition.description}
-                </p>
-                {#if showCommands}
-                    <BotCommands {grantedPermissions} commands={bot.definition.commands} />
+            <BotProperties
+                {bot}
+                installing={busy}
+                {showCommands}
+                grantedCommandPermissions={grantedPermissions}>
+                {#if currentApiKey !== undefined}
+                    <Legend large label={i18nKey("bots.manage.currentApiKey")}></Legend>
+                    <div class="key">
+                        <pre>{currentApiKey}</pre>
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <div
+                            role="button"
+                            tabindex="0"
+                            onclick={() => onCopy(currentApiKey)}
+                            class="copy">
+                            <CopyIcon size={"1.2rem"} color={"var(--icon-txt)"} />
+                        </div>
+                    </div>
                 {/if}
                 {#if choosePermissions}
                     <ChoosePermissions
@@ -186,7 +199,7 @@
                         granted={grantedPermissions}
                         requested={mode.requested} />
                 {/if}
-            </div>
+            </BotProperties>
         </div>
         <div class="footer" slot="footer">
             <ButtonGroup>
@@ -213,31 +226,33 @@
         align-items: center;
         gap: 12px;
     }
-    .avatar {
-        flex: 0 0 50px;
-        position: relative;
-        align-self: start;
+
+    .copy {
+        cursor: pointer;
+        transition: transform 0.2s ease;
+
+        &:active {
+            transform: scale(0.8);
+        }
     }
 
-    .details {
+    .key {
         display: flex;
-        gap: $sp2;
-        flex: 1;
-        flex-direction: column;
-        @include font(book, normal, fs-100);
+        gap: $sp3;
+        align-items: center;
+        width: 100%;
+        margin-bottom: $sp4;
 
-        .bot-name {
-            @include ellipsis();
-        }
-
-        .bot-desc {
-            @include font(light, normal, fs-100);
+        pre {
+            word-break: break-all;
+            flex: 1;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            margin: 0;
             color: var(--txt-light);
-            margin-bottom: $sp3;
-
-            &.collapsed {
-                @include clamp(4);
-            }
+            color: var(--warn);
+            @include font(book, normal, fs-80);
+            @include clamp(2);
         }
     }
 </style>

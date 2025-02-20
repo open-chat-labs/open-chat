@@ -102,13 +102,17 @@
 
     function reviewApiKey() {
         if (bot.definition.autonomousConfig !== undefined && apiKeyPermissions !== undefined) {
-            botSummaryMode = {
-                kind: "editing_api_key",
-                id: collection.id,
-                requested: bot.definition.autonomousConfig.permissions,
-                granted: apiKeyPermissions,
-            };
-            generatingKey = true;
+            const requested = bot.definition.autonomousConfig.permissions;
+            client.getApiKey(collection.id, bot.id).then((apiKey) => {
+                botSummaryMode = {
+                    kind: "editing_api_key",
+                    id: collection.id,
+                    requested,
+                    granted: apiKeyPermissions,
+                    apiKey,
+                };
+                generatingKey = true;
+            });
         }
     }
 

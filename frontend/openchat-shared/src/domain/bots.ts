@@ -677,6 +677,7 @@ export type EditingApiKey = BotSummaryModeCommon & {
     kind: "editing_api_key";
     id: CommunityIdentifier | ChatIdentifier;
     granted: ExternalBotPermissions;
+    apiKey?: string;
 };
 
 export type EnhancedExternalBot = ExternalBot & { grantedPermissions: ExternalBotPermissions };

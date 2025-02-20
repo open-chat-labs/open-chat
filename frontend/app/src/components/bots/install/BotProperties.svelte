@@ -1,9 +1,13 @@
 <script lang="ts">
-    import type { ExternalBotLike, ExternalBotPermissions } from "openchat-client";
+    import type { ExternalBotLike, ExternalBotPermissions, OpenChat } from "openchat-client";
+    import { AvatarSize, userStore } from "openchat-client";
     import BotAvatar from "../BotAvatar.svelte";
     import BotCommands from "../BotCommands.svelte";
-    import type { Snippet } from "svelte";
+    import { getContext, type Snippet } from "svelte";
     import { mobileWidth } from "@src/stores/screenDimensions";
+    import Avatar from "@src/components/Avatar.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         bot: ExternalBotLike;
@@ -13,6 +17,7 @@
         onClick?: (match: ExternalBotLike) => void;
         children?: Snippet;
         showAvatar?: boolean;
+        showCommands?: boolean;
     }
 
     let {
@@ -23,8 +28,10 @@
         onClick,
         children,
         showAvatar = !$mobileWidth,
+        showCommands = true,
     }: Props = $props();
     let collapsed = $state(true);
+    let owner = $derived($userStore.get(bot.ownerId));
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -40,12 +47,18 @@
         </span>
     {/if}
     <div class="details">
-        <h4 class="bot-name">
-            {bot.name}
+        <div class="bot-name">
+            <h4>{bot.name}</h4>
+            {#if owner}
+                <div class="owner">
+                    <Avatar url={client.userAvatarUrl(owner)} size={AvatarSize.Tiny} />
+                    <span class="username">{owner.username}</span>
+                </div>
+            {/if}
             {#if installing}
                 <div class="installing"></div>
             {/if}
-        </h4>
+        </div>
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <p
@@ -55,9 +68,11 @@
             onclick={() => (collapsed = !collapsed)}>
             {bot.definition.description}
         </p>
-        <BotCommands
-            grantedPermissions={grantedCommandPermissions}
-            commands={bot.definition.commands} />
+        {#if showCommands}
+            <BotCommands
+                grantedPermissions={grantedCommandPermissions}
+                commands={bot.definition.commands} />
+        {/if}
 
         {@render children?.()}
     </div>
@@ -111,7 +126,8 @@
         .bot-name {
             @include ellipsis();
             display: flex;
-            gap: $sp4;
+            gap: $sp3;
+            @include font(book, normal, fs-110);
         }
 
         .bot-desc {
@@ -122,6 +138,21 @@
             &.collapsed {
                 @include clamp(4);
             }
+        }
+    }
+
+    .owner {
+        padding: $sp1 $sp3;
+        border: var(--bw) solid var(--bd);
+        border-radius: $sp2;
+        display: flex;
+        gap: $sp2;
+        align-items: center;
+        color: var(--txt-light);
+        @include font(light, normal, fs-90);
+
+        .username {
+            flex: auto;
         }
     }
 </style>

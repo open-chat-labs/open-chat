@@ -35,7 +35,7 @@
                 class:command-error={errors?.has(`command_${i}`)}
                 class:not_permitted={!permitted}>
                 {#if command.defaultRole === "owner" || command.defaultRole === "admin"}
-                    <ShieldAccount size={"1rem"} color={"var(--txt)"} />
+                    <ShieldAccount size={"1rem"} color={"var(--button-txt)"} />
                 {/if}
                 {`/${command.name}`}
             </div>
@@ -55,6 +55,10 @@
         flex-wrap: wrap;
         gap: $sp3;
         margin-bottom: $sp4;
+
+        @include mobile() {
+            gap: $sp2;
+        }
 
         &.centered {
             justify-content: center;

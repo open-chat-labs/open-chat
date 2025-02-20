@@ -233,6 +233,8 @@ import {
     GroupUpdateBotResponse,
     GroupGenerateBotApiKeyArgs,
     GroupGenerateBotApiKeyResponse,
+    GroupApiKeyArgs,
+    GroupApiKeyResponse,
 } from "../../typebox";
 
 export class GroupClient extends MsgpackCanisterAgent {
@@ -1326,6 +1328,24 @@ export class GroupClient extends MsgpackCanisterAgent {
             generateApiKeyResponse,
             GroupGenerateBotApiKeyArgs,
             GroupGenerateBotApiKeyResponse,
+        );
+    }
+
+    getApiKey(botId: string): Promise<string | undefined> {
+        return this.executeMsgpackQuery(
+            "api_key",
+            {
+                bot_id: principalStringToBytes(botId),
+            },
+            (resp) => {
+                if (typeof resp === "object" && "Success" in resp) {
+                    return resp.Success;
+                }
+                console.log("Failed to get community api key: ", botId, resp);
+                return undefined;
+            },
+            GroupApiKeyArgs,
+            GroupApiKeyResponse,
         );
     }
 }

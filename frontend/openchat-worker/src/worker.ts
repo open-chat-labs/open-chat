@@ -1732,6 +1732,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "getApiKey":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getApiKey(payload.id, payload.botId),
+                );
+                break;
+
             case "getLocalUserIndexForUser":
                 executeThenReply(
                     payload,

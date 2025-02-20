@@ -8012,6 +8012,20 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    getApiKey(
+        id: ChatIdentifier | CommunityIdentifier,
+        botId: string,
+    ): Promise<string | undefined> {
+        return this.#sendRequest({
+            kind: "getApiKey",
+            id,
+            botId,
+        }).catch((err) => {
+            this.#logger.error("Failed to get api key", err);
+            return undefined;
+        });
+    }
+
     executeInternalBotCommand(
         scope: BotActionScope,
         bot: InternalBotCommandInstance,

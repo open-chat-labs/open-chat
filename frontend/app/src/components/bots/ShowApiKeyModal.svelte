@@ -70,9 +70,11 @@
                     on:click={sendApiKeyToBot}>
                     <Translatable resourceKey={i18nKey("bots.add.sendToBot")} />
                 </Button>
-                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onCopy}>
-                    <Translatable resourceKey={i18nKey("copy")} />
-                </Button>
+                {#if !$mobileWidth}
+                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onCopy}>
+                        <Translatable resourceKey={i18nKey("copy")} />
+                    </Button>
+                {/if}
                 <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
                     <Translatable resourceKey={i18nKey("close")} />
                 </Button>
