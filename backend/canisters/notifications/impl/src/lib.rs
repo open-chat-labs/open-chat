@@ -145,3 +145,24 @@ pub struct CanisterIds {
     pub notifications_index: CanisterId,
     pub cycles_dispenser: CanisterId,
 }
+
+#[test]
+fn notification_length() {
+    let notification = types::Notification::DirectMessage(types::DirectMessageNotification {
+        sender: Principal::from_text("cbopz-duaaa-aaaaa-qaaka-cai").unwrap().into(),
+        thread_root_message_index: None,
+        message_index: 1.into(),
+        event_index: 1.into(),
+        sender_name: "BlahBlah".to_string(),
+        sender_display_name: None,
+        message_type: "text".to_string(),
+        message_text: Some("abc".to_string()),
+        image_url: None,
+        sender_avatar_id: None,
+        crypto_transfer: None,
+    });
+
+    let bytes = msgpack::serialize_then_unwrap(notification).len();
+
+    assert!(bytes < 125, "{bytes}");
+}

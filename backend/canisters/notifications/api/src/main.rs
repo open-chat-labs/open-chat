@@ -1,9 +1,12 @@
-use candid_gen::generate_candid_method;
+use std::env;
+use ts_export::generate_ts_method;
 
 #[allow(deprecated)]
 fn main() {
-    generate_candid_method!(notifications, notification_candid_check, query);
+    let directory = env::current_dir().unwrap().join("tsBindings/notifications");
+    if directory.exists() {
+        std::fs::remove_dir_all(&directory).unwrap();
+    }
 
-    candid::export_service!();
-    std::print!("{}", __export_service());
+    generate_ts_method!(notifications, notification_types, query);
 }

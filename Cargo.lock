@@ -5051,10 +5051,11 @@ name = "notifications_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen",
  "notifications_index_canister",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 

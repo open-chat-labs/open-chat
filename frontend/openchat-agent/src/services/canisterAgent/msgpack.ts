@@ -12,17 +12,11 @@ import {
 } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { toCanisterResponseError } from "../error";
-import { type Options, Packr } from "msgpackr";
 import type { Static, TSchema } from "@sinclair/typebox";
 import { AssertError } from "@sinclair/typebox/value";
 import { CanisterAgent } from "./base";
 import { typeboxValidate } from "../../utils/typebox";
-
-const Packer = new Packr({
-    useRecords: false,
-    skipValues: [null, undefined],
-    largeBigIntToString: true,
-} as unknown as Options);
+import { deserializeFromMsgPack, serializeToMsgPack } from "../../utils/msgpack";
 
 export abstract class MsgpackCanisterAgent extends CanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string, canisterName: string) {
@@ -186,7 +180,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
         validator: T,
     ): ArrayBuffer {
         const validated = typeboxValidate(value, validator);
-        return Packer.pack(validated);
+        return serializeToMsgPack(validated);
     }
 
     private static processMsgpackResponse<Resp extends TSchema, Out>(
@@ -194,7 +188,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
         mapper: (from: Static<Resp>) => Out,
         validator: Resp,
     ): Out {
-        const response = Packer.unpack(new Uint8Array(responseBytes));
+        const response = deserializeFromMsgPack(new Uint8Array(responseBytes));
         try {
             const validated = typeboxValidate(response, validator);
             return mapper(validated);

@@ -25,6 +25,7 @@ use model::favourite_chats::FavouriteChats;
 use model::message_activity_events::MessageActivityEvents;
 use model::referrals::Referrals;
 use model::streak::Streak;
+use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -120,7 +121,7 @@ impl RuntimeState {
             sender,
             recipients: vec![recipient],
             authorizer: Some(self.data.local_user_index_canister_id),
-            notification_bytes: ByteBuf::from(candid::encode_one(notification).unwrap()),
+            notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
         };
         ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
 

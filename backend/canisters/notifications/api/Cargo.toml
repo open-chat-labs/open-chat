@@ -2,18 +2,14 @@
 name = "notifications_canister"
 version = "0.1.0"
 edition = "2021"
-default-run = "notifications_canister"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[[bin]]
-name = "notification_candid_gen"
-path = "src/notification_candid_gen.rs"
-
 [dependencies]
 candid = { workspace = true }
-candid_gen = { path = "../../../libraries/candid_gen" }
 notifications_index_canister = { path = "../../notifications_index/api" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+ts_export = { path = "../../../libraries/ts_export" }
+ts-rs = { workspace = true }
 types = { path = "../../../libraries/types" }

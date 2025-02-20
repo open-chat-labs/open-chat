@@ -3,6 +3,7 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::fmt::{Debug, Formatter};
+use ts_export::ts_export;
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct NotificationEnvelope {
@@ -22,7 +23,8 @@ impl NotificationEnvelope {
     }
 }
 
-#[derive(CandidType, Serialize)]
+#[ts_export]
+#[derive(Serialize)]
 pub enum Notification {
     AddedToChannel(AddedToChannelNotification),
     DirectMessage(DirectMessageNotification),
@@ -36,7 +38,8 @@ pub enum Notification {
     ChannelMessageTipped(ChannelMessageTipped),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AddedToChannelNotification {
     pub community_id: CommunityId,
     pub community_name: String,
@@ -49,7 +52,8 @@ pub struct AddedToChannelNotification {
     pub channel_avatar_id: Option<u128>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DirectMessageNotification {
     pub sender: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -64,7 +68,8 @@ pub struct DirectMessageNotification {
     pub crypto_transfer: Option<CryptoTransferDetails>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMessageNotification {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -81,7 +86,8 @@ pub struct GroupMessageNotification {
     pub crypto_transfer: Option<CryptoTransferDetails>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelMessageNotification {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
@@ -101,7 +107,8 @@ pub struct ChannelMessageNotification {
     pub crypto_transfer: Option<CryptoTransferDetails>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DirectReactionAddedNotification {
     pub them: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -113,7 +120,8 @@ pub struct DirectReactionAddedNotification {
     pub user_avatar_id: Option<u128>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupReactionAddedNotification {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -127,7 +135,8 @@ pub struct GroupReactionAddedNotification {
     pub group_avatar_id: Option<u128>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelReactionAddedNotification {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
@@ -144,7 +153,8 @@ pub struct ChannelReactionAddedNotification {
     pub channel_avatar_id: Option<u128>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DirectMessageTipped {
     pub them: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -156,7 +166,8 @@ pub struct DirectMessageTipped {
     pub user_avatar_id: Option<u128>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMessageTipped {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -170,7 +181,8 @@ pub struct GroupMessageTipped {
     pub group_avatar_id: Option<u128>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelMessageTipped {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
@@ -187,7 +199,8 @@ pub struct ChannelMessageTipped {
     pub channel_avatar_id: Option<u128>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CryptoTransferDetails {
     pub recipient: UserId,
     pub recipient_username: Option<String>,
@@ -214,25 +227,4 @@ impl Debug for NotificationEnvelope {
             .field("timestamp", &self.timestamp)
             .finish()
     }
-}
-
-#[test]
-fn notification_length() {
-    let notification = Notification::DirectMessage(DirectMessageNotification {
-        sender: Principal::from_text("cbopz-duaaa-aaaaa-qaaka-cai").unwrap().into(),
-        thread_root_message_index: None,
-        message_index: 1.into(),
-        event_index: 1.into(),
-        sender_name: "BlahBlah".to_string(),
-        sender_display_name: None,
-        message_type: "text".to_string(),
-        message_text: Some("abc".to_string()),
-        image_url: None,
-        sender_avatar_id: None,
-        crypto_transfer: None,
-    });
-
-    let bytes = candid::encode_one(notification).unwrap().len();
-
-    assert!(bytes < 850, "{bytes}");
 }
