@@ -3,6 +3,7 @@ use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv, User};
 use candid::Principal;
 use community_canister::generate_bot_api_key;
+use jwt::Claims;
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandInitial};
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
@@ -10,9 +11,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    AccessTokenScope, AuthToken, AutonomousConfig, BotActionChatDetails, BotActionScope, BotApiKeyToken, BotCommandDefinition,
-    BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent,
-    CommunityPermission, MessageContent, MessagePermission, Rules, TextContent, UserId,
+    AccessTokenScope, AuthToken, AutonomousConfig, BotActionByCommandClaims, BotActionChatDetails, BotActionScope,
+    BotApiKeyToken, BotCommandArgValue, BotCommandDefinition, BotDefinition, BotInstallationLocation, BotMessageContent,
+    BotPermissions, CanisterId, Chat, ChatEvent, CommunityPermission, MessageContent, MessagePermission, Rules, TextContent,
+    UserId,
 };
 use utils::base64;
 
@@ -348,6 +350,88 @@ fn e2e_autonomous_bot_test() {
 }
 
 #[test]
+fn send_api_key_test() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+
+    // Register a bot
+    let bot_name = random_string();
+    let (bot_id, _bot_principal) = register_autonomous_bot(env, &owner, canister_ids.user_index, bot_name.clone());
+
+    // Install bot in community
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        canister_ids.local_user_index(env, community_id),
+        BotInstallationLocation::Community(community_id),
+        bot_id,
+        BotPermissions::default(),
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    // Generate an API key for the bot in the channel
+    let api_key = match client::community::generate_bot_api_key(
+        env,
+        owner.principal,
+        community_id.into(),
+        &generate_bot_api_key::Args {
+            bot_id,
+            requested_permissions: BotPermissions::text_only(),
+            channel_id: Some(channel_id),
+        },
+    ) {
+        generate_bot_api_key::Response::Success(result) => result.api_key,
+        response => panic!("'generate_bot_api_key' error: {response:?}"),
+    };
+
+    // Get an access token to sync_api_key
+    let access_token_args = access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
+        bot_id,
+        command: BotCommandInitial {
+            name: "sync_api_key".to_string(),
+            args: Vec::new(),
+        },
+        scope: BotActionScope::Chat(BotActionChatDetails {
+            chat: Chat::Channel(community_id, channel_id),
+            thread: None,
+            message_id: random_from_u128(),
+        }),
+    });
+
+    let access_token = match client::local_user_index::access_token_v2(
+        env,
+        owner.principal,
+        canister_ids.local_user_index(env, community_id),
+        &access_token_args,
+    ) {
+        local_user_index_canister::access_token_v2::Response::Success(access_token) => access_token,
+        response => panic!("'access_token' error: {response:?}"),
+    };
+
+    // Check the API key in the token matches the generated API key
+    let jwt = jwt::extract_and_decode::<Claims<BotActionByCommandClaims>>(&access_token).expect("Expected valid access token");
+    let claims = jwt.into_custom();
+    assert_eq!(claims.command.args[0].name, "api_key");
+    let BotCommandArgValue::String(value) = &claims.command.args[0].value else {
+        panic!("Expected arg value to be string");
+    };
+    assert_eq!(value, &api_key);
+}
+
+#[test]
 fn create_channel_by_api_key() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -656,6 +740,38 @@ fn register_bot(
             commands: commands.clone(),
             autonomous_config: Some(AutonomousConfig {
                 sync_api_key: false,
+                permissions: BotPermissions::text_only(),
+            }),
+        },
+    );
+
+    let response = client::user_index::happy_path::explore_bots(env, user.principal, user_index_canister_id, None);
+    let bot_id = response.matches.iter().find(|b| b.name == bot_name).unwrap().id;
+
+    (bot_id, bot_principal)
+}
+
+fn register_autonomous_bot(
+    env: &mut PocketIc,
+    user: &User,
+    user_index_canister_id: CanisterId,
+    bot_name: String,
+) -> (UserId, Principal) {
+    // Register a bot
+    let endpoint = "https://my.bot.xyz/".to_string();
+    let description = "greet".to_string();
+
+    let bot_principal = client::user_index::happy_path::register_bot(
+        env,
+        user,
+        user_index_canister_id,
+        bot_name.clone(),
+        endpoint.clone(),
+        BotDefinition {
+            description: description.clone(),
+            commands: vec![],
+            autonomous_config: Some(AutonomousConfig {
+                sync_api_key: true,
                 permissions: BotPermissions::text_only(),
             }),
         },

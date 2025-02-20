@@ -80,6 +80,14 @@ pub fn verify(jwt: &str, public_key_pem: &str) -> Result<String, Box<dyn Error>>
     Ok(claims_json.to_string())
 }
 
+pub fn extract_and_decode<T: DeserializeOwned>(jwt: &str) -> Result<T, Box<dyn Error>> {
+    let mut parts = jwt.split('.');
+    let _header_json = parts.next().ok_or("Invalid jwt")?;
+    let claims_json = parts.next().ok_or("Invalid jwt")?;
+
+    decode_from_json(claims_json)
+}
+
 pub fn verify_and_decode<T: DeserializeOwned>(jwt: &str, public_key_pem: &str) -> Result<T, Box<dyn Error>> {
     let claims_json = verify(jwt, public_key_pem)?;
 

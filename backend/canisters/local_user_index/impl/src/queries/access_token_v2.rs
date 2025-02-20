@@ -13,7 +13,7 @@ use types::c2c_can_issue_access_token::{
 };
 use types::{
     c2c_bot_api_key, AccessTokenScope, BotActionByApiKeyClaims, BotActionByCommandClaims, BotApiKeyToken, BotCommand,
-    BotCommandArg, BotCommandArgValue, Chat, JoinOrEndVideoCallClaims, StartVideoCallClaims,
+    BotCommandArg, BotCommandArgValue, BotPermissions, Chat, GroupRole, JoinOrEndVideoCallClaims, StartVideoCallClaims,
 };
 use utils::base64;
 
@@ -163,14 +163,21 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
     };
 
     if let ArgsInternal::BotActionByCommand(args) = args_outer {
-        let Some((permissions, default_role)) = state
-            .data
-            .bots
-            .get(&args.bot_id)
-            .and_then(|b| b.commands.iter().find(|c| c.name == args.command.name))
-            .map(|c| (c.permissions.clone(), c.default_role.unwrap_or_default()))
-        else {
-            return Err(Response::NotAuthorized);
+        let bot = state.data.bots.get(&args.bot_id).ok_or(Response::NotAuthorized)?;
+
+        let (permissions, default_role) = if args.command.name.eq_ignore_ascii_case(SYNC_API_KEY_COMMAND_NAME) {
+            if bot.autonomous_config.as_ref().is_none_or(|config| !config.sync_api_key) {
+                return Err(Response::NotAuthorized);
+            }
+            (BotPermissions::default(), GroupRole::Owner)
+        } else {
+            let command = bot
+                .commands
+                .iter()
+                .find(|c| c.name == args.command.name)
+                .ok_or(Response::NotAuthorized)?;
+
+            (command.permissions.clone(), command.default_role.unwrap_or_default())
         };
 
         return Ok(PrepareResult {
