@@ -1228,16 +1228,10 @@
 <main class:anon={$anonUser} class:offline={$offlineStore}>
     {#if $layoutStore.showNav}
         <LeftNav
-            on:profile={showProfile}
-            on:wallet={showWallet}
-            on:halloffame={() => (modal = { kind: "hall_of_fame" })}
-            on:newGroup={() => newGroup("group")}
-            on:communityDetails={communityDetails}
-            on:newChannel={newChannel}
-            on:leaveCommunity={triggerConfirm}
-            on:deleteCommunity={triggerConfirm}
-            on:upgrade={upgrade}
-            on:claimDailyChit={claimDailyChit} />
+            onProfile={showProfile}
+            onWallet={showWallet}
+            onUpgrade={upgrade}
+            onClaimDailyChit={claimDailyChit} />
     {/if}
 
     {#if $layoutStore.showLeft}
@@ -1329,7 +1323,7 @@
     <Overlay>
         <Register
             on:logout={() => client.logout()}
-            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
+            on:createdUser={(ev) => client.onRegisteredUser(ev.detail)} />
     </Overlay>
 {:else if modal.kind !== "none"}
     <Overlay

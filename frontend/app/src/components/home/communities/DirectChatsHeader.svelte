@@ -6,10 +6,10 @@
     import { iconSize } from "../../../stores/iconSize";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import { createEventDispatcher } from "svelte";
 
     const dispatch = createEventDispatcher();
@@ -36,7 +36,7 @@
                     <Menu>
                         <MenuItem
                             disabled={!canMarkAllRead}
-                            on:click={() => dispatch("markAllRead")}>
+                            onclick={() => dispatch("markAllRead")}>
                             <CheckboxMultipleMarked
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}

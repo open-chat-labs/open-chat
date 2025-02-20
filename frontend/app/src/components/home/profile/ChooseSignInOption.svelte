@@ -38,6 +38,7 @@
         const supportsII = "PublicKeyCredential" in window;
 
         options.push(AuthProvider.EMAIL);
+        options.push(AuthProvider.PASSKEY);
 
         if (supportsII) {
             options.push(AuthProvider.II);
@@ -51,9 +52,10 @@
 
         if (restrictTo.size > 0) {
             options = options.filter((o) => {
-                return (
+                return restrictTo.has(o) || (
                     (o === AuthProvider.II && restrictTo.has("II")) ||
                     (o === AuthProvider.EMAIL && restrictTo.has("EMAIL")) ||
+                    (o === AuthProvider.PASSKEY && restrictTo.has("PASSKEY")) ||
                     (o === AuthProvider.ETH && restrictTo.has("ETH")) ||
                     (o === AuthProvider.SOL && restrictTo.has("SOL")) ||
                     (o === AuthProvider.NFID && restrictTo.has("NFID"))

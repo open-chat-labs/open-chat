@@ -2114,6 +2114,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
 
 [[package]]
+name = "dupe_deps_detector"
+version = "0.1.0"
+
+[[package]]
 name = "dyn-clone"
 version = "1.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5033,6 +5037,7 @@ dependencies = [
  "notifications_index_canister",
  "notifications_index_canister_client",
  "openssl",
+ "prometheus",
  "serde",
  "serde_json",
  "tokio",
@@ -5859,6 +5864,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "prometheus"
+version = "0.13.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3d33c28a30771f7f96db69893f78b857f7450d7e0237e9c8fc6427a81bae7ed1"
+dependencies = [
+ "cfg-if",
+ "fnv",
+ "lazy_static",
+ "memchr",
+ "parking_lot",
+ "protobuf",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "proof_of_unique_personhood"
 version = "0.1.0"
 dependencies = [
@@ -5967,6 +5987,12 @@ dependencies = [
  "tempfile",
  "unarray",
 ]
+
+[[package]]
+name = "protobuf"
+version = "2.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "106dd99e98437432fed6519dedecfade6a06a73bb7b2a1e019fdd2bee5778d94"
 
 [[package]]
 name = "psm"
@@ -8411,9 +8437,10 @@ dependencies = [
 name = "user_canister_client"
 version = "0.1.0"
 dependencies = [
- "candid",
  "canister_client",
  "ic-agent",
+ "ic_principal",
+ "msgpack",
  "types",
  "user_canister",
 ]

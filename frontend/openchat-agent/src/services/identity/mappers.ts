@@ -8,6 +8,7 @@ import type {
     ApiInitiateIdentityLinkResponse,
     ApiPrepareDelegationResponse,
     ApiRemoveIdentityLinkResponse,
+    ApiWebAuthnKey,
 } from "./candid/idl";
 import {
     type ApproveIdentityLinkResponse,
@@ -20,9 +21,10 @@ import {
     type PrepareDelegationResponse,
     type PrepareDelegationSuccess,
     type RemoveIdentityLinkResponse,
+    type WebAuthnKeyFull,
     UnsupportedValueError,
 } from "openchat-shared";
-import { consolidateBytes } from "../../utils/mapping";
+import { consolidateBytes, optional } from "../../utils/mapping";
 import type { Signature } from "@dfinity/agent";
 import { Delegation } from "@dfinity/identity";
 import type { PublicKey, SignedDelegation } from "./candid/types";
@@ -53,7 +55,13 @@ export function checkAuthPrincipalResponse(
     candid: ApiCheckAuthPrincipalResponse,
 ): CheckAuthPrincipalResponse {
     if ("Success" in candid) {
-        return { kind: "success" };
+        return {
+            kind: "success",
+            userId: optional(candid.Success.user_id, (p) => p.toString()),
+            webAuthnKey: optional(candid.Success.webauthn_key, webAuthnKey),
+            originatingCanister: candid.Success.originating_canister.toString(),
+            isIIPrincipal: candid.Success.is_ii_principal,
+        };
     }
     if ("NotFound" in candid) {
         return { kind: "not_found" };
@@ -151,6 +159,12 @@ export function initiateIdentityLinkResponse(
     if ("PublicKeyInvalid" in candid) {
         return "public_key_invalid";
     }
+    if ("OriginatingCanisterInvalid" in candid) {
+        return "originating_canister_invalid";
+    }
+    if ("LinkedIdentitiesLimitReached" in candid) {
+        return "linked_identities_limit_reached";
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiInitiateIdentityLinkResponse type received",
         candid,
@@ -169,6 +183,8 @@ export function authPrincipalsResponse(
             principal: p.principal.toString(),
             originatingCanister: p.originating_canister.toString(),
             isIIPrincipal: p.is_ii_principal,
+            isCurrentIdentity: p.is_current_identity,
+            webAuthnKey: optional(p.webauthn_key, webAuthnKey),
         }));
     }
 
@@ -224,4 +240,24 @@ export function removeIdentityLinkResponse(
         "Unexpected ApiRemoveIdentityLinkResponse type received",
         candid,
     );
+}
+
+function webAuthnKey(key: ApiWebAuthnKey): WebAuthnKeyFull {
+    return {
+        publicKey: consolidateBytes(key.public_key),
+        credentialId: consolidateBytes(key.credential_id),
+        origin: key.origin,
+        crossPlatform: key.cross_platform,
+        aaguid: consolidateBytes(key.aaguid),
+    };
+}
+
+export function apiWebAuthnKey(key: WebAuthnKeyFull): ApiWebAuthnKey {
+    return {
+        public_key: key.publicKey,
+        credential_id: key.credentialId,
+        origin: key.origin,
+        cross_platform: key.crossPlatform,
+        aaguid: key.aaguid,
+    };
 }

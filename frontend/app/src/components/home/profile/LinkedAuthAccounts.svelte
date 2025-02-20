@@ -62,7 +62,7 @@
         <TruncatedAccount account={account.principal}>
             <AuthProviderLogo square provider={account.provider} />
         </TruncatedAccount>
-        {#if account.principal === client.AuthPrincipal}
+        {#if account.isCurrentIdentity}
             <div class="current">
                 <TooltipWrapper position="top" align="end">
                     <Account slot="target" size={$iconSize} color={"var(--icon-txt)"} />

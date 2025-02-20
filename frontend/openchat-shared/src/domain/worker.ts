@@ -182,6 +182,8 @@ import type {
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
+    WebAuthnKey,
+    WebAuthnKeyFull,
 } from "./identity";
 import type { GenerateMagicLinkResponse } from "./email";
 import type {
@@ -207,6 +209,7 @@ import type {
     BotCommandResponse,
     BotDefinition,
     BotDefinitionResponse,
+    BotInstallationLocation,
     BotsResponse,
     ExternalBot,
     ExternalBotPermissions,
@@ -398,6 +401,9 @@ export type WorkerRequest =
     | GetAccessToken
     | GetLocalUserIndexForUser
     | UpdateBtcBalance
+    | CurrentUserWebAuthnKey
+    | LookupWebAuthnPubKey
+    | SetCachedWebAuthnKey
     | GenerateMagicLink
     | GetSignInWithEmailDelegation
     | SiwePrepareLogin
@@ -434,7 +440,7 @@ export type WorkerRequest =
 
 type GenerateBotApiKey = {
     kind: "generateBotApiKey";
-    id: MultiUserChatIdentifier | CommunityIdentifier;
+    id: ChatIdentifier | CommunityIdentifier;
     botId: string;
     permissions: ExternalBotPermissions;
 };
@@ -462,21 +468,21 @@ type UpdateRegisteredBot = {
 
 type InstallBot = {
     kind: "installBot";
-    id: CommunityIdentifier | GroupChatIdentifier;
+    id: BotInstallationLocation;
     botId: string;
     grantedPermissions: ExternalBotPermissions;
 };
 
 type UpdateInstalledBot = {
     kind: "updateInstalledBot";
-    id: CommunityIdentifier | GroupChatIdentifier;
+    id: BotInstallationLocation;
     botId: string;
     grantedPermissions: ExternalBotPermissions;
 };
 
 type UninstallBot = {
     kind: "uninstallBot";
-    id: CommunityIdentifier | GroupChatIdentifier;
+    id: BotInstallationLocation;
     botId: string;
 };
 
@@ -1164,6 +1170,7 @@ type GenerateIdentityChallenge = {
 
 type CreateOpenChatIdentity = {
     kind: "createOpenChatIdentity";
+    webAuthnCredentialId: Uint8Array | undefined;
     challengeAttempt: ChallengeAttempt | undefined;
 };
 
@@ -1385,6 +1392,20 @@ type UpdateBtcBalance = {
     kind: "updateBtcBalance";
 };
 
+type CurrentUserWebAuthnKey = {
+    kind: "currentUserWebAuthnKey";
+};
+
+type LookupWebAuthnPubKey = {
+    credentialId: Uint8Array;
+    kind: "lookupWebAuthnPubKey";
+};
+
+type SetCachedWebAuthnKey = {
+    key: WebAuthnKeyFull;
+    kind: "setCachedWebAuthnKey";
+};
+
 type GenerateMagicLink = {
     email: string;
     sessionKey: Uint8Array;
@@ -1429,6 +1450,7 @@ type LinkIdentities = {
     initiatorKey: CryptoKeyPair;
     initiatorDelegation: JsonnableDelegationChain;
     initiatorIsIIPrincipal: boolean;
+    initiatorWebAuthnKey: WebAuthnKey | undefined;
     approverKey: CryptoKeyPair;
     approverDelegation: JsonnableDelegationChain;
 };
@@ -1471,6 +1493,7 @@ export type WorkerResponseInner =
     | boolean
     | string
     | string[]
+    | Uint8Array
     | undefined
     | [number, number]
     | GenerateChallengeResponse
@@ -1601,6 +1624,7 @@ export type WorkerResponseInner =
     | PendingDeploymentResponse
     | JoinVideoCallResponse
     | UpdateBtcBalanceResponse
+    | WebAuthnKeyFull
     | GenerateMagicLinkResponse
     | SiwePrepareLoginResponse
     | SiwsPrepareLoginResponse
@@ -2284,6 +2308,12 @@ export type WorkerResult<T> = T extends Init
     ? string
     : T extends UpdateBtcBalance
     ? UpdateBtcBalanceResponse
+    : T extends CurrentUserWebAuthnKey
+    ? WebAuthnKeyFull | undefined
+    : T extends LookupWebAuthnPubKey
+    ? Uint8Array | undefined
+    : T extends SetCachedWebAuthnKey
+    ? void
     : T extends GenerateMagicLink
     ? GenerateMagicLinkResponse
     : T extends GetSignInWithEmailDelegation

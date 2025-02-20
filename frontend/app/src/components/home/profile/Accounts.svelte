@@ -19,9 +19,9 @@
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuIcon from "../../MenuIconLegacy.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
+    import MenuItem from "../../MenuItemLegacy.svelte";
     import AccountTransactions from "./AccountTransactions.svelte";
     import Overlay from "../../Overlay.svelte";
     import SwapCrypto from "./SwapCrypto.svelte";
@@ -178,7 +178,7 @@
                         </span>
                         <span slot="menu">
                             <Menu>
-                                <MenuItem on:click={() => showSend(token.ledger)}>
+                                <MenuItem onclick={() => showSend(token.ledger)}>
                                     <ArrowRightBoldCircle
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
@@ -188,7 +188,7 @@
                                     </div>
                                 </MenuItem>
                                 {#if token.enabled}
-                                    <MenuItem on:click={() => showReceive(token.ledger)}>
+                                    <MenuItem onclick={() => showReceive(token.ledger)}>
                                         <ArrowLeftBoldCircle
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
@@ -198,23 +198,21 @@
                                                 resourceKey={i18nKey("cryptoAccount.receive")} />
                                         </div>
                                     </MenuItem>
-                                        {#if $swappableTokensStore.has(token.ledger)}
-                                            <MenuItem on:click={() => showSwap(token.ledger)}>
-                                                <SwapIcon
-                                                    size={$iconSize}
-                                                    color={"var(--icon-inverted-txt)"}
-                                                    slot="icon" />
-                                                <div slot="text">
-                                                    <Translatable
-                                                        resourceKey={i18nKey(
-                                                            "cryptoAccount.swap",
-                                                        )} />
-                                                </div>
-                                            </MenuItem>
-                                        {/if}
+                                    {#if $swappableTokensStore.has(token.ledger)}
+                                        <MenuItem onclick={() => showSwap(token.ledger)}>
+                                            <SwapIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">
+                                                <Translatable
+                                                    resourceKey={i18nKey("cryptoAccount.swap")} />
+                                            </div>
+                                        </MenuItem>
+                                    {/if}
                                 {/if}
                                 {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
-                                    <MenuItem on:click={() => showTransactions(token)}>
+                                    <MenuItem onclick={() => showTransactions(token)}>
                                         <ViewList
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
@@ -228,7 +226,7 @@
                                     </MenuItem>
                                 {/if}
                                 {#if manualWalletConfig}
-                                    <MenuItem on:click={() => removeFromWallet(token.ledger)}>
+                                    <MenuItem onclick={() => removeFromWallet(token.ledger)}>
                                         <HeartRemoveOutline
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}

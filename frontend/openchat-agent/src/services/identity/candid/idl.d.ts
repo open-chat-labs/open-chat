@@ -1,7 +1,7 @@
 import type { IDL } from "@dfinity/candid";
 import {
     ApproveIdentityLinkResponse,
-    CheckAuthPrincipalResponse,
+    CheckAuthPrincipalV2Response,
     CreateIdentityResponse,
     GenerateChallengeResponse,
     GetDelegationResponse,
@@ -10,11 +10,12 @@ import {
     SignedDelegation,
     AuthPrincipalsResponse,
     RemoveIdentityLinkResponse,
+    WebAuthnKey,
     _SERVICE,
 } from "./types";
 export {
     ApproveIdentityLinkResponse as ApiApproveIdentityLinkResponse,
-    CheckAuthPrincipalResponse as ApiCheckAuthPrincipalResponse,
+    CheckAuthPrincipalV2Response as ApiCheckAuthPrincipalResponse,
     CreateIdentityResponse as ApiCreateIdentityResponse,
     GenerateChallengeResponse as ApiGenerateChallengeResponse,
     GetDelegationResponse as ApiGetDelegationResponse,
@@ -23,6 +24,7 @@ export {
     SignedDelegation as ApiSignedDelegation,
     AuthPrincipalsResponse as ApiAuthPrincipalsResponse,
     RemoveIdentityLinkResponse as ApiRemoveIdentityLinkResponse,
+    WebAuthnKey as ApiWebAuthnKey,
     _SERVICE as IdentityService,
 };
 

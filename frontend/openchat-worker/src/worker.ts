@@ -5,11 +5,13 @@ import {
     ECDSAKeyIdentity,
     type JsonnableDelegationChain,
 } from "@dfinity/identity";
+import { Principal } from "@dfinity/principal";
 import {
     IdentityAgent,
     OpenChatAgent,
     setCommunityReferral,
     getBotDefinition,
+    setCachedWebAuthnKey,
 } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
@@ -30,6 +32,7 @@ import {
     type LinkIdentitiesResponse,
     AuthProvider,
     type RemoveIdentityLinkResponse,
+    type WebAuthnKey,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -61,17 +64,16 @@ async function initialize(
     const authProviderIdentity = await authIdentityStorage.get() ?? new AnonymousIdentity();
     const authPrincipal = authProviderIdentity.getPrincipal();
     authPrincipalString = authPrincipal.toString();
-
-    if (authPrincipal.isAnonymous() || authPrincipalString !== expectedAuthPrincipal) {
-        return { kind: "auth_identity_not_found" };
-    }
-
     identityAgent = await IdentityAgent.create(
         authProviderIdentity as SignIdentity,
         identityCanister,
         icUrl,
         authProvider === undefined ? undefined : authProvider === AuthProvider.II,
     );
+
+    if (authPrincipal.isAnonymous() || authPrincipalString !== expectedAuthPrincipal) {
+        return { kind: "auth_identity_not_found" };
+    }
 
     const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
     if (ocIdentity !== undefined) {
@@ -94,6 +96,7 @@ async function initialize(
 }
 
 async function createOpenChatIdentity(
+    webAuthnCredentialId: Uint8Array | undefined,
     challengeAttempt: ChallengeAttempt | undefined,
 ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
     if (identityAgent === undefined || authPrincipalString === undefined) {
@@ -102,7 +105,7 @@ async function createOpenChatIdentity(
 
     const sessionKey = await ECDSAKeyIdentity.generate();
 
-    const response = await identityAgent.createOpenChatIdentity(sessionKey, challengeAttempt);
+    const response = await identityAgent.createOpenChatIdentity(sessionKey, webAuthnCredentialId, challengeAttempt);
 
     if (typeof response !== "string") {
         await ocIdentityStorage.set(sessionKey, response.getDelegation(), authPrincipalString);
@@ -263,7 +266,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             executeThenReply(
                 payload,
                 correlationId,
-                createOpenChatIdentity(payload.challengeAttempt).then((resp) => {
+                createOpenChatIdentity(payload.webAuthnCredentialId, payload.challengeAttempt).then((resp) => {
                     const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
                     agent = new OpenChatAgent(id, {
                         ...initPayload!,
@@ -1735,6 +1738,28 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.updateBtcBalance(payload.userId));
                 break;
 
+            case "currentUserWebAuthnKey":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    identityAgent?.checkAuthPrincipal().then((res) => {
+                        return res.kind === "success" ? res.webAuthnKey : undefined
+                    }) ?? Promise.resolve(undefined)
+                );
+                break;
+
+            case "lookupWebAuthnPubKey":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    identityAgent?.lookupWebAuthnPubKey(payload.credentialId) ?? Promise.resolve(undefined)
+                );
+                break;
+
+            case "setCachedWebAuthnKey":
+                executeThenReply(payload, correlationId, setCachedWebAuthnKey(payload.key));
+                break;
+
             case "generateMagicLink":
                 executeThenReply(
                     payload,
@@ -1829,6 +1854,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.initiatorKey,
                         payload.initiatorDelegation,
                         payload.initiatorIsIIPrincipal,
+                        payload.initiatorWebAuthnKey,
                         payload.approverKey,
                         payload.approverDelegation,
                     ),
@@ -1969,6 +1995,7 @@ async function linkIdentities(
     initiatorKey: CryptoKeyPair,
     initiatorDelegation: JsonnableDelegationChain,
     initiatorIsIIPrincipal: boolean,
+    initiatorWebAuthnKey: WebAuthnKey | undefined,
     approverKey: CryptoKeyPair,
     approverDelegation: JsonnableDelegationChain,
 ): Promise<LinkIdentitiesResponse> {
@@ -1976,7 +2003,6 @@ async function linkIdentities(
         await ECDSAKeyIdentity.fromKeyPair(initiatorKey),
         DelegationChain.fromJSON(initiatorDelegation),
     );
-    const initiator = initiatorIdentity.getPrincipal().toString();
     const initiatorAgent = await IdentityAgent.create(
         initiatorIdentity,
         identityCanister,
@@ -1988,7 +2014,6 @@ async function linkIdentities(
         await ECDSAKeyIdentity.fromKeyPair(approverKey),
         DelegationChain.fromJSON(approverDelegation),
     );
-    const approver = approverIdentity.getPrincipal().toString();
     const approverAgent = await IdentityAgent.create(
         approverIdentity,
         identityCanister,
@@ -1996,15 +2021,20 @@ async function linkIdentities(
         undefined,
     );
 
-    if (approver != authPrincipalString) {
-        return "principal_mismatch";
-    }
-
-    const initiateResponse = await initiatorAgent.initiateIdentityLink(approver);
+    const approver = approverIdentity.getPrincipal().toString();
+    const initiateResponse = await initiatorAgent.initiateIdentityLink(
+        approver,
+        initiatorWebAuthnKey?.credentialId
+    );
     if (initiateResponse !== "success") {
         return initiateResponse;
     }
-    return await approverAgent.approveIdentityLink(initiator);
+
+    const initiatorPrincipal = initiatorWebAuthnKey !== undefined
+        ? Principal.selfAuthenticating(initiatorWebAuthnKey.publicKey)
+        : initiatorIdentity.getPrincipal();
+
+    return await approverAgent.approveIdentityLink(initiatorPrincipal.toString());
 }
 
 async function removeIdentityLink(linked_principal: string): Promise<RemoveIdentityLinkResponse> {

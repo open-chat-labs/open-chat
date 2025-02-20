@@ -12,8 +12,10 @@ import type {
     InitiateIdentityLinkResponse,
     PrepareDelegationResponse,
     RemoveIdentityLinkResponse,
+    WebAuthnKeyFull,
 } from "openchat-shared";
 import {
+    apiWebAuthnKey,
     approveIdentityLinkResponse,
     authPrincipalsResponse,
     checkAuthPrincipalResponse,
@@ -26,7 +28,7 @@ import {
 } from "./mappers";
 import type { CreateIdentityArgs } from "./candid/types";
 import { apiOptional } from "../common/chatMappers";
-import { identity } from "../../utils/mapping";
+import { consolidateBytes, identity } from "../../utils/mapping";
 import { Principal } from "@dfinity/principal";
 import type { DelegationIdentity } from "@dfinity/identity";
 import { signedDelegation } from "../../utils/id";
@@ -38,11 +40,13 @@ export class IdentityClient extends CandidCanisterAgent<IdentityService> {
 
     createIdentity(
         sessionKey: Uint8Array,
+        webAuthnKey: WebAuthnKeyFull | undefined,
         isIIPrincipal: boolean | undefined,
         challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<CreateIdentityResponse> {
         const args: CreateIdentityArgs = {
             public_key: this.publicKey(),
+            webauthn_key: apiOptional(apiWebAuthnKey, webAuthnKey),
             session_key: sessionKey,
             is_ii_principal: apiOptional(identity, isIIPrincipal),
             max_time_to_live: [] as [] | [bigint],
@@ -57,7 +61,7 @@ export class IdentityClient extends CandidCanisterAgent<IdentityService> {
 
     checkAuthPrincipal(): Promise<CheckAuthPrincipalResponse> {
         return this.handleQueryResponse(
-            () => this.service.check_auth_principal({}),
+            () => this.service.check_auth_principal_v2({}),
             checkAuthPrincipalResponse,
             {},
         );
@@ -97,11 +101,13 @@ export class IdentityClient extends CandidCanisterAgent<IdentityService> {
 
     initiateIdentityLink(
         linkToPrincipal: string,
+        webAuthnKey: WebAuthnKeyFull | undefined,
         isIIPrincipal: boolean | undefined,
     ): Promise<InitiateIdentityLinkResponse> {
         return this.handleResponse(
             this.service.initiate_identity_link({
                 link_to_principal: Principal.fromText(linkToPrincipal),
+                webauthn_key: apiOptional(apiWebAuthnKey, webAuthnKey),
                 public_key: this.publicKey(),
                 is_ii_principal: apiOptional(identity, isIIPrincipal),
             }),
@@ -133,6 +139,23 @@ export class IdentityClient extends CandidCanisterAgent<IdentityService> {
         return this.handleQueryResponse(
             () => this.service.auth_principals({}),
             authPrincipalsResponse,
+        );
+    }
+
+    lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array | undefined> {
+        const args = {
+            credential_id: credentialId,
+        };
+        return this.handleQueryResponse(
+            () => this.service.lookup_webauthn_pubkey(args),
+            (resp) => {
+                if ("Success" in resp) {
+                    return consolidateBytes(resp.Success.pubkey);
+                } else {
+                    return undefined;
+                }
+            },
+            args
         );
     }
 

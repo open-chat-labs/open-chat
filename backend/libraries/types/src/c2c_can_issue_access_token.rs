@@ -1,4 +1,4 @@
-use crate::{BotPermissions, UserId, VideoCallType};
+use crate::{BotPermissions, GroupRole, UserId, VideoCallType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -15,6 +15,16 @@ impl AccessTypeArgs {
         match self {
             AccessTypeArgs::BotActionByCommand(args) => Some(args.requested_permissions.clone()),
             AccessTypeArgs::BotActionByApiKey(args) => Some(args.requested_permissions.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn initiator(&self) -> Option<UserId> {
+        match self {
+            AccessTypeArgs::StartVideoCall(args) => Some(args.initiator),
+            AccessTypeArgs::JoinVideoCall(args) => Some(args.initiator),
+            AccessTypeArgs::MarkVideoCallAsEnded(args) => Some(args.initiator),
+            AccessTypeArgs::BotActionByCommand(args) => Some(args.initiator),
             _ => None,
         }
     }
@@ -48,6 +58,7 @@ pub struct MarkVideoCallAsEndedArgs {
 pub struct BotActionByCommandArgs {
     pub bot_id: UserId,
     pub initiator: UserId,
+    pub initiator_role: GroupRole,
     pub requested_permissions: BotPermissions,
 }
 

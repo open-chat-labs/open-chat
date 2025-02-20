@@ -1,9 +1,9 @@
-import DOMPurify, { type DOMPurifyI } from "dompurify";
+import DOMPurify from "dompurify";
 
 export const DOMPurifyDefault = createDefault();
 export const DOMPurifyOneLine = createOneLine();
 
-function createDefault(): DOMPurifyI {
+function createDefault(): DOMPurify.DOMPurify {
     const domPurify = DOMPurify();
     domPurify.setConfig({
         ALLOWED_ATTR: ["target", "href", "class", "user-id", "suppress-links"],
@@ -16,7 +16,7 @@ function createDefault(): DOMPurifyI {
     return domPurify;
 }
 
-function createOneLine(): DOMPurifyI {
+function createOneLine(): DOMPurify.DOMPurify {
     const domPurify = DOMPurify();
     domPurify.setConfig({
         ALLOWED_ATTR: ["target", "href", "class", "user-id", "suppress-links"],
@@ -28,8 +28,9 @@ function createOneLine(): DOMPurifyI {
         },
     });
     domPurify.addHook("uponSanitizeElement", (node) => {
-        if (node.tagName === "BR") {
-            node.outerHTML = " ";
+        const element = node as Element;
+        if (element.tagName === "BR") {
+            element.outerHTML = " ";
         }
     });
     return domPurify;

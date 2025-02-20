@@ -3,6 +3,52 @@ macro_rules! generate_update_call {
     ($method_name:ident) => {
         pub async fn $method_name(
             agent: &ic_agent::Agent,
+            canister_id: &ic_principal::Principal,
+            args: &$method_name::Args,
+        ) -> Result<$method_name::Response, Box<dyn std::error::Error + Sync + std::marker::Send>> {
+            let args_bytes = msgpack::serialize_to_vec(args)?;
+
+            let method_name = stringify!($method_name);
+            let response = agent
+                .update(canister_id, method_name)
+                .with_arg(args_bytes)
+                .call_and_wait()
+                .await?;
+
+            let result = msgpack::deserialize(response.as_slice())?;
+            Ok(result)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! generate_query_call {
+    ($method_name:ident) => {
+        pub async fn $method_name(
+            agent: &ic_agent::Agent,
+            canister_id: &ic_principal::Principal,
+            args: &$method_name::Args,
+        ) -> Result<$method_name::Response, Box<dyn std::error::Error + std::marker::Send + std::marker::Sync>> {
+            let args_bytes = msgpack::serialize_to_vec(args)?;
+
+            let method_name = stringify!($method_name);
+            let response = agent
+                .query(canister_id, method_name)
+                .with_arg(args_bytes)
+                .call()
+                .await?;
+
+            let result = msgpack::deserialize(response.as_slice())?;
+            Ok(result)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! generate_candid_update_call {
+    ($method_name:ident) => {
+        pub async fn $method_name(
+            agent: &ic_agent::Agent,
             canister_id: &candid::Principal,
             args: &$method_name::Args,
         ) -> Result<$method_name::Response, Box<dyn std::error::Error + Sync + std::marker::Send>> {
@@ -24,7 +70,7 @@ macro_rules! generate_update_call {
 }
 
 #[macro_export]
-macro_rules! generate_query_call {
+macro_rules! generate_candid_query_call {
     ($method_name:ident) => {
         pub async fn $method_name(
             agent: &ic_agent::Agent,

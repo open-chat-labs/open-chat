@@ -16,6 +16,7 @@ export const builtinBot: InternalBot = {
             {
                 name: "crypto",
                 description: "bots.crypto.desc",
+                directBotDisabled: true,
                 permissions: {
                     ...emptyPermissions,
                     messagePermissions: ["crypto"],
@@ -51,6 +52,7 @@ export const builtinBot: InternalBot = {
                     messagePermissions: ["text"],
                 },
                 params: [],
+                directBotDisabled: true,
             },
             {
                 name: "gif",
@@ -71,6 +73,7 @@ export const builtinBot: InternalBot = {
                         choices: [],
                     },
                 ],
+                directBotDisabled: true,
             },
             {
                 name: "faq",
@@ -156,6 +159,7 @@ export const builtinBot: InternalBot = {
                         ],
                     },
                 ],
+                directBotDisabled: true,
             },
             {
                 name: "poll",
@@ -165,6 +169,7 @@ export const builtinBot: InternalBot = {
                     messagePermissions: ["poll"],
                 },
                 params: [],
+                directBotDisabled: true,
             },
             {
                 name: "register_bot",
@@ -172,6 +177,7 @@ export const builtinBot: InternalBot = {
                 permissions: emptyPermissions,
                 params: [],
                 devmode: true,
+                directBotDisabled: false,
             },
             {
                 name: "search",
@@ -189,6 +195,7 @@ export const builtinBot: InternalBot = {
                         choices: [],
                     },
                 ],
+                directBotDisabled: false,
             },
             {
                 name: "test-msg",
@@ -210,24 +217,28 @@ export const builtinBot: InternalBot = {
                         choices: [],
                     },
                 ],
+                directBotDisabled: true,
             },
             {
                 name: "update_bot",
                 description: "bots.update_bot.desc",
                 permissions: emptyPermissions,
                 params: [],
+                directBotDisabled: false,
             },
             {
                 name: "remove_bot",
                 description: "bots.update_bot.removeDesc",
                 permissions: emptyPermissions,
                 params: [],
+                directBotDisabled: false,
             },
             {
                 name: "witch",
                 description: "bots.witch.desc",
                 permissions: emptyPermissions,
                 params: [],
+                directBotDisabled: false,
             },
         ],
     },

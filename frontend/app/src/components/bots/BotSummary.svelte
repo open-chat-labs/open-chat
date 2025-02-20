@@ -2,12 +2,12 @@
     import {
         OpenChat,
         type BotMatch,
-        hasEveryRequiredPermission,
         type CommunityIdentifier,
         type BotSummaryMode,
-        type GroupChatIdentifier,
         type ExternalBotPermissions,
-        type MultiUserChatIdentifier,
+        type ExternalBot,
+        type BotInstallationLocation,
+        type ChatIdentifier,
     } from "openchat-client";
     import { getContext } from "svelte";
     import Overlay from "../Overlay.svelte";
@@ -17,8 +17,6 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
     import Legend from "../Legend.svelte";
     import Checkbox from "../Checkbox.svelte";
     import { togglePermission } from "../../utils/bots";
@@ -27,12 +25,13 @@
     import ShowApiKey from "./ShowApiKey.svelte";
     import AreYouSure from "../AreYouSure.svelte";
     import Tabs from "../Tabs.svelte";
+    import BotCommands from "./BotCommands.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         mode: BotSummaryMode;
-        bot: BotMatch;
+        bot: BotMatch | ExternalBot;
         onClose: () => void;
     }
 
@@ -43,6 +42,8 @@
         switch (mode.kind) {
             case "installing_command_bot":
                 return i18nKey("bots.add.title");
+            case "installing_direct_command_bot":
+                return i18nKey("bots.add.titleDirect");
             case "editing_command_bot":
                 return i18nKey("bots.edit.title");
             case "viewing_command_bot":
@@ -57,6 +58,8 @@
         switch (mode.kind) {
             case "installing_command_bot":
                 return i18nKey("bots.add.addBot");
+            case "installing_direct_command_bot":
+                return i18nKey("bots.add.continue");
             case "editing_command_bot":
                 return i18nKey("bots.edit.updateBot");
             case "viewing_command_bot":
@@ -84,7 +87,7 @@
         }
     }
 
-    function installBot(id: CommunityIdentifier | GroupChatIdentifier) {
+    function installBot(id: BotInstallationLocation) {
         busy = true;
         client
             .installBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
@@ -98,7 +101,7 @@
             .finally(() => (busy = false));
     }
 
-    function updateBot(id: CommunityIdentifier | GroupChatIdentifier) {
+    function updateBot(id: BotInstallationLocation) {
         busy = true;
         client
             .updateInstalledBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
@@ -113,7 +116,7 @@
     }
 
     function generateApiKey(
-        id: CommunityIdentifier | MultiUserChatIdentifier,
+        id: CommunityIdentifier | ChatIdentifier,
     ): (confirmed: boolean) => Promise<void> {
         return (confirmed: boolean) => {
             if (!confirmingRegeneration && !confirmed) {
@@ -148,6 +151,9 @@
     function mainButton() {
         switch (mode.kind) {
             case "installing_command_bot":
+                installBot(mode.id);
+                break;
+            case "installing_direct_command_bot":
                 installBot(mode.id);
                 break;
             case "editing_command_bot":
@@ -245,26 +251,7 @@
                     {bot.definition.description}
                 </p>
                 {#if showCommands}
-                    <div class="commands">
-                        {#each bot.definition.commands as command}
-                            <TooltipWrapper position="bottom" align="middle">
-                                <div
-                                    slot="target"
-                                    class="command"
-                                    class:not_permitted={!hasEveryRequiredPermission(
-                                        command.permissions,
-                                        grantedPermissions,
-                                    )}>
-                                    {command.name}
-                                </div>
-                                <div let:position let:align slot="tooltip">
-                                    <TooltipPopup {align} {position}>
-                                        {command.description}
-                                    </TooltipPopup>
-                                </div>
-                            </TooltipWrapper>
-                        {/each}
-                    </div>
+                    <BotCommands {grantedPermissions} commands={bot.definition.commands} />
                 {/if}
                 {#if choosePermissions}
                     <div class="permissions">
@@ -273,7 +260,6 @@
                             <Translatable resourceKey={i18nKey("bots.add.permissionsInfo")}
                             ></Translatable>
                         </p>
-                        <Legend label={title}></Legend>
                         <Tabs
                             initialIndex={2}
                             tabs={[
@@ -343,30 +329,6 @@
 
             &.collapsed {
                 @include clamp(4);
-            }
-        }
-    }
-
-    .commands {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: $sp3;
-        margin-bottom: $sp4;
-
-        .command {
-            @include font(light, normal, fs-80);
-            background-color: var(--button-bg);
-            border: 1px solid var(--button-bg);
-            color: var(--button-txt);
-            padding: $sp2 $sp3;
-            border-radius: $sp2;
-            cursor: pointer;
-
-            &.not_permitted {
-                background-color: unset;
-                color: var(--txt);
-                opacity: 0.8;
             }
         }
     }

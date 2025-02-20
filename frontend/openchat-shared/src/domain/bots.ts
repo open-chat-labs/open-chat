@@ -1,9 +1,10 @@
 import { Principal } from "@dfinity/principal";
 import type {
+    ChatIdentifier,
+    DirectChatIdentifier,
     GroupChatIdentifier,
     MessageContent,
     MessageContext,
-    MultiUserChatIdentifier,
 } from "./chat";
 import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
 import { type InterpolationValues, parseBigInt, type ResourceKey } from "../utils";
@@ -12,10 +13,15 @@ import type { CommunityIdentifier } from "./community";
 
 export const MIN_NAME_LENGTH = 3;
 
-export type BotGroupDetails = {
+export type InstalledBotDetails = {
     id: string;
     permissions: ExternalBotPermissions;
 };
+
+export type BotInstallationLocation =
+    | CommunityIdentifier
+    | GroupChatIdentifier
+    | DirectChatIdentifier;
 
 export type BotsResponse = {
     timestamp: bigint;
@@ -142,6 +148,8 @@ export type SlashCommandSchema = {
     params: SlashCommandParam[];
     permissions: ExternalBotPermissions;
     devmode?: boolean;
+    ownerOnly?: boolean;
+    directBotDisabled?: boolean;
 };
 
 export function emptyExternalBotPermissions(): ExternalBotPermissions {
@@ -477,7 +485,7 @@ export function validateBot(
         errors.addErrors("bot_principal", i18nKey("bots.builder.errors.principal"));
     }
 
-    if (bot.definition.commands.length === 0) {
+    if (bot.definition.commands.length === 0 && bot.definition.autonomousConfig === undefined) {
         errors.addErrors("no_commands", i18nKey("bots.builder.errors.noCommands"));
     }
 
@@ -634,6 +642,7 @@ export type BotClientConfigData = {
 
 export type BotSummaryMode =
     | InstallingCommandBot
+    | InstallingDirectCommandBot
     | EditingCommandBot
     | ViewingCommandBot
     | AddingApiKey
@@ -648,26 +657,33 @@ export type InstallingCommandBot = BotSummaryModeCommon & {
     id: CommunityIdentifier | GroupChatIdentifier;
 };
 
+export type InstallingDirectCommandBot = BotSummaryModeCommon & {
+    kind: "installing_direct_command_bot";
+    id: DirectChatIdentifier;
+};
+
 export type EditingCommandBot = BotSummaryModeCommon & {
     kind: "editing_command_bot";
-    id: CommunityIdentifier | GroupChatIdentifier;
+    id: CommunityIdentifier | GroupChatIdentifier | DirectChatIdentifier;
     granted: ExternalBotPermissions;
 };
 
 export type ViewingCommandBot = BotSummaryModeCommon & {
     kind: "viewing_command_bot";
-    id: CommunityIdentifier | GroupChatIdentifier;
+    id: CommunityIdentifier | GroupChatIdentifier | DirectChatIdentifier;
     granted: ExternalBotPermissions;
 };
 
 export type AddingApiKey = BotSummaryModeCommon & {
     kind: "adding_api_key";
-    id: CommunityIdentifier | MultiUserChatIdentifier;
+    id: CommunityIdentifier | ChatIdentifier;
 };
 
 // Editing will infact amount to generating a new key
 export type EditingApiKey = BotSummaryModeCommon & {
     kind: "editing_api_key";
-    id: CommunityIdentifier | MultiUserChatIdentifier;
+    id: CommunityIdentifier | ChatIdentifier;
     granted: ExternalBotPermissions;
 };
+
+export type EnhancedExternalBot = ExternalBot & { grantedPermissions: ExternalBotPermissions };

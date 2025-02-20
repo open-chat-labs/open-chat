@@ -1,22 +1,18 @@
-use crate::Notification;
+use crate::metrics::write_metrics;
+use crate::{timestamp, NotificationToPush};
 use async_channel::{Receiver, Sender};
 use std::collections::{BinaryHeap, HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, UNIX_EPOCH};
-use tracing::{error, info};
-use types::{Error, Milliseconds, TimestampMillis, UserId};
-use web_push::{
-    ContentEncoding, HyperWebPushClient, PartialVapidSignatureBuilder, SubscriptionInfo, Urgency, VapidSignature,
-    VapidSignatureBuilder, WebPushClient, WebPushError, WebPushMessage, WebPushMessageBuilder,
-};
+use std::time::Instant;
+use tracing::info;
+use types::{Milliseconds, TimestampMillis, UserId};
+use web_push::{HyperWebPushClient, WebPushClient, WebPushError};
 
-const MAX_PAYLOAD_LENGTH_BYTES: usize = 3 * 1000; // Just under 3KB
 const ONE_MINUTE: Milliseconds = 60 * 1000;
 
 pub struct Pusher {
-    receiver: Receiver<Notification>,
+    receiver: Receiver<NotificationToPush>,
     web_push_client: HyperWebPushClient,
-    sig_builder: PartialVapidSignatureBuilder,
     subscriptions_to_remove_sender: Sender<(UserId, String)>,
     invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
@@ -24,8 +20,7 @@ pub struct Pusher {
 
 impl Pusher {
     pub fn new(
-        receiver: Receiver<Notification>,
-        vapid_private_pem: &str,
+        receiver: Receiver<NotificationToPush>,
         subscriptions_to_remove_sender: Sender<(UserId, String)>,
         invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
         throttled_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
@@ -33,7 +28,6 @@ impl Pusher {
         Self {
             receiver,
             web_push_client: HyperWebPushClient::new(),
-            sig_builder: VapidSignatureBuilder::from_pem_no_sub(vapid_private_pem.as_bytes()).unwrap(),
             subscriptions_to_remove_sender,
             invalid_subscriptions,
             throttled_subscriptions,
@@ -41,97 +35,61 @@ impl Pusher {
     }
 
     pub async fn run(self) {
-        while let Ok(notification) = self.receiver.recv().await {
-            if let Ok(map) = self.invalid_subscriptions.read() {
-                if map.contains_key(&notification.subscription_info.endpoint) {
-                    continue;
-                }
-            }
-            if let Ok(map) = self.throttled_subscriptions.read() {
-                if let Some(until) = map.get(&notification.subscription_info.endpoint) {
-                    let timestamp = timestamp();
-                    if *until > timestamp {
-                        info!("Notification skipped due to subscription being throttled");
-                        continue;
-                    }
-                }
-            }
-            if let Err(error) = self.push_notification(&notification).await {
-                let bytes = notification.payload.len();
-                error!(
-                    ?error,
-                    bytes, notification.subscription_info.endpoint, "Failed to push notification"
-                );
-            }
-        }
-    }
+        while let Ok(NotificationToPush { notification, message }) = self.receiver.recv().await {
+            let payload_bytes = message.payload.as_ref().map_or(0, |p| p.content.len()) as u64;
+            let start = Instant::now();
+            let push_result = self.web_push_client.send(message).await;
+            let success = push_result.is_ok();
 
-    pub async fn push_notification(&self, notification: &Notification) -> Result<(), Error> {
-        let payload_bytes = notification.payload.as_ref();
-        let subscription = &notification.subscription_info;
-        let vapid_signature = self.build_vapid_signature(subscription)?;
-
-        let message = build_web_push_message(payload_bytes, subscription, vapid_signature.clone())?;
-        let length = message.payload.as_ref().map_or(0, |p| p.content.len());
-        if length <= MAX_PAYLOAD_LENGTH_BYTES {
-            if let Err(error) = self.web_push_client.send(message).await {
+            if let Err(error) = push_result {
                 match error {
                     WebPushError::EndpointNotValid | WebPushError::InvalidUri | WebPushError::EndpointNotFound => {
                         let _ = self
                             .subscriptions_to_remove_sender
-                            .try_send((notification.recipient, subscription.keys.p256dh.clone()));
-
+                            .try_send((notification.recipient, notification.subscription_info.keys.p256dh.clone()));
                         if let Ok(mut map) = self.invalid_subscriptions.write() {
                             if map.len() > 10000 {
                                 prune_invalid_subscriptions(&mut map);
                             }
-                            map.insert(subscription.endpoint.clone(), timestamp());
+                            map.insert(notification.subscription_info.endpoint.clone(), timestamp());
                         }
 
                         info!(
                             ?error,
-                            subscription.endpoint, "Failed to push notification, subscription queued to be removed"
+                            notification.subscription_info.endpoint,
+                            "Failed to push notification, subscription queued to be removed"
                         );
-                        Ok(())
                     }
                     _ => {
                         if let Ok(mut map) = self.throttled_subscriptions.write() {
+                            let timestamp = timestamp();
                             if map.len() > 100 {
-                                let timestamp = timestamp();
                                 map.retain(|_, ts| *ts > timestamp);
                             }
-                            info!(subscription.endpoint, "Subscription throttled for 1 minute");
-                            map.insert(subscription.endpoint.clone(), timestamp() + ONE_MINUTE);
+                            info!(notification.subscription_info.endpoint, "Subscription throttled for 1 minute");
+                            map.insert(notification.subscription_info.endpoint.clone(), timestamp + ONE_MINUTE);
                         }
-                        Err(error.into())
                     }
                 }
-            } else {
-                Ok(())
             }
-        } else {
-            Err(format!("Max length exceeded. Length: {length}").into())
+
+            let end = Instant::now();
+            let push_duration = end.saturating_duration_since(start).as_millis() as u64;
+            let timestamp = timestamp();
+            let end_to_end_latency = timestamp.saturating_sub(notification.timestamp);
+            let end_to_end_internal_latency = end.saturating_duration_since(notification.first_read_at).as_millis() as u64;
+            write_metrics(|m| {
+                if success {
+                    m.incr_total_notifications_pushed();
+                    m.incr_total_notification_bytes_pushed(payload_bytes);
+                    m.set_latest_notification_index_pushed(notification.index, notification.notifications_canister);
+                }
+                m.observe_end_to_end_latency(end_to_end_latency, notification.notifications_canister);
+                m.observe_end_to_end_internal_latency(end_to_end_internal_latency);
+                m.observe_send_web_push_message_duration(push_duration, success);
+            });
         }
     }
-
-    fn build_vapid_signature(&self, subscription: &SubscriptionInfo) -> Result<VapidSignature, WebPushError> {
-        let mut sig_builder = self.sig_builder.clone().add_sub_info(subscription);
-        sig_builder.add_claim("sub", "https://oc.app");
-        sig_builder.build()
-    }
-}
-
-fn build_web_push_message(
-    payload: &[u8],
-    subscription: &SubscriptionInfo,
-    vapid_signature: VapidSignature,
-) -> Result<WebPushMessage, WebPushError> {
-    let mut message_builder = WebPushMessageBuilder::new(subscription);
-    message_builder.set_payload(ContentEncoding::Aes128Gcm, payload);
-    message_builder.set_vapid_signature(vapid_signature);
-    message_builder.set_ttl(3600); // 1 hour
-    message_builder.set_urgency(Urgency::High);
-    message_builder.build()
 }
 
 // Prunes the oldest 1000 subscriptions
@@ -154,28 +112,6 @@ fn prune_invalid_subscriptions(map: &mut HashMap<String, TimestampMillis>) {
 
     for (_, subscription) in heap {
         map.remove(&subscription);
-    }
-}
-
-fn timestamp() -> TimestampMillis {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64
-}
-
-#[derive(Debug)]
-#[allow(dead_code)]
-struct SubscriptionInfoDebug<'a> {
-    endpoint: &'a str,
-    p256dh_len: usize,
-    auth_len: usize,
-}
-
-impl<'a> From<&'a SubscriptionInfo> for SubscriptionInfoDebug<'a> {
-    fn from(s: &'a SubscriptionInfo) -> Self {
-        SubscriptionInfoDebug {
-            endpoint: &s.endpoint,
-            p256dh_len: s.keys.p256dh.len(),
-            auth_len: s.keys.auth.len(),
-        }
     }
 }
 

@@ -1,10 +1,12 @@
 use crate::ic_agent::IcAgent;
+use crate::metrics::write_metrics;
 use crate::Notification;
 use async_channel::Sender;
 use base64::Engine;
 use index_store::IndexStore;
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Instant;
 use tokio::time;
 use tracing::{error, info};
 use types::{CanisterId, Error, Timestamped, UserId};
@@ -77,6 +79,7 @@ impl<I: IndexStore> Reader<I> {
                 break;
             }
 
+            let first_read_at = Instant::now();
             let base64 = base64::engine::general_purpose::STANDARD_NO_PAD.encode(notification.notification_bytes);
             let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
 
@@ -87,9 +90,13 @@ impl<I: IndexStore> Reader<I> {
                         // subscriptions to avoid partially processed notifications
                         self.sender
                             .send(Notification {
+                                notifications_canister: self.notifications_canister_id,
+                                index: indexed_notification.index,
+                                timestamp: notification.timestamp,
                                 recipient: user_id,
                                 payload: payload.clone(),
                                 subscription_info,
+                                first_read_at,
                             })
                             .await
                             .unwrap();
@@ -101,6 +108,7 @@ impl<I: IndexStore> Reader<I> {
         }
 
         if let Some(latest_index) = latest_index_processed {
+            write_metrics(|m| m.set_latest_notification_index_read(latest_index, self.notifications_canister_id));
             self.set_index_processed_up_to(latest_index).await?;
         }
 

@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotActionScope, BotCommand, Chat, UserId, VideoCallType};
+use types::{BotActionScope, BotCommandArg, Chat, UserId, VideoCallType};
 
 #[ts_export(local_user_index, access_token_v2)]
 #[allow(clippy::large_enum_variant)]
@@ -45,6 +45,13 @@ pub struct MarkVideoCallAsEndedArgs {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct BotActionByCommandArgs {
     pub bot_id: UserId,
-    pub command: BotCommand,
+    pub command: BotCommandInitial,
     pub scope: BotActionScope,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct BotCommandInitial {
+    pub name: String,
+    pub args: Vec<BotCommandArg>,
 }

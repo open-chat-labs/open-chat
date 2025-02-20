@@ -1,7 +1,7 @@
-use canister_client::generate_update_call;
+use canister_client::generate_candid_update_call;
 use market_maker_canister::*;
 
 // Queries
 
 // Update
-generate_update_call!(update_config);
+generate_candid_update_call!(update_config);

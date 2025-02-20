@@ -109,10 +109,10 @@ pub struct BotApiKeys {
 
 #[derive(Serialize, Deserialize)]
 pub struct ApiKey {
-    secret: String,
-    granted_permissions: BotPermissions,
-    generated_by: UserId,
-    generated_at: TimestampMillis,
+    pub secret: String,
+    pub granted_permissions: BotPermissions,
+    pub generated_by: UserId,
+    pub generated_at: TimestampMillis,
 }
 
 impl BotApiKeys {
@@ -134,6 +134,10 @@ impl BotApiKeys {
             },
         );
         key
+    }
+
+    pub fn get(&self, bot_id: &UserId) -> Option<&ApiKey> {
+        self.keys.get(bot_id)
     }
 
     pub fn permissions_if_secret_matches(&self, bot_id: &UserId, secret: &str) -> Option<&BotPermissions> {

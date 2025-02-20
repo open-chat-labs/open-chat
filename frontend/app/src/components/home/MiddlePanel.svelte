@@ -13,6 +13,8 @@
         selectedChatId,
         eventsStore,
         filteredProposalsStore,
+        externalBots,
+        installedDirectBots,
     } from "openchat-client";
     import { pathParams } from "../../routes";
     import { tick } from "svelte";
@@ -20,19 +22,26 @@
     import { layoutStore, type Layout, rightPanelWidth } from "../../stores/layout";
     import Loading from "../Loading.svelte";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
+    import UninstalledDirectBot from "../bots/UninstalledDirectBot.svelte";
 
-    export let joining: MultiUserChat | undefined;
-    export let currentChatMessages: CurrentChatMessages | undefined;
-
-    let middlePanel: HTMLElement;
-
-    $: noChat = $pathParams.kind !== "global_chat_selected_route";
-
-    $: {
-        if (middlePanel) {
-            alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
-        }
+    interface Props {
+        joining: MultiUserChat | undefined;
+        currentChatMessages: CurrentChatMessages | undefined;
     }
+
+    let { joining, currentChatMessages = $bindable() }: Props = $props();
+
+    let middlePanel: HTMLElement | undefined;
+
+    let uninstalledBotId = $derived.by(() => {
+        if ($selectedChatStore === undefined) return false;
+        if ($selectedChatStore.kind !== "direct_chat") return false;
+        const botId = $selectedChatStore.them.userId;
+        const bot = $externalBots.get(botId);
+        return bot !== undefined && $installedDirectBots.get(botId) === undefined
+            ? botId
+            : undefined;
+    });
 
     function alignVideoCall(
         call: ActiveVideoCall | undefined,
@@ -41,7 +50,7 @@
         rightPanelWidth: number | undefined,
         attempts: number = 0,
     ) {
-        if (call && chatIdentifiersEqual(call.chatId, chatId)) {
+        if (call && chatIdentifiersEqual(call.chatId, chatId) && middlePanel) {
             const callContainer = document.getElementById("video-call-container");
             const rect = middlePanel.getBoundingClientRect();
             if (callContainer) {
@@ -77,9 +86,15 @@
     function resize() {
         alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
     }
+    let noChat = $derived($pathParams.kind !== "global_chat_selected_route");
+    $effect(() => {
+        if (middlePanel) {
+            alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
+        }
+    });
 </script>
 
-<svelte:window on:resize={resize} on:orientationchange={resize} />
+<svelte:window onresize={resize} onorientationchange={resize} />
 
 <section
     bind:this={middlePanel}
@@ -103,6 +118,8 @@
                 <NoChatSelected on:newchat />
             </div>
         {/if}
+    {:else if uninstalledBotId && $selectedChatId.kind === "direct_chat"}
+        <UninstalledDirectBot chatId={$selectedChatId} botId={uninstalledBotId} />
     {:else if $selectedChatStore !== undefined}
         <CurrentChat
             bind:currentChatMessages

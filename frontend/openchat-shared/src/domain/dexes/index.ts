@@ -1,4 +1,4 @@
-export type DexId = "icpswap" | "sonic" | "kongswap";
+export type DexId = "icpswap" | "kongswap" | "sonic";
 
 export type TokenSwapPool = {
     dex: DexId;

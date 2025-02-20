@@ -5,13 +5,16 @@ import type {
     ApproveIdentityLinkResponse,
     AuthenticationPrincipalsResponse,
     ChallengeAttempt,
+    CheckAuthPrincipalResponse,
     CreateOpenChatIdentityError,
     GenerateChallengeResponse,
     InitiateIdentityLinkResponse,
     RemoveIdentityLinkResponse,
+    WebAuthnKeyFull,
 } from "openchat-shared";
 import { buildDelegationIdentity, toDer } from "openchat-shared";
 import { createHttpAgent } from "../utils/httpAgent";
+import { getCachedWebAuthnKey } from "../utils/webAuthnKeyCache";
 
 export class IdentityAgent {
     private readonly _identityClient: IdentityClient;
@@ -41,13 +44,23 @@ export class IdentityAgent {
         return this._identityClient.checkAuthPrincipal().then((resp) => resp.kind === "success");
     }
 
+    checkAuthPrincipal(): Promise<CheckAuthPrincipalResponse> {
+        return this._identityClient.checkAuthPrincipal();
+    }
+
     async createOpenChatIdentity(
         sessionKey: SignIdentity,
+        webAuthnCredentialId: Uint8Array | undefined,
         challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
+        const webAuthnKey = webAuthnCredentialId !== undefined
+            ? await this.hydrateWebAuthnKey(webAuthnCredentialId)
+            : undefined;
+
         const sessionKeyDer = toDer(sessionKey);
         const createIdentityResponse = await this._identityClient.createIdentity(
             sessionKeyDer,
+            webAuthnKey,
             this._isIIPrincipal,
             challengeAttempt,
         );
@@ -76,11 +89,11 @@ export class IdentityAgent {
 
         return prepareDelegationResponse.kind === "success"
             ? this.getDelegation(
-                  prepareDelegationResponse.userKey,
-                  sessionKey,
-                  sessionKeyDer,
-                  prepareDelegationResponse.expiration,
-              )
+                prepareDelegationResponse.userKey,
+                sessionKey,
+                sessionKeyDer,
+                prepareDelegationResponse.expiration,
+            )
             : undefined;
     }
 
@@ -88,8 +101,15 @@ export class IdentityAgent {
         return this._identityClient.generateChallenge();
     }
 
-    initiateIdentityLink(linkToPrincipal: string): Promise<InitiateIdentityLinkResponse> {
-        return this._identityClient.initiateIdentityLink(linkToPrincipal, this._isIIPrincipal);
+    async initiateIdentityLink(
+        linkToPrincipal: string,
+        webAuthnCredentialId: Uint8Array | undefined
+    ): Promise<InitiateIdentityLinkResponse> {
+        const webAuthnKey = webAuthnCredentialId !== undefined
+            ? await this.hydrateWebAuthnKey(webAuthnCredentialId)
+            : undefined;
+
+        return this._identityClient.initiateIdentityLink(linkToPrincipal, webAuthnKey, this._isIIPrincipal);
     }
 
     approveIdentityLink(linkInitiatedBy: string): Promise<ApproveIdentityLinkResponse> {
@@ -102,6 +122,13 @@ export class IdentityAgent {
 
     getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
         return this._identityClient.getAuthenticationPrincipals();
+    }
+
+    async lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array | undefined> {
+        const cached = await getCachedWebAuthnKey(credentialId);
+        return cached !== undefined
+            ? cached.publicKey
+            : this._identityClient.lookupWebAuthnPubKey(credentialId);
     }
 
     private async getDelegation(
@@ -125,5 +152,11 @@ export class IdentityAgent {
             getDelegationResponse.delegation,
             getDelegationResponse.signature,
         );
+    }
+
+    private async hydrateWebAuthnKey(credentialId: Uint8Array): Promise<WebAuthnKeyFull> {
+        const key = await getCachedWebAuthnKey(credentialId);
+        if (key === undefined) throw new Error("Failed to find WebAuthnKey details");
+        return key;
     }
 }

@@ -15,6 +15,7 @@
         type OpenChat,
         type ResourceKey,
         selectedAuthProviderStore,
+        type WebAuthnKey,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
@@ -22,6 +23,7 @@
     import { AuthClient } from "@dfinity/auth-client";
     import AlertBox from "../../AlertBox.svelte";
     import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+    import { Principal } from "@dfinity/principal";
     import SignInOption from "./SignInOption.svelte";
     import {
         EmailPollerError,
@@ -42,6 +44,7 @@
         key: ECDSAKeyIdentity;
         delegation: DelegationChain;
         provider: AuthProvider;
+        webAuthnKey?: WebAuthnKey;
     };
 
     type ApproverIdentity = { kind: "approver"; initiator: IdentityDetail };
@@ -71,9 +74,11 @@
     let verificationCode: string | undefined = undefined;
     let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = [];
 
-    $: currentProvider =
-        accounts.find((a) => a.principal === client.AuthPrincipal)?.provider ??
-        $selectedAuthProviderStore;
+    $: currentIdentity = accounts.find((a) => a.isCurrentIdentity);
+    $: currentProvider = currentIdentity?.provider ?? $selectedAuthProviderStore;
+    $: restrictTo = substep.kind === "approver" && currentProvider !== undefined
+        ? new Set<string>([currentProvider])
+        : new Set<string>();
 
     onMount(() => {
         client.getAuthenticationPrincipals().then((a) => (accounts = a));
@@ -112,7 +117,33 @@
         localStorage.setItem(configKeys.selectedAuthEmail, email);
         error = undefined;
 
-        if (provider === AuthProvider.EMAIL) {
+        if (provider === AuthProvider.PASSKEY) {
+            if (substep.kind === "initiator") {
+                const [identity, delegation, webAuthnKey] = await client.signUpWithWebAuthn(false);
+                substep = {
+                    kind: "approver",
+                    initiator: {
+                        key: identity,
+                        delegation,
+                        webAuthnKey,
+                        provider: AuthProvider.PASSKEY,
+                    },
+                };
+            } else {
+                const initiator = substep.initiator;
+                const [identity, delegation, webAuthnKey] = await client.reSignInWithCurrentWebAuthnIdentity();
+                substep = {
+                    kind: "ready_to_link",
+                    initiator,
+                    approver: {
+                        key: identity,
+                        delegation,
+                        webAuthnKey,
+                        provider: AuthProvider.PASSKEY,
+                    },
+                };
+            }
+        } else if (provider === AuthProvider.EMAIL) {
             providerStep = "signing_in_with_email";
             emailSigninHandler.generateMagicLink(email).then((resp) => {
                 if (resp.kind === "success") {
@@ -227,9 +258,18 @@
 
     // Link the two identities that we have built together
     function linkIdentities() {
-        if (substep.kind !== "ready_to_link") return;
+        if (substep.kind !== "ready_to_link" || currentIdentity === undefined) return;
 
         const { initiator, approver } = substep;
+
+        const approverPrincipal = Principal.selfAuthenticating(new Uint8Array(approver.delegation.publicKey)).toString();
+
+        if (currentIdentity.principal !== approverPrincipal) {
+            console.log("Principal mismatch: ", currentIdentity.principal, approverPrincipal);
+            error = "identity.failure.principalMismatch";
+            substep = { kind: "initiator" };
+            return;
+        }
 
         error = undefined;
         linking = true;
@@ -238,6 +278,7 @@
                 initiator.key,
                 initiator.delegation,
                 initiator.provider === AuthProvider.II,
+                initiator.webAuthnKey,
                 approver.key,
                 approver.delegation,
             )
@@ -254,10 +295,6 @@
                 } else if (resp === "principal_linked_to_another_oc_user") {
                     console.log("Identity already linked to another OpenChat account: ", resp);
                     error = "identity.failure.alreadyLinked";
-                    substep = { kind: "initiator" };
-                } else if (resp === "principal_mismatch") {
-                    console.log("Approval principal mismatch: ", resp);
-                    error = "identity.failure.principalMismatch";
                     substep = { kind: "initiator" };
                 } else {
                     console.log("Failed to link identities: ", resp);
@@ -333,6 +370,7 @@
             </div>
             <ChooseSignInOption
                 mode={"signin"}
+                {restrictTo}
                 {currentProvider}
                 showMore={substep.kind === "initiator"}
                 bind:emailInvalid

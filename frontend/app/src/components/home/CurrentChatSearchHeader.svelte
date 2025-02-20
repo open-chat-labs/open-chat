@@ -24,7 +24,7 @@
     let searching = false;
     let showMentionPicker = false;
     let mentionPrefix: string | undefined;
-    let searchBoxHeight: number | undefined;
+    let searchBoxHeight: number = 80;
     let rangeToReplace: [number, number] | undefined = undefined;
     let timer: number | undefined;
 
@@ -239,7 +239,7 @@
 
 {#if showMentionPicker}
     <MentionPicker
-        offset={searchBoxHeight ?? 80}
+        offset={searchBoxHeight}
         direction={"down"}
         prefix={mentionPrefix}
         mentionSelf

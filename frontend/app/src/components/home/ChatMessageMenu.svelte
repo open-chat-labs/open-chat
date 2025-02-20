@@ -1,7 +1,7 @@
 <script lang="ts">
     import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
+    import MenuItem from "../MenuItemLegacy.svelte";
+    import MenuIcon from "../MenuIconLegacy.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
@@ -322,7 +322,7 @@
         <div slot="menu">
             <Menu centered>
                 {#if isProposal && !inert}
-                    <MenuItem on:click={collapseMessage}>
+                    <MenuItem onclick={collapseMessage}>
                         <CollapseIcon
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -334,7 +334,7 @@
                 {/if}
                 {#if confirmed && !inert && !failed}
                     {#if canFollow}
-                        <MenuItem on:click={() => followThread(true)}>
+                        <MenuItem onclick={() => followThread(true)}>
                             <EyeArrowRightIcon
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -344,7 +344,7 @@
                             </div>
                         </MenuItem>
                     {:else if canUnfollow}
-                        <MenuItem on:click={() => followThread(false)}>
+                        <MenuItem onclick={() => followThread(false)}>
                             <EyeOffIcon
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -355,7 +355,7 @@
                         </MenuItem>
                     {/if}
                     {#if publicGroup && canShare}
-                        <MenuItem on:click={shareMessage}>
+                        <MenuItem onclick={shareMessage}>
                             <ShareIcon
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -363,7 +363,7 @@
                             <div slot="text"><Translatable resourceKey={i18nKey("share")} /></div>
                         </MenuItem>
                     {/if}
-                    <MenuItem on:click={copyMessageUrl}>
+                    <MenuItem onclick={copyMessageUrl}>
                         <ContentCopy
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -373,17 +373,12 @@
                         </div>
                     </MenuItem>
                 {/if}
-                {#if isTouchOnlyDevice}
-                    <MenuItem on:click={copyMessage}>
-                        <ContentCopy
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text"><Translatable resourceKey={i18nKey("copy")} /></div>
-                    </MenuItem>
-                {/if}
+                <MenuItem onclick={copyMessage}>
+                    <ContentCopy size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                    <div slot="text"><Translatable resourceKey={i18nKey("copy")} /></div>
+                </MenuItem>
                 {#if canRemind && confirmed && !inert && !failed}
-                    <MenuItem on:click={remindMe}>
+                    <MenuItem onclick={remindMe}>
                         <ClockPlusOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -394,7 +389,7 @@
                     </MenuItem>
                 {/if}
                 {#if canCancelRemind && confirmed && !inert && !failed}
-                    <MenuItem on:click={cancelReminder}>
+                    <MenuItem onclick={cancelReminder}>
                         <ClockRemoveOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -406,7 +401,7 @@
                 {/if}
                 {#if confirmed && canPin && !inThread && !inert && !failed}
                     {#if pinned}
-                        <MenuItem on:click={unpinMessage}>
+                        <MenuItem onclick={unpinMessage}>
                             <PinOff
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -416,7 +411,7 @@
                             </div>
                         </MenuItem>
                     {:else}
-                        <MenuItem on:click={pinMessage}>
+                        <MenuItem onclick={pinMessage}>
                             <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                             <div slot="text">
                                 <Translatable resourceKey={i18nKey("pinMessage")} />
@@ -426,7 +421,7 @@
                 {/if}
                 {#if confirmed && supportsReply && !inert && !failed}
                     {#if canQuoteReply}
-                        <MenuItem on:click={() => dispatch("reply")}>
+                        <MenuItem onclick={() => dispatch("reply")}>
                             <Reply
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -437,7 +432,7 @@
                         </MenuItem>
                     {/if}
                     {#if !inThread && canStartThread}
-                        <MenuItem on:click={initiateThread}>
+                        <MenuItem onclick={initiateThread}>
                             <ChatPlusOutline
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -449,7 +444,7 @@
                     {/if}
                 {/if}
                 {#if canForward && !inThread && !inert && !failed}
-                    <MenuItem on:click={forward}>
+                    <MenuItem onclick={forward}>
                         <ForwardIcon
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -458,7 +453,7 @@
                     </MenuItem>
                 {/if}
                 {#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}
-                    <MenuItem on:click={() => dispatch("replyPrivately")}>
+                    <MenuItem onclick={() => dispatch("replyPrivately")}>
                         <ReplyOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -470,7 +465,7 @@
                 {/if}
                 {#if !me && translatable && !failed}
                     {#if translated}
-                        <MenuItem on:click={untranslateMessage}>
+                        <MenuItem onclick={untranslateMessage}>
                             <TranslateOff
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -480,7 +475,7 @@
                             </div>
                         </MenuItem>
                     {:else}
-                        <MenuItem on:click={translateMessage}>
+                        <MenuItem onclick={translateMessage}>
                             <TranslateIcon
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -492,7 +487,7 @@
                     {/if}
                 {/if}
                 {#if canEdit && !inert && !failed}
-                    <MenuItem on:click={() => dispatch("editMessage")}>
+                    <MenuItem onclick={() => dispatch("editMessage")}>
                         <PencilOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -502,7 +497,7 @@
                 {/if}
                 {#if canTip}
                     <MenuItem
-                        on:click={() =>
+                        onclick={() =>
                             dispatch("tipMessage", $lastCryptoSent ?? LEDGER_CANISTER_ICP)}>
                         <Bitcoin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <div slot="text"><Translatable resourceKey={i18nKey("tip.menu")} /></div>
@@ -510,13 +505,13 @@
                 {/if}
                 <MenuItem separator />
                 {#if confirmed && multiUserChat && !me && canBlockUser && !failed}
-                    <MenuItem on:click={blockUser}>
+                    <MenuItem onclick={blockUser}>
                         <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <div slot="text"><Translatable resourceKey={i18nKey("blockUser")} /></div>
                     </MenuItem>
                 {/if}
                 {#if canDeleteMessage}
-                    <MenuItem on:click={deleteMessage}>
+                    <MenuItem onclick={deleteMessage}>
                         <DeleteOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -531,7 +526,7 @@
                     </MenuItem>
                 {/if}
                 {#if confirmed && !me && !inert}
-                    <MenuItem on:click={reportMessage}>
+                    <MenuItem onclick={reportMessage}>
                         <Flag size={$iconSize} color={"var(--error)"} slot="icon" />
                         <div slot="text">
                             <Translatable resourceKey={i18nKey("report.menu")} />
@@ -539,7 +534,7 @@
                     </MenuItem>
                 {/if}
                 {#if canRevealDeleted || canRevealBlocked}
-                    <MenuItem on:click={revealDeletedMessage}>
+                    <MenuItem onclick={revealDeletedMessage}>
                         <EyeIcon size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <div slot="text">
                             <Translatable resourceKey={i18nKey("revealDeletedMessage")} />
@@ -547,7 +542,7 @@
                     </MenuItem>
                 {/if}
                 {#if canUndelete}
-                    <MenuItem on:click={undeleteMessage}>
+                    <MenuItem onclick={undeleteMessage}>
                         <DeleteOffOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
@@ -558,7 +553,7 @@
                     </MenuItem>
                 {/if}
                 {#if failed}
-                    <MenuItem on:click={retrySend}>
+                    <MenuItem onclick={retrySend}>
                         <Refresh size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <div slot="text">
                             <Translatable resourceKey={i18nKey("retryMessage")} />

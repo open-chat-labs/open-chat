@@ -1,18 +1,24 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
     import { fade } from "svelte/transition";
 
-    export let centered = false;
-    export let fit = false;
+    interface Props {
+        centered?: boolean;
+        fit?: boolean;
+        children?: Snippet;
+    }
+
+    let { centered = false, fit = false, children }: Props = $props();
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-    on:contextmenu|preventDefault
+    oncontextmenu={(e) => e.preventDefault()}
     transition:fade|local={{ duration: 100 }}
     class="menu"
     class:fit
     class:centered>
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">

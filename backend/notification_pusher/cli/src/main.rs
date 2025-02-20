@@ -1,9 +1,10 @@
 use candid::Principal;
 use index_store::DummyStore;
 use notification_pusher_core::ic_agent::IcAgent;
-use notification_pusher_core::run_notifications_pusher;
+use notification_pusher_core::{run_notifications_pusher, write_metrics};
 use std::collections::HashMap;
 use std::str::FromStr;
+use tokio::time;
 use tracing::info;
 use types::Error;
 
@@ -23,10 +24,16 @@ async fn main() -> Result<(), Error> {
     let ic_url = dotenv::var("IC_URL")?;
     let ic_identity_pem = dotenv::var("IC_IDENTITY_PEM")?;
     let is_production = bool::from_str(&dotenv::var("IS_PRODUCTION")?).unwrap();
+    let pusher_count = dotenv::var("PUSHER_COUNT")
+        .ok()
+        .and_then(|s| u32::from_str(&s).ok())
+        .unwrap_or(1);
 
     let ic_agent = IcAgent::build(&ic_url, &ic_identity_pem, !is_production).await?;
 
     info!("Initialization complete");
+
+    tokio::spawn(write_metrics_to_file());
 
     run_notifications_pusher(
         ic_agent,
@@ -34,9 +41,22 @@ async fn main() -> Result<(), Error> {
         vec![notifications_canister_id],
         index_store,
         vapid_private_pem,
-        1,
+        pusher_count,
     )
     .await;
 
     Ok(())
+}
+
+async fn write_metrics_to_file() {
+    let mut interval = time::interval(time::Duration::from_secs(30));
+
+    loop {
+        interval.tick().await;
+
+        let mut bytes = Vec::new();
+        write_metrics(&mut bytes);
+
+        std::fs::write("metrics.md", bytes).unwrap();
+    }
 }
