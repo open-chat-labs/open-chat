@@ -682,12 +682,22 @@ export type EditingApiKey = BotSummaryModeCommon & {
 
 export type EnhancedExternalBot = ExternalBot & { grantedPermissions: ExternalBotPermissions };
 
-export function botInstallationLocationForChat(chatId: ChatIdentifier): BotInstallationLocation {
-    switch (chatId.kind) {
-        case "channel":
-            return { kind: "community", communityId: chatId.communityId };
+export function botActionScopeFromExecutionContext(
+    ctx: CommunityIdentifier | ChatIdentifier,
+): BotActionScope {
+    switch (ctx.kind) {
+        case "community":
+            return {
+                kind: "community_scope",
+                communityId: ctx,
+            };
         default:
-            return chatId;
+            return {
+                kind: "chat_scope",
+                chatId: ctx,
+                messageId: random64(),
+                threadRootMessageIndex: undefined,
+            };
     }
 }
 
@@ -700,14 +710,7 @@ export function botActionScopeFromInstallLocation(
                 kind: "community_scope",
                 communityId: { kind: "community", communityId: location.communityId },
             };
-        case "group_chat":
-            return {
-                kind: "chat_scope",
-                chatId: location,
-                messageId: random64(),
-                threadRootMessageIndex: undefined,
-            };
-        case "direct_chat":
+        default:
             return {
                 kind: "chat_scope",
                 chatId: location,

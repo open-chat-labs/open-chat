@@ -15,7 +15,6 @@
         currentCommunityBots,
         emptyExternalBotPermissions,
         flattenCommandPermissions,
-        botInstallationLocationForChat,
     } from "openchat-client";
 
     let { botId, chatId, onClose }: BotProfileProps = $props();
@@ -39,7 +38,6 @@
 
 {#if bot !== undefined && id !== undefined}
     <BotSummary
-        location={botInstallationLocationForChat(chatId)}
         level={"group"}
         mode={{
             kind: "viewing_command_bot",

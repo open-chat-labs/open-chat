@@ -1,56 +1,34 @@
 <script lang="ts">
-    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import AlertBox from "../AlertBox.svelte";
     import { interpolate } from "../../i18n/i18n";
     import Markdown from "../home/Markdown.svelte";
     import { _ } from "svelte-i18n";
-    import { i18nKey } from "openchat-client";
+    import {
+        i18nKey,
+        type ChatIdentifier,
+        type CommunityIdentifier,
+        type ExternalBotLike,
+    } from "openchat-client";
+    import ApiKey from "./ApiKey.svelte";
 
     interface Props {
+        botExecutionContext: CommunityIdentifier | ChatIdentifier;
+        bot: ExternalBotLike;
         apiKey: string;
     }
 
-    let { apiKey }: Props = $props();
-
-    function onCopy() {
-        navigator.clipboard.writeText(apiKey);
-    }
+    let props: Props = $props();
 </script>
 
 <AlertBox>
-    <Markdown text={interpolate($_, i18nKey("bots.manage.copyKey"))} />
-    <div class="key">
-        <pre>{apiKey}</pre>
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <div role="button" tabindex="0" onclick={onCopy} class="copy">
-            <CopyIcon size={"1.2rem"} color={"var(--icon-txt)"} />
-        </div>
+    <div class="warning">
+        <Markdown text={interpolate($_, i18nKey("bots.manage.copyKey"))} />
     </div>
+    <ApiKey truncate={false} {...props} />
 </AlertBox>
 
 <style lang="scss">
-    .copy {
-        cursor: pointer;
-        transition: transform 0.2s ease;
-
-        &:active {
-            transform: scale(0.8);
-        }
-    }
-
-    .key {
-        display: flex;
-        gap: $sp2;
-        align-items: center;
-        width: 100%;
-        margin-top: $sp4;
-
-        pre {
-            word-break: break-all;
-            flex: 1;
-            overflow-wrap: break-word;
-            white-space: pre-wrap;
-            margin: 0;
-        }
+    .warning {
+        margin-bottom: $sp4;
     }
 </style>

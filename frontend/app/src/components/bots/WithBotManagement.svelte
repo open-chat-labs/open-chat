@@ -164,12 +164,7 @@
 </script>
 
 {#if botSummaryMode !== undefined}
-    <BotSummary
-        location={commandContextId}
-        {level}
-        mode={botSummaryMode}
-        onClose={closeModal}
-        {bot} />
+    <BotSummary {level} mode={botSummaryMode} onClose={closeModal} {bot} />
 {/if}
 
 {@render contents({

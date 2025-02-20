@@ -1,5 +1,4 @@
 <script lang="ts">
-    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import {
         OpenChat,
         type CommunityIdentifier,
@@ -24,18 +23,18 @@
     import ChoosePermissions from "./install/ChoosePermissions.svelte";
     import BotProperties from "./install/BotProperties.svelte";
     import Legend from "../Legend.svelte";
+    import ApiKey from "./ApiKey.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        location: BotInstallationLocation;
         level: Level;
         mode: BotSummaryMode;
         bot: ExternalBotLike;
         onClose: () => void;
     }
 
-    let { location, bot, onClose, mode, level }: Props = $props();
+    let { bot, onClose, mode, level }: Props = $props();
     let busy = $state(false);
     let title = $derived.by(() => {
         switch (mode.kind) {
@@ -71,12 +70,6 @@
     function getExistingApiKey(mode: BotSummaryMode): string | undefined {
         if (mode.kind === "editing_api_key") {
             return mode.apiKey;
-        }
-    }
-
-    function onCopy(key?: string) {
-        if (key) {
-            navigator.clipboard.writeText(key);
         }
     }
 
@@ -163,7 +156,8 @@
 {/if}
 
 {#if newApiKey !== undefined}
-    <ShowApiKeyModal {location} {bot} apiKey={newApiKey} {onClose}></ShowApiKeyModal>
+    <ShowApiKeyModal botExecutionContext={mode.id} {bot} apiKey={newApiKey} {onClose}
+    ></ShowApiKeyModal>
 {/if}
 
 <Overlay dismissible>
@@ -179,17 +173,8 @@
                 grantedCommandPermissions={grantedPermissions}>
                 {#if currentApiKey !== undefined}
                     <Legend large label={i18nKey("bots.manage.currentApiKey")}></Legend>
-                    <div class="key">
-                        <pre>{currentApiKey}</pre>
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <div
-                            role="button"
-                            tabindex="0"
-                            onclick={() => onCopy(currentApiKey)}
-                            class="copy">
-                            <CopyIcon size={"1.2rem"} color={"var(--icon-txt)"} />
-                        </div>
-                    </div>
+                    <ApiKey {bot} botExecutionContext={mode.id} apiKey={currentApiKey} truncate
+                    ></ApiKey>
                 {/if}
                 {#if choosePermissions}
                     <ChoosePermissions
@@ -225,34 +210,5 @@
         justify-content: center;
         align-items: center;
         gap: 12px;
-    }
-
-    .copy {
-        cursor: pointer;
-        transition: transform 0.2s ease;
-
-        &:active {
-            transform: scale(0.8);
-        }
-    }
-
-    .key {
-        display: flex;
-        gap: $sp3;
-        align-items: center;
-        width: 100%;
-        margin-bottom: $sp4;
-
-        pre {
-            word-break: break-all;
-            flex: 1;
-            overflow-wrap: break-word;
-            white-space: pre-wrap;
-            margin: 0;
-            color: var(--txt-light);
-            color: var(--warn);
-            @include font(book, normal, fs-80);
-            @include clamp(2);
-        }
     }
 </style>
