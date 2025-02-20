@@ -19,7 +19,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ExchangeArgs {
     ICPSwap(ICPSwapArgs),
-    Sonic(SonicArgs),
+    //Sonic(SonicArgs),
     KongSwap(KongSwapArgs),
 }
 
@@ -27,7 +27,7 @@ impl ExchangeArgs {
     pub fn exchange_id(&self) -> ExchangeId {
         match self {
             ExchangeArgs::ICPSwap(_) => ExchangeId::ICPSwap,
-            ExchangeArgs::Sonic(_) => ExchangeId::Sonic,
+            //ExchangeArgs::Sonic(_) => ExchangeId::Sonic,
             ExchangeArgs::KongSwap(_) => ExchangeId::KongSwap,
         }
     }
@@ -35,7 +35,7 @@ impl ExchangeArgs {
     pub fn swap_canister_id(&self) -> CanisterId {
         match self {
             ExchangeArgs::ICPSwap(a) => a.swap_canister_id,
-            ExchangeArgs::Sonic(a) => a.swap_canister_id,
+            //ExchangeArgs::Sonic(a) => a.swap_canister_id,
             ExchangeArgs::KongSwap(a) => a.swap_canister_id,
         }
     }

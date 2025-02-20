@@ -156,7 +156,7 @@ pub(crate) fn send_message_with_reply(
         now: state.env.now(),
     };
 
-    handle_message_impl(args, state)
+    handle_message_impl(args, None, false, state)
 }
 
 fn to_gb(bytes: u64) -> String {

@@ -203,10 +203,10 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
     }
 }
 
-fn fire_and_forget_c2c_tip_message<P: Serialize>(canister_id: CanisterId, payload: &P, state: &mut RuntimeState) {
-    state.data.fire_and_forget_handler.send(
-        canister_id,
-        "c2c_tip_message_msgpack".to_string(),
-        msgpack::serialize_then_unwrap(payload),
-    );
+fn fire_and_forget_c2c_tip_message<P: Serialize>(_canister_id: CanisterId, _payload: &P, _state: &mut RuntimeState) {
+    // state.data.fire_and_forget_handler.send(
+    //     canister_id,
+    //     "c2c_tip_message_msgpack".to_string(),
+    //     msgpack::serialize_then_unwrap(payload),
+    // );
 }

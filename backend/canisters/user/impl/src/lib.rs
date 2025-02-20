@@ -9,14 +9,15 @@ use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
-use crate::timer_job_types::{ClaimChitInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
-use fire_and_forget_handler::FireAndForgetHandler;
+//use fire_and_forget_handler::FireAndForgetHandler;
+use group_community_user::{BotApiKeys, InstalledBots};
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use model::chit_earned_events::ChitEarnedEvents;
 use model::contacts::Contacts;
@@ -35,9 +36,9 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
-    Cryptocurrency, Cycles, Document, Milliseconds, Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof,
-    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned,
+    ChitEarnedReason, CommunityId, Cryptocurrency, Cycles, Document, Milliseconds, Notification, NotifyChit, TimestampMillis,
+    Timestamped, UniquePersonProof, UserId,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -161,47 +162,47 @@ impl RuntimeState {
         }
     }
 
-    pub fn mark_streak_insurance_payment(&mut self, payment: UserCanisterStreakInsurancePayment) {
-        let user_id: UserId = self.env.canister_id().into();
-        self.data.streak.mark_streak_insurance_payment(payment.clone());
-        self.data.event_store_client.push(
-            EventBuilder::new("user_streak_insurance_payment", payment.timestamp)
-                .with_user(user_id.to_string(), true)
-                .with_source(user_id.to_string(), true)
-                .with_json_payload(&payment)
-                .build(),
-        );
-        self.set_up_streak_insurance_timer_job();
-        self.data
-            .push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsurancePayment(payment));
-    }
+    // pub fn mark_streak_insurance_payment(&mut self, payment: UserCanisterStreakInsurancePayment) {
+    //     let user_id: UserId = self.env.canister_id().into();
+    //     self.data.streak.mark_streak_insurance_payment(payment.clone());
+    //     self.data.event_store_client.push(
+    //         EventBuilder::new("user_streak_insurance_payment", payment.timestamp)
+    //             .with_user(user_id.to_string(), true)
+    //             .with_source(user_id.to_string(), true)
+    //             .with_json_payload(&payment)
+    //             .build(),
+    //     );
+    //     self.set_up_streak_insurance_timer_job();
+    //     self.data
+    //         .push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsurancePayment(payment));
+    // }
 
-    pub fn mark_streak_insurance_claim(&mut self, claim: UserCanisterStreakInsuranceClaim) {
-        let user_id: UserId = self.env.canister_id().into();
-        self.data.event_store_client.push(
-            EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
-                .with_user(user_id.to_string(), true)
-                .with_source(user_id.to_string(), true)
-                .with_json_payload(&claim)
-                .build(),
-        );
-        self.data
-            .push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim));
-    }
+    // pub fn mark_streak_insurance_claim(&mut self, claim: UserCanisterStreakInsuranceClaim) {
+    //     let user_id: UserId = self.env.canister_id().into();
+    //     self.data.event_store_client.push(
+    //         EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
+    //             .with_user(user_id.to_string(), true)
+    //             .with_source(user_id.to_string(), true)
+    //             .with_json_payload(&claim)
+    //             .build(),
+    //     );
+    //     self.data
+    //         .push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim));
+    // }
 
-    pub fn set_up_streak_insurance_timer_job(&mut self) {
-        if self.data.streak.has_insurance() {
-            self.data
-                .timer_jobs
-                .cancel_jobs(|j| matches!(j, TimerJob::ClaimChitInsurance(_)));
+    // pub fn set_up_streak_insurance_timer_job(&mut self) {
+    //     if self.data.streak.has_insurance() {
+    //         self.data
+    //             .timer_jobs
+    //             .cancel_jobs(|j| matches!(j, TimerJob::ClaimChitInsurance(_)));
 
-            self.data.timer_jobs.enqueue_job(
-                TimerJob::ClaimChitInsurance(ClaimChitInsuranceJob),
-                self.data.streak.ends(),
-                self.env.now(),
-            );
-        }
-    }
+    //         self.data.timer_jobs.enqueue_job(
+    //             TimerJob::ClaimChitInsurance(ClaimChitInsuranceJob),
+    //             self.data.streak.ends(),
+    //             self.env.now(),
+    //         );
+    //     }
+    // }
 
     pub fn is_empty_and_dormant(&self) -> bool {
         if self.data.direct_chats.len() <= 1
@@ -286,7 +287,7 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub contacts: Contacts,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
-    pub fire_and_forget_handler: FireAndForgetHandler,
+    //pub fire_and_forget_handler: FireAndForgetHandler,
     pub saved_crypto_accounts: Vec<NamedAccount>,
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
@@ -311,6 +312,10 @@ struct Data {
     pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
     #[serde(default)]
     pub message_ids_deduped: bool,
+    #[serde(default)]
+    pub bots: InstalledBots,
+    #[serde(default)]
+    bot_api_keys: BotApiKeys,
 }
 
 impl Data {
@@ -354,7 +359,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             contacts: Contacts::default(),
             diamond_membership_expires_at: None,
-            fire_and_forget_handler: FireAndForgetHandler::default(),
+            //fire_and_forget_handler: FireAndForgetHandler::default(),
             saved_crypto_accounts: Vec::new(),
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
@@ -380,6 +385,8 @@ impl Data {
             stable_memory_keys_to_garbage_collect: Vec::new(),
             local_user_index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
             message_ids_deduped: true,
+            bots: InstalledBots::default(),
+            bot_api_keys: BotApiKeys::default(),
         }
     }
 
@@ -491,6 +498,26 @@ impl Data {
         if event.user_id.map_or(true, |user_id| !self.blocked_users.contains(&user_id)) {
             self.message_activity_events.push(event, now);
         }
+    }
+
+    pub fn is_bot_permitted(&self, bot_id: &UserId, initiator: &BotInitiator, required: BotPermissions) -> bool {
+        // Try to get the installed bot
+        let Some(bot) = self.bots.get(bot_id) else {
+            return false;
+        };
+
+        // Get the granted permissions when initiated by command or API key
+        let granted = match initiator {
+            BotInitiator::Command(_) => &bot.permissions,
+            BotInitiator::ApiKeySecret(secret) => match self.bot_api_keys.permissions_if_secret_matches(bot_id, secret) {
+                Some(bot_permissions) => bot_permissions,
+                None => return false,
+            },
+            BotInitiator::ApiKeyPermissions(permissions) => permissions,
+        };
+
+        // The permissions required must be a subset of the permissions granted to the bot
+        required.is_subset(granted)
     }
 }
 

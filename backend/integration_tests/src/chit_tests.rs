@@ -147,32 +147,32 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
     const ONE_CHAT: u128 = 100_000_000;
     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, 100 * ONE_CHAT);
 
-    let expected_price = (2u128.pow(days_insured as u32) - 1) * ONE_CHAT;
+    //    let expected_price = (2u128.pow(days_insured as u32) - 1) * ONE_CHAT;
 
-    if days_insured > 0 {
-        let pay_for_insurance_response = client::user::pay_for_streak_insurance(
-            env,
-            user.principal,
-            user.canister(),
-            &user_canister::pay_for_streak_insurance::Args {
-                additional_days: days_insured,
-                expected_price,
-            },
-        );
-        assert!(
-            matches!(
-                pay_for_insurance_response,
-                user_canister::pay_for_streak_insurance::Response::Success
-            ),
-            "{pay_for_insurance_response:?}"
-        );
-    }
+    // if days_insured > 0 {
+    //     let pay_for_insurance_response = client::user::pay_for_streak_insurance(
+    //         env,
+    //         user.principal,
+    //         user.canister(),
+    //         &user_canister::pay_for_streak_insurance::Args {
+    //             additional_days: days_insured,
+    //             expected_price,
+    //         },
+    //     );
+    //     assert!(
+    //         matches!(
+    //             pay_for_insurance_response,
+    //             user_canister::pay_for_streak_insurance::Response::Success
+    //         ),
+    //         "{pay_for_insurance_response:?}"
+    //     );
+    // }
 
-    let result = client::user::happy_path::initial_state(env, &user);
-    assert_eq!(
-        result.streak_insurance.map(|s| s.days_insured).unwrap_or_default(),
-        days_insured
-    );
+    // let result = client::user::happy_path::initial_state(env, &user);
+    // assert_eq!(
+    //     result.streak_insurance.map(|s| s.days_insured).unwrap_or_default(),
+    //     days_insured
+    // );
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     env.tick();
