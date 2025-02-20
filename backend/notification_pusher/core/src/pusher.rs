@@ -36,7 +36,7 @@ impl Pusher {
 
     pub async fn run(self) {
         while let Ok(NotificationToPush { notification, message }) = self.receiver.recv().await {
-            let payload_bytes = message.payload.as_ref().map_or(0, |p| p.content.len()) as u64;
+            let payload_size = message.payload.as_ref().map_or(0, |p| p.content.len()) as u64;
             let start = Instant::now();
             let push_result = self.web_push_client.send(message).await;
             let success = push_result.is_ok();
@@ -80,8 +80,7 @@ impl Pusher {
             let end_to_end_internal_latency = end.saturating_duration_since(notification.first_read_at).as_millis() as u64;
             write_metrics(|m| {
                 if success {
-                    m.incr_total_notifications_pushed();
-                    m.incr_total_notification_bytes_pushed(payload_bytes);
+                    m.observe_notification_payload_size(payload_size);
                     m.set_latest_notification_index_pushed(notification.index, notification.notifications_canister);
                 }
                 m.observe_end_to_end_latency(end_to_end_latency, notification.notifications_canister);

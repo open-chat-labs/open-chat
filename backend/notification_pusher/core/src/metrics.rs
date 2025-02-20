@@ -1,11 +1,13 @@
 use crate::{Notification, NotificationToPush};
 use async_channel::Sender;
 use prometheus::proto::MetricFamily;
-use prometheus::{Histogram, HistogramOpts, HistogramVec, IntCounter, IntGaugeVec, Opts, PullingGauge, Registry};
+use prometheus::{Histogram, HistogramOpts, HistogramVec, IntGaugeVec, Opts, PullingGauge, Registry};
 use std::sync::OnceLock;
 use types::{CanisterId, Milliseconds, UserId};
 
-const BASE_BUCKETS: [f64; 13] = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0];
+const BASE_BUCKETS: [f64; 13] = [
+    1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0, 2000.0, 5000.0, 10000.0,
+];
 
 pub struct Metrics {
     registry: Registry,
@@ -16,8 +18,7 @@ pub struct Metrics {
     end_to_end_internal_latency_ms: Histogram,
     processing_duration_ms: HistogramVec,
     send_web_push_message_duration_ms: HistogramVec,
-    total_notifications_pushed: IntCounter,
-    total_notification_bytes_pushed: IntCounter,
+    notification_payload_sizes: Histogram,
 }
 
 static METRICS: OnceLock<Metrics> = OnceLock::new();
@@ -93,32 +94,33 @@ impl Metrics {
 
         let end_to_end_latency_ms = HistogramVec::new(
             HistogramOpts::new("end_to_end_latency", "In milliseconds. Per notifications canister")
-                .buckets(calc_buckets(10000.0)),
+                .buckets(calc_buckets(1000.0)),
             &["canisterId"],
         )
         .unwrap();
 
         let end_to_end_internal_latency_ms = Histogram::with_opts(
-            HistogramOpts::new("end_to_end_internal_latency", "In milliseconds").buckets(calc_buckets(100.0)),
+            HistogramOpts::new("end_to_end_internal_latency", "In milliseconds").buckets(calc_buckets(10.0)),
         )
         .unwrap();
 
         let processing_duration_ms = HistogramVec::new(
-            HistogramOpts::new("processing_duration", "In milliseconds").buckets(calc_buckets(0.1)),
+            HistogramOpts::new("processing_duration", "In milliseconds").buckets(calc_buckets(0.01)),
             &["success"],
         )
         .unwrap();
 
         let send_web_push_message_duration_ms = HistogramVec::new(
-            HistogramOpts::new("send_web_push_message_duration", "In milliseconds").buckets(calc_buckets(100.0)),
+            HistogramOpts::new("send_web_push_message_duration", "In milliseconds").buckets(calc_buckets(10.0)),
             &["success"],
         )
         .unwrap();
 
-        let total_notifications_pushed =
-            IntCounter::new("total_notifications_pushed", "Total count of notifications pushed").unwrap();
-        let total_notification_bytes_pushed =
-            IntCounter::new("total_notification_bytes_pushed", "Total count of notification bytes pushed").unwrap();
+        let notification_payload_sizes = Histogram::with_opts(
+            HistogramOpts::new("notification_payload_sizes", "The size of notification payloads in bytes")
+                .buckets(calc_buckets(1.0)),
+        )
+        .unwrap();
 
         registry.register(Box::new(latest_notification_index_read.clone())).unwrap();
         registry
@@ -131,8 +133,7 @@ impl Metrics {
         registry
             .register(Box::new(send_web_push_message_duration_ms.clone()))
             .unwrap();
-        registry.register(Box::new(total_notifications_pushed.clone())).unwrap();
-        registry.register(Box::new(total_notification_bytes_pushed.clone())).unwrap();
+        registry.register(Box::new(notification_payload_sizes.clone())).unwrap();
 
         Metrics {
             registry,
@@ -143,8 +144,7 @@ impl Metrics {
             end_to_end_internal_latency_ms,
             processing_duration_ms,
             send_web_push_message_duration_ms,
-            total_notifications_pushed,
-            total_notification_bytes_pushed,
+            notification_payload_sizes,
         }
     }
 
@@ -192,12 +192,8 @@ impl Metrics {
             .observe(latency as f64);
     }
 
-    pub fn incr_total_notifications_pushed(&self) {
-        self.total_notifications_pushed.inc();
-    }
-
-    pub fn incr_total_notification_bytes_pushed(&self, amount: u64) {
-        self.total_notification_bytes_pushed.inc_by(amount);
+    pub fn observe_notification_payload_size(&self, size: u64) {
+        self.notification_payload_sizes.observe(size as f64);
     }
 }
 
