@@ -5,4 +5,4 @@ import type { EventIndex } from "./EventIndex";
 import type { MessageIndex } from "./MessageIndex";
 import type { UserId } from "./UserId";
 
-export type GroupMessageNotification = { chat_id: ChatId, thread_root_message_index?: MessageIndex, message_index: MessageIndex, event_index: EventIndex, group_name: string, sender: UserId, sender_name: string, sender_display_name?: string, message_type: string, message_text?: string, image_url?: string, group_avatar_id?: bigint, crypto_transfer?: CryptoTransferDetails, };
+export type GroupMessageNotification = { c: ChatId, tr?: MessageIndex, m: MessageIndex, e: EventIndex, g: string, s: UserId, sn: string, sd?: string, ty: string, tx?: string, i?: string, a?: bigint, ct?: CryptoTransferDetails, };

@@ -4,4 +4,4 @@ import type { MessageIndex } from "./MessageIndex";
 import type { Reaction } from "./Reaction";
 import type { UserId } from "./UserId";
 
-export type DirectReactionAddedNotification = { them: UserId, thread_root_message_index?: MessageIndex, message_index: MessageIndex, message_event_index: EventIndex, username: string, display_name?: string, reaction: Reaction, user_avatar_id?: bigint, };
+export type DirectReactionAddedNotification = { t: UserId, tr?: MessageIndex, m: MessageIndex, e: EventIndex, u: string, d?: string, r: Reaction, a?: bigint, };
