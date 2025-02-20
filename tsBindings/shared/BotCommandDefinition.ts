@@ -3,4 +3,4 @@ import type { BotCommandParam } from "./BotCommandParam";
 import type { BotPermissions } from "./BotPermissions";
 import type { GroupRole } from "./GroupRole";
 
-export type BotCommandDefinition = { name: string, description?: string, placeholder?: string, params: Array<BotCommandParam>, permissions: BotPermissions, default_role: GroupRole, };
+export type BotCommandDefinition = { name: string, description?: string, placeholder?: string, params: Array<BotCommandParam>, permissions: BotPermissions, default_role?: GroupRole, };

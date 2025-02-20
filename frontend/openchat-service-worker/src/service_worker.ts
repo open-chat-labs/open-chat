@@ -1,8 +1,12 @@
 import { IDL } from "@dfinity/candid";
 import {
     type ApiNotification,
+    deserializeFromMsgPack,
     NotificationIdl,
+    Notification as TNotification,
     notification as toNotification,
+    notificationV2 as toNotificationV2,
+    typeboxValidate,
 } from "openchat-agent";
 import type {
     Notification,
@@ -122,14 +126,11 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
 
     const bytes = toUint8Array(value);
 
-    // Try to extract the typed notification from the event
-    const candid = IDL.decode([NotificationIdl], bytes.buffer)[0] as unknown as ApiNotification;
-    if (!candid) {
-        console.debug("SW: unable to decode candid", id);
+    const notification = decodeNotification(bytes, timestamp);
+    if (notification === undefined) {
+        console.debug("SW: unable to decode notification", id);
         return;
     }
-
-    const notification = toNotification(candid, timestamp);
 
     const windowClients = await self.clients.matchAll({
         type: "window",
@@ -175,6 +176,25 @@ async function handleNotificationClick(event: NotificationEvent): Promise<void> 
         console.debug("SW: notification clicked no open clients. Opening: ", urlToOpen);
         await self.clients.openWindow(urlToOpen);
     }
+}
+
+function decodeNotification(bytes: Uint8Array, timestamp: bigint): Notification | undefined {
+    try {
+        const deserialized = deserializeFromMsgPack(bytes);
+        const validated = typeboxValidate(deserialized, TNotification);
+        return toNotificationV2(validated, timestamp);
+    }
+    catch {
+        // Failed to decode using MsgPack
+    }
+
+    // Try to extract the typed notification from the event
+    const candid = IDL.decode([NotificationIdl], bytes.buffer)[0] as unknown as ApiNotification;
+    if (!candid) {
+        return;
+    }
+
+    return toNotification(candid, timestamp);
 }
 
 function toUint8Array(base64String: string): Uint8Array {

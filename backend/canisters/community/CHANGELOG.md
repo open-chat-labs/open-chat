@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Expose channel count in metrics ([#7390](https://github.com/open-chat-labs/open-chat/pull/7390))
+- Serialize notifications using MessagePack rather than Candid ([#7445](https://github.com/open-chat-labs/open-chat/pull/7445))
 
 ### Removed
 
