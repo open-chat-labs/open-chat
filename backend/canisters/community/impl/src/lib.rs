@@ -110,7 +110,7 @@ impl RuntimeState {
                 sender,
                 recipients,
                 authorizer: Some(self.data.local_group_index_canister_id),
-                notification_bytes: ByteBuf::from(candid::encode_one(notification).unwrap()),
+                notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
             };
             ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
         }
