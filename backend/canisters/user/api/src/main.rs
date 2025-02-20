@@ -8,6 +8,7 @@ fn main() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
 
+    generate_ts_method!(user, api_key);
     generate_ts_method!(user, bio);
     generate_ts_method!(user, cached_btc_address);
     generate_ts_method!(user, chit_events);
