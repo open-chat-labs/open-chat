@@ -1555,19 +1555,19 @@ export const TransferFromError = Type.Union([
 
 export type ChannelMessageTipped = Static<typeof ChannelMessageTipped>;
 export const ChannelMessageTipped = Type.Object({
-    community_id: CommunityId,
-    channel_id: ChannelId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_index: MessageIndex,
-    message_event_index: EventIndex,
-    community_name: Type.String(),
-    channel_name: Type.String(),
-    tipped_by: UserId,
-    tipped_by_name: Type.String(),
-    tipped_by_display_name: Type.Optional(Type.String()),
-    tip: Type.String(),
-    community_avatar_id: Type.Optional(Type.BigInt()),
-    channel_avatar_id: Type.Optional(Type.BigInt()),
+    ci: CommunityId,
+    chi: ChannelId,
+    tr: Type.Optional(MessageIndex),
+    m: MessageIndex,
+    e: EventIndex,
+    cn: Type.String(),
+    chn: Type.String(),
+    ti: UserId,
+    tn: Type.String(),
+    td: Type.Optional(Type.String()),
+    t: Type.String(),
+    ca: Type.Optional(Type.BigInt()),
+    cha: Type.Optional(Type.BigInt()),
 });
 
 export type MessageMatch = Static<typeof MessageMatch>;
@@ -1880,11 +1880,11 @@ export const Tally = Type.Object({
 
 export type CryptoTransferDetails = Static<typeof CryptoTransferDetails>;
 export const CryptoTransferDetails = Type.Object({
-    recipient: UserId,
-    recipient_username: Type.Optional(Type.String()),
-    ledger: TSPrincipal,
-    symbol: Type.String(),
-    amount: Type.BigInt(),
+    r: UserId,
+    u: Type.Optional(Type.String()),
+    l: TSPrincipal,
+    s: Type.String(),
+    a: Type.BigInt(),
 });
 
 export type DiamondMembershipFeesByDuration = Static<typeof DiamondMembershipFeesByDuration>;
@@ -5172,14 +5172,14 @@ export const UserConfigureWalletArgs = Type.Object({
 
 export type DirectReactionAddedNotification = Static<typeof DirectReactionAddedNotification>;
 export const DirectReactionAddedNotification = Type.Object({
-    them: UserId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_index: MessageIndex,
-    message_event_index: EventIndex,
-    username: Type.String(),
-    display_name: Type.Optional(Type.String()),
-    reaction: Reaction,
-    user_avatar_id: Type.Optional(Type.BigInt()),
+    t: UserId,
+    tr: Type.Optional(MessageIndex),
+    m: MessageIndex,
+    e: EventIndex,
+    u: Type.String(),
+    d: Type.Optional(Type.String()),
+    r: Reaction,
+    a: Type.Optional(Type.BigInt()),
 });
 
 export type PaymentGate = Static<typeof PaymentGate>;
@@ -5312,14 +5312,14 @@ export const UserSummary = Type.Object({
 
 export type DirectMessageTipped = Static<typeof DirectMessageTipped>;
 export const DirectMessageTipped = Type.Object({
-    them: UserId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_index: MessageIndex,
-    message_event_index: EventIndex,
-    username: Type.String(),
-    display_name: Type.Optional(Type.String()),
-    tip: Type.String(),
-    user_avatar_id: Type.Optional(Type.BigInt()),
+    ti: UserId,
+    tr: Type.Optional(MessageIndex),
+    m: MessageIndex,
+    e: EventIndex,
+    u: Type.String(),
+    d: Type.Optional(Type.String()),
+    t: Type.String(),
+    a: Type.Optional(Type.BigInt()),
 });
 
 export type MessagePermissions = Static<typeof MessagePermissions>;
@@ -5680,17 +5680,17 @@ export const MessageUnpinned = Type.Object({
 
 export type DirectMessageNotification = Static<typeof DirectMessageNotification>;
 export const DirectMessageNotification = Type.Object({
-    sender: UserId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_index: MessageIndex,
-    event_index: EventIndex,
-    sender_name: Type.String(),
-    sender_display_name: Type.Optional(Type.String()),
-    message_type: Type.String(),
-    message_text: Type.Optional(Type.String()),
-    image_url: Type.Optional(Type.String()),
-    sender_avatar_id: Type.Optional(Type.BigInt()),
-    crypto_transfer: Type.Optional(CryptoTransferDetails),
+    s: UserId,
+    tr: Type.Optional(MessageIndex),
+    m: MessageIndex,
+    e: EventIndex,
+    sn: Type.String(),
+    sd: Type.Optional(Type.String()),
+    ty: Type.String(),
+    tx: Type.Optional(Type.String()),
+    i: Type.Optional(Type.String()),
+    a: Type.Optional(Type.BigInt()),
+    ct: Type.Optional(CryptoTransferDetails),
 });
 
 export type CompletedCryptoTransactionNNS = Static<typeof CompletedCryptoTransactionNNS>;
@@ -5831,33 +5831,33 @@ export const FailedCryptoTransactionICRC2 = Type.Object({
 
 export type GroupReactionAddedNotification = Static<typeof GroupReactionAddedNotification>;
 export const GroupReactionAddedNotification = Type.Object({
-    chat_id: ChatId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_index: MessageIndex,
-    message_event_index: EventIndex,
-    group_name: Type.String(),
-    added_by: UserId,
-    added_by_name: Type.String(),
-    added_by_display_name: Type.Optional(Type.String()),
-    reaction: Reaction,
-    group_avatar_id: Type.Optional(Type.BigInt()),
+    c: ChatId,
+    tr: Type.Optional(MessageIndex),
+    m: MessageIndex,
+    e: EventIndex,
+    g: Type.String(),
+    a: UserId,
+    n: Type.String(),
+    d: Type.Optional(Type.String()),
+    r: Reaction,
+    av: Type.Optional(Type.BigInt()),
 });
 
 export type ChannelReactionAddedNotification = Static<typeof ChannelReactionAddedNotification>;
 export const ChannelReactionAddedNotification = Type.Object({
-    community_id: CommunityId,
-    channel_id: ChannelId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_index: MessageIndex,
-    message_event_index: EventIndex,
-    community_name: Type.String(),
-    channel_name: Type.String(),
-    added_by: UserId,
-    added_by_name: Type.String(),
-    added_by_display_name: Type.Optional(Type.String()),
-    reaction: Reaction,
-    community_avatar_id: Type.Optional(Type.BigInt()),
-    channel_avatar_id: Type.Optional(Type.BigInt()),
+    ci: CommunityId,
+    chi: ChannelId,
+    tr: Type.Optional(MessageIndex),
+    m: MessageIndex,
+    e: EventIndex,
+    cn: Type.String(),
+    chn: Type.String(),
+    a: UserId,
+    an: Type.String(),
+    ad: Type.Optional(Type.String()),
+    r: Reaction,
+    ca: Type.Optional(Type.BigInt()),
+    cha: Type.Optional(Type.BigInt()),
 });
 
 export type UsersInvited = Static<typeof UsersInvited>;
@@ -5973,15 +5973,15 @@ export const MemberJoined = Type.Object({
 
 export type AddedToChannelNotification = Static<typeof AddedToChannelNotification>;
 export const AddedToChannelNotification = Type.Object({
-    community_id: CommunityId,
-    community_name: Type.String(),
-    channel_id: ChannelId,
-    channel_name: Type.String(),
-    added_by: UserId,
-    added_by_name: Type.String(),
-    added_by_display_name: Type.Optional(Type.String()),
-    community_avatar_id: Type.Optional(Type.BigInt()),
-    channel_avatar_id: Type.Optional(Type.BigInt()),
+    ci: CommunityId,
+    cn: Type.String(),
+    chi: ChannelId,
+    chn: Type.String(),
+    a: UserId,
+    an: Type.String(),
+    ad: Type.Optional(Type.String()),
+    ca: Type.Optional(Type.BigInt()),
+    cha: Type.Optional(Type.BigInt()),
 });
 
 export type AudioContent = Static<typeof AudioContent>;
@@ -6128,22 +6128,22 @@ export const ReportedMessage = Type.Object({
 
 export type ChannelMessageNotification = Static<typeof ChannelMessageNotification>;
 export const ChannelMessageNotification = Type.Object({
-    community_id: CommunityId,
-    channel_id: ChannelId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_index: MessageIndex,
-    event_index: EventIndex,
-    community_name: Type.String(),
-    channel_name: Type.String(),
-    sender: UserId,
-    sender_name: Type.String(),
-    sender_display_name: Type.Optional(Type.String()),
-    message_type: Type.String(),
-    message_text: Type.Optional(Type.String()),
-    image_url: Type.Optional(Type.String()),
-    community_avatar_id: Type.Optional(Type.BigInt()),
-    channel_avatar_id: Type.Optional(Type.BigInt()),
-    crypto_transfer: Type.Optional(CryptoTransferDetails),
+    ci: CommunityId,
+    chi: ChannelId,
+    tr: Type.Optional(MessageIndex),
+    m: MessageIndex,
+    e: EventIndex,
+    cn: Type.String(),
+    chn: Type.String(),
+    s: UserId,
+    sn: Type.String(),
+    sd: Type.Optional(Type.String()),
+    ty: Type.String(),
+    tx: Type.Optional(Type.String()),
+    i: Type.Optional(Type.String()),
+    ca: Type.Optional(Type.BigInt()),
+    cha: Type.Optional(Type.BigInt()),
+    ct: Type.Optional(CryptoTransferDetails),
 });
 
 export type GroupMembershipUpdates = Static<typeof GroupMembershipUpdates>;
@@ -6224,33 +6224,33 @@ export const OptionUpdateAirdropConfig = Type.Union(
 
 export type GroupMessageTipped = Static<typeof GroupMessageTipped>;
 export const GroupMessageTipped = Type.Object({
-    chat_id: ChatId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_index: MessageIndex,
-    message_event_index: EventIndex,
-    group_name: Type.String(),
-    tipped_by: UserId,
-    tipped_by_name: Type.String(),
-    tipped_by_display_name: Type.Optional(Type.String()),
-    tip: Type.String(),
-    group_avatar_id: Type.Optional(Type.BigInt()),
+    c: ChatId,
+    tr: Type.Optional(MessageIndex),
+    m: MessageIndex,
+    e: EventIndex,
+    g: Type.String(),
+    ti: UserId,
+    tn: Type.String(),
+    td: Type.Optional(Type.String()),
+    t: Type.String(),
+    a: Type.Optional(Type.BigInt()),
 });
 
 export type GroupMessageNotification = Static<typeof GroupMessageNotification>;
 export const GroupMessageNotification = Type.Object({
-    chat_id: ChatId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_index: MessageIndex,
-    event_index: EventIndex,
-    group_name: Type.String(),
-    sender: UserId,
-    sender_name: Type.String(),
-    sender_display_name: Type.Optional(Type.String()),
-    message_type: Type.String(),
-    message_text: Type.Optional(Type.String()),
-    image_url: Type.Optional(Type.String()),
-    group_avatar_id: Type.Optional(Type.BigInt()),
-    crypto_transfer: Type.Optional(CryptoTransferDetails),
+    c: ChatId,
+    tr: Type.Optional(MessageIndex),
+    m: MessageIndex,
+    e: EventIndex,
+    g: Type.String(),
+    s: UserId,
+    sn: Type.String(),
+    sd: Type.Optional(Type.String()),
+    ty: Type.String(),
+    tx: Type.Optional(Type.String()),
+    i: Type.Optional(Type.String()),
+    a: Type.Optional(Type.BigInt()),
+    ct: Type.Optional(CryptoTransferDetails),
 });
 
 export type OptionUpdateDocument = Static<typeof OptionUpdateDocument>;
@@ -7532,34 +7532,34 @@ export const BotActionByCommandArgs = Type.Object({
 export type Notification = Static<typeof Notification>;
 export const Notification = Type.Union([
     Type.Object({
-        AddedToChannel: AddedToChannelNotification,
+        ac: AddedToChannelNotification,
     }),
     Type.Object({
-        DirectMessage: DirectMessageNotification,
+        dm: DirectMessageNotification,
     }),
     Type.Object({
-        GroupMessage: GroupMessageNotification,
+        gm: GroupMessageNotification,
     }),
     Type.Object({
-        ChannelMessage: ChannelMessageNotification,
+        cm: ChannelMessageNotification,
     }),
     Type.Object({
-        DirectReactionAdded: DirectReactionAddedNotification,
+        dr: DirectReactionAddedNotification,
     }),
     Type.Object({
-        GroupReactionAdded: GroupReactionAddedNotification,
+        gr: GroupReactionAddedNotification,
     }),
     Type.Object({
-        ChannelReactionAdded: ChannelReactionAddedNotification,
+        cr: ChannelReactionAddedNotification,
     }),
     Type.Object({
-        DirectMessageTipped: DirectMessageTipped,
+        dt: DirectMessageTipped,
     }),
     Type.Object({
-        GroupMessageTipped: GroupMessageTipped,
+        gt: GroupMessageTipped,
     }),
     Type.Object({
-        ChannelMessageTipped: ChannelMessageTipped,
+        ct: ChannelMessageTipped,
     }),
 ]);
 

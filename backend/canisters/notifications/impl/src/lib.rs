@@ -164,5 +164,5 @@ fn notification_length() {
 
     let bytes = msgpack::serialize_then_unwrap(notification).len();
 
-    assert!(bytes < 125, "{bytes}");
+    assert!(bytes < 55, "{bytes}");
 }

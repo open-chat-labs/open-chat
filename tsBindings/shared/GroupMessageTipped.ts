@@ -4,4 +4,4 @@ import type { EventIndex } from "./EventIndex";
 import type { MessageIndex } from "./MessageIndex";
 import type { UserId } from "./UserId";
 
-export type GroupMessageTipped = { chat_id: ChatId, thread_root_message_index?: MessageIndex, message_index: MessageIndex, message_event_index: EventIndex, group_name: string, tipped_by: UserId, tipped_by_name: string, tipped_by_display_name?: string, tip: string, group_avatar_id?: bigint, };
+export type GroupMessageTipped = { c: ChatId, tr?: MessageIndex, m: MessageIndex, e: EventIndex, g: string, ti: UserId, tn: string, td?: string, t: string, a?: bigint, };

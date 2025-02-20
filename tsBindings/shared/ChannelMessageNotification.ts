@@ -6,4 +6,4 @@ import type { EventIndex } from "./EventIndex";
 import type { MessageIndex } from "./MessageIndex";
 import type { UserId } from "./UserId";
 
-export type ChannelMessageNotification = { community_id: CommunityId, channel_id: ChannelId, thread_root_message_index?: MessageIndex, message_index: MessageIndex, event_index: EventIndex, community_name: string, channel_name: string, sender: UserId, sender_name: string, sender_display_name?: string, message_type: string, message_text?: string, image_url?: string, community_avatar_id?: bigint, channel_avatar_id?: bigint, crypto_transfer?: CryptoTransferDetails, };
+export type ChannelMessageNotification = { ci: CommunityId, chi: ChannelId, tr?: MessageIndex, m: MessageIndex, e: EventIndex, cn: string, chn: string, s: UserId, sn: string, sd?: string, ty: string, tx?: string, i?: string, ca?: bigint, cha?: bigint, ct?: CryptoTransferDetails, };
