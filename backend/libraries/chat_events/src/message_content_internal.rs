@@ -8,7 +8,7 @@ use serde_bytes::ByteBuf;
 use std::collections::{HashMap, HashSet};
 use types::icrc1::{Account, CryptoAccount};
 use types::{
-    is_default, AudioContent, BlobReference, CallParticipant, CanisterId, CompletedCryptoTransaction,
+    is_default, AudioContent, BlobReference, CallParticipant, CanisterId, CompletedCryptoTransaction, ContentValidationError,
     ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction, Cryptocurrency, CustomContent,
     FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MessageContent, MessageContentEventPayload, MessageContentInitial, MessageContentType,
@@ -18,7 +18,8 @@ use types::{
     PollVotes, PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload,
     Proposal, ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
-    VideoCallContent, VideoCallPresence, VideoCallType, VideoContent, VoteOperation,
+    UserType, VideoCallContent, VideoCallPresence, VideoCallType, VideoContent, VoteOperation, MAX_TEXT_LENGTH,
+    MAX_TEXT_LENGTH_USIZE,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -62,6 +63,100 @@ pub enum MessageContentInternal {
 }
 
 impl MessageContentInternal {
+    pub fn validate_new_message(
+        content: MessageContentInitial,
+        is_direct_chat: bool,
+        sender_user_type: UserType,
+        forwarding: bool,
+        now: TimestampMillis,
+    ) -> ValidateNewMessageContentResult {
+        let contains_crypto_transfer = content.contains_crypto_transfer();
+
+        if forwarding {
+            let invalid_type_for_forwarding = contains_crypto_transfer
+                || matches!(
+                    &content,
+                    MessageContentInitial::Poll(_) | MessageContentInitial::GovernanceProposal(_)
+                );
+
+            if invalid_type_for_forwarding {
+                return ValidateNewMessageContentResult::Error(ContentValidationError::InvalidTypeForForwarding);
+            }
+        }
+
+        // Allow GovernanceProposal messages to exceed the max length since they are collapsed on the UI
+        if content.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(&content, MessageContentInitial::GovernanceProposal(_)) {
+            return ValidateNewMessageContentResult::Error(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH));
+        }
+
+        match &content {
+            MessageContentInitial::Poll(p) => {
+                if let Err(reason) = p.config.validate(is_direct_chat, now) {
+                    return ValidateNewMessageContentResult::Error(ContentValidationError::InvalidPoll(reason));
+                }
+            }
+            MessageContentInitial::Prize(p) => {
+                if p.end_date <= now {
+                    return ValidateNewMessageContentResult::Error(ContentValidationError::PrizeEndDateInThePast);
+                }
+            }
+            MessageContentInitial::GovernanceProposal(_)
+            | MessageContentInitial::MessageReminderCreated(_)
+            | MessageContentInitial::MessageReminder(_) => {
+                return ValidateNewMessageContentResult::Error(ContentValidationError::Unauthorized);
+            }
+            _ => {}
+        };
+
+        let is_empty = match &content {
+            MessageContentInitial::Text(t) => t.text.is_empty(),
+            MessageContentInitial::Image(i) => i.blob_reference.is_none(),
+            MessageContentInitial::Video(v) => v.video_blob_reference.is_none(),
+            MessageContentInitial::Audio(a) => a.blob_reference.is_none(),
+            MessageContentInitial::File(f) => f.blob_reference.is_none(),
+            MessageContentInitial::Poll(p) => p.config.options.is_empty(),
+            MessageContentInitial::Prize(p) => p.prizes_v2.is_empty(),
+            MessageContentInitial::Deleted(_) => true,
+            MessageContentInitial::Crypto(_)
+            | MessageContentInitial::Giphy(_)
+            | MessageContentInitial::GovernanceProposal(_)
+            | MessageContentInitial::MessageReminderCreated(_)
+            | MessageContentInitial::MessageReminder(_)
+            | MessageContentInitial::P2PSwap(_)
+            | MessageContentInitial::Custom(_) => false,
+        };
+
+        if is_empty {
+            return ValidateNewMessageContentResult::Error(ContentValidationError::Empty);
+        }
+
+        match content {
+            MessageContentInitial::Crypto(c) => match c.transfer {
+                CryptoTransaction::Pending(_) => ValidateNewMessageContentResult::SuccessCrypto(c),
+                CryptoTransaction::Completed(completed) if sender_user_type.is_oc_controlled_bot() => {
+                    ValidateNewMessageContentResult::Success(MessageContentInternal::Crypto(CryptoContentInternal {
+                        recipient: c.recipient,
+                        transfer: completed.into(),
+                        caption: c.caption,
+                    }))
+                }
+                _ => ValidateNewMessageContentResult::Error(ContentValidationError::TransferMustBePending),
+            },
+            MessageContentInitial::Prize(c) => match &c.transfer {
+                CryptoTransaction::Pending(_) => ValidateNewMessageContentResult::SuccessPrize(c),
+                CryptoTransaction::Completed(completed) if sender_user_type.is_oc_controlled_bot() => {
+                    let completed = completed.clone().into();
+                    ValidateNewMessageContentResult::Success(MessageContentInternal::Prize(PrizeContentInternal::new(
+                        c, completed,
+                    )))
+                }
+                _ => ValidateNewMessageContentResult::Error(ContentValidationError::TransferMustBePending),
+            },
+            MessageContentInitial::P2PSwap(c) => ValidateNewMessageContentResult::SuccessP2PSwap(c),
+            content => ValidateNewMessageContentResult::Success(content.into()),
+        }
+    }
+
     pub fn new_with_transfer(
         content: MessageContentInitial,
         transfer: CompletedCryptoTransactionInternal,
@@ -267,6 +362,14 @@ impl MessageContentInternal {
     pub fn content_type(&self) -> MessageContentType {
         self.into()
     }
+}
+
+pub enum ValidateNewMessageContentResult {
+    Success(MessageContentInternal),
+    SuccessCrypto(CryptoContent),
+    SuccessPrize(PrizeContentInitial),
+    SuccessP2PSwap(P2PSwapContentInitial),
+    Error(ContentValidationError),
 }
 
 fn option_string_length(value: &Option<String>) -> u32 {
@@ -720,6 +823,22 @@ impl MessageContentInternalSubtype for CryptoContentInternal {
             recipient: self.recipient,
             transfer: CryptoTransaction::Completed(self.transfer.into()),
             caption: self.caption,
+        }
+    }
+}
+
+impl TryFrom<CryptoContent> for CryptoContentInternal {
+    type Error = ();
+
+    fn try_from(value: CryptoContent) -> Result<Self, Self::Error> {
+        if let CryptoTransaction::Completed(transfer) = value.transfer {
+            Ok(CryptoContentInternal {
+                recipient: value.recipient,
+                transfer: transfer.into(),
+                caption: value.caption,
+            })
+        } else {
+            Err(())
         }
     }
 }
@@ -1705,17 +1824,10 @@ impl From<MessageContentInitial> for MessageContentInternal {
             MessageContentInitial::MessageReminderCreated(r) => MessageContentInternal::MessageReminderCreated(r.into()),
             MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r.into()),
             MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c.into()),
-            MessageContentInitial::Crypto(c) => {
-                if let CryptoTransaction::Completed(transfer) = c.transfer {
-                    MessageContentInternal::Crypto(CryptoContentInternal {
-                        recipient: c.recipient,
-                        transfer: transfer.into(),
-                        caption: c.caption,
-                    })
-                } else {
-                    panic!("Crypto transfer must be completed")
-                }
-            }
+            MessageContentInitial::Crypto(c) => c
+                .try_into()
+                .map(MessageContentInternal::Crypto)
+                .expect("Crypto transfer must be completed"),
             MessageContentInitial::P2PSwap(_) | MessageContentInitial::Prize(_) => {
                 unreachable!()
             }

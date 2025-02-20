@@ -1,8 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency,
-    MessageIndex, MessagePermission, Milliseconds, P2PSwapStatus, ProposalContent, TimestampMillis, TokenInfo, TotalVotes,
-    User, UserId, UserType, VideoCallType,
+    MessageIndex, MessagePermission, Milliseconds, P2PSwapStatus, PendingCryptoTransaction, ProposalContent, TimestampMillis,
+    TokenInfo, TotalVotes, User, UserId, VideoCallType,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -85,6 +85,7 @@ pub enum ContentValidationError {
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),
     TransferCannotBeZero,
+    TransferMustBePending,
     InvalidTypeForForwarding,
     PrizeEndDateInThePast,
     Unauthorized,
@@ -248,81 +249,6 @@ impl MessageContent {
 }
 
 impl MessageContentInitial {
-    pub fn validate_for_new_message(
-        &self,
-        is_direct_chat: bool,
-        sender_user_type: UserType,
-        forwarding: bool,
-        now: TimestampMillis,
-    ) -> Result<(), ContentValidationError> {
-        if forwarding {
-            let invalid_type_for_forwarding = self.contains_crypto_transfer()
-                || matches!(
-                    self,
-                    MessageContentInitial::Poll(_) | MessageContentInitial::GovernanceProposal(_)
-                );
-
-            if invalid_type_for_forwarding {
-                return Err(ContentValidationError::InvalidTypeForForwarding);
-            }
-        }
-
-        match self {
-            MessageContentInitial::Poll(p) => {
-                if let Err(reason) = p.config.validate(is_direct_chat, now) {
-                    return Err(ContentValidationError::InvalidPoll(reason));
-                }
-            }
-            MessageContentInitial::Crypto(c) => {
-                if c.transfer.is_zero() {
-                    return Err(ContentValidationError::TransferCannotBeZero);
-                }
-            }
-            MessageContentInitial::Prize(p) => {
-                if p.end_date <= now {
-                    return Err(ContentValidationError::PrizeEndDateInThePast);
-                }
-            }
-            MessageContentInitial::GovernanceProposal(_)
-            | MessageContentInitial::MessageReminderCreated(_)
-            | MessageContentInitial::MessageReminder(_) => {
-                return Err(ContentValidationError::Unauthorized);
-            }
-            _ => {}
-        };
-
-        if self.contains_crypto_transfer() && sender_user_type.is_bot() && !sender_user_type.is_oc_controlled_bot() {
-            return Err(ContentValidationError::Unauthorized);
-        }
-
-        let is_empty = match self {
-            MessageContentInitial::Text(t) => t.text.is_empty(),
-            MessageContentInitial::Image(i) => i.blob_reference.is_none(),
-            MessageContentInitial::Video(v) => v.video_blob_reference.is_none(),
-            MessageContentInitial::Audio(a) => a.blob_reference.is_none(),
-            MessageContentInitial::File(f) => f.blob_reference.is_none(),
-            MessageContentInitial::Poll(p) => p.config.options.is_empty(),
-            MessageContentInitial::Prize(p) => p.prizes_v2.is_empty(),
-            MessageContentInitial::Deleted(_) => true,
-            MessageContentInitial::Crypto(_)
-            | MessageContentInitial::Giphy(_)
-            | MessageContentInitial::GovernanceProposal(_)
-            | MessageContentInitial::MessageReminderCreated(_)
-            | MessageContentInitial::MessageReminder(_)
-            | MessageContentInitial::P2PSwap(_)
-            | MessageContentInitial::Custom(_) => false,
-        };
-
-        if is_empty {
-            Err(ContentValidationError::Empty)
-        // Allow GovernanceProposal messages to exceed the max length since they are collapsed on the UI
-        } else if self.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(self, MessageContentInitial::GovernanceProposal(_)) {
-            Err(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH))
-        } else {
-            Ok(())
-        }
-    }
-
     pub fn text_length(&self) -> usize {
         self.text().map_or(0, |t| t.chars().count())
     }
@@ -351,6 +277,20 @@ impl MessageContentInitial {
             self,
             MessageContentInitial::Crypto(_) | MessageContentInitial::Prize(_) | MessageContentInitial::P2PSwap(_)
         )
+    }
+
+    pub fn pending_crypto_transfer(&self) -> Option<&PendingCryptoTransaction> {
+        let transfer = match self {
+            MessageContentInitial::Crypto(c) => &c.transfer,
+            MessageContentInitial::Prize(c) => &c.transfer,
+            _ => return None,
+        };
+
+        if let CryptoTransaction::Pending(pending) = transfer {
+            Some(&pending)
+        } else {
+            None
+        }
     }
 }
 

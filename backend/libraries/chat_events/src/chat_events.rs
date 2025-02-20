@@ -22,12 +22,12 @@ use types::{
     AcceptP2PSwapResult, BlobReference, BotMessageContext, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType,
     CompleteP2PSwapResult, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex,
     EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen,
-    GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageEditedEventPayload,
-    MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds,
-    MultiUserChat, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
-    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload,
-    RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
-    UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation,
+    GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId,
+    MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted,
+    P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
+    ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult,
+    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
+    VideoCallParticipants, VideoCallPresence, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -2258,7 +2258,7 @@ pub struct EditMessageArgs {
     pub min_visible_event_index: EventIndex,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub content: MessageContentInitial,
+    pub content: MessageContentInternal,
     pub block_level_markdown: Option<bool>,
     pub finalise_bot_message: bool,
     pub now: TimestampMillis,
