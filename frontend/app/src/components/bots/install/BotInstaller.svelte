@@ -1,13 +1,10 @@
 <script lang="ts">
     import {
         type AutonomousBotConfig,
-        botActionScopeFromInstallLocation,
         type BotInstallationLocation,
         emptyExternalBotPermissions,
-        type ExternalBot,
         type ExternalBotLike,
         type ExternalBotPermissions,
-        externalBots,
         flattenCommandPermissions,
         type Level,
         OpenChat,
@@ -55,7 +52,6 @@
     );
     let busy = $state(false);
     let step = $state<Step>(firstStep());
-    let registeredBot: ExternalBot | undefined = $derived($externalBots.get(bot.id));
 
     function firstStep(): Step {
         if (bot.definition.commands.length > 0) {
@@ -93,26 +89,6 @@
                 onClose(true);
                 break;
         }
-    }
-
-    function sendApiKeyToBot(apiKey: string) {
-        client
-            .executeBotCommand(botActionScopeFromInstallLocation(location), {
-                kind: "external_bot",
-                id: bot.id,
-                endpoint: registeredBot?.endpoint ?? "",
-                command: {
-                    name: "sync_api_key",
-                    params: [{ name: "api_key", kind: "string", value: apiKey }],
-                },
-            })
-            .then((resp) => {
-                if (resp !== "success") {
-                    toastStore.showFailureToast(i18nKey("bots.add.sendToBotFailed"));
-                } else {
-                    toastStore.showSuccessToast(i18nKey("bots.add.sendToBotSucceeded"));
-                }
-            });
     }
 
     function generateApiKey(then?: (apiKey: string) => void) {
@@ -166,7 +142,6 @@
         </div>
         <div class="body" slot="body">
             <BotProperties installing={busy} {grantedCommandPermissions} {bot}>
-                <hr class="separator" />
                 {#if step.kind === "choose_command_permissions"}
                     <ChoosePermissions
                         {level}
@@ -196,16 +171,6 @@
                 {:else if step.kind === "choose_autonomous_permissions"}
                     {@render button(i18nKey("bots.add.generateApiKey"), () => nextStep(step))}
                 {:else if step.kind === "show_api_key"}
-                    {@const apiKey = step.apiKey}
-                    {#if step.config.syncApiKey}
-                        {@render button(
-                            i18nKey("bots.add.sendToBot"),
-                            () => sendApiKeyToBot(apiKey),
-                            true,
-                            false,
-                            false,
-                        )}
-                    {/if}
                     {@render button(i18nKey("bots.add.continue"), () => nextStep(step))}
                 {:else}
                     {@render button(i18nKey("bots.add.install"), () => nextStep(step))}
@@ -239,10 +204,5 @@
         justify-content: center;
         gap: 12px;
         flex-direction: column;
-    }
-
-    .separator {
-        color: var(--txt-light);
-        margin-bottom: $sp3;
     }
 </style>

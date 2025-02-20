@@ -23,10 +23,9 @@
         botExecutionContext: CommunityIdentifier | ChatIdentifier;
         bot: ExternalBotLike;
         apiKey: string;
-        truncate: boolean;
     }
 
-    let { botExecutionContext, bot, apiKey, truncate }: Props = $props();
+    let { botExecutionContext, bot, apiKey }: Props = $props();
 
     let allowSend = $derived(bot.definition.autonomousConfig?.syncApiKey ?? false);
 
@@ -59,20 +58,9 @@
 </script>
 
 <div class="key">
-    <pre class:truncate>{apiKey}</pre>
+    <pre>{apiKey}</pre>
 </div>
 <div class="icons">
-    <TooltipWrapper position={"top"} align={"middle"}>
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <div role="button" tabindex="0" slot="target" class="icon" onclick={onCopy}>
-            <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
-        </div>
-        <div let:position let:align slot="tooltip">
-            <TooltipPopup {position} {align} textLength={100} longestWord={10}>
-                <Translatable resourceKey={i18nKey("copy")} />
-            </TooltipPopup>
-        </div>
-    </TooltipWrapper>
     {#if allowSend}
         <TooltipWrapper position={"top"} align={"middle"}>
             <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -86,6 +74,17 @@
             </div>
         </TooltipWrapper>
     {/if}
+    <TooltipWrapper position={"top"} align={"middle"}>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <div role="button" tabindex="0" slot="target" class="icon" onclick={onCopy}>
+            <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+        </div>
+        <div let:position let:align slot="tooltip">
+            <TooltipPopup {position} {align} textLength={100} longestWord={10}>
+                <Translatable resourceKey={i18nKey("copy")} />
+            </TooltipPopup>
+        </div>
+    </TooltipWrapper>
 </div>
 
 <style lang="scss">
@@ -118,10 +117,7 @@
             margin: 0;
             color: var(--warn);
             @include font(book, normal, fs-80);
-
-            &.truncate {
-                @include clamp(2);
-            }
+            @include clamp(2);
         }
     }
 </style>

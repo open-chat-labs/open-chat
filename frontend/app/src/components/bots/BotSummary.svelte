@@ -173,8 +173,7 @@
                 grantedCommandPermissions={grantedPermissions}>
                 {#if currentApiKey !== undefined}
                     <Legend large label={i18nKey("bots.manage.currentApiKey")}></Legend>
-                    <ApiKey {bot} botExecutionContext={mode.id} apiKey={currentApiKey} truncate
-                    ></ApiKey>
+                    <ApiKey {bot} botExecutionContext={mode.id} apiKey={currentApiKey}></ApiKey>
                 {/if}
                 {#if choosePermissions}
                     <ChoosePermissions

@@ -113,6 +113,7 @@
     }
 
     .installing {
+        margin-left: $sp3;
         @include loading-spinner(1em, 0.5em, var(--button-spinner), "/assets/plain-spinner.svg");
     }
 
