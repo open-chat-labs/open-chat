@@ -5,4 +5,4 @@ import type { EventIndex } from "./EventIndex";
 import type { MessageIndex } from "./MessageIndex";
 import type { UserId } from "./UserId";
 
-export type ChannelMessageTipped = { community_id: CommunityId, channel_id: ChannelId, thread_root_message_index?: MessageIndex, message_index: MessageIndex, message_event_index: EventIndex, community_name: string, channel_name: string, tipped_by: UserId, tipped_by_name: string, tipped_by_display_name?: string, tip: string, community_avatar_id?: bigint, channel_avatar_id?: bigint, };
+export type ChannelMessageTipped = { ci: CommunityId, chi: ChannelId, tr?: MessageIndex, m: MessageIndex, e: EventIndex, cn: string, chn: string, ti: UserId, tn: string, td?: string, t: string, ca?: bigint, cha?: bigint, };

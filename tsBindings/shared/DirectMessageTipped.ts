@@ -3,4 +3,4 @@ import type { EventIndex } from "./EventIndex";
 import type { MessageIndex } from "./MessageIndex";
 import type { UserId } from "./UserId";
 
-export type DirectMessageTipped = { them: UserId, thread_root_message_index?: MessageIndex, message_index: MessageIndex, message_event_index: EventIndex, username: string, display_name?: string, tip: string, user_avatar_id?: bigint, };
+export type DirectMessageTipped = { ti: UserId, tr?: MessageIndex, m: MessageIndex, e: EventIndex, u: string, d?: string, t: string, a?: bigint, };

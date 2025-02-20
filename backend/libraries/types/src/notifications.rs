@@ -26,186 +26,312 @@ impl NotificationEnvelope {
 #[ts_export]
 #[derive(Serialize)]
 pub enum Notification {
+    #[serde(rename = "ac")]
     AddedToChannel(AddedToChannelNotification),
+    #[serde(rename = "dm")]
     DirectMessage(DirectMessageNotification),
+    #[serde(rename = "gm")]
     GroupMessage(GroupMessageNotification),
+    #[serde(rename = "cm")]
     ChannelMessage(ChannelMessageNotification),
+    #[serde(rename = "dr")]
     DirectReactionAdded(DirectReactionAddedNotification),
+    #[serde(rename = "gr")]
     GroupReactionAdded(GroupReactionAddedNotification),
+    #[serde(rename = "cr")]
     ChannelReactionAdded(ChannelReactionAddedNotification),
+    #[serde(rename = "dt")]
     DirectMessageTipped(DirectMessageTipped),
+    #[serde(rename = "gt")]
     GroupMessageTipped(GroupMessageTipped),
+    #[serde(rename = "ct")]
     ChannelMessageTipped(ChannelMessageTipped),
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AddedToChannelNotification {
+    #[serde(rename = "ci")]
     pub community_id: CommunityId,
+    #[serde(rename = "cn")]
     pub community_name: String,
+    #[serde(rename = "chi")]
     pub channel_id: ChannelId,
+    #[serde(rename = "chn")]
     pub channel_name: String,
+    #[serde(rename = "a")]
     pub added_by: UserId,
+    #[serde(rename = "an")]
     pub added_by_name: String,
+    #[serde(rename = "ad")]
     pub added_by_display_name: Option<String>,
+    #[serde(rename = "ca")]
     pub community_avatar_id: Option<u128>,
+    #[serde(rename = "cha")]
     pub channel_avatar_id: Option<u128>,
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DirectMessageNotification {
+    #[serde(rename = "s")]
     pub sender: UserId,
+    #[serde(rename = "tr")]
     pub thread_root_message_index: Option<MessageIndex>,
+    #[serde(rename = "m")]
     pub message_index: MessageIndex,
+    #[serde(rename = "e")]
     pub event_index: EventIndex,
+    #[serde(rename = "sn")]
     pub sender_name: String,
+    #[serde(rename = "sd")]
     pub sender_display_name: Option<String>,
+    #[serde(rename = "ty")]
     pub message_type: String,
+    #[serde(rename = "tx")]
     pub message_text: Option<String>,
+    #[serde(rename = "i")]
     pub image_url: Option<String>,
+    #[serde(rename = "a")]
     pub sender_avatar_id: Option<u128>,
+    #[serde(rename = "ct")]
     pub crypto_transfer: Option<CryptoTransferDetails>,
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMessageNotification {
+    #[serde(rename = "c")]
     pub chat_id: ChatId,
+    #[serde(rename = "tr")]
     pub thread_root_message_index: Option<MessageIndex>,
+    #[serde(rename = "m")]
     pub message_index: MessageIndex,
+    #[serde(rename = "e")]
     pub event_index: EventIndex,
+    #[serde(rename = "g")]
     pub group_name: String,
+    #[serde(rename = "s")]
     pub sender: UserId,
+    #[serde(rename = "sn")]
     pub sender_name: String,
+    #[serde(rename = "sd")]
     pub sender_display_name: Option<String>,
+    #[serde(rename = "ty")]
     pub message_type: String,
+    #[serde(rename = "tx")]
     pub message_text: Option<String>,
+    #[serde(rename = "i")]
     pub image_url: Option<String>,
+    #[serde(rename = "a")]
     pub group_avatar_id: Option<u128>,
+    #[serde(rename = "ct")]
     pub crypto_transfer: Option<CryptoTransferDetails>,
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelMessageNotification {
+    #[serde(rename = "ci")]
     pub community_id: CommunityId,
+    #[serde(rename = "chi")]
     pub channel_id: ChannelId,
+    #[serde(rename = "tr")]
     pub thread_root_message_index: Option<MessageIndex>,
+    #[serde(rename = "m")]
     pub message_index: MessageIndex,
+    #[serde(rename = "e")]
     pub event_index: EventIndex,
+    #[serde(rename = "cn")]
     pub community_name: String,
+    #[serde(rename = "chn")]
     pub channel_name: String,
+    #[serde(rename = "s")]
     pub sender: UserId,
+    #[serde(rename = "sn")]
     pub sender_name: String,
+    #[serde(rename = "sd")]
     pub sender_display_name: Option<String>,
+    #[serde(rename = "ty")]
     pub message_type: String,
+    #[serde(rename = "tx")]
     pub message_text: Option<String>,
+    #[serde(rename = "i")]
     pub image_url: Option<String>,
+    #[serde(rename = "ca")]
     pub community_avatar_id: Option<u128>,
+    #[serde(rename = "cha")]
     pub channel_avatar_id: Option<u128>,
+    #[serde(rename = "ct")]
     pub crypto_transfer: Option<CryptoTransferDetails>,
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DirectReactionAddedNotification {
+    #[serde(rename = "t")]
     pub them: UserId,
+    #[serde(rename = "tr")]
     pub thread_root_message_index: Option<MessageIndex>,
+    #[serde(rename = "m")]
     pub message_index: MessageIndex,
+    #[serde(rename = "e")]
     pub message_event_index: EventIndex,
+    #[serde(rename = "u")]
     pub username: String,
+    #[serde(rename = "d")]
     pub display_name: Option<String>,
+    #[serde(rename = "r")]
     pub reaction: Reaction,
+    #[serde(rename = "a")]
     pub user_avatar_id: Option<u128>,
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupReactionAddedNotification {
+    #[serde(rename = "c")]
     pub chat_id: ChatId,
+    #[serde(rename = "tr")]
     pub thread_root_message_index: Option<MessageIndex>,
+    #[serde(rename = "m")]
     pub message_index: MessageIndex,
+    #[serde(rename = "e")]
     pub message_event_index: EventIndex,
+    #[serde(rename = "g")]
     pub group_name: String,
+    #[serde(rename = "a")]
     pub added_by: UserId,
+    #[serde(rename = "n")]
     pub added_by_name: String,
+    #[serde(rename = "d")]
     pub added_by_display_name: Option<String>,
+    #[serde(rename = "r")]
     pub reaction: Reaction,
+    #[serde(rename = "av")]
     pub group_avatar_id: Option<u128>,
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelReactionAddedNotification {
+    #[serde(rename = "ci")]
     pub community_id: CommunityId,
+    #[serde(rename = "chi")]
     pub channel_id: ChannelId,
+    #[serde(rename = "tr")]
     pub thread_root_message_index: Option<MessageIndex>,
+    #[serde(rename = "m")]
     pub message_index: MessageIndex,
+    #[serde(rename = "e")]
     pub message_event_index: EventIndex,
+    #[serde(rename = "cn")]
     pub community_name: String,
+    #[serde(rename = "chn")]
     pub channel_name: String,
+    #[serde(rename = "a")]
     pub added_by: UserId,
+    #[serde(rename = "an")]
     pub added_by_name: String,
+    #[serde(rename = "ad")]
     pub added_by_display_name: Option<String>,
+    #[serde(rename = "r")]
     pub reaction: Reaction,
+    #[serde(rename = "ca")]
     pub community_avatar_id: Option<u128>,
+    #[serde(rename = "cha")]
     pub channel_avatar_id: Option<u128>,
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DirectMessageTipped {
+    #[serde(rename = "ti")]
     pub them: UserId,
+    #[serde(rename = "tr")]
     pub thread_root_message_index: Option<MessageIndex>,
+    #[serde(rename = "m")]
     pub message_index: MessageIndex,
+    #[serde(rename = "e")]
     pub message_event_index: EventIndex,
+    #[serde(rename = "u")]
     pub username: String,
+    #[serde(rename = "d")]
     pub display_name: Option<String>,
+    #[serde(rename = "t")]
     pub tip: String, // formatted amount, eg. "0.1 CHAT"
+    #[serde(rename = "a")]
     pub user_avatar_id: Option<u128>,
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMessageTipped {
+    #[serde(rename = "c")]
     pub chat_id: ChatId,
+    #[serde(rename = "tr")]
     pub thread_root_message_index: Option<MessageIndex>,
+    #[serde(rename = "m")]
     pub message_index: MessageIndex,
+    #[serde(rename = "e")]
     pub message_event_index: EventIndex,
+    #[serde(rename = "g")]
     pub group_name: String,
+    #[serde(rename = "ti")]
     pub tipped_by: UserId,
+    #[serde(rename = "tn")]
     pub tipped_by_name: String,
+    #[serde(rename = "td")]
     pub tipped_by_display_name: Option<String>,
+    #[serde(rename = "t")]
     pub tip: String,
+    #[serde(rename = "a")]
     pub group_avatar_id: Option<u128>,
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelMessageTipped {
+    #[serde(rename = "ci")]
     pub community_id: CommunityId,
+    #[serde(rename = "chi")]
     pub channel_id: ChannelId,
+    #[serde(rename = "tr")]
     pub thread_root_message_index: Option<MessageIndex>,
+    #[serde(rename = "m")]
     pub message_index: MessageIndex,
+    #[serde(rename = "e")]
     pub message_event_index: EventIndex,
+    #[serde(rename = "cn")]
     pub community_name: String,
+    #[serde(rename = "chn")]
     pub channel_name: String,
+    #[serde(rename = "ti")]
     pub tipped_by: UserId,
+    #[serde(rename = "tn")]
     pub tipped_by_name: String,
+    #[serde(rename = "td")]
     pub tipped_by_display_name: Option<String>,
+    #[serde(rename = "t")]
     pub tip: String,
+    #[serde(rename = "ca")]
     pub community_avatar_id: Option<u128>,
+    #[serde(rename = "cha")]
     pub channel_avatar_id: Option<u128>,
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CryptoTransferDetails {
+    #[serde(rename = "r")]
     pub recipient: UserId,
+    #[serde(rename = "u")]
     pub recipient_username: Option<String>,
+    #[serde(rename = "l")]
     pub ledger: CanisterId,
+    #[serde(rename = "s")]
     pub symbol: String,
+    #[serde(rename = "a")]
     pub amount: u128,
 }
 

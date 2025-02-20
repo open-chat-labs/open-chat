@@ -30,35 +30,35 @@ import { toBigInt32 } from "openchat-shared";
 import { principalBytesToString } from "../../utils/mapping";
 
 export function notification(value: TNotification, timestamp: bigint): Notification {
-    if ("AddedToChannel" in value) {
-        return addedToChannelNotification(value.AddedToChannel, timestamp);
+    if ("ac" in value) {
+        return addedToChannelNotification(value.ac, timestamp);
     }
-    if ("ChannelMessage" in value) {
-        return channelNotification(value.ChannelMessage, timestamp);
+    if ("cm" in value) {
+        return channelNotification(value.cm, timestamp);
     }
-    if ("GroupMessage" in value) {
-        return groupNotification(value.GroupMessage, timestamp);
+    if ("gm" in value) {
+        return groupNotification(value.gm, timestamp);
     }
-    if ("DirectMessage" in value) {
-        return directNotification(value.DirectMessage, timestamp);
+    if ("dm" in value) {
+        return directNotification(value.dm, timestamp);
     }
-    if ("ChannelReactionAdded" in value) {
-        return channelReactionNotification(value.ChannelReactionAdded, timestamp);
+    if ("cr" in value) {
+        return channelReactionNotification(value.cr, timestamp);
     }
-    if ("GroupReactionAdded" in value) {
-        return groupReactionNotification(value.GroupReactionAdded, timestamp);
+    if ("gr" in value) {
+        return groupReactionNotification(value.gr, timestamp);
     }
-    if ("DirectReactionAdded" in value) {
-        return directReactionNotification(value.DirectReactionAdded, timestamp);
+    if ("dr" in value) {
+        return directReactionNotification(value.dr, timestamp);
     }
-    if ("ChannelMessageTipped" in value) {
-        return channelMessageTipped(value.ChannelMessageTipped, timestamp);
+    if ("ct" in value) {
+        return channelMessageTipped(value.ct, timestamp);
     }
-    if ("GroupMessageTipped" in value) {
-        return groupMessageTipped(value.GroupMessageTipped, timestamp);
+    if ("gt" in value) {
+        return groupMessageTipped(value.gt, timestamp);
     }
-    if ("DirectMessageTipped" in value) {
-        return directMessageTipped(value.DirectMessageTipped, timestamp);
+    if ("dt" in value) {
+        return directMessageTipped(value.dt, timestamp);
     }
     throw new Error(`Unexpected ApiNotification type received, ${value}`);
 }
@@ -71,16 +71,16 @@ export function addedToChannelNotification(
         kind: "added_to_channel_notification",
         chatId: {
             kind: "channel",
-            communityId: principalBytesToString(value.community_id),
-            channelId: Number(toBigInt32(value.channel_id)),
+            communityId: principalBytesToString(value.ci),
+            channelId: Number(toBigInt32(value.chi)),
         },
-        communityName: value.community_name,
-        channelName: value.channel_name,
-        addedBy: principalBytesToString(value.added_by),
-        addedByUsername: value.added_by_name,
-        addedByDisplayName: value.added_by_display_name,
-        communityAvatarId: value.community_avatar_id,
-        channelAvatarId: value.channel_avatar_id,
+        communityName: value.cn,
+        channelName: value.chn,
+        addedBy: principalBytesToString(value.a),
+        addedByUsername: value.an,
+        addedByDisplayName: value.ad,
+        communityAvatarId: value.ca,
+        channelAvatarId: value.cha,
         timestamp,
     };
 }
@@ -91,26 +91,26 @@ export function channelNotification(
 ): ChannelNotification {
     return {
         kind: "channel_notification",
-        sender: principalBytesToString(value.sender),
-        threadRootMessageIndex: value.thread_root_message_index,
-        messageIndex: value.message_index,
-        messageEventIndex: value.event_index,
-        senderName: value.sender_name,
-        senderDisplayName: value.sender_display_name,
+        sender: principalBytesToString(value.s),
+        threadRootMessageIndex: value.tr,
+        messageIndex: value.m,
+        messageEventIndex: value.e,
+        senderName: value.sn,
+        senderDisplayName: value.sd,
         chatId: {
             kind: "channel",
-            communityId: principalBytesToString(value.community_id),
-            channelId: Number(toBigInt32(value.channel_id)),
+            communityId: principalBytesToString(value.ci),
+            channelId: Number(toBigInt32(value.chi)),
         },
-        communityName: value.community_name,
-        channelName: value.channel_name,
-        messageType: value.message_type,
-        messageText: value.message_text,
-        imageUrl: value.image_url,
-        communityAvatarId: value.community_avatar_id,
-        channelAvatarId: value.channel_avatar_id,
-        cryptoTransfer: value.crypto_transfer !== undefined
-            ? cryptoTransfer(value.crypto_transfer)
+        communityName: value.cn,
+        channelName: value.chn,
+        messageType: value.ty,
+        messageText: value.tx,
+        imageUrl: value.i,
+        communityAvatarId: value.ca,
+        channelAvatarId: value.cha,
+        cryptoTransfer: value.ct !== undefined
+            ? cryptoTransfer(value.ct)
             : undefined,
         timestamp,
     };
@@ -122,20 +122,20 @@ export function groupNotification(
 ): GroupNotification {
     return {
         kind: "group_notification",
-        sender: principalBytesToString(value.sender),
-        threadRootMessageIndex: value.thread_root_message_index,
-        messageIndex: value.message_index,
-        messageEventIndex: value.event_index,
-        senderName: value.sender_name,
-        senderDisplayName: value.sender_display_name,
-        chatId: { kind: "group_chat", groupId: principalBytesToString(value.chat_id) },
-        groupName: value.group_name,
-        messageType: value.message_type,
-        messageText: value.message_text,
-        imageUrl: value.image_url,
-        groupAvatarId: value.group_avatar_id,
-        cryptoTransfer: value.crypto_transfer !== undefined
-            ? cryptoTransfer(value.crypto_transfer)
+        sender: principalBytesToString(value.s),
+        threadRootMessageIndex: value.tr,
+        messageIndex: value.m,
+        messageEventIndex: value.e,
+        senderName: value.sn,
+        senderDisplayName: value.sd,
+        chatId: { kind: "group_chat", groupId: principalBytesToString(value.c) },
+        groupName: value.g,
+        messageType: value.ty,
+        messageText: value.tx,
+        imageUrl: value.i,
+        groupAvatarId: value.a,
+        cryptoTransfer: value.ct !== undefined
+            ? cryptoTransfer(value.ct)
             : undefined,
         timestamp,
     };
@@ -147,17 +147,17 @@ export function directNotification(
 ): DirectNotification {
     return {
         kind: "direct_notification",
-        chatId: { kind: "direct_chat", userId: principalBytesToString(value.sender) },
-        messageIndex: value.message_index,
-        messageEventIndex: value.event_index,
-        username: value.sender_name,
-        displayName: value.sender_display_name,
-        messageType: value.message_type,
-        messageText: value.message_text,
-        imageUrl: value.image_url,
-        userAvatarId: value.sender_avatar_id,
-        cryptoTransfer: value.crypto_transfer !== undefined
-            ? cryptoTransfer(value.crypto_transfer)
+        chatId: { kind: "direct_chat", userId: principalBytesToString(value.s) },
+        messageIndex: value.m,
+        messageEventIndex: value.e,
+        username: value.sn,
+        displayName: value.sd,
+        messageType: value.ty,
+        messageText: value.tx,
+        imageUrl: value.i,
+        userAvatarId: value.a,
+        cryptoTransfer: value.ct !== undefined
+            ? cryptoTransfer(value.ct)
             : undefined,
         timestamp,
     };
@@ -171,20 +171,20 @@ function channelReactionNotification(
         kind: "channel_reaction",
         chatId: {
             kind: "channel",
-            communityId: principalBytesToString(value.community_id),
-            channelId: Number(toBigInt32(value.channel_id)),
+            communityId: principalBytesToString(value.ci),
+            channelId: Number(toBigInt32(value.chi)),
         },
-        communityName: value.community_name,
-        channelName: value.channel_name,
-        threadRootMessageIndex: value.thread_root_message_index,
-        messageIndex: value.message_index,
-        messageEventIndex: value.message_event_index,
-        addedBy: principalBytesToString(value.added_by),
-        addedByName: value.added_by_name,
-        addedByDisplayName: value.added_by_display_name,
-        reaction: value.reaction,
-        communityAvatarId: value.community_avatar_id,
-        channelAvatarId: value.channel_avatar_id,
+        communityName: value.cn,
+        channelName: value.chn,
+        threadRootMessageIndex: value.tr,
+        messageIndex: value.m,
+        messageEventIndex: value.e,
+        addedBy: principalBytesToString(value.a),
+        addedByName: value.an,
+        addedByDisplayName: value.ad,
+        reaction: value.r,
+        communityAvatarId: value.ca,
+        channelAvatarId: value.cha,
         timestamp,
     };
 }
@@ -195,16 +195,16 @@ function groupReactionNotification(
 ): GroupReaction {
     return {
         kind: "group_reaction",
-        chatId: { kind: "group_chat", groupId: principalBytesToString(value.chat_id) },
-        threadRootMessageIndex: value.thread_root_message_index,
-        messageIndex: value.message_index,
-        messageEventIndex: value.message_event_index,
-        groupName: value.group_name,
-        addedBy: principalBytesToString(value.added_by),
-        addedByName: value.added_by_name,
-        addedByDisplayName: value.added_by_display_name,
-        reaction: value.reaction,
-        groupAvatarId: value.group_avatar_id,
+        chatId: { kind: "group_chat", groupId: principalBytesToString(value.c) },
+        threadRootMessageIndex: value.tr,
+        messageIndex: value.m,
+        messageEventIndex: value.e,
+        groupName: value.g,
+        addedBy: principalBytesToString(value.a),
+        addedByName: value.n,
+        addedByDisplayName: value.d,
+        reaction: value.r,
+        groupAvatarId: value.av,
         timestamp,
     };
 }
@@ -215,13 +215,13 @@ function directReactionNotification(
 ): DirectReaction {
     return {
         kind: "direct_reaction",
-        chatId: { kind: "direct_chat", userId: principalBytesToString(value.them) },
-        messageIndex: value.message_index,
-        messageEventIndex: value.message_event_index,
-        username: value.username,
-        displayName: value.display_name,
-        reaction: value.reaction,
-        userAvatarId: value.user_avatar_id,
+        chatId: { kind: "direct_chat", userId: principalBytesToString(value.t) },
+        messageIndex: value.m,
+        messageEventIndex: value.e,
+        username: value.u,
+        displayName: value.d,
+        reaction: value.r,
+        userAvatarId: value.a,
         timestamp,
     };
 }
@@ -234,20 +234,20 @@ function channelMessageTipped(
         kind: "channel_message_tipped",
         chatId: {
             kind: "channel",
-            communityId: principalBytesToString(value.community_id),
-            channelId: Number(toBigInt32(value.channel_id)),
+            communityId: principalBytesToString(value.ci),
+            channelId: Number(toBigInt32(value.chi)),
         },
-        communityName: value.community_name,
-        channelName: value.channel_name,
-        threadRootMessageIndex: value.thread_root_message_index,
-        messageIndex: value.message_index,
-        messageEventIndex: value.message_event_index,
-        tippedBy: principalBytesToString(value.tipped_by),
-        tippedByName: value.tipped_by_name,
-        tippedByDisplayName: value.tipped_by_display_name,
-        tip: value.tip,
-        communityAvatarId: value.community_avatar_id,
-        channelAvatarId: value.channel_avatar_id,
+        communityName: value.cn,
+        channelName: value.chn,
+        threadRootMessageIndex: value.tr,
+        messageIndex: value.m,
+        messageEventIndex: value.e,
+        tippedBy: principalBytesToString(value.ti),
+        tippedByName: value.tn,
+        tippedByDisplayName: value.td,
+        tip: value.t,
+        communityAvatarId: value.ca,
+        channelAvatarId: value.cha,
         timestamp,
     };
 }
@@ -258,16 +258,16 @@ function groupMessageTipped(
 ): GroupMessageTipped {
     return {
         kind: "group_message_tipped",
-        chatId: { kind: "group_chat", groupId: principalBytesToString(value.chat_id) },
-        threadRootMessageIndex: value.thread_root_message_index,
-        messageIndex: value.message_index,
-        messageEventIndex: value.message_event_index,
-        groupName: value.group_name,
-        tippedBy: principalBytesToString(value.tipped_by),
-        tippedByName: value.tipped_by_name,
-        tippedByDisplayName: value.tipped_by_display_name,
-        tip: value.tip,
-        groupAvatarId: value.group_avatar_id,
+        chatId: { kind: "group_chat", groupId: principalBytesToString(value.c) },
+        threadRootMessageIndex: value.tr,
+        messageIndex: value.m,
+        messageEventIndex: value.e,
+        groupName: value.g,
+        tippedBy: principalBytesToString(value.ti),
+        tippedByName: value.tn,
+        tippedByDisplayName: value.td,
+        tip: value.t,
+        groupAvatarId: value.a,
         timestamp,
     };
 }
@@ -278,23 +278,23 @@ function directMessageTipped(
 ): DirectMessageTipped {
     return {
         kind: "direct_message_tipped",
-        chatId: { kind: "direct_chat", userId: principalBytesToString(value.them) },
-        messageIndex: value.message_index,
-        messageEventIndex: value.message_event_index,
-        username: value.username,
-        displayName: value.display_name,
-        tip: value.tip,
-        userAvatarId: value.user_avatar_id,
+        chatId: { kind: "direct_chat", userId: principalBytesToString(value.ti) },
+        messageIndex: value.m,
+        messageEventIndex: value.e,
+        username: value.u,
+        displayName: value.d,
+        tip: value.t,
+        userAvatarId: value.a,
         timestamp,
     };
 }
 
 function cryptoTransfer(value: TCryptoTransferDetails): CryptoTransferDetails {
     return {
-        recipient: principalBytesToString(value.recipient),
-        recipientUsername: value.recipient_username,
-        ledger: principalBytesToString(value.ledger),
-        symbol: value.symbol,
-        amount: value.amount,
+        recipient: principalBytesToString(value.r),
+        recipientUsername: value.u,
+        ledger: principalBytesToString(value.l),
+        symbol: value.s,
+        amount: value.a,
     };
 }

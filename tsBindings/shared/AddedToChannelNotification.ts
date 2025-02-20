@@ -3,4 +3,4 @@ import type { ChannelId } from "./ChannelId";
 import type { CommunityId } from "./CommunityId";
 import type { UserId } from "./UserId";
 
-export type AddedToChannelNotification = { community_id: CommunityId, community_name: string, channel_id: ChannelId, channel_name: string, added_by: UserId, added_by_name: string, added_by_display_name?: string, community_avatar_id?: bigint, channel_avatar_id?: bigint, };
+export type AddedToChannelNotification = { ci: CommunityId, cn: string, chi: ChannelId, chn: string, a: UserId, an: string, ad?: string, ca?: bigint, cha?: bigint, };
