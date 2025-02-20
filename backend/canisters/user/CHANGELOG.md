@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Sync blocked users to LocalUserIndex ([#7333](https://github.com/open-chat-labs/open-chat/pull/7333))
 - One time job to sync existing blocked users to LocalUserIndex ([#7352](https://github.com/open-chat-labs/open-chat/pull/7352))
 - Expose recent daily CHIT claims ([#7413](https://github.com/open-chat-labs/open-chat/pull/7413))
+- Serialize notifications using MessagePack rather than Candid ([#7445](https://github.com/open-chat-labs/open-chat/pull/7445))
 
 ### Removed
 
