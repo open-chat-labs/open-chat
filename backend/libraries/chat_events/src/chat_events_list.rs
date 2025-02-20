@@ -291,10 +291,6 @@ impl ChatEventsList {
         self.events_map.iter().next_back()
     }
 
-    pub fn contains_message_id(&self, message_id: MessageId) -> bool {
-        self.message_id_map.contains_key(&message_id)
-    }
-
     pub fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
         match event_key {
             EventKey::EventIndex(e) => Some(e),

@@ -1,4 +1,5 @@
 use crate::crypto::process_transaction_without_caller_check;
+use crate::guards::caller_is_local_user_index;
 use crate::guards::caller_is_owner;
 use crate::model::pin_number::VerifyPinError;
 use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
@@ -7,16 +8,28 @@ use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, Time
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use chat_events::EditMessageArgs;
+use chat_events::EditMessageResult;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
 use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use rand::Rng;
+use types::BotCaller;
+use types::BotPermissions;
+use types::DirectMessageNotification;
+use types::EventIndex;
+use types::Notification;
 use types::{
     BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
     EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, TimestampMillis,
     UserId, UserType,
 };
+use user_canister::c2c_bot_send_message;
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
+
+use super::c2c_send_messages::handle_message_impl;
+use super::c2c_send_messages::HandleMessageArgs;
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
@@ -25,7 +38,7 @@ use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCani
 async fn send_message_v2(mut args: Args) -> Response {
     run_regular_jobs();
 
-    let (my_user_id, recipient_type) = match mutate_state(|state| validate_request(&args, state)) {
+    let (my_user_id, recipient_type) = match mutate_state(|state| validate_request(&args, None, state)) {
         ValidateRequestResult::Valid(u, t) => (u, t),
         ValidateRequestResult::Invalid(response) => return response,
         ValidateRequestResult::RecipientUnknown(u, local_user_index_canister_id) => {
@@ -40,6 +53,7 @@ async fn send_message_v2(mut args: Args) -> Response {
                 };
             (u, RecipientType::Other(user_type))
         }
+        ValidateRequestResult::BotNotPermitted => unreachable!(),
     };
 
     let mut completed_transfer = None;
@@ -107,6 +121,130 @@ async fn send_message_v2(mut args: Args) -> Response {
     mutate_state(|state| send_message_impl(args, completed_transfer, p2p_swap_id, recipient_type, state))
 }
 
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_message::Response {
+    run_regular_jobs();
+
+    mutate_state(|state| {
+        let finalised = args.finalised;
+        let bot_id = args.bot_id;
+        let bot_name = args.bot_name.clone();
+        let bot_caller = BotCaller {
+            bot: args.bot_id,
+            initiator: args.initiator.clone(),
+        };
+
+        let args: Args = args.into();
+
+        match validate_request(&args, Some(&bot_caller), state) {
+            ValidateRequestResult::Invalid(response) => return response.into(),
+            ValidateRequestResult::BotNotPermitted => return c2c_bot_send_message::Response::NotAuthorized,
+            _ => (),
+        }
+
+        let now = state.env.now();
+
+        // Check if a message with the same id already exists
+        if let Some(chat) = state.data.direct_chats.get_mut(&bot_id.into()) {
+            if let Some((message, _)) =
+                chat.events
+                    .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
+            {
+                // If the message id of a bot message matches an existing unfinalised bot message
+                // then edit this message instead of pushing a new one
+                if let Some(bot_message) = message.bot_context {
+                    if bot_caller.bot == message.sender
+                        && bot_caller.initiator.user() == bot_message.command.as_ref().map(|c| c.initiator)
+                        && bot_caller.initiator.command() == bot_message.command.as_ref()
+                        && !bot_message.finalised
+                    {
+                        let edit_message_args = EditMessageArgs {
+                            sender: bot_caller.bot,
+                            min_visible_event_index: EventIndex::default(),
+                            thread_root_message_index: args.thread_root_message_index,
+                            message_id: args.message_id,
+                            content: args.content.clone(),
+                            block_level_markdown: Some(args.block_level_markdown),
+                            finalise_bot_message: finalised,
+                            now,
+                        };
+
+                        let EditMessageResult::Success(message_index, event) =
+                            chat.events.edit_message::<CdkRuntime>(edit_message_args, None)
+                        else {
+                            // Shouldn't happen
+                            return c2c_bot_send_message::Response::NotAuthorized;
+                        };
+
+                        if finalised && !chat.notifications_muted.value {
+                            let content: MessageContent = args.content.into();
+                            let notification = Notification::DirectMessage(DirectMessageNotification {
+                                sender: bot_id,
+                                thread_root_message_index: args.thread_root_message_index,
+                                message_index,
+                                event_index: event.index,
+                                sender_name: bot_name,
+                                sender_display_name: None,
+                                message_type: content.message_type(),
+                                message_text: content.notification_text(&[], &[]),
+                                image_url: content.notification_image_url(),
+                                sender_avatar_id: None,
+                                crypto_transfer: content.notification_crypto_transfer_details(&[]),
+                            });
+                            let recipient = state.env.canister_id().into();
+
+                            state.push_notification(Some(bot_id), recipient, notification);
+                        }
+
+                        return c2c_bot_send_message::Response::Success(SuccessResult {
+                            chat_id: bot_id.into(),
+                            event_index: event.index,
+                            message_index,
+                            expires_at: event.expires_at,
+                            timestamp: now,
+                        });
+                    }
+                }
+
+                return c2c_bot_send_message::Response::MessageAlreadyFinalised;
+            }
+        }
+
+        let event_wrapper = handle_message_impl(
+            HandleMessageArgs {
+                sender: bot_id,
+                thread_root_message_id: None,
+                message_id: Some(args.message_id),
+                sender_message_index: None,
+                sender_name: bot_name,
+                sender_display_name: None,
+                content: args.content.into(),
+                replies_to: None,
+                forwarding: false,
+                sender_user_type: UserType::BotV2,
+                sender_avatar_id: None,
+                push_message_sent_event: true,
+                mentioned: Vec::new(),
+                mute_notification: !finalised,
+                block_level_markdown: args.block_level_markdown,
+                now,
+            },
+            Some(bot_caller),
+            finalised,
+            state,
+        );
+
+        c2c_bot_send_message::Response::Success(SuccessResult {
+            chat_id: bot_id.into(),
+            event_index: event_wrapper.index,
+            message_index: event_wrapper.event.message_index,
+            expires_at: event_wrapper.expires_at,
+            timestamp: now,
+        })
+    })
+}
+
 #[derive(Copy, Clone)]
 enum RecipientType {
     _Self,
@@ -136,25 +274,39 @@ impl From<RecipientType> for UserType {
 enum ValidateRequestResult {
     Valid(UserId, RecipientType),
     Invalid(Response),
+    BotNotPermitted,
     RecipientUnknown(UserId, CanisterId), // UserId, UserIndexCanisterId
 }
 
-fn validate_request(args: &Args, state: &mut RuntimeState) -> ValidateRequestResult {
+fn validate_request(args: &Args, bot_caller: Option<&BotCaller>, state: &mut RuntimeState) -> ValidateRequestResult {
     if state.data.suspended.value {
         return ValidateRequestResult::Invalid(UserSuspended);
     }
+
     if state.data.blocked_users.contains(&args.recipient) {
         return ValidateRequestResult::Invalid(RecipientBlocked);
     }
+
     if args.recipient == OPENCHAT_BOT_USER_ID {
         return ValidateRequestResult::Invalid(InvalidRequest(
             "Messaging the OpenChat Bot is not currently supported".to_string(),
         ));
     }
+
+    if let Some(bot_caller) = bot_caller {
+        if !state.data.is_bot_permitted(
+            &bot_caller.bot,
+            &bot_caller.initiator,
+            BotPermissions::from_message_permission((&args.content).into()),
+        ) {
+            return ValidateRequestResult::BotNotPermitted;
+        }
+    }
+
     if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
         if chat
             .events
-            .contains_message_id(args.thread_root_message_index, args.message_id)
+            .message_already_finalised(args.thread_root_message_index, args.message_id, bot_caller.is_some())
         {
             return ValidateRequestResult::Invalid(DuplicateMessageId);
         }
@@ -173,10 +325,12 @@ fn validate_request(args: &Args, state: &mut RuntimeState) -> ValidateRequestRes
         }
     }
 
-    if let Err(error) = args
-        .content
-        .validate_for_new_message(true, UserType::User, args.forwarding, now)
-    {
+    if let Err(error) = args.content.validate_for_new_message(
+        true,
+        if bot_caller.is_some() { UserType::BotV2 } else { UserType::User },
+        args.forwarding,
+        now,
+    ) {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),

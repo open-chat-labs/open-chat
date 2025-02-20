@@ -1,6 +1,7 @@
 use crate::RuntimeState;
 use types::TimestampMillis;
 
+pub mod api_key;
 pub mod bio;
 pub mod c2c_can_issue_access_token;
 pub mod c2c_can_issue_access_token_v2;

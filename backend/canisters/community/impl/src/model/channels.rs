@@ -1,6 +1,7 @@
 use super::members::CommunityMembers;
 use chat_events::Reader;
-use group_chat_core::{BotApiKeys, CanLeaveResult, GroupChatCore, GroupMemberInternal, LeaveResult};
+use group_chat_core::{CanLeaveResult, GroupChatCore, GroupMemberInternal, LeaveResult};
+use group_community_user::BotApiKeys;
 use rand::rngs::StdRng;
 use rand::{Rng, RngCore};
 use search::weighted::*;
