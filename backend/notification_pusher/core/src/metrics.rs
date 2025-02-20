@@ -5,17 +5,17 @@ use prometheus::{Histogram, HistogramOpts, HistogramVec, IntCounter, IntGaugeVec
 use std::sync::OnceLock;
 use types::{CanisterId, Milliseconds, UserId};
 
-const INTERNAL_LATENCY_BUCKETS: [f64; 13] = [
-    1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0, 2000.0, 5000.0, 10000.0,
-];
+const BASE_BUCKETS: [f64; 13] = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0];
 
 pub struct Metrics {
     registry: Registry,
     latest_notification_index_read: IntGaugeVec,
     latest_notification_index_processed: IntGaugeVec,
     latest_notification_index_pushed: IntGaugeVec,
-    notification_latency_ms: HistogramVec,
-    notification_latency_internal_ms: Histogram,
+    end_to_end_latency_ms: HistogramVec,
+    end_to_end_internal_latency_ms: Histogram,
+    processing_duration_ms: HistogramVec,
+    send_web_push_message_duration_ms: HistogramVec,
     total_notifications_pushed: IntCounter,
     total_notification_bytes_pushed: IntCounter,
 }
@@ -91,15 +91,27 @@ impl Metrics {
         )
         .unwrap();
 
-        let notification_latency_ms = HistogramVec::new(
-            HistogramOpts::new("notification_latency", "In milliseconds. Per notifications canister")
-                .buckets(INTERNAL_LATENCY_BUCKETS.map(|b| b * 100.0).to_vec()),
+        let end_to_end_latency_ms = HistogramVec::new(
+            HistogramOpts::new("end_to_end_latency", "In milliseconds. Per notifications canister")
+                .buckets(calc_buckets(10000.0)),
             &["canisterId"],
         )
         .unwrap();
 
-        let notification_latency_internal_ms = Histogram::with_opts(
-            HistogramOpts::new("notification_latency_internal", "In milliseconds").buckets(INTERNAL_LATENCY_BUCKETS.to_vec()),
+        let end_to_end_internal_latency_ms = Histogram::with_opts(
+            HistogramOpts::new("end_to_end_internal_latency", "In milliseconds").buckets(calc_buckets(100.0)),
+        )
+        .unwrap();
+
+        let processing_duration_ms = HistogramVec::new(
+            HistogramOpts::new("processing_duration", "In milliseconds").buckets(calc_buckets(0.1)),
+            &["success"],
+        )
+        .unwrap();
+
+        let send_web_push_message_duration_ms = HistogramVec::new(
+            HistogramOpts::new("send_web_push_message_duration", "In milliseconds").buckets(calc_buckets(100.0)),
+            &["success"],
         )
         .unwrap();
 
@@ -113,8 +125,12 @@ impl Metrics {
             .register(Box::new(latest_notification_index_processed.clone()))
             .unwrap();
         registry.register(Box::new(latest_notification_index_pushed.clone())).unwrap();
-        registry.register(Box::new(notification_latency_ms.clone())).unwrap();
-        registry.register(Box::new(notification_latency_internal_ms.clone())).unwrap();
+        registry.register(Box::new(end_to_end_latency_ms.clone())).unwrap();
+        registry.register(Box::new(end_to_end_internal_latency_ms.clone())).unwrap();
+        registry.register(Box::new(processing_duration_ms.clone())).unwrap();
+        registry
+            .register(Box::new(send_web_push_message_duration_ms.clone()))
+            .unwrap();
         registry.register(Box::new(total_notifications_pushed.clone())).unwrap();
         registry.register(Box::new(total_notification_bytes_pushed.clone())).unwrap();
 
@@ -123,8 +139,10 @@ impl Metrics {
             latest_notification_index_read,
             latest_notification_index_processed,
             latest_notification_index_pushed,
-            notification_latency_ms,
-            notification_latency_internal_ms,
+            end_to_end_latency_ms,
+            end_to_end_internal_latency_ms,
+            processing_duration_ms,
+            send_web_push_message_duration_ms,
             total_notifications_pushed,
             total_notification_bytes_pushed,
         }
@@ -152,14 +170,26 @@ impl Metrics {
             .set(index as i64);
     }
 
-    pub fn observe_notification_latency(&self, latency: Milliseconds, canister_id: CanisterId) {
-        self.notification_latency_ms
+    pub fn observe_end_to_end_latency(&self, latency: Milliseconds, canister_id: CanisterId) {
+        self.end_to_end_latency_ms
             .with_label_values(&[&canister_id.to_string()])
             .observe(latency as f64);
     }
 
-    pub fn observe_notification_latency_internal(&self, latency: Milliseconds) {
-        self.notification_latency_internal_ms.observe(latency as f64);
+    pub fn observe_end_to_end_internal_latency(&self, latency: Milliseconds) {
+        self.end_to_end_internal_latency_ms.observe(latency as f64);
+    }
+
+    pub fn observe_processing_duration(&self, latency: Milliseconds, success: bool) {
+        self.processing_duration_ms
+            .with_label_values(&[&success.to_string()])
+            .observe(latency as f64);
+    }
+
+    pub fn observe_send_web_push_message_duration(&self, latency: Milliseconds, success: bool) {
+        self.send_web_push_message_duration_ms
+            .with_label_values(&[&success.to_string()])
+            .observe(latency as f64);
     }
 
     pub fn incr_total_notifications_pushed(&self) {
@@ -169,4 +199,8 @@ impl Metrics {
     pub fn incr_total_notification_bytes_pushed(&self, amount: u64) {
         self.total_notification_bytes_pushed.inc_by(amount);
     }
+}
+
+fn calc_buckets(multiplication_factor: f64) -> Vec<f64> {
+    BASE_BUCKETS.into_iter().map(|b| b * multiplication_factor).collect()
 }

@@ -3,6 +3,7 @@ use crate::{timestamp, Notification, NotificationToPush};
 use async_channel::{Receiver, Sender};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
+use std::time::Instant;
 use tracing::info;
 use types::TimestampMillis;
 use web_push::{
@@ -39,18 +40,21 @@ impl Processor {
 
     pub async fn run(self) {
         while let Ok(notification) = self.receiver.recv().await {
+            let start = Instant::now();
             let notifications_canister = notification.notifications_canister;
             let index = notification.index;
 
-            match self.process_notification(&notification) {
-                Ok(message) => {
-                    self.sender.send(NotificationToPush { notification, message }).await.unwrap();
-                }
-                Err(_) => {
-                    // Record error in metrics
-                }
+            let result = self.process_notification(&notification);
+            let success = result.is_ok();
+            if let Ok(message) = result {
+                self.sender.send(NotificationToPush { notification, message }).await.unwrap();
             }
-            write_metrics(|m| m.set_latest_notification_index_processed(index, notifications_canister));
+            let end = Instant::now();
+            let duration = end.saturating_duration_since(start).as_millis() as u64;
+            write_metrics(|m| {
+                m.observe_processing_duration(duration, success);
+                m.set_latest_notification_index_processed(index, notifications_canister);
+            });
         }
     }
 
