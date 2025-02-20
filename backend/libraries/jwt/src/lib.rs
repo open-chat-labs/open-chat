@@ -85,7 +85,7 @@ pub fn extract_and_decode<T: DeserializeOwned>(jwt: &str) -> Result<T, Box<dyn E
     let _header_json = parts.next().ok_or("Invalid jwt")?;
     let claims_json = parts.next().ok_or("Invalid jwt")?;
 
-    decode_from_json(&claims_json)
+    decode_from_json(claims_json)
 }
 
 pub fn verify_and_decode<T: DeserializeOwned>(jwt: &str, public_key_pem: &str) -> Result<T, Box<dyn Error>> {
