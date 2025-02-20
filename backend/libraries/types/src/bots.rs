@@ -42,12 +42,12 @@ pub struct BotCommandParam {
     pub description: Option<String>,
     pub placeholder: Option<String>,
     pub required: bool,
-    pub param_type: SlashCommandParamType,
+    pub param_type: BotCommandParamType,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub enum SlashCommandParamType {
+pub enum BotCommandParamType {
     UserParam,
     BooleanParam,
     StringParam(StringParam),
@@ -61,8 +61,8 @@ pub enum SlashCommandParamType {
 pub struct StringParam {
     pub min_length: u16,
     pub max_length: u16,
-    #[ts(as = "Vec<SlashCommandOptionChoiceString>")]
-    pub choices: Vec<SlashCommandOptionChoice<String>>,
+    #[ts(as = "Vec<BotCommandOptionChoiceString>")]
+    pub choices: Vec<BotCommandOptionChoice<String>>,
 }
 
 #[ts_export]
@@ -70,8 +70,8 @@ pub struct StringParam {
 pub struct IntegerParam {
     pub min_value: i128,
     pub max_value: i128,
-    #[ts(as = "Vec<SlashCommandOptionChoiceI128>")]
-    pub choices: Vec<SlashCommandOptionChoice<i128>>,
+    #[ts(as = "Vec<BotCommandOptionChoiceI128>")]
+    pub choices: Vec<BotCommandOptionChoice<i128>>,
 }
 
 #[ts_export]
@@ -79,13 +79,13 @@ pub struct IntegerParam {
 pub struct DecimalParam {
     pub min_value: f64,
     pub max_value: f64,
-    #[ts(as = "Vec<SlashCommandOptionChoiceF64>")]
-    pub choices: Vec<SlashCommandOptionChoice<f64>>,
+    #[ts(as = "Vec<BotCommandOptionChoiceF64>")]
+    pub choices: Vec<BotCommandOptionChoice<f64>>,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct SlashCommandOptionChoice<T> {
+pub struct BotCommandOptionChoice<T> {
     pub name: String,
     pub value: T,
 }
@@ -217,9 +217,9 @@ macro_rules! slash_command_option_choice {
     };
 }
 
-slash_command_option_choice!(SlashCommandOptionChoiceString, String);
-slash_command_option_choice!(SlashCommandOptionChoiceF64, f64);
-slash_command_option_choice!(SlashCommandOptionChoiceI128, i128);
+slash_command_option_choice!(BotCommandOptionChoiceString, String);
+slash_command_option_choice!(BotCommandOptionChoiceF64, f64);
+slash_command_option_choice!(BotCommandOptionChoiceI128, i128);
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
