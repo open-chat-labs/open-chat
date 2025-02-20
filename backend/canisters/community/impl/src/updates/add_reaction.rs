@@ -7,7 +7,7 @@ use group_chat_core::AddRemoveReactionResult;
 use types::{Achievement, ChannelReactionAddedNotification, Chat, EventIndex, Notification};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn add_reaction(args: Args) -> Response {
     run_regular_jobs();

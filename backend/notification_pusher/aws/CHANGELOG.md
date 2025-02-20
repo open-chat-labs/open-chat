@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Record notification pusher metrics using Prometheus ([#7434](https://github.com/open-chat-labs/open-chat/pull/7434))
 - Move notification processing to single synchronous thread + more metrics ([#7437](https://github.com/open-chat-labs/open-chat/pull/7437))
 - Allow configuring the number of notification pusher threads ([#7438](https://github.com/open-chat-labs/open-chat/pull/7438))
+- Use histograms to track notification latency and internal latency ([#7440](https://github.com/open-chat-labs/open-chat/pull/7440))
+- Add metrics to measure durations to process and push notifications ([#7442](https://github.com/open-chat-labs/open-chat/pull/7442))
 
 ## [[2.0.1023](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1023-notifications_pusher)] - 2024-01-24
 

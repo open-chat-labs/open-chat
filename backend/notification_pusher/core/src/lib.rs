@@ -8,7 +8,7 @@ use index_store::IndexStore;
 use prometheus::{Encoder, TextEncoder};
 use std::io::Write;
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tracing::info;
 use types::{CanisterId, TimestampMillis, UserId};
 use web_push::{SubscriptionInfo, WebPushMessage};
@@ -95,6 +95,7 @@ pub struct Notification {
     recipient: UserId,
     payload: Arc<Vec<u8>>,
     subscription_info: SubscriptionInfo,
+    first_read_at: Instant,
 }
 
 pub struct NotificationToPush {

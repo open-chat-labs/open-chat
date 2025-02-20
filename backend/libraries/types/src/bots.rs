@@ -25,7 +25,7 @@ pub struct BotCommandDefinition {
     pub placeholder: Option<String>,
     pub params: Vec<BotCommandParam>,
     pub permissions: BotPermissions,
-    pub default_role: GroupRole,
+    pub default_role: Option<GroupRole>,
 }
 
 #[ts_export]

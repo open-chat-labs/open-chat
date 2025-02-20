@@ -6,6 +6,7 @@ use base64::Engine;
 use index_store::IndexStore;
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Instant;
 use tokio::time;
 use tracing::{error, info};
 use types::{CanisterId, Error, Timestamped, UserId};
@@ -78,6 +79,7 @@ impl<I: IndexStore> Reader<I> {
                 break;
             }
 
+            let first_read_at = Instant::now();
             let base64 = base64::engine::general_purpose::STANDARD_NO_PAD.encode(notification.notification_bytes);
             let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
 
@@ -94,6 +96,7 @@ impl<I: IndexStore> Reader<I> {
                                 recipient: user_id,
                                 payload: payload.clone(),
                                 subscription_info,
+                                first_read_at,
                             })
                             .await
                             .unwrap();
