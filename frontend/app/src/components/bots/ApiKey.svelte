@@ -28,6 +28,8 @@
 
     let { botExecutionContext, bot, apiKey, truncate }: Props = $props();
 
+    let allowSend = $derived(bot.definition.autonomousConfig?.syncApiKey ?? false);
+
     function onCopy() {
         navigator.clipboard.writeText(apiKey);
     }
@@ -71,17 +73,19 @@
             </TooltipPopup>
         </div>
     </TooltipWrapper>
-    <TooltipWrapper position={"top"} align={"middle"}>
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <div role="button" tabindex="0" slot="target" class="icon" onclick={sendApiKeyToBot}>
-            <Send size={$iconSize} color={"var(--icon-txt)"} />
-        </div>
-        <div let:position let:align slot="tooltip">
-            <TooltipPopup {position} {align} textLength={100} longestWord={10}>
-                <Translatable resourceKey={i18nKey("bots.add.sendToBot")} />
-            </TooltipPopup>
-        </div>
-    </TooltipWrapper>
+    {#if allowSend}
+        <TooltipWrapper position={"top"} align={"middle"}>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <div role="button" tabindex="0" slot="target" class="icon" onclick={sendApiKeyToBot}>
+                <Send size={$iconSize} color={"var(--icon-txt)"} />
+            </div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align} textLength={100} longestWord={10}>
+                    <Translatable resourceKey={i18nKey("bots.add.sendToBot")} />
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {/if}
 </div>
 
 <style lang="scss">
