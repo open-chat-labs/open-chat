@@ -103,7 +103,7 @@ impl Default for StableBlobStorage {
     }
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct Key {
     prefix: Hash,

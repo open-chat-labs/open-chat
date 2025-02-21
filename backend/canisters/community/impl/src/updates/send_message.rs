@@ -216,7 +216,7 @@ fn prepare(
             && member
                 .rules_accepted
                 .as_ref()
-                .map_or(true, |accepted| accepted.value < state.data.rules.text.version)
+                .is_none_or(|accepted| accepted.value < state.data.rules.text.version)
         {
             Err(CommunityRulesNotAccepted)
         } else {
