@@ -16,15 +16,39 @@ pub enum CommunityRole {
 }
 
 #[ts_export]
+#[repr(u8)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum CommunityPermission {
-    ChangeRoles,
-    UpdateDetails,
-    InviteUsers,
-    RemoveMembers,
-    CreatePublicChannel,
-    CreatePrivateChannel,
-    ManageUserGroups,
+    ChangeRoles = 0,
+    UpdateDetails = 1,
+    InviteUsers = 2,
+    RemoveMembers = 3,
+    CreatePublicChannel = 4,
+    CreatePrivateChannel = 5,
+    ManageUserGroups = 6,
+}
+
+impl From<CommunityPermission> for u8 {
+    fn from(value: CommunityPermission) -> Self {
+        value as u8
+    }
+}
+
+impl TryFrom<u8> for CommunityPermission {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(CommunityPermission::ChangeRoles),
+            1 => Ok(CommunityPermission::UpdateDetails),
+            2 => Ok(CommunityPermission::InviteUsers),
+            3 => Ok(CommunityPermission::RemoveMembers),
+            4 => Ok(CommunityPermission::CreatePublicChannel),
+            5 => Ok(CommunityPermission::CreatePrivateChannel),
+            6 => Ok(CommunityPermission::ManageUserGroups),
+            _ => Err(()),
+        }
+    }
 }
 
 #[ts_export]

@@ -13,7 +13,7 @@ fn reported_messages_impl(args: Args, state: &RuntimeState) -> Response {
         .data
         .reported_messages
         .iter()
-        .filter(|m| args.user_id.map_or(true, |u| m.sender.to_string() == u.to_string()))
+        .filter(|m| args.user_id.is_none_or(|u| m.sender.to_string() == u.to_string()))
         .collect();
 
     let json = serde_json::to_string(&reported_messages).unwrap();

@@ -1,12 +1,12 @@
 use crate::updates::send_message::register_timer_jobs;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
+use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult};
 use ic_cdk::update;
 use rand::Rng;
 use types::{
-    CanisterId, Chat, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId, MessageIndex, Notification,
-    TimestampMillis, User, UserId, UserType,
+    CanisterId, Chat, ContentValidationError, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId,
+    MessageIndex, Notification, TimestampMillis, User, UserId, UserType,
 };
 use user_canister::{C2CReplyContext, MessageActivity, MessageActivityEvent};
 
@@ -31,15 +31,26 @@ async fn c2c_handle_bot_messages(
         }
     };
 
-    for message in args.messages.iter() {
-        if let Err(error) = message.content.validate_for_new_message(true, sender_user_type, false, now) {
-            return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(error);
+    let mut messages = Vec::new();
+    for message in args.messages {
+        match MessageContentInternal::validate_new_message(message.content.clone(), true, sender_user_type, false, now) {
+            ValidateNewMessageContentResult::Success(content) => {
+                messages.push((message, content));
+            }
+            ValidateNewMessageContentResult::Error(error) => {
+                return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(error);
+            }
+            _ => {
+                return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(
+                    ContentValidationError::Unauthorized,
+                );
+            }
         }
     }
 
     mutate_state(|state| {
         let now = state.env.now();
-        for message in args.messages {
+        for (message, content) in messages {
             handle_message_impl(
                 HandleMessageArgs {
                     sender,
@@ -48,7 +59,7 @@ async fn c2c_handle_bot_messages(
                     sender_message_index: None,
                     sender_name: args.bot_name.clone(),
                     sender_display_name: args.bot_display_name.clone(),
-                    content: message.content.into(),
+                    content,
                     replies_to: None,
                     forwarding: false,
                     sender_user_type,

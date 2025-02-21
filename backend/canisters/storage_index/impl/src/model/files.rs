@@ -174,7 +174,7 @@ impl Files {
         };
         self.blob_reference_counts
             .range(range_start..)
-            .take_while(move |(r, _)| r.hash == hash && user_id.map_or(true, |u| u == r.user_id))
+            .take_while(move |(r, _)| r.hash == hash && user_id.is_none_or(|u| u == r.user_id))
     }
 }
 
