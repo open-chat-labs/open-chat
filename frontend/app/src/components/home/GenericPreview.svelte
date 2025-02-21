@@ -18,48 +18,42 @@
     export let rendered = false;
 
     let previewWrapper: HTMLElement;
-    let previewPromise: Promise<LinkInfo> | undefined = undefined;
+    let previewPromise: Promise<LinkInfo | undefined> | undefined = undefined;
 
     $: {
         if (intersecting && !$eventListScrolling && !rendered && !$offlineStore) {
             // make sure we only actually *load* the preview once
             previewPromise = previewPromise ?? loadPreview(url);
             previewPromise.then((preview) => {
-                if (
-                    preview.title !== undefined ||
-                    preview.description !== undefined ||
-                    preview.image !== undefined
-                ) {
-                    if (intersecting && !$eventListScrolling) {
-                        rendered = true;
-                        dispatch("rendered", url);
-                    }
+                if (preview && intersecting && !$eventListScrolling) {
+                    rendered = true;
+                    dispatch("rendered", url);
                 }
             });
         }
     }
 
-    async function loadPreview(url: string): Promise<LinkInfo> {
+    async function loadPreview(url: string): Promise<LinkInfo | undefined> {
         const response = await fetch(
             `${import.meta.env.OC_PREVIEW_PROXY_URL}/preview?url=${encodeURIComponent(url)}`,
         );
+
+        const checkIfMetaEmpty = (meta: Omit<LinkInfo, "url">) =>
+            !meta.title && !meta.description && !meta.image && !meta.imageAlt;
+
         if (response.ok) {
             const meta = await response.json();
-            return {
-                url,
-                title: meta.title,
-                description: meta.description,
-                image: meta.image ? new URL(meta.image, url).toString() : undefined,
-                imageAlt: meta.imageAlt,
-            };
-        } else {
-            return {
-                url,
-                title: undefined,
-                description: undefined,
-                image: undefined,
-                imageAlt: undefined,
-            };
+            const metaIsEmpty = checkIfMetaEmpty(meta);
+
+            if (!metaIsEmpty) {
+                return {
+                    url,
+                    title: meta.title,
+                    description: meta.description,
+                    image: meta.image ? new URL(meta.image, url).toString() : undefined,
+                    imageAlt: meta.imageAlt,
+                };
+            }
         }
     }
 
@@ -70,7 +64,7 @@
 
 {#if rendered}
     {#await previewPromise then preview}
-        {#if preview !== undefined}
+        {#if preview}
             <div bind:this={previewWrapper}>
                 {#if preview.title}
                     <a class="title" href={preview.url} target="_blank">{preview.title}</a>

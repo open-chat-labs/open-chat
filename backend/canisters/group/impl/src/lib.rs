@@ -688,7 +688,7 @@ impl Data {
     }
 
     pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {
-        if self.next_event_expiry.map_or(true, |ex| expiry < ex) {
+        if self.next_event_expiry.is_none_or(|ex| expiry < ex) {
             self.next_event_expiry = Some(expiry);
 
             let timer_jobs = &mut self.timer_jobs;

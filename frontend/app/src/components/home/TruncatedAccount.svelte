@@ -8,6 +8,7 @@
 
     export let account: string;
     export let centered = false;
+    export let disableCopy = false
 
     function collapseAccount(account: string) {
         if (account.length > 23) {
@@ -36,9 +37,11 @@
     <div class="principal">
         {collapseAccount(account)}
     </div>
-    <div class="copy" title={$_("copyToClipboard")} on:click={copy}>
-        <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
-    </div>
+    {#if !disableCopy}
+        <div class="copy" title={$_("copyToClipboard")} on:click={copy}>
+            <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
