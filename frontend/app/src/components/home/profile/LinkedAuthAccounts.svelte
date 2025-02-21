@@ -59,7 +59,7 @@
 
 {#each accounts as account}
     <div class="account">
-        <TruncatedAccount account={account.principal}>
+        <TruncatedAccount account={account.principal} disableCopy={true}>
             <AuthProviderLogo square provider={account.provider} />
         </TruncatedAccount>
         {#if account.isCurrentIdentity}
