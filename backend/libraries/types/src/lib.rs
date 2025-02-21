@@ -6,6 +6,7 @@ mod access_tokens;
 mod achievement;
 mod airdrop_config;
 mod avatar;
+mod bitflags;
 mod bots;
 mod build_version;
 pub mod c2c_bot_api_key;

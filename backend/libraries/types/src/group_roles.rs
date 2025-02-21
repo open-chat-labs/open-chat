@@ -173,32 +173,87 @@ impl GroupPermissionRole {
 }
 
 #[ts_export]
+#[repr(u8)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum GroupPermission {
-    ChangeRoles,
-    UpdateGroup,
-    AddMembers,
-    InviteUsers,
-    RemoveMembers,
-    DeleteMessages,
-    PinMessages,
-    ReactToMessages,
-    MentionAllMembers,
-    StartVideoCall,
+    ChangeRoles = 0,
+    UpdateGroup = 1,
+    AddMembers = 2,
+    InviteUsers = 3,
+    RemoveMembers = 4,
+    DeleteMessages = 5,
+    PinMessages = 6,
+    ReactToMessages = 7,
+    MentionAllMembers = 8,
+    StartVideoCall = 9,
+}
+
+impl From<GroupPermission> for u8 {
+    fn from(value: GroupPermission) -> Self {
+        value as u8
+    }
+}
+
+impl TryFrom<u8> for GroupPermission {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(GroupPermission::ChangeRoles),
+            1 => Ok(GroupPermission::UpdateGroup),
+            2 => Ok(GroupPermission::AddMembers),
+            3 => Ok(GroupPermission::InviteUsers),
+            4 => Ok(GroupPermission::RemoveMembers),
+            5 => Ok(GroupPermission::DeleteMessages),
+            6 => Ok(GroupPermission::PinMessages),
+            7 => Ok(GroupPermission::ReactToMessages),
+            8 => Ok(GroupPermission::MentionAllMembers),
+            9 => Ok(GroupPermission::StartVideoCall),
+            _ => Err(()),
+        }
+    }
 }
 
 #[ts_export]
+#[repr(u8)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum MessagePermission {
-    Text,
-    Image,
-    Video,
-    Audio,
-    File,
-    Poll,
-    Crypto,
-    Giphy,
-    Prize,
-    P2pSwap,
-    VideoCall,
+    Text = 0,
+    Image = 1,
+    Video = 2,
+    Audio = 3,
+    File = 4,
+    Poll = 5,
+    Crypto = 6,
+    Giphy = 7,
+    Prize = 8,
+    P2pSwap = 9,
+    VideoCall = 10,
+}
+
+impl From<MessagePermission> for u8 {
+    fn from(value: MessagePermission) -> Self {
+        value as u8
+    }
+}
+
+impl TryFrom<u8> for MessagePermission {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(MessagePermission::Text),
+            1 => Ok(MessagePermission::Image),
+            2 => Ok(MessagePermission::Video),
+            3 => Ok(MessagePermission::Audio),
+            4 => Ok(MessagePermission::File),
+            5 => Ok(MessagePermission::Poll),
+            6 => Ok(MessagePermission::Crypto),
+            7 => Ok(MessagePermission::Giphy),
+            8 => Ok(MessagePermission::Prize),
+            9 => Ok(MessagePermission::P2pSwap),
+            10 => Ok(MessagePermission::VideoCall),
+            _ => Err(()),
+        }
+    }
 }

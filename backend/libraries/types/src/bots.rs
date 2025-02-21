@@ -1,3 +1,4 @@
+use crate::bitflags::serialize_as_bitflags;
 use crate::{
     AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
     GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
@@ -93,8 +94,11 @@ pub struct BotCommandOptionChoice<T> {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
 pub struct BotPermissions {
+    #[serde(serialize_with = "serialize_as_bitflags", skip_serializing_if = "HashSet::is_empty")]
     pub community: HashSet<CommunityPermission>,
+    #[serde(serialize_with = "serialize_as_bitflags", skip_serializing_if = "HashSet::is_empty")]
     pub chat: HashSet<GroupPermission>,
+    #[serde(serialize_with = "serialize_as_bitflags", skip_serializing_if = "HashSet::is_empty")]
     pub message: HashSet<MessagePermission>,
 }
 
