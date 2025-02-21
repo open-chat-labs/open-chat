@@ -50,7 +50,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             min_visible_event_index: channel_member.min_visible_event_index(),
             thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
-            content: args.content,
+            content: args.content.into(),
             block_level_markdown: args.block_level_markdown,
             finalise_bot_message: false,
             now,

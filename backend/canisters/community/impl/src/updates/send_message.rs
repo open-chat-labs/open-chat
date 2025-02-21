@@ -6,6 +6,7 @@ use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaym
 use crate::{mutate_state, read_state, run_regular_jobs, CallerResult, Data, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use chat_events::{MessageContentInternal, ValidateNewMessageContentResult};
 use community_canister::c2c_bot_send_message;
 use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::send_message::{Response::*, *};
@@ -15,8 +16,8 @@ use lazy_static::lazy_static;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, EventIndex, EventWrapper,
-    Message, MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId, Version,
+    Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, ContentValidationError,
+    EventIndex, EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -75,15 +76,33 @@ pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, finalised: b
         Err(response) => return response,
     };
 
-    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        let now = state.env.now();
-        let users_mentioned = extract_users_mentioned(args.mentioned, args.content.text(), &state.data.members);
+    let now = state.env.now();
+    let content =
+        match MessageContentInternal::validate_new_message(args.content, false, (&caller).into(), args.forwarding, now) {
+            ValidateNewMessageContentResult::Success(content) => content,
+            ValidateNewMessageContentResult::Error(error) => {
+                return match error {
+                    ContentValidationError::Empty => MessageEmpty,
+                    ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
+                    ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
+                    other => InvalidRequest(format!("{other:?}")),
+                }
+            }
+            _ => return InvalidRequest("Message type not supported".to_string()),
+        };
 
-        let result = channel.chat.validate_and_send_message(
+    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
+        if channel.chat.external_url.is_some() {
+            return NotAuthorized;
+        }
+
+        let users_mentioned = extract_users_mentioned(args.mentioned, content.text(), &state.data.members);
+
+        let result = channel.chat.send_message(
             &caller,
             args.thread_root_message_index,
             args.message_id,
-            args.content,
+            content,
             args.replies_to,
             &users_mentioned.all_users_mentioned,
             args.forwarding,
@@ -347,9 +366,6 @@ fn process_send_message_result(
             })
         }
         SendMessageResult::ThreadMessageNotFound => ThreadMessageNotFound,
-        SendMessageResult::MessageEmpty => MessageEmpty,
-        SendMessageResult::TextTooLong(max_length) => TextTooLong(max_length),
-        SendMessageResult::InvalidPoll(reason) => InvalidPoll(reason),
         SendMessageResult::NotAuthorized => NotAuthorized,
         SendMessageResult::UserNotInGroup => UserNotInChannel,
         SendMessageResult::UserSuspended => UserSuspended,

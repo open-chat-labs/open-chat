@@ -4,13 +4,14 @@ use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaym
 use crate::{mutate_state, read_state, run_regular_jobs, CallerResult, Data, RuntimeState, TimerJob};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use chat_events::{MessageContentInternal, ValidateNewMessageContentResult};
 use group_canister::c2c_bot_send_message;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message,
-    MessageContent, MessageIndex, Notification, TimestampMillis, User,
+    Achievement, BotCaller, BotPermissions, Caller, Chat, ContentValidationError, EventIndex, EventWrapper,
+    GroupMessageNotification, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -59,6 +60,9 @@ pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, finalised: b
     if state.data.is_frozen() {
         return ChatFrozen;
     }
+    if state.data.chat.external_url.is_some() {
+        return NotAuthorized;
+    }
 
     let caller = match state.verified_caller(bot) {
         CallerResult::Success(caller) => caller,
@@ -69,11 +73,26 @@ pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, finalised: b
 
     let now = state.env.now();
     let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
-    let result = state.data.chat.validate_and_send_message(
+
+    let content =
+        match MessageContentInternal::validate_new_message(args.content, false, (&caller).into(), args.forwarding, now) {
+            ValidateNewMessageContentResult::Success(content) => content,
+            ValidateNewMessageContentResult::Error(error) => {
+                return match error {
+                    ContentValidationError::Empty => MessageEmpty,
+                    ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
+                    ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
+                    other => InvalidRequest(format!("{other:?}")),
+                }
+            }
+            _ => return InvalidRequest("Message type not supported".to_string()),
+        };
+
+    let result = state.data.chat.send_message(
         &caller,
         args.thread_root_message_index,
         args.message_id,
-        args.content,
+        content,
         args.replies_to,
         &mentioned,
         args.forwarding,
@@ -278,9 +297,6 @@ fn process_send_message_result(
             })
         }
         SendMessageResult::ThreadMessageNotFound => ThreadMessageNotFound,
-        SendMessageResult::MessageEmpty => MessageEmpty,
-        SendMessageResult::TextTooLong(max_length) => TextTooLong(max_length),
-        SendMessageResult::InvalidPoll(reason) => InvalidPoll(reason),
         SendMessageResult::NotAuthorized => NotAuthorized,
         SendMessageResult::UserNotInGroup => CallerNotInGroup,
         SendMessageResult::UserSuspended => UserSuspended,
