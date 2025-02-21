@@ -1,5 +1,6 @@
-use serde::Serializer;
+use serde::{Deserialize, Deserializer, Serializer};
 use std::collections::HashSet;
+use std::hash::Hash;
 
 pub fn encode_as_bitflags(inputs: impl Iterator<Item = u8>) -> u128 {
     let mut set = HashSet::new();
@@ -12,7 +13,6 @@ pub fn encode_as_bitflags(inputs: impl Iterator<Item = u8>) -> u128 {
     output
 }
 
-#[allow(dead_code)]
 pub fn decode_from_bitflags(bits: u128) -> Vec<u8> {
     let mut output = Vec::new();
     let mut remaining = bits;
@@ -32,6 +32,16 @@ pub fn decode_from_bitflags(bits: u128) -> Vec<u8> {
 pub fn serialize_as_bitflags<S: Serializer, T: Into<u8> + Copy>(value: &HashSet<T>, s: S) -> Result<S::Ok, S::Error> {
     let encoded = encode_as_bitflags(value.iter().map(|v| (*v).into()));
     s.serialize_u128(encoded)
+}
+
+pub fn deserialize_from_bitflags<'de, D: Deserializer<'de>, T: TryFrom<u8> + Copy + Eq + Hash>(
+    d: D,
+) -> Result<HashSet<T>, D::Error> {
+    let bits = u128::deserialize(d)?;
+    Ok(decode_from_bitflags(bits)
+        .into_iter()
+        .filter_map(|v| T::try_from(v).ok())
+        .collect())
 }
 
 #[test]
