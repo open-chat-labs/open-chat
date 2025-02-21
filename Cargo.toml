@@ -170,6 +170,10 @@ members = [
 ]
 resolver = "2"
 
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
 [workspace.dependencies]
 async-channel = "2.1.0"
 async-trait = "0.1.74"
