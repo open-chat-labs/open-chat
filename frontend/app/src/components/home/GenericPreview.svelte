@@ -18,7 +18,7 @@
     export let rendered = false;
 
     let previewWrapper: HTMLElement;
-    let previewPromise: Promise<LinkInfo | null> | undefined = undefined;
+    let previewPromise: Promise<LinkInfo | undefined> | undefined = undefined;
 
     $: {
         if (intersecting && !$eventListScrolling && !rendered && !$offlineStore) {
@@ -33,19 +33,19 @@
         }
     }
 
-    async function loadPreview(url: string): Promise<LinkInfo | null> {
+    async function loadPreview(url: string): Promise<LinkInfo | undefined> {
         const response = await fetch(
             `${import.meta.env.OC_PREVIEW_PROXY_URL}/preview?url=${encodeURIComponent(url)}`,
         );
 
-        const check_if_meta_empty = (meta: Omit<LinkInfo, "url">) =>
+        const checkIfMetaEmpty = (meta: Omit<LinkInfo, "url">) =>
             !meta.title && !meta.description && !meta.image && !meta.imageAlt;
 
         if (response.ok) {
             const meta = await response.json();
-            const meta_is_empty = check_if_meta_empty(meta);
+            const metaIsEmpty = checkIfMetaEmpty(meta);
 
-            if (!meta_is_empty) {
+            if (!metaIsEmpty) {
                 return {
                     url,
                     title: meta.title,
@@ -55,8 +55,6 @@
                 };
             }
         }
-
-        return null;
     }
 
     function imageLoaded() {
