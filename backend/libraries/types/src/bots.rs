@@ -1,4 +1,4 @@
-use crate::bitflags::{deserialize_from_bitflags, serialize_as_bitflags};
+use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
     AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
     GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
@@ -94,23 +94,11 @@ pub struct BotCommandOptionChoice<T> {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
 pub struct BotPermissions {
-    #[serde(
-        serialize_with = "serialize_as_bitflags",
-        deserialize_with = "deserialize_from_bitflags",
-        skip_serializing_if = "HashSet::is_empty"
-    )]
+    #[serde(skip_serializing_if = "HashSet::is_empty")]
     pub community: HashSet<CommunityPermission>,
-    #[serde(
-        serialize_with = "serialize_as_bitflags",
-        deserialize_with = "deserialize_from_bitflags",
-        skip_serializing_if = "HashSet::is_empty"
-    )]
+    #[serde(skip_serializing_if = "HashSet::is_empty")]
     pub chat: HashSet<GroupPermission>,
-    #[serde(
-        serialize_with = "serialize_as_bitflags",
-        deserialize_with = "deserialize_from_bitflags",
-        skip_serializing_if = "HashSet::is_empty"
-    )]
+    #[serde(skip_serializing_if = "HashSet::is_empty")]
     pub message: HashSet<MessagePermission>,
 }
 
@@ -195,6 +183,42 @@ impl BotPermissions {
                 MessagePermission::P2pSwap,
                 MessagePermission::VideoCall,
             ]),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct EncodedBotPermissions {
+    pub community: u128,
+    pub chat: u128,
+    pub message: u128,
+}
+
+impl From<&BotPermissions> for EncodedBotPermissions {
+    fn from(permissions: &BotPermissions) -> Self {
+        EncodedBotPermissions {
+            community: encode_as_bitflags(permissions.community.iter().map(|v| *v as u8)),
+            chat: encode_as_bitflags(permissions.chat.iter().map(|v| *v as u8)),
+            message: encode_as_bitflags(permissions.message.iter().map(|v| *v as u8)),
+        }
+    }
+}
+
+impl From<&EncodedBotPermissions> for BotPermissions {
+    fn from(permissions: &EncodedBotPermissions) -> Self {
+        BotPermissions {
+            community: decode_from_bitflags(permissions.community)
+                .into_iter()
+                .filter_map(|v| v.try_into().ok())
+                .collect(),
+            chat: decode_from_bitflags(permissions.chat)
+                .into_iter()
+                .filter_map(|v| v.try_into().ok())
+                .collect(),
+            message: decode_from_bitflags(permissions.message)
+                .into_iter()
+                .filter_map(|v| v.try_into().ok())
+                .collect(),
         }
     }
 }
@@ -302,13 +326,13 @@ impl BotInstallationLocation {
     }
 }
 
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BotApiKeyToken {
     pub gateway: CanisterId,
     pub bot_id: UserId,
     pub scope: AccessTokenScope,
     pub secret: String,
+    pub permissions: EncodedBotPermissions,
 }
 
 #[ts_export]
