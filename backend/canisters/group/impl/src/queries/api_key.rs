@@ -35,7 +35,7 @@ fn api_key_impl(args: Args, caller: Principal, state: &RuntimeState) -> Response
         bot_id: args.bot_id,
         scope: AccessTokenScope::Chat(Chat::Group(state.env.canister_id().into())),
         secret: api_key.secret.clone(),
-        permissions: api_key.granted_permissions.clone(),
+        permissions: (&api_key.granted_permissions).into(),
     };
 
     let encoded_api_key = base64::from_value(&api_key_token);

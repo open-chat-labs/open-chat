@@ -44,17 +44,18 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> Response {
             return NotAuthorized;
         }
 
-        let api_key_secret =
-            channel
-                .bot_api_keys
-                .generate(args.bot_id, args.requested_permissions.clone(), now, state.env.rng());
+        let permissions = (&args.requested_permissions).into();
+
+        let api_key_secret = channel
+            .bot_api_keys
+            .generate(args.bot_id, args.requested_permissions, now, state.env.rng());
 
         BotApiKeyToken {
             gateway: state.data.local_user_index_canister_id,
             bot_id: args.bot_id,
             scope: AccessTokenScope::Chat(Chat::Channel(community_id, channel.id)),
             secret: api_key_secret,
-            permissions: args.requested_permissions,
+            permissions,
         }
     } else {
         let Some(member) = state.data.members.get(caller) else {
@@ -65,18 +66,19 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> Response {
             return NotAuthorized;
         }
 
-        let api_key_secret =
-            state
-                .data
-                .bot_api_keys
-                .generate(args.bot_id, args.requested_permissions.clone(), now, state.env.rng());
+        let permissions = (&args.requested_permissions).into();
+
+        let api_key_secret = state
+            .data
+            .bot_api_keys
+            .generate(args.bot_id, args.requested_permissions, now, state.env.rng());
 
         BotApiKeyToken {
             gateway: state.data.local_user_index_canister_id,
             bot_id: args.bot_id,
             scope: AccessTokenScope::Community(community_id),
             secret: api_key_secret,
-            permissions: args.requested_permissions,
+            permissions,
         }
     };
 

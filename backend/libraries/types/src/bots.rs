@@ -4,7 +4,6 @@ use crate::{
     GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
     TimestampMillis, UserId, VideoContent,
 };
-use candid::types::{Serializer, Type};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -93,8 +92,7 @@ pub struct BotCommandOptionChoice<T> {
 }
 
 #[ts_export]
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[serde(from = "EncodedBotPermissions", into = "EncodedBotPermissions")]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
 pub struct BotPermissions {
     pub community: HashSet<CommunityPermission>,
     pub chat: HashSet<GroupPermission>,
@@ -295,7 +293,7 @@ pub struct BotApiKeyToken {
     pub bot_id: UserId,
     pub scope: AccessTokenScope,
     pub secret: String,
-    pub permissions: BotPermissions,
+    pub permissions: EncodedBotPermissions,
 }
 
 #[ts_export]
@@ -364,33 +362,14 @@ pub struct ApiKey {
     pub generated_at: TimestampMillis,
 }
 
-impl CandidType for BotPermissions {
-    fn _ty() -> Type {
-        EncodedBotPermissions::_ty()
-    }
-
-    fn idl_serialize<S>(&self, serializer: S) -> Result<(), S::Error>
-    where
-        S: Serializer,
-    {
-        EncodedBotPermissions::from(self).idl_serialize(serializer)
-    }
-}
-
-#[derive(CandidType, Serialize, Deserialize)]
-struct EncodedBotPermissions {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct EncodedBotPermissions {
     #[serde(skip_serializing_if = "Option::is_none")]
     community: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     chat: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     message: Option<u32>,
-}
-
-impl From<BotPermissions> for EncodedBotPermissions {
-    fn from(value: BotPermissions) -> Self {
-        (&value).into()
-    }
 }
 
 impl From<&BotPermissions> for EncodedBotPermissions {
