@@ -30,7 +30,7 @@ fn run(target_name: String) -> Option<String> {
 
         if canister_id_string.as_str()[6..6 + target_name.len()] == target_name
             && canister_id_string.ends_with("cai")
-            && best.as_ref().map_or(true, |s| canister_id_string > *s)
+            && best.as_ref().is_none_or(|s| canister_id_string > *s)
         {
             println!("Principal: {canister_id_string}. Bytes: {canister_id_bytes:?}");
             best = Some(canister_id_string);

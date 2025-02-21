@@ -62,7 +62,7 @@ impl ChitEarnedEvents {
         self.events
             .iter()
             .rev()
-            .take_while(|e| since.map_or(true, |ts| e.timestamp > ts))
+            .take_while(|e| since.is_none_or(|ts| e.timestamp > ts))
             .filter(|e| {
                 matches!(
                     e.reason,

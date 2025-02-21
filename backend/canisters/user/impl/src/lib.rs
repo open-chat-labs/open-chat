@@ -136,7 +136,7 @@ impl RuntimeState {
         for chat in self.data.direct_chats.iter_mut() {
             let result = chat.events.remove_expired_events(now);
             if let Some(expiry) = chat.events.next_event_expiry() {
-                if next_event_expiry.map_or(true, |current| expiry < current) {
+                if next_event_expiry.is_none_or(|current| expiry < current) {
                     next_event_expiry = Some(expiry);
                 }
             }
@@ -416,7 +416,7 @@ impl Data {
     }
 
     pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {
-        if self.next_event_expiry.map_or(true, |ex| expiry < ex) {
+        if self.next_event_expiry.is_none_or(|ex| expiry < ex) {
             self.next_event_expiry = Some(expiry);
 
             let timer_jobs = &mut self.timer_jobs;
@@ -488,7 +488,7 @@ impl Data {
     }
 
     pub fn push_message_activity(&mut self, event: MessageActivityEvent, now: TimestampMillis) {
-        if event.user_id.map_or(true, |user_id| !self.blocked_users.contains(&user_id)) {
+        if event.user_id.is_none_or(|user_id| !self.blocked_users.contains(&user_id)) {
             self.message_activity_events.push(event, now);
         }
     }
