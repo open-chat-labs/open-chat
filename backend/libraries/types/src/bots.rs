@@ -1,8 +1,8 @@
 use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
-    AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
-    GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
-    TimestampMillis, UserId, VideoContent,
+    is_default, AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, FileContent,
+    GiphyContent, GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent,
+    TextContent, TimestampMillis, UserId, VideoContent,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -189,8 +189,11 @@ impl BotPermissions {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EncodedBotPermissions {
+    #[serde(default, skip_serializing_if = "is_default")]
     pub community: u128,
+    #[serde(default, skip_serializing_if = "is_default")]
     pub chat: u128,
+    #[serde(default, skip_serializing_if = "is_default")]
     pub message: u128,
 }
 
