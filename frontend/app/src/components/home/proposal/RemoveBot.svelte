@@ -4,8 +4,8 @@
     import Legend from "../../Legend.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import {
-        type BotMatch as BotMatchType,
         type ExecuteGenericNervousSystemFunction,
+        type ExternalBotLike,
     } from "openchat-client";
     import { Principal } from "@dfinity/principal";
     import BotExplorer from "../../bots/BotExplorer.svelte";
@@ -17,10 +17,10 @@
 
     let { valid = $bindable() }: Props = $props();
 
-    let selected = $state<BotMatchType | undefined>(undefined);
+    let selected = $state<ExternalBotLike | undefined>(undefined);
     let isValid = $derived(selected !== undefined);
 
-    function selectMatch(match: BotMatchType | undefined) {
+    function selectMatch(match: ExternalBotLike | undefined) {
         selected = match;
     }
 
@@ -30,7 +30,7 @@
         }
     });
 
-    function removeBotPayload(bot: BotMatchType): Uint8Array {
+    function removeBotPayload(bot: ExternalBotLike): Uint8Array {
         return new Uint8Array(
             IDL.encode(
                 [
@@ -63,7 +63,6 @@
     {#if selected !== undefined}
         <SelectedMatch onRemove={() => (selected = undefined)} match={selected}></SelectedMatch>
     {:else}
-        <BotExplorer showCommands={false} maxHeight={"450px"} fill onSelect={selectMatch}
-        ></BotExplorer>
+        <BotExplorer maxHeight={"450px"} fill onSelect={selectMatch}></BotExplorer>
     {/if}
 </section>

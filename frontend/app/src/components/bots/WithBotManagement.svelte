@@ -4,6 +4,7 @@
         flattenCommandPermissions,
         type BotSummaryMode,
         type ExternalBot,
+        type Level,
     } from "openchat-shared";
     import { i18nKey } from "../../i18n/i18n";
     import {
@@ -29,6 +30,16 @@
         contents: Snippet<[BotManagement]>;
     }
 
+    let level: Level = $derived.by(() => {
+        switch (collection.kind) {
+            case "community":
+                return "community";
+            case "channel":
+                return "channel";
+            default:
+                return "group";
+        }
+    });
     let { collection, bot, canManage, grantedPermissions, apiKey, contents }: Props = $props();
     let botSummaryMode = $state<BotSummaryMode | undefined>(undefined);
     let generatingKey = $state(false);
@@ -91,13 +102,17 @@
 
     function reviewApiKey() {
         if (bot.definition.autonomousConfig !== undefined && apiKeyPermissions !== undefined) {
-            botSummaryMode = {
-                kind: "editing_api_key",
-                id: collection.id,
-                requested: bot.definition.autonomousConfig.permissions,
-                granted: apiKeyPermissions,
-            };
-            generatingKey = true;
+            const requested = bot.definition.autonomousConfig.permissions;
+            client.getApiKey(collection.id, bot.id).then((apiKey) => {
+                botSummaryMode = {
+                    kind: "editing_api_key",
+                    id: collection.id,
+                    requested,
+                    granted: apiKeyPermissions,
+                    apiKey,
+                };
+                generatingKey = true;
+            });
         }
     }
 
@@ -149,7 +164,7 @@
 </script>
 
 {#if botSummaryMode !== undefined}
-    <BotSummary mode={botSummaryMode} onClose={closeModal} {bot} />
+    <BotSummary {level} mode={botSummaryMode} onClose={closeModal} {bot} />
 {/if}
 
 {@render contents({

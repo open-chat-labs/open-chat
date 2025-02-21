@@ -1,7 +1,7 @@
 <script lang="ts">
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import { hasEveryRequiredPermission, type FlattenedCommand } from "openchat-shared";
+    import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import {
@@ -91,6 +91,16 @@
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
     ): boolean {
+        const chatRolePermitted =
+            chat !== undefined && chat.kind !== "direct_chat"
+                ? isPermitted(chat.membership.role, command.defaultRole)
+                : true;
+
+        const communityRolePermitted =
+            community !== undefined
+                ? isPermitted(community.membership.role, command.defaultRole)
+                : true;
+
         const chatPermitted =
             chat !== undefined && chat.kind !== "direct_chat"
                 ? [...command.permissions.chatPermissions].every((p) =>
@@ -111,6 +121,8 @@
         switch (mode) {
             case "message":
                 return (
+                    chatRolePermitted &&
+                    communityRolePermitted &&
                     chatPermitted &&
                     communityPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
@@ -119,6 +131,8 @@
                 );
             case "thread":
                 return (
+                    chatRolePermitted &&
+                    communityRolePermitted &&
                     chatPermitted &&
                     communityPermitted &&
                     [...command.permissions.messagePermissions].every((p) =>
@@ -158,9 +172,13 @@
         if ($selectedCommand && $instanceValid && $selectedChatStore && $selectedMessageContext) {
             client
                 .executeBotCommand(
-                    $selectedChatStore,
-                    $selectedMessageContext.threadRootMessageIndex,
-                    createBotInstance($selectedCommand, messageContext),
+                    {
+                        kind: "chat_scope",
+                        chatId: $selectedMessageContext.chatId,
+                        threadRootMessageIndex: $selectedMessageContext.threadRootMessageIndex,
+                        messageId: random64(),
+                    },
+                    createBotInstance($selectedCommand),
                 )
                 .then((result) => {
                     if (result === "failure") {
@@ -312,17 +330,6 @@
             .bot-name {
                 @include font(light, normal, fs-80);
                 color: var(--txt-light);
-            }
-
-            .icon {
-                flex: 0 0 $size;
-                width: $size;
-                height: $size;
-                aspect-ratio: 1 / 1;
-                background-position: center;
-                background-repeat: no-repeat;
-                background-size: cover;
-                border-radius: $sp2;
             }
 
             .details {

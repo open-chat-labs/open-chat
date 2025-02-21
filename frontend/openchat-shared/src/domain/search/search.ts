@@ -42,6 +42,7 @@ export type BotMatch = {
     ownerId: string;
     avatarUrl?: string;
     definition: BotDefinition;
+    endpoint: string;
 };
 
 export type ExploreCommunitiesResponse = TermInvalid | ExploreSuccess | Offline;

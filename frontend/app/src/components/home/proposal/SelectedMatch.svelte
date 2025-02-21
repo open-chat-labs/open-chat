@@ -1,9 +1,9 @@
 <script lang="ts">
     import Close from "svelte-material-icons/Close.svelte";
-    import type { BotMatch, CommunityMatch, GroupMatch } from "openchat-client";
+    import type { CommunityMatch, ExternalBotLike, GroupMatch } from "openchat-client";
 
     interface Props {
-        match: CommunityMatch | GroupMatch | BotMatch;
+        match: CommunityMatch | GroupMatch | ExternalBotLike;
         onRemove: () => void;
     }
 

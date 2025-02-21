@@ -409,6 +409,7 @@ import type {
     WebAuthnKey,
     WebAuthnKeyFull,
     BotInstallationLocation,
+    BotActionScope,
 } from "openchat-shared";
 import {
     Stream,
@@ -7015,6 +7016,31 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    #getLocalUserIndexForBotActionScope(scope: BotActionScope): Promise<string> {
+        switch (scope.kind) {
+            case "chat_scope":
+                const chat = this.lookupChatSummary(scope.chatId);
+                if (chat) {
+                    return this.#getLocalUserIndex(chat, true);
+                }
+                throw new Error(`Unable to get the local user index for scope: ${scope}`);
+            case "community_scope":
+                return this.#getLocalUserIndexForCommunity(scope.communityId.communityId);
+        }
+    }
+
+    #getLocalUserIndexForCommunity(communityId: string): Promise<string> {
+        const community = this.#liveState.communities.get({
+            kind: "community",
+            communityId,
+        });
+        if (community) {
+            return Promise.resolve(community.localUserIndex);
+        } else {
+            throw new Error(`Unable to get the local user index for community: ${communityId}`);
+        }
+    }
+
     #getLocalUserIndex(chat: ChatSummary, flipDirect: boolean = false): Promise<string> {
         switch (chat.kind) {
             case "group_chat":
@@ -7986,9 +8012,32 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    getApiKey(
+        id: ChatIdentifier | CommunityIdentifier,
+        botId: string,
+    ): Promise<string | undefined> {
+        return this.#sendRequest({
+            kind: "getApiKey",
+            id,
+            botId,
+        }).catch((err) => {
+            this.#logger.error("Failed to get api key", err);
+            return undefined;
+        });
+    }
+
     executeInternalBotCommand(
+        scope: BotActionScope,
         bot: InternalBotCommandInstance,
     ): Promise<"success" | "failure" | "too_many_requests"> {
+        // Internal commands currently only make sense in a chat scope
+        if (scope.kind === "community_scope") return Promise.resolve("success");
+
+        const context = {
+            chatId: scope.chatId,
+            threadRootMessageIndex: scope.threadRootMessageIndex,
+        };
+
         if (bot.command.name === "witch") {
             this.dispatchEvent(new SummonWitch());
         } else if (bot.command.name === "register_bot") {
@@ -7998,14 +8047,14 @@ export class OpenChat extends EventTarget {
         } else if (bot.command.name === "remove_bot") {
             this.dispatchEvent(new RemoveBot());
         } else if (bot.command.name === "poll") {
-            this.dispatchEvent(new CreatePoll(bot.command.messageContext));
+            this.dispatchEvent(new CreatePoll(context));
         } else if (bot.command.name === "gif") {
             const param = bot.command.params[0];
             if (param !== undefined && param.kind === "string" && param.value !== undefined) {
-                this.dispatchEvent(new AttachGif([bot.command.messageContext, param.value]));
+                this.dispatchEvent(new AttachGif([context, param.value]));
             }
         } else if (bot.command.name === "crypto") {
-            const ev = new TokenTransfer({ context: bot.command.messageContext });
+            const ev = new TokenTransfer({ context: context });
             const [token, amount] = bot.command.params;
             if (
                 token !== undefined &&
@@ -8029,14 +8078,12 @@ export class OpenChat extends EventTarget {
         } else if (bot.command.name === "test-msg") {
             const param = bot.command.params[0];
             if (param !== undefined && param.kind === "decimal" && param.value !== null) {
-                this.dispatchEvent(
-                    new CreateTestMessages([bot.command.messageContext, param.value]),
-                );
+                this.dispatchEvent(new CreateTestMessages([context, param.value]));
             }
         } else if (bot.command.name === "diamond") {
             const url = addQueryStringParam("diamond", "");
             const msg = `[${this.config.i18nFormatter("upgrade.message")}](${url})`;
-            this.sendMessageWithAttachment(bot.command.messageContext, msg, false, undefined, []);
+            this.sendMessageWithAttachment(context, msg, false, undefined, []);
         } else if (bot.command.name === "faq") {
             const topic =
                 bot.command.params[0]?.kind === "string" ? bot.command.params[0]?.value : undefined;
@@ -8045,39 +8092,34 @@ export class OpenChat extends EventTarget {
                 topic === undefined
                     ? `[🤔 FAQs](/faq)`
                     : `[🤔 FAQ: ${this.config.i18nFormatter(`faq.${topic}_q`)}](${url})`;
-            this.sendMessageWithAttachment(bot.command.messageContext, msg, false, undefined, []);
+            this.sendMessageWithAttachment(context, msg, false, undefined, []);
         } else if (bot.command.name === "search" && bot.command.params[0]?.kind === "string") {
             this.dispatchEvent(new SearchChat(bot.command.params[0]?.value ?? ""));
         }
         return Promise.resolve("success");
     }
 
-    #getChatIdForBotCommandScope(chatId: ChatIdentifier): ChatIdentifier {
-        if (chatId.kind === "direct_chat") {
-            return { kind: "direct_chat", userId: this.#liveState.user.userId };
+    #messageIdFromBotActionScope(scope: BotActionScope) {
+        switch (scope.kind) {
+            case "chat_scope":
+                return scope.messageId;
+            case "community_scope":
+                return random64();
         }
-        return chatId;
     }
 
     #getAuthTokenForBotCommand(
-        chat: ChatSummary,
-        threadRootMessageIndex: number | undefined,
+        scope: BotActionScope,
         bot: ExternalBotCommandInstance,
     ): Promise<[string, bigint]> {
-        const messageId = random64();
-        return this.#getLocalUserIndex(chat, true).then((localUserIndex) => {
+        const messageId = this.#messageIdFromBotActionScope(scope);
+        return this.#getLocalUserIndexForBotActionScope(scope).then((localUserIndex) => {
             return this.#sendRequest({
                 kind: "getAccessToken",
-                chatId: chat.id,
                 accessTokenType: {
                     kind: "bot_action_by_command",
                     botId: bot.id,
-                    scope: {
-                        kind: "chat_scope",
-                        chatId: this.#getChatIdForBotCommandScope(chat.id),
-                        threadRootMessageIndex,
-                        messageId,
-                    },
+                    scope,
                     command: {
                         initiator: this.#liveState.user.userId,
                         commandName: bot.command.name,
@@ -8206,28 +8248,30 @@ export class OpenChat extends EventTarget {
     }
 
     #sendPlaceholderMessage(
-        msgContext: MessageContext,
+        scope: BotActionScope,
         botContext: BotMessageContext,
         content: MessageContent,
         msgId: bigint,
         senderId: string,
         blockLevelMarkdown: boolean,
     ): () => void {
-        if (unconfirmed.contains(msgContext, msgId)) {
-            unconfirmed.overwriteContent(
-                msgContext,
-                msgId,
-                content,
-                botContext,
-                blockLevelMarkdown,
-            );
+        // we can't send a placeholder message to a community scope but that's ok
+        if (scope.kind === "community_scope") return () => undefined;
+
+        const context: MessageContext = {
+            chatId: scope.chatId,
+            threadRootMessageIndex: scope.threadRootMessageIndex,
+        };
+
+        if (unconfirmed.contains(context, msgId)) {
+            unconfirmed.overwriteContent(context, msgId, content, botContext, blockLevelMarkdown);
         } else {
-            const currentEvents = this.#eventsForMessageContext(msgContext);
+            const currentEvents = this.#eventsForMessageContext(context);
             const [eventIndex, messageIndex] =
-                msgContext.threadRootMessageIndex !== undefined
+                context.threadRootMessageIndex !== undefined
                     ? nextEventAndMessageIndexesForThread(currentEvents)
                     : nextEventAndMessageIndexes();
-            this.dispatchEvent(new SendingMessage(msgContext));
+            this.dispatchEvent(new SendingMessage(context));
             const event: EventWrapper<Message> = {
                 index: eventIndex,
                 timestamp: BigInt(Date.now()),
@@ -8246,15 +8290,14 @@ export class OpenChat extends EventTarget {
                     botContext,
                 },
             };
-            unconfirmed.add(msgContext, event);
-            this.dispatchEvent(new SentMessage(msgContext, event));
+            unconfirmed.add(context, event);
+            this.dispatchEvent(new SentMessage(context, event));
         }
-        return () => unconfirmed.delete(msgContext, msgId);
+        return () => unconfirmed.delete(context, msgId);
     }
 
     executeBotCommand(
-        chat: ChatSummary,
-        threadRootMessageIndex: number | undefined,
+        scope: BotActionScope,
         bot: BotCommandInstance,
     ): Promise<"success" | "failure" | "too_many_requests"> {
         const botContext = {
@@ -8268,10 +8311,10 @@ export class OpenChat extends EventTarget {
         let removePlaceholder: (() => void) | undefined = undefined;
         switch (bot.kind) {
             case "external_bot":
-                return this.#getAuthTokenForBotCommand(chat, threadRootMessageIndex, bot)
+                return this.#getAuthTokenForBotCommand(scope, bot)
                     .then(([token, msgId]) => {
                         removePlaceholder = this.#sendPlaceholderMessage(
-                            bot.command.messageContext,
+                            scope,
                             botContext,
                             bot.command.placeholder !== undefined
                                 ? { kind: "text_content", text: bot.command.placeholder }
@@ -8295,7 +8338,7 @@ export class OpenChat extends EventTarget {
                         } else {
                             if (resp.message !== undefined) {
                                 removePlaceholder = this.#sendPlaceholderMessage(
-                                    bot.command.messageContext,
+                                    scope,
                                     { ...botContext, finalised: resp.message.finalised },
                                     resp.message.messageContent,
                                     resp.message.messageId,
@@ -8314,7 +8357,7 @@ export class OpenChat extends EventTarget {
                         return "failure";
                     });
             case "internal_bot":
-                return this.executeInternalBotCommand(bot);
+                return this.executeInternalBotCommand(scope, bot);
         }
     }
 

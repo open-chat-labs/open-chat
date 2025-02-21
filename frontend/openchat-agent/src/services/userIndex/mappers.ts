@@ -74,15 +74,16 @@ import type {
     UserIndexExternalAchievementsExternalAchievement,
     UserIndexExploreBotsResponse,
     BotMatch as ApiBotMatch,
-    SlashCommandSchema as ApiSlashCommandSchema,
-    SlashCommandParam as ApiSlashCommandParam,
-    SlashCommandParamType as ApiSlashCommandParamType,
+    BotCommandDefinition as ApiSlashCommandSchema,
+    BotCommandParam as ApiSlashCommandParam,
+    BotCommandParamType as ApiSlashCommandParamType,
     BotDefinition as ApiBotDefinition,
     UserIndexBotUpdatesResponse,
     UserIndexBotUpdatesBotSchema,
     AutonomousConfig,
 } from "../../typebox";
 import { toRecord } from "../../utils/list";
+import { apiMemberRole } from "../community/mappersV2";
 
 export function botUpdatesResponse(
     value: UserIndexBotUpdatesResponse,
@@ -651,6 +652,7 @@ export function apiBotDefinition(domain: BotDefinition): ApiBotDefinition {
 
 export function apiAutonomousConfig(domain: AutonomousBotConfig): AutonomousConfig {
     return {
+        sync_api_key: domain.syncApiKey,
         permissions: {
             chat: domain.permissions.chatPermissions.map(apiChatPermission),
             community: domain.permissions.communityPermissions.map(apiCommunityPermission),
@@ -665,6 +667,7 @@ export function apiExternalBotCommand(command: SlashCommandSchema): ApiSlashComm
         description: command.description,
         placeholder: command.placeholder,
         params: command.params.map(apiExternalBotParam),
+        default_role: apiMemberRole(command.defaultRole),
         permissions: {
             chat: command.permissions.chatPermissions.map(apiChatPermission),
             community: command.permissions.communityPermissions.map(apiCommunityPermission),
@@ -692,6 +695,7 @@ export function externalBotMatch(
         id: botId,
         ownerId: principalBytesToString(match.owner),
         definition: externalBotDefinition(match),
+        endpoint: match.endpoint,
     };
 }
 

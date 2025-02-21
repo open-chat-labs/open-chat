@@ -507,4 +507,8 @@ export class AnonUserClient {
     ): Promise<GenerateBotKeyResponse> {
         throw new AnonymousOperationError();
     }
+
+    getApiKey(_botId: string): Promise<string | undefined> {
+        throw new AnonymousOperationError();
+    }
 }

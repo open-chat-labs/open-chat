@@ -436,7 +436,14 @@ export type WorkerRequest =
     | GetBotDefinition
     | CallBotCommandEndpoint
     | WithdrawFromIcpSwap
-    | GenerateBotApiKey;
+    | GenerateBotApiKey
+    | GetApiKey;
+
+type GetApiKey = {
+    kind: "getApiKey";
+    id: ChatIdentifier | CommunityIdentifier;
+    botId: string;
+};
 
 type GenerateBotApiKey = {
     kind: "generateBotApiKey";
@@ -1492,6 +1499,8 @@ export type WorkerResponseInner =
     | bigint
     | boolean
     | string
+    | string
+    | undefined
     | string[]
     | Uint8Array
     | undefined
@@ -2374,4 +2383,6 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends GenerateBotApiKey
     ? GenerateBotKeyResponse
+    : T extends GetApiKey
+    ? string | undefined
     : never;

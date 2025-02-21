@@ -80,7 +80,7 @@
                             <InfoIcon>
                                 <Translatable
                                     resourceKey={apiKeyPermissions !== undefined
-                                        ? i18nKey("bots.manage.deleteApiKeyInfo")
+                                        ? i18nKey("bots.manage.reviewApiKeyInfo")
                                         : i18nKey("bots.manage.apiKeyInfo")}></Translatable>
                             </InfoIcon>
                         {/if}

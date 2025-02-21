@@ -38,6 +38,7 @@
 
 {#if bot !== undefined && id !== undefined}
     <BotSummary
+        level={"group"}
         mode={{
             kind: "viewing_command_bot",
             id,

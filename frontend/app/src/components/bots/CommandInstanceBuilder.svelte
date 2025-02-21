@@ -1,10 +1,5 @@
 <script lang="ts">
-    import {
-        type ChatSummary,
-        // createParamInstancesFromSchema,
-        type FlattenedCommand,
-        type MessageContext,
-    } from "openchat-shared";
+    import { random64, type FlattenedCommand, type MessageContext } from "openchat-shared";
     import CommandParam from "./CommandParamInstance.svelte";
     import { createBotInstance, instanceValid, selectedCommandParamInstances } from "./botState";
     import { getContext, onMount } from "svelte";
@@ -22,11 +17,10 @@
         onCancel: () => void;
         onCommandSent: () => void;
         messageContext: MessageContext;
-        chat: ChatSummary;
     }
 
     const client = getContext<OpenChat>("client");
-    let { command, onCancel, onCommandSent, messageContext, chat }: Props = $props();
+    let { command, onCancel, onCommandSent, messageContext }: Props = $props();
     let commandName = $derived(`/${command.name}`);
     let form: HTMLFormElement;
     let busy = $state(false);
@@ -42,9 +36,13 @@
         busy = true;
         client
             .executeBotCommand(
-                chat,
-                messageContext.threadRootMessageIndex,
-                $state.snapshot(createBotInstance(command, messageContext)),
+                {
+                    kind: "chat_scope",
+                    chatId: messageContext.chatId,
+                    threadRootMessageIndex: messageContext.threadRootMessageIndex,
+                    messageId: random64(),
+                },
+                $state.snapshot(createBotInstance(command)),
             )
             .then((result) => {
                 if (result === "failure") {

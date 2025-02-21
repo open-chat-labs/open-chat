@@ -2,18 +2,16 @@
     import page from "page";
     import {
         chatIdentifiersEqual,
-        emptyExternalBotPermissions,
         externalBots,
-        flattenCommandPermissions,
         OpenChat,
         chatListScopeStore as chatListScope,
-        type BotSummaryMode,
         type DirectChatIdentifier,
         currentUser,
+        installedDirectBots,
     } from "openchat-client";
-    import BotSummary from "./BotSummary.svelte";
     import { getContext, tick } from "svelte";
     import { pathParams, routeForScope } from "../../routes";
+    import BotInstaller from "./install/BotInstaller.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -25,34 +23,25 @@
     let { botId, chatId }: Props = $props();
 
     let bot = $derived($externalBots.get(botId));
-    let permissions = $derived(
-        bot ? flattenCommandPermissions(bot.definition) : emptyExternalBotPermissions(),
-    );
-    let mode: BotSummaryMode | undefined = $derived.by(() => {
-        return bot
-            ? {
-                  kind: "installing_direct_command_bot",
-                  id: { kind: "direct_chat", userId: $currentUser.userId },
-                  requested: permissions,
-                  granted: permissions,
-              }
-            : undefined;
-    });
 
-    function deleteDirectChat() {
-        if (
-            $pathParams.kind === "global_chat_selected_route" &&
-            chatIdentifiersEqual(chatId, $pathParams.chatId)
-        ) {
-            page(routeForScope($chatListScope));
+    function onClose(installed: boolean) {
+        if (!installed) {
+            if (
+                $pathParams.kind === "global_chat_selected_route" &&
+                chatIdentifiersEqual(chatId, $pathParams.chatId)
+            ) {
+                page(routeForScope($chatListScope));
+            }
+            tick().then(() => client.removeChat(chatId));
         }
-        tick().then(() => client.removeChat(chatId));
     }
 </script>
 
-{#if bot !== undefined && mode !== undefined}
-    <BotSummary {bot} {mode} onClose={deleteDirectChat} />
+{#if bot !== undefined}
+    <BotInstaller
+        level={"group"}
+        location={{ kind: "direct_chat", userId: $currentUser.userId }}
+        {bot}
+        {onClose}
+        installedBots={$installedDirectBots} />
 {/if}
-
-<style lang="scss">
-</style>
