@@ -1964,7 +1964,7 @@ impl GroupChatCore {
             .iter()
             .rev()
             .take_while(move |(&ts, m)| {
-                since.as_ref().map_or(true, |s| ts > *s) && m.message_index() >= min_visible_message_index
+                since.as_ref().is_none_or(|s| ts > *s) && m.message_index() >= min_visible_message_index
             })
             .filter(move |(_, m)| m.sender() != user_id)
             .filter_map(|(_, m)| {

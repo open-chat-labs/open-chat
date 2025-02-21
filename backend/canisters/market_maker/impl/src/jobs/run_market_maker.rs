@@ -39,7 +39,7 @@ fn get_active_exchanges(state: &RuntimeState) -> Vec<(ExchangeId, Box<dyn Exchan
                 .data
                 .market_makers_in_progress
                 .get(&id)
-                .map_or(true, |ts| now.saturating_sub(*ts) > 10 * MINUTE_IN_MS)
+                .is_none_or(|ts| now.saturating_sub(*ts) > 10 * MINUTE_IN_MS)
         })
         .filter_map(|(&id, c)| state.get_exchange_client(id).map(|e| (id, e, c.clone())))
         .collect()

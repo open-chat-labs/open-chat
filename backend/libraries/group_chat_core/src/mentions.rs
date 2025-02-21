@@ -56,7 +56,7 @@ impl Mentions {
         self.by_timestamp
             .iter()
             .rev()
-            .take_while(move |(&t, _)| since.map_or(true, |s| t > s))
+            .take_while(move |(&t, _)| since.is_none_or(|s| t > s))
             .flat_map(|(t, m)| {
                 m.iter().map(|mention| Mention {
                     timestamp: *t,
