@@ -1,3 +1,4 @@
+use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
     AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
     GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
@@ -286,13 +287,13 @@ impl BotInstallationLocation {
     }
 }
 
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BotApiKeyToken {
     pub gateway: CanisterId,
     pub bot_id: UserId,
     pub scope: AccessTokenScope,
     pub secret: String,
+    pub permissions: EncodedBotPermissions,
 }
 
 #[ts_export]
@@ -359,4 +360,51 @@ pub struct ApiKey {
     pub granted_permissions: BotPermissions,
     pub generated_by: UserId,
     pub generated_at: TimestampMillis,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct EncodedBotPermissions {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    community: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    chat: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    message: Option<u32>,
+}
+
+impl From<&BotPermissions> for EncodedBotPermissions {
+    fn from(permissions: &BotPermissions) -> Self {
+        fn encode<T: Into<u8> + Copy>(field: &HashSet<T>) -> Option<u32> {
+            if field.is_empty() {
+                None
+            } else {
+                Some(encode_as_bitflags(field.iter().map(|v| (*v).into())))
+            }
+        }
+
+        EncodedBotPermissions {
+            community: encode(&permissions.community),
+            chat: encode(&permissions.chat),
+            message: encode(&permissions.message),
+        }
+    }
+}
+
+impl From<EncodedBotPermissions> for BotPermissions {
+    fn from(permissions: EncodedBotPermissions) -> Self {
+        fn decode<T: TryFrom<u8> + Copy + Eq + Hash>(field: Option<u32>) -> HashSet<T> {
+            field
+                .map(decode_from_bitflags)
+                .unwrap_or_default()
+                .into_iter()
+                .filter_map(|v| v.try_into().ok())
+                .collect()
+        }
+
+        BotPermissions {
+            community: decode(permissions.community),
+            chat: decode(permissions.chat),
+            message: decode(permissions.message),
+        }
+    }
 }
