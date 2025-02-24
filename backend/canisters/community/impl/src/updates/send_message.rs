@@ -18,7 +18,7 @@ use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, ContentValidationError,
-    EventIndex, EventWrapper, IdempotentMessage, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User,
+    EventIndex, EventWrapper, IdempotentC2CCall, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User,
     UserId, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
@@ -342,7 +342,7 @@ fn process_send_message_result(
                 for (user_id, activity) in activity_events {
                     state.data.user_event_sync_queue.push(
                         user_id,
-                        IdempotentMessage {
+                        IdempotentC2CCall {
                             created_at: now,
                             idempotency_id: state.env.rng().next_u64(),
                             value: CommunityCanisterEvent::MessageActivity(MessageActivityEvent {

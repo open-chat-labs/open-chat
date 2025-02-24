@@ -12,7 +12,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Cycles, IdempotentMessage, SubscriptionInfo, TimestampMillis, Timestamped, UserId,
+    BuildVersion, CanisterId, CanisterWasm, Cycles, IdempotentC2CCall, SubscriptionInfo, TimestampMillis, Timestamped, UserId,
 };
 use user_ids_set::UserIdsSet;
 use utils::canister::CanistersRequiringUpgrade;
@@ -122,7 +122,7 @@ impl RuntimeState {
         for canister_id in self.data.notifications_canisters.keys().copied() {
             self.data.notification_canisters_event_sync_queue.push(
                 canister_id,
-                IdempotentMessage {
+                IdempotentC2CCall {
                     created_at: now,
                     idempotency_id: self.env.rng().next_u64(),
                     value: event.clone(),

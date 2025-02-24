@@ -23,7 +23,7 @@ use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
-    CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, IdempotentMessage, MessageContent,
+    CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, IdempotentC2CCall, MessageContent,
     ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
@@ -152,7 +152,7 @@ impl RuntimeState {
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent, now: TimestampMillis) {
         self.data.user_event_sync_queue.push(
             user_id,
-            IdempotentMessage {
+            IdempotentC2CCall {
                 created_at: now,
                 idempotency_id: self.env.rng().next_u64(),
                 value: event,
@@ -163,7 +163,7 @@ impl RuntimeState {
     pub fn push_event_to_user_index(&mut self, event: UserIndexEvent, now: TimestampMillis) {
         self.data.user_index_event_sync_queue.push(
             self.data.user_index_canister_id,
-            IdempotentMessage {
+            IdempotentC2CCall {
                 created_at: now,
                 idempotency_id: self.env.rng().next_u64(),
                 value: event,

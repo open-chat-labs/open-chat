@@ -21,7 +21,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, CommunityId, Cycles, FrozenGroupInfo, IdempotentMessage,
+    AccessGate, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, CommunityId, Cycles, FrozenGroupInfo, IdempotentC2CCall,
     Milliseconds, TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
@@ -109,7 +109,7 @@ impl RuntimeState {
     ) {
         self.data.local_group_index_event_sync_queue.push(
             canister_id,
-            IdempotentMessage {
+            IdempotentC2CCall {
                 created_at: now,
                 idempotency_id: self.env.rng().next_u64(),
                 value: event,

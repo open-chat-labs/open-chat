@@ -29,7 +29,7 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles, DiamondMembershipFees, IdempotentMessage,
+    BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles, DiamondMembershipFees, IdempotentC2CCall,
     Milliseconds, TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_index_canister::ChildCanisterType;
@@ -159,7 +159,7 @@ impl RuntimeState {
     ) {
         self.data.notifications_index_event_sync_queue.push(
             self.data.notifications_index_canister_id,
-            IdempotentMessage {
+            IdempotentC2CCall {
                 created_at: now,
                 idempotency_id: self.env.rng().next_u64(),
                 value: event,

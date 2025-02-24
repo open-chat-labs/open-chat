@@ -37,7 +37,7 @@ use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
-    Cryptocurrency, Cycles, Document, IdempotentMessage, Milliseconds, Notification, NotifyChit, TimestampMillis, Timestamped,
+    Cryptocurrency, Cycles, Document, IdempotentC2CCall, Milliseconds, Notification, NotifyChit, TimestampMillis, Timestamped,
     UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
@@ -161,7 +161,7 @@ impl RuntimeState {
         if canister_id != OPENCHAT_BOT_USER_ID.into() && canister_id != self.env.canister_id() {
             self.data.user_canister_events_queue.push(
                 canister_id.into(),
-                IdempotentMessage {
+                IdempotentC2CCall {
                     created_at: self.env.now(),
                     idempotency_id: self.env.rng().next_u64(),
                     value: event,
@@ -232,7 +232,7 @@ impl RuntimeState {
     pub fn push_local_user_index_canister_event(&mut self, event: LocalUserIndexEvent, now: TimestampMillis) {
         self.data.local_user_index_event_sync_queue.push(
             self.data.local_user_index_canister_id,
-            IdempotentMessage {
+            IdempotentC2CCall {
                 created_at: now,
                 idempotency_id: self.env.rng().next_u64(),
                 value: event,

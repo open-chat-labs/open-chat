@@ -1,10 +1,10 @@
 use crate::UserIndexEvent;
 use serde::{Deserialize, Serialize};
-use types::{Fallback, IdempotentMessage};
+use types::{Fallback, IdempotentC2CCall};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
-    pub events: Vec<IdempotentMessage<UserIndexEvent>>,
+    pub events: Vec<IdempotentC2CCall<UserIndexEvent>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

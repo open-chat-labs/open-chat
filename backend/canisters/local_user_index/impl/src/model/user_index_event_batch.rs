@@ -1,9 +1,9 @@
 use crate::UserIndexEvent;
 use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
-use types::{CanisterId, IdempotentMessage};
+use types::{CanisterId, IdempotentC2CCall};
 use utils::canister::should_retry_failed_c2c_call;
 
-grouped_timer_job_batch!(UserIndexEventBatch, CanisterId, IdempotentMessage<UserIndexEvent>, 1000);
+grouped_timer_job_batch!(UserIndexEventBatch, CanisterId, IdempotentC2CCall<UserIndexEvent>, 1000);
 
 impl TimerJobItem for UserIndexEventBatch {
     async fn process(&self) -> Result<(), bool> {

@@ -1,10 +1,10 @@
 use notifications_index_canister::NotificationsIndexEvent;
 use serde::{Deserialize, Serialize};
-use types::{Fallback, IdempotentMessage};
+use types::{Fallback, IdempotentC2CCall};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub events: Vec<IdempotentMessage<NotificationsIndexEvent>>,
+    pub events: Vec<IdempotentC2CCall<NotificationsIndexEvent>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

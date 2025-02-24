@@ -1,12 +1,12 @@
 use notifications_index_canister::NotificationsIndexEvent;
 use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
-use types::{CanisterId, IdempotentMessage};
+use types::{CanisterId, IdempotentC2CCall};
 use utils::canister::should_retry_failed_c2c_call;
 
 grouped_timer_job_batch!(
     NotificationCanistersEventBatch,
     CanisterId,
-    IdempotentMessage<NotificationsIndexEvent>,
+    IdempotentC2CCall<NotificationsIndexEvent>,
     1000
 );
 
