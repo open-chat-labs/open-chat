@@ -390,8 +390,8 @@ impl From<&BotPermissions> for EncodedBotPermissions {
     }
 }
 
-impl From<EncodedBotPermissions> for BotPermissions {
-    fn from(permissions: EncodedBotPermissions) -> Self {
+impl From<&EncodedBotPermissions> for BotPermissions {
+    fn from(permissions: &EncodedBotPermissions) -> Self {
         fn decode<T: TryFrom<u8> + Copy + Eq + Hash>(field: Option<u32>) -> HashSet<T> {
             field
                 .map(decode_from_bitflags)
