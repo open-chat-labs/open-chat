@@ -5,7 +5,6 @@ import {
     paramInstanceIsValid,
     type BotCommandInstance,
     type FlattenedCommand,
-    type MessageContext,
     type MessageFormatter,
     type SlashCommandParam,
     type SlashCommandParamInstance,
@@ -108,15 +107,23 @@ export const instanceValid = derived(
     [selectedCommand, selectedCommandParamInstances],
     ([selectedCommand, selectedCommandParamInstances]) => {
         if (selectedCommand === undefined) return false;
-        if (selectedCommandParamInstances.length !== selectedCommand.params.length) {
-            return false;
-        }
-        const pairs: [SlashCommandParam, SlashCommandParamInstance][] = selectedCommand.params.map(
-            (p, i) => [p, selectedCommandParamInstances[i]],
-        );
-        return pairs.every(([p, i]) => paramInstanceIsValid(p, i));
+        return instanceIsValid(selectedCommand, selectedCommandParamInstances);
     },
 );
+
+export function instanceIsValid(
+    command: FlattenedCommand,
+    params: SlashCommandParamInstance[],
+): boolean {
+    if (params.length !== command.params.length) {
+        return false;
+    }
+    const pairs: [SlashCommandParam, SlashCommandParamInstance][] = command.params.map((p, i) => [
+        p,
+        params[i],
+    ]);
+    return pairs.every(([p, i]) => paramInstanceIsValid(p, i));
+}
 
 function commandsMatch(a: FlattenedCommand | undefined, b: FlattenedCommand | undefined): boolean {
     if (a === undefined || b === undefined) return false;
@@ -135,10 +142,7 @@ export function focusNextCommand() {
     });
 }
 
-export function createBotInstance(
-    command: FlattenedCommand,
-    context: MessageContext,
-): BotCommandInstance {
+export function createBotInstance(command: FlattenedCommand): BotCommandInstance {
     switch (command.kind) {
         case "external_bot":
             return {
@@ -147,7 +151,6 @@ export function createBotInstance(
                 endpoint: command.botEndpoint,
                 command: {
                     name: command.name,
-                    messageContext: context,
                     params: get(selectedCommandParamInstances),
                     placeholder: command.placeholder,
                 },
@@ -157,7 +160,6 @@ export function createBotInstance(
                 kind: "internal_bot",
                 command: {
                     name: command.name,
-                    messageContext: context,
                     params: get(selectedCommandParamInstances),
                 },
             };

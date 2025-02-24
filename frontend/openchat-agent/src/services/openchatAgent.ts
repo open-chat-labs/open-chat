@@ -4243,6 +4243,22 @@ export class OpenChatAgent extends EventTarget {
                 return this.userClient.generateBotApiKey(botId, permissions);
         }
     }
+
+    getApiKey(
+        id: CommunityIdentifier | ChatIdentifier,
+        botId: string,
+    ): Promise<string | undefined> {
+        switch (id.kind) {
+            case "channel":
+                return this.communityClient(id.communityId).getApiKey(botId, id.channelId);
+            case "community":
+                return this.communityClient(id.communityId).getApiKey(botId);
+            case "group_chat":
+                return this.getGroupClient(id.groupId).getApiKey(botId);
+            case "direct_chat":
+                return this.userClient.getApiKey(botId);
+        }
+    }
 }
 
 export interface ExchangeRateClient {

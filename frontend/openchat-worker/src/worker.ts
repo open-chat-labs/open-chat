@@ -61,7 +61,7 @@ async function initialize(
     identityCanister = _identityCanister;
     icUrl = _icUrl;
 
-    const authProviderIdentity = await authIdentityStorage.get() ?? new AnonymousIdentity();
+    const authProviderIdentity = (await authIdentityStorage.get()) ?? new AnonymousIdentity();
     const authPrincipal = authProviderIdentity.getPrincipal();
     authPrincipalString = authPrincipal.toString();
     identityAgent = await IdentityAgent.create(
@@ -105,7 +105,11 @@ async function createOpenChatIdentity(
 
     const sessionKey = await ECDSAKeyIdentity.generate();
 
-    const response = await identityAgent.createOpenChatIdentity(sessionKey, webAuthnCredentialId, challengeAttempt);
+    const response = await identityAgent.createOpenChatIdentity(
+        sessionKey,
+        webAuthnCredentialId,
+        challengeAttempt,
+    );
 
     if (typeof response !== "string") {
         await ocIdentityStorage.set(sessionKey, response.getDelegation(), authPrincipalString);
@@ -266,15 +270,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             executeThenReply(
                 payload,
                 correlationId,
-                createOpenChatIdentity(payload.webAuthnCredentialId, payload.challengeAttempt).then((resp) => {
-                    const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
-                    agent = new OpenChatAgent(id, {
-                        ...initPayload!,
-                        logger: logger!,
-                    });
-                    agent.addEventListener("openchat_event", handleAgentEvent);
-                    return typeof resp !== "string" ? "success" : resp;
-                }),
+                createOpenChatIdentity(payload.webAuthnCredentialId, payload.challengeAttempt).then(
+                    (resp) => {
+                        const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
+                        agent = new OpenChatAgent(id, {
+                            ...initPayload!,
+                            logger: logger!,
+                        });
+                        agent.addEventListener("openchat_event", handleAgentEvent);
+                        return typeof resp !== "string" ? "success" : resp;
+                    },
+                ),
             );
             return;
         }
@@ -1726,6 +1732,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "getApiKey":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getApiKey(payload.id, payload.botId),
+                );
+                break;
+
             case "getLocalUserIndexForUser":
                 executeThenReply(
                     payload,
@@ -1743,8 +1757,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     identityAgent?.checkAuthPrincipal().then((res) => {
-                        return res.kind === "success" ? res.webAuthnKey : undefined
-                    }) ?? Promise.resolve(undefined)
+                        return res.kind === "success" ? res.webAuthnKey : undefined;
+                    }) ?? Promise.resolve(undefined),
                 );
                 break;
 
@@ -1752,7 +1766,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    identityAgent?.lookupWebAuthnPubKey(payload.credentialId) ?? Promise.resolve(undefined)
+                    identityAgent?.lookupWebAuthnPubKey(payload.credentialId) ??
+                        Promise.resolve(undefined),
                 );
                 break;
 
@@ -2024,15 +2039,16 @@ async function linkIdentities(
     const approver = approverIdentity.getPrincipal().toString();
     const initiateResponse = await initiatorAgent.initiateIdentityLink(
         approver,
-        initiatorWebAuthnKey?.credentialId
+        initiatorWebAuthnKey?.credentialId,
     );
     if (initiateResponse !== "success") {
         return initiateResponse;
     }
 
-    const initiatorPrincipal = initiatorWebAuthnKey !== undefined
-        ? Principal.selfAuthenticating(initiatorWebAuthnKey.publicKey)
-        : initiatorIdentity.getPrincipal();
+    const initiatorPrincipal =
+        initiatorWebAuthnKey !== undefined
+            ? Principal.selfAuthenticating(initiatorWebAuthnKey.publicKey)
+            : initiatorIdentity.getPrincipal();
 
     return await approverAgent.approveIdentityLink(initiatorPrincipal.toString());
 }

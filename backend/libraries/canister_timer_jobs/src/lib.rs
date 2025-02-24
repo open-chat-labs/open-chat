@@ -52,7 +52,7 @@ impl<J> TimerJobs<J> {
         let to_remove: Vec<_> = self
             .jobs
             .iter()
-            .filter(|(_, (_, wrapper))| wrapper.deref().borrow().as_ref().map_or(true, |j| filter(j)))
+            .filter(|(_, (_, wrapper))| wrapper.deref().borrow().as_ref().is_none_or(|j| filter(j)))
             .map(|(timer_id, _)| *timer_id)
             .collect();
 

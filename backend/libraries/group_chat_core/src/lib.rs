@@ -14,15 +14,15 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
-    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, ContentValidationError,
-    CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated,
-    FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
-    GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason,
-    MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch,
-    MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate,
-    OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules,
-    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked,
-    UsersInvited, Version, Versioned, VersionedRules, VideoCall, MAX_RETURNED_MENTIONS,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, CustomPermission,
+    Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult,
+    FieldTooShortResult, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext,
+    GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, MemberLeft, MembersRemoved, Message,
+    MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
+    MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
+    PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
+    Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
+    MAX_RETURNED_MENTIONS,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -578,12 +578,12 @@ impl GroupChatCore {
         Success(matches)
     }
 
-    pub fn validate_and_send_message<R: Runtime + Send + 'static>(
+    pub fn send_message<R: Runtime + Send + 'static>(
         &mut self,
         caller: &Caller,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        content: MessageContentInitial,
+        content: MessageContentInternal,
         replies_to: Option<GroupReplyContext>,
         mentioned: &[UserId],
         forwarding: bool,
@@ -595,28 +595,6 @@ impl GroupChatCore {
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
-
-        if self.external_url.is_some() {
-            return NotAuthorized;
-        }
-
-        if let Err(error) = content.validate_for_new_message(false, caller.into(), forwarding, now) {
-            return match error {
-                ContentValidationError::Empty => MessageEmpty,
-                ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
-                ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
-                ContentValidationError::TransferCannotBeZero => {
-                    unreachable!()
-                }
-                ContentValidationError::InvalidTypeForForwarding => {
-                    InvalidRequest("Cannot forward this type of message".to_string())
-                }
-                ContentValidationError::PrizeEndDateInThePast => InvalidRequest("Prize ended in the past".to_string()),
-                ContentValidationError::Unauthorized => {
-                    InvalidRequest("User unauthorized to send messages of this type".to_string())
-                }
-            };
-        }
 
         // If there is an existing message with the same message id then this is invalid unless
         // a bot is updating an unfinalised message
@@ -648,43 +626,8 @@ impl GroupChatCore {
                 }
             }
 
-            return SendMessageResult::MessageAlreadyExists;
+            return MessageAlreadyExists;
         }
-
-        self.send_message(
-            caller,
-            thread_root_message_index,
-            message_id,
-            content.into(),
-            replies_to,
-            mentioned,
-            forwarding,
-            rules_accepted,
-            suppressed,
-            block_level_markdown,
-            event_store_client,
-            finalised,
-            now,
-        )
-    }
-
-    pub fn send_message<R: Runtime + Send + 'static>(
-        &mut self,
-        caller: &Caller,
-        thread_root_message_index: Option<MessageIndex>,
-        message_id: MessageId,
-        content: MessageContentInternal,
-        replies_to: Option<GroupReplyContext>,
-        mentioned: &[UserId],
-        forwarding: bool,
-        rules_accepted: Option<Version>,
-        suppressed: bool,
-        block_level_markdown: bool,
-        event_store_client: &mut EventStoreClient<R>,
-        finalised: bool,
-        now: TimestampMillis,
-    ) -> SendMessageResult {
-        use SendMessageResult::*;
 
         let PrepareSendMessageSuccess {
             min_visible_event_index,
@@ -756,7 +699,7 @@ impl GroupChatCore {
         finalise: bool,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        content: MessageContentInitial,
+        content: MessageContentInternal,
         replies_to: Option<GroupReplyContext>,
         mentioned: &[UserId],
         rules_accepted: Option<Version>,
@@ -769,13 +712,7 @@ impl GroupChatCore {
         let PrepareSendMessageSuccess {
             min_visible_event_index,
             everyone_mentioned,
-        } = match self.prepare_send_message(
-            caller,
-            thread_root_message_index,
-            &content.clone().into(),
-            rules_accepted,
-            now,
-        ) {
+        } = match self.prepare_send_message(caller, thread_root_message_index, &content, rules_accepted, now) {
             PrepareSendMessageResult::Success(success) => success,
             PrepareSendMessageResult::UserLapsed => return UserLapsed,
             PrepareSendMessageResult::UserSuspended => return UserSuspended,
@@ -1962,7 +1899,7 @@ impl GroupChatCore {
             .iter()
             .rev()
             .take_while(move |(&ts, m)| {
-                since.as_ref().map_or(true, |s| ts > *s) && m.message_index() >= min_visible_message_index
+                since.as_ref().is_none_or(|s| ts > *s) && m.message_index() >= min_visible_message_index
             })
             .filter(move |(_, m)| m.sender() != user_id)
             .filter_map(|(_, m)| {
@@ -2121,9 +2058,6 @@ pub enum MessagesResult {
 pub enum SendMessageResult {
     Success(SendMessageSuccess),
     ThreadMessageNotFound,
-    MessageEmpty,
-    TextTooLong(u32),
-    InvalidPoll(InvalidPollReason),
     NotAuthorized,
     UserNotInGroup,
     UserSuspended,

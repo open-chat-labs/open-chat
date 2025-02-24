@@ -1,3 +1,4 @@
+use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
     AccessTokenScope, AudioContent, CanisterId, Chat, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
     GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
@@ -42,12 +43,12 @@ pub struct BotCommandParam {
     pub description: Option<String>,
     pub placeholder: Option<String>,
     pub required: bool,
-    pub param_type: SlashCommandParamType,
+    pub param_type: BotCommandParamType,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub enum SlashCommandParamType {
+pub enum BotCommandParamType {
     UserParam,
     BooleanParam,
     StringParam(StringParam),
@@ -61,8 +62,8 @@ pub enum SlashCommandParamType {
 pub struct StringParam {
     pub min_length: u16,
     pub max_length: u16,
-    #[ts(as = "Vec<SlashCommandOptionChoiceString>")]
-    pub choices: Vec<SlashCommandOptionChoice<String>>,
+    #[ts(as = "Vec<BotCommandOptionChoiceString>")]
+    pub choices: Vec<BotCommandOptionChoice<String>>,
 }
 
 #[ts_export]
@@ -70,8 +71,8 @@ pub struct StringParam {
 pub struct IntegerParam {
     pub min_value: i128,
     pub max_value: i128,
-    #[ts(as = "Vec<SlashCommandOptionChoiceI128>")]
-    pub choices: Vec<SlashCommandOptionChoice<i128>>,
+    #[ts(as = "Vec<BotCommandOptionChoiceI128>")]
+    pub choices: Vec<BotCommandOptionChoice<i128>>,
 }
 
 #[ts_export]
@@ -79,13 +80,13 @@ pub struct IntegerParam {
 pub struct DecimalParam {
     pub min_value: f64,
     pub max_value: f64,
-    #[ts(as = "Vec<SlashCommandOptionChoiceF64>")]
-    pub choices: Vec<SlashCommandOptionChoice<f64>>,
+    #[ts(as = "Vec<BotCommandOptionChoiceF64>")]
+    pub choices: Vec<BotCommandOptionChoice<f64>>,
 }
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct SlashCommandOptionChoice<T> {
+pub struct BotCommandOptionChoice<T> {
     pub name: String,
     pub value: T,
 }
@@ -217,9 +218,9 @@ macro_rules! slash_command_option_choice {
     };
 }
 
-slash_command_option_choice!(SlashCommandOptionChoiceString, String);
-slash_command_option_choice!(SlashCommandOptionChoiceF64, f64);
-slash_command_option_choice!(SlashCommandOptionChoiceI128, i128);
+slash_command_option_choice!(BotCommandOptionChoiceString, String);
+slash_command_option_choice!(BotCommandOptionChoiceF64, f64);
+slash_command_option_choice!(BotCommandOptionChoiceI128, i128);
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -298,13 +299,13 @@ impl From<Chat> for BotInstallationLocation {
     }
 }
 
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BotApiKeyToken {
     pub gateway: CanisterId,
     pub bot_id: UserId,
     pub scope: AccessTokenScope,
     pub secret: String,
+    pub permissions: EncodedBotPermissions,
 }
 
 #[ts_export]
@@ -362,4 +363,60 @@ impl From<BotMessageContent> for MessageContentInitial {
 pub enum AuthToken {
     Jwt(String),
     ApiKey(String),
+}
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ApiKey {
+    pub secret: String,
+    pub granted_permissions: BotPermissions,
+    pub generated_by: UserId,
+    pub generated_at: TimestampMillis,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct EncodedBotPermissions {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    community: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    chat: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    message: Option<u32>,
+}
+
+impl From<&BotPermissions> for EncodedBotPermissions {
+    fn from(permissions: &BotPermissions) -> Self {
+        fn encode<T: Into<u8> + Copy>(field: &HashSet<T>) -> Option<u32> {
+            if field.is_empty() {
+                None
+            } else {
+                Some(encode_as_bitflags(field.iter().map(|v| (*v).into())))
+            }
+        }
+
+        EncodedBotPermissions {
+            community: encode(&permissions.community),
+            chat: encode(&permissions.chat),
+            message: encode(&permissions.message),
+        }
+    }
+}
+
+impl From<EncodedBotPermissions> for BotPermissions {
+    fn from(permissions: EncodedBotPermissions) -> Self {
+        fn decode<T: TryFrom<u8> + Copy + Eq + Hash>(field: Option<u32>) -> HashSet<T> {
+            field
+                .map(decode_from_bitflags)
+                .unwrap_or_default()
+                .into_iter()
+                .filter_map(|v| v.try_into().ok())
+                .collect()
+        }
+
+        BotPermissions {
+            community: decode(permissions.community),
+            chat: decode(permissions.chat),
+            message: decode(permissions.message),
+        }
+    }
 }

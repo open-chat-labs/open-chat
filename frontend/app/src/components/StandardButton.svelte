@@ -56,6 +56,7 @@
 <style lang="scss">
     button {
         transition:
+            border ease-in-out 200ms,
             background ease-in-out 200ms,
             color ease-in-out 200ms;
         background: var(--button-bg);
@@ -125,6 +126,12 @@
             background: none;
             color: var(--txt-light);
             border: var(--bw) solid var(--bd);
+
+            @media (hover: hover) {
+                &:hover {
+                    border: var(--bw) solid var(--txt-light);
+                }
+            }
         }
 
         &.fill {

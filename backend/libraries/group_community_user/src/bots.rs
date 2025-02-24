@@ -4,7 +4,7 @@ use rand::{rngs::StdRng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::{btree_map::Entry, BTreeMap, BTreeSet, HashMap};
-use types::{BotPermissions, PublicApiKeyDetails, TimestampMillis, UserId};
+use types::{ApiKey, BotPermissions, PublicApiKeyDetails, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct InstalledBots {
@@ -105,14 +105,6 @@ pub struct BotInternal {
 #[derive(Serialize, Deserialize, Default)]
 pub struct BotApiKeys {
     keys: HashMap<UserId, ApiKey>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ApiKey {
-    pub secret: String,
-    pub granted_permissions: BotPermissions,
-    pub generated_by: UserId,
-    pub generated_at: TimestampMillis,
 }
 
 impl BotApiKeys {

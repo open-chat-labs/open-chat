@@ -171,6 +171,10 @@ members = [
 ]
 resolver = "2"
 
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
 [workspace.dependencies]
 async-channel = "2.1.0"
 async-trait = "0.1.74"
@@ -180,7 +184,7 @@ aws-types = "1.1.5"
 base64 = "0.22.1"
 bitflags = { version = "2.4.1", features = ["serde"] }
 candid = "0.10.10"
-canbench-rs = "0.1.8"
+canbench-rs = "0.1.9"
 clap = "4.5.4"
 ct-codecs = "1.1.1"
 data-encoding = "2.6.0"
@@ -195,7 +199,7 @@ getrandom = { version = "0.2.15", features = ["custom"] }
 hex = "0.4.3"
 hmac-sha256 = { version = "1.1.7", features = ["traits010"] }
 http = "1.1.0"
-ic-agent = "0.39.1"
+ic-agent = "0.39.3"
 ic-canister-sig-creation = "1.1.0"
 ic-captcha = "1.0.0"
 ic-cbor = "2.5.0"
@@ -209,7 +213,7 @@ ic-ledger-types = "0.14.0"
 ic_principal = "0.1.1"
 ic-stable-structures = { git = "https://github.com/dfinity/stable-structures", rev = "69ed47f9b5001af67d650c714cd56ec3ee0ef2bb" }
 ic-transport-types = "0.39.1"
-ic-utils = "0.39.0"
+ic-utils = "0.39.3"
 ic-verifiable-credentials = "1.0.1"
 icrc-ledger-types = "0.1.5"
 ic0 = "0.23.0"
@@ -221,7 +225,7 @@ lazy_static = "1.4.0"
 num-traits = "0.2.19"
 openssl = "0.10.70"
 p256 = { version = "0.13.2" }
-pocket-ic = "6.0.0"
+pocket-ic = { git = "https://github.com/dfinity/ic", rev = "0923aa8f3ea2e2a251e3bfb1525442215b06b2b3" }
 proc-macro2 = "1.0.83"
 prometheus = "0.13.4"
 proptest = "1.5.0"
@@ -249,7 +253,7 @@ test-strategy = "0.4.0"
 time = "0.3.36"
 tokio = "1.37.0"
 tracing = "0.1.40"
-tracing-subscriber = "0.3.18"
+tracing-subscriber = "0.3.19"
 ts-rs = { version = "10.1.0", features = ["no-serde-warnings"] }
 url = "2.5.2"
 web-push = { version = "0.10.1", default-features = false, features = [

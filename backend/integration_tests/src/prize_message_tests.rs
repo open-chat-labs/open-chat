@@ -139,7 +139,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
     // Send user1 some ICP
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
 
-    let prizes = [100000, 200000];
+    let prizes = vec![100000, 200000];
     let token = Cryptocurrency::InternetComputer;
     let fee = token.fee().unwrap();
     let total = prizes.iter().sum::<u128>();
@@ -155,7 +155,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
-                prizes_v2: prizes.into_iter().map(u128::from).collect(),
+                prizes_v2: prizes,
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token,
@@ -227,7 +227,7 @@ fn old_transactions_fixed_by_updating_created_date() {
     // Send user1 some ICP
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, 200_000);
 
-    let prizes = [100_000];
+    let prizes = vec![100_000];
     let token = Cryptocurrency::InternetComputer;
     let fee = token.fee().unwrap();
     let total = prizes.iter().sum::<u128>();
@@ -243,7 +243,7 @@ fn old_transactions_fixed_by_updating_created_date() {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
-                prizes_v2: prizes.into_iter().map(u128::from).collect(),
+                prizes_v2: prizes,
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token,

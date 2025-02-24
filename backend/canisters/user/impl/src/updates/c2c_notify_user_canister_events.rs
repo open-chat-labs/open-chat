@@ -13,7 +13,7 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{
     Achievement, Chat, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex,
-    Notification, P2PSwapStatus, UserId, UserType, VideoCallPresence,
+    MessageContentInitial, Notification, P2PSwapStatus, UserId, UserType, VideoCallPresence,
 };
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::{
@@ -197,7 +197,7 @@ fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, st
                 min_visible_event_index: EventIndex::default(),
                 thread_root_message_index,
                 message_id: args.message_id,
-                content: args.content.into(),
+                content: MessageContentInitial::from(args.content).into(),
                 block_level_markdown: args.block_level_markdown,
                 finalise_bot_message: false,
                 now,

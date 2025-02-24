@@ -24,6 +24,8 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let now = state.env.now();
 
+    let encoded_permissions = (&args.requested_permissions).into();
+
     let api_key_secret = state
         .data
         .bot_api_keys
@@ -34,6 +36,7 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> Response {
         bot_id: args.bot_id,
         scope: AccessTokenScope::Chat(Chat::Group(state.env.canister_id().into())),
         secret: api_key_secret,
+        permissions: encoded_permissions,
     };
 
     let api_key = base64::from_value(&api_key_token);
