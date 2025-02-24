@@ -2,7 +2,7 @@
 use crate::utils::tick_many;
 use crate::{CanisterIds, User, T};
 use candid::{CandidType, Principal};
-use pocket_ic::{PocketIc, UserError, WasmResult};
+use pocket_ic::{PocketIc, RejectResponse};
 use rand::random;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -216,16 +216,16 @@ fn register_user_internal(
     (user, delegation)
 }
 
-fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
-    match response.unwrap() {
-        WasmResult::Reply(bytes) => candid::decode_one(&bytes).unwrap(),
-        WasmResult::Reject(error) => panic!("{error}"),
+fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<Vec<u8>, RejectResponse>) -> R {
+    match response {
+        Ok(bytes) => candid::decode_one(&bytes).unwrap(),
+        Err(error) => panic!("{error}"),
     }
 }
 
-pub fn unwrap_msgpack_response<R: DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
-    match response.unwrap() {
-        WasmResult::Reply(bytes) => msgpack::deserialize_then_unwrap(&bytes),
-        WasmResult::Reject(error) => panic!("{error}"),
+pub fn unwrap_msgpack_response<R: DeserializeOwned>(response: Result<Vec<u8>, RejectResponse>) -> R {
+    match response {
+        Ok(bytes) => msgpack::deserialize_then_unwrap(&bytes),
+        Err(error) => panic!("{error}"),
     }
 }
