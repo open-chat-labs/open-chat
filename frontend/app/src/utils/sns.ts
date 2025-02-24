@@ -114,9 +114,8 @@ const ApiMessagePermission = IDL.Variant({
     Video: IDL.Null,
 });
 const ApiExternalBotPermissions = IDL.Record({
-    chat: IDL.Vec(ApiGroupPermission),
     community: IDL.Vec(ApiCommunityPermission),
-    thread: IDL.Vec(ApiMessagePermission),
+    chat: IDL.Vec(ApiGroupPermission),
     message: IDL.Vec(ApiMessagePermission),
 });
 const ApiDecimalParamChoice = IDL.Record({
@@ -146,25 +145,34 @@ const ApiStringParam = IDL.Record({
     max_length: IDL.Nat16,
     choices: IDL.Vec(ApiStringParamChoice),
 });
-const ApiSlashCommandParamType = IDL.Variant({
+const ApiBotCommandParamType = IDL.Variant({
     UserParam: IDL.Null,
     DecimalParam: ApiDecimalParam,
     IntegerParam: ApiIntegerParam,
     StringParam: ApiStringParam,
     BooleanParam: IDL.Null,
 });
-const ApiSlashCommandParam = IDL.Record({
+const ApiBotCommandParam = IDL.Record({
     name: IDL.Text,
     description: IDL.Opt(IDL.Text),
     required: IDL.Bool,
     placeholder: IDL.Opt(IDL.Text),
-    param_type: ApiSlashCommandParamType,
+    param_type: ApiBotCommandParamType,
 });
-const ApiSlashCommandSchema = IDL.Record({
+const ApiBotCommandSchema = IDL.Record({
     permissions: ApiExternalBotPermissions,
     name: IDL.Text,
     description: IDL.Opt(IDL.Text),
-    params: IDL.Vec(ApiSlashCommandParam),
+    params: IDL.Vec(ApiBotCommandParam),
+});
+const ApiAutonomousCommandSchema = IDL.Record({
+    permissions: ApiExternalBotPermissions,
+    sync_api_key: IDL.Bool,
+})
+const ApiBotDefinition = IDL.Record({
+    description: IDL.Text,
+    commands: IDL.Vec(ApiBotCommandSchema),
+    autonomous_config: IDL.Opt(ApiAutonomousCommandSchema),
 });
 
 function createCommandParamType(param: SlashCommandParam): Record<string, any> {
@@ -310,9 +318,8 @@ export function createRegisterExternalBotPayload(
                     endpoint: IDL.Text,
                     owner: IDL.Principal,
                     name: IDL.Text,
-                    description: IDL.Text,
-                    commands: IDL.Vec(ApiSlashCommandSchema),
                     avatar: IDL.Opt(IDL.Text),
+                    definition: ApiBotDefinition,
                 }),
             ],
             [
@@ -321,20 +328,28 @@ export function createRegisterExternalBotPayload(
                     endpoint: candidate.endpoint,
                     owner: Principal.fromText(ownerId),
                     name: candidate.name,
-                    description: candidate.definition.description ?? "",
                     avatar: optionalStringToCandid(candidate.avatarUrl),
-                    commands: candidate.definition.commands.map((c) => ({
-                        name: c.name,
-                        description: optionalStringToCandid(c.description),
-                        permissions: createPermissions(c.permissions),
-                        params: c.params.map((p) => ({
-                            name: p.name,
-                            description: optionalStringToCandid(p.description),
-                            required: p.required,
-                            placeholder: optionalStringToCandid(p.placeholder),
-                            param_type: createCommandParamType(p),
+                    definition: {
+                        description: candidate.definition.description,
+                        commands: candidate.definition.commands.map((c) => ({
+                            name: c.name,
+                            description: optionalStringToCandid(c.description),
+                            permissions: createPermissions(c.permissions),
+                            params: c.params.map((p) => ({
+                                name: p.name,
+                                description: optionalStringToCandid(p.description),
+                                required: p.required,
+                                placeholder: optionalStringToCandid(p.placeholder),
+                                param_type: createCommandParamType(p),
+                            })),
                         })),
-                    })),
+                        autonomous_config: candidate.definition.autonomousConfig !== undefined
+                            ? [{
+                                permissions: createPermissions(candidate.definition.autonomousConfig.permissions),
+                                sync_api_key: candidate.definition.autonomousConfig.syncApiKey,
+                            }]
+                            : [],
+                    }
                 },
             ],
         ),
