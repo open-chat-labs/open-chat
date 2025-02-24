@@ -46,9 +46,14 @@ export const swipe: Action<HTMLElement, { threshold: number }> = (
         handleGesture();
     }
 
-    node.addEventListener("touchstart", touchStart, true);
-    node.addEventListener("touchend", touchEnd, true);
-    node.addEventListener("touchmove", touchMove, true);
+    const options: AddEventListenerOptions = {
+        capture: true,
+        passive: true,
+    };
+
+    node.addEventListener("touchstart", touchStart, options);
+    node.addEventListener("touchend", touchEnd, options);
+    node.addEventListener("touchmove", touchMove, options);
 
     return {
         destroy() {
