@@ -92,7 +92,6 @@ export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAcces
                     bot_id: principalStringToBytes(domain.botId),
                     scope: apiBotActionScope(domain.scope),
                     command: {
-                        initiator: principalStringToBytes(domain.command.initiator),
                         name: domain.command.commandName,
                         args: domain.command.arguments.map(apiBotCommandArg),
                     },

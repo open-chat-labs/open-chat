@@ -1701,4 +1701,23 @@ export class UserClient extends MsgpackCanisterAgent {
         //     UserGenerateBotApiKeyResponse,
         // );
     }
+
+    getApiKey(_botId: string): Promise<string | undefined> {
+        return Promise.resolve(undefined);
+        // return this.executeMsgpackQuery(
+        //     "api_key",
+        //     {
+        //         bot_id: principalStringToBytes(botId),
+        //     },
+        //     (resp) => {
+        //         if (typeof resp === "object" && "Success" in resp) {
+        //             return resp.Success;
+        //         }
+        //         console.log("Failed to get community api key: ", botId, resp);
+        //         return undefined;
+        //     },
+        //     UserApiKeyArgs,
+        //     UserApiKeyResponse,
+        // );
+    }
 }
