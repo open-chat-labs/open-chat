@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
-use group_community_user::BotUpdate;
+use installed_bots::BotUpdate;
 use types::{InstalledBotDetails, OptionUpdate, TimestampMillis, UserId};
 use user_canister::updates::{Response::*, *};
 use utils::time::{today, tomorrow};

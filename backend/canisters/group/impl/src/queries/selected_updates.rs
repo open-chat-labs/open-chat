@@ -1,7 +1,7 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use group_canister::selected_updates_v2::{Response::*, *};
-use group_community_user::BotUpdate;
+use installed_bots::BotUpdate;
 use std::collections::HashSet;
 use types::InstalledBotDetails;
 

@@ -17,7 +17,7 @@ use constants::{DAY_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
-use group_community_user::{BotApiKeys, InstalledBots};
+use installed_bots::{BotApiKeys, InstalledBots};
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use model::chit_earned_events::ChitEarnedEvents;
 use model::contacts::Contacts;

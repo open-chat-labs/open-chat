@@ -2,7 +2,7 @@ use crate::{model::members::CommunityMembers, read_state, RuntimeState};
 use canister_api_macros::query;
 use community_canister::selected_updates_v2::{Response::*, *};
 use group_community_common::MemberUpdate;
-use group_community_user::BotUpdate;
+use installed_bots::BotUpdate;
 use std::cell::LazyCell;
 use std::collections::HashSet;
 use types::{InstalledBotDetails, UserId};

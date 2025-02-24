@@ -32,7 +32,7 @@ group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 group_chat_core = { path = "../../../libraries/group_chat_core" }
 group_community_common = { path = "../../../libraries/group_community_common" }
-group_community_user = { path = "../../../libraries/group_community_user" }
+installed_bots = { path = "../../../libraries/installed_bots" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }

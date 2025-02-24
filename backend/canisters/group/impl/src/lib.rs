@@ -18,7 +18,7 @@ use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
-use group_community_user::{BotApiKeys, InstalledBots};
+use installed_bots::{BotApiKeys, InstalledBots};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
