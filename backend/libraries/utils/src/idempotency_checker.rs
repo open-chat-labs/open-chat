@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{HashMap, HashSet};
 use types::{CanisterId, TimestampMillis};
 
 // Ensures messages are not processed multiple times.
@@ -7,7 +7,16 @@ use types::{CanisterId, TimestampMillis};
 // monotonically increasing).
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct IdempotencyChecker {
-    previous_message_per_sender: HashMap<CanisterId, BTreeSet<(TimestampMillis, u64)>>,
+    #[serde(rename = "s")]
+    per_sender: HashMap<CanisterId, IdempotencyCheckerPerCanister>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+struct IdempotencyCheckerPerCanister {
+    #[serde(rename = "c")]
+    latest_created_at: TimestampMillis,
+    #[serde(rename = "i")]
+    idempotency_ids: HashSet<u64>,
 }
 
 impl IdempotencyChecker {
@@ -17,23 +26,22 @@ impl IdempotencyChecker {
             return true;
         }
 
-        let previous_messages = self.previous_message_per_sender.entry(sender).or_default();
+        let checker = self.per_sender.entry(sender).or_default();
 
-        if previous_messages.last().is_some_and(|(ts, _)| *ts > created_at) {
-            // `created_at` is monotonically increasing, so given that `created_at` is lower for
-            // this incoming message than one of the processed messages, we know this message has
-            // already been processed, so return false.
-            false
-        } else if !previous_messages.insert((created_at, idempotency_id)) {
-            false
-        } else {
-            // Clear all messages which were created at an earlier date
-            while let Some((ts, _)) = previous_messages.first() {
-                if *ts < created_at {
-                    previous_messages.pop_first();
-                }
-            }
-            true
+        // `created_at` is monotonically increasing, so given that `created_at` is lower for
+        // this incoming message than the latest processed message, we know this message has
+        // already been processed, so return false.
+        if checker.latest_created_at > created_at {
+            return false;
         }
+
+        // If `created_at` for this new message is later than for the latest already processed
+        // message, then bump `latest_created_at` and clear the set of `idempotency_ids` since they
+        // were only relevant for the previous `created_at` value.
+        if checker.latest_created_at > created_at {
+            checker.idempotency_ids.clear();
+            checker.latest_created_at = created_at;
+        }
+        checker.idempotency_ids.insert(idempotency_id)
     }
 }
