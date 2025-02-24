@@ -601,6 +601,7 @@ impl Default for Data {
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
             streak_insurance_logs: StreakInsuranceLogs::default(),
+            idempotency_checker: IdempotencyChecker::default(),
         }
     }
 }

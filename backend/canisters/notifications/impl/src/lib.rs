@@ -120,6 +120,7 @@ impl Default for Data {
             notifications: EventStream::default(),
             subscriptions: Subscriptions::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
+            idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode: true,
         }
