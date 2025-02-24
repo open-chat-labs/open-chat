@@ -4,12 +4,18 @@ import type {
     DirectChatIdentifier,
     GroupChatIdentifier,
     MessageContent,
-    MessageContext,
 } from "./chat";
-import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
-import { type InterpolationValues, parseBigInt, type ResourceKey } from "../utils";
+import type {
+    BotActionScope,
+    ChatPermissions,
+    CommunityPermissions,
+    MemberRole,
+    MessagePermission,
+} from "./permission";
+import { type InterpolationValues, parseBigInt, random64, type ResourceKey } from "../utils";
 import { ValidationErrors } from "../utils/validation";
 import type { CommunityIdentifier } from "./community";
+import type { BotMatch } from "./search/search";
 
 export const MIN_NAME_LENGTH = 3;
 
@@ -137,6 +143,7 @@ export function emptySlashCommand(): SlashCommandSchema {
         name: "",
         description: "",
         params: [],
+        defaultRole: "member",
         permissions: emptyExternalBotPermissions(),
     };
 }
@@ -148,7 +155,7 @@ export type SlashCommandSchema = {
     params: SlashCommandParam[];
     permissions: ExternalBotPermissions;
     devmode?: boolean;
-    ownerOnly?: boolean;
+    defaultRole: MemberRole;
     directBotDisabled?: boolean;
 };
 
@@ -225,7 +232,6 @@ export type ExternalBotPermissions = {
 
 export type SlashCommandInstance = {
     name: string;
-    messageContext: MessageContext;
     params: SlashCommandParamInstance[];
     placeholder?: string;
 };
@@ -252,6 +258,8 @@ type BotCommon = {
     definition: BotDefinition;
 };
 
+export type ExternalBotLike = ExternalBot | BotMatch;
+
 export type ExternalBot = BotCommon & {
     kind: "external_bot";
     avatarUrl?: string;
@@ -272,6 +280,7 @@ export type BotDefinition = {
 };
 
 export type AutonomousBotConfig = {
+    syncApiKey: boolean;
     permissions: ExternalBotPermissions;
 };
 
@@ -298,22 +307,22 @@ export type InternalBotCommandInstance = {
 
 // Not sure about this just yet, but I feel like it's probably a thing
 
-export type FlattenedCommand = SlashCommandSchema &
-    (
-        | {
-              kind: "external_bot";
-              botName: string;
-              avatarUrl?: string;
-              botId: string;
-              botEndpoint: string;
-              botDescription?: string;
-          }
-        | {
-              kind: "internal_bot";
-              botName: string;
-              botDescription?: string;
-          }
-    );
+export type FlattenedExternalCommand = SlashCommandSchema & {
+    kind: "external_bot";
+    botName: string;
+    avatarUrl?: string;
+    botId: string;
+    botEndpoint: string;
+    botDescription?: string;
+};
+
+export type FlattenedInternalCommand = SlashCommandSchema & {
+    kind: "internal_bot";
+    botName: string;
+    botDescription?: string;
+};
+
+export type FlattenedCommand = FlattenedExternalCommand | FlattenedInternalCommand;
 
 export type CommandParamInstance = {
     name: string;
@@ -640,26 +649,10 @@ export type BotClientConfigData = {
     icHost: string;
 };
 
-export type BotSummaryMode =
-    | InstallingCommandBot
-    | InstallingDirectCommandBot
-    | EditingCommandBot
-    | ViewingCommandBot
-    | AddingApiKey
-    | EditingApiKey;
+export type BotSummaryMode = EditingCommandBot | ViewingCommandBot | AddingApiKey | EditingApiKey;
 
 type BotSummaryModeCommon = {
     requested: ExternalBotPermissions;
-};
-
-export type InstallingCommandBot = BotSummaryModeCommon & {
-    kind: "installing_command_bot";
-    id: CommunityIdentifier | GroupChatIdentifier;
-};
-
-export type InstallingDirectCommandBot = BotSummaryModeCommon & {
-    kind: "installing_direct_command_bot";
-    id: DirectChatIdentifier;
 };
 
 export type EditingCommandBot = BotSummaryModeCommon & {
@@ -684,6 +677,45 @@ export type EditingApiKey = BotSummaryModeCommon & {
     kind: "editing_api_key";
     id: CommunityIdentifier | ChatIdentifier;
     granted: ExternalBotPermissions;
+    apiKey?: string;
 };
 
 export type EnhancedExternalBot = ExternalBot & { grantedPermissions: ExternalBotPermissions };
+
+export function botActionScopeFromExecutionContext(
+    ctx: CommunityIdentifier | ChatIdentifier,
+): BotActionScope {
+    switch (ctx.kind) {
+        case "community":
+            return {
+                kind: "community_scope",
+                communityId: ctx,
+            };
+        default:
+            return {
+                kind: "chat_scope",
+                chatId: ctx,
+                messageId: random64(),
+                threadRootMessageIndex: undefined,
+            };
+    }
+}
+
+export function botActionScopeFromInstallLocation(
+    location: BotInstallationLocation,
+): BotActionScope {
+    switch (location.kind) {
+        case "community":
+            return {
+                kind: "community_scope",
+                communityId: { kind: "community", communityId: location.communityId },
+            };
+        default:
+            return {
+                kind: "chat_scope",
+                chatId: location,
+                messageId: random64(),
+                threadRootMessageIndex: undefined,
+            };
+    }
+}
