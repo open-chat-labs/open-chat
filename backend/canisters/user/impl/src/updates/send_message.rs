@@ -199,7 +199,12 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
             return c2c_bot_send_message::Response::NotAuthorized;
         }
 
-        let now = state.env.now();
+        let result = match prepare(&args, true, state) {
+            Ok(ok) => ok,
+            Err(response) => return (*response).into(),
+        };
+
+        let now = result.now;
 
         let content =
             match MessageContentInternal::validate_new_message(args.content, true, UserType::BotV2, args.forwarding, now) {
