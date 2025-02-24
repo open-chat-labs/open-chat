@@ -3,4 +3,4 @@ import type { DecimalParam } from "./DecimalParam";
 import type { IntegerParam } from "./IntegerParam";
 import type { StringParam } from "./StringParam";
 
-export type SlashCommandParamType = "UserParam" | "BooleanParam" | { "StringParam": StringParam } | { "IntegerParam": IntegerParam } | { "DecimalParam": DecimalParam };
+export type BotCommandParamType = "UserParam" | "BooleanParam" | { "StringParam": StringParam } | { "IntegerParam": IntegerParam } | { "DecimalParam": DecimalParam };

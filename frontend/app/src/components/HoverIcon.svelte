@@ -1,10 +1,12 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
+
     interface Props {
         compact?: boolean;
         title?: string | undefined;
         disabled?: boolean;
         tabindex?: number;
-        children?: import('svelte').Snippet;
+        children?: Snippet;
         onclick?: () => void;
     }
 
@@ -33,6 +35,7 @@
         background-color: transparent;
         transition: background-color ease-in-out 100ms;
         cursor: pointer;
+        aspect-ratio: 1 / 1;
 
         &.compact {
             padding: $sp2;

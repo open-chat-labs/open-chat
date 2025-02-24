@@ -113,6 +113,7 @@
             name: "",
             description: "",
             params: [],
+            defaultRole: "member",
             permissions: emptyExternalBotPermissions(),
         };
     }
