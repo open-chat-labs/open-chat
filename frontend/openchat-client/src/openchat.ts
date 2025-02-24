@@ -8313,16 +8313,18 @@ export class OpenChat extends EventTarget {
             case "external_bot":
                 return this.#getAuthTokenForBotCommand(scope, bot)
                     .then(([token, msgId]) => {
-                        removePlaceholder = this.#sendPlaceholderMessage(
-                            scope,
-                            botContext,
-                            bot.command.placeholder !== undefined
-                                ? { kind: "text_content", text: bot.command.placeholder }
-                                : { kind: "bot_placeholder_content" },
-                            msgId,
-                            bot.id,
-                            false,
-                        );
+                        if (bot.command.name !== "sync_api_key") {
+                            removePlaceholder = this.#sendPlaceholderMessage(
+                                scope,
+                                botContext,
+                                bot.command.placeholder !== undefined
+                                    ? { kind: "text_content", text: bot.command.placeholder }
+                                    : { kind: "bot_placeholder_content" },
+                                msgId,
+                                bot.id,
+                                false,
+                            );
+                        }
                         return this.#callBotCommandEndpoint(bot.endpoint, token);
                     })
                     .then((resp) => {
