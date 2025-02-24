@@ -741,6 +741,15 @@ function customContent(value: TCustomContent): MessageContent {
         };
     }
 
+    if (value.kind === "bot_content") {
+        const decoder = new TextDecoder();
+        const data = JSON.parse(decoder.decode(new Uint8Array(value.data)));
+        return {
+            kind: "bot_rendered_content",
+            payload: data.payload,
+            endpoint: data.endpoint,
+        };
+    }
     throw new Error(`Unknown custom content kind received: ${value.kind}`);
 }
 
@@ -1596,6 +1605,7 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "message_reminder_created_content":
         case "reported_message_content":
         case "p2p_swap_content":
+        case "bot_rendered_content":
             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
     }
 }

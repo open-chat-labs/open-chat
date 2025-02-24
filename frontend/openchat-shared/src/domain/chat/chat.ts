@@ -69,11 +69,18 @@ export type MessageContent =
     | ReportedMessageContent
     | UserReferralCard
     | MemeFighterContent
-    | VideoCallContent;
+    | VideoCallContent
+    | BotRenderedContent;
 
 export type VideoCallParticipant = {
     userId: string;
     joined: bigint;
+};
+
+export type BotRenderedContent = {
+    kind: "bot_rendered_content";
+    endpoint: string;
+    payload: unknown;
 };
 
 export type VideoCallContent = {

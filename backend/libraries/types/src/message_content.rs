@@ -307,6 +307,7 @@ impl From<&MessageContentInitial> for MessagePermission {
             MessageContentInitial::Giphy(_) => MessagePermission::Giphy,
             MessageContentInitial::Prize(_) => MessagePermission::Prize,
             MessageContentInitial::P2PSwap(_) => MessagePermission::P2pSwap,
+            MessageContentInitial::Custom(_) => MessagePermission::Text,
             _ => unreachable!(),
         }
     }

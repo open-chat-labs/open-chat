@@ -190,6 +190,8 @@ export function getContentAsFormattedText(
         text = "Meme Fighter message";
     } else if (content.kind === "video_call_content") {
         text = "Video call";
+    } else if (content.kind === "bot_rendered_content") {
+        text = "Bot rendered content";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }

@@ -8259,6 +8259,9 @@ export const BotMessageContent = Type.Union([
     Type.Object({
         Giphy: GiphyContent,
     }),
+    Type.Object({
+        Custom: CustomContent,
+    }),
 ]);
 
 export type CurrentUserSummary = Static<typeof CurrentUserSummary>;

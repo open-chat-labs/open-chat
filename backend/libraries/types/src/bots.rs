@@ -1,8 +1,6 @@
 use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
-    AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
-    GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
-    TimestampMillis, UserId, VideoContent,
+    AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, CustomContent, FileContent, GiphyContent, GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent, TimestampMillis, UserId, VideoContent
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -306,6 +304,7 @@ pub enum BotMessageContent {
     File(FileContent),
     Poll(PollContent),
     Giphy(GiphyContent),
+    Custom(CustomContent),
 }
 
 #[ts_export]
@@ -342,6 +341,7 @@ impl From<BotMessageContent> for MessageContentInitial {
             BotMessageContent::File(c) => MessageContentInitial::File(c),
             BotMessageContent::Poll(c) => MessageContentInitial::Poll(c),
             BotMessageContent::Giphy(c) => MessageContentInitial::Giphy(c),
+            BotMessageContent::Custom(c) => MessageContentInitial::Custom(c),
         }
     }
 }

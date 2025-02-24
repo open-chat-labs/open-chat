@@ -26,6 +26,7 @@
     import P2PSwapContent from "./P2PSwapContent.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import BotPlaceholderContent from "./BotPlaceholderContent.svelte";
+    import BotRenderedContent from "./BotRenderedContent.svelte";
 
     export let content: MessageContent;
     export let me: boolean = false;
@@ -71,6 +72,8 @@
         {blockLevelMarkdown} />
 {:else if content.kind === "video_content"}
     <VideoContent {edited} {fill} {content} {reply} {height} {blockLevelMarkdown} />
+{:else if content.kind === "bot_rendered_content"}
+    <BotRenderedContent {content} />
 {:else if content.kind === "video_call_content"}
     <VideoCallContent on:startVideoCall {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
