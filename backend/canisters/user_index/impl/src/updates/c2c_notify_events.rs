@@ -2,6 +2,7 @@ use crate::guards::caller_is_local_user_index_canister;
 use crate::{mutate_state, RuntimeState, UserRegisteredEventPayload};
 use candid::Principal;
 use canister_api_macros::update;
+use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use constants::ONE_MB;
 use event_store_producer::EventBuilder;
@@ -9,12 +10,13 @@ use local_user_index_canister::{
     DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
     UserRegistered, UsernameChanged,
 };
+use std::cell::LazyCell;
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, MessageContent, TextContent, TimestampMillis, UserId, UserType};
 use user_index_canister::c2c_notify_events::{Response::*, *};
 use user_index_canister::LocalUserIndexEvent;
 
-#[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
+#[update(guard = "caller_is_local_user_index_canister", msgpack = true, fallback = true)]
 #[trace]
 fn c2c_notify_events(args: Args) -> Response {
     mutate_state(|state| c2c_notify_events_impl(args, state))
@@ -22,15 +24,26 @@ fn c2c_notify_events(args: Args) -> Response {
 
 fn c2c_notify_events_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller: CanisterId = state.env.caller();
-    let now = state.env.now();
+    let now = LazyCell::new(now_millis);
     for event in args.events {
-        handle_event(event, caller, now, state);
+        if state
+            .data
+            .idempotency_checker
+            .check(caller, event.created_at, event.idempotency_id)
+        {
+            handle_event(event.value, caller, &now, state);
+        }
     }
 
     Success
 }
 
-fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMillis, state: &mut RuntimeState) {
+fn handle_event<F: FnOnce() -> TimestampMillis>(
+    event: LocalUserIndexEvent,
+    caller: Principal,
+    now: &LazyCell<TimestampMillis, F>,
+    state: &mut RuntimeState,
+) {
     match event {
         LocalUserIndexEvent::UserRegistered(ev) => {
             process_new_user(ev.principal, ev.username, ev.user_id, ev.referred_by, caller, state)
@@ -94,7 +107,7 @@ fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMil
             state
                 .data
                 .users
-                .record_proof_of_unique_personhood(user_id, proof.clone(), now);
+                .record_proof_of_unique_personhood(user_id, proof.clone(), **now);
             state.push_event_to_all_local_user_indexes(UserIndexEvent::NotifyUniquePersonProof(user_id, proof), Some(caller));
         }
         LocalUserIndexEvent::NotifyChit(ev) => {
@@ -106,7 +119,7 @@ fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMil
                 chit.chit_balance,
                 chit.streak,
                 chit.streak_ends,
-                now,
+                **now,
             ) {
                 if let Some(user) = state.data.users.get_by_user_id(&user_id) {
                     state.data.chit_leaderboard.update_position(
@@ -114,7 +127,7 @@ fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMil
                         user.total_chit_earned(),
                         chit.chit_balance,
                         chit.timestamp,
-                        now,
+                        **now,
                     );
                 }
             }
@@ -125,18 +138,18 @@ fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMil
             state
                 .data
                 .users
-                .add_bot_installation(ev.bot_id, ev.location, caller, ev.installed_by, now);
+                .add_bot_installation(ev.bot_id, ev.location, caller, ev.installed_by, **now);
         }
         LocalUserIndexEvent::BotUninstalled(ev) => {
             state.data.users.remove_bot_installation(ev.bot_id, &ev.location);
         }
-        LocalUserIndexEvent::UserBlocked(user_id, blocked) => state.data.notifications_index_event_sync_queue.push(
-            state.data.notifications_index_canister_id,
+        LocalUserIndexEvent::UserBlocked(user_id, blocked) => state.push_event_to_notifications_index(
             notifications_index_canister::UserIndexEvent::UserBlocked(user_id, blocked),
+            **now,
         ),
-        LocalUserIndexEvent::UserUnblocked(user_id, unblocked) => state.data.notifications_index_event_sync_queue.push(
-            state.data.notifications_index_canister_id,
+        LocalUserIndexEvent::UserUnblocked(user_id, unblocked) => state.push_event_to_notifications_index(
             notifications_index_canister::UserIndexEvent::UserUnblocked(user_id, unblocked),
+            **now,
         ),
     }
 }

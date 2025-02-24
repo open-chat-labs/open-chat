@@ -1,10 +1,10 @@
 use crate::updates::c2c_notify_low_balance::top_up_user;
 use crate::UserEvent;
 use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
-use types::UserId;
+use types::{IdempotentMessage, UserId};
 use utils::canister::{is_out_of_cycles_error, should_retry_failed_c2c_call};
 
-grouped_timer_job_batch!(UserEventBatch, UserId, UserEvent, 1000);
+grouped_timer_job_batch!(UserEventBatch, UserId, IdempotentMessage<UserEvent>, 1000);
 
 impl TimerJobItem for UserEventBatch {
     async fn process(&self) -> Result<(), bool> {

@@ -1,15 +1,17 @@
 use crate::guards::caller_is_user_index_canister;
 use crate::{jobs, mutate_state, RuntimeState, UserEvent, UserToDelete};
 use canister_api_macros::update;
+use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
 use local_user_index_canister::{UserIndexEvent, UserRegistered};
 use msgpack::serialize_then_unwrap;
 use p256_key_pair::P256KeyPair;
+use std::cell::LazyCell;
 use std::cmp::min;
 use tracing::info;
-use types::c2c_uninstall_bot;
+use types::{c2c_uninstall_bot, TimestampMillis};
 use user_canister::{
     DiamondMembershipPaymentReceived, DisplayNameChanged, ExternalAchievementAwarded, OpenChatBotMessageV2,
     PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup,
@@ -23,18 +25,24 @@ fn c2c_notify_user_index_events(args: Args) -> Response {
 }
 
 fn c2c_notify_user_index_events_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let now = LazyCell::new(now_millis);
     for event in args.events {
-        handle_event(event, state);
+        handle_event(event, &now, state);
     }
     Success
 }
 
-fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
+fn handle_event<F: FnOnce() -> TimestampMillis>(
+    event: UserIndexEvent,
+    now: &LazyCell<TimestampMillis, F>,
+    state: &mut RuntimeState,
+) {
     match event {
         UserIndexEvent::UsernameChanged(ev) => {
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::UsernameChanged(Box::new(UsernameChanged { username: ev.username })),
+                **now,
             );
         }
         UserIndexEvent::DisplayNameChanged(ev) => {
@@ -43,6 +51,7 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                 UserEvent::DisplayNameChanged(Box::new(DisplayNameChanged {
                     display_name: ev.display_name,
                 })),
+                **now,
             );
         }
         UserIndexEvent::UserSuspended(ev) => {
@@ -54,6 +63,7 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                     reason: ev.reason,
                     suspended_by: ev.suspended_by,
                 })),
+                **now,
             );
         }
         UserIndexEvent::PhoneNumberConfirmed(ev) => {
@@ -64,6 +74,7 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                     storage_added: ev.storage_added,
                     new_storage_limit: ev.new_storage_limit,
                 })),
+                **now,
             );
         }
         UserIndexEvent::StorageUpgraded(ev) => {
@@ -74,9 +85,10 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                     storage_added: ev.storage_added,
                     new_storage_limit: ev.new_storage_limit,
                 })),
+                **now,
             );
         }
-        UserIndexEvent::UserRegistered(ev) => handle_user_registered(ev, state),
+        UserIndexEvent::UserRegistered(ev) => handle_user_registered(ev, **now, state),
         UserIndexEvent::BotRegistered(ev) => {
             state
                 .data
@@ -118,6 +130,7 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                     latest_message_index: ev.latest_message_index,
                     group_canister_timestamp: ev.group_canister_timestamp,
                 })),
+                **now,
             );
         }
         UserIndexEvent::UserJoinedCommunityOrChannel(ev) => {
@@ -129,6 +142,7 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                     channels: ev.channels,
                     community_canister_timestamp: ev.community_canister_timestamp,
                 })),
+                **now,
             );
         }
         UserIndexEvent::DiamondMembershipPaymentReceived(ev) => {
@@ -150,11 +164,12 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                         recurring: ev.recurring,
                         send_bot_message: ev.send_bot_message,
                     })),
+                    **now,
                 );
             }
         }
         UserIndexEvent::OpenChatBotMessage(ev) => {
-            state.push_event_to_user(ev.user_id, UserEvent::OpenChatBotMessage(Box::new(ev.message)));
+            state.push_event_to_user(ev.user_id, UserEvent::OpenChatBotMessage(Box::new(ev.message)), **now);
         }
         UserIndexEvent::OpenChatBotMessageV2(ev) => {
             state.push_event_to_user(
@@ -164,13 +179,11 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                     content: ev.content,
                     mentioned: ev.mentioned,
                 })),
+                **now,
             );
         }
         UserIndexEvent::ReferralCodeAdded(ev) => {
-            state
-                .data
-                .referral_codes
-                .add(ev.referral_type, ev.code, ev.expiry, state.env.now());
+            state.data.referral_codes.add(ev.referral_type, ev.code, ev.expiry, **now);
         }
         UserIndexEvent::UserPrincipalUpdated(update) => {
             state
@@ -200,7 +213,7 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
         }
         UserIndexEvent::NotifyUniquePersonProof(user_id, proof) => {
             if state.data.local_users.contains(&user_id) {
-                state.push_event_to_user(user_id, UserEvent::NotifyUniquePersonProof(Box::new(proof.clone())))
+                state.push_event_to_user(user_id, UserEvent::NotifyUniquePersonProof(Box::new(proof.clone())), **now);
             }
             state.data.global_users.insert_unique_person_proof(user_id, proof);
         }
@@ -216,6 +229,7 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                     name: ev.name,
                     chit_reward: ev.chit_reward,
                 })),
+                **now,
             );
         }
         UserIndexEvent::SyncExistingUser(user) => {
@@ -227,6 +241,7 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                     user_type: user.user_type,
                     referred_by: user.referred_by,
                 },
+                **now,
                 state,
             );
 
@@ -259,7 +274,7 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
     }
 }
 
-fn handle_user_registered(user: UserRegistered, state: &mut RuntimeState) {
+fn handle_user_registered(user: UserRegistered, now: TimestampMillis, state: &mut RuntimeState) {
     state.data.global_users.add(user.user_principal, user.user_id, user.user_type);
 
     if let Some(referred_by) = user.referred_by {
@@ -270,6 +285,7 @@ fn handle_user_registered(user: UserRegistered, state: &mut RuntimeState) {
                     user_id: user.user_id,
                     username: user.username,
                 })),
+                now,
             );
         }
     }

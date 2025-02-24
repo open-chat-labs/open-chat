@@ -56,7 +56,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         })),
                     );
 
-                    state.data.award_achievement_and_notify(Achievement::EditedMessage, now);
+                    state.award_achievement_and_notify(Achievement::EditedMessage, now);
                 }
                 Success
             }

@@ -26,6 +26,7 @@ use model::referrals::Referrals;
 use model::streak::Streak;
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::BaseKeyPrefix;
@@ -36,11 +37,12 @@ use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
-    Cryptocurrency, Cycles, Document, Milliseconds, Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof,
-    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    Cryptocurrency, Cycles, Document, IdempotentMessage, Milliseconds, Notification, NotifyChit, TimestampMillis, Timestamped,
+    UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 use utils::regular_jobs::RegularJobs;
 use utils::time::{today, tomorrow};
 
@@ -157,12 +159,20 @@ impl RuntimeState {
 
     pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
         if canister_id != OPENCHAT_BOT_USER_ID.into() && canister_id != self.env.canister_id() {
-            self.data.user_canister_events_queue.push(canister_id.into(), event);
+            self.data.user_canister_events_queue.push(
+                canister_id.into(),
+                IdempotentMessage {
+                    created_at: self.env.now(),
+                    idempotency_id: self.env.rng().next_u64(),
+                    value: event,
+                },
+            );
         }
     }
 
     pub fn mark_streak_insurance_payment(&mut self, payment: UserCanisterStreakInsurancePayment) {
         let user_id: UserId = self.env.canister_id().into();
+        let now = payment.timestamp;
         self.data.streak.mark_streak_insurance_payment(payment.clone());
         self.data.event_store_client.push(
             EventBuilder::new("user_streak_insurance_payment", payment.timestamp)
@@ -172,12 +182,12 @@ impl RuntimeState {
                 .build(),
         );
         self.set_up_streak_insurance_timer_job();
-        self.data
-            .push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsurancePayment(payment));
+        self.push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsurancePayment(payment), now);
     }
 
     pub fn mark_streak_insurance_claim(&mut self, claim: UserCanisterStreakInsuranceClaim) {
         let user_id: UserId = self.env.canister_id().into();
+        let now = claim.timestamp;
         self.data.event_store_client.push(
             EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
                 .with_user(user_id.to_string(), true)
@@ -185,8 +195,7 @@ impl RuntimeState {
                 .with_json_payload(&claim)
                 .build(),
         );
-        self.data
-            .push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim));
+        self.push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim), now);
     }
 
     pub fn set_up_streak_insurance_timer_job(&mut self) {
@@ -218,6 +227,77 @@ impl RuntimeState {
             }
         }
         false
+    }
+
+    pub fn push_local_user_index_canister_event(&mut self, event: LocalUserIndexEvent, now: TimestampMillis) {
+        self.data.local_user_index_event_sync_queue.push(
+            self.data.local_user_index_canister_id,
+            IdempotentMessage {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: event,
+            },
+        );
+    }
+
+    pub fn award_achievements_and_notify(&mut self, achievements: Vec<Achievement>, now: TimestampMillis) {
+        let mut awarded = false;
+
+        for achievement in achievements {
+            awarded |= self.data.award_achievement(achievement, now);
+        }
+
+        if awarded {
+            self.notify_user_index_of_chit(now);
+        }
+    }
+
+    pub fn award_achievement_and_notify(&mut self, achievement: Achievement, now: TimestampMillis) {
+        if self.data.award_achievement(achievement, now) {
+            self.notify_user_index_of_chit(now);
+        }
+    }
+
+    pub fn award_external_achievement(&mut self, name: String, chit_reward: u32, now: TimestampMillis) -> bool {
+        if self.data.external_achievements.insert(name.clone()) {
+            self.data.chit_events.push(ChitEarned {
+                amount: chit_reward as i32,
+                timestamp: now,
+                reason: ChitEarnedReason::ExternalAchievement(name),
+            });
+
+            self.notify_user_index_of_chit(now);
+
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn notify_user_index_of_chit(&mut self, now: TimestampMillis) {
+        self.push_local_user_index_canister_event(
+            LocalUserIndexEvent::NotifyChit(NotifyChit {
+                timestamp: now,
+                chit_balance: self.data.chit_events.balance_for_month_by_timestamp(now),
+                streak: self.data.streak.days(now),
+                streak_ends: self.data.streak.ends(),
+            }),
+            now,
+        )
+    }
+
+    pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) {
+        if self.data.blocked_users.value.insert(user_id) {
+            self.data.blocked_users.timestamp = now;
+            self.push_local_user_index_canister_event(LocalUserIndexEvent::UserBlocked(user_id), now);
+        }
+    }
+
+    pub fn unblock_user(&mut self, user_id: UserId, now: TimestampMillis) {
+        if self.data.blocked_users.value.remove(&user_id) {
+            self.data.blocked_users.timestamp = now;
+            self.push_local_user_index_canister_event(LocalUserIndexEvent::UserUnblocked(user_id), now);
+        }
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -311,6 +391,8 @@ struct Data {
     pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
     #[serde(default)]
     pub message_ids_deduped: bool,
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
 }
 
 impl Data {
@@ -380,20 +462,7 @@ impl Data {
             stable_memory_keys_to_garbage_collect: Vec::new(),
             local_user_index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
             message_ids_deduped: true,
-        }
-    }
-
-    pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) {
-        if self.blocked_users.value.insert(user_id) {
-            self.blocked_users.timestamp = now;
-            self.push_local_user_index_canister_event(LocalUserIndexEvent::UserBlocked(user_id));
-        }
-    }
-
-    pub fn unblock_user(&mut self, user_id: UserId, now: TimestampMillis) {
-        if self.blocked_users.value.remove(&user_id) {
-            self.blocked_users.timestamp = now;
-            self.push_local_user_index_canister_event(LocalUserIndexEvent::UserUnblocked(user_id));
+            idempotency_checker: IdempotencyChecker::default(),
         }
     }
 
@@ -425,24 +494,6 @@ impl Data {
         }
     }
 
-    pub fn award_achievements_and_notify(&mut self, achievements: Vec<Achievement>, now: TimestampMillis) {
-        let mut awarded = false;
-
-        for achievement in achievements {
-            awarded |= self.award_achievement(achievement, now);
-        }
-
-        if awarded {
-            self.notify_user_index_of_chit(now);
-        }
-    }
-
-    pub fn award_achievement_and_notify(&mut self, achievement: Achievement, now: TimestampMillis) {
-        if self.award_achievement(achievement, now) {
-            self.notify_user_index_of_chit(now);
-        }
-    }
-
     pub fn award_achievement(&mut self, achievement: Achievement, now: TimestampMillis) -> bool {
         if self.achievements.insert(achievement) {
             let amount = achievement.chit_reward() as i32;
@@ -455,36 +506,6 @@ impl Data {
         } else {
             false
         }
-    }
-
-    pub fn award_external_achievement(&mut self, name: String, chit_reward: u32, now: TimestampMillis) -> bool {
-        if self.external_achievements.insert(name.clone()) {
-            self.chit_events.push(ChitEarned {
-                amount: chit_reward as i32,
-                timestamp: now,
-                reason: ChitEarnedReason::ExternalAchievement(name),
-            });
-
-            self.notify_user_index_of_chit(now);
-
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn push_local_user_index_canister_event(&mut self, event: LocalUserIndexEvent) {
-        self.local_user_index_event_sync_queue
-            .push(self.local_user_index_canister_id, event);
-    }
-
-    pub fn notify_user_index_of_chit(&mut self, now: TimestampMillis) {
-        self.push_local_user_index_canister_event(LocalUserIndexEvent::NotifyChit(NotifyChit {
-            timestamp: now,
-            chit_balance: self.chit_events.balance_for_month_by_timestamp(now),
-            streak: self.streak.days(now),
-            streak_ends: self.streak.ends(),
-        }))
     }
 
     pub fn push_message_activity(&mut self, event: MessageActivityEvent, now: TimestampMillis) {

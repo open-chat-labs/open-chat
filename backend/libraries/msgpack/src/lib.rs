@@ -2,6 +2,7 @@ use rmp_serde::{decode, encode};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
+use types::Fallback;
 
 pub fn serialize<T, W>(value: T, writer: W) -> Result<(), encode::Error>
 where
@@ -39,4 +40,16 @@ pub fn serialize_then_unwrap<T: Serialize>(value: T) -> Vec<u8> {
 
 pub fn deserialize_then_unwrap<'a, T: Deserialize<'a>>(bytes: &'a [u8]) -> T {
     deserialize_from_slice(bytes).unwrap()
+}
+
+pub fn deserialize_with_fallback<'a, T>(bytes: &'a [u8]) -> T
+where
+    T: Fallback + Deserialize<'a>,
+    T::FallbackType: Deserialize<'a>,
+{
+    if let Ok(value) = deserialize_from_slice(bytes) {
+        value
+    } else {
+        deserialize_from_slice::<T::FallbackType>(bytes).unwrap().into()
+    }
 }

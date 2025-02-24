@@ -30,11 +30,14 @@ async fn install_bot(args: Args) -> Response {
     }
 
     mutate_state(|state| {
-        state.push_event_to_user_index(UserIndexEvent::BotInstalled(Box::new(user_index_canister::BotInstalled {
-            bot_id: args.bot_id,
-            location: args.location,
-            installed_by: user_id,
-        })));
+        state.push_event_to_user_index(
+            UserIndexEvent::BotInstalled(Box::new(user_index_canister::BotInstalled {
+                bot_id: args.bot_id,
+                location: args.location,
+                installed_by: user_id,
+            })),
+            state.env.now(),
+        );
     });
 
     Success

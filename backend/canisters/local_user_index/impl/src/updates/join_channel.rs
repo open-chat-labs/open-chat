@@ -31,13 +31,15 @@ async fn join_channel(args: Args) -> Response {
             community_canister::c2c_join_channel::Response::Success(s)
             | community_canister::c2c_join_channel::Response::AlreadyInChannel(s) => {
                 if !is_bot {
-                    mutate_state(|state| state.notify_user_joined_channel(user_details.user_id, args.community_id, &s));
+                    mutate_state(|state| {
+                        state.notify_user_joined_channel(user_details.user_id, args.community_id, &s, state.env.now())
+                    });
                 }
                 Success(s)
             }
             community_canister::c2c_join_channel::Response::SuccessJoinedCommunity(s) => {
                 if !is_bot {
-                    mutate_state(|state| state.notify_user_joined_community(user_details.user_id, &s));
+                    mutate_state(|state| state.notify_user_joined_community(user_details.user_id, &s, state.env.now()));
                 }
                 SuccessJoinedCommunity(s)
             }

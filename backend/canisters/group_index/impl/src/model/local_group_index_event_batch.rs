@@ -1,9 +1,14 @@
 use crate::LocalGroupIndexEvent;
 use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
-use types::CanisterId;
+use types::{CanisterId, IdempotentMessage};
 use utils::canister::should_retry_failed_c2c_call;
 
-grouped_timer_job_batch!(LocalGroupIndexEventBatch, CanisterId, LocalGroupIndexEvent, 1000);
+grouped_timer_job_batch!(
+    LocalGroupIndexEventBatch,
+    CanisterId,
+    IdempotentMessage<LocalGroupIndexEvent>,
+    1000
+);
 
 impl TimerJobItem for LocalGroupIndexEventBatch {
     async fn process(&self) -> Result<(), bool> {

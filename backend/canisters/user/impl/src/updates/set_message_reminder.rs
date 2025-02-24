@@ -71,7 +71,7 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
         now,
     );
 
-    state.data.award_achievement_and_notify(Achievement::SentReminder, now);
+    state.award_achievement_and_notify(Achievement::SentReminder, now);
 
     Success(reminder_id)
 }

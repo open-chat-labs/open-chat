@@ -15,6 +15,7 @@ use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, VecDeque};
@@ -22,14 +23,15 @@ use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
-    CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, MessageContent, ReferralType,
-    TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
+    CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, IdempotentMessage, MessageContent,
+    ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 use utils::iterator_extensions::IteratorExtensions;
 
 mod bots;
@@ -89,14 +91,15 @@ impl RuntimeState {
                     &self.data.ic_root_key,
                     now,
                 ) {
-                    self.push_event_to_user_index(UserIndexEvent::NotifyUniquePersonProof(Box::new((
-                        user_id,
-                        unique_person_proof.clone(),
-                    ))));
+                    self.push_event_to_user_index(
+                        UserIndexEvent::NotifyUniquePersonProof(Box::new((user_id, unique_person_proof.clone()))),
+                        now,
+                    );
                     if self.data.local_users.contains(&user_id) {
                         self.push_event_to_user(
                             user_id,
                             UserEvent::NotifyUniquePersonProof(Box::new(unique_person_proof.clone())),
+                            now,
                         );
                     }
                     user_details.unique_person_proof = Some(unique_person_proof.clone());
@@ -146,30 +149,54 @@ impl RuntimeState {
             .is_some_and(|u| u.is_platform_operator)
     }
 
-    pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent) {
-        self.data.user_event_sync_queue.push(user_id, event);
+    pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent, now: TimestampMillis) {
+        self.data.user_event_sync_queue.push(
+            user_id,
+            IdempotentMessage {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: event,
+            },
+        );
     }
 
-    pub fn push_event_to_user_index(&mut self, event: UserIndexEvent) {
-        self.data
-            .user_index_event_sync_queue
-            .push(self.data.user_index_canister_id, event);
+    pub fn push_event_to_user_index(&mut self, event: UserIndexEvent, now: TimestampMillis) {
+        self.data.user_index_event_sync_queue.push(
+            self.data.user_index_canister_id,
+            IdempotentMessage {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: event,
+            },
+        );
     }
 
-    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContent, _mentioned: Vec<User>) {
+    pub fn push_oc_bot_message_to_user(
+        &mut self,
+        user_id: UserId,
+        content: MessageContent,
+        _mentioned: Vec<User>,
+        now: TimestampMillis,
+    ) {
         if self.data.local_users.contains(&user_id) {
-            self.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(content)));
+            self.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(content)), now);
         } else {
-            self.push_event_to_user_index(UserIndexEvent::OpenChatBotMessage(Box::new(
-                user_index_canister::OpenChatBotMessage {
+            self.push_event_to_user_index(
+                UserIndexEvent::OpenChatBotMessage(Box::new(user_index_canister::OpenChatBotMessage {
                     user_id,
                     message: content,
-                },
-            )));
+                })),
+                now,
+            );
         }
     }
 
-    pub fn notify_user_joined_community(&mut self, user_id: UserId, community: &CommunityCanisterCommunitySummary) {
+    pub fn notify_user_joined_community(
+        &mut self,
+        user_id: UserId,
+        community: &CommunityCanisterCommunitySummary,
+        now: TimestampMillis,
+    ) {
         let channels = community
             .channels
             .iter()
@@ -179,7 +206,7 @@ impl RuntimeState {
             })
             .collect();
 
-        self.notify_user_joined_community_or_channel(user_id, community.community_id, channels, community.last_updated);
+        self.notify_user_joined_community_or_channel(user_id, community.community_id, channels, community.last_updated, now);
     }
 
     pub fn notify_user_joined_channel(
@@ -187,6 +214,7 @@ impl RuntimeState {
         user_id: UserId,
         community_id: CommunityId,
         channel: &CommunityCanisterChannelSummary,
+        now: TimestampMillis,
     ) {
         self.notify_user_joined_community_or_channel(
             user_id,
@@ -196,6 +224,7 @@ impl RuntimeState {
                 latest_message_index: channel.latest_message.as_ref().map(|m| m.event.message_index),
             }],
             channel.last_updated,
+            now,
         );
     }
 
@@ -205,6 +234,7 @@ impl RuntimeState {
         community_id: CommunityId,
         channels: Vec<ChannelLatestMessageIndex>,
         community_canister_timestamp: TimestampMillis,
+        now: TimestampMillis,
     ) {
         let local_user_index_canister_id = self.env.canister_id();
         if self.data.local_users.get(&user_id).is_some() {
@@ -216,17 +246,19 @@ impl RuntimeState {
                     channels,
                     community_canister_timestamp,
                 })),
+                now,
             );
         } else {
-            self.push_event_to_user_index(UserIndexEvent::UserJoinedCommunityOrChannel(Box::new(
-                user_index_canister::UserJoinedCommunityOrChannel {
+            self.push_event_to_user_index(
+                UserIndexEvent::UserJoinedCommunityOrChannel(Box::new(user_index_canister::UserJoinedCommunityOrChannel {
                     user_id,
                     community_id,
                     local_user_index_canister_id,
                     channels,
                     community_canister_timestamp,
-                },
-            )));
+                })),
+                now,
+            );
         }
     }
 
@@ -334,6 +366,8 @@ struct Data {
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<UserId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -406,6 +440,7 @@ impl Data {
             cycles_balance_check_queue: VecDeque::new(),
             bots: BotsMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            idempotency_checker: IdempotencyChecker::default(),
         }
     }
 }

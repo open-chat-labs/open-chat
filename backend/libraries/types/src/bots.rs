@@ -155,7 +155,7 @@ impl BotPermissions {
     pub fn chat_owner() -> Self {
         Self {
             community: HashSet::new(),
-            chat: HashSet::from_iter(vec![
+            chat: HashSet::from_iter([
                 GroupPermission::ChangeRoles,
                 GroupPermission::UpdateGroup,
                 GroupPermission::AddMembers,
@@ -167,7 +167,7 @@ impl BotPermissions {
                 GroupPermission::MentionAllMembers,
                 GroupPermission::StartVideoCall,
             ]),
-            message: HashSet::from_iter(vec![
+            message: HashSet::from_iter([
                 MessagePermission::Text,
                 MessagePermission::Image,
                 MessagePermission::Video,

@@ -11,15 +11,19 @@ use local_group_index_canister::ChildCanisterType;
 use model::community_event_batch::CommunityEventBatch;
 use model::group_event_batch::GroupEventBatch;
 use model::local_group_map::LocalGroupMap;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, VecDeque};
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
-use types::{BuildVersion, CanisterId, ChildCanisterWasms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId};
+use types::{
+    BuildVersion, CanisterId, ChildCanisterWasms, Cycles, IdempotentMessage, Milliseconds, TimestampMillis, Timestamped, UserId,
+};
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 use utils::iterator_extensions::IteratorExtensions;
 
 mod guards;
@@ -72,12 +76,26 @@ impl RuntimeState {
         self.data.notifications_canister_id == caller
     }
 
-    pub fn push_event_to_group(&mut self, canister_id: CanisterId, event: GroupEvent) {
-        self.data.group_event_sync_queue.push(canister_id, event);
+    pub fn push_event_to_group(&mut self, canister_id: CanisterId, event: GroupEvent, now: TimestampMillis) {
+        self.data.group_event_sync_queue.push(
+            canister_id,
+            IdempotentMessage {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: event,
+            },
+        );
     }
 
-    pub fn push_event_to_community(&mut self, canister_id: CanisterId, event: CommunityEvent) {
-        self.data.community_event_sync_queue.push(canister_id, event);
+    pub fn push_event_to_community(&mut self, canister_id: CanisterId, event: CommunityEvent, now: TimestampMillis) {
+        self.data.community_event_sync_queue.push(
+            canister_id,
+            IdempotentMessage {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: event,
+            },
+        );
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -174,6 +192,8 @@ struct Data {
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
     pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
 }
 
 impl Data {
@@ -224,6 +244,7 @@ impl Data {
             cycles_balance_check_queue: VecDeque::new(),
             group_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             community_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            idempotency_checker: IdempotencyChecker::default(),
         }
     }
 }

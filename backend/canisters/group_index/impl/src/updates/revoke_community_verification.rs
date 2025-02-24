@@ -10,7 +10,7 @@ fn revoke_community_verification(args: Args) -> Response {
 }
 
 fn revoke_community_verification_impl(args: Args, state: &mut RuntimeState) -> Response {
-    match state.data.set_verified_community(args.community_id, false) {
+    match state.set_verified_community(args.community_id, false) {
         true => Success,
         false => NotFound,
     }

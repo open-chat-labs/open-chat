@@ -2808,6 +2808,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
@@ -4554,6 +4555,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
@@ -4622,6 +4624,7 @@ dependencies = [
  "canister_client",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
@@ -4852,6 +4855,7 @@ version = "0.1.0"
 dependencies = [
  "rmp-serde",
  "serde",
+ "types",
 ]
 
 [[package]]
@@ -5138,6 +5142,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_tracing_macros",
  "constants",
  "cycles_dispenser_canister",
@@ -8564,6 +8569,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",

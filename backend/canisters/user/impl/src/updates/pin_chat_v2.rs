@@ -36,7 +36,7 @@ fn pin_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    state.data.award_achievement_and_notify(Achievement::PinnedChat, now);
+    state.award_achievement_and_notify(Achievement::PinnedChat, now);
 
     Success
 }

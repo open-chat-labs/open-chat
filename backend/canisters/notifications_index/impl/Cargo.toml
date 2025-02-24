@@ -14,6 +14,7 @@ candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
+canister_time = { path = "../../../libraries/canister_time" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 constants = { path = "../../../libraries/constants" }
 cycles_dispenser_canister = { path = "../../cycles_dispenser/api" }

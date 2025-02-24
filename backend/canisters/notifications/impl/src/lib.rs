@@ -10,6 +10,7 @@ use types::{BuildVersion, CanisterId, Cycles, NotificationEnvelope, TimestampMil
 use user_ids_set::UserIdsSet;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
 mod lifecycle;
@@ -75,6 +76,8 @@ struct Data {
     pub subscriptions: Subscriptions,
     #[serde(default = "blocked_users")]
     pub blocked_users: UserIdsSet,
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -99,6 +102,7 @@ impl Data {
             notifications: EventStream::default(),
             subscriptions: Subscriptions::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
+            idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode,
         }

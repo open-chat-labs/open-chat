@@ -31,7 +31,7 @@ fn set_bio_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     state.data.bio = Timestamped::new(args.text, now);
 
-    state.data.award_achievement_and_notify(Achievement::SetBio, now);
+    state.award_achievement_and_notify(Achievement::SetBio, now);
 
     Success
 }

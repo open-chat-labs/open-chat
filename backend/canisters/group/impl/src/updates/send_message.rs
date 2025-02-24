@@ -210,7 +210,7 @@ fn process_send_message_result(
 
                 if new_achievement && !caller.is_bot() {
                     for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
-                        state.data.notify_user_of_achievement(sender, a);
+                        state.notify_user_of_achievement(sender, a, now);
                     }
                 }
 
@@ -224,10 +224,7 @@ fn process_send_message_result(
                         .get(&c.recipient)
                         .is_some_and(|m| !m.user_type().is_bot())
                     {
-                        state
-                            .data
-                            .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
-
+                        state.notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto, now);
                         activity_events.push((c.recipient, MessageActivity::Crypto));
                     }
                 }
@@ -271,7 +268,7 @@ fn process_send_message_result(
                 }
 
                 for (user_id, activity) in activity_events {
-                    state.data.user_event_sync_queue.push(
+                    state.push_event_to_user(
                         user_id,
                         GroupCanisterEvent::MessageActivity(MessageActivityEvent {
                             chat: Chat::Group(chat_id),
@@ -283,6 +280,7 @@ fn process_send_message_result(
                             timestamp: now,
                             user_id: Some(sender),
                         }),
+                        now,
                     );
                 }
             }

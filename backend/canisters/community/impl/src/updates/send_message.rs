@@ -13,11 +13,13 @@ use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use rand::RngCore;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, ContentValidationError,
-    EventIndex, EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId, Version,
+    EventIndex, EventWrapper, IdempotentMessage, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User,
+    UserId, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -283,7 +285,7 @@ fn process_send_message_result(
                         .event
                         .achievements(false, thread_root_message_index.is_some())
                     {
-                        state.data.notify_user_of_achievement(sender, a);
+                        state.notify_user_of_achievement(sender, a, now);
                     }
                 }
 
@@ -297,9 +299,7 @@ fn process_send_message_result(
                         .is_some_and(|m| !m.user_type.is_bot());
 
                     if recipient_is_human {
-                        state
-                            .data
-                            .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
+                        state.notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto, now);
 
                         activity_events.push((c.recipient, MessageActivity::Crypto));
                     }
@@ -342,16 +342,20 @@ fn process_send_message_result(
                 for (user_id, activity) in activity_events {
                     state.data.user_event_sync_queue.push(
                         user_id,
-                        CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
-                            chat: Chat::Channel(community_id, channel_id),
-                            thread_root_message_index,
-                            message_index,
-                            message_id,
-                            event_index,
-                            activity,
-                            timestamp: now,
-                            user_id: Some(sender),
-                        }),
+                        IdempotentMessage {
+                            created_at: now,
+                            idempotency_id: state.env.rng().next_u64(),
+                            value: CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                                chat: Chat::Channel(community_id, channel_id),
+                                thread_root_message_index,
+                                message_index,
+                                message_id,
+                                event_index,
+                                activity,
+                                timestamp: now,
+                                user_id: Some(sender),
+                            }),
+                        },
                     );
                 }
             }

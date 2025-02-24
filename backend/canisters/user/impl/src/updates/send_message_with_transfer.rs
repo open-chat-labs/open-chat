@@ -494,5 +494,5 @@ fn award_achievements(
         achievements.push(Achievement::RepliedInThread);
     }
 
-    state.data.award_achievements_and_notify(achievements, state.env.now());
+    state.award_achievements_and_notify(achievements, state.env.now());
 }
