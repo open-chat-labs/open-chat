@@ -59,7 +59,6 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
 
     mutate_state(|state| {
         let chat = args_wrapper.chat();
-        let requested_permissions = access_type_args.requested_permissions();
 
         match &args_wrapper {
             ArgsInternal::BotActionByCommand(args) => {
@@ -76,7 +75,7 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                     bot: args.bot_id,
                     scope: args.scope.clone(),
                     bot_api_gateway: state.env.canister_id(),
-                    granted_permissions: requested_permissions.unwrap(),
+                    granted_permissions: access_type_args.requested_permissions().unwrap().into(),
                     command: BotCommand {
                         name: args.command.name.clone(),
                         args: command_args,
@@ -90,7 +89,7 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                     bot: args.bot_id,
                     scope: args.scope.clone(),
                     bot_api_gateway: state.env.canister_id(),
-                    granted_permissions: requested_permissions.unwrap(),
+                    granted_permissions: access_type_args.requested_permissions().unwrap().into(),
                 };
                 return build_token(token_type_name, custom_claims, state);
             }

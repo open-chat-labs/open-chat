@@ -372,6 +372,12 @@ pub struct EncodedBotPermissions {
     message: Option<u32>,
 }
 
+impl From<BotPermissions> for EncodedBotPermissions {
+    fn from(permissions: BotPermissions) -> Self {
+        EncodedBotPermissions::from(&permissions)
+    }
+}
+
 impl From<&BotPermissions> for EncodedBotPermissions {
     fn from(permissions: &BotPermissions) -> Self {
         fn encode<T: Into<u8> + Copy>(field: &HashSet<T>) -> Option<u32> {
@@ -392,6 +398,12 @@ impl From<&BotPermissions> for EncodedBotPermissions {
 
 impl From<EncodedBotPermissions> for BotPermissions {
     fn from(permissions: EncodedBotPermissions) -> Self {
+        BotPermissions::from(&permissions)
+    }
+}
+
+impl From<&EncodedBotPermissions> for BotPermissions {
+    fn from(permissions: &EncodedBotPermissions) -> Self {
         fn decode<T: TryFrom<u8> + Copy + Eq + Hash>(field: Option<u32>) -> HashSet<T> {
             field
                 .map(decode_from_bitflags)
