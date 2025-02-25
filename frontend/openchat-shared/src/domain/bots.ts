@@ -251,6 +251,7 @@ export function emptyBotInstance(ownerId: string): ExternalBot {
             description: "",
             commands: [],
         },
+        registrationStatus: { kind: "private" },
     };
 }
 
@@ -267,7 +268,14 @@ export type ExternalBot = BotCommon & {
     id: string;
     ownerId: string;
     endpoint: string;
+    registrationStatus: BotRegistrationStatus;
 };
+
+export type BotRegistrationStatus = BotPublic | BotPrivate;
+
+export type BotPublic = { kind: "public" };
+
+export type BotPrivate = { kind: "private"; location?: BotInstallationLocation };
 
 export type InternalBot = BotCommon & {
     kind: "internal_bot";

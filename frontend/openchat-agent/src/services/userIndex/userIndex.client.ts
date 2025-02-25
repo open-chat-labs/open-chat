@@ -51,6 +51,7 @@ import {
     exploreBotsResponse,
     botUpdatesResponse,
     apiBotDefinition,
+    apiBotInstallLocation,
 } from "./mappers";
 import {
     getCachedUsers,
@@ -640,6 +641,8 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
+        const location =
+            bot.registrationStatus.kind === "private" ? bot.registrationStatus.location : undefined;
         return this.executeMsgpackUpdate(
             "register_bot",
             {
@@ -649,6 +652,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
                 avatar: mapOptional(bot.avatarUrl, identity),
                 endpoint: bot.endpoint,
                 definition: apiBotDefinition(bot.definition),
+                permitted_install_location: mapOptional(location, apiBotInstallLocation),
             },
             (resp) => {
                 console.log("UserIndex register bot response: ", resp);

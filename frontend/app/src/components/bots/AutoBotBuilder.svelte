@@ -217,7 +217,10 @@
             on:imageSelected={botAvatarSelected} />
     </div>
 
-    <InstallationLocationSelector />
+    {#if candidate.registrationStatus.kind === "private"}
+        <InstallationLocationSelector
+            bind:location={candidate.registrationStatus.installLocation} />
+    {/if}
 
     <Legend
         required={mode === "register"}

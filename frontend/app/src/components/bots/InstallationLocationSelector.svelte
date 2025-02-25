@@ -3,6 +3,7 @@
         AvatarSize,
         i18nKey,
         OpenChat,
+        type BotInstallationLocation,
         type CommunityMatch,
         type GroupMatch,
     } from "openchat-client";
@@ -25,11 +26,17 @@
         entity: CommunityMatch | GroupMatch;
     };
 
+    interface Props {
+        location?: BotInstallationLocation;
+    }
+
+    let { location = $bindable() }: Props = $props();
     let searching: boolean = $state(false);
     let searchTerm: string = $state("");
     let placeholder = i18nKey("Search for a community, group or user");
     let results: Match[] = $state([]);
     let selected: Match | undefined = $state(undefined);
+    location; // usual hack
 
     async function onPerformSearch(term: string) {
         if (term === "") {
@@ -82,6 +89,16 @@
     function select(match: Match | undefined) {
         selected = match;
         results = [];
+        if (match !== undefined) {
+            switch (match.entity.kind) {
+                case "community_match":
+                    location = { kind: "community", communityId: match.id };
+                    break;
+                case "group_match":
+                    location = { kind: "group_chat", groupId: match.id };
+                    break;
+            }
+        }
     }
 
     function reset(clearSelected: boolean) {
