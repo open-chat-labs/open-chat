@@ -305,7 +305,7 @@
 {#if selectedTab === "users"}
     <div class="search">
         <Search
-            on:searchEntered={onSearchEntered}
+            onPerformSearch={onSearchEntered}
             searching={false}
             bind:searchTerm={searchTermEntered}
             placeholder={i18nKey("search")} />

@@ -60,7 +60,7 @@
 
 <Search
     {fill}
-    on:searchEntered={() => onSearchEntered(true)}
+    onPerformSearch={() => onSearchEntered(true)}
     searching={false}
     bind:searchTerm={botSearchState.term}
     placeholder={i18nKey("search")} />
