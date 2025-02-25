@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotActionScope, BotCommandArg, Chat, UserId, VideoCallType};
+use types::{BotActionScope, BotCommandArg, BotCommandMeta, Chat, UserId, VideoCallType};
 
 #[ts_export(local_user_index, access_token_v2)]
 #[allow(clippy::large_enum_variant)]
@@ -47,6 +47,7 @@ pub struct BotActionByCommandArgs {
     pub bot_id: UserId,
     pub command: BotCommandInitial,
     pub scope: BotActionScope,
+    pub meta: Option<BotCommandMeta>,
 }
 
 #[ts_export]

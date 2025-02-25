@@ -87,6 +87,7 @@ fn e2e_command_bot_test() {
             thread: None,
             message_id,
         }),
+        meta: None,
     });
 
     let response = client::local_user_index::access_token_v2(
@@ -409,6 +410,7 @@ fn send_api_key_test() {
             thread: None,
             message_id: random_from_u128(),
         }),
+        meta: None,
     });
 
     let access_token = match client::local_user_index::access_token_v2(
@@ -599,6 +601,7 @@ fn send_multiple_updates_to_same_message() {
             thread: None,
             message_id,
         }),
+        meta: None,
     });
     let access_token = match client::local_user_index::access_token_v2(
         env,
