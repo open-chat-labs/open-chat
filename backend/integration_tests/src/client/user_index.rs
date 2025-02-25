@@ -298,7 +298,7 @@ pub mod happy_path {
                 avatar: None,
                 endpoint,
                 definition,
-                initial_install_location: None,
+                permitted_install_location: None,
             },
         );
 

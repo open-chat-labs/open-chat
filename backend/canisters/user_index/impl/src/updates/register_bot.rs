@@ -75,7 +75,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             last_updated: now,
             avatar,
             installations: HashMap::new(),
-            registration_status: BotRegistrationStatus::Private(args.initial_install_location),
+            registration_status: BotRegistrationStatus::Private(args.permitted_install_location),
         }),
     );
 
@@ -87,7 +87,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             name: args.name.clone(),
             commands: args.definition.commands.clone(),
             autonomous_config: args.definition.autonomous_config.clone(),
-            initial_install_location: args.initial_install_location,
+            permitted_install_location: args.permitted_install_location,
         }),
         None,
     );

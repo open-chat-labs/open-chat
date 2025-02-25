@@ -12,7 +12,7 @@ pub struct Args {
     pub avatar: Option<String>, // Image as a data URL
     pub endpoint: String,
     pub definition: BotDefinition,
-    pub initial_install_location: Option<BotInstallationLocation>,
+    pub permitted_install_location: Option<BotInstallationLocation>,
 }
 
 #[ts_export(user_index, register_bot)]

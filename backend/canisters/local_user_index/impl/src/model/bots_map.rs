@@ -42,7 +42,7 @@ impl BotsMap {
         name: String,
         commands: Vec<BotCommandDefinition>,
         autonomous_config: Option<AutonomousConfig>,
-        initial_install_location: Option<BotInstallationLocation>,
+        permitted_install_location: Option<BotInstallationLocation>,
     ) {
         self.bots.insert(
             bot_id,
@@ -53,7 +53,7 @@ impl BotsMap {
                 commands,
                 autonomous_config,
                 principal: user_principal,
-                registration_status: BotRegistrationStatus::Private(initial_install_location),
+                registration_status: BotRegistrationStatus::Private(permitted_install_location),
             },
         );
         self.principal_to_user_id.insert(user_principal, bot_id);

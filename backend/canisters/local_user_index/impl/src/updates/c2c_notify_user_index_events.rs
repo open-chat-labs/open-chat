@@ -85,7 +85,7 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                 ev.name,
                 ev.commands,
                 ev.autonomous_config,
-                ev.initial_install_location,
+                ev.permitted_install_location,
             );
         }
         UserIndexEvent::BotPublished(ev) => {

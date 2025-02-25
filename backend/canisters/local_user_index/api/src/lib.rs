@@ -94,7 +94,7 @@ pub struct BotRegistered {
     pub name: String,
     pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
-    pub initial_install_location: Option<BotInstallationLocation>,
+    pub permitted_install_location: Option<BotInstallationLocation>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
