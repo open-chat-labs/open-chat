@@ -372,7 +372,8 @@ export function createParamInstancesFromSchema(
             case "user":
                 return { kind: "user", name: p.name };
             case "boolean":
-                return { kind: "boolean", name: p.name, value: false };
+                const value = (maybeParams[i] ?? "false").toLocaleLowerCase() === "true";
+                return { kind: "boolean", name: p.name, value };
             case "integer": {
                 let value: bigint | null = parseBigInt(maybeParams[i]) ?? null;
                 if (p.choices.length > 0) {
