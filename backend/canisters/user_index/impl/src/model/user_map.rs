@@ -589,7 +589,7 @@ impl UserMap {
                     || match bot.registration_status {
                         BotRegistrationStatus::Public => true,
                         BotRegistrationStatus::Private(location) => {
-                            location == installation_location || caller.map(|c| c == bot.owner).unwrap_or_default()
+                            location == installation_location || caller.is_some_and(|c| c == bot.owner)
                         }
                     }
             })
