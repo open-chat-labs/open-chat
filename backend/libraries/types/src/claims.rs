@@ -1,7 +1,4 @@
-use crate::{
-    AccessTokenScope, BotActionScope, BotCommand, BotCommandMeta, CanisterId, Chat, EncodedBotPermissions, UserId,
-    VideoCallType,
-};
+use crate::{AccessTokenScope, BotActionScope, BotCommand, CanisterId, Chat, EncodedBotPermissions, UserId, VideoCallType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -25,7 +22,6 @@ pub struct BotActionByCommandClaims {
     pub scope: BotActionScope,
     pub granted_permissions: EncodedBotPermissions,
     pub command: BotCommand,
-    pub meta: Option<BotCommandMeta>,
 }
 
 #[derive(Serialize, Deserialize)]

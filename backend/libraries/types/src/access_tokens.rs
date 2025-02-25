@@ -143,10 +143,3 @@ impl AccessTokenScope {
         }
     }
 }
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct BotCommandMeta {
-    pub timezone: String, // IANA timezone e.g. "Europe/London"
-    pub language: String, // The language selected in OpenChat e.g. "en"
-}

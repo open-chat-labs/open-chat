@@ -81,13 +81,13 @@ fn e2e_command_bot_test() {
         command: BotCommandInitial {
             name: command_name.clone(),
             args: Vec::new(),
+            meta: None,
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat,
             thread: None,
             message_id,
         }),
-        meta: None,
     });
 
     let response = client::local_user_index::access_token_v2(
@@ -404,13 +404,13 @@ fn send_api_key_test() {
         command: BotCommandInitial {
             name: "sync_api_key".to_string(),
             args: Vec::new(),
+            meta: None,
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat: Chat::Channel(community_id, channel_id),
             thread: None,
             message_id: random_from_u128(),
         }),
-        meta: None,
     });
 
     let access_token = match client::local_user_index::access_token_v2(
@@ -595,13 +595,13 @@ fn send_multiple_updates_to_same_message() {
         command: BotCommandInitial {
             name: command_name.clone(),
             args: Vec::new(),
+            meta: None,
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat,
             thread: None,
             message_id,
         }),
-        meta: None,
     });
     let access_token = match client::local_user_index::access_token_v2(
         env,

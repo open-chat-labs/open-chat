@@ -47,7 +47,6 @@ pub struct BotActionByCommandArgs {
     pub bot_id: UserId,
     pub command: BotCommandInitial,
     pub scope: BotActionScope,
-    pub meta: Option<BotCommandMeta>,
 }
 
 #[ts_export]
@@ -55,4 +54,5 @@ pub struct BotActionByCommandArgs {
 pub struct BotCommandInitial {
     pub name: String,
     pub args: Vec<BotCommandArg>,
+    pub meta: Option<BotCommandMeta>,
 }

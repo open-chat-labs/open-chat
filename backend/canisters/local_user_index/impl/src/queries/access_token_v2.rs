@@ -80,8 +80,8 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                         name: args.command.name.clone(),
                         args: command_args,
                         initiator: access_type_args.initiator().unwrap(),
+                        meta: args.command.meta.clone(),
                     },
-                    meta: args.meta.clone(),
                 };
                 return build_token(token_type_name, custom_claims, state);
             }
