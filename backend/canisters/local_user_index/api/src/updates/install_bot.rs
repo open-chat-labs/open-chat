@@ -17,6 +17,7 @@ pub enum Response {
     Frozen,
     NotAuthorized,
     AlreadyAdded,
+    NotFound,
     InternalError(String),
 }
 

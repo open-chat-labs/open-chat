@@ -428,3 +428,12 @@ impl From<&EncodedBotPermissions> for BotPermissions {
         }
     }
 }
+
+// TODO remove default after release - currently useful for migration
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub enum BotRegistrationState {
+    #[default]
+    Public,
+    Private(Option<BotInstallationLocation>),
+}

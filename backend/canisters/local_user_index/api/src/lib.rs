@@ -25,6 +25,7 @@ pub enum UserIndexEvent {
     StorageUpgraded(StorageUpgraded),
     UserRegistered(UserRegistered),
     BotRegistered(BotRegistered),
+    BotPublished(BotPublished),
     BotUpdated(BotUpdated),
     BotRemoved(BotRemoved),
     BotUninstall(BotUninstall),
@@ -87,16 +88,24 @@ pub struct UserRegistered {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BotRegistered {
-    pub user_id: UserId,
+    pub bot_id: UserId,
+    pub owner_id: UserId,
     pub user_principal: Principal,
     pub name: String,
     pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
+    pub initial_install_location: Option<BotInstallationLocation>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotPublished {
+    pub bot_id: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BotUpdated {
-    pub user_id: UserId,
+    pub bot_id: UserId,
+    pub owner_id: UserId,
     pub definition: BotDefinition,
 }
 

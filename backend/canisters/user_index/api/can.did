@@ -158,17 +158,13 @@ type DiamondMembershipFeesResponse = variant {
     };
 };
 
-type RegisterBotArgs = record {
-    "principal" : principal;
-    owner : UserId;
-    name : text;
-    avatar : opt text;
-    endpoint : text;
-    definition : BotDefinition;
+type PublishBotArgs = record {
+    bot_id : UserId;
 };
 
-type RegisterBotResponse = variant {
+type PublishBotResponse = variant {
     Success;
+    NotFound;
 };
 
 type UpdateBotArgs = record {
@@ -345,7 +341,7 @@ service : {
     users : (UsersArgs) -> (UsersResponse) query;
 
     // Only callable by SNS governance canister
-    register_bot : (RegisterBotArgs) -> (RegisterBotResponse);
+    publish_bot: (PublishBotArgs) -> (PublishBotResponse);
     register_external_achievement : (RegisterExternalAchievementArgs) -> (RegisterExternalAchievementResponse);
 
     // Only callable by whitelisted canisters

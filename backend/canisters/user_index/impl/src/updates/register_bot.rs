@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
-use crate::guards::caller_is_governance_principal;
 use crate::model::user_map::Bot;
 use crate::model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
-use canister_api_macros::{proposal, update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{ONE_GB, USER_LIMIT};
 use event_store_producer::EventBuilder;
@@ -13,6 +12,7 @@ use local_user_index_canister::{BotRegistered, UserIndexEvent};
 use rand::RngCore;
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
+use types::BotRegistrationState;
 use types::{UserId, UserType};
 use url::Url;
 use user_index_canister::register_bot::{Response::*, *};
@@ -26,13 +26,6 @@ fn register_bot(args: Args) -> Response {
         mutate_state(|state| register_bot_impl(args, state));
     }
 
-    Success
-}
-
-#[proposal(guard = "caller_is_governance_principal")]
-#[trace]
-fn register_bot(args: Args) -> Response {
-    mutate_state(|state| register_bot_impl(args, state));
     Success
 }
 
@@ -82,16 +75,19 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             last_updated: now,
             avatar,
             installations: HashMap::new(),
+            registration_state: BotRegistrationState::Private(args.initial_install_location),
         }),
     );
 
     state.push_event_to_all_local_user_indexes(
         UserIndexEvent::BotRegistered(BotRegistered {
-            user_id,
+            bot_id: user_id,
+            owner_id: args.owner,
             user_principal: args.principal,
             name: args.name.clone(),
             commands: args.definition.commands.clone(),
             autonomous_config: args.definition.autonomous_config.clone(),
+            initial_install_location: args.initial_install_location,
         }),
         None,
     );

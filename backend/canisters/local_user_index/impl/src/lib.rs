@@ -275,7 +275,7 @@ impl RuntimeState {
                 .bots
                 .iter()
                 .map(|b| BotMetrics {
-                    user_id: b.user_id,
+                    user_id: b.bot_id,
                     name: b.name.clone(),
                     commands: b.commands.iter().map(|c| c.name.clone()).collect(),
                 })

@@ -22,7 +22,7 @@ pub fn extract_access_context(auth_token: &AuthToken, state: &mut RuntimeState) 
     };
 
     let user = User {
-        user_id: bot.user_id,
+        user_id: bot.bot_id,
         username: bot.name.clone(),
     };
 
