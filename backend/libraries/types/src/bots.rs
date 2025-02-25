@@ -41,7 +41,7 @@ pub struct AutonomousConfig {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct BotEventsDefinition {
     pub types: Vec<BotEventType>,
-    pub can_subscribe: bool,
+    pub notify: bool,
 }
 
 #[ts_export]
