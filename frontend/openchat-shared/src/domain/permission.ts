@@ -179,6 +179,12 @@ export type BotCommand = {
     initiator: string;
     commandName: string;
     arguments: SlashCommandParamInstance[];
+    meta?: BotCommandMeta;
+};
+
+export type BotCommandMeta = {
+    timezone: string;
+    language: string;
 };
 
 export type BotActionChatScope = {
