@@ -1,7 +1,7 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{AutonomousConfig, BotCommandDefinition, BotDefinition, UserId};
+use types::{AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, BotRegistrationStatus, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct BotsMap {
@@ -11,11 +11,15 @@ pub struct BotsMap {
 
 #[derive(Serialize, Deserialize)]
 pub struct Bot {
-    pub user_id: UserId,
+    #[serde(alias = "user_id")]
+    pub bot_id: UserId,
+    pub owner_id: UserId,
     pub name: String,
     pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
     pub principal: Principal,
+    #[serde(default)]
+    pub registration_status: BotRegistrationStatus,
 }
 
 impl BotsMap {
@@ -29,36 +33,48 @@ impl BotsMap {
             .and_then(|user_id| self.bots.get(user_id))
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
         user_principal: Principal,
-        user_id: UserId,
+        bot_id: UserId,
+        owner_id: UserId,
         name: String,
         commands: Vec<BotCommandDefinition>,
         autonomous_config: Option<AutonomousConfig>,
+        permitted_install_location: Option<BotInstallationLocation>,
     ) {
         self.bots.insert(
-            user_id,
+            bot_id,
             Bot {
-                user_id,
+                bot_id,
+                owner_id,
                 name,
                 commands,
                 autonomous_config,
                 principal: user_principal,
+                registration_status: BotRegistrationStatus::Private(permitted_install_location),
             },
         );
-        self.principal_to_user_id.insert(user_principal, user_id);
+        self.principal_to_user_id.insert(user_principal, bot_id);
     }
 
-    pub fn update(&mut self, user_id: UserId, definition: BotDefinition) {
-        self.bots.entry(user_id).and_modify(|bot| {
+    pub fn publish(&mut self, bot_id: UserId) {
+        self.bots.entry(bot_id).and_modify(|bot| {
+            bot.registration_status = BotRegistrationStatus::Public;
+        });
+    }
+
+    pub fn update(&mut self, bot_id: UserId, owner_id: UserId, definition: BotDefinition) {
+        self.bots.entry(bot_id).and_modify(|bot| {
+            bot.owner_id = owner_id;
             bot.commands = definition.commands;
             bot.autonomous_config = definition.autonomous_config;
         });
     }
 
-    pub fn remove(&mut self, user_id: &UserId) -> Option<Bot> {
-        let bot = self.bots.remove(user_id)?;
+    pub fn remove(&mut self, bot_id: &UserId) -> Option<Bot> {
+        let bot = self.bots.remove(bot_id)?;
         self.principal_to_user_id.remove(&bot.principal);
         Some(bot)
     }

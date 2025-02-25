@@ -1404,6 +1404,12 @@ export const OptionUpdateGroupPermissionRole = Type.Union(
     { default: "NoChange" },
 );
 
+export type BotCommandMeta = Static<typeof BotCommandMeta>;
+export const BotCommandMeta = Type.Object({
+    timezone: Type.String(),
+    language: Type.String(),
+});
+
 export type Cryptocurrency = Static<typeof Cryptocurrency>;
 export const Cryptocurrency = Type.Union([
     Type.Literal("InternetComputer"),
@@ -2647,13 +2653,6 @@ export const UserIndexUsersArgs = Type.Object({
     users_suspended_since: Type.Optional(Type.BigInt()),
 });
 
-export type UserIndexExploreBotsArgs = Static<typeof UserIndexExploreBotsArgs>;
-export const UserIndexExploreBotsArgs = Type.Object({
-    search_term: Type.Optional(Type.String()),
-    page_index: Type.Number(),
-    page_size: Type.Number(),
-});
-
 export type UserIndexSubmitProofOfUniquePersonhoodResponse = Static<
     typeof UserIndexSubmitProofOfUniquePersonhoodResponse
 >;
@@ -2807,6 +2806,7 @@ export const LocalUserIndexInstallBotResponse = Type.Union([
     Type.Literal("Frozen"),
     Type.Literal("NotAuthorized"),
     Type.Literal("AlreadyAdded"),
+    Type.Literal("NotFound"),
     Type.Object({
         InternalError: Type.String(),
     }),
@@ -6493,6 +6493,14 @@ export const UserIndexSearchResponse = Type.Object({
     Success: UserIndexSearchResult,
 });
 
+export type UserIndexExploreBotsArgs = Static<typeof UserIndexExploreBotsArgs>;
+export const UserIndexExploreBotsArgs = Type.Object({
+    search_term: Type.Optional(Type.String()),
+    page_index: Type.Number(),
+    page_size: Type.Number(),
+    installation_location: Type.Optional(BotInstallationLocation),
+});
+
 export type UserIndexChitLeaderboardSuccessResult = Static<
     typeof UserIndexChitLeaderboardSuccessResult
 >;
@@ -7395,6 +7403,15 @@ export const CompletedCryptoTransactionICRC2 = Type.Object({
     block_index: Type.BigInt(),
 });
 
+export type BotRegistrationStatus = Static<typeof BotRegistrationStatus>;
+export const BotRegistrationStatus = Type.Union([
+    Type.Literal("Public"),
+    Type.Object({}),
+    Type.Object({
+        Private: Type.Union([BotInstallationLocation, Type.Null()]),
+    }),
+]);
+
 export type EventWrapperGroupUnfrozen = Static<typeof EventWrapperGroupUnfrozen>;
 export const EventWrapperGroupUnfrozen = Type.Object({
     index: EventIndex,
@@ -7522,6 +7539,7 @@ export const BotCommand = Type.Object({
     name: Type.String(),
     args: Type.Array(BotCommandArg),
     initiator: UserId,
+    meta: Type.Optional(BotCommandMeta),
 });
 
 export type Proposal = Static<typeof Proposal>;
@@ -8199,6 +8217,7 @@ export type BotCommandInitial = Static<typeof BotCommandInitial>;
 export const BotCommandInitial = Type.Object({
     name: Type.String(),
     args: Type.Array(BotCommandArg),
+    meta: Type.Optional(BotCommandMeta),
 });
 
 export type BotCommandDefinition = Static<typeof BotCommandDefinition>;
@@ -8329,8 +8348,8 @@ export const BotDefinition = Type.Object({
     autonomous_config: Type.Optional(AutonomousConfig),
 });
 
-export type UserIndexBotUpdatesBotSchema = Static<typeof UserIndexBotUpdatesBotSchema>;
-export const UserIndexBotUpdatesBotSchema = Type.Object({
+export type UserIndexBotUpdatesBotDetails = Static<typeof UserIndexBotUpdatesBotDetails>;
+export const UserIndexBotUpdatesBotDetails = Type.Object({
     id: UserId,
     owner: UserId,
     name: Type.String(),
@@ -8340,6 +8359,7 @@ export const UserIndexBotUpdatesBotSchema = Type.Object({
     commands: Type.Array(BotCommandDefinition),
     autonomous_config: Type.Optional(AutonomousConfig),
     last_updated: Type.BigInt(),
+    registration_status: BotRegistrationStatus,
 });
 
 export type UserIndexUsersResult = Static<typeof UserIndexUsersResult>;
@@ -8393,6 +8413,7 @@ export const UserIndexRegisterBotArgs = Type.Object({
     avatar: Type.Optional(Type.String()),
     endpoint: Type.String(),
     definition: BotDefinition,
+    permitted_install_location: Type.Optional(BotInstallationLocation),
 });
 
 export type LocalUserIndexChatEventsArgs = Static<typeof LocalUserIndexChatEventsArgs>;
@@ -8738,7 +8759,7 @@ export const GroupIndexExploreGroupsResponse = Type.Union([
 
 export type UserIndexBotUpdatesSuccessResult = Static<typeof UserIndexBotUpdatesSuccessResult>;
 export const UserIndexBotUpdatesSuccessResult = Type.Object({
-    added_or_updated: Type.Array(UserIndexBotUpdatesBotSchema),
+    added_or_updated: Type.Array(UserIndexBotUpdatesBotDetails),
     removed: Type.Array(UserId),
     timestamp: Type.BigInt(),
 });

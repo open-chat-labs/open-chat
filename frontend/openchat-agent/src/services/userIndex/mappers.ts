@@ -79,7 +79,7 @@ import type {
     BotCommandParamType as ApiSlashCommandParamType,
     BotDefinition as ApiBotDefinition,
     UserIndexBotUpdatesResponse,
-    UserIndexBotUpdatesBotSchema,
+    UserIndexBotUpdatesBotDetails,
     AutonomousConfig,
 } from "../../typebox";
 import { toRecord } from "../../utils/list";
@@ -114,7 +114,7 @@ export function botUpdatesResponse(
 }
 
 export function botSchema(
-    bot: UserIndexBotUpdatesBotSchema,
+    bot: UserIndexBotUpdatesBotDetails,
     blobUrlPattern: string,
     canisterId: string,
 ): ExternalBot {
