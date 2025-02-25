@@ -684,6 +684,8 @@
     "enterInviteCode": "招待コードを入力してください",
     "enterMessage": "メッセージを入力してください...",
     "enterToSend": "Enterキーでメッセージを送信する",
+    "ephemeral": "あなただけに見える",
+    "ephemeralInfo": "このメッセージはあなただけが見ることができます。このメッセージを操作することはできず、次にアプリを更新すると消えます。",
     "errorBlurb": "申し訳ありません。予期せぬエラーが発生しました。OpenChatを再読み込みしてください",
     "errorEditingMessage": "メッセージの編集で予期せぬエラーが発生しました",
     "errorLoadingChats": "チャットを読み込むことができません",

@@ -23,6 +23,7 @@
         currentChatMembersMap as chatMembersMap,
         currentChatBlockedUsers,
         type BotMessageContext as BotMessageContextType,
+        ephemeralMessages,
     } from "openchat-client";
     import { isTouchOnlyDevice } from "../../utils/devices";
     import EmojiPicker from "./EmojiPicker.svelte";
@@ -68,6 +69,7 @@
     import BotMessageContext from "../bots/BotMessageContext.svelte";
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
     import { quickReactions } from "../../stores/quickReactions";
+    import EphemeralNote from "./EphemeralNote.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -152,7 +154,7 @@
     $: canEdit =
         me && supportsEdit && !msg.deleted && client.contentTypeSupportsEdit(msg.content.kind);
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
-    $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly;
+    $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral;
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
     $: messageContext = { chatId, threadRootMessageIndex };
@@ -167,6 +169,7 @@
         Number(msg.content.timestamp) < $now - 5 * 60 * 1000;
     $: canRevealDeleted = deletedByMe && !undeleting && !permanentlyDeleted;
     $: edited = msg.edited && !botContext?.finalised;
+    $: ephemeral = $ephemeralMessages.get(messageContext)?.has(msg.messageId) ?? false;
 
     onMount(() => {
         if (!readByMe) {
@@ -657,6 +660,7 @@
                             <pre>readonly: {readonly}</pre>
                             <pre>showChatMenu: {showChatMenu}</pre>
                             <pre>intersecting: {intersecting}</pre>
+                            <pre>ephemeral: {ephemeral}</pre>
                         {/if}
                     </div>
 
@@ -707,6 +711,10 @@
                             on:reportMessage={reportMessage}
                             on:cancelReminder={cancelReminder}
                             on:remindMe={remindMe} />
+                    {/if}
+
+                    {#if ephemeral}
+                        <EphemeralNote />
                     {/if}
                 </div>
 

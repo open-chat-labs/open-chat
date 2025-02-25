@@ -684,6 +684,8 @@
     "enterInviteCode": "输入邀请码",
     "enterMessage": "输入消息...",
     "enterToSend": "回车键发送",
+    "ephemeral": "仅您可见",
+    "ephemeralInfo": "只有您能看到此消息。您无法与其交互，并且它将在您下次刷新应用时消失",
     "errorBlurb": "抱歉, 我们遇到了些问题。请稍后重新打开OpenChat。",
     "errorEditingMessage": "未知错误，编辑消息失败",
     "errorLoadingChats": "无法加载您的聊天",

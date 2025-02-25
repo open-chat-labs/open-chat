@@ -684,6 +684,8 @@
     "enterInviteCode": "Entrez votre code d'invitation",
     "enterMessage": "Entrez un message...",
     "enterToSend": "La touche Entrée envoie un message",
+    "ephemeral": "visible uniquement par vous",
+    "ephemeralInfo": "Vous seul pouvez voir ce message. Vous ne pouvez pas interagir avec lui et il disparaîtra la prochaine fois que vous actualiserez l'application.",
     "errorBlurb": "Désolé, nous avons rencontré une erreur inattendue. Veuillez essayer de recharger OpenChat.",
     "errorEditingMessage": "Une erreur inattendue s'est produite lors de la modification de votre message",
     "errorLoadingChats": "Impossible de charger vos chats",

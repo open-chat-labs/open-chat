@@ -684,6 +684,8 @@
     "enterInviteCode": "Enter your invite code",
     "enterMessage": "Enter a message...",
     "enterToSend": "Enter key sends message",
+    "ephemeral": "only visible to you",
+    "ephemeralInfo": "Only you can see this message. You cannot interact with it and it will disappear the next time you refresh the app",
     "errorBlurb": "Sorry, we encountered an unexpected error. Please try reloading OpenChat.",
     "errorEditingMessage": "An unexpected error occurred editing your message",
     "errorLoadingChats": "Unable to load your chats",

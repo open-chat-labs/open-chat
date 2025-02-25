@@ -642,6 +642,7 @@ export type BotResponseMessage = {
     messageContent: MessageContent;
     finalised: boolean;
     blockLevelMarkdown: boolean;
+    ephemeral: boolean;
 };
 
 export type BotClientConfigData = {
