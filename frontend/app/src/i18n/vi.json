@@ -684,6 +684,8 @@
     "enterInviteCode": "Nhập mã để tham gia",
     "enterMessage": "Nhập tin nhắn...",
     "enterToSend": "Nhấn Enter để gửi",
+    "ephemeral": "chỉ bạn mới thấy được",
+    "ephemeralInfo": "Chỉ bạn mới có thể thấy thông báo này. Bạn không thể tương tác với nó và nó sẽ biến mất vào lần tiếp theo bạn làm mới ứng dụng",
     "errorBlurb": "Chúng tôi đang khắc phục sự cố, xin các bạn thông cảm. Hãy thử tải lại OpenChat.",
     "errorEditingMessage": "Đã xảy ra sự cố khi chỉnh sửa tin nhắn của bạn. Xin vui lòng thông cảm",
     "errorLoadingChats": "Không thể tải thông tin cuộc trò chuyện",

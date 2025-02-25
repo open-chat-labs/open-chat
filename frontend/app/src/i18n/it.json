@@ -684,6 +684,8 @@
     "enterInviteCode": "Inserisci il tuo codice di invito",
     "enterMessage": "Inserisci un messaggio...",
     "enterToSend": "Il tasto Invio invia il messaggio",
+    "ephemeral": "visibile solo a te",
+    "ephemeralInfo": "Solo tu puoi vedere questo messaggio. Non puoi interagire con esso e scomparirà la prossima volta che aggiornerai l'app",
     "errorBlurb": "Spiacenti, si è verificato un errore imprevisto. Prova a ricaricare OpenChat.",
     "errorEditingMessage": "Si è verificato un errore imprevisto durante la modifica del messaggio",
     "errorLoadingChats": "Impossibile caricare le tue chat",

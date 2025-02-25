@@ -246,7 +246,7 @@
     }
 
     function onSearchChat(term: string) {
-        showChatHeader = true;
+        showSearchHeader = true;
         searchTerm = term;
     }
 
