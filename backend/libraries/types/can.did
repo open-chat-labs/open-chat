@@ -2217,6 +2217,7 @@ type BotCommand = record {
     name : text;
     args : vec BotCommandArg;
     initiator : UserId;
+    meta : opt BotCommandMeta;
 };
 
 type BotCommandArg = record {
@@ -2230,4 +2231,9 @@ type BotCommandArgValue = variant {
     Decimal : float64;
     Boolean : bool;
     User : UserId;
+};
+
+type BotCommandMeta = record {
+    timezone : text;
+    language : text;
 };
