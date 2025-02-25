@@ -47,7 +47,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<UserId, Response> {
     match bot.registration_status {
         BotRegistrationStatus::Public => (),
         BotRegistrationStatus::Private(location) => {
-            if !location.map(|loc| loc == args.location).unwrap_or_default() && bot.owner_id != user.user_id {
+let is_authorized = location.is_some_and(|loc| loc == args.location) || bot.owner_id == user.user_id;
+if !is_authorized {
                 return Err(Response::NotAuthorized);
             }
         }
