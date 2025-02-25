@@ -11,7 +11,7 @@ use types::Chat;
 async fn bot_chat_events(args_wrapper: Args) -> Response {
     let Some(bot_user_id) = read_state(|state| {
         let caller = state.env.caller();
-        state.data.bots.get_by_caller(&caller).map(|b| b.user_id)
+        state.data.bots.get_by_caller(&caller).map(|b| b.bot_id)
     }) else {
         return FailedAuthentication("Caller is not a registered bot".to_string());
     };
