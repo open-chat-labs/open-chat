@@ -251,6 +251,14 @@ pub struct BotCommand {
     pub name: String,
     pub args: Vec<BotCommandArg>,
     pub initiator: UserId,
+    pub meta: Option<BotCommandMeta>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct BotCommandMeta {
+    pub timezone: String, // IANA timezone e.g. "Europe/London"
+    pub language: String, // The language selected in OpenChat e.g. "en"
 }
 
 #[ts_export]
