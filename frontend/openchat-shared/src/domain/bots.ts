@@ -18,6 +18,7 @@ import type { CommunityIdentifier } from "./community";
 import type { BotMatch } from "./search/search";
 
 export const MIN_NAME_LENGTH = 3;
+export const MIN_PARAM_NAME_LENGTH = 1;
 
 export type InstalledBotDetails = {
     id: string;
@@ -447,10 +448,10 @@ export function i18nKey(key: string, params?: InterpolationValues): ResourceKey 
 }
 
 // This is used for all names: bot, command, param
-export function validBotComponentName(name: string): ResourceKey[] {
+export function validBotComponentName(name: string, min: number): ResourceKey[] {
     const errors = [];
-    if (name.length < MIN_NAME_LENGTH) {
-        errors.push(i18nKey("bots.builder.errors.minLength", { n: MIN_NAME_LENGTH }));
+    if (name.length < min) {
+        errors.push(i18nKey("bots.builder.errors.minLength", { n: min }));
     }
     const regex = /^[a-zA-Z0-9_]+$/;
     if (!regex.test(name)) {
@@ -480,7 +481,7 @@ export function validateBot(
     mode: "register" | "update",
 ): ValidationErrors {
     const errors = new ValidationErrors();
-    errors.addErrors(`bot_name`, validBotComponentName(bot.name));
+    errors.addErrors(`bot_name`, validBotComponentName(bot.name, MIN_NAME_LENGTH));
 
     if (bot.ownerId === "") {
         errors.addErrors("bot_owner", i18nKey("bots.builder.errors.owner"));
@@ -516,7 +517,7 @@ function validateCommand(
     errors: ValidationErrors,
 ): boolean {
     let valid = true;
-    const nameErrors = validBotComponentName(command.name);
+    const nameErrors = validBotComponentName(command.name, MIN_NAME_LENGTH);
     if (nameErrors.length > 0) {
         errors.addErrors(`${errorPath}_name`, nameErrors);
         valid = false;
@@ -553,24 +554,24 @@ function validateParameter(
     errors: ValidationErrors,
 ): boolean {
     let valid = true;
-    const nameErrors = validBotComponentName(param.name);
+    const nameErrors = validBotComponentName(param.name, MIN_PARAM_NAME_LENGTH);
     if (nameErrors.length > 0) {
         errors.addErrors(`${errorPath}_name`, nameErrors);
         valid = false;
     }
     if (param.kind === "string") {
         param.choices.forEach((c, i) => {
-            if (c.name.length < MIN_NAME_LENGTH) {
+            if (c.name.length < MIN_PARAM_NAME_LENGTH) {
                 errors.addErrors(
                     `${errorPath}_choices_${i}_name`,
-                    i18nKey("bots.builder.errors.minLength", { n: 3 }),
+                    i18nKey("bots.builder.errors.minLength", { n: MIN_PARAM_NAME_LENGTH }),
                 );
                 valid = false;
             }
-            if (c.value.length < MIN_NAME_LENGTH) {
+            if (c.value.length < MIN_PARAM_NAME_LENGTH) {
                 errors.addErrors(
                     `${errorPath}_choices_${i}_value`,
-                    i18nKey("bots.builder.errors.minLength", { n: 3 }),
+                    i18nKey("bots.builder.errors.minLength", { n: MIN_PARAM_NAME_LENGTH }),
                 );
                 valid = false;
             }
@@ -578,10 +579,10 @@ function validateParameter(
     }
     if (param.kind === "integer") {
         param.choices.forEach((c, i) => {
-            if (c.name.length < MIN_NAME_LENGTH) {
+            if (c.name.length < MIN_PARAM_NAME_LENGTH) {
                 errors.addErrors(
                     `${errorPath}_choices_${i}_name`,
-                    i18nKey("bots.builder.errors.minLength", { n: 3 }),
+                    i18nKey("bots.builder.errors.minLength", { n: MIN_PARAM_NAME_LENGTH }),
                 );
                 valid = false;
             }
@@ -592,7 +593,7 @@ function validateParameter(
             if (c.name.length < MIN_NAME_LENGTH) {
                 errors.addErrors(
                     `${errorPath}_choices_${i}_name`,
-                    i18nKey("bots.builder.errors.minLength", { n: 3 }),
+                    i18nKey("bots.builder.errors.minLength", { n: MIN_PARAM_NAME_LENGTH }),
                 );
                 valid = false;
             }
