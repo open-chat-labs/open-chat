@@ -81,6 +81,7 @@ fn e2e_command_bot_test() {
         command: BotCommandInitial {
             name: command_name.clone(),
             args: Vec::new(),
+            meta: None,
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat,
@@ -403,6 +404,7 @@ fn send_api_key_test() {
         command: BotCommandInitial {
             name: "sync_api_key".to_string(),
             args: Vec::new(),
+            meta: None,
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat: Chat::Channel(community_id, channel_id),
@@ -593,6 +595,7 @@ fn send_multiple_updates_to_same_message() {
         command: BotCommandInitial {
             name: command_name.clone(),
             args: Vec::new(),
+            meta: None,
         },
         scope: BotActionScope::Chat(BotActionChatDetails {
             chat,
