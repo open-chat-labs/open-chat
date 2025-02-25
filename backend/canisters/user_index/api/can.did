@@ -103,6 +103,7 @@ type UsersResponse = variant {
 };
 
 type ExploreBotsArgs = record {
+    installation_location : opt BotInstallationLocation;
     search_term : opt text;
     page_index : nat32;
     page_size : nat8;
