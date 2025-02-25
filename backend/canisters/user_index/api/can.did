@@ -26,11 +26,17 @@ type BotUpdatesResponse = variant {
             commands : vec BotCommandDefinition;
             autonomous_config : opt AutonomousConfig;
             last_updated : TimestampMillis;
+            registration_status : BotRegistrationStatus;
         };
         removed : vec UserId;
         timestamp : TimestampMillis;
     };
     SuccessNoUpdates;
+};
+
+type BotRegistrationStatus = variant {
+    Private : opt BotInstallationLocation;
+    Public;
 };
 
 type CheckUsernameArgs = record {

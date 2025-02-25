@@ -5,7 +5,7 @@ use user_index_canister::explore_bots::{Response::*, *};
 const MIN_TERM_LENGTH: u8 = 2;
 const MAX_TERM_LENGTH: u8 = 20;
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn explore_bots(args: Args) -> Response {
     read_state(|state| explore_bots_impl(args, state))
 }

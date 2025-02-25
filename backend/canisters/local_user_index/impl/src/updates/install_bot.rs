@@ -3,7 +3,7 @@ use canister_api_macros::update;
 use canister_client::generate_c2c_call;
 use canister_tracing_macros::trace;
 use local_user_index_canister::install_bot::{Response::*, *};
-use types::{c2c_install_bot, BotRegistrationState, UserId};
+use types::{c2c_install_bot, BotRegistrationStatus, UserId};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -44,9 +44,9 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<UserId, Response> {
     let user = state.data.global_users.get(&caller).unwrap();
     let bot = state.data.bots.get(&args.bot_id).ok_or(Response::NotFound)?;
 
-    match bot.registration_state {
-        BotRegistrationState::Public => (),
-        BotRegistrationState::Private(location) => {
+    match bot.registration_status {
+        BotRegistrationStatus::Public => (),
+        BotRegistrationStatus::Private(location) => {
             if !location.map(|loc| loc == args.location).unwrap_or_default() && bot.owner_id != user.user_id {
                 return Err(Response::NotAuthorized);
             }

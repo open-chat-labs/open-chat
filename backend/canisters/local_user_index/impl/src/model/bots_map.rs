@@ -1,7 +1,7 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, BotRegistrationState, UserId};
+use types::{AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, BotRegistrationStatus, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct BotsMap {
@@ -19,7 +19,7 @@ pub struct Bot {
     pub autonomous_config: Option<AutonomousConfig>,
     pub principal: Principal,
     #[serde(default)]
-    pub registration_state: BotRegistrationState,
+    pub registration_status: BotRegistrationStatus,
 }
 
 impl BotsMap {
@@ -53,7 +53,7 @@ impl BotsMap {
                 commands,
                 autonomous_config,
                 principal: user_principal,
-                registration_state: BotRegistrationState::Private(initial_install_location),
+                registration_status: BotRegistrationStatus::Private(initial_install_location),
             },
         );
         self.principal_to_user_id.insert(user_principal, bot_id);
@@ -61,7 +61,7 @@ impl BotsMap {
 
     pub fn publish(&mut self, bot_id: UserId) {
         self.bots.entry(bot_id).and_modify(|bot| {
-            bot.registration_state = BotRegistrationState::Public;
+            bot.registration_status = BotRegistrationStatus::Public;
         });
     }
 

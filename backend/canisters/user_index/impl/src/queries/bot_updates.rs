@@ -5,7 +5,7 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use user_index_canister::bot_updates::{Response::*, *};
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn bot_updates(args: Args) -> Response {
     read_state(|state| bot_updates_impl(args, state))
 }

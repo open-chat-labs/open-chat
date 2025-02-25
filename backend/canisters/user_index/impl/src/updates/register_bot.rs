@@ -12,7 +12,7 @@ use local_user_index_canister::{BotRegistered, UserIndexEvent};
 use rand::RngCore;
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
-use types::BotRegistrationState;
+use types::BotRegistrationStatus;
 use types::{UserId, UserType};
 use url::Url;
 use user_index_canister::register_bot::{Response::*, *};
@@ -75,7 +75,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             last_updated: now,
             avatar,
             installations: HashMap::new(),
-            registration_state: BotRegistrationState::Private(args.initial_install_location),
+            registration_status: BotRegistrationStatus::Private(args.initial_install_location),
         }),
     );
 

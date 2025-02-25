@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotInstallationLocation, BotMatch, BotRegistrationState, CanisterId, CyclesTopUp,
+    AutonomousConfig, BotCommandDefinition, BotInstallationLocation, BotMatch, BotRegistrationStatus, CanisterId, CyclesTopUp,
     Document, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
 };
 use user_index_canister::bot_updates::BotDetails;
@@ -53,7 +53,7 @@ pub struct Bot {
     pub last_updated: TimestampMillis,
     pub installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
     #[serde(default)]
-    pub registration_state: BotRegistrationState,
+    pub registration_status: BotRegistrationStatus,
 }
 
 impl Bot {
@@ -105,7 +105,7 @@ impl Bot {
             commands: self.commands.clone(),
             autonomous_config: self.autonomous_config.clone(),
             last_updated: self.last_updated,
-            registration_state: self.registration_state.clone(),
+            registration_status: self.registration_status.clone(),
         }
     }
 }
@@ -256,8 +256,8 @@ impl UserMap {
             return false;
         };
 
-        if !matches!(bot.registration_state, BotRegistrationState::Public) {
-            bot.registration_state = BotRegistrationState::Public;
+        if !matches!(bot.registration_status, BotRegistrationStatus::Public) {
+            bot.registration_status = BotRegistrationStatus::Public;
             self.bot_updates.insert((now, BotUpdate::Updated(bot_id)));
         }
 
@@ -586,9 +586,9 @@ impl UserMap {
             .iter()
             .filter(|(_, bot)| {
                 installation_location.is_none()
-                    || match bot.registration_state {
-                        BotRegistrationState::Public => true,
-                        BotRegistrationState::Private(location) => {
+                    || match bot.registration_status {
+                        BotRegistrationStatus::Public => true,
+                        BotRegistrationStatus::Private(location) => {
                             location == installation_location || caller.map(|c| c == bot.owner).unwrap_or_default()
                         }
                     }

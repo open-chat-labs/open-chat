@@ -2237,3 +2237,8 @@ type BotCommandMeta = record {
     timezone : text;
     language : text;
 };
+
+type BotInstallationLocation = variant {
+  Group : principal;
+  Community : principal;
+};
