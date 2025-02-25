@@ -1,6 +1,6 @@
 use crate::{
     AccessGate, AccessGateConfig, BotCommand, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper,
-    GroupPermissions, GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
+    EventsCaller, GroupPermissions, GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -44,10 +44,20 @@ pub enum ChatEvent {
 }
 
 #[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[repr(u8)]
+pub enum ChatEventType {
+    Message = 0,            // Messages + edits, reaction, tips, etc.
+    MembershipUpdated = 1,  // User added, blocked, invited, role changed, etc.
+    ChatDetailsUpdated = 2, // Name, description, rules, permissions changed, etc.
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct EventsResponse {
     #[ts(as = "Vec<crate::EventWrapperChatEvent>")]
     pub events: Vec<EventWrapper<ChatEvent>>,
+    pub unauthorized: Vec<EventIndex>,
     pub expired_event_ranges: Vec<(EventIndex, EventIndex)>,
     pub expired_message_ranges: Vec<(MessageIndex, MessageIndex)>,
     pub latest_event_index: EventIndex,
@@ -452,4 +462,56 @@ pub struct BotRemoved {
 pub struct BotUpdated {
     pub user_id: UserId,
     pub updated_by: UserId,
+}
+
+impl ChatEvent {
+    pub fn remove_unauthorized_events(caller: &EventsCaller, events: &mut Vec<EventWrapper<ChatEvent>>) -> Vec<EventIndex> {
+        let mut unauthorized = Vec::new();
+        if let EventsCaller::Bot(bot) = caller {
+            events.retain(|event| {
+                if event.event.event_type().is_some_and(|t| bot.event_types.contains(&t)) {
+                    true
+                } else {
+                    unauthorized.push(event.index);
+                    false
+                }
+            })
+        }
+        unauthorized
+    }
+
+    pub fn event_type(&self) -> Option<ChatEventType> {
+        match self {
+            ChatEvent::Message(_) => Some(ChatEventType::Message),
+            ChatEvent::GroupChatCreated(_)
+            | ChatEvent::DirectChatCreated(_)
+            | ChatEvent::GroupNameChanged(_)
+            | ChatEvent::GroupDescriptionChanged(_)
+            | ChatEvent::GroupRulesChanged(_)
+            | ChatEvent::AvatarChanged(_)
+            | ChatEvent::MessagePinned(_)
+            | ChatEvent::MessageUnpinned(_)
+            | ChatEvent::PermissionsChanged(_)
+            | ChatEvent::GroupVisibilityChanged(_)
+            | ChatEvent::GroupInviteCodeChanged(_)
+            | ChatEvent::ChatFrozen(_)
+            | ChatEvent::ChatUnfrozen(_)
+            | ChatEvent::EventsTimeToLiveUpdated(_)
+            | ChatEvent::GroupGateUpdated(_)
+            | ChatEvent::ExternalUrlUpdated(_) => Some(ChatEventType::ChatDetailsUpdated),
+            ChatEvent::ParticipantsAdded(_)
+            | ChatEvent::ParticipantsRemoved(_)
+            | ChatEvent::ParticipantJoined(_)
+            | ChatEvent::ParticipantLeft(_)
+            | ChatEvent::RoleChanged(_)
+            | ChatEvent::UsersBlocked(_)
+            | ChatEvent::UsersUnblocked(_)
+            | ChatEvent::UsersInvited(_)
+            | ChatEvent::MembersAddedToDefaultChannel(_)
+            | ChatEvent::BotAdded(_)
+            | ChatEvent::BotRemoved(_)
+            | ChatEvent::BotUpdated(_) => Some(ChatEventType::MembershipUpdated),
+            ChatEvent::Empty | ChatEvent::FailedToDeserialize => None,
+        }
+    }
 }

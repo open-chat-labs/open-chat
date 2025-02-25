@@ -37,10 +37,11 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotInitiator, BotPermissions,
-    BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
-    CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, GroupRole,
-    MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator,
+    BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics,
+    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
+    EventsCaller, FrozenGroupInfo, GroupRole, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped,
+    UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -727,9 +728,26 @@ impl Data {
         }
     }
 
-    pub fn get_member_for_events(&self, caller: Principal) -> Result<Option<CommunityMemberInternal>, EventsResponse> {
+    pub fn get_caller_for_events(&self, caller: Principal, channel_id: ChannelId) -> Result<EventsCaller, EventsResponse> {
         let hidden_for_non_members = !self.is_public.value || self.has_payment_gate();
         let member = self.members.get(caller);
+
+        if member.is_none() {
+            let bot_user_id = caller.into();
+            if let Some(bot) = self.bots.get(&bot_user_id) {
+                if let Some(event_visibility) = bot.event_visibility.as_ref() {
+                    return Ok(EventsCaller::Bot(BotEventsCaller {
+                        bot: bot_user_id,
+                        min_visible_event_index: event_visibility
+                            .min_visible_event_indexes
+                            .get(&Some(channel_id))
+                            .copied()
+                            .unwrap_or_default(),
+                        event_types: event_visibility.event_types.clone(),
+                    }));
+                }
+            }
+        }
 
         if hidden_for_non_members {
             if let Some(member) = &member {
@@ -743,7 +761,7 @@ impl Data {
             }
         }
 
-        Ok(member)
+        Ok(member.map_or(EventsCaller::Unknown, |m| EventsCaller::User(m.user_id)))
     }
 
     pub fn notify_user_of_achievement(&mut self, user_id: UserId, achievement: Achievement) {

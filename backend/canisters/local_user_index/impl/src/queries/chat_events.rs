@@ -13,7 +13,7 @@ async fn chat_events(args: Args) -> Response {
     let futures: Vec<_> = args
         .requests
         .into_iter()
-        .map(|r| make_c2c_call(r, user.principal, user.user_id))
+        .map(|r| make_c2c_call_to_get_events(r, user.principal, user.user_id))
         .collect();
 
     let responses = futures::future::join_all(futures).await;
@@ -24,7 +24,11 @@ async fn chat_events(args: Args) -> Response {
     })
 }
 
-async fn make_c2c_call(events_args: EventsArgs, principal: Principal, user_id: UserId) -> EventsResponse {
+pub(crate) async fn make_c2c_call_to_get_events(
+    events_args: EventsArgs,
+    principal: Principal,
+    user_id: UserId,
+) -> EventsResponse {
     match events_args.context {
         EventsContext::Direct(them) => match events_args.args {
             EventsArgsInner::Page(args) => map_response(

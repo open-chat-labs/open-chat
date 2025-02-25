@@ -14,15 +14,15 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
-    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, CustomPermission,
-    Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult,
-    FieldTooShortResult, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext,
-    GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, MemberLeft, MembersRemoved, Message,
-    MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
-    MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
-    PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
-    MAX_RETURNED_MENTIONS,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, ChatEvent,
+    CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse,
+    ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupMember, GroupNameChanged,
+    GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
+    MemberLeft, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions,
+    MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions,
+    OptionalMessagePermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates,
+    ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version,
+    Versioned, VersionedRules, VideoCall, MAX_RETURNED_MENTIONS,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -352,7 +352,7 @@ impl GroupChatCore {
 
     pub fn events(
         &self,
-        user_id: Option<UserId>,
+        caller: EventsCaller,
         thread_root_message_index: Option<MessageIndex>,
         start_index: EventIndex,
         ascending: bool,
@@ -361,9 +361,10 @@ impl GroupChatCore {
     ) -> EventsResult {
         use EventsResult::*;
 
-        match self.events_reader(user_id, thread_root_message_index) {
+        match self.events_reader(&caller, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
-                let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.scan(
+                let user_id = caller.user_id();
+                let (mut events, expired_event_ranges) = EventOrExpiredRange::split(reader.scan(
                     Some(start_index.into()),
                     ascending,
                     max_messages as usize,
@@ -373,9 +374,11 @@ impl GroupChatCore {
                 let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
                 let latest_event_index = reader.latest_event_index().unwrap();
                 let chat_last_updated = self.last_updated(user_id);
+                let unauthorized = ChatEvent::remove_unauthorized_events(&caller, &mut events);
 
                 Success(EventsResponse {
                     events,
+                    unauthorized,
                     expired_event_ranges,
                     expired_message_ranges,
                     latest_event_index,
@@ -391,21 +394,24 @@ impl GroupChatCore {
 
     pub fn events_by_index(
         &self,
-        user_id: Option<UserId>,
+        caller: EventsCaller,
         thread_root_message_index: Option<MessageIndex>,
         events: Vec<EventIndex>,
     ) -> EventsResult {
         use EventsResult::*;
 
-        match self.events_reader(user_id, thread_root_message_index) {
+        match self.events_reader(&caller, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
-                let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.get_by_indexes(&events, user_id));
+                let user_id = caller.user_id();
+                let (mut events, expired_event_ranges) = EventOrExpiredRange::split(reader.get_by_indexes(&events, user_id));
                 let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
                 let latest_event_index = reader.latest_event_index().unwrap();
                 let chat_last_updated = self.last_updated(user_id);
+                let unauthorized = ChatEvent::remove_unauthorized_events(&caller, &mut events);
 
                 Success(EventsResponse {
                     events,
+                    unauthorized,
                     expired_event_ranges,
                     expired_message_ranges,
                     latest_event_index,
@@ -421,7 +427,7 @@ impl GroupChatCore {
 
     pub fn events_window(
         &self,
-        user_id: Option<UserId>,
+        caller: EventsCaller,
         thread_root_message_index: Option<MessageIndex>,
         mid_point: MessageIndex,
         max_messages: u32,
@@ -429,9 +435,10 @@ impl GroupChatCore {
     ) -> EventsResult {
         use EventsResult::*;
 
-        match self.events_reader(user_id, thread_root_message_index) {
+        match self.events_reader(&caller, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
-                let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.window(
+                let user_id = caller.user_id();
+                let (mut events, expired_event_ranges) = EventOrExpiredRange::split(reader.window(
                     mid_point.into(),
                     max_messages as usize,
                     max_events as usize,
@@ -440,9 +447,11 @@ impl GroupChatCore {
                 let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
                 let latest_event_index = reader.latest_event_index().unwrap();
                 let chat_last_updated = self.last_updated(user_id);
+                let unauthorized = ChatEvent::remove_unauthorized_events(&caller, &mut events);
 
                 Success(EventsResponse {
                     events,
+                    unauthorized,
                     expired_event_ranges,
                     expired_message_ranges,
                     latest_event_index,
@@ -458,14 +467,15 @@ impl GroupChatCore {
 
     pub fn messages_by_message_index(
         &self,
-        user_id: Option<UserId>,
+        caller: EventsCaller,
         thread_root_message_index: Option<MessageIndex>,
         messages: Vec<MessageIndex>,
     ) -> MessagesResult {
         use MessagesResult::*;
 
-        match self.events_reader(user_id, thread_root_message_index) {
+        match self.events_reader(&caller, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
+                let user_id = caller.user_id();
                 let messages: Vec<_> = messages
                     .into_iter()
                     .filter_map(|m| reader.message_event(m.into(), user_id))
@@ -1917,10 +1927,16 @@ impl GroupChatCore {
             })
     }
 
-    fn events_reader(&self, user_id: Option<UserId>, thread_root_message_index: Option<MessageIndex>) -> EventsReaderResult {
+    fn events_reader(&self, caller: &EventsCaller, thread_root_message_index: Option<MessageIndex>) -> EventsReaderResult {
         use EventsReaderResult::*;
 
-        match self.min_visible_event_index(user_id) {
+        let min_visible_event_index_result = match caller {
+            EventsCaller::Unknown => self.min_visible_event_index(None),
+            EventsCaller::User(user_id) => self.min_visible_event_index(Some(*user_id)),
+            EventsCaller::Bot(bot) => MinVisibleEventIndexResult::Success(bot.min_visible_event_index),
+            EventsCaller::System => MinVisibleEventIndexResult::Success(EventIndex::default()),
+        };
+        match min_visible_event_index_result {
             MinVisibleEventIndexResult::Success(min_visible_event_index) => {
                 if let Some(events_reader) = self.events.events_reader(min_visible_event_index, thread_root_message_index) {
                     Success(events_reader)

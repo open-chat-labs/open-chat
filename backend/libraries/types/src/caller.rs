@@ -1,4 +1,5 @@
-use crate::{BotCommand, BotInitiator, UserId, UserType};
+use crate::{BotCommand, BotInitiator, ChatEventType, EventIndex, UserId, UserType};
+use std::collections::HashSet;
 
 #[derive(Clone)]
 pub enum Caller {
@@ -52,6 +53,31 @@ impl From<&Caller> for UserType {
             Caller::Bot(_) => UserType::Bot,
             Caller::BotV2(_) => UserType::BotV2,
             Caller::OCBot(_) => UserType::OcControlledBot,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub enum EventsCaller {
+    Unknown,
+    User(UserId),
+    Bot(BotEventsCaller),
+    System,
+}
+
+#[derive(Clone)]
+pub struct BotEventsCaller {
+    pub bot: UserId,
+    pub min_visible_event_index: EventIndex,
+    pub event_types: HashSet<ChatEventType>,
+}
+
+impl EventsCaller {
+    pub fn user_id(&self) -> Option<UserId> {
+        match self {
+            EventsCaller::User(user_id) => Some(*user_id),
+            EventsCaller::Bot(bot_caller) => Some(bot_caller.bot),
+            _ => None,
         }
     }
 }

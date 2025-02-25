@@ -34,11 +34,11 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotInitiator, BotPermissions, BotRemoved,
-    BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty,
-    EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
-    Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY,
-    SNS_FEE_SHARE_PERCENT,
+    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator, BotPermissions,
+    BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles,
+    Document, Empty, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
+    GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis,
+    Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -719,6 +719,28 @@ impl Data {
         self.expiring_member_actions.remove_member(user_id, None);
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
+    }
+
+    pub fn get_caller_for_events(&self, caller: Principal) -> EventsCaller {
+        if let Some(user_id) = self.lookup_user_id(caller) {
+            EventsCaller::User(user_id)
+        } else {
+            let bot_user_id = caller.into();
+            if let Some(bot) = self.bots.get(&bot_user_id) {
+                if let Some(event_visibility) = bot.event_visibility.as_ref() {
+                    return EventsCaller::Bot(BotEventsCaller {
+                        bot: bot_user_id,
+                        min_visible_event_index: event_visibility
+                            .min_visible_event_indexes
+                            .get(&None)
+                            .copied()
+                            .unwrap_or_default(),
+                        event_types: event_visibility.event_types.clone(),
+                    });
+                }
+            }
+            EventsCaller::Unknown
+        }
     }
 
     pub fn notify_user_of_achievement(&mut self, user_id: UserId, achievement: Achievement) {

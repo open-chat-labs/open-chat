@@ -92,6 +92,7 @@ fn process_events(events_response: Vec<EventOrExpiredRange>, chat: &DirectChat, 
 
     Success(EventsResponse {
         events,
+        unauthorized: Vec::new(),
         expired_event_ranges,
         expired_message_ranges,
         latest_event_index,

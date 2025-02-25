@@ -16,6 +16,7 @@ pub struct BotDefinition {
     pub description: String,
     pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
+    pub events: Option<BotEventsDefinition>,
 }
 
 #[ts_export]
@@ -34,6 +35,22 @@ pub struct BotCommandDefinition {
 pub struct AutonomousConfig {
     pub permissions: BotPermissions,
     pub sync_api_key: bool,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct BotEventsDefinition {
+    pub types: Vec<BotEventType>,
+    pub can_subscribe: bool,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[repr(u8)]
+pub enum BotEventType {
+    Message = 0,            // Messages + edits, reaction, tips, etc.
+    MembershipChanged = 1,  // User added, blocked, role changed, etc.
+    ChatDetailsUpdated = 2, // Name, description, rules, permissions changed, etc.
 }
 
 #[ts_export]

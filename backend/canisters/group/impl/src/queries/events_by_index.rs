@@ -23,12 +23,12 @@ fn events_by_index_impl(args: Args, on_behalf_of: Option<Principal>, state: &Run
     }
 
     let caller = on_behalf_of.unwrap_or_else(|| state.env.caller());
-    let user_id = state.data.lookup_user_id(caller);
+    let events_caller = state.data.get_caller_for_events(caller);
 
     match state
         .data
         .chat
-        .events_by_index(user_id, args.thread_root_message_index, args.events)
+        .events_by_index(events_caller, args.thread_root_message_index, args.events)
     {
         EventsResult::Success(response) => Success(response),
         EventsResult::UserNotInGroup => CallerNotInGroup,
