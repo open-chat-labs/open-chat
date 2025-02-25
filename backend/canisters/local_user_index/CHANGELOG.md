@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support `sync_api_key` cmd + min required cmd role ([#7435](https://github.com/open-chat-labs/open-chat/pull/7435))
 - Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
 
+### Changed
+
+- Return `EncodedPermissions` in bot command JWTs ([#7462](https://github.com/open-chat-labs/open-chat/pull/7462))
+
 ## [[2.0.1600](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1600-local_user_index)] - 2025-02-06
 
 ### Added
