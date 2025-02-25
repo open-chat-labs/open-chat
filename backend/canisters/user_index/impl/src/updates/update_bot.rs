@@ -64,6 +64,7 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let now = state.env.now();
+    let owner = bot.owner;
 
     bot.last_updated = now;
 
@@ -77,7 +78,8 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(definition) = args.definition {
         state.push_event_to_all_local_user_indexes(
             UserIndexEvent::BotUpdated(BotUpdated {
-                user_id: args.bot_id,
+                bot_id: args.bot_id,
+                owner_id: owner,
                 definition,
             }),
             None,

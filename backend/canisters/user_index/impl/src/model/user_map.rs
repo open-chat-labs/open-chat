@@ -9,10 +9,10 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotInstallationLocation, BotMatch, CanisterId, CyclesTopUp, Document, Milliseconds,
-    SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
+    AutonomousConfig, BotCommandDefinition, BotInstallationLocation, BotMatch, BotRegistrationStatus, CanisterId, CyclesTopUp,
+    Document, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
 };
-use user_index_canister::bot_updates::BotSchema;
+use user_index_canister::bot_updates::BotDetails;
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MonthKey;
 
@@ -52,6 +52,8 @@ pub struct Bot {
     pub autonomous_config: Option<AutonomousConfig>,
     pub last_updated: TimestampMillis,
     pub installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
+    #[serde(default)]
+    pub registration_status: BotRegistrationStatus,
 }
 
 impl Bot {
@@ -92,8 +94,8 @@ impl Bot {
         self.installations.remove(location)
     }
 
-    pub fn to_schema(&self, id: UserId) -> BotSchema {
-        BotSchema {
+    pub fn to_schema(&self, id: UserId) -> BotDetails {
+        BotDetails {
             id,
             owner: self.owner,
             name: self.name.clone(),
@@ -103,6 +105,7 @@ impl Bot {
             commands: self.commands.clone(),
             autonomous_config: self.autonomous_config.clone(),
             last_updated: self.last_updated,
+            registration_status: self.registration_status.clone(),
         }
     }
 }
@@ -246,6 +249,19 @@ impl UserMap {
         } else {
             UpdateUserResult::UserNotFound
         }
+    }
+
+    pub fn publish_bot(&mut self, bot_id: UserId, now: TimestampMillis) -> bool {
+        let Some(bot) = self.bots.get_mut(&bot_id) else {
+            return false;
+        };
+
+        if !matches!(bot.registration_status, BotRegistrationStatus::Public) {
+            bot.registration_status = BotRegistrationStatus::Public;
+            self.bot_updates.insert((now, BotUpdate::Updated(bot_id)));
+        }
+
+        true
     }
 
     pub fn get(&self, user_id_or_principal: &Principal) -> Option<&User> {
@@ -555,12 +571,28 @@ impl UserMap {
         self.unique_person_proofs_submitted
     }
 
-    pub fn search_bots(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> (Vec<BotMatch>, u32) {
+    pub fn search_bots(
+        &self,
+        search_term: Option<String>,
+        page_index: u32,
+        page_size: u8,
+        caller: Option<UserId>,
+        installation_location: Option<BotInstallationLocation>,
+    ) -> (Vec<BotMatch>, u32) {
         let query = search_term.map(Query::parse);
 
         let mut matches: Vec<_> = self
             .bots
             .iter()
+            .filter(|(_, bot)| {
+                installation_location.is_none()
+                    || match bot.registration_status {
+                        BotRegistrationStatus::Public => true,
+                        BotRegistrationStatus::Private(location) => {
+                            location == installation_location || caller.is_some_and(|c| c == bot.owner)
+                        }
+                    }
+            })
             .map(|(user_id, bot)| {
                 let score = if let Some(query) = &query {
                     SearchDocument::default()

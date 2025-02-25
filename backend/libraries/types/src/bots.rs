@@ -280,7 +280,7 @@ pub enum BotCommandArgValue {
 }
 
 #[ts_export]
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BotInstallationLocation {
     Community(CommunityId),
     Group(ChatId),
@@ -427,4 +427,13 @@ impl From<&EncodedBotPermissions> for BotPermissions {
             message: decode(permissions.message),
         }
     }
+}
+
+// TODO remove default after release - currently useful for migration
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub enum BotRegistrationStatus {
+    #[default]
+    Public,
+    Private(Option<BotInstallationLocation>),
 }
