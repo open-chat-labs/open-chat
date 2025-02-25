@@ -8125,6 +8125,10 @@ export class OpenChat extends EventTarget {
                         initiator: this.#liveState.user.userId,
                         commandName: bot.command.name,
                         arguments: bot.command.params,
+                        meta: {
+                            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                            language: this.#liveState.locale.substring(0, 2),
+                        },
                     },
                 },
                 localUserIndex,
