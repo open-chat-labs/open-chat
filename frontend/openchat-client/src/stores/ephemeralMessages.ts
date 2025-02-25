@@ -12,16 +12,11 @@ export type EphemeralMessages = MessageContextMap<EphemeralState>;
 
 function createEphemeralStore() {
     const store = writable<EphemeralMessages>(new MessageContextMap<EphemeralState>());
-
-    function emptyState(): EphemeralState {
-        return new Map();
-    }
-
     return {
         subscribe: store.subscribe,
         add: (key: MessageContext, message: EventWrapper<Message>): void => {
             store.update((state) => {
-                const s = state.get(key) ?? emptyState();
+                const s = state.get(key) ?? new Map();
                 if (!s.has(message.event.messageId)) {
                     s.set(message.event.messageId, message);
                     state.set(key, s);
