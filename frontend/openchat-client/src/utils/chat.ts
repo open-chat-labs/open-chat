@@ -446,10 +446,14 @@ export function mergeUnconfirmedIntoSummary(
     blockedUsers: Set<string>,
     currentUserId: string,
     messageFilters: MessageFilter[],
+    ephemeralMessages: EventWrapper<Message>[],
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
-    const unconfirmedMessages = unconfirmed.get({ chatId: chatSummary.id })?.messages;
+    const unconfirmedMessages = [
+        ...(unconfirmed.get({ chatId: chatSummary.id })?.messages ?? []),
+        ...ephemeralMessages,
+    ];
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
@@ -1380,12 +1384,13 @@ export function mergeSendMessageResponse(
     msg: Message,
     resp: SendMessageSuccess | TransferSuccess,
 ): EventWrapper<Message> {
-    const content = resp.kind === "transfer_success" && msg.content.kind === "crypto_content"
-        ? {
-            ...msg.content,
-            transfer: resp.transfer,
-        }
-        : msg.content;
+    const content =
+        resp.kind === "transfer_success" && msg.content.kind === "crypto_content"
+            ? {
+                  ...msg.content,
+                  transfer: resp.transfer,
+              }
+            : msg.content;
 
     return {
         index: resp.eventIndex,
