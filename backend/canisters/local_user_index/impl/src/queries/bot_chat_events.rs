@@ -5,7 +5,7 @@ use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use local_user_index_canister::bot_chat_events::{Response::*, *};
 use local_user_index_canister::chat_events::{EventsArgs, EventsContext, EventsResponse};
-use types::{AccessTokenScope, BotApiKeyToken, ChannelId, Chat, UserId};
+use types::{AccessTokenScope, BotApiKeyToken, BotPermissions, ChannelId, Chat, UserId};
 use utils::base64;
 
 #[query(composite = true, candid = true, msgpack = true)]
@@ -64,6 +64,13 @@ fn prepare(channel_id: Option<ChannelId>, api_key: &str, state: &RuntimeState) -
     if token.bot_id != bot.bot_id {
         return Err(FailedAuthentication(INVALID_API_KEY_MESSAGE.to_string()));
     }
+    if BotPermissions::from(token.permissions)
+        .permitted_event_types_to_read()
+        .is_empty()
+    {
+        return Err(FailedAuthentication("Bot not permitted to read chat events".to_string()));
+    }
+
     let chat = match token.scope {
         AccessTokenScope::Chat(chat) => chat,
         AccessTokenScope::Community(community_id) => {
