@@ -396,8 +396,7 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
             case "group_chat":
                 return { Group: principalStringToBytes(domain.groupId) };
             case "direct_chat":
-                throw new Error("Not implemented yet");
-            // return { User: principalStringToBytes(domain.userId) };
+                return { User: principalStringToBytes(domain.userId) };
         }
     }
 

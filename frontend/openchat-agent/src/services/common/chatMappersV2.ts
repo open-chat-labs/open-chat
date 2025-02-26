@@ -308,19 +308,21 @@ import type {
     CommunityGenerateBotApiKeyResponse,
     GroupGenerateBotApiKeyResponse,
     PublicApiKeyDetails as ApiPublicApiKeyDetails,
-    BotGroupDetails as ApiInstalledBotDetails,
-    // InstalledBotDetails as ApiInstalledBotDetails,
-    // UserUpdateBotResponse,
-    // UserGenerateBotApiKeyResponse,
+    UserUpdateBotResponse,
+    InstalledBotDetails as ApiInstalledBotDetails,
+    UserGenerateBotApiKeyResponse,
 } from "../../typebox";
 import type { ApiPrincipal } from "../index";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
 export function generateApiKeyResponse(
-    value: CommunityGenerateBotApiKeyResponse | GroupGenerateBotApiKeyResponse,
-    // | UserGenerateBotApiKeyResponse,
+    value:
+        | CommunityGenerateBotApiKeyResponse
+        | GroupGenerateBotApiKeyResponse
+        | UserGenerateBotApiKeyResponse,
 ): GenerateBotKeyResponse {
+    console.log("Bot api key: ", value);
     if (typeof value === "object" && "Success" in value) {
         return { kind: "success", apiKey: value.Success.api_key };
     }
@@ -3415,8 +3417,7 @@ export function externalBotPermissions(value: ApiExternalBotPermissions): Extern
 }
 
 export function updateBotResponse(
-    value: CommunityUpdateBotResponse | GroupUpdateBotResponse,
-    // | UserUpdateBotResponse,
+    value: CommunityUpdateBotResponse | GroupUpdateBotResponse | UserUpdateBotResponse,
 ): boolean {
     if (value === "Success") {
         return true;
