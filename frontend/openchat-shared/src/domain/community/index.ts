@@ -302,6 +302,8 @@ export type LeaveCommunityResponse = "success" | "failure" | "offline";
 export type DeleteCommunityResponse = "success" | "failure" | "offline";
 
 export type LocalCommunitySummaryUpdates = {
+    installedBots?: Map<string, ExternalBotPermissions>;
+    removedBots?: Set<string>;
     added?: CommunitySummary;
     removedAtTimestamp?: bigint;
     lastUpdated: number;
