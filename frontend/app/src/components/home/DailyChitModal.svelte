@@ -38,7 +38,9 @@
 
     $: available = $chitState.nextDailyChitClaim < $now500;
     $: streak = $chitState.streakEnds < $now500 ? 0 : $chitState.streak;
-    $: percent = calculatePercentage(streak);
+    $: badgesVisible = calculateBadgesVisible(streak);
+    $: maxBadgeVisible = badgesVisible[badgesVisible.length - 1];
+    $: percent = calculatePercentage(maxBadgeVisible);
     $: remaining = client.formatTimeRemaining($now500, Number($chitState.nextDailyChitClaim), true);
 
     onMount(() => {
@@ -48,8 +50,18 @@
         }
     });
 
-    function calculatePercentage(streak: number): number {
-        const percent = (streak / 30) * 100;
+    function calculateBadgesVisible(streak: number): number[] {
+        if (streak < 30) {
+            return [3, 7, 14, 30];
+        } else if (streak < 100) {
+            return [14, 30, 100];
+        } else {
+            return [30, 100, 365];
+        }
+    }
+
+    function calculatePercentage(maxBadge: number): number {
+        const percent = (streak / maxBadge) * 100;
         return percent > 100 ? 100 : percent;
     }
 
@@ -169,18 +181,11 @@
                     <div class="line"></div>
                 </div>
                 <div class="badges">
-                    <div class="badge three">
-                        <Streak disabled={streak < 3} days={3} />
-                    </div>
-                    <div class="badge seven">
-                        <Streak disabled={streak < 7} days={7} />
-                    </div>
-                    <div class="badge fourteen">
-                        <Streak disabled={streak < 14} days={14} />
-                    </div>
-                    <div class="badge thirty">
-                        <Streak disabled={streak < 30} days={30} />
-                    </div>
+                    {#each badgesVisible as badge}
+                        <div class="badge" style="left: {badge * 100 / maxBadgeVisible}%">
+                            <Streak disabled={streak < badge} days={badge} />
+                        </div>
+                    {/each}
                 </div>
             </div>
         </div>
