@@ -29,13 +29,11 @@ use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
 };
 
-mod bots;
 mod invited_users;
 mod members;
 mod mentions;
 mod roles;
 
-pub use bots::*;
 pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;

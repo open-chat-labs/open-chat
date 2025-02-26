@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
+
 ## [[2.0.1603](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1603-local_group_index)] - 2025-02-10
 
 ### Changed

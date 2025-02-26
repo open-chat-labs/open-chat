@@ -65,6 +65,7 @@ fn commit(
     invited_users: Vec<UserId>,
     state: &mut RuntimeState,
 ) {
+    let now = state.env.now();
     let text = format!("You have been invited to the group [{group_name}](/group/{group_id}) by @UserId({invited_by}).");
     let message = MessageContent::Text(TextContent { text });
     let mentioned = vec![User {
@@ -73,6 +74,6 @@ fn commit(
     }];
 
     for user_id in invited_users {
-        state.push_oc_bot_message_to_user(user_id, message.clone(), mentioned.clone());
+        state.push_oc_bot_message_to_user(user_id, message.clone(), mentioned.clone(), now);
     }
 }

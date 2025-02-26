@@ -35,10 +35,9 @@ async fn accept_p2p_swap(args: Args) -> Response {
             );
 
             mutate_state(|state| {
+                let now = state.env.now();
                 if new_achievement {
-                    state
-                        .data
-                        .notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer);
+                    state.notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer, now);
                 }
 
                 if let Some(channel) = state.data.channels.get(&channel_id) {
@@ -55,7 +54,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                         {
                             let community_id = state.env.canister_id().into();
 
-                            state.data.user_event_sync_queue.push(
+                            state.push_event_to_user(
                                 message.sender,
                                 CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
                                     chat: Chat::Channel(community_id, channel.id),
@@ -64,9 +63,10 @@ async fn accept_p2p_swap(args: Args) -> Response {
                                     message_id: message.message_id,
                                     event_index,
                                     activity: MessageActivity::P2PSwapAccepted,
-                                    timestamp: state.env.now(),
+                                    timestamp: now,
                                     user_id: Some(user_id),
                                 }),
+                                now,
                             );
                         }
                     }

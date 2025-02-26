@@ -90,9 +90,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                                 status: P2PSwapStatus::Accepted(status),
                             })),
                         );
-                        state
-                            .data
-                            .award_achievement_and_notify(Achievement::AcceptedP2PSwapOffer, now);
+                        state.award_achievement_and_notify(Achievement::AcceptedP2PSwapOffer, now);
                     }
                 }
             });

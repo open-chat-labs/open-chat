@@ -68,7 +68,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                             }),
                         );
 
-                        state.data.user_event_sync_queue.push(
+                        state.push_event_to_user(
                             message.sender,
                             GroupCanisterEvent::MessageActivity(MessageActivityEvent {
                                 chat: Chat::Group(chat_id),
@@ -80,11 +80,10 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                                 timestamp: now,
                                 user_id: Some(user_id),
                             }),
+                            now,
                         );
 
-                        state
-                            .data
-                            .notify_user_of_achievement(message.sender, Achievement::HadMessageTipped);
+                        state.notify_user_of_achievement(message.sender, Achievement::HadMessageTipped, now);
                     }
                 }
             }

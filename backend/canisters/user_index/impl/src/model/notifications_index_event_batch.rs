@@ -1,9 +1,14 @@
 use notifications_index_canister::UserIndexEvent;
 use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
-use types::CanisterId;
+use types::{CanisterId, IdempotentEnvelope};
 use utils::canister::should_retry_failed_c2c_call;
 
-grouped_timer_job_batch!(NotificationsIndexEventBatch, CanisterId, UserIndexEvent, 100);
+grouped_timer_job_batch!(
+    NotificationsIndexEventBatch,
+    CanisterId,
+    IdempotentEnvelope<UserIndexEvent>,
+    100
+);
 
 impl TimerJobItem for NotificationsIndexEventBatch {
     async fn process(&self) -> Result<(), bool> {

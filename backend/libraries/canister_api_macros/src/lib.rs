@@ -34,6 +34,8 @@ struct AttributeInput {
     #[serde(default)]
     pub json: bool,
     #[serde(default)]
+    pub fallback: bool,
+    #[serde(default)]
     pub manual_reply: bool,
 }
 
@@ -79,12 +81,18 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
         let serializer = quote! { serializer = #serializer_name, };
         let deserializer = quote! { deserializer = #deserializer_name };
 
+        let deserializer_impl = if attr.fallback {
+            quote! { msgpack::deserialize_with_fallback }
+        } else {
+            quote! { msgpack::deserialize_then_unwrap }
+        };
+
         let mut msgpack_item = item.clone();
         msgpack_item.sig.ident = Ident::new(&msgpack_name, Span::call_site());
 
         quote! {
             use msgpack::serialize_then_unwrap as #serializer_ident;
-            use msgpack::deserialize_then_unwrap as #deserializer_ident;
+            use #deserializer_impl as #deserializer_ident;
 
             #[ic_cdk::#method_type(name = #msgpack_name, #guard #composite #manual_reply #serializer #deserializer)]
             #msgpack_item

@@ -1,6 +1,6 @@
 use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
-    AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
+    AccessTokenScope, AudioContent, CanisterId, Chat, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
     GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
     TimestampMillis, UserId, VideoContent,
 };
@@ -155,7 +155,7 @@ impl BotPermissions {
     pub fn chat_owner() -> Self {
         Self {
             community: HashSet::new(),
-            chat: HashSet::from_iter(vec![
+            chat: HashSet::from_iter([
                 GroupPermission::ChangeRoles,
                 GroupPermission::UpdateGroup,
                 GroupPermission::AddMembers,
@@ -167,7 +167,7 @@ impl BotPermissions {
                 GroupPermission::MentionAllMembers,
                 GroupPermission::StartVideoCall,
             ]),
-            message: HashSet::from_iter(vec![
+            message: HashSet::from_iter([
                 MessagePermission::Text,
                 MessagePermission::Image,
                 MessagePermission::Video,
@@ -224,7 +224,7 @@ slash_command_option_choice!(BotCommandOptionChoiceI128, i128);
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct BotGroupDetails {
+pub struct InstalledBotDetails {
     pub user_id: UserId,
     pub added_by: UserId,
     pub permissions: BotPermissions,
@@ -284,6 +284,7 @@ pub enum BotCommandArgValue {
 pub enum BotInstallationLocation {
     Community(CommunityId),
     Group(ChatId),
+    User(ChatId),
 }
 
 impl BotInstallationLocation {
@@ -291,6 +292,17 @@ impl BotInstallationLocation {
         match self {
             BotInstallationLocation::Community(c) => (*c).into(),
             BotInstallationLocation::Group(g) => (*g).into(),
+            BotInstallationLocation::User(u) => (*u).into(),
+        }
+    }
+}
+
+impl From<Chat> for BotInstallationLocation {
+    fn from(value: Chat) -> Self {
+        match value {
+            Chat::Channel(community_id, _) => BotInstallationLocation::Community(community_id),
+            Chat::Group(g) => BotInstallationLocation::Group(g),
+            Chat::Direct(u) => BotInstallationLocation::User(u),
         }
     }
 }
