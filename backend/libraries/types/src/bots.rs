@@ -40,17 +40,8 @@ pub struct AutonomousConfig {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct BotChatEventsDefinition {
-    pub event_types: Vec<BotEventType>,
+    pub event_types: Vec<ChatEventType>,
     pub notify: bool,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-#[repr(u8)]
-pub enum BotEventType {
-    Message = 0,            // Messages + edits, reaction, tips, etc.
-    MembershipChanged = 1,  // User added, blocked, role changed, etc.
-    ChatDetailsUpdated = 2, // Name, description, rules, permissions changed, etc.
 }
 
 #[ts_export]

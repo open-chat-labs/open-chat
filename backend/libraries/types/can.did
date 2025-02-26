@@ -259,8 +259,8 @@ type ChatEventWrapper = record {
 
 type ChatEventType = variant {
     Message;
-    MembershipChanged;
-    ChatDetailsUpdated;
+    MembershipUpdate;
+    ChatDetailsUpdate;
 };
 
 type GroupChatSummary = record {

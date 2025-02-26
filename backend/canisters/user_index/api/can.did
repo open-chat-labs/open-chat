@@ -214,7 +214,7 @@ type BotDefinition = record {
     description : text;
     commands : vec BotCommandDefinition;
     autonomous_config : opt AutonomousConfig;
-    events : opt BotEventsDefinition;
+    chat_events : opt BotChatEventsDefinition;
 };
 
 type AutonomousConfig = record {
@@ -222,8 +222,8 @@ type AutonomousConfig = record {
     sync_api_key : bool;
 };
 
-type BotEventsDefinition = record {
-    types : vec ChatEventType;
+type BotChatEventsDefinition = record {
+    event_types : vec ChatEventType;
     notify : bool;
 };
 
