@@ -3,7 +3,6 @@ import { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import {
     type ExternalBot,
-    type ExternalBotPermissions,
     type ChatPermissions,
     type CommunityPermissions,
     type MessagePermission,
@@ -168,7 +167,7 @@ const ApiBotCommandSchema = IDL.Record({
 const ApiAutonomousCommandSchema = IDL.Record({
     permissions: ApiExternalBotPermissions,
     sync_api_key: IDL.Bool,
-})
+});
 const ApiBotDefinition = IDL.Record({
     description: IDL.Text,
     commands: IDL.Vec(ApiBotCommandSchema),
@@ -296,60 +295,17 @@ function createMessagePermission(perm: MessagePermission): Record<string, any> {
     }
 }
 
-function createPermissions(perm: ExternalBotPermissions): Record<string, any> {
-    return {
-        chat: perm.chatPermissions.map(createGroupPermission),
-        community: perm.communityPermissions.map(createCommunityPermission),
-        message: perm.messagePermissions.map(createMessagePermission),
-        thread: perm.messagePermissions.map(createMessagePermission),
-    };
-}
-
-export function createRegisterExternalBotPayload(
-    principal: string,
-    ownerId: string,
-    candidate: ExternalBot,
-): Uint8Array {
+export function createPublishExternalBotPayload(bot: ExternalBot): Uint8Array {
     return new Uint8Array(
         IDL.encode(
             [
                 IDL.Record({
-                    principal: IDL.Principal,
-                    endpoint: IDL.Text,
-                    owner: IDL.Principal,
-                    name: IDL.Text,
-                    avatar: IDL.Opt(IDL.Text),
-                    definition: ApiBotDefinition,
+                    bot_id: IDL.Principal,
                 }),
             ],
             [
                 {
-                    principal: Principal.fromText(principal),
-                    endpoint: candidate.endpoint,
-                    owner: Principal.fromText(ownerId),
-                    name: candidate.name,
-                    avatar: optionalStringToCandid(candidate.avatarUrl),
-                    definition: {
-                        description: candidate.definition.description,
-                        commands: candidate.definition.commands.map((c) => ({
-                            name: c.name,
-                            description: optionalStringToCandid(c.description),
-                            permissions: createPermissions(c.permissions),
-                            params: c.params.map((p) => ({
-                                name: p.name,
-                                description: optionalStringToCandid(p.description),
-                                required: p.required,
-                                placeholder: optionalStringToCandid(p.placeholder),
-                                param_type: createCommandParamType(p),
-                            })),
-                        })),
-                        autonomous_config: candidate.definition.autonomousConfig !== undefined
-                            ? [{
-                                permissions: createPermissions(candidate.definition.autonomousConfig.permissions),
-                                sync_api_key: candidate.definition.autonomousConfig.syncApiKey,
-                            }]
-                            : [],
-                    }
+                    bot_id: Principal.fromText(bot.id),
                 },
             ],
         ),
