@@ -2,7 +2,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    BotGroupDetails, Empty, EventIndex, GroupMember, MessageIndex, PublicApiKeyDetails, TimestampMillis, UserId, VersionedRules,
+    Empty, EventIndex, GroupMember, InstalledBotDetails, MessageIndex, PublicApiKeyDetails, TimestampMillis, UserId,
+    VersionedRules,
 };
 
 pub type Args = Empty;
@@ -22,7 +23,7 @@ pub struct SuccessResult {
     pub last_updated: TimestampMillis,
     pub latest_event_index: EventIndex,
     pub participants: Vec<GroupMember>,
-    pub bots: Vec<BotGroupDetails>,
+    pub bots: Vec<InstalledBotDetails>,
     pub api_keys: Vec<PublicApiKeyDetails>,
     pub basic_members: Vec<UserId>,
     pub blocked_users: Vec<UserId>,

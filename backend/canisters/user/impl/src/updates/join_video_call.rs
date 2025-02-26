@@ -45,7 +45,7 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
                     })),
                 );
 
-                state.data.award_achievement_and_notify(Achievement::JoinedCall, now);
+                state.award_achievement_and_notify(Achievement::JoinedCall, now);
 
                 Success
             }

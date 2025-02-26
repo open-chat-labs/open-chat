@@ -59,7 +59,7 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
     }
 
     state.set_up_streak_insurance_timer_job();
-    state.data.notify_user_index_of_chit(now);
+    state.notify_user_index_of_chit(now);
     state.data.event_store_client.push(
         EventBuilder::new("user_claimed_daily_chit", now)
             .with_user(user_id.to_string(), true)

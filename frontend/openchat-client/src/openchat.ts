@@ -8768,7 +8768,7 @@ export class OpenChat extends EventTarget {
         const metricsUrl =
             import.meta.env.OC_NODE_ENV === "production"
                 ? `https://${this.config.userIndexCanister}.raw.ic0.app/metrics`
-                : `http://${this.config.userIndexCanister}.localhost:8080/metrics`;
+                : `http://${this.config.userIndexCanister}.raw.localhost:8080/metrics`;
         return fetch(metricsUrl, {
             headers: { "Content-Type": "application/json" },
         })

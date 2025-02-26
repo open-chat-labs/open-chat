@@ -13,7 +13,7 @@ fn remove_subscription(args: Args) -> Response {
 fn remove_subscription_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     if let Some(user_id) = state.data.principal_to_user_id_map.get(&caller) {
-        state.remove_subscription(user_id, args.p256dh_key);
+        state.remove_subscription(user_id, args.p256dh_key, state.env.now());
     }
     Success
 }

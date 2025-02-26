@@ -9,7 +9,7 @@ use community_canister::LocalGroupIndexEvent;
 use constants::OPENCHAT_BOT_USER_ID;
 use types::{GroupNameChanged, Timestamped};
 
-#[update(guard = "caller_is_local_group_index", msgpack = true)]
+#[update(guard = "caller_is_local_group_index", msgpack = true, fallback = true)]
 #[trace]
 fn c2c_notify_events(args: Args) -> Response {
     run_regular_jobs();
@@ -19,7 +19,13 @@ fn c2c_notify_events(args: Args) -> Response {
 
 fn c2c_notify_events_impl(args: Args, state: &mut RuntimeState) -> Response {
     for event in args.events {
-        process_event(event, state);
+        if state.data.idempotency_checker.check(
+            state.data.local_group_index_canister_id,
+            event.created_at,
+            event.idempotency_id,
+        ) {
+            process_event(event.value, state);
+        }
     }
     Response::Success
 }

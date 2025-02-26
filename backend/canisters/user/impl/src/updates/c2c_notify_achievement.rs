@@ -29,7 +29,7 @@ fn c2c_notify_achievement_impl(args: Args, state: &mut RuntimeState) -> Response
     }
 
     if awarded {
-        state.data.notify_user_index_of_chit(now);
+        state.notify_user_index_of_chit(now);
     }
 
     Success

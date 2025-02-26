@@ -8,6 +8,7 @@ fn main() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
 
+    generate_ts_method!(user, api_key);
     generate_ts_method!(user, bio);
     generate_ts_method!(user, cached_btc_address);
     generate_ts_method!(user, chit_events);
@@ -46,6 +47,7 @@ fn main() {
     generate_ts_method!(user, delete_group);
     generate_ts_method!(user, delete_messages);
     generate_ts_method!(user, edit_message_v2);
+    generate_ts_method!(user, generate_bot_api_key);
     generate_ts_method!(user, join_video_call);
     generate_ts_method!(user, leave_community);
     generate_ts_method!(user, leave_group);

@@ -237,9 +237,7 @@ pub(crate) async fn process_token_swap(
 
     if successful_swap {
         mutate_state(|state| {
-            state
-                .data
-                .award_achievement_and_notify(Achievement::SwappedFromWallet, state.env.now());
+            state.award_achievement_and_notify(Achievement::SwappedFromWallet, state.env.now());
         });
         Success(SuccessResult { amount_out })
     } else {

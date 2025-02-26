@@ -15,11 +15,12 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
-use group_chat_core::{AccessRulesInternal, AddResult, BotApiKeys};
+use group_chat_core::{AccessRulesInternal, AddResult};
 use group_community_common::{
-    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, GroupBots, Members, PaymentReceipts,
-    PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
+    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PaymentRecipient,
+    PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
+use installed_bots::{BotApiKeys, InstalledBots};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
@@ -40,11 +41,12 @@ use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotInitiator, BotPermissions,
     BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
     CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, GroupRole,
-    MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 use utils::regular_jobs::RegularJobs;
 
 mod activity_notifications;
@@ -287,6 +289,23 @@ impl RuntimeState {
         }
     }
 
+    pub fn push_event_to_user(&mut self, user_id: UserId, event: CommunityCanisterEvent, now: TimestampMillis) {
+        self.data.user_event_sync_queue.push(
+            user_id,
+            IdempotentEnvelope {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: event,
+            },
+        );
+    }
+
+    pub fn notify_user_of_achievement(&mut self, user_id: UserId, achievement: Achievement, now: TimestampMillis) {
+        if self.data.achievements.award(user_id, achievement).is_some() {
+            self.push_event_to_user(user_id, CommunityCanisterEvent::Achievement(achievement), now);
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -421,9 +440,11 @@ struct Data {
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
-    bots: GroupBots,
+    bots: InstalledBots,
     bot_api_keys: BotApiKeys,
     verified: Timestamped<bool>,
+    #[serde(default)]
+    idempotency_checker: IdempotencyChecker,
 }
 
 impl Data {
@@ -526,9 +547,10 @@ impl Data {
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
-            bots: GroupBots::default(),
+            bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
             verified: Timestamped::default(),
+            idempotency_checker: IdempotencyChecker::default(),
         }
     }
 
@@ -744,13 +766,6 @@ impl Data {
         }
 
         Ok(member)
-    }
-
-    pub fn notify_user_of_achievement(&mut self, user_id: UserId, achievement: Achievement) {
-        if self.achievements.award(user_id, achievement).is_some() {
-            self.user_event_sync_queue
-                .push(user_id, CommunityCanisterEvent::Achievement(achievement));
-        }
     }
 
     pub fn add_members_to_channel(

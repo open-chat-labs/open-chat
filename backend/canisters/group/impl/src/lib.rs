@@ -12,18 +12,19 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
 use group_chat_core::{
-    AddResult as AddMemberResult, BotApiKeys, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation,
-    VerifyMemberError,
+    AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation, VerifyMemberError,
 };
 use group_community_common::{
-    Achievements, ExpiringMemberActions, ExpiringMembers, GroupBots, PaymentReceipts, PaymentRecipient, PendingPayment,
+    Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
+use installed_bots::{BotApiKeys, InstalledBots};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use principal_to_user_id_map::PrincipalToUserIdMap;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, StableMemoryMap};
@@ -36,12 +37,13 @@ use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotInitiator, BotPermissions, BotRemoved,
     BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty,
-    EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
-    Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY,
-    SNS_FEE_SHARE_PERCENT,
+    EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
+    IdempotentEnvelope, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId,
+    UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 use utils::regular_jobs::RegularJobs;
 
 mod activity_notifications;
@@ -364,6 +366,23 @@ impl RuntimeState {
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
     }
 
+    pub fn push_event_to_user(&mut self, user_id: UserId, event: GroupCanisterEvent, now: TimestampMillis) {
+        self.data.user_event_sync_queue.push(
+            user_id,
+            IdempotentEnvelope {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: event,
+            },
+        );
+    }
+
+    pub fn notify_user_of_achievement(&mut self, user_id: UserId, achievement: Achievement, now: TimestampMillis) {
+        if self.data.achievements.award(user_id, achievement).is_some() {
+            self.push_event_to_user(user_id, GroupCanisterEvent::Achievement(achievement), now);
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         let group_chat_core = &self.data.chat;
         let now = self.env.now();
@@ -501,9 +520,11 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     verified: Timestamped<bool>,
-    pub bots: GroupBots,
+    pub bots: InstalledBots,
     pub bot_api_keys: BotApiKeys,
     message_ids_deduped: bool,
+    #[serde(default)]
+    idempotency_checker: IdempotencyChecker,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -603,9 +624,10 @@ impl Data {
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             verified: Timestamped::default(),
-            bots: GroupBots::default(),
+            bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
             message_ids_deduped: true,
+            idempotency_checker: IdempotencyChecker::default(),
         }
     }
 
@@ -719,13 +741,6 @@ impl Data {
         self.expiring_member_actions.remove_member(user_id, None);
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
-    }
-
-    pub fn notify_user_of_achievement(&mut self, user_id: UserId, achievement: Achievement) {
-        if self.achievements.award(user_id, achievement).is_some() {
-            self.user_event_sync_queue
-                .push(user_id, GroupCanisterEvent::Achievement(achievement));
-        }
     }
 
     pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&BotPermissions> {

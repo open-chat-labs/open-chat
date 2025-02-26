@@ -24,7 +24,7 @@ fn manage_favourite_chats(args: Args) -> Response {
         }
 
         if adding {
-            state.data.award_achievement_and_notify(Achievement::FavouritedChat, now);
+            state.award_achievement_and_notify(Achievement::FavouritedChat, now);
         }
 
         Success

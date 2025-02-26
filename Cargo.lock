@@ -1600,6 +1600,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
+ "installed_bots",
  "instruction_counts_log",
  "itertools 0.13.0",
  "lazy_static",
@@ -2840,6 +2841,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
@@ -2862,6 +2864,7 @@ dependencies = [
  "ic-stable-structures",
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
+ "installed_bots",
  "instruction_counts_log",
  "itertools 0.13.0",
  "ledger_utils",
@@ -4189,6 +4192,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "installed_bots"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "constants",
+ "rand 0.8.5",
+ "serde",
+ "serde_repr",
+ "types",
+ "utils 0.1.0",
+]
+
+[[package]]
 name = "instant"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4585,6 +4601,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
@@ -4653,6 +4670,7 @@ dependencies = [
  "canister_client",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
@@ -4883,6 +4901,7 @@ version = "0.1.0"
 dependencies = [
  "rmp-serde",
  "serde",
+ "types",
 ]
 
 [[package]]
@@ -5169,6 +5188,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_tracing_macros",
  "constants",
  "cycles_dispenser_canister",
@@ -8515,6 +8535,7 @@ dependencies = [
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
  "identity_utils",
+ "installed_bots",
  "itertools 0.13.0",
  "kongswap_canister",
  "kongswap_canister_c2c_client",
@@ -8608,6 +8629,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",

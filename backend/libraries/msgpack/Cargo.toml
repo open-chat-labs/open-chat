@@ -8,3 +8,4 @@ edition.workspace = true
 [dependencies]
 rmp-serde = { workspace = true }
 serde = { workspace = true }
+types = { path = "../types" }

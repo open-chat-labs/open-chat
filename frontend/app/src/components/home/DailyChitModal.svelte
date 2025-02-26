@@ -284,18 +284,6 @@
                 transform: translateX(var(--offset)) scale(3);
             }
         }
-        .three {
-            left: 10%;
-        }
-        .seven {
-            left: 23.33%;
-        }
-        .fourteen {
-            left: 46.66%;
-        }
-        .thirty {
-            left: 100%;
-        }
     }
 
     .marker {
