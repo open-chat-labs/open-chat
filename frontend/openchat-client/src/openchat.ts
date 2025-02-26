@@ -526,6 +526,7 @@ import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
 import { setExternalBots } from "./stores";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
+import { ephemeralMessages } from "./stores/ephemeralMessages";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -8124,6 +8125,10 @@ export class OpenChat extends EventTarget {
                         initiator: this.#liveState.user.userId,
                         commandName: bot.command.name,
                         arguments: bot.command.params,
+                        meta: {
+                            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                            language: this.#liveState.locale.substring(0, 2),
+                        },
                     },
                 },
                 localUserIndex,
@@ -8247,13 +8252,14 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    #sendPlaceholderMessage(
+    #sendPlaceholderBotMessage(
         scope: BotActionScope,
         botContext: BotMessageContext,
         content: MessageContent,
         msgId: bigint,
         senderId: string,
         blockLevelMarkdown: boolean,
+        ephemeral: boolean,
     ): () => void {
         // we can't send a placeholder message to a community scope but that's ok
         if (scope.kind === "community_scope") return () => undefined;
@@ -8290,7 +8296,11 @@ export class OpenChat extends EventTarget {
                     botContext,
                 },
             };
-            unconfirmed.add(context, event);
+            if (!ephemeral) {
+                unconfirmed.add(context, event);
+            } else {
+                ephemeralMessages.add(context, event);
+            }
             this.dispatchEvent(new SentMessage(context, event));
         }
         return () => unconfirmed.delete(context, msgId);
@@ -8314,7 +8324,7 @@ export class OpenChat extends EventTarget {
                 return this.#getAuthTokenForBotCommand(scope, bot)
                     .then(([token, msgId]) => {
                         if (bot.command.name !== "sync_api_key") {
-                            removePlaceholder = this.#sendPlaceholderMessage(
+                            removePlaceholder = this.#sendPlaceholderBotMessage(
                                 scope,
                                 botContext,
                                 bot.command.placeholder !== undefined
@@ -8322,6 +8332,7 @@ export class OpenChat extends EventTarget {
                                     : { kind: "bot_placeholder_content" },
                                 msgId,
                                 bot.id,
+                                false,
                                 false,
                             );
                         }
@@ -8339,13 +8350,19 @@ export class OpenChat extends EventTarget {
                             }
                         } else {
                             if (resp.message !== undefined) {
-                                removePlaceholder = this.#sendPlaceholderMessage(
+                                // The message that comes back from the bot may be marked as ephemeral in which
+                                // case it will have a different messageId
+                                if (resp.message.ephemeral) {
+                                    removePlaceholder?.();
+                                }
+                                removePlaceholder = this.#sendPlaceholderBotMessage(
                                     scope,
                                     { ...botContext, finalised: resp.message.finalised },
                                     resp.message.messageContent,
                                     resp.message.messageId,
                                     bot.id,
                                     resp.message.blockLevelMarkdown,
+                                    resp.message.ephemeral,
                                 );
                             } else {
                                 removePlaceholder?.();
@@ -8754,7 +8771,7 @@ export class OpenChat extends EventTarget {
         const metricsUrl =
             import.meta.env.OC_NODE_ENV === "production"
                 ? `https://${this.config.userIndexCanister}.raw.ic0.app/metrics`
-                : `http://${this.config.userIndexCanister}.localhost:8080/metrics`;
+                : `http://${this.config.userIndexCanister}.raw.localhost:8080/metrics`;
         return fetch(metricsUrl, {
             headers: { "Content-Type": "application/json" },
         })

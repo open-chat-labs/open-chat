@@ -684,6 +684,8 @@
     "enterInviteCode": "Wpisz swój kod zaproszenia",
     "enterMessage": "Wpisz wiadomość...",
     "enterToSend": "Klawisz Enter wysyła wiadomość",
+    "ephemeral": "widoczne tylko dla Ciebie",
+    "ephemeralInfo": "Tylko Ty możesz zobaczyć tę wiadomość. Nie możesz z nią wchodzić w interakcję i zniknie ona przy następnym odświeżeniu aplikacji.",
     "errorBlurb": "Przepraszamy, napotkaliśmy nieoczekiwany błąd. Spróbuj ponownie załadować OpenChat.",
     "errorEditingMessage": "Wystąpił nieoczekiwany błąd podczas edytowania Twojej wiadomości",
     "errorLoadingChats": "Nie można wczytać Twoich czatów",

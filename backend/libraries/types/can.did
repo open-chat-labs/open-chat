@@ -526,7 +526,7 @@ type SelectedGroupUpdates = record {
     latest_event_index : EventIndex;
     members_added_or_updated : vec Participant;
     members_removed : vec UserId;
-    bots_added_or_updated : vec BotGroupDetails;
+    bots_added_or_updated : vec InstalledBotDetails;
     bots_removed : vec UserId;
     api_keys_generated : vec PublicApiKeyDetails;
     blocked_users_added : vec UserId;
@@ -2195,7 +2195,7 @@ type BotGroupConfig = record {
     permissions : BotPermissions;
 };
 
-type BotGroupDetails = record {
+type InstalledBotDetails = record {
     user_id : UserId;
     added_by : UserId;
     permissions : BotPermissions;
@@ -2236,4 +2236,10 @@ type BotCommandArgValue = variant {
 type BotCommandMeta = record {
     timezone : text;
     language : text;
+};
+
+type BotInstallationLocation = variant {
+    Group : CanisterId;
+    Community : CanisterId;
+    User : UserId;
 };

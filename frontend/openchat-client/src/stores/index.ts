@@ -26,3 +26,4 @@ export * from "./filteredProposals";
 export * from "./storage";
 export * from "./permission";
 export * from "./bots";
+export * from "./ephemeralMessages";

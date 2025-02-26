@@ -1,6 +1,6 @@
 use crate::{
-    AccessGate, AccessGateConfig, BotGroupDetails, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo,
-    GroupMember, GroupPermissions, GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate,
+    AccessGate, AccessGateConfig, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember,
+    GroupPermissions, GroupRole, HydratedMention, InstalledBotDetails, Message, MessageIndex, Milliseconds, OptionUpdate,
     PublicApiKeyDetails, TimestampMillis, UserId, Version,
 };
 use candid::CandidType;
@@ -251,7 +251,7 @@ pub struct SelectedGroupUpdates {
     pub latest_event_index: EventIndex,
     pub members_added_or_updated: Vec<GroupMember>,
     pub members_removed: Vec<UserId>,
-    pub bots_added_or_updated: Vec<BotGroupDetails>,
+    pub bots_added_or_updated: Vec<InstalledBotDetails>,
     pub bots_removed: Vec<UserId>,
     pub api_keys_generated: Vec<PublicApiKeyDetails>,
     pub blocked_users_added: Vec<UserId>,

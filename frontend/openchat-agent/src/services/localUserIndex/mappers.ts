@@ -94,6 +94,7 @@ export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAcces
                     command: {
                         name: domain.command.commandName,
                         args: domain.command.arguments.map(apiBotCommandArg),
+                        meta: domain.command.meta,
                     },
                 },
             };

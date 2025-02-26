@@ -13,6 +13,7 @@ const ApiBotSuccess = Type.Object({
             content: MessageContent,
             finalised: Type.Optional(Type.Boolean()),
             block_level_markdown: Type.Optional(Type.Boolean()),
+            ephemeral: Type.Optional(Type.Boolean()),
         }),
     ),
 });
@@ -104,12 +105,13 @@ function externalBotResponse(value: ApiBotResponse): BotCommandResponse {
             kind: "success",
             message: mapOptional(
                 value.Success.message,
-                ({ id, content, finalised, block_level_markdown }) => {
+                ({ id, content, finalised, block_level_markdown, ephemeral }) => {
                     return {
                         messageId: toBigInt64(id),
                         messageContent: messageContent(content, ""),
                         finalised: finalised ?? false,
                         blockLevelMarkdown: block_level_markdown ?? false,
+                        ephemeral: ephemeral ?? false,
                     };
                 },
             ),

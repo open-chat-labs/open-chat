@@ -1,6 +1,6 @@
 use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
-    AccessTokenScope, AudioContent, CanisterId, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
+    AccessTokenScope, AudioContent, CanisterId, Chat, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
     GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
     TimestampMillis, UserId, VideoContent,
 };
@@ -224,7 +224,7 @@ slash_command_option_choice!(BotCommandOptionChoiceI128, i128);
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct BotGroupDetails {
+pub struct InstalledBotDetails {
     pub user_id: UserId,
     pub added_by: UserId,
     pub permissions: BotPermissions,
@@ -280,10 +280,11 @@ pub enum BotCommandArgValue {
 }
 
 #[ts_export]
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BotInstallationLocation {
     Community(CommunityId),
     Group(ChatId),
+    User(ChatId),
 }
 
 impl BotInstallationLocation {
@@ -291,6 +292,17 @@ impl BotInstallationLocation {
         match self {
             BotInstallationLocation::Community(c) => (*c).into(),
             BotInstallationLocation::Group(g) => (*g).into(),
+            BotInstallationLocation::User(u) => (*u).into(),
+        }
+    }
+}
+
+impl From<Chat> for BotInstallationLocation {
+    fn from(value: Chat) -> Self {
+        match value {
+            Chat::Channel(community_id, _) => BotInstallationLocation::Community(community_id),
+            Chat::Group(g) => BotInstallationLocation::Group(g),
+            Chat::Direct(u) => BotInstallationLocation::User(u),
         }
     }
 }
@@ -427,4 +439,13 @@ impl From<&EncodedBotPermissions> for BotPermissions {
             message: decode(permissions.message),
         }
     }
+}
+
+// TODO remove default after release - currently useful for migration
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub enum BotRegistrationStatus {
+    #[default]
+    Public,
+    Private(Option<BotInstallationLocation>),
 }

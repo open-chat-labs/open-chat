@@ -1600,6 +1600,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
+ "installed_bots",
  "instruction_counts_log",
  "itertools 0.13.0",
  "lazy_static",
@@ -2863,6 +2864,7 @@ dependencies = [
  "ic-stable-structures",
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
+ "installed_bots",
  "instruction_counts_log",
  "itertools 0.13.0",
  "ledger_utils",
@@ -4187,6 +4189,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a0c10553d664a4d0bcff9f4215d0aac67a639cc68ef660840afe309b807bc9f5"
 dependencies = [
  "generic-array",
+]
+
+[[package]]
+name = "installed_bots"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "constants",
+ "rand 0.8.5",
+ "serde",
+ "serde_repr",
+ "types",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -8520,6 +8535,7 @@ dependencies = [
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
  "identity_utils",
+ "installed_bots",
  "itertools 0.13.0",
  "kongswap_canister",
  "kongswap_canister_c2c_client",

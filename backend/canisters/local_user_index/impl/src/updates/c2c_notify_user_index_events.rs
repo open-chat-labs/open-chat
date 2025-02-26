@@ -90,13 +90,21 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserIndexEvent::UserRegistered(ev) => handle_user_registered(ev, **now, state),
         UserIndexEvent::BotRegistered(ev) => {
-            state
-                .data
-                .bots
-                .add(ev.user_principal, ev.user_id, ev.name, ev.commands, ev.autonomous_config);
+            state.data.bots.add(
+                ev.user_principal,
+                ev.bot_id,
+                ev.owner_id,
+                ev.name,
+                ev.commands,
+                ev.autonomous_config,
+                ev.permitted_install_location,
+            );
+        }
+        UserIndexEvent::BotPublished(ev) => {
+            state.data.bots.publish(ev.bot_id);
         }
         UserIndexEvent::BotUpdated(ev) => {
-            state.data.bots.update(ev.user_id, ev.definition);
+            state.data.bots.update(ev.bot_id, ev.owner_id, ev.definition);
         }
         UserIndexEvent::PlatformOperatorStatusChanged(ev) => {
             state

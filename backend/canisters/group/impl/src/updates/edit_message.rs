@@ -46,7 +46,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             .events
             .edit_message(edit_message_args, Some(&mut state.data.event_store_client))
         {
-            EditMessageResult::Success => {
+            EditMessageResult::Success(_, _) => {
                 if args.new_achievement && !is_bot {
                     state.notify_user_of_achievement(sender, Achievement::EditedMessage, now);
                 }

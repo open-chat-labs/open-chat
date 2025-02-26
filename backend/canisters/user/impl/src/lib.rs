@@ -17,6 +17,7 @@ use constants::{DAY_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
+use installed_bots::{BotApiKeys, InstalledBots};
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use model::chit_earned_events::ChitEarnedEvents;
 use model::contacts::Contacts;
@@ -36,9 +37,9 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
-    Cryptocurrency, Cycles, Document, IdempotentC2CCall, Milliseconds, Notification, NotifyChit, TimestampMillis, Timestamped,
-    UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned,
+    ChitEarnedReason, CommunityId, Cryptocurrency, Cycles, Document, IdempotentC2CCall, Milliseconds, Notification, NotifyChit,
+    TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -393,6 +394,9 @@ struct Data {
     pub message_ids_deduped: bool,
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
+    pub bots: InstalledBots,
+    #[serde(default)]
+    bot_api_keys: BotApiKeys,
 }
 
 impl Data {
@@ -463,6 +467,8 @@ impl Data {
             local_user_index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
             message_ids_deduped: true,
             idempotency_checker: IdempotencyChecker::default(),
+            bots: InstalledBots::default(),
+            bot_api_keys: BotApiKeys::default(),
         }
     }
 
@@ -512,6 +518,26 @@ impl Data {
         if event.user_id.is_none_or(|user_id| !self.blocked_users.contains(&user_id)) {
             self.message_activity_events.push(event, now);
         }
+    }
+
+    pub fn is_bot_permitted(&self, bot_id: &UserId, initiator: &BotInitiator, required: BotPermissions) -> bool {
+        // Try to get the installed bot
+        let Some(bot) = self.bots.get(bot_id) else {
+            return false;
+        };
+
+        // Get the granted permissions when initiated by command or API key
+        let granted = match initiator {
+            BotInitiator::Command(_) => &bot.permissions,
+            BotInitiator::ApiKeySecret(secret) => match self.bot_api_keys.permissions_if_secret_matches(bot_id, secret) {
+                Some(bot_permissions) => bot_permissions,
+                None => return false,
+            },
+            BotInitiator::ApiKeyPermissions(permissions) => permissions,
+        };
+
+        // The permissions required must be a subset of the permissions granted to the bot
+        required.is_subset(granted)
     }
 }
 
