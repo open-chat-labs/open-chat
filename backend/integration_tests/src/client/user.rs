@@ -259,6 +259,7 @@ pub mod happy_path {
             &user_canister::events::Args {
                 user_id,
                 thread_root_message_index: None,
+                bot_api_key_secret: None,
                 start_index,
                 ascending,
                 max_messages,
@@ -281,6 +282,7 @@ pub mod happy_path {
             &user_canister::events_by_index::Args {
                 user_id,
                 thread_root_message_index: None,
+                bot_api_key_secret: None,
                 events,
                 latest_known_update: None,
             },

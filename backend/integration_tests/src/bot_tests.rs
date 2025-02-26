@@ -773,7 +773,7 @@ fn register_bot(
                 sync_api_key: false,
                 permissions: BotPermissions::text_only(),
             }),
-            events: None,
+            chat_events: None,
         },
     );
 
@@ -806,7 +806,7 @@ fn register_autonomous_bot(
                 sync_api_key: true,
                 permissions: BotPermissions::text_only(),
             }),
-            events: None,
+            chat_events: None,
         },
     );
 
