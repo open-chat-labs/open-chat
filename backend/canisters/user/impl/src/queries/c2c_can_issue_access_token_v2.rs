@@ -17,11 +17,11 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
             .bot_api_keys
             .permissions_if_secret_matches(&args.bot_id, &args.secret);
 
-        if granted_opt.is_some_and(|granted| args.requested_permissions.is_subset(granted)) {
-            return Response::Success;
+        return if granted_opt.is_some_and(|granted| args.requested_permissions.is_subset(granted)) {
+            Response::Success
         } else {
-            return Response::Failure;
-        }
+            Response::Failure
+        };
     }
 
     if let AccessTypeArgs::BotActionByCommand(args) = &args_outer {
@@ -30,11 +30,7 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
             return Response::Failure;
         };
 
-        if args.requested_permissions.is_subset(granted) {
-            return Response::Success;
-        } else {
-            return Response::Failure;
-        }
+        return if args.requested_permissions.is_subset(granted) { Response::Success } else { Response::Failure };
     }
 
     let initiator = match &args_outer {
