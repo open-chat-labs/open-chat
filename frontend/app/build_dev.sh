@@ -11,8 +11,8 @@ export OC_WEBAUTHN_ORIGIN=localhost
 export OC_DEV_PORT=5001
 export OC_DFX_NETWORK=local
 export OC_INTERNET_IDENTITY_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
-export OC_INTERNET_IDENTITY_URL=http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080/
-export OC_NFID_URL=http://localhost:8080?canisterId=qhbym-qaaaa-aaaaa-aaafq-cai
+export OC_INTERNET_IDENTITY_URL=http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080
+export OC_NFID_URL=http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080
 export OC_NODE_ENV=$NODE_ENV
 export OC_PREVIEW_PROXY_URL=https://dy7sqxe9if6te.cloudfront.net
 export OC_VIDEO_BRIDGE_URL=http://localhost:5050
