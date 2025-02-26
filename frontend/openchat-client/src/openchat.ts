@@ -1628,13 +1628,6 @@ export class OpenChat extends EventTarget {
         };
     }
 
-    setCommunityIndexes(indexes: Record<string, number>): Promise<boolean> {
-        Object.entries(indexes).forEach(([k, v]) =>
-            localCommunitySummaryUpdates.updateIndex({ kind: "community", communityId: k }, v),
-        );
-        return this.#sendRequest({ kind: "setCommunityIndexes", indexes }).catch(() => false);
-    }
-
     setMemberDisplayName(
         id: CommunityIdentifier,
         displayName: string | undefined,
@@ -7427,44 +7420,38 @@ export class OpenChat extends EventTarget {
 
     // takes a list of communities that may contain communities that we are a member of and/or preview communities
     // and overwrites them in the correct place
-    updateCommunityIndexes(communities: CommunitySummary[]): void {
-        const [previews, member] = communities.reduce(
-            ([previews, member], c) => {
+    updateCommunityIndexes(orderedCommunities: CommunitySummary[]): void {
+        // Set the index field on each community
+        const [previews, updates] = orderedCommunities.reduce(
+            ([previews, updates], c, i) => {
+                const index = orderedCommunities.length - i;
                 if (this.#liveState.communityPreviews.has(c.id)) {
-                    previews.push(c);
-                } else {
-                    member.push(c);
+                    previews.push({
+                        ...c,
+                        membership: {
+                            ...c.membership,
+                            index,
+                        },
+                    });
+                } else if (c.membership.index !== index) {
+                    localCommunitySummaryUpdates.updateIndex({ kind: "community", communityId: c.id.communityId }, index);
+                    updates[c.id.communityId] = index;
                 }
-                return [previews, member];
+                return [previews, updates];
             },
-            [[], []] as [CommunitySummary[], CommunitySummary[]],
+            [[], {}] as [CommunitySummary[], Record<string, number>],
         );
+
         if (previews.length > 0) {
             communityPreviewsStore.update((state) => {
-                previews.forEach((p) => state.set(p.id, p));
+                previews.forEach((c) => state.set(c.id, c));
                 return state;
             });
         }
 
-        if (member.length > 0) {
-            globalStateStore.update((state) => {
-                const communities = state.communities.clone();
-                member.forEach((m) => communities.set(m.id, m));
-                return {
-                    ...state,
-                    communities,
-                };
-            });
+        if (Object.keys(updates).length > 0) {
+            this.#sendRequest({ kind: "setCommunityIndexes", indexes: updates }).catch(() => false);
         }
-        this.setCommunityIndexes(
-            member.reduce(
-                (idxs, c) => {
-                    idxs[c.id.communityId] = c.membership.index;
-                    return idxs;
-                },
-                {} as Record<string, number>,
-            ),
-        );
     }
 
     async setSelectedCommunity(
