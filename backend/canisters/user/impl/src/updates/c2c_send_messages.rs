@@ -5,8 +5,8 @@ use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextI
 use ic_cdk::update;
 use rand::Rng;
 use types::{
-    CanisterId, Chat, ContentValidationError, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId,
-    MessageIndex, Notification, TimestampMillis, User, UserId, UserType,
+    BotCaller, BotMessageContext, CanisterId, Chat, ContentValidationError, DirectMessageNotification, EventWrapper, Message,
+    MessageContent, MessageId, MessageIndex, Notification, TimestampMillis, User, UserId, UserType,
 };
 use user_canister::{C2CReplyContext, MessageActivity, MessageActivityEvent};
 
@@ -70,6 +70,8 @@ async fn c2c_handle_bot_messages(
                     block_level_markdown: message.block_level_markdown.unwrap_or_default(),
                     now,
                 },
+                None,
+                false,
                 state,
             );
         }
@@ -129,7 +131,12 @@ pub(crate) async fn verify_user(local_user_index_canister_id: CanisterId, user_i
     }
 }
 
-pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeState) -> EventWrapper<Message> {
+pub(crate) fn handle_message_impl(
+    args: HandleMessageArgs,
+    bot_caller: Option<BotCaller>,
+    finalised: bool,
+    state: &mut RuntimeState,
+) -> EventWrapper<Message> {
     let chat_id = args.sender.into();
     let replies_to = convert_reply_context(args.replies_to, args.sender, state);
     let files = args.content.blob_references();
@@ -151,9 +158,11 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         None
     };
 
+    let message_id = args.message_id.unwrap_or_else(|| state.env.rng().gen());
+
     let push_message_args = PushMessageArgs {
         thread_root_message_index,
-        message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
+        message_id,
         sender: args.sender,
         content: args.content,
         mentioned: Vec::new(),
@@ -163,10 +172,8 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         block_level_markdown: args.block_level_markdown,
         correlation_id: 0,
         now: args.now,
-        bot_context: None,
+        bot_context: bot_caller.map(|bot| BotMessageContext::from(&bot, finalised)),
     };
-
-    let message_id = push_message_args.message_id;
 
     let message_event = chat.push_message(
         false,

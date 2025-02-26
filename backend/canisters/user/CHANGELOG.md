@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Serialize notifications using MessagePack rather than Candid ([#7445](https://github.com/open-chat-labs/open-chat/pull/7445))
 - Reduce the size of notifications when serialized ([#7448](https://github.com/open-chat-labs/open-chat/pull/7448))
 - Move new message validation to `MessageContentInternal` ([#7452](https://github.com/open-chat-labs/open-chat/pull/7452))
+- Support bots used directly by users ([#7397](https://github.com/open-chat-labs/open-chat/pull/7397))
 
 ### Removed
 

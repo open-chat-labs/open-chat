@@ -26,6 +26,7 @@ generate_msgpack_update_call!(delete_group);
 generate_msgpack_update_call!(delete_messages);
 generate_msgpack_update_call!(edit_message_v2);
 generate_update_call!(end_video_call_v2);
+generate_msgpack_update_call!(generate_bot_api_key);
 generate_msgpack_update_call!(join_video_call);
 generate_msgpack_update_call!(leave_community);
 generate_msgpack_update_call!(leave_group);

@@ -300,7 +300,9 @@ async fn get_api_key(scope: AccessTokenScope, api_key_args: c2c_bot_api_key::Arg
             )
             .await
         }
-        AccessTokenScope::Chat(Chat::Direct(_)) => unimplemented!("TODO when the canister memory limit has been raised"),
+        AccessTokenScope::Chat(Chat::Direct(chat_id)) => {
+            user_canister_c2c_client::c2c_bot_api_key(chat_id.into(), &api_key_args).await
+        }
         AccessTokenScope::Community(community_id) => {
             community_canister_c2c_client::c2c_bot_api_key(
                 community_id.into(),

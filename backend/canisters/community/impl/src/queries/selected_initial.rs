@@ -2,7 +2,7 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use community_canister::selected_initial::{Response::*, *};
 use std::collections::HashSet;
-use types::BotGroupDetails;
+use types::InstalledBotDetails;
 
 #[query(candid = true, msgpack = true)]
 fn selected_initial(args: Args) -> Response {
@@ -49,7 +49,7 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
     let bots = data
         .bots
         .iter()
-        .map(|(user_id, bot)| BotGroupDetails {
+        .map(|(user_id, bot)| InstalledBotDetails {
             user_id: *user_id,
             permissions: bot.permissions.clone(),
             added_by: bot.added_by,

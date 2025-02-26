@@ -12,13 +12,13 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
 use group_chat_core::{
-    AddResult as AddMemberResult, BotApiKeys, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation,
-    VerifyMemberError,
+    AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation, VerifyMemberError,
 };
 use group_community_common::{
-    Achievements, ExpiringMemberActions, ExpiringMembers, GroupBots, PaymentReceipts, PaymentRecipient, PendingPayment,
+    Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
+use installed_bots::{BotApiKeys, InstalledBots};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
@@ -501,7 +501,7 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     verified: Timestamped<bool>,
-    pub bots: GroupBots,
+    pub bots: InstalledBots,
     pub bot_api_keys: BotApiKeys,
     message_ids_deduped: bool,
 }
@@ -603,7 +603,7 @@ impl Data {
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             verified: Timestamped::default(),
-            bots: GroupBots::default(),
+            bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
             message_ids_deduped: true,
         }

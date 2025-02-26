@@ -15,11 +15,12 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
-use group_chat_core::{AccessRulesInternal, AddResult, BotApiKeys};
+use group_chat_core::{AccessRulesInternal, AddResult};
 use group_community_common::{
-    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, GroupBots, Members, PaymentReceipts,
-    PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
+    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PaymentRecipient,
+    PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
+use installed_bots::{BotApiKeys, InstalledBots};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
@@ -421,7 +422,7 @@ struct Data {
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
-    bots: GroupBots,
+    bots: InstalledBots,
     bot_api_keys: BotApiKeys,
     verified: Timestamped<bool>,
 }
@@ -526,7 +527,7 @@ impl Data {
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
-            bots: GroupBots::default(),
+            bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
             verified: Timestamped::default(),
         }

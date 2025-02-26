@@ -1,9 +1,9 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use group_canister::selected_updates_v2::{Response::*, *};
-use group_community_common::BotUpdate;
+use installed_bots::BotUpdate;
 use std::collections::HashSet;
-use types::BotGroupDetails;
+use types::InstalledBotDetails;
 
 #[query(candid = true, msgpack = true)]
 fn selected_updates_v2(args: Args) -> Response {
@@ -35,7 +35,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             BotUpdate::Added | BotUpdate::Updated => {
                 if bots_changed.insert(user_id) {
                     if let Some(bot) = bots.get(&user_id) {
-                        results.bots_added_or_updated.push(BotGroupDetails {
+                        results.bots_added_or_updated.push(InstalledBotDetails {
                             user_id,
                             permissions: bot.permissions.clone(),
                             added_by: bot.added_by,
