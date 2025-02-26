@@ -254,7 +254,8 @@
             "required": "必需参数",
             "requiredDesc": "这是命令的必需参数吗",
             "testContext": "测试上下文",
-            "testContextInfo": "选择要注册此机器人的测试环境",
+            "testContextExplanation": "您的机器人只能在指定的环境中安装，直到它被发布，这必须通过提案来完成。",
+            "testContextInfo": "选择要测试机器人的群组或社区",
             "title": "构建机器人",
             "uptoN": "最多 {n}"
         },

@@ -254,7 +254,8 @@
             "required": "Parámetro requerido",
             "requiredDesc": "¿Es este un parámetro obligatorio para el comando?",
             "testContext": "Contexto de prueba",
-            "testContextInfo": "Seleccione un contexto de prueba para registrar este bot",
+            "testContextExplanation": "Su bot solo estará disponible para su instalación en el contexto especificado hasta que se publique, lo que debe hacerse mediante una propuesta.",
+            "testContextInfo": "Seleccione un grupo o comunidad en la que probar su bot",
             "title": "Construir un bot",
             "uptoN": "hasta {n}"
         },

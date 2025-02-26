@@ -254,7 +254,8 @@
             "required": "Parametro obbligatorio",
             "requiredDesc": "Questo è un parametro obbligatorio per il comando",
             "testContext": "Contesto di prova",
-            "testContextInfo": "Seleziona un contesto di test con cui registrare questo bot",
+            "testContextExplanation": "Il tuo bot sarà disponibile per l'installazione solo nel contesto specificato finché non verrà pubblicato, operazione che dovrà essere effettuata tramite una proposta.",
+            "testContextInfo": "Seleziona un gruppo o una community in cui testare il tuo bot",
             "title": "Costruisci un bot",
             "uptoN": "fino a {n}"
         },

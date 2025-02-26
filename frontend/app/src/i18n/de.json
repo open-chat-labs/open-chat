@@ -254,7 +254,8 @@
             "required": "Erforderlicher Parameter",
             "requiredDesc": "Ist dies ein erforderlicher Parameter für den Befehl",
             "testContext": "Testkontext",
-            "testContextInfo": "Wählen Sie einen Testkontext aus, bei dem dieser Bot registriert werden soll",
+            "testContextExplanation": "Ihr Bot ist nur bis zu seiner Veröffentlichung, die über einen Vorschlag erfolgen muss, zur Installation im angegebenen Kontext verfügbar.",
+            "testContextInfo": "Wählen Sie eine Gruppe oder Community aus, in der Sie Ihren Bot testen möchten",
             "title": "Einen Bot erstellen",
             "uptoN": "bis zu {n}"
         },

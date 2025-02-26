@@ -254,7 +254,8 @@
             "required": "Wymagany parametr",
             "requiredDesc": "Czy jest to wymagany parametr dla polecenia?",
             "testContext": "Kontekst testu",
-            "testContextInfo": "Wybierz kontekst testowy, aby zarejestrować tego bota",
+            "testContextExplanation": "Twojego bota będzie można zainstalować wyłącznie w określonym kontekście, aż do jego opublikowania, co musi nastąpić za pośrednictwem propozycji.",
+            "testContextInfo": "Wybierz grupę lub społeczność, w której chcesz przetestować swojego bota",
             "title": "Zbuduj bota",
             "uptoN": "do {n}"
         },

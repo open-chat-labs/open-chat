@@ -254,7 +254,8 @@
             "required": "Required parameter",
             "requiredDesc": "Is this a required parameter for the command",
             "testContext": "Test context",
-            "testContextInfo": "Select a test context to register this bot with",
+            "testContextExplanation": "Your bot will only be available for installation in the specified context until it is published, which must be done via a proposal.",
+            "testContextInfo": "Select a group or community in which to test your bot",
             "title": "Register a bot",
             "uptoN": "up to {n}"
         },

@@ -6,7 +6,6 @@
         type BotInstallationLocation,
         type CommunityMatch,
         type GroupMatch,
-        type UserSummary,
     } from "openchat-client";
     import Legend from "../Legend.svelte";
     import Search from "../Search.svelte";
@@ -24,7 +23,7 @@
         avatarUrl: string;
         name: string;
         id: string;
-        entity: CommunityMatch | GroupMatch | UserSummary;
+        entity: CommunityMatch | GroupMatch;
     };
 
     interface Props {
@@ -43,25 +42,16 @@
         if (term === "") {
             reset(true);
         } else {
-            const [communities, groups, users] = await Promise.all([
+            const [communities, groups] = await Promise.all([
                 searchCommunities(term),
                 searchGroups(term),
-                searchUsers(term),
             ]);
-            results = [...communities, ...groups, ...users];
+            results = [...communities, ...groups];
         }
     }
 
-    function normalise(thing: CommunityMatch | GroupMatch | UserSummary): Match {
+    function normalise(thing: CommunityMatch | GroupMatch): Match {
         switch (thing.kind) {
-            case "user":
-            case "bot":
-                return {
-                    avatarUrl: client.userAvatarUrl(thing),
-                    name: client.displayName(thing),
-                    id: thing.userId,
-                    entity: thing,
-                };
             case "community_match":
                 return {
                     avatarUrl: client.communityAvatarUrl(thing.id.communityId, thing.avatar),
@@ -80,10 +70,6 @@
                     entity: thing,
                 };
         }
-    }
-
-    function searchUsers(term: string): Promise<Match[]> {
-        return client.searchUsers(term, PAGE_SIZE).then((users) => users.map(normalise));
     }
 
     function searchCommunities(term: string): Promise<Match[]> {
@@ -111,9 +97,6 @@
                 case "group_match":
                     location = { kind: "group_chat", groupId: match.id };
                     break;
-                case "user":
-                case "bot":
-                    location = { kind: "direct_chat", userId: match.id };
             }
         }
     }
@@ -155,8 +138,6 @@
                                         Community
                                     {:else if match.entity.kind === "group_match"}
                                         Group chat
-                                    {:else if match.entity.kind === "user"}
-                                        Direct chat
                                     {/if}
                                 </div>
                             </div>
@@ -168,10 +149,7 @@
     {/if}
 
     <p class="info">
-        <Translatable
-            resourceKey={i18nKey(
-                "Your bot will only be available for installation in the specified context until it is published, which must be done via a proposal.",
-            )}></Translatable>
+        <Translatable resourceKey={i18nKey("bots.builder.testContextExplanation")}></Translatable>
     </p>
 </div>
 
