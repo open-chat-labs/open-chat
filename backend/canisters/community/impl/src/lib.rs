@@ -753,20 +753,19 @@ impl Data {
     pub fn get_caller_for_events(
         &self,
         caller: Principal,
+        channel_id: ChannelId,
         bot_api_key_secret: Option<String>,
     ) -> Result<EventsCaller, EventsResponse> {
         if let Some(secret) = bot_api_key_secret {
             let bot_user_id = caller.into();
-            if let Some(api_key) = self.bot_api_keys.get(&bot_user_id) {
-                if api_key.secret.as_str() == secret {
-                    let bot_permitted_event_types = api_key.granted_permissions.permitted_event_types_to_read();
-                    if !bot_permitted_event_types.is_empty() {
-                        return Ok(EventsCaller::Bot(BotEventsCaller {
-                            bot: bot_user_id,
-                            bot_permitted_event_types,
-                            min_visible_event_index: EventIndex::default(),
-                        }));
-                    }
+            if let Some(permissions) = self.get_api_key_permissions(&bot_user_id, &secret, Some(channel_id)) {
+                let bot_permitted_event_types = permissions.permitted_event_types_to_read();
+                if !bot_permitted_event_types.is_empty() {
+                    return Ok(EventsCaller::Bot(BotEventsCaller {
+                        bot: bot_user_id,
+                        bot_permitted_event_types,
+                        min_visible_event_index: EventIndex::default(),
+                    }));
                 }
             }
             return Err(EventsResponse::UserNotInCommunity);

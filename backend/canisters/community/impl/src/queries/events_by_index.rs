@@ -28,7 +28,7 @@ fn events_by_index_impl(
     }
 
     let caller = on_behalf_of.unwrap_or_else(|| state.env.caller());
-    let events_caller = match state.data.get_caller_for_events(caller, bot_api_key_secret) {
+    let events_caller = match state.data.get_caller_for_events(caller, args.channel_id, bot_api_key_secret) {
         Ok(ec) => ec,
         Err(response) => return response,
     };
