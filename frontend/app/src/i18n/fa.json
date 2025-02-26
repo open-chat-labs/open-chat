@@ -253,6 +253,9 @@
             "principalRules": "این شناسه canister برای یک ربات onchain خواهد بود",
             "required": "پارامتر مورد نیاز",
             "requiredDesc": "آیا این یک پارامتر لازم برای دستور است؟",
+            "testContext": "زمینه تست",
+            "testContextExplanation": "ربات شما فقط برای نصب در زمینه مشخص شده تا زمان انتشار در دسترس خواهد بود که باید از طریق پروپوزال انجام شود.",
+            "testContextInfo": "گروه یا انجمنی را انتخاب کنید که در آن ربات خود را آزمایش کنید",
             "title": "یک ربات بسازید",
             "uptoN": "تا {n}"
         },
@@ -1395,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "فقط این قوطی می تواند جایزه را اهدا کند",
             "chitReward": "پاداش CHIT",
             "chitRewardRules": "حداقل {value} CHIT",
+            "chooseBot": "لطفا رباتی را که می خواهید منتشر کنید انتخاب کنید",
             "enterAchievementName": "نامی برای دستاورد وارد کنید",
             "enterAmount": "مقداری از نشانه‌های {token} را وارد کنید",
             "enterChitReward": "پاداش CHIT را وارد کنید",

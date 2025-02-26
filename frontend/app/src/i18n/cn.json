@@ -253,6 +253,9 @@
             "principalRules": "这将是链上机器人的 canisterID",
             "required": "必需参数",
             "requiredDesc": "这是命令的必需参数吗",
+            "testContext": "测试上下文",
+            "testContextExplanation": "您的机器人只能在指定的环境中安装，直到它被发布，这必须通过提案来完成。",
+            "testContextInfo": "选择要测试机器人的群组或社区",
             "title": "构建机器人",
             "uptoN": "最多 {n}"
         },
@@ -1395,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "只有此罐子可以授予成就",
             "chitReward": "CHIT 奖励",
             "chitRewardRules": "至少 {value} CHIT",
+            "chooseBot": "请选择您想要发布的机器人",
             "enterAchievementName": "输入成就的名称",
             "enterAmount": "输入 {token} 代币的数量",
             "enterChitReward": "输入 CHIT 奖励",

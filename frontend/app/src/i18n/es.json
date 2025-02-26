@@ -253,6 +253,9 @@
             "principalRules": "Este será el canisterID para un bot en cadena",
             "required": "Parámetro requerido",
             "requiredDesc": "¿Es este un parámetro obligatorio para el comando?",
+            "testContext": "Contexto de prueba",
+            "testContextExplanation": "Su bot solo estará disponible para su instalación en el contexto especificado hasta que se publique, lo que debe hacerse mediante una propuesta.",
+            "testContextInfo": "Seleccione un grupo o comunidad en la que probar su bot",
             "title": "Construir un bot",
             "uptoN": "hasta {n}"
         },
@@ -1395,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "Sólo este bote puede otorgar el logro.",
             "chitReward": "Recompensa CHIT",
             "chitRewardRules": "al menos {value} CHIT",
+            "chooseBot": "Por favor, seleccione el bot que desea publicar",
             "enterAchievementName": "Introduzca un nombre para el logro",
             "enterAmount": "Ingrese una cantidad de tokens {token}",
             "enterChitReward": "Ingresa la recompensa CHIT",

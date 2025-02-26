@@ -57,9 +57,9 @@
         searchTerm = "";
     }
 
-    async function performSearch(ev: CustomEvent<string>) {
+    async function performSearch(term: string) {
         searchResultsAvailable = false;
-        searchTerm = ev.detail;
+        searchTerm = term;
 
         if ($chatListScope.kind === "direct_chat") {
             searchTerm = trimLeadingAtSymbol(searchTerm);
@@ -146,4 +146,4 @@
     });
 </script>
 
-<Search {placeholder} {searching} {searchTerm} on:searchEntered={performSearch} />
+<Search {placeholder} {searching} {searchTerm} onPerformSearch={performSearch} />

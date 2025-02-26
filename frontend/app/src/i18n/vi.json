@@ -253,6 +253,9 @@
             "principalRules": "Đây sẽ là canisterID cho một bot onchain",
             "required": "Tham số bắt buộc",
             "requiredDesc": "Đây có phải là tham số bắt buộc cho lệnh không?",
+            "testContext": "Bối cảnh thử nghiệm",
+            "testContextExplanation": "Bot của bạn sẽ chỉ có thể cài đặt trong bối cảnh được chỉ định cho đến khi nó được phát hành, điều này phải được thực hiện thông qua một đề xuất.",
+            "testContextInfo": "Chọn một nhóm hoặc cộng đồng để thử nghiệm bot của bạn",
             "title": "Xây dựng một bot",
             "uptoN": "lên đến {n}"
         },
@@ -1395,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "Chỉ có chiếc bình này mới có thể trao tặng thành tích",
             "chitReward": "Phần thưởng CHIT",
             "chitRewardRules": "ít nhất {value} CHIT",
+            "chooseBot": "Vui lòng chọn bot mà bạn muốn xuất bản",
             "enterAchievementName": "Nhập tên cho thành tích",
             "enterAmount": "Nhập số lượng mã thông báo {token}",
             "enterChitReward": "Nhập phần thưởng CHIT",

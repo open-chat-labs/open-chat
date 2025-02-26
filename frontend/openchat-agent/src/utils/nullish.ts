@@ -14,7 +14,7 @@ export function deepRemoveNullishFields(value: unknown, depth = 0): unknown {
                 if (k[0].toUpperCase() !== k[0]) {
                     delete (value as Record<string, unknown>)[k];
                 } else {
-                    (value as Record<string, unknown>)[k] = undefined;
+                    (value as Record<string, unknown>)[k] = null;
                 }
             } else {
                 deepRemoveNullishFields(v, depth + 1);

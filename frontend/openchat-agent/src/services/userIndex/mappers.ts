@@ -30,6 +30,8 @@ import type {
     ExternalBot,
     BotDefinition,
     AutonomousBotConfig,
+    BotInstallationLocation,
+    BotRegistrationStatus,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -37,6 +39,7 @@ import {
     identity,
     mapOptional,
     principalBytesToString,
+    principalStringToBytes,
 } from "../../utils/mapping";
 import {
     apiChatPermission,
@@ -81,9 +84,22 @@ import type {
     UserIndexBotUpdatesResponse,
     UserIndexBotUpdatesBotDetails,
     AutonomousConfig,
+    BotInstallationLocation as ApiBotInstallationLocation,
+    BotRegistrationStatus as ApiBotRegistrationStatus,
 } from "../../typebox";
 import { toRecord } from "../../utils/list";
 import { apiMemberRole } from "../community/mappersV2";
+
+export function apiBotInstallLocation(domain: BotInstallationLocation): ApiBotInstallationLocation {
+    switch (domain.kind) {
+        case "community":
+            return { Community: principalStringToBytes(domain.communityId) };
+        case "group_chat":
+            return { Group: principalStringToBytes(domain.groupId) };
+        case "direct_chat":
+            throw new Error(`Unexpected BotInstallationLocation received: ${domain}`);
+    }
+}
 
 export function botUpdatesResponse(
     value: UserIndexBotUpdatesResponse,
@@ -133,7 +149,29 @@ export function botSchema(
         ownerId: principalBytesToString(bot.owner),
         endpoint: bot.endpoint,
         definition: externalBotDefinition(bot),
+        registrationStatus: botRegistrationStatus(bot.registration_status),
     };
+}
+
+export function botRegistrationStatus(value: ApiBotRegistrationStatus): BotRegistrationStatus {
+    if (value === "Public") {
+        return { kind: "public" };
+    } else if ("Private" in value) {
+        return {
+            kind: "private",
+            location: mapOptional(value.Private, botInstallationLocation),
+        };
+    }
+    throw new Error(`Unknown BotRegistrationStatus of ${value}`);
+}
+
+export function botInstallationLocation(api: ApiBotInstallationLocation): BotInstallationLocation {
+    if ("Community" in api) {
+        return { kind: "community", communityId: principalBytesToString(api.Community) };
+    } else if ("Group" in api) {
+        return { kind: "group_chat", groupId: principalBytesToString(api.Group) };
+    }
+    throw new Error(`Unknown BotInstallationLocation of ${api}`);
 }
 
 export function userSearchResponse(value: UserIndexSearchResponse): UserSummary[] {

@@ -77,16 +77,17 @@ export function toCanisterResponseError(
         }
     }
 
-    // if we make an api after the session has expired (which should not happen) it will manifest as a 400 error
-    if (code === 400 && getTimeUntilSessionExpiryMs(identity) < 0) {
-        console.debug(
-            "SESSION: we received a 400 response and the session has timed out: ",
-            getTimeUntilSessionExpiryMs(identity),
-        );
-        return new SessionExpiryError(code, error);
-    }
-    if (code === 403 && error.message.includes("Invalid delegation")) {
-        return new InvalidDelegationError(error);
+    // if we make an api call after the session has expired (which should not happen) it will manifest as a 400 error
+    if (code === 400) {
+        if (getTimeUntilSessionExpiryMs(identity) < 0) {
+            console.debug(
+                "SESSION: we received a 400 response and the session has timed out: ",
+                getTimeUntilSessionExpiryMs(identity),
+            );
+            return new SessionExpiryError(code, error);
+        } else if (error.message.includes("Invalid delegation")) {
+            return new InvalidDelegationError(error);
+        }
     }
 
     return code === 401 || code === 403 ? new AuthError(code, error) : new HttpError(code, error);

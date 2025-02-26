@@ -4102,10 +4102,11 @@ export class OpenChatAgent extends EventTarget {
         searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number,
+        location?: BotInstallationLocation,
     ): Promise<ExploreBotsResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this._userIndexClient.exploreBots(searchTerm, pageIndex, pageSize);
+        return this._userIndexClient.exploreBots(searchTerm, pageIndex, pageSize, location);
     }
 
     registerBot(principal: string, bot: ExternalBot): Promise<boolean> {

@@ -253,6 +253,9 @@
             "principalRules": "Ce sera le canisterID pour un bot onchain",
             "required": "Paramètre obligatoire",
             "requiredDesc": "Est-ce un paramètre obligatoire pour la commande",
+            "testContext": "Contexte de test",
+            "testContextExplanation": "Votre bot ne sera disponible à l'installation que dans le contexte spécifié jusqu'à sa publication, ce qui doit être fait via une proposition.",
+            "testContextInfo": "Sélectionnez un groupe ou une communauté dans lequel tester votre bot",
             "title": "Construire un bot",
             "uptoN": "jusqu'à {n}"
         },
@@ -1395,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "Seule cette cartouche peut décerner le succès",
             "chitReward": "Récompense CHIT",
             "chitRewardRules": "au moins {value} CHIT",
+            "chooseBot": "Veuillez choisir le bot que vous souhaitez publier",
             "enterAchievementName": "Entrez un nom pour la réussite",
             "enterAmount": "Entrez une quantité de jetons {token}",
             "enterChitReward": "Entrez la récompense CHIT",

@@ -253,6 +253,9 @@
             "principalRules": "זה יהיה ה-canisterID עבור בוט onchain",
             "required": "פרמטר נדרש",
             "requiredDesc": "האם זה פרמטר נדרש עבור הפקודה",
+            "testContext": "הקשר בדיקה",
+            "testContextExplanation": "הבוט שלך יהיה זמין להתקנה רק בהקשר שצוין עד לפרסום, מה שחייב להיעשות באמצעות הצעה.",
+            "testContextInfo": "בחר קבוצה או קהילה שבה תבדוק את הבוט שלך",
             "title": "בנה בוט",
             "uptoN": "עד {n}"
         },
@@ -1395,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "רק מיכל זה יכול להעניק את ההישג",
             "chitReward": "פרס CHIT",
             "chitRewardRules": "לפחות {value} CHIT",
+            "chooseBot": "אנא בחר את הבוט שברצונך לפרסם",
             "enterAchievementName": "הזן שם להישג",
             "enterAmount": "הזן כמות של {token} אסימונים",
             "enterChitReward": "הזן את הפרס CHIT",
