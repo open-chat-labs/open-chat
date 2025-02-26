@@ -2239,6 +2239,7 @@ type BotCommandMeta = record {
 };
 
 type BotInstallationLocation = variant {
-  Group : principal;
-  Community : principal;
+    Group : CanisterId;
+    Community : CanisterId;
+    User : UserId;
 };
