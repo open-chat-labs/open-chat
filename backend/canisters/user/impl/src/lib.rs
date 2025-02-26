@@ -39,7 +39,8 @@ use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned,
     ChitEarnedReason, CommunityId, Cryptocurrency, Cycles, Document, IdempotentC2CCall, Milliseconds, Notification, NotifyChit,
-    TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
+    UserId,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
