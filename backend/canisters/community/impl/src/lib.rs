@@ -41,7 +41,7 @@ use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator,
     BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics,
     CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
-    EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
+    EventIndex, EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
     TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
@@ -750,22 +750,30 @@ impl Data {
         }
     }
 
-    pub fn get_caller_for_events(&self, caller: Principal, channel_id: ChannelId) -> Result<EventsCaller, EventsResponse> {
-        let hidden_for_non_members = !self.is_public.value || self.has_payment_gate();
-        let member = self.members.get(caller);
-
-        if member.is_none() {
+    pub fn get_caller_for_events(
+        &self,
+        caller: Principal,
+        bot_api_key_secret: Option<String>,
+    ) -> Result<EventsCaller, EventsResponse> {
+        if let Some(secret) = bot_api_key_secret {
             let bot_user_id = caller.into();
-            if let Some(event_visibility) = self.bots.get(&bot_user_id).and_then(|b| b.event_visibility.as_ref()) {
-                if let Some(&min_visible_event_index) = event_visibility.min_visible_event_indexes.get(&Some(channel_id)) {
-                    return Ok(EventsCaller::Bot(BotEventsCaller {
-                        bot: bot_user_id,
-                        min_visible_event_index,
-                        bot_permitted_event_types: event_visibility.event_types.clone(),
-                    }));
+            if let Some(api_key) = self.bot_api_keys.get(&bot_user_id) {
+                if api_key.secret.as_str() == secret {
+                    let bot_permitted_event_types = api_key.granted_permissions.permitted_event_types_to_read();
+                    if !bot_permitted_event_types.is_empty() {
+                        return Ok(EventsCaller::Bot(BotEventsCaller {
+                            bot: bot_user_id,
+                            bot_permitted_event_types,
+                            min_visible_event_index: EventIndex::default(),
+                        }));
+                    }
                 }
             }
+            return Err(EventsResponse::UserNotInCommunity);
         }
+
+        let hidden_for_non_members = !self.is_public.value || self.has_payment_gate();
+        let member = self.members.get(caller);
 
         if hidden_for_non_members {
             if let Some(member) = &member {

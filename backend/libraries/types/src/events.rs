@@ -47,9 +47,9 @@ pub enum ChatEvent {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq)]
 #[repr(u8)]
 pub enum ChatEventType {
-    Message = 0,            // Messages + edits, reaction, tips, etc.
-    MembershipUpdated = 1,  // User added, blocked, invited, role changed, etc.
-    ChatDetailsUpdated = 2, // Name, description, rules, permissions changed, etc.
+    Message = 0,           // Messages + edits, reaction, tips, etc.
+    MembershipUpdate = 1,  // User added, blocked, invited, role changed, etc.
+    ChatDetailsUpdate = 2, // Name, description, rules, permissions changed, etc.
 }
 
 #[ts_export]
@@ -488,7 +488,7 @@ impl ChatEvent {
             | ChatEvent::ChatUnfrozen(_)
             | ChatEvent::EventsTimeToLiveUpdated(_)
             | ChatEvent::GroupGateUpdated(_)
-            | ChatEvent::ExternalUrlUpdated(_) => Some(ChatEventType::ChatDetailsUpdated),
+            | ChatEvent::ExternalUrlUpdated(_) => Some(ChatEventType::ChatDetailsUpdate),
             ChatEvent::ParticipantsAdded(_)
             | ChatEvent::ParticipantsRemoved(_)
             | ChatEvent::ParticipantJoined(_)
@@ -500,7 +500,7 @@ impl ChatEvent {
             | ChatEvent::MembersAddedToDefaultChannel(_)
             | ChatEvent::BotAdded(_)
             | ChatEvent::BotRemoved(_)
-            | ChatEvent::BotUpdated(_) => Some(ChatEventType::MembershipUpdated),
+            | ChatEvent::BotUpdated(_) => Some(ChatEventType::MembershipUpdate),
             ChatEvent::Empty | ChatEvent::FailedToDeserialize => None,
         }
     }

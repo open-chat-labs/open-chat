@@ -743,21 +743,28 @@ impl Data {
         self.user_cache.delete(user_id);
     }
 
-    pub fn get_caller_for_events(&self, caller: Principal) -> EventsCaller {
-        if let Some(user_id) = self.lookup_user_id(caller) {
-            EventsCaller::User(user_id)
-        } else {
+    pub fn get_caller_for_events(&self, caller: Principal, bot_api_key_secret: Option<String>) -> Option<EventsCaller> {
+        if let Some(secret) = bot_api_key_secret {
             let bot_user_id = caller.into();
-            if let Some(event_visibility) = self.bots.get(&bot_user_id).and_then(|b| b.event_visibility.as_ref()) {
-                if let Some(&min_visible_event_index) = event_visibility.min_visible_event_indexes.get(&None) {
-                    return EventsCaller::Bot(BotEventsCaller {
-                        bot: bot_user_id,
-                        min_visible_event_index,
-                        bot_permitted_event_types: event_visibility.event_types.clone(),
-                    });
+            if let Some(api_key) = self.bot_api_keys.get(&bot_user_id) {
+                if api_key.secret.as_str() != secret {
+                    return None;
                 }
+                let bot_permitted_event_types = api_key.granted_permissions.permitted_event_types_to_read();
+                if bot_permitted_event_types.is_empty() {
+                    return None;
+                }
+                return Some(EventsCaller::Bot(BotEventsCaller {
+                    bot: bot_user_id,
+                    bot_permitted_event_types,
+                    min_visible_event_index: EventIndex::default(),
+                }));
             }
-            EventsCaller::Unknown
+            None
+        } else if let Some(user_id) = self.lookup_user_id(caller) {
+            Some(EventsCaller::User(user_id))
+        } else {
+            Some(EventsCaller::Unknown)
         }
     }
 

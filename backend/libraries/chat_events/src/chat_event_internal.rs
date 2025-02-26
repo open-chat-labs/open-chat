@@ -168,7 +168,7 @@ impl ChatEventInternal {
             | ChatEventInternal::ChatUnfrozen(_)
             | ChatEventInternal::EventsTimeToLiveUpdated(_)
             | ChatEventInternal::GroupGateUpdated(_)
-            | ChatEventInternal::ExternalUrlUpdated(_) => Some(ChatEventType::ChatDetailsUpdated),
+            | ChatEventInternal::ExternalUrlUpdated(_) => Some(ChatEventType::ChatDetailsUpdate),
             ChatEventInternal::ParticipantsAdded(_)
             | ChatEventInternal::ParticipantsRemoved(_)
             | ChatEventInternal::ParticipantJoined(_)
@@ -180,7 +180,7 @@ impl ChatEventInternal {
             | ChatEventInternal::MembersAddedToPublicChannel(_)
             | ChatEventInternal::BotAdded(_)
             | ChatEventInternal::BotRemoved(_)
-            | ChatEventInternal::BotUpdated(_) => Some(ChatEventType::MembershipUpdated),
+            | ChatEventInternal::BotUpdated(_) => Some(ChatEventType::MembershipUpdate),
             ChatEventInternal::Empty | ChatEventInternal::FailedToDeserialize => None,
         }
     }

@@ -13,7 +13,7 @@ async fn chat_events(args: Args) -> Response {
     let futures: Vec<_> = args
         .requests
         .into_iter()
-        .map(|r| make_c2c_call_to_get_events(r, user.principal, user.user_id, false))
+        .map(|r| make_c2c_call_to_get_events(r, user.principal, user.user_id, None))
         .collect();
 
     let responses = futures::future::join_all(futures).await;
@@ -26,15 +26,13 @@ async fn chat_events(args: Args) -> Response {
 
 pub(crate) async fn make_c2c_call_to_get_events(
     events_args: EventsArgs,
-    principal: Principal,
+    caller: Principal,
     user_id: UserId,
-    is_bot: bool,
+    bot_api_key_secret: Option<String>,
 ) -> EventsResponse {
-    let caller = if is_bot { user_id.into() } else { principal };
-
     match events_args.context {
         EventsContext::Direct(them) => {
-            let (canister_id, bot_caller) = if is_bot { (them.into(), Some(user_id)) } else { (user_id.into(), None) };
+            let canister_id = if bot_api_key_secret.is_some() { them.into() } else { user_id.into() };
 
             match events_args.args {
                 EventsSelectionCriteria::Page(args) => map_response(
@@ -43,7 +41,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                         &user_canister::events::Args {
                             user_id: them,
                             thread_root_message_index: None,
-                            bot_caller,
+                            bot_api_key_secret,
                             start_index: args.start_index,
                             ascending: args.ascending,
                             max_messages: args.max_messages,
@@ -59,7 +57,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                         &user_canister::events_by_index::Args {
                             user_id: them,
                             thread_root_message_index: None,
-                            bot_caller,
+                            bot_api_key_secret,
                             events: args.events,
                             latest_known_update: events_args.latest_known_update,
                         },
@@ -72,7 +70,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                         &user_canister::events_window::Args {
                             user_id: them,
                             thread_root_message_index: None,
-                            bot_caller,
+                            bot_api_key_secret,
                             mid_point: args.mid_point,
                             max_messages: args.max_messages,
                             max_events: args.max_events,
@@ -89,6 +87,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                     chat_id.into(),
                     &group_canister::c2c_events::Args {
                         caller,
+                        bot_api_key_secret,
                         args: group_canister::events::Args {
                             thread_root_message_index,
                             start_index: args.start_index,
@@ -106,6 +105,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                     chat_id.into(),
                     &group_canister::c2c_events_by_index::Args {
                         caller,
+                        bot_api_key_secret,
                         args: group_canister::events_by_index::Args {
                             thread_root_message_index,
                             events: args.events,
@@ -120,6 +120,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                     chat_id.into(),
                     &group_canister::c2c_events_window::Args {
                         caller,
+                        bot_api_key_secret,
                         args: group_canister::events_window::Args {
                             thread_root_message_index,
                             mid_point: args.mid_point,
@@ -138,6 +139,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                     community_id.into(),
                     &community_canister::c2c_events::Args {
                         caller,
+                        bot_api_key_secret,
                         args: community_canister::events::Args {
                             channel_id,
                             thread_root_message_index,
@@ -156,6 +158,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                     community_id.into(),
                     &community_canister::c2c_events_by_index::Args {
                         caller,
+                        bot_api_key_secret,
                         args: community_canister::events_by_index::Args {
                             channel_id,
                             thread_root_message_index,
@@ -171,6 +174,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                     community_id.into(),
                     &community_canister::c2c_events_window::Args {
                         caller,
+                        bot_api_key_secret,
                         args: community_canister::events_window::Args {
                             channel_id,
                             thread_root_message_index,

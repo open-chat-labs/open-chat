@@ -1,4 +1,4 @@
-use crate::RuntimeState;
+use crate::{RuntimeState, INVALID_API_KEY_MESSAGE};
 use jwt::Claims;
 use rand::Rng;
 use types::{
@@ -32,17 +32,15 @@ pub fn extract_access_context(auth_token: &AuthToken, state: &mut RuntimeState) 
     }
 }
 
-fn extract_access_context_from_apikey(
+pub fn extract_access_context_from_apikey(
     access_token: &str,
     bot: &User,
     state: &mut RuntimeState,
 ) -> Result<BotAccessContext, String> {
-    const INVALID_MESSAGE: &str = "Not a valid API key";
-
-    let token: BotApiKeyToken = base64::to_value(access_token).map_err(|_| INVALID_MESSAGE.to_string())?;
+    let token: BotApiKeyToken = base64::to_value(access_token).map_err(|_| INVALID_API_KEY_MESSAGE.to_string())?;
 
     if token.bot_id != bot.user_id {
-        return Err(INVALID_MESSAGE.to_string());
+        return Err(INVALID_API_KEY_MESSAGE.to_string());
     }
 
     let scope = to_bot_action_scope(token.scope, state);

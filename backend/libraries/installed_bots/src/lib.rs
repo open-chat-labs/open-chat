@@ -19,14 +19,7 @@ impl InstalledBots {
             return false;
         }
 
-        self.bots.insert(
-            user_id,
-            BotInternal {
-                added_by,
-                permissions,
-                event_visibility: None,
-            },
-        );
+        self.bots.insert(user_id, BotInternal { added_by, permissions });
         self.prune_then_insert_member_update(user_id, BotUpdate::Added, now);
 
         true
@@ -107,7 +100,6 @@ pub enum BotUpdate {
 pub struct BotInternal {
     pub added_by: UserId,
     pub permissions: BotPermissions,
-    pub event_visibility: Option<BotEventVisibility>,
 }
 
 #[derive(Serialize, Deserialize)]
