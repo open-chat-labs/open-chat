@@ -82,7 +82,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
                     );
                 }
 
-                state.data.award_achievement_and_notify(Achievement::DeletedMessage, now)
+                state.award_achievement_and_notify(Achievement::DeletedMessage, now)
             }
         }
 

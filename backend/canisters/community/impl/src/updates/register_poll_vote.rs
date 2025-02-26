@@ -71,24 +71,22 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
                         args.thread_root_message_index,
                         args.message_index.into(),
                     ) {
-                        state.data.user_event_sync_queue.push(
-                            creator,
-                            CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
-                                chat: Chat::Channel(state.env.canister_id().into(), channel.id),
-                                thread_root_message_index: args.thread_root_message_index,
-                                message_index: message.message_index,
-                                message_id: message.message_id,
-                                event_index,
-                                activity: MessageActivity::PollVote,
-                                timestamp: now,
-                                user_id: matches!(votes.total, TotalVotes::Visible(_)).then_some(user_id),
-                            }),
-                        );
+                        let event = CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                            chat: Chat::Channel(state.env.canister_id().into(), channel.id),
+                            thread_root_message_index: args.thread_root_message_index,
+                            message_index: message.message_index,
+                            message_id: message.message_id,
+                            event_index,
+                            activity: MessageActivity::PollVote,
+                            timestamp: now,
+                            user_id: matches!(votes.total, TotalVotes::Visible(_)).then_some(user_id),
+                        });
+                        state.push_event_to_user(creator, event, now);
                     }
                 }
 
                 if args.new_achievement && !member.user_type.is_bot() {
-                    state.data.notify_user_of_achievement(user_id, Achievement::VotedOnPoll);
+                    state.notify_user_of_achievement(user_id, Achievement::VotedOnPoll, now);
                 }
             }
 

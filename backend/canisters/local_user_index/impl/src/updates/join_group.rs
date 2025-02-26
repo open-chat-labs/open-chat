@@ -64,6 +64,7 @@ fn commit(
     state: &mut RuntimeState,
 ) {
     let local_user_index_canister_id = state.env.canister_id();
+    let now = state.env.now();
 
     if state.data.local_users.get(&user_id).is_some() {
         state.push_event_to_user(
@@ -74,16 +75,18 @@ fn commit(
                 latest_message_index,
                 group_canister_timestamp,
             })),
+            now,
         );
     } else {
-        state.push_event_to_user_index(UserIndexEvent::UserJoinedGroup(Box::new(
-            user_index_canister::UserJoinedGroup {
+        state.push_event_to_user_index(
+            UserIndexEvent::UserJoinedGroup(Box::new(user_index_canister::UserJoinedGroup {
                 user_id,
                 chat_id,
                 local_user_index_canister_id,
                 latest_message_index,
                 group_canister_timestamp,
-            },
-        )));
+            })),
+            now,
+        );
     }
 }

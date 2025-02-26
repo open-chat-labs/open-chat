@@ -11,6 +11,7 @@ pub mod file_id;
 pub mod format;
 pub mod git;
 pub mod hasher;
+pub mod idempotency_checker;
 pub mod iterator_extensions;
 pub mod memory;
 pub mod mentions;

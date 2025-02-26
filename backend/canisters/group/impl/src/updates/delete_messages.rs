@@ -97,7 +97,7 @@ fn delete_messages_impl(user_id: UserId, is_bot: bool, args: Args, state: &mut R
             }
 
             if args.new_achievement && !is_bot {
-                state.data.notify_user_of_achievement(user_id, Achievement::DeletedMessage);
+                state.notify_user_of_achievement(user_id, Achievement::DeletedMessage, now);
             }
 
             handle_activity_notification(state);

@@ -29,13 +29,13 @@ async fn join_community(args: Args) -> Response {
         Ok(response) => match response {
             community_canister::c2c_join_community::Response::Success(s) => {
                 if !is_bot {
-                    mutate_state(|state| state.notify_user_joined_community(user_details.user_id, &s));
+                    mutate_state(|state| state.notify_user_joined_community(user_details.user_id, &s, state.env.now()));
                 }
                 Success(s)
             }
             community_canister::c2c_join_community::Response::AlreadyInCommunity(s) => {
                 if !is_bot {
-                    mutate_state(|state| state.notify_user_joined_community(user_details.user_id, &s));
+                    mutate_state(|state| state.notify_user_joined_community(user_details.user_id, &s, state.env.now()));
                 }
                 AlreadyInCommunity(s)
             }

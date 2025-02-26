@@ -18,6 +18,6 @@ fn block_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let now = state.env.now();
-    state.data.block_user(args.user_id, now);
+    state.block_user(args.user_id, now);
     Success
 }

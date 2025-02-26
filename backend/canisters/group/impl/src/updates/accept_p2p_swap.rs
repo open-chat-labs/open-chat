@@ -33,10 +33,9 @@ async fn accept_p2p_swap(args: Args) -> Response {
             );
 
             mutate_state(|state| {
+                let now = state.env.now();
                 if new_achievement {
-                    state
-                        .data
-                        .notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer);
+                    state.notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer, now);
                 }
 
                 if let Some((message, event_index)) =
@@ -53,7 +52,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                         .get(&message.sender)
                         .is_some_and(|m| !m.user_type().is_bot())
                     {
-                        state.data.user_event_sync_queue.push(
+                        state.push_event_to_user(
                             message.sender,
                             GroupCanisterEvent::MessageActivity(MessageActivityEvent {
                                 chat: Chat::Group(state.env.canister_id().into()),
@@ -62,9 +61,10 @@ async fn accept_p2p_swap(args: Args) -> Response {
                                 message_id: message.message_id,
                                 event_index,
                                 activity: MessageActivity::P2PSwapAccepted,
-                                timestamp: state.env.now(),
+                                timestamp: now,
                                 user_id: Some(user_id),
                             }),
+                            now,
                         );
                     }
                 }

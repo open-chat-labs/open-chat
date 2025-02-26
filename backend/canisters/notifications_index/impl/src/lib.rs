@@ -5,16 +5,20 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, SubscriptionRemoved};
 use principal_to_user_id_map::PrincipalToUserIdMap;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use timer_job_queues::GroupedTimerJobQueue;
-use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, SubscriptionInfo, TimestampMillis, Timestamped, UserId};
+use types::{
+    BuildVersion, CanisterId, CanisterWasm, Cycles, IdempotentEnvelope, SubscriptionInfo, TimestampMillis, Timestamped, UserId,
+};
 use user_ids_set::UserIdsSet;
 use utils::canister::CanistersRequiringUpgrade;
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
 mod jobs;
@@ -57,34 +61,34 @@ impl RuntimeState {
         self.data.push_service_principals.contains(&self.env.caller())
     }
 
-    pub fn add_subscription(&mut self, user_id: UserId, subscription: SubscriptionInfo) {
+    pub fn add_subscription(&mut self, user_id: UserId, subscription: SubscriptionInfo, now: TimestampMillis) {
         let subscriptions_removed = self.data.subscriptions.push(user_id, subscription.clone());
 
         let event = NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded { user_id, subscription });
 
-        self.push_event_to_notifications_canisters(event);
+        self.push_event_to_notifications_canisters(event, now);
 
         for p256dh_key in subscriptions_removed {
             let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved { user_id, p256dh_key });
 
-            self.push_event_to_notifications_canisters(event);
+            self.push_event_to_notifications_canisters(event, now);
         }
     }
 
-    pub fn remove_subscription(&mut self, user_id: UserId, p256dh_key: String) {
+    pub fn remove_subscription(&mut self, user_id: UserId, p256dh_key: String, now: TimestampMillis) {
         self.data.subscriptions.remove(user_id, &p256dh_key);
 
         let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved { user_id, p256dh_key });
 
-        self.push_event_to_notifications_canisters(event);
+        self.push_event_to_notifications_canisters(event, now);
     }
 
-    pub fn remove_all_subscriptions(&mut self, user_id: UserId) {
+    pub fn remove_all_subscriptions(&mut self, user_id: UserId, now: TimestampMillis) {
         self.data.subscriptions.remove_all(user_id);
 
         let event = NotificationsIndexEvent::AllSubscriptionsRemoved(user_id);
 
-        self.push_event_to_notifications_canisters(event);
+        self.push_event_to_notifications_canisters(event, now);
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -114,11 +118,16 @@ impl RuntimeState {
         }
     }
 
-    fn push_event_to_notifications_canisters(&mut self, event: NotificationsIndexEvent) {
+    pub fn push_event_to_notifications_canisters(&mut self, event: NotificationsIndexEvent, now: TimestampMillis) {
         for canister_id in self.data.notifications_canisters.keys().copied() {
-            self.data
-                .notification_canisters_event_sync_queue
-                .push(canister_id, event.clone());
+            self.data.notification_canisters_event_sync_queue.push(
+                canister_id,
+                IdempotentEnvelope {
+                    created_at: now,
+                    idempotency_id: self.env.rng().next_u64(),
+                    value: event.clone(),
+                },
+            );
         }
     }
 }
@@ -142,6 +151,8 @@ struct Data {
     pub notification_canisters_event_sync_queue: GroupedTimerJobQueue<NotificationCanistersEventBatch>,
     #[serde(default = "blocked_users")]
     pub blocked_users: UserIdsSet,
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -179,6 +190,7 @@ impl Data {
             notifications_index_event_sync_queue: CanisterEventSyncQueue::default(),
             notification_canisters_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
+            idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode,
         }

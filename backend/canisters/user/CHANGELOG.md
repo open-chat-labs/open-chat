@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
+
 ### Changed
 
 - Allow overriding the fee when withdrawing from ICPSwap ([#7314](https://github.com/open-chat-labs/open-chat/pull/7314))

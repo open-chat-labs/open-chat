@@ -20,7 +20,7 @@ use user_canister::{
     MessageActivity, MessageActivityEvent, P2PSwapStatusChange, SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent,
 };
 
-#[update(msgpack = true)]
+#[update(msgpack = true, fallback = true)]
 #[trace]
 async fn c2c_notify_user_canister_events(args: Args) -> Response {
     run_regular_jobs();
@@ -41,8 +41,15 @@ async fn c2c_notify_user_canister_events(args: Args) -> Response {
 }
 
 fn c2c_notify_user_canister_events_impl(args: Args, caller_user_id: UserId, state: &mut RuntimeState) -> Response {
+    let caller = caller_user_id.into();
     for event in args.events {
-        process_event(event, caller_user_id, state);
+        if state
+            .data
+            .idempotency_checker
+            .check(caller, event.created_at, event.idempotency_id)
+        {
+            process_event(event.value, caller_user_id, state);
+        }
     }
     Success
 }
@@ -63,7 +70,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             }
 
             if awarded {
-                state.data.notify_user_index_of_chit(now);
+                state.notify_user_index_of_chit(now);
             }
 
             send_messages(*args, caller_user_id, state);
@@ -138,7 +145,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             }
 
             if rewarded {
-                state.data.notify_user_index_of_chit(now);
+                state.notify_user_index_of_chit(now);
             }
         }
     }
@@ -313,7 +320,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                     );
                 }
 
-                state.data.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
+                state.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
             }
         } else {
             chat.events.remove_reaction(add_remove_reaction_args);
@@ -410,7 +417,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 );
             }
 
-            state.data.award_achievement_and_notify(Achievement::HadMessageTipped, now);
+            state.award_achievement_and_notify(Achievement::HadMessageTipped, now);
         }
     }
 }

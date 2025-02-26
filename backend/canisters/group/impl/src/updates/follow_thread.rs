@@ -30,7 +30,7 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
     match state.data.chat.follow_thread(user_id, args.thread_root_message_index, now) {
         FollowThreadResult::Success => {
             if args.new_achievement && !is_bot {
-                state.data.notify_user_of_achievement(user_id, Achievement::FollowedThread);
+                state.notify_user_of_achievement(user_id, Achievement::FollowedThread, now);
             }
 
             state.data.mark_group_updated_in_user_canister(user_id);

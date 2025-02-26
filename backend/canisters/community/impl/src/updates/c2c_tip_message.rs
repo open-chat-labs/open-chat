@@ -54,20 +54,16 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         if let Some(sender) = channel.chat.members.get(&message.sender) {
                             if message.sender != user_id && !sender.user_type().is_bot() {
                                 let community_id = state.env.canister_id().into();
-
-                                state.data.user_event_sync_queue.push(
-                                    message.sender,
-                                    CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
-                                        chat: Chat::Channel(community_id, channel.id),
-                                        thread_root_message_index: args.thread_root_message_index,
-                                        message_index: message.message_index,
-                                        message_id: message.message_id,
-                                        event_index,
-                                        activity: MessageActivity::Tip,
-                                        timestamp: now,
-                                        user_id: Some(user_id),
-                                    }),
-                                );
+                                let event = CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                                    chat: Chat::Channel(community_id, channel.id),
+                                    thread_root_message_index: args.thread_root_message_index,
+                                    message_index: message.message_index,
+                                    message_id: message.message_id,
+                                    event_index,
+                                    activity: MessageActivity::Tip,
+                                    timestamp: now,
+                                    user_id: Some(user_id),
+                                });
 
                                 let notification = Notification::ChannelMessageTipped(ChannelMessageTipped {
                                     community_id,
@@ -88,11 +84,10 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                                     community_avatar_id: state.data.avatar.as_ref().map(|a| a.id),
                                     channel_avatar_id: channel.chat.avatar.as_ref().map(|a| a.id),
                                 });
-                                state.push_notification(Some(user_id), vec![message.sender], notification);
 
-                                state
-                                    .data
-                                    .notify_user_of_achievement(message.sender, Achievement::HadMessageTipped);
+                                state.push_notification(Some(user_id), vec![message.sender], notification);
+                                state.push_event_to_user(message.sender, event, now);
+                                state.notify_user_of_achievement(message.sender, Achievement::HadMessageTipped, now);
                             }
                         }
                     }

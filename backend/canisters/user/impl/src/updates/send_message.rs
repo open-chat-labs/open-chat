@@ -497,9 +497,7 @@ fn send_message_impl(
             );
         }
 
-        state
-            .data
-            .award_achievements_and_notify(message_event.event.achievements(true, false), now);
+        state.award_achievements_and_notify(message_event.event.achievements(true, false), now);
     }
 
     register_timer_jobs(

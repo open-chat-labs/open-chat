@@ -29,7 +29,7 @@ fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     state.data.avatar = Timestamped::new(args.avatar, now);
 
-    state.data.award_achievement_and_notify(Achievement::SetAvatar, now);
+    state.award_achievement_and_notify(Achievement::SetAvatar, now);
 
     ic_cdk::spawn(update_index_canister(state.data.user_index_canister_id, id));
 
