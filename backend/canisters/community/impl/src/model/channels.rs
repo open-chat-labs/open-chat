@@ -340,7 +340,14 @@ impl Channel {
     }
 
     pub fn last_updated(&self, user_id: Option<UserId>) -> TimestampMillis {
-        max(self.chat.last_updated(user_id), self.date_imported.unwrap_or_default())
+        [
+            self.chat.last_updated(user_id),
+            self.date_imported.unwrap_or_default(),
+            self.bot_api_keys.last_updated(),
+        ]
+        .into_iter()
+        .max()
+        .unwrap()
     }
 
     pub fn summary_updates(

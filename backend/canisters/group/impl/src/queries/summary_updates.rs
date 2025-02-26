@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use crate::{read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::query;
@@ -32,7 +30,14 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
     };
 
     let chat = &state.data.chat;
-    let chat_last_updated = max(chat.last_updated(Some(member.user_id())), state.data.verified.timestamp);
+    let chat_last_updated = [
+        chat.last_updated(Some(member.user_id())),
+        state.data.verified.timestamp,
+        state.data.bot_api_keys.last_updated(),
+    ]
+    .into_iter()
+    .max()
+    .unwrap();
 
     if chat_last_updated <= updates_since {
         return SuccessNoUpdates;
