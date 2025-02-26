@@ -36,6 +36,16 @@ describe("nullish utils", () => {
             expect(deepRemoveNullishFields(value)).toEqual(expected);
         });
 
+        test("variants where the value is undefined are not deleted", () => {
+            const value = {
+                Success: undefined
+            };
+            const expected = {
+                Success: undefined
+            };
+            expect(deepRemoveNullishFields(value)).toStrictEqual(expected);
+        })
+
         test("nullish fields are removed from objects in arrays", () => {
             const value = [1, true, { a: null, b: 2 }, { c: undefined }];
             const expected = [1, true, { b: 2 }, { }];

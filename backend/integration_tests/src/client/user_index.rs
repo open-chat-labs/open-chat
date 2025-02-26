@@ -298,6 +298,7 @@ pub mod happy_path {
                 avatar: None,
                 endpoint,
                 definition,
+                permitted_install_location: None,
             },
         );
 
@@ -377,6 +378,7 @@ pub mod happy_path {
             sender,
             user_index_canister_id,
             &user_index_canister::explore_bots::Args {
+                installation_location: None,
                 search_term,
                 page_index: 0,
                 page_size: 10,

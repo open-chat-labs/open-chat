@@ -57,6 +57,7 @@ import { blockedUsers } from "./blockedUsers";
 import { createLsBoolStore } from "./localStorageSetting";
 import { configKeys } from "../utils/config";
 import { recentlySentMessagesStore } from "./recentlySentMessages";
+import { ephemeralMessages } from "./ephemeralMessages";
 
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
@@ -351,6 +352,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         currentChatBlockedOrSuspendedUsers,
         currentUserIdStore,
         messageFiltersStore,
+        ephemeralMessages,
     ],
     ([
         summaries,
@@ -362,6 +364,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         blockedOrSuspendedUsers,
         $currentUserId,
         $messageFilters,
+        $ephemeralMessages,
     ]) => {
         const mergedSummaries = mergeLocalSummaryUpdates(
             currentScope,
@@ -384,6 +387,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
                         blockedOrSuspendedUsers,
                         $currentUserId,
                         $messageFilters,
+                        [...($ephemeralMessages.get({ chatId })?.values() ?? [])],
                     ),
                 );
                 return result;
@@ -561,6 +565,7 @@ export const threadEvents = derived(
         currentUserIdStore,
         messageFiltersStore,
         recentlySentMessagesStore,
+        ephemeralMessages,
     ],
     ([
         $serverEvents,
@@ -574,6 +579,7 @@ export const threadEvents = derived(
         $currentUserId,
         $messageFilters,
         $recentlySentMessagesStore,
+        $ephemeralMessages,
     ]) => {
         if ($messageContext === undefined || $messageContext.threadRootMessageIndex === undefined)
             return [];
@@ -582,9 +588,10 @@ export const threadEvents = derived(
               Object.values($failedMessages.get($messageContext)!)
             : [];
         const unconfirmed = $unconfirmed.get($messageContext)?.messages ?? [];
+        const ephemeral = [...($ephemeralMessages.get($messageContext)?.values() ?? [])];
         return mergeEventsAndLocalUpdates(
             $serverEvents,
-            [...unconfirmed, ...failed],
+            [...unconfirmed, ...failed, ...ephemeral],
             $localUpdates,
             new DRange(),
             $proposalTallies,
@@ -745,6 +752,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         currentUserIdStore,
         messageFiltersStore,
         recentlySentMessagesStore,
+        ephemeralMessages,
     ],
     ([
         $serverEventsForSelectedChat,
@@ -758,15 +766,17 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $currentUserId,
         $messageFilters,
         $recentlySentMessagesStore,
+        $ephemeralMessages,
     ]) => {
         const chatId = get(selectedChatId) ?? { kind: "group_chat", groupId: "" };
         const failedForChat = $failedMessages.get({ chatId });
         // for the purpose of merging, unconfirmed and failed can be treated the same
         const failed = failedForChat ? Object.values(failedForChat) : [];
         const unconfirmed = $unconfirmed.get({ chatId })?.messages ?? [];
+        const ephemeral = [...($ephemeralMessages.get({ chatId })?.values() ?? [])];
         return mergeEventsAndLocalUpdates(
             $serverEventsForSelectedChat,
-            [...unconfirmed, ...failed],
+            [...unconfirmed, ...failed, ...ephemeral],
             $localMessageUpdates,
             $expiredEventRanges,
             $proposalTallies,

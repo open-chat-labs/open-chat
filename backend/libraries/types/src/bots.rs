@@ -251,6 +251,14 @@ pub struct BotCommand {
     pub name: String,
     pub args: Vec<BotCommandArg>,
     pub initiator: UserId,
+    pub meta: Option<BotCommandMeta>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct BotCommandMeta {
+    pub timezone: String, // IANA timezone e.g. "Europe/London"
+    pub language: String, // The language selected in OpenChat e.g. "en"
 }
 
 #[ts_export]
@@ -272,7 +280,7 @@ pub enum BotCommandArgValue {
 }
 
 #[ts_export]
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BotInstallationLocation {
     Community(CommunityId),
     Group(ChatId),
@@ -384,6 +392,12 @@ pub struct EncodedBotPermissions {
     message: Option<u32>,
 }
 
+impl From<BotPermissions> for EncodedBotPermissions {
+    fn from(permissions: BotPermissions) -> Self {
+        EncodedBotPermissions::from(&permissions)
+    }
+}
+
 impl From<&BotPermissions> for EncodedBotPermissions {
     fn from(permissions: &BotPermissions) -> Self {
         fn encode<T: Into<u8> + Copy>(field: &HashSet<T>) -> Option<u32> {
@@ -404,6 +418,12 @@ impl From<&BotPermissions> for EncodedBotPermissions {
 
 impl From<EncodedBotPermissions> for BotPermissions {
     fn from(permissions: EncodedBotPermissions) -> Self {
+        BotPermissions::from(&permissions)
+    }
+}
+
+impl From<&EncodedBotPermissions> for BotPermissions {
+    fn from(permissions: &EncodedBotPermissions) -> Self {
         fn decode<T: TryFrom<u8> + Copy + Eq + Hash>(field: Option<u32>) -> HashSet<T> {
             field
                 .map(decode_from_bitflags)
@@ -419,4 +439,13 @@ impl From<EncodedBotPermissions> for BotPermissions {
             message: decode(permissions.message),
         }
     }
+}
+
+// TODO remove default after release - currently useful for migration
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub enum BotRegistrationStatus {
+    #[default]
+    Public,
+    Private(Option<BotInstallationLocation>),
 }

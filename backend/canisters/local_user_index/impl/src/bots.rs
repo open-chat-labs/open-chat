@@ -22,7 +22,7 @@ pub fn extract_access_context(auth_token: &AuthToken, state: &mut RuntimeState) 
     };
 
     let user = User {
-        user_id: bot.user_id,
+        user_id: bot.bot_id,
         username: bot.name.clone(),
     };
 
@@ -77,7 +77,7 @@ fn extract_access_context_from_jwt(jwt: &str, bot: &User, state: &mut RuntimeSta
             (
                 exp,
                 scope,
-                BotInitiator::ApiKeyPermissions(bot_action_claims.granted_permissions),
+                BotInitiator::ApiKeyPermissions(bot_action_claims.granted_permissions.into()),
                 bot_action_claims.bot,
             )
         } else {

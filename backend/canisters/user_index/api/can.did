@@ -26,11 +26,17 @@ type BotUpdatesResponse = variant {
             commands : vec BotCommandDefinition;
             autonomous_config : opt AutonomousConfig;
             last_updated : TimestampMillis;
+            registration_status : BotRegistrationStatus;
         };
         removed : vec UserId;
         timestamp : TimestampMillis;
     };
     SuccessNoUpdates;
+};
+
+type BotRegistrationStatus = variant {
+    Private : opt BotInstallationLocation;
+    Public;
 };
 
 type CheckUsernameArgs = record {
@@ -97,6 +103,7 @@ type UsersResponse = variant {
 };
 
 type ExploreBotsArgs = record {
+    installation_location : opt BotInstallationLocation;
     search_term : opt text;
     page_index : nat32;
     page_size : nat8;
@@ -158,17 +165,13 @@ type DiamondMembershipFeesResponse = variant {
     };
 };
 
-type RegisterBotArgs = record {
-    "principal" : principal;
-    owner : UserId;
-    name : text;
-    avatar : opt text;
-    endpoint : text;
-    definition : BotDefinition;
+type PublishBotArgs = record {
+    bot_id : UserId;
 };
 
-type RegisterBotResponse = variant {
+type PublishBotResponse = variant {
     Success;
+    NotFound;
 };
 
 type UpdateBotArgs = record {
@@ -345,7 +348,7 @@ service : {
     users : (UsersArgs) -> (UsersResponse) query;
 
     // Only callable by SNS governance canister
-    register_bot : (RegisterBotArgs) -> (RegisterBotResponse);
+    publish_bot: (PublishBotArgs) -> (PublishBotResponse);
     register_external_achievement : (RegisterExternalAchievementArgs) -> (RegisterExternalAchievementResponse);
 
     // Only callable by whitelisted canisters

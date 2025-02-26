@@ -11,6 +11,9 @@ fn explore_bots(args: Args) -> Response {
 }
 
 fn explore_bots_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    let user_id = state.data.users.get_by_principal(&caller).map(|user| user.user_id);
+
     if let Some(term_length) = args.search_term.as_ref().map(|st| st.len() as u8) {
         if term_length < MIN_TERM_LENGTH {
             return TermTooShort(MIN_TERM_LENGTH);
@@ -21,10 +24,13 @@ fn explore_bots_impl(args: Args, state: &RuntimeState) -> Response {
         }
     }
 
-    let (matches, total) = state
-        .data
-        .users
-        .search_bots(args.search_term, args.page_index, args.page_size);
+    let (matches, total) = state.data.users.search_bots(
+        args.search_term,
+        args.page_index,
+        args.page_size,
+        user_id,
+        args.installation_location,
+    );
 
     Success(SuccessResult { matches, total })
 }
