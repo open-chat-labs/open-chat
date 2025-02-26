@@ -38,7 +38,7 @@ impl IdempotencyChecker {
         // If `created_at` for this new message is later than for the latest already processed
         // message, then bump `latest_created_at` and clear the set of `idempotency_ids` since they
         // were only relevant for the previous `created_at` value.
-        if checker.latest_created_at > created_at {
+        if created_at > checker.latest_created_at {
             checker.idempotency_ids.clear();
             checker.latest_created_at = created_at;
         }
