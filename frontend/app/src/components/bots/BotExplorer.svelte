@@ -15,7 +15,7 @@
     const PAGE_SIZE = 50;
 
     interface Props {
-        location: BotInstallationLocation;
+        location?: BotInstallationLocation;
         onSelect: (match: ExternalBotLike | undefined) => void;
         fill?: boolean;
         maxHeight?: string;
