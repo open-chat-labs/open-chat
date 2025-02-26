@@ -217,7 +217,7 @@
             on:imageSelected={botAvatarSelected} />
     </div>
 
-    {#if candidate.registrationStatus.kind === "private"}
+    {#if candidate.registrationStatus.kind === "private" && mode === "register"}
         <InstallationLocationSelector bind:location={candidate.registrationStatus.location} />
     {/if}
 

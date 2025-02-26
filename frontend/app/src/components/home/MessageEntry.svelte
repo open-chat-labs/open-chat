@@ -295,6 +295,8 @@
             } else if (directChatBotId && !commandSent && $selectedCommand === undefined) {
                 e.preventDefault();
                 showDirectBotChatWarning = true;
+            } else if (directChatBotId && commandSent) {
+                e.preventDefault();
             }
             commandSent = false;
         }
