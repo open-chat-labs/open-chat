@@ -135,7 +135,6 @@ export function botSchema(
     canisterId: string,
 ): ExternalBot {
     const botId = principalBytesToString(bot.id);
-    const x = botRegistrationStatus(bot.registration_status);
     return {
         kind: "external_bot",
         id: botId,

@@ -253,6 +253,8 @@
             "principalRules": "Dies ist die CanisterID für einen Onchain-Bot",
             "required": "Erforderlicher Parameter",
             "requiredDesc": "Ist dies ein erforderlicher Parameter für den Befehl",
+            "testContext": "Testkontext",
+            "testContextInfo": "Wählen Sie einen Testkontext aus, bei dem dieser Bot registriert werden soll",
             "title": "Einen Bot erstellen",
             "uptoN": "bis zu {n}"
         },

@@ -253,10 +253,10 @@
             "principalRules": "This will be the canisterID for an onchain bot",
             "required": "Required parameter",
             "requiredDesc": "Is this a required parameter for the command",
-            "title": "Register a bot",
-            "uptoN": "up to {n}",
             "testContext": "Test context",
-            "testContextInfo": "Select a test context to register this bot with"
+            "testContextInfo": "Select a test context to register this bot with",
+            "title": "Register a bot",
+            "uptoN": "up to {n}"
         },
         "builtin": {
             "desc": "This bot provides the built in OpenChat commands",

@@ -253,6 +253,8 @@
             "principalRules": "Đây sẽ là canisterID cho một bot onchain",
             "required": "Tham số bắt buộc",
             "requiredDesc": "Đây có phải là tham số bắt buộc cho lệnh không?",
+            "testContext": "Bối cảnh thử nghiệm",
+            "testContextInfo": "Chọn một bối cảnh thử nghiệm để đăng ký bot này",
             "title": "Xây dựng một bot",
             "uptoN": "lên đến {n}"
         },

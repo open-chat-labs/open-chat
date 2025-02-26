@@ -218,8 +218,7 @@
     </div>
 
     {#if candidate.registrationStatus.kind === "private"}
-        <InstallationLocationSelector
-            bind:location={candidate.registrationStatus.installLocation} />
+        <InstallationLocationSelector bind:location={candidate.registrationStatus.location} />
     {/if}
 
     <Legend

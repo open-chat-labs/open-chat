@@ -253,6 +253,8 @@
             "principalRules": "این شناسه canister برای یک ربات onchain خواهد بود",
             "required": "پارامتر مورد نیاز",
             "requiredDesc": "آیا این یک پارامتر لازم برای دستور است؟",
+            "testContext": "زمینه تست",
+            "testContextInfo": "یک زمینه آزمایشی برای ثبت این ربات انتخاب کنید",
             "title": "یک ربات بسازید",
             "uptoN": "تا {n}"
         },

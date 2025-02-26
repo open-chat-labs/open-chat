@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         i18nKey,
+        type BotInstallationLocation,
         type BotMatch as BotMatchType,
         type ExternalBotLike,
         type OpenChat,
@@ -14,13 +15,14 @@
     const PAGE_SIZE = 50;
 
     interface Props {
+        location: BotInstallationLocation;
         onSelect: (match: ExternalBotLike | undefined) => void;
         fill?: boolean;
         maxHeight?: string;
         installingBot?: BotMatchType | undefined;
     }
 
-    let { onSelect, fill = false, maxHeight, installingBot }: Props = $props();
+    let { location, onSelect, fill = false, maxHeight, installingBot }: Props = $props();
 
     let initialised = $state(false);
 
@@ -36,6 +38,7 @@
                 botSearchState.term === "" ? undefined : botSearchState.term,
                 botSearchState.index,
                 PAGE_SIZE,
+                location,
             )
             .then((results) => {
                 console.log("Results: ", results);

@@ -5140,17 +5140,14 @@ export class OpenChat extends EventTarget {
         searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number,
+        location?: BotInstallationLocation,
     ): Promise<ExploreBotsResponse> {
-        // return Promise.resolve({
-        //     kind: "success",
-        //     matches: testMatches,
-        //     total: 2,
-        // });
         return this.#sendRequest({
             kind: "exploreBots",
             searchTerm,
             pageIndex,
             pageSize,
+            location,
         });
     }
 

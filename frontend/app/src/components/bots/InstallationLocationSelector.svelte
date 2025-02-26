@@ -6,6 +6,7 @@
         type BotInstallationLocation,
         type CommunityMatch,
         type GroupMatch,
+        type UserSummary,
     } from "openchat-client";
     import Legend from "../Legend.svelte";
     import Search from "../Search.svelte";
@@ -23,7 +24,7 @@
         avatarUrl: string;
         name: string;
         id: string;
-        entity: CommunityMatch | GroupMatch;
+        entity: CommunityMatch | GroupMatch | UserSummary;
     };
 
     interface Props {
@@ -42,16 +43,25 @@
         if (term === "") {
             reset(true);
         } else {
-            const [communities, groups] = await Promise.all([
+            const [communities, groups, users] = await Promise.all([
                 searchCommunities(term),
                 searchGroups(term),
+                searchUsers(term),
             ]);
-            results = [...communities, ...groups];
+            results = [...communities, ...groups, ...users];
         }
     }
 
-    function normalise(thing: CommunityMatch | GroupMatch): Match {
+    function normalise(thing: CommunityMatch | GroupMatch | UserSummary): Match {
         switch (thing.kind) {
+            case "user":
+            case "bot":
+                return {
+                    avatarUrl: client.userAvatarUrl(thing),
+                    name: client.displayName(thing),
+                    id: thing.userId,
+                    entity: thing,
+                };
             case "community_match":
                 return {
                     avatarUrl: client.communityAvatarUrl(thing.id.communityId, thing.avatar),
@@ -70,6 +80,10 @@
                     entity: thing,
                 };
         }
+    }
+
+    function searchUsers(term: string): Promise<Match[]> {
+        return client.searchUsers(term, PAGE_SIZE).then((users) => users.map(normalise));
     }
 
     function searchCommunities(term: string): Promise<Match[]> {
@@ -97,6 +111,9 @@
                 case "group_match":
                     location = { kind: "group_chat", groupId: match.id };
                     break;
+                case "user":
+                case "bot":
+                    location = { kind: "direct_chat", userId: match.id };
             }
         }
     }
@@ -115,7 +132,7 @@
         label={i18nKey("bots.builder.testContext")}
         rules={i18nKey("bots.builder.testContextInfo")}></Legend>
     {#if selected !== undefined}
-        <SelectedMatch onRemove={() => reset(true)} match={selected.entity}></SelectedMatch>
+        <SelectedMatch onRemove={() => reset(true)} match={selected}></SelectedMatch>
     {:else}
         <Search inputStyle fill {placeholder} {searching} {searchTerm} {onPerformSearch} />
     {/if}
@@ -129,7 +146,20 @@
                             <Avatar url={match.avatarUrl} size={AvatarSize.Small} />
                         {/snippet}
                         {#snippet text()}
-                            {match.name}
+                            <div class="details">
+                                <div class="name">
+                                    {match.name}
+                                </div>
+                                <div class="type">
+                                    {#if match.entity.kind === "community_match"}
+                                        Community
+                                    {:else if match.entity.kind === "group_match"}
+                                        Group chat
+                                    {:else if match.entity.kind === "user"}
+                                        Direct chat
+                                    {/if}
+                                </div>
+                            </div>
                         {/snippet}
                     </MenuItem>
                 {/each}
@@ -177,5 +207,10 @@
         position: absolute;
         @include z-index("popup-menu");
         box-shadow: var(--menu-sh);
+    }
+
+    .type {
+        @include font(light, normal, fs-70);
+        color: var(--txt-light);
     }
 </style>

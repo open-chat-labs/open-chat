@@ -253,6 +253,8 @@
             "principalRules": "Este será el canisterID para un bot en cadena",
             "required": "Parámetro requerido",
             "requiredDesc": "¿Es este un parámetro obligatorio para el comando?",
+            "testContext": "Contexto de prueba",
+            "testContextInfo": "Seleccione un contexto de prueba para registrar este bot",
             "title": "Construir un bot",
             "uptoN": "hasta {n}"
         },

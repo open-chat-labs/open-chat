@@ -253,6 +253,8 @@
             "principalRules": "Będzie to identyfikator kanistra dla bota onchain",
             "required": "Wymagany parametr",
             "requiredDesc": "Czy jest to wymagany parametr dla polecenia?",
+            "testContext": "Kontekst testu",
+            "testContextInfo": "Wybierz kontekst testowy, aby zarejestrować tego bota",
             "title": "Zbuduj bota",
             "uptoN": "do {n}"
         },

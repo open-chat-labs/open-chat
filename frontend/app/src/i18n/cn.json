@@ -253,6 +253,8 @@
             "principalRules": "这将是链上机器人的 canisterID",
             "required": "必需参数",
             "requiredDesc": "这是命令的必需参数吗",
+            "testContext": "测试上下文",
+            "testContextInfo": "选择要注册此机器人的测试环境",
             "title": "构建机器人",
             "uptoN": "最多 {n}"
         },

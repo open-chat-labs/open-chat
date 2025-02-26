@@ -253,6 +253,8 @@
             "principalRules": "זה יהיה ה-canisterID עבור בוט onchain",
             "required": "פרמטר נדרש",
             "requiredDesc": "האם זה פרמטר נדרש עבור הפקודה",
+            "testContext": "הקשר בדיקה",
+            "testContextInfo": "בחר הקשר לבדיקה כדי לרשום את הבוט הזה איתו",
             "title": "בנה בוט",
             "uptoN": "עד {n}"
         },

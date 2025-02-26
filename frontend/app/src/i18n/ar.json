@@ -253,6 +253,8 @@
             "principalRules": "سيكون هذا هو canisterID لروبوت onchain",
             "required": "المعلمة المطلوبة",
             "requiredDesc": "هل هذه معلمة مطلوبة للأمر",
+            "testContext": "سياق الاختبار",
+            "testContextInfo": "حدد سياق الاختبار لتسجيل هذا الروبوت به",
             "title": "بناء بوت",
             "uptoN": "حتى {n}"
         },
