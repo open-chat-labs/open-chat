@@ -8117,7 +8117,13 @@ export class OpenChat extends EventTarget {
                 accessTokenType: {
                     kind: "bot_action_by_command",
                     botId: bot.id,
-                    scope,
+                    scope:
+                        scope.kind === "chat_scope" && scope.chatId.kind === "direct_chat"
+                            ? {
+                                  ...scope,
+                                  chatId: { ...scope.chatId, userId: this.#liveState.user.userId },
+                              }
+                            : scope,
                     command: {
                         initiator: this.#liveState.user.userId,
                         commandName: bot.command.name,

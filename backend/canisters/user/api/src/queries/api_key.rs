@@ -2,13 +2,13 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::UserId;
 
-#[ts_export(group, api_key)]
+#[ts_export(user, api_key)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub bot_id: UserId,
 }
 
-#[ts_export(group, api_key)]
+#[ts_export(user, api_key)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(String),

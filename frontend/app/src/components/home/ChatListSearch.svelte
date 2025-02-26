@@ -103,14 +103,9 @@
         return 0;
     }
 
-    // TODO - this is temporary
-    function filterOutBots(a: UserSummary | BotMatch): boolean {
-        return a.kind === "user";
-    }
-
     async function userAndBotSearch(term: string) {
         userAndBotsSearchResults = Promise.all([searchUsers(term), searchBots(term)]).then(
-            ([users, bots]) => [...users, ...bots].filter(filterOutBots).sort(sortUsersOrBots),
+            ([users, bots]) => [...users, ...bots].sort(sortUsersOrBots),
         );
         await userAndBotsSearchResults.then(postSearch);
     }
