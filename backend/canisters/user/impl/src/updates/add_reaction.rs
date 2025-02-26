@@ -55,7 +55,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                     })),
                 );
 
-                state.data.award_achievement_and_notify(Achievement::ReactedToMessage, now);
+                state.award_achievement_and_notify(Achievement::ReactedToMessage, now);
 
                 Success
             }

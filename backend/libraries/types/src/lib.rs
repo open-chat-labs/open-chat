@@ -49,6 +49,7 @@ mod group_match;
 mod group_member;
 mod group_roles;
 mod http;
+mod idempotency;
 mod indexed_event;
 mod mention;
 mod message;
@@ -125,6 +126,7 @@ pub use group_match::*;
 pub use group_member::*;
 pub use group_roles::*;
 pub use http::*;
+pub use idempotency::*;
 pub use indexed_event::*;
 pub use mention::*;
 pub use message::*;
@@ -202,4 +204,8 @@ pub enum ResultLowercase<T, E> {
 
 pub fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     *value == Default::default()
+}
+
+pub trait Fallback: Sized {
+    type FallbackType: Into<Self>;
 }

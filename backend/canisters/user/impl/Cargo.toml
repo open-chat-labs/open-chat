@@ -48,6 +48,7 @@ icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_led
 icrc_ledger_canister = { path = "../../../external_canisters/icrc_ledger/api" }
 icrc-ledger-types = { workspace = true }
 identity_utils = { path = "../../../libraries/identity_utils" }
+installed_bots = { path = "../../../libraries/installed_bots" }
 itertools = { workspace = true }
 kongswap_canister = { path = "../../../external_canisters/kongswap/api" }
 kongswap_canister_c2c_client = { path = "../../../external_canisters/kongswap/c2c_client" }

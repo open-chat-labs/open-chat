@@ -48,7 +48,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
             RegisterPollVoteResult::Success(votes, creator) => {
                 if creator != user_id {
                     if args.new_achievement && !is_bot {
-                        state.data.notify_user_of_achievement(user_id, Achievement::VotedOnPoll);
+                        state.notify_user_of_achievement(user_id, Achievement::VotedOnPoll, now);
                     }
 
                     if let Some((message, event_index)) = state.data.chat.events.message_internal(
@@ -57,7 +57,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
                         args.message_index.into(),
                     ) {
                         if state.data.chat.members.get(&creator).is_some_and(|m| !m.user_type().is_bot()) {
-                            state.data.user_event_sync_queue.push(
+                            state.push_event_to_user(
                                 creator,
                                 GroupCanisterEvent::MessageActivity(MessageActivityEvent {
                                     chat: Chat::Group(state.env.canister_id().into()),
@@ -69,6 +69,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
                                     timestamp: now,
                                     user_id: matches!(votes.total, TotalVotes::Visible(_)).then_some(user_id),
                                 }),
+                                now,
                             );
                         }
                     }

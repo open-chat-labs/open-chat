@@ -9,9 +9,12 @@ export function deepRemoveNullishFields(value: unknown, depth = 0): unknown {
     } else if (typeof value === "object") {
         for (const [k, v] of Object.entries(value)) {
             if (v == null) {
-                // Temp hack to handle `Result<(), E>` responses which are returned as `{ Ok: null }`
-                if (k !== "Ok") {
+                // Delete the key if it is a field (lower case name), else set it to
+                // undefined if it is a variant name (upper case name).
+                if (k[0].toUpperCase() !== k[0]) {
                     delete (value as Record<string, unknown>)[k];
+                } else {
+                    (value as Record<string, unknown>)[k] = undefined;
                 }
             } else {
                 deepRemoveNullishFields(v, depth + 1);

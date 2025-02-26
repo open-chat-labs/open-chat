@@ -413,7 +413,7 @@ impl Job for ClaimChitInsuranceJob {
             let now = state.env.now();
             if let Some(insurance_claim) = state.data.streak.claim_via_insurance(now) {
                 state.mark_streak_insurance_claim(insurance_claim);
-                state.data.notify_user_index_of_chit(now);
+                state.notify_user_index_of_chit(now);
             }
         });
     }

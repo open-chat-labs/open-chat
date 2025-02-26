@@ -60,7 +60,8 @@ async fn process_user(user: UserToDelete) {
             state.data.local_users.remove(&user_id);
 
             if !user.triggered_by_user {
-                state.push_event_to_user_index(UserIndexEvent::UserDeleted(Box::new(UserDeleted { user_id })));
+                let now = state.env.now();
+                state.push_event_to_user_index(UserIndexEvent::UserDeleted(Box::new(UserDeleted { user_id })), now);
                 state.data.canister_pool.push(canister_id);
             }
         } else if user.attempt < 50 {
