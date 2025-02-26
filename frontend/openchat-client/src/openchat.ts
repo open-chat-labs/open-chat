@@ -7425,17 +7425,22 @@ export class OpenChat extends EventTarget {
         const [previews, updates] = orderedCommunities.reduce(
             ([previews, updates], c, i) => {
                 const index = orderedCommunities.length - i;
-                if (this.#liveState.communityPreviews.has(c.id)) {
-                    previews.push({
-                        ...c,
-                        membership: {
-                            ...c.membership,
-                            index,
-                        },
-                    });
-                } else if (c.membership.index !== index) {
-                    localCommunitySummaryUpdates.updateIndex({ kind: "community", communityId: c.id.communityId }, index);
-                    updates[c.id.communityId] = index;
+                if (c.membership.index !== index) {
+                    if (this.#liveState.communityPreviews.has(c.id)) {
+                        previews.push({
+                            ...c,
+                            membership: {
+                                ...c.membership,
+                                index,
+                            },
+                        });
+                    } else {
+                        localCommunitySummaryUpdates.updateIndex({
+                            kind: "community",
+                            communityId: c.id.communityId
+                        }, index);
+                        updates[c.id.communityId] = index;
+                    }
                 }
                 return [previews, updates];
             },
