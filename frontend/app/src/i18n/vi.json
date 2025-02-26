@@ -253,6 +253,9 @@
             "principalRules": "Đây sẽ là canisterID cho một bot onchain",
             "required": "Tham số bắt buộc",
             "requiredDesc": "Đây có phải là tham số bắt buộc cho lệnh không?",
+            "testContext": "Bối cảnh thử nghiệm",
+            "testContextExplanation": "Bot của bạn sẽ chỉ có thể cài đặt trong bối cảnh được chỉ định cho đến khi nó được phát hành, điều này phải được thực hiện thông qua một đề xuất.",
+            "testContextInfo": "Chọn một nhóm hoặc cộng đồng để thử nghiệm bot của bạn",
             "title": "Xây dựng một bot",
             "uptoN": "lên đến {n}"
         },

@@ -305,7 +305,7 @@
 {#if selectedTab === "users"}
     <div class="search">
         <Search
-            on:searchEntered={onSearchEntered}
+            onPerformSearch={onSearchEntered}
             searching={false}
             bind:searchTerm={searchTermEntered}
             placeholder={i18nKey("search")} />
@@ -458,7 +458,7 @@
     </div>
 {:else if selectedTab === "add-bots" && collection.kind !== "channel"}
     <div class="bot-explorer">
-        <BotExplorer {installingBot} onSelect={onBotSelected}></BotExplorer>
+        <BotExplorer location={botContainer} {installingBot} onSelect={onBotSelected}></BotExplorer>
     </div>
 {/if}
 

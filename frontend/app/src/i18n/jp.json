@@ -253,6 +253,9 @@
             "principalRules": "これはオンチェーンボットのcanisterIDになります",
             "required": "必須パラメータ",
             "requiredDesc": "これはコマンドの必須パラメータですか",
+            "testContext": "テストコンテキスト",
+            "testContextExplanation": "ボットは、公開されるまで指定されたコンテキストでのみインストール可能であり、公開は提案を通じて行う必要があります。",
+            "testContextInfo": "ボットをテストするグループまたはコミュニティを選択します",
             "title": "ボットを構築する",
             "uptoN": "{n}まで"
         },

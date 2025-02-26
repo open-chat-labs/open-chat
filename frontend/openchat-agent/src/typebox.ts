@@ -7406,7 +7406,6 @@ export const CompletedCryptoTransactionICRC2 = Type.Object({
 export type BotRegistrationStatus = Static<typeof BotRegistrationStatus>;
 export const BotRegistrationStatus = Type.Union([
     Type.Literal("Public"),
-    Type.Object({}),
     Type.Object({
         Private: Type.Union([BotInstallationLocation, Type.Null()]),
     }),

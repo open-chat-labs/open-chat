@@ -153,7 +153,7 @@
         </div>
         <div class="search">
             <Search
-                on:searchEntered={() => searchVirtualList?.reset()}
+                onPerformSearch={() => searchVirtualList?.reset()}
                 fill
                 searching={false}
                 bind:searchTerm={searchTermEntered}

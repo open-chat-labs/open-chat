@@ -9,6 +9,7 @@ function createTestBot(): ExternalBot {
         id: "bot_id",
         ownerId: "owner_id",
         endpoint: "https://my_bot",
+        registrationStatus: { kind: "public" },
         definition: {
             kind: "bot_definition",
             description: "This is a test bot",
