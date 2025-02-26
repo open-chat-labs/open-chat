@@ -25,7 +25,7 @@ async fn bot_chat_events(args_wrapper: Args) -> Response {
                     EventsContext::Channel(community_id, channel_id, args_wrapper.thread_root_message_index)
                 }
             },
-            args: args_wrapper.args,
+            args: args_wrapper.events,
             latest_known_update: None,
         },
         bot_user_id.into(),

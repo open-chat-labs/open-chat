@@ -69,7 +69,7 @@ pub enum EventsCaller {
 pub struct BotEventsCaller {
     pub bot: UserId,
     pub min_visible_event_index: EventIndex,
-    pub event_types: HashSet<ChatEventType>,
+    pub permitted_event_types: HashSet<ChatEventType>,
 }
 
 impl EventsCaller {
@@ -77,6 +77,13 @@ impl EventsCaller {
         match self {
             EventsCaller::User(user_id) => Some(*user_id),
             EventsCaller::Bot(bot_caller) => Some(bot_caller.bot),
+            _ => None,
+        }
+    }
+
+    pub fn permitted_event_types(&self) -> Option<&HashSet<ChatEventType>> {
+        match self {
+            EventsCaller::Bot(bot_caller) => Some(&bot_caller.permitted_event_types),
             _ => None,
         }
     }

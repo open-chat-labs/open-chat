@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use std::ops::DerefMut;
 use types::{
     is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated,
-    ChannelId, Chat, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal,
+    ChannelId, Chat, ChatEventType, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal,
     EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
     GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
     MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent,
@@ -149,11 +149,47 @@ impl ChatEventInternal {
             None
         }
     }
+
+    pub fn event_type(&self) -> Option<ChatEventType> {
+        match self {
+            ChatEventInternal::Message(_) => Some(ChatEventType::Message),
+            ChatEventInternal::GroupChatCreated(_)
+            | ChatEventInternal::DirectChatCreated(_)
+            | ChatEventInternal::GroupNameChanged(_)
+            | ChatEventInternal::GroupDescriptionChanged(_)
+            | ChatEventInternal::GroupRulesChanged(_)
+            | ChatEventInternal::AvatarChanged(_)
+            | ChatEventInternal::MessagePinned(_)
+            | ChatEventInternal::MessageUnpinned(_)
+            | ChatEventInternal::PermissionsChanged(_)
+            | ChatEventInternal::GroupVisibilityChanged(_)
+            | ChatEventInternal::GroupInviteCodeChanged(_)
+            | ChatEventInternal::ChatFrozen(_)
+            | ChatEventInternal::ChatUnfrozen(_)
+            | ChatEventInternal::EventsTimeToLiveUpdated(_)
+            | ChatEventInternal::GroupGateUpdated(_)
+            | ChatEventInternal::ExternalUrlUpdated(_) => Some(ChatEventType::ChatDetailsUpdated),
+            ChatEventInternal::ParticipantsAdded(_)
+            | ChatEventInternal::ParticipantsRemoved(_)
+            | ChatEventInternal::ParticipantJoined(_)
+            | ChatEventInternal::ParticipantLeft(_)
+            | ChatEventInternal::RoleChanged(_)
+            | ChatEventInternal::UsersBlocked(_)
+            | ChatEventInternal::UsersUnblocked(_)
+            | ChatEventInternal::UsersInvited(_)
+            | ChatEventInternal::MembersAddedToPublicChannel(_)
+            | ChatEventInternal::BotAdded(_)
+            | ChatEventInternal::BotRemoved(_)
+            | ChatEventInternal::BotUpdated(_) => Some(ChatEventType::MembershipUpdated),
+            ChatEventInternal::Empty | ChatEventInternal::FailedToDeserialize => None,
+        }
+    }
 }
 
 pub enum EventOrExpiredRangeInternal {
     Event(EventWrapperInternal<ChatEventInternal>),
     ExpiredEventRange(EventIndex, EventIndex),
+    Unauthorized(EventIndex),
 }
 
 impl EventOrExpiredRangeInternal {

@@ -1,6 +1,6 @@
 use crate::{
     AccessGate, AccessGateConfig, BotCommand, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper,
-    EventsCaller, GroupPermissions, GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
+    GroupPermissions, GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -68,7 +68,12 @@ pub struct EventsResponse {
 pub enum EventOrExpiredRange {
     Event(EventWrapper<ChatEvent>),
     ExpiredEventRange(EventIndex, EventIndex),
+    Unauthorized(EventIndex),
 }
+
+type Events = Vec<EventWrapper<ChatEvent>>;
+type ExpiredEventRanges = Vec<(EventIndex, EventIndex)>;
+type Unauthorized = Vec<EventIndex>;
 
 impl EventOrExpiredRange {
     pub fn as_event(&self) -> Option<&EventWrapper<ChatEvent>> {
@@ -79,22 +84,22 @@ impl EventOrExpiredRange {
         }
     }
 
-    pub fn split(
-        events_and_expired_ranges: Vec<EventOrExpiredRange>,
-    ) -> (Vec<EventWrapper<ChatEvent>>, Vec<(EventIndex, EventIndex)>) {
+    pub fn split(events_and_expired_ranges: Vec<EventOrExpiredRange>) -> (Events, ExpiredEventRanges, Unauthorized) {
         let mut events = Vec::new();
         let mut expired_ranges = Vec::new();
+        let mut unauthorized = Vec::new();
 
         for event_or_expired_range in events_and_expired_ranges {
             match event_or_expired_range {
                 EventOrExpiredRange::Event(e) => events.push(e),
                 EventOrExpiredRange::ExpiredEventRange(from, to) => expired_ranges.push((from, to)),
+                EventOrExpiredRange::Unauthorized(e) => unauthorized.push(e),
             }
         }
 
         expired_ranges.sort();
 
-        (events, expired_ranges)
+        (events, expired_ranges, unauthorized)
     }
 }
 
@@ -465,21 +470,6 @@ pub struct BotUpdated {
 }
 
 impl ChatEvent {
-    pub fn remove_unauthorized_events(caller: &EventsCaller, events: &mut Vec<EventWrapper<ChatEvent>>) -> Vec<EventIndex> {
-        let mut unauthorized = Vec::new();
-        if let EventsCaller::Bot(bot) = caller {
-            events.retain(|event| {
-                if event.event.event_type().is_some_and(|t| bot.event_types.contains(&t)) {
-                    true
-                } else {
-                    unauthorized.push(event.index);
-                    false
-                }
-            })
-        }
-        unauthorized
-    }
-
     pub fn event_type(&self) -> Option<ChatEventType> {
         match self {
             ChatEvent::Message(_) => Some(ChatEventType::Message),

@@ -1,4 +1,4 @@
-use crate::chat_events::EventsArgsInner;
+use crate::chat_events::EventsSelectionCriteria;
 use candid::Deserialize;
 use serde::Serialize;
 use ts_export::ts_export;
@@ -10,7 +10,7 @@ use user_canister::token_swap_status::CandidType;
 pub struct Args {
     pub chat: Chat,
     pub thread_root_message_index: Option<MessageIndex>,
-    pub args: EventsArgsInner,
+    pub events: EventsSelectionCriteria,
 }
 
 #[ts_export(local_user_index, chat_events)]

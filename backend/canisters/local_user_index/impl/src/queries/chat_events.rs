@@ -31,7 +31,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
 ) -> EventsResponse {
     match events_args.context {
         EventsContext::Direct(them) => match events_args.args {
-            EventsArgsInner::Page(args) => map_response(
+            EventsSelectionCriteria::Page(args) => map_response(
                 user_canister_c2c_client::events(
                     user_id.into(),
                     &user_canister::events::Args {
@@ -46,7 +46,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                 )
                 .await,
             ),
-            EventsArgsInner::ByIndex(args) => map_response(
+            EventsSelectionCriteria::ByIndex(args) => map_response(
                 user_canister_c2c_client::events_by_index(
                     user_id.into(),
                     &user_canister::events_by_index::Args {
@@ -58,7 +58,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                 )
                 .await,
             ),
-            EventsArgsInner::Window(args) => map_response(
+            EventsSelectionCriteria::Window(args) => map_response(
                 user_canister_c2c_client::events_window(
                     user_id.into(),
                     &user_canister::events_window::Args {
@@ -74,7 +74,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
             ),
         },
         EventsContext::Group(chat_id, thread_root_message_index) => match events_args.args {
-            EventsArgsInner::Page(args) => map_response(
+            EventsSelectionCriteria::Page(args) => map_response(
                 group_canister_c2c_client::c2c_events(
                     chat_id.into(),
                     &group_canister::c2c_events::Args {
@@ -91,7 +91,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                 )
                 .await,
             ),
-            EventsArgsInner::ByIndex(args) => map_response(
+            EventsSelectionCriteria::ByIndex(args) => map_response(
                 group_canister_c2c_client::c2c_events_by_index(
                     chat_id.into(),
                     &group_canister::c2c_events_by_index::Args {
@@ -105,7 +105,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                 )
                 .await,
             ),
-            EventsArgsInner::Window(args) => map_response(
+            EventsSelectionCriteria::Window(args) => map_response(
                 group_canister_c2c_client::c2c_events_window(
                     chat_id.into(),
                     &group_canister::c2c_events_window::Args {
@@ -123,7 +123,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
             ),
         },
         EventsContext::Channel(community_id, channel_id, thread_root_message_index) => match events_args.args {
-            EventsArgsInner::Page(args) => map_response(
+            EventsSelectionCriteria::Page(args) => map_response(
                 community_canister_c2c_client::c2c_events(
                     community_id.into(),
                     &community_canister::c2c_events::Args {
@@ -141,7 +141,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                 )
                 .await,
             ),
-            EventsArgsInner::ByIndex(args) => map_response(
+            EventsSelectionCriteria::ByIndex(args) => map_response(
                 community_canister_c2c_client::c2c_events_by_index(
                     community_id.into(),
                     &community_canister::c2c_events_by_index::Args {
@@ -156,7 +156,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                 )
                 .await,
             ),
-            EventsArgsInner::Window(args) => map_response(
+            EventsSelectionCriteria::Window(args) => map_response(
                 community_canister_c2c_client::c2c_events_window(
                     community_id.into(),
                     &community_canister::c2c_events_window::Args {

@@ -761,7 +761,7 @@ impl Data {
                     return Ok(EventsCaller::Bot(BotEventsCaller {
                         bot: bot_user_id,
                         min_visible_event_index,
-                        event_types: event_visibility.event_types.clone(),
+                        permitted_event_types: event_visibility.event_types.clone(),
                     }));
                 }
             }

@@ -55,9 +55,9 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
 
         let user_id = member.user_id();
 
-        if let Some(events_reader) = chat
-            .events
-            .events_reader(member.min_visible_event_index(), args.thread_root_message_index)
+        if let Some(events_reader) =
+            chat.events
+                .events_reader(member.min_visible_event_index(), args.thread_root_message_index, None)
         {
             if let Some(message) = events_reader.message(args.message_id.into(), Some(user_id)) {
                 Ok((
