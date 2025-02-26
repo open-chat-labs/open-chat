@@ -132,8 +132,6 @@ import type {
     MessageActivitySummary,
     ExternalBotPermissions,
     PublicApiKeyDetails,
-    // PublicApiKeyDetails,
-    // ExternalBotPermissions,
 } from "openchat-shared";
 import {
     nullMembership,

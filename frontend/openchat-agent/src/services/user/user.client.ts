@@ -1712,7 +1712,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 if (typeof resp === "object" && "Success" in resp) {
                     return resp.Success;
                 }
-                console.log("Failed to get community api key: ", botId, resp);
+                console.log("Failed to get direct api key: ", botId, resp);
                 return undefined;
             },
             UserApiKeyArgs,
