@@ -1398,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "Тільки ця каністра може присудити досягнення",
             "chitReward": "CHIT нагорода",
             "chitRewardRules": "принаймні {value} CHIT",
+            "chooseBot": "Виберіть бота, якого ви хочете опублікувати",
             "enterAchievementName": "Введіть назву для досягнення",
             "enterAmount": "Введіть кількість токенів {token}",
             "enterChitReward": "Введіть нагороду CHIT",

@@ -15,8 +15,8 @@
     }
 </script>
 
-<Legend large label={i18nKey("Please choose the bot you would like to publish")} />
 {#if selected === undefined}
+    <Legend large label={i18nKey("proposal.maker.chooseBot")} />
     <ChooseBot ownedOnly onSelect={select} />
 {:else}
     <BotProperties padded bot={selected} installing={false}></BotProperties>

@@ -1398,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "Only this canister can award the achievement",
             "chitReward": "CHIT reward",
             "chitRewardRules": "at least {value} CHIT",
+            "chooseBot": "Please choose the bot that you would like to publish",
             "enterAchievementName": "Enter a name for the achievement",
             "enterAmount": "Enter a quantity of {token} tokens",
             "enterChitReward": "Enter the CHIT reward",

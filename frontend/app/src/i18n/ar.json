@@ -1398,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "فقط هذه العلبة يمكنها أن تمنح الإنجاز",
             "chitReward": "مكافأة شيت",
             "chitRewardRules": "على الأقل {value} CHIT",
+            "chooseBot": "الرجاء اختيار البوت الذي ترغب في نشره",
             "enterAchievementName": "أدخل اسمًا للإنجاز",
             "enterAmount": "أدخل كمية من رموز {token}",
             "enterChitReward": "أدخل مكافأة CHIT",

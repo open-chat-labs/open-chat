@@ -1398,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "केवल यह कनस्तर ही उपलब्धि प्रदान कर सकता है",
             "chitReward": "चिट इनाम",
             "chitRewardRules": "कम से कम {value} चिट",
+            "chooseBot": "कृपया वह बॉट चुनें जिसे आप प्रकाशित करना चाहते हैं",
             "enterAchievementName": "उपलब्धि के लिए नाम दर्ज करें",
             "enterAmount": "{token} टोकन की मात्रा दर्ज करें",
             "enterChitReward": "CHIT पुरस्कार दर्ज करें",
