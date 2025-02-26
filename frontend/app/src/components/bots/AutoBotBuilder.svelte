@@ -28,6 +28,7 @@
     import Tabs from "../Tabs.svelte";
     import BotCommands from "./BotCommands.svelte";
     import Checkbox from "../Checkbox.svelte";
+    import InstallationLocationSelector from "./InstallationLocationSelector.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -215,6 +216,10 @@
             image={candidate.avatarUrl}
             on:imageSelected={botAvatarSelected} />
     </div>
+
+    {#if candidate.registrationStatus.kind === "private"}
+        <InstallationLocationSelector bind:location={candidate.registrationStatus.location} />
+    {/if}
 
     <Legend
         required={mode === "register"}

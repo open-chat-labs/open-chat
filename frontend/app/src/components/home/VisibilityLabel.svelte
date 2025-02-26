@@ -2,7 +2,11 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let isPublic: boolean;
+    interface Props {
+        isPublic: boolean;
+    }
+
+    let { isPublic }: Props = $props();
 </script>
 
 <div class="visibility">

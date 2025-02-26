@@ -868,6 +868,7 @@ type ExploreBots = {
     searchTerm: string | undefined;
     pageIndex: number;
     pageSize: number;
+    location?: BotInstallationLocation;
     kind: "exploreBots";
 };
 

@@ -67,7 +67,7 @@
             fill
             bind:searchTerm={communitySearchState.term}
             searching={false}
-            on:searchEntered={(ev: CustomEvent<string>) => search(ev.detail)}
+            onPerformSearch={search}
             placeholder={i18nKey("communities.search")} />
     {/if}
 

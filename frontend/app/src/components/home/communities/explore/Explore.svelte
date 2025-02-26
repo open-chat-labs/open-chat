@@ -153,7 +153,7 @@
                         fill
                         bind:searchTerm={communitySearchState.term}
                         searching={false}
-                        on:searchEntered={() => search($exploreCommunitiesFilters, true)}
+                        onPerformSearch={() => search($exploreCommunitiesFilters, true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
                 <div class="create">
@@ -180,7 +180,7 @@
                         searching={false}
                         fill
                         bind:searchTerm={communitySearchState.term}
-                        on:searchEntered={() => search($exploreCommunitiesFilters, true)}
+                        onPerformSearch={() => search($exploreCommunitiesFilters, true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
             {/if}
