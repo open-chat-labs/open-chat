@@ -212,6 +212,9 @@ impl TryFrom<u8> for ChatPermission {
             7 => Ok(ChatPermission::ReactToMessages),
             8 => Ok(ChatPermission::MentionAllMembers),
             9 => Ok(ChatPermission::StartVideoCall),
+            10 => Ok(ChatPermission::ReadMessages),
+            11 => Ok(ChatPermission::ReadMembershipUpdates),
+            12 => Ok(ChatPermission::ReadChatDetailsUpdates),
             _ => Err(()),
         }
     }
