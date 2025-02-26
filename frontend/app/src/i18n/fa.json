@@ -1398,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "فقط این قوطی می تواند جایزه را اهدا کند",
             "chitReward": "پاداش CHIT",
             "chitRewardRules": "حداقل {value} CHIT",
+            "chooseBot": "لطفا رباتی را که می خواهید منتشر کنید انتخاب کنید",
             "enterAchievementName": "نامی برای دستاورد وارد کنید",
             "enterAmount": "مقداری از نشانه‌های {token} را وارد کنید",
             "enterChitReward": "پاداش CHIT را وارد کنید",

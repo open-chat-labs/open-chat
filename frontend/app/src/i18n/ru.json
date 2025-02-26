@@ -1398,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "Только эта канистра может дать достижение",
             "chitReward": "Награда ЧИТ",
             "chitRewardRules": "по крайней мере {value} ЧИТ",
+            "chooseBot": "Пожалуйста, выберите бота, которого вы хотели бы опубликовать",
             "enterAchievementName": "Введите название достижения.",
             "enterAmount": "Введите количество токенов {token}",
             "enterChitReward": "Введите награду CHIT",

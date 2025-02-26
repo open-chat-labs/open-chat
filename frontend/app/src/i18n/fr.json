@@ -1398,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "Seule cette cartouche peut décerner le succès",
             "chitReward": "Récompense CHIT",
             "chitRewardRules": "au moins {value} CHIT",
+            "chooseBot": "Veuillez choisir le bot que vous souhaitez publier",
             "enterAchievementName": "Entrez un nom pour la réussite",
             "enterAmount": "Entrez une quantité de jetons {token}",
             "enterChitReward": "Entrez la récompense CHIT",

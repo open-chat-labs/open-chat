@@ -1398,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "Nur dieser Kanister kann den Erfolg verleihen",
             "chitReward": "CHIT-Belohnung",
             "chitRewardRules": "zumindest {value} CHIT",
+            "chooseBot": "Bitte wählen Sie den Bot aus, den Sie veröffentlichen möchten",
             "enterAchievementName": "Geben Sie einen Namen für die Leistung ein",
             "enterAmount": "Geben Sie eine Menge von {token} Token ein",
             "enterChitReward": "Geben Sie die CHIT-Belohnung ein",

@@ -1398,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "Chỉ có chiếc bình này mới có thể trao tặng thành tích",
             "chitReward": "Phần thưởng CHIT",
             "chitRewardRules": "ít nhất {value} CHIT",
+            "chooseBot": "Vui lòng chọn bot mà bạn muốn xuất bản",
             "enterAchievementName": "Nhập tên cho thành tích",
             "enterAmount": "Nhập số lượng mã thông báo {token}",
             "enterChitReward": "Nhập phần thưởng CHIT",

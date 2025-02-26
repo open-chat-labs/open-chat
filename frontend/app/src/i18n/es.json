@@ -1398,6 +1398,7 @@
             "awardingAchievementCanisterIdRules": "Sólo este bote puede otorgar el logro.",
             "chitReward": "Recompensa CHIT",
             "chitRewardRules": "al menos {value} CHIT",
+            "chooseBot": "Por favor, seleccione el bot que desea publicar",
             "enterAchievementName": "Introduzca un nombre para el logro",
             "enterAmount": "Ingrese una cantidad de tokens {token}",
             "enterChitReward": "Ingresa la recompensa CHIT",
