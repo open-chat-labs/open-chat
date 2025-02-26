@@ -3442,6 +3442,11 @@ export function externalBotDefinition(value: ApiBotDefinition): BotDefinition {
             syncApiKey: c.sync_api_key,
             permissions: externalBotPermissions(c.permissions),
         })),
+        // TODO - fill in later
+        events: {
+            eventTypes: new Set(["message"]),
+            notify: true,
+        },
     };
 }
 

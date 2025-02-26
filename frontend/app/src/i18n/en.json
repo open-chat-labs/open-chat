@@ -166,6 +166,7 @@
             "generateApiKey": "Generate api key",
             "install": "Install",
             "loadDefinition": "Load definition",
+            "notifyEvents": "Notify events",
             "noPermissions": "No special permissions required",
             "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the bot's capabilities.",
             "sendToBot": "Send key to bot",
@@ -185,6 +186,7 @@
             "addCommand": "Add command",
             "addParam": "Add a parameter",
             "autonomousPermissionsLabel": "Autonomous permissions",
+            "eventsLabel": "Events",
             "choiceName": "Choice name",
             "choices": "Choices",
             "choicesInfo": "If you enter a set of choices for your parameter, the user will be presented with a drop down to choose the correct value.",
@@ -299,7 +301,10 @@
         "events": {
             "add": "Bot **{botname}** added by {username}",
             "remove": "Bot **{botname}** removed by {username}",
-            "update": "Bot **{botname}** updated by {username}"
+            "update": "Bot **{botname}** updated by {username}",
+            "message": "Message",
+            "membership_changed": "Membership details changed",
+            "chat_details_updated": "Chat details changed"
         },
         "explorer": {
             "addBots": "Add bots",

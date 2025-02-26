@@ -286,7 +286,15 @@ export type BotDefinition = {
     description: string;
     commands: SlashCommandSchema[];
     autonomousConfig?: AutonomousBotConfig;
+    events?: BotEventsDefinition;
 };
+
+export type BotEventsDefinition = {
+    eventTypes: Set<BotEventType>;
+    notify: boolean;
+};
+
+export type BotEventType = "message" | "membership_changed" | "chat_details_updated";
 
 export type AutonomousBotConfig = {
     syncApiKey: boolean;

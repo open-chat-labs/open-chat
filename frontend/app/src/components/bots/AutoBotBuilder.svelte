@@ -9,6 +9,7 @@
         type SlashCommandSchema,
         type ValidationErrorMessages,
         userStore,
+        type BotDefinition,
     } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import Input from "../Input.svelte";
@@ -25,10 +26,11 @@
     import CommandViewer from "./CommandViewer.svelte";
     import SingleUserSelector from "../home/SingleUserSelector.svelte";
     import BotPermissionViewer from "./BotPermissionViewer.svelte";
-    import Tabs from "../Tabs.svelte";
+    import Tabs, { type Tab } from "../Tabs.svelte";
     import BotCommands from "./BotCommands.svelte";
     import Checkbox from "../Checkbox.svelte";
     import InstallationLocationSelector from "./InstallationLocationSelector.svelte";
+    import BotEventsViewer from "./BotEventsViewer.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -159,6 +161,7 @@
                     if (resp.kind === "bot_definition") {
                         candidate.definition = resp;
                         schemaLoaded = true;
+                        console.log("Schema loaded: ", resp);
                     } else {
                         toastStore.showFailureToast(i18nKey(`${JSON.stringify(resp.error)}`));
                     }
@@ -166,7 +169,37 @@
                 .finally(() => (schemaLoading = false));
         }
     }
+
+    function getTabs(definition: BotDefinition): Tab[] {
+        const tabs: Tab[] = [];
+        if (definition.commands.length > 0) {
+            tabs.push({ title: i18nKey("bots.builder.commandsLabel"), snippet: commands });
+        }
+        if (definition.autonomousConfig !== undefined) {
+            tabs.push({
+                title: i18nKey("bots.builder.autonomousPermissionsLabel"),
+                snippet: autonomousPermissions,
+            });
+        }
+        if (definition.events !== undefined) {
+            tabs.push({
+                title: i18nKey("bots.builder.eventsLabel"),
+                snippet: eventSubscriptions,
+            });
+        }
+        return tabs;
+    }
 </script>
+
+{#snippet configtabs()}
+    {@const tabs = getTabs(candidate.definition)}
+    {#if tabs.length === 0}
+        <Legend label={tabs[0].title}></Legend>
+        {@render tabs[0].snippet()}
+    {:else}
+        <Tabs {tabs}></Tabs>
+    {/if}
+{/snippet}
 
 {#snippet commands()}
     {#if candidate.definition.commands.length > 0}
@@ -189,6 +222,23 @@
                 label={i18nKey("bots.add.sendToBot")}
                 checked={candidate.definition.autonomousConfig.syncApiKey}
                 id={"sync_api_key"}></Checkbox>
+        </div>
+    {:else}
+        <div class="smallprint">
+            <Translatable resourceKey={i18nKey("bots.builder.noAutonomousConfig")}></Translatable>
+        </div>
+    {/if}
+{/snippet}
+
+{#snippet eventSubscriptions()}
+    {#if candidate.definition.events !== undefined}
+        <BotEventsViewer eventTypes={candidate.definition.events.eventTypes} />
+        <div class="send-key">
+            <Checkbox
+                disabled
+                label={i18nKey("bots.add.notifyEvents")}
+                checked={candidate.definition.events.notify}
+                id={"notify_events"}></Checkbox>
         </div>
     {:else}
         <div class="smallprint">
@@ -299,25 +349,8 @@
         <Legend label={i18nKey("bots.builder.descLabel")}></Legend>
         <Input disabled={true} value={candidate.definition.description} />
 
-        {#if candidate.definition.commands.length === 0 && candidate.definition.autonomousConfig !== undefined}
-            <Legend label={i18nKey("bots.builder.autonomousPermissionsLabel")}></Legend>
-            {@render autonomousPermissions()}
-        {:else if candidate.definition.commands.length > 0 && candidate.definition.autonomousConfig === undefined}
-            <Legend label={i18nKey("bots.builder.commandsLabel")}></Legend>
-            {@render commands()}
-        {:else}
-            <Tabs
-                tabs={[
-                    {
-                        title: i18nKey("bots.builder.commandsLabel"),
-                        snippet: commands,
-                    },
-                    {
-                        title: i18nKey("bots.builder.autonomousPermissionsLabel"),
-                        snippet: autonomousPermissions,
-                    },
-                ]}></Tabs>
-        {/if}
+        {@render configtabs()}
+
         <div class="error">
             {#if errors.has("duplicate_commands")}
                 <ErrorMessage>
