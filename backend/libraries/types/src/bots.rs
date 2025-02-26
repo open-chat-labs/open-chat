@@ -16,7 +16,6 @@ pub struct BotDefinition {
     pub description: String,
     pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
-    pub chat_events: Option<BotChatEventsDefinition>,
 }
 
 #[ts_export]
@@ -35,13 +34,6 @@ pub struct BotCommandDefinition {
 pub struct AutonomousConfig {
     pub permissions: BotPermissions,
     pub sync_api_key: bool,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-pub struct BotChatEventsDefinition {
-    pub event_types: Vec<ChatEventType>,
-    pub notify: bool,
 }
 
 #[ts_export]
