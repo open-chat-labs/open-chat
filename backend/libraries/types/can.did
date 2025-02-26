@@ -2182,6 +2182,9 @@ type GroupPermission = variant {
     ReactToMessages;
     MentionAllMembers;
     StartVideoCall;
+    ReadMessages;
+    ReadMembershipUpdates;
+    ReadChatDetailsUpdates;
 };
 
 type MessagePermission = variant {
