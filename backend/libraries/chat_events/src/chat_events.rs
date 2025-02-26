@@ -1912,7 +1912,7 @@ impl ChatEvents {
         &self,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
-        authorized_types: Option<HashSet<ChatEventType>>,
+        bot_permitted_event_types: Option<HashSet<ChatEventType>>,
     ) -> Option<ChatEventsListReader> {
         let events_list = self.events_list(min_visible_event_index, thread_root_message_index)?;
 
@@ -1923,7 +1923,7 @@ impl ChatEvents {
                 events_list,
                 &self.last_updated_timestamps,
                 min_visible_event_index,
-                authorized_types,
+                bot_permitted_event_types,
             ))
         }
     }

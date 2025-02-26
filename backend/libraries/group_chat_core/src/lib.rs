@@ -1940,7 +1940,7 @@ impl GroupChatCore {
                 if let Some(events_reader) = self.events.events_reader(
                     min_visible_event_index,
                     thread_root_message_index,
-                    caller.permitted_event_types().cloned(),
+                    caller.bot_permitted_event_types().cloned(),
                 ) {
                     Success(events_reader)
                 } else {

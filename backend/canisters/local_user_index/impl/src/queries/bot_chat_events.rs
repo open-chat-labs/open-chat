@@ -9,9 +9,9 @@ use types::Chat;
 #[query(composite = true, candid = true, msgpack = true)]
 #[trace]
 async fn bot_chat_events(args_wrapper: Args) -> Response {
-    let Some(bot_user_id) = read_state(|state| {
+    let Some((caller, bot_user_id)) = read_state(|state| {
         let caller = state.env.caller();
-        state.data.bots.get_by_caller(&caller).map(|b| b.bot_id)
+        state.data.bots.get_by_caller(&caller).map(|b| (caller, b.bot_id))
     }) else {
         return FailedAuthentication("Caller is not a registered bot".to_string());
     };
@@ -28,8 +28,9 @@ async fn bot_chat_events(args_wrapper: Args) -> Response {
             args: args_wrapper.events,
             latest_known_update: None,
         },
-        bot_user_id.into(),
+        caller,
         bot_user_id,
+        true,
     )
     .await
     {

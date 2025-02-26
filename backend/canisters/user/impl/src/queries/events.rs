@@ -14,6 +14,7 @@ fn events(args: Args) -> Response {
             args.latest_known_update,
             args.user_id,
             args.thread_root_message_index,
+            args.bot_caller,
             args,
             events_impl,
             state,
@@ -35,6 +36,7 @@ pub(crate) fn read_events<A, F: FnOnce(A, UserId, ChatEventsListReader) -> Vec<E
     latest_known_update: Option<TimestampMillis>,
     user_id: UserId,
     thread_root_message_index: Option<MessageIndex>,
+    bot_caller: Option<UserId>,
     args: A,
     get_events_fn: F,
     state: &RuntimeState,
@@ -43,7 +45,7 @@ pub(crate) fn read_events<A, F: FnOnce(A, UserId, ChatEventsListReader) -> Vec<E
         chat,
         events_reader,
         my_user_id,
-    } = match prepare(latest_known_update, user_id, thread_root_message_index, state) {
+    } = match prepare(latest_known_update, user_id, thread_root_message_index, bot_caller, state) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -64,6 +66,7 @@ fn prepare(
     latest_known_update: Option<TimestampMillis>,
     user_id: UserId,
     thread_root_message_index: Option<MessageIndex>,
+    bot_caller: Option<UserId>,
     state: &RuntimeState,
 ) -> Result<PrepareResult, Response> {
     if let Err(now) = check_replica_up_to_date(latest_known_update, state) {
@@ -74,9 +77,22 @@ fn prepare(
         return Err(ChatNotFound);
     };
 
-    if let Some(events_reader) = chat
-        .events
-        .events_reader(EventIndex::default(), thread_root_message_index, None)
+    let bot_permitted_event_types = if let Some(bot_caller) = bot_caller {
+        let Some(bot) = state.data.bots.get(&bot_caller) else {
+            return Err(ChatNotFound);
+        };
+        let Some(event_visibility) = bot.event_visibility.as_ref().filter(|v| !v.event_types.is_empty()) else {
+            return Err(ChatNotFound);
+        };
+
+        Some(event_visibility.event_types.clone())
+    } else {
+        None
+    };
+
+    if let Some(events_reader) =
+        chat.events
+            .events_reader(EventIndex::default(), thread_root_message_index, bot_permitted_event_types)
     {
         Ok(PrepareResult {
             chat,
