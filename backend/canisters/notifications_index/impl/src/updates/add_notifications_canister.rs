@@ -6,7 +6,7 @@ use notifications_index_canister::add_notifications_canister::{Response::*, *};
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded};
 use rand::RngCore;
 use std::collections::hash_map::Entry::Vacant;
-use types::{BuildVersion, CanisterId, CanisterWasm, IdempotentC2CCall};
+use types::{BuildVersion, CanisterId, CanisterWasm, IdempotentEnvelope};
 use utils::canister::{install_basic, set_controllers};
 
 #[update(guard = "caller_is_registry_canister", msgpack = true)]
@@ -66,7 +66,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
         {
             state.data.notification_canisters_event_sync_queue.push(
                 canister_id,
-                IdempotentC2CCall {
+                IdempotentEnvelope {
                     created_at: now,
                     idempotency_id: state.env.rng().next_u64(),
                     value: NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded { user_id, subscription }),

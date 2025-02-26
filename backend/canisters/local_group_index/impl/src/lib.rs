@@ -18,7 +18,8 @@ use std::collections::{BTreeMap, VecDeque};
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, ChildCanisterWasms, Cycles, IdempotentC2CCall, Milliseconds, TimestampMillis, Timestamped, UserId,
+    BuildVersion, CanisterId, ChildCanisterWasms, Cycles, IdempotentEnvelope, Milliseconds, TimestampMillis, Timestamped,
+    UserId,
 };
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
@@ -79,7 +80,7 @@ impl RuntimeState {
     pub fn push_event_to_group(&mut self, canister_id: CanisterId, event: GroupEvent, now: TimestampMillis) {
         self.data.group_event_sync_queue.push(
             canister_id,
-            IdempotentC2CCall {
+            IdempotentEnvelope {
                 created_at: now,
                 idempotency_id: self.env.rng().next_u64(),
                 value: event,
@@ -90,7 +91,7 @@ impl RuntimeState {
     pub fn push_event_to_community(&mut self, canister_id: CanisterId, event: CommunityEvent, now: TimestampMillis) {
         self.data.community_event_sync_queue.push(
             canister_id,
-            IdempotentC2CCall {
+            IdempotentEnvelope {
                 created_at: now,
                 idempotency_id: self.env.rng().next_u64(),
                 value: event,

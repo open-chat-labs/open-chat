@@ -8,11 +8,11 @@ use types::{CanisterId, TimestampMillis};
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct IdempotencyChecker {
     #[serde(rename = "s")]
-    per_sender: HashMap<CanisterId, IdempotencyCheckerPerCanister>,
+    per_sender: HashMap<CanisterId, IdempotencyCheckerPerSender>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-struct IdempotencyCheckerPerCanister {
+struct IdempotencyCheckerPerSender {
     #[serde(rename = "c")]
     latest_created_at: TimestampMillis,
     #[serde(rename = "i")]

@@ -8,7 +8,7 @@ use notifications_index_canister::post_upgrade::Args;
 use rand::RngCore;
 use stable_memory::get_reader;
 use tracing::info;
-use types::IdempotentC2CCall;
+use types::IdempotentEnvelope;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -41,7 +41,7 @@ fn post_upgrade(args: Args) {
                 canister_id,
                 events
                     .into_iter()
-                    .map(|e| IdempotentC2CCall {
+                    .map(|e| IdempotentEnvelope {
                         created_at: now,
                         idempotency_id: state.env.rng().next_u64(),
                         value: e,

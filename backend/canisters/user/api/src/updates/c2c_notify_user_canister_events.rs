@@ -1,10 +1,10 @@
 use crate::UserCanisterEvent;
 use serde::{Deserialize, Serialize};
-use types::{Fallback, IdempotentC2CCall};
+use types::{Fallback, IdempotentEnvelope};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub events: Vec<IdempotentC2CCall<UserCanisterEvent>>,
+    pub events: Vec<IdempotentEnvelope<UserCanisterEvent>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

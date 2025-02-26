@@ -41,7 +41,7 @@ use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotInitiator, BotPermissions,
     BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
     CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, GroupRole,
-    IdempotentC2CCall, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -292,7 +292,7 @@ impl RuntimeState {
     pub fn push_event_to_user(&mut self, user_id: UserId, event: CommunityCanisterEvent, now: TimestampMillis) {
         self.data.user_event_sync_queue.push(
             user_id,
-            IdempotentC2CCall {
+            IdempotentEnvelope {
                 created_at: now,
                 idempotency_id: self.env.rng().next_u64(),
                 value: event,

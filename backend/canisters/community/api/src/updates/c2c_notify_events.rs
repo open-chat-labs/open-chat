@@ -1,10 +1,10 @@
 use crate::LocalGroupIndexEvent;
 use serde::{Deserialize, Serialize};
-use types::{Fallback, IdempotentC2CCall};
+use types::{Fallback, IdempotentEnvelope};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub events: Vec<IdempotentC2CCall<LocalGroupIndexEvent>>,
+    pub events: Vec<IdempotentEnvelope<LocalGroupIndexEvent>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
