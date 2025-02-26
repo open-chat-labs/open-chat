@@ -2,7 +2,9 @@ use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use local_user_index_canister::chat_events::{EventsArgs, EventsArgsInner, EventsByIndexArgs, EventsContext, EventsResponse};
+use local_user_index_canister::chat_events::{
+    EventsArgs, EventsByIndexArgs, EventsContext, EventsResponse, EventsSelectionCriteria,
+};
 use local_user_index_canister::group_and_community_summary_updates::{SummaryUpdatesArgs, SummaryUpdatesResponse};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -51,22 +53,22 @@ fn get_batched_events_succeeds() {
             requests: vec![
                 EventsArgs {
                     context: EventsContext::Direct(user2.user_id),
-                    args: EventsArgsInner::ByIndex(EventsByIndexArgs { events: vec![1.into()] }),
+                    args: EventsSelectionCriteria::ByIndex(EventsByIndexArgs { events: vec![1.into()] }),
                     latest_known_update: None,
                 },
                 EventsArgs {
                     context: EventsContext::Group(group_id1, None),
-                    args: EventsArgsInner::ByIndex(EventsByIndexArgs { events: vec![2.into()] }),
+                    args: EventsSelectionCriteria::ByIndex(EventsByIndexArgs { events: vec![2.into()] }),
                     latest_known_update: None,
                 },
                 EventsArgs {
                     context: EventsContext::Group(group_id2, None),
-                    args: EventsArgsInner::ByIndex(EventsByIndexArgs { events: vec![3.into()] }),
+                    args: EventsSelectionCriteria::ByIndex(EventsByIndexArgs { events: vec![3.into()] }),
                     latest_known_update: None,
                 },
                 EventsArgs {
                     context: EventsContext::Channel(community_id, channel_id, None),
-                    args: EventsArgsInner::ByIndex(EventsByIndexArgs { events: vec![4.into()] }),
+                    args: EventsSelectionCriteria::ByIndex(EventsByIndexArgs { events: vec![4.into()] }),
                     latest_known_update: None,
                 },
             ],

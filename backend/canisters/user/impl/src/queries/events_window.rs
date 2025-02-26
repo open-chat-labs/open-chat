@@ -13,6 +13,7 @@ fn events_window(args: Args) -> Response {
             args.latest_known_update,
             args.user_id,
             args.thread_root_message_index,
+            args.bot_caller,
             args,
             events_window_impl,
             state,

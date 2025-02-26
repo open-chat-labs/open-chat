@@ -3,6 +3,7 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use community_canister::messages_by_message_index::{Response::*, *};
 use group_chat_core::MessagesResult;
+use types::EventsCaller;
 
 #[query(candid = true, msgpack = true)]
 fn messages_by_message_index(args: Args) -> Response {
@@ -21,10 +22,12 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response 
         return UserNotInCommunity;
     }
 
+    let events_caller = user_id.map_or(EventsCaller::Unknown, EventsCaller::User);
+
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
         match channel
             .chat
-            .messages_by_message_index(user_id, args.thread_root_message_index, args.messages)
+            .messages_by_message_index(events_caller, args.thread_root_message_index, args.messages)
         {
             MessagesResult::Success(response) => Success(response),
             MessagesResult::UserNotInGroup => UserNotInChannel,

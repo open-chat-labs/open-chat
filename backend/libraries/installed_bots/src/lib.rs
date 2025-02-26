@@ -3,8 +3,8 @@ use constants::calculate_summary_updates_data_removal_cutoff;
 use rand::{rngs::StdRng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::collections::{btree_map::Entry, BTreeMap, BTreeSet, HashMap};
-use types::{ApiKey, BotPermissions, PublicApiKeyDetails, TimestampMillis, UserId};
+use std::collections::{btree_map::Entry, BTreeMap, BTreeSet, HashMap, HashSet};
+use types::{ApiKey, BotPermissions, ChannelId, ChatEventType, EventIndex, PublicApiKeyDetails, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct InstalledBots {
@@ -19,7 +19,14 @@ impl InstalledBots {
             return false;
         }
 
-        self.bots.insert(user_id, BotInternal { added_by, permissions });
+        self.bots.insert(
+            user_id,
+            BotInternal {
+                added_by,
+                permissions,
+                event_visibility: None,
+            },
+        );
         self.prune_then_insert_member_update(user_id, BotUpdate::Added, now);
 
         true
@@ -100,6 +107,13 @@ pub enum BotUpdate {
 pub struct BotInternal {
     pub added_by: UserId,
     pub permissions: BotPermissions,
+    pub event_visibility: Option<BotEventVisibility>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BotEventVisibility {
+    pub min_visible_event_indexes: HashMap<Option<ChannelId>, EventIndex>,
+    pub event_types: HashSet<ChatEventType>,
 }
 
 #[derive(Serialize, Deserialize, Default)]

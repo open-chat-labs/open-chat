@@ -23,10 +23,10 @@ fn events_impl(args: Args, on_behalf_of: Option<Principal>, state: &RuntimeState
     }
 
     let caller = on_behalf_of.unwrap_or_else(|| state.env.caller());
-    let user_id = state.data.lookup_user_id(caller);
+    let events_caller = state.data.get_caller_for_events(caller);
 
     match state.data.chat.events(
-        user_id,
+        events_caller,
         args.thread_root_message_index,
         args.start_index,
         args.ascending,

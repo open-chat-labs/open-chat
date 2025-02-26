@@ -23,16 +23,15 @@ fn events_by_index_impl(args: Args, on_behalf_of: Option<Principal>, state: &Run
     }
 
     let caller = on_behalf_of.unwrap_or_else(|| state.env.caller());
-
-    let member = match state.data.get_member_for_events(caller) {
-        Ok(member) => member,
+    let events_caller = match state.data.get_caller_for_events(caller, args.channel_id) {
+        Ok(ec) => ec,
         Err(response) => return response,
     };
 
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
         match channel
             .chat
-            .events_by_index(member.map(|m| m.user_id), args.thread_root_message_index, args.events)
+            .events_by_index(events_caller, args.thread_root_message_index, args.events)
         {
             EventsResult::Success(response) => Success(response),
             EventsResult::UserNotInGroup => UserNotInChannel,

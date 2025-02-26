@@ -35,11 +35,11 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotInitiator, BotPermissions, BotRemoved,
-    BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty,
-    EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
-    IdempotentEnvelope, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId,
-    UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator, BotPermissions,
+    BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles,
+    Document, Empty, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
+    GroupPermissions, GroupSubtype, IdempotentEnvelope, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules,
+    TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -741,6 +741,24 @@ impl Data {
         self.expiring_member_actions.remove_member(user_id, None);
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
+    }
+
+    pub fn get_caller_for_events(&self, caller: Principal) -> EventsCaller {
+        if let Some(user_id) = self.lookup_user_id(caller) {
+            EventsCaller::User(user_id)
+        } else {
+            let bot_user_id = caller.into();
+            if let Some(event_visibility) = self.bots.get(&bot_user_id).and_then(|b| b.event_visibility.as_ref()) {
+                if let Some(&min_visible_event_index) = event_visibility.min_visible_event_indexes.get(&None) {
+                    return EventsCaller::Bot(BotEventsCaller {
+                        bot: bot_user_id,
+                        min_visible_event_index,
+                        bot_permitted_event_types: event_visibility.event_types.clone(),
+                    });
+                }
+            }
+            EventsCaller::Unknown
+        }
     }
 
     pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&BotPermissions> {

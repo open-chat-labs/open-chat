@@ -19,7 +19,7 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response 
     if let Some(chat) = state.data.direct_chats.get(&args.user_id.into()) {
         let Some(events_reader) = chat
             .events
-            .events_reader(EventIndex::default(), args.thread_root_message_index)
+            .events_reader(EventIndex::default(), args.thread_root_message_index, None)
         else {
             return ThreadMessageNotFound;
         };

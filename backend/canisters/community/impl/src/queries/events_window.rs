@@ -23,15 +23,14 @@ fn events_window_impl(args: Args, on_behalf_of: Option<Principal>, state: &Runti
     }
 
     let caller = on_behalf_of.unwrap_or_else(|| state.env.caller());
-
-    let member = match state.data.get_member_for_events(caller) {
-        Ok(member) => member,
+    let events_caller = match state.data.get_caller_for_events(caller, args.channel_id) {
+        Ok(ec) => ec,
         Err(response) => return response,
     };
 
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
         match channel.chat.events_window(
-            member.map(|m| m.user_id),
+            events_caller,
             args.thread_root_message_index,
             args.mid_point,
             args.max_messages,

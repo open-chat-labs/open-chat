@@ -41,7 +41,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         let Some(events_reader) = chat
             .events
-            .events_reader(EventIndex::default(), args.thread_root_message_index)
+            .events_reader(EventIndex::default(), args.thread_root_message_index, None)
         else {
             return Success(SuccessResult { messages: Vec::new() });
         };

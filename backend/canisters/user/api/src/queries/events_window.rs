@@ -8,6 +8,8 @@ use types::{MessageIndex, TimestampMillis, UserId};
 pub struct Args {
     pub user_id: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
+    #[ts(skip)]
+    pub bot_caller: Option<UserId>,
     pub mid_point: MessageIndex,
     pub max_messages: u32,
     pub max_events: u32,
