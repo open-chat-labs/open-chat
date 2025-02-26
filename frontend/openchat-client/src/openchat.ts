@@ -7421,37 +7421,31 @@ export class OpenChat extends EventTarget {
     // takes a list of communities that may contain communities that we are a member of and/or preview communities
     // and overwrites them in the correct place
     updateCommunityIndexes(orderedCommunities: CommunitySummary[]): void {
-        // Set the index field on each community
-        const [previews, updates] = orderedCommunities.reduce(
-            ([previews, updates], c, i) => {
-                const index = orderedCommunities.length - i;
-                if (c.membership.index !== index) {
-                    if (this.#liveState.communityPreviews.has(c.id)) {
-                        previews.push({
-                            ...c,
-                            membership: {
-                                ...c.membership,
-                                index,
-                            },
-                        });
-                    } else {
-                        localCommunitySummaryUpdates.updateIndex({
-                            kind: "community",
-                            communityId: c.id.communityId
-                        }, index);
-                        updates[c.id.communityId] = index;
-                    }
-                }
-                return [previews, updates];
-            },
-            [[], {}] as [CommunitySummary[], Record<string, number>],
-        );
+        const updates: Record<string, number> = {};
+        for (let i = 0; i < orderedCommunities.length; i++) {
+            const community = orderedCommunities[i];
+            const index = orderedCommunities.length - i;
 
-        if (previews.length > 0) {
-            communityPreviewsStore.update((state) => {
-                previews.forEach((c) => state.set(c.id, c));
-                return state;
-            });
+            // Skip if index is unchanged
+            if (community.membership.index === index) continue;
+
+            if (this.#liveState.communityPreviews.has(community.id)) {
+                communityPreviewsStore.update((state) => state.set(community.id, {
+                    ...community,
+                    membership: {
+                        ...community.membership,
+                        index,
+                    },
+                }));
+            } else {
+                localCommunitySummaryUpdates.updateIndex({
+                    kind: "community",
+                    communityId: community.id.communityId
+                }, index);
+
+                // Queue the update to be sent to the canister
+                updates[community.id.communityId] = index;
+            }
         }
 
         if (Object.keys(updates).length > 0) {
