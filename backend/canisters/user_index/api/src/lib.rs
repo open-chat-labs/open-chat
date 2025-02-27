@@ -30,6 +30,7 @@ pub enum LocalUserIndexEvent {
     BotUninstalled(Box<BotUninstalled>),
     UserBlocked(UserId, UserId),
     UserUnblocked(UserId, UserId),
+    SetMaxStreak(UserId, u16),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
