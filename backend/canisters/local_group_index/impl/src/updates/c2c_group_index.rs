@@ -8,14 +8,27 @@ use community_canister::NameChanged as CommunityNameChanged;
 use community_canister::VerifiedChanged as CommunityVerifiedChanged;
 use group_canister::NameChanged as GroupNameChanged;
 use group_canister::VerifiedChanged as GroupVerifiedChanged;
-use local_group_index_canister::c2c_notify_group_index_events::{Response::*, *};
+use local_group_index_canister::c2c_group_index::{Response::*, *};
 use local_group_index_canister::GroupIndexEvent;
 use std::cell::LazyCell;
 use types::TimestampMillis;
 
-#[update(guard = "caller_is_group_index_canister", msgpack = true, fallback = true)]
+#[update(guard = "caller_is_group_index_canister", msgpack = true)]
 #[trace]
-fn c2c_notify_group_index_events(args: Args) -> Response {
+fn c2c_notify_group_index_events(args: local_group_index_canister::c2c_notify_group_index_events::Args) -> Response {
+    mutate_state(|state| {
+        c2c_notify_group_index_events_impl(
+            Args {
+                events: args.events.into_iter().map(|e| e.into()).collect(),
+            },
+            state,
+        )
+    })
+}
+
+#[update(guard = "caller_is_group_index_canister", msgpack = true)]
+#[trace]
+fn c2c_group_index(args: Args) -> Response {
     mutate_state(|state| c2c_notify_group_index_events_impl(args, state))
 }
 

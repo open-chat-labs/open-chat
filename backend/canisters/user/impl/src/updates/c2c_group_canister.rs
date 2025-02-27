@@ -2,12 +2,27 @@ use crate::guards::caller_is_known_group_canister;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use user_canister::c2c_notify_group_canister_events::{Response::*, *};
+use user_canister::c2c_group_canister::{Response::*, *};
 use user_canister::GroupCanisterEvent;
 
-#[update(guard = "caller_is_known_group_canister", msgpack = true, fallback = true)]
+#[update(guard = "caller_is_known_group_canister", msgpack = true)]
 #[trace]
-fn c2c_notify_group_canister_events(args: Args) -> Response {
+fn c2c_notify_group_canister_events(args: user_canister::c2c_notify_group_canister_events::Args) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| {
+        c2c_notify_group_canister_events_impl(
+            Args {
+                events: args.events.into_iter().map(|e| e.into()).collect(),
+            },
+            state,
+        )
+    })
+}
+
+#[update(guard = "caller_is_known_group_canister", msgpack = true)]
+#[trace]
+fn c2c_group_canister(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| c2c_notify_group_canister_events_impl(args, state))

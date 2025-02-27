@@ -15,7 +15,7 @@ impl TimerJobItem for LocalGroupIndexEventBatch {
         let response = local_group_index_canister_c2c_client::c2c_notify_group_index_events(
             self.key,
             &local_group_index_canister::c2c_notify_group_index_events::Args {
-                events: self.items.clone(),
+                events: self.items.iter().map(|e| e.value.clone()).collect(),
             },
         )
         .await;

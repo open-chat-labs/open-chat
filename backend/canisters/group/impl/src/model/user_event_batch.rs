@@ -15,7 +15,7 @@ impl TimerJobItem for UserEventBatch {
         let response = user_canister_c2c_client::c2c_notify_group_canister_events(
             self.key.into(),
             &user_canister::c2c_notify_group_canister_events::Args {
-                events: self.items.clone(),
+                events: self.items.iter().map(|e| e.value.clone()).collect(),
             },
         )
         .await;
