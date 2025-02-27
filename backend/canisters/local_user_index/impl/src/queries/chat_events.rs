@@ -26,10 +26,14 @@ async fn chat_events(args: Args) -> Response {
 
 pub(crate) async fn make_c2c_call_to_get_events(
     events_args: EventsArgs,
-    caller: Principal,
+    principal: Principal,
     user_id: UserId,
     bot_api_key_secret: Option<String>,
 ) -> EventsResponse {
+    // If this call is being made by a bot, set the caller as
+    // the bot's userId, rather than its principal
+    let caller = if bot_api_key_secret.is_some() { user_id.into() } else { principal };
+
     match events_args.context {
         EventsContext::Direct(them) => {
             let canister_id = if bot_api_key_secret.is_some() { them.into() } else { user_id.into() };
