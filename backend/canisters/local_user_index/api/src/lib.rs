@@ -272,6 +272,7 @@ pub enum UserEvent {
     NotifyStreakInsuranceClaim(UserCanisterStreakInsuranceClaim),
     UserBlocked(UserId),
     UserUnblocked(UserId),
+    SetMaxStreak(u16),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]

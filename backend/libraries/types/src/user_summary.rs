@@ -17,6 +17,7 @@ pub struct UserSummary {
     pub total_chit_earned: i32,
     pub chit_balance: i32,
     pub streak: u16,
+    pub max_streak: u16,
     pub is_unique_person: bool,
 }
 
@@ -46,6 +47,7 @@ pub struct UserSummaryVolatile {
     pub total_chit_earned: i32,
     pub chit_balance: i32,
     pub streak: u16,
+    pub max_streak: u16,
 }
 
 #[ts_export]

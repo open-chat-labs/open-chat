@@ -118,6 +118,20 @@ pub struct InstalledBotDetails {
 }
 
 impl UserMap {
+    pub fn set_max_streaks(&mut self) {
+        for user in self.users.values_mut() {
+            if user.streak > user.max_streak {
+                user.max_streak = user.streak;
+            }
+        }
+    }
+
+    pub fn set_max_streak(&mut self, user_id: &UserId, max_streak: u16) {
+        if let Some(user) = self.users.get_mut(user_id) {
+            user.max_streak = max_streak;
+        }
+    }
+
     pub fn does_username_exist(&self, username: &str, is_bot: bool) -> bool {
         let map = if is_bot { &self.botname_to_user_id } else { &self.username_to_user_id };
         map.contains_key(username)
@@ -394,6 +408,9 @@ impl UserMap {
             user.latest_chit_event = chit_event_timestamp;
             user.streak = streak;
             user.streak_ends = streak_ends;
+            if streak > user.max_streak {
+                user.max_streak = streak;
+            }
         } else {
             let previous_month = MonthKey::from_timestamp(now).previous();
             if chit_event_month == previous_month && chit_event_timestamp >= user.latest_chit_event_previous_month {
