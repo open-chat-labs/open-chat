@@ -5,7 +5,7 @@ use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use local_user_index_canister::bot_chat_events::{Response::*, *};
 use local_user_index_canister::chat_events::{EventsArgs, EventsContext, EventsResponse};
-use types::{AccessTokenScope, BotApiKeyToken, BotPermissions, ChannelId, Chat, UserId};
+use types::{AccessTokenScope, AuthToken, BotApiKeyToken, BotPermissions, ChannelId, Chat, UserId};
 use utils::base64;
 
 #[query(composite = true, candid = true, msgpack = true)]
@@ -16,7 +16,7 @@ async fn bot_chat_events(args: Args) -> Response {
         bot_user_id,
         chat,
         api_key_secret,
-    } = match read_state(|state| prepare(args.channel_id, &args.api_key, state)) {
+    } = match read_state(|state| prepare(args.channel_id, args.auth_token, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -53,12 +53,15 @@ struct PrepareOk {
     api_key_secret: String,
 }
 
-fn prepare(channel_id: Option<ChannelId>, api_key: &str, state: &RuntimeState) -> Result<PrepareOk, Response> {
+fn prepare(channel_id: Option<ChannelId>, auth_token: AuthToken, state: &RuntimeState) -> Result<PrepareOk, Response> {
     let caller = state.env.caller();
     let Some(bot) = state.data.bots.get_by_caller(&caller) else {
         return Err(FailedAuthentication("Bot not found".to_string()));
     };
-    let Ok(token) = base64::to_value::<BotApiKeyToken>(api_key) else {
+    let AuthToken::ApiKey(api_key) = auth_token else {
+        return Err(FailedAuthentication("JWTs are not currently supported".to_string()));
+    };
+    let Ok(token) = base64::to_value::<BotApiKeyToken>(&api_key) else {
         return Err(FailedAuthentication(INVALID_API_KEY_MESSAGE.to_string()));
     };
     if token.bot_id != bot.bot_id {

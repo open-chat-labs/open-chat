@@ -630,7 +630,7 @@ fn read_messages_by_api_key(channel_api_key: bool, authorized: bool) {
             events: EventsSelectionCriteria::ByIndex(EventsByIndexArgs {
                 events: vec![send_message_response.event_index],
             }),
-            api_key,
+            auth_token: AuthToken::ApiKey(api_key),
         },
     );
 
