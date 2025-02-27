@@ -3,8 +3,8 @@ use constants::calculate_summary_updates_data_removal_cutoff;
 use rand::{rngs::StdRng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::collections::{btree_map::Entry, BTreeMap, BTreeSet, HashMap};
-use types::{ApiKey, BotPermissions, PublicApiKeyDetails, TimestampMillis, UserId};
+use std::collections::{btree_map::Entry, BTreeMap, BTreeSet, HashMap, HashSet};
+use types::{ApiKey, BotPermissions, ChannelId, ChatEventType, EventIndex, PublicApiKeyDetails, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct InstalledBots {
@@ -100,6 +100,12 @@ pub enum BotUpdate {
 pub struct BotInternal {
     pub added_by: UserId,
     pub permissions: BotPermissions,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BotEventVisibility {
+    pub min_visible_event_indexes: HashMap<Option<ChannelId>, EventIndex>,
+    pub event_types: HashSet<ChatEventType>,
 }
 
 #[derive(Serialize, Deserialize, Default)]

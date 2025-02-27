@@ -74,7 +74,10 @@ fn prepare(
         return Err(ChatNotFound);
     };
 
-    if let Some(events_reader) = chat.events.events_reader(EventIndex::default(), thread_root_message_index) {
+    if let Some(events_reader) = chat
+        .events
+        .events_reader(EventIndex::default(), thread_root_message_index, None)
+    {
         Ok(PrepareResult {
             chat,
             events_reader,
@@ -86,12 +89,13 @@ fn prepare(
 }
 
 fn process_events(events_response: Vec<EventOrExpiredRange>, chat: &DirectChat, latest_event_index: EventIndex) -> Response {
-    let (events, expired_event_ranges) = EventOrExpiredRange::split(events_response);
+    let (events, expired_event_ranges, _) = EventOrExpiredRange::split(events_response);
     let expired_message_ranges = chat.events.convert_to_message_ranges(&expired_event_ranges);
     let chat_last_updated = chat.last_updated();
 
     Success(EventsResponse {
         events,
+        unauthorized: Vec::new(),
         expired_event_ranges,
         expired_message_ranges,
         latest_event_index,

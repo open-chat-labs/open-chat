@@ -44,10 +44,20 @@ pub enum ChatEvent {
 }
 
 #[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[repr(u8)]
+pub enum ChatEventType {
+    Message = 0,           // Messages + edits, reaction, tips, etc.
+    MembershipUpdate = 1,  // User added, blocked, invited, role changed, etc.
+    ChatDetailsUpdate = 2, // Name, description, rules, permissions changed, etc.
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct EventsResponse {
     #[ts(as = "Vec<crate::EventWrapperChatEvent>")]
     pub events: Vec<EventWrapper<ChatEvent>>,
+    pub unauthorized: Vec<EventIndex>,
     pub expired_event_ranges: Vec<(EventIndex, EventIndex)>,
     pub expired_message_ranges: Vec<(MessageIndex, MessageIndex)>,
     pub latest_event_index: EventIndex,
@@ -58,7 +68,12 @@ pub struct EventsResponse {
 pub enum EventOrExpiredRange {
     Event(EventWrapper<ChatEvent>),
     ExpiredEventRange(EventIndex, EventIndex),
+    Unauthorized(EventIndex),
 }
+
+type Events = Vec<EventWrapper<ChatEvent>>;
+type ExpiredEventRanges = Vec<(EventIndex, EventIndex)>;
+type Unauthorized = Vec<EventIndex>;
 
 impl EventOrExpiredRange {
     pub fn as_event(&self) -> Option<&EventWrapper<ChatEvent>> {
@@ -69,22 +84,22 @@ impl EventOrExpiredRange {
         }
     }
 
-    pub fn split(
-        events_and_expired_ranges: Vec<EventOrExpiredRange>,
-    ) -> (Vec<EventWrapper<ChatEvent>>, Vec<(EventIndex, EventIndex)>) {
+    pub fn split(events_and_expired_ranges: Vec<EventOrExpiredRange>) -> (Events, ExpiredEventRanges, Unauthorized) {
         let mut events = Vec::new();
         let mut expired_ranges = Vec::new();
+        let mut unauthorized = Vec::new();
 
         for event_or_expired_range in events_and_expired_ranges {
             match event_or_expired_range {
                 EventOrExpiredRange::Event(e) => events.push(e),
                 EventOrExpiredRange::ExpiredEventRange(from, to) => expired_ranges.push((from, to)),
+                EventOrExpiredRange::Unauthorized(e) => unauthorized.push(e),
             }
         }
 
         expired_ranges.sort();
 
-        (events, expired_ranges)
+        (events, expired_ranges, unauthorized)
     }
 }
 
@@ -452,4 +467,41 @@ pub struct BotRemoved {
 pub struct BotUpdated {
     pub user_id: UserId,
     pub updated_by: UserId,
+}
+
+impl ChatEvent {
+    pub fn event_type(&self) -> Option<ChatEventType> {
+        match self {
+            ChatEvent::Message(_) => Some(ChatEventType::Message),
+            ChatEvent::GroupChatCreated(_)
+            | ChatEvent::DirectChatCreated(_)
+            | ChatEvent::GroupNameChanged(_)
+            | ChatEvent::GroupDescriptionChanged(_)
+            | ChatEvent::GroupRulesChanged(_)
+            | ChatEvent::AvatarChanged(_)
+            | ChatEvent::MessagePinned(_)
+            | ChatEvent::MessageUnpinned(_)
+            | ChatEvent::PermissionsChanged(_)
+            | ChatEvent::GroupVisibilityChanged(_)
+            | ChatEvent::GroupInviteCodeChanged(_)
+            | ChatEvent::ChatFrozen(_)
+            | ChatEvent::ChatUnfrozen(_)
+            | ChatEvent::EventsTimeToLiveUpdated(_)
+            | ChatEvent::GroupGateUpdated(_)
+            | ChatEvent::ExternalUrlUpdated(_) => Some(ChatEventType::ChatDetailsUpdate),
+            ChatEvent::ParticipantsAdded(_)
+            | ChatEvent::ParticipantsRemoved(_)
+            | ChatEvent::ParticipantJoined(_)
+            | ChatEvent::ParticipantLeft(_)
+            | ChatEvent::RoleChanged(_)
+            | ChatEvent::UsersBlocked(_)
+            | ChatEvent::UsersUnblocked(_)
+            | ChatEvent::UsersInvited(_)
+            | ChatEvent::MembersAddedToDefaultChannel(_)
+            | ChatEvent::BotAdded(_)
+            | ChatEvent::BotRemoved(_)
+            | ChatEvent::BotUpdated(_) => Some(ChatEventType::MembershipUpdate),
+            ChatEvent::Empty | ChatEvent::FailedToDeserialize => None,
+        }
+    }
 }

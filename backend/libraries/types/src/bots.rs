@@ -1,8 +1,8 @@
 use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
-    AccessTokenScope, AudioContent, CanisterId, Chat, ChatId, CommunityId, CommunityPermission, FileContent, GiphyContent,
-    GroupPermission, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent,
-    TimestampMillis, UserId, VideoContent,
+    AccessTokenScope, AudioContent, CanisterId, Chat, ChatEventType, ChatId, ChatPermission, CommunityId, CommunityPermission,
+    FileContent, GiphyContent, GroupRole, ImageContent, MessageContentInitial, MessageId, MessagePermission, PollContent,
+    TextContent, TimestampMillis, UserId, VideoContent,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -95,7 +95,7 @@ pub struct BotCommandOptionChoice<T> {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
 pub struct BotPermissions {
     pub community: HashSet<CommunityPermission>,
-    pub chat: HashSet<GroupPermission>,
+    pub chat: HashSet<ChatPermission>,
     pub message: HashSet<MessagePermission>,
 }
 
@@ -109,8 +109,8 @@ impl BotPermissions {
     }
 
     pub fn intersect(p1: &Self, p2: &Self) -> Self {
-        fn intersect<T: Hash + Eq + Clone>(x: &HashSet<T>, y: &HashSet<T>) -> HashSet<T> {
-            x.intersection(y).cloned().collect()
+        fn intersect<T: Hash + Eq + Copy>(x: &HashSet<T>, y: &HashSet<T>) -> HashSet<T> {
+            x.intersection(y).copied().collect()
         }
 
         Self {
@@ -121,8 +121,8 @@ impl BotPermissions {
     }
 
     pub fn union(p1: &Self, p2: &Self) -> Self {
-        fn union<T: Hash + Eq + Clone>(x: &HashSet<T>, y: &HashSet<T>) -> HashSet<T> {
-            x.union(y).cloned().collect()
+        fn union<T: Hash + Eq + Copy>(x: &HashSet<T>, y: &HashSet<T>) -> HashSet<T> {
+            x.union(y).copied().collect()
         }
 
         Self {
@@ -156,16 +156,19 @@ impl BotPermissions {
         Self {
             community: HashSet::new(),
             chat: HashSet::from_iter([
-                GroupPermission::ChangeRoles,
-                GroupPermission::UpdateGroup,
-                GroupPermission::AddMembers,
-                GroupPermission::InviteUsers,
-                GroupPermission::RemoveMembers,
-                GroupPermission::DeleteMessages,
-                GroupPermission::PinMessages,
-                GroupPermission::ReactToMessages,
-                GroupPermission::MentionAllMembers,
-                GroupPermission::StartVideoCall,
+                ChatPermission::ChangeRoles,
+                ChatPermission::UpdateGroup,
+                ChatPermission::AddMembers,
+                ChatPermission::InviteUsers,
+                ChatPermission::RemoveMembers,
+                ChatPermission::DeleteMessages,
+                ChatPermission::PinMessages,
+                ChatPermission::ReactToMessages,
+                ChatPermission::MentionAllMembers,
+                ChatPermission::StartVideoCall,
+                ChatPermission::ReadMessages,
+                ChatPermission::ReadMembership,
+                ChatPermission::ReadChatDetails,
             ]),
             message: HashSet::from_iter([
                 MessagePermission::Text,
@@ -181,6 +184,20 @@ impl BotPermissions {
                 MessagePermission::VideoCall,
             ]),
         }
+    }
+
+    pub fn permitted_event_types_to_read(&self) -> HashSet<ChatEventType> {
+        let mut event_types = HashSet::new();
+        if self.chat.contains(&ChatPermission::ReadMessages) {
+            event_types.insert(ChatEventType::Message);
+        }
+        if self.chat.contains(&ChatPermission::ReadMembership) {
+            event_types.insert(ChatEventType::MembershipUpdate);
+        }
+        if self.chat.contains(&ChatPermission::ReadChatDetails) {
+            event_types.insert(ChatEventType::ChatDetailsUpdate);
+        }
+        event_types
     }
 }
 
@@ -329,7 +346,7 @@ pub enum BotMessageContent {
 }
 
 #[ts_export]
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub enum BotInitiator {
     Command(BotCommand),
     ApiKeySecret(String),

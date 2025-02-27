@@ -257,6 +257,12 @@ type ChatEventWrapper = record {
     event : ChatEvent;
 };
 
+type ChatEventType = variant {
+    Message;
+    MembershipUpdate;
+    ChatDetailsUpdate;
+};
+
 type GroupChatSummary = record {
     chat_id : ChatId;
     local_user_index_canister_id : CanisterId;
@@ -1480,6 +1486,7 @@ type PushEventResult = record {
 
 type EventsSuccessResult = record {
     events : vec ChatEventWrapper;
+    unauthorized : vec EventIndex;
     expired_event_ranges : vec record { EventIndex; EventIndex };
     expired_message_ranges : vec record { MessageIndex; MessageIndex };
     latest_event_index : nat32;
@@ -2175,6 +2182,9 @@ type GroupPermission = variant {
     ReactToMessages;
     MentionAllMembers;
     StartVideoCall;
+    ReadMessages;
+    ReadMembership;
+    ReadChatDetails;
 };
 
 type MessagePermission = variant {
