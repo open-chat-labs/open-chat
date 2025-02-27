@@ -3,4 +3,4 @@ import type { LocalUserIndexChatEventsEventsByIndexArgs } from "./LocalUserIndex
 import type { LocalUserIndexChatEventsEventsPageArgs } from "./LocalUserIndexChatEventsEventsPageArgs";
 import type { LocalUserIndexChatEventsEventsWindowArgs } from "./LocalUserIndexChatEventsEventsWindowArgs";
 
-export type LocalUserIndexChatEventsEventsArgsInner = { "Page": LocalUserIndexChatEventsEventsPageArgs } | { "ByIndex": LocalUserIndexChatEventsEventsByIndexArgs } | { "Window": LocalUserIndexChatEventsEventsWindowArgs };
+export type LocalUserIndexChatEventsEventsSelectionCriteria = { "Page": LocalUserIndexChatEventsEventsPageArgs } | { "ByIndex": LocalUserIndexChatEventsEventsByIndexArgs } | { "Window": LocalUserIndexChatEventsEventsWindowArgs };

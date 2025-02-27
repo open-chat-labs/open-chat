@@ -26,6 +26,7 @@
         OpenChat,
         PermissionRole,
         ExternalBotPermissions,
+        ChatPermissions,
     } from "openchat-client";
     import {
         currentCommunityBots,
@@ -104,8 +105,13 @@
 
         const chatPermitted =
             chat !== undefined && chat.kind !== "direct_chat"
-                ? [...command.permissions.chatPermissions].every((p) =>
-                      isPermitted(chat.membership.role, chat.permissions[p] as PermissionRole),
+                ? [...command.permissions.chatPermissions].every(
+                      (p) =>
+                          ["readMessages", "readMembership", "readChatDetails"].includes(p) ||
+                          isPermitted(
+                              chat.membership.role,
+                              chat.permissions[p as keyof ChatPermissions] as PermissionRole,
+                          ),
                   )
                 : true;
 

@@ -1173,6 +1173,9 @@
     "percLeft": "{perc}% left",
     "performingUpgrade": "Performing Upgrade",
     "permissions": {
+        "readMessages": "read messages",
+        "readMembership": "read membership details",
+        "readChatDetails": "read chat details",
         "addMembers": "add members",
         "allMembers": "All members can",
         "changeRoles": "change member roles",

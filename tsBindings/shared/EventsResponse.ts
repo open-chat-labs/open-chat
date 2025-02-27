@@ -3,4 +3,4 @@ import type { EventIndex } from "./EventIndex";
 import type { EventWrapperChatEvent } from "./EventWrapperChatEvent";
 import type { MessageIndex } from "./MessageIndex";
 
-export type EventsResponse = { events: Array<EventWrapperChatEvent>, expired_event_ranges: Array<[EventIndex, EventIndex]>, expired_message_ranges: Array<[MessageIndex, MessageIndex]>, latest_event_index: EventIndex, chat_last_updated: bigint, };
+export type EventsResponse = { events: Array<EventWrapperChatEvent>, unauthorized: Array<EventIndex>, expired_event_ranges: Array<[EventIndex, EventIndex]>, expired_message_ranges: Array<[MessageIndex, MessageIndex]>, latest_event_index: EventIndex, chat_last_updated: bigint, };
