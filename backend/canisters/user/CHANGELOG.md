@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reduce the size of notifications when serialized ([#7448](https://github.com/open-chat-labs/open-chat/pull/7448))
 - Move new message validation to `MessageContentInternal` ([#7452](https://github.com/open-chat-labs/open-chat/pull/7452))
 - Support bots used directly by users ([#7397](https://github.com/open-chat-labs/open-chat/pull/7397))
+- On `user::c2c_install_bot` create a direct chat ([#7489](https://github.com/open-chat-labs/open-chat/pull/7489))
 
 ### Removed
 
