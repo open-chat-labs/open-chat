@@ -188,10 +188,10 @@ impl BotPermissions {
         if self.chat.contains(&ChatPermission::ReadMessages) {
             event_types.insert(ChatEventType::Message);
         }
-        if self.chat.contains(&ChatPermission::ReadMembershipUpdates) {
+        if self.chat.contains(&ChatPermission::ReadMembership) {
             event_types.insert(ChatEventType::MembershipUpdate);
         }
-        if self.chat.contains(&ChatPermission::ReadChatDetailsUpdates) {
+        if self.chat.contains(&ChatPermission::ReadChatDetails) {
             event_types.insert(ChatEventType::ChatDetailsUpdate);
         }
         event_types

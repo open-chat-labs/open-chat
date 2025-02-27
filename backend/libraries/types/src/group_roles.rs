@@ -187,8 +187,8 @@ pub enum ChatPermission {
     MentionAllMembers = 8,
     StartVideoCall = 9,
     ReadMessages = 10,
-    ReadMembershipUpdates = 11,
-    ReadChatDetailsUpdates = 12,
+    ReadMembership = 11,
+    ReadChatDetails = 12,
 }
 
 impl From<ChatPermission> for u8 {
@@ -213,8 +213,8 @@ impl TryFrom<u8> for ChatPermission {
             8 => Ok(ChatPermission::MentionAllMembers),
             9 => Ok(ChatPermission::StartVideoCall),
             10 => Ok(ChatPermission::ReadMessages),
-            11 => Ok(ChatPermission::ReadMembershipUpdates),
-            12 => Ok(ChatPermission::ReadChatDetailsUpdates),
+            11 => Ok(ChatPermission::ReadMembership),
+            12 => Ok(ChatPermission::ReadChatDetails),
             _ => Err(()),
         }
     }

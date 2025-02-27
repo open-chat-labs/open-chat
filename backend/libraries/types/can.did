@@ -2183,8 +2183,8 @@ type GroupPermission = variant {
     MentionAllMembers;
     StartVideoCall;
     ReadMessages;
-    ReadMembershipUpdates;
-    ReadChatDetailsUpdates;
+    ReadMembership;
+    ReadChatDetails;
 };
 
 type MessagePermission = variant {
