@@ -34,7 +34,7 @@ fn generate_bot_api_key_impl(args: Args, state: &mut RuntimeState) -> Response {
     let api_key_token = BotApiKeyToken {
         gateway: state.data.local_user_index_canister_id,
         bot_id: args.bot_id,
-        scope: AccessTokenScope::Chat(Chat::Group(state.env.canister_id().into())),
+        scope: AccessTokenScope::Chat(Chat::Direct(state.env.canister_id().into())),
         secret: api_key_secret,
         permissions: encoded_permissions,
     };
