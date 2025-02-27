@@ -66,6 +66,24 @@ export type HasMembershipRole = {
     };
 };
 
+export const botChatPermissionList = [
+    "changeRoles",
+    "updateGroup",
+    "addMembers",
+    "inviteUsers",
+    "removeMembers",
+    "deleteMessages",
+    "pinMessages",
+    "reactToMessages",
+    "mentionAllMembers",
+    "startVideoCall",
+    "readMessages",
+    "readMembership",
+    "readChatDetails",
+] as const;
+type BotChatPermissionType = typeof botChatPermissionList;
+export type BotChatPermission = BotChatPermissionType[number];
+
 export type ChatPermissions = {
     changeRoles: ChatPermissionRole;
     updateGroup: ChatPermissionRole;
@@ -125,6 +143,18 @@ export type OptionalMessagePermissions = {
     memeFighter: OptionUpdate<ChatPermissionRole>;
     p2pSwap: OptionUpdate<ChatPermissionRole>;
 };
+
+export const botCommunityPermissionList = [
+    "changeRoles",
+    "updateDetails",
+    "inviteUsers",
+    "removeMembers",
+    "createPublicChannel",
+    "createPrivateChannel",
+    "manageUserGroups",
+] as const;
+type BotCommunityPermissionType = typeof botCommunityPermissionList;
+export type BotCommunityPermission = BotCommunityPermissionType[number];
 
 export type CommunityPermissions = {
     changeRoles: CommunityPermissionRole;

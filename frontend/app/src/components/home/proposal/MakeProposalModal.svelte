@@ -345,7 +345,7 @@
                 }
                 return {
                     kind: "execute_generic_nervous_system_function",
-                    functionId: BigInt(1013),
+                    functionId: BigInt(1015),
                     payload: createPublishExternalBotPayload(selectedBot),
                 };
             }
@@ -448,7 +448,6 @@
                         <option value={"transfer_sns_funds"}>Transfer SNS funds</option>
                         <option value={"advance_sns_target_version"}
                             >Advance SNS target version</option>
-                        <option value={"publish_bot"}>Publish a bot</option>
                         {#if symbol === "CHAT"}
                             <option value={"register_external_achievement"}
                                 >Register external achievement</option>

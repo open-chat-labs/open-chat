@@ -17,7 +17,7 @@ import type {
     VideoCallType,
 } from "openchat-shared";
 import type {
-    LocalUserIndexChatEventsEventsArgsInner,
+    LocalUserIndexChatEventsEventsSelectionCriteria,
     LocalUserIndexChatEventsEventsArgs,
     LocalUserIndexChatEventsEventsContext,
     LocalUserIndexChatEventsResponse,
@@ -249,7 +249,9 @@ function eventsContext(context: MessageContext): LocalUserIndexChatEventsEventsC
     }
 }
 
-function eventsArgsInner(args: ChatEventsArgs["args"]): LocalUserIndexChatEventsEventsArgsInner {
+function eventsArgsInner(
+    args: ChatEventsArgs["args"],
+): LocalUserIndexChatEventsEventsSelectionCriteria {
     switch (args.kind) {
         case "page":
             return {
