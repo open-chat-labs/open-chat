@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
+- Maintain `max_streak` and sync it to UserIndex ([#7488](https://github.com/open-chat-labs/open-chat/pull/7488))
 
 ### Changed
 
