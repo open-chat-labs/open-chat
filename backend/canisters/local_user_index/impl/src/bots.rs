@@ -1,4 +1,4 @@
-use crate::{RuntimeState, INVALID_API_KEY_MESSAGE};
+use crate::RuntimeState;
 use jwt::Claims;
 use rand::Rng;
 use types::{

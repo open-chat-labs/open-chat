@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotInitiator, MessageIndex, TimestampMillis, UserId};
+use types::{MessageIndex, TimestampMillis, UserId};
 
 #[ts_export(user, events_window)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
