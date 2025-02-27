@@ -13,12 +13,25 @@ use local_user_index_canister::{
 use std::cell::LazyCell;
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, MessageContent, TextContent, TimestampMillis, UserId, UserType};
-use user_index_canister::c2c_notify_events::{Response::*, *};
+use user_index_canister::c2c_local_user_index::{Response::*, *};
 use user_index_canister::LocalUserIndexEvent;
 
-#[update(guard = "caller_is_local_user_index_canister", msgpack = true, fallback = true)]
+#[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
 #[trace]
-fn c2c_notify_events(args: Args) -> Response {
+fn c2c_notify_events(args: user_index_canister::c2c_notify_events::Args) -> Response {
+    mutate_state(|state| {
+        c2c_notify_events_impl(
+            Args {
+                events: args.events.into_iter().map(|e| e.into()).collect(),
+            },
+            state,
+        )
+    })
+}
+
+#[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
+#[trace]
+fn c2c_local_user_index(args: Args) -> Response {
     mutate_state(|state| c2c_notify_events_impl(args, state))
 }
 

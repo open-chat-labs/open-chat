@@ -4,14 +4,29 @@ use crate::model::events::CommunityEventInternal;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::c2c_notify_events::*;
+use community_canister::c2c_local_group_index::*;
 use community_canister::LocalGroupIndexEvent;
 use constants::OPENCHAT_BOT_USER_ID;
 use types::{GroupNameChanged, Timestamped};
 
-#[update(guard = "caller_is_local_group_index", msgpack = true, fallback = true)]
+#[update(guard = "caller_is_local_group_index", msgpack = true)]
 #[trace]
-fn c2c_notify_events(args: Args) -> Response {
+fn c2c_notify_events(args: community_canister::c2c_notify_events::Args) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| {
+        c2c_notify_events_impl(
+            Args {
+                events: args.events.into_iter().map(|e| e.into()).collect(),
+            },
+            state,
+        )
+    })
+}
+
+#[update(guard = "caller_is_local_group_index", msgpack = true)]
+#[trace]
+fn c2c_local_group_index(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| c2c_notify_events_impl(args, state))

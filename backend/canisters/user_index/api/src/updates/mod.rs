@@ -3,6 +3,7 @@ pub mod add_platform_moderator;
 pub mod add_platform_operator;
 pub mod assign_platform_moderators_group;
 pub mod award_external_achievement;
+pub mod c2c_local_user_index;
 pub mod c2c_mark_user_canister_empty;
 pub mod c2c_notify_chit;
 pub mod c2c_notify_events;

@@ -2,13 +2,26 @@ use crate::guards::caller_is_notifications_index;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use notifications_canister::c2c_sync_index::{Response::*, *};
+use notifications_canister::c2c_notifications_index::{Response::*, *};
 use notifications_index_canister::NotificationsIndexEvent;
 use stable_memory_map::StableMemoryMap;
 
-#[update(guard = "caller_is_notifications_index", msgpack = true, fallback = true)]
+#[update(guard = "caller_is_notifications_index", msgpack = true)]
 #[trace]
-fn c2c_sync_index(args: Args) -> Response {
+fn c2c_sync_index(args: notifications_canister::c2c_sync_index::Args) -> Response {
+    mutate_state(|state| {
+        c2c_sync_index_impl(
+            Args {
+                events: args.events.into_iter().map(|e| e.into()).collect(),
+            },
+            state,
+        )
+    })
+}
+
+#[update(guard = "caller_is_notifications_index", msgpack = true)]
+#[trace]
+fn c2c_notifications_index(args: Args) -> Response {
     mutate_state(|state| c2c_sync_index_impl(args, state))
 }
 

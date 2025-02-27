@@ -13,7 +13,7 @@ grouped_timer_job_batch!(
 impl TimerJobItem for NotificationCanistersEventBatch {
     async fn process(&self) -> Result<(), bool> {
         let args = notifications_canister::c2c_sync_index::Args {
-            events: self.items.clone(),
+            events: self.items.iter().map(|e| e.value.clone()).collect(),
         };
 
         let response = notifications_canister_c2c_client::c2c_sync_index(self.key, &args).await;

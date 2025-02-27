@@ -6,14 +6,29 @@ use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use constants::OPENCHAT_BOT_USER_ID;
-use group_canister::c2c_notify_events::*;
+use group_canister::c2c_local_group_index::*;
 use group_canister::LocalGroupIndexEvent;
 use std::cell::LazyCell;
 use types::{GroupNameChanged, TimestampMillis, Timestamped};
 
-#[update(guard = "caller_is_local_group_index", msgpack = true, fallback = true)]
+#[update(guard = "caller_is_local_group_index", msgpack = true)]
 #[trace]
-fn c2c_notify_events(args: Args) -> Response {
+fn c2c_notify_events(args: group_canister::c2c_notify_events::Args) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| {
+        c2c_notify_events_impl(
+            Args {
+                events: args.events.into_iter().map(|e| e.into()).collect(),
+            },
+            state,
+        )
+    })
+}
+
+#[update(guard = "caller_is_local_group_index", msgpack = true)]
+#[trace]
+fn c2c_local_group_index(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| c2c_notify_events_impl(args, state))
