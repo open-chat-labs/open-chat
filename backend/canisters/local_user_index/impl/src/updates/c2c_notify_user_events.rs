@@ -70,5 +70,8 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserEvent::UserUnblocked(unblocked) => {
             state.push_event_to_user_index(UserIndexEvent::UserUnblocked(user_id, unblocked), **now);
         }
+        UserEvent::SetMaxStreak(max_streak) => {
+            state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);
+        }
     }
 }

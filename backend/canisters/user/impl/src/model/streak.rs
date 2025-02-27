@@ -11,6 +11,8 @@ pub struct Streak {
     start_day: u16,
     end_day: u16,
     #[serde(default)]
+    max_streak: u16,
+    #[serde(default)]
     insurance_last_updated: TimestampMillis,
     #[serde(default)]
     days_insured: u8,
@@ -45,7 +47,7 @@ impl Streak {
                 if self.is_new_streak(today) {
                     if let Some(insurance_claim) = self.claim_via_insurance(now) {
                         // This can happen if the user claims just after midnight, before the timer job runs
-                        self.end_day = today;
+                        self.set_end_day(today);
                         return Ok(Some(insurance_claim));
                     }
                     self.start_day = today;
@@ -54,7 +56,7 @@ impl Streak {
                     self.days_missed = 0;
                 }
 
-                self.end_day = today;
+                self.set_end_day(today);
                 return Ok(None);
             }
         }
@@ -69,7 +71,7 @@ impl Streak {
 
         if let Some(today) = Streak::timestamp_to_day(now) {
             if today == self.end_day + 2 {
-                self.end_day += 1;
+                self.set_end_day(self.end_day + 1);
                 self.days_missed += 1;
                 self.insurance_last_updated = now;
 
@@ -91,6 +93,14 @@ impl Streak {
         } else {
             false
         }
+    }
+
+    pub fn max_streak(&self) -> u16 {
+        self.max_streak
+    }
+
+    pub fn set_max_streak(&mut self, max_streak: u16) {
+        self.max_streak = max_streak;
     }
 
     pub fn timestamp_to_day(ts: TimestampMillis) -> Option<u16> {
@@ -153,6 +163,14 @@ impl Streak {
             total += Self::insurance_cost_for_day(days_currently_insured + i);
         }
         total
+    }
+
+    fn set_end_day(&mut self, day: u16) {
+        self.end_day = day;
+        let streak = 1 + self.end_day - self.start_day;
+        if streak > self.max_streak {
+            self.max_streak = streak;
+        }
     }
 
     fn is_new_streak(&self, today: u16) -> bool {

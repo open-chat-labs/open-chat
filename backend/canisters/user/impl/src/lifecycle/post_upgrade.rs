@@ -1,5 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
+use crate::model::streak::Streak;
 use crate::timer_job_types::DedupeMessageIdsJob;
 use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
@@ -40,6 +41,18 @@ fn post_upgrade(args: Args) {
             for user_id in blocked_users {
                 state.push_local_user_index_canister_event(UserEvent::UserBlocked(user_id), now);
             }
+
+            // Init the `max_streak` field by calculating its value based on the historical claims
+            let mut streak = Streak::default();
+            for claim in state.data.chit_events.iter_daily_claims() {
+                let _ = streak.claim(claim);
+            }
+            let max_streak = streak.max_streak();
+            state.data.streak.set_max_streak(max_streak);
+            if max_streak > state.data.streak.days(now) {
+                state.push_local_user_index_canister_event(UserEvent::SetMaxStreak(max_streak), now);
+            }
+
             state.data.local_user_index_event_sync_queue.set_defer_processing(false);
         }
     })
