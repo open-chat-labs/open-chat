@@ -38,10 +38,11 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotInitiator, BotPermissions,
-    BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
-    CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator,
+    BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics,
+    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
+    EventIndex, EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -749,23 +750,44 @@ impl Data {
         }
     }
 
-    pub fn get_member_for_events(&self, caller: Principal) -> Result<Option<CommunityMemberInternal>, EventsResponse> {
-        let hidden_for_non_members = !self.is_public.value || self.has_payment_gate();
-        let member = self.members.get(caller);
-
-        if hidden_for_non_members {
-            if let Some(member) = &member {
-                if member.suspended().value {
-                    return Err(EventsResponse::UserSuspended);
-                } else if member.lapsed().value {
-                    return Err(EventsResponse::UserLapsed);
-                }
-            } else {
+    pub fn get_caller_for_events(
+        &self,
+        caller: Principal,
+        channel_id: ChannelId,
+        bot_initiator: Option<BotInitiator>,
+    ) -> Result<EventsCaller, EventsResponse> {
+        if let Some(initiator) = bot_initiator {
+            let bot_user_id = caller.into();
+            let Some(permissions) = self.granted_bot_permissions(&bot_user_id, &initiator, Some(channel_id)) else {
+                return Err(EventsResponse::UserNotInCommunity);
+            };
+            let bot_permitted_event_types = permissions.permitted_event_types_to_read();
+            if bot_permitted_event_types.is_empty() {
                 return Err(EventsResponse::UserNotInCommunity);
             }
-        }
+            Ok(EventsCaller::Bot(BotEventsCaller {
+                bot: bot_user_id,
+                bot_permitted_event_types,
+                min_visible_event_index: EventIndex::default(),
+            }))
+        } else {
+            let hidden_for_non_members = !self.is_public.value || self.has_payment_gate();
+            let member = self.members.get(caller);
 
-        Ok(member)
+            if hidden_for_non_members {
+                if let Some(member) = &member {
+                    if member.suspended().value {
+                        return Err(EventsResponse::UserSuspended);
+                    } else if member.lapsed().value {
+                        return Err(EventsResponse::UserLapsed);
+                    }
+                } else {
+                    return Err(EventsResponse::UserNotInCommunity);
+                }
+            }
+
+            Ok(member.map_or(EventsCaller::Unknown, |m| EventsCaller::User(m.user_id)))
+        }
     }
 
     pub fn add_members_to_channel(
@@ -956,18 +978,23 @@ impl Data {
         initiator: &BotInitiator,
         required: BotPermissions,
     ) -> bool {
+        self.granted_bot_permissions(bot_id, initiator, channel_id)
+            .is_some_and(|granted| required.is_subset(&granted))
+    }
+
+    fn granted_bot_permissions(
+        &self,
+        bot_id: &UserId,
+        initiator: &BotInitiator,
+        channel_id: Option<ChannelId>,
+    ) -> Option<BotPermissions> {
         // Try to get the installed bot
-        let Some(bot) = self.bots.get(bot_id) else {
-            return false;
-        };
+        let bot = self.bots.get(bot_id)?;
 
         // Get the permissions granted to the bot when initiated by command or API key
         let granted_to_bot = match initiator {
             BotInitiator::Command(_) => &bot.permissions,
-            BotInitiator::ApiKeySecret(secret) => match self.get_api_key_permissions(bot_id, secret, channel_id) {
-                Some(bot_permissions) => bot_permissions,
-                None => return false,
-            },
+            BotInitiator::ApiKeySecret(secret) => self.get_api_key_permissions(bot_id, secret, channel_id)?,
             BotInitiator::ApiKeyPermissions(permissions) => permissions,
         };
 
@@ -980,16 +1007,12 @@ impl Data {
             };
 
         // If this is a command initiated by a user then intersect the permissions granted to the bot with the user's permissions
-        let granted = match initiator {
-            BotInitiator::Command(command) => match self.get_user_permissions(&command.initiator, channel_id) {
-                Some(user_permissions) => &BotPermissions::intersect(granted_to_bot, &user_permissions),
-                None => return false,
-            },
-            _ => granted_to_bot,
-        };
-
-        // The permissions required must be a subset of the permissions granted to the bot
-        required.is_subset(granted)
+        match initiator {
+            BotInitiator::Command(command) => self
+                .get_user_permissions(&command.initiator, channel_id)
+                .map(|u| BotPermissions::intersect(granted_to_bot, &u)),
+            _ => Some(granted_to_bot.clone()),
+        }
     }
 
     pub fn is_same_or_senior_in_channel(&self, user_id: &UserId, channel_id: &ChannelId, role: GroupRole) -> bool {

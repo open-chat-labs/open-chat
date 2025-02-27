@@ -6,33 +6,38 @@ use canister_api_macros::query;
 use community_canister::c2c_events_by_index::Args as C2CArgs;
 use community_canister::events_by_index::{Response::*, *};
 use group_chat_core::EventsResult;
+use types::BotInitiator;
 
 #[query(candid = true, msgpack = true)]
 fn events_by_index(args: Args) -> Response {
-    read_state(|state| events_by_index_impl(args, None, state))
+    read_state(|state| events_by_index_impl(args, None, None, state))
 }
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_events_by_index(args: C2CArgs) -> Response {
-    read_state(|state| events_by_index_impl(args.args, Some(args.caller), state))
+    read_state(|state| events_by_index_impl(args.args, Some(args.caller), args.bot_initiator, state))
 }
 
-fn events_by_index_impl(args: Args, on_behalf_of: Option<Principal>, state: &RuntimeState) -> Response {
+fn events_by_index_impl(
+    args: Args,
+    on_behalf_of: Option<Principal>,
+    bot_initiator: Option<BotInitiator>,
+    state: &RuntimeState,
+) -> Response {
     if let Err(now) = check_replica_up_to_date(args.latest_known_update, state) {
         return ReplicaNotUpToDateV2(now);
     }
 
     let caller = on_behalf_of.unwrap_or_else(|| state.env.caller());
-
-    let member = match state.data.get_member_for_events(caller) {
-        Ok(member) => member,
+    let events_caller = match state.data.get_caller_for_events(caller, args.channel_id, bot_initiator) {
+        Ok(ec) => ec,
         Err(response) => return response,
     };
 
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
         match channel
             .chat
-            .events_by_index(member.map(|m| m.user_id), args.thread_root_message_index, args.events)
+            .events_by_index(events_caller, args.thread_root_message_index, args.events)
         {
             EventsResult::Success(response) => Success(response),
             EventsResult::UserNotInGroup => UserNotInChannel,

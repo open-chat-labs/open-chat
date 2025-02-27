@@ -4,6 +4,7 @@ use crate::{client, TestEnv, User};
 use candid::Principal;
 use jwt::Claims;
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandInitial};
+use local_user_index_canister::chat_events::{EventsByIndexArgs, EventsSelectionCriteria};
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -13,8 +14,8 @@ use testing::rng::{random_from_u128, random_string};
 use types::{
     AccessTokenScope, AuthToken, AutonomousConfig, BotActionByCommandClaims, BotActionChatDetails, BotActionScope,
     BotApiKeyToken, BotCommandArgValue, BotCommandDefinition, BotDefinition, BotInstallationLocation, BotMessageContent,
-    BotPermissions, CanisterId, Chat, ChatEvent, ChatType, CommunityPermission, MessageContent, MessagePermission, Rules,
-    TextContent, UserId,
+    BotPermissions, CanisterId, Chat, ChatEvent, ChatPermission, ChatType, CommunityPermission, MessageContent,
+    MessagePermission, Rules, TextContent, UserId,
 };
 use utils::base64;
 
@@ -555,6 +556,93 @@ fn create_channel_by_api_key() {
 
     if !matches!(response, local_user_index_canister::bot_delete_channel::Response::Success) {
         panic!("'bot_delete_channel' error: {response:?}");
+    }
+}
+
+#[test_case(true, true)]
+#[test_case(true, false)]
+#[test_case(false, true)]
+#[test_case(false, false)]
+fn read_messages_by_api_key(channel_api_key: bool, authorized: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+
+    // Register a bot
+    let bot_name = random_string();
+    let command_name = random_string();
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, bot_name.clone(), command_name.clone());
+
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        canister_ids.local_user_index(env, community_id),
+        BotInstallationLocation::Community(community_id),
+        bot_id,
+        BotPermissions::text_only(),
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    let api_key = match client::community::generate_bot_api_key(
+        env,
+        owner.principal,
+        community_id.into(),
+        &community_canister::generate_bot_api_key::Args {
+            bot_id,
+            requested_permissions: BotPermissions {
+                community: HashSet::new(),
+                chat: HashSet::from_iter([if authorized {
+                    ChatPermission::ReadMessages
+                } else {
+                    ChatPermission::ReadMembership
+                }]),
+                message: HashSet::new(),
+            },
+            channel_id: channel_api_key.then_some(channel_id),
+        },
+    ) {
+        community_canister::generate_bot_api_key::Response::Success(result) => result.api_key,
+        response => panic!("'generate_bot_api_key' error: {response:?}"),
+    };
+
+    let send_message_response =
+        client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
+
+    let response = client::local_user_index::bot_chat_events(
+        env,
+        bot_principal,
+        canister_ids.local_user_index(env, community_id),
+        &local_user_index_canister::bot_chat_events::Args {
+            channel_id: Some(channel_id),
+            events: EventsSelectionCriteria::ByIndex(EventsByIndexArgs {
+                events: vec![send_message_response.event_index],
+            }),
+            auth_token: AuthToken::ApiKey(api_key),
+        },
+    );
+
+    let local_user_index_canister::bot_chat_events::Response::Success(result) = &response else {
+        panic!("'bot_chat_events' error: {response:?}");
+    };
+
+    if authorized {
+        assert_eq!(result.events.len(), 1);
+        assert!(result.unauthorized.is_empty());
+    } else {
+        assert!(result.events.is_empty());
+        assert_eq!(result.unauthorized, vec![send_message_response.event_index]);
     }
 }
 

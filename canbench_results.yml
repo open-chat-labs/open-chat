@@ -1,7 +1,7 @@
 benches:
   add_reactions:
     total:
-      instructions: 886900008
+      instructions: 886923529
       heap_increase: 3
       stable_memory_increase: 0
     scopes: {}
