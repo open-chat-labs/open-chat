@@ -626,7 +626,6 @@ fn read_messages_by_api_key(channel_api_key: bool, authorized: bool) {
         canister_ids.local_user_index(env, community_id),
         &local_user_index_canister::bot_chat_events::Args {
             channel_id: Some(channel_id),
-            thread_root_message_index: None,
             events: EventsSelectionCriteria::ByIndex(EventsByIndexArgs {
                 events: vec![send_message_response.event_index],
             }),

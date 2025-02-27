@@ -1,22 +1,21 @@
+use crate::bots::extract_access_context;
 use crate::queries::chat_events::make_c2c_call_to_get_events;
-use crate::{read_state, RuntimeState, INVALID_API_KEY_MESSAGE};
-use candid::Principal;
+use crate::{mutate_state, RuntimeState};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use local_user_index_canister::bot_chat_events::{Response::*, *};
 use local_user_index_canister::chat_events::{EventsArgs, EventsContext, EventsResponse};
-use types::{AccessTokenScope, AuthToken, BotApiKeyToken, BotPermissions, ChannelId, Chat, UserId};
-use utils::base64;
+use types::{AuthToken, BotActionScope, BotInitiator, ChannelId, Chat, MessageIndex, UserId};
 
 #[query(composite = true, candid = true, msgpack = true)]
 #[trace]
 async fn bot_chat_events(args: Args) -> Response {
     let PrepareOk {
-        caller,
-        bot_user_id,
+        bot_id,
+        initiator,
         chat,
-        api_key_secret,
-    } = match read_state(|state| prepare(args.channel_id, args.auth_token, state)) {
+        thread,
+    } = match mutate_state(|state| prepare(args.channel_id, args.auth_token, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -25,17 +24,15 @@ async fn bot_chat_events(args: Args) -> Response {
         EventsArgs {
             context: match chat {
                 Chat::Direct(user_id) => EventsContext::Direct((*user_id).into()),
-                Chat::Group(chat_id) => EventsContext::Group(chat_id, args.thread_root_message_index),
-                Chat::Channel(community_id, channel_id) => {
-                    EventsContext::Channel(community_id, channel_id, args.thread_root_message_index)
-                }
+                Chat::Group(chat_id) => EventsContext::Group(chat_id, thread),
+                Chat::Channel(community_id, channel_id) => EventsContext::Channel(community_id, channel_id, thread),
             },
             args: args.events,
             latest_known_update: None,
         },
-        caller,
-        bot_user_id,
-        Some(api_key_secret),
+        bot_id.into(),
+        bot_id,
+        Some(initiator),
     )
     .await
     {
@@ -47,38 +44,20 @@ async fn bot_chat_events(args: Args) -> Response {
 }
 
 struct PrepareOk {
-    caller: Principal,
-    bot_user_id: UserId,
+    bot_id: UserId,
+    initiator: BotInitiator,
     chat: Chat,
-    api_key_secret: String,
+    thread: Option<MessageIndex>,
 }
 
-fn prepare(channel_id: Option<ChannelId>, auth_token: AuthToken, state: &RuntimeState) -> Result<PrepareOk, Response> {
-    let caller = state.env.caller();
-    let Some(bot) = state.data.bots.get_by_caller(&caller) else {
-        return Err(FailedAuthentication("Bot not found".to_string()));
-    };
-    let AuthToken::ApiKey(api_key) = auth_token else {
-        return Err(FailedAuthentication("JWTs are not currently supported".to_string()));
-    };
-    let Ok(token) = base64::to_value::<BotApiKeyToken>(&api_key) else {
-        return Err(FailedAuthentication(INVALID_API_KEY_MESSAGE.to_string()));
-    };
-    if token.bot_id != bot.bot_id {
-        return Err(FailedAuthentication(INVALID_API_KEY_MESSAGE.to_string()));
-    }
-    if BotPermissions::from(token.permissions)
-        .permitted_event_types_to_read()
-        .is_empty()
-    {
-        return Err(FailedAuthentication("Bot not permitted to read chat events".to_string()));
-    }
+fn prepare(channel_id: Option<ChannelId>, auth_token: AuthToken, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
+    let context = extract_access_context(&auth_token, state).map_err(FailedAuthentication)?;
 
-    let chat = match token.scope {
-        AccessTokenScope::Chat(chat) => chat,
-        AccessTokenScope::Community(community_id) => {
+    let (chat, thread) = match context.scope {
+        BotActionScope::Chat(scope) => (scope.chat, scope.thread),
+        BotActionScope::Community(scope) => {
             if let Some(channel_id) = channel_id {
-                Chat::Channel(community_id, channel_id)
+                (Chat::Channel(scope.community_id, channel_id), None)
             } else {
                 return Err(InternalError("Channel not specified".to_string()));
             }
@@ -86,9 +65,9 @@ fn prepare(channel_id: Option<ChannelId>, auth_token: AuthToken, state: &Runtime
     };
 
     Ok(PrepareOk {
-        caller,
-        bot_user_id: bot.bot_id,
+        bot_id: context.bot_id,
+        initiator: context.initiator,
         chat,
-        api_key_secret: token.secret,
+        thread,
     })
 }

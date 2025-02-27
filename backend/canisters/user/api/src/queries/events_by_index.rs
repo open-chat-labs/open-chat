@@ -8,8 +8,6 @@ use types::{EventIndex, MessageIndex, TimestampMillis, UserId};
 pub struct Args {
     pub user_id: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
-    #[ts(skip)]
-    pub bot_api_key_secret: Option<String>,
     pub events: Vec<EventIndex>,
     pub latest_known_update: Option<TimestampMillis>,
 }

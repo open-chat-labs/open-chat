@@ -166,6 +166,9 @@ impl BotPermissions {
                 ChatPermission::ReactToMessages,
                 ChatPermission::MentionAllMembers,
                 ChatPermission::StartVideoCall,
+                ChatPermission::ReadMessages,
+                ChatPermission::ReadMembership,
+                ChatPermission::ReadChatDetails,
             ]),
             message: HashSet::from_iter([
                 MessagePermission::Text,
@@ -343,7 +346,7 @@ pub enum BotMessageContent {
 }
 
 #[ts_export]
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub enum BotInitiator {
     Command(BotCommand),
     ApiKeySecret(String),
