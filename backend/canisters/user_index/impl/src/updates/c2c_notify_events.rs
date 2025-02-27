@@ -151,6 +151,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             notifications_index_canister::UserIndexEvent::UserUnblocked(user_id, unblocked),
             **now,
         ),
+        LocalUserIndexEvent::SetMaxStreak(user_id, max_streak) => state.data.users.set_max_streak(&user_id, max_streak),
     }
 }
 
