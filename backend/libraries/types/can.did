@@ -1988,6 +1988,7 @@ type UserSummaryVolatile = record {
     total_chit_earned : int32;
     chit_balance : int32;
     streak : nat16;
+    max_streak : nat16;
 };
 
 type CurrentUserSummary = record {
