@@ -55,6 +55,7 @@ pub enum BotCommandParamType {
     IntegerParam(IntegerParam),
     #[serde(alias = "NumberParam")]
     DecimalParam(DecimalParam),
+    DateTimeParam(DateTimeParam),
 }
 
 #[ts_export]
@@ -64,6 +65,7 @@ pub struct StringParam {
     pub max_length: u16,
     #[ts(as = "Vec<BotCommandOptionChoiceString>")]
     pub choices: Vec<BotCommandOptionChoice<String>>,
+    pub multi_line: bool,
 }
 
 #[ts_export]
@@ -82,6 +84,12 @@ pub struct DecimalParam {
     pub max_value: f64,
     #[ts(as = "Vec<BotCommandOptionChoiceF64>")]
     pub choices: Vec<BotCommandOptionChoice<f64>>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct DateTimeParam {
+    pub future_only: bool,
 }
 
 #[ts_export]
@@ -302,6 +310,7 @@ pub enum BotCommandArgValue {
     Decimal(f64),
     Boolean(bool),
     User(UserId),
+    DateTime(TimestampMillis),
 }
 
 #[ts_export]

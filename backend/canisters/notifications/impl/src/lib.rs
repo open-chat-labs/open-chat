@@ -74,16 +74,10 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub notifications: EventStream<NotificationEnvelope>,
     pub subscriptions: Subscriptions,
-    #[serde(default = "blocked_users")]
     pub blocked_users: UserIdsSet,
-    #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
-}
-
-fn blocked_users() -> UserIdsSet {
-    UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users())
 }
 
 impl Data {

@@ -52,7 +52,6 @@ pub struct Bot {
     pub autonomous_config: Option<AutonomousConfig>,
     pub last_updated: TimestampMillis,
     pub installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
-    #[serde(default)]
     pub registration_status: BotRegistrationStatus,
 }
 
@@ -118,14 +117,6 @@ pub struct InstalledBotDetails {
 }
 
 impl UserMap {
-    pub fn set_max_streaks(&mut self) {
-        for user in self.users.values_mut() {
-            if user.streak > user.max_streak {
-                user.max_streak = user.streak;
-            }
-        }
-    }
-
     pub fn set_max_streak(&mut self, user_id: &UserId, max_streak: u16) {
         if let Some(user) = self.users.get_mut(user_id) {
             user.max_streak = max_streak;

@@ -6,12 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `DateTime` bot command parameter ([#7496](https://github.com/open-chat-labs/open-chat/pull/7496))
+- Add `bot_chat_details` ([#7499](https://github.com/open-chat-labs/open-chat/pull/7499))
+
+## [[2.0.1610](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1610-local_user_index)] - 2025-02-28
+
 ### Added
 
 - Support `sync_api_key` cmd + min required cmd role ([#7439](https://github.com/open-chat-labs/open-chat/pull/7439))
 - Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
 - Introduce new idempotent endpoints for C2C calls ([#7492](https://github.com/open-chat-labs/open-chat/pull/7492))
-- Add `bot_chat_details` ([#7499](https://github.com/open-chat-labs/open-chat/pull/7499))
 
 ### Changed
 

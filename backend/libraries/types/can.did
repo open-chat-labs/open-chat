@@ -2122,12 +2122,14 @@ type BotCommandParamType = variant {
     StringParam : StringParam;
     IntegerParam : IntegerParam;
     DecimalParam : DecimalParam;
+    DateTimeParam : DateTimeParam;
 };
 
 type StringParam = record {
     min_length : nat16;
     max_length : nat16;
     choices : vec StringParamChoice;
+    multi_line : bool;
 };
 
 type StringParamChoice = record {
@@ -2155,6 +2157,10 @@ type DecimalParam = record {
 type DecimalParamChoice = record {
     name : text;
     value : float64;
+};
+
+type DateTimeParam = record {
+    future_only : bool;
 };
 
 type BotPermissions = record {
@@ -2243,6 +2249,7 @@ type BotCommandArgValue = variant {
     Decimal : float64;
     Boolean : bool;
     User : UserId;
+    DateTime : TimestampMillis;
 };
 
 type BotCommandMeta = record {
