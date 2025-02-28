@@ -9774,7 +9774,7 @@ export const UserMessagesByMessageIndexResponse = Type.Union([
 export type EventsResponse = Static<typeof EventsResponse>;
 export const EventsResponse = Type.Object({
     events: Type.Array(EventWrapperChatEvent),
-    unauthorized: Type.Array(EventIndex),
+    // unauthorized: Type.Array(EventIndex),
     expired_event_ranges: Type.Array(Type.Tuple([EventIndex, EventIndex])),
     expired_message_ranges: Type.Array(Type.Tuple([MessageIndex, MessageIndex])),
     latest_event_index: EventIndex,
@@ -10043,8 +10043,8 @@ export const UserInitialStateSuccessResult = Type.Object({
     wallet_config: UserWalletConfig,
     referrals: Type.Array(UserReferral),
     message_activity_summary: UserMessageActivitySummary,
-    bots: Type.Array(InstalledBotDetails),
-    api_keys: Type.Array(PublicApiKeyDetails),
+    // bots: Type.Array(InstalledBotDetails),
+    // api_keys: Type.Array(PublicApiKeyDetails),
 });
 
 export type UserInitialStateResponse = Static<typeof UserInitialStateResponse>;
@@ -10077,9 +10077,9 @@ export const UserUpdatesSuccessResult = Type.Object({
     wallet_config: Type.Optional(UserWalletConfig),
     referrals: Type.Array(UserReferral),
     message_activity_summary: Type.Optional(UserMessageActivitySummary),
-    bots_added_or_updated: Type.Array(InstalledBotDetails),
-    bots_removed: Type.Array(UserId),
-    api_keys_generated: Type.Array(PublicApiKeyDetails),
+    // bots_added_or_updated: Type.Array(InstalledBotDetails),
+    // bots_removed: Type.Array(UserId),
+    // api_keys_generated: Type.Array(PublicApiKeyDetails),
 });
 
 export type UserUpdatesResponse = Static<typeof UserUpdatesResponse>;
