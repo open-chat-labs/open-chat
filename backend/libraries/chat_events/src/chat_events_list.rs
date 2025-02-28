@@ -10,8 +10,8 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use std::ops::Deref;
 use tracing::{error, info};
 use types::{
-    Chat, ChatEvent, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message,
-    MessageId, MessageIndex, TimestampMillis, UserId,
+    Chat, ChatEvent, ChatEventType, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
+    Mention, Message, MessageId, MessageIndex, TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -52,7 +52,7 @@ impl ChatEventsList {
         let mut my_messages_index = 0;
         let mut their_messages_index = 0;
         while let Some(event_index) = self.events_with_duplicate_message_ids.pop_first() {
-            if let Some(mut event_wrapper) = self.get_event(event_index.into(), EventIndex::default()) {
+            if let Some(mut event_wrapper) = self.get_event(event_index.into(), EventIndex::default(), None) {
                 if let ChatEventInternal::Message(m) = &mut event_wrapper.event {
                     if m.sender == my_user_id {
                         m.message_id = self.new_message_id(my_user_id, their_user_id, my_messages_index);
@@ -134,11 +134,22 @@ impl ChatEventsList {
         event_index
     }
 
-    pub(crate) fn get(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> Option<EventOrExpiredRangeInternal> {
+    pub(crate) fn get(
+        &self,
+        event_key: EventKey,
+        min_visible_event_index: EventIndex,
+        bot_permitted_event_types: Option<&HashSet<ChatEventType>>,
+    ) -> Option<EventOrExpiredRangeInternal> {
         let event_index = self.event_index(event_key).filter(|e| *e >= min_visible_event_index)?;
 
         match self.get_value_or_neighbours(event_index) {
-            Ok(event) => Some(EventOrExpiredRangeInternal::Event(event)),
+            Ok(event) => {
+                if bot_permitted_event_types.is_none_or(|pt| event.event.event_type().is_some_and(|t| pt.contains(&t))) {
+                    Some(EventOrExpiredRangeInternal::Event(event))
+                } else {
+                    Some(EventOrExpiredRangeInternal::Unauthorized(event.index))
+                }
+            }
             Err((prev, next)) => Some(EventOrExpiredRangeInternal::ExpiredEventRange(
                 prev.map_or(EventIndex::default(), |i| i.incr()),
                 next.map_or(self.latest_event_index.unwrap_or_default(), |i| i.decr()),
@@ -150,8 +161,10 @@ impl ChatEventsList {
         &self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
+        bot_permitted_event_types: Option<&HashSet<ChatEventType>>,
     ) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.get(event_key, min_visible_event_index).and_then(|e| e.into_event())
+        self.get(event_key, min_visible_event_index, bot_permitted_event_types)
+            .and_then(|e| e.into_event())
     }
 
     pub(crate) fn update_event<
@@ -163,7 +176,7 @@ impl ChatEventsList {
         event_key: EventKey,
         update_event_fn: F,
     ) -> Result<(T, EventIndex), UpdateEventError<E>> {
-        if let Some(mut event) = self.get_event(event_key, EventIndex::default()) {
+        if let Some(mut event) = self.get_event(event_key, EventIndex::default(), None) {
             update_event_fn(&mut event).map(|result| {
                 let event_index = event.index;
                 self.events_map.insert(event);
@@ -175,7 +188,7 @@ impl ChatEventsList {
     }
 
     pub(crate) fn is_accessible(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> bool {
-        self.get_event(event_key, min_visible_event_index).is_some()
+        self.event_index(event_key).is_some_and(|e| e >= min_visible_event_index)
     }
 
     pub(crate) fn iter(
@@ -183,6 +196,7 @@ impl ChatEventsList {
         start: Option<EventKey>,
         ascending: bool,
         min_visible_event_index: EventIndex,
+        bot_permitted_event_types: Option<HashSet<ChatEventType>>,
     ) -> Box<dyn Iterator<Item = EventOrExpiredRangeInternal> + '_> {
         let (min, max) = if let Some(start) = start {
             if let Some(index) = self.event_index(start) {
@@ -207,6 +221,7 @@ impl ChatEventsList {
                 expected_next: min,
                 end: max,
                 complete: false,
+                bot_permitted_event_types,
             })
         } else {
             Box::new(ChatEventsListIterator {
@@ -215,6 +230,7 @@ impl ChatEventsList {
                 expected_next: max,
                 end: min,
                 complete: false,
+                bot_permitted_event_types,
             })
         }
     }
@@ -291,10 +307,6 @@ impl ChatEventsList {
         self.events_map.iter().next_back()
     }
 
-    pub fn contains_message_id(&self, message_id: MessageId) -> bool {
-        self.message_id_map.contains_key(&message_id)
-    }
-
     pub fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
         match event_key {
             EventKey::EventIndex(e) => Some(e),
@@ -327,6 +339,7 @@ pub struct ChatEventsListReader<'r> {
     events_list: &'r ChatEventsList,
     last_updated_timestamps: &'r LastUpdatedTimestamps,
     min_visible_event_index: EventIndex,
+    bot_permitted_event_types: Option<HashSet<ChatEventType>>,
 }
 
 impl Deref for ChatEventsListReader<'_> {
@@ -342,18 +355,20 @@ impl<'r> ChatEventsListReader<'r> {
         events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
     ) -> ChatEventsListReader<'r> {
-        Self::with_min_visible_event_index(events_list, last_updated_timestamps, EventIndex::default())
+        Self::with_min_visible_event_index(events_list, last_updated_timestamps, EventIndex::default(), None)
     }
 
     pub(crate) fn with_min_visible_event_index(
         events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
         min_visible_event_index: EventIndex,
+        bot_permitted_event_types: Option<HashSet<ChatEventType>>,
     ) -> ChatEventsListReader<'r> {
         ChatEventsListReader {
             events_list,
             last_updated_timestamps,
             min_visible_event_index,
+            bot_permitted_event_types,
         }
     }
 }
@@ -468,6 +483,7 @@ pub trait Reader {
         match event_or_expired_range {
             EventOrExpiredRangeInternal::Event(event) => EventOrExpiredRange::Event(self.hydrate_event(event, my_user_id)),
             EventOrExpiredRangeInternal::ExpiredEventRange(from, to) => EventOrExpiredRange::ExpiredEventRange(from, to),
+            EventOrExpiredRangeInternal::Unauthorized(event) => EventOrExpiredRange::Unauthorized(event),
         }
     }
 
@@ -556,7 +572,11 @@ pub trait Reader {
 
 impl Reader for ChatEventsListReader<'_> {
     fn get(&self, event_key: EventKey) -> Option<EventOrExpiredRangeInternal> {
-        self.events_list.get(event_key, self.min_visible_event_index)
+        self.events_list.get(
+            event_key,
+            self.min_visible_event_index,
+            self.bot_permitted_event_types.as_ref(),
+        )
     }
 
     fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
@@ -564,7 +584,12 @@ impl Reader for ChatEventsListReader<'_> {
     }
 
     fn iter(&self, start: Option<EventKey>, ascending: bool) -> Box<dyn Iterator<Item = EventOrExpiredRangeInternal> + '_> {
-        self.events_list.iter(start, ascending, self.min_visible_event_index)
+        self.events_list.iter(
+            start,
+            ascending,
+            self.min_visible_event_index,
+            self.bot_permitted_event_types.clone(),
+        )
     }
 
     fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_> {
@@ -574,7 +599,7 @@ impl Reader for ChatEventsListReader<'_> {
                 .iter()
                 .rev()
                 .copied()
-                .map_while(|e| self.events_list.get_event(e.into(), self.min_visible_event_index))
+                .map_while(|e| self.events_list.get_event(e.into(), self.min_visible_event_index, None))
                 .filter_map(move |e| try_into_message_event(e, my_user_id)),
         )
     }
@@ -611,6 +636,7 @@ struct ChatEventsListIterator<I> {
     expected_next: EventIndex,
     end: EventIndex,
     complete: bool,
+    bot_permitted_event_types: Option<HashSet<ChatEventType>>,
 }
 
 impl<I: Iterator<Item = EventWrapperInternal<ChatEventInternal>>> Iterator for ChatEventsListIterator<I> {
@@ -624,7 +650,15 @@ impl<I: Iterator<Item = EventWrapperInternal<ChatEventInternal>>> Iterator for C
         let result = if let Some(next) = self.inner.next() {
             let index = next.index;
             let result = if next.index == self.expected_next {
-                EventOrExpiredRangeInternal::Event(next)
+                if self
+                    .bot_permitted_event_types
+                    .as_ref()
+                    .is_none_or(|pt| next.event.event_type().is_some_and(|t| pt.contains(&t)))
+                {
+                    EventOrExpiredRangeInternal::Event(next)
+                } else {
+                    EventOrExpiredRangeInternal::Unauthorized(index)
+                }
             } else if self.ascending {
                 EventOrExpiredRangeInternal::ExpiredEventRange(self.expected_next, index.decr())
             } else {

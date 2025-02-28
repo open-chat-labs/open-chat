@@ -69,7 +69,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                                 );
                             }
 
-                            state.data.user_event_sync_queue.push(
+                            state.push_event_to_user(
                                 message.sender,
                                 GroupCanisterEvent::MessageActivity(MessageActivityEvent {
                                     chat: Chat::Group(chat_id),
@@ -81,16 +81,15 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                                     timestamp: state.env.now(),
                                     user_id: Some(user_id),
                                 }),
+                                now,
                             );
 
-                            state
-                                .data
-                                .notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo);
+                            state.notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo, now);
                         }
                     }
 
                     if args.new_achievement && !is_bot {
-                        state.data.notify_user_of_achievement(user_id, Achievement::ReactedToMessage);
+                        state.notify_user_of_achievement(user_id, Achievement::ReactedToMessage, now);
                     }
                 }
 

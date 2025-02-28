@@ -2,8 +2,8 @@
     import Check from "svelte-material-icons/Check.svelte";
     import Minus from "svelte-material-icons/Minus.svelte";
     import {
-        chatPermissionsList,
-        communityPermissionsList,
+        botChatPermissionList,
+        botCommunityPermissionList,
         type ExternalBotPermissions,
         messagePermissionsList,
         type ResourceKey,
@@ -38,12 +38,12 @@
 {/snippet}
 
 {#snippet chatTab()}
-    {#each chatPermissionsList as perm}
+    {#each botChatPermissionList as perm}
         {@render check(i18nKey(`permissions.${perm}`), permissions.chatPermissions.includes(perm))}
     {/each}
 {/snippet}
 {#snippet communityTab()}
-    {#each communityPermissionsList as perm}
+    {#each botCommunityPermissionList as perm}
         {@render check(
             i18nKey(`permissions.${perm}`),
             permissions.communityPermissions.includes(perm),

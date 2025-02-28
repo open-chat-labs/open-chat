@@ -175,7 +175,7 @@ impl GroupPermissionRole {
 #[ts_export]
 #[repr(u8)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum GroupPermission {
+pub enum ChatPermission {
     ChangeRoles = 0,
     UpdateGroup = 1,
     AddMembers = 2,
@@ -186,29 +186,35 @@ pub enum GroupPermission {
     ReactToMessages = 7,
     MentionAllMembers = 8,
     StartVideoCall = 9,
+    ReadMessages = 10,
+    ReadMembership = 11,
+    ReadChatDetails = 12,
 }
 
-impl From<GroupPermission> for u8 {
-    fn from(value: GroupPermission) -> Self {
+impl From<ChatPermission> for u8 {
+    fn from(value: ChatPermission) -> Self {
         value as u8
     }
 }
 
-impl TryFrom<u8> for GroupPermission {
+impl TryFrom<u8> for ChatPermission {
     type Error = ();
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(GroupPermission::ChangeRoles),
-            1 => Ok(GroupPermission::UpdateGroup),
-            2 => Ok(GroupPermission::AddMembers),
-            3 => Ok(GroupPermission::InviteUsers),
-            4 => Ok(GroupPermission::RemoveMembers),
-            5 => Ok(GroupPermission::DeleteMessages),
-            6 => Ok(GroupPermission::PinMessages),
-            7 => Ok(GroupPermission::ReactToMessages),
-            8 => Ok(GroupPermission::MentionAllMembers),
-            9 => Ok(GroupPermission::StartVideoCall),
+            0 => Ok(ChatPermission::ChangeRoles),
+            1 => Ok(ChatPermission::UpdateGroup),
+            2 => Ok(ChatPermission::AddMembers),
+            3 => Ok(ChatPermission::InviteUsers),
+            4 => Ok(ChatPermission::RemoveMembers),
+            5 => Ok(ChatPermission::DeleteMessages),
+            6 => Ok(ChatPermission::PinMessages),
+            7 => Ok(ChatPermission::ReactToMessages),
+            8 => Ok(ChatPermission::MentionAllMembers),
+            9 => Ok(ChatPermission::StartVideoCall),
+            10 => Ok(ChatPermission::ReadMessages),
+            11 => Ok(ChatPermission::ReadMembership),
+            12 => Ok(ChatPermission::ReadChatDetails),
             _ => Err(()),
         }
     }

@@ -57,6 +57,8 @@ pub struct User {
     pub streak: u16,
     #[serde(rename = "se", default, skip_serializing_if = "is_default")]
     pub streak_ends: TimestampMillis,
+    #[serde(rename = "ms", default, skip_serializing_if = "is_default")]
+    pub max_streak: u16,
     #[serde(rename = "cu", default)]
     pub chit_updated: TimestampMillis,
     #[serde(rename = "lc", default)]
@@ -112,6 +114,7 @@ impl User {
             chit_updated: now,
             streak: 0,
             streak_ends: 0,
+            max_streak: 0,
             latest_chit_event: 0,
             latest_chit_event_previous_month: 0,
             unique_person_proof: None,
@@ -131,6 +134,7 @@ impl User {
             total_chit_earned: self.total_chit_earned(),
             chit_balance: self.current_chit_balance(now),
             streak: self.streak(now),
+            max_streak: self.max_streak,
             is_unique_person: self.unique_person_proof.is_some(),
         }
     }
@@ -160,6 +164,7 @@ impl User {
             total_chit_earned: self.total_chit_earned(),
             chit_balance: self.chit_per_month.get(&month_key).copied().unwrap_or_default(),
             streak: self.streak(now),
+            max_streak: self.max_streak,
         }
     }
 
@@ -247,6 +252,7 @@ impl Default for User {
             reported_messages: Vec::new(),
             chit_per_month: BTreeMap::new(),
             streak: 0,
+            max_streak: 0,
             streak_ends: 0,
             chit_updated: 0,
             latest_chit_event: 0,

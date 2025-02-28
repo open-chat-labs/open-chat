@@ -183,7 +183,7 @@ type SelectedInitialSuccess = record {
     last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     members : vec CommunityMember;
-    bots : vec BotGroupDetails;
+    bots : vec InstalledBotDetails;
     api_keys : vec PublicApiKeyDetails;
     basic_members : vec UserId;
     blocked_users : vec UserId;
@@ -209,7 +209,7 @@ type SelectedUpdatesSuccess = record {
     last_updated : TimestampMillis;
     members_added_or_updated : vec CommunityMember;
     members_removed : vec UserId;
-    bots_added_or_updated : vec BotGroupDetails;
+    bots_added_or_updated : vec InstalledBotDetails;
     bots_removed : vec UserId;
     api_keys_generated : vec PublicApiKeyDetails;
     blocked_users_added : vec UserId;

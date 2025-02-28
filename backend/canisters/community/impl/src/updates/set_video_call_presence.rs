@@ -48,7 +48,7 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
     {
         SetVideoCallPresenceResult::Success => {
             if args.new_achievement && !is_bot {
-                state.data.notify_user_of_achievement(user_id, Achievement::JoinedCall);
+                state.notify_user_of_achievement(user_id, Achievement::JoinedCall, now);
             }
 
             handle_activity_notification(state);

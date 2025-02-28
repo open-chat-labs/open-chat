@@ -1,17 +1,17 @@
 use crate::updates::c2c_notify_low_balance::top_up_canister;
 use crate::GroupEvent;
 use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
-use types::CanisterId;
+use types::{CanisterId, IdempotentEnvelope};
 use utils::canister::{is_out_of_cycles_error, should_retry_failed_c2c_call};
 
-grouped_timer_job_batch!(GroupEventBatch, CanisterId, GroupEvent, 1000);
+grouped_timer_job_batch!(GroupEventBatch, CanisterId, IdempotentEnvelope<GroupEvent>, 1000);
 
 impl TimerJobItem for GroupEventBatch {
     async fn process(&self) -> Result<(), bool> {
         let response = group_canister_c2c_client::c2c_notify_events(
             self.key,
             &group_canister::c2c_notify_events::Args {
-                events: self.items.clone(),
+                events: self.items.iter().map(|e| e.value.clone()).collect(),
             },
         )
         .await;

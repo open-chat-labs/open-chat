@@ -3,8 +3,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    Chat, ChatId, ChitEarned, CommunityId, DirectChatSummary, DirectChatSummaryUpdates, OptionUpdate, PinNumberSettings,
-    StreakInsurance, TimestampMillis, UserId,
+    Chat, ChatId, ChitEarned, CommunityId, DirectChatSummary, DirectChatSummaryUpdates, InstalledBotDetails, OptionUpdate,
+    PinNumberSettings, PublicApiKeyDetails, StreakInsurance, TimestampMillis, UserId,
 };
 
 #[ts_export(user, updates)]
@@ -44,6 +44,7 @@ pub struct SuccessResult {
     pub chit_balance: i32,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
+    pub max_streak: u16,
     #[ts(as = "types::OptionUpdateStreakInsurance")]
     pub streak_insurance: OptionUpdate<StreakInsurance>,
     pub next_daily_claim: TimestampMillis,
@@ -51,6 +52,9 @@ pub struct SuccessResult {
     pub wallet_config: Option<WalletConfig>,
     pub referrals: Vec<Referral>,
     pub message_activity_summary: Option<MessageActivitySummary>,
+    pub bots_added_or_updated: Vec<InstalledBotDetails>,
+    pub bots_removed: Vec<UserId>,
+    pub api_keys_generated: Vec<PublicApiKeyDetails>,
 }
 
 #[ts_export(user, updates)]

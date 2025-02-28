@@ -480,7 +480,6 @@ import {
 import {
     globalStateStore,
     setGlobalState,
-    updateSummaryWithConfirmedMessage,
     chatListScopeStore,
     chitStateStore,
     mergeCombinedUnreadCounts,
@@ -2868,11 +2867,6 @@ export class OpenChat extends EventTarget {
 
         this.#addServerEventsToStores(chatId, resp.events, threadRootMessageIndex, []);
 
-        for (const event of resp.events) {
-            if (event.event.kind === "message") {
-                unconfirmed.delete(context, event.event.messageId);
-            }
-        }
         return resp.events;
     }
 
@@ -3567,7 +3561,7 @@ export class OpenChat extends EventTarget {
                 mergeServerEvents(events, newEvents, context),
             );
             if (newLatestMessage !== undefined) {
-                updateSummaryWithConfirmedMessage(chatId, newLatestMessage);
+                localChatSummaryUpdates.markUpdated(chatId, { latestMessage: newLatestMessage });
             }
             const selectedThreadRootMessageIndex = this.#liveState.selectedThreadRootMessageIndex;
             if (selectedThreadRootMessageIndex !== undefined) {
@@ -5133,17 +5127,14 @@ export class OpenChat extends EventTarget {
         searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number,
+        location?: BotInstallationLocation,
     ): Promise<ExploreBotsResponse> {
-        // return Promise.resolve({
-        //     kind: "success",
-        //     matches: testMatches,
-        //     total: 2,
-        // });
         return this.#sendRequest({
             kind: "exploreBots",
             searchTerm,
             pageIndex,
             pageSize,
+            location,
         });
     }
 
@@ -8106,7 +8097,13 @@ export class OpenChat extends EventTarget {
                 accessTokenType: {
                     kind: "bot_action_by_command",
                     botId: bot.id,
-                    scope,
+                    scope:
+                        scope.kind === "chat_scope" && scope.chatId.kind === "direct_chat"
+                            ? {
+                                  ...scope,
+                                  chatId: { ...scope.chatId, userId: this.#liveState.user.userId },
+                              }
+                            : scope,
                     command: {
                         initiator: this.#liveState.user.userId,
                         commandName: bot.command.name,
@@ -8175,20 +8172,18 @@ export class OpenChat extends EventTarget {
         let perm: ExternalBotPermissions | undefined;
         switch (id.kind) {
             case "community":
-                communityStateStore.updateProp(id, "bots", (b) => {
-                    perm = b.get(botId);
-                    b.delete(botId);
-                    return new Map(b);
-                });
+                perm = this.#liveState.currentCommunityBots.get(botId);
+                localCommunitySummaryUpdates.removeBot(id, botId);
                 break;
             case "group_chat":
-                chatStateStore.updateProp(id, "bots", (b) => {
-                    perm = b.get(botId);
-                    b.delete(botId);
-                    return new Map(b);
-                });
+                perm = this.#liveState.currentChatBots.get(botId);
+                localChatSummaryUpdates.removeBot(id, botId);
                 break;
-            case "direct_chat": //FIXME
+            case "direct_chat":
+                perm = this.#liveState.installedDirectBots.get(botId);
+                localGlobalUpdates.removeBot(botId);
+                this.removeChat({ kind: "direct_chat", userId: botId });
+                this.archiveChat({ kind: "direct_chat", userId: botId });
                 break;
         }
         return perm;
@@ -8198,25 +8193,27 @@ export class OpenChat extends EventTarget {
         id: BotInstallationLocation,
         botId: string,
         perm: ExternalBotPermissions | undefined,
-    ): void {
+    ): ExternalBotPermissions | undefined {
+        let previousPermissions: ExternalBotPermissions | undefined = undefined;
         switch (id.kind) {
             case "community":
-                communityStateStore.updateProp(id, "bots", (b) => {
-                    if (perm === undefined) return b;
-                    b.set(botId, perm);
-                    return new Map(b);
-                });
+                if (perm === undefined) return perm;
+                previousPermissions = this.#liveState.currentCommunityBots.get(botId);
+                localCommunitySummaryUpdates.installBot(id, botId, perm);
                 break;
             case "group_chat":
-                chatStateStore.updateProp(id, "bots", (b) => {
-                    if (perm === undefined) return b;
-                    b.set(botId, perm);
-                    return new Map(b);
-                });
+                if (perm === undefined) return perm;
+                previousPermissions = this.#liveState.currentChatBots.get(botId);
+                localChatSummaryUpdates.installBot(id, botId, perm);
                 break;
-            case "direct_chat": //FIXME
+            case "direct_chat":
+                if (perm === undefined) return perm;
+                previousPermissions = this.#liveState.installedDirectBots.get(botId);
+                localGlobalUpdates.installBot(botId, perm);
+                this.unarchiveChat({ kind: "direct_chat", userId: botId });
                 break;
         }
+        return previousPermissions;
     }
 
     uninstallBot(id: BotInstallationLocation, botId: string): Promise<boolean> {
@@ -8226,11 +8223,11 @@ export class OpenChat extends EventTarget {
             id,
             botId,
         })
-            .then((res) => {
-                if (!res) {
+            .then((success) => {
+                if (!success) {
                     this.#installBotLocally(id, botId, perm);
                 }
-                return res;
+                return success;
             })
             .catch((err) => {
                 this.#logger.error("Error removing bot from group or community", err);
@@ -8757,7 +8754,7 @@ export class OpenChat extends EventTarget {
         const metricsUrl =
             import.meta.env.OC_NODE_ENV === "production"
                 ? `https://${this.config.userIndexCanister}.raw.ic0.app/metrics`
-                : `http://${this.config.userIndexCanister}.localhost:8080/metrics`;
+                : `http://${this.config.userIndexCanister}.raw.localhost:8080/metrics`;
         return fetch(metricsUrl, {
             headers: { "Content-Type": "application/json" },
         })

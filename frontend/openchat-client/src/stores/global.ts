@@ -8,10 +8,8 @@ import type {
     CommunityIdentifier,
     CommunitySummary,
     DirectChatSummary,
-    EventWrapper,
     ExternalBotPermissions,
     GroupChatSummary,
-    Message,
     MessageActivitySummary,
     PublicApiKeyDetails,
     Referral,
@@ -23,6 +21,7 @@ import { derived } from "svelte/store";
 import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { serverWalletConfigStore } from "./crypto";
+import { localGlobalUpdates } from "./localGlobalUpdates";
 
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
 
@@ -38,7 +37,20 @@ export type GlobalState = {
     messageActivitySummary: MessageActivitySummary;
 };
 
-export const installedDirectBots = immutableStore<Map<string, ExternalBotPermissions>>(new Map());
+const installedServerDirectBots = immutableStore<Map<string, ExternalBotPermissions>>(new Map());
+export const installedDirectBots = derived(
+    [installedServerDirectBots, localGlobalUpdates],
+    ([$serverBots, $local]) => {
+        const clone = new Map($serverBots);
+        const localInstalled = [...($local.get("global")?.installedDirectBots?.entries() ?? [])];
+        const localDeleted = [...($local.get("global")?.removedDirectBots?.values() ?? [])];
+        localInstalled.forEach(([id, perm]) => {
+            clone.set(id, perm);
+        });
+        localDeleted.forEach((id) => clone.delete(id));
+        return clone;
+    },
+);
 export const directApiKeys = immutableStore<Map<string, PublicApiKeyDetails>>(new Map());
 
 export const chitStateStore = immutableStore<ChitState>({
@@ -295,62 +307,6 @@ export const globalUnreadCount = derived(
     },
 );
 
-function updateLastMessage<T extends ChatSummary>(chat: T, message: EventWrapper<Message>): T {
-    const latestEventIndex = Math.max(message.index, chat.latestEventIndex);
-    const overwriteLatestMessage =
-        chat.latestMessage === undefined ||
-        message.index > chat.latestMessage.index ||
-        // If they are the same message, take the confirmed one since it'll have the correct timestamp
-        message.event.messageId === chat.latestMessage.event.messageId;
-
-    const latestMessage = overwriteLatestMessage ? message : chat.latestMessage;
-
-    return {
-        ...chat,
-        latestEventIndex,
-        latestMessage,
-    };
-}
-
-export function updateSummaryWithConfirmedMessage(
-    chatId: ChatIdentifier,
-    message: EventWrapper<Message>,
-): void {
-    globalStateStore.update((state) => {
-        switch (chatId.kind) {
-            case "channel":
-                const community = state.communities.get({
-                    kind: "community",
-                    communityId: chatId.communityId,
-                });
-                if (community !== undefined) {
-                    state.communities.set(community.id, {
-                        ...community,
-                        channels: community.channels.map((c) => {
-                            if (c.id.channelId === chatId.channelId) {
-                                return updateLastMessage(c, message);
-                            }
-                            return c;
-                        }),
-                    });
-                }
-                return state;
-            case "direct_chat":
-                const directChat = state.directChats.get(chatId);
-                if (directChat !== undefined) {
-                    state.directChats.set(chatId, updateLastMessage(directChat, message));
-                }
-                return state;
-            case "group_chat":
-                const groupChat = state.groupChats.get(chatId);
-                if (groupChat !== undefined) {
-                    state.groupChats.set(chatId, updateLastMessage(groupChat, message));
-                }
-                return state;
-        }
-    });
-}
-
 export function setGlobalState(
     communities: CommunitySummary[],
     allChats: ChatSummary[],
@@ -394,7 +350,7 @@ export function setGlobalState(
         return skipUpdate ? curr : chitState;
     });
     serverWalletConfigStore.set(walletConfig);
-    installedDirectBots.set(installedBots);
+    installedServerDirectBots.set(installedBots);
     directApiKeys.set(apiKeys);
 }
 

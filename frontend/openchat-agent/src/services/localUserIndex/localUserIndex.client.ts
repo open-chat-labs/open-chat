@@ -36,7 +36,7 @@ import {
 } from "./mappers";
 import {
     joinGroupResponse,
-    apiChatPermission,
+    apiBotChatPermission,
     apiCommunityPermission,
     apiMessagePermission,
     apiChatIdentifier,
@@ -396,8 +396,7 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
             case "group_chat":
                 return { Group: principalStringToBytes(domain.groupId) };
             case "direct_chat":
-                throw new Error("Not implemented yet");
-            // return { User: principalStringToBytes(domain.userId) };
+                return { User: principalStringToBytes(domain.userId) };
         }
     }
 
@@ -412,7 +411,7 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
                 location: this.#apiBotInstallationLocation(location),
                 bot_id: principalStringToBytes(botId),
                 granted_permissions: {
-                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
+                    chat: grantedPermissions.chatPermissions.map(apiBotChatPermission),
                     community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
                     message: grantedPermissions.messagePermissions.map(apiMessagePermission),
                 },

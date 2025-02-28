@@ -798,7 +798,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.exploreBots(payload.searchTerm, payload.pageIndex, payload.pageSize),
+                    agent.exploreBots(
+                        payload.searchTerm,
+                        payload.pageIndex,
+                        payload.pageSize,
+                        payload.location,
+                    ),
                 );
                 break;
 

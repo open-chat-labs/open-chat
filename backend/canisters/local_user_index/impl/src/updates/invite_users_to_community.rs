@@ -65,6 +65,7 @@ fn commit(
     invited_users: Vec<UserId>,
     state: &mut RuntimeState,
 ) {
+    let now = state.env.now();
     let text = format!(
         "You have been invited to the community [{community_name}](/community/{community_id}) by @UserId({invited_by})."
     );
@@ -75,6 +76,6 @@ fn commit(
     }];
 
     for user_id in invited_users {
-        state.push_oc_bot_message_to_user(user_id, message.clone(), mentioned.clone());
+        state.push_oc_bot_message_to_user(user_id, message.clone(), mentioned.clone(), now);
     }
 }

@@ -40,11 +40,7 @@ async fn tip_message(args: Args) -> Response {
         Err(error) => return InternalError(format!("{error:?}")),
     }
 
-    mutate_state(|state| {
-        state
-            .data
-            .award_achievement_and_notify(Achievement::TippedMessage, state.env.now())
-    });
+    mutate_state(|state| state.award_achievement_and_notify(Achievement::TippedMessage, state.env.now()));
 
     match prepare_result {
         PrepareResult::Direct(tip_message_args) => {

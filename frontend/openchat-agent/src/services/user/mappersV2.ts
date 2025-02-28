@@ -130,8 +130,8 @@ import type {
     MessageContext,
     MessageActivity,
     MessageActivitySummary,
-    // PublicApiKeyDetails,
-    // ExternalBotPermissions,
+    ExternalBotPermissions,
+    PublicApiKeyDetails,
 } from "openchat-shared";
 import {
     nullMembership,
@@ -157,8 +157,8 @@ import {
     messageMatch,
     messageEvent,
     eventsSuccessResponse,
-    // installedBotDetails,
-    // publicApiKeyDetails,
+    installedBotDetails,
+    publicApiKeyDetails,
 } from "../common/chatMappersV2";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -852,16 +852,14 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
             referrals: result.referrals.map(referral),
             walletConfig: walletConfig(result.wallet_config),
             messageActivitySummary: messageActivitySummary(result.message_activity_summary),
-            bots: new Map(),
-            apiKeys: new Map(),
-            // bots: result.bots.map(installedBotDetails).reduce((m, b) => {
-            //     m.set(b.id, b.permissions);
-            //     return m;
-            // }, new Map<string, ExternalBotPermissions>()),
-            // apiKeys: result.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
-            //     m.set(k.botId, k);
-            //     return m;
-            // }, new Map<string, PublicApiKeyDetails>()),
+            bots: result.bots.map(installedBotDetails).reduce((m, b) => {
+                m.set(b.id, b.permissions);
+                return m;
+            }, new Map<string, ExternalBotPermissions>()),
+            apiKeys: result.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
+                m.set(k.botId, k);
+                return m;
+            }, new Map<string, PublicApiKeyDetails>()),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${value}`);
@@ -1032,12 +1030,9 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
                 result.message_activity_summary,
                 messageActivitySummary,
             ),
-            botsAddedOrUpdated: [],
-            botsRemoved: new Set(),
-            apiKeysGenerated: [],
-            // botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
-            // botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
-            // apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
+            botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
+            botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
+            apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
         };
     }
 

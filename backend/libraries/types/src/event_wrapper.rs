@@ -14,6 +14,13 @@ pub struct EventWrapper<T> {
     pub event: T,
 }
 
+#[derive(Clone, Debug)]
+pub struct EventMetaData {
+    pub index: EventIndex,
+    pub timestamp: TimestampMillis,
+    pub expires_at: Option<TimestampMillis>,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct EventWrapperInternal<T> {
     #[serde(rename = "i", alias = "index")]

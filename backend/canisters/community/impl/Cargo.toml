@@ -39,6 +39,7 @@ ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 icrc-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
+installed_bots = { path = "../../../libraries/installed_bots" }
 instruction_counts_log = { path = "../../../libraries/instruction_counts_log" }
 itertools = { workspace = true }
 lazy_static = { workspace = true }

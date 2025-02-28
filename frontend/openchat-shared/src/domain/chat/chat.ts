@@ -704,6 +704,8 @@ export type LocalPollVote = {
 
 export type LocalGlobalUpdates = {
     walletConfig?: WalletConfig;
+    installedDirectBots?: Map<string, ExternalBotPermissions>;
+    removedDirectBots?: Set<string>;
     lastUpdated: number;
 };
 
@@ -713,9 +715,12 @@ export type LocalChatSummaryUpdates = {
     pinned?: Set<ChatListScope["kind"]>;
     unpinned?: Set<ChatListScope["kind"]>;
     added?: ChatSummary;
+    installedBots?: Map<string, ExternalBotPermissions>;
+    removedBots?: Set<string>;
     updated?:
         | {
               kind?: undefined;
+              latestMessage?: EventWrapper<Message>;
               notificationsMuted?: boolean;
               archived?: boolean;
               rulesAccepted?: boolean;
@@ -724,6 +729,7 @@ export type LocalChatSummaryUpdates = {
               kind: "group_chat" | "channel";
               name?: string;
               description?: string;
+              latestMessage?: EventWrapper<Message>;
               public?: boolean;
               permissions?: OptionalChatPermissions;
               frozen?: boolean;

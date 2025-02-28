@@ -32,6 +32,9 @@
     }: Props = $props();
     let collapsed = $state(true);
     let owner = $derived($userStore.get(bot.ownerId));
+    let isPublic = $derived(
+        bot.kind === "external_bot" && bot.registrationStatus.kind === "public",
+    );
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -48,7 +51,10 @@
     {/if}
     <div class="details">
         <div class="bot-name">
-            <h4>{bot.name}</h4>
+            <h4>
+                <div class={`img ${isPublic ? "public" : "private"}`}></div>
+                {bot.name}
+            </h4>
             {#if owner}
                 <div class="owner">
                     <Avatar url={client.userAvatarUrl(owner)} size={AvatarSize.Tiny} />
@@ -129,6 +135,12 @@
             display: flex;
             gap: $sp3;
             @include font(book, normal, fs-110);
+
+            h4 {
+                display: flex;
+                gap: $sp2;
+                align-items: center;
+            }
         }
 
         .bot-desc {
@@ -154,6 +166,22 @@
 
         .username {
             flex: auto;
+        }
+    }
+
+    .img {
+        background-repeat: no-repeat;
+        $size: 12px;
+        flex: 0 0 $size;
+        width: $size;
+        height: $size;
+
+        &.public {
+            background-image: url("/assets/unlocked.svg");
+        }
+
+        &.private {
+            background-image: url("/assets/locked.svg");
         }
     }
 </style>

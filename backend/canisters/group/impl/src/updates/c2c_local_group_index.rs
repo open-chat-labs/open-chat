@@ -2,31 +2,57 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_group_index;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
+use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use constants::OPENCHAT_BOT_USER_ID;
-use group_canister::c2c_notify_events::*;
+use group_canister::c2c_local_group_index::*;
 use group_canister::LocalGroupIndexEvent;
-use types::{GroupNameChanged, Timestamped};
+use std::cell::LazyCell;
+use types::{GroupNameChanged, TimestampMillis, Timestamped};
 
 #[update(guard = "caller_is_local_group_index", msgpack = true)]
 #[trace]
-fn c2c_notify_events(args: Args) -> Response {
+fn c2c_notify_events(args: group_canister::c2c_notify_events::Args) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| {
+        c2c_notify_events_impl(
+            Args {
+                events: args.events.into_iter().map(|e| e.into()).collect(),
+            },
+            state,
+        )
+    })
+}
+
+#[update(guard = "caller_is_local_group_index", msgpack = true)]
+#[trace]
+fn c2c_local_group_index(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| c2c_notify_events_impl(args, state))
 }
 
 fn c2c_notify_events_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let now = LazyCell::new(now_millis);
     for event in args.events {
-        process_event(event, state);
+        if state.data.idempotency_checker.check(
+            state.data.local_group_index_canister_id,
+            event.created_at,
+            event.idempotency_id,
+        ) {
+            process_event(event.value, &now, state);
+        }
     }
     Response::Success
 }
 
-fn process_event(event: LocalGroupIndexEvent, state: &mut RuntimeState) {
-    let now = state.env.now();
-
+fn process_event<F: FnOnce() -> TimestampMillis>(
+    event: LocalGroupIndexEvent,
+    now: &LazyCell<TimestampMillis, F>,
+    state: &mut RuntimeState,
+) {
     match event {
         LocalGroupIndexEvent::NameChanged(ev) => {
             state.data.chat.events.push_main_event(
@@ -36,13 +62,13 @@ fn process_event(event: LocalGroupIndexEvent, state: &mut RuntimeState) {
                     changed_by: OPENCHAT_BOT_USER_ID,
                 })),
                 0,
-                now,
+                **now,
             );
 
-            state.data.chat.name = Timestamped::new(ev.name, now);
+            state.data.chat.name = Timestamped::new(ev.name, **now);
         }
         LocalGroupIndexEvent::VerifiedChanged(ev) => {
-            state.data.verified = Timestamped::new(ev.verified, now);
+            state.data.verified = Timestamped::new(ev.verified, **now);
         }
     }
 

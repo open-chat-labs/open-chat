@@ -24,6 +24,7 @@ import type {
     ExternalBot,
     BotsResponse,
     BotDefinition,
+    BotInstallationLocation,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -51,6 +52,7 @@ import {
     exploreBotsResponse,
     botUpdatesResponse,
     apiBotDefinition,
+    apiBotInstallLocation,
 } from "./mappers";
 import {
     getCachedUsers,
@@ -625,6 +627,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number,
+        location?: BotInstallationLocation,
     ): Promise<ExploreBotsResponse> {
         return this.executeMsgpackQuery(
             "explore_bots",
@@ -632,6 +635,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
                 search_term: searchTerm,
                 page_index: pageIndex,
                 page_size: pageSize,
+                installation_location: mapOptional(location, apiBotInstallLocation),
             },
             (resp) => exploreBotsResponse(resp, this.blobUrlPattern, this.canisterId),
             UserIndexExploreBotsArgs,
@@ -640,6 +644,8 @@ export class UserIndexClient extends MsgpackCanisterAgent {
     }
 
     registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
+        const location =
+            bot.registrationStatus.kind === "private" ? bot.registrationStatus.location : undefined;
         return this.executeMsgpackUpdate(
             "register_bot",
             {
@@ -649,6 +655,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
                 avatar: mapOptional(bot.avatarUrl, identity),
                 endpoint: bot.endpoint,
                 definition: apiBotDefinition(bot.definition),
+                permitted_install_location: mapOptional(location, apiBotInstallLocation),
             },
             (resp) => {
                 console.log("UserIndex register bot response: ", resp);

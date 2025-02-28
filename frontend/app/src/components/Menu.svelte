@@ -6,9 +6,10 @@
         centered?: boolean;
         fit?: boolean;
         children?: Snippet;
+        shadow?: boolean;
     }
 
-    let { centered = false, fit = false, children }: Props = $props();
+    let { centered = false, fit = false, children, shadow = true }: Props = $props();
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -17,6 +18,7 @@
     transition:fade|local={{ duration: 100 }}
     class="menu"
     class:fit
+    class:shadow
     class:centered>
     {@render children?.()}
 </div>
@@ -25,7 +27,6 @@
     .menu {
         width: toRem(250);
         background-color: var(--menu-bg);
-        box-shadow: var(--menu-sh);
         border-radius: var(--rd);
         border: var(--bw) solid var(--menu-bd);
         max-height: 80vh;
@@ -36,6 +37,10 @@
             &.centered {
                 width: 70vw;
             }
+        }
+
+        &.shadow {
+            box-shadow: var(--menu-sh);
         }
 
         &.fit {

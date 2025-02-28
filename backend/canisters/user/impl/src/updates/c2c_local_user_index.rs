@@ -3,19 +3,38 @@ use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{Achievement, DiamondMembershipPlanDuration, MessageContentInitial, ReferralStatus, Timestamped};
-use user_canister::c2c_notify_events::{Response::*, *};
+use user_canister::c2c_local_user_index::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::{LocalUserIndexEvent, UserCanisterEvent};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-fn c2c_notify_events(args: Args) -> Response {
+fn c2c_notify_events(args: user_canister::c2c_notify_events::Args) -> Response {
+    mutate_state(|state| {
+        c2c_notify_events_impl(
+            Args {
+                events: args.events.into_iter().map(|e| e.into()).collect(),
+            },
+            state,
+        )
+    })
+}
+
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_local_user_index(args: Args) -> Response {
     mutate_state(|state| c2c_notify_events_impl(args, state))
 }
 
 fn c2c_notify_events_impl(args: Args, state: &mut RuntimeState) -> Response {
     for event in args.events {
-        process_event(event, state);
+        if state.data.idempotency_checker.check(
+            state.data.local_user_index_canister_id,
+            event.created_at,
+            event.idempotency_id,
+        ) {
+            process_event(event.value, state);
+        }
     }
     Success
 }
@@ -29,7 +48,7 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
         }
         LocalUserIndexEvent::DisplayNameChanged(ev) => {
             state.data.display_name = Timestamped::new(ev.display_name, now);
-            state.data.award_achievement_and_notify(Achievement::SetDisplayName, now);
+            state.award_achievement_and_notify(Achievement::SetDisplayName, now);
         }
         LocalUserIndexEvent::PhoneNumberConfirmed(ev) => {
             state.data.phone_is_verified = true;
@@ -68,7 +87,7 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
                     .join(ev.chat_id, ev.local_user_index_canister_id, ev.latest_message_index, now);
 
                 state.data.hot_group_exclusions.remove(&ev.chat_id, now);
-                state.data.award_achievement_and_notify(Achievement::JoinedGroup, now);
+                state.award_achievement_and_notify(Achievement::JoinedGroup, now);
             }
         }
         LocalUserIndexEvent::UserJoinedCommunityOrChannel(ev) => {
@@ -96,7 +115,7 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
                         .collect(),
                     now,
                 );
-                state.data.award_achievement_and_notify(Achievement::JoinedCommunity, now);
+                state.award_achievement_and_notify(Achievement::JoinedCommunity, now);
             }
         }
         LocalUserIndexEvent::DiamondMembershipPaymentReceived(ev) => {
@@ -107,7 +126,7 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
             }
 
             if awarded {
-                state.data.notify_user_index_of_chit(now);
+                state.notify_user_index_of_chit(now);
             }
 
             state.data.diamond_membership_expires_at = Some(ev.expires_at);
@@ -131,9 +150,7 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
             }
         }
         LocalUserIndexEvent::NotifyUniquePersonProof(proof) => {
-            if state.data.award_achievement(Achievement::ProvedUniquePersonhood, now) {
-                state.data.notify_user_index_of_chit(now);
-            }
+            state.award_achievement_and_notify(Achievement::ProvedUniquePersonhood, now);
             state.data.unique_person_proof = Some(*proof);
 
             if let Some(referred_by) = state.data.referred_by {
@@ -144,7 +161,7 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
             }
         }
         LocalUserIndexEvent::ExternalAchievementAwarded(ev) => {
-            state.data.award_external_achievement(ev.name, ev.chit_reward, now);
+            state.award_external_achievement(ev.name, ev.chit_reward, now);
         }
     }
 }

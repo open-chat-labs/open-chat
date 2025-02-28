@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
+- Maintain `max_streak` and sync it to UserIndex ([#7488](https://github.com/open-chat-labs/open-chat/pull/7488))
+- Introduce new idempotent endpoints for C2C calls ([#7492](https://github.com/open-chat-labs/open-chat/pull/7492))
+
 ### Changed
 
 - Allow overriding the fee when withdrawing from ICPSwap ([#7314](https://github.com/open-chat-labs/open-chat/pull/7314))
@@ -17,6 +23,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Serialize notifications using MessagePack rather than Candid ([#7445](https://github.com/open-chat-labs/open-chat/pull/7445))
 - Reduce the size of notifications when serialized ([#7448](https://github.com/open-chat-labs/open-chat/pull/7448))
 - Move new message validation to `MessageContentInternal` ([#7452](https://github.com/open-chat-labs/open-chat/pull/7452))
+- Support bots used directly by users ([#7397](https://github.com/open-chat-labs/open-chat/pull/7397))
+- On `user::c2c_install_bot` create a direct chat ([#7489](https://github.com/open-chat-labs/open-chat/pull/7489))
+- Add `max_streak` to user summary updates ([#7495](https://github.com/open-chat-labs/open-chat/pull/7495))
 
 ### Removed
 

@@ -41,10 +41,10 @@ fn set_community_verification_impl(
             _ => (),
         };
 
-        state.data.rename_public_community(args.community_id, args.name);
+        state.rename_public_community(args.community_id, args.name);
     }
 
-    state.data.set_verified_community(args.community_id, true);
+    state.set_verified_community(args.community_id, true);
 
     Success
 }
@@ -71,10 +71,10 @@ fn set_group_verification_impl(
             _ => (),
         };
 
-        state.data.rename_public_group(args.group_id, args.name);
+        state.rename_public_group(args.group_id, args.name);
     }
 
-    state.data.set_verified_group(args.group_id, true);
+    state.set_verified_group(args.group_id, true);
 
     Success
 }
@@ -114,9 +114,9 @@ fn rename_other_if_name_clashes(name: &str, state: &mut RuntimeState) -> RenameO
             };
 
             if is_community {
-                state.data.rename_public_community(canister_id.into(), new_name);
+                state.rename_public_community(canister_id.into(), new_name);
             } else {
-                state.data.rename_public_group(canister_id.into(), new_name);
+                state.rename_public_group(canister_id.into(), new_name);
             }
 
             Renamed

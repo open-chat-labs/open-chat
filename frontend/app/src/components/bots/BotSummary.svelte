@@ -80,7 +80,7 @@
             case "viewing_command_bot":
                 return mode.granted;
             default:
-                return mode.requested;
+                return { ...mode.requested };
         }
     }
 

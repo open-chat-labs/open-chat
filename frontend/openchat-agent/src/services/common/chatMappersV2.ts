@@ -130,6 +130,7 @@ import type {
     SlashCommandParamInstance,
     GenerateBotKeyResponse,
     PublicApiKeyDetails,
+    BotChatPermission,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -294,7 +295,7 @@ import type {
     VideoCallPresence as TVideoCallPresence,
     VideoCallType as TVideoCallType,
     VideoContent as TVideoContent,
-    GroupPermission,
+    ChatPermission,
     CommunityPermission,
     MessagePermission as ApiMessagePermission,
     BotPermissions as ApiExternalBotPermissions,
@@ -308,19 +309,21 @@ import type {
     CommunityGenerateBotApiKeyResponse,
     GroupGenerateBotApiKeyResponse,
     PublicApiKeyDetails as ApiPublicApiKeyDetails,
-    BotGroupDetails as ApiInstalledBotDetails,
-    // InstalledBotDetails as ApiInstalledBotDetails,
-    // UserUpdateBotResponse,
-    // UserGenerateBotApiKeyResponse,
+    UserUpdateBotResponse,
+    InstalledBotDetails as ApiInstalledBotDetails,
+    UserGenerateBotApiKeyResponse,
 } from "../../typebox";
 import type { ApiPrincipal } from "../index";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
 export function generateApiKeyResponse(
-    value: CommunityGenerateBotApiKeyResponse | GroupGenerateBotApiKeyResponse,
-    // | UserGenerateBotApiKeyResponse,
+    value:
+        | CommunityGenerateBotApiKeyResponse
+        | GroupGenerateBotApiKeyResponse
+        | UserGenerateBotApiKeyResponse,
 ): GenerateBotKeyResponse {
+    console.log("Bot api key: ", value);
     if (typeof value === "object" && "Success" in value) {
         return { kind: "success", apiKey: value.Success.api_key };
     }
@@ -3262,7 +3265,7 @@ export function apiDexId(dex: DexId): TExchangeId {
     }
 }
 
-export function apiChatPermission(perm: keyof ChatPermissions): GroupPermission {
+export function apiBotChatPermission(perm: BotChatPermission): ChatPermission {
     switch (perm) {
         case "addMembers":
             return "AddMembers";
@@ -3284,6 +3287,12 @@ export function apiChatPermission(perm: keyof ChatPermissions): GroupPermission 
             return "StartVideoCall";
         case "updateGroup":
             return "UpdateGroup";
+        case "readMessages":
+            return "ReadMessages";
+        case "readMembership":
+            return "ReadMembership";
+        case "readChatDetails":
+            return "ReadChatDetails";
         default:
             throw new Error(`Unexpected ChatPermission (${perm}) received`);
     }
@@ -3335,7 +3344,7 @@ export function apiMessagePermission(perm: MessagePermission): ApiMessagePermiss
     }
 }
 
-export function chatPermission(perm: GroupPermission): keyof ChatPermissions {
+export function botChatPermission(perm: ChatPermission): BotChatPermission {
     switch (perm) {
         case "AddMembers":
             return "addMembers";
@@ -3357,6 +3366,12 @@ export function chatPermission(perm: GroupPermission): keyof ChatPermissions {
             return "startVideoCall";
         case "UpdateGroup":
             return "updateGroup";
+        case "ReadMessages":
+            return "readMessages";
+        case "ReadMembership":
+            return "readMembership";
+        case "ReadChatDetails":
+            return "readChatDetails";
     }
 }
 
@@ -3408,15 +3423,14 @@ export function messagePermission(perm: ApiMessagePermission): MessagePermission
 
 export function externalBotPermissions(value: ApiExternalBotPermissions): ExternalBotPermissions {
     return {
-        chatPermissions: value.chat.map(chatPermission),
+        chatPermissions: value.chat.map(botChatPermission),
         communityPermissions: value.community.map(communityPermission),
         messagePermissions: value.message.map(messagePermission),
     };
 }
 
 export function updateBotResponse(
-    value: CommunityUpdateBotResponse | GroupUpdateBotResponse,
-    // | UserUpdateBotResponse,
+    value: CommunityUpdateBotResponse | GroupUpdateBotResponse | UserUpdateBotResponse,
 ): boolean {
     if (value === "Success") {
         return true;

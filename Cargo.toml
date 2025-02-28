@@ -135,6 +135,7 @@ members = [
     "backend/libraries/icdex_client",
     "backend/libraries/identity_utils",
     "backend/libraries/index_store",
+    "backend/libraries/installed_bots",
     "backend/libraries/instruction_counts_log",
     "backend/libraries/json",
     "backend/libraries/jwt",
@@ -224,7 +225,7 @@ lazy_static = "1.4.0"
 num-traits = "0.2.19"
 openssl = "0.10.70"
 p256 = { version = "0.13.2" }
-pocket-ic = { git = "https://github.com/dfinity/ic", rev = "0923aa8f3ea2e2a251e3bfb1525442215b06b2b3" }
+pocket-ic = "7.0.0"
 proc-macro2 = "1.0.83"
 prometheus = "0.13.4"
 proptest = "1.5.0"

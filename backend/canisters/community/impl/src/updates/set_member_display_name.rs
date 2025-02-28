@@ -41,9 +41,7 @@ fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> Respons
     state.data.members.set_display_name(user_id, args.display_name, now);
 
     if args.new_achievement {
-        state
-            .data
-            .notify_user_of_achievement(user_id, Achievement::SetCommunityDisplayName);
+        state.notify_user_of_achievement(user_id, Achievement::SetCommunityDisplayName, now);
     }
 
     handle_activity_notification(state);

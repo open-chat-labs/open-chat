@@ -201,19 +201,23 @@ fn commit(
     state.data.local_users.add(user_id, principal, wasm_version, now);
     state.data.global_users.add(principal, user_id, UserType::User);
 
-    state.push_event_to_user_index(UserIndexEvent::UserRegistered(Box::new(UserRegistered {
-        principal,
-        user_id,
-        username: username.clone(),
-        referred_by,
-        is_from_identity_canister,
-    })));
+    state.push_event_to_user_index(
+        UserIndexEvent::UserRegistered(Box::new(UserRegistered {
+            principal,
+            user_id,
+            username: username.clone(),
+            referred_by,
+            is_from_identity_canister,
+        })),
+        now,
+    );
 
     if let Some(referred_by) = referred_by {
         if state.data.local_users.contains(&referred_by) {
             state.push_event_to_user(
                 referred_by,
                 UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
+                now,
             );
         }
     }

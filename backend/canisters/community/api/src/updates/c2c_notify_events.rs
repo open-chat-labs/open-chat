@@ -6,7 +6,4 @@ pub struct Args {
     pub events: Vec<LocalGroupIndexEvent>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Response = crate::c2c_local_group_index::Response;
