@@ -42,6 +42,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 
 [[package]]
+name = "adler2"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "512761e0bb2578dd7380c6baaa0f4ce03e84f95e960231d1dec8bf4d7d6e2627"
+
+[[package]]
 name = "aead"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -742,7 +748,7 @@ dependencies = [
  "cc",
  "cfg-if",
  "libc",
- "miniz_oxide",
+ "miniz_oxide 0.7.2",
  "object",
  "rustc-demangle",
 ]
@@ -1600,6 +1606,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
+ "installed_bots",
  "instruction_counts_log",
  "itertools 0.13.0",
  "lazy_static",
@@ -2554,6 +2561,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "flate2"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11faaf5a5236997af9848be0bef4db95824b1d534ebc64d0f0c6cf3e67bd38dc"
+dependencies = [
+ "crc32fast",
+ "miniz_oxide 0.8.5",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2840,6 +2857,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
@@ -2862,6 +2880,7 @@ dependencies = [
  "ic-stable-structures",
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
+ "installed_bots",
  "instruction_counts_log",
  "itertools 0.13.0",
  "ledger_utils",
@@ -4189,6 +4208,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "installed_bots"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "constants",
+ "rand 0.8.5",
+ "serde",
+ "serde_repr",
+ "types",
+ "utils 0.1.0",
+]
+
+[[package]]
 name = "instant"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4585,6 +4617,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
@@ -4653,6 +4686,7 @@ dependencies = [
  "canister_client",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
@@ -4841,6 +4875,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "miniz_oxide"
+version = "0.8.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e3e04debbb59698c15bacbb6d93584a8c0ca9cc3213cb423d31f760d8843ce5"
+dependencies = [
+ "adler2",
+]
+
+[[package]]
 name = "mio"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4883,6 +4926,7 @@ version = "0.1.0"
 dependencies = [
  "rmp-serde",
  "serde",
+ "types",
 ]
 
 [[package]]
@@ -5169,6 +5213,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_tracing_macros",
  "constants",
  "cycles_dispenser_canister",
@@ -5758,12 +5803,14 @@ checksum = "2900ede94e305130c13ddd391e0ab7cbaeb783945ae07a279c268cb05109c6cb"
 
 [[package]]
 name = "pocket-ic"
-version = "6.0.0"
-source = "git+https://github.com/dfinity/ic?rev=0923aa8f3ea2e2a251e3bfb1525442215b06b2b3#0923aa8f3ea2e2a251e3bfb1525442215b06b2b3"
+version = "7.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ccd672d6b262731dccae40cb561e4c578709ea9987fbf649377d51077bf16db3"
 dependencies = [
  "backoff",
  "base64 0.13.1",
  "candid",
+ "flate2",
  "hex",
  "ic-certification 3.0.3",
  "ic-transport-types",
@@ -8515,6 +8562,7 @@ dependencies = [
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
  "identity_utils",
+ "installed_bots",
  "itertools 0.13.0",
  "kongswap_canister",
  "kongswap_canister_c2c_client",
@@ -8608,6 +8656,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",

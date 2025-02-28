@@ -18,5 +18,6 @@ pub struct SuccessResult {
     pub chit_earned: u32,
     pub chit_balance: i32,
     pub streak: u16,
+    pub max_streak: u16,
     pub next_claim: TimestampMillis,
 }

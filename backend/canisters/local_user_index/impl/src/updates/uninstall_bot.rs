@@ -29,13 +29,14 @@ async fn uninstall_bot(args: Args) -> Response {
     }
 
     mutate_state(|state| {
-        state.push_event_to_user_index(UserIndexEvent::BotUninstalled(Box::new(
-            user_index_canister::BotUninstalled {
+        state.push_event_to_user_index(
+            UserIndexEvent::BotUninstalled(Box::new(user_index_canister::BotUninstalled {
                 bot_id: args.bot_id,
                 location: args.location,
                 uninstalled_by: user_id,
-            },
-        )));
+            })),
+            state.env.now(),
+        );
     });
 
     Success

@@ -1,12 +1,14 @@
+<script module>
+    export type Tab = {
+        title: ResourceKey;
+        snippet: Snippet;
+    };
+</script>
+
 <script lang="ts">
     import type { Snippet } from "svelte";
     import Translatable from "./Translatable.svelte";
     import type { ResourceKey } from "openchat-client";
-
-    type Tab = {
-        title: ResourceKey;
-        snippet: Snippet;
-    };
 
     interface Props {
         tabs: Tab[];

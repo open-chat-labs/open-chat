@@ -182,7 +182,6 @@ export const builtinBot: InternalBot = {
                 description: "bots.register_bot.desc",
                 permissions: emptyPermissions,
                 params: [],
-                devmode: true,
                 directBotDisabled: false,
             },
             {

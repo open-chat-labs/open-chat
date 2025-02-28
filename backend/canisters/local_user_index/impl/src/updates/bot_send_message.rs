@@ -1,3 +1,4 @@
+use crate::{bots::extract_access_context, mutate_state, RuntimeState};
 use canister_api_macros::update;
 use local_user_index_canister::bot_send_message::*;
 use rand::Rng;
@@ -5,19 +6,28 @@ use types::{
     BotActionScope, BotInitiator, BotMessageContent, ChannelId, Chat, ChatId, CommunityId, MessageId, MessageIndex, UserId,
 };
 
-use crate::{bots::extract_access_context, mutate_state, RuntimeState};
-
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_send_message(args: Args) -> Response {
-    use Response::*;
-
     let context = match mutate_state(|state| extract_message_access_context(&args, state)) {
         Ok(context) => context,
         Err(response) => return response,
     };
 
     match context.chat {
-        Chat::Direct(_) => InvalidRequest("Cannot yet send messages directly to users".to_string()),
+        Chat::Direct(chat_id) => {
+            send_message_to_user(
+                context.bot_id,
+                context.bot_name,
+                context.initiator,
+                chat_id,
+                context.thread,
+                context.message_id,
+                args.content,
+                args.block_level_markdown,
+                args.finalised,
+            )
+            .await
+        }
         Chat::Group(chat_id) => {
             send_message_to_group(
                 context.bot_id,
@@ -190,6 +200,52 @@ async fn send_message_to_group(
             group_canister::c2c_bot_send_message::Response::ThreadNotFound => ThreadNotFound,
             group_canister::c2c_bot_send_message::Response::InvalidRequest(message) => InvalidRequest(message),
             group_canister::c2c_bot_send_message::Response::MessageAlreadyFinalised => MessageAlreadyFinalised,
+        },
+        Err((code, message)) => C2CError(code as i32, message),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn send_message_to_user(
+    bot_id: UserId,
+    bot_name: String,
+    initiator: BotInitiator,
+    chat_id: ChatId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    content: BotMessageContent,
+    block_level_markdown: bool,
+    finalised: bool,
+) -> Response {
+    use Response::*;
+
+    match user_canister_c2c_client::c2c_bot_send_message(
+        chat_id.into(),
+        &user_canister::c2c_bot_send_message::Args {
+            bot_id,
+            initiator,
+            thread_root_message_index,
+            message_id,
+            content,
+            bot_name,
+            block_level_markdown,
+            finalised,
+        },
+    )
+    .await
+    {
+        Ok(response) => match response {
+            user_canister::c2c_bot_send_message::Response::Success(result) => Success(SuccessResult {
+                message_id,
+                event_index: result.event_index,
+                message_index: result.message_index,
+                timestamp: result.timestamp,
+                expires_at: result.expires_at,
+            }),
+            user_canister::c2c_bot_send_message::Response::NotAuthorized => NotAuthorized,
+            user_canister::c2c_bot_send_message::Response::ThreadNotFound => ThreadNotFound,
+            user_canister::c2c_bot_send_message::Response::InvalidRequest(message) => InvalidRequest(message),
+            user_canister::c2c_bot_send_message::Response::MessageAlreadyFinalised => MessageAlreadyFinalised,
         },
         Err((code, message)) => C2CError(code as i32, message),
     }

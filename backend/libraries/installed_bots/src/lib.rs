@@ -1,18 +1,19 @@
 use candid::Principal;
 use constants::calculate_summary_updates_data_removal_cutoff;
+use rand::{rngs::StdRng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::collections::{btree_map::Entry, BTreeMap, BTreeSet};
-use types::{BotPermissions, TimestampMillis, UserId};
+use std::collections::{btree_map::Entry, BTreeMap, BTreeSet, HashMap, HashSet};
+use types::{ApiKey, BotPermissions, ChannelId, ChatEventType, EventIndex, PublicApiKeyDetails, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct GroupBots {
+pub struct InstalledBots {
     bots: BTreeMap<UserId, BotInternal>,
     updates: BTreeSet<(TimestampMillis, UserId, BotUpdate)>,
     latest_update_removed: TimestampMillis,
 }
 
-impl GroupBots {
+impl InstalledBots {
     pub fn add(&mut self, user_id: UserId, added_by: UserId, permissions: BotPermissions, now: TimestampMillis) -> bool {
         if self.bots.contains_key(&user_id) {
             return false;
@@ -99,4 +100,70 @@ pub enum BotUpdate {
 pub struct BotInternal {
     pub added_by: UserId,
     pub permissions: BotPermissions,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BotEventVisibility {
+    pub min_visible_event_indexes: HashMap<Option<ChannelId>, EventIndex>,
+    pub event_types: HashSet<ChatEventType>,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct BotApiKeys {
+    keys: HashMap<UserId, ApiKey>,
+}
+
+impl BotApiKeys {
+    pub fn generate(
+        &mut self,
+        user_id: UserId,
+        granted_permissions: BotPermissions,
+        now: TimestampMillis,
+        rng: &mut StdRng,
+    ) -> String {
+        let key = rng.gen::<u128>().to_string();
+        self.keys.insert(
+            user_id,
+            ApiKey {
+                secret: key.clone(),
+                granted_permissions,
+                generated_by: user_id,
+                generated_at: now,
+            },
+        );
+        key
+    }
+
+    pub fn get(&self, bot_id: &UserId) -> Option<&ApiKey> {
+        self.keys.get(bot_id)
+    }
+
+    pub fn permissions_if_secret_matches(&self, bot_id: &UserId, secret: &str) -> Option<&BotPermissions> {
+        self.keys
+            .get(bot_id)
+            .filter(|k| k.secret == secret)
+            .map(|k| &k.granted_permissions)
+    }
+
+    pub fn generated_since(&self, since: TimestampMillis) -> Vec<PublicApiKeyDetails> {
+        self.keys
+            .iter()
+            .filter_map(|(bot_id, key)| {
+                if key.generated_at > since {
+                    Some(PublicApiKeyDetails {
+                        bot_id: *bot_id,
+                        granted_permissions: key.granted_permissions.clone(),
+                        generated_by: key.generated_by,
+                        generated_at: key.generated_at,
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
+    pub fn last_updated(&self) -> TimestampMillis {
+        self.keys.values().map(|k| k.generated_at).max().unwrap_or_default()
+    }
 }

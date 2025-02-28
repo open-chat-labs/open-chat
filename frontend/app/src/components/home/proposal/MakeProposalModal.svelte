@@ -13,15 +13,8 @@
         type ResourceKey,
         currentUser as user,
         cryptoBalance as cryptoBalanceStore,
-        currentUser,
     } from "openchat-client";
-    import {
-        emptyBotInstance,
-        isPrincipalValid,
-        isUrl,
-        random32,
-        type ExternalBot,
-    } from "openchat-shared";
+    import { isPrincipalValid, isUrl, random32, type ExternalBot } from "openchat-shared";
     import { iconSize } from "../../../stores/iconSize";
     import Button from "../../Button.svelte";
     import Legend from "../../Legend.svelte";
@@ -36,17 +29,17 @@
     import {
         createAddTokenPayload,
         createRegisterExternalAchievementPayload,
-        createRegisterExternalBotPayload,
+        createPublishExternalBotPayload,
         createUpdateTokenPayload,
     } from "../../../utils/sns";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import DurationPicker from "../DurationPicker.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import BotBuilder from "../../bots/AutoBotBuilderWrapper.svelte";
     import TransferSnsFunds from "./TransferSNSFunds.svelte";
     import VerificationProposal from "./VerificationProposal.svelte";
     import RemoveBot from "./RemoveBot.svelte";
+    import BotPublisher from "@src/components/bots/BotPublisher.svelte";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -85,7 +78,7 @@
     let busy = true;
     let selectedProposalType:
         | "motion"
-        | "register_bot"
+        | "publish_bot"
         | "remove_bot"
         | "transfer_sns_funds"
         | "register_external_achievement"
@@ -105,10 +98,7 @@
     let refreshingBalance = false;
     let balanceWithRefresh: BalanceWithRefresh;
     let achivementName = "";
-    let candidateBot: ExternalBot = emptyBotInstance($currentUser.userId);
-    let candidateBotValid = false;
-    let botSchemaLoaded = false;
-    let botPrincipal = "";
+    let selectedBot: ExternalBot | undefined = undefined;
     //@ts-ignore
     let transferSnsFunds: TransferSnsFunds | undefined;
     //@ts-ignore
@@ -166,7 +156,7 @@
         summaryValid &&
         (selectedProposalType === "motion" ||
             selectedProposalType === "advance_sns_target_version" ||
-            (selectedProposalType === "register_bot" && candidateBotValid) ||
+            (selectedProposalType === "publish_bot" && selectedBot !== undefined) ||
             (selectedProposalType === "remove_bot" && removeBotValid) ||
             (selectedProposalType === "transfer_sns_funds" && transferSnsFundsValid) ||
             (selectedProposalType === "set_community_verification" && verificationValid) ||
@@ -349,20 +339,14 @@
                     ),
                 };
             }
-            case "register_bot": {
-                if (candidateBot === undefined) {
-                    throw new Error(
-                        "Candidate bot definition is undefined. This should not happen.",
-                    );
+            case "publish_bot": {
+                if (selectedBot === undefined) {
+                    throw new Error("No bot has been selected - this should not happen");
                 }
                 return {
                     kind: "execute_generic_nervous_system_function",
-                    functionId: BigInt(1013),
-                    payload: createRegisterExternalBotPayload(
-                        botPrincipal,
-                        $user.userId,
-                        candidateBot,
-                    ),
+                    functionId: BigInt(1015),
+                    payload: createPublishExternalBotPayload(selectedBot),
                 };
             }
         }
@@ -469,8 +453,8 @@
                                 >Register external achievement</option>
                             <option value={"add_token"}>Add token</option>
                             <option value={"update_token"}>Update token</option>
-                            <option value={"register_bot"}>Register a bot</option>
-                            <option value={"register_bot"}>
+                            <option value={"publish_bot"}>Publish a bot</option>
+                            <option value={"remove_bot"}>
                                 <Translatable resourceKey={i18nKey("bots.manage.remove")}
                                 ></Translatable>
                             </option>
@@ -590,12 +574,8 @@
                         bind:this={verificationComponent}
                         bind:valid={verificationValid}
                         type={selectedProposalType} />
-                {:else if selectedProposalType === "register_bot"}
-                    <BotBuilder
-                        onUpdate={(bot) => (candidateBot = bot)}
-                        bind:principal={botPrincipal}
-                        bind:schemaLoaded={botSchemaLoaded}
-                        bind:valid={candidateBotValid} />
+                {:else if selectedProposalType === "publish_bot"}
+                    <BotPublisher bind:selected={selectedBot}></BotPublisher>
                 {:else if selectedProposalType === "remove_bot"}
                     <RemoveBot bind:valid={removeBotValid}></RemoveBot>
                 {:else if selectedProposalType === "transfer_sns_funds"}

@@ -102,10 +102,24 @@ const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvent
     () => [],
 );
 
-export const currentChatBots = createDerivedPropStore<ChatSpecificState, "bots">(
+const currentServerChatBots = createDerivedPropStore<ChatSpecificState, "bots">(
     chatStateStore,
     "bots",
     () => new Map<string, ExternalBotPermissions>(),
+);
+export const currentChatBots = derived(
+    [selectedChatId, currentServerChatBots, localChatSummaryUpdates],
+    ([$chatId, $serverBots, $local]) => {
+        if ($chatId === undefined) return $serverBots;
+        const clone = new Map($serverBots);
+        const localInstalled = [...($local.get($chatId)?.installedBots?.entries() ?? [])];
+        const localDeleted = [...($local.get($chatId)?.removedBots?.values() ?? [])];
+        localInstalled.forEach(([id, perm]) => {
+            clone.set(id, perm);
+        });
+        localDeleted.forEach((id) => clone.delete(id));
+        return clone;
+    },
 );
 
 export const currentChatApiKeys = createDerivedPropStore<ChatSpecificState, "apiKeys">(

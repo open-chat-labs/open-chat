@@ -26,6 +26,7 @@
         OpenChat,
         PermissionRole,
         ExternalBotPermissions,
+        ChatPermissions,
     } from "openchat-client";
     import {
         currentCommunityBots,
@@ -82,7 +83,8 @@
     function restrictByBotIfNecessary(command: FlattenedCommand): boolean {
         return (
             selectedBotId === undefined ||
-            (command.kind === "external_bot" && command.botId === selectedBotId)
+            (command.kind === "external_bot" && command.botId === selectedBotId) ||
+            (command.kind === "internal_bot" && command.directBotDisabled === false)
         );
     }
 
@@ -103,8 +105,13 @@
 
         const chatPermitted =
             chat !== undefined && chat.kind !== "direct_chat"
-                ? [...command.permissions.chatPermissions].every((p) =>
-                      isPermitted(chat.membership.role, chat.permissions[p] as PermissionRole),
+                ? [...command.permissions.chatPermissions].every(
+                      (p) =>
+                          ["readMessages", "readMembership", "readChatDetails"].includes(p) ||
+                          isPermitted(
+                              chat.membership.role,
+                              chat.permissions[p as keyof ChatPermissions] as PermissionRole,
+                          ),
                   )
                 : true;
 

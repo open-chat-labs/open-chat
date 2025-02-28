@@ -704,6 +704,8 @@ export type LocalPollVote = {
 
 export type LocalGlobalUpdates = {
     walletConfig?: WalletConfig;
+    installedDirectBots?: Map<string, ExternalBotPermissions>;
+    removedDirectBots?: Set<string>;
     lastUpdated: number;
 };
 
@@ -713,6 +715,8 @@ export type LocalChatSummaryUpdates = {
     pinned?: Set<ChatListScope["kind"]>;
     unpinned?: Set<ChatListScope["kind"]>;
     added?: ChatSummary;
+    installedBots?: Map<string, ExternalBotPermissions>;
+    removedBots?: Set<string>;
     updated?:
         | {
               kind?: undefined;

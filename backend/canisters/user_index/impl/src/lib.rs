@@ -22,19 +22,21 @@ use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
 use p256_key_pair::P256KeyPair;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
-    TimestampMillis, Timestamped, UserId, UserType,
+    BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles, DiamondMembershipFees, IdempotentEnvelope,
+    Milliseconds, TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_index_canister::ChildCanisterType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 use utils::time::MonthKey;
 
 mod guards;
@@ -148,6 +150,21 @@ impl RuntimeState {
             }
         }
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
+    }
+
+    pub fn push_event_to_notifications_index(
+        &mut self,
+        event: notifications_index_canister::UserIndexEvent,
+        now: TimestampMillis,
+    ) {
+        self.data.notifications_index_event_sync_queue.push(
+            self.data.notifications_index_canister_id,
+            IdempotentEnvelope {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: event,
+            },
+        )
     }
 
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
@@ -387,6 +404,8 @@ struct Data {
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub streak_insurance_logs: StreakInsuranceLogs,
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
 }
 
 impl Data {
@@ -468,6 +487,7 @@ impl Data {
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
             streak_insurance_logs: StreakInsuranceLogs::default(),
+            idempotency_checker: IdempotencyChecker::default(),
         };
 
         // Register the ProposalsBot
@@ -581,6 +601,7 @@ impl Default for Data {
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
             streak_insurance_logs: StreakInsuranceLogs::default(),
+            idempotency_checker: IdempotencyChecker::default(),
         }
     }
 }

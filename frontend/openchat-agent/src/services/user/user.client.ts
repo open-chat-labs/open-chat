@@ -134,11 +134,11 @@ import {
     joinVideoCallResponse,
     setPinNumberResponse,
     apiMaybeAccessGateConfig,
-    // apiChatPermission,
-    // apiCommunityPermission,
-    // apiMessagePermission,
-    // updateBotResponse,
-    // generateApiKeyResponse,
+    apiBotChatPermission,
+    apiCommunityPermission,
+    apiMessagePermission,
+    updateBotResponse,
+    generateApiKeyResponse,
 } from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import {
@@ -273,10 +273,12 @@ import {
     UserMarkMessageActivityFeedReadResponse,
     UserMessageActivityFeedArgs,
     UserMessageActivityFeedResponse,
-    // UserUpdateBotArgs,
-    // UserUpdateBotResponse,
-    // UserGenerateBotApiKeyArgs,
-    // UserGenerateBotApiKeyResponse,
+    UserUpdateBotArgs,
+    UserUpdateBotResponse,
+    UserGenerateBotApiKeyArgs,
+    UserGenerateBotApiKeyResponse,
+    UserApiKeyArgs,
+    UserApiKeyResponse,
 } from "../../typebox";
 import { toggleNotificationsResponse } from "../notifications/mappers";
 
@@ -1661,63 +1663,60 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     updateInstalledBot(
-        _botId: string,
-        _grantedPermissions: ExternalBotPermissions,
+        botId: string,
+        grantedPermissions: ExternalBotPermissions,
     ): Promise<boolean> {
-        return Promise.resolve(true);
-        // return this.executeMsgpackUpdate(
-        //     "update_bot",
-        //     {
-        //         bot_id: principalStringToBytes(botId),
-        //         granted_permissions: {
-        //             chat: grantedPermissions.chatPermissions.map(apiChatPermission),
-        //             community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
-        //             message: grantedPermissions.messagePermissions.map(apiMessagePermission),
-        //         },
-        //     },
-        //     updateBotResponse,
-        //     UserUpdateBotArgs,
-        //     UserUpdateBotResponse,
-        // );
+        return this.executeMsgpackUpdate(
+            "update_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+                granted_permissions: {
+                    chat: grantedPermissions.chatPermissions.map(apiBotChatPermission),
+                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
+                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                },
+            },
+            updateBotResponse,
+            UserUpdateBotArgs,
+            UserUpdateBotResponse,
+        );
     }
 
     generateBotApiKey(
-        _botId: string,
-        _permissions: ExternalBotPermissions,
+        botId: string,
+        permissions: ExternalBotPermissions,
     ): Promise<GenerateBotKeyResponse> {
-        return Promise.resolve({ kind: "success", apiKey: "" });
-        // return this.executeMsgpackUpdate(
-        //     "generate_bot_api_key",
-        //     {
-        //         bot_id: principalStringToBytes(botId),
-        //         requested_permissions: {
-        //             chat: permissions.chatPermissions.map(apiChatPermission),
-        //             community: permissions.communityPermissions.map(apiCommunityPermission),
-        //             message: permissions.messagePermissions.map(apiMessagePermission),
-        //         },
-        //     },
-        //     generateApiKeyResponse,
-        //     UserGenerateBotApiKeyArgs,
-        //     UserGenerateBotApiKeyResponse,
-        // );
+        return this.executeMsgpackUpdate(
+            "generate_bot_api_key",
+            {
+                bot_id: principalStringToBytes(botId),
+                requested_permissions: {
+                    chat: permissions.chatPermissions.map(apiBotChatPermission),
+                    community: permissions.communityPermissions.map(apiCommunityPermission),
+                    message: permissions.messagePermissions.map(apiMessagePermission),
+                },
+            },
+            generateApiKeyResponse,
+            UserGenerateBotApiKeyArgs,
+            UserGenerateBotApiKeyResponse,
+        );
     }
 
-    getApiKey(_botId: string): Promise<string | undefined> {
-        return Promise.resolve(undefined);
-        // return this.executeMsgpackQuery(
-        //     "api_key",
-        //     {
-        //         bot_id: principalStringToBytes(botId),
-        //     },
-        //     (resp) => {
-        //         if (typeof resp === "object" && "Success" in resp) {
-        //             return resp.Success;
-        //         }
-        //         console.log("Failed to get community api key: ", botId, resp);
-        //         return undefined;
-        //     },
-        //     UserApiKeyArgs,
-        //     UserApiKeyResponse,
-        // );
+    getApiKey(botId: string): Promise<string | undefined> {
+        return this.executeMsgpackQuery(
+            "api_key",
+            {
+                bot_id: principalStringToBytes(botId),
+            },
+            (resp) => {
+                if (typeof resp === "object" && "Success" in resp) {
+                    return resp.Success;
+                }
+                console.log("Failed to get direct api key: ", botId, resp);
+                return undefined;
+            },
+            UserApiKeyArgs,
+            UserApiKeyResponse,
+        );
     }
 }

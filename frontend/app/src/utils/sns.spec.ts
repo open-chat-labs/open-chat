@@ -1,5 +1,5 @@
 import type { ExternalBot } from "openchat-client";
-import { createRegisterExternalBotPayload } from "./sns";
+import { createPublishExternalBotPayload } from "./sns";
 
 function createTestBot(): ExternalBot {
     return {
@@ -9,6 +9,7 @@ function createTestBot(): ExternalBot {
         id: "bot_id",
         ownerId: "owner_id",
         endpoint: "https://my_bot",
+        registrationStatus: { kind: "public" },
         definition: {
             kind: "bot_definition",
             description: "This is a test bot",
@@ -94,12 +95,6 @@ describe("encoding external bot", () => {
     // All this does is just check that the encoding doesn't fail. Better than nothing.
     test("happy path encoding fully specified bot", () => {
         const bot = createTestBot();
-        expect(() =>
-            createRegisterExternalBotPayload(
-                "dmalx-m4aaa-aaaaa-qaanq-cai",
-                "dmalx-m4aaa-aaaaa-qaanq-cai",
-                bot,
-            ),
-        ).not.toThrow();
+        expect(() => createPublishExternalBotPayload(bot)).not.toThrow();
     });
 });

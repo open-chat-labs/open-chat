@@ -1,7 +1,7 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
-use types::UserId;
+use types::{InstalledBotDetails, UserId};
 use user_canister::initial_state::{Response::*, *};
 use utils::time::{today, tomorrow};
 
@@ -35,6 +35,19 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         pinned: state.data.favourite_chats.pinned().to_vec(),
     };
 
+    let bots = state
+        .data
+        .bots
+        .iter()
+        .map(|(user_id, bot)| InstalledBotDetails {
+            user_id: *user_id,
+            permissions: bot.permissions.clone(),
+            added_by: bot.added_by,
+        })
+        .collect();
+
+    let api_keys = state.data.bot_api_keys.generated_since(0);
+
     Success(SuccessResult {
         timestamp: now,
         direct_chats,
@@ -52,11 +65,14 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         chit_balance: state.data.chit_events.balance_for_month_by_timestamp(now),
         streak: state.data.streak.days(now),
         streak_ends: state.data.streak.ends(),
+        max_streak: state.data.streak.max_streak(),
         streak_insurance: state.data.streak.streak_insurance(now),
         next_daily_claim: if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
         is_unique_person: state.data.unique_person_proof.is_some(),
         wallet_config: state.data.wallet_config.value.clone(),
         referrals: state.data.referrals.list(),
         message_activity_summary: state.data.message_activity_events.summary(),
+        bots,
+        api_keys,
     })
 }

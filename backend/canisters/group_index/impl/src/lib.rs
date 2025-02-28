@@ -15,13 +15,14 @@ use group_index_canister::ChildCanisterType;
 use local_group_index_canister::{GroupIndexEvent as LocalGroupIndexEvent, NameChanged, VerifiedChanged};
 use model::local_group_index_event_batch::LocalGroupIndexEventBatch;
 use model::local_group_index_map::LocalGroupIndexMap;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, CommunityId, Cycles, FrozenGroupInfo, Milliseconds,
-    TimestampMillis, Timestamped, UserId,
+    AccessGate, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, CommunityId, Cycles, FrozenGroupInfo, IdempotentEnvelope,
+    Milliseconds, TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -76,6 +77,132 @@ impl RuntimeState {
     pub fn can_caller_upload_wasm_chunks(&self) -> bool {
         let caller = self.env.caller();
         self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
+    }
+
+    pub fn push_group_event_to_local_group_index(
+        &mut self,
+        group_id: ChatId,
+        event: LocalGroupIndexEvent,
+        now: TimestampMillis,
+    ) {
+        if let Some(canister_id) = self.data.local_index_map.get_index_canister_for_group(&group_id) {
+            self.push_event_to_local_group_index(canister_id, event, now);
+        }
+    }
+
+    pub fn push_community_event_to_local_group_index(
+        &mut self,
+        community_id: CommunityId,
+        event: LocalGroupIndexEvent,
+        now: TimestampMillis,
+    ) {
+        if let Some(canister_id) = self.data.local_index_map.get_index_canister_for_community(&community_id) {
+            self.push_event_to_local_group_index(canister_id, event, now);
+        }
+    }
+
+    pub fn push_event_to_local_group_index(
+        &mut self,
+        canister_id: CanisterId,
+        event: LocalGroupIndexEvent,
+        now: TimestampMillis,
+    ) {
+        self.data.local_group_index_event_sync_queue.push(
+            canister_id,
+            IdempotentEnvelope {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: event,
+            },
+        )
+    }
+
+    pub fn set_verified_community(&mut self, community_id: CommunityId, verified: bool) -> bool {
+        let Some(community) = self.data.public_communities.get_mut(&community_id) else {
+            return false;
+        };
+
+        community.set_verified(verified);
+
+        self.push_community_event_to_local_group_index(
+            community_id,
+            LocalGroupIndexEvent::CommunityVerifiedChanged(VerifiedChanged {
+                canister_id: community_id.into(),
+                verified,
+            }),
+            self.env.now(),
+        );
+
+        true
+    }
+
+    pub fn set_verified_group(&mut self, group_id: ChatId, verified: bool) -> bool {
+        let Some(group) = self.data.public_groups.get_mut(&group_id) else {
+            return false;
+        };
+
+        group.set_verified(verified);
+
+        self.push_group_event_to_local_group_index(
+            group_id,
+            LocalGroupIndexEvent::GroupVerifiedChanged(VerifiedChanged {
+                canister_id: group_id.into(),
+                verified,
+            }),
+            self.env.now(),
+        );
+
+        true
+    }
+
+    pub fn rename_public_community(&mut self, community_id: CommunityId, new_name: String) -> bool {
+        let Some(community) = self.data.public_communities.get_mut(&community_id) else {
+            return false;
+        };
+
+        let canister_id: CanisterId = community_id.into();
+
+        self.data
+            .public_group_and_community_names
+            .rename(community.name(), &new_name, canister_id);
+
+        community.set_name(new_name.clone());
+
+        self.push_community_event_to_local_group_index(
+            community_id,
+            LocalGroupIndexEvent::CommunityNameChanged(NameChanged {
+                canister_id,
+                name: new_name.clone(),
+            }),
+            self.env.now(),
+        );
+
+        true
+    }
+
+    pub fn rename_public_group(&mut self, group_id: ChatId, new_name: String) -> bool {
+        let Some(group) = self.data.public_groups.get_mut(&group_id) else {
+            return false;
+        };
+
+        let canister_id: CanisterId = group_id.into();
+
+        self.data
+            .public_group_and_community_names
+            .rename(group.name(), &new_name, canister_id);
+
+        group.set_name(new_name.clone());
+
+        self.push_group_event_to_local_group_index(
+            group_id,
+            LocalGroupIndexEvent::GroupNameChanged(NameChanged {
+                canister_id,
+                name: new_name.clone(),
+            }),
+            self.env.now(),
+        );
+
+        true
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -291,100 +418,6 @@ impl Data {
         }
 
         self.cached_metrics = cached_metrics;
-    }
-
-    pub fn push_group_event_to_local_group_index(&mut self, group_id: ChatId, event: LocalGroupIndexEvent) {
-        if let Some(canister_id) = self.local_index_map.get_index_canister_for_group(&group_id) {
-            self.local_group_index_event_sync_queue.push(canister_id, event);
-        }
-    }
-
-    pub fn push_community_event_to_local_group_index(&mut self, community_id: CommunityId, event: LocalGroupIndexEvent) {
-        if let Some(canister_id) = self.local_index_map.get_index_canister_for_community(&community_id) {
-            self.local_group_index_event_sync_queue.push(canister_id, event);
-        }
-    }
-
-    pub fn set_verified_community(&mut self, community_id: CommunityId, verified: bool) -> bool {
-        let Some(community) = self.public_communities.get_mut(&community_id) else {
-            return false;
-        };
-
-        community.set_verified(verified);
-
-        self.push_community_event_to_local_group_index(
-            community_id,
-            LocalGroupIndexEvent::CommunityVerifiedChanged(VerifiedChanged {
-                canister_id: community_id.into(),
-                verified,
-            }),
-        );
-
-        true
-    }
-
-    pub fn set_verified_group(&mut self, group_id: ChatId, verified: bool) -> bool {
-        let Some(group) = self.public_groups.get_mut(&group_id) else {
-            return false;
-        };
-
-        group.set_verified(verified);
-
-        self.push_group_event_to_local_group_index(
-            group_id,
-            LocalGroupIndexEvent::GroupVerifiedChanged(VerifiedChanged {
-                canister_id: group_id.into(),
-                verified,
-            }),
-        );
-
-        true
-    }
-
-    pub fn rename_public_community(&mut self, community_id: CommunityId, new_name: String) -> bool {
-        let Some(community) = self.public_communities.get_mut(&community_id) else {
-            return false;
-        };
-
-        let canister_id: CanisterId = community_id.into();
-
-        self.public_group_and_community_names
-            .rename(community.name(), &new_name, canister_id);
-
-        community.set_name(new_name.clone());
-
-        self.push_community_event_to_local_group_index(
-            community_id,
-            LocalGroupIndexEvent::CommunityNameChanged(NameChanged {
-                canister_id,
-                name: new_name.clone(),
-            }),
-        );
-
-        true
-    }
-
-    pub fn rename_public_group(&mut self, group_id: ChatId, new_name: String) -> bool {
-        let Some(group) = self.public_groups.get_mut(&group_id) else {
-            return false;
-        };
-
-        let canister_id: CanisterId = group_id.into();
-
-        self.public_group_and_community_names
-            .rename(group.name(), &new_name, canister_id);
-
-        group.set_name(new_name.clone());
-
-        self.push_group_event_to_local_group_index(
-            group_id,
-            LocalGroupIndexEvent::GroupNameChanged(NameChanged {
-                canister_id,
-                name: new_name.clone(),
-            }),
-        );
-
-        true
     }
 }
 

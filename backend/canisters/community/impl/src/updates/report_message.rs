@@ -72,10 +72,11 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
         return Err(NotAuthorized);
     }
 
-    let Some(events_reader) = channel
-        .chat
-        .events
-        .events_reader(channel_member.min_visible_event_index(), args.thread_root_message_index)
+    let Some(events_reader) =
+        channel
+            .chat
+            .events
+            .events_reader(channel_member.min_visible_event_index(), args.thread_root_message_index, None)
     else {
         return Err(MessageNotFound);
     };

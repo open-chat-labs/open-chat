@@ -1,5 +1,5 @@
 mod add_notifications_canister;
-mod c2c_sync_user_index_events;
+mod c2c_user_index;
 mod push_subscription;
 mod remove_subscription;
 mod remove_subscriptions;

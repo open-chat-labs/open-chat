@@ -7,8 +7,8 @@ import type {
 } from "./chat";
 import type {
     BotActionScope,
-    ChatPermissions,
-    CommunityPermissions,
+    BotChatPermission,
+    BotCommunityPermission,
     MemberRole,
     MessagePermission,
 } from "./permission";
@@ -190,8 +190,8 @@ function mergePermissions(
 }
 
 export type ExternalBotPermissionsSet = {
-    chatPermissions: Set<keyof ChatPermissions>;
-    communityPermissions: Set<keyof CommunityPermissions>;
+    chatPermissions: Set<BotChatPermission>;
+    communityPermissions: Set<BotCommunityPermission>;
     messagePermissions: Set<MessagePermission>;
 };
 
@@ -226,8 +226,8 @@ export function hasEveryRequiredPermission(
 }
 
 export type ExternalBotPermissions = {
-    chatPermissions: (keyof ChatPermissions)[];
-    communityPermissions: (keyof CommunityPermissions)[];
+    chatPermissions: BotChatPermission[];
+    communityPermissions: BotCommunityPermission[];
     messagePermissions: MessagePermission[];
 };
 
@@ -251,6 +251,7 @@ export function emptyBotInstance(ownerId: string): ExternalBot {
             description: "",
             commands: [],
         },
+        registrationStatus: { kind: "private" },
     };
 }
 
@@ -267,7 +268,14 @@ export type ExternalBot = BotCommon & {
     id: string;
     ownerId: string;
     endpoint: string;
+    registrationStatus: BotRegistrationStatus;
 };
+
+export type BotRegistrationStatus = BotPublic | BotPrivate;
+
+export type BotPublic = { kind: "public" };
+
+export type BotPrivate = { kind: "private"; location?: BotInstallationLocation };
 
 export type InternalBot = BotCommon & {
     kind: "internal_bot";

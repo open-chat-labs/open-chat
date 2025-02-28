@@ -88,6 +88,7 @@ pub struct UserRegistered {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BotRegistered {
+    #[serde(alias = "user_id")]
     pub bot_id: UserId,
     pub owner_id: UserId,
     pub user_principal: Principal,
@@ -272,6 +273,7 @@ pub enum UserEvent {
     NotifyStreakInsuranceClaim(UserCanisterStreakInsuranceClaim),
     UserBlocked(UserId),
     UserUnblocked(UserId),
+    SetMaxStreak(u16),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]

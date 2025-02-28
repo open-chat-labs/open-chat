@@ -42,7 +42,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             .events
             .edit_message(edit_message_args, Some(&mut state.data.event_store_client))
         {
-            EditMessageResult::Success => {
+            EditMessageResult::Success(_, _) => {
                 if args.user_id != OPENCHAT_BOT_USER_ID {
                     let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
 
@@ -56,7 +56,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         })),
                     );
 
-                    state.data.award_achievement_and_notify(Achievement::EditedMessage, now);
+                    state.award_achievement_and_notify(Achievement::EditedMessage, now);
                 }
                 Success
             }

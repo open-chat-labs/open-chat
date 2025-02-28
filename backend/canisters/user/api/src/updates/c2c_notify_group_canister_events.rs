@@ -6,7 +6,4 @@ pub struct Args {
     pub events: Vec<GroupCanisterEvent>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Response = crate::c2c_group_canister::Response;

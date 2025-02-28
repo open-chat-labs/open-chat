@@ -77,10 +77,38 @@ export const communityStateStore = createCommunitySpecificObjectStore<CommunityS
     }),
 );
 
-export const currentCommunityBots = createDerivedPropStore<CommunitySpecificState, "bots">(
+export const selectedCommunity = derived(
+    [communities, chatListScopeStore],
+    ([$communities, $chatListScope]) => {
+        if ($chatListScope.kind === "community") {
+            return $communities.get($chatListScope.id);
+        } else if ($chatListScope.kind === "favourite" && $chatListScope.communityId) {
+            return $communities.get($chatListScope.communityId);
+        } else {
+            return undefined;
+        }
+    },
+);
+
+const currentServerCommunityBots = createDerivedPropStore<CommunitySpecificState, "bots">(
     communityStateStore,
     "bots",
     () => new Map<string, ExternalBotPermissions>(),
+);
+
+export const currentCommunityBots = derived(
+    [selectedCommunity, currentServerCommunityBots, localCommunitySummaryUpdates],
+    ([$community, $serverBots, $local]) => {
+        if ($community === undefined) return $serverBots;
+        const clone = new Map($serverBots);
+        const localInstalled = [...($local.get($community.id)?.installedBots?.entries() ?? [])];
+        const localDeleted = [...($local.get($community.id)?.removedBots?.values() ?? [])];
+        localInstalled.forEach(([id, perm]) => {
+            clone.set(id, perm);
+        });
+        localDeleted.forEach((id) => clone.delete(id));
+        return clone;
+    },
 );
 
 export const currentCommunityApiKeys = createDerivedPropStore<CommunitySpecificState, "apiKeys">(
@@ -124,19 +152,6 @@ export const currentCommunityRules = createDerivedPropStore<CommunitySpecificSta
     communityStateStore,
     "rules",
     () => undefined,
-);
-
-export const selectedCommunity = derived(
-    [communities, chatListScopeStore],
-    ([$communities, $chatListScope]) => {
-        if ($chatListScope.kind === "community") {
-            return $communities.get($chatListScope.id);
-        } else if ($chatListScope.kind === "favourite" && $chatListScope.communityId) {
-            return $communities.get($chatListScope.communityId);
-        } else {
-            return undefined;
-        }
-    },
 );
 
 export function nextCommunityIndex(): number {

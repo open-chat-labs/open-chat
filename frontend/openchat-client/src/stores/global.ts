@@ -21,6 +21,7 @@ import { derived } from "svelte/store";
 import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { serverWalletConfigStore } from "./crypto";
+import { localGlobalUpdates } from "./localGlobalUpdates";
 
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
 
@@ -36,7 +37,20 @@ export type GlobalState = {
     messageActivitySummary: MessageActivitySummary;
 };
 
-export const installedDirectBots = immutableStore<Map<string, ExternalBotPermissions>>(new Map());
+const installedServerDirectBots = immutableStore<Map<string, ExternalBotPermissions>>(new Map());
+export const installedDirectBots = derived(
+    [installedServerDirectBots, localGlobalUpdates],
+    ([$serverBots, $local]) => {
+        const clone = new Map($serverBots);
+        const localInstalled = [...($local.get("global")?.installedDirectBots?.entries() ?? [])];
+        const localDeleted = [...($local.get("global")?.removedDirectBots?.values() ?? [])];
+        localInstalled.forEach(([id, perm]) => {
+            clone.set(id, perm);
+        });
+        localDeleted.forEach((id) => clone.delete(id));
+        return clone;
+    },
+);
 export const directApiKeys = immutableStore<Map<string, PublicApiKeyDetails>>(new Map());
 
 export const chitStateStore = immutableStore<ChitState>({
@@ -336,7 +350,7 @@ export function setGlobalState(
         return skipUpdate ? curr : chitState;
     });
     serverWalletConfigStore.set(walletConfig);
-    installedDirectBots.set(installedBots);
+    installedServerDirectBots.set(installedBots);
     directApiKeys.set(apiKeys);
 }
 

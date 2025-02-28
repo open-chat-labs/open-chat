@@ -57,9 +57,9 @@
         searchTerm = "";
     }
 
-    async function performSearch(ev: CustomEvent<string>) {
+    async function performSearch(term: string) {
         searchResultsAvailable = false;
-        searchTerm = ev.detail;
+        searchTerm = term;
 
         if ($chatListScope.kind === "direct_chat") {
             searchTerm = trimLeadingAtSymbol(searchTerm);
@@ -103,14 +103,9 @@
         return 0;
     }
 
-    // TODO - this is temporary
-    function filterOutBots(a: UserSummary | BotMatch): boolean {
-        return a.kind === "user";
-    }
-
     async function userAndBotSearch(term: string) {
         userAndBotsSearchResults = Promise.all([searchUsers(term), searchBots(term)]).then(
-            ([users, bots]) => [...users, ...bots].filter(filterOutBots).sort(sortUsersOrBots),
+            ([users, bots]) => [...users, ...bots].sort(sortUsersOrBots),
         );
         await userAndBotsSearchResults.then(postSearch);
     }
@@ -146,4 +141,4 @@
     });
 </script>
 
-<Search {placeholder} {searching} {searchTerm} on:searchEntered={performSearch} />
+<Search {placeholder} {searching} {searchTerm} onPerformSearch={performSearch} />

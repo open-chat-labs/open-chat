@@ -11,9 +11,10 @@ fn remove_subscriptions(args: Args) -> Response {
 }
 
 fn remove_subscriptions_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let now = state.env.now();
     for user in args.subscriptions_by_user {
         for key in user.p256dh_keys {
-            state.remove_subscription(user.user_id, key);
+            state.remove_subscription(user.user_id, key, now);
         }
     }
     Success

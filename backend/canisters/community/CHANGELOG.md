@@ -9,7 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add api_key query endpoint callable by owner(s) ([#7431](https://github.com/open-chat-labs/open-chat/pull/7431))
-- Support `sync_api_key` cmd + min required cmd role ([#7435](https://github.com/open-chat-labs/open-chat/pull/7435))
+- Support `sync_api_key` cmd + min required cmd role ([#7439](https://github.com/open-chat-labs/open-chat/pull/7439))
+- Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
+- Introduce new idempotent endpoints for C2C calls ([#7492](https://github.com/open-chat-labs/open-chat/pull/7492))
 
 ### Changed
 
@@ -18,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reduce the size of notifications when serialized ([#7448](https://github.com/open-chat-labs/open-chat/pull/7448))
 - Move new message validation to `MessageContentInternal` ([#7452](https://github.com/open-chat-labs/open-chat/pull/7452))
 - Encode permissions within bot API keys as bitflags ([#7456](https://github.com/open-chat-labs/open-chat/pull/7456))
+- Channel summaries updated when api keys generated ([#7478](https://github.com/open-chat-labs/open-chat/pull/7478))
 
 ### Removed
 
