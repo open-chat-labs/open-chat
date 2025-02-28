@@ -16,6 +16,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "mark_as_online"
         | "mark_suspected_bot"
         | "pay_for_diamond_membership"
+        | "register_bot"
         | "set_display_name"
         | "set_moderation_flags"
         | "set_username"
@@ -40,9 +41,9 @@ fn accept_if_valid(state: &RuntimeState) {
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
         | "register_external_achievement"
+        | "publish_bot"
         | "suspected_bots" => state.is_caller_governance_principal(),
         "award_external_achievement" | "modclub_callback" => true,
-        "register_bot" => state.data.test_mode || state.is_caller_governance_principal(),
         "remove_bot" => state.is_caller_governance_principal() || state.is_caller_openchat_user(),
         _ => false,
     };
