@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1611](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1611-user_index)] - 2025-02-28
+
 ### Added
 
 - Support `sync_api_key` cmd + min required cmd role ([#7439](https://github.com/open-chat-labs/open-chat/pull/7439))
