@@ -2779,8 +2779,10 @@ export const UserIndexSetDiamondMembershipFeesResponse = Type.Union([
     Type.Literal("Invalid"),
 ]);
 
-export type UserIndexRegisterBotResponse = Static<typeof UserIndexRegisterBotResponse>;
-export const UserIndexRegisterBotResponse = Type.Literal("Success");
+export type UserIndexRegisterBotSuccessResult = Static<typeof UserIndexRegisterBotSuccessResult>;
+export const UserIndexRegisterBotSuccessResult = Type.Object({
+    bot_id: UserId,
+});
 
 export type UserIndexReportedMessagesArgs = Static<typeof UserIndexReportedMessagesArgs>;
 export const UserIndexReportedMessagesArgs = Type.Object({
@@ -6563,6 +6565,21 @@ export const UserIndexSetDiamondMembershipFeesArgs = Type.Object({
     fees: DiamondMembershipFees,
 });
 
+export type UserIndexRegisterBotResponse = Static<typeof UserIndexRegisterBotResponse>;
+export const UserIndexRegisterBotResponse = Type.Union([
+    Type.Object({
+        Success: UserIndexRegisterBotSuccessResult,
+    }),
+    Type.Literal("AlreadyRegistered"),
+    Type.Object({
+        InvalidRequest: Type.String(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("UserSuspended"),
+]);
+
 export type UserIndexPlatformModeratorsGroupResponse = Static<
     typeof UserIndexPlatformModeratorsGroupResponse
 >;
@@ -8463,7 +8480,6 @@ export const UserIndexUpdateBotArgs = Type.Object({
 export type UserIndexRegisterBotArgs = Static<typeof UserIndexRegisterBotArgs>;
 export const UserIndexRegisterBotArgs = Type.Object({
     principal: TSPrincipal,
-    owner: UserId,
     name: Type.String(),
     avatar: Type.Optional(Type.String()),
     endpoint: Type.String(),
