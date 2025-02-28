@@ -152,6 +152,14 @@ impl BotPermissions {
         }
     }
 
+    pub fn from_chat_permission(permission: ChatPermission) -> Self {
+        Self {
+            community: HashSet::new(),
+            chat: HashSet::from_iter([permission]),
+            message: HashSet::new(),
+        }
+    }
+
     pub fn from_community_permission(permission: CommunityPermission) -> Self {
         Self {
             community: HashSet::from_iter([permission]),

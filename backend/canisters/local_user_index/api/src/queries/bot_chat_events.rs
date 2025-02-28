@@ -18,6 +18,7 @@ pub struct Args {
 pub enum Response {
     Success(types::EventsResponse),
     FailedAuthentication(String),
+    NotAuthorized,
     NotFound,
     InternalError(String),
 }
