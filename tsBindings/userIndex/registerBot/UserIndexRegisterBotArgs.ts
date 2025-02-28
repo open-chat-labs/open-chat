@@ -2,6 +2,5 @@
 import type { BotDefinition } from "../../shared/BotDefinition";
 import type { BotInstallationLocation } from "../../shared/BotInstallationLocation";
 import type { TSPrincipal } from "../../shared/TSPrincipal";
-import type { UserId } from "../../shared/UserId";
 
-export type UserIndexRegisterBotArgs = { principal: TSPrincipal, owner: UserId, name: string, avatar?: string, endpoint: string, definition: BotDefinition, permitted_install_location?: BotInstallationLocation, };
+export type UserIndexRegisterBotArgs = { principal: TSPrincipal, name: string, avatar?: string, endpoint: string, definition: BotDefinition, permitted_install_location?: BotInstallationLocation, };
