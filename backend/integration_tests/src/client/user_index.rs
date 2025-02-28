@@ -293,7 +293,6 @@ pub mod happy_path {
             user_index_canister_id,
             &user_index_canister::register_bot::Args {
                 principal,
-                owner: owner.user_id,
                 name,
                 avatar: None,
                 endpoint,
