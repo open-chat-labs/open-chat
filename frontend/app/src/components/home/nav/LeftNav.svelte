@@ -98,16 +98,6 @@
         }));
     }
 
-    function reindex(communities: CommunitySummary[]): CommunitySummary[] {
-        return communities.map((item, i) => ({
-            ...item,
-            membership: {
-                ...item.membership,
-                index: communities.length - i,
-            },
-        }));
-    }
-
     function handleDndConsider(e: CustomEvent<DndEvent<CommunityItem>>) {
         dragging = true;
         communityItems = e.detail.items;
@@ -124,7 +114,7 @@
         communityItems = e.detail.items;
         resetScroll(navWrapper);
         resetScroll(scrollingSection);
-        client.updateCommunityIndexes(reindex(e.detail.items));
+        client.updateCommunityIndexes(e.detail.items);
     }
 
     function toggleNav(e: Event) {
