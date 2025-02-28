@@ -360,7 +360,7 @@ pub struct Rules {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct VersionedRules {
     pub text: String,
     pub version: Version,
@@ -388,4 +388,29 @@ pub enum VideoCallType {
     Broadcast,
     #[default]
     Default,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ChatDetails {
+    pub name: String,
+    pub description: String,
+    pub avatar_id: Option<u128>,
+    pub is_public: bool,
+    pub history_visible_to_new_joiners: bool,
+    pub messages_visible_to_non_members: bool,
+    pub permissions: GroupPermissions,
+    pub rules: VersionedRules,
+    pub events_ttl: Option<Milliseconds>,
+    pub events_ttl_last_updated: Option<TimestampMillis>,
+    pub gate_config: Option<AccessGateConfig>,
+    pub video_call_in_progress: Option<VideoCall>,
+    pub verified: Option<bool>,
+    pub frozen: Option<FrozenGroupInfo>,
+    pub date_last_pinned: Option<TimestampMillis>,
+    pub last_updated: TimestampMillis,
+    pub external_url: Option<String>,
+    pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
+    pub member_count: u32,
 }
