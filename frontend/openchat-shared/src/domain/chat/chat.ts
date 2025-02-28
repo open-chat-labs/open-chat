@@ -720,6 +720,7 @@ export type LocalChatSummaryUpdates = {
     updated?:
         | {
               kind?: undefined;
+              latestMessage?: EventWrapper<Message>;
               notificationsMuted?: boolean;
               archived?: boolean;
               rulesAccepted?: boolean;
@@ -728,6 +729,7 @@ export type LocalChatSummaryUpdates = {
               kind: "group_chat" | "channel";
               name?: string;
               description?: string;
+              latestMessage?: EventWrapper<Message>;
               public?: boolean;
               permissions?: OptionalChatPermissions;
               frozen?: boolean;

@@ -480,7 +480,6 @@ import {
 import {
     globalStateStore,
     setGlobalState,
-    updateSummaryWithConfirmedMessage,
     chatListScopeStore,
     chitStateStore,
     mergeCombinedUnreadCounts,
@@ -2875,11 +2874,6 @@ export class OpenChat extends EventTarget {
 
         this.#addServerEventsToStores(chatId, resp.events, threadRootMessageIndex, []);
 
-        for (const event of resp.events) {
-            if (event.event.kind === "message") {
-                unconfirmed.delete(context, event.event.messageId);
-            }
-        }
         return resp.events;
     }
 
@@ -3574,7 +3568,7 @@ export class OpenChat extends EventTarget {
                 mergeServerEvents(events, newEvents, context),
             );
             if (newLatestMessage !== undefined) {
-                updateSummaryWithConfirmedMessage(chatId, newLatestMessage);
+                localChatSummaryUpdates.markUpdated(chatId, { latestMessage: newLatestMessage });
             }
             const selectedThreadRootMessageIndex = this.#liveState.selectedThreadRootMessageIndex;
             if (selectedThreadRootMessageIndex !== undefined) {
