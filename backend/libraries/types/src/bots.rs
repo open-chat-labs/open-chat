@@ -65,6 +65,7 @@ pub struct StringParam {
     pub max_length: u16,
     #[ts(as = "Vec<BotCommandOptionChoiceString>")]
     pub choices: Vec<BotCommandOptionChoice<String>>,
+    #[serde(default)]
     pub mutli_line: bool,
 }
 
