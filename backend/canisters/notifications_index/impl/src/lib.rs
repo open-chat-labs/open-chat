@@ -16,7 +16,6 @@ use types::{
 };
 use user_ids_set::UserIdsSet;
 use utils::canister::CanistersRequiringUpgrade;
-use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 
@@ -145,24 +144,11 @@ struct Data {
     pub notifications_canister_wasm_for_new_canisters: CanisterWasm,
     pub notifications_canister_wasm_for_upgrades: CanisterWasm,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
-    #[deprecated]
-    pub notifications_index_event_sync_queue: CanisterEventSyncQueue<NotificationsIndexEvent>,
-    #[serde(default = "notification_canisters_event_sync_queue")]
     pub notification_canisters_event_sync_queue: GroupedTimerJobQueue<NotificationCanistersEventBatch>,
-    #[serde(default = "blocked_users")]
     pub blocked_users: UserIdsSet,
-    #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
-}
-
-fn notification_canisters_event_sync_queue() -> GroupedTimerJobQueue<NotificationCanistersEventBatch> {
-    GroupedTimerJobQueue::new(5, false)
-}
-
-fn blocked_users() -> UserIdsSet {
-    UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users())
 }
 
 impl Data {
@@ -187,7 +173,6 @@ impl Data {
             notifications_canister_wasm_for_new_canisters: CanisterWasm::default(),
             notifications_canister_wasm_for_upgrades: CanisterWasm::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            notifications_index_event_sync_queue: CanisterEventSyncQueue::default(),
             notification_canisters_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             idempotency_checker: IdempotencyChecker::default(),

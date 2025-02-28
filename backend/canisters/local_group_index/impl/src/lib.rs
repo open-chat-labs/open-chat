@@ -193,7 +193,6 @@ struct Data {
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
     pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
-    #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
 }
 

@@ -11,14 +11,12 @@ pub struct BotsMap {
 
 #[derive(Serialize, Deserialize)]
 pub struct Bot {
-    #[serde(alias = "user_id")]
     pub bot_id: UserId,
     pub owner_id: UserId,
     pub name: String,
     pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
     pub principal: Principal,
-    #[serde(default)]
     pub registration_status: BotRegistrationStatus,
 }
 
