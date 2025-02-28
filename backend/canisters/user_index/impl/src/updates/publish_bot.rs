@@ -1,6 +1,6 @@
 use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::proposal;
+use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
 use local_user_index_canister::{BotPublished, UserIndexEvent};
 use user_index_canister::publish_bot::{Args, Response};
@@ -9,6 +9,20 @@ use user_index_canister::publish_bot::{Args, Response};
 #[trace]
 fn publish_bot(args: Args) -> Response {
     mutate_state(|state| publish_bot_impl(args, state))
+}
+
+#[update(msgpack = true)]
+#[trace]
+fn publish_bot(args: Args) -> Response {
+    mutate_state(
+        |state| {
+            if state.data.test_mode {
+                publish_bot_impl(args, state)
+            } else {
+                Response::NotAuthorised
+            }
+        },
+    )
 }
 
 fn publish_bot_impl(args: Args, state: &mut RuntimeState) -> Response {

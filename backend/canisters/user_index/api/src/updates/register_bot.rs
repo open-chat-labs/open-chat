@@ -1,7 +1,7 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotDefinition, BotInstallationLocation};
+use types::{BotDefinition, BotInstallationLocation, UserId};
 
 #[ts_export(user_index, register_bot)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -17,9 +17,15 @@ pub struct Args {
 #[ts_export(user_index, register_bot)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(SuccessResult),
     AlreadyRegistered,
     InvalidRequest(String),
     InternalError(String),
     UserSuspended,
+}
+
+#[ts_export(user_index, register_bot)]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SuccessResult {
+    pub bot_id: UserId,
 }

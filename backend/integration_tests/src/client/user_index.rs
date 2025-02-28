@@ -33,10 +33,10 @@ generate_update_call!(upgrade_local_user_index_canister_wasm);
 generate_update_call!(upgrade_user_canister_wasm);
 generate_update_call!(upload_wasm_chunk);
 generate_msgpack_update_call!(register_bot);
+generate_msgpack_update_call!(publish_bot);
 generate_msgpack_update_call!(update_bot);
 
 pub mod happy_path {
-    use crate::User;
     use candid::Principal;
     use event_store_canister::TimestampMillis;
     use pocket_ic::PocketIc;
@@ -279,17 +279,17 @@ pub mod happy_path {
 
     pub fn register_bot(
         env: &mut PocketIc,
-        owner: &User,
+        caller: Principal,
         user_index_canister_id: CanisterId,
         name: String,
         endpoint: String,
         definition: BotDefinition,
-    ) -> Principal {
+    ) -> (UserId, Principal) {
         let principal = random_principal();
 
         let response = super::register_bot(
             env,
-            owner.principal,
+            caller,
             user_index_canister_id,
             &user_index_canister::register_bot::Args {
                 principal,
@@ -301,8 +301,24 @@ pub mod happy_path {
             },
         );
 
-        assert!(matches!(response, user_index_canister::register_bot::Response::Success));
-        principal
+        match response {
+            user_index_canister::register_bot::Response::Success(result) => (result.bot_id, principal),
+            response => panic!("'register_bot' error: {response:?}"),
+        }
+    }
+
+    pub fn publish_bot(env: &mut PocketIc, caller: Principal, user_index_canister_id: CanisterId, bot_id: UserId) {
+        let response = super::publish_bot(
+            env,
+            caller,
+            user_index_canister_id,
+            &user_index_canister::publish_bot::Args { bot_id },
+        );
+
+        match response {
+            user_index_canister::publish_bot::Response::Success => (),
+            response => panic!("'publish_bot' error: {response:?}"),
+        }
     }
 
     #[allow(clippy::too_many_arguments)]

@@ -113,7 +113,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             .build(),
     );
 
-    Success
+    Success(SuccessResult { bot_id })
 }
 
 fn validate_request(args: &Args, owner_id: UserId, state: &RuntimeState) -> Result<(), String> {

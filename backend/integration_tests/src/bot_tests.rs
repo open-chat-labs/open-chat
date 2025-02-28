@@ -830,7 +830,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
 
 fn register_bot(
     env: &mut PocketIc,
-    user: &User,
+    owner: &User,
     user_index_canister_id: CanisterId,
     bot_name: String,
     command_name: String,
@@ -848,9 +848,9 @@ fn register_bot(
         default_role: None,
     }];
 
-    let bot_principal = client::user_index::happy_path::register_bot(
+    client::user_index::happy_path::register_bot(
         env,
-        user,
+        owner.principal,
         user_index_canister_id,
         bot_name.clone(),
         endpoint.clone(),
@@ -862,17 +862,12 @@ fn register_bot(
                 permissions: BotPermissions::text_only(),
             }),
         },
-    );
-
-    let response = client::user_index::happy_path::explore_bots(env, user.principal, user_index_canister_id, None);
-    let bot_id = response.matches.iter().find(|b| b.name == bot_name).unwrap().id;
-
-    (bot_id, bot_principal)
+    )
 }
 
 fn register_autonomous_bot(
     env: &mut PocketIc,
-    user: &User,
+    owner: &User,
     user_index_canister_id: CanisterId,
     bot_name: String,
 ) -> (UserId, Principal) {
@@ -880,9 +875,9 @@ fn register_autonomous_bot(
     let endpoint = "https://my.bot.xyz/".to_string();
     let description = "greet".to_string();
 
-    let bot_principal = client::user_index::happy_path::register_bot(
+    client::user_index::happy_path::register_bot(
         env,
-        user,
+        owner.principal,
         user_index_canister_id,
         bot_name.clone(),
         endpoint.clone(),
@@ -894,12 +889,7 @@ fn register_autonomous_bot(
                 permissions: BotPermissions::text_only(),
             }),
         },
-    );
-
-    let response = client::user_index::happy_path::explore_bots(env, user.principal, user_index_canister_id, None);
-    let bot_id = response.matches.iter().find(|b| b.name == bot_name).unwrap().id;
-
-    (bot_id, bot_principal)
+    )
 }
 
 fn generate_bot_api_key(env: &mut PocketIc, bot_id: UserId, chat: &Chat, owner: Principal) -> Result<String, String> {
