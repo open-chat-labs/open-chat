@@ -44,7 +44,6 @@ async fn bot_chat_details(args: Args) -> Response {
     }
 }
 
-#[allow(clippy::result_large_err)]
 struct PrepareOk {
     bot_id: UserId,
     initiator: BotInitiator,
