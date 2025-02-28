@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
 - Store max streak length for each user ([#7488](https://github.com/open-chat-labs/open-chat/pull/7488))
 - Introduce new idempotent endpoints for C2C calls ([#7492](https://github.com/open-chat-labs/open-chat/pull/7492))
+- Add `DateTime` bot command parameter ([#7496](https://github.com/open-chat-labs/open-chat/pull/7496))
 
 ## [[2.0.1599](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1599-user_index)] - 2025-02-06
 
