@@ -1,8 +1,9 @@
 use crate::env::ENV;
 use crate::utils::now_millis;
-use crate::{client, TestEnv};
+use crate::{client, TestEnv, User};
 use constants::DAY_IN_MS;
 use pocket_ic::PocketIc;
+use std::cmp::max;
 use std::ops::{Add, Deref};
 use std::time::{Duration, SystemTime};
 use test_case::test_case;
@@ -41,6 +42,7 @@ fn claim_daily_chit_reflected_in_user_index() {
 
     assert_eq!(user1_summary.chit_balance, 200);
     assert_eq!(user1_summary.streak, 1);
+    assert_eq!(user1_summary.max_streak, 1);
 }
 
 #[test]
@@ -79,6 +81,7 @@ fn chit_streak_gained_and_lost_as_expected() {
 
     assert_eq!(result.users.len(), 1);
     assert_eq!(result.users[0].volatile.as_ref().unwrap().streak, 0);
+    assert_eq!(result.users[0].volatile.as_ref().unwrap().max_streak, 4);
 }
 
 #[test]
@@ -141,8 +144,7 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
     let user = client::register_user(env, canister_ids);
     ensure_time_at_least_day0(env);
 
-    let result = client::user::happy_path::claim_daily_chit(env, &user);
-    assert_eq!(result.streak, 1);
+    claim_then_check_result(env, &user, 1, 1);
 
     const ONE_CHAT: u128 = 100_000_000;
     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, 100 * ONE_CHAT);
@@ -177,42 +179,50 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     env.tick();
     let insured = days_insured >= 1;
-    assert_eq!(
-        client::user::happy_path::initial_state(env, &user).streak,
-        if insured { 2 } else { 0 }
-    );
-    let result = client::user::happy_path::claim_daily_chit(env, &user);
-    assert_eq!(result.streak, if insured { 3 } else { 1 });
+
+    let mut expected_streak = if insured { 2 } else { 0 };
+    let mut expected_max_streak = max(expected_streak, 1);
+    assert_streak_lengths(env, &user, expected_streak, expected_max_streak);
+
+    expected_streak += 1;
+    expected_max_streak = max(expected_streak, expected_max_streak);
+    claim_then_check_result(env, &user, expected_streak, expected_max_streak);
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     env.tick();
     let insured = days_insured >= 2;
-    assert_eq!(
-        client::user::happy_path::initial_state(env, &user).streak,
-        if insured { 4 } else { 0 }
-    );
-    let result = client::user::happy_path::claim_daily_chit(env, &user);
-    assert_eq!(result.streak, if insured { 5 } else { 1 });
+
+    expected_streak = if insured { 4 } else { 0 };
+    expected_max_streak = max(expected_streak, expected_max_streak);
+    assert_streak_lengths(env, &user, expected_streak, expected_max_streak);
+
+    expected_streak += 1;
+    expected_max_streak = max(expected_streak, expected_max_streak);
+    claim_then_check_result(env, &user, expected_streak, expected_max_streak);
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     env.tick();
     let insured = days_insured >= 3;
-    assert_eq!(
-        client::user::happy_path::initial_state(env, &user).streak,
-        if insured { 6 } else { 0 }
-    );
-    let result = client::user::happy_path::claim_daily_chit(env, &user);
-    assert_eq!(result.streak, if insured { 7 } else { 1 });
+
+    expected_streak = if insured { 6 } else { 0 };
+    expected_max_streak = max(expected_streak, expected_max_streak);
+    assert_streak_lengths(env, &user, expected_streak, expected_max_streak);
+
+    expected_streak += 1;
+    expected_max_streak = max(expected_streak, expected_max_streak);
+    claim_then_check_result(env, &user, expected_streak, expected_max_streak);
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     env.tick();
     let insured = days_insured >= 4;
-    assert_eq!(
-        client::user::happy_path::initial_state(env, &user).streak,
-        if insured { 8 } else { 0 }
-    );
-    let result = client::user::happy_path::claim_daily_chit(env, &user);
-    assert_eq!(result.streak, if insured { 9 } else { 1 });
+
+    expected_streak = if insured { 6 } else { 0 };
+    expected_max_streak = max(expected_streak, expected_max_streak);
+    assert_streak_lengths(env, &user, expected_streak, expected_max_streak);
+
+    expected_streak += 1;
+    expected_max_streak = max(expected_streak, expected_max_streak);
+    claim_then_check_result(env, &user, expected_streak, expected_max_streak);
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     env.tick();
@@ -231,4 +241,16 @@ fn ensure_time_at_least_day0(env: &mut PocketIc) {
     if now_millis(env) < DAY_ZERO {
         env.set_time(SystemTime::now());
     }
+}
+
+fn assert_streak_lengths(env: &PocketIc, user: &User, streak: u16, max_streak: u16) {
+    let initial_state = client::user::happy_path::initial_state(env, user);
+    assert_eq!(initial_state.streak, streak);
+    assert_eq!(initial_state.max_streak, max_streak);
+}
+
+fn claim_then_check_result(env: &mut PocketIc, user: &User, streak: u16, max_streak: u16) {
+    let result = client::user::happy_path::claim_daily_chit(env, user);
+    assert_eq!(result.streak, streak);
+    assert_eq!(result.max_streak, max_streak);
 }
