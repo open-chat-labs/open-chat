@@ -1,8 +1,7 @@
-use std::collections::HashMap;
-
+use crate::guards::caller_is_openchat_user;
 use crate::model::user_map::Bot;
 use crate::model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN};
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -10,8 +9,8 @@ use constants::{ONE_GB, USER_LIMIT};
 use event_store_producer::EventBuilder;
 use local_user_index_canister::{BotRegistered, UserIndexEvent};
 use rand::RngCore;
+use std::collections::HashMap;
 use storage_index_canister::add_or_update_users::UserConfig;
-use tracing::error;
 use types::BotRegistrationStatus;
 use types::{UserId, UserType};
 use url::Url;
@@ -19,47 +18,50 @@ use user_index_canister::register_bot::{Response::*, *};
 use utils::document::try_parse_data_url;
 use utils::text_validation::{validate_username, UsernameValidationError};
 
-#[update(msgpack = true)]
+#[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 fn register_bot(args: Args) -> Response {
-    if read_state(|state| state.data.test_mode) {
-        mutate_state(|state| register_bot_impl(args, state));
-    }
-
-    Success
+    mutate_state(|state| register_bot_impl(args, state))
 }
 
-fn register_bot_impl(args: Args, state: &mut RuntimeState) {
-    let name = &args.name;
-    let error_prefix = format!("register bot {name}:");
+fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
+    // Don't allow the bot to be re-registered
+    if state.data.users.get_by_principal(&args.principal).is_some() {
+        return AlreadyRegistered;
+    }
 
-    if let Err(message) = validate_request(&args, state) {
-        error!("{error_prefix} {message}");
-        return;
+    let caller = state.env.caller();
+    let owner = state.data.users.get_by_principal(&caller).unwrap();
+    let owner_id = owner.user_id;
+
+    if owner.suspension_details.is_some() {
+        return UserSuspended;
+    }
+
+    if let Err(message) = validate_request(&args, owner_id, state) {
+        return InvalidRequest(message);
     }
 
     let avatar = if let Some(data_url) = args.avatar.as_ref() {
         match try_parse_data_url(data_url) {
             Some(a) => Some(a),
             None => {
-                error!("{error_prefix} invalid avatar");
-                return;
+                return InvalidRequest("invalid avatar".to_string());
             }
         }
     } else {
         None
     };
 
-    let Some(user_id) = generate_random_user_id(state) else {
-        error!("{error_prefix} can't generate unique user id!");
-        return;
+    let Some(bot_id) = generate_random_user_id(state) else {
+        return InternalError("can't generate unique user id".to_string());
     };
 
     let now = state.env.now();
 
     state.data.users.register(
         args.principal,
-        user_id,
+        bot_id,
         args.name.clone(),
         None,
         now,
@@ -67,7 +69,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
         UserType::BotV2,
         Some(Bot {
             name: args.name.clone(),
-            owner: args.owner,
+            owner: owner_id,
             endpoint: args.endpoint.clone(),
             description: args.definition.description.clone(),
             commands: args.definition.commands.clone(),
@@ -81,8 +83,8 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
 
     state.push_event_to_all_local_user_indexes(
         UserIndexEvent::BotRegistered(BotRegistered {
-            bot_id: user_id,
-            owner_id: args.owner,
+            bot_id,
+            owner_id,
             user_principal: args.principal,
             name: args.name.clone(),
             commands: args.definition.commands.clone(),
@@ -102,7 +104,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
 
     state.data.event_store_client.push(
         EventBuilder::new("user_registered", now)
-            .with_user(user_id.to_string(), true)
+            .with_user(bot_id.to_string(), true)
             .with_source(state.env.canister_id().to_string(), false)
             .with_json_payload(&crate::UserRegisteredEventPayload {
                 referred: false,
@@ -110,11 +112,11 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
             })
             .build(),
     );
+
+    Success(SuccessResult { bot_id })
 }
 
-fn validate_request(args: &Args, state: &RuntimeState) -> Result<(), String> {
-    let owner_id = &args.owner;
-
+fn validate_request(args: &Args, owner_id: UserId, state: &RuntimeState) -> Result<(), String> {
     if args.principal == Principal::anonymous() {
         return Err("principal cannot be anonymous".to_string());
     }
@@ -150,7 +152,7 @@ fn validate_request(args: &Args, state: &RuntimeState) -> Result<(), String> {
         return Err(format!("user limit reached {USER_LIMIT}"));
     }
 
-    let Some(owner) = state.data.users.get_by_user_id(&args.owner) else {
+    let Some(owner) = state.data.users.get_by_user_id(&owner_id) else {
         return Err(format!("owner not found {owner_id}"));
     };
 

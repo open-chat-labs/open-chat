@@ -172,6 +172,7 @@ type PublishBotArgs = record {
 type PublishBotResponse = variant {
     Success;
     NotFound;
+    NotAuthorised;
 };
 
 type UpdateBotArgs = record {

@@ -15,6 +15,7 @@ pub struct Args {
 pub enum Response {
     Success,
     NotFound,
+    NotAuthorised,
 }
 
 #[derive(Serialize)]
