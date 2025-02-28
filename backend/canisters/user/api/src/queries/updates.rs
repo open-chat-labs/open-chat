@@ -44,6 +44,7 @@ pub struct SuccessResult {
     pub chit_balance: i32,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
+    pub max_streak: u16,
     #[ts(as = "types::OptionUpdateStreakInsurance")]
     pub streak_insurance: OptionUpdate<StreakInsurance>,
     pub next_daily_claim: TimestampMillis,

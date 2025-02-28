@@ -34,6 +34,7 @@ pub struct SuccessResult {
     pub chit_balance: i32,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
+    pub max_streak: u16,
     pub streak_insurance: Option<StreakInsurance>,
     pub next_daily_claim: TimestampMillis,
     pub is_unique_person: bool,
