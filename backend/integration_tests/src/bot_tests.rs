@@ -50,20 +50,27 @@ fn e2e_command_bot_test() {
     assert_eq!(bot.id, bot_id);
     assert_eq!(bot.name, bot_name);
 
-    // Explore bots and check new bot is returned
-    let response = client::user_index::happy_path::explore_bots(env, owner.principal, canister_ids.user_index, None);
-    assert!(response.matches.iter().any(|b| b.id == bot_id));
-
     // Add bot to group with inadequate permissions
     let mut granted_permissions = BotPermissions::default();
+    let installation_location = BotInstallationLocation::Group(group_id);
     client::local_user_index::happy_path::install_bot(
         env,
         owner.principal,
         canister_ids.local_user_index(env, group_id),
-        BotInstallationLocation::Group(group_id),
+        installation_location,
         bot.id,
         granted_permissions.clone(),
     );
+
+    // Explore bots and check new bot is returned
+    let response = client::user_index::happy_path::explore_bots(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        None,
+        Some(installation_location),
+    );
+    assert!(response.matches.iter().any(|b| b.id == bot_id));
 
     let bot_added_timestamp = now_millis(env);
     env.advance_time(Duration::from_millis(1000));

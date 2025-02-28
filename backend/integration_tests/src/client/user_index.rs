@@ -44,8 +44,8 @@ pub mod happy_path {
     use std::collections::HashMap;
     use testing::rng::random_principal;
     use types::{
-        BotDefinition, CanisterId, CanisterWasm, Chit, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration,
-        Empty, OptionUpdate, UserId, UserSummary,
+        BotDefinition, BotInstallationLocation, CanisterId, CanisterWasm, Chit, Cryptocurrency, DiamondMembershipFees,
+        DiamondMembershipPlanDuration, Empty, OptionUpdate, UserId, UserSummary,
     };
     use user_index_canister::users::UserGroup;
     use user_index_canister::ChildCanisterType;
@@ -387,13 +387,14 @@ pub mod happy_path {
         sender: Principal,
         user_index_canister_id: CanisterId,
         search_term: Option<String>,
+        installation_location: Option<BotInstallationLocation>,
     ) -> user_index_canister::explore_bots::SuccessResult {
         let response = super::explore_bots(
             env,
             sender,
             user_index_canister_id,
             &user_index_canister::explore_bots::Args {
-                installation_location: None,
+                installation_location,
                 search_term,
                 page_index: 0,
                 page_size: 10,
