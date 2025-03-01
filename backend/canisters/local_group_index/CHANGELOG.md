@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix messageId deduplication for groups which used disappearing messages ([#7503](https://github.com/open-chat-labs/open-chat/pull/7503))
+
 ## [[2.0.1612](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1612-local_group_index)] - 2025-02-28
 
 ### Added
