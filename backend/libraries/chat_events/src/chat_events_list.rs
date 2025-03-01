@@ -3,12 +3,13 @@ use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::stable_memory::ChatEventsStableStorage;
 use crate::{ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
 use itertools::Itertools;
+use rand::rngs::StdRng;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::ops::Deref;
-use tracing::{error, info};
+use tracing::info;
 use types::{
     Chat, ChatEvent, ChatEventType, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
     Mention, Message, MessageId, MessageIndex, TimestampMillis, UserId,
@@ -27,15 +28,11 @@ pub struct ChatEventsList {
 }
 
 impl ChatEventsList {
-    pub fn fix_duplicate_message_ids(&mut self, my_user_id: UserId, their_user_id: UserId) -> Option<bool> {
+    pub fn fix_duplicate_message_ids(&mut self, rng: &mut StdRng) -> Option<bool> {
         let message_id_zero_event = self.message_id_map.remove(&MessageId::from(0u64));
 
         if message_id_zero_event.is_none() && self.message_id_map.len() == self.message_event_indexes.len() {
             return Some(true);
-        }
-
-        if ic_cdk::api::instruction_counter() > 2_000_000_000 {
-            return Some(false);
         }
 
         if self.events_with_duplicate_message_ids.is_empty() {
@@ -49,42 +46,32 @@ impl ChatEventsList {
         }
 
         let mut count = 0;
-        let mut my_messages_index = 0;
-        let mut their_messages_index = 0;
-        while let Some(event_index) = self.events_with_duplicate_message_ids.pop_first() {
+        while ic_cdk::api::instruction_counter() < 2_000_000_000 {
+            let Some(event_index) = self.events_with_duplicate_message_ids.pop_first() else {
+                break;
+            };
+
             if let Some(mut event_wrapper) = self.get_event(event_index.into(), EventIndex::default(), None) {
                 if let ChatEventInternal::Message(m) = &mut event_wrapper.event {
-                    if m.sender == my_user_id {
-                        m.message_id = self.new_message_id(my_user_id, their_user_id, my_messages_index);
-                        my_messages_index += 1;
-                    } else {
-                        m.message_id = self.new_message_id(their_user_id, my_user_id, their_messages_index);
-                        their_messages_index += 1;
-                    }
-                    if self.message_id_map.insert(m.message_id, event_index).is_some() {
-                        error!(%my_user_id, %their_user_id, "Duplicate message Id: {}", m.message_id);
-                        return None;
-                    };
+                    m.message_id = self.new_message_id(rng);
+                    self.message_id_map.insert(m.message_id, event_index);
                     self.events_map.insert(event_wrapper);
                     count += 1;
-                    continue;
                 }
             }
-            error!(?event_index, "Message not found when de-duping messageIds");
-            return None;
         }
 
         info!(count, "MessageIds deduped");
         Some(self.message_id_map.len() == self.message_event_indexes.len())
     }
 
-    fn new_message_id(&self, user_id1: UserId, user_id2: UserId, index: u32) -> MessageId {
-        let mut hasher = Sha256::new();
-        hasher.update(user_id1.as_slice());
-        hasher.update(user_id2.as_slice());
-        hasher.update(index.to_be_bytes());
-        let value: [u8; 32] = hasher.finalize().into();
-        MessageId::from(u128::from_be_bytes(value[..16].try_into().unwrap()))
+    fn new_message_id(&self, rng: &mut StdRng) -> MessageId {
+        loop {
+            let message_id = rng.gen::<MessageId>();
+            if !self.message_id_map.contains_key(&message_id) {
+                return message_id;
+            }
+        }
     }
 
     pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
