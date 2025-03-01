@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Fix `register_bot` and `explore_bots` ([#7501](https://github.com/open-chat-labs/open-chat/pull/7501))
+
+## [[2.0.1620](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1620-user_index)] - 2025-02-28
+
+### Fixed
+
 - Fix `inspect_message` for registering bots on mainnet ([#7500](https://github.com/open-chat-labs/open-chat/pull/7500))
 
 ## [[2.0.1611](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1611-user_index)] - 2025-02-28

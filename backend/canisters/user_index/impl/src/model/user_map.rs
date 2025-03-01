@@ -148,7 +148,7 @@ impl UserMap {
     pub fn register(
         &mut self,
         principal: Principal,
-        user_id: UserId,
+        bot_id: UserId,
         username: String,
         display_name: Option<String>,
         now: TimestampMillis,
@@ -157,18 +157,18 @@ impl UserMap {
         bot: Option<Bot>,
     ) {
         if bot.is_some() {
-            self.botname_to_user_id.insert(&username, user_id);
+            self.botname_to_user_id.insert(&username, bot_id);
         } else {
-            self.username_to_user_id.insert(&username, user_id);
+            self.username_to_user_id.insert(&username, bot_id);
         }
 
         let avatar_id = bot.as_ref().and_then(|b| b.avatar.as_ref().map(|a| a.id));
 
-        self.principal_to_user_id.insert(principal, user_id);
+        self.principal_to_user_id.insert(principal, bot_id);
 
         let user = User::new(
             principal,
-            user_id,
+            bot_id,
             username,
             display_name,
             now,
@@ -177,15 +177,15 @@ impl UserMap {
             avatar_id,
         );
 
-        self.users.insert(user_id, user);
+        self.users.insert(bot_id, user);
 
         if let Some(bot) = bot {
-            self.bots.insert(user_id, bot);
-            self.bot_updates.insert((now, BotUpdate::Added(user_id)));
+            self.bots.insert(bot_id, bot);
+            self.bot_updates.insert((now, BotUpdate::Added(bot_id)));
         }
 
         if let Some(ref_by) = referred_by {
-            self.user_referrals.entry(ref_by).or_default().push(user_id);
+            self.user_referrals.entry(ref_by).or_default().push(bot_id);
         }
     }
 
@@ -592,14 +592,14 @@ impl UserMap {
         let mut matches: Vec<_> = self
             .bots
             .iter()
-            .filter(|(_, bot)| {
-                installation_location.is_none()
-                    || match bot.registration_status {
-                        BotRegistrationStatus::Public => true,
-                        BotRegistrationStatus::Private(location) => {
-                            location == installation_location || caller.is_some_and(|c| c == bot.owner)
-                        }
+            .filter(|(_, bot)| match bot.registration_status {
+                BotRegistrationStatus::Public => true,
+                BotRegistrationStatus::Private(location) => match installation_location {
+                    Some(installation_location) => {
+                        location == Some(installation_location) || caller.is_some_and(|c| c == bot.owner)
                     }
+                    None => false,
+                },
             })
             .map(|(user_id, bot)| {
                 let score = if let Some(query) = &query {
@@ -608,7 +608,7 @@ impl UserMap {
                         .add_field(bot.description.clone(), 1.0, true)
                         .calculate_score(query)
                 } else {
-                    bot.installations.len() as u32
+                    (bot.installations.len() + 1) as u32
                 };
                 (score, user_id, bot)
             })
@@ -621,6 +621,7 @@ impl UserMap {
         let matches = matches
             .into_iter()
             .rev()
+            .filter(|&(s, _, _)| (s > 0))
             .map(|(s, id, b)| b.to_match(*id, s))
             .skip(page_index as usize * page_size as usize)
             .take(page_size as usize)

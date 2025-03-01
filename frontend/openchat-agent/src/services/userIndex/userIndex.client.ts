@@ -650,7 +650,6 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             "register_bot",
             {
                 principal: principalStringToBytes(principal),
-                owner: principalStringToBytes(bot.ownerId),
                 name: bot.name,
                 avatar: mapOptional(bot.avatarUrl, identity),
                 endpoint: bot.endpoint,
@@ -659,7 +658,8 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             },
             (resp) => {
                 console.log("UserIndex register bot response: ", resp);
-                return true;
+
+                return typeof resp === "object" && "Success" in resp;
             },
             UserIndexRegisterBotArgs,
             UserIndexRegisterBotResponse,

@@ -7,7 +7,6 @@ use types::{BotDefinition, BotInstallationLocation, UserId};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub principal: Principal,
-    pub owner: UserId,
     pub name: String,
     pub avatar: Option<String>, // Image as a data URL
     pub endpoint: String,
@@ -18,5 +17,15 @@ pub struct Args {
 #[ts_export(user_index, register_bot)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(SuccessResult),
+    AlreadyRegistered,
+    InvalidRequest(String),
+    InternalError(String),
+    UserSuspended,
+}
+
+#[ts_export(user_index, register_bot)]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SuccessResult {
+    pub bot_id: UserId,
 }
