@@ -1,4 +1,4 @@
-use ic_cdk::api::call::RejectionCode;
+use ic_cdk::call::RejectCode;
 
 mod accept_cycles;
 mod can_spend_cycles;
@@ -10,6 +10,6 @@ pub use accept_cycles::accept_cycles;
 pub use can_spend_cycles::can_spend_cycles;
 pub use check_cycles_balance::{check_cycles_balance, send_low_balance_notification, MIN_CYCLES_BALANCE};
 
-pub fn is_out_of_cycles_error(code: RejectionCode, message: &str) -> bool {
-    code == RejectionCode::SysTransient && message.starts_with("IC0207:")
+pub fn is_out_of_cycles_error(code: RejectCode, message: &str) -> bool {
+    code == RejectCode::SysTransient && message.starts_with("IC0207:")
 }

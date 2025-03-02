@@ -1,6 +1,6 @@
 use ::types::{CanisterId, SnsNeuronId};
 use canister_client::generate_candid_c2c_call;
-use ic_cdk::api::call::{CallResult, RejectionCode};
+use ic_cdk::call::RejectCode;
 use sns_governance_canister::types::manage_neuron::configure::Operation;
 use sns_governance_canister::types::manage_neuron::{Command, Configure};
 use sns_governance_canister::types::{manage_neuron_response, ManageNeuron};
@@ -20,7 +20,7 @@ pub async fn configure_neuron(
     governance_canister_id: CanisterId,
     neuron_id: SnsNeuronId,
     operation: Operation,
-) -> CallResult<()> {
+) -> Result<(), (RejectCode, String)> {
     let args = ManageNeuron {
         subaccount: neuron_id.to_vec(),
         command: Some(Command::Configure(Configure {
@@ -32,7 +32,7 @@ pub async fn configure_neuron(
 
     match response.command.unwrap() {
         manage_neuron_response::Command::Configure(_) => Ok(()),
-        manage_neuron_response::Command::Error(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
+        manage_neuron_response::Command::Error(e) => Err((RejectCode::CanisterError, format!("{e:?}"))),
         _ => unreachable!(),
     }
 }

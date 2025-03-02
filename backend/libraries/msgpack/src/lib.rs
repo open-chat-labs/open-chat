@@ -42,6 +42,10 @@ pub fn deserialize_then_unwrap<'a, T: Deserialize<'a>>(bytes: &'a [u8]) -> T {
     deserialize_from_slice(bytes).unwrap()
 }
 
+pub fn deserialize_owned_then_unwrap<T: DeserializeOwned>(bytes: impl AsRef<[u8]>) -> T {
+    rmp_serde::from_slice(bytes.as_ref()).unwrap()
+}
+
 pub fn deserialize_with_fallback<'a, T>(bytes: &'a [u8]) -> T
 where
     T: Fallback + Deserialize<'a>,

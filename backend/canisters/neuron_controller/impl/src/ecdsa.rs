@@ -1,13 +1,16 @@
-use ic_cdk::api::call::CallResult;
-use ic_cdk::api::management_canister::ecdsa::{EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgument, SignWithEcdsaArgument};
-use ic_cdk::api::management_canister::http_request::{
-    CanisterHttpRequestArgument, HttpHeader, HttpMethod, TransformContext, TransformFunc,
+use ic_cdk::call::RejectCode;
+use ic_cdk::management_canister::{
+    self, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgs, HttpHeader, HttpMethod, HttpRequestArgs, SignWithEcdsaArgs,
+    TransformContext, TransformFunc,
 };
 use ic_transport_types::{to_request_id, EnvelopeContent};
 use serde::Serialize;
 use sha256::sha256;
 use tracing::{error, info};
 use types::CanisterId;
+use utils::canister::convert_cdk_error;
+
+const SIGN_WITH_ECDSA_FEE: u128 = 26_153_846_153;
 
 pub fn get_key_id(is_local_dev_mode: bool) -> EcdsaKeyId {
     let key_name = if is_local_dev_mode { "dfx_test_key" } else { "key_1" };
@@ -18,18 +21,18 @@ pub fn get_key_id(is_local_dev_mode: bool) -> EcdsaKeyId {
     }
 }
 
-pub async fn get_public_key(key_id: EcdsaKeyId) -> CallResult<Vec<u8>> {
-    match ic_cdk::api::management_canister::ecdsa::ecdsa_public_key(EcdsaPublicKeyArgument {
+pub async fn get_public_key(key_id: EcdsaKeyId) -> Result<Vec<u8>, (RejectCode, String)> {
+    match management_canister::ecdsa_public_key(&EcdsaPublicKeyArgs {
         canister_id: None,
         derivation_path: Vec::new(),
         key_id,
     })
     .await
     {
-        Ok(res) => Ok(res.0.public_key),
+        Ok(res) => Ok(res.public_key),
         Err(error) => {
             error!(?error, "Error calling 'ecdsa_public_key'");
-            Err(error)
+            Err(convert_cdk_error(error))
         }
     }
 }
@@ -48,8 +51,8 @@ pub async fn make_canister_call_via_ecdsa(request: CanisterEcdsaRequest) -> Resu
         Err(error) => return Err(format!("Failed to sign envelope: {error:?}")),
     };
 
-    let (response,) = ic_cdk::api::management_canister::http_request::http_request(
-        CanisterHttpRequestArgument {
+    let response = management_canister::http_request_with_cycles(
+        &HttpRequestArgs {
             url: request.request_url,
             max_response_bytes: Some(1024 * 1024), // 1 MB
             method: HttpMethod::POST,
@@ -71,7 +74,11 @@ pub async fn make_canister_call_via_ecdsa(request: CanisterEcdsaRequest) -> Resu
     Ok(String::from_utf8(response.body).unwrap())
 }
 
-async fn sign_envelope(content: EnvelopeContent, public_key: Vec<u8>, key_id: EcdsaKeyId) -> CallResult<Vec<u8>> {
+async fn sign_envelope(
+    content: EnvelopeContent,
+    public_key: Vec<u8>,
+    key_id: EcdsaKeyId,
+) -> Result<Vec<u8>, (RejectCode, String)> {
     let request_id = to_request_id(&content).unwrap();
 
     let signature = sign(key_id, &request_id.signable()).await?;
@@ -96,20 +103,23 @@ async fn sign_envelope(content: EnvelopeContent, public_key: Vec<u8>, key_id: Ec
     Ok(serialized_bytes)
 }
 
-async fn sign(key_id: EcdsaKeyId, message: &[u8]) -> CallResult<Vec<u8>> {
+async fn sign(key_id: EcdsaKeyId, message: &[u8]) -> Result<Vec<u8>, (RejectCode, String)> {
     let message_hash = sha256(message);
 
-    match ic_cdk::api::management_canister::ecdsa::sign_with_ecdsa(SignWithEcdsaArgument {
-        message_hash: message_hash.to_vec(),
-        derivation_path: Vec::new(),
-        key_id,
-    })
+    match management_canister::sign_with_ecdsa_with_cycles(
+        &SignWithEcdsaArgs {
+            message_hash: message_hash.to_vec(),
+            derivation_path: Vec::new(),
+            key_id,
+        },
+        SIGN_WITH_ECDSA_FEE,
+    )
     .await
     {
-        Ok(res) => Ok(res.0.signature),
+        Ok(res) => Ok(res.signature),
         Err(error) => {
             error!(?error, "Error calling 'sign_with_ecdsa'");
-            Err(error)
+            Err(convert_cdk_error(error))
         }
     }
 }

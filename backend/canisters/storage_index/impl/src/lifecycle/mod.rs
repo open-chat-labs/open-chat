@@ -41,7 +41,7 @@ fn init_cycles_dispenser_client(cycles_dispenser_canister_id: CanisterId, min_cy
 }
 
 fn reseed_rng() {
-    ic_cdk::spawn(reseed_rng_inner());
+    ic_cdk::futures::spawn(reseed_rng_inner());
 
     async fn reseed_rng_inner() {
         let seed = get_random_seed().await;

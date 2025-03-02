@@ -1,6 +1,6 @@
 use crate::jobs::update_proposals;
 use crate::{mutate_state, RuntimeState};
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
 use nns_governance_canister::types::ListProposalInfo;
 use sns_governance_canister::types::ListProposals;
@@ -36,7 +36,7 @@ fn run_impl(state: &mut RuntimeState) {
             if !ns.disabled() {
                 let is_nns = governance_canister_id == state.data.nns_governance_canister_id;
 
-                ic_cdk::spawn(process_proposal(governance_canister_id, proposal_id, is_nns));
+                ic_cdk::futures::spawn(process_proposal(governance_canister_id, proposal_id, is_nns));
             }
         }
     }
@@ -73,7 +73,10 @@ async fn process_proposal(governance_canister_id: CanisterId, proposal_id: Propo
     }
 }
 
-async fn get_nns_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId) -> CallResult<Option<Proposal>> {
+async fn get_nns_proposal(
+    governance_canister_id: CanisterId,
+    proposal_id: ProposalId,
+) -> Result<Option<Proposal>, (RejectCode, String)> {
     let response = nns_governance_canister_c2c_client::list_proposals(
         governance_canister_id,
         &ListProposalInfo {
@@ -88,7 +91,10 @@ async fn get_nns_proposal(governance_canister_id: CanisterId, proposal_id: Propo
     Ok(response.into_iter().next().and_then(|p| p.try_into().ok()))
 }
 
-async fn get_sns_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId) -> CallResult<Option<Proposal>> {
+async fn get_sns_proposal(
+    governance_canister_id: CanisterId,
+    proposal_id: ProposalId,
+) -> Result<Option<Proposal>, (RejectCode, String)> {
     let response = sns_governance_canister_c2c_client::list_proposals(
         governance_canister_id,
         &ListProposals {

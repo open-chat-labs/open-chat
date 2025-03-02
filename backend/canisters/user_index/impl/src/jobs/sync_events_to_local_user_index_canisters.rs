@@ -25,7 +25,7 @@ pub(crate) fn try_run_now(state: &mut RuntimeState) -> bool {
         if let Some(timer_id) = TIMER_ID.take() {
             ic_cdk_timers::clear_timer(timer_id);
         }
-        ic_cdk::spawn(process_batch(batch));
+        ic_cdk::futures::spawn(process_batch(batch));
         true
     } else {
         false
@@ -37,7 +37,7 @@ fn run() {
     TIMER_ID.set(None);
 
     if let Some(batch) = mutate_state(next_batch) {
-        ic_cdk::spawn(process_batch(batch));
+        ic_cdk::futures::spawn(process_batch(batch));
     }
 }
 

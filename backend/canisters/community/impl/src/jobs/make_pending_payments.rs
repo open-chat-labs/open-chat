@@ -33,7 +33,7 @@ pub fn run() {
     let (pending_payment, now_nanos) = mutate_state(|state| (state.data.pending_payments_queue.pop(), state.env.now_nanos()));
 
     if let Some(pending_payment) = pending_payment {
-        ic_cdk::spawn(process_payment(pending_payment, now_nanos));
+        ic_cdk::futures::spawn(process_payment(pending_payment, now_nanos));
         read_state(start_job_if_required);
     }
 }

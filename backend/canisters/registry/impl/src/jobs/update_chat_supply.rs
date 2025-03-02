@@ -1,7 +1,7 @@
 use crate::mutate_state;
 use candid::Principal;
 use constants::{HOUR_IN_MS, SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use icrc_ledger_types::icrc1::account::Account;
 use sha256::sha256;
 use sns_governance_canister::types::NeuronId;
@@ -16,12 +16,12 @@ pub fn start_job() {
 }
 
 fn run() {
-    ic_cdk::spawn(async {
+    ic_cdk::futures::spawn(async {
         let _ = run_async().await;
     });
 }
 
-async fn run_async() -> CallResult<()> {
+async fn run_async() -> Result<(), (RejectCode, String)> {
     let total_supply = icrc_ledger_canister_c2c_client::icrc1_total_supply(SNS_LEDGER_CANISTER_ID)
         .await
         .map(|s| u128::try_from(s.0).unwrap())?;
@@ -71,7 +71,7 @@ async fn run_async() -> CallResult<()> {
     Ok(())
 }
 
-async fn neuron_ids_by_principal(principal: Principal) -> CallResult<Vec<NeuronId>> {
+async fn neuron_ids_by_principal(principal: Principal) -> Result<Vec<NeuronId>, (RejectCode, String)> {
     let mut neuron_ids = Vec::new();
 
     loop {

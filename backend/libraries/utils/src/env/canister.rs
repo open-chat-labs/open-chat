@@ -18,7 +18,7 @@ impl CanisterEnv {
 }
 
 thread_local! {
-    static CANISTER_ID: LazyCell<CanisterId> = LazyCell::new(ic_cdk::id);
+    static CANISTER_ID: LazyCell<CanisterId> = LazyCell::new(ic_cdk::api::canister_self);
 }
 
 impl Environment for CanisterEnv {
@@ -27,7 +27,7 @@ impl Environment for CanisterEnv {
     }
 
     fn caller(&self) -> Principal {
-        ic_cdk::caller()
+        ic_cdk::api::msg_caller()
     }
 
     fn canister_id(&self) -> CanisterId {
@@ -35,7 +35,7 @@ impl Environment for CanisterEnv {
     }
 
     fn cycles_balance(&self) -> Cycles {
-        ic_cdk::api::canister_balance128()
+        ic_cdk::api::canister_cycle_balance()
     }
 
     fn rng(&mut self) -> &mut StdRng {
@@ -43,7 +43,7 @@ impl Environment for CanisterEnv {
     }
 
     fn arg_data_raw(&self) -> Vec<u8> {
-        ic_cdk::api::call::arg_data_raw()
+        ic_cdk::api::msg_arg_data()
     }
 }
 

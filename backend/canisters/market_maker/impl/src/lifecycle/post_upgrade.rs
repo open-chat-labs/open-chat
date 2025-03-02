@@ -28,5 +28,5 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(exchanges::icdex::deposit_funds()));
+    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::futures::spawn(exchanges::icdex::deposit_funds()));
 }
