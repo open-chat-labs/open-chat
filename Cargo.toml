@@ -203,9 +203,9 @@ ic-agent = "0.39.3"
 ic-canister-sig-creation = "1.1.0"
 ic-captcha = "1.0.0"
 ic-cbor = "2.5.0"
-ic-cdk = { git = "https://github.com/dfinity/cdk-rs", rev = "9a45b5ce24eb417ac3606d6378c346a68183559a" }
-ic-cdk-macros = { git = "https://github.com/dfinity/cdk-rs", rev = "9a45b5ce24eb417ac3606d6378c346a68183559a" }
-ic-cdk-timers = { git = "https://github.com/dfinity/cdk-rs", rev = "9a45b5ce24eb417ac3606d6378c346a68183559a" }
+ic-cdk = "0.18.0-alpha.1"
+ic-cdk-macros = "0.18.0-alpha.1"
+ic-cdk-timers = "0.12.0-alpha.1"
 ic-certificate-verification = "2.4.0"
 ic-certification = "2.5.0"
 ic-http-certification = "2.5.0"
@@ -268,5 +268,8 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
+ic-cdk = { git = "https://github.com/dfinity/cdk-rs", rev = "9a45b5ce24eb417ac3606d6378c346a68183559a" }
+ic-cdk-macros = { git = "https://github.com/dfinity/cdk-rs", rev = "9a45b5ce24eb417ac3606d6378c346a68183559a" }
+ic-cdk-timers = { git = "https://github.com/dfinity/cdk-rs", rev = "9a45b5ce24eb417ac3606d6378c346a68183559a" }
 rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
 ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "c584e25ce28fa27b64964c208725b6bc100fbdac" }
