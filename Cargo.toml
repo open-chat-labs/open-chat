@@ -190,10 +190,10 @@ ct-codecs = "1.1.1"
 data-encoding = "2.6.0"
 dataurl = "0.1.2"
 dotenv = "0.15.0"
-event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.6.0" }
-event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.6.0" }
-event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.6.0" }
-event_store_utils = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.6.0" }
+event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "6d818189fee50159408de2c2c14923a0aef78ffb" }
+event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "6d818189fee50159408de2c2c14923a0aef78ffb" }
+event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "6d818189fee50159408de2c2c14923a0aef78ffb" }
+event_store_utils = { git = "https://github.com/open-chat-labs/event-store", rev = "6d818189fee50159408de2c2c14923a0aef78ffb" }
 futures = "0.3.30"
 getrandom = { version = "0.2.15", features = ["custom"] }
 hex = "0.4.3"
