@@ -2,7 +2,7 @@ export OC_BUILD_ENV=prod_test
 export OC_NODE_ENV=$NODE_ENV
 export OC_WEBAUTHN_ORIGIN=test.oc.app
 export OC_INTERNET_IDENTITY_CANISTER_ID=rdmx6-jaaaa-aaaaa-aaadq-cai
-export OC_INTERNET_IDENTITY_URL=https://identity.ic0.app
+export OC_INTERNET_IDENTITY_URL=https://identity.internetcomputer.org
 export OC_NFID_URL=https://nfid.one/authenticate/?applicationName=OpenChatTest
 export OC_VIDEO_BRIDGE_URL=https://d37cwaycp9g5li.cloudfront.net
 export OC_DFX_NETWORK=ic_test
