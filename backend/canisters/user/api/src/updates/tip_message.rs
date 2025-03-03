@@ -6,6 +6,7 @@ use types::{CanisterId, Chat, Cryptocurrency, MessageId, MessageIndex, Milliseco
 
 #[ts_export(user, tip_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
+#[serde(from = "ArgsCombined")]
 pub struct Args {
     pub chat: Chat,
     pub recipient: UserId,
