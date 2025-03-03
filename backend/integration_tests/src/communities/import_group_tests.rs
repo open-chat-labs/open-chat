@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
@@ -8,7 +9,7 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    icrc1, Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, EventIndex, MessageContentInitial,
+    icrc1, Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, Cryptocurrency, EventIndex, MessageContentInitial,
     PendingCryptoTransaction, PrizeContentInitial, ReplyContext, TextContent,
 };
 use user_canister::mark_read::ChatMessagesRead;
@@ -198,6 +199,7 @@ fn pending_prizes_transferred_to_community() {
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token_symbol: ICP_SYMBOL.to_string(),
+                    token: Cryptocurrency::InternetComputer,
                     amount: amount_to_transfer,
                     to: group_id.into(),
                     fee,

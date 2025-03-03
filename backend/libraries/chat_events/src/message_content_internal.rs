@@ -1382,6 +1382,7 @@ impl PrizeContentInternal {
                 ledger,
                 fee: transaction_fee,
                 token_symbol: token_symbol.clone(),
+                token: token_symbol.clone().into(),
                 amount: oc_fee - transaction_fee,
                 to: Account::from(OPENCHAT_TREASURY_CANISTER_ID),
                 memo: Some(MEMO_PRIZE_FEE.to_vec().into()),

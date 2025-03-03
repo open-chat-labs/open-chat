@@ -26,7 +26,8 @@ async fn tip_message(args: Args) -> Response {
 
     let pending_transfer = PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
         ledger: args.ledger,
-        token_symbol: args.token_symbol,
+        token_symbol: args.token_symbol.clone(),
+        token: args.token_symbol.into(),
         amount: args.amount,
         to: Principal::from(args.recipient).into(),
         fee: args.fee,

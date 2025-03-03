@@ -425,7 +425,8 @@ pub(crate) async fn set_up_p2p_swap(
 
         let pending_transfer = PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
             ledger: args.token0.ledger,
-            token_symbol: args.token0.symbol,
+            token_symbol: args.token0.symbol.clone(),
+            token: args.token0.symbol.into(),
             amount: args.token0_amount + args.token0.fee,
             to: Account {
                 owner: state.data.escrow_canister_id,

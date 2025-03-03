@@ -23,7 +23,8 @@ pub fn create_pending_transaction(
     PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
         ledger,
         fee,
-        token_symbol,
+        token_symbol: token_symbol.clone(),
+        token: token_symbol.into(),
         amount,
         to: user_id.into(),
         memo: memo.map(|bytes| bytes.to_vec().into()),

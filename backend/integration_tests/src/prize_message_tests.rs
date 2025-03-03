@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, TestEnv};
@@ -7,7 +8,7 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    icrc1, ChatEvent, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial, OptionUpdate,
+    icrc1, ChatEvent, CryptoTransaction, Cryptocurrency, EventIndex, MessageContent, MessageContentInitial, OptionUpdate,
     PendingCryptoTransaction, PrizeContentInitial,
 };
 
@@ -48,6 +49,7 @@ fn prize_messages_can_be_claimed_successfully() {
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token_symbol: ICP_SYMBOL.to_string(),
+                    token: Cryptocurrency::InternetComputer,
                     amount: prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128,
                     to: group_id.into(),
                     fee,
@@ -157,6 +159,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token_symbol: ICP_SYMBOL.to_string(),
+                    token: Cryptocurrency::InternetComputer,
                     amount,
                     to: group_id.into(),
                     fee,
@@ -244,6 +247,7 @@ fn old_transactions_fixed_by_updating_created_date() {
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token_symbol: ICP_SYMBOL.to_string(),
+                    token: Cryptocurrency::InternetComputer,
                     amount,
                     to: group_id.into(),
                     fee,

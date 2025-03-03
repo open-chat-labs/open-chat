@@ -398,6 +398,7 @@ pub mod nns {
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
         pub token_symbol: String,
+        pub token: Cryptocurrency,
         pub amount: Tokens,
         pub to: UserOrAccount,
         pub fee: Option<Tokens>,
@@ -408,8 +409,7 @@ pub mod nns {
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     struct PendingCryptoTransactionCombined {
         ledger: CanisterId,
-        #[serde(default)]
-        token_symbol: String,
+        token_symbol: Option<String>,
         token: Option<Cryptocurrency>,
         amount: Tokens,
         to: UserOrAccount,
@@ -420,9 +420,14 @@ pub mod nns {
 
     impl From<PendingCryptoTransactionCombined> for PendingCryptoTransaction {
         fn from(value: PendingCryptoTransactionCombined) -> Self {
+            let token_symbol = value
+                .token_symbol
+                .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
+
             PendingCryptoTransaction {
                 ledger: value.ledger,
-                token_symbol: value.token.map_or(value.token_symbol, |t| t.token_symbol().to_string()),
+                token_symbol: token_symbol.clone(),
+                token: token_symbol.into(),
                 amount: value.amount,
                 to: value.to,
                 fee: value.fee,
@@ -512,6 +517,7 @@ pub mod icrc1 {
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
         pub token_symbol: String,
+        pub token: Cryptocurrency,
         pub amount: u128,
         pub to: Account,
         pub fee: u128,
@@ -523,9 +529,8 @@ pub mod icrc1 {
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     struct PendingCryptoTransactionCombined {
         ledger: CanisterId,
-        #[serde(default)]
-        token_symbol: String,
         token: Option<Cryptocurrency>,
+        token_symbol: Option<String>,
         amount: u128,
         to: Account,
         fee: u128,
@@ -535,9 +540,14 @@ pub mod icrc1 {
 
     impl From<PendingCryptoTransactionCombined> for PendingCryptoTransaction {
         fn from(value: PendingCryptoTransactionCombined) -> Self {
+            let token_symbol = value
+                .token_symbol
+                .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
+
             PendingCryptoTransaction {
                 ledger: value.ledger,
-                token_symbol: value.token.map_or(value.token_symbol, |t| t.token_symbol().to_string()),
+                token_symbol: token_symbol.clone(),
+                token: token_symbol.into(),
                 amount: value.amount,
                 to: value.to,
                 fee: value.fee,
@@ -610,6 +620,7 @@ pub mod icrc2 {
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
         pub token_symbol: String,
+        pub token: Cryptocurrency,
         pub amount: u128,
         pub from: Account,
         pub to: Account,
@@ -622,8 +633,7 @@ pub mod icrc2 {
     #[derive(Serialize, Deserialize, Clone, Debug)]
     struct PendingCryptoTransactionCombined {
         ledger: CanisterId,
-        #[serde(default)]
-        token_symbol: String,
+        token_symbol: Option<String>,
         token: Option<Cryptocurrency>,
         amount: u128,
         from: Account,
@@ -635,9 +645,14 @@ pub mod icrc2 {
 
     impl From<PendingCryptoTransactionCombined> for PendingCryptoTransaction {
         fn from(value: PendingCryptoTransactionCombined) -> Self {
+            let token_symbol = value
+                .token_symbol
+                .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
+
             PendingCryptoTransaction {
                 ledger: value.ledger,
-                token_symbol: value.token.map_or(value.token_symbol, |t| t.token_symbol().to_string()),
+                token_symbol: token_symbol.clone(),
+                token: token_symbol.into(),
                 amount: value.amount,
                 from: value.from,
                 to: value.to,
@@ -734,6 +749,7 @@ impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {
         nns::PendingCryptoTransaction {
             ledger: value.ledger,
             token_symbol: value.token_symbol,
+            token: value.token,
             amount: Tokens::from_e8s(value.amount.try_into().unwrap()),
             to: UserOrAccount::Account(AccountIdentifier::new(
                 &value.to.owner,
