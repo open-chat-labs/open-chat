@@ -94,8 +94,6 @@
             param.choices = param.choices.filter((c) => c !== choice);
         }
     }
-
-    console.log("Where's this?");
 </script>
 
 <Overlay>
