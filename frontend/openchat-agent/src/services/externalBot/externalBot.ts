@@ -139,10 +139,10 @@ export function callBotCommandEndpoint(
 ): Promise<BotCommandResponse> {
     const headers = new Headers();
     headers.append("Content-type", "text/plain");
+    headers.append("x-oc-jwt", token);
     return fetch(`${endpoint}/execute_command`, {
         method: "POST",
         headers: headers,
-        body: token,
     })
         .then(async (res) => {
             if (res.ok) {
