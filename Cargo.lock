@@ -3538,7 +3538,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk"
 version = "0.18.0-alpha.1"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=ab5f4309f18ac063dc9093b889864d6e4743e627#ab5f4309f18ac063dc9093b889864d6e4743e627"
 dependencies = [
  "candid",
  "ic-cdk-macros 0.18.0-alpha.1",
@@ -3596,7 +3596,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk-macros"
 version = "0.18.0-alpha.1"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=ab5f4309f18ac063dc9093b889864d6e4743e627#ab5f4309f18ac063dc9093b889864d6e4743e627"
 dependencies = [
  "candid",
  "proc-macro2",
@@ -3609,7 +3609,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk-timers"
 version = "0.12.0-alpha.1"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=ab5f4309f18ac063dc9093b889864d6e4743e627#ab5f4309f18ac063dc9093b889864d6e4743e627"
 dependencies = [
  "candid",
  "futures",
@@ -3666,7 +3666,7 @@ dependencies = [
 [[package]]
 name = "ic-ledger-types"
 version = "0.15.0-alpha.1"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=ab5f4309f18ac063dc9093b889864d6e4743e627#ab5f4309f18ac063dc9093b889864d6e4743e627"
 dependencies = [
  "candid",
  "crc32fast",
@@ -3680,7 +3680,7 @@ dependencies = [
 [[package]]
 name = "ic-management-canister-types"
 version = "0.2.1"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=ab5f4309f18ac063dc9093b889864d6e4743e627#ab5f4309f18ac063dc9093b889864d6e4743e627"
 dependencies = [
  "candid",
  "serde",
@@ -3700,7 +3700,7 @@ dependencies = [
 [[package]]
 name = "ic-response-codes"
 version = "0.1.1"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=ab5f4309f18ac063dc9093b889864d6e4743e627#ab5f4309f18ac063dc9093b889864d6e4743e627"
 
 [[package]]
 name = "ic-signature-verification"
@@ -3832,7 +3832,7 @@ checksum = "8de254dd67bbd58073e23dc1c8553ba12fa1dc610a19de94ad2bbcd0460c067f"
 [[package]]
 name = "ic0"
 version = "0.24.0-alpha.1"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=ab5f4309f18ac063dc9093b889864d6e4743e627#ab5f4309f18ac063dc9093b889864d6e4743e627"
 
 [[package]]
 name = "ic_bls12_381"
