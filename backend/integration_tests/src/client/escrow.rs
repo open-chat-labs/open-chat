@@ -8,7 +8,6 @@ generate_msgpack_update_call!(create_swap);
 generate_msgpack_update_call!(notify_deposit);
 
 pub mod happy_path {
-    #![allow(deprecated)]
     use candid::Principal;
     use pocket_ic::PocketIc;
     use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
