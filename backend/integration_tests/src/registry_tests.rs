@@ -4,12 +4,13 @@ use crate::setup::install_icrc_ledger;
 use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE};
 use pocket_ic::PocketIc;
 use registry_canister::TokenStandard;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_principal, random_string};
-use types::{CanisterId, Cryptocurrency};
+use types::CanisterId;
 
 #[test]
 fn add_token_succeeds() {
@@ -195,8 +196,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         &user,
         &user_canister::approve_transfer::Args {
             spender: canister_ids.registry.into(),
-            ledger_canister_id: Cryptocurrency::CHAT.ledger_canister_id().unwrap(),
-            amount: 100_000_000 + Cryptocurrency::CHAT.fee().unwrap(),
+            ledger_canister_id: CHAT_LEDGER_CANISTER_ID,
+            amount: 100_000_000 + CHAT_TRANSFER_FEE,
             expires_in: None,
             pin: None,
         },

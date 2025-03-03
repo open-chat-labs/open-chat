@@ -3,9 +3,10 @@ use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
+use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use tracing::error;
-use types::{CanisterId, Cryptocurrency, TimestampNanos};
+use types::{CanisterId, TimestampNanos};
 use user_index_canister::register_external_achievement::{Response::*, *};
 use user_index_canister::ExternalAchievementInitial;
 
@@ -32,12 +33,12 @@ async fn register_external_achievement(args: Args) -> Response {
             from: from.into(),
             to: result.this_canister_id.into(),
             amount: amount.into(),
-            fee: Cryptocurrency::CHAT.fee().map(|fee| fee.into()),
+            fee: Some(CHAT_TRANSFER_FEE.into()),
             memo: None,
             created_at_time: Some(result.now_nanos),
         };
 
-        match icrc2_transfer_from(Cryptocurrency::CHAT.ledger_canister_id().unwrap(), &transfer_args).await {
+        match icrc2_transfer_from(CHAT_LEDGER_CANISTER_ID, &transfer_args).await {
             Ok(block_index) => Some(block_index),
             Err(message) => {
                 error!(message);

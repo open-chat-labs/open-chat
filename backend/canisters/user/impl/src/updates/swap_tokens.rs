@@ -315,8 +315,8 @@ fn log_error(message: &str, error: &str, args: &Args, attempt: u32) {
     error!(
         swap_id = %args.swap_id,
         exchange_id = %args.exchange_args.exchange_id(),
-        input_token = args.input_token.token.token_symbol(),
-        output_token = args.output_token.token.token_symbol(),
+        input_token = args.input_token.symbol,
+        output_token = args.output_token.symbol,
         error,
         attempt,
         message

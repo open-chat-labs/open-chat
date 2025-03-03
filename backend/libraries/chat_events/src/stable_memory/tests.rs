@@ -12,12 +12,12 @@ use crate::{
     PollContentInternal, PrizeContentInternal, PrizeWinnerContentInternal, ProposalContentInternal, ReplyContextInternal,
     ReportedMessageInternal, TextContentInternal, ThreadSummaryInternal, VideoCallContentInternal, VideoContentInternal,
 };
+use constants::CHAT_SYMBOL;
 use rand::random;
 use testing::rng::{random_from_principal, random_from_u128, random_from_u32, random_principal, random_string};
 use types::{
-    Cryptocurrency, EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal,
-    ProposalDecisionStatus, ProposalRewardStatus, Reaction, SnsProposal, Tally, ThumbnailData, Tips, TokenInfo,
-    VideoCallPresence, VideoCallType,
+    EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal, ProposalDecisionStatus,
+    ProposalRewardStatus, Reaction, SnsProposal, Tally, ThumbnailData, Tips, TokenInfo, VideoCallPresence, VideoCallType,
 };
 
 mod test_values;
@@ -130,7 +130,7 @@ fn crypto_content() {
         recipient: random_from_principal(),
         transfer: CompletedCryptoTransactionInternal::ICRC1(crate::icrc1::CompletedCryptoTransactionInternal {
             ledger: random_principal(),
-            token: Cryptocurrency::CHAT,
+            token: CHAT_SYMBOL.to_string().into(),
             amount: random(),
             from: crate::icrc1::CryptoAccountInternal::Account(AccountInternal {
                 owner: random_principal(),
@@ -239,7 +239,7 @@ fn prize_content() {
             .collect(),
         transaction: CompletedCryptoTransactionInternal::NNS(crate::nns::CompletedCryptoTransactionInternal {
             ledger: random_principal(),
-            token: Cryptocurrency::CHAT,
+            token: CHAT_SYMBOL.to_string().into(),
             amount: random(),
             fee: random(),
             from: crate::nns::CryptoAccountInternal::Account(random::<[u8; 28]>().try_into().unwrap()),
@@ -346,14 +346,14 @@ fn p2p_swap_content() {
     let content = MessageContentInternal::P2PSwap(P2PSwapContentInternal {
         swap_id: random(),
         token0: TokenInfo {
-            token: Cryptocurrency::CHAT,
+            symbol: CHAT_SYMBOL.to_string(),
             ledger: random_principal(),
             decimals: random(),
             fee: random(),
         },
         token0_amount: random(),
         token1: TokenInfo {
-            token: Cryptocurrency::Other(random_string()),
+            symbol: random_string(),
             ledger: random_principal(),
             decimals: random(),
             fee: random(),

@@ -1,8 +1,8 @@
-use constants::{DAY_IN_MS, LIFETIME_DIAMOND_TIMESTAMP};
+use constants::{CHAT_LEDGER_CANISTER_ID, DAY_IN_MS, LIFETIME_DIAMOND_TIMESTAMP};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{
-    is_default, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
+    is_default, CanisterId, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
     DiamondMembershipStatusFull, DiamondMembershipSubscription, TimestampMillis,
 };
 
@@ -23,7 +23,8 @@ pub struct DiamondMembershipDetailsInternal {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct DiamondMembershipPayment {
     pub timestamp: TimestampMillis,
-    pub token: Cryptocurrency,
+    pub ledger: CanisterId,
+    pub fee: u128,
     pub amount_e8s: u64,
     pub block_index: u64,
     pub duration: DiamondMembershipPlanDuration,
@@ -103,7 +104,8 @@ impl DiamondMembershipDetailsInternal {
     #[allow(clippy::too_many_arguments)]
     pub fn add_payment(
         &mut self,
-        token: Cryptocurrency,
+        ledger: CanisterId,
+        transfer_fee: u128,
         amount_e8s: u64,
         block_index: u64,
         duration: DiamondMembershipPlanDuration,
@@ -113,7 +115,8 @@ impl DiamondMembershipDetailsInternal {
     ) {
         let payment = DiamondMembershipPayment {
             timestamp: now,
-            token,
+            ledger,
+            fee: transfer_fee,
             amount_e8s,
             block_index,
             duration,
@@ -122,7 +125,7 @@ impl DiamondMembershipDetailsInternal {
 
         let duration_millis = duration.as_millis();
         self.expires_at = Some(max(now, self.expires_at.unwrap_or_default()) + duration_millis);
-        self.pay_in_chat = matches!(payment.token, Cryptocurrency::CHAT);
+        self.pay_in_chat = payment.ledger == CHAT_LEDGER_CANISTER_ID;
         self.payments.push(payment);
         self.subscription = if recurring { duration.into() } else { DiamondMembershipSubscription::Disabled };
         self.payment_in_progress = false;

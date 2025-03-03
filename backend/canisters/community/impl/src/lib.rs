@@ -10,7 +10,7 @@ use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, ChatMetricsInternal};
 use community_canister::add_members_to_channel::UserFailedError;
 use community_canister::EventsResponse;
-use constants::{ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
+use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -40,8 +40,8 @@ use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator,
     BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics,
-    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
-    EventIndex, EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
+    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document, Empty, EventIndex,
+    EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
     TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
@@ -145,7 +145,7 @@ impl RuntimeState {
         let treasury_share = payment.amount.saturating_sub(owner_share * owner_count);
         let amount = treasury_share.saturating_sub(payment.fee);
         if amount > 0 {
-            let is_chat = payment.ledger_canister_id == SNS_LEDGER_CANISTER_ID;
+            let is_chat = payment.ledger_canister_id == CHAT_LEDGER_CANISTER_ID;
             let is_icp = payment.ledger_canister_id == ICP_LEDGER_CANISTER_ID;
             self.data.pending_payments_queue.push(PendingPayment {
                 amount,
@@ -337,7 +337,7 @@ impl RuntimeState {
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow: self.data.escrow_canister_id,
-                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
+                icp_ledger: ICP_LEDGER_CANISTER_ID,
                 internet_identity: self.data.internet_identity_canister_id,
             },
         }

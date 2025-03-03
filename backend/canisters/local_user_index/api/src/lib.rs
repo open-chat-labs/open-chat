@@ -1,12 +1,13 @@
+#![allow(deprecated)]
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
     is_default, AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, CanisterId,
-    ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration,
-    TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserType,
+    ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, DiamondMembershipPlanDuration, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis,
+    UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
+    UserId, UserType,
 };
 
 mod lifecycle;
@@ -176,7 +177,9 @@ pub struct DiamondMembershipPaymentReceived {
     pub user_id: UserId,
     pub timestamp: TimestampMillis,
     pub expires_at: TimestampMillis,
-    pub token: Cryptocurrency,
+    pub ledger: CanisterId,
+    pub token_symbol: Option<String>,
+    pub token: Option<types::Cryptocurrency>,
     pub amount_e8s: u64,
     pub block_index: u64,
     pub duration: DiamondMembershipPlanDuration,

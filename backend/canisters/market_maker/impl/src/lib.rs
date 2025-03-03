@@ -1,14 +1,15 @@
 use crate::exchanges::Exchange;
 use crate::model::orders_log::OrdersLog;
 use canister_state_macros::canister_state;
+use constants::{CHAT_SYMBOL, ICP_SYMBOL};
 use icdex_client::ICDexClient;
 use market_maker_canister::{ExchangeId, ICDEX_EXCHANGE_ID, ICDEX_EXCHANGE_V2_ID};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use types::{
-    AggregatedOrders, BuildVersion, CancelOrderRequest, CanisterId, Cryptocurrency, Cycles, MakeOrderRequest, TimestampMillis,
-    Timestamped, TokenInfo,
+    AggregatedOrders, BuildVersion, CancelOrderRequest, CanisterId, Cycles, MakeOrderRequest, TimestampMillis, Timestamped,
+    TokenInfo,
 };
 use utils::env::Environment;
 
@@ -77,13 +78,13 @@ impl RuntimeState {
             self.env.canister_id(),
             dex_canister_id,
             TokenInfo {
-                token: Cryptocurrency::InternetComputer,
+                symbol: ICP_SYMBOL.to_string(),
                 ledger: self.data.icp_ledger_canister_id,
                 decimals: 8,
                 fee: 10_000,
             },
             TokenInfo {
-                token: Cryptocurrency::CHAT,
+                symbol: CHAT_SYMBOL.to_string(),
                 ledger: self.data.chat_ledger_canister_id,
                 decimals: 8,
                 fee: 100_000,

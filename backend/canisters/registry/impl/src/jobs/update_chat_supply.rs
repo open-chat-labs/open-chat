@@ -1,6 +1,6 @@
 use crate::mutate_state;
 use candid::Principal;
-use constants::{HOUR_IN_MS, SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
+use constants::{CHAT_LEDGER_CANISTER_ID, HOUR_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
 use ic_cdk::api::call::CallResult;
 use icrc_ledger_types::icrc1::account::Account;
 use sha256::sha256;
@@ -22,7 +22,7 @@ fn run() {
 }
 
 async fn run_async() -> CallResult<()> {
-    let total_supply = icrc_ledger_canister_c2c_client::icrc1_total_supply(SNS_LEDGER_CANISTER_ID)
+    let total_supply = icrc_ledger_canister_c2c_client::icrc1_total_supply(CHAT_LEDGER_CANISTER_ID)
         .await
         .map(|s| u128::try_from(s.0).unwrap())?;
 
@@ -47,7 +47,7 @@ async fn run_async() -> CallResult<()> {
     let mut reserved = 0;
     for subaccount in reserved_subaccounts {
         let balance = icrc_ledger_canister_c2c_client::icrc1_balance_of(
-            SNS_LEDGER_CANISTER_ID,
+            CHAT_LEDGER_CANISTER_ID,
             &Account {
                 owner: SNS_GOVERNANCE_CANISTER_ID,
                 subaccount: Some(subaccount),

@@ -8,9 +8,10 @@ generate_msgpack_update_call!(create_swap);
 generate_msgpack_update_call!(notify_deposit);
 
 pub mod happy_path {
+    #![allow(deprecated)]
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use types::{CanisterId, Cryptocurrency, P2PSwapLocation, TimestampMillis, UserId};
+    use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
 
     #[allow(clippy::too_many_arguments)]
     pub fn create_swap(
@@ -18,9 +19,9 @@ pub mod happy_path {
         sender: Principal,
         escrow_canister_id: CanisterId,
         location: P2PSwapLocation,
-        input_token: Cryptocurrency,
+        input_token: TokenInfo,
         input_amount: u128,
-        output_token: Cryptocurrency,
+        output_token: TokenInfo,
         output_amount: u128,
         expires_at: TimestampMillis,
     ) -> u32 {
@@ -30,9 +31,9 @@ pub mod happy_path {
             escrow_canister_id,
             &escrow_canister::create_swap::Args {
                 location,
-                token0: input_token.try_into().unwrap(),
+                token0: input_token,
                 token0_amount: input_amount,
-                token1: output_token.try_into().unwrap(),
+                token1: output_token,
                 token1_amount: output_amount,
                 expires_at,
                 additional_admins: Vec::new(),

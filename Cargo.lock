@@ -8614,6 +8614,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "constants",
  "human_readable",
  "ic-ledger-types",
  "modclub_canister",

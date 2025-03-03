@@ -1,11 +1,12 @@
 use crate::env::ENV;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::{Chat, ChatEvent, Cryptocurrency};
+use types::{Chat, ChatEvent};
 
 #[test]
 fn tip_direct_message_succeeds() {
@@ -32,7 +33,8 @@ fn tip_direct_message_succeeds() {
         Chat::Direct(user2.user_id.into()),
         message_id,
         canister_ids.icp_ledger,
-        Cryptocurrency::InternetComputer,
+        ICP_SYMBOL.to_string(),
+        ICP_TRANSFER_FEE,
         tip_amount,
     );
 
@@ -93,7 +95,8 @@ fn tip_group_message_succeeds() {
         Chat::Group(group_id),
         message_id,
         canister_ids.icp_ledger,
-        Cryptocurrency::InternetComputer,
+        ICP_SYMBOL.to_string(),
+        ICP_TRANSFER_FEE,
         tip_amount,
     );
 
@@ -150,7 +153,8 @@ fn tip_channel_message_succeeds() {
         Chat::Channel(community_id, channel_id),
         message_id,
         canister_ids.icp_ledger,
-        Cryptocurrency::InternetComputer,
+        ICP_SYMBOL.to_string(),
+        ICP_TRANSFER_FEE,
         tip_amount,
     );
 
@@ -205,9 +209,9 @@ fn tip_group_message_retries_if_c2c_call_fails() {
             thread_root_message_index: None,
             message_id,
             ledger: canister_ids.icp_ledger,
-            token: Cryptocurrency::InternetComputer,
+            token_symbol: ICP_SYMBOL.to_string(),
             amount: tip_amount,
-            fee: Cryptocurrency::InternetComputer.fee().unwrap(),
+            fee: ICP_TRANSFER_FEE,
             decimals: 8,
             pin: None,
         },
@@ -279,9 +283,9 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
             thread_root_message_index: None,
             message_id,
             ledger: canister_ids.icp_ledger,
-            token: Cryptocurrency::InternetComputer,
+            token_symbol: ICP_SYMBOL.to_string(),
             amount: tip_amount,
-            fee: Cryptocurrency::InternetComputer.fee().unwrap(),
+            fee: ICP_TRANSFER_FEE,
             decimals: 8,
             pin: None,
         },
