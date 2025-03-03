@@ -211,13 +211,13 @@ impl From<DiamondMembershipPaymentReceivedCombined> for DiamondMembershipPayment
             timestamp: value.timestamp,
             expires_at: value.expires_at,
             token: value.token.clone(),
-            ledger: value.ledger.unwrap_or_else(|| {
-                if matches!(value.token, types::Cryptocurrency::InternetComputer) {
+            ledger: value
+                .ledger
+                .unwrap_or(if matches!(value.token, types::Cryptocurrency::InternetComputer) {
                     ICP_LEDGER_CANISTER_ID
                 } else {
                     CHAT_LEDGER_CANISTER_ID
-                }
-            }),
+                }),
             token_symbol: value.token_symbol.unwrap_or_else(|| value.token.token_symbol().to_string()),
             amount_e8s: value.amount_e8s,
             block_index: value.block_index,
