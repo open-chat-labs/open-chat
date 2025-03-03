@@ -176,6 +176,7 @@ pub struct UserJoinedCommunityOrChannel {
 pub struct DiamondMembershipPaymentReceived {
     pub timestamp: TimestampMillis,
     pub expires_at: TimestampMillis,
+    pub token: Cryptocurrency,
     pub ledger: CanisterId,
     pub token_symbol: String,
     pub amount_e8s: u64,
@@ -191,7 +192,7 @@ struct DiamondMembershipPaymentReceivedCombined {
     expires_at: TimestampMillis,
     ledger: Option<CanisterId>,
     token_symbol: Option<String>,
-    token: Option<Cryptocurrency>,
+    token: Cryptocurrency,
     amount_e8s: u64,
     block_index: u64,
     duration: DiamondMembershipPlanDuration,
@@ -204,16 +205,15 @@ impl From<DiamondMembershipPaymentReceivedCombined> for DiamondMembershipPayment
         DiamondMembershipPaymentReceived {
             timestamp: value.timestamp,
             expires_at: value.expires_at,
+            token: value.token.clone(),
             ledger: value.ledger.unwrap_or_else(|| {
-                if matches!(value.token, Some(Cryptocurrency::InternetComputer)) {
+                if matches!(value.token, Cryptocurrency::InternetComputer) {
                     ICP_LEDGER_CANISTER_ID
                 } else {
                     CHAT_LEDGER_CANISTER_ID
                 }
             }),
-            token_symbol: value
-                .token_symbol
-                .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string()),
+            token_symbol: value.token_symbol.unwrap_or_else(|| value.token.token_symbol().to_string()),
             amount_e8s: value.amount_e8s,
             block_index: value.block_index,
             duration: value.duration,
