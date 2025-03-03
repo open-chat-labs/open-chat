@@ -184,7 +184,7 @@ impl GroupRoleInternal {
         self.is_admin() || self.is_owner()
     }
 
-    pub fn permissions(&self, role_permissions: &GroupPermissions) -> HashSet<ChatPermission> {
+    pub fn chat_permissions(&self, role_permissions: &GroupPermissions) -> HashSet<ChatPermission> {
         let permissions = [
             (role_permissions.add_members, ChatPermission::AddMembers),
             (role_permissions.change_roles, ChatPermission::ChangeRoles),
@@ -198,10 +198,15 @@ impl GroupRoleInternal {
             (role_permissions.update_group, ChatPermission::UpdateGroup),
         ];
 
-        permissions
+        let mut permissions: HashSet<_> = permissions
             .into_iter()
             .filter_map(|(rp, p)| self.is_permitted(rp).then_some(p))
-            .collect()
+            .collect();
+
+        permissions.insert(ChatPermission::ReadChatDetails);
+        permissions.insert(ChatPermission::ReadMembership);
+        permissions.insert(ChatPermission::ReadMessages);
+        permissions
     }
 
     pub fn message_permissions(&self, role_permissions: &MessagePermissions) -> HashSet<MessagePermission> {
