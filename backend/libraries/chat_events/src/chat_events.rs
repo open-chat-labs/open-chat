@@ -50,15 +50,12 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn fix_duplicate_message_ids(&mut self, rng: &mut StdRng) -> Option<bool> {
+    pub fn fix_duplicate_message_ids(&mut self, my_user_id: UserId, their_user_id: UserId) -> Option<bool> {
         if self.message_ids_deduped {
             return Some(true);
         }
-        if !self.main.fix_duplicate_message_ids(rng)? {
+        if !self.main.fix_duplicate_message_ids(my_user_id, their_user_id)? {
             return Some(false);
-        }
-        for thread in self.threads.values_mut() {
-            thread.fix_duplicate_message_ids(rng)?;
         }
         info!(chat = ?self.chat, "Finished deduping messageIds");
         self.message_ids_deduped = true;
