@@ -27,6 +27,7 @@ pub struct DiamondMembershipDetailsInternal {
 #[serde(from = "DiamondMembershipPaymentCombined")]
 pub struct DiamondMembershipPayment {
     pub timestamp: TimestampMillis,
+    pub token: Cryptocurrency,
     pub ledger: CanisterId,
     pub fee: u128,
     pub amount_e8s: u64,
@@ -38,7 +39,7 @@ pub struct DiamondMembershipPayment {
 #[derive(Serialize, Deserialize, Clone)]
 struct DiamondMembershipPaymentCombined {
     timestamp: TimestampMillis,
-    token: Option<Cryptocurrency>,
+    token: Cryptocurrency,
     ledger: Option<CanisterId>,
     fee: Option<u128>,
     amount_e8s: u64,
@@ -51,12 +52,13 @@ impl From<DiamondMembershipPaymentCombined> for DiamondMembershipPayment {
     fn from(value: DiamondMembershipPaymentCombined) -> Self {
         DiamondMembershipPayment {
             timestamp: value.timestamp,
-            ledger: value.ledger.unwrap_or(if matches!(value.token, Some(Cryptocurrency::CHAT)) {
+            token: value.token.clone(),
+            ledger: value.ledger.unwrap_or(if matches!(value.token, Cryptocurrency::CHAT) {
                 CHAT_LEDGER_CANISTER_ID
             } else {
                 ICP_LEDGER_CANISTER_ID
             }),
-            fee: value.fee.unwrap_or(if matches!(value.token, Some(Cryptocurrency::CHAT)) {
+            fee: value.fee.unwrap_or(if matches!(value.token, Cryptocurrency::CHAT) {
                 CHAT_TRANSFER_FEE
             } else {
                 ICP_TRANSFER_FEE
@@ -153,6 +155,11 @@ impl DiamondMembershipDetailsInternal {
     ) {
         let payment = DiamondMembershipPayment {
             timestamp: now,
+            token: if ledger == CHAT_LEDGER_CANISTER_ID {
+                Cryptocurrency::CHAT
+            } else {
+                Cryptocurrency::InternetComputer
+            },
             ledger,
             fee: transfer_fee,
             amount_e8s,
