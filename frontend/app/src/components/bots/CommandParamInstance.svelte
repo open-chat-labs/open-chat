@@ -13,14 +13,12 @@
     import IntegerInput from "../IntegerInput.svelte";
     import NumberInput from "../NumberInput.svelte";
     import Translatable from "../Translatable.svelte";
+    import MultiLineInput from "../home/MultiLineInput.svelte";
+    import DateInput from "../DateInput.svelte";
 
-    interface Props {
-        param: SlashCommandParam;
-        instance: SlashCommandParamInstance;
-        onChange: () => void;
-    }
-
-    let { param, instance, onChange }: Props = $props();
+    export let param: SlashCommandParam;
+    export let instance: SlashCommandParamInstance;
+    export let onChange: () => void;
 </script>
 
 <div class="param">
@@ -54,6 +52,8 @@
                     </option>
                 {/each}
             </Select>
+        {:else if param.multi_line}
+            <MultiLineInput minLines={2} onInput={onChange} placeholder={i18nKey(param.description ?? "")} />
         {:else}
             <Input
                 minlength={param.minLength}
@@ -97,8 +97,19 @@
                 placeholder={i18nKey(param.placeholder ?? "")}
                 bind:value={instance.value} />
         {/if}
+    {:else if instance.kind === "dateTime" && param.kind === "dateTime"}
+        <Legend label={i18nKey(param.name)} required={param.required} />
+        <DateInput bind:value={instance.value} futureOnly={param.future_only} placeholder={i18nKey(param.placeholder ?? "")} />
     {/if}
 </div>
 
 <style lang="scss">
+    .param {
+        margin-top: $sp3;
+    }
+
+    .param:not(:last-child) {
+        /* Gives a bit more spacing between param inputs */
+        margin-bottom: $sp4;
+    }
 </style>

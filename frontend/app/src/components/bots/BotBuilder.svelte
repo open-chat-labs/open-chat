@@ -1,4 +1,5 @@
 <script lang="ts">
+    // IS THIS COMPONENT EVEN USED!!!!!!
     import {
         currentUser,
         emptyBotInstance,
@@ -119,6 +120,7 @@
     }
 </script>
 
+// IS THIS COMPONENT EVEN USED???
 {#if selectedCommand !== undefined && selectedCommandIndex !== undefined}
     <CommandBuilder
         onAddAnother={addCommand}

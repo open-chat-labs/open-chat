@@ -52,6 +52,9 @@
                 return param.value ?? "null";
             case "user":
                 return param.userId ? $userStore.get(param.userId)?.username ?? "null" : "null";
+            case "dateTime":
+                // TODO return parsed date?
+                return param.value ? param.value.toString() : "no date given";
         }
     }
 </script>

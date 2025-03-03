@@ -575,6 +575,7 @@
                     {#if excessiveLinks}
                         <div class="note">{$_("excessiveLinksNote")}</div>
                     {/if}
+                    <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
                     <div
                         data-gram="false"
                         data-gramm_editor="false"
@@ -601,7 +602,8 @@
                         on:dragleave={() => (dragging = false)}
                         on:drop={onDrop}
                         on:input={onInput}
-                        on:keypress={keyPress} />
+                        on:keypress={keyPress}>
+                    </div>
 
                     {#if containsMarkdown}
                         <MarkdownToggle {editingEvent} />
@@ -627,6 +629,7 @@
                                 on:audioCaptured />
                         </div>
                     {:else if canEnterText}
+                        <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
                         <div class="send" on:click={sendMessage}>
                             <HoverIcon title={$_("sendMessage")}>
                                 <Send size={$iconSize} color={"var(--icon-txt)"} />
@@ -651,11 +654,13 @@
                         on:clearAttachment
                         on:fileSelected />
                 {:else}
+                    <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
                     <div class="send" on:click={sendMessage}>
                         <HoverIcon>
                             <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
                         </HoverIcon>
                     </div>
+                    <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
                     <div class="send" on:click={cancelEdit}>
                         <HoverIcon>
                             <Close size={$iconSize} color={"var(--button-txt)"} />

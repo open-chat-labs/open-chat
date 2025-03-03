@@ -149,6 +149,10 @@ export function apiBotCommandArgValue(domain: SlashCommandParamInstance): BotCom
             return {
                 User: principalStringToBytes(domain.userId!),
             };
+        case "dateTime":
+            return {
+                DateTime: Date.now(),
+            }
     }
 }
 

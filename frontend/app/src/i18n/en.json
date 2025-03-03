@@ -217,6 +217,8 @@
                 "owner": "You must enter an owner for the bot",
                 "principal": "You must enter a valid principal to identify the bot"
             },
+            "dateTimeFutureOnly": "Future dates",
+            "dateTimeFutureOnlyDesc": "Allows selection of future dates only",
             "iconLabel": "Bot avatar",
             "maxLengthLabel": "Maximum length",
             "maxLengthPlaceholder": "Enter maximum length",

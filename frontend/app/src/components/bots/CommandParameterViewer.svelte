@@ -52,6 +52,9 @@
                     <option value={"decimal"}>
                         <Translatable resourceKey={i18nKey("Decimal")}></Translatable>
                     </option>
+                    <option value={"dateTime"}>
+                        <Translatable resourceKey={i18nKey("DateTime")}></Translatable>
+                    </option>
                 </Select>
             </section>
             <section>
@@ -167,6 +170,13 @@
                             placeholder={i18nKey("bots.builder.maxValuePlaceholder")}
                             value={param.maxValue} />
                     </div>
+                </section>
+            {:else if param.kind === "dateTime"}
+                <section>
+                    <Legend
+                        label={i18nKey("bots.builder.dateTimeFutureOnly")}
+                        rules={i18nKey("bots.builder.dateTimeFutureOnlyDesc")}></Legend>
+                    <Input disabled value={param.future_only.toString()} />
                 </section>
             {/if}
 

@@ -127,6 +127,11 @@
                 return i18nKey("bots.update_bot.remove");
         }
     });
+
+    console.log(
+        "BOT MODAL !!!!",
+        step === "edit" && botState.current !== undefined && mode !== "remove",
+    );
 </script>
 
 <ModalContent on:close={onClose}>

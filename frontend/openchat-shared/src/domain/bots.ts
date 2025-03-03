@@ -41,7 +41,8 @@ export type SlashCommandParamType =
     | BooleanParam
     | StringParam
     | IntegerParam
-    | DecimalParam;
+    | DecimalParam
+    | DateTimeParam;
 
 export type CommandParam = {
     name: string;
@@ -63,6 +64,7 @@ export type StringParam = {
     minLength: number;
     maxLength: number;
     choices: SlashCommandOptionChoice<string>[];
+    multi_line: boolean;
 };
 
 export type IntegerParam = {
@@ -78,6 +80,11 @@ export type DecimalParam = {
     maxValue: number;
     choices: SlashCommandOptionChoice<number>[];
 };
+
+export type DateTimeParam = {
+    kind: "dateTime";
+    future_only: boolean;
+}
 
 export type SlashCommandOptionChoice<T> = {
     name: string;
@@ -109,6 +116,7 @@ export function defaultStringParam(param?: SlashCommandParam): SlashCommandParam
         minLength: 0,
         maxLength: 1000,
         choices: [],
+        multi_line: false,
     };
 }
 
@@ -137,6 +145,14 @@ export function defaultUserParam(param?: SlashCommandParam): SlashCommandParam {
         kind: "user",
         ...defaultCommonParam(param),
     };
+}
+
+export function defaultDateTimeParam(param?: SlashCommandParam): SlashCommandParam {
+    return {
+        kind: "dateTime",
+        ...defaultCommonParam(param),
+        future_only: false,
+    }
 }
 
 export function emptySlashCommand(): SlashCommandSchema {
@@ -362,12 +378,18 @@ export type DecimalParamInstance = {
     value: number | null; // this is to do with how number input binding works
 };
 
+export type DateTimeParamInstance = {
+    kind: "dateTime",
+    value?: BigInt | null,
+}
+
 export type SlashCommandParamTypeInstance =
     | UserParamInstance
     | BooleanParamInstance
     | StringParamInstance
     | IntegerParamInstance
-    | DecimalParamInstance;
+    | DecimalParamInstance
+    | DateTimeParamInstance;
 
 export type SlashCommandParamInstance = CommandParamInstance & SlashCommandParamTypeInstance;
 
@@ -409,6 +431,13 @@ export function createParamInstancesFromSchema(
                         )?.value ?? "";
                 }
                 return { kind: "string", name: p.name, value: strParam };
+            }
+            case "dateTime": {
+                return {
+                    name: p.name,
+                    kind: "dateTime",
+                    value: null, //? Do I need to set a value here?
+                }
             }
         }
     });

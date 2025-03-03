@@ -6,6 +6,7 @@
         defaultIntegerParam,
         defaultStringParam,
         defaultUserParam,
+        defaultDateTimeParam,
         type ValidationErrors,
         type SlashCommandOptionChoice,
         type SlashCommandParam,
@@ -53,6 +54,9 @@
             case "boolean":
                 param = defaultBooleanParam(param);
                 break;
+            case "dateTime":
+                param = defaultDateTimeParam(param);
+                break;
         }
     }
 
@@ -90,6 +94,8 @@
             param.choices = param.choices.filter((c) => c !== choice);
         }
     }
+
+    console.log("Where's this?");
 </script>
 
 <Overlay>
@@ -113,6 +119,9 @@
                     </option>
                     <option value={"number"}>
                         <Translatable resourceKey={i18nKey("Number")}></Translatable>
+                    </option>
+                    <option value={"number"}>
+                        <Translatable resourceKey={i18nKey("DateTime")}></Translatable>
                     </option>
                 </Select>
             </section>
@@ -192,7 +201,8 @@
                     <div class="min">
                         <Legend
                             label={i18nKey("bots.builder.minValueLabel")}
-                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}></Legend>
+                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}
+                        ></Legend>
                         <IntegerInput
                             min={BigInt(0)}
                             max={param.maxValue}
@@ -215,7 +225,8 @@
                     <div class="min">
                         <Legend
                             label={i18nKey("bots.builder.minValueLabel")}
-                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}></Legend>
+                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}
+                        ></Legend>
                         <NumberInput
                             min={0}
                             max={param.maxValue}
@@ -233,6 +244,8 @@
                             bind:value={param.maxValue} />
                     </div>
                 </section>
+            {:else if param.kind === "dateTime"}
+                <div>TODO!!!!</div>
             {/if}
 
             {#if param.kind === "string" || param.kind === "integer" || param.kind === "decimal"}
