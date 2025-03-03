@@ -16,9 +16,13 @@
     import MultiLineInput from "../home/MultiLineInput.svelte";
     import DateInput from "../DateInput.svelte";
 
-    export let param: SlashCommandParam;
-    export let instance: SlashCommandParamInstance;
-    export let onChange: () => void;
+    interface Props {
+        param: SlashCommandParam;
+        instance: SlashCommandParamInstance;
+        onChange: () => void;
+    }
+
+    let { param, instance, onChange }: Props = $props();
 </script>
 
 <div class="param">
@@ -99,7 +103,7 @@
         {/if}
     {:else if instance.kind === "dateTime" && param.kind === "dateTime"}
         <Legend label={i18nKey(param.name)} required={param.required} />
-        <DateInput bind:value={instance.value} futureOnly={param.future_only} placeholder={i18nKey(param.placeholder ?? "")} />
+        <DateInput value={instance.value} futureOnly={param.future_only} placeholder={i18nKey(param.placeholder ?? "")} onSelect={onChange}/>
     {/if}
 </div>
 

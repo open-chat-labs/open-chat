@@ -7,33 +7,45 @@
     import type { ResourceKey } from "openchat-client";
     import { onMount } from "svelte";
 
-    export let onSelect: (d: number | undefined) => void = () => {};
-    export let align = "left";
-    export let futureOnly = false;
-    export let closeOnSelection = false;
-    export let disabled = false;
-    export let required = false;
-    export let valid = true;
-    export let timePrecision: "minute" | "second" | "millisecond" | null = "minute";
-    export let format = "dd MMM yyyy, HH:mm";
-    export let placeholder: ResourceKey | undefined = undefined;
+    interface Props {
+        align?: string;
+        closeOnSelection?: boolean;
+        disabled?: boolean;
+        format?: string;
+        futureOnly?: boolean;
+        onSelect: (tms: BigInt | undefined) => void;
+        placeholder?: ResourceKey | undefined;
+        required?: boolean;
+        timePrecision?: "minute" | "second" | "millisecond" | null;
+        valid?: boolean;
+        // Provided date value in milliseconds!
+        value?: BigInt | null | undefined;
+    }
 
-    // Provided date value in milliseconds!
-    export let value: BigInt | null | undefined = undefined;
+    let {
+        align = "left",
+        closeOnSelection = false,
+        disabled = false,
+        format = "dd MMM yyyy, HH:mm",
+        futureOnly = false,
+        onSelect,
+        placeholder = undefined,
+        required = false,
+        timePrecision = "minute",
+        valid = true,
+        value = undefined,
+    }: Props = $props();
 
     // If we're only allowed to select future dates, then minimum date and
     // time selectable is current!
-    let minDate: Date | undefined;
-    if (futureOnly) {
-        minDate = new Date();
-    }
+    let minDate: Date | undefined = futureOnly ? new Date() : undefined;
 
     // Allow selection of up to 10 years in the future.
     let maxDate = new Date();
     maxDate.setFullYear(maxDate.getFullYear() + 10);
 
     // Initialise local date from the provided value on component mount
-    let localDate: Date | undefined;
+    let localDate: Date | undefined = $state(undefined);
     onMount(() => {
         if (typeof value === "number") {
             localDate = new Date(Number(value));
@@ -54,7 +66,7 @@
         {valid}
         visible={false}
         on:select={(v) => {
-            onSelect(v.detail.getMilliseconds());
+            onSelect(BigInt(v.detail.getMilliseconds()));
         }}
         placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""} />
 </div>

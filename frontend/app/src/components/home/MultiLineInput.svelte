@@ -5,44 +5,65 @@
     import { _ } from "svelte-i18n";
     import type { FormEventHandler } from "svelte/elements";
     import { getContext, onMount } from "svelte";
-    import { type OpenChat } from "openchat-client";
+    import { type OpenChat, type ResourceKey } from "openchat-client";
+    import type { EventWrapper, Message } from "openchat-client";
 
-    const client = getContext<OpenChat>("client");
+    interface Props {
+        checkIfMessageIsEmpty?: () => boolean;
+        containsMarkdown?: boolean;
+        disabled?: boolean;
+        dragging?: boolean;
+        editingEvent?: EventWrapper<Message> | undefined;
+        excessiveLinks?: boolean;
+        keyPress?: FormEventHandler<HTMLDivElement>;
+        light?: boolean;
+        messageIsEmpty?: boolean;
+        minLines?: number | undefined;
+        placeholder?: ResourceKey | undefined;
+        recording?: boolean;
+        onDragEnter?: FormEventHandler<HTMLDivElement>;
+        onDragLeave?: FormEventHandler<HTMLDivElement>;
+        onDragOver?: FormEventHandler<HTMLDivElement>;
+        onDrop?: FormEventHandler<HTMLDivElement>;
+        onInput: (value: string) => void;
+        saveSelection?: FormEventHandler<HTMLDivElement>;
+        textContent?: string | undefined;
+    }
 
-    // Requied props
-    export let onInput: (value: string) => void;
-
-    // Optional props
-    export let textContent: string | undefined = "";
-    export let excessiveLinks = false;
-    export let placeholder = i18nKey("enterMessage");
-    export let disabled = false;
-    export let light = false;
-    export let messageIsEmpty = true;
-    export let containsMarkdown = false;
-    export let editingEvent = undefined;
-    export let dragging = false;
-    export let recording = false;
-    export let minLines: number | undefined = undefined;
-    export let checkIfMessageIsEmpty: () => boolean = () => true;
-    export let onDrop: FormEventHandler<HTMLDivElement> = (_) => {};
-    export let keyPress: FormEventHandler<HTMLDivElement> = (_) => {};
-    export let saveSelection: FormEventHandler<HTMLDivElement> = (_) => {};
-    export let onDragOver: FormEventHandler<HTMLDivElement> = () => {
-        dragging = true;
-    };
-    export let onDragEnter: FormEventHandler<HTMLDivElement> = () => {
-        dragging = true;
-    };
-    export let onDragLeave: FormEventHandler<HTMLDivElement> = () => {
-        dragging = false;
-    };
+    let {
+        onInput,
+        textContent = "",
+        excessiveLinks = false,
+        placeholder = i18nKey("enterMessage"),
+        disabled = false,
+        light = false,
+        messageIsEmpty = true,
+        containsMarkdown = false,
+        editingEvent = undefined,
+        dragging = false,
+        recording = false,
+        minLines = undefined,
+        checkIfMessageIsEmpty = () => true,
+        onDrop = (_) => {},
+        keyPress = (_) => {},
+        saveSelection = (_) => {},
+        onDragOver = () => {
+            dragging = true;
+        },
+        onDragEnter = () => {
+            dragging = true;
+        },
+        onDragLeave = () => {
+            dragging = false;
+        },
+    }: Props = $props();
 
     let inp: HTMLDivElement;
+    const client = getContext<OpenChat>("client");
 
     // Handles placeholder show/hide
-    $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && checkIfMessageIsEmpty();
-    $: excessiveLinks = client.extractEnabledLinks(textContent ?? "").length > 5;
+    messageIsEmpty = (textContent?.trim() ?? "").length === 0 && checkIfMessageIsEmpty();
+    excessiveLinks = client.extractEnabledLinks(textContent ?? "").length > 5;
 
     function detectMarkdown(text: string | null) {
         if (!text) return false;
@@ -66,7 +87,7 @@
         return result;
     }
 
-    let baseInpHeight = 0;
+    let baseInpHeight = $state(0);
     let inpLineHeight = 24;
     onMount(() => {
         setTimeout(() => {
@@ -106,18 +127,17 @@
             right: 12,
             top: 12,
         }}
-        on:input={() => {
+        oninput={() => {
             textContent = inp.textContent ?? "";
             containsMarkdown = detectMarkdown(textContent);
             onInput(textContent);
         }}
-        on:paste
-        on:keypress={keyPress}
-        on:blur={saveSelection}
-        on:dragover={onDragOver}
-        on:dragenter={onDragEnter}
-        on:dragleave={onDragLeave}
-        on:drop={onDrop}>
+        onkeypress={keyPress}
+        onblur={saveSelection}
+        ondragover={onDragOver}
+        ondragenter={onDragEnter}
+        ondragleave={onDragLeave}
+        ondrop={onDrop}>
     </div>
 
     {#if containsMarkdown}
