@@ -221,21 +221,9 @@ impl From<types::MessageContent> for MessageContent {
             types::MessageContent::Deleted(deleted_by) => Self::Deleted(deleted_by),
             types::MessageContent::Giphy(giphy_content) => Self::Giphy(giphy_content),
             types::MessageContent::Custom(custom_content) => Self::Custom(custom_content),
-            other => {
-                let kind = match other {
-                    types::MessageContent::GovernanceProposal(_) => "GovernanceProposal",
-                    types::MessageContent::Prize(_) => "Prize",
-                    types::MessageContent::PrizeWinner(_) => "PrizeWinner",
-                    types::MessageContent::MessageReminderCreated(_) => "MessageReminderCreated",
-                    types::MessageContent::MessageReminder(_) => "MessageReminder",
-                    types::MessageContent::ReportedMessage(_) => "ReportedMessage",
-                    types::MessageContent::P2PSwap(_) => "P2PSwap",
-                    types::MessageContent::VideoCall(_) => "VideoCall",
-                    _ => "Unknown",
-                };
-
-                Self::Unsupported(UnsupportedContent { kind: kind.to_string() })
-            }
+            other => Self::Unsupported(UnsupportedContent {
+                kind: other.message_type(),
+            }),
         }
     }
 }
