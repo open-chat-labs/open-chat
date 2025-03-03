@@ -989,20 +989,6 @@ export const SuspensionAction = Type.Union([
     }),
 ]);
 
-export type GroupPermission = Static<typeof GroupPermission>;
-export const GroupPermission = Type.Union([
-    Type.Literal("ChangeRoles"),
-    Type.Literal("UpdateGroup"),
-    Type.Literal("AddMembers"),
-    Type.Literal("InviteUsers"),
-    Type.Literal("RemoveMembers"),
-    Type.Literal("DeleteMessages"),
-    Type.Literal("PinMessages"),
-    Type.Literal("ReactToMessages"),
-    Type.Literal("MentionAllMembers"),
-    Type.Literal("StartVideoCall"),
-]);
-
 export type BotCommandOptionChoiceF64 = Static<typeof BotCommandOptionChoiceF64>;
 export const BotCommandOptionChoiceF64 = Type.Object({
     name: Type.String(),
@@ -1264,6 +1250,7 @@ export const UserSummaryVolatile = Type.Object({
     total_chit_earned: Type.Number(),
     chit_balance: Type.Number(),
     streak: Type.Number(),
+    max_streak: Type.Number(),
 });
 
 export type CommunityPermissionRole = Static<typeof CommunityPermissionRole>;
@@ -1401,6 +1388,23 @@ export type GroupReplyContext = Static<typeof GroupReplyContext>;
 export const GroupReplyContext = Type.Object({
     event_index: EventIndex,
 });
+
+export type ChatPermission = Static<typeof ChatPermission>;
+export const ChatPermission = Type.Union([
+    Type.Literal("ChangeRoles"),
+    Type.Literal("UpdateGroup"),
+    Type.Literal("AddMembers"),
+    Type.Literal("InviteUsers"),
+    Type.Literal("RemoveMembers"),
+    Type.Literal("DeleteMessages"),
+    Type.Literal("PinMessages"),
+    Type.Literal("ReactToMessages"),
+    Type.Literal("MentionAllMembers"),
+    Type.Literal("StartVideoCall"),
+    Type.Literal("ReadMessages"),
+    Type.Literal("ReadMembership"),
+    Type.Literal("ReadChatDetails"),
+]);
 
 export type PushEventResult = Static<typeof PushEventResult>;
 export const PushEventResult = Type.Object({
@@ -1730,7 +1734,7 @@ export const VerifiedCredentialArgumentValue = Type.Union([
 export type BotPermissions = Static<typeof BotPermissions>;
 export const BotPermissions = Type.Object({
     community: Type.Array(CommunityPermission),
-    chat: Type.Array(GroupPermission),
+    chat: Type.Array(ChatPermission),
     message: Type.Array(MessagePermission),
 });
 
@@ -2775,8 +2779,10 @@ export const UserIndexSetDiamondMembershipFeesResponse = Type.Union([
     Type.Literal("Invalid"),
 ]);
 
-export type UserIndexRegisterBotResponse = Static<typeof UserIndexRegisterBotResponse>;
-export const UserIndexRegisterBotResponse = Type.Literal("Success");
+export type UserIndexRegisterBotSuccessResult = Static<typeof UserIndexRegisterBotSuccessResult>;
+export const UserIndexRegisterBotSuccessResult = Type.Object({
+    bot_id: UserId,
+});
 
 export type UserIndexReportedMessagesArgs = Static<typeof UserIndexReportedMessagesArgs>;
 export const UserIndexReportedMessagesArgs = Type.Object({
@@ -3029,21 +3035,6 @@ export const LocalUserIndexChatEventsEventsPageArgs = Type.Object({
     max_messages: Type.Number(),
     max_events: Type.Number(),
 });
-
-export type LocalUserIndexChatEventsEventsArgsInner = Static<
-    typeof LocalUserIndexChatEventsEventsArgsInner
->;
-export const LocalUserIndexChatEventsEventsArgsInner = Type.Union([
-    Type.Object({
-        Page: LocalUserIndexChatEventsEventsPageArgs,
-    }),
-    Type.Object({
-        ByIndex: LocalUserIndexChatEventsEventsByIndexArgs,
-    }),
-    Type.Object({
-        Window: LocalUserIndexChatEventsEventsWindowArgs,
-    }),
-]);
 
 export type LocalUserIndexJoinCommunityArgs = Static<typeof LocalUserIndexJoinCommunityArgs>;
 export const LocalUserIndexJoinCommunityArgs = Type.Object({
@@ -5379,6 +5370,7 @@ export const UserSummary = Type.Object({
     total_chit_earned: Type.Number(),
     chit_balance: Type.Number(),
     streak: Type.Number(),
+    max_streak: Type.Number(),
     is_unique_person: Type.Boolean(),
 });
 
@@ -6573,6 +6565,21 @@ export const UserIndexSetDiamondMembershipFeesArgs = Type.Object({
     fees: DiamondMembershipFees,
 });
 
+export type UserIndexRegisterBotResponse = Static<typeof UserIndexRegisterBotResponse>;
+export const UserIndexRegisterBotResponse = Type.Union([
+    Type.Object({
+        Success: UserIndexRegisterBotSuccessResult,
+    }),
+    Type.Literal("AlreadyRegistered"),
+    Type.Object({
+        InvalidRequest: Type.String(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("UserSuspended"),
+]);
+
 export type UserIndexPlatformModeratorsGroupResponse = Static<
     typeof UserIndexPlatformModeratorsGroupResponse
 >;
@@ -6656,6 +6663,21 @@ export const LocalUserIndexChatEventsEventsContext = Type.Union([
     }),
     Type.Object({
         Channel: Type.Tuple([CommunityId, ChannelId, Type.Union([MessageIndex, Type.Null()])]),
+    }),
+]);
+
+export type LocalUserIndexChatEventsEventsSelectionCriteria = Static<
+    typeof LocalUserIndexChatEventsEventsSelectionCriteria
+>;
+export const LocalUserIndexChatEventsEventsSelectionCriteria = Type.Union([
+    Type.Object({
+        Page: LocalUserIndexChatEventsEventsPageArgs,
+    }),
+    Type.Object({
+        ByIndex: LocalUserIndexChatEventsEventsByIndexArgs,
+    }),
+    Type.Object({
+        Window: LocalUserIndexChatEventsEventsWindowArgs,
     }),
 ]);
 
@@ -7823,7 +7845,7 @@ export const UserIndexCurrentUserResponse = Type.Union([
 export type LocalUserIndexChatEventsEventsArgs = Static<typeof LocalUserIndexChatEventsEventsArgs>;
 export const LocalUserIndexChatEventsEventsArgs = Type.Object({
     context: LocalUserIndexChatEventsEventsContext,
-    args: LocalUserIndexChatEventsEventsArgsInner,
+    args: LocalUserIndexChatEventsEventsSelectionCriteria,
     latest_known_update: Type.Optional(Type.BigInt()),
 });
 
@@ -8458,7 +8480,6 @@ export const UserIndexUpdateBotArgs = Type.Object({
 export type UserIndexRegisterBotArgs = Static<typeof UserIndexRegisterBotArgs>;
 export const UserIndexRegisterBotArgs = Type.Object({
     principal: TSPrincipal,
-    owner: UserId,
     name: Type.String(),
     avatar: Type.Optional(Type.String()),
     endpoint: Type.String(),
@@ -9769,6 +9790,7 @@ export const UserMessagesByMessageIndexResponse = Type.Union([
 export type EventsResponse = Static<typeof EventsResponse>;
 export const EventsResponse = Type.Object({
     events: Type.Array(EventWrapperChatEvent),
+    // unauthorized: Type.Array(EventIndex),
     expired_event_ranges: Type.Array(Type.Tuple([EventIndex, EventIndex])),
     expired_message_ranges: Type.Array(Type.Tuple([MessageIndex, MessageIndex])),
     latest_event_index: EventIndex,
@@ -10037,8 +10059,8 @@ export const UserInitialStateSuccessResult = Type.Object({
     wallet_config: UserWalletConfig,
     referrals: Type.Array(UserReferral),
     message_activity_summary: UserMessageActivitySummary,
-    bots: Type.Array(InstalledBotDetails),
-    api_keys: Type.Array(PublicApiKeyDetails),
+    // bots: Type.Array(InstalledBotDetails),
+    // api_keys: Type.Array(PublicApiKeyDetails),
 });
 
 export type UserInitialStateResponse = Static<typeof UserInitialStateResponse>;
@@ -10071,9 +10093,9 @@ export const UserUpdatesSuccessResult = Type.Object({
     wallet_config: Type.Optional(UserWalletConfig),
     referrals: Type.Array(UserReferral),
     message_activity_summary: Type.Optional(UserMessageActivitySummary),
-    bots_added_or_updated: Type.Array(InstalledBotDetails),
-    bots_removed: Type.Array(UserId),
-    api_keys_generated: Type.Array(PublicApiKeyDetails),
+    // bots_added_or_updated: Type.Array(InstalledBotDetails),
+    // bots_removed: Type.Array(UserId),
+    // api_keys_generated: Type.Array(PublicApiKeyDetails),
 });
 
 export type UserUpdatesResponse = Static<typeof UserUpdatesResponse>;

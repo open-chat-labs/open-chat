@@ -3,14 +3,27 @@ use crate::{mutate_state, RuntimeState, UserIndexEvent};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
-use local_user_index_canister::c2c_notify_user_events::{Response::*, *};
+use local_user_index_canister::c2c_user_canister::{Response::*, *};
 use local_user_index_canister::UserEvent;
 use std::cell::LazyCell;
 use types::{StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserId};
 
-#[update(guard = "caller_is_local_user_canister", msgpack = true, fallback = true)]
+#[update(guard = "caller_is_local_user_canister", msgpack = true)]
 #[trace]
-fn c2c_notify_user_events(args: Args) -> Response {
+fn c2c_notify_user_events(args: local_user_index_canister::c2c_notify_user_events::Args) -> Response {
+    mutate_state(|state| {
+        c2c_notify_user_events_impl(
+            Args {
+                events: args.events.into_iter().map(|e| e.into()).collect(),
+            },
+            state,
+        )
+    })
+}
+
+#[update(guard = "caller_is_local_user_canister", msgpack = true)]
+#[trace]
+fn c2c_user_canister(args: Args) -> Response {
     mutate_state(|state| c2c_notify_user_events_impl(args, state))
 }
 
@@ -69,6 +82,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserEvent::UserUnblocked(unblocked) => {
             state.push_event_to_user_index(UserIndexEvent::UserUnblocked(user_id, unblocked), **now);
+        }
+        UserEvent::SetMaxStreak(max_streak) => {
+            state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);
         }
     }
 }

@@ -15,7 +15,7 @@ impl TimerJobItem for LocalUserIndexEventBatch {
         let response = local_user_index_canister_c2c_client::c2c_notify_user_events(
             self.key,
             &local_user_index_canister::c2c_notify_user_events::Args {
-                events: self.items.clone(),
+                events: self.items.iter().map(|e| e.value.clone()).collect(),
             },
         )
         .await;

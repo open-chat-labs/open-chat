@@ -6,10 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix `register_bot` and `explore_bots` ([#7501](https://github.com/open-chat-labs/open-chat/pull/7501))
+
+## [[2.0.1620](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1620-user_index)] - 2025-02-28
+
+### Fixed
+
+- Fix `inspect_message` for registering bots on mainnet ([#7500](https://github.com/open-chat-labs/open-chat/pull/7500))
+
+## [[2.0.1611](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1611-user_index)] - 2025-02-28
+
 ### Added
 
 - Support `sync_api_key` cmd + min required cmd role ([#7439](https://github.com/open-chat-labs/open-chat/pull/7439))
 - Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
+- Store max streak length for each user ([#7488](https://github.com/open-chat-labs/open-chat/pull/7488))
+- Introduce new idempotent endpoints for C2C calls ([#7492](https://github.com/open-chat-labs/open-chat/pull/7492))
+- Add `DateTime` bot command parameter ([#7496](https://github.com/open-chat-labs/open-chat/pull/7496))
 
 ## [[2.0.1599](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1599-user_index)] - 2025-02-06
 

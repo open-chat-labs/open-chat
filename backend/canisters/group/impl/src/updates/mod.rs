@@ -9,7 +9,7 @@ pub mod c2c_install_bot;
 pub mod c2c_invite_users;
 pub mod c2c_join_group;
 pub mod c2c_leave_group;
-pub mod c2c_notify_events;
+pub mod c2c_local_group_index;
 pub mod c2c_notify_p2p_swap_status_change;
 pub mod c2c_report_message_v2;
 pub mod c2c_set_user_suspended;

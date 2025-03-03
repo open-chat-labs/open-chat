@@ -6,9 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1623](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1623-local_group_index)] - 2025-03-03
+
+### Fixed
+
+- Fix messageId deduplication for groups which used disappearing messages ([#7503](https://github.com/open-chat-labs/open-chat/pull/7503))
+
+## [[2.0.1612](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1612-local_group_index)] - 2025-02-28
+
 ### Added
 
 - Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
+- Introduce new idempotent endpoints for C2C calls ([#7492](https://github.com/open-chat-labs/open-chat/pull/7492))
 
 ## [[2.0.1603](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1603-local_group_index)] - 2025-02-10
 

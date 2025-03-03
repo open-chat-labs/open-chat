@@ -35,11 +35,11 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotInitiator, BotPermissions, BotRemoved,
-    BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty,
-    EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
-    IdempotentEnvelope, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId,
-    UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator, BotPermissions,
+    BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles,
+    Document, Empty, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
+    GroupPermissions, GroupSubtype, IdempotentEnvelope, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules,
+    TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -743,6 +743,26 @@ impl Data {
         self.user_cache.delete(user_id);
     }
 
+    pub fn get_caller_for_events(&self, caller: Principal, bot_initiator: Option<BotInitiator>) -> Option<EventsCaller> {
+        if let Some(initiator) = bot_initiator {
+            let bot_user_id = caller.into();
+            let permissions = self.granted_bot_permissions(&bot_user_id, &initiator)?;
+            let bot_permitted_event_types = permissions.permitted_event_types_to_read();
+            if bot_permitted_event_types.is_empty() {
+                return None;
+            }
+            Some(EventsCaller::Bot(BotEventsCaller {
+                bot: bot_user_id,
+                bot_permitted_event_types,
+                min_visible_event_index: EventIndex::default(),
+            }))
+        } else if let Some(user_id) = self.lookup_user_id(caller) {
+            Some(EventsCaller::User(user_id))
+        } else {
+            Some(EventsCaller::Unknown)
+        }
+    }
+
     pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&BotPermissions> {
         self.bots.get(bot_user_id).map(|b| &b.permissions)
     }
@@ -761,26 +781,22 @@ impl Data {
     }
 
     pub fn is_bot_permitted(&self, bot_id: &UserId, initiator: &BotInitiator, required: BotPermissions) -> bool {
+        self.granted_bot_permissions(bot_id, initiator)
+            .is_some_and(|granted| required.is_subset(&granted))
+    }
+
+    fn granted_bot_permissions(&self, bot_id: &UserId, initiator: &BotInitiator) -> Option<BotPermissions> {
         // Try to get the installed bot
-        let Some(bot) = self.bots.get(bot_id) else {
-            return false;
-        };
+        let bot = self.bots.get(bot_id)?;
 
         // Get the granted permissions when initiated by command or API key
-        let granted = match initiator {
-            BotInitiator::Command(command) => match self.get_user_permissions(&command.initiator) {
-                Some(user_permissions) => &BotPermissions::intersect(&bot.permissions, &user_permissions),
-                None => return false,
-            },
-            BotInitiator::ApiKeySecret(secret) => match self.bot_api_keys.permissions_if_secret_matches(bot_id, secret) {
-                Some(bot_permissions) => bot_permissions,
-                None => return false,
-            },
-            BotInitiator::ApiKeyPermissions(permissions) => permissions,
-        };
-
-        // The permissions required must be a subset of the permissions granted to the bot
-        required.is_subset(granted)
+        match initiator {
+            BotInitiator::Command(command) => self
+                .get_user_permissions(&command.initiator)
+                .map(|u| BotPermissions::intersect(&bot.permissions, &u)),
+            BotInitiator::ApiKeySecret(secret) => self.bot_api_keys.permissions_if_secret_matches(bot_id, secret).cloned(),
+            BotInitiator::ApiKeyPermissions(permissions) => Some(permissions.clone()),
+        }
     }
 
     pub fn install_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {

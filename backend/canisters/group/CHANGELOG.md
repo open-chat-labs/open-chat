@@ -6,11 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1624](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1624-group)] - 2025-03-03
+
+### Fixed
+
+- Fix messageId deduplication for groups which used disappearing messages ([#7503](https://github.com/open-chat-labs/open-chat/pull/7503))
+
+## [[2.0.1619](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1619-group)] - 2025-02-28
+
 ### Added
 
 - Add api_key query endpoint callable by owner(s) ([#7431](https://github.com/open-chat-labs/open-chat/pull/7431))
 - Support `sync_api_key` cmd + min required cmd role ([#7439](https://github.com/open-chat-labs/open-chat/pull/7439))
 - Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
+- Introduce new idempotent endpoints for C2C calls ([#7492](https://github.com/open-chat-labs/open-chat/pull/7492))
+- Add `c2c_bot_group_details` ([#7499](https://github.com/open-chat-labs/open-chat/pull/7499))
 
 ### Changed
 

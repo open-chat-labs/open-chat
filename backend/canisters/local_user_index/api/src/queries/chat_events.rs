@@ -13,7 +13,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct EventsArgs {
     pub context: EventsContext,
-    pub args: EventsArgsInner,
+    pub args: EventsSelectionCriteria,
     pub latest_known_update: Option<TimestampMillis>,
 }
 
@@ -27,7 +27,7 @@ pub enum EventsContext {
 
 #[ts_export(local_user_index, chat_events)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum EventsArgsInner {
+pub enum EventsSelectionCriteria {
     Page(EventsPageArgs),
     ByIndex(EventsByIndexArgs),
     Window(EventsWindowArgs),

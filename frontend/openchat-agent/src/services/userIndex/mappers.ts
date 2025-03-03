@@ -42,7 +42,7 @@ import {
     principalStringToBytes,
 } from "../../utils/mapping";
 import {
-    apiChatPermission,
+    apiBotChatPermission,
     apiCommunityPermission,
     apiMessagePermission,
     externalBotDefinition,
@@ -692,7 +692,7 @@ export function apiAutonomousConfig(domain: AutonomousBotConfig): AutonomousConf
     return {
         sync_api_key: domain.syncApiKey,
         permissions: {
-            chat: domain.permissions.chatPermissions.map(apiChatPermission),
+            chat: domain.permissions.chatPermissions.map(apiBotChatPermission),
             community: domain.permissions.communityPermissions.map(apiCommunityPermission),
             message: domain.permissions.messagePermissions.map(apiMessagePermission),
         },
@@ -707,7 +707,7 @@ export function apiExternalBotCommand(command: SlashCommandSchema): ApiSlashComm
         params: command.params.map(apiExternalBotParam),
         default_role: apiMemberRole(command.defaultRole),
         permissions: {
-            chat: command.permissions.chatPermissions.map(apiChatPermission),
+            chat: command.permissions.chatPermissions.map(apiBotChatPermission),
             community: command.permissions.communityPermissions.map(apiCommunityPermission),
             message: command.permissions.messagePermissions.map(apiMessagePermission),
         },

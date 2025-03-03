@@ -366,7 +366,6 @@ struct Data {
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<UserId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
-    #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
 }
 

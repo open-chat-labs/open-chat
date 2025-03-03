@@ -257,6 +257,12 @@ type ChatEventWrapper = record {
     event : ChatEvent;
 };
 
+type ChatEventType = variant {
+    Message;
+    MembershipUpdate;
+    ChatDetailsUpdate;
+};
+
 type GroupChatSummary = record {
     chat_id : ChatId;
     local_user_index_canister_id : CanisterId;
@@ -1114,6 +1120,7 @@ type UserSummary = record {
     total_chit_earned : int32;
     chit_balance : int32;
     streak : nat16;
+    max_streak : nat16;
     is_unique_person : bool;
 };
 
@@ -1480,6 +1487,7 @@ type PushEventResult = record {
 
 type EventsSuccessResult = record {
     events : vec ChatEventWrapper;
+    unauthorized : vec EventIndex;
     expired_event_ranges : vec record { EventIndex; EventIndex };
     expired_message_ranges : vec record { MessageIndex; MessageIndex };
     latest_event_index : nat32;
@@ -1980,6 +1988,7 @@ type UserSummaryVolatile = record {
     total_chit_earned : int32;
     chit_balance : int32;
     streak : nat16;
+    max_streak : nat16;
 };
 
 type CurrentUserSummary = record {
@@ -2113,12 +2122,14 @@ type BotCommandParamType = variant {
     StringParam : StringParam;
     IntegerParam : IntegerParam;
     DecimalParam : DecimalParam;
+    DateTimeParam : DateTimeParam;
 };
 
 type StringParam = record {
     min_length : nat16;
     max_length : nat16;
     choices : vec StringParamChoice;
+    multi_line : bool;
 };
 
 type StringParamChoice = record {
@@ -2148,6 +2159,10 @@ type DecimalParamChoice = record {
     value : float64;
 };
 
+type DateTimeParam = record {
+    future_only : bool;
+};
+
 type BotPermissions = record {
     community: vec CommunityPermission;
     chat: vec GroupPermission;
@@ -2175,6 +2190,9 @@ type GroupPermission = variant {
     ReactToMessages;
     MentionAllMembers;
     StartVideoCall;
+    ReadMessages;
+    ReadMembership;
+    ReadChatDetails;
 };
 
 type MessagePermission = variant {
@@ -2231,6 +2249,7 @@ type BotCommandArgValue = variant {
     Decimal : float64;
     Boolean : bool;
     User : UserId;
+    DateTime : TimestampMillis;
 };
 
 type BotCommandMeta = record {

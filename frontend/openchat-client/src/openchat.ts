@@ -480,7 +480,6 @@ import {
 import {
     globalStateStore,
     setGlobalState,
-    updateSummaryWithConfirmedMessage,
     chatListScopeStore,
     chitStateStore,
     mergeCombinedUnreadCounts,
@@ -1626,13 +1625,6 @@ export class OpenChat extends EventTarget {
             iiOrigin: new URL(this.config.internetIdentityUrl).origin,
             credentialJwts: credentials,
         };
-    }
-
-    setCommunityIndexes(indexes: Record<string, number>): Promise<boolean> {
-        Object.entries(indexes).forEach(([k, v]) =>
-            localCommunitySummaryUpdates.updateIndex({ kind: "community", communityId: k }, v),
-        );
-        return this.#sendRequest({ kind: "setCommunityIndexes", indexes }).catch(() => false);
     }
 
     setMemberDisplayName(
@@ -2875,11 +2867,6 @@ export class OpenChat extends EventTarget {
 
         this.#addServerEventsToStores(chatId, resp.events, threadRootMessageIndex, []);
 
-        for (const event of resp.events) {
-            if (event.event.kind === "message") {
-                unconfirmed.delete(context, event.event.messageId);
-            }
-        }
         return resp.events;
     }
 
@@ -3574,7 +3561,7 @@ export class OpenChat extends EventTarget {
                 mergeServerEvents(events, newEvents, context),
             );
             if (newLatestMessage !== undefined) {
-                updateSummaryWithConfirmedMessage(chatId, newLatestMessage);
+                localChatSummaryUpdates.markUpdated(chatId, { latestMessage: newLatestMessage });
             }
             const selectedThreadRootMessageIndex = this.#liveState.selectedThreadRootMessageIndex;
             if (selectedThreadRootMessageIndex !== undefined) {
@@ -7424,44 +7411,37 @@ export class OpenChat extends EventTarget {
 
     // takes a list of communities that may contain communities that we are a member of and/or preview communities
     // and overwrites them in the correct place
-    updateCommunityIndexes(communities: CommunitySummary[]): void {
-        const [previews, member] = communities.reduce(
-            ([previews, member], c) => {
-                if (this.#liveState.communityPreviews.has(c.id)) {
-                    previews.push(c);
-                } else {
-                    member.push(c);
-                }
-                return [previews, member];
-            },
-            [[], []] as [CommunitySummary[], CommunitySummary[]],
-        );
-        if (previews.length > 0) {
-            communityPreviewsStore.update((state) => {
-                previews.forEach((p) => state.set(p.id, p));
-                return state;
-            });
+    updateCommunityIndexes(orderedCommunities: CommunitySummary[]): void {
+        const updates: Record<string, number> = {};
+        for (let i = 0; i < orderedCommunities.length; i++) {
+            const community = orderedCommunities[i];
+            const index = orderedCommunities.length - i;
+
+            // Skip if index is unchanged
+            if (community.membership.index === index) continue;
+
+            if (this.#liveState.communityPreviews.has(community.id)) {
+                communityPreviewsStore.update((state) => state.set(community.id, {
+                    ...community,
+                    membership: {
+                        ...community.membership,
+                        index,
+                    },
+                }));
+            } else {
+                localCommunitySummaryUpdates.updateIndex({
+                    kind: "community",
+                    communityId: community.id.communityId
+                }, index);
+
+                // Queue the update to be sent to the canister
+                updates[community.id.communityId] = index;
+            }
         }
 
-        if (member.length > 0) {
-            globalStateStore.update((state) => {
-                const communities = state.communities.clone();
-                member.forEach((m) => communities.set(m.id, m));
-                return {
-                    ...state,
-                    communities,
-                };
-            });
+        if (Object.keys(updates).length > 0) {
+            this.#sendRequest({ kind: "setCommunityIndexes", indexes: updates }).catch(() => false);
         }
-        this.setCommunityIndexes(
-            member.reduce(
-                (idxs, c) => {
-                    idxs[c.id.communityId] = c.membership.index;
-                    return idxs;
-                },
-                {} as Record<string, number>,
-            ),
-        );
     }
 
     async setSelectedCommunity(

@@ -2,8 +2,7 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 use types::{
-    GroupPermission, GroupPermissionRole, GroupPermissions, GroupRole, MessageContentType, MessagePermission,
-    MessagePermissions,
+    ChatPermission, GroupPermissionRole, GroupPermissions, GroupRole, MessageContentType, MessagePermission, MessagePermissions,
 };
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
@@ -185,18 +184,18 @@ impl GroupRoleInternal {
         self.is_admin() || self.is_owner()
     }
 
-    pub fn permissions(&self, role_permissions: &GroupPermissions) -> HashSet<GroupPermission> {
+    pub fn permissions(&self, role_permissions: &GroupPermissions) -> HashSet<ChatPermission> {
         let permissions = [
-            (role_permissions.add_members, GroupPermission::AddMembers),
-            (role_permissions.change_roles, GroupPermission::ChangeRoles),
-            (role_permissions.delete_messages, GroupPermission::DeleteMessages),
-            (role_permissions.invite_users, GroupPermission::InviteUsers),
-            (role_permissions.mention_all_members, GroupPermission::MentionAllMembers),
-            (role_permissions.pin_messages, GroupPermission::PinMessages),
-            (role_permissions.react_to_messages, GroupPermission::ReactToMessages),
-            (role_permissions.remove_members, GroupPermission::RemoveMembers),
-            (role_permissions.start_video_call, GroupPermission::StartVideoCall),
-            (role_permissions.update_group, GroupPermission::UpdateGroup),
+            (role_permissions.add_members, ChatPermission::AddMembers),
+            (role_permissions.change_roles, ChatPermission::ChangeRoles),
+            (role_permissions.delete_messages, ChatPermission::DeleteMessages),
+            (role_permissions.invite_users, ChatPermission::InviteUsers),
+            (role_permissions.mention_all_members, ChatPermission::MentionAllMembers),
+            (role_permissions.pin_messages, ChatPermission::PinMessages),
+            (role_permissions.react_to_messages, ChatPermission::ReactToMessages),
+            (role_permissions.remove_members, ChatPermission::RemoveMembers),
+            (role_permissions.start_video_call, ChatPermission::StartVideoCall),
+            (role_permissions.update_group, ChatPermission::UpdateGroup),
         ];
 
         permissions

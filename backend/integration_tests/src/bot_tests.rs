@@ -4,6 +4,7 @@ use crate::{client, TestEnv, User};
 use candid::Principal;
 use jwt::Claims;
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandInitial};
+use local_user_index_canister::chat_events::{EventsByIndexArgs, EventsSelectionCriteria};
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -13,8 +14,8 @@ use testing::rng::{random_from_u128, random_string};
 use types::{
     AccessTokenScope, AuthToken, AutonomousConfig, BotActionByCommandClaims, BotActionChatDetails, BotActionScope,
     BotApiKeyToken, BotCommandArgValue, BotCommandDefinition, BotDefinition, BotInstallationLocation, BotMessageContent,
-    BotPermissions, CanisterId, Chat, ChatEvent, ChatType, CommunityPermission, MessageContent, MessagePermission, Rules,
-    TextContent, UserId,
+    BotPermissions, CanisterId, Chat, ChatEvent, ChatPermission, ChatType, CommunityPermission, MessageContent,
+    MessagePermission, Rules, TextContent, UserId,
 };
 use utils::base64;
 
@@ -49,20 +50,27 @@ fn e2e_command_bot_test() {
     assert_eq!(bot.id, bot_id);
     assert_eq!(bot.name, bot_name);
 
-    // Explore bots and check new bot is returned
-    let response = client::user_index::happy_path::explore_bots(env, owner.principal, canister_ids.user_index, None);
-    assert!(response.matches.iter().any(|b| b.id == bot_id));
-
     // Add bot to group with inadequate permissions
     let mut granted_permissions = BotPermissions::default();
+    let installation_location = BotInstallationLocation::Group(group_id);
     client::local_user_index::happy_path::install_bot(
         env,
         owner.principal,
         canister_ids.local_user_index(env, group_id),
-        BotInstallationLocation::Group(group_id),
+        installation_location,
         bot.id,
         granted_permissions.clone(),
     );
+
+    // Explore bots and check new bot is returned
+    let response = client::user_index::happy_path::explore_bots(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        None,
+        Some(installation_location),
+    );
+    assert!(response.matches.iter().any(|b| b.id == bot_id));
 
     let bot_added_timestamp = now_millis(env);
     env.advance_time(Duration::from_millis(1000));
@@ -558,6 +566,93 @@ fn create_channel_by_api_key() {
     }
 }
 
+#[test_case(true, true)]
+#[test_case(true, false)]
+#[test_case(false, true)]
+#[test_case(false, false)]
+fn read_messages_by_api_key(channel_api_key: bool, authorized: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+
+    // Register a bot
+    let bot_name = random_string();
+    let command_name = random_string();
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, bot_name.clone(), command_name.clone());
+
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        canister_ids.local_user_index(env, community_id),
+        BotInstallationLocation::Community(community_id),
+        bot_id,
+        BotPermissions::text_only(),
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    let api_key = match client::community::generate_bot_api_key(
+        env,
+        owner.principal,
+        community_id.into(),
+        &community_canister::generate_bot_api_key::Args {
+            bot_id,
+            requested_permissions: BotPermissions {
+                community: HashSet::new(),
+                chat: HashSet::from_iter([if authorized {
+                    ChatPermission::ReadMessages
+                } else {
+                    ChatPermission::ReadMembership
+                }]),
+                message: HashSet::new(),
+            },
+            channel_id: channel_api_key.then_some(channel_id),
+        },
+    ) {
+        community_canister::generate_bot_api_key::Response::Success(result) => result.api_key,
+        response => panic!("'generate_bot_api_key' error: {response:?}"),
+    };
+
+    let send_message_response =
+        client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
+
+    let response = client::local_user_index::bot_chat_events(
+        env,
+        bot_principal,
+        canister_ids.local_user_index(env, community_id),
+        &local_user_index_canister::bot_chat_events::Args {
+            channel_id: Some(channel_id),
+            events: EventsSelectionCriteria::ByIndex(EventsByIndexArgs {
+                events: vec![send_message_response.event_index],
+            }),
+            auth_token: AuthToken::ApiKey(api_key),
+        },
+    );
+
+    let local_user_index_canister::bot_chat_events::Response::Success(result) = &response else {
+        panic!("'bot_chat_events' error: {response:?}");
+    };
+
+    if authorized {
+        assert_eq!(result.events.len(), 1);
+        assert!(result.unauthorized.is_empty());
+    } else {
+        assert!(result.events.is_empty());
+        assert_eq!(result.unauthorized, vec![send_message_response.event_index]);
+    }
+}
+
 #[test_case(ChatType::Direct)]
 #[test_case(ChatType::Group)]
 #[test_case(ChatType::Channel)]
@@ -742,7 +837,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
 
 fn register_bot(
     env: &mut PocketIc,
-    user: &User,
+    owner: &User,
     user_index_canister_id: CanisterId,
     bot_name: String,
     command_name: String,
@@ -760,9 +855,9 @@ fn register_bot(
         default_role: None,
     }];
 
-    let bot_principal = client::user_index::happy_path::register_bot(
+    client::user_index::happy_path::register_bot(
         env,
-        user,
+        owner.principal,
         user_index_canister_id,
         bot_name.clone(),
         endpoint.clone(),
@@ -774,17 +869,12 @@ fn register_bot(
                 permissions: BotPermissions::text_only(),
             }),
         },
-    );
-
-    let response = client::user_index::happy_path::explore_bots(env, user.principal, user_index_canister_id, None);
-    let bot_id = response.matches.iter().find(|b| b.name == bot_name).unwrap().id;
-
-    (bot_id, bot_principal)
+    )
 }
 
 fn register_autonomous_bot(
     env: &mut PocketIc,
-    user: &User,
+    owner: &User,
     user_index_canister_id: CanisterId,
     bot_name: String,
 ) -> (UserId, Principal) {
@@ -792,9 +882,9 @@ fn register_autonomous_bot(
     let endpoint = "https://my.bot.xyz/".to_string();
     let description = "greet".to_string();
 
-    let bot_principal = client::user_index::happy_path::register_bot(
+    client::user_index::happy_path::register_bot(
         env,
-        user,
+        owner.principal,
         user_index_canister_id,
         bot_name.clone(),
         endpoint.clone(),
@@ -806,12 +896,7 @@ fn register_autonomous_bot(
                 permissions: BotPermissions::text_only(),
             }),
         },
-    );
-
-    let response = client::user_index::happy_path::explore_bots(env, user.principal, user_index_canister_id, None);
-    let bot_id = response.matches.iter().find(|b| b.name == bot_name).unwrap().id;
-
-    (bot_id, bot_principal)
+    )
 }
 
 fn generate_bot_api_key(env: &mut PocketIc, bot_id: UserId, chat: &Chat, owner: Principal) -> Result<String, String> {

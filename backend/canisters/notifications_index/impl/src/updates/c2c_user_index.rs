@@ -3,14 +3,27 @@ use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
-use notifications_index_canister::c2c_sync_user_index_events::{Response::*, *};
+use notifications_index_canister::c2c_user_index::{Response::*, *};
 use notifications_index_canister::{NotificationsIndexEvent, UserIndexEvent};
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 
-#[update(guard = "caller_is_user_index_canister", msgpack = true, fallback = true)]
+#[update(guard = "caller_is_user_index_canister", msgpack = true)]
 #[trace]
-fn c2c_sync_user_index_events(args: Args) -> Response {
+fn c2c_sync_user_index_events(args: notifications_index_canister::c2c_sync_user_index_events::Args) -> Response {
+    mutate_state(|state| {
+        c2c_sync_user_index_events_impl(
+            Args {
+                events: args.events.into_iter().map(|e| e.into()).collect(),
+            },
+            state,
+        )
+    })
+}
+
+#[update(guard = "caller_is_user_index_canister", msgpack = true)]
+#[trace]
+fn c2c_user_index(args: Args) -> Response {
     mutate_state(|state| c2c_sync_user_index_events_impl(args, state))
 }
 

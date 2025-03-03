@@ -134,7 +134,7 @@ import {
     joinVideoCallResponse,
     setPinNumberResponse,
     apiMaybeAccessGateConfig,
-    apiChatPermission,
+    apiBotChatPermission,
     apiCommunityPermission,
     apiMessagePermission,
     updateBotResponse,
@@ -1671,7 +1671,7 @@ export class UserClient extends MsgpackCanisterAgent {
             {
                 bot_id: principalStringToBytes(botId),
                 granted_permissions: {
-                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
+                    chat: grantedPermissions.chatPermissions.map(apiBotChatPermission),
                     community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
                     message: grantedPermissions.messagePermissions.map(apiMessagePermission),
                 },
@@ -1691,7 +1691,7 @@ export class UserClient extends MsgpackCanisterAgent {
             {
                 bot_id: principalStringToBytes(botId),
                 requested_permissions: {
-                    chat: permissions.chatPermissions.map(apiChatPermission),
+                    chat: permissions.chatPermissions.map(apiBotChatPermission),
                     community: permissions.communityPermissions.map(apiCommunityPermission),
                     message: permissions.messagePermissions.map(apiMessagePermission),
                 },
