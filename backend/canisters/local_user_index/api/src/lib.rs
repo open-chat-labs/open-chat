@@ -196,7 +196,7 @@ struct DiamondMembershipPaymentReceivedCombined {
     expires_at: TimestampMillis,
     ledger: Option<CanisterId>,
     token_symbol: Option<String>,
-    token: types::Cryptocurrency,
+    token: Option<types::Cryptocurrency>,
     amount_e8s: u64,
     block_index: u64,
     duration: DiamondMembershipPlanDuration,
@@ -206,19 +206,23 @@ struct DiamondMembershipPaymentReceivedCombined {
 
 impl From<DiamondMembershipPaymentReceivedCombined> for DiamondMembershipPaymentReceived {
     fn from(value: DiamondMembershipPaymentReceivedCombined) -> Self {
+        let token_symbol = value
+            .token_symbol
+            .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
+
+        let token: types::Cryptocurrency = token_symbol.clone().into();
+
         DiamondMembershipPaymentReceived {
             user_id: value.user_id,
             timestamp: value.timestamp,
             expires_at: value.expires_at,
-            token: value.token.clone(),
-            ledger: value
-                .ledger
-                .unwrap_or(if matches!(value.token, types::Cryptocurrency::InternetComputer) {
-                    ICP_LEDGER_CANISTER_ID
-                } else {
-                    CHAT_LEDGER_CANISTER_ID
-                }),
-            token_symbol: value.token_symbol.unwrap_or_else(|| value.token.token_symbol().to_string()),
+            token: token.clone(),
+            ledger: if matches!(token, types::Cryptocurrency::InternetComputer) {
+                ICP_LEDGER_CANISTER_ID
+            } else {
+                CHAT_LEDGER_CANISTER_ID
+            },
+            token_symbol,
             amount_e8s: value.amount_e8s,
             block_index: value.block_index,
             duration: value.duration,

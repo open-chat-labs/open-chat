@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use crate::message_content_internal::icrc1::AccountInternal;
 use crate::stable_memory::tests::test_values::{
     AUDIO1, CRYPTO1, CUSTOM1, DELETED1, FILE1, GIPHY1, GOVERNANCE_PROPOSAL1, IMAGE1, MESSAGE_REMINDER1,
@@ -16,8 +17,9 @@ use constants::CHAT_SYMBOL;
 use rand::random;
 use testing::rng::{random_from_principal, random_from_u128, random_from_u32, random_principal, random_string};
 use types::{
-    EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal, ProposalDecisionStatus,
-    ProposalRewardStatus, Reaction, SnsProposal, Tally, ThumbnailData, Tips, TokenInfo, VideoCallPresence, VideoCallType,
+    Cryptocurrency, EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal,
+    ProposalDecisionStatus, ProposalRewardStatus, Reaction, SnsProposal, Tally, ThumbnailData, Tips, TokenInfo,
+    VideoCallPresence, VideoCallType,
 };
 
 mod test_values;
@@ -347,6 +349,7 @@ fn p2p_swap_content() {
         swap_id: random(),
         token0: TokenInfo {
             symbol: CHAT_SYMBOL.to_string(),
+            token: Cryptocurrency::CHAT,
             ledger: random_principal(),
             decimals: random(),
             fee: random(),
@@ -354,6 +357,7 @@ fn p2p_swap_content() {
         token0_amount: random(),
         token1: TokenInfo {
             symbol: random_string(),
+            token: Cryptocurrency::InternetComputer,
             ledger: random_principal(),
             decimals: random(),
             fee: random(),

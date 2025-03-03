@@ -23,6 +23,7 @@ pub struct CancelOrderRequest {
 #[serde(from = "TokenInfoCombined")]
 pub struct TokenInfo {
     pub symbol: String,
+    pub token: crate::Cryptocurrency,
     pub ledger: CanisterId,
     pub decimals: u8,
     pub fee: u128,
@@ -40,10 +41,13 @@ pub struct TokenInfoCombined {
 
 impl From<TokenInfoCombined> for TokenInfo {
     fn from(value: TokenInfoCombined) -> Self {
+        let symbol = value
+            .symbol
+            .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
+
         TokenInfo {
-            symbol: value
-                .symbol
-                .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string()),
+            token: symbol.clone().into(),
+            symbol,
             ledger: value.ledger,
             decimals: value.decimals,
             fee: value.fee,

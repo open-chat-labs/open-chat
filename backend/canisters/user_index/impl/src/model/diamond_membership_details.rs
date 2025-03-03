@@ -39,7 +39,7 @@ pub struct DiamondMembershipPayment {
 #[derive(Serialize, Deserialize, Clone)]
 struct DiamondMembershipPaymentCombined {
     timestamp: TimestampMillis,
-    token: Cryptocurrency,
+    token: Option<Cryptocurrency>,
     ledger: Option<CanisterId>,
     fee: Option<u128>,
     amount_e8s: u64,
@@ -50,19 +50,19 @@ struct DiamondMembershipPaymentCombined {
 
 impl From<DiamondMembershipPaymentCombined> for DiamondMembershipPayment {
     fn from(value: DiamondMembershipPaymentCombined) -> Self {
+        let token = value
+            .token
+            .unwrap_or(if matches!(value.ledger, Some(CHAT_LEDGER_CANISTER_ID)) {
+                Cryptocurrency::CHAT
+            } else {
+                Cryptocurrency::InternetComputer
+            });
+
         DiamondMembershipPayment {
             timestamp: value.timestamp,
-            token: value.token.clone(),
-            ledger: value.ledger.unwrap_or(if matches!(value.token, Cryptocurrency::CHAT) {
-                CHAT_LEDGER_CANISTER_ID
-            } else {
-                ICP_LEDGER_CANISTER_ID
-            }),
-            fee: value.fee.unwrap_or(if matches!(value.token, Cryptocurrency::CHAT) {
-                CHAT_TRANSFER_FEE
-            } else {
-                ICP_TRANSFER_FEE
-            }),
+            token: token.clone(),
+            ledger: if matches!(token, Cryptocurrency::CHAT) { CHAT_LEDGER_CANISTER_ID } else { ICP_LEDGER_CANISTER_ID },
+            fee: if matches!(token, Cryptocurrency::CHAT) { CHAT_TRANSFER_FEE } else { ICP_TRANSFER_FEE },
             amount_e8s: value.amount_e8s,
             block_index: value.block_index,
             duration: value.duration,

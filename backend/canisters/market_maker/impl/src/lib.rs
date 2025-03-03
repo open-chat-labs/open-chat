@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use crate::exchanges::Exchange;
 use crate::model::orders_log::OrdersLog;
 use canister_state_macros::canister_state;
@@ -8,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use types::{
-    AggregatedOrders, BuildVersion, CancelOrderRequest, CanisterId, Cycles, MakeOrderRequest, TimestampMillis, Timestamped,
-    TokenInfo,
+    AggregatedOrders, BuildVersion, CancelOrderRequest, CanisterId, Cryptocurrency, Cycles, MakeOrderRequest, TimestampMillis,
+    Timestamped, TokenInfo,
 };
 use utils::env::Environment;
 
@@ -79,12 +80,14 @@ impl RuntimeState {
             dex_canister_id,
             TokenInfo {
                 symbol: ICP_SYMBOL.to_string(),
+                token: Cryptocurrency::InternetComputer,
                 ledger: self.data.icp_ledger_canister_id,
                 decimals: 8,
                 fee: 10_000,
             },
             TokenInfo {
                 symbol: CHAT_SYMBOL.to_string(),
+                token: Cryptocurrency::CHAT,
                 ledger: self.data.chat_ledger_canister_id,
                 decimals: 8,
                 fee: 100_000,
