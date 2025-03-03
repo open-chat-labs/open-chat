@@ -3537,21 +3537,8 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2abdf9341da9f9f6b451a40609cb69645a05a8e9eb7784c16209f16f2c0f76f"
-dependencies = [
- "candid",
- "ic-cdk-macros 0.17.0",
- "ic0 0.23.0",
- "serde",
- "serde_bytes",
-]
-
-[[package]]
-name = "ic-cdk"
 version = "0.18.0-alpha.1"
-source = "git+https://github.com/dfinity/cdk-rs?rev=9a45b5ce24eb417ac3606d6378c346a68183559a#9a45b5ce24eb417ac3606d6378c346a68183559a"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
 dependencies = [
  "candid",
  "ic-cdk-macros 0.18.0-alpha.1",
@@ -3608,22 +3595,8 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk-macros"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8df41980e95dead28735ab0f748c75477b0c5eab37a09a5641c78ec406a1db0"
-dependencies = [
- "candid",
- "proc-macro2",
- "quote",
- "serde",
- "serde_tokenstream 0.2.2",
- "syn 2.0.87",
-]
-
-[[package]]
-name = "ic-cdk-macros"
 version = "0.18.0-alpha.1"
-source = "git+https://github.com/dfinity/cdk-rs?rev=9a45b5ce24eb417ac3606d6378c346a68183559a#9a45b5ce24eb417ac3606d6378c346a68183559a"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
 dependencies = [
  "candid",
  "proc-macro2",
@@ -3636,7 +3609,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk-timers"
 version = "0.12.0-alpha.1"
-source = "git+https://github.com/dfinity/cdk-rs?rev=9a45b5ce24eb417ac3606d6378c346a68183559a#9a45b5ce24eb417ac3606d6378c346a68183559a"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
 dependencies = [
  "candid",
  "futures",
@@ -3692,14 +3665,13 @@ dependencies = [
 
 [[package]]
 name = "ic-ledger-types"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a7103dea96107c8b1e49d6e80ab452ab48e9f3594d618dbb46449381f4f0a01"
+version = "0.15.0-alpha.1"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
 dependencies = [
  "candid",
  "crc32fast",
  "hex",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "serde",
  "serde_bytes",
  "sha2 0.10.8",
@@ -3708,7 +3680,7 @@ dependencies = [
 [[package]]
 name = "ic-management-canister-types"
 version = "0.2.1"
-source = "git+https://github.com/dfinity/cdk-rs?rev=9a45b5ce24eb417ac3606d6378c346a68183559a#9a45b5ce24eb417ac3606d6378c346a68183559a"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
 dependencies = [
  "candid",
  "serde",
@@ -3728,7 +3700,7 @@ dependencies = [
 [[package]]
 name = "ic-response-codes"
 version = "0.1.1"
-source = "git+https://github.com/dfinity/cdk-rs?rev=9a45b5ce24eb417ac3606d6378c346a68183559a#9a45b5ce24eb417ac3606d6378c346a68183559a"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
 
 [[package]]
 name = "ic-signature-verification"
@@ -3860,7 +3832,7 @@ checksum = "8de254dd67bbd58073e23dc1c8553ba12fa1dc610a19de94ad2bbcd0460c067f"
 [[package]]
 name = "ic0"
 version = "0.24.0-alpha.1"
-source = "git+https://github.com/dfinity/cdk-rs?rev=9a45b5ce24eb417ac3606d6378c346a68183559a#9a45b5ce24eb417ac3606d6378c346a68183559a"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=a331b509d65da63b45127e0394948aa5077686a8#a331b509d65da63b45127e0394948aa5077686a8"
 
 [[package]]
 name = "ic_bls12_381"
