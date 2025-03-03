@@ -1,8 +1,11 @@
-use constants::{CHAT_LEDGER_CANISTER_ID, DAY_IN_MS, LIFETIME_DIAMOND_TIMESTAMP};
+#![allow(deprecated)]
+use constants::{
+    CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE, DAY_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_TRANSFER_FEE, LIFETIME_DIAMOND_TIMESTAMP,
+};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{
-    is_default, CanisterId, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
+    is_default, CanisterId, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
     DiamondMembershipStatusFull, DiamondMembershipSubscription, TimestampMillis,
 };
 
@@ -21,6 +24,7 @@ pub struct DiamondMembershipDetailsInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(from = "DiamondMembershipPaymentCombined")]
 pub struct DiamondMembershipPayment {
     pub timestamp: TimestampMillis,
     pub ledger: CanisterId,
@@ -29,6 +33,40 @@ pub struct DiamondMembershipPayment {
     pub block_index: u64,
     pub duration: DiamondMembershipPlanDuration,
     pub manual_payment: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct DiamondMembershipPaymentCombined {
+    timestamp: TimestampMillis,
+    token: Option<Cryptocurrency>,
+    ledger: Option<CanisterId>,
+    fee: Option<u128>,
+    amount_e8s: u64,
+    block_index: u64,
+    duration: DiamondMembershipPlanDuration,
+    manual_payment: bool,
+}
+
+impl From<DiamondMembershipPaymentCombined> for DiamondMembershipPayment {
+    fn from(value: DiamondMembershipPaymentCombined) -> Self {
+        DiamondMembershipPayment {
+            timestamp: value.timestamp,
+            ledger: value.ledger.unwrap_or(if matches!(value.token, Some(Cryptocurrency::CHAT)) {
+                CHAT_LEDGER_CANISTER_ID
+            } else {
+                ICP_LEDGER_CANISTER_ID
+            }),
+            fee: value.fee.unwrap_or(if matches!(value.token, Some(Cryptocurrency::CHAT)) {
+                CHAT_TRANSFER_FEE
+            } else {
+                ICP_TRANSFER_FEE
+            }),
+            amount_e8s: value.amount_e8s,
+            block_index: value.block_index,
+            duration: value.duration,
+            manual_payment: value.manual_payment,
+        }
+    }
 }
 
 impl DiamondMembershipDetailsInternal {
