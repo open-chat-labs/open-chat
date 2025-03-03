@@ -165,7 +165,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     UserEvent::DiamondMembershipPaymentReceived(Box::new(DiamondMembershipPaymentReceived {
                         timestamp: ev.timestamp,
                         expires_at: ev.expires_at,
-                        token: ev.token,
+                        ledger: ev.ledger,
                         token_symbol: ev.token_symbol,
                         amount_e8s: ev.amount_e8s,
                         block_index: ev.block_index,
