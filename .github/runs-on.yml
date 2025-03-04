@@ -1,6 +1,0 @@
-images:
-  official_image_with_rust_preinstalled:
-    platform: "linux"
-    arch: "x64"
-    owner: "135269210855" # RunsOn owner
-    name: "runs-on-v2.2-ubuntu22-full-x64-20250216080243"

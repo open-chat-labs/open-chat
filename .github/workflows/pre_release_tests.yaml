@@ -11,15 +11,20 @@ jobs:
     name: Run pre-release tests
     runs-on:
       - runs-on
-      - image=official_image_with_rust_preinstalled
       - runner=16cpu-linux-x64
       - family=m7i
       - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/workflows/setup-rust
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          cache: read
+          cache: false
+      - name: Setup caching
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: 'build-debug'
+          save-if: false
       - name: Wait for wasms to be built
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
