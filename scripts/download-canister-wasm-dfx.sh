@@ -6,6 +6,12 @@ cd $SCRIPT_DIR/..
 
 CANISTER_NAME=$1
 
+if ! command -v jq &> /dev/null
+then
+  echo "Please install jq then try again (https://jqlang.org/download)"
+  exit 1
+fi
+
 URL=$(jq ".canisters.${CANISTER_NAME}.wasm" dfx.json)
 URL=$(echo "$URL" | tr -d '"')
 
