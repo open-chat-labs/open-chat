@@ -345,6 +345,7 @@ fn reported_message_content() {
 
 #[test]
 fn p2p_swap_content() {
+    let symbol = random_string();
     let content = MessageContentInternal::P2PSwap(P2PSwapContentInternal {
         swap_id: random(),
         token0: TokenInfo {
@@ -356,8 +357,8 @@ fn p2p_swap_content() {
         },
         token0_amount: random(),
         token1: TokenInfo {
-            symbol: random_string(),
-            token: Cryptocurrency::InternetComputer,
+            symbol: symbol.clone(),
+            token: Cryptocurrency::Other(symbol),
             ledger: random_principal(),
             decimals: random(),
             fee: random(),
