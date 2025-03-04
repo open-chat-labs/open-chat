@@ -13,13 +13,13 @@
         disabled?: boolean;
         format?: string;
         futureOnly?: boolean;
-        onSelect: (tms: BigInt | undefined) => void;
+        onSelect: (tms: bigint | undefined) => void;
         placeholder?: ResourceKey | undefined;
         required?: boolean;
         timePrecision?: "minute" | "second" | "millisecond" | null;
         valid?: boolean;
         // Provided date value in milliseconds!
-        value?: BigInt | null | undefined;
+        value?: bigint | null | undefined;
     }
 
     let {

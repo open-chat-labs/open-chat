@@ -163,6 +163,7 @@
     }
 
     $: {
+        // svelte-ignore reactive_declaration_non_reactive_property
         if ($screenWidth === ScreenWidth.Large) {
             inp?.focus();
         }

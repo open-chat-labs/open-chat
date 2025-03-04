@@ -380,7 +380,7 @@ export type DecimalParamInstance = {
 
 export type DateTimeParamInstance = {
     kind: "dateTime",
-    value?: BigInt | null,
+    value?: bigint | null,
 }
 
 export type SlashCommandParamTypeInstance =
@@ -472,6 +472,8 @@ export function paramInstanceIsValid(
                 instance.value >= schema.minValue &&
                 instance.value <= schema.maxValue)
         );
+    } else if (schema.kind === "dateTime" && instance.kind === "dateTime") {
+        return !schema.required || instance.value !== undefined;
     }
 
     return false;
