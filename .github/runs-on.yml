@@ -3,6 +3,4 @@ images:
     platform: "linux"
     arch: "x64"
     owner: "135269210855" # RunsOn owner
-    name: "runs-on-v2.2-ubuntu22-full-x64-*" # RunsOn x64 most recent image
-    preinstall: |
-      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -y
+    name: "runs-on-v2.2-ubuntu22-full-x64-20250216080243"
