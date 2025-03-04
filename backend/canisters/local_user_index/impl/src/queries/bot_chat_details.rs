@@ -1,6 +1,6 @@
 use crate::bots::extract_access_context;
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::query;
+use canister_api_macros::{query, update};
 use canister_tracing_macros::trace;
 use local_user_index_canister::bot_chat_details::{Response::*, *};
 use types::{AuthToken, BotActionScope, BotInitiator, ChannelId, Chat, UserId};
@@ -8,6 +8,16 @@ use types::{AuthToken, BotActionScope, BotInitiator, ChannelId, Chat, UserId};
 #[query(composite = true, candid = true, msgpack = true)]
 #[trace]
 async fn bot_chat_details(args: Args) -> Response {
+    bot_chat_details_impl(args).await
+}
+
+#[update(candid = true, msgpack = true)]
+#[trace]
+async fn bot_chat_details_c2c(args: Args) -> Response {
+    bot_chat_details_impl(args).await
+}
+
+async fn bot_chat_details_impl(args: Args) -> Response {
     let PrepareOk { bot_id, initiator, chat } = match mutate_state(|state| prepare(args.channel_id, args.auth_token, state)) {
         Ok(ok) => ok,
         Err(response) => return *response,
