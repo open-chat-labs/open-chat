@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "命令占位符消息",
             "commandPlaceholderPlaceholder": "未指定命令占位符消息",
             "commandsLabel": "命令",
+            "dateTimeFutureOnly": "未来日期",
+            "dateTimeFutureOnlyDesc": "仅允许选择未来日期",
             "descLabel": "机器人描述",
             "descPlaceholder": "输入机器人描述",
             "editPrincipalPlaceholder": "若不变则留空",

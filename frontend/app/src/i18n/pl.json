@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "Komunikat zastępczy polecenia",
             "commandPlaceholderPlaceholder": "Nie określono komunikatu zastępczego polecenia",
             "commandsLabel": "Polecenia",
+            "dateTimeFutureOnly": "Przyszłe daty",
+            "dateTimeFutureOnlyDesc": "Umożliwia wybór tylko przyszłych dat",
             "descLabel": "Opis bota",
             "descPlaceholder": "Wprowadź opis bota",
             "editPrincipalPlaceholder": "Pozostaw puste, jeśli nie zmieniono",
