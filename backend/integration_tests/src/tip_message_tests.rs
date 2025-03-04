@@ -35,8 +35,8 @@ fn tip_direct_message_succeeds() {
         message_id,
         canister_ids.icp_ledger,
         ICP_SYMBOL.to_string(),
-        ICP_TRANSFER_FEE,
         tip_amount,
+        ICP_TRANSFER_FEE,
     );
 
     let user1_message = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![event_index])
@@ -97,8 +97,8 @@ fn tip_group_message_succeeds() {
         message_id,
         canister_ids.icp_ledger,
         ICP_SYMBOL.to_string(),
-        ICP_TRANSFER_FEE,
         tip_amount,
+        ICP_TRANSFER_FEE,
     );
 
     let message = client::group::happy_path::events_by_index(env, &user2, group_id, vec![event_index])
@@ -155,8 +155,8 @@ fn tip_channel_message_succeeds() {
         message_id,
         canister_ids.icp_ledger,
         ICP_SYMBOL.to_string(),
-        ICP_TRANSFER_FEE,
         tip_amount,
+        ICP_TRANSFER_FEE,
     );
 
     let message = client::community::happy_path::events_by_index(env, &user2, community_id, channel_id, vec![event_index])
