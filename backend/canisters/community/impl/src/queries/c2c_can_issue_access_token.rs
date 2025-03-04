@@ -47,7 +47,7 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
             return Response::Failure;
         };
 
-        // Get the permissions granted to the user in this group
+        // Get the permissions granted to the user in this community
         let Some(granted_to_user) = state.data.get_user_permissions(&args.initiator, args_outer.channel_id) else {
             return Response::Failure;
         };
