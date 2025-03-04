@@ -1166,6 +1166,7 @@ type FailedCryptoTransaction = variant {
 type NnsPendingCryptoTransaction = record {
     ledger : CanisterId;
     token_symbol : text;
+    token : Cryptocurrency;
     amount : Tokens;
     to : NnsUserOrAccount;
     fee : opt Tokens;
@@ -1222,6 +1223,7 @@ type Icrc1Account = record {
 type Icrc1PendingCryptoTransaction = record {
     ledger : CanisterId;
     token_symbol : text;
+    token : Cryptocurrency;
     amount : nat;
     fee : nat;
     to : Icrc1Account;
@@ -1256,6 +1258,7 @@ type Icrc1FailedCryptoTransaction = record {
 type Icrc2PendingCryptoTransaction = record {
     ledger : CanisterId;
     token_symbol : text;
+    token : Cryptocurrency;
     amount : nat;
     fee : nat;
     from : Icrc1Account;
@@ -1878,6 +1881,7 @@ type OptionalMessagePermissionsUpdate = variant {
 
 type TokenInfo = record {
     symbol : text;
+    token : Cryptocurrency;
     ledger : CanisterId;
     decimals : nat8;
     fee : nat;
