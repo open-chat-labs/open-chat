@@ -33,6 +33,7 @@
     let placeholder = i18nKey("Search for a community, group or user");
     let results: Match[] = $state([]);
     let selected: Match | undefined = $state(undefined);
+    let focused = $state(false);
     location; // usual hack
 
     onMount(() => onPerformSearch(""));
@@ -81,6 +82,14 @@
             }
         }
     }
+
+    function onFocus() {
+        focused = true;
+    }
+
+    function onBlur() {
+        window.setTimeout(() => focused = false, 100);
+    }
 </script>
 
 <div class="bot-install-location" class:showing-menu={results.length > 0}>
@@ -90,10 +99,10 @@
     {#if selected !== undefined}
         <SelectedMatch onRemove={() => reset()} match={selected}></SelectedMatch>
     {:else}
-        <Search inputStyle fill {placeholder} searching={false} {searchTerm} {onPerformSearch} />
+        <Search inputStyle fill {placeholder} searching={false} {searchTerm} {onPerformSearch} {onFocus} {onBlur} />
     {/if}
 
-    {#if results.length > 0}
+    {#if focused && results.length > 0}
         <div class="menu">
             <Menu shadow={false}>
                 {#each results as match (match.id)}
