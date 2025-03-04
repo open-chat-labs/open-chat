@@ -25,7 +25,7 @@ jobs:
     steps:
       - name: Install Rustup
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -y
+          curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --default-toolchain none -y
       - name: PATH
         run: |
           echo $PATH
@@ -35,7 +35,8 @@ jobs:
         with:
           cache: false
         continue-on-error: true
-      - run: |
+      - name: PATH
+        run: |
           echo $PATH
       - uses: arduino/setup-protoc@v1
         with:
