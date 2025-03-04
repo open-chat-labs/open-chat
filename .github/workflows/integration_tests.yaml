@@ -19,6 +19,7 @@ jobs:
     name: run integration tests
     runs-on:
       - runs-on
+      - image=official_image_with_rust_preinstalled
       - runner=16cpu-linux-x64
       - family=m7i
       - run-id=${{ github.run_id }}
