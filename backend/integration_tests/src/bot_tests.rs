@@ -112,7 +112,7 @@ fn e2e_command_bot_test() {
     ));
 
     // Update the group bot permissions
-    granted_permissions.message.insert(MessagePermission::Text);
+    granted_permissions = granted_permissions.with_message(&HashSet::from_iter([MessagePermission::Text]));
     client::group::happy_path::update_bot(env, owner.principal, group_id, bot.id, granted_permissions.clone());
 
     // Confirm bot returned in `selected_update`
@@ -489,11 +489,8 @@ fn create_channel_by_api_key() {
         community_id.into(),
         &community_canister::generate_bot_api_key::Args {
             bot_id,
-            requested_permissions: BotPermissions {
-                community: HashSet::from_iter(vec![CommunityPermission::CreatePublicChannel]),
-                chat: HashSet::new(),
-                message: HashSet::new(),
-            },
+            requested_permissions: BotPermissions::default()
+                .with_community(&HashSet::from_iter(vec![CommunityPermission::CreatePublicChannel])),
             channel_id: None,
         },
     ) {
@@ -608,15 +605,11 @@ fn read_messages_by_api_key(channel_api_key: bool, authorized: bool) {
         community_id.into(),
         &community_canister::generate_bot_api_key::Args {
             bot_id,
-            requested_permissions: BotPermissions {
-                community: HashSet::new(),
-                chat: HashSet::from_iter([if authorized {
-                    ChatPermission::ReadMessages
-                } else {
-                    ChatPermission::ReadMembership
-                }]),
-                message: HashSet::new(),
-            },
+            requested_permissions: BotPermissions::default().with_chat(&HashSet::from_iter([if authorized {
+                ChatPermission::ReadMessages
+            } else {
+                ChatPermission::ReadMembership
+            }])),
             channel_id: channel_api_key.then_some(channel_id),
         },
     ) {
