@@ -1700,6 +1700,11 @@ export const VideoCallAccessTokenArgs = Type.Object({
     call_type: VideoCallType,
 });
 
+export type DateTimeParam = Static<typeof DateTimeParam>;
+export const DateTimeParam = Type.Object({
+    future_only: Type.Boolean(),
+});
+
 export type P2PSwapCancelled = Static<typeof P2PSwapCancelled>;
 export const P2PSwapCancelled = Type.Object({
     token0_txn_out: Type.Optional(Type.BigInt()),
@@ -5584,6 +5589,7 @@ export const StringParam = Type.Object({
     min_length: Type.Number(),
     max_length: Type.Number(),
     choices: Type.Array(BotCommandOptionChoiceString),
+    multi_line: Type.Boolean(),
 });
 
 export type GroupInviteCodeChanged = Static<typeof GroupInviteCodeChanged>;
@@ -5979,6 +5985,9 @@ export const BotCommandArgValue = Type.Union([
     Type.Object({
         User: UserId,
     }),
+    Type.Object({
+        DateTime: Type.BigInt(),
+    }),
 ]);
 
 export type PendingCryptoTransactionICRC2 = Static<typeof PendingCryptoTransactionICRC2>;
@@ -6201,6 +6210,9 @@ export const BotCommandParamType = Type.Union([
     }),
     Type.Object({
         DecimalParam: DecimalParam,
+    }),
+    Type.Object({
+        DateTimeParam: DateTimeParam,
     }),
 ]);
 
