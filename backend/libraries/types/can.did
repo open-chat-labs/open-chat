@@ -2170,9 +2170,9 @@ type DateTimeParam = record {
 };
 
 type BotPermissions = record {
-    community: vec CommunityPermission;
-    chat: vec GroupPermission;
-    message: vec MessagePermission;
+    community: nat32;
+    chat: nat32;
+    message: nat32;
 };
 
 type CommunityPermission = variant {

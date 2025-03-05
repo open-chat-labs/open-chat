@@ -33,7 +33,7 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
@@ -933,11 +933,7 @@ impl Data {
 
         let community_permissions = community_member.role().permissions(&self.permissions);
 
-        let mut bot_permissions = BotPermissions {
-            community: community_permissions,
-            chat: HashSet::new(),
-            message: HashSet::new(),
-        };
+        let mut bot_permissions = BotPermissions::default().with_community(&community_permissions);
 
         if let Some(channel_id) = channel_id {
             let channel = self.channels.get(&channel_id)?;
@@ -948,8 +944,9 @@ impl Data {
                 .role()
                 .message_permissions(&channel.chat.permissions.message_permissions);
 
-            bot_permissions.chat = channel_permissions;
-            bot_permissions.message = message_permissions;
+            bot_permissions = bot_permissions
+                .with_chat(&channel_permissions)
+                .with_message(&message_permissions);
         }
 
         Some(bot_permissions)

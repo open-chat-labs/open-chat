@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Limit message content types from `bot_chat_events` ([#7509](https://github.com/open-chat-labs/open-chat/pull/7509))
+- Always encode `BotPermission`s as `u32`s ([#7519](https://github.com/open-chat-labs/open-chat/pull/7519))
 
 ## [[2.0.1610](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1610-local_user_index)] - 2025-02-28
 

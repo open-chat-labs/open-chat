@@ -773,11 +773,11 @@ impl Data {
         let group_permissions = member.role().chat_permissions(&self.chat.permissions);
         let message_permissions = member.role().message_permissions(&self.chat.permissions.message_permissions);
 
-        Some(BotPermissions {
-            community: HashSet::new(),
-            chat: group_permissions,
-            message: message_permissions,
-        })
+        Some(
+            BotPermissions::default()
+                .with_chat(&group_permissions)
+                .with_message(&message_permissions),
+        )
     }
 
     pub fn is_bot_permitted(&self, bot_id: &UserId, initiator: &BotInitiator, required: BotPermissions) -> bool {
