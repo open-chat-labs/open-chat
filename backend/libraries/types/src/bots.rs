@@ -280,8 +280,25 @@ fn union_bits(x: u32, y: u32) -> u32 {
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum BotPermissionsCombined {
-    New(BotPermissions),
+    New(BotPermissionsNew),
     Old(BotPermissionsPrevious),
+}
+
+#[derive(Deserialize)]
+struct BotPermissionsNew {
+    community: u32,
+    chat: u32,
+    message: u32,
+}
+
+impl From<BotPermissionsNew> for BotPermissions {
+    fn from(value: BotPermissionsNew) -> Self {
+        BotPermissions {
+            community: value.community,
+            chat: value.chat,
+            message: value.message,
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
@@ -303,7 +320,7 @@ impl From<BotPermissionsPrevious> for BotPermissions {
 impl From<BotPermissionsCombined> for BotPermissions {
     fn from(value: BotPermissionsCombined) -> Self {
         match value {
-            BotPermissionsCombined::New(p) => p,
+            BotPermissionsCombined::New(p) => p.into(),
             BotPermissionsCombined::Old(p) => p.into(),
         }
     }
