@@ -1,6 +1,8 @@
+#![allow(deprecated)]
 use crate::exchanges::Exchange;
 use crate::model::orders_log::OrdersLog;
 use canister_state_macros::canister_state;
+use constants::{CHAT_SYMBOL, ICP_SYMBOL};
 use icdex_client::ICDexClient;
 use market_maker_canister::{ExchangeId, ICDEX_EXCHANGE_ID, ICDEX_EXCHANGE_V2_ID};
 use serde::{Deserialize, Serialize};
@@ -77,12 +79,14 @@ impl RuntimeState {
             self.env.canister_id(),
             dex_canister_id,
             TokenInfo {
+                symbol: ICP_SYMBOL.to_string(),
                 token: Cryptocurrency::InternetComputer,
                 ledger: self.data.icp_ledger_canister_id,
                 decimals: 8,
                 fee: 10_000,
             },
             TokenInfo {
+                symbol: CHAT_SYMBOL.to_string(),
                 token: Cryptocurrency::CHAT,
                 ledger: self.data.chat_ledger_canister_id,
                 decimals: 8,

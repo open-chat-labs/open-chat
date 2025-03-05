@@ -158,6 +158,7 @@ type UsersChitResponse = variant {
 type DiamondMembershipFeesResponse = variant {
     Success : vec record {
         token : Cryptocurrency;
+        token_symbol : text;
         one_month : nat64;
         three_months : nat64;
         one_year : nat64;

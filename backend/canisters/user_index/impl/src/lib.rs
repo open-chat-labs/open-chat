@@ -29,8 +29,8 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles, DiamondMembershipFees, IdempotentEnvelope,
-    Milliseconds, TimestampMillis, Timestamped, UserId, UserType,
+    BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cycles, DiamondMembershipFees, IdempotentEnvelope, Milliseconds,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_index_canister::ChildCanisterType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
@@ -690,7 +690,7 @@ pub struct DiamondMembershipUserMetrics {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct DiamondMembershipPaymentMetrics {
-    pub amount_raised: Vec<(Cryptocurrency, u128)>,
+    pub amount_raised: Vec<(String, u128)>,
     pub manual_payments_taken: u64,
     pub recurring_payments_taken: u64,
     pub recurring_payments_failed_due_to_insufficient_funds: u64,

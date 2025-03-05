@@ -8,6 +8,7 @@ edition.workspace = true
 [dependencies]
 candid = { workspace = true }
 chat_events = { path = "../../../libraries/chat_events" }
+constants = { path = "../../../libraries/constants" }
 ic-ledger-types = { workspace = true }
 icrc-ledger-types = { workspace = true }
 proposals_bot_canister = { path = "../../proposals_bot/api" }

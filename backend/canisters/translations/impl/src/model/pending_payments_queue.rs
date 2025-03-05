@@ -1,7 +1,7 @@
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use types::{Cryptocurrency, TimestampMillis};
+use types::{CanisterId, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PendingPaymentsQueue {
@@ -25,7 +25,8 @@ impl PendingPaymentsQueue {
 #[derive(Serialize, Deserialize)]
 pub struct PendingPayment {
     pub amount: u128,
-    pub currency: Cryptocurrency,
+    pub ledger: CanisterId,
+    pub fee: u128,
     pub timestamp: TimestampMillis,
     pub recipient_account: Account,
     pub reason: PendingPaymentReason,

@@ -1,7 +1,9 @@
+#![allow(deprecated)]
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{now_nanos, tick_many};
 use crate::{client, TestEnv};
+use constants::{ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -31,10 +33,9 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
         stop_canister(env, user2.local_user_index, user2.canister());
     }
 
-    let token = Cryptocurrency::InternetComputer;
-    let ledger = token.ledger_canister_id().unwrap();
+    let ledger = ICP_LEDGER_CANISTER_ID;
     let amount = 1_000_000;
-    let fee = 10_000;
+    let fee = ICP_TRANSFER_FEE;
     let now_nanos = now_nanos(env);
 
     let transaction = if icrc2 {
@@ -46,7 +47,8 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
         PendingCryptoTransaction::ICRC2(types::icrc2::PendingCryptoTransaction {
             ledger,
             fee,
-            token,
+            token_symbol: ICP_SYMBOL.to_string(),
+            token: Cryptocurrency::InternetComputer,
             amount,
             from: random_principal.into(),
             to: user2.user_id.into(),
@@ -60,7 +62,8 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
         PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
             ledger,
             fee,
-            token,
+            token_symbol: ICP_SYMBOL.to_string(),
+            token: Cryptocurrency::InternetComputer,
             amount,
             to: user2.user_id.into(),
             memo: None,
@@ -137,10 +140,9 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     client::group::happy_path::join_group(env, user2.principal, group_id);
 
-    let token = Cryptocurrency::InternetComputer;
-    let ledger = token.ledger_canister_id().unwrap();
+    let ledger = ICP_LEDGER_CANISTER_ID;
     let amount = 1_000_000;
-    let fee = 10_000;
+    let fee = ICP_TRANSFER_FEE;
     let now_nanos = now_nanos(env);
     let local_group_index = canister_ids.local_group_index(env, group_id);
 
@@ -153,7 +155,8 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
         PendingCryptoTransaction::ICRC2(types::icrc2::PendingCryptoTransaction {
             ledger,
             fee,
-            token,
+            token_symbol: ICP_SYMBOL.to_string(),
+            token: Cryptocurrency::InternetComputer,
             amount,
             from: random_principal.into(),
             to: user2.user_id.into(),
@@ -167,7 +170,8 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
         PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
             ledger,
             fee,
-            token,
+            token_symbol: ICP_SYMBOL.to_string(),
+            token: Cryptocurrency::InternetComputer,
             amount,
             to: user2.user_id.into(),
             memo: None,

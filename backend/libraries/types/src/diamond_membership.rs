@@ -30,7 +30,7 @@ pub enum DiamondMembershipStatus {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum DiamondMembershipPlanDuration {
     OneMonth = 1,

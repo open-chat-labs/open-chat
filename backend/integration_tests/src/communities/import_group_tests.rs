@@ -1,8 +1,9 @@
+#![allow(deprecated)]
 use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use constants::HOUR_IN_MS;
+use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -180,8 +181,7 @@ fn pending_prizes_transferred_to_community() {
         ..
     } = init_test_data(env, canister_ids, *controller);
 
-    let token = Cryptocurrency::InternetComputer;
-    let fee = token.fee().unwrap();
+    let fee = ICP_TRANSFER_FEE;
     let message_id = random_from_u128();
     let prizes = vec![100000; 2];
     let amount_to_transfer = prizes.iter().sum::<u128>() + fee * prizes.len() as u128;
@@ -198,7 +198,8 @@ fn pending_prizes_transferred_to_community() {
                 prizes_v2: prizes,
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
-                    token: token.clone(),
+                    token_symbol: ICP_SYMBOL.to_string(),
+                    token: Cryptocurrency::InternetComputer,
                     amount: amount_to_transfer,
                     to: group_id.into(),
                     fee,
@@ -239,7 +240,7 @@ fn pending_prizes_transferred_to_community() {
     tick_many(env, 10);
 
     let community_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
-    assert_eq!(community_balance, amount_to_transfer - token.fee().unwrap());
+    assert_eq!(community_balance, amount_to_transfer - fee);
 
     client::community::happy_path::claim_prize(env, user2.principal, community_id, channel_id, message_id);
     client::community::happy_path::claim_prize(env, user3.principal, community_id, channel_id, message_id);

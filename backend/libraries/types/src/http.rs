@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 use candid::{define_function, CandidType, Nat};
 use serde::Deserialize;
 use serde_bytes::ByteBuf;

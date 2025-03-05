@@ -396,6 +396,9 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
         let now = state.env.now();
         let my_user_id = state.env.canister_id().into();
         let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+        let token_symbol = args
+            .token_symbol
+            .unwrap_or_else(|| args.token.unwrap().token_symbol().to_string());
 
         let tip_message_args = TipMessageArgs {
             user_id: caller_user_id,
@@ -403,7 +406,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
             thread_root_message_index,
             message_id: args.message_id,
             ledger: args.ledger,
-            token: args.token.clone(),
+            token_symbol: token_symbol.clone(),
             amount: args.amount,
             now,
         };
@@ -425,7 +428,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                     message_event_index: message_event.index,
                     username: args.username,
                     display_name: args.display_name,
-                    tip: format_crypto_amount_with_symbol(args.amount, args.decimals, args.token.token_symbol()),
+                    tip: format_crypto_amount_with_symbol(args.amount, args.decimals, &token_symbol),
                     user_avatar_id: args.user_avatar_id,
                 });
                 state.push_notification(Some(caller_user_id), my_user_id, notification);

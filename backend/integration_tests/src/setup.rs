@@ -3,7 +3,7 @@ use crate::env::VIDEO_CALL_OPERATOR;
 use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds, TestEnv, T};
 use candid::{CandidType, Nat, Principal};
-use constants::SNS_GOVERNANCE_CANISTER_ID;
+use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, SNS_GOVERNANCE_CANISTER_ID};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
@@ -75,9 +75,9 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         env,
         controller,
         "OpenChat".to_string(),
-        "CHAT".to_string(),
-        100000,
-        Some("2ouva-viaaa-aaaaq-aaamq-cai"),
+        CHAT_SYMBOL.to_string(),
+        CHAT_TRANSFER_FEE as u64,
+        Some(CHAT_LEDGER_CANISTER_ID.to_text().as_str()),
         Vec::new(),
     );
     let chat_governance_canister_id = SNS_GOVERNANCE_CANISTER_ID;

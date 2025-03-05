@@ -6,7 +6,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, Reader};
-use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
+use constants::{CHAT_LEDGER_CANISTER_ID, DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -36,10 +36,10 @@ use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator, BotPermissions,
-    BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles,
-    Document, Empty, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
-    GroupPermissions, GroupSubtype, IdempotentEnvelope, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules,
-    TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cycles, Document, Empty,
+    EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
+    IdempotentEnvelope, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId,
+    UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -150,7 +150,7 @@ impl RuntimeState {
         let treasury_share = payment.amount.saturating_sub(owner_share * owner_count);
         let amount = treasury_share.saturating_sub(payment.fee);
         if amount > 0 {
-            let is_chat = payment.ledger_canister_id == SNS_LEDGER_CANISTER_ID;
+            let is_chat = payment.ledger_canister_id == CHAT_LEDGER_CANISTER_ID;
             let is_icp = payment.ledger_canister_id == ICP_LEDGER_CANISTER_ID;
             self.data.pending_payments_queue.push(PendingPayment {
                 amount,
@@ -444,7 +444,7 @@ impl RuntimeState {
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow_canister_id: self.data.escrow_canister_id,
-                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
+                icp_ledger: ICP_LEDGER_CANISTER_ID,
             },
         }
     }

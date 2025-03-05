@@ -1,11 +1,11 @@
 use crate::env::ENV;
-use crate::utils::{now_millis, tick_many};
+use crate::utils::{chat_token_info, icp_token_info, now_millis, tick_many};
 use crate::{client, TestEnv};
 use constants::DAY_IN_MS;
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use std::ops::Deref;
-use types::{Chat, Cryptocurrency, P2PSwapLocation};
+use types::{Chat, P2PSwapLocation};
 
 #[test]
 fn swap_via_escrow_canister_succeeds() {
@@ -28,9 +28,9 @@ fn swap_via_escrow_canister_succeeds() {
         user1.user_id.into(),
         canister_ids.escrow,
         P2PSwapLocation::from_message(Chat::Direct(user2.user_id.into()), None, 0u64.into()),
-        Cryptocurrency::InternetComputer,
+        icp_token_info(),
         icp_amount,
-        Cryptocurrency::CHAT,
+        chat_token_info(),
         chat_amount,
         now + DAY_IN_MS,
     );
