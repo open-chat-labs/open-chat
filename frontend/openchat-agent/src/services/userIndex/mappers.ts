@@ -668,6 +668,13 @@ export function apiCustomParamFields(param: SlashCommandParam): ApiSlashCommandP
                     min_length: param.minLength,
                     max_length: param.maxLength,
                     choices: param.choices,
+                    multi_line: param.multi_line,
+                },
+            };
+        case "dateTime":
+            return {
+                DateTimeParam: {
+                    future_only: param.future_only,
                 },
             };
     }

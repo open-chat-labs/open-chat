@@ -630,6 +630,12 @@ export function botCommandArg(api: BotCommandArg): SlashCommandParamInstance {
             name,
             userId: principalBytesToString(value.User),
         };
+    } else if ("DateTime" in value) {
+        return {
+            kind: "dateTime",
+            name,
+            value: value.DateTime,
+        }
     }
     throw new Error(`Unexpected ApiBotCommandArg type received, ${api}`);
 }
@@ -3489,6 +3495,7 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
             minLength: paramType.StringParam.min_length,
             maxLength: paramType.StringParam.max_length,
             choices: paramType.StringParam.choices,
+            multi_line: paramType.StringParam.multi_line,
         };
     } else if ("IntegerParam" in paramType) {
         return {
@@ -3506,7 +3513,12 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
             minValue: paramType.DecimalParam.min_value,
             maxValue: paramType.DecimalParam.max_value,
             choices: paramType.DecimalParam.choices,
-        };
+        };    
+    } else if ("DateTimeParam" in paramType) {
+        return {
+            kind: "dateTime",
+            future_only: paramType.DateTimeParam.future_only,
+        }
     }
     throw new UnsupportedValueError("Unexpected ApiSlashCommandParamType value", paramType);
 }

@@ -36,6 +36,7 @@ function createTestBot(): ExternalBot {
                                 { name: "one", value: "one" },
                                 { name: "two", value: "two" },
                             ],
+                            multi_line: false,
                         },
                         {
                             kind: "user",

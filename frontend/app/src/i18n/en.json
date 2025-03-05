@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "Command placeholder message",
             "commandPlaceholderPlaceholder": "Command placeholder message not specified",
             "commandsLabel": "Commands",
+            "dateTimeFutureOnly": "Future dates",
+            "dateTimeFutureOnlyDesc": "Allows selection of future dates only",
             "descLabel": "Bot description",
             "descPlaceholder": "Enter bot description",
             "editPrincipalPlaceholder": "Leave blank if unchanged",
