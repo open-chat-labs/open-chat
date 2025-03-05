@@ -1,6 +1,6 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
-use types::Cryptocurrency;
+use constants::{CHAT_SYMBOL, ICP_SYMBOL};
 use user_index_canister::diamond_membership_fees::{Response::*, *};
 
 #[query(candid = true, msgpack = true)]
@@ -13,14 +13,18 @@ fn diamond_membership_fees_impl(state: &RuntimeState) -> Response {
 
     let fees = vec![
         DiamondMembershipFees {
-            token: Cryptocurrency::CHAT,
+            #[allow(deprecated)]
+            token: types::Cryptocurrency::CHAT,
+            token_symbol: CHAT_SYMBOL.to_string(),
             one_month: fees.chat_fees.one_month,
             three_months: fees.chat_fees.three_months,
             one_year: fees.chat_fees.one_year,
             lifetime: fees.chat_fees.lifetime,
         },
         DiamondMembershipFees {
-            token: Cryptocurrency::InternetComputer,
+            #[allow(deprecated)]
+            token: types::Cryptocurrency::InternetComputer,
+            token_symbol: ICP_SYMBOL.to_string(),
             one_month: fees.icp_fees.one_month,
             three_months: fees.icp_fees.three_months,
             one_year: fees.icp_fees.one_year,

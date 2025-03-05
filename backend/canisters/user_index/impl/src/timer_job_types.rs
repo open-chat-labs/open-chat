@@ -3,13 +3,13 @@ use crate::updates::suspend_user::suspend_user_impl;
 use crate::updates::unsuspend_user::unsuspend_user_impl;
 use crate::{mutate_state, read_state};
 use canister_timer_jobs::Job;
-use constants::{MINUTE_IN_MS, SECOND_IN_MS};
+use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, SECOND_IN_MS};
 use ic_ledger_types::Tokens;
 use local_user_index_canister::{OpenChatBotMessage, UserIndexEvent};
 use serde::{Deserialize, Serialize};
 use types::{
-    ChatId, CommunityId, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContent, Milliseconds,
-    TextContent, UserId,
+    ChatId, CommunityId, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContent, Milliseconds, TextContent,
+    UserId,
 };
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -106,7 +106,9 @@ impl Job for RecurringDiamondMembershipPayment {
 
             let args = Args {
                 duration,
-                token: if pay_in_chat { Cryptocurrency::CHAT } else { Cryptocurrency::InternetComputer },
+                #[allow(deprecated)]
+                token: if pay_in_chat { types::Cryptocurrency::CHAT } else { types::Cryptocurrency::InternetComputer },
+                ledger: if pay_in_chat { CHAT_LEDGER_CANISTER_ID } else { ICP_LEDGER_CANISTER_ID },
                 expected_price_e8s: price_e8s,
                 recurring: true,
             };

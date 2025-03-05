@@ -52,9 +52,8 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
-        CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, Empty, EventIndex, EventsResponse, MessageContentInitial,
-        MessageId, MessageIndex, Milliseconds, Reaction, ReplyContext, Rules, TextContent, TimestampMillis, UserId,
-        VideoCallType,
+        CanisterId, Chat, ChatId, CommunityId, Empty, EventIndex, EventsResponse, MessageContentInitial, MessageId,
+        MessageIndex, Milliseconds, Reaction, ReplyContext, Rules, TextContent, TimestampMillis, UserId, VideoCallType,
     };
     use user_canister::set_pin_number::PinNumberVerification;
 
@@ -357,8 +356,9 @@ pub mod happy_path {
         chat: Chat,
         message_id: MessageId,
         ledger: CanisterId,
-        token: Cryptocurrency,
+        token_symbol: String,
         amount: u128,
+        fee: u128,
     ) {
         let response = super::tip_message(
             env,
@@ -371,9 +371,10 @@ pub mod happy_path {
                 message_id,
                 ledger,
                 amount,
-                fee: token.fee().unwrap(),
-                decimals: token.decimals().unwrap(),
-                token,
+                fee,
+                decimals: 8,
+                token: token_symbol.clone().into(),
+                token_symbol,
                 pin: None,
             },
         );

@@ -4673,6 +4673,7 @@ dependencies = [
  "candid",
  "candid_gen",
  "community_canister",
+ "constants",
  "event_store_canister",
  "group_canister",
  "ic-ledger-types",
@@ -8509,6 +8510,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "chat_events",
+ "constants",
  "ic-ledger-types",
  "icrc-ledger-types",
  "proposals_bot_canister",
@@ -8635,6 +8637,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "constants",
  "human_readable",
  "ic-ledger-types",
  "modclub_canister",

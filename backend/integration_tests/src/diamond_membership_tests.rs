@@ -2,14 +2,14 @@ use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
-use constants::{DAY_IN_MS, MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
+use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, ICP_TRANSFER_FEE, MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
 use jwt::{verify_and_decode, Claims};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use types::{
-    Achievement, ChitEarnedReason, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees,
-    DiamondMembershipPlanDuration, DiamondMembershipSubscription, ReferralStatus,
+    Achievement, ChitEarnedReason, DiamondMembershipDetails, DiamondMembershipFees, DiamondMembershipPlanDuration,
+    DiamondMembershipSubscription, ReferralStatus,
 };
 
 #[test_case(true, false)]
@@ -80,12 +80,9 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
     let fees = DiamondMembershipFees::default();
 
     let (expected_price, transfer_fee) = if pay_in_chat {
-        (fees.chat_price_e8s(duration) as u128, Cryptocurrency::CHAT.fee().unwrap())
+        (fees.chat_price_e8s(duration) as u128, CHAT_TRANSFER_FEE)
     } else {
-        (
-            fees.icp_price_e8s(duration) as u128,
-            Cryptocurrency::InternetComputer.fee().unwrap(),
-        )
+        (fees.icp_price_e8s(duration) as u128, ICP_TRANSFER_FEE)
     };
 
     let new_balance = client::ledger::happy_path::balance_of(env, ledger, user.user_id);

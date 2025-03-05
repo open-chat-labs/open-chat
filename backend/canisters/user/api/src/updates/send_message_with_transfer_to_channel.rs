@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;

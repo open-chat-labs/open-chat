@@ -21,8 +21,8 @@ fn run() {
     });
 }
 
-async fn run_async() -> Result<(), (RejectCode, String)> {
-    let total_supply = icrc_ledger_canister_c2c_client::icrc1_total_supply(SNS_LEDGER_CANISTER_ID)
+async fn run_async() -> CallResult<()> {
+    let total_supply = icrc_ledger_canister_c2c_client::icrc1_total_supply(CHAT_LEDGER_CANISTER_ID)
         .await
         .map(|s| u128::try_from(s.0).unwrap())?;
 
@@ -47,7 +47,7 @@ async fn run_async() -> Result<(), (RejectCode, String)> {
     let mut reserved = 0;
     for subaccount in reserved_subaccounts {
         let balance = icrc_ledger_canister_c2c_client::icrc1_balance_of(
-            SNS_LEDGER_CANISTER_ID,
+            CHAT_LEDGER_CANISTER_ID,
             &Account {
                 owner: SNS_GOVERNANCE_CANISTER_ID,
                 subaccount: Some(subaccount),
