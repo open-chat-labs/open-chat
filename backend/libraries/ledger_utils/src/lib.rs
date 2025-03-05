@@ -1,10 +1,10 @@
+#![allow(deprecated)]
 use candid::Principal;
 use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
 use sha2::{Digest, Sha256};
 use types::{
-    CanisterId, CompletedCryptoTransaction, Cryptocurrency, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos,
-    UserId,
+    CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos, UserId,
 };
 
 pub mod icrc1;
@@ -12,7 +12,7 @@ pub mod icrc2;
 pub mod nns;
 
 pub fn create_pending_transaction(
-    token: Cryptocurrency,
+    token_symbol: String,
     ledger: CanisterId,
     amount: u128,
     fee: u128,
@@ -23,7 +23,8 @@ pub fn create_pending_transaction(
     PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
         ledger,
         fee,
-        token,
+        token_symbol: token_symbol.clone(),
+        token: token_symbol.into(),
         amount,
         to: user_id.into(),
         memo: memo.map(|bytes| bytes.to_vec().into()),

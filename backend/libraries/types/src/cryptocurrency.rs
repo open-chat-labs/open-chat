@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use crate::nns::{Tokens, UserOrAccount};
 use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
@@ -7,6 +8,7 @@ use ts_export::ts_export;
 
 const ICP_FEE: u128 = 10_000;
 
+#[deprecated]
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Cryptocurrency {
@@ -29,37 +31,17 @@ impl Cryptocurrency {
             Cryptocurrency::Other(symbol) => symbol,
         }
     }
+}
 
-    pub fn decimals(&self) -> Option<u8> {
-        match self {
-            Cryptocurrency::InternetComputer => Some(8),
-            Cryptocurrency::SNS1 => Some(8),
-            Cryptocurrency::CKBTC => Some(8),
-            Cryptocurrency::CHAT => Some(8),
-            Cryptocurrency::KINIC => Some(8),
-            Cryptocurrency::Other(_) => None,
-        }
-    }
-
-    pub fn fee(&self) -> Option<u128> {
-        match self {
-            Cryptocurrency::InternetComputer => Some(ICP_FEE),
-            Cryptocurrency::SNS1 => Some(1_000),
-            Cryptocurrency::CKBTC => Some(10),
-            Cryptocurrency::CHAT => Some(100_000),
-            Cryptocurrency::KINIC => Some(100_000),
-            Cryptocurrency::Other(_) => None,
-        }
-    }
-
-    pub fn ledger_canister_id(&self) -> Option<CanisterId> {
-        match self {
-            Cryptocurrency::InternetComputer => Some(Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()),
-            Cryptocurrency::SNS1 => Some(Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap()),
-            Cryptocurrency::CKBTC => Some(Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap()),
-            Cryptocurrency::CHAT => Some(Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap()),
-            Cryptocurrency::KINIC => Some(Principal::from_text("73mez-iiaaa-aaaaq-aaasq-cai").unwrap()),
-            Cryptocurrency::Other(_) => None,
+#[allow(deprecated)]
+impl From<String> for Cryptocurrency {
+    fn from(value: String) -> Self {
+        match value.as_str() {
+            "ICP" => Cryptocurrency::InternetComputer,
+            "ckBTC" => Cryptocurrency::CKBTC,
+            "CHAT" => Cryptocurrency::CHAT,
+            "KINIC" => Cryptocurrency::KINIC,
+            _ => Cryptocurrency::Other(value),
         }
     }
 }
@@ -107,11 +89,11 @@ impl CryptoTransaction {
         }
     }
 
-    pub fn token(&self) -> Cryptocurrency {
+    pub fn token_symbol(&self) -> &str {
         match self {
-            CryptoTransaction::Pending(p) => p.token(),
-            CryptoTransaction::Completed(c) => c.token(),
-            CryptoTransaction::Failed(f) => f.token(),
+            CryptoTransaction::Pending(p) => p.token_symbol(),
+            CryptoTransaction::Completed(c) => c.token_symbol(),
+            CryptoTransaction::Failed(f) => f.token_symbol(),
         }
     }
 
@@ -145,11 +127,11 @@ impl PendingCryptoTransaction {
         }
     }
 
-    pub fn token(&self) -> Cryptocurrency {
+    pub fn token_symbol(&self) -> &str {
         match self {
-            PendingCryptoTransaction::NNS(t) => t.token.clone(),
-            PendingCryptoTransaction::ICRC1(t) => t.token.clone(),
-            PendingCryptoTransaction::ICRC2(t) => t.token.clone(),
+            PendingCryptoTransaction::NNS(t) => t.token_symbol.as_str(),
+            PendingCryptoTransaction::ICRC1(t) => t.token_symbol.as_str(),
+            PendingCryptoTransaction::ICRC2(t) => t.token_symbol.as_str(),
         }
     }
 
@@ -269,11 +251,11 @@ impl CompletedCryptoTransaction {
         }
     }
 
-    pub fn token(&self) -> Cryptocurrency {
+    pub fn token_symbol(&self) -> &str {
         match self {
-            CompletedCryptoTransaction::NNS(t) => t.token.clone(),
-            CompletedCryptoTransaction::ICRC1(t) => t.token.clone(),
-            CompletedCryptoTransaction::ICRC2(t) => t.token.clone(),
+            CompletedCryptoTransaction::NNS(t) => t.token.token_symbol(),
+            CompletedCryptoTransaction::ICRC1(t) => t.token.token_symbol(),
+            CompletedCryptoTransaction::ICRC2(t) => t.token.token_symbol(),
         }
     }
 
@@ -311,11 +293,11 @@ impl FailedCryptoTransaction {
         }
     }
 
-    pub fn token(&self) -> Cryptocurrency {
+    pub fn token_symbol(&self) -> &str {
         match self {
-            FailedCryptoTransaction::NNS(t) => t.token.clone(),
-            FailedCryptoTransaction::ICRC1(t) => t.token.clone(),
-            FailedCryptoTransaction::ICRC2(t) => t.token.clone(),
+            FailedCryptoTransaction::NNS(t) => t.token.token_symbol(),
+            FailedCryptoTransaction::ICRC1(t) => t.token.token_symbol(),
+            FailedCryptoTransaction::ICRC2(t) => t.token.token_symbol(),
         }
     }
 
@@ -411,15 +393,48 @@ pub mod nns {
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[serde(from = "PendingCryptoTransactionCombined")]
     #[ts(rename = "PendingCryptoTransactionNNS")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
+        pub token_symbol: String,
         pub token: Cryptocurrency,
         pub amount: Tokens,
         pub to: UserOrAccount,
         pub fee: Option<Tokens>,
         pub memo: Option<u64>,
         pub created: TimestampNanos,
+    }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    struct PendingCryptoTransactionCombined {
+        ledger: CanisterId,
+        token_symbol: Option<String>,
+        token: Option<Cryptocurrency>,
+        amount: Tokens,
+        to: UserOrAccount,
+        fee: Option<Tokens>,
+        memo: Option<u64>,
+        created: TimestampNanos,
+    }
+
+    impl From<PendingCryptoTransactionCombined> for PendingCryptoTransaction {
+        fn from(value: PendingCryptoTransactionCombined) -> Self {
+            let token_symbol = value
+                .token_symbol
+                .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
+
+            PendingCryptoTransaction {
+                ledger: value.ledger,
+                token_symbol: token_symbol.clone(),
+                token: token_symbol.into(),
+                amount: value.amount,
+                to: value.to,
+                fee: value.fee,
+                memo: value.memo,
+                created: value.created,
+            }
+        }
     }
 
     #[ts_export]
@@ -497,9 +512,11 @@ pub mod icrc1 {
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[serde(from = "PendingCryptoTransactionCombined")]
     #[ts(rename = "PendingCryptoTransactionICRC1")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
+        pub token_symbol: String,
         pub token: Cryptocurrency,
         pub amount: u128,
         pub to: Account,
@@ -507,6 +524,37 @@ pub mod icrc1 {
         #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
+    }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    struct PendingCryptoTransactionCombined {
+        ledger: CanisterId,
+        token: Option<Cryptocurrency>,
+        token_symbol: Option<String>,
+        amount: u128,
+        to: Account,
+        fee: u128,
+        memo: Option<Memo>,
+        created: TimestampNanos,
+    }
+
+    impl From<PendingCryptoTransactionCombined> for PendingCryptoTransaction {
+        fn from(value: PendingCryptoTransactionCombined) -> Self {
+            let token_symbol = value
+                .token_symbol
+                .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
+
+            PendingCryptoTransaction {
+                ledger: value.ledger,
+                token_symbol: token_symbol.clone(),
+                token: token_symbol.into(),
+                amount: value.amount,
+                to: value.to,
+                fee: value.fee,
+                memo: value.memo,
+                created: value.created,
+            }
+        }
     }
 
     #[ts_export]
@@ -567,9 +615,11 @@ pub mod icrc2 {
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[serde(from = "PendingCryptoTransactionCombined")]
     #[ts(rename = "PendingCryptoTransactionICRC2")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
+        pub token_symbol: String,
         pub token: Cryptocurrency,
         pub amount: u128,
         pub from: Account,
@@ -578,6 +628,39 @@ pub mod icrc2 {
         #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, Debug)]
+    struct PendingCryptoTransactionCombined {
+        ledger: CanisterId,
+        token_symbol: Option<String>,
+        token: Option<Cryptocurrency>,
+        amount: u128,
+        from: Account,
+        to: Account,
+        fee: u128,
+        memo: Option<Memo>,
+        created: TimestampNanos,
+    }
+
+    impl From<PendingCryptoTransactionCombined> for PendingCryptoTransaction {
+        fn from(value: PendingCryptoTransactionCombined) -> Self {
+            let token_symbol = value
+                .token_symbol
+                .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
+
+            PendingCryptoTransaction {
+                ledger: value.ledger,
+                token_symbol: token_symbol.clone(),
+                token: token_symbol.into(),
+                amount: value.amount,
+                from: value.from,
+                to: value.to,
+                fee: value.fee,
+                memo: value.memo,
+                created: value.created,
+            }
+        }
     }
 
     #[ts_export]
@@ -665,6 +748,7 @@ impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {
     fn from(value: icrc1::PendingCryptoTransaction) -> Self {
         nns::PendingCryptoTransaction {
             ledger: value.ledger,
+            token_symbol: value.token_symbol,
             token: value.token,
             amount: Tokens::from_e8s(value.amount.try_into().unwrap()),
             to: UserOrAccount::Account(AccountIdentifier::new(

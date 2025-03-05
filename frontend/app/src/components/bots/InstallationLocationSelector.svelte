@@ -1,29 +1,27 @@
 <script lang="ts">
     import {
         AvatarSize,
+        globalStateStore,
         i18nKey,
         OpenChat,
         type BotInstallationLocation,
-        type CommunityMatch,
-        type GroupMatch,
     } from "openchat-client";
     import Legend from "../Legend.svelte";
     import Search from "../Search.svelte";
     import Translatable from "../Translatable.svelte";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import Avatar from "../Avatar.svelte";
     import SelectedMatch from "../home/proposal/SelectedMatch.svelte";
 
     const client = getContext<OpenChat>("client");
-    const PAGE_SIZE = 15;
 
     type Match = {
         avatarUrl: string;
         name: string;
         id: string;
-        entity: CommunityMatch | GroupMatch;
+        isCommunity: boolean;
     };
 
     interface Props {
@@ -31,82 +29,66 @@
     }
 
     let { location = $bindable() }: Props = $props();
-    let searching: boolean = $state(false);
     let searchTerm: string = $state("");
     let placeholder = i18nKey("Search for a community, group or user");
     let results: Match[] = $state([]);
     let selected: Match | undefined = $state(undefined);
+    let focused = $state(false);
     location; // usual hack
 
-    async function onPerformSearch(term: string) {
-        if (term === "") {
-            reset(true);
-        } else {
-            const [communities, groups] = await Promise.all([
-                searchCommunities(term),
-                searchGroups(term),
-            ]);
-            results = [...communities, ...groups];
-        }
+    onMount(() => onPerformSearch(""));
+
+    function onPerformSearch(term: string) {
+        const globalState = $globalStateStore;
+
+        const termLower = term.toLowerCase();
+
+        const communities: Match[] = globalState.communities.values()
+            .filter((c) => termLower === "" || c.name.toLowerCase().includes(termLower))
+            .map((c) => ({
+                avatarUrl: client.communityAvatarUrl(c.id.communityId, c.avatar),
+                name: c.name,
+                id: c.id.communityId,
+                isCommunity: true,
+            }));
+
+        const groups: Match[] = globalState.groupChats.values()
+            .filter((g) => termLower === "" || g.name.toLowerCase().includes(termLower))
+            .map((g) => ({
+                avatarUrl: client.groupAvatarUrl(g),
+                name: g.name,
+                id: g.id.groupId,
+                isCommunity: false,
+            }));
+
+        communities.sort((a: Match, b: Match) => a.name.localeCompare(b.name));
+        groups.sort((a: Match, b: Match) => a.name.localeCompare(b.name));
+        results = [...communities, ...groups];
     }
 
-    function normalise(thing: CommunityMatch | GroupMatch): Match {
-        switch (thing.kind) {
-            case "community_match":
-                return {
-                    avatarUrl: client.communityAvatarUrl(thing.id.communityId, thing.avatar),
-                    name: thing.name,
-                    id: thing.id.communityId,
-                    entity: thing,
-                };
-            case "group_match":
-                return {
-                    avatarUrl: client.groupAvatarUrl({
-                        ...thing,
-                        id: thing.chatId,
-                    }),
-                    name: thing.name,
-                    id: thing.chatId.groupId,
-                    entity: thing,
-                };
-        }
-    }
-
-    function searchCommunities(term: string): Promise<Match[]> {
-        return client
-            .exploreCommunities(term === "" ? undefined : term, 0, PAGE_SIZE, 0, [])
-            .then((results) => (results.kind === "success" ? results.matches : []))
-            .then((res) => res.map(normalise));
-    }
-
-    function searchGroups(term: string): Promise<Match[]> {
-        return client
-            .searchGroups(term, PAGE_SIZE)
-            .then((results) => (results.kind === "success" ? results.matches : []))
-            .then((res) => res.map(normalise));
+    function reset() {
+        selected = undefined;
+        onPerformSearch("");
     }
 
     function select(match: Match | undefined) {
         selected = match;
         results = [];
         if (match !== undefined) {
-            switch (match.entity.kind) {
-                case "community_match":
-                    location = { kind: "community", communityId: match.id };
-                    break;
-                case "group_match":
-                    location = { kind: "group_chat", groupId: match.id };
-                    break;
+            if (match.isCommunity) {
+                location = { kind: "community", communityId: match.id };
+            } else {
+                location = { kind: "group_chat", groupId: match.id };
             }
         }
     }
 
-    function reset(clearSelected: boolean) {
-        results = [];
-        searchTerm = "";
-        if (clearSelected) {
-            select(undefined);
-        }
+    function onFocus() {
+        focused = true;
+    }
+
+    function onBlur() {
+        window.setTimeout(() => focused = false, 100);
     }
 </script>
 
@@ -115,12 +97,12 @@
         label={i18nKey("bots.builder.testContext")}
         rules={i18nKey("bots.builder.testContextInfo")}></Legend>
     {#if selected !== undefined}
-        <SelectedMatch onRemove={() => reset(true)} match={selected}></SelectedMatch>
+        <SelectedMatch onRemove={() => reset()} match={selected}></SelectedMatch>
     {:else}
-        <Search inputStyle fill {placeholder} {searching} {searchTerm} {onPerformSearch} />
+        <Search inputStyle fill {placeholder} searching={false} {searchTerm} {onPerformSearch} {onFocus} {onBlur} />
     {/if}
 
-    {#if results.length > 0}
+    {#if focused && results.length > 0}
         <div class="menu">
             <Menu shadow={false}>
                 {#each results as match (match.id)}
@@ -134,9 +116,9 @@
                                     {match.name}
                                 </div>
                                 <div class="type">
-                                    {#if match.entity.kind === "community_match"}
+                                    {#if match.isCommunity}
                                         Community
-                                    {:else if match.entity.kind === "group_match"}
+                                    {:else}
                                         Group chat
                                     {/if}
                                 </div>

@@ -106,7 +106,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
     let transaction_time = now_nanos - duplicate_buster;
 
     let transaction = create_pending_transaction(
-        result.token,
+        result.token_symbol,
         result.ledger_canister_id,
         result.amount,
         result.fee,

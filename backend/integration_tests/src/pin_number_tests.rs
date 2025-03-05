@@ -1,13 +1,13 @@
 use crate::env::ENV;
 use crate::utils::now_nanos;
 use crate::{client, TestEnv};
-use constants::MINUTE_IN_MS;
+use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS};
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_from_u128;
-use types::{CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial};
+use types::{CryptoContent, CryptoTransaction, MessageContentInitial};
 use user_canister::set_pin_number::PinNumberVerification;
 
 #[test]
@@ -160,10 +160,10 @@ fn transfer_requires_correct_pin(test_case: u32) {
             content: MessageContentInitial::Crypto(CryptoContent {
                 recipient: user2.user_id,
                 transfer: CryptoTransaction::Pending(create_pending_transaction(
-                    Cryptocurrency::InternetComputer,
+                    ICP_SYMBOL.to_string(),
                     canister_ids.icp_ledger,
                     10000,
-                    10000,
+                    ICP_TRANSFER_FEE,
                     user2.user_id,
                     None,
                     now_nanos(env),

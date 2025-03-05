@@ -1,6 +1,6 @@
 use candid::Principal;
 use canister_agent_utils::{build_ic_agent, get_canister_wasm, install_wasm, set_controllers, CanisterIds, CanisterName};
-use constants::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
+use constants::{CHAT_LEDGER_CANISTER_ID, SNS_GOVERNANCE_CANISTER_ID};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
@@ -210,7 +210,7 @@ async fn install_service_canisters_impl(
         admins: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         local_user_index_canister_id: canister_ids.local_user_index,
-        chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
+        chat_ledger_canister_id: CHAT_LEDGER_CANISTER_ID,
         wasm_version: version,
         test_mode,
     };
@@ -275,7 +275,7 @@ async fn install_service_canisters_impl(
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         icp_ledger_canister_id: canister_ids.nns_ledger,
-        chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
+        chat_ledger_canister_id: CHAT_LEDGER_CANISTER_ID,
         wasm_version: version,
         test_mode,
     };
@@ -310,7 +310,7 @@ async fn install_service_canisters_impl(
         event_store_canister_id: canister_ids.event_store,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         registry_canister_id: canister_ids.registry,
-        chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
+        chat_ledger_canister_id: CHAT_LEDGER_CANISTER_ID,
         chat_governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
         wasm_version: version,
         test_mode,

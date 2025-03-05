@@ -4,7 +4,7 @@ use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use constants::PRIZE_FEE_PERCENT;
+use constants::{ICP_SYMBOL, PRIZE_FEE_PERCENT};
 use ledger_utils::create_pending_transaction;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -12,8 +12,8 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    CanisterId, ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
-    MessageContentInitial, OptionUpdate, PrizeContentInitial, TextContent, UpdatedRules, Version,
+    CanisterId, ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, MessageContent, MessageContentInitial,
+    OptionUpdate, PrizeContentInitial, TextContent, UpdatedRules, Version,
 };
 
 #[test]
@@ -84,7 +84,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
             content: MessageContentInitial::Crypto(CryptoContent {
                 recipient: user2.user_id,
                 transfer: CryptoTransaction::Pending(create_pending_transaction(
-                    Cryptocurrency::InternetComputer,
+                    ICP_SYMBOL.to_string(),
                     canister_ids.icp_ledger,
                     10000,
                     10000,
@@ -175,7 +175,7 @@ fn send_prize_in_channel() {
             message_id: random_from_u128(),
             content: MessageContentInitial::Prize(PrizeContentInitial {
                 transfer: CryptoTransaction::Pending(create_pending_transaction(
-                    Cryptocurrency::InternetComputer,
+                    ICP_SYMBOL.to_string(),
                     canister_ids.icp_ledger,
                     amount,
                     fee,

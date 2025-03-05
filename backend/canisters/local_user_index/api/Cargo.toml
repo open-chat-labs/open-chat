@@ -9,6 +9,7 @@ edition.workspace = true
 candid = { workspace = true }
 candid_gen = { path = "../../../libraries/candid_gen" }
 community_canister = { path = "../../community/api" }
+constants = { path = "../../../libraries/constants" }
 event_store_canister = { workspace = true }
 group_canister = { path = "../../group/api" }
 ic-ledger-types = { workspace = true }

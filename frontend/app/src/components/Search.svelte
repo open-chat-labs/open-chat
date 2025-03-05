@@ -14,6 +14,8 @@
         fill?: boolean;
         inputStyle?: boolean;
         onPerformSearch?: (term: string) => void;
+        onFocus?: () => void;
+        onBlur?: () => void;
     }
 
     let {
@@ -23,6 +25,8 @@
         fill = false,
         inputStyle = false,
         onPerformSearch,
+        onFocus,
+        onBlur,
     }: Props = $props();
 
     let timer: number | undefined;
@@ -62,7 +66,9 @@
         type="text"
         class:input-style={inputStyle}
         use:translatable={{ key: placeholder }}
-        placeholder={interpolate($_, placeholder)} />
+        placeholder={interpolate($_, placeholder)}
+        onfocus={onFocus}
+        onblur={onBlur} />
     {#if searchTerm !== ""}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->

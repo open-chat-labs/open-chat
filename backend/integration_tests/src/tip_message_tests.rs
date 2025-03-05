@@ -1,6 +1,8 @@
+#![allow(deprecated)]
 use crate::env::ENV;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
@@ -32,8 +34,9 @@ fn tip_direct_message_succeeds() {
         Chat::Direct(user2.user_id.into()),
         message_id,
         canister_ids.icp_ledger,
-        Cryptocurrency::InternetComputer,
+        ICP_SYMBOL.to_string(),
         tip_amount,
+        ICP_TRANSFER_FEE,
     );
 
     let user1_message = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![event_index])
@@ -93,8 +96,9 @@ fn tip_group_message_succeeds() {
         Chat::Group(group_id),
         message_id,
         canister_ids.icp_ledger,
-        Cryptocurrency::InternetComputer,
+        ICP_SYMBOL.to_string(),
         tip_amount,
+        ICP_TRANSFER_FEE,
     );
 
     let message = client::group::happy_path::events_by_index(env, &user2, group_id, vec![event_index])
@@ -150,8 +154,9 @@ fn tip_channel_message_succeeds() {
         Chat::Channel(community_id, channel_id),
         message_id,
         canister_ids.icp_ledger,
-        Cryptocurrency::InternetComputer,
+        ICP_SYMBOL.to_string(),
         tip_amount,
+        ICP_TRANSFER_FEE,
     );
 
     let message = client::community::happy_path::events_by_index(env, &user2, community_id, channel_id, vec![event_index])
@@ -205,9 +210,10 @@ fn tip_group_message_retries_if_c2c_call_fails() {
             thread_root_message_index: None,
             message_id,
             ledger: canister_ids.icp_ledger,
+            token_symbol: ICP_SYMBOL.to_string(),
             token: Cryptocurrency::InternetComputer,
             amount: tip_amount,
-            fee: Cryptocurrency::InternetComputer.fee().unwrap(),
+            fee: ICP_TRANSFER_FEE,
             decimals: 8,
             pin: None,
         },
@@ -279,9 +285,10 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
             thread_root_message_index: None,
             message_id,
             ledger: canister_ids.icp_ledger,
+            token_symbol: ICP_SYMBOL.to_string(),
             token: Cryptocurrency::InternetComputer,
             amount: tip_amount,
-            fee: Cryptocurrency::InternetComputer.fee().unwrap(),
+            fee: ICP_TRANSFER_FEE,
             decimals: 8,
             pin: None,
         },

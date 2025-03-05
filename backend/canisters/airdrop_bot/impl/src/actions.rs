@@ -1,7 +1,7 @@
 use crate::jobs::execute_airdrop::start_airdrop_timer;
 use crate::{mutate_state, read_state, USERNAME};
 use candid::Deserialize;
-use constants::{MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
+use constants::{CHAT_TRANSFER_FEE, MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use rand::Rng;
 use serde::Serialize;
@@ -10,7 +10,7 @@ use tracing::{error, info, trace};
 use types::icrc1::{self, Account};
 use types::{
     BotMessage, CanisterId, ChannelId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction,
-    Cryptocurrency, MessageContentInitial, UserId,
+    MessageContentInitial, UserId,
 };
 use utils::canister::should_retry_failed_c2c_call;
 use utils::time::{MonthKey, MONTHS};
@@ -131,17 +131,17 @@ async fn handle_transfer_action(action: AirdropTransfer) -> Result<(), bool> {
         )
     });
 
-    let token = Cryptocurrency::CHAT;
     let to = Account::from(action.recipient);
     let memo = match action.airdrop_type {
         AirdropType::Main(_) => MEMO_CHIT_FOR_CHAT_AIRDROP,
         AirdropType::Lottery(_) => MEMO_CHIT_FOR_CHAT_LOTTERY,
     };
+    let fee = CHAT_TRANSFER_FEE;
 
     let args = TransferArg {
         from_subaccount: None,
         to: to.into(),
-        fee: token.fee().map(|f| f.into()),
+        fee: Some(fee.into()),
         created_at_time: Some(now_nanos),
         memo: Some(memo.to_vec().into()),
         amount,
@@ -150,14 +150,14 @@ async fn handle_transfer_action(action: AirdropTransfer) -> Result<(), bool> {
     match icrc_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, &args).await {
         Ok(Ok(block_index)) => {
             mutate_state(|state| {
-                let fee = token.fee().unwrap();
                 let block_index = block_index.0.try_into().unwrap();
 
                 let message_action = Action::SendMessage(Box::new(AirdropMessage {
                     recipient: action.recipient,
                     transaction: CompletedCryptoTransaction::ICRC1(icrc1::CompletedCryptoTransaction {
                         ledger: ledger_canister_id,
-                        token,
+                        #[allow(deprecated)]
+                        token: types::Cryptocurrency::CHAT,
                         amount: action.amount,
                         fee,
                         from: Account::from(this_canister_id).into(),

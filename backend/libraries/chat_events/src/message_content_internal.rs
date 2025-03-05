@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use crate::DeletedByInternal;
 use candid::Principal;
 use constants::{MEMO_PRIZE_FEE, MEMO_PRIZE_REFUND, OPENCHAT_TREASURY_CANISTER_ID, PRIZE_FEE_PERCENT};
@@ -348,9 +349,9 @@ impl MessageContentInternal {
             }
             MessageContentInternal::P2PSwap(c) => MessageContentEventPayload::P2PSwap(P2PSwapContentEventPayload {
                 caption_length: option_string_length(&c.caption),
-                token0: c.token0.token.token_symbol().to_string(),
+                token0: c.token0.symbol.clone(),
                 token0_amount: c.token0_amount,
-                token1: c.token1.token.token_symbol().to_string(),
+                token1: c.token1.symbol.clone(),
                 token1_amount: c.token1_amount,
             }),
             MessageContentInternal::Deleted(_) | MessageContentInternal::VideoCall(_) | MessageContentInternal::Custom(_) => {
@@ -401,8 +402,7 @@ impl From<&MessageContentInternal> for Document {
 
                 let amount = c.transfer.units();
                 // This is only used for string searching so it's better to default to 8 than to trap
-                let decimals = c.transfer.token().decimals().unwrap_or(8);
-                let amount_string = format_crypto_amount(amount, decimals);
+                let amount_string = format_crypto_amount(amount, 8);
                 document.add_field(&amount_string);
 
                 try_add_caption(&mut document, c.caption.as_ref())
@@ -433,8 +433,8 @@ impl From<&MessageContentInternal> for Document {
             MessageContentInternal::MessageReminder(r) => try_add_caption(&mut document, r.notes.as_ref()),
             MessageContentInternal::P2PSwap(p) => {
                 document.add_field("swap");
-                document.add_field(p.token0.token.token_symbol());
-                document.add_field(p.token1.token.token_symbol());
+                document.add_field(&p.token0.symbol);
+                document.add_field(&p.token1.symbol);
                 try_add_caption(&mut document, p.caption.as_ref())
             }
             MessageContentInternal::Custom(c) => {
@@ -1086,6 +1086,7 @@ pub(crate) mod icrc1 {
         #[serde(rename = "l", alias = "ledger")]
         pub ledger: CanisterId,
         #[serde(rename = "k", alias = "token")]
+        #[allow(deprecated)]
         pub token: Cryptocurrency,
         #[serde(rename = "a", alias = "amount")]
         pub amount: u128,
@@ -1145,6 +1146,7 @@ pub(crate) mod icrc2 {
         #[serde(rename = "l", alias = "ledger")]
         pub ledger: CanisterId,
         #[serde(rename = "k", alias = "token")]
+        #[allow(deprecated)]
         pub token: Cryptocurrency,
         #[serde(rename = "a", alias = "amount")]
         pub amount: u128,
@@ -1371,6 +1373,7 @@ impl PrizeContentInternal {
         let unclaimed_fees =
             ((unclaimed_prizes * self.fee_percent as u128) / 100) + (self.prizes_remaining.len() as u128 * transaction_fee);
         let refund = unclaimed_prizes + unclaimed_fees;
+        let token_symbol = self.transaction.token().token_symbol().to_string();
 
         let mut payments = Vec::new();
 
@@ -1378,7 +1381,8 @@ impl PrizeContentInternal {
             payments.push(PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
                 ledger,
                 fee: transaction_fee,
-                token: self.transaction.token(),
+                token_symbol: token_symbol.clone(),
+                token: token_symbol.clone().into(),
                 amount: oc_fee - transaction_fee,
                 to: Account::from(OPENCHAT_TREASURY_CANISTER_ID),
                 memo: Some(MEMO_PRIZE_FEE.to_vec().into()),
@@ -1388,7 +1392,7 @@ impl PrizeContentInternal {
 
         if refund > transaction_fee {
             payments.push(create_pending_transaction(
-                self.transaction.token(),
+                token_symbol,
                 ledger,
                 refund - transaction_fee,
                 transaction_fee,
@@ -1412,7 +1416,9 @@ impl MessageContentInternalSubtype for PrizeContentInternal {
             winner_count: self.winners.len() as u32,
             user_is_winner: my_user_id.map(|u| self.winners.contains(&u)).unwrap_or_default(),
             winners: self.winners.into_iter().collect(),
+            token_symbol: self.transaction.token().token_symbol().to_string(),
             token: self.transaction.token(),
+            ledger: self.transaction.ledger_canister_id(),
             end_date: self.end_date,
             caption: self.caption,
             diamond_only: self.diamond_only,

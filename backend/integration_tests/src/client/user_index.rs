@@ -37,7 +37,9 @@ generate_msgpack_update_call!(publish_bot);
 generate_msgpack_update_call!(update_bot);
 
 pub mod happy_path {
+    #![allow(deprecated)]
     use candid::Principal;
+    use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID};
     use event_store_canister::TimestampMillis;
     use pocket_ic::PocketIc;
     use sha256::sha256;
@@ -105,6 +107,7 @@ pub mod happy_path {
             canister_id,
             &user_index_canister::pay_for_diamond_membership::Args {
                 duration,
+                ledger: if pay_in_chat { CHAT_LEDGER_CANISTER_ID } else { ICP_LEDGER_CANISTER_ID },
                 token: if pay_in_chat { Cryptocurrency::CHAT } else { Cryptocurrency::InternetComputer },
                 expected_price_e8s: if pay_in_chat { fees.chat_price_e8s(duration) } else { fees.icp_price_e8s(duration) },
                 recurring,
