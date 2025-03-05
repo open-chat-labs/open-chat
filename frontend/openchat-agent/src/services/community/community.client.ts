@@ -39,6 +39,7 @@ import {
     acceptP2PSwapResponse,
     apiAccessGateConfig,
     addRemoveReactionResponse,
+    apiExternalBotPermissions,
     apiGroupPermissions,
     apiMessageContent,
     apiUser as apiUserV2,
@@ -70,9 +71,6 @@ import {
     updateGroupResponse,
     videoCallParticipantsResponse,
     apiMaybeAccessGateConfig,
-    apiBotChatPermission,
-    apiCommunityPermission,
-    apiMessagePermission,
     updateBotResponse,
     generateApiKeyResponse,
 } from "../common/chatMappersV2";
@@ -1732,11 +1730,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
             "update_bot",
             {
                 bot_id: principalStringToBytes(botId),
-                granted_permissions: {
-                    chat: grantedPermissions.chatPermissions.map(apiBotChatPermission),
-                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
-                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
-                },
+                granted_permissions: apiExternalBotPermissions(grantedPermissions),
             },
             updateBotResponse,
             CommunityUpdateBotArgs,
@@ -1753,11 +1747,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
             "generate_bot_api_key",
             {
                 bot_id: principalStringToBytes(botId),
-                requested_permissions: {
-                    chat: permissions.chatPermissions.map(apiBotChatPermission),
-                    community: permissions.communityPermissions.map(apiCommunityPermission),
-                    message: permissions.messagePermissions.map(apiMessagePermission),
-                },
+                requested_permissions: apiExternalBotPermissions(permissions),
                 channel_id: mapOptional(channelId, toBigInt32),
             },
             generateApiKeyResponse,

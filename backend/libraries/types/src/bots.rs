@@ -104,10 +104,13 @@ pub struct BotCommandOptionChoice<T> {
 #[serde(from = "BotPermissionsCombined")]
 pub struct BotPermissions {
     #[serde(skip_serializing_if = "is_zero")]
+    #[ts(as = "Option::<u32>", optional)]
     community: u32,
     #[serde(skip_serializing_if = "is_zero")]
+    #[ts(as = "Option::<u32>", optional)]
     chat: u32,
     #[serde(skip_serializing_if = "is_zero")]
+    #[ts(as = "Option::<u32>", optional)]
     message: u32,
 }
 

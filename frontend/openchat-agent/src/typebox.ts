@@ -1690,9 +1690,9 @@ export const VerifiedCredentialArgumentValue = Type.Union([
 
 export type BotPermissions = Static<typeof BotPermissions>;
 export const BotPermissions = Type.Object({
-    community: Type.Number(),
-    chat: Type.Number(),
-    message: Type.Number(),
+    community: Type.Optional(Type.Number()),
+    chat: Type.Optional(Type.Number()),
+    message: Type.Optional(Type.Number()),
 });
 
 export type VideoCallAccessTokenArgs = Static<typeof VideoCallAccessTokenArgs>;
