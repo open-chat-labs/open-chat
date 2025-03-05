@@ -101,6 +101,7 @@ pub struct BotCommandOptionChoice<T> {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+#[serde(from = "BotPermissionsCombined")]
 pub struct BotPermissions {
     #[serde(skip_serializing_if = "is_zero")]
     community: u32,
@@ -296,6 +297,15 @@ impl From<BotPermissionsPrevious> for BotPermissions {
             .with_community(&value.community)
             .with_chat(&value.chat)
             .with_message(&value.message)
+    }
+}
+
+impl From<BotPermissionsCombined> for BotPermissions {
+    fn from(value: BotPermissionsCombined) -> Self {
+        match value {
+            BotPermissionsCombined::New(p) => p,
+            BotPermissionsCombined::Old(p) => p.into(),
+        }
     }
 }
 

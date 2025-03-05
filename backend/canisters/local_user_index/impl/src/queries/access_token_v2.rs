@@ -75,7 +75,7 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                     bot: args.bot_id,
                     scope: args.scope.clone(),
                     bot_api_gateway: state.env.canister_id(),
-                    granted_permissions: access_type_args.requested_permissions().unwrap().into(),
+                    granted_permissions: access_type_args.requested_permissions().unwrap(),
                     command: BotCommand {
                         name: args.command.name.clone(),
                         args: command_args,
@@ -90,7 +90,7 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                     bot: args.bot_id,
                     scope: args.scope.clone(),
                     bot_api_gateway: state.env.canister_id(),
-                    granted_permissions: access_type_args.requested_permissions().unwrap().into(),
+                    granted_permissions: access_type_args.requested_permissions().unwrap(),
                 };
                 return build_token(token_type_name, custom_claims, state);
             }

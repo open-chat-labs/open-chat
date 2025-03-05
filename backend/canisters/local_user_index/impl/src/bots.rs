@@ -77,7 +77,7 @@ fn extract_access_context_from_jwt(jwt: &str, bot: &User, state: &mut RuntimeSta
             (
                 exp,
                 scope,
-                BotInitiator::ApiKeyPermissions(bot_action_claims.granted_permissions.into()),
+                BotInitiator::ApiKeyPermissions(bot_action_claims.granted_permissions),
                 bot_action_claims.bot,
             )
         } else {
