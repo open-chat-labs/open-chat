@@ -3515,7 +3515,6 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
             choices: paramType.DecimalParam.choices,
         };    
     } else if ("DateTimeParam" in paramType) {
-        console.log("IT'S DATE TIME!");
         return {
             kind: "dateTime",
             future_only: paramType.DateTimeParam.future_only,

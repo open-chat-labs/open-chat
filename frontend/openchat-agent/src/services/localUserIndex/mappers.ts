@@ -151,7 +151,7 @@ export function apiBotCommandArgValue(domain: SlashCommandParamInstance): BotCom
             };
         case "dateTime":
             return {
-                DateTime: BigInt(Date.now()),
+                DateTime: domain.value!,
             }
     }
 }

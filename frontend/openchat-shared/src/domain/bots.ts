@@ -436,7 +436,7 @@ export function createParamInstancesFromSchema(
                 return {
                     name: p.name,
                     kind: "dateTime",
-                    value: null, //? Do I need to set a value here?
+                    value: parseBigInt(maybeParams[i]) ?? null,
                 }
             }
         }
