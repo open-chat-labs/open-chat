@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Always encode `BotPermission`s as `u32`s ([#7519](https://github.com/open-chat-labs/open-chat/pull/7519))
+
 ### Fixed
 
 - Fix `register_bot` and `explore_bots` ([#7501](https://github.com/open-chat-labs/open-chat/pull/7501))
