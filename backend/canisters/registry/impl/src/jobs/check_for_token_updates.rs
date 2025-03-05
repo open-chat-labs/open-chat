@@ -1,7 +1,7 @@
 use crate::metadata_helper::MetadataHelper;
 use crate::{mutate_state, read_state};
 use constants::HOUR_IN_MS;
-use ic_cdk::api::call::RejectionCode;
+use ic_cdk::call::RejectCode;
 use std::time::Duration;
 use tracing::{error, info};
 use types::CanisterId;
@@ -12,7 +12,7 @@ pub fn start_job() {
 }
 
 fn run() {
-    ic_cdk::spawn(run_async());
+    ic_cdk::futures::spawn(run_async());
 }
 
 async fn run_async() {
@@ -21,14 +21,14 @@ async fn run_async() {
     futures::future::join_all(ledger_canister_ids.into_iter().map(check_for_token_updates)).await;
 }
 
-async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), (RejectionCode, String)> {
+async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), (RejectCode, String)> {
     let metadata = icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await?;
     let metadata_helper = match MetadataHelper::try_parse(metadata) {
         Ok(h) => h,
         Err(reason) => {
             let error = format!("Token metadata is incomplete: {reason}");
             error!(%ledger_canister_id, error);
-            return Err((RejectionCode::Unknown, error));
+            return Err((RejectCode::CanisterError, error));
         }
     };
 

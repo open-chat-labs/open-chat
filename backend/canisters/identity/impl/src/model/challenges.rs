@@ -53,7 +53,7 @@ impl Challenges {
             }
         }
 
-        ic_cdk::trap(&format!("Could not find a new challenge key after {MAX_TRIES} tries"));
+        ic_cdk::trap(format!("Could not find a new challenge key after {MAX_TRIES} tries"));
     }
 
     pub fn check(&mut self, attempt: &ChallengeAttempt, now: TimestampMillis) -> bool {

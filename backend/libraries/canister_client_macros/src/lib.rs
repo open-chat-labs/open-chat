@@ -99,7 +99,7 @@ macro_rules! generate_c2c_call {
         pub async fn $method_name(
             canister_id: types::CanisterId,
             args: &$method_name::Args,
-        ) -> ic_cdk::api::call::CallResult<$method_name::Response> {
+        ) -> Result<$method_name::Response, (::ic_cdk::call::RejectCode, String)> {
             let method_name = concat!(stringify!($method_name), "_msgpack");
 
             canister_client::make_c2c_call(canister_id, method_name, args, msgpack::serialize_to_vec, |r| {
@@ -119,7 +119,7 @@ macro_rules! generate_candid_c2c_call {
         pub async fn $method_name(
             canister_id: ::types::CanisterId,
             args: &$method_name::Args,
-        ) -> ::ic_cdk::api::call::CallResult<$method_name::Response> {
+        ) -> Result<$method_name::Response, (::ic_cdk::call::RejectCode, String)> {
             let method_name = stringify!($external_canister_method_name);
 
             canister_client::make_c2c_call(canister_id, method_name, args, ::candid::encode_one, |r| {
@@ -137,7 +137,7 @@ macro_rules! generate_candid_c2c_call_with_payment {
             canister_id: ::types::CanisterId,
             args: &$method_name::Args,
             cycles: ::types::Cycles,
-        ) -> ::ic_cdk::api::call::CallResult<$method_name::Response> {
+        ) -> Result<$method_name::Response, (::ic_cdk::call::RejectCode, String)> {
             let method_name = stringify!($method_name);
 
             canister_client::make_c2c_call_with_payment(
@@ -162,7 +162,7 @@ macro_rules! generate_candid_c2c_call_tuple_args {
         pub async fn $method_name(
             canister_id: ::types::CanisterId,
             args: $method_name::Args,
-        ) -> ::ic_cdk::api::call::CallResult<$method_name::Response> {
+        ) -> Result<$method_name::Response, (::ic_cdk::call::RejectCode, String)> {
             let method_name = stringify!($external_canister_method_name);
 
             canister_client::make_c2c_call(canister_id, method_name, args, ::candid::encode_args, |r| {
@@ -179,7 +179,9 @@ macro_rules! generate_candid_c2c_call_no_args {
         ::canister_client::generate_candid_c2c_call_no_args!($method_name, $method_name);
     };
     ($method_name:ident, $external_canister_method_name:ident) => {
-        pub async fn $method_name(canister_id: ::types::CanisterId) -> ::ic_cdk::api::call::CallResult<$method_name::Response> {
+        pub async fn $method_name(
+            canister_id: ::types::CanisterId,
+        ) -> Result<$method_name::Response, (::ic_cdk::call::RejectCode, String)> {
             let method_name = stringify!($external_canister_method_name);
 
             canister_client::make_c2c_call(canister_id, method_name, (), ::candid::encode_one, |r| {

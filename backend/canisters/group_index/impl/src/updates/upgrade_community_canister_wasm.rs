@@ -4,7 +4,7 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::upgrade_community_canister_wasm::*;
 use group_index_canister::ChildCanisterType;
-use ic_cdk::api::call::{CallResult, RejectionCode};
+use ic_cdk::call::RejectCode;
 use tracing::{error, info};
 use types::{CanisterId, CanisterWasm, Hash, UpgradeChunkedCanisterWasmResponse::*, UpgradesFilter};
 use utils::canister::build_filter_map;
@@ -76,7 +76,7 @@ pub(crate) async fn upgrade_community_wasm_in_local_group_index(
     canister_wasm: &CanisterWasm,
     wasm_hash: Hash,
     filter: Option<UpgradesFilter>,
-) -> CallResult<()> {
+) -> Result<(), (RejectCode, String)> {
     let push_wasm_response = local_group_index_canister_c2c_client::push_wasm_in_chunks(
         canister_id,
         local_group_index_canister::ChildCanisterType::Community,
@@ -88,7 +88,7 @@ pub(crate) async fn upgrade_community_wasm_in_local_group_index(
         push_wasm_response,
         local_group_index_canister::c2c_push_wasm_chunk::Response::Success
     ) {
-        return Err((RejectionCode::Unknown, format!("{push_wasm_response:?}")));
+        return Err((RejectCode::CanisterError, format!("{push_wasm_response:?}")));
     }
 
     let upgrade_response = local_group_index_canister_c2c_client::c2c_upgrade_community_canister_wasm(
@@ -102,7 +102,7 @@ pub(crate) async fn upgrade_community_wasm_in_local_group_index(
     .await?;
 
     if !matches!(upgrade_response, Success) {
-        return Err((RejectionCode::Unknown, format!("{upgrade_response:?}")));
+        return Err((RejectCode::CanisterError, format!("{upgrade_response:?}")));
     }
 
     Ok(())

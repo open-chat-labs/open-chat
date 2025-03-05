@@ -4,7 +4,7 @@ use crate::timer_job_types::{ProcessUserRefundJob, TimerJob, TopUpNeuronJob, Vot
 use crate::{mutate_state, RuntimeState};
 use canister_timer_jobs::Job;
 use constants::MINUTE_IN_MS;
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
@@ -33,9 +33,9 @@ pub fn start_job(state: &RuntimeState) {
 pub fn run() {
     for (governance_canister_id, is_nns) in mutate_state(start_next_sync) {
         if is_nns {
-            ic_cdk::spawn(get_and_process_nns_proposals(governance_canister_id));
+            ic_cdk::futures::spawn(get_and_process_nns_proposals(governance_canister_id));
         } else {
-            ic_cdk::spawn(get_and_process_sns_proposals(governance_canister_id));
+            ic_cdk::futures::spawn(get_and_process_sns_proposals(governance_canister_id));
         }
     }
 }
@@ -55,7 +55,7 @@ async fn get_and_process_nns_proposals(governance_canister_id: CanisterId) {
     handle_proposals_response(governance_canister_id, response);
 }
 
-async fn get_nns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec<ProposalInfo>> {
+async fn get_nns_proposals(governance_canister_id: CanisterId) -> Result<Vec<ProposalInfo>, (RejectCode, String)> {
     let mut proposals: Vec<ProposalInfo> = Vec::new();
 
     loop {
@@ -88,7 +88,7 @@ async fn get_and_process_sns_proposals(governance_canister_id: CanisterId) {
     handle_proposals_response(governance_canister_id, response);
 }
 
-async fn get_sns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec<ProposalData>> {
+async fn get_sns_proposals(governance_canister_id: CanisterId) -> Result<Vec<ProposalData>, (RejectCode, String)> {
     let mut proposals: Vec<ProposalData> = Vec::new();
 
     loop {
@@ -114,7 +114,10 @@ async fn get_sns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec
     Ok(proposals)
 }
 
-fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId, response: CallResult<Vec<R>>) {
+fn handle_proposals_response<R: RawProposal>(
+    governance_canister_id: CanisterId,
+    response: Result<Vec<R>, (RejectCode, String)>,
+) {
     match response {
         Ok(raw_proposals) => {
             let mut proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();

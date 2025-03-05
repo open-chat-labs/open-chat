@@ -30,7 +30,7 @@ fn run() {
     let actions = mutate_state(|state| state.data.expiring_member_actions.pop_batch());
 
     for action in actions {
-        ic_cdk::spawn(process_action(action));
+        ic_cdk::futures::spawn(process_action(action));
     }
 
     read_state(start_job_if_required);

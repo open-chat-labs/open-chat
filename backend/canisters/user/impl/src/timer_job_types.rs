@@ -218,7 +218,7 @@ impl Job for HardDeleteMessageContentJob {
 
 impl Job for DeleteFileReferencesJob {
     fn execute(self) {
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             let to_retry = storage_bucket_client::delete_files(self.files.clone()).await;
 
             if !to_retry.is_empty() {
@@ -262,7 +262,7 @@ impl Job for RemoveExpiredEventsJob {
 
 impl Job for ProcessTokenSwapJob {
     fn execute(self) {
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             process_token_swap(self.token_swap, None, self.attempt, self.debug).await;
         });
     }
@@ -272,7 +272,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match escrow_canister_c2c_client::notify_deposit(
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
@@ -306,7 +306,7 @@ impl Job for CancelP2PSwapInEscrowCanisterJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match escrow_canister_c2c_client::cancel_swap(
                 escrow_canister_id,
                 &escrow_canister::cancel_swap::Args { swap_id: self.swap_id },
@@ -348,7 +348,7 @@ impl Job for MarkP2PSwapExpiredJob {
 
 impl Job for SendMessageToGroupJob {
     fn execute(self) {
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match group_canister_c2c_client::c2c_send_message(self.chat_id.into(), &self.args).await {
                 Ok(group_canister::c2c_send_message::Response::Success(_)) => {}
                 Err(_) if self.attempt < 20 => {
@@ -374,7 +374,7 @@ impl Job for SendMessageToGroupJob {
 
 impl Job for SendMessageToChannelJob {
     fn execute(self) {
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match community_canister_c2c_client::c2c_send_message(self.community_id.into(), &self.args).await {
                 Ok(community_canister::c2c_send_message::Response::Success(_)) => {}
                 Err(_) if self.attempt < 20 => {

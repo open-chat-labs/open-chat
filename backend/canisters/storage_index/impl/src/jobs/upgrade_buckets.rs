@@ -1,5 +1,5 @@
 use crate::{mutate_state, RuntimeState};
-use ic_cdk::api::management_canister::main::CanisterInstallMode;
+use ic_cdk::management_canister::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -32,7 +32,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 fn run() {
     if let Some(batch) = mutate_state(next_batch) {
         if !batch.is_empty() {
-            ic_cdk::spawn(perform_upgrades(batch));
+            ic_cdk::futures::spawn(perform_upgrades(batch));
         }
     } else if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);

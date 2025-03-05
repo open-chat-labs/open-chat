@@ -7,7 +7,7 @@ fn inspect_message() {
 }
 
 fn accept_if_valid(state: &RuntimeState) {
-    let method_name = ic_cdk::api::call::method_name().trim_end_matches("_msgpack").to_string();
+    let method_name = ic_cdk::api::msg_method_name().trim_end_matches("_msgpack").to_string();
 
     let is_valid = match method_name.as_str() {
         "claim_daily_chit"
@@ -49,6 +49,6 @@ fn accept_if_valid(state: &RuntimeState) {
     };
 
     if is_valid {
-        ic_cdk::api::call::accept_message();
+        ic_cdk::api::accept_message();
     }
 }

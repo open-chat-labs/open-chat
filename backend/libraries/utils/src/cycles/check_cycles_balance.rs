@@ -10,7 +10,7 @@ const GB_STORAGE_PER_SECOND_FEE: Cycles = 127_000;
 
 pub fn check_cycles_balance(top_up_canister_id: CanisterId) {
     if should_notify() {
-        ic_cdk::spawn(send_low_balance_notification(top_up_canister_id));
+        ic_cdk::futures::spawn(send_low_balance_notification(top_up_canister_id));
     }
 }
 
@@ -24,7 +24,7 @@ pub async fn send_low_balance_notification(canister_id: CanisterId) {
 }
 
 fn should_notify() -> bool {
-    let cycles_balance = ic_cdk::api::canister_balance128();
+    let cycles_balance = ic_cdk::api::canister_cycle_balance();
     let freeze_threshold = get_approx_freeze_threshold_cycles();
 
     cycles_balance < max(2 * freeze_threshold, MIN_CYCLES_BALANCE)

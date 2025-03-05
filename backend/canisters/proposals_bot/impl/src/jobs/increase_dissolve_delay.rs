@@ -33,7 +33,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some(neuron) = mutate_state(|state| state.data.nervous_systems.get_neuron_in_need_of_dissolve_delay_increase()) {
-        ic_cdk::spawn(increase_dissolve_delay(
+        ic_cdk::futures::spawn(increase_dissolve_delay(
             neuron.governance_canister_id,
             neuron.neuron_id,
             neuron.additional_dissolve_delay_seconds,

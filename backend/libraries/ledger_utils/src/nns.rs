@@ -1,5 +1,5 @@
 use crate::default_ledger_account;
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use ic_ledger_types::{Memo, Timestamp, TransferArgs};
 use types::nns::Tokens;
 use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction};
@@ -7,7 +7,7 @@ use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction};
 pub async fn process_transaction(
     transaction: types::nns::PendingCryptoTransaction,
     sender: CanisterId,
-) -> CallResult<Result<CompletedCryptoTransaction, FailedCryptoTransaction>> {
+) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, (RejectCode, String)> {
     let memo = transaction.memo.unwrap_or_default();
     let fee = transaction.fee.unwrap_or(Tokens::DEFAULT_FEE);
 

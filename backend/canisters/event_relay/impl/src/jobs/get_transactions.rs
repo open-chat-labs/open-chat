@@ -1,7 +1,7 @@
 use crate::{mutate_state, read_state};
 use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use event_store_producer::EventBuilder;
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use icrc_ledger_types::icrc3::transactions::{GetTransactionsRequest, Transaction};
 use serde::Serialize;
 use std::cell::Cell;
@@ -27,7 +27,7 @@ pub(crate) fn start_job_if_required() -> bool {
 }
 
 fn run() {
-    ic_cdk::spawn(async {
+    ic_cdk::futures::spawn(async {
         let delay = run_async().await;
         ic_cdk_timers::set_timer(Duration::from_millis(delay), run);
     });
@@ -125,7 +125,7 @@ async fn run_async() -> Milliseconds {
     delay
 }
 
-async fn get_transactions(start: u64, ledger_canister_id: CanisterId) -> CallResult<Vec<Transaction>> {
+async fn get_transactions(start: u64, ledger_canister_id: CanisterId) -> Result<Vec<Transaction>, (RejectCode, String)> {
     let response = sns_ledger_canister_c2c_client::get_transactions(
         ledger_canister_id,
         &GetTransactionsRequest {

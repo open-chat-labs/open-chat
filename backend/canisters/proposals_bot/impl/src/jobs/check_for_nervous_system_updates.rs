@@ -15,7 +15,7 @@ pub fn start_job() {
 }
 
 fn run() {
-    ic_cdk::spawn(run_async());
+    ic_cdk::futures::spawn(run_async());
 }
 
 async fn run_async() {
@@ -39,7 +39,7 @@ async fn run_async() {
                         state.data.nervous_systems.update_from_registry(ns);
                     } else {
                         info!(%governance_canister_id, "Creating group for nervous system");
-                        ic_cdk::spawn(create_group(ns, state.data.group_index_canister_id));
+                        ic_cdk::futures::spawn(create_group(ns, state.data.group_index_canister_id));
                     }
                 }
                 state.data.registry_synced_up_to = result.last_updated;

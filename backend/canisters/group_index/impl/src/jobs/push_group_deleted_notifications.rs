@@ -28,7 +28,7 @@ fn run() {
 
     if let Some(batch) = mutate_state(next_batch) {
         if !batch.is_empty() {
-            ic_cdk::spawn(push_notifications(batch));
+            ic_cdk::futures::spawn(push_notifications(batch));
             read_state(start_job_if_required);
         }
     }

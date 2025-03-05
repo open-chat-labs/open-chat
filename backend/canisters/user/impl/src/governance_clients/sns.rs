@@ -1,6 +1,6 @@
 use crate::governance_clients::sns::manage_neuron::RegisterVote;
 use candid::Principal;
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::{manage_neuron, manage_neuron_response, GovernanceError};
 use tracing::error;
@@ -11,7 +11,7 @@ pub async fn list_neurons(
     limit: u32,
     of_principal: Principal,
     now: TimestampMillis,
-) -> CallResult<Vec<SnsNeuronId>> {
+) -> Result<Vec<SnsNeuronId>, (RejectCode, String)> {
     let args = sns_governance_canister::list_neurons::Args {
         limit,
         start_page_at: None,
@@ -36,7 +36,7 @@ pub async fn register_vote(
     neuron_id: SnsNeuronId,
     proposal_id: ProposalId,
     adopt: bool,
-) -> CallResult<Result<(), GovernanceError>> {
+) -> Result<Result<(), GovernanceError>, (RejectCode, String)> {
     let args = sns_governance_canister::manage_neuron::Args {
         subaccount: neuron_id.to_vec(),
         command: Some(manage_neuron::Command::RegisterVote(RegisterVote {

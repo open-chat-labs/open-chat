@@ -2,7 +2,7 @@ use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::api::call::{CallResult, RejectionCode};
+use ic_cdk::call::RejectCode;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::compute_neuron_staking_subaccount_bytes;
@@ -102,7 +102,7 @@ async fn stake_neuron_impl(
     ledger_canister_id: CanisterId,
     nonce: u64,
     dissolve_delay_seconds: u32,
-) -> CallResult<Response> {
+) -> Result<Response, (RejectCode, String)> {
     let subaccount = compute_neuron_staking_subaccount_bytes(this_canister_id, nonce);
 
     if let Err(transfer_error) = icrc_ledger_canister_c2c_client::icrc1_transfer(
@@ -138,7 +138,11 @@ async fn stake_neuron_impl(
     Ok(Success(neuron_id))
 }
 
-async fn claim_neuron(this_canister_id: CanisterId, governance_canister_id: CanisterId, nonce: u64) -> CallResult<SnsNeuronId> {
+async fn claim_neuron(
+    this_canister_id: CanisterId,
+    governance_canister_id: CanisterId,
+    nonce: u64,
+) -> Result<SnsNeuronId, (RejectCode, String)> {
     let args = ManageNeuron {
         subaccount: vec![],
         command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
@@ -153,7 +157,7 @@ async fn claim_neuron(this_canister_id: CanisterId, governance_canister_id: Cani
 
     match response.command.unwrap() {
         manage_neuron_response::Command::ClaimOrRefresh(c) => Ok(c.refreshed_neuron_id.unwrap().id.try_into().unwrap()),
-        manage_neuron_response::Command::Error(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
+        manage_neuron_response::Command::Error(e) => Err((RejectCode::CanisterError, format!("{e:?}"))),
         _ => unreachable!(),
     }
 }

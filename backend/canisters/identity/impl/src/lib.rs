@@ -7,7 +7,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use ic_canister_sig_creation::signature_map::{SignatureMap, LABEL_SIG};
 use ic_canister_sig_creation::CanisterSigPublicKey;
-use ic_cdk::api::set_certified_data;
+use ic_cdk::api::certified_data_set;
 use identity_canister::{WebAuthnKey, WEBAUTHN_ORIGINATING_CANISTER};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -214,7 +214,7 @@ impl Data {
 
     pub fn update_root_hash(&mut self) {
         let prefixed_root_hash = ic_certification::labeled_hash(LABEL_SIG, &self.signature_map.root_hash());
-        set_certified_data(&prefixed_root_hash[..]);
+        certified_data_set(&prefixed_root_hash[..]);
     }
 
     pub fn requires_captcha(&self, originating_canister_id: &CanisterId) -> bool {

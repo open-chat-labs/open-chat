@@ -34,7 +34,7 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion)
 }
 
 fn generate_salt() {
-    ic_cdk::spawn(generate_salt_inner());
+    ic_cdk::futures::spawn(generate_salt_inner());
 
     async fn generate_salt_inner() {
         let seed = get_random_seed().await;
@@ -46,7 +46,7 @@ fn generate_salt() {
 }
 
 fn reseed_rng() {
-    ic_cdk::spawn(reseed_rng_inner());
+    ic_cdk::futures::spawn(reseed_rng_inner());
 
     async fn reseed_rng_inner() {
         let seed = get_random_seed().await;

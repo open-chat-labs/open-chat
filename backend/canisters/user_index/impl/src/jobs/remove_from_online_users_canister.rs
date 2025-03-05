@@ -32,7 +32,7 @@ pub fn run() {
             .pop_front()
             .map(|p| (state.data.online_users_canister_id, p))
     }) {
-        ic_cdk::spawn(remove_user(canister_id, principal));
+        ic_cdk::futures::spawn(remove_user(canister_id, principal));
     }
 }
 

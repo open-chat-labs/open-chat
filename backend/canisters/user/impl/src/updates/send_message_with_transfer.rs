@@ -8,7 +8,7 @@ use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT, SECOND_IN_MS};
 use escrow_canister::deposit_subaccount;
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use tracing::error;
 use types::icrc1::Account;
 use types::{
@@ -379,7 +379,7 @@ async fn process_transaction(
     pending_transaction: PendingCryptoTransaction,
     p2p_swap_id: Option<u32>,
     now: TimestampMillis,
-) -> CallResult<Result<(MessageContentInternal, CompletedCryptoTransaction), String>> {
+) -> Result<Result<(MessageContentInternal, CompletedCryptoTransaction), String>, (RejectCode, String)> {
     match crate::crypto::process_transaction(pending_transaction).await {
         Ok(Ok(completed)) => {
             if let Some(id) = p2p_swap_id {

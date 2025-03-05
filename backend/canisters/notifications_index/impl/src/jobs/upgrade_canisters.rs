@@ -1,6 +1,6 @@
 use crate::{mutate_state, RuntimeState};
 use constants::min_cycles_balance;
-use ic_cdk::api::management_canister::main::CanisterInstallMode;
+use ic_cdk::management_canister::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -30,7 +30,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 
 fn run() {
     match mutate_state(try_get_next) {
-        GetNextResult::Success(canister_to_upgrade) => ic_cdk::spawn(perform_upgrade(canister_to_upgrade)),
+        GetNextResult::Success(canister_to_upgrade) => ic_cdk::futures::spawn(perform_upgrade(canister_to_upgrade)),
         GetNextResult::Continue => {}
         GetNextResult::QueueEmpty => {
             if let Some(timer_id) = TIMER_ID.take() {
@@ -76,7 +76,7 @@ fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
     };
 
     let new_wasm = state.data.notifications_canister_wasm_for_upgrades.clone();
-    let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);
+    let deposit_cycles_if_needed = ic_cdk::api::canister_cycle_balance() > min_cycles_balance(state.data.test_mode);
 
     GetNextResult::Success(CanisterToUpgrade {
         canister_id,

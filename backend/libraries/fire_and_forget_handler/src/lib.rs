@@ -32,7 +32,7 @@ impl FireAndForgetHandler {
             attempt: 0,
         };
 
-        ic_cdk::spawn(self.clone().process_single(call));
+        ic_cdk::futures::spawn(self.clone().process_single(call));
     }
 
     pub fn send_candid<A: CandidType>(&self, canister_id: CanisterId, method_name: impl Into<String>, args: A) {
@@ -90,7 +90,7 @@ impl FireAndForgetHandler {
         let now = canister_time::now_millis();
         let next_batch = self.within_lock(|i| i.next_batch(50, now));
         match next_batch {
-            NextBatchResult::Success(batch) => ic_cdk::spawn(self.clone().process_batch(batch)),
+            NextBatchResult::Success(batch) => ic_cdk::futures::spawn(self.clone().process_batch(batch)),
             NextBatchResult::Continue => {}
             NextBatchResult::StopJob => {
                 if let Some(timer_id) = self.within_lock(|i| i.timer_id.take()) {

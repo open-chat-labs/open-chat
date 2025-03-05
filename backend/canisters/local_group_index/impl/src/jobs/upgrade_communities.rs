@@ -1,6 +1,6 @@
 use crate::{mutate_state, RuntimeState};
 use constants::min_cycles_balance;
-use ic_cdk::api::management_canister::main::CanisterInstallMode;
+use ic_cdk::management_canister::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use local_group_index_canister::ChildCanisterType;
 use std::cell::Cell;
@@ -34,7 +34,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 fn run() {
     if let Some(batch) = mutate_state(next_batch) {
         if !batch.is_empty() {
-            ic_cdk::spawn(perform_upgrades(batch));
+            ic_cdk::futures::spawn(perform_upgrades(batch));
         }
     } else if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
@@ -80,7 +80,7 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
     let community_canister_wasm = &state.data.child_canister_wasms.get(ChildCanisterType::Community);
     let current_wasm_version = community.wasm_version;
     let new_wasm_version = community_canister_wasm.wasm.version;
-    let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);
+    let deposit_cycles_if_needed = ic_cdk::api::canister_cycle_balance() > min_cycles_balance(state.data.test_mode);
 
     if current_wasm_version == new_wasm_version && !force {
         return None;

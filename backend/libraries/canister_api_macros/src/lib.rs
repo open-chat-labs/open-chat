@@ -5,7 +5,7 @@ use serde::Deserialize;
 use serde_tokenstream::from_tokenstream;
 use std::fmt::Formatter;
 use syn::parse::{Parse, ParseStream};
-use syn::{parse_macro_input, Block, FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, PatType, Signature, Token};
+use syn::{parse_macro_input, Block, FnArg, Ident, ItemFn, LitBool, Pat, PatIdent, PatType, ReturnType, Signature, Token};
 
 enum MethodType {
     Update,
@@ -58,6 +58,8 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
     let composite = attr.composite.then_some(quote! { composite = true, });
     let manual_reply = attr.manual_reply.then_some(quote! { manual_reply = "true", });
 
+    let empty_return = matches!(item.sig.output, ReturnType::Default);
+
     let candid = if attr.candid {
         quote! {
             #[ic_cdk::#method_type(name = #name, #guard #composite #manual_reply)]
@@ -76,17 +78,21 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
         let deserializer_name = format!("{msgpack_name}_deserializer");
         let deserializer_ident = Ident::new(&deserializer_name, Span::call_site());
 
-        let serializer = quote! { serializer = #serializer_name, };
-        let deserializer = quote! { deserializer = #deserializer_name };
+        let encode_with = if empty_return {
+            quote! {}
+        } else {
+            quote! { encode_with = #serializer_ident, }
+        };
+        let decode_with = quote! { decode_with = #deserializer_name };
 
         let mut msgpack_item = item.clone();
         msgpack_item.sig.ident = Ident::new(&msgpack_name, Span::call_site());
 
         quote! {
             use msgpack::serialize_then_unwrap as #serializer_ident;
-            use msgpack::deserialize_then_unwrap as #deserializer_ident;
+            use msgpack::deserialize_owned_then_unwrap as #deserializer_ident;
 
-            #[ic_cdk::#method_type(name = #msgpack_name, #guard #composite #manual_reply #serializer #deserializer)]
+            #[ic_cdk::#method_type(name = #msgpack_name, #guard #composite #manual_reply #encode_with #decode_with)]
             #msgpack_item
         }
     } else {
@@ -102,17 +108,21 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
         let deserializer_name = format!("{json_name}_deserializer");
         let deserializer_ident = Ident::new(&deserializer_name, Span::call_site());
 
-        let serializer = quote! { serializer = #serializer_name, };
-        let deserializer = quote! { deserializer = #deserializer_name };
+        let encode_with = if empty_return {
+            quote! {}
+        } else {
+            quote! { encode_with = #serializer_ident, }
+        };
+        let decode_with = quote! { decode_with = #deserializer_name };
 
         let mut json_item = item.clone();
         json_item.sig.ident = Ident::new(&json_name, Span::call_site());
 
         quote! {
             use json::serialize_then_unwrap as #serializer_ident;
-            use json::deserialize_then_unwrap as #deserializer_ident;
+            use json::deserialize_owned_then_unwrap as #deserializer_ident;
 
-            #[ic_cdk::#method_type(name = #json_name, #guard #composite #manual_reply #serializer #deserializer)]
+            #[ic_cdk::#method_type(name = #json_name, #guard #composite #manual_reply #encode_with #decode_with)]
             #json_item
         }
     } else {

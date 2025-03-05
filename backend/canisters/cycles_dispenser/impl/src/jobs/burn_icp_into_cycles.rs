@@ -15,8 +15,8 @@ pub fn start_job() {
 
 fn run() {
     match mutate_state(get_next_action) {
-        Action::BurnIcp(burn) => ic_cdk::spawn(burn_icp(burn)),
-        Action::NotifyTopUp(notify) => ic_cdk::spawn(notify_cmc(notify)),
+        Action::BurnIcp(burn) => ic_cdk::futures::spawn(burn_icp(burn)),
+        Action::NotifyTopUp(notify) => ic_cdk::futures::spawn(notify_cmc(notify)),
         Action::None => {}
     }
 }

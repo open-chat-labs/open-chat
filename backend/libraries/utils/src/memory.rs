@@ -18,7 +18,7 @@ pub fn heap() -> u64 {
 pub fn stable() -> u64 {
     #[cfg(target_arch = "wasm32")]
     {
-        ic_cdk::api::stable::stable_size() * 65536
+        ic_cdk::stable::stable_size() * 65536
     }
 
     #[cfg(not(target_arch = "wasm32"))]

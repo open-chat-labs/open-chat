@@ -14,7 +14,7 @@ fn c2c_delete_group(args: Args) -> Response {
 
 fn c2c_delete_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.local_groups.delete(&args.chat_id) {
-        ic_cdk::spawn(delete_canister(args.chat_id.into()));
+        ic_cdk::futures::spawn(delete_canister(args.chat_id.into()));
         Success
     } else {
         ChatNotFound

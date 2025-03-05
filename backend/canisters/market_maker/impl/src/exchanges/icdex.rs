@@ -1,7 +1,7 @@
 use crate::exchanges::Exchange;
 use crate::read_state;
 use async_trait::async_trait;
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use icdex_canister::deposit::Token0OrToken1;
 use icdex_client::ICDexClient;
 use icrc_ledger_types::icrc1::account::Account;
@@ -10,33 +10,33 @@ use types::{AggregatedOrders, CancelOrderRequest, CanisterId, MakeOrderRequest, 
 
 #[async_trait]
 impl<M: Fn(MakeOrderRequest) + Send + Sync, C: Fn(CancelOrderRequest) + Send + Sync> Exchange for ICDexClient<M, C> {
-    async fn latest_price(&self) -> CallResult<u64> {
+    async fn latest_price(&self) -> Result<u64, (RejectCode, String)> {
         self.latest_price().await
     }
 
-    async fn my_open_orders(&self) -> CallResult<Vec<Order>> {
+    async fn my_open_orders(&self) -> Result<Vec<Order>, (RejectCode, String)> {
         self.my_open_orders().await
     }
 
-    async fn orderbook(&self) -> CallResult<AggregatedOrders> {
+    async fn orderbook(&self) -> Result<AggregatedOrders, (RejectCode, String)> {
         self.orderbook().await
     }
 
-    async fn make_orders(&self, orders: Vec<MakeOrderRequest>) -> CallResult<()> {
+    async fn make_orders(&self, orders: Vec<MakeOrderRequest>) -> Result<(), (RejectCode, String)> {
         for order in orders {
             self.make_order(order).await?;
         }
         Ok(())
     }
 
-    async fn cancel_orders(&self, orders: Vec<CancelOrderRequest>) -> CallResult<()> {
+    async fn cancel_orders(&self, orders: Vec<CancelOrderRequest>) -> Result<(), (RejectCode, String)> {
         for order in orders {
             self.cancel_order(order).await?;
         }
         Ok(())
     }
 
-    async fn account_balances(&self) -> CallResult<Vec<(CanisterId, u128)>> {
+    async fn account_balances(&self) -> Result<Vec<(CanisterId, u128)>, (RejectCode, String)> {
         self.account_balances().await
     }
 }

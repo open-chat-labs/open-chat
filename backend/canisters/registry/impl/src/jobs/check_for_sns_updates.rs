@@ -1,8 +1,8 @@
 use crate::updates::add_token::add_sns_token;
 use crate::{mutate_state, read_state};
 use constants::HOUR_IN_MS;
-use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk::api::management_canister::main::CanisterId;
+use ic_cdk::call::RejectCode;
 use registry_canister::NervousSystemDetails;
 use sns_governance_canister::types::governance::SnsMetadata;
 use sns_governance_canister::types::NervousSystemParameters;
@@ -21,7 +21,7 @@ pub fn start_job() {
 }
 
 fn run() {
-    ic_cdk::spawn(run_async());
+    ic_cdk::futures::spawn(run_async());
 }
 
 async fn run_async() {
@@ -91,7 +91,7 @@ async fn is_successfully_launched(sns_swap_canister_id: CanisterId) -> Option<bo
 
 async fn get_nervous_system_metadata_and_parameters(
     governance_canister_id: CanisterId,
-) -> CallResult<(SnsMetadata, NervousSystemParameters)> {
+) -> Result<(SnsMetadata, NervousSystemParameters), (RejectCode, String)> {
     futures::future::try_join(
         sns_governance_canister_c2c_client::get_metadata(governance_canister_id, &Empty {}),
         sns_governance_canister_c2c_client::get_nervous_system_parameters(governance_canister_id, &()),
@@ -99,7 +99,7 @@ async fn get_nervous_system_metadata_and_parameters(
     .await
 }
 
-async fn get_nervous_system_details(sns: DeployedSns) -> CallResult<NervousSystemDetails> {
+async fn get_nervous_system_details(sns: DeployedSns) -> Result<NervousSystemDetails, (RejectCode, String)> {
     let (metadata, parameters) = get_nervous_system_metadata_and_parameters(sns.governance_canister_id.unwrap()).await?;
 
     let now = read_state(|state| state.env.now());
@@ -109,7 +109,7 @@ async fn get_nervous_system_details(sns: DeployedSns) -> CallResult<NervousSyste
         None => {
             error!(?sns, "Unable to build NervousSystemDetails due to missing data");
             Err((
-                RejectionCode::Unknown,
+                RejectCode::CanisterError,
                 "Unable to build NervousSystemDetails due to missing data".to_string(),
             ))
         }

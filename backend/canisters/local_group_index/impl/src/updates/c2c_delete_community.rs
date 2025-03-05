@@ -14,7 +14,7 @@ fn c2c_delete_community(args: Args) -> Response {
 
 fn c2c_delete_community_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.local_communities.delete(&args.community_id) {
-        ic_cdk::spawn(delete_canister(args.community_id.into()));
+        ic_cdk::futures::spawn(delete_canister(args.community_id.into()));
         Success
     } else {
         CommunityNotFound

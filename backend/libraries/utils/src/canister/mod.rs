@@ -1,4 +1,4 @@
-use ic_cdk::api::call::RejectionCode;
+use ic_cdk::call::{CallFailed, Error, RejectCode};
 use std::cmp::Ordering;
 use types::BuildVersion;
 
@@ -30,16 +30,16 @@ pub use stop::*;
 pub use uninstall::*;
 pub use update_settings::*;
 
-pub fn is_out_of_cycles_error(rejection_code: RejectionCode, message: &str) -> bool {
-    matches!(rejection_code, RejectionCode::SysTransient) && message.contains("out of cycles")
+pub fn is_out_of_cycles_error(reject_code: RejectCode, message: &str) -> bool {
+    matches!(reject_code, RejectCode::SysTransient) && message.contains("out of cycles")
 }
 
-pub fn should_retry_failed_c2c_call(rejection_code: RejectionCode, message: &str) -> bool {
-    match rejection_code {
-        RejectionCode::DestinationInvalid => false,
-        RejectionCode::CanisterReject => false,
-        RejectionCode::CanisterError if message.contains("IC0536") => false, // CanisterMethodNotFound
-        RejectionCode::CanisterError if message.contains("IC0537") => false, // CanisterWasmModuleNotFound
+pub fn should_retry_failed_c2c_call(reject_code: RejectCode, message: &str) -> bool {
+    match reject_code {
+        RejectCode::DestinationInvalid => false,
+        RejectCode::CanisterReject => false,
+        RejectCode::CanisterError if message.contains("IC0536") => false, // CanisterMethodNotFound
+        RejectCode::CanisterError if message.contains("IC0537") => false, // CanisterWasmModuleNotFound
         _ => true,
     }
 }
@@ -49,5 +49,13 @@ pub fn should_perform_upgrade(current: BuildVersion, next: BuildVersion, test_mo
         Ordering::Less => true,
         Ordering::Greater if test_mode => true,
         _ => false,
+    }
+}
+
+pub fn convert_cdk_error(error: Error) -> (RejectCode, String) {
+    match error {
+        Error::CallFailed(CallFailed::CallPerformFailed(f)) => (RejectCode::SysTransient, f.to_string()),
+        Error::CallFailed(CallFailed::CallRejected(r)) => (r.reject_code(), r.to_string()),
+        Error::CandidDecodeFailed(f) => (RejectCode::CanisterReject, f.to_string()),
     }
 }

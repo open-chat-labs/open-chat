@@ -1,7 +1,7 @@
 use crate::model::nervous_systems::ProposalToPush;
 use crate::{generate_message_id, mutate_state, read_state, RuntimeState};
 use chat_events::{MessageContentInternal, ProposalContentInternal};
-use ic_cdk::api::call::{CallResult, RejectionCode};
+use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
 use sns_governance_canister::types::{get_proposal_response, ProposalId};
 use std::cell::Cell;
@@ -30,7 +30,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some(proposal) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposal_to_push()) {
-        ic_cdk::spawn(push_proposal(proposal));
+        ic_cdk::futures::spawn(push_proposal(proposal));
     }
     read_state(start_job_if_required);
 }
@@ -54,7 +54,10 @@ async fn push_proposal(
     }
 }
 
-async fn fetch_payload_rendering_if_required(governance_canister_id: CanisterId, proposal: Proposal) -> CallResult<Proposal> {
+async fn fetch_payload_rendering_if_required(
+    governance_canister_id: CanisterId,
+    proposal: Proposal,
+) -> Result<Proposal, (RejectCode, String)> {
     if let Proposal::SNS(p) = &proposal {
         // If not a motion proposal, call `get_proposal` to get the payload rendering.
         if p.action != 1 {
@@ -152,7 +155,7 @@ async fn push_channel_proposal(
 fn mark_proposal_pushed(
     governance_canister_id: CanisterId,
     proposal: Proposal,
-    result: Result<(MessageId, Option<MessageIndex>), RejectionCode>,
+    result: Result<(MessageId, Option<MessageIndex>), RejectCode>,
 ) {
     mutate_state(|state| {
         match result {
@@ -168,7 +171,7 @@ fn mark_proposal_pushed(
                     .nervous_systems
                     .mark_proposal_push_failed(&governance_canister_id, proposal);
 
-                if code == RejectionCode::DestinationInvalid {
+                if code == RejectCode::DestinationInvalid {
                     state.data.nervous_systems.mark_disabled(&governance_canister_id);
                 }
             }
@@ -179,9 +182,9 @@ fn mark_proposal_pushed(
 
 fn extract_channel_result(
     message_id: MessageId,
-    response: CallResult<community_canister::c2c_send_message::Response>,
+    response: Result<community_canister::c2c_send_message::Response, (RejectCode, String)>,
     canister_id: CanisterId,
-) -> Result<(MessageId, Option<MessageIndex>), RejectionCode> {
+) -> Result<(MessageId, Option<MessageIndex>), RejectCode> {
     match response {
         Ok(community_canister::c2c_send_message::Response::Success(result)) => Ok((message_id, Some(result.message_index))),
         other => extract_result_inner(message_id, other, canister_id),
@@ -190,9 +193,9 @@ fn extract_channel_result(
 
 fn extract_group_result(
     message_id: MessageId,
-    response: CallResult<group_canister::c2c_send_message::Response>,
+    response: Result<group_canister::c2c_send_message::Response, (RejectCode, String)>,
     canister_id: CanisterId,
-) -> Result<(MessageId, Option<MessageIndex>), RejectionCode> {
+) -> Result<(MessageId, Option<MessageIndex>), RejectCode> {
     match response {
         Ok(group_canister::c2c_send_message::Response::Success(result)) => Ok((message_id, Some(result.message_index))),
         other => extract_result_inner(message_id, other, canister_id),
@@ -201,16 +204,16 @@ fn extract_group_result(
 
 fn extract_result_inner<T: Debug>(
     message_id: MessageId,
-    response: CallResult<T>,
+    response: Result<T, (RejectCode, String)>,
     canister_id: CanisterId,
-) -> Result<(MessageId, Option<MessageIndex>), RejectionCode> {
+) -> Result<(MessageId, Option<MessageIndex>), RejectCode> {
     match response {
         // If the messageId has already been used, treat that as success
-        Err((code, error)) if code == RejectionCode::CanisterError && error.contains("MessageId") => Ok((message_id, None)),
+        Err((code, error)) if code == RejectCode::CanisterError && error.contains("MessageId") => Ok((message_id, None)),
         Err((code, _)) => Err(code),
         _ => {
             error!(?response, %canister_id, "Failed to push proposal");
-            Err(RejectionCode::CanisterError)
+            Err(RejectCode::CanisterError)
         }
     }
 }

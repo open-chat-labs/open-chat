@@ -4,12 +4,12 @@ use candid::Principal;
 use canister_timer_jobs::Job;
 use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use cycles_minting_canister::notify_create_canister::{Subnet, SubnetSelection};
-use ic_cdk::api::call::{CallResult, RejectionCode};
-use ic_cdk::api::management_canister::main::{CanisterSettings, UpdateSettingsArgument};
+use ic_cdk::call::RejectCode;
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_FEE};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{CanisterId, TimestampMillis};
+use utils::canister::set_controllers;
 
 const MEMO_CREATE_CANISTER: Memo = Memo(0x41455243); // == 'CREA'
 
@@ -45,7 +45,7 @@ impl Job for ExpandOntoSubnetJob {
         if let Some((next_step, now)) =
             read_state(|state| state.data.subnets.in_progress().map(|s| (s.next_step(), state.env.now())))
         {
-            ic_cdk::spawn(self.process_step(next_step, now));
+            ic_cdk::futures::spawn(self.process_step(next_step, now));
         }
     }
 }
@@ -70,7 +70,11 @@ impl ExpandOntoSubnetJob {
         })
     }
 
-    async fn process_step_inner(&self, next_step: ExpandOntoSubnetStep, now: TimestampMillis) -> CallResult<Option<bool>> {
+    async fn process_step_inner(
+        &self,
+        next_step: ExpandOntoSubnetStep,
+        now: TimestampMillis,
+    ) -> Result<Option<bool>, (RejectCode, String)> {
         let complete = match next_step {
             ExpandOntoSubnetStep::CreateLocalUserIndex => {
                 let canister_id = create_canister(
@@ -133,15 +137,7 @@ impl ExpandOntoSubnetJob {
                     (ids.notifications_canister, self.notifications_index),
                 ]
                 .into_iter()
-                .map(|(canister_id, controller)| {
-                    ic_cdk::api::management_canister::main::update_settings(UpdateSettingsArgument {
-                        canister_id,
-                        settings: CanisterSettings {
-                            controllers: Some(vec![controller]),
-                            ..Default::default()
-                        },
-                    })
-                })
+                .map(|(canister_id, controller)| set_controllers(canister_id, vec![controller]))
                 .collect();
 
                 futures::future::try_join_all(futures).await?;
@@ -202,7 +198,7 @@ impl ExpandOntoSubnetJob {
                     })
                 } else {
                     return Err((
-                        RejectionCode::Unknown,
+                        RejectCode::CanisterError,
                         format!("Failed to add notifications canister: {response:?}"),
                     ));
                 }
@@ -229,7 +225,7 @@ impl ExpandOntoSubnetJob {
                     })
                 } else {
                     return Err((
-                        RejectionCode::Unknown,
+                        RejectCode::CanisterError,
                         format!("Failed to add local user index: {response:?}"),
                     ));
                 }
@@ -257,7 +253,7 @@ impl ExpandOntoSubnetJob {
                     })
                 } else {
                     return Err((
-                        RejectionCode::Unknown,
+                        RejectCode::CanisterError,
                         format!("Failed to add local group index: {response:?}"),
                     ));
                 }
@@ -276,7 +272,7 @@ async fn create_canister(
     this_canister_id: Principal,
     create_canister_block_index: Option<u64>,
     now: TimestampMillis,
-) -> CallResult<CanisterId> {
+) -> Result<CanisterId, (RejectCode, String)> {
     let block_index = match create_canister_block_index {
         Some(index) => index,
         None => {
@@ -305,7 +301,7 @@ async fn create_canister(
                     index
                 }
                 Err(error) => {
-                    return Err((RejectionCode::Unknown, format!("{error:?}")));
+                    return Err((RejectCode::CanisterError, format!("{error:?}")));
                 }
             }
         }
@@ -332,6 +328,6 @@ async fn create_canister(
             }
             Ok(canister_id)
         }
-        Err(error) => Err((RejectionCode::Unknown, format!("{error:?}"))),
+        Err(error) => Err((RejectCode::CanisterError, format!("{error:?}"))),
     }
 }

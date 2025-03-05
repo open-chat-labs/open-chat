@@ -2,7 +2,7 @@ use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::api::call::{CallResult, RejectionCode};
+use ic_cdk::call::RejectCode;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use proposals_bot_canister::top_up_neuron::{Response::*, *};
@@ -57,7 +57,11 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
     Err(GovernanceCanisterNotSupported)
 }
 
-async fn top_up_neuron_impl(args: &Args, ledger_canister_id: CanisterId, sns_neuron_id: SnsNeuronId) -> CallResult<Response> {
+async fn top_up_neuron_impl(
+    args: &Args,
+    ledger_canister_id: CanisterId,
+    sns_neuron_id: SnsNeuronId,
+) -> Result<Response, (RejectCode, String)> {
     if let Err(transfer_error) = icrc_ledger_canister_c2c_client::icrc1_transfer(
         ledger_canister_id,
         &TransferArg {
@@ -82,7 +86,7 @@ async fn top_up_neuron_impl(args: &Args, ledger_canister_id: CanisterId, sns_neu
     Ok(Success)
 }
 
-async fn refresh_neuron(governance_canister_id: CanisterId, sns_neuron_id: SnsNeuronId) -> CallResult<()> {
+async fn refresh_neuron(governance_canister_id: CanisterId, sns_neuron_id: SnsNeuronId) -> Result<(), (RejectCode, String)> {
     let args = ManageNeuron {
         subaccount: sns_neuron_id.to_vec(),
         command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
@@ -94,7 +98,7 @@ async fn refresh_neuron(governance_canister_id: CanisterId, sns_neuron_id: SnsNe
 
     match response.command.unwrap() {
         manage_neuron_response::Command::ClaimOrRefresh(_) => Ok(()),
-        manage_neuron_response::Command::Error(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
+        manage_neuron_response::Command::Error(e) => Err((RejectCode::CanisterError, format!("{e:?}"))),
         _ => unreachable!(),
     }
 }
