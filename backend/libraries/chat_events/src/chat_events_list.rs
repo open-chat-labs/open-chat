@@ -55,10 +55,20 @@ impl ChatEventsList {
             if let Some(mut event_wrapper) = self.get_event(event_index.into(), EventIndex::default(), None) {
                 if let ChatEventInternal::Message(m) = &mut event_wrapper.event {
                     if m.sender == my_user_id {
-                        m.message_id = self.new_message_id(my_user_id, their_user_id, my_messages_index);
+                        m.message_id = self.new_message_id(
+                            my_user_id,
+                            their_user_id,
+                            my_messages_index,
+                            m.content.text().unwrap_or_default(),
+                        );
                         my_messages_index += 1;
                     } else {
-                        m.message_id = self.new_message_id(their_user_id, my_user_id, their_messages_index);
+                        m.message_id = self.new_message_id(
+                            their_user_id,
+                            my_user_id,
+                            their_messages_index,
+                            m.content.text().unwrap_or_default(),
+                        );
                         their_messages_index += 1;
                     }
                     if self.message_id_map.insert(m.message_id, event_index).is_some() {
@@ -78,11 +88,12 @@ impl ChatEventsList {
         Some(self.message_id_map.len() == self.message_event_indexes.len())
     }
 
-    fn new_message_id(&self, user_id1: UserId, user_id2: UserId, index: u32) -> MessageId {
+    fn new_message_id(&self, user_id1: UserId, user_id2: UserId, index: u32, text: &str) -> MessageId {
         let mut hasher = Sha256::new();
         hasher.update(user_id1.as_slice());
         hasher.update(user_id2.as_slice());
         hasher.update(index.to_be_bytes());
+        hasher.update(text.as_bytes());
         let value: [u8; 32] = hasher.finalize().into();
         MessageId::from(u128::from_be_bytes(value[..16].try_into().unwrap()))
     }
