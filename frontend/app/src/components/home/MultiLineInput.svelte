@@ -1,69 +1,53 @@
+<script module lang="ts">
+    export interface Props {
+        disabled?: boolean;
+        dragging?: boolean;
+        editingEvent?: EventWrapper<Message> | undefined;
+        light?: boolean;
+        minLines?: number | undefined;
+        placeholder?: ResourceKey | undefined;
+        recording?: boolean;
+        value?: string | undefined;
+        onkeypress?: () => void;
+        ondragenter?: () => void;
+        ondragleave?: () => void;
+        ondragover?: () => void;
+        ondrop?: () => void;
+        oninput?: (value: string) => void;
+        onblur?: () => void;
+    }
+</script>
+
 <script lang="ts">
     import MarkdownToggle from "./MarkdownToggle.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { translatable } from "../../actions/translatable";
     import { _ } from "svelte-i18n";
-    import type { FormEventHandler } from "svelte/elements";
-    import { getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { type OpenChat, type ResourceKey } from "openchat-client";
     import type { EventWrapper, Message } from "openchat-client";
 
-    interface Props {
-        checkIfMessageIsEmpty?: () => boolean;
-        containsMarkdown?: boolean;
-        disabled?: boolean;
-        dragging?: boolean;
-        editingEvent?: EventWrapper<Message> | undefined;
-        excessiveLinks?: boolean;
-        keyPress?: FormEventHandler<HTMLDivElement>;
-        light?: boolean;
-        messageIsEmpty?: boolean;
-        minLines?: number | undefined;
-        placeholder?: ResourceKey | undefined;
-        recording?: boolean;
-        onDragEnter?: FormEventHandler<HTMLDivElement>;
-        onDragLeave?: FormEventHandler<HTMLDivElement>;
-        onDragOver?: FormEventHandler<HTMLDivElement>;
-        onDrop?: FormEventHandler<HTMLDivElement>;
-        onInput: (value: string) => void;
-        saveSelection?: FormEventHandler<HTMLDivElement>;
-        textContent?: string | undefined;
-    }
-
     let {
-        onInput,
-        textContent = "",
-        excessiveLinks = false,
-        placeholder = i18nKey("enterMessage"),
         disabled = false,
-        light = false,
-        messageIsEmpty = true,
-        containsMarkdown = false,
-        editingEvent = undefined,
         dragging = false,
-        recording = false,
+        editingEvent = undefined,
+        light = false,
         minLines = undefined,
-        checkIfMessageIsEmpty = () => true,
-        onDrop = (_) => {},
-        keyPress = (_) => {},
-        saveSelection = (_) => {},
-        onDragOver = () => {
-            dragging = true;
-        },
-        onDragEnter = () => {
-            dragging = true;
-        },
-        onDragLeave = () => {
-            dragging = false;
-        },
+        placeholder = i18nKey("enterMessage"),
+        recording = false,
+        value = $bindable(""),
+        ondragenter = undefined,
+        onkeypress = undefined,
+        ondragleave = undefined,
+        ondragover = undefined,
+        ondrop = undefined,
+        oninput = undefined,
+        onblur = undefined,
     }: Props = $props();
 
-    let inp: HTMLDivElement;
     const client = getContext<OpenChat>("client");
-
-    // Handles placeholder show/hide
-    messageIsEmpty = (textContent?.trim() ?? "").length === 0 && checkIfMessageIsEmpty();
-    excessiveLinks = client.extractEnabledLinks(textContent ?? "").length > 5;
+    const dispatch = createEventDispatcher();
+    let inp: HTMLDivElement | undefined = $state();
 
     function detectMarkdown(text: string | null) {
         if (!text) return false;
@@ -87,6 +71,29 @@
         return result;
     }
 
+    function handleInput() {
+        if (inp) {
+            value = inp.textContent ?? "";
+            containsMarkdown = detectMarkdown(value);
+            messageIsEmpty = checkMessageIsEmpty(value);
+            excessiveLinks = checkExcessiveLinks(value);
+            
+            dispatch("change", value);
+            oninput?.(value);
+        }
+    }
+
+    function checkMessageIsEmpty(message: string) {
+        return (message?.trim() ?? "").length === 0;
+    }
+
+    function checkExcessiveLinks(message: string) {
+        return client.extractEnabledLinks(message ?? "").length > 5;
+    }
+
+    let containsMarkdown = $state(detectMarkdown(value));
+    let messageIsEmpty = $state(checkMessageIsEmpty(value));
+    let excessiveLinks = $state(checkExcessiveLinks(value));
     let baseInpHeight = $state(0);
     let inpLineHeight = 24;
     onMount(() => {
@@ -127,17 +134,14 @@
             right: 12,
             top: 12,
         }}
-        oninput={() => {
-            textContent = inp.textContent ?? "";
-            containsMarkdown = detectMarkdown(textContent);
-            onInput(textContent);
-        }}
-        onkeypress={keyPress}
-        onblur={saveSelection}
-        ondragover={onDragOver}
-        ondragenter={onDragEnter}
-        ondragleave={onDragLeave}
-        ondrop={onDrop}>
+        onblur={() => onblur?.()}
+        ondragover={() => ondragover?.()}
+        ondragenter={() => ondragenter?.()}
+        ondragleave={() => ondragleave?.()}
+        ondrop={() => ondrop?.()}
+        oninput={handleInput}
+        onkeypress={() => onkeypress?.()}
+        >
     </div>
 
     {#if containsMarkdown}

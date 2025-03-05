@@ -57,7 +57,12 @@
                 {/each}
             </Select>
         {:else if param.multi_line}
-            <MultiLineInput minLines={2} onInput={onChange} placeholder={i18nKey(param.description ?? "")} />
+            <MultiLineInput
+                minLines={2}
+                placeholder={i18nKey(param.description ?? "")}
+                oninput={onChange}
+                bind:value={instance.value}
+                />
         {:else}
             <Input
                 minlength={param.minLength}
@@ -103,7 +108,14 @@
         {/if}
     {:else if instance.kind === "dateTime" && param.kind === "dateTime"}
         <Legend label={i18nKey(param.name)} required={param.required} />
-        <DateInput value={instance.value} futureOnly={param.future_only} placeholder={i18nKey(param.placeholder ?? "")} onSelect={onChange}/>
+        <DateInput
+            value={instance.value}
+            futureOnly={param.future_only}
+            placeholder={i18nKey(param.placeholder ?? "")}
+            onselect={(value) => {
+                instance.value = value;
+                onChange();
+            }}/>
     {/if}
 </div>
 

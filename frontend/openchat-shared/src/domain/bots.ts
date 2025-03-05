@@ -473,7 +473,7 @@ export function paramInstanceIsValid(
                 instance.value <= schema.maxValue)
         );
     } else if (schema.kind === "dateTime" && instance.kind === "dateTime") {
-        return !schema.required || instance.value !== undefined;
+        return !schema.required || (instance.value !== undefined && instance.value !== null);
     }
 
     return false;

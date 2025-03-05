@@ -1,5 +1,22 @@
+<script module lang="ts">
+    export interface Props {
+        align?: string;
+        closeOnSelection?: boolean;
+        disabled?: boolean;
+        format?: string;
+        futureOnly?: boolean;
+        placeholder?: ResourceKey | undefined;
+        required?: boolean;
+        timePrecision?: "minute" | "second" | "millisecond" | null;
+        valid?: boolean;
+        // Provided date value in milliseconds!
+        value?: bigint | null | undefined;
+        onselect: (tms: bigint | undefined) => void;
+    }
+</script>
+
 <script lang="ts">
-    // TODO i18n localisation!
+    // TODO i18n localisation for the date picker!
 
     import { _ } from "svelte-i18n";
     import { interpolate } from "../i18n/i18n";
@@ -7,33 +24,18 @@
     import type { ResourceKey } from "openchat-client";
     import { onMount } from "svelte";
 
-    interface Props {
-        align?: string;
-        closeOnSelection?: boolean;
-        disabled?: boolean;
-        format?: string;
-        futureOnly?: boolean;
-        onSelect: (tms: bigint | undefined) => void;
-        placeholder?: ResourceKey | undefined;
-        required?: boolean;
-        timePrecision?: "minute" | "second" | "millisecond" | null;
-        valid?: boolean;
-        // Provided date value in milliseconds!
-        value?: bigint | null | undefined;
-    }
-
     let {
         align = "left",
         closeOnSelection = false,
         disabled = false,
         format = "dd MMM yyyy, HH:mm",
         futureOnly = false,
-        onSelect,
         placeholder = undefined,
         required = false,
         timePrecision = "minute",
         valid = true,
         value = undefined,
+        onselect,
     }: Props = $props();
 
     // If we're only allowed to select future dates, then minimum date and
@@ -65,10 +67,11 @@
         {required}
         {valid}
         visible={false}
-        on:select={(v) => {
-            onSelect(BigInt(v.detail.getMilliseconds()));
+        placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
+        on:select={(v: {detail: Date}) => {
+            onselect?.(BigInt(v.detail.getMilliseconds()));
         }}
-        placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""} />
+        />
 </div>
 
 <style lang="scss">
