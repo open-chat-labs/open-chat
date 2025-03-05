@@ -268,9 +268,9 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "ab5f4309f18ac063dc9093b889864d6e4743e627" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "ab5f4309f18ac063dc9093b889864d6e4743e627" }
-ic-cdk-timers = { git = "https://github.com/hpeebles/cdk-rs", rev = "ab5f4309f18ac063dc9093b889864d6e4743e627" }
-ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "ab5f4309f18ac063dc9093b889864d6e4743e627" }
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "bb1e805a3f1d62a0720370ecbf7e74b1fc2733e6" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "bb1e805a3f1d62a0720370ecbf7e74b1fc2733e6" }
+ic-cdk-timers = { git = "https://github.com/hpeebles/cdk-rs", rev = "bb1e805a3f1d62a0720370ecbf7e74b1fc2733e6" }
+ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "bb1e805a3f1d62a0720370ecbf7e74b1fc2733e6" }
 rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
 ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "c584e25ce28fa27b64964c208725b6bc100fbdac" }

@@ -54,12 +54,13 @@ pub async fn make_c2c_call_raw(
         ic_cdk::println!("Making call to {canister_id} \"{method_name}\"");
     }
 
-    let response = ic_cdk::call::Call::unbounded_wait(canister_id, method_name)
-        .with_raw_args(payload_bytes)
-        .with_cycles(cycles)
-        .await;
+    let mut call = ic_cdk::call::Call::unbounded_wait(canister_id, method_name).with_raw_args(payload_bytes);
 
-    match response {
+    if cycles > 0 {
+        call = call.with_cycles(cycles);
+    }
+
+    match call.await {
         Ok(response_bytes) => {
             tracing::trace!(method_name, %canister_id, "Completed c2c call successfully");
             Ok(response_bytes.into_bytes())
