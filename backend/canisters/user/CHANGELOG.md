@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support bots used directly by users ([#7397](https://github.com/open-chat-labs/open-chat/pull/7397))
 - On `user::c2c_install_bot` create a direct chat ([#7489](https://github.com/open-chat-labs/open-chat/pull/7489))
 - Add `max_streak` to user summary updates ([#7495](https://github.com/open-chat-labs/open-chat/pull/7495))
+- Always encode `BotPermission`s as `u32`s ([#7519](https://github.com/open-chat-labs/open-chat/pull/7519))
 
 ### Removed
 
