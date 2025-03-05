@@ -1,6 +1,6 @@
 use crate::mutate_state;
 use candid::Principal;
-use constants::{HOUR_IN_MS, SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
+use constants::{CHAT_LEDGER_CANISTER_ID, HOUR_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
 use ic_cdk::call::RejectCode;
 use icrc_ledger_types::icrc1::account::Account;
 use sha256::sha256;
@@ -21,7 +21,7 @@ fn run() {
     });
 }
 
-async fn run_async() -> CallResult<()> {
+async fn run_async() -> Result<(), (RejectCode, String)> {
     let total_supply = icrc_ledger_canister_c2c_client::icrc1_total_supply(CHAT_LEDGER_CANISTER_ID)
         .await
         .map(|s| u128::try_from(s.0).unwrap())?;
