@@ -286,8 +286,11 @@ enum BotPermissionsCombined {
 
 #[derive(Deserialize)]
 struct BotPermissionsNew {
+    #[serde(default)]
     community: u32,
+    #[serde(default)]
     chat: u32,
+    #[serde(default)]
     message: u32,
 }
 
