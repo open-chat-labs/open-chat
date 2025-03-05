@@ -100,43 +100,79 @@ pub struct BotCommandOptionChoice<T> {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 pub struct BotPermissions {
-    pub community: HashSet<CommunityPermission>,
-    pub chat: HashSet<ChatPermission>,
-    pub message: HashSet<MessagePermission>,
+    #[serde(skip_serializing_if = "is_zero")]
+    community: u32,
+    #[serde(skip_serializing_if = "is_zero")]
+    chat: u32,
+    #[serde(skip_serializing_if = "is_zero")]
+    message: u32,
+}
+
+fn is_zero(value: &u32) -> bool {
+    *value == 0
 }
 
 impl BotPermissions {
+    pub fn with_community(self, community: &HashSet<CommunityPermission>) -> Self {
+        Self {
+            community: Self::encode(community),
+            ..self
+        }
+    }
+
+    pub fn with_chat(self, chat: &HashSet<ChatPermission>) -> Self {
+        Self {
+            chat: Self::encode(chat),
+            ..self
+        }
+    }
+
+    pub fn with_message(self, message: &HashSet<MessagePermission>) -> Self {
+        Self {
+            message: Self::encode(message),
+            ..self
+        }
+    }
+
+    pub fn community(&self) -> HashSet<CommunityPermission> {
+        Self::decode(self.community)
+    }
+
+    pub fn chat(&self) -> HashSet<ChatPermission> {
+        Self::decode(self.chat)
+    }
+
+    pub fn message(&self) -> HashSet<MessagePermission> {
+        Self::decode(self.message)
+    }
+
     pub fn is_empty(&self) -> bool {
-        self.community.is_empty() && self.chat.is_empty() && self.message.is_empty()
+        self.community == 0 && self.chat == 0 && self.message == 0
     }
 
     pub fn is_subset(&self, other: &Self) -> bool {
-        self.community.is_subset(&other.community) && self.chat.is_subset(&other.chat) && self.message.is_subset(&other.message)
+        fn is_subset(x: u32, y: u32) -> bool {
+            intersect_bits(x, y) == x
+        }
+
+        is_subset(self.community, other.community) && is_subset(self.chat, other.chat) && is_subset(self.message, other.message)
     }
 
-    pub fn intersect(p1: &Self, p2: &Self) -> Self {
-        fn intersect<T: Hash + Eq + Copy>(x: &HashSet<T>, y: &HashSet<T>) -> HashSet<T> {
-            x.intersection(y).copied().collect()
-        }
-
+    pub fn intersect(&self, other: &Self) -> Self {
         Self {
-            community: intersect(&p1.community, &p2.community),
-            chat: intersect(&p1.chat, &p2.chat),
-            message: intersect(&p1.message, &p2.message),
+            community: intersect_bits(self.community, other.community),
+            chat: intersect_bits(self.chat, other.chat),
+            message: intersect_bits(self.message, other.message),
         }
     }
 
-    pub fn union(p1: &Self, p2: &Self) -> Self {
-        fn union<T: Hash + Eq + Copy>(x: &HashSet<T>, y: &HashSet<T>) -> HashSet<T> {
-            x.union(y).copied().collect()
-        }
-
+    pub fn union(&self, other: &Self) -> Self {
         Self {
-            community: union(&p1.community, &p2.community),
-            chat: union(&p1.chat, &p2.chat),
-            message: union(&p1.message, &p2.message),
+            community: union_bits(self.community, other.community),
+            chat: union_bits(self.chat, other.chat),
+            message: union_bits(self.message, other.message),
         }
     }
 
@@ -146,32 +182,28 @@ impl BotPermissions {
 
     pub fn from_message_permission(permission: MessagePermission) -> Self {
         Self {
-            community: HashSet::new(),
-            chat: HashSet::new(),
-            message: HashSet::from_iter([permission]),
+            message: encode_as_bitflags([permission as u8].into_iter()),
+            ..Default::default()
         }
     }
 
     pub fn from_chat_permission(permission: ChatPermission) -> Self {
         Self {
-            community: HashSet::new(),
-            chat: HashSet::from_iter([permission]),
-            message: HashSet::new(),
+            chat: encode_as_bitflags([permission as u8].into_iter()),
+            ..Default::default()
         }
     }
 
     pub fn from_community_permission(permission: CommunityPermission) -> Self {
         Self {
-            community: HashSet::from_iter([permission]),
-            chat: HashSet::new(),
-            message: HashSet::new(),
+            community: encode_as_bitflags([permission as u8].into_iter()),
+            ..Default::default()
         }
     }
 
     pub fn chat_owner() -> Self {
-        Self {
-            community: HashSet::new(),
-            chat: HashSet::from_iter([
+        Self::default()
+            .with_chat(&HashSet::from_iter([
                 ChatPermission::ChangeRoles,
                 ChatPermission::UpdateGroup,
                 ChatPermission::AddMembers,
@@ -185,8 +217,8 @@ impl BotPermissions {
                 ChatPermission::ReadMessages,
                 ChatPermission::ReadMembership,
                 ChatPermission::ReadChatDetails,
-            ]),
-            message: HashSet::from_iter([
+            ]))
+            .with_message(&HashSet::from_iter([
                 MessagePermission::Text,
                 MessagePermission::Image,
                 MessagePermission::Video,
@@ -198,22 +230,72 @@ impl BotPermissions {
                 MessagePermission::Prize,
                 MessagePermission::P2pSwap,
                 MessagePermission::VideoCall,
-            ]),
-        }
+            ]))
     }
 
     pub fn permitted_event_types_to_read(&self) -> HashSet<ChatEventType> {
         let mut event_types = HashSet::new();
-        if self.chat.contains(&ChatPermission::ReadMessages) {
+        let chat_permissions = self.chat();
+        if chat_permissions.contains(&ChatPermission::ReadMessages) {
             event_types.insert(ChatEventType::Message);
         }
-        if self.chat.contains(&ChatPermission::ReadMembership) {
+        if chat_permissions.contains(&ChatPermission::ReadMembership) {
             event_types.insert(ChatEventType::MembershipUpdate);
         }
-        if self.chat.contains(&ChatPermission::ReadChatDetails) {
+        if chat_permissions.contains(&ChatPermission::ReadChatDetails) {
             event_types.insert(ChatEventType::ChatDetailsUpdate);
         }
         event_types
+    }
+
+    fn encode<T: Into<u8> + Copy>(field: &HashSet<T>) -> u32 {
+        encode_as_bitflags(field.iter().map(|v| (*v).into()))
+    }
+
+    fn decode<T: TryFrom<u8> + Copy + Eq + Hash>(field: u32) -> HashSet<T> {
+        decode_from_bitflags(field)
+            .into_iter()
+            .filter_map(|v| v.try_into().ok())
+            .collect()
+    }
+}
+
+fn intersect_bits(x: u32, y: u32) -> u32 {
+    let mut intersection = [0; 4];
+    for (i, (x_byte, y_byte)) in x.to_be_bytes().into_iter().zip(y.to_be_bytes()).enumerate() {
+        intersection[i] = x_byte & y_byte;
+    }
+    u32::from_be_bytes(intersection)
+}
+
+fn union_bits(x: u32, y: u32) -> u32 {
+    let mut union = [0; 4];
+    for (i, (x_byte, y_byte)) in x.to_be_bytes().into_iter().zip(y.to_be_bytes()).enumerate() {
+        union[i] = x_byte | y_byte;
+    }
+    u32::from_be_bytes(union)
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum BotPermissionsCombined {
+    New(BotPermissions),
+    Old(BotPermissionsPrevious),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
+struct BotPermissionsPrevious {
+    community: HashSet<CommunityPermission>,
+    chat: HashSet<ChatPermission>,
+    message: HashSet<MessagePermission>,
+}
+
+impl From<BotPermissionsPrevious> for BotPermissions {
+    fn from(value: BotPermissionsPrevious) -> Self {
+        BotPermissions::default()
+            .with_community(&value.community)
+            .with_chat(&value.chat)
+            .with_message(&value.message)
     }
 }
 
@@ -347,7 +429,7 @@ pub struct BotApiKeyToken {
     pub bot_id: UserId,
     pub scope: AccessTokenScope,
     pub secret: String,
-    pub permissions: EncodedBotPermissions,
+    pub permissions: BotPermissions,
 }
 
 #[ts_export]
@@ -414,65 +496,6 @@ pub struct ApiKey {
     pub granted_permissions: BotPermissions,
     pub generated_by: UserId,
     pub generated_at: TimestampMillis,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct EncodedBotPermissions {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    community: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    chat: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    message: Option<u32>,
-}
-
-impl From<BotPermissions> for EncodedBotPermissions {
-    fn from(permissions: BotPermissions) -> Self {
-        EncodedBotPermissions::from(&permissions)
-    }
-}
-
-impl From<&BotPermissions> for EncodedBotPermissions {
-    fn from(permissions: &BotPermissions) -> Self {
-        fn encode<T: Into<u8> + Copy>(field: &HashSet<T>) -> Option<u32> {
-            if field.is_empty() {
-                None
-            } else {
-                Some(encode_as_bitflags(field.iter().map(|v| (*v).into())))
-            }
-        }
-
-        EncodedBotPermissions {
-            community: encode(&permissions.community),
-            chat: encode(&permissions.chat),
-            message: encode(&permissions.message),
-        }
-    }
-}
-
-impl From<EncodedBotPermissions> for BotPermissions {
-    fn from(permissions: EncodedBotPermissions) -> Self {
-        BotPermissions::from(&permissions)
-    }
-}
-
-impl From<&EncodedBotPermissions> for BotPermissions {
-    fn from(permissions: &EncodedBotPermissions) -> Self {
-        fn decode<T: TryFrom<u8> + Copy + Eq + Hash>(field: Option<u32>) -> HashSet<T> {
-            field
-                .map(decode_from_bitflags)
-                .unwrap_or_default()
-                .into_iter()
-                .filter_map(|v| v.try_into().ok())
-                .collect()
-        }
-
-        BotPermissions {
-            community: decode(permissions.community),
-            chat: decode(permissions.chat),
-            message: decode(permissions.message),
-        }
-    }
 }
 
 // TODO remove default after release - currently useful for migration
