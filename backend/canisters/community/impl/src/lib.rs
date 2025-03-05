@@ -943,7 +943,7 @@ impl Data {
             let channel = self.channels.get(&channel_id)?;
             let channel_member = channel.chat.members.get_verified_member(*user_id).ok()?;
 
-            let channel_permissions = channel_member.role().permissions(&channel.chat.permissions);
+            let channel_permissions = channel_member.role().chat_permissions(&channel.chat.permissions);
             let message_permissions = channel_member
                 .role()
                 .message_permissions(&channel.chat.permissions.message_permissions);

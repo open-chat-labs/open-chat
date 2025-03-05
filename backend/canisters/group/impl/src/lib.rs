@@ -770,7 +770,7 @@ impl Data {
     pub fn get_user_permissions(&self, user_id: &UserId) -> Option<BotPermissions> {
         let member = self.chat.members.get_verified_member(*user_id).ok()?;
 
-        let group_permissions = member.role().permissions(&self.chat.permissions);
+        let group_permissions = member.role().chat_permissions(&self.chat.permissions);
         let message_permissions = member.role().message_permissions(&self.chat.permissions.message_permissions);
 
         Some(BotPermissions {

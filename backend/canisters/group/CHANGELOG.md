@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Support using command JWT for reading ([#7512](https://github.com/open-chat-labs/open-chat/pull/7512))
+
+## [[2.0.1624](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1624-group)] - 2025-03-03
+
+### Fixed
+
 - Fix messageId deduplication for groups which used disappearing messages ([#7503](https://github.com/open-chat-labs/open-chat/pull/7503))
 
 ## [[2.0.1619](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1619-group)] - 2025-02-28

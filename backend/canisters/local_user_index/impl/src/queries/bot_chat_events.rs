@@ -1,7 +1,7 @@
 use crate::bots::extract_access_context;
 use crate::queries::chat_events::make_c2c_call_to_get_events;
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::query;
+use canister_api_macros::{query, update};
 use canister_tracing_macros::trace;
 use local_user_index_canister::bot_chat_events::{Response::*, *};
 use local_user_index_canister::chat_events::{EventsArgs, EventsContext, EventsResponse};
@@ -10,6 +10,16 @@ use types::{AuthToken, BotActionScope, BotInitiator, ChannelId, Chat, MessageInd
 #[query(composite = true, candid = true, msgpack = true)]
 #[trace]
 async fn bot_chat_events(args: Args) -> Response {
+    bot_chat_events_impl(args).await
+}
+
+#[update(candid = true, msgpack = true)]
+#[trace]
+async fn bot_chat_events_c2c(args: Args) -> Response {
+    bot_chat_events_impl(args).await
+}
+
+async fn bot_chat_events_impl(args: Args) -> Response {
     let PrepareOk {
         bot_id,
         initiator,
@@ -36,7 +46,7 @@ async fn bot_chat_events(args: Args) -> Response {
     )
     .await
     {
-        EventsResponse::Success(response) => Success(response),
+        EventsResponse::Success(response) => Success(response.into()),
         EventsResponse::NotFound => NotFound,
         EventsResponse::InternalError(error) => InternalError(error),
         EventsResponse::ReplicaNotUpToDate(_) => unreachable!(),
