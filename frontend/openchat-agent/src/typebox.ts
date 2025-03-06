@@ -928,17 +928,6 @@ export const UserUnpinChatResponse = Type.Union([
 export type UserConfigureWalletResponse = Static<typeof UserConfigureWalletResponse>;
 export const UserConfigureWalletResponse = Type.Literal("Success");
 
-export type CommunityPermission = Static<typeof CommunityPermission>;
-export const CommunityPermission = Type.Union([
-    Type.Literal("ChangeRoles"),
-    Type.Literal("UpdateDetails"),
-    Type.Literal("InviteUsers"),
-    Type.Literal("RemoveMembers"),
-    Type.Literal("CreatePublicChannel"),
-    Type.Literal("CreatePrivateChannel"),
-    Type.Literal("ManageUserGroups"),
-]);
-
 export type MessageReminderContent = Static<typeof MessageReminderContent>;
 export const MessageReminderContent = Type.Object({
     reminder_id: Type.BigInt(),
@@ -1139,21 +1128,6 @@ export const ChatMetrics = Type.Object({
 
 export type VideoCallType = Static<typeof VideoCallType>;
 export const VideoCallType = Type.Union([Type.Literal("Broadcast"), Type.Literal("Default")]);
-
-export type MessagePermission = Static<typeof MessagePermission>;
-export const MessagePermission = Type.Union([
-    Type.Literal("Text"),
-    Type.Literal("Image"),
-    Type.Literal("Video"),
-    Type.Literal("Audio"),
-    Type.Literal("File"),
-    Type.Literal("Poll"),
-    Type.Literal("Crypto"),
-    Type.Literal("Giphy"),
-    Type.Literal("Prize"),
-    Type.Literal("P2pSwap"),
-    Type.Literal("VideoCall"),
-]);
 
 export type VideoCall = Static<typeof VideoCall>;
 export const VideoCall = Type.Object({
@@ -1388,23 +1362,6 @@ export type GroupReplyContext = Static<typeof GroupReplyContext>;
 export const GroupReplyContext = Type.Object({
     event_index: EventIndex,
 });
-
-export type ChatPermission = Static<typeof ChatPermission>;
-export const ChatPermission = Type.Union([
-    Type.Literal("ChangeRoles"),
-    Type.Literal("UpdateGroup"),
-    Type.Literal("AddMembers"),
-    Type.Literal("InviteUsers"),
-    Type.Literal("RemoveMembers"),
-    Type.Literal("DeleteMessages"),
-    Type.Literal("PinMessages"),
-    Type.Literal("ReactToMessages"),
-    Type.Literal("MentionAllMembers"),
-    Type.Literal("StartVideoCall"),
-    Type.Literal("ReadMessages"),
-    Type.Literal("ReadMembership"),
-    Type.Literal("ReadChatDetails"),
-]);
 
 export type PushEventResult = Static<typeof PushEventResult>;
 export const PushEventResult = Type.Object({
@@ -1733,14 +1690,19 @@ export const VerifiedCredentialArgumentValue = Type.Union([
 
 export type BotPermissions = Static<typeof BotPermissions>;
 export const BotPermissions = Type.Object({
-    community: Type.Array(CommunityPermission),
-    chat: Type.Array(ChatPermission),
-    message: Type.Array(MessagePermission),
+    community: Type.Optional(Type.Number()),
+    chat: Type.Optional(Type.Number()),
+    message: Type.Optional(Type.Number()),
 });
 
 export type VideoCallAccessTokenArgs = Static<typeof VideoCallAccessTokenArgs>;
 export const VideoCallAccessTokenArgs = Type.Object({
     call_type: VideoCallType,
+});
+
+export type DateTimeParam = Static<typeof DateTimeParam>;
+export const DateTimeParam = Type.Object({
+    future_only: Type.Boolean(),
 });
 
 export type P2PSwapCancelled = Static<typeof P2PSwapCancelled>;
@@ -5627,6 +5589,7 @@ export const StringParam = Type.Object({
     min_length: Type.Number(),
     max_length: Type.Number(),
     choices: Type.Array(BotCommandOptionChoiceString),
+    multi_line: Type.Boolean(),
 });
 
 export type GroupInviteCodeChanged = Static<typeof GroupInviteCodeChanged>;
@@ -6022,6 +5985,9 @@ export const BotCommandArgValue = Type.Union([
     Type.Object({
         User: UserId,
     }),
+    Type.Object({
+        DateTime: Type.BigInt(),
+    }),
 ]);
 
 export type PendingCryptoTransactionICRC2 = Static<typeof PendingCryptoTransactionICRC2>;
@@ -6244,6 +6210,9 @@ export const BotCommandParamType = Type.Union([
     }),
     Type.Object({
         DecimalParam: DecimalParam,
+    }),
+    Type.Object({
+        DateTimeParam: DateTimeParam,
     }),
 ]);
 

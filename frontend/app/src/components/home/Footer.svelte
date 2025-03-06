@@ -117,7 +117,7 @@
                 </div>
                 <EmojiPicker on:emojiSelected={emojiSelected} {mode} />
             </span>
-            <span slot="footer" />
+            <span slot="footer"></span>
         </ModalContent>
     </div>
 {/if}

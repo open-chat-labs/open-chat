@@ -396,6 +396,7 @@ struct Data {
     pub message_ids_deduped: bool,
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
+    #[serde(default)]
     pub bots: InstalledBots,
     #[serde(default)]
     bot_api_keys: BotApiKeys,

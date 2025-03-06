@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "Mensaje de marcador de posición de comando",
             "commandPlaceholderPlaceholder": "Mensaje de marcador de posición de comando no especificado",
             "commandsLabel": "Comandos",
+            "dateTimeFutureOnly": "Fechas futuras",
+            "dateTimeFutureOnlyDesc": "Permite la selección de fechas futuras únicamente",
             "descLabel": "Descripción del bot",
             "descPlaceholder": "Ingresar la descripción del bot",
             "editPrincipalPlaceholder": "Déjelo en blanco si no se modifica",

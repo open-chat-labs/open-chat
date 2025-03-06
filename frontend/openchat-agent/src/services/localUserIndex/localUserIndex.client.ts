@@ -36,10 +36,8 @@ import {
 } from "./mappers";
 import {
     joinGroupResponse,
-    apiBotChatPermission,
-    apiCommunityPermission,
-    apiMessagePermission,
     apiChatIdentifier,
+    apiExternalBotPermissions,
 } from "../common/chatMappersV2";
 import { toBigInt32, MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
 import {
@@ -410,11 +408,7 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
             {
                 location: this.#apiBotInstallationLocation(location),
                 bot_id: principalStringToBytes(botId),
-                granted_permissions: {
-                    chat: grantedPermissions.chatPermissions.map(apiBotChatPermission),
-                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
-                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
-                },
+                granted_permissions: apiExternalBotPermissions(grantedPermissions),
             },
             (resp) => {
                 console.log("Install bot response: ", resp);

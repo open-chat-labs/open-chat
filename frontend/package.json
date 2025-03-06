@@ -56,6 +56,7 @@
         "turbo": "^2.1.2"
     },
     "dependencies": {
+        "date-picker-svelte": "^2.15.1",
         "svelte-dnd-action": "^0.9.52",
         "svelte-i18n": "^4.0.1",
         "workbox-core": "^7.1.0",

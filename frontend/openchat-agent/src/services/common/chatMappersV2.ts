@@ -119,7 +119,6 @@ import type {
     AcceptP2PSwapResponse,
     AccessGateConfig,
     SetPinNumberResponse,
-    MessagePermission,
     ExternalBotPermissions,
     InstalledBotDetails,
     BotDefinition,
@@ -130,7 +129,6 @@ import type {
     SlashCommandParamInstance,
     GenerateBotKeyResponse,
     PublicApiKeyDetails,
-    BotChatPermission,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -148,6 +146,9 @@ import {
     ICP_SYMBOL,
     KINIC_SYMBOL,
     SNS1_SYMBOL,
+    communityPermissionsList,
+    botChatPermissionList,
+    messagePermissionsList,
 } from "openchat-shared";
 import { pinNumberFailureResponseV2 } from "./pinNumberErrorMapper";
 import { toRecord2 } from "../../utils/list";
@@ -295,9 +296,6 @@ import type {
     VideoCallPresence as TVideoCallPresence,
     VideoCallType as TVideoCallType,
     VideoContent as TVideoContent,
-    ChatPermission,
-    CommunityPermission,
-    MessagePermission as ApiMessagePermission,
     BotPermissions as ApiExternalBotPermissions,
     CommunityUpdateBotResponse,
     GroupUpdateBotResponse,
@@ -630,6 +628,12 @@ export function botCommandArg(api: BotCommandArg): SlashCommandParamInstance {
             name,
             userId: principalBytesToString(value.User),
         };
+    } else if ("DateTime" in value) {
+        return {
+            kind: "dateTime",
+            name,
+            value: value.DateTime,
+        }
     }
     throw new Error(`Unexpected ApiBotCommandArg type received, ${api}`);
 }
@@ -3265,168 +3269,40 @@ export function apiDexId(dex: DexId): TExchangeId {
     }
 }
 
-export function apiBotChatPermission(perm: BotChatPermission): ChatPermission {
-    switch (perm) {
-        case "addMembers":
-            return "AddMembers";
-        case "changeRoles":
-            return "ChangeRoles";
-        case "deleteMessages":
-            return "DeleteMessages";
-        case "inviteUsers":
-            return "InviteUsers";
-        case "mentionAllMembers":
-            return "MentionAllMembers";
-        case "pinMessages":
-            return "PinMessages";
-        case "reactToMessages":
-            return "ReactToMessages";
-        case "removeMembers":
-            return "RemoveMembers";
-        case "startVideoCall":
-            return "StartVideoCall";
-        case "updateGroup":
-            return "UpdateGroup";
-        case "readMessages":
-            return "ReadMessages";
-        case "readMembership":
-            return "ReadMembership";
-        case "readChatDetails":
-            return "ReadChatDetails";
-        default:
-            throw new Error(`Unexpected ChatPermission (${perm}) received`);
-    }
-}
-
-export function apiCommunityPermission(perm: keyof CommunityPermissions): CommunityPermission {
-    switch (perm) {
-        case "changeRoles":
-            return "ChangeRoles";
-        case "createPrivateChannel":
-            return "CreatePrivateChannel";
-        case "createPublicChannel":
-            return "CreatePublicChannel";
-        case "inviteUsers":
-            return "InviteUsers";
-        case "manageUserGroups":
-            return "ManageUserGroups";
-        case "removeMembers":
-            return "RemoveMembers";
-        case "updateDetails":
-            return "UpdateDetails";
-    }
-}
-
-export function apiMessagePermission(perm: MessagePermission): ApiMessagePermission {
-    switch (perm) {
-        case "audio":
-            return "Audio";
-        case "crypto":
-            return "Crypto";
-        case "file":
-            return "File";
-        case "giphy":
-            return "Giphy";
-        case "image":
-            return "Image";
-        case "p2pSwap":
-            return "P2pSwap";
-        case "poll":
-            return "Poll";
-        case "prize":
-            return "Prize";
-        case "text":
-            return "Text";
-        case "video":
-            return "Video";
-        default:
-            throw new Error(`Unexpect MessagePermission (${perm})`);
-    }
-}
-
-export function botChatPermission(perm: ChatPermission): BotChatPermission {
-    switch (perm) {
-        case "AddMembers":
-            return "addMembers";
-        case "ChangeRoles":
-            return "changeRoles";
-        case "DeleteMessages":
-            return "deleteMessages";
-        case "InviteUsers":
-            return "inviteUsers";
-        case "MentionAllMembers":
-            return "mentionAllMembers";
-        case "PinMessages":
-            return "pinMessages";
-        case "ReactToMessages":
-            return "reactToMessages";
-        case "RemoveMembers":
-            return "removeMembers";
-        case "StartVideoCall":
-            return "startVideoCall";
-        case "UpdateGroup":
-            return "updateGroup";
-        case "ReadMessages":
-            return "readMessages";
-        case "ReadMembership":
-            return "readMembership";
-        case "ReadChatDetails":
-            return "readChatDetails";
-    }
-}
-
-export function communityPermission(perm: CommunityPermission): keyof CommunityPermissions {
-    switch (perm) {
-        case "ChangeRoles":
-            return "changeRoles";
-        case "CreatePrivateChannel":
-            return "createPrivateChannel";
-        case "CreatePublicChannel":
-            return "createPublicChannel";
-        case "InviteUsers":
-            return "inviteUsers";
-        case "ManageUserGroups":
-            return "manageUserGroups";
-        case "RemoveMembers":
-            return "removeMembers";
-        case "UpdateDetails":
-            return "updateDetails";
-    }
-}
-
-export function messagePermission(perm: ApiMessagePermission): MessagePermission {
-    switch (perm) {
-        case "Audio":
-            return "audio";
-        case "Crypto":
-            return "crypto";
-        case "File":
-            return "file";
-        case "Giphy":
-            return "giphy";
-        case "Image":
-            return "image";
-        case "P2pSwap":
-            return "p2pSwap";
-        case "Poll":
-            return "poll";
-        case "Prize":
-            return "prize";
-        case "Text":
-            return "text";
-        case "Video":
-            return "video";
-        case "VideoCall":
-            return "text";
-    }
-}
-
 export function externalBotPermissions(value: ApiExternalBotPermissions): ExternalBotPermissions {
     return {
-        chatPermissions: value.chat.map(botChatPermission),
-        communityPermissions: value.community.map(communityPermission),
-        messagePermissions: value.message.map(messagePermission),
+        communityPermissions: permissionsFromBits(value.community ?? 0, [...communityPermissionsList]),
+        chatPermissions: permissionsFromBits(value.chat ?? 0, [...botChatPermissionList]),
+        messagePermissions: permissionsFromBits(value.message ?? 0, [...messagePermissionsList]),
     };
+}
+
+export function apiExternalBotPermissions(value: ExternalBotPermissions): ApiExternalBotPermissions {
+    return {
+        community: permissionsToBits(value.communityPermissions, [...communityPermissionsList]),
+        chat: permissionsToBits(value.chatPermissions, [...botChatPermissionList]),
+        message: permissionsToBits(value.messagePermissions, [...messagePermissionsList]),
+    }
+}
+
+function permissionsFromBits<T>(bits: number, allPermissions: T[]): T[] {
+    const permissions = [];
+    for (let i = 0; i < allPermissions.length; i++) {
+        if ((bits & (1 << i)) !== 0) {
+            permissions.push(allPermissions[i]);
+        }
+    }
+    return permissions;
+}
+
+function permissionsToBits<T>(permissions: T[], allPermissions: T[]): number {
+    let bits = 0;
+    for (let i = 0; i < allPermissions.length; i++) {
+        if (permissions.includes(allPermissions[i])) {
+            bits += 1 << i;
+        }
+    }
+    return bits;
 }
 
 export function updateBotResponse(
@@ -3489,6 +3365,7 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
             minLength: paramType.StringParam.min_length,
             maxLength: paramType.StringParam.max_length,
             choices: paramType.StringParam.choices,
+            multi_line: paramType.StringParam.multi_line,
         };
     } else if ("IntegerParam" in paramType) {
         return {
@@ -3506,7 +3383,12 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
             minValue: paramType.DecimalParam.min_value,
             maxValue: paramType.DecimalParam.max_value,
             choices: paramType.DecimalParam.choices,
-        };
+        };    
+    } else if ("DateTimeParam" in paramType) {
+        return {
+            kind: "dateTime",
+            future_only: paramType.DateTimeParam.future_only,
+        }
     }
     throw new UnsupportedValueError("Unexpected ApiSlashCommandParamType value", paramType);
 }

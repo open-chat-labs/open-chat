@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "Message d'espace réservé à la commande",
             "commandPlaceholderPlaceholder": "Message d'espace réservé à la commande non spécifié",
             "commandsLabel": "Commandes",
+            "dateTimeFutureOnly": "Dates futures",
+            "dateTimeFutureOnlyDesc": "Permet la sélection de dates futures uniquement",
             "descLabel": "Description du robot",
             "descPlaceholder": "Entrez la description du bot",
             "editPrincipalPlaceholder": "Laisser vide si inchangé",

@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "コマンドプレースホルダーメッセージ",
             "commandPlaceholderPlaceholder": "コマンドプレースホルダーメッセージが指定されていません",
             "commandsLabel": "コマンド",
+            "dateTimeFutureOnly": "今後の日程",
+            "dateTimeFutureOnlyDesc": "将来の日付のみ選択可能",
             "descLabel": "ボットの説明",
             "descPlaceholder": "ボットの説明を入力してください",
             "editPrincipalPlaceholder": "変更しない場合は空白のままにしてください",

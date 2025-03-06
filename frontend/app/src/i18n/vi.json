@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "Tin nhắn giữ chỗ lệnh",
             "commandPlaceholderPlaceholder": "Tin nhắn giữ chỗ lệnh không được chỉ định",
             "commandsLabel": "Lệnh",
+            "dateTimeFutureOnly": "Ngày tháng trong tương lai",
+            "dateTimeFutureOnlyDesc": "Chỉ cho phép lựa chọn ngày trong tương lai",
             "descLabel": "Mô tả bot",
             "descPlaceholder": "Nhập mô tả bot",
             "editPrincipalPlaceholder": "Để trống nếu không thay đổi",

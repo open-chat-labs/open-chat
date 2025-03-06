@@ -42,9 +42,7 @@ import {
     principalStringToBytes,
 } from "../../utils/mapping";
 import {
-    apiBotChatPermission,
-    apiCommunityPermission,
-    apiMessagePermission,
+    apiExternalBotPermissions,
     externalBotDefinition,
     token,
 } from "../common/chatMappersV2";
@@ -668,6 +666,13 @@ export function apiCustomParamFields(param: SlashCommandParam): ApiSlashCommandP
                     min_length: param.minLength,
                     max_length: param.maxLength,
                     choices: param.choices,
+                    multi_line: param.multi_line,
+                },
+            };
+        case "dateTime":
+            return {
+                DateTimeParam: {
+                    future_only: param.future_only,
                 },
             };
     }
@@ -691,11 +696,7 @@ export function apiBotDefinition(domain: BotDefinition): ApiBotDefinition {
 export function apiAutonomousConfig(domain: AutonomousBotConfig): AutonomousConfig {
     return {
         sync_api_key: domain.syncApiKey,
-        permissions: {
-            chat: domain.permissions.chatPermissions.map(apiBotChatPermission),
-            community: domain.permissions.communityPermissions.map(apiCommunityPermission),
-            message: domain.permissions.messagePermissions.map(apiMessagePermission),
-        },
+        permissions: apiExternalBotPermissions(domain.permissions),
     };
 }
 
@@ -706,11 +707,7 @@ export function apiExternalBotCommand(command: SlashCommandSchema): ApiSlashComm
         placeholder: command.placeholder,
         params: command.params.map(apiExternalBotParam),
         default_role: apiMemberRole(command.defaultRole),
-        permissions: {
-            chat: command.permissions.chatPermissions.map(apiBotChatPermission),
-            community: command.permissions.communityPermissions.map(apiCommunityPermission),
-            message: command.permissions.messagePermissions.map(apiMessagePermission),
-        },
+        permissions: apiExternalBotPermissions(command.permissions),
     };
 }
 

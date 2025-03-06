@@ -33,6 +33,9 @@
     // if your modal *definitely* overflows on mobile you might need to set height explicitly
     export let overflows: boolean = false;
 
+    // It will probably overflow if you have a datetime picker in the modal!
+    export let overflowVisible: boolean = false;
+
     let divElement: HTMLElement;
 
     $: useAlignTo = alignTo !== undefined && !$mobileWidth;
@@ -104,6 +107,7 @@
                 <slot {onClose} name="header" />
             </h4>
             {#if closeIcon}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <span title={$_("close")} class="close" class:rtl={$rtlStore} on:click={onClose}>
                     <HoverIcon>
                         <Close size={"1em"} color={"var(--icon-txt)"} />
@@ -113,7 +117,7 @@
         </div>
     {/if}
     {#if !hideBody}
-        <div class="body" class:fill>
+        <div class="body" class:fill class:overflow-visible={overflowVisible}>
             <slot {onClose} name="body" />
         </div>
     {/if}
@@ -216,6 +220,10 @@
 
         @include mobile() {
             padding: $sp3 $sp4;
+        }
+
+        &.overflow-visible {
+            overflow-y: visible;
         }
     }
     .footer {

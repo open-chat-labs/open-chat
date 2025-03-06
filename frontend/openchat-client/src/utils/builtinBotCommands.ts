@@ -32,6 +32,7 @@ export const builtinBot: InternalBot = {
                         description: "bots.crypto.params.token.desc",
                         placeholder: "bots.crypto.params.token.placeholder",
                         choices: [],
+                        multi_line: false,
                     },
                     {
                         kind: "decimal",
@@ -74,6 +75,7 @@ export const builtinBot: InternalBot = {
                         description: "bots.gif.params.term.desc",
                         placeholder: "bots.gif.params.term.placeholder",
                         choices: [],
+                        multi_line: false,
                     },
                 ],
                 directBotDisabled: true,
@@ -161,6 +163,7 @@ export const builtinBot: InternalBot = {
                                 value: "translation",
                             },
                         ],
+                        multi_line: false,
                     },
                 ],
                 directBotDisabled: true,
@@ -199,6 +202,7 @@ export const builtinBot: InternalBot = {
                         description: "bots.search.params.term.desc",
                         placeholder: "bots.search.params.term.placeholder",
                         choices: [],
+                        multi_line: false
                     },
                 ],
                 directBotDisabled: false,

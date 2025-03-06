@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "Platzhalternachricht für Befehle",
             "commandPlaceholderPlaceholder": "Platzhalternachricht für Befehl nicht angegeben",
             "commandsLabel": "Befehle",
+            "dateTimeFutureOnly": "Zukünftige Termine",
+            "dateTimeFutureOnlyDesc": "Ermöglicht nur die Auswahl zukünftiger Daten",
             "descLabel": "Bot-Beschreibung",
             "descPlaceholder": "Geben Sie die Bot-Beschreibung ein",
             "editPrincipalPlaceholder": "Leer lassen, falls unverändert",

@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "رسالة العنصر النائب للأوامر",
             "commandPlaceholderPlaceholder": "لم يتم تحديد رسالة العنصر النائب للأمر",
             "commandsLabel": "الأوامر",
+            "dateTimeFutureOnly": "تواريخ مستقبلية",
+            "dateTimeFutureOnlyDesc": "يسمح باختيار التواريخ المستقبلية فقط",
             "descLabel": "وصف البوت",
             "descPlaceholder": "أدخل وصف البوت",
             "editPrincipalPlaceholder": "اتركه فارغًا إذا لم يتغير",
