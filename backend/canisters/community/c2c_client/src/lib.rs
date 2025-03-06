@@ -28,7 +28,7 @@ generate_c2c_call!(c2c_invite_users_to_channel);
 generate_c2c_call!(c2c_join_channel);
 generate_c2c_call!(c2c_join_community);
 generate_c2c_call!(c2c_leave_community);
-generate_c2c_call!(c2c_local_group_index, 30);
+generate_c2c_call!(c2c_local_group_index, 60);
 generate_c2c_call!(c2c_send_message);
 generate_c2c_call!(c2c_set_user_suspended);
 generate_c2c_call!(c2c_tip_message);
