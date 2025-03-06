@@ -1,6 +1,6 @@
 use ic_cdk::call::{CallFailed, Error, RejectCode};
 use std::cmp::Ordering;
-use types::BuildVersion;
+use types::{BuildVersion, CanisterId, UpgradesFilter};
 
 mod canisters_requiring_upgrade;
 mod chunk_store;
@@ -44,11 +44,25 @@ pub fn should_retry_failed_c2c_call(reject_code: RejectCode, message: &str) -> b
     }
 }
 
-pub fn should_perform_upgrade(current: BuildVersion, next: BuildVersion, test_mode: bool) -> bool {
+pub fn should_perform_upgrade(
+    canister_id: CanisterId,
+    current: BuildVersion,
+    next: BuildVersion,
+    filter: &UpgradesFilter,
+    test_mode: bool,
+) -> bool {
     match current.cmp(&next) {
-        Ordering::Less => true,
-        Ordering::Greater if test_mode => true,
-        _ => false,
+        Ordering::Less => {}
+        Ordering::Greater if test_mode => {}
+        _ => return false,
+    };
+
+    if filter.exclude.contains(&canister_id) {
+        false
+    } else if filter.versions.is_empty() && filter.include.is_empty() {
+        true
+    } else {
+        filter.versions.contains(&current) || filter.include.contains(&canister_id)
     }
 }
 
