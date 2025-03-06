@@ -8,10 +8,10 @@ grouped_timer_job_batch!(CommunityEventBatch, CanisterId, IdempotentEnvelope<Com
 
 impl TimerJobItem for CommunityEventBatch {
     async fn process(&self) -> Result<(), bool> {
-        let response = community_canister_c2c_client::c2c_notify_events(
+        let response = community_canister_c2c_client::c2c_local_group_index(
             self.key,
-            &community_canister::c2c_notify_events::Args {
-                events: self.items.iter().map(|e| e.value.clone()).collect(),
+            &community_canister::c2c_local_group_index::Args {
+                events: self.items.clone(),
             },
         )
         .await;

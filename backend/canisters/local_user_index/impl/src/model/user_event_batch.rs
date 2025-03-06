@@ -8,16 +8,16 @@ grouped_timer_job_batch!(UserEventBatch, UserId, IdempotentEnvelope<UserEvent>, 
 
 impl TimerJobItem for UserEventBatch {
     async fn process(&self) -> Result<(), bool> {
-        let response = user_canister_c2c_client::c2c_notify_events(
+        let response = user_canister_c2c_client::c2c_local_user_index(
             self.key.into(),
-            &user_canister::c2c_notify_events::Args {
-                events: self.items.iter().map(|e| e.value.clone()).collect(),
+            &user_canister::c2c_local_user_index::Args {
+                events: self.items.clone(),
             },
         )
         .await;
 
         match response {
-            Ok(user_canister::c2c_notify_events::Response::Success) => Ok(()),
+            Ok(user_canister::c2c_local_user_index::Response::Success) => Ok(()),
             Err((code, msg)) => {
                 if is_out_of_cycles_error(code, &msg) {
                     top_up_user(Some(self.key)).await;
