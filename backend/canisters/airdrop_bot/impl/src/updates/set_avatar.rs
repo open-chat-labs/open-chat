@@ -24,7 +24,7 @@ fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.data.avatar = Timestamped::new(args.avatar, now);
 
     let user_index_canister_id = state.data.user_index_canister_id;
-    ic_cdk::spawn(update_index_canister(user_index_canister_id, id));
+    ic_cdk::futures::spawn(update_index_canister(user_index_canister_id, id));
 
     Success
 }

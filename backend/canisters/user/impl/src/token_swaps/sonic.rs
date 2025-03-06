@@ -2,7 +2,7 @@ use super::swap_client::{SwapClient, SwapSuccess};
 use crate::token_swaps::{convert_error, nat_to_u128};
 use async_trait::async_trait;
 use candid::{Int, Nat};
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use serde::{Deserialize, Serialize};
 use sonic_canister::SonicResult;
 use std::cell::Cell;
@@ -62,14 +62,14 @@ impl SwapClient for SonicClient {
         self.sonic_canister_id
     }
 
-    async fn deposit_account(&self) -> CallResult<Account> {
+    async fn deposit_account(&self) -> Result<Account, (RejectCode, String)> {
         retrieve_subaccount(self.sonic_canister_id).await.map(|sa| Account {
             owner: self.sonic_canister_id,
             subaccount: Some(sa),
         })
     }
 
-    async fn deposit(&self, amount: u128) -> CallResult<u128> {
+    async fn deposit(&self, amount: u128) -> Result<u128, (RejectCode, String)> {
         let token = self.input_token();
         let args = (token.ledger, amount.saturating_sub(token.fee).into());
         match sonic_canister_c2c_client::deposit(self.sonic_canister_id, args).await?.0 {
@@ -78,7 +78,7 @@ impl SwapClient for SonicClient {
         }
     }
 
-    async fn swap(&self, amount: u128, min_amount_out: u128) -> CallResult<Result<SwapSuccess, String>> {
+    async fn swap(&self, amount: u128, min_amount_out: u128) -> Result<Result<SwapSuccess, String>, (RejectCode, String)> {
         let args = (
             Nat::from(amount),
             Nat::from(min_amount_out),
@@ -98,14 +98,18 @@ impl SwapClient for SonicClient {
         }
     }
 
-    async fn withdraw(&self, successful_swap: bool, amount: u128) -> CallResult<u128> {
+    async fn withdraw(&self, successful_swap: bool, amount: u128) -> Result<u128, (RejectCode, String)> {
         let token = if successful_swap { self.output_token() } else { self.input_token() };
         let amount = if successful_swap { amount } else { amount.saturating_sub(token.fee) };
         withdraw(self.sonic_canister_id, token.ledger, amount).await
     }
 }
 
-pub async fn withdraw(swap_canister_id: CanisterId, ledger_canister_id: CanisterId, amount: u128) -> CallResult<u128> {
+pub async fn withdraw(
+    swap_canister_id: CanisterId,
+    ledger_canister_id: CanisterId,
+    amount: u128,
+) -> Result<u128, (RejectCode, String)> {
     let args = (ledger_canister_id, amount.into());
     match sonic_canister_c2c_client::withdraw(swap_canister_id, args).await?.0 {
         SonicResult::Ok(amount_withdrawn) => Ok(nat_to_u128(amount_withdrawn)),
@@ -113,7 +117,7 @@ pub async fn withdraw(swap_canister_id: CanisterId, ledger_canister_id: Canister
     }
 }
 
-async fn retrieve_subaccount(sonic_canister_id: CanisterId) -> CallResult<[u8; 32]> {
+async fn retrieve_subaccount(sonic_canister_id: CanisterId) -> Result<[u8; 32], (RejectCode, String)> {
     let current = SUBACCOUNT.get();
     if current != [0; 32] {
         Ok(current)

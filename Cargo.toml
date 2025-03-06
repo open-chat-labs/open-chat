@@ -183,17 +183,17 @@ aws-sdk-dynamodb = "1.14.0"
 aws-types = "1.1.5"
 base64 = "0.22.1"
 bitflags = { version = "2.4.1", features = ["serde"] }
-candid = "0.10.10"
+candid = "0.10.13"
 canbench-rs = "0.1.9"
 clap = "4.5.4"
 ct-codecs = "1.1.1"
 data-encoding = "2.6.0"
 dataurl = "0.1.2"
 dotenv = "0.15.0"
-event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.6.0" }
-event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.6.0" }
-event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.6.0" }
-event_store_utils = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.6.0" }
+event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "6d818189fee50159408de2c2c14923a0aef78ffb" }
+event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "6d818189fee50159408de2c2c14923a0aef78ffb" }
+event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "6d818189fee50159408de2c2c14923a0aef78ffb" }
+event_store_utils = { git = "https://github.com/open-chat-labs/event-store", rev = "6d818189fee50159408de2c2c14923a0aef78ffb" }
 futures = "0.3.30"
 getrandom = { version = "0.2.15", features = ["custom"] }
 hex = "0.4.3"
@@ -203,13 +203,13 @@ ic-agent = "0.39.3"
 ic-canister-sig-creation = "1.1.0"
 ic-captcha = "1.0.0"
 ic-cbor = "2.5.0"
-ic-cdk = "0.17.0"
-ic-cdk-macros = "0.17.0"
-ic-cdk-timers = "0.11.0"
+ic-cdk = "0.18.0-alpha.1"
+ic-cdk-macros = "0.18.0-alpha.1"
+ic-cdk-timers = "0.12.0-alpha.1"
 ic-certificate-verification = "2.4.0"
 ic-certification = "2.5.0"
 ic-http-certification = "2.5.0"
-ic-ledger-types = "0.14.0"
+ic-ledger-types = "0.15.0-alpha.1"
 ic_principal = "0.1.1"
 ic-stable-structures = { git = "https://github.com/dfinity/stable-structures", rev = "69ed47f9b5001af67d650c714cd56ec3ee0ef2bb" }
 ic-transport-types = "0.39.1"
@@ -268,6 +268,9 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "19f04d7d996d77b1c2f938e4c7e1efd8e3f12910" }
+ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "b2596b5d45b87c204ed21b4b115f3a5b7dd2135a" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "b2596b5d45b87c204ed21b4b115f3a5b7dd2135a" }
+ic-cdk-timers = { git = "https://github.com/hpeebles/cdk-rs", rev = "b2596b5d45b87c204ed21b4b115f3a5b7dd2135a" }
+ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "b2596b5d45b87c204ed21b4b115f3a5b7dd2135a" }
 rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
 ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "c584e25ce28fa27b64964c208725b6bc100fbdac" }

@@ -42,6 +42,6 @@ async fn bot_delete_channel(args: Args) -> Response {
             community_canister::c2c_bot_delete_channel::Response::CommunityFrozen => Frozen,
             community_canister::c2c_bot_delete_channel::Response::ChannelNotFound => ChannelNotFound,
         },
-        Err((code, message)) => C2CError(code as i32, message),
+        Err((code, message)) => C2CError(u32::from(code) as i32, message),
     }
 }

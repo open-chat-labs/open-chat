@@ -2,7 +2,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_delete_community::{Response::*, *};
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use types::{CanisterId, CommunityId, DeletedCommunityInfo, UserId};
 
 #[update(msgpack = true)]
@@ -56,7 +56,7 @@ pub(crate) async fn delete_community(
     deleted_by: UserId,
     community_name: String,
     members: Vec<UserId>,
-) -> CallResult<local_group_index_canister::c2c_delete_community::Response> {
+) -> Result<local_group_index_canister::c2c_delete_community::Response, (RejectCode, String)> {
     let response = local_group_index_canister_c2c_client::c2c_delete_community(
         local_group_index_canister_id,
         &local_group_index_canister::c2c_delete_community::Args { community_id },

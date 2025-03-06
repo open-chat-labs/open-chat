@@ -1,6 +1,6 @@
 use crate::model::nervous_systems::ProposalsToUpdate;
 use crate::{mutate_state, read_state, RuntimeState};
-use ic_cdk::api::call::RejectionCode;
+use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -26,7 +26,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some(proposals) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposals_to_update()) {
-        ic_cdk::spawn(update_proposals(proposals));
+        ic_cdk::futures::spawn(update_proposals(proposals));
     }
     read_state(start_job_if_required);
 }
@@ -75,11 +75,7 @@ async fn update_channel_proposals(
     mark_proposals_updated(governance_canister_id, proposals, response.err().map(|(c, _)| c));
 }
 
-fn mark_proposals_updated(
-    governance_canister_id: CanisterId,
-    proposals: Vec<ProposalUpdate>,
-    error_code: Option<RejectionCode>,
-) {
+fn mark_proposals_updated(governance_canister_id: CanisterId, proposals: Vec<ProposalUpdate>, error_code: Option<RejectCode>) {
     mutate_state(|state| {
         let now = state.env.now();
         if let Some(code) = error_code {
@@ -88,7 +84,7 @@ fn mark_proposals_updated(
                 .nervous_systems
                 .mark_proposals_update_failed(&governance_canister_id, proposals, now);
 
-            if code == RejectionCode::DestinationInvalid {
+            if code == RejectCode::DestinationInvalid {
                 state.data.nervous_systems.mark_disabled(&governance_canister_id);
             }
         } else {

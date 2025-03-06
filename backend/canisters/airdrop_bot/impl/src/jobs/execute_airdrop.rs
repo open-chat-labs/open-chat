@@ -49,7 +49,7 @@ fn run() {
         read_state(|state| (state.data.airdrops.next().cloned(), state.data.user_index_canister_id));
 
     if let Some(config) = config {
-        ic_cdk::spawn(prepare_airdrop(config, user_index_canister_id));
+        ic_cdk::futures::spawn(prepare_airdrop(config, user_index_canister_id));
     } else {
         trace!("No airdrop configured");
     };

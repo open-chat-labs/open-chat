@@ -126,7 +126,7 @@ impl RuntimeState {
             authorizer: Some(self.data.local_user_index_canister_id),
             notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
         };
-        ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
+        ic_cdk::futures::spawn(push_notification_inner(self.data.notifications_canister_id, args));
 
         async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
             let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;

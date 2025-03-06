@@ -22,7 +22,7 @@ fn run() {
 
             if cycles_balance < 2 * freezing_limit {
                 info!("Requesting cycles top up");
-                ic_cdk::spawn(send_low_balance_notification(state.data.storage_index_canister_id));
+                ic_cdk::futures::spawn(send_low_balance_notification(state.data.storage_index_canister_id));
             }
         }
     });

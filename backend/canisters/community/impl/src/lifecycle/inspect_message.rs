@@ -7,7 +7,7 @@ fn inspect_message() {
 }
 
 fn accept_if_valid(state: &RuntimeState) {
-    let method_name = ic_cdk::api::call::method_name()
+    let method_name = ic_cdk::api::msg_method_name()
         .trim_end_matches("_msgpack")
         .trim_end_matches("_v2")
         .to_string();
@@ -25,6 +25,6 @@ fn accept_if_valid(state: &RuntimeState) {
         || ((method_name == "start_video_call" || method_name == "end_video_call") && state.is_caller_video_call_operator());
 
     if is_valid {
-        ic_cdk::api::call::accept_message();
+        ic_cdk::api::accept_message();
     }
 }

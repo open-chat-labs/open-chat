@@ -31,7 +31,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some(pending_payment) = mutate_state(|state| state.data.pending_payments_queue.pop()) {
-        ic_cdk::spawn(process_payment(pending_payment));
+        ic_cdk::futures::spawn(process_payment(pending_payment));
     }
     read_state(start_job_if_required);
 }

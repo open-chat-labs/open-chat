@@ -31,7 +31,7 @@ fn run() {
 
         // Only create the new canister if it won't result in the cycles balance being too low
         if utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(test_mode)) {
-            ic_cdk::spawn(add_new_canister(cycles_to_use));
+            ic_cdk::futures::spawn(add_new_canister(cycles_to_use));
         } else {
             read_state(|state| start_job_if_required(state, Some(Duration::from_secs(300))));
         }

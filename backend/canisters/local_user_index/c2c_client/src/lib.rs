@@ -1,6 +1,6 @@
 use candid::Principal;
 use canister_client::generate_c2c_call;
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use local_user_index_canister::*;
 use std::collections::HashMap;
 use types::{CanisterId, UserId};
@@ -45,7 +45,7 @@ pub async fn push_wasm_in_chunks(
     canister_id: CanisterId,
     canister_type: ChildCanisterType,
     wasm: &[u8],
-) -> CallResult<c2c_push_wasm_chunk::Response> {
+) -> Result<c2c_push_wasm_chunk::Response, (RejectCode, String)> {
     for (index, chunk) in wasm.chunks(1_000_000).enumerate() {
         let response = c2c_push_wasm_chunk(
             canister_id,

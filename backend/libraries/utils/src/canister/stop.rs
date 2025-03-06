@@ -1,14 +1,15 @@
-use ic_cdk::api::call::{CallResult, RejectionCode};
-use ic_cdk::api::management_canister;
-use ic_cdk::api::management_canister::main::{CanisterIdRecord, CanisterStatusType};
+use crate::canister::convert_cdk_error;
+use ic_cdk::call::RejectCode;
+use ic_cdk::management_canister::{self, CanisterStatusArgs, CanisterStatusType, StopCanisterArgs};
 use tracing::{error, trace};
 use types::CanisterId;
 
-pub async fn stop(canister_id: CanisterId) -> CallResult<()> {
-    if let Err((code, msg)) = management_canister::main::stop_canister(CanisterIdRecord { canister_id }).await {
+pub async fn stop(canister_id: CanisterId) -> Result<(), (RejectCode, String)> {
+    if let Err(error) = management_canister::stop_canister(&StopCanisterArgs { canister_id }).await {
+        let (code, msg) = convert_cdk_error(error);
         error!(
             %canister_id,
-            error_code = code as u8,
+            error_code = %code,
             error_message = msg.as_str(),
             "Error calling stop_canister"
         );
@@ -18,8 +19,8 @@ pub async fn stop(canister_id: CanisterId) -> CallResult<()> {
     let mut iterations = 0;
     let mut failures = 0;
     loop {
-        match management_canister::main::canister_status(CanisterIdRecord { canister_id }).await {
-            Ok((response,)) => {
+        match management_canister::canister_status(&CanisterStatusArgs { canister_id }).await {
+            Ok(response) => {
                 let status = response.status;
                 if status == CanisterStatusType::Stopped {
                     return Ok(());
@@ -30,10 +31,11 @@ pub async fn stop(canister_id: CanisterId) -> CallResult<()> {
                     "Waiting for canister to stop",
                 );
             }
-            Err((code, msg)) => {
+            Err(error) => {
+                let (code, msg) = convert_cdk_error(error);
                 error!(
                     %canister_id,
-                    error_code = code as u8,
+                    error_code = %code,
                     error_message = msg.as_str(),
                     "Error calling canister_status"
                 );
@@ -47,7 +49,7 @@ pub async fn stop(canister_id: CanisterId) -> CallResult<()> {
         iterations += 1;
         if iterations >= 10 {
             error!(%canister_id, iterations, "Failed to wait for canister to stop");
-            return Err((RejectionCode::Unknown, "Failed to wait for canister to stop".to_string()));
+            return Err((RejectCode::SysUnknown, "Failed to wait for canister to stop".to_string()));
         }
     }
 }

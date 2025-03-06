@@ -1,12 +1,15 @@
 use super::nns::manage_neuron::RegisterVote;
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use nns_governance_canister::types::{manage_neuron, manage_neuron_response, GovernanceError, ListProposalInfo, ManageNeuron};
 use tracing::error;
 use types::{CanisterId, NnsNeuronId, ProposalId};
 
 const REWARD_STATUS_ACCEPTING_VOTES: i32 = 1;
 
-pub async fn get_ballots(governance_canister_id: CanisterId, proposal_id: ProposalId) -> CallResult<GetBallotsResult> {
+pub async fn get_ballots(
+    governance_canister_id: CanisterId,
+    proposal_id: ProposalId,
+) -> Result<GetBallotsResult, (RejectCode, String)> {
     let args = ListProposalInfo {
         limit: 1,
         before_proposal: Some((proposal_id + 1).into()),
@@ -58,7 +61,7 @@ pub async fn register_vote(
     neuron_id: NnsNeuronId,
     proposal_id: ProposalId,
     adopt: bool,
-) -> CallResult<Result<(), GovernanceError>> {
+) -> Result<Result<(), GovernanceError>, (RejectCode, String)> {
     let args = ManageNeuron {
         id: Some(neuron_id.into()),
         neuron_id_or_subaccount: None,
