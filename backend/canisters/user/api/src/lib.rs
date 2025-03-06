@@ -173,6 +173,7 @@ pub struct UserJoinedCommunityOrChannel {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "DiamondMembershipPaymentReceivedCombined")]
 pub struct DiamondMembershipPaymentReceived {
     pub timestamp: TimestampMillis,
     pub expires_at: TimestampMillis,
