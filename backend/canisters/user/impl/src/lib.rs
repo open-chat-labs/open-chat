@@ -392,14 +392,10 @@ struct Data {
     pub message_activity_events: MessageActivityEvents,
     pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
-    #[serde(default)]
     pub message_ids_deduped: bool,
-    #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
-    #[serde(default)]
     pub bots: InstalledBots,
-    #[serde(default)]
-    bot_api_keys: BotApiKeys,
+    pub bot_api_keys: BotApiKeys,
 }
 
 impl Data {

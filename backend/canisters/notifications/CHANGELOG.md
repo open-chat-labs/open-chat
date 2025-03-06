@@ -6,10 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Changed
-
-- Switch to using bounded-wait calls for idempotent c2c calls ([#7528](https://github.com/open-chat-labs/open-chat/pull/7528))
-
 ## [[2.0.1615](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1615-notifications)] - 2025-02-28
 
 ### Added
