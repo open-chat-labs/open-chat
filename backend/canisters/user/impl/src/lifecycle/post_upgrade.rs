@@ -33,10 +33,11 @@ fn post_upgrade(args: Args) {
     DedupeMessageIdsJob::default().execute();
 
     mutate_state(|state| {
+        state.data.local_user_index_event_sync_queue.set_defer_processing(true);
         let now = state.env.now();
+
         let blocked_users = state.data.blocked_users.value.clone();
         if !blocked_users.is_empty() {
-            state.data.local_user_index_event_sync_queue.set_defer_processing(true);
             for user_id in blocked_users {
                 state.push_local_user_index_canister_event(UserEvent::UserBlocked(user_id), now);
             }
