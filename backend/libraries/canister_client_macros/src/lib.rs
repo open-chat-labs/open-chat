@@ -102,9 +102,32 @@ macro_rules! generate_c2c_call {
         ) -> Result<$method_name::Response, (::ic_cdk::call::RejectCode, String)> {
             let method_name = concat!(stringify!($method_name), "_msgpack");
 
-            canister_client::make_c2c_call(canister_id, method_name, args, msgpack::serialize_to_vec, |r| {
-                msgpack::deserialize_from_slice(r)
-            })
+            canister_client::make_c2c_call(
+                canister_id,
+                method_name,
+                args,
+                msgpack::serialize_to_vec,
+                |r| msgpack::deserialize_from_slice(r),
+                None,
+            )
+            .await
+        }
+    };
+    ($method_name:ident, $timeout_seconds:literal) => {
+        pub async fn $method_name(
+            canister_id: types::CanisterId,
+            args: &$method_name::Args,
+        ) -> Result<$method_name::Response, (::ic_cdk::call::RejectCode, String)> {
+            let method_name = concat!(stringify!($method_name), "_msgpack");
+
+            canister_client::make_c2c_call(
+                canister_id,
+                method_name,
+                args,
+                msgpack::serialize_to_vec,
+                |r| msgpack::deserialize_from_slice(r),
+                Some($timeout_seconds),
+            )
             .await
         }
     };
@@ -122,9 +145,14 @@ macro_rules! generate_candid_c2c_call {
         ) -> Result<$method_name::Response, (::ic_cdk::call::RejectCode, String)> {
             let method_name = stringify!($external_canister_method_name);
 
-            canister_client::make_c2c_call(canister_id, method_name, args, ::candid::encode_one, |r| {
-                ::candid::decode_one(r)
-            })
+            canister_client::make_c2c_call(
+                canister_id,
+                method_name,
+                args,
+                ::candid::encode_one,
+                |r| ::candid::decode_one(r),
+                None,
+            )
             .await
         }
     };
@@ -165,9 +193,14 @@ macro_rules! generate_candid_c2c_call_tuple_args {
         ) -> Result<$method_name::Response, (::ic_cdk::call::RejectCode, String)> {
             let method_name = stringify!($external_canister_method_name);
 
-            canister_client::make_c2c_call(canister_id, method_name, args, ::candid::encode_args, |r| {
-                ::candid::decode_args(r)
-            })
+            canister_client::make_c2c_call(
+                canister_id,
+                method_name,
+                args,
+                ::candid::encode_args,
+                |r| ::candid::decode_args(r),
+                None,
+            )
             .await
         }
     };
@@ -184,9 +217,14 @@ macro_rules! generate_candid_c2c_call_no_args {
         ) -> Result<$method_name::Response, (::ic_cdk::call::RejectCode, String)> {
             let method_name = stringify!($external_canister_method_name);
 
-            canister_client::make_c2c_call(canister_id, method_name, (), ::candid::encode_one, |r| {
-                ::candid::decode_one(r)
-            })
+            canister_client::make_c2c_call(
+                canister_id,
+                method_name,
+                (),
+                ::candid::encode_one,
+                |r| ::candid::decode_one(r),
+                None,
+            )
             .await
         }
     };

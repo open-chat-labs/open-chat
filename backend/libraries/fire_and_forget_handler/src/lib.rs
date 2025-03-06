@@ -47,7 +47,7 @@ impl FireAndForgetHandler {
     }
 
     async fn process_single(self, mut call: C2cCall) {
-        let result = make_c2c_call_raw(call.canister_id, &call.method_name, &call.payload, 0).await;
+        let result = make_c2c_call_raw(call.canister_id, &call.method_name, &call.payload, 0, None).await;
 
         if result.is_err() || call.attempt > 0 {
             self.within_lock(|i| {

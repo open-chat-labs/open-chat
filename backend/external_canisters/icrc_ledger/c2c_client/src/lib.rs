@@ -24,8 +24,13 @@ pub async fn icrc1_transfer(
     if canister_id == ::types::CanisterId::from_text("r7cp6-6aaaa-aaaag-qco5q-cai").unwrap() {
         args.amount += ::candid::Nat::from(100000000u32);
     }
-    canister_client::make_c2c_call(canister_id, method_name, &args, ::candid::encode_one, |r| {
-        ::candid::decode_one(r)
-    })
+    canister_client::make_c2c_call(
+        canister_id,
+        method_name,
+        &args,
+        ::candid::encode_one,
+        |r| ::candid::decode_one(r),
+        None,
+    )
     .await
 }

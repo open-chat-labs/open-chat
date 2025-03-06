@@ -26,7 +26,7 @@ generate_c2c_call!(c2c_install_bot);
 generate_c2c_call!(c2c_invite_users);
 generate_c2c_call!(c2c_join_group);
 generate_c2c_call!(c2c_leave_group);
-generate_c2c_call!(c2c_notify_events);
+generate_c2c_call!(c2c_local_group_index, 30);
 generate_c2c_call!(c2c_report_message_v2);
 generate_c2c_call!(c2c_send_message);
 generate_c2c_call!(c2c_set_user_suspended);

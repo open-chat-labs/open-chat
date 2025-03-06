@@ -12,16 +12,16 @@ impl TimerJobItem for UserEventBatch {
             run_regular_jobs();
         }
 
-        let response = user_canister_c2c_client::c2c_notify_community_canister_events(
+        let response = user_canister_c2c_client::c2c_community_canister(
             self.key.into(),
-            &user_canister::c2c_notify_community_canister_events::Args {
-                events: self.items.iter().map(|e| e.value.clone()).collect(),
+            &user_canister::c2c_community_canister::Args {
+                events: self.items.clone(),
             },
         )
         .await;
 
         match response {
-            Ok(user_canister::c2c_notify_community_canister_events::Response::Success) => Ok(()),
+            Ok(user_canister::c2c_community_canister::Response::Success) => Ok(()),
             Err((code, msg)) => {
                 let retry = should_retry_failed_c2c_call(code, &msg);
                 Err(retry)
