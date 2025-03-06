@@ -13,29 +13,40 @@ fi
 
 echo "Downloading wasms"
 
-./download-canister-wasm.sh airdrop_bot $WASM_SRC || exit 1
-./download-canister-wasm.sh community $WASM_SRC || exit 1
-./download-canister-wasm.sh cycles_dispenser $WASM_SRC || exit 1
-./download-canister-wasm.sh escrow $WASM_SRC || exit 1
-./download-canister-wasm.sh event_relay $WASM_SRC || exit 1
-./download-canister-wasm.sh group $WASM_SRC || exit 1
-./download-canister-wasm.sh group_index $WASM_SRC || exit 1
-./download-canister-wasm.sh identity $WASM_SRC || exit 1
-./download-canister-wasm.sh local_group_index $WASM_SRC || exit 1
-./download-canister-wasm.sh local_user_index $WASM_SRC || exit 1
-./download-canister-wasm.sh market_maker $WASM_SRC || exit 1
-./download-canister-wasm.sh neuron_controller $WASM_SRC || exit 1
-./download-canister-wasm.sh notifications $WASM_SRC || exit 1
-./download-canister-wasm.sh notifications_index $WASM_SRC || exit 1
-./download-canister-wasm.sh online_users $WASM_SRC || exit 1
-./download-canister-wasm.sh openchat_installer $WASM_SRC || exit 1
-./download-canister-wasm.sh proposal_validation $WASM_SRC || exit 1
-./download-canister-wasm.sh proposals_bot $WASM_SRC || exit 1
-./download-canister-wasm.sh registry $WASM_SRC || exit 1
-./download-canister-wasm.sh storage_bucket $WASM_SRC || exit 1
-./download-canister-wasm.sh storage_index $WASM_SRC || exit 1
-./download-canister-wasm.sh translations $WASM_SRC || exit 1
-./download-canister-wasm.sh user $WASM_SRC || exit 1
-./download-canister-wasm.sh user_index $WASM_SRC || exit 1
+pids=()
+
+./download-canister-wasm.sh airdrop_bot $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh community $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh cycles_dispenser $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh escrow $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh event_relay $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh group $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh group_index $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh identity $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh local_group_index $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh local_user_index $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh market_maker $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh neuron_controller $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh notifications $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh notifications_index $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh online_users $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh openchat_installer $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh proposal_validation $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh proposals_bot $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh registry $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh storage_bucket $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh storage_index $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh translations $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh user $WASM_SRC & pids+=($!)
+./download-canister-wasm.sh user_index $WASM_SRC & pids+=($!)
+
+./download-canister-wasm-dfx.sh event_store  & pids+=($!)
+./download-canister-wasm-dfx.sh sign_in_with_email & pids+=($!)
+./download-canister-wasm-dfx.sh sign_in_with_ethereum & pids+=($!)
+./download-canister-wasm-dfx.sh sign_in_with_solana & pids+=($!)
+
+for pid in ${pids[@]}; do
+   wait $pid || { echo "Failed to download all wasms"; exit 1; }
+done
 
 echo "Wasms downloaded"
