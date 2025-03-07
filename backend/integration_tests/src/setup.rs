@@ -22,12 +22,12 @@ use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 
 pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
-// This gets set to true as soon as the first thread starts initializing the environment to ensure
-// that only happens once.
+// This is set to true as soon as the first thread starts initializing the environment to ensure
+// that the full initialization only happens once.
 static INIT_STARTED_LOCK: Mutex<bool> = Mutex::new(false);
 // These canister Ids are set at the end of the initialization process, so each thread (other than
 // the one doing the initialization) waits until the canister Ids are available at which point they
-// make their own copy of the already initialized PocketIC state.
+// make their own copy of the initialized PocketIC state.
 static CANISTER_IDS: OnceLock<CanisterIds> = OnceLock::new();
 
 pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
