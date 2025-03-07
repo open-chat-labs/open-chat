@@ -1,4 +1,4 @@
-use candid::Principal;
+use candid::{Encode, Principal};
 use canister_agent_utils::{build_ic_agent, get_canister_wasm, install_wasm, set_controllers, CanisterIds, CanisterName};
 use constants::{CHAT_LEDGER_CANISTER_ID, SNS_GOVERNANCE_CANISTER_ID};
 use ic_agent::{Agent, Identity};
@@ -45,22 +45,6 @@ async fn install_service_canisters_impl(
             &canister_ids.notifications_index,
             vec![canister_ids.openchat_installer],
         ),
-        set_controllers(management_canister, &canister_ids.identity, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.airdrop_bot, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.storage_index, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.registry, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.market_maker, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.neuron_controller, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.escrow, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.translations, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.event_relay, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.event_store, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.sign_in_with_email, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.sign_in_with_ethereum, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.sign_in_with_solana, controllers.clone()),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -106,7 +90,7 @@ async fn install_service_canisters_impl(
         management_canister,
         &canister_ids.openchat_installer,
         &openchat_installer_canister_wasm.module,
-        openchat_installer_init_args,
+        Encode!(&openchat_installer_init_args).unwrap(),
     )
     .await;
 
@@ -354,114 +338,104 @@ async fn install_service_canisters_impl(
         runtime_features: None,
     };
 
-    futures::future::join5(
+    futures::future::join_all([
         install_wasm(
             management_canister,
             &canister_ids.identity,
             &identity_canister_wasm.module,
-            identity_init_args,
+            Encode!(&identity_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
             &canister_ids.online_users,
             &online_users_canister_wasm.module,
-            online_users_init_args,
+            Encode!(&online_users_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
             &canister_ids.proposals_bot,
             &proposals_bot_canister_wasm.module,
-            proposals_bot_init_args,
+            Encode!(&proposals_bot_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
             &canister_ids.storage_index,
             &storage_index_canister_wasm.module,
-            storage_index_init_args,
+            Encode!(&storage_index_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
             &canister_ids.cycles_dispenser,
             &cycles_dispenser_canister_wasm.module,
-            cycles_dispenser_init_args,
+            Encode!(&cycles_dispenser_init_args).unwrap(),
         ),
-    )
-    .await;
-
-    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.registry,
             &registry_canister_wasm.module,
-            registry_init_args,
+            Encode!(&registry_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
             &canister_ids.market_maker,
             &market_maker_canister_wasm.module,
-            market_maker_init_args,
+            Encode!(&market_maker_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
             &canister_ids.neuron_controller,
             &neuron_controller_canister_wasm.module,
-            neuron_controller_init_args,
+            Encode!(&neuron_controller_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
             &canister_ids.escrow,
             &escrow_canister_wasm.module,
-            escrow_init_args,
+            Encode!(&escrow_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
             &canister_ids.translations,
             &translations_canister_wasm.module,
-            translations_init_args,
+            Encode!(&translations_init_args).unwrap(),
         ),
-    )
-    .await;
-
-    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.event_relay,
             &event_relay_canister_wasm.module,
-            event_relay_init_args,
+            Encode!(&event_relay_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
             &canister_ids.event_store,
             &event_store_canister_wasm.module,
-            event_store_init_args,
+            Encode!(&event_store_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
             &canister_ids.sign_in_with_email,
             &sign_in_with_email_wasm.module,
-            sign_in_with_email_init_args,
+            Encode!(&sign_in_with_email_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
             &canister_ids.sign_in_with_ethereum,
             &sign_in_with_ethereum_wasm.module,
-            sign_in_with_ethereum_init_args,
+            Encode!(&sign_in_with_ethereum_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
             &canister_ids.sign_in_with_solana,
             &sign_in_with_solana_wasm.module,
-            sign_in_with_solana_init_args,
+            Encode!(&sign_in_with_solana_init_args).unwrap(),
         ),
-    )
-    .await;
-
-    install_wasm(
-        management_canister,
-        &canister_ids.airdrop_bot,
-        &airdrop_bot_canister_wasm.module,
-        airdrop_bot_init_args,
-    )
+        install_wasm(
+            management_canister,
+            &canister_ids.airdrop_bot,
+            &airdrop_bot_canister_wasm.module,
+            Encode!(&airdrop_bot_init_args).unwrap(),
+        ),
+    ])
     .await;
 
     let user_canister_wasm = get_canister_wasm(CanisterName::User, version);
