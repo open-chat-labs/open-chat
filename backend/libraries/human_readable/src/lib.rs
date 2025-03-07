@@ -115,6 +115,7 @@ impl From<&CanisterWasm> for CanisterWasmTrimmed {
 
 #[derive(Serialize)]
 pub struct HumanReadableUpgradesFilter {
+    versions: Vec<BuildVersion>,
     include: Vec<HumanReadablePrincipal>,
     exclude: Vec<HumanReadablePrincipal>,
 }
@@ -122,6 +123,7 @@ pub struct HumanReadableUpgradesFilter {
 impl From<&UpgradesFilter> for HumanReadableUpgradesFilter {
     fn from(value: &UpgradesFilter) -> Self {
         HumanReadableUpgradesFilter {
+            versions: value.versions.iter().cloned().collect(),
             include: value.include.iter().copied().map(|c| c.into()).collect(),
             exclude: value.exclude.iter().copied().map(|c| c.into()).collect(),
         }

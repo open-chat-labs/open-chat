@@ -7,7 +7,6 @@ use local_user_index_canister::c2c_upgrade_user_canister_wasm::*;
 use local_user_index_canister::ChildCanisterType;
 use sha256::sha256;
 use std::cmp::Reverse;
-use std::collections::HashSet;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, ChunkedCanisterWasm, Hash, UpgradeChunkedCanisterWasmResponse::*};
 use utils::canister::{should_perform_upgrade, upload_wasm_in_chunks};
@@ -62,20 +61,16 @@ fn commit(args: Args, wasm: CanisterWasm, chunks: Vec<Hash>, state: &mut Runtime
         .set(ChildCanisterType::User, ChunkedCanisterWasm { wasm, chunks, wasm_hash });
 
     let filter = args.filter.unwrap_or_default();
-    let include: HashSet<_> = filter.include.into_iter().collect();
-    let include_all = include.is_empty();
-    let exclude: HashSet<_> = filter.exclude.into_iter().collect();
 
     for canister_id in state
         .data
         .local_users
         .iter()
         .filter(|(user_id, user)| {
-            should_perform_upgrade(user.wasm_version, version, state.data.test_mode) && !state.data.global_users.is_bot(user_id)
+            should_perform_upgrade((**user_id).into(), user.wasm_version, version, &filter, state.data.test_mode)
+                && !state.data.global_users.is_bot(user_id)
         })
         .map(|(user_id, _)| CanisterId::from(*user_id))
-        .filter(|c| include_all || include.contains(c))
-        .filter(|c| !exclude.contains(c))
         .sorted_by_key(|&c| Reverse(state.data.global_users.diamond_membership_expiry_date(&c.into())))
     {
         state.data.canisters_requiring_upgrade.enqueue(canister_id, false);

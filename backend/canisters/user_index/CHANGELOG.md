@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `versions` to upgrade filter to filter canisters to upgrade by version ([#7531](https://github.com/open-chat-labs/open-chat/pull/7531))
+
 ### Changed
 
 - Always encode `BotPermission`s as `u32`s ([#7519](https://github.com/open-chat-labs/open-chat/pull/7519))
