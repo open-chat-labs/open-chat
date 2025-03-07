@@ -91,6 +91,7 @@ impl From<&User> for types::User {
     }
 }
 
+#[derive(Clone)]
 pub struct CanisterIds {
     pub openchat_installer: CanisterId,
     pub user_index: CanisterId,
