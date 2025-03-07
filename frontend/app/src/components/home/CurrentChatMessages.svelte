@@ -35,7 +35,6 @@
     import ChatEventList from "./ChatEventList.svelte";
     import PrivatePreview from "./PrivatePreview.svelte";
     import TimelineDate from "./TimelineDate.svelte";
-    import { reverseScroll } from "../../stores/scrollPos";
     import Witch from "../Witch.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -131,10 +130,9 @@
     }
 
     $: timeline = client.groupEvents(
-        $reverseScroll ? [...events].reverse() : events,
+        [...events].reverse(),
         $user.userId,
         $expandedDeletedMessages,
-        $reverseScroll,
         groupInner(filteredProposals),
     );
 
@@ -283,14 +281,6 @@
     let:isReadByMe
     let:messageObserver
     let:labelObserver>
-    {#if !$reverseScroll}
-        {#if showAvatar}
-            <InitialChatMessage {chat} />
-        {/if}
-        {#if privatePreview}
-            <PrivatePreview />
-        {/if}
-    {/if}
     {#if !privatePreview}
         {#each timeline as timelineItem}
             {#if timelineItem.kind === "timeline_date"}
@@ -312,8 +302,8 @@
                             chatType={chat.kind}
                             user={$user}
                             me={isMe(evt)}
-                            first={$reverseScroll ? i + 1 === innerGroup.length : i === 0}
-                            last={$reverseScroll ? i === 0 : i + 1 === innerGroup.length}
+                            first={i + 1 === innerGroup.length}
+                            last={i === 0}
                             {readonly}
                             {canPin}
                             {canBlockUsers}
@@ -350,12 +340,10 @@
             {/if}
         {/each}
     {/if}
-    {#if $reverseScroll}
-        {#if privatePreview}
-            <PrivatePreview />
-        {/if}
-        {#if showAvatar}
-            <InitialChatMessage {chat} />
-        {/if}
+    {#if privatePreview}
+        <PrivatePreview />
+    {/if}
+    {#if showAvatar}
+        <InitialChatMessage {chat} />
     {/if}
 </ChatEventList>

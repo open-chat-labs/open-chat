@@ -5,8 +5,6 @@
     import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import type { OpenChat } from "openchat-client";
     import GenericPreview from "./GenericPreview.svelte";
-    import { reverseScroll } from "../../stores/scrollPos";
-    import { lowBandwidth } from "../../stores/settings";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { rtlStore } from "../../stores/rtl";
@@ -128,9 +126,6 @@
     }
 
     function adjustScroll(wrapper: HTMLElement) {
-        // if we are using reverse scroll rendering there is no need to adjust the scroll top when rendering previews
-        if ($reverseScroll || $lowBandwidth) return;
-
         list = list || closestAncestor(wrapper, ".scrollable-list");
         if (list) {
             list.scrollTop = list.scrollTop + wrapper.offsetHeight;

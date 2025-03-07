@@ -1,4 +1,4 @@
-use candid::{CandidType, Principal};
+use candid::Principal;
 use ic_agent::identity::{BasicIdentity, Secp256k1Identity};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
@@ -194,15 +194,15 @@ pub async fn set_controllers(
     request.call_and_wait().await.expect("Failed to set controllers");
 }
 
-pub async fn install_wasm<A: CandidType + Sync + Send>(
+pub async fn install_wasm(
     management_canister: &ManagementCanister<'_>,
     canister_id: &CanisterId,
     wasm_bytes: &[u8],
-    init_args: A,
+    init_args_bytes: Vec<u8>,
 ) {
     management_canister
         .install_code(canister_id, wasm_bytes)
-        .with_arg(init_args)
+        .with_raw_arg(init_args_bytes)
         .call_and_wait()
         .await
         .expect("Failed to install wasm");

@@ -165,6 +165,7 @@ members = [
     "backend/tools/canister_upgrader",
     "backend/tools/canister_wasm_chunks_uploader",
     "backend/tools/dupe_deps_detector",
+    "backend/tools/local_canister_creator",
     "backend/tools/principal_generator",
     "backend/tools/translation_tool",
     "backend/tools/ts_exporter",

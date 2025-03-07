@@ -33,7 +33,7 @@
     function joinGroup() {
         dispatch("joinGroup", {
             group: chat,
-            select: true,
+            select: false,
         });
     }
 

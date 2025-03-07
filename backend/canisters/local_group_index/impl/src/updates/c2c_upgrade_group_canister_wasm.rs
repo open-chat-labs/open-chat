@@ -5,7 +5,6 @@ use canister_tracing_macros::trace;
 use local_group_index_canister::c2c_upgrade_group_canister_wasm::*;
 use local_group_index_canister::ChildCanisterType;
 use sha256::sha256;
-use std::collections::HashSet;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, ChunkedCanisterWasm, Hash, UpgradeChunkedCanisterWasmResponse::*};
 use utils::canister::{should_perform_upgrade, upload_wasm_in_chunks};
@@ -68,18 +67,21 @@ fn commit(args: Args, wasm: CanisterWasm, chunks: Vec<Hash>, state: &mut Runtime
         .set(ChildCanisterType::Group, ChunkedCanisterWasm { wasm, chunks, wasm_hash });
 
     let filter = args.filter.unwrap_or_default();
-    let include: HashSet<_> = filter.include.into_iter().collect();
-    let include_all = include.is_empty();
-    let exclude: HashSet<_> = filter.exclude.into_iter().collect();
 
     for canister_id in state
         .data
         .local_groups
         .iter()
-        .filter(|(_, group)| should_perform_upgrade(group.wasm_version, version, state.data.test_mode))
+        .filter(|(group_id, group)| {
+            should_perform_upgrade(
+                (**group_id).into(),
+                group.wasm_version,
+                version,
+                &filter,
+                state.data.test_mode,
+            )
+        })
         .map(|(chat_id, _)| CanisterId::from(*chat_id))
-        .filter(|c| include_all || include.contains(c))
-        .filter(|c| !exclude.contains(c))
     {
         state.data.groups_requiring_upgrade.enqueue(canister_id, false);
     }
