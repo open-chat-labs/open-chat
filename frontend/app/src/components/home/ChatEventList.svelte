@@ -37,7 +37,6 @@
         eventListLastScrolled,
         eventListScrollTop,
         eventListScrolling,
-        reverseScroll,
     } from "../../stores/scrollPos";
     import TimelineDate from "./TimelineDate.svelte";
 
@@ -105,35 +104,16 @@
         eventCount: events.length,
     });
 
-    const bottom = () => {
-        if (messagesDiv) {
-            if ($reverseScroll) {
-                return 0;
-            } else {
-                return messagesDiv.scrollHeight - messagesDiv.clientHeight;
-            }
-        }
-        return 0;
-    };
-
     const fromBottom = () => {
         if (messagesDiv) {
-            if ($reverseScroll) {
-                return -messagesDiv.scrollTop;
-            } else {
-                return bottom() - messagesDiv.scrollTop;
-            }
+            return -messagesDiv.scrollTop;
         }
         return 0;
     };
 
     const fromTop = () => {
         if (messagesDiv) {
-            if ($reverseScroll) {
-                return messagesDiv.scrollHeight - messagesDiv.clientHeight - fromBottom();
-            } else {
-                return messagesDiv.scrollTop;
-            }
+            return messagesDiv.scrollHeight - messagesDiv.clientHeight - fromBottom();
         }
         return 0;
     };
@@ -213,17 +193,10 @@
                     }
 
                     if (needsAdjustment) {
-                        if ($reverseScroll && loadingNewMessages && !loadingPrevMessages) {
+                        if (loadingNewMessages && !loadingPrevMessages) {
                             await interruptScroll((el) => {
                                 if (previousScrollTop !== undefined) {
                                     el.scrollTop = previousScrollTop - scrollHeightDiff;
-                                }
-                            });
-                        }
-                        if (!$reverseScroll && loadingPrevMessages && !loadingNewMessages) {
-                            await interruptScroll((el) => {
-                                if (previousScrollTop !== undefined) {
-                                    el.scrollTop = previousScrollTop + scrollHeightDiff;
                                 }
                             });
                         }
@@ -233,7 +206,6 @@
                             scrollHeight: el.scrollHeight,
                             scrollHeightDiff,
                             scrollTopDiff,
-                            reverseRender: $reverseScroll,
                         });
                     }
 
@@ -298,9 +270,6 @@
                 ...(messagesDiv?.querySelectorAll(".date-label[data-timestamp]:not(.floating)") ??
                     []),
             ];
-            if (!$reverseScroll) {
-                labels.reverse();
-            }
             floatingTimestamp = undefined;
             for (const label of labels) {
                 const float = elementIsOffTheTop(label);
@@ -400,7 +369,7 @@
     ): Promise<void> {
         if (messagesDiv) {
             messagesDiv?.scrollTo({
-                top: bottom(),
+                top: 0,
                 behavior,
             });
         }
@@ -607,14 +576,12 @@
         if (!messageContextsEqual(context, messageContext)) return;
         await resetScroll(initialLoad);
         if (!messageContextsEqual(context, messageContext)) return;
-        if ($reverseScroll) {
-            // Seems like we *must* interrupt the scroll to stop runaway loading
-            // even though we do not need to do any adjustment of the scrollTop in this direction.
-            // This seems to help on chrome but not on safari (God help us).
-            await interruptScroll(() => {
-                console.debug("SCROLL: onLoadedPrevious interrupt");
-            });
-        }
+        // Seems like we *must* interrupt the scroll to stop runaway loading
+        // even though we do not need to do any adjustment of the scrollTop in this direction.
+        // This seems to help on chrome but not on safari (God help us).
+        await interruptScroll(() => {
+            console.debug("SCROLL: onLoadedPrevious interrupt");
+        });
     }
 
     async function onLoadedNewMessages(context: MessageContext) {
@@ -710,7 +677,6 @@
     bind:clientHeight={messagesDivHeight}
     on:scroll={onUserScroll}
     class:interrupt
-    class:reverse={$reverseScroll}
     class={`scrollable-list ${rootSelector}`}>
     <slot {isAccepted} {isConfirmed} {isFailed} {isReadByMe} {messageObserver} {labelObserver} />
 </div>
@@ -763,11 +729,8 @@
     .scrollable-list {
         @include message-list();
         background-color: var(--currentChat-msgs-bg);
-
-        &.reverse {
-            display: flex;
-            flex-direction: column-reverse;
-        }
+        display: flex;
+        flex-direction: column-reverse;
 
         &.interrupt {
             overflow-y: hidden;
