@@ -5,4 +5,4 @@ use notifications_canister::*;
 
 // Updates
 generate_c2c_call!(c2c_push_notification);
-generate_c2c_call!(c2c_notifications_index, 30);
+generate_c2c_call!(c2c_notifications_index, 60);
