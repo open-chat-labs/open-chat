@@ -5,6 +5,7 @@
     "main": "lib/index.js",
     "scripts": {
         "build": "npm run clean && tsc",
+        "build:docker": "npm run build",
         "dev": "npm run clean && tsc -w",
         "wait": "npm run clean && wait-on lib/index.js",
         "clean": "rm -rf lib",

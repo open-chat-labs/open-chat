@@ -5,6 +5,7 @@
     "main": "lib/worker.js",
     "scripts": {
         "build": "rollup -c",
+        "build:docker": "npm run build",
         "dev": "rollup -cw",
         "wait": "npm run clean && wait-on lib/worker.js",
         "clean": "rm -f lib/worker.js",

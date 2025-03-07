@@ -1,6 +1,17 @@
 # by default, ignore all hidden files and make some exceptions
 .*
+*.md
+*.log
 Dockerfile
+Dockerfile.*
+canbench*
+LICENSE
+Makefile
 target
-frontend
 wasms
+lib
+node_modules
+npm-debug.log
+canbench*.yml
+LICENSE
+Makefile
