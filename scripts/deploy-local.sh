@@ -27,31 +27,41 @@ NNS_CMC_CANISTER_ID=rkp4c-7iaaa-aaaaa-aaaca-cai
 NNS_SNS_WASM_CANISTER_ID=qaa6y-5yaaa-aaaaa-aaafa-cai
 NNS_INDEX_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
 
-# Create the OpenChat canisters
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 openchat_installer
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 user_index
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 group_index
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications_index
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 local_user_index
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 local_group_index
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 identity
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 online_users
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 proposals_bot
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 airdrop_bot
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000000 storage_index
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000000 cycles_dispenser
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 registry
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 market_maker
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 neuron_controller
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 escrow
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 translations
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 event_relay
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 event_store
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_email
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_ethereum
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_solana
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 website
+echo "Building local_canister_creator and canister_installer"
+cargo build -p local_canister_creator -p canister_installer
+echo "Building completed"
+
+echo "Creating canisters"
+cargo run -p local_canister_creator -- \
+  --ic-url http://127.0.0.1:8080/ \
+  --controller $IDENTITY \
+  --cycles 1000000000000000 \
+  --canister-ids-json-dir .dfx/local \
+  --canister openchat_installer \
+  --canister user_index \
+  --canister group_index \
+  --canister notifications_index \
+  --canister local_user_index \
+  --canister local_group_index \
+  --canister notifications \
+  --canister identity \
+  --canister online_users \
+  --canister proposals_bot \
+  --canister airdrop_bot \
+  --canister storage_index \
+  --canister cycles_dispenser \
+  --canister registry \
+  --canister market_maker \
+  --canister neuron_controller \
+  --canister escrow \
+  --canister translations \
+  --canister event_relay \
+  --canister event_store \
+  --canister sign_in_with_email \
+  --canister sign_in_with_ethereum \
+  --canister sign_in_with_solana \
+  --canister website || exit 1
+echo "Canisters created"
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh local \
