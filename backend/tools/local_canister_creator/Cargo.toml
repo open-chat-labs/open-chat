@@ -1,0 +1,15 @@
+[package]
+name = "local_canister_creator"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+canister_agent_utils = { path = "../../libraries/canister_agent_utils" }
+clap = { workspace = true, features = ["derive"] }
+futures = { workspace = true }
+ic-agent = { workspace = true }
+ic-utils = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+types = { path = "../../libraries/types" }
