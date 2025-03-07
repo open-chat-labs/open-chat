@@ -20,6 +20,7 @@ metrics.md
 release_changelog.md
 summary.md
 temp.did
+tsBindings
 website_release.md
 frontend/app/src/stores/timeline.ts
 /Makefile
