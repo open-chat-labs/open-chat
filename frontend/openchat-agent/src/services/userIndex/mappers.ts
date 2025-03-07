@@ -41,11 +41,7 @@ import {
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
-import {
-    apiExternalBotPermissions,
-    externalBotDefinition,
-    token,
-} from "../common/chatMappersV2";
+import { apiExternalBotPermissions, externalBotDefinition, token } from "../common/chatMappersV2";
 import type {
     CurrentUserSummary as TCurrentUserSummary,
     DiamondMembershipDetails as TDiamondMembershipDetails,
@@ -95,7 +91,7 @@ export function apiBotInstallLocation(domain: BotInstallationLocation): ApiBotIn
         case "group_chat":
             return { Group: principalStringToBytes(domain.groupId) };
         case "direct_chat":
-            throw new Error(`Unexpected BotInstallationLocation received: ${domain}`);
+            return { User: principalStringToBytes(domain.userId) };
     }
 }
 
