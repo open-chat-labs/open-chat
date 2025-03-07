@@ -33,7 +33,6 @@
     import ChatEventList from "../ChatEventList.svelte";
     import { randomSentence } from "../../../utils/randomMsg";
     import TimelineDate from "../TimelineDate.svelte";
-    import { reverseScroll } from "../../../stores/scrollPos";
     import { i18nKey } from "../../../i18n/i18n";
     import P2PSwapContentBuilder from "../P2PSwapContentBuilder.svelte";
     import AreYouSure from "../../AreYouSure.svelte";
@@ -87,10 +86,9 @@
     $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
     $: timeline = client.groupEvents(
-        $reverseScroll ? [...events].reverse() : events,
+        [...events].reverse(),
         $user.userId,
         $expandedDeletedMessages,
-        $reverseScroll,
     ) as TimelineItem<Message>[];
     $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
@@ -388,8 +386,8 @@
                             chatType={chat.kind}
                             user={$user}
                             event={evt}
-                            first={$reverseScroll ? i + 1 === userGroup.length : i === 0}
-                            last={$reverseScroll ? i === 0 : i + 1 === userGroup.length}
+                            first={i + 1 === userGroup.length}
+                            last={i === 0}
                             me={evt.event.sender === $user.userId}
                             accepted={isAccepted($unconfirmed, evt)}
                             confirmed={isConfirmed($unconfirmed, evt)}

@@ -642,7 +642,6 @@ export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
     expandedDeletedMessages: Set<number>,
-    reverse: boolean,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
 ): TimelineItem<ChatEvent>[] {
     return flattenTimeline(
@@ -652,13 +651,11 @@ export function groupEvents(
         )
             .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
             .map(groupInner ?? groupBySender),
-        reverse,
     );
 }
 
 export function flattenTimeline(
     grouped: EventWrapper<ChatEvent>[][][],
-    reverse: boolean,
 ): TimelineItem<ChatEvent>[] {
     const timeline: TimelineItem<ChatEvent>[] = [];
     grouped.forEach((dayGroup) => {
@@ -670,11 +667,7 @@ export function flattenTimeline(
             kind: "timeline_event_group",
             group: dayGroup,
         };
-        if (reverse) {
-            timeline.push(group, date);
-        } else {
-            timeline.push(date, group);
-        }
+        timeline.push(group, date);
     });
     return timeline;
 }
