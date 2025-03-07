@@ -99,6 +99,10 @@ impl Streak {
         self.max_streak
     }
 
+    pub fn set_max_streak(&mut self, max_streak: u16) {
+        self.max_streak = max_streak;
+    }
+
     pub fn timestamp_to_day(ts: TimestampMillis) -> Option<u16> {
         if ts < DAY_ZERO {
             return None;
