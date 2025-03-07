@@ -22,7 +22,12 @@ use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 
 pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
+// This gets set to true as soon as the first thread starts initializing the environment to ensure
+// that only happens once.
 static INIT_STARTED_LOCK: Mutex<bool> = Mutex::new(false);
+// These canister Ids are set at the end of the initialization process, so each thread (other than
+// the one doing the initialization) waits until the canister Ids are available at which point they
+// make their own copy of the already initialized PocketIC state.
 static CANISTER_IDS: OnceLock<CanisterIds> = OnceLock::new();
 
 pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
@@ -56,6 +61,7 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
     if !*init_started {
         *init_started = true;
 
+        // This thread is first, so it is the only one which will run the full initialization
         println!("Initialization starting");
 
         if std::fs::exists(&pocket_ic_state_dir).unwrap() {
@@ -86,8 +92,10 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
 
     let pocket_ic_state_dir_copy = pocket_ic_state_dir.join(random_id);
 
+    // Make a copy of the initialized environment
     copy_dir_all(pocket_ic_state_base_dir, &pocket_ic_state_dir_copy).unwrap();
 
+    // Load the initialized environment into a new PocketIC instance
     let env = PocketIcBuilder::new().with_state_dir(pocket_ic_state_dir_copy).build();
 
     TestEnv {
