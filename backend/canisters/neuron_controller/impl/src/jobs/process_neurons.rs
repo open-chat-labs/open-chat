@@ -1,7 +1,7 @@
 use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
 use crate::{mutate_state, read_state, Neurons};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
 use nns_governance_canister::types::manage_neuron::{Command, Disburse, Spawn};
@@ -22,7 +22,7 @@ pub fn start_job() {
 }
 
 fn run() {
-    ic_cdk::spawn(run_async());
+    ic_cdk::futures::spawn(run_async());
 }
 
 async fn run_async() {
@@ -179,7 +179,7 @@ async fn disburse_neurons(neuron_ids: Vec<u64>) {
 async fn is_cycles_dispenser_balance_low(
     nns_ledger_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-) -> CallResult<bool> {
+) -> Result<bool, (RejectCode, String)> {
     icrc_ledger_canister_c2c_client::icrc1_balance_of(nns_ledger_canister_id, &Account::from(cycles_dispenser_canister_id))
         .await
         .map(|balance| balance < 10000 * E8S_PER_ICP)

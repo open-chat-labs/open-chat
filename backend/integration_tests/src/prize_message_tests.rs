@@ -1,7 +1,8 @@
+#![allow(deprecated)]
 use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, TestEnv};
-use constants::{HOUR_IN_MS, MINUTE_IN_MS, PRIZE_FEE_PERCENT};
+use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS, PRIZE_FEE_PERCENT};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -32,8 +33,7 @@ fn prize_messages_can_be_claimed_successfully() {
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
 
     let prizes = [100000, 200000];
-    let token = Cryptocurrency::InternetComputer;
-    let fee = token.fee().unwrap();
+    let fee = ICP_TRANSFER_FEE;
     let message_id = random_from_u128();
 
     let send_message_response = client::user::send_message_with_transfer_to_group(
@@ -48,7 +48,8 @@ fn prize_messages_can_be_claimed_successfully() {
                 prizes_v2: prizes.into_iter().map(u128::from).collect(),
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
-                    token,
+                    token_symbol: ICP_SYMBOL.to_string(),
+                    token: Cryptocurrency::InternetComputer,
                     amount: prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128,
                     to: group_id.into(),
                     fee,
@@ -140,8 +141,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
 
     let prizes = vec![100000, 200000];
-    let token = Cryptocurrency::InternetComputer;
-    let fee = token.fee().unwrap();
+    let fee = ICP_TRANSFER_FEE;
     let total = prizes.iter().sum::<u128>();
     let amount = total + (fee * prizes.len() as u128) + (total * PRIZE_FEE_PERCENT as u128 / 100);
     let message_id = random_from_u128();
@@ -158,7 +158,8 @@ fn unclaimed_prizes_get_refunded(case: u32) {
                 prizes_v2: prizes,
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
-                    token,
+                    token_symbol: ICP_SYMBOL.to_string(),
+                    token: Cryptocurrency::InternetComputer,
                     amount,
                     to: group_id.into(),
                     fee,
@@ -228,8 +229,7 @@ fn old_transactions_fixed_by_updating_created_date() {
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, 200_000);
 
     let prizes = vec![100_000];
-    let token = Cryptocurrency::InternetComputer;
-    let fee = token.fee().unwrap();
+    let fee = ICP_TRANSFER_FEE;
     let total = prizes.iter().sum::<u128>();
     let amount = total + (fee * prizes.len() as u128) + (total * PRIZE_FEE_PERCENT as u128 / 100);
     let message_id = random_from_u128();
@@ -246,7 +246,8 @@ fn old_transactions_fixed_by_updating_created_date() {
                 prizes_v2: prizes,
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
-                    token,
+                    token_symbol: ICP_SYMBOL.to_string(),
+                    token: Cryptocurrency::InternetComputer,
                     amount,
                     to: group_id.into(),
                     fee,

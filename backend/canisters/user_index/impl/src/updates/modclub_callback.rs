@@ -19,7 +19,7 @@ use user_index_canister::modclub_callback::*;
 #[update(guard = "caller_is_modclub")]
 #[trace]
 fn modclub_callback(args: Args) {
-    ic_cdk::spawn(handle_modclub_callback(args))
+    ic_cdk::futures::spawn(handle_modclub_callback(args))
 }
 
 async fn handle_modclub_callback(args: Args) {

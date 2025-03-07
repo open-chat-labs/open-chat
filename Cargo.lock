@@ -139,7 +139,7 @@ dependencies = [
  "community_canister_c2c_client",
  "constants",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -813,7 +813,7 @@ dependencies = [
  "candid",
  "chat_events",
  "event_store_producer",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-stable-structures",
  "stable_memory_map",
  "types",
@@ -1066,9 +1066,9 @@ dependencies = [
 
 [[package]]
 name = "candid"
-version = "0.10.11"
+version = "0.10.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d04aa85a9ba2542bded33d1eff0ffb17cb98b1be8117e0a25e1ad8c62bedc881"
+checksum = "a253bab4a9be502c82332b60cbeee6202ad0692834efeec95fae9f29db33d692"
 dependencies = [
  "anyhow",
  "binread",
@@ -1135,7 +1135,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client_macros",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "tracing",
 ]
 
@@ -1356,7 +1356,7 @@ dependencies = [
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "hex",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-ledger-types",
  "ic-stable-structures",
  "itertools 0.13.0",
@@ -1416,7 +1416,7 @@ dependencies = [
  "candid",
  "canister_client",
  "ckbtc_minter_canister",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "types",
 ]
 
@@ -1567,7 +1567,7 @@ dependencies = [
  "candid",
  "canister_client",
  "community_canister",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "msgpack",
  "tracing",
  "types",
@@ -1602,7 +1602,7 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -1848,7 +1848,7 @@ dependencies = [
  "candid",
  "canister_client",
  "cycles_dispenser_canister",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "tracing",
  "types",
 ]
@@ -1868,7 +1868,7 @@ dependencies = [
  "cycles_minting_canister",
  "cycles_minting_canister_c2c_client",
  "human_readable",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
@@ -1893,7 +1893,7 @@ version = "0.1.0"
 dependencies = [
  "cycles_dispenser_canister",
  "cycles_dispenser_canister_c2c_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "tracing",
  "types",
@@ -1915,7 +1915,7 @@ dependencies = [
  "candid",
  "canister_client",
  "cycles_minting_canister",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "types",
 ]
 
@@ -2324,7 +2324,7 @@ dependencies = [
  "candid",
  "canister_client",
  "escrow_canister",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "msgpack",
  "tracing",
  "types",
@@ -2345,7 +2345,7 @@ dependencies = [
  "escrow_canister",
  "hex",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -2426,7 +2426,7 @@ dependencies = [
  "candid",
  "canister_client",
  "event_relay_canister",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "types",
 ]
 
@@ -2445,7 +2445,7 @@ dependencies = [
  "event_store_producer_cdk_runtime",
  "event_store_utils",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -2464,7 +2464,7 @@ dependencies = [
 [[package]]
 name = "event_store_canister"
 version = "0.6.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=v0.6.0#d7311f1ba1e3610ec1eea8cd16874b2395c676f7"
+source = "git+https://github.com/open-chat-labs/event-store?rev=6d818189fee50159408de2c2c14923a0aef78ffb#6d818189fee50159408de2c2c14923a0aef78ffb"
 dependencies = [
  "candid",
  "serde",
@@ -2474,7 +2474,7 @@ dependencies = [
 [[package]]
 name = "event_store_producer"
 version = "0.6.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=v0.6.0#d7311f1ba1e3610ec1eea8cd16874b2395c676f7"
+source = "git+https://github.com/open-chat-labs/event-store?rev=6d818189fee50159408de2c2c14923a0aef78ffb#6d818189fee50159408de2c2c14923a0aef78ffb"
 dependencies = [
  "event_store_canister",
  "ic_principal",
@@ -2485,11 +2485,11 @@ dependencies = [
 [[package]]
 name = "event_store_producer_cdk_runtime"
 version = "0.6.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=v0.6.0#d7311f1ba1e3610ec1eea8cd16874b2395c676f7"
+source = "git+https://github.com/open-chat-labs/event-store?rev=6d818189fee50159408de2c2c14923a0aef78ffb#6d818189fee50159408de2c2c14923a0aef78ffb"
 dependencies = [
  "event_store_canister",
  "event_store_producer",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic_principal",
  "rand 0.8.5",
@@ -2500,7 +2500,7 @@ dependencies = [
 [[package]]
 name = "event_store_utils"
 version = "0.6.0"
-source = "git+https://github.com/open-chat-labs/event-store?rev=v0.6.0#d7311f1ba1e3610ec1eea8cd16874b2395c676f7"
+source = "git+https://github.com/open-chat-labs/event-store?rev=6d818189fee50159408de2c2c14923a0aef78ffb#6d818189fee50159408de2c2c14923a0aef78ffb"
 dependencies = [
  "serde",
 ]
@@ -2551,7 +2551,7 @@ dependencies = [
  "canister_time",
  "constants",
  "futures",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "serde",
  "serde_bytes",
@@ -2831,7 +2831,7 @@ dependencies = [
  "candid",
  "canister_client",
  "group_canister",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "msgpack",
  "tracing",
  "types",
@@ -2874,7 +2874,7 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
@@ -2965,7 +2965,7 @@ version = "0.1.0"
 dependencies = [
  "canister_client",
  "group_index_canister",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "msgpack",
  "tracing",
  "types",
@@ -3004,7 +3004,7 @@ dependencies = [
  "hex",
  "http_request",
  "human_readable",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "local_group_index_canister",
@@ -3537,16 +3537,18 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2abdf9341da9f9f6b451a40609cb69645a05a8e9eb7784c16209f16f2c0f76f"
+version = "0.18.0-alpha.1"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=b2596b5d45b87c204ed21b4b115f3a5b7dd2135a#b2596b5d45b87c204ed21b4b115f3a5b7dd2135a"
 dependencies = [
  "candid",
- "ic-cdk-macros 0.17.0",
- "ic0 0.23.0",
+ "ic-cdk-macros 0.18.0-alpha.1",
+ "ic-management-canister-types",
+ "ic-response-codes",
+ "ic0 0.24.0-alpha.1",
  "serde",
  "serde_bytes",
  "slotmap",
+ "thiserror 2.0.11",
 ]
 
 [[package]]
@@ -3593,8 +3595,8 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk-macros"
-version = "0.17.0"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=19f04d7d996d77b1c2f938e4c7e1efd8e3f12910#19f04d7d996d77b1c2f938e4c7e1efd8e3f12910"
+version = "0.18.0-alpha.1"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=b2596b5d45b87c204ed21b4b115f3a5b7dd2135a#b2596b5d45b87c204ed21b4b115f3a5b7dd2135a"
 dependencies = [
  "candid",
  "proc-macro2",
@@ -3606,13 +3608,13 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk-timers"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb8fd812a9e26f6aa00594546f8fbf4d4853f39c3ba794c8ff11ecf86fd3c9e4"
+version = "0.12.0-alpha.1"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=b2596b5d45b87c204ed21b4b115f3a5b7dd2135a#b2596b5d45b87c204ed21b4b115f3a5b7dd2135a"
 dependencies = [
+ "candid",
  "futures",
- "ic-cdk 0.17.0",
- "ic0 0.23.0",
+ "ic-cdk 0.18.0-alpha.1",
+ "ic0 0.24.0-alpha.1",
  "serde",
  "serde_bytes",
  "slotmap",
@@ -3663,17 +3665,26 @@ dependencies = [
 
 [[package]]
 name = "ic-ledger-types"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a7103dea96107c8b1e49d6e80ab452ab48e9f3594d618dbb46449381f4f0a01"
+version = "0.15.0-alpha.1"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=b2596b5d45b87c204ed21b4b115f3a5b7dd2135a#b2596b5d45b87c204ed21b4b115f3a5b7dd2135a"
 dependencies = [
  "candid",
  "crc32fast",
  "hex",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "serde",
  "serde_bytes",
  "sha2 0.10.8",
+]
+
+[[package]]
+name = "ic-management-canister-types"
+version = "0.2.1"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=b2596b5d45b87c204ed21b4b115f3a5b7dd2135a#b2596b5d45b87c204ed21b4b115f3a5b7dd2135a"
+dependencies = [
+ "candid",
+ "serde",
+ "serde_bytes",
 ]
 
 [[package]]
@@ -3685,6 +3696,11 @@ dependencies = [
  "leb128",
  "sha2 0.10.8",
 ]
+
+[[package]]
+name = "ic-response-codes"
+version = "0.1.1"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=b2596b5d45b87c204ed21b4b115f3a5b7dd2135a#b2596b5d45b87c204ed21b4b115f3a5b7dd2135a"
 
 [[package]]
 name = "ic-signature-verification"
@@ -3814,6 +3830,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8de254dd67bbd58073e23dc1c8553ba12fa1dc610a19de94ad2bbcd0460c067f"
 
 [[package]]
+name = "ic0"
+version = "0.24.0-alpha.1"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=b2596b5d45b87c204ed21b4b115f3a5b7dd2135a#b2596b5d45b87c204ed21b4b115f3a5b7dd2135a"
+
+[[package]]
 name = "ic_bls12_381"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3856,7 +3877,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "icdex_canister",
  "types",
 ]
@@ -3867,7 +3888,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "hex",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "icdex_canister",
  "icdex_canister_c2c_client",
  "types",
@@ -3889,7 +3910,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "icp_ledger_canister",
  "types",
 ]
@@ -3909,7 +3930,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "icpswap_swap_pool_canister",
  "types",
 ]
@@ -3949,7 +3970,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "icrc_ledger_canister",
  "types",
 ]
@@ -3976,7 +3997,7 @@ name = "identity_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "identity_canister",
  "msgpack",
  "tracing",
@@ -3996,7 +4017,7 @@ dependencies = [
  "http_request",
  "ic-canister-sig-creation",
  "ic-captcha",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-certificate-verification",
  "ic-certification 2.6.0",
@@ -4509,7 +4530,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "kongswap_canister",
  "types",
 ]
@@ -4534,7 +4555,7 @@ name = "ledger_utils"
 version = "0.1.0"
 dependencies = [
  "candid",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-ledger-types",
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
@@ -4560,7 +4581,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "legacy_bot_api",
  "msgpack",
  "tracing",
@@ -4602,7 +4623,7 @@ name = "local_group_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "local_group_index_canister",
  "msgpack",
  "tracing",
@@ -4629,7 +4650,7 @@ dependencies = [
  "group_canister",
  "group_canister_c2c_client",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "local_group_index_canister",
@@ -4652,6 +4673,7 @@ dependencies = [
  "candid",
  "candid_gen",
  "community_canister",
+ "constants",
  "event_store_canister",
  "group_canister",
  "ic-ledger-types",
@@ -4670,7 +4692,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "local_user_index_canister",
  "msgpack",
  "tracing",
@@ -4699,7 +4721,7 @@ dependencies = [
  "group_canister",
  "group_canister_c2c_client",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "itertools 0.13.0",
@@ -4797,7 +4819,7 @@ dependencies = [
  "futures",
  "hex",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icdex_canister",
@@ -4915,7 +4937,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "modclub_canister",
  "types",
 ]
@@ -4999,7 +5021,7 @@ dependencies = [
  "hex",
  "http_request",
  "human_readable",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
@@ -5040,7 +5062,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "nns_governance_canister",
  "types",
 ]
@@ -5124,7 +5146,7 @@ name = "notifications_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "msgpack",
  "notifications_canister",
  "tracing",
@@ -5153,7 +5175,7 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "msgpack",
@@ -5187,7 +5209,7 @@ name = "notifications_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "msgpack",
  "notifications_index_canister",
  "tracing",
@@ -5220,7 +5242,7 @@ dependencies = [
  "futures",
  "http_request",
  "human_readable",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "msgpack",
@@ -5393,7 +5415,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "online_users_canister",
  "tracing",
  "types",
@@ -5423,7 +5445,7 @@ dependencies = [
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "msgpack",
@@ -5484,7 +5506,7 @@ dependencies = [
  "hex",
  "http_request",
  "human_readable",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "msgpack",
@@ -5965,7 +5987,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_api_macros",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "proposal_validation_canister",
  "serde_json",
 ]
@@ -6007,7 +6029,7 @@ dependencies = [
  "hex",
  "http_request",
  "human_readable",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -6477,7 +6499,7 @@ name = "registry_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "msgpack",
  "registry_canister",
  "tracing",
@@ -6521,7 +6543,7 @@ dependencies = [
  "hex",
  "http_request",
  "human_readable",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
@@ -7298,7 +7320,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "sns_archive_canister",
  "types",
 ]
@@ -7320,7 +7342,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "sns_governance_canister",
  "types",
 ]
@@ -7341,7 +7363,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "sns_ledger_canister",
  "types",
 ]
@@ -7362,7 +7384,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "sns_root_canister",
  "types",
 ]
@@ -7383,7 +7405,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "sns_swap_canister",
  "types",
 ]
@@ -7404,7 +7426,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "sns_wasm_canister",
  "types",
 ]
@@ -7434,7 +7456,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "sonic_canister",
  "types",
 ]
@@ -7475,7 +7497,7 @@ dependencies = [
 name = "stable_memory"
 version = "0.1.0"
 dependencies = [
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-stable-structures",
 ]
 
@@ -7483,7 +7505,7 @@ dependencies = [
 name = "stable_memory_map"
 version = "0.1.0"
 dependencies = [
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-stable-structures",
  "ic_principal",
  "msgpack",
@@ -7537,7 +7559,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "storage_bucket_canister",
  "tracing",
  "types",
@@ -7554,7 +7576,7 @@ dependencies = [
  "canister_tracing_macros",
  "constants",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "json",
@@ -7608,7 +7630,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "storage_index_canister",
  "tracing",
  "types",
@@ -7639,7 +7661,7 @@ dependencies = [
  "futures",
  "http_request",
  "human_readable",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "json",
@@ -8014,7 +8036,7 @@ name = "timer_job_queues"
 version = "0.1.0"
 dependencies = [
  "futures",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "serde",
 ]
@@ -8293,7 +8315,7 @@ dependencies = [
  "constants",
  "fire_and_forget_handler",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -8488,6 +8510,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "chat_events",
+ "constants",
  "ic-ledger-types",
  "icrc-ledger-types",
  "proposals_bot_canister",
@@ -8503,7 +8526,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "msgpack",
  "tracing",
  "types",
@@ -8551,7 +8574,7 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-certificate-verification",
  "ic-ledger-types",
@@ -8614,6 +8637,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "constants",
  "human_readable",
  "ic-ledger-types",
  "modclub_canister",
@@ -8630,7 +8654,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "msgpack",
  "tracing",
  "types",
@@ -8674,7 +8698,7 @@ dependencies = [
  "hex",
  "http_request",
  "human_readable",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "ic-certificate-verification",
  "ic-ledger-types",
@@ -8737,7 +8761,7 @@ dependencies = [
  "cycles_dispenser_client",
  "dataurl",
  "getrandom 0.2.15",
- "ic-cdk 0.17.0",
+ "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
  "itertools 0.13.0",
  "msgpack",

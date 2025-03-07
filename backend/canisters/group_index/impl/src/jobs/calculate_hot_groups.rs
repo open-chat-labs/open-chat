@@ -12,7 +12,7 @@ pub fn start_job() {
 
 fn run() {
     let groups = mutate_state(calculate_hot_group_ids);
-    ic_cdk::spawn(hydrate_and_set_hot_groups(groups));
+    ic_cdk::futures::spawn(hydrate_and_set_hot_groups(groups));
 }
 
 fn calculate_hot_group_ids(state: &mut RuntimeState) -> Vec<ChatId> {

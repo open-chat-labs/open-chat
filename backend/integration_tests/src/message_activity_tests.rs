@@ -1,8 +1,9 @@
+#![allow(deprecated)]
 use crate::env::ENV;
-use crate::utils::{now_millis, now_nanos, tick_many};
+use crate::utils::{chat_token_info, icp_token_info, now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use constants::DAY_IN_MS;
+use constants::{DAY_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
 use event_store_canister::TimestampMillis;
 use pocket_ic::PocketIc;
 use std::collections::HashMap;
@@ -164,8 +165,9 @@ fn tip_message_and_check_activity_feed(chat_type: ChatType) {
         chat,
         message_id,
         canister_ids.icp_ledger,
-        Cryptocurrency::InternetComputer,
+        ICP_SYMBOL.to_string(),
         10_000_000,
+        ICP_TRANSFER_FEE,
     );
 
     tick_many(env, 3);
@@ -194,6 +196,7 @@ fn send_crypto_message_and_check_activity_feed(chat_type: ChatType) {
     let transaction = PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
         ledger: canister_ids.icp_ledger,
         fee: 10_000,
+        token_symbol: ICP_SYMBOL.to_string(),
         token: Cryptocurrency::InternetComputer,
         amount,
         to: us.user_id.into(),
@@ -355,9 +358,9 @@ fn accept_p2p_swap_and_check_activity_feed(chat_type: ChatType) {
 
     let message_id = random_from_u128();
     let content = MessageContentInitial::P2PSwap(P2PSwapContentInitial {
-        token0: Cryptocurrency::InternetComputer.try_into().unwrap(),
+        token0: icp_token_info(),
         token0_amount: 1_000_000_000,
-        token1: Cryptocurrency::CHAT.try_into().unwrap(),
+        token1: chat_token_info(),
         token1_amount: 10_000_000_000,
         expires_in: DAY_IN_MS,
         caption: None,
@@ -471,8 +474,9 @@ fn multiple_events_on_one_message_and_check_activity_feed(chat_type: ChatType) {
         chat,
         message_id,
         canister_ids.icp_ledger,
-        Cryptocurrency::InternetComputer,
+        ICP_SYMBOL.to_string(),
         10_000_000,
+        ICP_TRANSFER_FEE,
     );
 
     tick_many(env, 3);

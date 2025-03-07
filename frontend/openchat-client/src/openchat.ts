@@ -4768,6 +4768,11 @@ export class OpenChat extends EventTarget {
             kind: "registerBot",
             principal,
             bot,
+        }).then((success) => {
+            if (success) {
+                this.#loadBots();
+            }
+            return success;
         }).catch((err) => {
             this.#logger.error("Failed to register bot: ", err);
             return false;
@@ -4800,6 +4805,11 @@ export class OpenChat extends EventTarget {
             avatarUrl,
             endpoint,
             definition,
+        }).then((success) => {
+            if (success) {
+                this.#loadBots();
+            }
+            return success;
         }).catch((err) => {
             this.#logger.error("Failed to update registered bot: ", err);
             return false;

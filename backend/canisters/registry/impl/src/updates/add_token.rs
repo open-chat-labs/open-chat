@@ -4,12 +4,12 @@ use crate::{mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use constants::{MEMO_LIST_TOKEN, SNS_GOVERNANCE_CANISTER_ID};
+use constants::{CHAT_LEDGER_CANISTER_ID, MEMO_LIST_TOKEN, SNS_GOVERNANCE_CANISTER_ID};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use registry_canister::add_token::{Response::*, *};
 use registry_canister::{NervousSystemDetails, Payment};
 use tracing::{error, info};
-use types::{CanisterId, Cryptocurrency, UserId};
+use types::{CanisterId, UserId};
 
 const TOKEN_LISTING_FEE_E8S: u128 = 50_000_000_000; // 500 CHAT
 
@@ -116,7 +116,7 @@ pub(crate) async fn add_token_impl(
             created_at_time: Some(now_nanos),
         };
 
-        match icrc2_transfer_from(Cryptocurrency::CHAT.ledger_canister_id().unwrap(), &transfer_args).await {
+        match icrc2_transfer_from(CHAT_LEDGER_CANISTER_ID, &transfer_args).await {
             Ok(block_index) => {
                 payment = Some(Payment {
                     amount,

@@ -95,10 +95,8 @@ import {
     acceptP2PSwapResponse,
     addRemoveReactionResponse,
     apiAccessGateConfig,
-    apiBotChatPermission,
-    apiCommunityPermission,
+    apiExternalBotPermissions,
     apiMessageContent,
-    apiMessagePermission,
     apiUser as apiUserV2,
     apiVideoCallPresence,
     cancelP2PSwapResponse,
@@ -1299,11 +1297,7 @@ export class GroupClient extends MsgpackCanisterAgent {
             "update_bot",
             {
                 bot_id: principalStringToBytes(botId),
-                granted_permissions: {
-                    chat: grantedPermissions.chatPermissions.map(apiBotChatPermission),
-                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
-                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
-                },
+                granted_permissions: apiExternalBotPermissions(grantedPermissions),
             },
             updateBotResponse,
             GroupUpdateBotArgs,
@@ -1319,11 +1313,7 @@ export class GroupClient extends MsgpackCanisterAgent {
             "generate_bot_api_key",
             {
                 bot_id: principalStringToBytes(botId),
-                requested_permissions: {
-                    chat: permissions.chatPermissions.map(apiBotChatPermission),
-                    community: permissions.communityPermissions.map(apiCommunityPermission),
-                    message: permissions.messagePermissions.map(apiMessagePermission),
-                },
+                requested_permissions: apiExternalBotPermissions(permissions),
             },
             generateApiKeyResponse,
             GroupGenerateBotApiKeyArgs,

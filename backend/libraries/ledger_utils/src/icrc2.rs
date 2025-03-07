@@ -1,4 +1,4 @@
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use tracing::error;
 use types::{
@@ -9,7 +9,7 @@ use types::{
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
     sender: CanisterId,
-) -> CallResult<Result<CompletedCryptoTransaction, FailedCryptoTransaction>> {
+) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, (RejectCode, String)> {
     let args = TransferFromArgs {
         spender_subaccount: None,
         from: transaction.from.into(),
@@ -24,7 +24,7 @@ pub async fn process_transaction(
     Ok(match response {
         Ok(block_index) => Ok(CompletedCryptoTransaction {
             ledger: transaction.ledger,
-            token: transaction.token.clone(),
+            token: transaction.token_symbol.into(),
             amount: transaction.amount,
             fee: transaction.fee,
             spender: sender.into(),
@@ -44,7 +44,7 @@ pub async fn process_transaction(
             let error_message = format!("Transfer failed. {transfer_error:?}");
             Err(FailedCryptoTransaction {
                 ledger: transaction.ledger,
-                token: transaction.token,
+                token: transaction.token_symbol.into(),
                 amount: transaction.amount,
                 fee: transaction.fee,
                 spender: sender.into(),

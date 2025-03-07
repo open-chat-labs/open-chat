@@ -15,7 +15,7 @@ pub fn start_job() {
 fn run() {
     trace!("'calculate_freezing_limit' job started");
     let this_canister_id = read_state(|state| state.env.canister_id());
-    ic_cdk::spawn(run_async(this_canister_id))
+    ic_cdk::futures::spawn(run_async(this_canister_id))
 }
 
 async fn run_async(this_canister_id: CanisterId) {

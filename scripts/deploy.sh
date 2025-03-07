@@ -28,10 +28,13 @@ then
     ./scripts/download-all-canister-wasms.sh $WASM_SRC || exit 1
 fi
 
-./scripts/download-canister-wasm-dfx.sh event_store || exit 1
-./scripts/download-canister-wasm-dfx.sh sign_in_with_email || exit 1
-./scripts/download-canister-wasm-dfx.sh sign_in_with_ethereum || exit 1
-./scripts/download-canister-wasm-dfx.sh sign_in_with_solana || exit 1
+if [ ! -e ./wasms/event_store.wasm.gz ]
+then
+  ./scripts/download-canister-wasm-dfx.sh event_store || exit 1
+  ./scripts/download-canister-wasm-dfx.sh sign_in_with_email || exit 1
+  ./scripts/download-canister-wasm-dfx.sh sign_in_with_ethereum || exit 1
+  ./scripts/download-canister-wasm-dfx.sh sign_in_with_solana || exit 1
+fi
 
 OPENCHAT_INSTALLER_CANISTER_ID=$(dfx canister --network $NETWORK id openchat_installer)
 USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)

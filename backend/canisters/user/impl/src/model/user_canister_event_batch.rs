@@ -12,10 +12,10 @@ impl TimerJobItem for UserCanisterEventBatch {
             run_regular_jobs();
         }
 
-        let response = user_canister_c2c_client::c2c_notify_user_canister_events(
+        let response = user_canister_c2c_client::c2c_user_canister(
             self.key.into(),
-            &user_canister::c2c_notify_user_canister_events::Args {
-                events: self.items.iter().map(|e| e.value.clone()).collect(),
+            &user_canister::c2c_user_canister::Args {
+                events: self.items.clone(),
             },
         )
         .await;

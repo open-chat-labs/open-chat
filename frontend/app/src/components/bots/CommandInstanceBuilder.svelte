@@ -57,7 +57,7 @@
     function focusFirstInput() {
         if (form === undefined) return;
 
-        const formElements = form.querySelectorAll("input, select, textarea, button");
+        const formElements = form.querySelectorAll("input, select, textarea, button, .textbox");
         for (const el of formElements) {
             if (el instanceof HTMLElement && isFocusable(el)) {
                 el.focus();
@@ -93,7 +93,7 @@
 </script>
 
 <Overlay dismissible on:close={onCancel}>
-    <ModalContent closeIcon on:close={onCancel}>
+    <ModalContent closeIcon on:close={onCancel} overflowVisible={true}>
         <div slot="header">{commandName}</div>
         <form bind:this={form} slot="body" onsubmit={onSubmit}>
             {#if command.description}

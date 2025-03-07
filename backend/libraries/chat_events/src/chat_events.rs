@@ -17,18 +17,17 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
-use tracing::{error, info};
+use tracing::error;
 use types::{
     AcceptP2PSwapResult, BlobReference, BotMessageContext, CallParticipant, CancelP2PSwapResult, CanisterId, Chat,
-    ChatEventType, ChatType, CompleteP2PSwapResult, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated,
-    EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
-    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
-    MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
-    MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload,
-    P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction,
-    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis,
-    TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence,
-    VoteOperation,
+    ChatEventType, ChatType, CompleteP2PSwapResult, CompletedCryptoTransaction, DirectChatCreated, EventContext, EventIndex,
+    EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated,
+    GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload,
+    MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat,
+    P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
+    PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult,
+    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
+    VideoCallParticipants, VideoCallPresence, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -45,23 +44,9 @@ pub struct ChatEvents {
     video_call_in_progress: Timestamped<Option<VideoCall>>,
     anonymized_id: String,
     search_index: SearchIndex,
-    #[serde(default)]
-    message_ids_deduped: bool,
 }
 
 impl ChatEvents {
-    pub fn fix_duplicate_message_ids(&mut self, my_user_id: UserId, their_user_id: UserId) -> Option<bool> {
-        if self.message_ids_deduped {
-            return Some(true);
-        }
-        if !self.main.fix_duplicate_message_ids(my_user_id, their_user_id)? {
-            return Some(false);
-        }
-        info!(chat = ?self.chat, "Finished deduping messageIds");
-        self.message_ids_deduped = true;
-        Some(true)
-    }
-
     pub fn prune_updated_events(&mut self, now: TimestampMillis) -> u32 {
         self.last_updated_timestamps.prune(now)
     }
@@ -90,7 +75,6 @@ impl ChatEvents {
             video_call_in_progress: Timestamped::default(),
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
-            message_ids_deduped: true,
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -121,7 +105,6 @@ impl ChatEvents {
             video_call_in_progress: Timestamped::default(),
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
-            message_ids_deduped: true,
         };
 
         events.push_event(
@@ -940,7 +923,7 @@ impl ChatEvents {
                         chat_type: ChatType::from(&chat).to_string(),
                         chat_id: anonymized_id.clone(),
                         thread: args.thread_root_message_index.is_some(),
-                        token: args.token.token_symbol().to_string(),
+                        token: args.token_symbol.clone(),
                         amount: args.amount,
                     })
                     .build(),
@@ -992,14 +975,13 @@ impl ChatEvents {
 
         // Pop the last prize and reserve it
         let amount = content.prizes_remaining.pop().expect("some prizes_remaining");
-        let token = content.transaction.token();
         let ledger_canister_id = content.transaction.ledger_canister_id();
         let fee = content.transaction.fee();
 
         content.reservations.insert(user_id);
 
         Ok(ReservePrizeResult::Success(ReservePriceSuccess {
-            token,
+            token_symbol: content.transaction.token().token_symbol().to_string(),
             ledger_canister_id,
             amount,
             fee,
@@ -1033,7 +1015,7 @@ impl ChatEvents {
                         content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
                             winner,
                             ledger: transaction.ledger_canister_id(),
-                            token_symbol: transaction.token().token_symbol().to_string(),
+                            token_symbol: transaction.token_symbol().to_string(),
                             amount,
                             fee: transaction.fee(),
                             block_index: transaction.index(),
@@ -1302,9 +1284,9 @@ impl ChatEvents {
 
         if let Some(status) = content.complete(user_id, token0_txn_out, token1_txn_out) {
             let payload = P2PSwapCompletedEventPayload {
-                token0: content.token0.token.token_symbol().to_string(),
+                token0: content.token0.symbol.clone(),
                 token0_amount: content.token0_amount,
-                token1: content.token1.token.token_symbol().to_string(),
+                token1: content.token1.symbol.clone(),
                 token1_amount: content.token1_amount,
                 chat_type: ChatType::from(&chat).to_string(),
                 chat_id: anonymized_id.clone(),
@@ -2391,7 +2373,7 @@ pub struct TipMessageArgs {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub ledger: CanisterId,
-    pub token: Cryptocurrency,
+    pub token_symbol: String,
     pub amount: u128,
     pub now: TimestampMillis,
 }
@@ -2413,7 +2395,7 @@ pub enum ReservePrizeResult {
 }
 
 pub struct ReservePriceSuccess {
-    pub token: Cryptocurrency,
+    pub token_symbol: String,
     pub ledger_canister_id: CanisterId,
     pub amount: u128,
     pub fee: u128,

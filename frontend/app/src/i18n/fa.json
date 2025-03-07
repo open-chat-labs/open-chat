@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "پیام نگهدارنده فرمان",
             "commandPlaceholderPlaceholder": "پیام نگهدارنده فرمان مشخص نشده است",
             "commandsLabel": "دستورات",
+            "dateTimeFutureOnly": "تاریخ های آینده",
+            "dateTimeFutureOnlyDesc": "فقط به انتخاب تاریخ های آینده اجازه می دهد",
             "descLabel": "توضیحات ربات",
             "descPlaceholder": "توضیحات ربات را وارد کنید",
             "editPrincipalPlaceholder": "در صورت عدم تغییر آن را خالی بگذارید",

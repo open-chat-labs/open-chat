@@ -7,8 +7,8 @@ use crate::{
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE};
 use translations_canister::approve::{Response::*, *};
-use types::Cryptocurrency;
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
 #[update(candid = true, msgpack = true)]
@@ -29,7 +29,8 @@ async fn approve(args: Args) -> Response {
                 state.data.pending_payments_queue.push(PendingPayment {
                     recipient_account: result.proposed_by.into(),
                     timestamp: now,
-                    currency: Cryptocurrency::CHAT,
+                    ledger: CHAT_LEDGER_CANISTER_ID,
+                    fee: CHAT_TRANSFER_FEE,
                     amount: 100_000_000, // 1 CHAT
                     reason: PendingPaymentReason::Approval,
                 });

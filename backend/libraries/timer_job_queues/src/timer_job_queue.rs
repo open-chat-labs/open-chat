@@ -141,7 +141,7 @@ where
 
         if !items.is_empty() {
             let clone = self.clone();
-            ic_cdk::spawn(clone.process_batch(items));
+            ic_cdk::futures::spawn(clone.process_batch(items));
         }
     }
 

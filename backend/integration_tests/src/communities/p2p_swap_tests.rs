@@ -1,14 +1,14 @@
 use crate::env::ENV;
 use crate::p2p_swap_tests::verify_swap_status;
-use crate::utils::tick_many;
+use crate::utils::{chat_token_info, icp_token_info, tick_many};
 use crate::{client, TestEnv};
 use candid::Principal;
-use constants::{DAY_IN_MS, MINUTE_IN_MS};
+use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, MINUTE_IN_MS};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
-use types::{Cryptocurrency, MessageContentInitial, P2PSwapContentInitial, P2PSwapStatus};
+use types::{MessageContentInitial, P2PSwapContentInitial, P2PSwapStatus};
 
 #[test]
 fn p2p_swap_in_channel_succeeds() {
@@ -59,9 +59,9 @@ fn p2p_swap_in_channel_succeeds() {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
-                token0: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token0: icp_token_info(),
                 token0_amount: 1_000_000_000,
-                token1: Cryptocurrency::CHAT.try_into().unwrap(),
+                token1: chat_token_info(),
                 token1_amount: 10_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
@@ -169,9 +169,9 @@ fn cancel_p2p_swap_in_channel_succeeds(delete_message: bool) {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
-                token0: Cryptocurrency::CHAT.try_into().unwrap(),
+                token0: chat_token_info(),
                 token0_amount: 10_000_000_000,
-                token1: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token1: icp_token_info(),
                 token1_amount: 1_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
@@ -235,7 +235,7 @@ fn cancel_p2p_swap_in_channel_succeeds(delete_message: bool) {
 
     assert_eq!(
         client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
-        original_chat_balance - (2 * Cryptocurrency::CHAT.fee().unwrap())
+        original_chat_balance - (2 * CHAT_TRANSFER_FEE)
     );
 
     if !delete_message {

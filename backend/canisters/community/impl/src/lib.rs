@@ -10,7 +10,7 @@ use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, ChatMetricsInternal};
 use community_canister::add_members_to_channel::UserFailedError;
 use community_canister::EventsResponse;
-use constants::{ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
+use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -33,15 +33,15 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator,
     BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics,
-    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
-    EventIndex, EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
+    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cycles, Document, Empty, EventIndex,
+    EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
     TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
@@ -115,7 +115,7 @@ impl RuntimeState {
                 authorizer: Some(self.data.local_group_index_canister_id),
                 notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
             };
-            ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
+            ic_cdk::futures::spawn(push_notification_inner(self.data.notifications_canister_id, args));
         }
 
         async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
@@ -145,7 +145,7 @@ impl RuntimeState {
         let treasury_share = payment.amount.saturating_sub(owner_share * owner_count);
         let amount = treasury_share.saturating_sub(payment.fee);
         if amount > 0 {
-            let is_chat = payment.ledger_canister_id == SNS_LEDGER_CANISTER_ID;
+            let is_chat = payment.ledger_canister_id == CHAT_LEDGER_CANISTER_ID;
             let is_icp = payment.ledger_canister_id == ICP_LEDGER_CANISTER_ID;
             self.data.pending_payments_queue.push(PendingPayment {
                 amount,
@@ -271,10 +271,10 @@ impl RuntimeState {
         }
         for pending_transaction in final_prize_payments {
             self.data.timer_jobs.enqueue_job(
-                TimerJob::MakeTransfer(MakeTransferJob {
+                TimerJob::MakeTransfer(Box::new(MakeTransferJob {
                     pending_transaction,
                     attempt: 0,
-                }),
+                })),
                 now,
                 now,
             );
@@ -337,7 +337,7 @@ impl RuntimeState {
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow: self.data.escrow_canister_id,
-                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
+                icp_ledger: ICP_LEDGER_CANISTER_ID,
                 internet_identity: self.data.internet_identity_canister_id,
             },
         }
@@ -933,23 +933,20 @@ impl Data {
 
         let community_permissions = community_member.role().permissions(&self.permissions);
 
-        let mut bot_permissions = BotPermissions {
-            community: community_permissions,
-            chat: HashSet::new(),
-            message: HashSet::new(),
-        };
+        let mut bot_permissions = BotPermissions::default().with_community(&community_permissions);
 
         if let Some(channel_id) = channel_id {
             let channel = self.channels.get(&channel_id)?;
             let channel_member = channel.chat.members.get_verified_member(*user_id).ok()?;
 
-            let channel_permissions = channel_member.role().permissions(&channel.chat.permissions);
+            let channel_permissions = channel_member.role().chat_permissions(&channel.chat.permissions);
             let message_permissions = channel_member
                 .role()
                 .message_permissions(&channel.chat.permissions.message_permissions);
 
-            bot_permissions.chat = channel_permissions;
-            bot_permissions.message = message_permissions;
+            bot_permissions = bot_permissions
+                .with_chat(&channel_permissions)
+                .with_message(&message_permissions);
         }
 
         Some(bot_permissions)

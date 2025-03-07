@@ -1,7 +1,7 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::{mutate_state, RuntimeState};
 use crate::{read_state, LocalUserIndexEvent};
-use constants::SNS_ROOT_CANISTER_ID;
+use constants::{CHAT_LEDGER_CANISTER_ID, SNS_ROOT_CANISTER_ID};
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::{BlockIndex, Tokens};
 use icrc_ledger_types::icrc1::transfer::TransferArg;
@@ -10,7 +10,7 @@ use local_user_index_canister::OpenChatBotMessage;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{Cryptocurrency, MessageContent, TextContent};
+use types::{MessageContent, TextContent};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -31,7 +31,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some(pending_payment) = mutate_state(|state| state.data.pending_payments_queue.pop()) {
-        ic_cdk::spawn(process_payment(pending_payment));
+        ic_cdk::futures::spawn(process_payment(pending_payment));
     }
     read_state(start_job_if_required);
 }
@@ -41,13 +41,13 @@ async fn process_payment(pending_payment: PendingPayment) {
     let args = TransferArg {
         from_subaccount: None,
         to: pending_payment.recipient_account,
-        fee: None,
+        fee: Some(pending_payment.fee.into()),
         created_at_time: Some(pending_payment.timestamp),
         memo: Some(pending_payment.memo.to_vec().into()),
         amount: pending_payment.amount.into(),
     };
 
-    let result = make_transfer(pending_payment.currency.ledger_canister_id().unwrap(), &args, true).await;
+    let result = make_transfer(pending_payment.ledger, &args, true).await;
 
     mutate_state(|state| {
         match result {
@@ -69,10 +69,10 @@ fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, st
     let user_id = pending_payment.recipient_account.owner.into();
     let amount = Tokens::from_e8s(pending_payment.amount);
     let amount_formatted = amount.to_string().trim_end_matches('0').to_string();
-    let symbol = pending_payment.currency.token_symbol();
+    let symbol = pending_payment.token_symbol.clone();
     let mut amount_text = format!("{amount_formatted} {symbol}");
 
-    if matches!(pending_payment.currency, Cryptocurrency::CHAT) {
+    if pending_payment.ledger == CHAT_LEDGER_CANISTER_ID {
         let link = format!(
             "https://dashboard.internetcomputer.org/sns/{}/transaction/{}",
             SNS_ROOT_CANISTER_ID, block_index

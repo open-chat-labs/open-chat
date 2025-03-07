@@ -112,7 +112,7 @@ fn e2e_command_bot_test() {
     ));
 
     // Update the group bot permissions
-    granted_permissions.message.insert(MessagePermission::Text);
+    granted_permissions = granted_permissions.with_message(&HashSet::from_iter([MessagePermission::Text]));
     client::group::happy_path::update_bot(env, owner.principal, group_id, bot.id, granted_permissions.clone());
 
     // Confirm bot returned in `selected_update`
@@ -489,11 +489,8 @@ fn create_channel_by_api_key() {
         community_id.into(),
         &community_canister::generate_bot_api_key::Args {
             bot_id,
-            requested_permissions: BotPermissions {
-                community: HashSet::from_iter(vec![CommunityPermission::CreatePublicChannel]),
-                chat: HashSet::new(),
-                message: HashSet::new(),
-            },
+            requested_permissions: BotPermissions::default()
+                .with_community(&HashSet::from_iter(vec![CommunityPermission::CreatePublicChannel])),
             channel_id: None,
         },
     ) {
@@ -608,15 +605,11 @@ fn read_messages_by_api_key(channel_api_key: bool, authorized: bool) {
         community_id.into(),
         &community_canister::generate_bot_api_key::Args {
             bot_id,
-            requested_permissions: BotPermissions {
-                community: HashSet::new(),
-                chat: HashSet::from_iter([if authorized {
-                    ChatPermission::ReadMessages
-                } else {
-                    ChatPermission::ReadMembership
-                }]),
-                message: HashSet::new(),
-            },
+            requested_permissions: BotPermissions::default().with_chat(&HashSet::from_iter([if authorized {
+                ChatPermission::ReadMessages
+            } else {
+                ChatPermission::ReadMembership
+            }])),
             channel_id: channel_api_key.then_some(channel_id),
         },
     ) {
@@ -651,6 +644,113 @@ fn read_messages_by_api_key(channel_api_key: bool, authorized: bool) {
         assert!(result.events.is_empty());
         assert_eq!(result.unauthorized, vec![send_message_response.event_index]);
     }
+}
+
+#[test]
+fn read_messages_by_command() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+
+    // Register a bot
+    let bot_name = random_string();
+    let command_name = random_string();
+    let endpoint = "https://my.bot.xyz/".to_string();
+    let description = "greet".to_string();
+
+    let commands = vec![BotCommandDefinition {
+        name: command_name.clone(),
+        description: Some("Hello {user}".to_string()),
+        placeholder: None,
+        params: vec![],
+        permissions: BotPermissions::from_chat_permission(ChatPermission::ReadMessages),
+        default_role: None,
+    }];
+
+    let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        bot_name.clone(),
+        endpoint.clone(),
+        BotDefinition {
+            description: description.clone(),
+            commands: commands.clone(),
+            autonomous_config: Some(AutonomousConfig {
+                sync_api_key: false,
+                permissions: BotPermissions::default(),
+            }),
+        },
+    );
+
+    let chat = Chat::Channel(community_id, channel_id);
+    let local_user_index = canister_ids.local_user_index(env, chat.canister_id());
+
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Community(community_id),
+        bot_id,
+        BotPermissions::from_chat_permission(ChatPermission::ReadMessages),
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    let message_id = random_from_u128();
+    let access_token_args = access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
+        bot_id,
+        command: BotCommandInitial {
+            name: command_name.clone(),
+            args: Vec::new(),
+            meta: None,
+        },
+        scope: BotActionScope::Chat(BotActionChatDetails {
+            chat,
+            thread: None,
+            message_id,
+        }),
+    });
+
+    let access_token =
+        match client::local_user_index::access_token_v2(env, owner.principal, local_user_index, &access_token_args) {
+            local_user_index_canister::access_token_v2::Response::Success(access_token) => access_token,
+            response => panic!("'access_token' error: {response:?}"),
+        };
+
+    let send_message_response =
+        client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
+
+    let response = client::local_user_index::bot_chat_events(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_chat_events::Args {
+            channel_id: Some(channel_id),
+            events: EventsSelectionCriteria::ByIndex(EventsByIndexArgs {
+                events: vec![send_message_response.event_index],
+            }),
+            auth_token: AuthToken::Jwt(access_token.clone()),
+        },
+    );
+
+    let local_user_index_canister::bot_chat_events::Response::Success(result) = &response else {
+        panic!("'bot_chat_events' error: {response:?}");
+    };
+
+    assert_eq!(result.events.len(), 1);
+    assert!(result.unauthorized.is_empty());
 }
 
 #[test_case(ChatType::Direct)]

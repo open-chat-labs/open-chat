@@ -7,16 +7,16 @@ grouped_timer_job_batch!(UserIndexEventBatch, CanisterId, IdempotentEnvelope<Use
 
 impl TimerJobItem for UserIndexEventBatch {
     async fn process(&self) -> Result<(), bool> {
-        let response = user_index_canister_c2c_client::c2c_notify_events(
+        let response = user_index_canister_c2c_client::c2c_local_user_index(
             self.key,
-            &user_index_canister::c2c_notify_events::Args {
-                events: self.items.iter().map(|e| e.value.clone()).collect(),
+            &user_index_canister::c2c_local_user_index::Args {
+                events: self.items.clone(),
             },
         )
         .await;
 
         match response {
-            Ok(user_index_canister::c2c_notify_events::Response::Success) => Ok(()),
+            Ok(user_index_canister::c2c_local_user_index::Response::Success) => Ok(()),
             Err((code, msg)) => {
                 let retry = should_retry_failed_c2c_call(code, &msg);
                 Err(retry)

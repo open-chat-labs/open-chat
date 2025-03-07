@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "הודעת מציין מיקום פקודה",
             "commandPlaceholderPlaceholder": "הודעת מציין מיקום פקודה לא צוינה",
             "commandsLabel": "פקודות",
+            "dateTimeFutureOnly": "תאריכים עתידיים",
+            "dateTimeFutureOnlyDesc": "מאפשר בחירה של תאריכים עתידיים בלבד",
             "descLabel": "תיאור הבוט",
             "descPlaceholder": "הזן את תיאור הבוט",
             "editPrincipalPlaceholder": "השאר ריק אם לא השתנה",

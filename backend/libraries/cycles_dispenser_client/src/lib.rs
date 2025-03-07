@@ -76,10 +76,10 @@ fn run_once() {
             .as_ref()
             .map(|c| (c.min_cycles_balance, c.cycles_dispenser_canister_id))
     }) {
-        let cycles_balance = ic_cdk::api::canister_balance128();
+        let cycles_balance = ic_cdk::api::canister_cycle_balance();
 
         if cycles_balance < min_cycles_balance {
-            ic_cdk::spawn(request_top_up(cycles_balance, cycles_dispenser_canister_id))
+            ic_cdk::futures::spawn(request_top_up(cycles_balance, cycles_dispenser_canister_id))
         }
     }
 }

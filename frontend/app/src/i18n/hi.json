@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "कमांड प्लेसहोल्डर संदेश",
             "commandPlaceholderPlaceholder": "कमांड प्लेसहोल्डर संदेश निर्दिष्ट नहीं है",
             "commandsLabel": "आदेश",
+            "dateTimeFutureOnly": "भविष्य की तिथियाँ",
+            "dateTimeFutureOnlyDesc": "केवल भविष्य की तिथियों के चयन की अनुमति देता है",
             "descLabel": "बॉट विवरण",
             "descPlaceholder": "बॉट विवरण दर्ज करें",
             "editPrincipalPlaceholder": "यदि कोई परिवर्तन न हो तो खाली छोड़ दें",

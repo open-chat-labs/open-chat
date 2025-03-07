@@ -32,7 +32,7 @@ fn run() {
         DoNothing => (),
         CyclesBalanceTooLow => error!("Cycles balance too low to add a new bucket"),
         CreateBucket(args) => {
-            ic_cdk::spawn(create_bucket(args));
+            ic_cdk::futures::spawn(create_bucket(args));
         }
     }
 }

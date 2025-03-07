@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Always encode `BotPermission`s as `u32`s ([#7519](https://github.com/open-chat-labs/open-chat/pull/7519))
+- Switch to using bounded-wait calls for idempotent c2c calls ([#7528](https://github.com/open-chat-labs/open-chat/pull/7528))
+
+### Fixed
+
+- Support using command JWT for reading ([#7512](https://github.com/open-chat-labs/open-chat/pull/7512))
+
 ## [[2.0.1618](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1618-community)] - 2025-02-28
 
 ### Added

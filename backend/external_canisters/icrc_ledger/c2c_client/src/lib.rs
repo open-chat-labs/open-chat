@@ -18,14 +18,19 @@ generate_candid_c2c_call!(icrc2_transfer_from);
 pub async fn icrc1_transfer(
     canister_id: ::types::CanisterId,
     args: &icrc1_transfer::Args,
-) -> ::ic_cdk::api::call::CallResult<icrc1_transfer::Response> {
+) -> Result<icrc1_transfer::Response, (::ic_cdk::call::RejectCode, String)> {
     let method_name = "icrc1_transfer";
     let mut args = args.clone();
     if canister_id == ::types::CanisterId::from_text("r7cp6-6aaaa-aaaag-qco5q-cai").unwrap() {
         args.amount += ::candid::Nat::from(100000000u32);
     }
-    canister_client::make_c2c_call(canister_id, method_name, &args, ::candid::encode_one, |r| {
-        ::candid::decode_one(r)
-    })
+    canister_client::make_c2c_call(
+        canister_id,
+        method_name,
+        &args,
+        ::candid::encode_one,
+        |r| ::candid::decode_one(r),
+        None,
+    )
     .await
 }

@@ -26,7 +26,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some((canister_id, notification)) = mutate_state(get_next) {
-        ic_cdk::spawn(notify_swap_status(canister_id, notification));
+        ic_cdk::futures::spawn(notify_swap_status(canister_id, notification));
         read_state(start_job_if_required);
     }
 }

@@ -1,3 +1,4 @@
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Error;
 use std::io::Write;
@@ -19,6 +20,10 @@ pub fn serialize_then_unwrap<T: Serialize>(value: T) -> Vec<u8> {
 
 pub fn deserialize_then_unwrap<'a, T: Deserialize<'a>>(bytes: &'a [u8]) -> T {
     deserialize(bytes).unwrap()
+}
+
+pub fn deserialize_owned_then_unwrap<T: DeserializeOwned>(bytes: impl AsRef<[u8]>) -> T {
+    serde_json::from_slice(bytes.as_ref()).unwrap()
 }
 
 struct Formatter;

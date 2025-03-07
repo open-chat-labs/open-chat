@@ -1,15 +1,14 @@
-use crate::canister::install_basic;
+use crate::canister::{convert_cdk_error, install_basic};
 use candid::{CandidType, Principal};
-use ic_cdk::api::call::{CallResult, RejectionCode};
-use ic_cdk::api::management_canister;
-use ic_cdk::api::management_canister::main::{CanisterSettings, CreateCanisterArgument};
+use ic_cdk::call::RejectCode;
+use ic_cdk::management_canister::{self, CanisterSettings, CreateCanisterArgs};
 use tracing::error;
 use types::{CanisterId, CanisterWasm, Cycles};
 
 #[derive(Debug)]
 pub enum CreateAndInstallError {
-    CreateFailed(RejectionCode, String),
-    InstallFailed(CanisterId, RejectionCode, String),
+    CreateFailed(RejectCode, String),
+    InstallFailed(CanisterId, RejectCode, String),
 }
 
 pub async fn create_and_install<A: CandidType>(
@@ -38,11 +37,11 @@ pub async fn create_and_install<A: CandidType>(
     }
 }
 
-pub async fn create(cycles_to_use: Cycles) -> CallResult<Principal> {
-    match management_canister::main::create_canister(
-        CreateCanisterArgument {
+pub async fn create(cycles_to_use: Cycles) -> Result<Principal, (RejectCode, String)> {
+    match management_canister::create_canister_with_cycles(
+        &CreateCanisterArgs {
             settings: Some(CanisterSettings {
-                controllers: Some(vec![ic_cdk::id()]),
+                controllers: Some(vec![ic_cdk::api::canister_self()]),
                 ..Default::default()
             }),
         },
@@ -50,10 +49,11 @@ pub async fn create(cycles_to_use: Cycles) -> CallResult<Principal> {
     )
     .await
     {
-        Ok((x,)) => Ok(x.canister_id),
-        Err((code, msg)) => {
+        Ok(x) => Ok(x.canister_id),
+        Err(error) => {
+            let (code, msg) = convert_cdk_error(error);
             error!(
-                error_code = code as u8,
+                error_code = %code,
                 error_message = msg.as_str(),
                 "Error calling create_canister"
             );

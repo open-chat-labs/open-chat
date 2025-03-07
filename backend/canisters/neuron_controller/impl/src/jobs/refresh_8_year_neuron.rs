@@ -16,7 +16,7 @@ pub fn start_job() {
 }
 
 fn run() {
-    ic_cdk::spawn(run_async());
+    ic_cdk::futures::spawn(run_async());
 }
 
 async fn run_async() {

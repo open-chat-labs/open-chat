@@ -24,7 +24,7 @@ pub enum TimerJob {
     ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob),
     MarkGroupImportComplete(MarkGroupImportCompleteJob),
     FinalPrizePayments(FinalPrizePaymentsJob),
-    MakeTransfer(MakeTransferJob),
+    MakeTransfer(Box<MakeTransferJob>),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
@@ -208,10 +208,10 @@ impl Job for HardDeleteMessageContentJob {
                                     .is_some()
                                 {
                                     for pending_transaction in prize.final_payments(sender, state.env.now_nanos()) {
-                                        follow_on_jobs.push(TimerJob::MakeTransfer(MakeTransferJob {
+                                        follow_on_jobs.push(TimerJob::MakeTransfer(Box::new(MakeTransferJob {
                                             pending_transaction,
                                             attempt: 0,
-                                        }));
+                                        })));
                                     }
                                 }
                             }
@@ -240,7 +240,7 @@ impl Job for HardDeleteMessageContentJob {
 
 impl Job for DeleteFileReferencesJob {
     fn execute(self) {
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             let to_retry = storage_bucket_client::delete_files(self.files.clone()).await;
 
             if !to_retry.is_empty() {
@@ -287,7 +287,7 @@ impl Job for FinalizeGroupImportJob {
 
 impl Job for ProcessGroupImportChannelMembersJob {
     fn execute(self) {
-        ic_cdk::spawn(process_channel_members(self.group_id, self.channel_id, self.attempt));
+        ic_cdk::futures::spawn(process_channel_members(self.group_id, self.channel_id, self.attempt));
     }
 }
 
@@ -322,7 +322,7 @@ impl Job for MakeTransferJob {
     fn execute(self) {
         let sender = read_state(|state| state.env.canister_id());
         let pending = self.pending_transaction;
-        ic_cdk::spawn(make_transfer(pending, sender, self.attempt));
+        ic_cdk::futures::spawn(make_transfer(pending, sender, self.attempt));
 
         async fn make_transfer(mut pending_transaction: PendingCryptoTransaction, sender: CanisterId, attempt: u32) {
             if let Err(error) = process_transaction(pending_transaction.clone(), sender, true).await {
@@ -334,10 +334,10 @@ impl Job for MakeTransferJob {
                             pending_transaction.set_created(now * NANOS_PER_MILLISECOND);
                         }
                         state.data.timer_jobs.enqueue_job(
-                            TimerJob::MakeTransfer(MakeTransferJob {
+                            TimerJob::MakeTransfer(Box::new(MakeTransferJob {
                                 pending_transaction,
                                 attempt: attempt + 1,
-                            }),
+                            })),
                             now + MINUTE_IN_MS,
                             now,
                         );
@@ -352,7 +352,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match escrow_canister_c2c_client::notify_deposit(
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
@@ -413,7 +413,7 @@ impl Job for CancelP2PSwapInEscrowCanisterJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match escrow_canister_c2c_client::cancel_swap(
                 escrow_canister_id,
                 &escrow_canister::cancel_swap::Args { swap_id: self.swap_id },

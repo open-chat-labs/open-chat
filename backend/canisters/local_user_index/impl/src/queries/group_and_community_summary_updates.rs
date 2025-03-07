@@ -2,7 +2,7 @@ use crate::guards::caller_is_openchat_user;
 use crate::read_state;
 use candid::Principal;
 use canister_api_macros::query;
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use local_user_index_canister::group_and_community_summary_updates::{Response::*, *};
 
 #[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
@@ -66,7 +66,7 @@ async fn make_c2c_call(args: SummaryUpdatesArgs, principal: Principal) -> Summar
     }
 }
 
-fn map_response<R: Into<SummaryUpdatesResponse>>(response: CallResult<R>) -> SummaryUpdatesResponse {
+fn map_response<R: Into<SummaryUpdatesResponse>>(response: Result<R, (RejectCode, String)>) -> SummaryUpdatesResponse {
     match response {
         Ok(result) => result.into(),
         Err(error) => SummaryUpdatesResponse::InternalError(format!("{error:?}")),

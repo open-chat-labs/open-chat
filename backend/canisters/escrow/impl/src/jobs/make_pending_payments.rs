@@ -30,7 +30,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some(pending_payment) = mutate_state(|state| state.data.pending_payments_queue.pop()) {
-        ic_cdk::spawn(process_payment(pending_payment));
+        ic_cdk::futures::spawn(process_payment(pending_payment));
         read_state(start_job_if_required);
     }
 }
@@ -58,7 +58,7 @@ async fn process_payment(pending_payment: PendingPayment) {
             if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
                 let transfer = CompletedCryptoTransaction {
                     ledger: pending_payment.token_info.ledger,
-                    token: pending_payment.token_info.token,
+                    token: pending_payment.token_info.symbol.into(),
                     amount: pending_payment.amount,
                     from: Account {
                         owner: state.env.canister_id(),

@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{MEMO_STREAK_INSURANCE, SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
+use constants::{CHAT_LEDGER_CANISTER_ID, MEMO_STREAK_INSURANCE, SNS_GOVERNANCE_CANISTER_ID};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::icrc1::make_transfer;
@@ -20,7 +20,7 @@ async fn pay_for_streak_insurance(args: Args) -> Response {
     };
 
     let transfer_result = make_transfer(
-        SNS_LEDGER_CANISTER_ID,
+        CHAT_LEDGER_CANISTER_ID,
         &TransferArg {
             from_subaccount: None,
             to: Account {

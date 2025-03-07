@@ -13,7 +13,7 @@ use crate::timer_job_types::{ClaimChitInsuranceJob, DeleteFileReferencesJob, Rem
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use constants::{DAY_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
+use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -38,9 +38,9 @@ use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned,
-    ChitEarnedReason, CommunityId, Cryptocurrency, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification,
-    NotifyChit, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId,
+    ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
+    TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
+    UserId,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -126,7 +126,7 @@ impl RuntimeState {
             authorizer: Some(self.data.local_user_index_canister_id),
             notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
         };
-        ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
+        ic_cdk::futures::spawn(push_notification_inner(self.data.notifications_canister_id, args));
 
         async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
             let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
@@ -336,7 +336,7 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 escrow: self.data.escrow_canister_id,
-                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
+                icp_ledger: ICP_LEDGER_CANISTER_ID,
             },
         }
     }
@@ -392,13 +392,10 @@ struct Data {
     pub message_activity_events: MessageActivityEvents,
     pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
-    #[serde(default)]
     pub message_ids_deduped: bool,
-    #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
     pub bots: InstalledBots,
-    #[serde(default)]
-    bot_api_keys: BotApiKeys,
+    pub bot_api_keys: BotApiKeys,
 }
 
 impl Data {

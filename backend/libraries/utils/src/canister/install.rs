@@ -1,10 +1,9 @@
 use crate::canister;
-use crate::canister::is_out_of_cycles_error;
+use crate::canister::{convert_cdk_error, is_out_of_cycles_error};
 use candid::CandidType;
 use constants::CYCLES_REQUIRED_FOR_UPGRADE;
-use ic_cdk::api::call::CallResult;
-use ic_cdk::api::management_canister;
-use ic_cdk::api::management_canister::main::{CanisterInstallMode, ChunkHash, InstallChunkedCodeArgument, InstallCodeArgument};
+use ic_cdk::call::RejectCode;
+use ic_cdk::management_canister::{self, CanisterInstallMode, ChunkHash};
 use tracing::{error, trace};
 use types::{BuildVersion, CanisterId, CanisterWasm, CanisterWasmBytes, Cycles, Hash};
 
@@ -30,7 +29,11 @@ pub struct ChunkedWasmToInstall {
     pub store_canister_id: CanisterId,
 }
 
-pub async fn install_basic<A: CandidType>(canister_id: CanisterId, wasm: CanisterWasm, init_args: A) -> CallResult<()> {
+pub async fn install_basic<A: CandidType>(
+    canister_id: CanisterId,
+    wasm: CanisterWasm,
+    init_args: A,
+) -> Result<(), (RejectCode, String)> {
     install(CanisterToInstall {
         canister_id,
         current_wasm_version: BuildVersion::default(),
@@ -45,7 +48,7 @@ pub async fn install_basic<A: CandidType>(canister_id: CanisterId, wasm: Caniste
     .map(|_| ())
 }
 
-pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -> CallResult<Option<Cycles>> {
+pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -> Result<Option<Cycles>, (RejectCode, String)> {
     let canister_id = canister_to_install.canister_id;
     let mode = canister_to_install.mode;
 
@@ -56,13 +59,13 @@ pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -
     }
 
     let install_code_args = match canister_to_install.new_wasm {
-        WasmToInstall::Default(wasm_module) => InstallCodeArgs::Default(InstallCodeArgument {
+        WasmToInstall::Default(wasm_module) => InstallCodeArgs::Default(management_canister::InstallCodeArgs {
             mode,
             canister_id,
             wasm_module: wasm_module.into(),
             arg: candid::encode_one(canister_to_install.args).unwrap(),
         }),
-        WasmToInstall::Chunked(wasm) => InstallCodeArgs::Chunked(InstallChunkedCodeArgument {
+        WasmToInstall::Chunked(wasm) => InstallCodeArgs::Chunked(management_canister::InstallChunkedCodeArgs {
             mode,
             target_canister: canister_id,
             store_canister: Some(wasm.store_canister_id),
@@ -98,7 +101,7 @@ pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -
             ?mode,
             from_wasm_version = %canister_to_install.current_wasm_version,
             to_wasm_version = %canister_to_install.new_wasm_version,
-            error_code = code as u8,
+            error_code = %code,
             error_message = msg.as_str(),
             "Error calling 'install_code'"
         );
@@ -127,7 +130,7 @@ enum ShouldDepositAndRetry {
 }
 
 fn should_deposit_cycles_and_retry(
-    response: &CallResult<()>,
+    response: &Result<(), (RejectCode, String)>,
     deposit_cycles_if_needed: bool,
     attempt: usize,
 ) -> ShouldDepositAndRetry {
@@ -145,15 +148,16 @@ fn should_deposit_cycles_and_retry(
 
 #[derive(Clone)]
 enum InstallCodeArgs {
-    Default(InstallCodeArgument),
-    Chunked(InstallChunkedCodeArgument),
+    Default(management_canister::InstallCodeArgs),
+    Chunked(management_canister::InstallChunkedCodeArgs),
 }
 
 impl InstallCodeArgs {
-    async fn install(self) -> CallResult<()> {
+    async fn install(&self) -> Result<(), (RejectCode, String)> {
         match self {
-            InstallCodeArgs::Default(args) => management_canister::main::install_code(args.clone()).await,
-            InstallCodeArgs::Chunked(args) => management_canister::main::install_chunked_code(args.clone()).await,
+            InstallCodeArgs::Default(args) => management_canister::install_code(args).await,
+            InstallCodeArgs::Chunked(args) => management_canister::install_chunked_code(args).await,
         }
+        .map_err(convert_cdk_error)
     }
 }

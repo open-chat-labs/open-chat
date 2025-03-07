@@ -1,4 +1,4 @@
-use ic_cdk::api::call::CallResult;
+use ic_cdk::call::RejectCode;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc1::transfer::TransferError;
 use tracing::error;
@@ -12,7 +12,7 @@ pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
     sender: CanisterId,
     retry_if_bad_fee: bool,
-) -> CallResult<Result<CompletedCryptoTransaction, FailedCryptoTransaction>> {
+) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, (RejectCode, String)> {
     let from = Account::from(sender);
 
     let args = TransferArg {
@@ -28,7 +28,7 @@ pub async fn process_transaction(
     Ok(match response {
         Ok(block_index) => Ok(CompletedCryptoTransaction {
             ledger: transaction.ledger,
-            token: transaction.token.clone(),
+            token: transaction.token_symbol.into(),
             amount: transaction.amount,
             fee: transaction.fee,
             from: from.into(),
@@ -39,7 +39,7 @@ pub async fn process_transaction(
         }),
         Err(error_message) => Err(FailedCryptoTransaction {
             ledger: transaction.ledger,
-            token: transaction.token,
+            token: transaction.token_symbol.into(),
             amount: transaction.amount,
             fee: transaction.fee,
             from: from.into(),
@@ -56,7 +56,7 @@ pub async fn make_transfer(
     ledger_canister_id: CanisterId,
     args: &TransferArg,
     retry_if_bad_fee: bool,
-) -> CallResult<Result<u64, String>> {
+) -> Result<Result<u64, String>, (RejectCode, String)> {
     let mut response = icrc_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, args).await?;
 
     if retry_if_bad_fee {

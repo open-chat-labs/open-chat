@@ -199,6 +199,8 @@
             "commandPlaceholderLabel": "Повідомлення-заповнювач команди",
             "commandPlaceholderPlaceholder": "Повідомлення-заповнювач команди не вказано",
             "commandsLabel": "Команди",
+            "dateTimeFutureOnly": "Майбутні дати",
+            "dateTimeFutureOnlyDesc": "Дозволяє вибрати лише майбутні дати",
             "descLabel": "Опис бота",
             "descPlaceholder": "Введіть опис бота",
             "editPrincipalPlaceholder": "Залиште порожнім, якщо не змінено",
