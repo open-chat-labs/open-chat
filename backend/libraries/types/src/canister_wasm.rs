@@ -2,7 +2,7 @@ use crate::{BuildVersion, CanisterId, Hash};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 
@@ -90,8 +90,9 @@ impl Debug for CanisterWasmBytes {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub struct UpgradesFilter {
-    pub include: Vec<CanisterId>,
-    pub exclude: Vec<CanisterId>,
+    pub versions: HashSet<BuildVersion>,
+    pub include: HashSet<CanisterId>,
+    pub exclude: HashSet<CanisterId>,
 }
 
 #[derive(Serialize, Deserialize, Default)]
