@@ -17,7 +17,7 @@ impl TimerJobItem for GroupEventBatch {
         .await;
 
         match response {
-            Ok(group_canister::c2c_notify_events::Response::Success) => Ok(()),
+            Ok(group_canister::c2c_local_group_index::Response::Success) => Ok(()),
             Err((code, msg)) => {
                 if is_out_of_cycles_error(code, &msg) {
                     top_up_canister(Some(self.key)).await;
