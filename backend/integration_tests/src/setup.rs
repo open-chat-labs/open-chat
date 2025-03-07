@@ -15,6 +15,7 @@ use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
 use std::sync::{Mutex, OnceLock};
+use std::time::Instant;
 use storage_index_canister::init::CyclesDispenserConfig;
 use testing::rng::random_string;
 use testing::NNS_INTERNET_IDENTITY_CANISTER_ID;
@@ -58,8 +59,11 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
     let pocket_ic_state_base_dir = pocket_ic_state_dir.join("base");
 
     let mut init_started = INIT_STARTED_LOCK.lock().unwrap();
-    if !*init_started {
+
+    let canister_ids = if !*init_started {
         *init_started = true;
+
+        let started = Instant::now();
 
         // This thread is first, so it is the only one which will run the full initialization
         println!("Initialization starting");
@@ -80,13 +84,16 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
         tick_many(&mut env, ticks as usize);
 
         let canister_ids = install_canisters(&mut env, controller);
+        let duration = Instant::now().duration_since(started);
 
-        println!("Initialization complete");
+        println!("Initialization complete. Took: {}s", duration.as_secs());
 
-        CANISTER_IDS.set(canister_ids).unwrap();
-    }
+        CANISTER_IDS.set(canister_ids.clone()).unwrap();
 
-    let canister_ids = wait_for_initialization();
+        canister_ids
+    } else {
+        wait_for_initialization()
+    };
 
     let random_id = random_string();
 
