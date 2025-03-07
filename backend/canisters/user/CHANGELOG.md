@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Change DC summary so `latest_message` is optional
+
 ### Fixed
 
 - Fix upgrade for canisters that were stuck trying to message deleted users ([#7539](https://github.com/open-chat-labs/open-chat/pull/7539))
