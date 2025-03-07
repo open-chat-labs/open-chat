@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `DateTime` bot command parameter ([#7496](https://github.com/open-chat-labs/open-chat/pull/7496))
 - Add `bot_chat_details` ([#7499](https://github.com/open-chat-labs/open-chat/pull/7499))
 - Add c2c endpoints for canister bots read actions ([#7514](https://github.com/open-chat-labs/open-chat/pull/7514))
+- Add `versions` to upgrade filter to filter canisters to upgrade by version ([#7531](https://github.com/open-chat-labs/open-chat/pull/7531))
 
 ### Changed
 
