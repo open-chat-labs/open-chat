@@ -102,7 +102,7 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
     // Make a copy of the initialized environment
     copy_dir_all(pocket_ic_state_base_dir, &pocket_ic_state_dir_copy).unwrap();
 
-    // Load the initialized environment into a new PocketIC instance
+    // Load the copied initialized environment into a new PocketIC instance
     let env = PocketIcBuilder::new().with_state_dir(pocket_ic_state_dir_copy).build();
 
     TestEnv {
