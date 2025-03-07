@@ -4,12 +4,13 @@
     import type {
         BotMatch,
         ChatListScope,
+        DirectChatIdentifier,
         GroupSearchResponse,
         OpenChat,
         ResourceKey,
         UserSummary,
     } from "openchat-client";
-    import { chatListScopeStore as chatListScope } from "openchat-client";
+    import { chatListScopeStore as chatListScope, selectedChatId } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../utils/user";
     import { _ } from "svelte-i18n";
@@ -111,7 +112,8 @@
     }
 
     function searchBots(term: string): Promise<BotMatch[]> {
-        return client.exploreBots(term, 0, 10).then((result) => {
+        const location = $selectedChatId as DirectChatIdentifier;
+        return client.exploreBots(term, 0, 10, location).then((result) => {
             return result.kind === "success" ? result.matches : [];
         });
     }

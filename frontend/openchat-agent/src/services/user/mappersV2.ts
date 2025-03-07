@@ -130,8 +130,8 @@ import type {
     MessageContext,
     MessageActivity,
     MessageActivitySummary,
-    // ExternalBotPermissions,
-    // PublicApiKeyDetails,
+    ExternalBotPermissions,
+    PublicApiKeyDetails,
 } from "openchat-shared";
 import {
     nullMembership,
@@ -157,8 +157,8 @@ import {
     messageMatch,
     messageEvent,
     eventsSuccessResponse,
-    // installedBotDetails,
-    // publicApiKeyDetails,
+    installedBotDetails,
+    publicApiKeyDetails,
 } from "../common/chatMappersV2";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -852,16 +852,14 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
             referrals: result.referrals.map(referral),
             walletConfig: walletConfig(result.wallet_config),
             messageActivitySummary: messageActivitySummary(result.message_activity_summary),
-            bots: new Map(),
-            apiKeys: new Map(),
-            // bots: result.bots.map(installedBotDetails).reduce((m, b) => {
-            //     m.set(b.id, b.permissions);
-            //     return m;
-            // }, new Map<string, ExternalBotPermissions>()),
-            // apiKeys: result.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
-            //     m.set(k.botId, k);
-            //     return m;
-            // }, new Map<string, PublicApiKeyDetails>()),
+            bots: result.bots.map(installedBotDetails).reduce((m, b) => {
+                m.set(b.id, b.permissions);
+                return m;
+            }, new Map<string, ExternalBotPermissions>()),
+            apiKeys: result.api_keys.map(publicApiKeyDetails).reduce((m, k) => {
+                m.set(k.botId, k);
+                return m;
+            }, new Map<string, PublicApiKeyDetails>()),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${value}`);
@@ -1032,9 +1030,9 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
                 result.message_activity_summary,
                 messageActivitySummary,
             ),
-            botsAddedOrUpdated: [], // value.Success.bots_added_or_updated.map(installedBotDetails),
-            botsRemoved: new Set(), // new Set(value.Success.bots_removed.map(principalBytesToString)),
-            apiKeysGenerated: [], // value.Success.api_keys_generated.map(publicApiKeyDetails),
+            botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
+            botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
+            apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
         };
     }
 
@@ -1108,10 +1106,10 @@ function directChatSummary(value: TDirectChatSummary): DirectChatSummary {
     return {
         id: { kind: "direct_chat", userId: principalBytesToString(value.them) },
         kind: "direct_chat",
-        latestMessage: messageEvent(value.latest_message),
+        latestMessageIndex: value.latest_message_index,
+        latestMessage: mapOptional(value.latest_message, messageEvent),
         them: { kind: "direct_chat", userId: principalBytesToString(value.them) },
         latestEventIndex: value.latest_event_index,
-        latestMessageIndex: value.latest_message_index,
         lastUpdated: value.last_updated,
         readByThemUpTo: value.read_by_them_up_to,
         dateCreated: value.date_created,

@@ -113,9 +113,9 @@ impl DirectChat {
         DirectChatSummary {
             them: self.them,
             last_updated: self.last_updated(),
-            latest_message: events_reader.latest_message_event(Some(my_user_id)).unwrap(),
+            latest_message: events_reader.latest_message_event(Some(my_user_id)),
             latest_event_index: events_reader.latest_event_index().unwrap_or_default(),
-            latest_message_index: events_reader.latest_message_index().unwrap_or_default(),
+            latest_message_index: events_reader.latest_message_index(),
             date_created: self.date_created,
             read_by_me_up_to: self.read_by_me_up_to.value,
             read_by_them_up_to: self.read_by_them_up_to.value,

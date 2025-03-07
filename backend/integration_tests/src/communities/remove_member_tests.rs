@@ -64,7 +64,7 @@ fn block_user_succeeds(user_has_left_community: bool) {
         // Check bot message received
         let user1_id = user1.user_id;
         assert!(initial_state.direct_chats.summaries.iter().any(|dc| {
-            if let MessageContent::Text(content) = &dc.latest_message.event.content {
+            if let MessageContent::Text(content) = &dc.latest_message.as_ref().unwrap().event.content {
                 content.text
                     == format!("You were blocked from the public community \"{community_name}\" by @UserId({user1_id})")
             } else {
@@ -154,7 +154,7 @@ fn remove_user_succeeds() {
     // Check bot message received
     let user1_id = user1.user_id;
     assert!(initial_state.direct_chats.summaries.iter().any(|dc| {
-        if let MessageContent::Text(content) = &dc.latest_message.event.content {
+        if let MessageContent::Text(content) = &dc.latest_message.as_ref().unwrap().event.content {
             content.text == format!("You were removed from the private community \"{community_name}\" by @UserId({user1_id})")
         } else {
             false
