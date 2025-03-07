@@ -27,12 +27,12 @@ NNS_CMC_CANISTER_ID=rkp4c-7iaaa-aaaaa-aaaca-cai
 NNS_SNS_WASM_CANISTER_ID=qaa6y-5yaaa-aaaaa-aaafa-cai
 NNS_INDEX_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
 
-echo "Building local_canister_creator and canister_installer"
-cargo build -p local_canister_creator -p canister_installer
+echo "Building local_canister_creator"
+cargo build --package local_canister_creator
 echo "Building completed"
 
 echo "Creating canisters"
-cargo run -p local_canister_creator -- \
+cargo run --package local_canister_creator -- \
   --ic-url http://127.0.0.1:8080/ \
   --controller $IDENTITY \
   --cycles 1000000000000000 \
@@ -61,6 +61,7 @@ cargo run -p local_canister_creator -- \
   --canister sign_in_with_ethereum \
   --canister sign_in_with_solana \
   --canister website || exit 1
+
 echo "Canisters created"
 
 # Install the OpenChat canisters

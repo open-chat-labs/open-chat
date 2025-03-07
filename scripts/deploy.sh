@@ -61,8 +61,13 @@ SIGN_IN_WITH_ETHEREUM_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_w
 SIGN_IN_WITH_SOLANA_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_with_solana)
 WEBSITE_CANISTER_ID=$(dfx canister --network $NETWORK id website)
 
+echo "Building canister_installer"
+cargo build --package canister_installer
+echo "Building complete"
+
+echo "Running canister_installer"
 cargo run \
-  --manifest-path backend/tools/canister_installer/Cargo.toml -- \
+  --package canister_installer -- \
   --url $IC_URL \
   --test-mode $TEST_MODE \
   --controller $IDENTITY \
@@ -98,3 +103,4 @@ cargo run \
   --nns-index $NNS_INDEX_CANISTER_ID \
   --website $WEBSITE_CANISTER_ID \
 
+echo "Canisters installed"
