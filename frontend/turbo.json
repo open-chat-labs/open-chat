@@ -45,6 +45,10 @@
             "outputs": ["lib/**", "build/**"],
             "dependsOn": ["build:prod", "typecheck", "validate", "lint", "test:prod"]
         },
+        "build:docker": {
+            "outputs": ["lib/**", "build/**"],
+            "dependsOn": ["^build:docker"]
+        },
         "verify": {
             "dependsOn": ["typecheck", "validate", "lint", "test:prod"]
         },

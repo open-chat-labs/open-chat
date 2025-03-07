@@ -37,6 +37,21 @@ wasm hash locally with the wasm hash exposed by the IC.
 
 You can build the OpenChat canister wasms by running `./scripts/docker-build-all-wasms.sh`
 
+## Docker & bots
+
+If you are developing bots on the Open Chat platform, you may want to download and run the _open-chat_ docker image.
+
+This image runs the mainnet, and Open Chat canisters and UI within the container, therefore removing the requirement for a manual local installation.
+
+To run the `open-chat` image, once it's downloaded:
+```shell
+docker run -d -p 5002:80 -p 8080:8080 --name open-chat open-chat
+```
+
+NOTE: It may take up to a minute for the container to start serving OC app once it's started.
+
+The app UI should be available on [http://localhost:5002](http://localhost:5002).
+
 ## License
 
 Copyright 2024 OpenChat Labs LTD

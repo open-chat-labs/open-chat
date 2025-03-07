@@ -8,6 +8,7 @@
         "build:prod": "sh ./build_prod.sh",
         "build:prod_test": "sh ./build_prod_test.sh",
         "build:testnet": "sh ./build_testnet.sh",
+        "build:docker": "sh ./build_docker.sh",
         "dev": "sh ./build_dev.sh",
         "start": "sirv public --no-clear",
         "validate": "svelte-check --threshold error",

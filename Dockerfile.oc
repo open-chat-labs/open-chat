@@ -1,0 +1,107 @@
+# FIRST PART
+#
+# This first part sets up the dfx, and builds the local canisters + the app UI!
+FROM ubuntu:latest AS build-app
+
+WORKDIR /
+
+# Install deps!
+RUN apt-get update
+RUN apt-get install -y curl jq libunwind-dev build-essential
+
+# Install node and confirm commands are available
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs
+RUN nodejs --version
+RUN npm --version
+
+# Download and install dfx
+RUN DFX_VERSION=0.25.1-beta.1 DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+ENV PATH="/root/.local/share/dfx/bin:${PATH}"
+RUN dfx --help
+
+# Install latest rust!
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o install_rust.sh
+RUN chmod +x install_rust.sh
+RUN ./install_rust.sh -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN cargo --version
+
+# # Make the oc directory, and copy code into it
+WORKDIR /oc
+COPY . .
+
+# Run dfx, wait for it to start, check it's running, then run local deployment!
+RUN dfx start --clean > /dev/null 2>&1 & \
+    sleep 6 && \
+    curl -I http://127.0.0.1:8080/api/v2/status && \
+    ./scripts/deploy-local.sh
+
+# Build UI
+WORKDIR /oc/frontend
+
+RUN npm run build:docker
+
+
+# SECOND PART
+#
+# This bit copies the required files that were created in the first step, and
+# start the full app. Dfx has to be installed again since it's used to run the
+# local canisters, and Nginx is set up as a server for the UI files.
+FROM ubuntu:latest
+
+# Install new set of deps, there's some overlap.
+RUN apt-get update
+RUN apt-get install -y curl nginx jq libunwind-dev
+
+# Download and install dfx (again)
+RUN DFX_VERSION=0.25.1-beta.1 DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+ENV PATH="/root/.local/share/dfx/bin:${PATH}"
+RUN dfx --help
+
+# Copy the built UI files from the previous stage
+COPY --from=build-app /oc/frontend/app/build /usr/share/nginx/html
+COPY --from=build-app /oc/frontend/app/public /usr/share/nginx/html
+
+# Nginx conf for serving the UI, and proxying requests to the local canisters.
+RUN echo 'server {\n\
+    listen 80;\n\
+    server_name localhost;\n\
+\n\
+    location /api {\n\
+        proxy_pass http://localhost:8080;\n\
+        proxy_set_header Host $host;\n\
+        proxy_set_header X-Real-IP $remote_addr;\n\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
+        proxy_set_header X-Forwarded-Proto $scheme;\n\
+    }\n\
+\n\
+    location / {\n\
+        root /usr/share/nginx/html;\n\
+        try_files $uri /index.html;\n\
+    }\n\
+}' > /etc/nginx/conf.d/default.conf
+
+# Copy dfx setup files
+COPY --from=build-app /oc/.dfx /oc/.dfx
+COPY --from=build-app /oc/dfx.json /oc/dfx.json
+
+WORKDIR /oc
+
+# We need the dfx to bind to all interfaces within the container when running in
+# docker, which will allow outside access when port 8080 is exposed.
+RUN jq '.networks.local.bind = "0.0.0.0:8080"' dfx.json > dfx.json.tmp && mv dfx.json.tmp dfx.json
+
+# Create a startup script! `dfx stop` makes sure that any files crated by the
+# dfx run in the previous step are removed.
+RUN echo '#!/bin/sh\n\
+dfx stop || true\n\
+dfx start --log file --logfile ~/dfx.log &\n\
+nginx -g "daemon off;"' > start.sh
+RUN chmod +x start.sh
+
+# Nginx runs on port 80...
+EXPOSE 80
+# Dfx runs on port 8080
+EXPOSE 8080
+
+CMD ["/bin/sh", "start.sh"]

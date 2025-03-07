@@ -8,6 +8,7 @@
         "build:prod": "npm ci && dotenv -- turbo run build:prod --cache-dir .turbo",
         "build:prod_test": "npm ci && dotenv -- turbo run build:prod_test --cache-dir .turbo",
         "build:testnet": "npm ci && dotenv -- turbo run build:testnet --cache-dir .turbo",
+        "build:docker": "npm ci && dotenv -- turbo run build:docker --cache-dir .turbo",
         "deploy:prod_test": "npm ci && dotenv -- turbo run deploy:prod_test --cache-dir .turbo",
         "deploy:prod": "npm ci && dotenv -- turbo run deploy:prod --cache-dir .turbo",
         "deploy:testnet": "npm ci && dotenv -- turbo run deploy:testnet --cache-dir .turbo",
