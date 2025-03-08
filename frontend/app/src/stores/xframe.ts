@@ -39,6 +39,8 @@ const FRAME_ANCESTORS = [
     "https://fantasyextreme.org", //fantasyextreme prod
     "https://snxxs-viaaa-aaaam-acuba-cai.icp0.io", //fantasyextreme staging
     "https://e7bx6-iiaaa-aaaag-qm7oq-cai.icp0.io", // Partnrship
+    "https://pow-3.org", // pow-3 live
+    "https://power-3.org", // pow-3 live (alias)
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;
