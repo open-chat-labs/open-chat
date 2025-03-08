@@ -11,8 +11,8 @@ pub struct LastOnlineDates {
 }
 
 impl LastOnlineDates {
-    pub fn mark_online(&mut self, user_id: UserId, now: TimestampMillis) {
-        self.map.insert(user_id.into(), now);
+    pub fn mark_online(&mut self, user_id: UserId, now: TimestampMillis) -> Option<TimestampMillis> {
+        self.map.insert(user_id.into(), now)
     }
 
     pub fn get(&self, user_id: UserId) -> Option<TimestampMillis> {

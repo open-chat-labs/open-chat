@@ -1,4 +1,5 @@
 use crate::model::last_online_dates::LastOnlineDates;
+use crate::model::user_online_minutes::UserOnlineMinutes;
 use canister_state_macros::canister_state;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -66,6 +67,8 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub last_online_dates: LastOnlineDates,
+    #[serde(default)]
+    pub user_online_minutes: UserOnlineMinutes,
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -85,6 +88,7 @@ impl Data {
     ) -> Data {
         Data {
             last_online_dates: LastOnlineDates::default(),
+            user_online_minutes: UserOnlineMinutes::default(),
             principal_to_user_id_map: PrincipalToUserIdMap::default(),
             user_index_canister_id,
             cycles_dispenser_canister_id,
