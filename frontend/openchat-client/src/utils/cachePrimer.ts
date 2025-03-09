@@ -124,15 +124,15 @@ export class CachePrimer {
     }
 
     private getNextBatch(): [string, ChatEventsArgs[]] | undefined {
-        if (this.pending.size === 0) {
+        const sorted = this.pending.values().sort(compareChats);
+
+        const getNextResult = this.getNextFromSorted(sorted);
+        if (getNextResult === undefined) {
             return undefined;
         }
-        const sorted = this.pending.values().sort(compareChats);
-        const next = sorted[0];
-        this.pending.delete(next.id);
-        
+
+        const [next, localUserIndex] = getNextResult;
         const batch = this.getEventsArgs(next);
-        const localUserIndex = this.localUserIndex(next);
 
         for (let i = 1; i < sorted.length; i++) {
             const chat = sorted[i];
@@ -146,6 +146,17 @@ export class CachePrimer {
         }
 
         return [localUserIndex, batch];
+    }
+
+    private getNextFromSorted(sorted: ChatSummary[]): [ChatSummary, string] | undefined {
+        for (const next of sorted) {
+            this.pending.delete(next.id);
+            const localUserIndex = this.localUserIndex(next);
+            if (localUserIndex !== undefined) {
+                return [next, localUserIndex];
+            }
+        }
+        return undefined;
     }
 
     private getEventsArgs(chat: ChatSummary): ChatEventsArgs[] {
@@ -198,14 +209,14 @@ export class CachePrimer {
         return this.api.chatEventsBatch(localUserIndex, requests);
     }
 
-    private localUserIndex(chat: ChatSummary): string {
+    private localUserIndex(chat: ChatSummary): string | undefined {
         switch (chat.kind) {
             case "direct_chat":
                 return this.userCanisterLocalUserIndex;
             case "group_chat":
                 return chat.localUserIndex;
             case "channel":
-                return this.api.localUserIndexForCommunity(chat.id.communityId);
+                return this.api.cachedLocalUserIndexForCommunity(chat.id.communityId);
         }
     }
 
