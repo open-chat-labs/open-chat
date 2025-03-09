@@ -125,38 +125,32 @@ export class CachePrimer {
 
     private getNextBatch(): [string, ChatEventsArgs[]] | undefined {
         const sorted = this.pending.values().sort(compareChats);
+        const batch: ChatEventsArgs[] = []
+        let localUserIndexForBatch: string | undefined = undefined;
 
-        const getNextResult = this.getNextFromSorted(sorted);
-        if (getNextResult === undefined) {
-            return undefined;
-        }
-
-        const [next, localUserIndex] = getNextResult;
-        const batch = this.getEventsArgs(next);
-
-        for (let i = 1; i < sorted.length; i++) {
-            const chat = sorted[i];
-            if (this.localUserIndex(chat) === localUserIndex) {
-                this.getEventsArgs(chat).forEach((args) => batch.push(args));
-                this.pending.delete(chat.id);
-                if (batch.length >= BATCH_SIZE) {
-                    break;
-                }
-            }
-        }
-
-        return [localUserIndex, batch];
-    }
-
-    private getNextFromSorted(sorted: ChatSummary[]): [ChatSummary, string] | undefined {
         for (const next of sorted) {
-            this.pending.delete(next.id);
             const localUserIndex = this.localUserIndex(next);
-            if (localUserIndex !== undefined) {
-                return [next, localUserIndex];
+            if (localUserIndex === undefined) {
+                this.pending.delete(next.id);
+                continue;
+            }
+            if (localUserIndexForBatch === undefined) {
+                localUserIndexForBatch = localUserIndex;
+            } else if (localUserIndex !== localUserIndexForBatch) {
+                continue;
+            }
+
+            this.pending.delete(next.id);
+            batch.push(...this.getEventsArgs(next));
+
+            if (batch.length >= BATCH_SIZE) {
+                break;
             }
         }
-        return undefined;
+
+        return localUserIndexForBatch !== undefined
+            ? [localUserIndexForBatch, batch]
+            : undefined;
     }
 
     private getEventsArgs(chat: ChatSummary): ChatEventsArgs[] {
