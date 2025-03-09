@@ -129,10 +129,10 @@ export class CachePrimer {
         }
         const sorted = this.pending.values().sort(compareChats);
         const next = sorted[0];
+        this.pending.delete(next.id);
+        
         const batch = this.getEventsArgs(next);
         const localUserIndex = this.localUserIndex(next);
-
-        this.pending.delete(next.id);
 
         for (let i = 1; i < sorted.length; i++) {
             const chat = sorted[i];
