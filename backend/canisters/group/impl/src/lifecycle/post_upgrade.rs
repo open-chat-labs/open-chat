@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
 use crate::{mutate_state, read_state, Data};
@@ -10,6 +11,7 @@ use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use rand::Rng;
 use stable_memory::get_reader;
+use std::time::Duration;
 use tracing::info;
 
 #[post_upgrade]
@@ -63,7 +65,7 @@ fn post_upgrade(args: Args) {
                     thread_root_message_index: None,
                     message_id: state.env.rng().gen(),
                     content: MessageContentInternal::Text(TextContentInternal {
-                        text: "This public group has been dormant for over a year.\
+                        text: "This public group has been dormant for over a year.
 If there are no new messages in the next 30 days then this group will be deleted."
                             .to_string(),
                     }),
@@ -78,6 +80,9 @@ If there are no new messages in the next 30 days then this group will be deleted
                 },
                 Some(&mut state.data.event_store_client),
             );
+            ic_cdk_timers::set_timer(Duration::ZERO, || {
+                mutate_state(handle_activity_notification);
+            });
         }
     });
 }
