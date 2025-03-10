@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Switch to using bounded-wait calls for idempotent c2c calls ([#7528](https://github.com/open-chat-labs/open-chat/pull/7528))
 - Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+- Log number of public and private groups active in the last year ([#7552](https://github.com/open-chat-labs/open-chat/pull/7552))
 
 ## [[2.0.1613](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1613-group_index)] - 2025-02-28
 
