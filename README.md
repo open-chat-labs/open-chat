@@ -24,7 +24,9 @@ Start DFX using `dfx start`
 
 To install all the necessary canisters (OpenChat and NNS) run `./scripts/deploy-local.sh`
 
-To run the website run `npm --prefix frontend run dev`
+To run the website run `npm --prefix frontend run dev`. This process doesn't exit but watches changes to the website and rebuilds it using `vite` for fast development iteration.
+
+Open the website at `http://localhost:5001/`.
 
 To upgrade a canister run `./scripts/upgrade-canister-local.sh <DFX_IDENTITY_NAME> <CANISTER_NAME> <VERSION>` (eg. `./scripts/upgrade-canister-local.sh default user 1.0.0`)
 

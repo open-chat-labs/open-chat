@@ -239,7 +239,7 @@ fn invite_to_channel_oc_bot_message_received() {
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
     assert!(initial_state.direct_chats.summaries.iter().any(|dc| {
-        if let MessageContent::Text(content) = &dc.latest_message.event.content {
+        if let MessageContent::Text(content) = &dc.latest_message.as_ref().unwrap().event.content {
             content.text.contains("You have been invited to the channel") && content.text.contains(&channel_id.to_string())
         } else {
             false
