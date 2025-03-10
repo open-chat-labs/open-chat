@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1630](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1630-group_index)] - 2025-03-10
+
 ### Added
 
 - Add `versions` to upgrade filter to filter canisters to upgrade by version ([#7531](https://github.com/open-chat-labs/open-chat/pull/7531))

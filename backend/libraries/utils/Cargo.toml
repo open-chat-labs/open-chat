@@ -16,6 +16,7 @@ dataurl = { workspace = true }
 getrandom = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
+ic-management-canister-types = { workspace = true }
 itertools = { workspace = true }
 msgpack = { path = "../msgpack" }
 rand = { workspace = true }
