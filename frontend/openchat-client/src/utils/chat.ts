@@ -134,13 +134,14 @@ export function getUsersToMakeRtcConnectionsWith(
     myUserId: string,
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
+    blocked: Set<string>,
 ): string[] {
     if (chat.kind === "direct_chat") {
-        return [chat.id.userId];
+        return blocked.has(chat.id.userId) ? [] : [chat.id.userId];
     }
 
     const activeUsers = getRecentlyActiveUsers(chat, events, MAX_RTC_CONNECTIONS_PER_CHAT);
-    return activeUsers.has(myUserId) ? Array.from(activeUsers).filter((u) => u !== myUserId) : [];
+    return activeUsers.has(myUserId) ? Array.from(activeUsers).filter((u) => u !== myUserId && !blocked.has(u)) : [];
 }
 
 export function makeRtcConnections(
@@ -148,9 +149,10 @@ export function makeRtcConnections(
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
     lookup: UserLookup,
+    blocked: Set<string>,
     meteredApiKey: string,
 ): void {
-    const userIds = getUsersToMakeRtcConnectionsWith(myUserId, chat, events);
+    const userIds = getUsersToMakeRtcConnectionsWith(myUserId, chat, events, blocked);
     if (userIds.length === 0) return;
 
     userIds

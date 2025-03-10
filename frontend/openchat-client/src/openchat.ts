@@ -2475,6 +2475,7 @@ export class OpenChat extends EventTarget {
                 chat,
                 resp.events,
                 this.#liveState.userStore,
+                this.#liveState.blockedUsers,
                 this.config.meteredApiKey,
             );
         }
@@ -2837,6 +2838,7 @@ export class OpenChat extends EventTarget {
                     chat,
                     this.#liveState.threadEvents,
                     this.#liveState.userStore,
+                    this.#liveState.blockedUsers,
                     this.config.meteredApiKey,
                 );
             }
@@ -4481,6 +4483,10 @@ export class OpenChat extends EventTarget {
     }
 
     #handleWebRtcMessage(msg: WebRtcMessage): void {
+        if (this.#liveState.blockedUsers.has(msg.userId)) {
+            return;
+        }
+
         if (msg.kind === "remote_video_call_started") {
             const ev = createRemoteVideoStartedEvent(msg);
             if (ev) {
