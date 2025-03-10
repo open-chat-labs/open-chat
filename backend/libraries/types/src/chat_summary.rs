@@ -14,10 +14,10 @@ pub const MAX_THREADS_IN_SUMMARY: usize = 20;
 pub struct DirectChatSummary {
     pub them: UserId,
     pub last_updated: TimestampMillis,
-    #[ts(as = "crate::EventWrapperMessage")]
-    pub latest_message: EventWrapper<Message>,
+    #[ts(as = "Option<crate::EventWrapperMessage>")]
+    pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
-    pub latest_message_index: MessageIndex,
+    pub latest_message_index: Option<MessageIndex>,
     pub date_created: TimestampMillis,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
@@ -28,12 +28,6 @@ pub struct DirectChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
     pub video_call_in_progress: Option<VideoCall>,
-}
-
-impl DirectChatSummary {
-    pub fn display_date(&self) -> TimestampMillis {
-        self.latest_message.timestamp
-    }
 }
 
 #[ts_export]

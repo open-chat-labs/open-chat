@@ -4,12 +4,13 @@
     import type {
         BotMatch,
         ChatListScope,
+        DirectChatIdentifier,
         GroupSearchResponse,
         OpenChat,
         ResourceKey,
         UserSummary,
     } from "openchat-client";
-    import { chatListScopeStore as chatListScope } from "openchat-client";
+    import { chatListScopeStore as chatListScope, currentUser } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../utils/user";
     import { _ } from "svelte-i18n";
@@ -111,7 +112,15 @@
     }
 
     function searchBots(term: string): Promise<BotMatch[]> {
-        return client.exploreBots(term, 0, 10).then((result) => {
+        // This location is rather hacky because we can't have a direct chat with ourselves
+        // but it signals to the explore_bots endpoint that we want to see bots that are
+        // available for direct chat.
+        const location = {
+            kind: "direct_chat",
+            userId: $currentUser.userId,
+        } as DirectChatIdentifier;
+
+        return client.exploreBots(term, 0, 10, location).then((result) => {
             return result.kind === "success" ? result.matches : [];
         });
     }
