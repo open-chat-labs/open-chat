@@ -5,6 +5,7 @@ use constants::{
 };
 use pocket_ic::PocketIc;
 use rand::{rngs::StdRng, Rng, SeedableRng};
+use std::path::Path;
 use std::time::SystemTime;
 use std::{path::PathBuf, time::UNIX_EPOCH};
 use types::{Cryptocurrency, Hash, TimestampMillis, TimestampNanos, TokenInfo};
@@ -32,6 +33,20 @@ pub fn local_bin() -> PathBuf {
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to read CARGO_MANIFEST_DIR env variable"));
     file_path.push("wasms");
     file_path
+}
+
+pub fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> std::io::Result<()> {
+    std::fs::create_dir_all(&dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        if ty.is_dir() {
+            copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        } else {
+            std::fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        }
+    }
+    Ok(())
 }
 
 #[allow(dead_code)]

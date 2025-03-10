@@ -15,6 +15,7 @@ pocket-ic*
 msg.json
 notes.md
 notification.did
+pocket_ic_state
 proposal.candid
 metrics.md
 release_changelog.md
