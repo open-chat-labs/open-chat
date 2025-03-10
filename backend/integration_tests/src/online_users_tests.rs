@@ -5,6 +5,7 @@ use constants::MINUTE_IN_MS;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_principal;
+use utils::time::MonthKey;
 
 #[test]
 fn set_then_get_last_online_date_succeeds() {
@@ -70,4 +71,40 @@ fn mark_online_pushes_event() {
 
     assert_eq!(latest_event.name, "user_online");
     assert_eq!(latest_event.timestamp, timestamp);
+}
+
+#[test]
+fn online_minutes_tracked_correctly() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    let now = now_millis(env);
+    let month_temp = MonthKey::from_timestamp(now);
+
+    // Go to the start of next month so that each time we advance time we stay within the same month
+    env.advance_time(Duration::from_millis(
+        1 + month_temp.timestamp_range().end.saturating_sub(now),
+    ));
+
+    let month = month_temp.next();
+
+    for i in 1..10 {
+        client::online_users::happy_path::mark_as_online(env, user.principal, canister_ids.online_users);
+
+        env.tick();
+
+        assert_eq!(
+            i,
+            client::online_users::happy_path::online_minutes(
+                env,
+                user.principal,
+                canister_ids.online_users,
+                month.year(),
+                month.month()
+            )
+        );
+
+        env.advance_time(Duration::from_secs(60));
+    }
 }
