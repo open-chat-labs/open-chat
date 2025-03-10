@@ -25,5 +25,6 @@ fn post_upgrade(args: Args) {
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
 
-    info!(version = %args.wasm_version, "Post-upgrade complete");
+    let total_instructions = ic_cdk::api::call_context_instruction_counter();
+    info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
 }
