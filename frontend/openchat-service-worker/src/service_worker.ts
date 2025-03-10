@@ -178,7 +178,7 @@ function decodeNotification(bytes: Uint8Array, timestamp: bigint): Notification 
     try {
         const deserialized = deserializeFromMsgPack(bytes);
         const validated = typeboxValidate(deserialized, TNotification);
-        return toNotificationV2(validated, timestamp);
+        return toNotification(validated, timestamp);
     }
     catch {
         // Failed to decode using MsgPack
