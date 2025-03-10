@@ -58,9 +58,3 @@ didc bind ./src/services/signInWithSolana/candid/can.did -t js > ./src/services/
 
 didc bind ./src/services/snsGovernance/candid/can.did -t ts > ./src/services/snsGovernance/candid/types.d.ts
 didc bind ./src/services/snsGovernance/candid/can.did -t js > ./src/services/snsGovernance/candid/idl.js
-
-SEARCH='const Notification'
-REPLACE='import { IDL } from "@dfinity\/candid"\n\nexport const Notification'
-cargo run --bin notification_candid_gen > notification.did
-didc bind notification.did -t js | sed "s/$SEARCH/$REPLACE/" > ./src/services/notifications/candid/notification.js
-rm notification.did
