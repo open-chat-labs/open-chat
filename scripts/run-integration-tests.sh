@@ -44,3 +44,5 @@ cd ../..
 ./scripts/download-canister-wasm-dfx.sh sign_in_with_email || exit 1
 
 cargo test --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS
+
+rm -rf ./backend/integration_tests/pocket_ic_state
