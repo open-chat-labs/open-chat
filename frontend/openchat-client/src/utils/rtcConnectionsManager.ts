@@ -122,6 +122,10 @@ export class RtcConnectionsManager {
         });
     }
 
+    public disconnectFromUser(them: string): void {
+        [`m_${them}`, `d_${them}`].forEach((c) => this.connections.delete(c));
+    }
+
     public sendMessage = (userIds: string[], message: WebRtcMessage): void => {
         const connectionIds = userIds.flatMap((u) => [`m_${u}`, `d_${u}`]);
         connectionIds.forEach((connectionId) => {
