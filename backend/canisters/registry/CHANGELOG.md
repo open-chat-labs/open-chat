@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+
 ### Fixed
 
 - Fix check if token is ICRC1 compatible ([#7349](https://github.com/open-chat-labs/open-chat/pull/7349))

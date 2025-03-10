@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Limit message content types from `bot_chat_events` ([#7509](https://github.com/open-chat-labs/open-chat/pull/7509))
 - Always encode `BotPermission`s as `u32`s ([#7519](https://github.com/open-chat-labs/open-chat/pull/7519))
 - Switch to using bounded-wait calls for idempotent c2c calls ([#7528](https://github.com/open-chat-labs/open-chat/pull/7528))
+- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
 
 ## [[2.0.1610](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1610-local_user_index)] - 2025-02-28
 
