@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+- Use `unbounded_wait` when installing canisters ([#7558](https://github.com/open-chat-labs/open-chat/pull/7558))
+
+## [[2.0.1628](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1628-local_group_index)] - 2025-03-07
+
 ### Added
 
 - Add `versions` to upgrade filter to filter canisters to upgrade by version ([#7531](https://github.com/open-chat-labs/open-chat/pull/7531))
@@ -13,7 +20,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Switch to using bounded-wait calls for idempotent c2c calls ([#7528](https://github.com/open-chat-labs/open-chat/pull/7528))
-- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
 
 ## [[2.0.1623](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1623-local_group_index)] - 2025-03-03
 

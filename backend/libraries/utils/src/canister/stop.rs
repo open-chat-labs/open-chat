@@ -1,11 +1,12 @@
 use crate::canister::convert_cdk_error;
-use ic_cdk::call::RejectCode;
+use candid::Principal;
+use ic_cdk::call::{Call, CallResult, RejectCode};
 use ic_cdk::management_canister::{self, CanisterStatusArgs, CanisterStatusType, StopCanisterArgs};
 use tracing::{error, trace};
 use types::CanisterId;
 
 pub async fn stop(canister_id: CanisterId) -> Result<(), (RejectCode, String)> {
-    if let Err(error) = management_canister::stop_canister(&StopCanisterArgs { canister_id }).await {
+    if let Err(error) = stop_canister(&StopCanisterArgs { canister_id }).await {
         let (code, msg) = convert_cdk_error(error);
         error!(
             %canister_id,
@@ -52,4 +53,12 @@ pub async fn stop(canister_id: CanisterId) -> Result<(), (RejectCode, String)> {
             return Err((RejectCode::SysUnknown, "Failed to wait for canister to stop".to_string()));
         }
     }
+}
+
+// Copied from CDK but modified to use `unbounded_wait`
+async fn stop_canister(arg: &StopCanisterArgs) -> CallResult<()> {
+    Ok(Call::unbounded_wait(Principal::management_canister(), "stop_canister")
+        .with_arg(arg)
+        .await?
+        .candid()?)
 }

@@ -8778,6 +8778,7 @@ dependencies = [
  "getrandom 0.2.15",
  "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
+ "ic-management-canister-types",
  "itertools 0.13.0",
  "msgpack",
  "rand 0.8.5",

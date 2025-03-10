@@ -41,18 +41,24 @@ You can build the OpenChat canister wasms by running `./scripts/docker-build-all
 
 ## Docker & bots
 
-If you are developing bots on the Open Chat platform, you may want to download and run the _open-chat_ docker image.
+If you are developing bots on the Open Chat platform, you may want to build and then run the _open-chat_ docker image.
+
+To build the image from the repository use:
+```shell
+docker build -t open-chat -f Dockerfile.oc .
+```
+NOTE: it may take up to 10 minutes to build the image.
 
 This image runs the mainnet, and Open Chat canisters and UI within the container, therefore removing the requirement for a manual local installation.
 
-To run the `open-chat` image, once it's downloaded:
+To run the `open-chat` image, once it's built:
 ```shell
 docker run -d -p 5002:80 -p 8080:8080 --name open-chat open-chat
 ```
 
 NOTE: It may take up to a minute for the container to start serving OC app once it's started.
 
-The app UI should be available on [http://localhost:5002](http://localhost:5002).
+Once the container with the image is running, the app UI should be available on [http://localhost:5002](http://localhost:5002).
 
 ## License
 
