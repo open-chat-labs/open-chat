@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+- Use `unbounded_wait` when installing canisters ([#7558](https://github.com/open-chat-labs/open-chat/pull/7558))
 
 ## [[2.0.1627](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1627-notifications_index)] - 2025-03-06
 
