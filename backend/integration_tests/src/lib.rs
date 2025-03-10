@@ -30,10 +30,10 @@ mod gated_group_tests;
 mod group_and_community_verification_tests;
 mod identity_tests;
 mod join_group_tests;
-mod last_online_date_tests;
 mod mentions_tests;
 mod message_activity_tests;
 mod notification_tests;
+mod online_users_tests;
 mod p2p_swap_tests;
 mod pin_number_tests;
 // mod platform_moderator_tests;
@@ -91,6 +91,7 @@ impl From<&User> for types::User {
     }
 }
 
+#[derive(Clone)]
 pub struct CanisterIds {
     pub openchat_installer: CanisterId,
     pub user_index: CanisterId,
