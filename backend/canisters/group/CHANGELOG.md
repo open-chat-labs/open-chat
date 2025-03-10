@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Post in dormant groups that they'll be deleted in 30 days if still inactive ([#7554](https://github.com/open-chat-labs/open-chat/pull/7554))
+
 ### Changed
 
 - Always encode `BotPermission`s as `u32`s ([#7519](https://github.com/open-chat-labs/open-chat/pull/7519))
