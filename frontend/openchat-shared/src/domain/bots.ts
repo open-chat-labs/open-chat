@@ -1,4 +1,5 @@
 import { Principal } from "@dfinity/principal";
+import * as chrono from "chrono-node";
 import type {
     ChatIdentifier,
     DirectChatIdentifier,
@@ -84,7 +85,7 @@ export type DecimalParam = {
 export type DateTimeParam = {
     kind: "dateTime";
     future_only: boolean;
-}
+};
 
 export type SlashCommandOptionChoice<T> = {
     name: string;
@@ -152,7 +153,7 @@ export function defaultDateTimeParam(param?: SlashCommandParam): SlashCommandPar
         kind: "dateTime",
         ...defaultCommonParam(param),
         future_only: false,
-    }
+    };
 }
 
 export function emptySlashCommand(): SlashCommandSchema {
@@ -379,9 +380,9 @@ export type DecimalParamInstance = {
 };
 
 export type DateTimeParamInstance = {
-    kind: "dateTime",
-    value?: bigint | null,
-}
+    kind: "dateTime";
+    value?: bigint | null;
+};
 
 export type SlashCommandParamTypeInstance =
     | UserParamInstance
@@ -436,11 +437,31 @@ export function createParamInstancesFromSchema(
                 return {
                     name: p.name,
                     kind: "dateTime",
-                    value: parseBigInt(maybeParams[i]) ?? null,
-                }
+                    value: parseDateTime(maybeParams[i]),
+                };
             }
         }
     });
+}
+
+function parseDateTime(value: string): bigint | null {
+    const timestamp = parseBigInt(value);
+    if (timestamp != null) {
+        return timestamp;
+    }
+
+    const now = new Date();
+
+    const date = chrono.parseDate(
+        value,
+        { instant: now, timezone: now.getTimezoneOffset() },
+        { forwardDate: true },
+    );
+    if (date == null) {
+        return null;
+    }
+
+    return BigInt(date.getTime());
 }
 
 export function paramInstanceIsValid(

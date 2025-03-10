@@ -57,6 +57,7 @@
         "turbo": "^2.1.2"
     },
     "dependencies": {
+        "chrono-node": "^2.7.8",
         "date-picker-svelte": "^2.15.1",
         "svelte-dnd-action": "^0.9.52",
         "svelte-i18n": "^4.0.1",
