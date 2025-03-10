@@ -124,28 +124,33 @@ export class CachePrimer {
     }
 
     private getNextBatch(): [string, ChatEventsArgs[]] | undefined {
-        if (this.pending.size === 0) {
-            return undefined;
-        }
         const sorted = this.pending.values().sort(compareChats);
-        const next = sorted[0];
-        const batch = this.getEventsArgs(next);
-        const localUserIndex = this.localUserIndex(next);
+        const batch: ChatEventsArgs[] = []
+        let localUserIndexForBatch: string | undefined = undefined;
 
-        this.pending.delete(next.id);
+        for (const next of sorted) {
+            const localUserIndex = this.localUserIndex(next);
+            if (localUserIndex === undefined) {
+                this.pending.delete(next.id);
+                continue;
+            }
+            if (localUserIndexForBatch === undefined) {
+                localUserIndexForBatch = localUserIndex;
+            } else if (localUserIndex !== localUserIndexForBatch) {
+                continue;
+            }
 
-        for (let i = 1; i < sorted.length; i++) {
-            const chat = sorted[i];
-            if (this.localUserIndex(chat) === localUserIndex) {
-                this.getEventsArgs(chat).forEach((args) => batch.push(args));
-                this.pending.delete(chat.id);
-                if (batch.length >= BATCH_SIZE) {
-                    break;
-                }
+            this.pending.delete(next.id);
+            batch.push(...this.getEventsArgs(next));
+
+            if (batch.length >= BATCH_SIZE) {
+                break;
             }
         }
 
-        return [localUserIndex, batch];
+        return localUserIndexForBatch !== undefined
+            ? [localUserIndexForBatch, batch]
+            : undefined;
     }
 
     private getEventsArgs(chat: ChatSummary): ChatEventsArgs[] {
@@ -198,14 +203,14 @@ export class CachePrimer {
         return this.api.chatEventsBatch(localUserIndex, requests);
     }
 
-    private localUserIndex(chat: ChatSummary): string {
+    private localUserIndex(chat: ChatSummary): string | undefined {
         switch (chat.kind) {
             case "direct_chat":
                 return this.userCanisterLocalUserIndex;
             case "group_chat":
                 return chat.localUserIndex;
             case "channel":
-                return this.api.localUserIndexForCommunity(chat.id.communityId);
+                return this.api.cachedLocalUserIndexForCommunity(chat.id.communityId);
         }
     }
 
