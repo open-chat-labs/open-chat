@@ -1301,6 +1301,7 @@ export class OpenChat extends EventTarget {
 
     blockUserFromDirectChat(userId: string): Promise<boolean> {
         blockedUsers.add(userId);
+        rtcConnectionsManager.disconnectFromUser(userId);
         return this.#sendRequest({ kind: "blockUserFromDirectChat", userId })
             .then((resp) => {
                 return resp === "success";
