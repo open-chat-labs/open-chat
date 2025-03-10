@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
 - Log number of public and private groups active in the last year ([#7552](https://github.com/open-chat-labs/open-chat/pull/7552))
 
+### Fixed
+
+- Clear cached hot groups to fix deserialization during upgrade ([#7556](https://github.com/open-chat-labs/open-chat/pull/7556))
+
 ## [[2.0.1613](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1613-group_index)] - 2025-02-28
 
 ### Added
