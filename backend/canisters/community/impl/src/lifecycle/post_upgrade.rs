@@ -32,7 +32,8 @@ fn post_upgrade(args: Args) {
         finalize_group_import(group_id);
     }
 
-    info!(version = %args.wasm_version, "Post-upgrade complete");
+    let total_instructions = ic_cdk::api::call_context_instruction_counter();
+    info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
 
     read_state(|state| {
         let now = state.env.now();

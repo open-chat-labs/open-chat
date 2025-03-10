@@ -22,5 +22,6 @@ fn post_upgrade(args: Args) {
     let env = init_env(data.rng_seed);
     init_state(env, data, args.wasm_version);
 
-    info!(version = %args.wasm_version, "Post-upgrade complete");
+    let total_instructions = ic_cdk::api::call_context_instruction_counter();
+    info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
 }
