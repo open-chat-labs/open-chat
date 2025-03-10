@@ -3,7 +3,7 @@ use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
 use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, PushMessageArgs, TextContentInternal};
+use chat_events::{MessageContentInternal, PushMessageArgs, Reader, TextContentInternal};
 use constants::{DAY_IN_MS, OPENCHAT_BOT_USER_ID};
 use group_canister::post_upgrade::Args;
 use ic_cdk::post_upgrade;
@@ -47,7 +47,16 @@ fn post_upgrade(args: Args) {
 
         let now = state.env.now();
         let one_year_ago = now.saturating_sub(365 * DAY_IN_MS);
-        if state.data.chat.events.latest_event_timestamp().unwrap_or_default() < one_year_ago {
+        if state
+            .data
+            .chat
+            .events
+            .main_events_reader()
+            .latest_message_event(None)
+            .map(|m| m.timestamp)
+            .unwrap_or_default()
+            < one_year_ago
+        {
             state.data.chat.events.push_message(
                 PushMessageArgs {
                     sender: OPENCHAT_BOT_USER_ID,
