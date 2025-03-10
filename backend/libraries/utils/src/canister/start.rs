@@ -1,7 +1,7 @@
 use crate::canister::convert_cdk_error;
 use candid::Principal;
 use ic_cdk::call::{Call, CallResult, RejectCode};
-use ic_cdk::management_canister::{StartCanisterArgs, StopCanisterArgs};
+use ic_cdk::management_canister::StartCanisterArgs;
 use tracing::error;
 use types::CanisterId;
 
