@@ -17,7 +17,8 @@ then
   dfx extension install nns --version 0.5.0 >& /dev/null
 fi
 
-dfx --identity $IDENTITY nns install
+TEST_ICP_ACCOUNT=$(dfx --identity $IDENTITY ledger account-id)
+dfx --identity $IDENTITY nns install --ledger-accounts $TEST_ICP_ACCOUNT
 
 NNS_ROOT_CANISTER_ID=r7inp-6aaaa-aaaaa-aaabq-cai
 NNS_GOVERNANCE_CANISTER_ID=rrkah-fqaaa-aaaaa-aaaaq-cai
@@ -78,5 +79,6 @@ echo "Canisters created"
     $NNS_INDEX_CANISTER_ID \
     true \
 
+./scripts/get-test-icp.sh "dccg7-xmaaa-aaaaa-qaamq-cai" $IDENTITY
 ./scripts/deploy-test-ledger.sh $IDENTITY
 ./scripts/mint-test-tokens.sh "dccg7-xmaaa-aaaaa-qaamq-cai" $IDENTITY

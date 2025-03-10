@@ -6866,12 +6866,11 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    localUserIndexForCommunity(communityId: string): string {
+    cachedLocalUserIndexForCommunity(communityId: string): string | undefined {
         const community = this.#liveState.communities.get({ kind: "community", communityId });
-        if (community === undefined) {
-            throw new Error("Community not found");
-        }
-        return community.localUserIndex;
+        return community !== undefined
+            ? community.localUserIndex
+            : undefined;
     }
 
     // This will pretend that the value is english and apply it to the english i18n dictionary temporarily.
