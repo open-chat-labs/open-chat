@@ -19,6 +19,8 @@ fi
 
 TEST_ICP_ACCOUNT=$(dfx --identity $IDENTITY ledger account-id)
 dfx --identity $IDENTITY nns install --ledger-accounts $TEST_ICP_ACCOUNT
+# Stop the SNS aggregator so that it doesn't spam the logs
+dfx --identity anonymous canister stop sgymv-uiaaa-aaaaa-aaaia-cai &
 
 NNS_ROOT_CANISTER_ID=r7inp-6aaaa-aaaaa-aaabq-cai
 NNS_GOVERNANCE_CANISTER_ID=rrkah-fqaaa-aaaaa-aaaaq-cai
