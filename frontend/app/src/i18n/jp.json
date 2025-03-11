@@ -1083,6 +1083,7 @@
     "minutes": "分",
     "moderator": "モデレータ",
     "months": "月",
+    "mustBeFutureDateError": "将来の日付を選択する必要があります",
     "muted": "ミュート",
     "muteNotifications": "通知をミュートする",
     "myAccount": "マイアカウント",

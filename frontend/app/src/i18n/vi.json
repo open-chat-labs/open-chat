@@ -1083,6 +1083,7 @@
     "minutes": "Phút",
     "moderator": "người điều hành",
     "months": "Tháng",
+    "mustBeFutureDateError": "Bạn phải chọn một ngày trong tương lai",
     "muted": "Đã tắt tiếng",
     "muteNotifications": "Ẩn thông báo",
     "myAccount": "Tài khoản",

@@ -1083,6 +1083,7 @@
     "minutes": "分钟",
     "moderator": "版主",
     "months": "月份",
+    "mustBeFutureDateError": "您必须选择一个未来日期",
     "muted": "静默",
     "muteNotifications": "关闭通知",
     "myAccount": "我的帐户",

@@ -27,10 +27,14 @@
     // TODO i18n localisation for the date picker!
 
     import { _ } from "svelte-i18n";
-    import { interpolate } from "../i18n/i18n";
+    import { interpolate, i18nKey } from "../i18n/i18n";
     import SveltyPicker from "svelty-picker";
     import type { ResourceKey } from "openchat-client";
-    import { onMount, onDestroy } from "svelte";
+    import { onMount } from "svelte";
+    import CloseCircleOutline from "svelte-material-icons/CloseCircleOutline.svelte";
+    import TooltipWrapper from "./TooltipWrapper.svelte";
+    import TooltipPopup from "./TooltipPopup.svelte";
+    import Translatable from "./Translatable.svelte";
 
     let {
         align = "left",
@@ -54,23 +58,7 @@
         onchange = undefined,
     }: Props = $props();
 
-    // If we're only allowed to select future dates, then minimum date and
-    // time selectable is current!
-    startDate = futureOnly ? new Date() : undefined;
-
-    // Move the start date forward as time progresses
-    let startDateInterval: NodeJS.Timeout | undefined = undefined;
-    if (futureOnly) {
-        startDate = new Date();
-        startDateInterval = setInterval(() => {
-            startDate = new Date();
-        }, 500)
-        onDestroy(() => {
-            if (startDateInterval) {
-                clearInterval(startDateInterval);
-            }
-        });
-    }
+    let dateIsValid = $state(true);
 
     // Initialise local date from the provided value on component mount
     let localDate: string | undefined = $state(undefined);
@@ -100,11 +88,30 @@
         {todayBtn}
         {weekStart}
         onDateChange={({ dateValue }) => {
+            if (futureOnly && dateValue instanceof Date && dateValue < new Date()) {
+                dateIsValid = false;
+            } else {
+                dateIsValid = true;
+            }
             dateValue instanceof Date
                 ? onchange?.(BigInt(dateValue.getTime()))
                 : onchange?.(null);
         }}
     />
+    {#if !dateIsValid}
+        <div class="error">
+            <TooltipWrapper position={"top"} align={"middle"}>
+                <div slot="target" class="param" class:required={required}>
+                    <CloseCircleOutline width="1.25rem" height="1.25rem" />
+                </div>
+                <div let:position let:align slot="tooltip">
+                    <TooltipPopup {align} {position}>
+                        <Translatable resourceKey={i18nKey("mustBeFutureDateError")} />
+                    </TooltipPopup>
+                </div>
+            </TooltipWrapper>
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -127,11 +134,23 @@
 
         :global(input[name="date_input"]) {
             @include input();
-
             width: 100%;
 
             &::placeholder {
                 color: var(--placeholder);
+            }
+        }
+
+        .error {
+            position: absolute;
+            right: $sp3;
+            width: 1.25rem;
+            height: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+
+            :global(svg > path) {
+                fill: var(--error);
             }
         }
     }
