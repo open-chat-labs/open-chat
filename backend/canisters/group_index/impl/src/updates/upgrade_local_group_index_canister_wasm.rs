@@ -4,14 +4,18 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::upgrade_local_group_index_canister_wasm::*;
 use group_index_canister::ChildCanisterType;
-use tracing::info;
+use tracing::{error, info};
 use types::{BuildVersion, CanisterWasm, UpgradeChunkedCanisterWasmResponse::*};
 use utils::canister::should_perform_upgrade;
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 fn upgrade_local_group_index_canister_wasm(args: Args) -> Response {
-    mutate_state(|state| upgrade_local_group_index_canister_wasm_impl(args, state))
+    let response = mutate_state(|state| upgrade_local_group_index_canister_wasm_impl(args, state));
+    if !matches!(response, Success) {
+        error!(?response, "Failed to upgrade LocalGroupIndex canister wasm");
+    }
+    response
 }
 
 fn upgrade_local_group_index_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> Response {
