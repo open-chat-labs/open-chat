@@ -17,8 +17,10 @@ fn init(args: Args) {
     let env = init_env([0; 32]);
     let data = Data::new(
         args.user_index_canister_id,
+        args.airdrop_bot_canister_id,
         args.event_relay_canister_id,
         args.cycles_dispenser_canister_id,
+        args.sync_online_minutes_to_airdrop_bot_increment,
         args.test_mode,
     );
 

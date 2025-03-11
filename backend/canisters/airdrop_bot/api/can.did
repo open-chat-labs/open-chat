@@ -34,6 +34,7 @@ type V2Algorithm = record {
     lottery_prizes : vec nat;
     lottery_min_chit : nat32;
     lottery_min_streak : nat16;
+    min_minutes_online : nat16;
 };
 
 type CancelAirdropResponse = variant {

@@ -1,4 +1,5 @@
 use crate::actions::Action;
+use crate::model::user_minutes_online::UserMinutesOnline;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use model::airdrops::{Airdrops, AirdropsMetrics};
@@ -8,6 +9,7 @@ use std::collections::{BTreeMap, HashSet};
 use timer_job_queues::TimerJobQueue;
 use types::{BuildVersion, CanisterId, ChannelId, CommunityId, Cycles, Document, TimestampMillis, Timestamped};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod actions;
 mod guards;
@@ -41,6 +43,11 @@ impl RuntimeState {
         self.data.admins.contains(&caller)
     }
 
+    pub fn is_caller_online_users_canister(&self) -> bool {
+        let caller = self.env.caller();
+        caller == self.data.online_users_canister_id
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -56,6 +63,7 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
+                online_users: self.data.online_users_canister_id,
                 chat_ledger: self.data.chat_ledger_canister_id,
             },
         }
@@ -66,12 +74,18 @@ impl RuntimeState {
 struct Data {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    pub online_users_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
     pub admins: HashSet<Principal>,
     pub avatar: Timestamped<Option<Document>>,
     pub airdrops: Airdrops,
     pub channels_joined: HashSet<(CommunityId, ChannelId)>,
+    #[serde(default)]
+    pub user_minutes_online: UserMinutesOnline,
     pub pending_actions_queue: TimerJobQueue<Action>,
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -80,6 +94,7 @@ impl Data {
     pub fn new(
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
+        online_users_canister_id: CanisterId,
         chat_ledger_canister_id: CanisterId,
         admins: HashSet<Principal>,
         test_mode: bool,
@@ -87,12 +102,15 @@ impl Data {
         Data {
             user_index_canister_id,
             local_user_index_canister_id,
+            online_users_canister_id,
             chat_ledger_canister_id,
             admins,
             avatar: Timestamped::default(),
             airdrops: Airdrops::default(),
             channels_joined: HashSet::default(),
+            user_minutes_online: UserMinutesOnline::default(),
             pending_actions_queue: TimerJobQueue::new(20, true),
+            idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -118,5 +136,6 @@ pub struct Metrics {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub local_user_index: CanisterId,
+    pub online_users: CanisterId,
     pub chat_ledger: CanisterId,
 }

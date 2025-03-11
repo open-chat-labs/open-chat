@@ -1,13 +1,14 @@
 [package]
-name = "airdrop_bot_canister_client"
+name = "airdrop_bot_canister_c2c_client"
 version.workspace = true
 edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = { workspace = true }
-canister_client = { path = "../../../libraries/canister_client" }
-ic-agent = { workspace = true }
 airdrop_bot_canister = { path = "../api" }
+canister_client = { path = "../../../libraries/canister_client" }
+ic-cdk = { workspace = true }
+msgpack = { path = "../../../libraries/msgpack" }
+tracing = { workspace = true }
 types = { path = "../../../libraries/types" }

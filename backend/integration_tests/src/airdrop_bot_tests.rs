@@ -37,7 +37,8 @@ fn airdrop_end_to_end(v2: bool) {
     let community_id =
         client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
 
-    let users: Vec<_> = (0..5)
+    let user_count = if v2 { 6 } else { 5 };
+    let users: Vec<_> = (0..user_count)
         .map(|_| client::register_diamond_user(env, canister_ids, *controller))
         .collect();
 
@@ -89,6 +90,7 @@ fn airdrop_end_to_end(v2: bool) {
             lottery_prizes: vec![200_000_000_000, 200_000_000_000, 200_000_000_000, 200_000_000_000],
             lottery_min_chit: 500,
             lottery_min_streak: 30,
+            min_minutes_online: 1,
         })
     } else {
         AirdropAlgorithm::V1(V1Algorithm {
@@ -128,6 +130,13 @@ fn airdrop_end_to_end(v2: bool) {
 
     // Advance time to just after the airdrop is due
     env.advance_time(Duration::from_millis(1000 + start_airdrop.saturating_sub(now_millis(env))));
+
+    if v2 {
+        // Mark the first 5 users online (excluding the 6th)
+        for user in users.iter().take(5) {
+            client::online_users::happy_path::mark_as_online(env, user.principal, canister_ids.online_users);
+        }
+    }
 
     tick_many(env, 30);
 

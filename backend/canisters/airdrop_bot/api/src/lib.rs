@@ -37,4 +37,6 @@ pub struct V2Algorithm {
     pub lottery_prizes: Vec<u128>,
     pub lottery_min_chit: u32,
     pub lottery_min_streak: u16,
+    #[serde(default)]
+    pub min_minutes_online: u16,
 }

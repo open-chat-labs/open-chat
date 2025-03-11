@@ -12,5 +12,5 @@ pub struct Args {
 #[ts_export(online_users, online_minutes)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(u32),
+    Success(u16),
 }

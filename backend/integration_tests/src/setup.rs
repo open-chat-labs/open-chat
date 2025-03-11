@@ -288,8 +288,10 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id,
+        airdrop_bot_canister_id,
         event_relay_canister_id,
         cycles_dispenser_canister_id,
+        sync_online_minutes_to_airdrop_bot_increment: 1,
         wasm_version,
         test_mode,
     };
@@ -552,6 +554,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         admins: vec![controller],
         user_index_canister_id,
         local_user_index_canister_id: subnet.local_user_index,
+        online_users_canister_id,
         chat_ledger_canister_id,
         wasm_version,
         test_mode,
