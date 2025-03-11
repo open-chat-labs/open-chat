@@ -375,7 +375,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.markAsOnline().then(() => undefined),
+                    agent.markAsOnline(),
                 );
                 break;
 

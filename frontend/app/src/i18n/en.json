@@ -1649,6 +1649,7 @@
         "groupStats": "{level} stats",
         "icpTransfers": "ICP message",
         "imageMessages": "Image message",
+        "minutesOnline": "Mins online this month",
         "pollMessages": "Poll message",
         "pollVotes": "Poll votes",
         "reactions": "Reactions",

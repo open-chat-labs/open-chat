@@ -3,6 +3,7 @@
     import Flag from "svelte-material-icons/Flag.svelte";
     import { tweened } from "svelte/motion";
     import type { Metrics, OpenChat } from "openchat-client";
+    import { minutesOnlineStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { writable } from "svelte/store";
     import { iconSize } from "../../stores/iconSize";
@@ -236,6 +237,10 @@
     <div class="deleted-messages">
         <span class="stat">{stats.deletedMessages.toLocaleString()}</span>
         <Translatable resourceKey={i18nKey("stats.deletedMessages")} />
+    </div>
+    <div class="minutes-online">
+        <span class="stat">{$minutesOnlineStore.toLocaleString()}</span>
+        <Translatable resourceKey={i18nKey("stats.minutesOnline")} />
     </div>
     {#if showReported}
         <TooltipWrapper position={"top"} align="middle">

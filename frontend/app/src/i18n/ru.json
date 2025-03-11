@@ -1649,6 +1649,7 @@
         "groupStats": "Статистика {level} ",
         "icpTransfers": "ICP переводы",
         "imageMessages": "графические сообщения",
+        "minutesOnline": "Минут онлайн в этом месяце",
         "pollMessages": "сообщения опроса",
         "pollVotes": "голосование",
         "reactions": "реакции",
