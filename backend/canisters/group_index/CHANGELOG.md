@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Log error response if any canister wasm upgrades are rejected ([#7566](https://github.com/open-chat-labs/open-chat/pull/7566))
+
+## [[2.0.1635](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1635-group_index)] - 2025-03-10
+
+### Changed
+
 - Use `unbounded_wait` when installing canisters ([#7558](https://github.com/open-chat-labs/open-chat/pull/7558))
 
 ## [[2.0.1630](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1630-group_index)] - 2025-03-10

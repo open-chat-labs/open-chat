@@ -18,7 +18,10 @@ async fn upgrade_community_canister_wasm(args: Args) -> Response {
         local_group_index_canisters,
     } = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(response) => {
+            error!(?response, "Failed to upgrade Community canister wasm");
+            return response;
+        }
     };
 
     let version = wasm.version;
