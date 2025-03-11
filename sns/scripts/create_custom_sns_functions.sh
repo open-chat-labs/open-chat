@@ -16,7 +16,7 @@ do
     IFS='.' read -ra ADDR <<< "$FILENAME"
     FUNCTION_ID=${ADDR[0]}
 
-    # Source FUNCTION_NAME, FUNCTION_DESC, URL from the file contents
+    # Source FUNCTION_NAME, FUNCTION_DESC, URL, TOPIC from the file contents
     source $file
 
     SUMMARY=$FUNCTION_DESC
@@ -25,7 +25,6 @@ do
     then
         TARGET_CANISTER=${ADDR[1]}
         TARGET_NAME=${ADDR[2]}
-        TOPIC=${ADDR[3]}
 
         # Derive the remaining variables
         TITLE="Add a new custom SNS function to \\\"$FUNCTION_NAME\\\""
@@ -36,8 +35,7 @@ do
     else
         SERVICE_NAME=${ADDR[1]}
         TARGET_NAME=${ADDR[2]}
-        TOPIC=${ADDR[3]}
-        TARGET_CANISTER_ID=${ADDR[4]}
+        TARGET_CANISTER_ID=${ADDR[3]}
 
         # Derive the remaining variables
         VALIDATOR_CANISTER_ID=$(dfx -qq canister --network $NETWORK id proposal_validation)
