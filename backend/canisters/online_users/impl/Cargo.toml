@@ -10,6 +10,8 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+airdrop_bot_canister = { path = "../../airdrop_bot/api" }
+airdrop_bot_canister_c2c_client = { path = "../../airdrop_bot/c2c_client" }
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
@@ -29,6 +31,7 @@ rand = { workspace = true }
 serde = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
 stable_memory_map = { path = "../../../libraries/stable_memory_map" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_index_canister = { path = "../../user_index/api" }

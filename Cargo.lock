@@ -115,13 +115,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "airdrop_bot_canister_client"
+name = "airdrop_bot_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "airdrop_bot_canister",
- "candid",
  "canister_client",
- "ic-agent",
+ "ic-cdk 0.18.0-alpha.1",
+ "msgpack",
+ "tracing",
  "types",
 ]
 
@@ -5451,6 +5452,8 @@ dependencies = [
 name = "online_users_canister_impl"
 version = "0.1.0"
 dependencies = [
+ "airdrop_bot_canister",
+ "airdrop_bot_canister_c2c_client",
  "candid",
  "canister_api_macros",
  "canister_logger",
@@ -5470,6 +5473,7 @@ dependencies = [
  "serde",
  "stable_memory",
  "stable_memory_map",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_index_canister",

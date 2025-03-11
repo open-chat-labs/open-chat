@@ -1,12 +1,15 @@
 use crate::{mutate_state, read_state, RuntimeState};
+use airdrop_bot_canister::c2c_online_users::{OnlineForMinutes, OnlineUsersEvent};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::SECOND_IN_MS;
 use event_store_producer::EventBuilder;
 use online_users_canister::mark_as_online::{Response::*, *};
+use rand::RngCore;
 use stable_memory_map::StableMemoryMap;
-use types::{CanisterId, UserId};
+use types::{CanisterId, IdempotentEnvelope, UserId};
+use utils::time::MonthKey;
 
 #[update(msgpack = true)]
 #[trace]
@@ -47,7 +50,23 @@ fn mark_as_online_impl(user_id: UserId, state: &mut RuntimeState) -> Response {
         // Users are marked online every minute, but by requiring slightly less than a minute we
         // cater for the fact that some requests take longer than others to be processed, but we
         // also avoid double counting for users who are on multiple devices simultaneously.
-        state.data.user_online_minutes.incr(user_id, now);
+        let minutes_online = state.data.user_online_minutes.incr(user_id, now);
+        if minutes_online % 60 == 0 {
+            let month_key = MonthKey::from_timestamp(now);
+            state.data.airdrop_bot_event_sync_queue.push(
+                state.data.airdrop_bot_canister_id,
+                IdempotentEnvelope {
+                    created_at: now,
+                    idempotency_id: state.env.rng().next_u64(),
+                    value: OnlineUsersEvent::OnlineForMinutes(OnlineForMinutes {
+                        user_id,
+                        year: month_key.year(),
+                        month: month_key.month(),
+                        minutes_online,
+                    }),
+                },
+            )
+        }
     }
     state.data.mark_as_online_count += 1;
     state.data.event_store_client.push(

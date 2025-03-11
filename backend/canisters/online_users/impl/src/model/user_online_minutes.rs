@@ -9,12 +9,15 @@ pub struct UserOnlineMinutes {
 }
 
 impl UserOnlineMinutes {
-    pub fn incr(&mut self, user_id: UserId, now: TimestampMillis) {
+    pub fn incr(&mut self, user_id: UserId, now: TimestampMillis) -> u16 {
         let month_key = MonthKey::from_timestamp(now);
-        *self.months.entry(month_key).or_default().users.entry(user_id).or_default() += 1;
+        let entry = self.months.entry(month_key).or_default().users.entry(user_id).or_default();
+        let new_count = entry.saturating_add(1);
+        *entry = new_count;
+        new_count
     }
 
-    pub fn get(&self, user_id: UserId, month_key: MonthKey) -> u32 {
+    pub fn get(&self, user_id: UserId, month_key: MonthKey) -> u16 {
         self.months
             .get(&month_key)
             .and_then(|m| m.users.get(&user_id).copied())
@@ -24,5 +27,5 @@ impl UserOnlineMinutes {
 
 #[derive(Serialize, Deserialize, Default)]
 struct OnlineMinutesForMonth {
-    users: BTreeMap<UserId, u32>,
+    users: BTreeMap<UserId, u16>,
 }

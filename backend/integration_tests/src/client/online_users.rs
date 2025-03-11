@@ -32,7 +32,7 @@ pub mod happy_path {
         online_users_canister_id: CanisterId,
         year: u32,
         month: u8,
-    ) -> u32 {
+    ) -> u16 {
         let response = super::online_minutes(
             env,
             caller,

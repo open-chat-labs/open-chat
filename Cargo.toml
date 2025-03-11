@@ -2,7 +2,7 @@
 members = [
     "backend/benchmarks",
     "backend/canisters/airdrop_bot/api",
-    "backend/canisters/airdrop_bot/client",
+    "backend/canisters/airdrop_bot/c2c_client",
     "backend/canisters/airdrop_bot/impl",
     "backend/canisters/community/api",
     "backend/canisters/community/c2c_client",

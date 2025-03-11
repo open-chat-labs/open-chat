@@ -15,6 +15,7 @@ fn init(args: Args) {
     let data = Data::new(
         args.user_index_canister_id,
         args.local_user_index_canister_id,
+        args.online_users_canister_id,
         args.chat_ledger_canister_id,
         args.admins.into_iter().collect(),
         args.test_mode,

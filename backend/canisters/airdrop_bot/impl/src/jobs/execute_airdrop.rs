@@ -1,6 +1,6 @@
 use crate::actions::{Action, AirdropTransfer, AirdropType, LotteryAirdrop, MainAirdrop};
 use crate::{mutate_state, read_state, RuntimeState};
-use airdrop_bot_canister::AirdropConfig;
+use airdrop_bot_canister::{AirdropAlgorithm, AirdropConfig};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::iter::zip;
@@ -114,11 +114,17 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
     let mk = MonthKey::from_timestamp(config.start).previous();
 
     // Exclude channel owners from the airdrop
-    let users: Vec<UserId> = members
+    let mut users: Vec<UserId> = members
         .into_iter()
         .filter(|m| !matches!(m.role, GroupRole::Owner))
         .map(|m| m.user_id)
         .collect();
+
+    if let AirdropAlgorithm::V2(v2) = &config.algorithm {
+        if v2.min_minutes_online > 0 {
+            read_state(|state| users.retain(|u| state.data.user_minutes_online.get(u, &mk) >= v2.min_minutes_online));
+        }
+    }
 
     let chit = match user_index_canister_c2c_client::users_chit(
         user_index_canister_id,

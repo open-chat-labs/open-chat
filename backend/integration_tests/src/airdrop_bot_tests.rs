@@ -89,6 +89,7 @@ fn airdrop_end_to_end(v2: bool) {
             lottery_prizes: vec![200_000_000_000, 200_000_000_000, 200_000_000_000, 200_000_000_000],
             lottery_min_chit: 500,
             lottery_min_streak: 30,
+            min_minutes_online: 0,
         })
     } else {
         AirdropAlgorithm::V1(V1Algorithm {

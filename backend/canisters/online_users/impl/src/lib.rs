@@ -1,3 +1,4 @@
+use crate::model::airdrop_bot_event_batch::AirdropBotEventBatch;
 use crate::model::last_online_dates::LastOnlineDates;
 use crate::model::user_online_minutes::UserOnlineMinutes;
 use canister_state_macros::canister_state;
@@ -8,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::time::Duration;
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -57,6 +59,7 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
+                airdrop_bot: self.data.airdrop_bot_canister_id,
                 event_relay: event_store_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
@@ -71,17 +74,26 @@ struct Data {
     pub user_online_minutes: UserOnlineMinutes,
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub user_index_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    pub airdrop_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub mark_as_online_count: u64,
     pub cached_active_users: ActiveUsers,
+    #[serde(default = "airdrop_bot_event_sync_queue")]
+    pub airdrop_bot_event_sync_queue: GroupedTimerJobQueue<AirdropBotEventBatch>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn airdrop_bot_event_sync_queue() -> GroupedTimerJobQueue<AirdropBotEventBatch> {
+    GroupedTimerJobQueue::new(1, false)
 }
 
 impl Data {
     pub fn new(
         user_index_canister_id: CanisterId,
+        airdrop_bot_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
@@ -91,12 +103,14 @@ impl Data {
             user_online_minutes: UserOnlineMinutes::default(),
             principal_to_user_id_map: PrincipalToUserIdMap::default(),
             user_index_canister_id,
+            airdrop_bot_canister_id,
             cycles_dispenser_canister_id,
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
             mark_as_online_count: 0,
             cached_active_users: ActiveUsers::default(),
+            airdrop_bot_event_sync_queue: GroupedTimerJobQueue::new(1, false),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -131,6 +145,7 @@ pub struct ActiveUsers {
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
     pub user_index: CanisterId,
+    pub airdrop_bot: CanisterId,
     pub event_relay: CanisterId,
     pub cycles_dispenser: CanisterId,
 }
