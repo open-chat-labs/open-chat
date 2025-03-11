@@ -51,7 +51,7 @@ fn mark_as_online_impl(user_id: UserId, state: &mut RuntimeState) -> Response {
         // cater for the fact that some requests take longer than others to be processed, but we
         // also avoid double counting for users who are on multiple devices simultaneously.
         let minutes_online = state.data.user_online_minutes.incr(user_id, now);
-        if minutes_online % 60 == 0 {
+        if minutes_online % state.data.sync_online_minutes_to_airdrop_bot_increment == 0 {
             let month_key = MonthKey::from_timestamp(now);
             state.data.airdrop_bot_event_sync_queue.push(
                 state.data.airdrop_bot_canister_id,

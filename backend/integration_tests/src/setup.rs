@@ -291,6 +291,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         airdrop_bot_canister_id,
         event_relay_canister_id,
         cycles_dispenser_canister_id,
+        sync_online_minutes_to_airdrop_bot_increment: 1,
         wasm_version,
         test_mode,
     };

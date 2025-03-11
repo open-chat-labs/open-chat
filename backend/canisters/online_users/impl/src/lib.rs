@@ -55,6 +55,7 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             mark_as_online_count: self.data.mark_as_online_count,
             active_users: self.data.cached_active_users.clone(),
+            sync_online_minutes_to_airdrop_bot_increment: self.data.sync_online_minutes_to_airdrop_bot_increment,
             event_store_client_info,
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
@@ -82,8 +83,14 @@ struct Data {
     pub cached_active_users: ActiveUsers,
     #[serde(default = "airdrop_bot_event_sync_queue")]
     pub airdrop_bot_event_sync_queue: GroupedTimerJobQueue<AirdropBotEventBatch>,
+    #[serde(default = "sixty")]
+    pub sync_online_minutes_to_airdrop_bot_increment: u16,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn sixty() -> u16 {
+    60
 }
 
 fn airdrop_bot_event_sync_queue() -> GroupedTimerJobQueue<AirdropBotEventBatch> {
@@ -96,6 +103,7 @@ impl Data {
         airdrop_bot_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
+        sync_online_minutes_to_airdrop_bot_increment: u16,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -111,6 +119,7 @@ impl Data {
             mark_as_online_count: 0,
             cached_active_users: ActiveUsers::default(),
             airdrop_bot_event_sync_queue: GroupedTimerJobQueue::new(1, false),
+            sync_online_minutes_to_airdrop_bot_increment,
             rng_seed: [0; 32],
             test_mode,
         }
@@ -127,6 +136,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub mark_as_online_count: u64,
     pub active_users: ActiveUsers,
+    pub sync_online_minutes_to_airdrop_bot_increment: u16,
     pub event_store_client_info: EventStoreClientInfo,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,

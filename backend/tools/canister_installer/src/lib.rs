@@ -173,6 +173,7 @@ async fn install_service_canisters_impl(
         airdrop_bot_canister_id: canister_ids.airdrop_bot,
         event_relay_canister_id: canister_ids.event_relay,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        sync_online_minutes_to_airdrop_bot_increment: 60,
         wasm_version: version,
         test_mode,
     };
