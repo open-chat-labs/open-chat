@@ -112,7 +112,7 @@
             value={instance.value}
             futureOnly={param.future_only}
             placeholder={i18nKey(param.placeholder ?? "")}
-            onselect={(value) => {
+            onchange={(value) => {
                 instance.value = value;
                 onChange();
             }}/>

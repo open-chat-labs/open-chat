@@ -55,6 +55,7 @@
         "sass": "^1.65.1",
         "stream-browserify": "3.0.0",
         "svelte-preprocess": "^6.0.3",
+        "svelty-picker": "^6.1.5",
         "tslib": "^2.6.1",
         "typescript": "=5.4.2",
         "url": "^0.11.1",
