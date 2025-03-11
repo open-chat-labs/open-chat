@@ -136,14 +136,26 @@ export const ProposalsBotCanisterInstallMode = Type.Union([
 export type ProposalsBotTreasury = Static<typeof ProposalsBotTreasury>;
 export const ProposalsBotTreasury = Type.Union([Type.Literal("ICP"), Type.Literal("SNS")]);
 
-export type OnlineUsersMarkAsOnlineResponse = Static<typeof OnlineUsersMarkAsOnlineResponse>;
-export const OnlineUsersMarkAsOnlineResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("UserNotFound"),
-    Type.Object({
-        InternalError: Type.String(),
-    }),
-]);
+export type OnlineUsersMinutesOnlineArgs = Static<typeof OnlineUsersMinutesOnlineArgs>;
+export const OnlineUsersMinutesOnlineArgs = Type.Object({
+    year: Type.Number(),
+    month: Type.Number(),
+});
+
+export type OnlineUsersMinutesOnlineResponse = Static<typeof OnlineUsersMinutesOnlineResponse>;
+export const OnlineUsersMinutesOnlineResponse = Type.Object({
+    Success: Type.Number(),
+});
+
+export type OnlineUsersMarkAsOnlineSuccessResult = Static<
+    typeof OnlineUsersMarkAsOnlineSuccessResult
+>;
+export const OnlineUsersMarkAsOnlineSuccessResult = Type.Object({
+    timestamp: Type.BigInt(),
+    year: Type.Number(),
+    month: Type.Number(),
+    minutes_online: Type.Number(),
+});
 
 export type GroupSummaryUpdatesArgs = Static<typeof GroupSummaryUpdatesArgs>;
 export const GroupSummaryUpdatesArgs = Type.Object({
@@ -730,6 +742,7 @@ export const UserClaimDailyChitSuccessResult = Type.Object({
     chit_earned: Type.Number(),
     chit_balance: Type.Number(),
     streak: Type.Number(),
+    max_streak: Type.Number(),
     next_claim: Type.BigInt(),
 });
 
@@ -2376,6 +2389,7 @@ export type UserIndexDiamondMembershipFeesDiamondMembershipFees = Static<
 >;
 export const UserIndexDiamondMembershipFeesDiamondMembershipFees = Type.Object({
     token: Cryptocurrency,
+    token_symbol: Type.String(),
     one_month: Type.BigInt(),
     three_months: Type.BigInt(),
     one_year: Type.BigInt(),
@@ -2590,6 +2604,7 @@ export type UserIndexPayForDiamondMembershipArgs = Static<
 export const UserIndexPayForDiamondMembershipArgs = Type.Object({
     duration: DiamondMembershipPlanDuration,
     token: Cryptocurrency,
+    ledger: TSPrincipal,
     expected_price_e8s: Type.BigInt(),
     recurring: Type.Boolean(),
 });
@@ -4348,6 +4363,18 @@ export const OnlineUsersLastOnlineUserLastOnline = Type.Object({
     duration_since_last_online: Type.BigInt(),
 });
 
+export type OnlineUsersMarkAsOnlineResponse = Static<typeof OnlineUsersMarkAsOnlineResponse>;
+export const OnlineUsersMarkAsOnlineResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        SuccessV2: OnlineUsersMarkAsOnlineSuccessResult,
+    }),
+    Type.Literal("UserNotFound"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
 export type GroupSearchMessagesArgs = Static<typeof GroupSearchMessagesArgs>;
 export const GroupSearchMessagesArgs = Type.Object({
     search_term: Type.String(),
@@ -5461,6 +5488,7 @@ export const MessagePinned = Type.Object({
 export type PendingCryptoTransactionICRC1 = Static<typeof PendingCryptoTransactionICRC1>;
 export const PendingCryptoTransactionICRC1 = Type.Object({
     ledger: TSPrincipal,
+    token_symbol: Type.String(),
     token: Cryptocurrency,
     amount: Type.BigInt(),
     to: AccountICRC1,
@@ -5484,6 +5512,8 @@ export const PrizeContent = Type.Object({
     winner_count: Type.Number(),
     user_is_winner: Type.Boolean(),
     token: Cryptocurrency,
+    token_symbol: Type.String(),
+    ledger: TSPrincipal,
     end_date: Type.BigInt(),
     caption: Type.Optional(Type.String()),
     diamond_only: Type.Boolean(),
@@ -5699,6 +5729,7 @@ export const StartVideoCallArgs = Type.Object({
 
 export type TokenInfo = Static<typeof TokenInfo>;
 export const TokenInfo = Type.Object({
+    symbol: Type.String(),
     token: Cryptocurrency,
     ledger: TSPrincipal,
     decimals: Type.Number(),
@@ -5903,6 +5934,7 @@ export const UsersInvited = Type.Object({
 export type PendingCryptoTransactionNNS = Static<typeof PendingCryptoTransactionNNS>;
 export const PendingCryptoTransactionNNS = Type.Object({
     ledger: TSPrincipal,
+    token_symbol: Type.String(),
     token: Cryptocurrency,
     amount: Tokens,
     to: UserOrAccount,
@@ -5993,6 +6025,7 @@ export const BotCommandArgValue = Type.Union([
 export type PendingCryptoTransactionICRC2 = Static<typeof PendingCryptoTransactionICRC2>;
 export const PendingCryptoTransactionICRC2 = Type.Object({
     ledger: TSPrincipal,
+    token_symbol: Type.String(),
     token: Cryptocurrency,
     amount: Type.BigInt(),
     from: AccountICRC1,
@@ -7149,6 +7182,7 @@ export const UserTipMessageArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     message_id: MessageId,
     ledger: TSPrincipal,
+    token_symbol: Type.String(),
     token: Cryptocurrency,
     amount: Type.BigInt(),
     fee: Type.BigInt(),
@@ -10022,6 +10056,7 @@ export const UserInitialStateSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     streak_ends: Type.BigInt(),
+    max_streak: Type.Number(),
     streak_insurance: Type.Optional(StreakInsurance),
     next_daily_claim: Type.BigInt(),
     is_unique_person: Type.Boolean(),
@@ -10056,6 +10091,7 @@ export const UserUpdatesSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     streak_ends: Type.BigInt(),
+    max_streak: Type.Number(),
     streak_insurance: OptionUpdateStreakInsurance,
     next_daily_claim: Type.BigInt(),
     is_unique_person: Type.Optional(Type.Boolean()),

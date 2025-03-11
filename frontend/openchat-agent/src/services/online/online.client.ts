@@ -7,6 +7,8 @@ import {
     OnlineUsersLastOnlineArgs,
     OnlineUsersLastOnlineResponse,
     OnlineUsersMarkAsOnlineResponse,
+    OnlineUsersMinutesOnlineArgs,
+    OnlineUsersMinutesOnlineResponse,
 } from "../../typebox";
 
 export class OnlineClient extends MsgpackCanisterAgent {
@@ -34,6 +36,16 @@ export class OnlineClient extends MsgpackCanisterAgent {
             toVoid,
             Empty,
             OnlineUsersMarkAsOnlineResponse,
+        );
+    }
+
+    minutesOnline(year: number, month: number): Promise<number> {
+        return this.executeMsgpackQuery(
+            "minutes_online",
+            { year, month },
+            (resp) => resp.Success,
+            OnlineUsersMinutesOnlineArgs,
+            OnlineUsersMinutesOnlineResponse,
         );
     }
 }

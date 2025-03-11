@@ -44,15 +44,16 @@ fn try_get_user_id_locally(state: &RuntimeState) -> Result<UserId, (Principal, C
 fn mark_as_online_impl(user_id: UserId, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     let last_online = state.data.last_online_dates.mark_online(user_id, now);
+    let month_key = MonthKey::from_timestamp(now);
+
+    // We only increment the `user_online_minutes` if there has been at least 50 seconds since
+    // the user was last marked online.
+    // Users are marked online every minute, but by requiring slightly less than a minute we
+    // cater for the fact that some requests take longer than others to be processed, but we
+    // also avoid double counting for users who are on multiple devices simultaneously.
     if last_online.is_none_or(|lo| now.saturating_sub(lo) > 50 * SECOND_IN_MS) {
-        // We only increment the `user_online_minutes` if there has been at least 50 seconds since
-        // the user was last marked online.
-        // Users are marked online every minute, but by requiring slightly less than a minute we
-        // cater for the fact that some requests take longer than others to be processed, but we
-        // also avoid double counting for users who are on multiple devices simultaneously.
         let minutes_online = state.data.user_online_minutes.incr(user_id, now);
         if minutes_online % state.data.sync_online_minutes_to_airdrop_bot_increment == 0 {
-            let month_key = MonthKey::from_timestamp(now);
             state.data.airdrop_bot_event_sync_queue.push(
                 state.data.airdrop_bot_canister_id,
                 IdempotentEnvelope {
@@ -75,5 +76,11 @@ fn mark_as_online_impl(user_id: UserId, state: &mut RuntimeState) -> Response {
             .with_source(state.env.canister_id().to_string(), false)
             .build(),
     );
-    Success
+
+    SuccessV2(SuccessResult {
+        timestamp: now,
+        year: month_key.year(),
+        month: month_key.month(),
+        minutes_online: state.data.user_online_minutes.get(user_id, month_key),
+    })
 }

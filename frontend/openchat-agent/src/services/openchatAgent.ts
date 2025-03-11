@@ -2551,6 +2551,10 @@ export class OpenChatAgent extends EventTarget {
         return this._onlineClient.markAsOnline();
     }
 
+    minutesOnline(year: number, month: number): Promise<number> {
+        return this._onlineClient.minutesOnline(year, month);
+    }
+
     subscriptionExists(p256dh_key: string): Promise<boolean> {
         return this._notificationClient.subscriptionExists(p256dh_key);
     }

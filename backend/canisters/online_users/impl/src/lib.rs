@@ -74,26 +74,15 @@ struct Data {
     pub user_online_minutes: UserOnlineMinutes,
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub user_index_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub airdrop_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub mark_as_online_count: u64,
     pub cached_active_users: ActiveUsers,
-    #[serde(default = "airdrop_bot_event_sync_queue")]
     pub airdrop_bot_event_sync_queue: GroupedTimerJobQueue<AirdropBotEventBatch>,
-    #[serde(default = "sixty")]
     pub sync_online_minutes_to_airdrop_bot_increment: u16,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
-}
-
-fn sixty() -> u16 {
-    60
-}
-
-fn airdrop_bot_event_sync_queue() -> GroupedTimerJobQueue<AirdropBotEventBatch> {
-    GroupedTimerJobQueue::new(1, false)
 }
 
 impl Data {
