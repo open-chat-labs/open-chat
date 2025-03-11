@@ -49,7 +49,8 @@ pub mod happy_path {
 
         assert!(matches!(
             response,
-            online_users_canister::mark_as_online::Response::Success // | online_users_canister::mark_as_online::Response::SuccessV2(_)
+            online_users_canister::mark_as_online::Response::Success
+                | online_users_canister::mark_as_online::Response::SuccessV2(_)
         ));
     }
 }
