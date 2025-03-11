@@ -68,10 +68,9 @@
         {valid}
         visible={false}
         placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
-        on:select={(v: {detail: Date}) => {
-            onselect?.(BigInt(v.detail.getMilliseconds()));
-        }}
-        />
+        on:select={(v: { detail: Date }) => {
+            onselect?.(BigInt(v.detail.getTime()));
+        }} />
 </div>
 
 <style lang="scss">

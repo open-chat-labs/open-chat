@@ -434,10 +434,11 @@ export function createParamInstancesFromSchema(
                 return { kind: "string", name: p.name, value: strParam };
             }
             case "dateTime": {
+                const arg = maybeParams[i];
                 return {
                     name: p.name,
                     kind: "dateTime",
-                    value: parseDateTime(maybeParams[i]),
+                    value: parseBigInt(arg) ?? parseDateTime(arg),
                 };
             }
         }
@@ -445,11 +446,6 @@ export function createParamInstancesFromSchema(
 }
 
 function parseDateTime(value: string): bigint | null {
-    const timestamp = parseBigInt(value);
-    if (timestamp != null) {
-        return timestamp;
-    }
-
     const now = new Date();
 
     const date = chrono.parseDate(
@@ -457,6 +453,7 @@ function parseDateTime(value: string): bigint | null {
         { instant: now, timezone: now.getTimezoneOffset() },
         { forwardDate: true },
     );
+
     if (date == null) {
         return null;
     }
