@@ -26,14 +26,14 @@ pub mod happy_path {
         users
     }
 
-    pub fn online_minutes(
+    pub fn minutes_online(
         env: &PocketIc,
         caller: Principal,
         online_users_canister_id: CanisterId,
         year: u32,
         month: u8,
     ) -> u16 {
-        let response = super::online_minutes(
+        let response = super::minutes_online(
             env,
             caller,
             online_users_canister_id,
