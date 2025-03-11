@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Support using command JWT for reading ([#7512](https://github.com/open-chat-labs/open-chat/pull/7512))
+- Fix upgrade for groups which ran into issue due to disappearing messages ([#7578](https://github.com/open-chat-labs/open-chat/pull/7578))
 
 ## [[2.0.1624](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1624-group)] - 2025-03-03
 
