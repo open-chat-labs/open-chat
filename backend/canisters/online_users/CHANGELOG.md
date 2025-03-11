@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Track user online minutes per month ([#7547](https://github.com/open-chat-labs/open-chat/pull/7547))
+- Sync user minutes online to AirdropBot ([#7563](https://github.com/open-chat-labs/open-chat/pull/7563))
 
 ### Changed
 
