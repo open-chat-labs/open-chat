@@ -15,24 +15,11 @@ use types::TimestampMillis;
 
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
 #[trace]
-fn c2c_notify_group_index_events(args: local_group_index_canister::c2c_notify_group_index_events::Args) -> Response {
-    mutate_state(|state| {
-        c2c_notify_group_index_events_impl(
-            Args {
-                events: args.events.into_iter().map(|e| e.into()).collect(),
-            },
-            state,
-        )
-    })
-}
-
-#[update(guard = "caller_is_group_index_canister", msgpack = true)]
-#[trace]
 fn c2c_group_index(args: Args) -> Response {
-    mutate_state(|state| c2c_notify_group_index_events_impl(args, state))
+    mutate_state(|state| c2c_group_index_impl(args, state))
 }
 
-fn c2c_notify_group_index_events_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn c2c_group_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = LazyCell::new(now_millis);
     for event in args.events {
         if state

@@ -9,24 +9,11 @@ use user_canister::{LocalUserIndexEvent, UserCanisterEvent};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-fn c2c_notify_events(args: user_canister::c2c_notify_events::Args) -> Response {
-    mutate_state(|state| {
-        c2c_notify_events_impl(
-            Args {
-                events: args.events.into_iter().map(|e| e.into()).collect(),
-            },
-            state,
-        )
-    })
-}
-
-#[update(guard = "caller_is_local_user_index", msgpack = true)]
-#[trace]
 fn c2c_local_user_index(args: Args) -> Response {
-    mutate_state(|state| c2c_notify_events_impl(args, state))
+    mutate_state(|state| c2c_local_user_index_impl(args, state))
 }
 
-fn c2c_notify_events_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     for event in args.events {
         if state.data.idempotency_checker.check(
             state.data.local_user_index_canister_id,

@@ -444,7 +444,6 @@ struct Data {
     bots: InstalledBots,
     bot_api_keys: BotApiKeys,
     verified: Timestamped<bool>,
-    #[serde(default)]
     idempotency_checker: IdempotencyChecker,
 }
 

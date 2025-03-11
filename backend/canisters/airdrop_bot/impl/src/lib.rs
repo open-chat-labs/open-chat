@@ -74,17 +74,14 @@ impl RuntimeState {
 struct Data {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub online_users_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
     pub admins: HashSet<Principal>,
     pub avatar: Timestamped<Option<Document>>,
     pub airdrops: Airdrops,
     pub channels_joined: HashSet<(CommunityId, ChannelId)>,
-    #[serde(default)]
     pub user_minutes_online: UserMinutesOnline,
     pub pending_actions_queue: TimerJobQueue<Action>,
-    #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,

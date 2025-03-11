@@ -22,34 +22,6 @@ use user_canister::{
 
 #[update(msgpack = true)]
 #[trace]
-async fn c2c_notify_user_canister_events(args: user_canister::c2c_notify_user_canister_events::Args) -> Response {
-    run_regular_jobs();
-
-    let caller_user_id = match read_state(get_sender_status) {
-        crate::updates::c2c_send_messages::SenderStatus::Ok(user_id, UserType::User) => user_id,
-        crate::updates::c2c_send_messages::SenderStatus::Ok(..) => panic!("This request is from an OpenChat bot user"),
-        crate::updates::c2c_send_messages::SenderStatus::Blocked => return Blocked,
-        crate::updates::c2c_send_messages::SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
-            if !matches!(verify_user(local_user_index_canister_id, user_id).await, Some(UserType::User)) {
-                panic!("This request is not from an OpenChat user");
-            }
-            user_id
-        }
-    };
-
-    mutate_state(|state| {
-        c2c_notify_user_canister_events_impl(
-            Args {
-                events: args.events.into_iter().map(|e| e.into()).collect(),
-            },
-            caller_user_id,
-            state,
-        )
-    })
-}
-
-#[update(msgpack = true)]
-#[trace]
 async fn c2c_user_canister(args: Args) -> Response {
     run_regular_jobs();
 

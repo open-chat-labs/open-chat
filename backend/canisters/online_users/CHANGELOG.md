@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1644](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1644-online_users)] - 2025-03-12
+
 ### Changed
 
 - Return `minutes_online` in `mark_online` response ([#7572](https://github.com/open-chat-labs/open-chat/pull/7572))

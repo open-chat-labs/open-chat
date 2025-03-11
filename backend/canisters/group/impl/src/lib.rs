@@ -521,7 +521,6 @@ struct Data {
     verified: Timestamped<bool>,
     pub bots: InstalledBots,
     pub bot_api_keys: BotApiKeys,
-    #[serde(default)]
     idempotency_checker: IdempotencyChecker,
 }
 
