@@ -121,7 +121,8 @@ function externalBotResponse(value: ApiBotResponse): BotCommandResponse {
     } else if ("BadRequest" in value) {
         return {
             kind: "bad_request",
-            reason: value.BadRequest,
+            // TODO handle the various types
+            reason: JSON.stringify(value.BadRequest),
         };
     } else if ("InternalError" in value) {
         return {
