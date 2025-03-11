@@ -8,8 +8,6 @@ type DurationData = {
     hours: number;
     minutes: number;
     seconds: number;
-    weeks: number;
-    months: number;
 };
 
 export function formatDisappearingMessageTime(
@@ -43,17 +41,13 @@ export function durationFromMilliseconds(total: number): DurationData {
     const seconds = Math.floor((total / 1000) % 60);
     const minutes = Math.floor((total / 1000 / 60) % 60);
     const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
-    const days = Math.floor((total / (1000 * 60 * 60 * 24)) % 7);
-    const weeks = Math.floor((total / (1000 * 60 * 60 * 24 * 7)) % 4);
-    const months = Math.floor(total / (1000 * 60 * 60 * 24 * 7 * 4));
+    const days = Math.floor((total / (1000 * 60 * 60 * 24)));
     return {
         total,
         days,
         hours,
         minutes,
         seconds,
-        weeks,
-        months,
     };
 }
 
@@ -105,9 +99,7 @@ const timeDivisions = [
     { amount: 60, name: "seconds" },
     { amount: 60, name: "minutes" },
     { amount: 24, name: "hours" },
-    { amount: 7, name: "days" },
-    { amount: 4.34524, name: "weeks" },
-    { amount: 12, name: "months" },
+    { amount: 365.25, name: "days" },
     { amount: Number.POSITIVE_INFINITY, name: "years" },
 ];
 

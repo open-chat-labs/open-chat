@@ -4,16 +4,14 @@
     import Select from "../Select.svelte";
     import { _ } from "svelte-i18n";
     import type { OpenChat } from "openchat-client";
-    import { msToDays, msToHours, msToMinutes, msToMonths, msToWeeks } from "../../utils/time";
+    import { msToDays, msToHours, msToMinutes } from "../../utils/time";
 
     const ONE_MINUTE = 1000 * 60;
     const ONE_HOUR = ONE_MINUTE * 60;
     const ONE_DAY = ONE_HOUR * 24;
-    const ONE_WEEK = ONE_DAY * 7;
-    const ONE_MONTH = ONE_WEEK * 4;
     const client = getContext<OpenChat>("client");
 
-    type DurationUnit = "minutes" | "hours" | "days" | "weeks" | "months";
+    type DurationUnit = "minutes" | "hours" | "days";
 
     export let valid = true;
     export let milliseconds: bigint = BigInt(ONE_HOUR);
@@ -24,28 +22,22 @@
     let amount: string = "";
     let unit: DurationUnit;
 
-    $: allUnits = ["minutes", "hours", "days", "weeks", "months"] as DurationUnit[];
+    $: allUnits = ["minutes", "hours", "days"] as DurationUnit[];
     $: supportedDurations = allUnits.filter(unitFilter);
 
     onMount(() => {
         const duration = client.durationFromMilliseconds(Number(milliseconds));
-        const { days, hours, minutes, weeks, months, total } = duration;
+        const { days, hours, minutes, total } = duration;
 
-        if (minutes > 0) {
-            amount = msToMinutes(total).toString();
-            unit = "minutes";
+        if (days > 0) {
+            amount = msToDays(total).toString();
+            unit = "days";
         } else if (hours > 0) {
             amount = msToHours(total).toString();
             unit = "hours";
-        } else if (days > 0) {
-            amount = msToDays(total).toString();
-            unit = "days";
-        } else if (weeks > 0) {
-            amount = msToWeeks(total).toString();
-            unit = "weeks";
-        } else if (months > 0) {
-            amount = msToMonths(total).toString();
-            unit = "months";
+        } else if (minutes > 0) {
+            amount = msToMinutes(total).toString();
+            unit = "minutes";
         }
         initialised = true;
     });
@@ -59,12 +51,6 @@
         }
         valid = true;
         switch (unit) {
-            case "months":
-                milliseconds = BigInt(ONE_MONTH * ttlNum);
-                break;
-            case "weeks":
-                milliseconds = BigInt(ONE_WEEK * ttlNum);
-                break;
             case "minutes":
                 milliseconds = BigInt(ONE_MINUTE * ttlNum);
                 break;
