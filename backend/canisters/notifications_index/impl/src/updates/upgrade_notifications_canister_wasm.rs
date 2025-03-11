@@ -4,13 +4,17 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use notifications_index_canister::upgrade_notifications_canister_wasm::{Response::*, *};
 use std::collections::HashSet;
-use tracing::info;
+use tracing::{error, info};
 use types::BuildVersion;
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 fn upgrade_notifications_canister_wasm(args: Args) -> Response {
-    mutate_state(|state| upgrade_notifications_canister_wasm_impl(args, state))
+    let response = mutate_state(|state| upgrade_notifications_canister_wasm_impl(args, state));
+    if !matches!(response, Success) {
+        error!(?response, "Failed to upgrade Notifications canister wasm");
+    }
+    response
 }
 
 fn upgrade_notifications_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> Response {
