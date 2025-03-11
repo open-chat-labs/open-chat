@@ -2547,7 +2547,7 @@ export class OpenChatAgent extends EventTarget {
         return this._onlineClient.lastOnline(userIds);
     }
 
-    markAsOnline(): Promise<void> {
+    markAsOnline(): Promise<number> {
         return this._onlineClient.markAsOnline();
     }
 

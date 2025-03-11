@@ -1506,12 +1506,11 @@ export type WorkerResponseInner =
     | void
     | bigint
     | boolean
-    | string
+    | number
     | string
     | undefined
     | string[]
     | Uint8Array
-    | undefined
     | [number, number]
     | GenerateChallengeResponse
     | CreateOpenChatIdentityResponse
@@ -2012,7 +2011,7 @@ export type WorkerResult<T> = T extends Init
     : T extends LastOnline
     ? Record<string, number>
     : T extends MarkAsOnline
-    ? void
+    ? number
     : T extends MinutesOnline
     ? number
     : T extends ChatEventsBatch

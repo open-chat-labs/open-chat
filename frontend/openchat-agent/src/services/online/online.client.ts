@@ -1,7 +1,7 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
-import { principalStringToBytes, toVoid } from "../../utils/mapping";
-import { lastOnlineResponse } from "./mappers";
+import { principalStringToBytes } from "../../utils/mapping";
+import { lastOnlineResponse, markAsOnlineResponse } from "./mappers";
 import {
     Empty,
     OnlineUsersLastOnlineArgs,
@@ -29,11 +29,11 @@ export class OnlineClient extends MsgpackCanisterAgent {
         );
     }
 
-    markAsOnline(): Promise<void> {
+    markAsOnline(): Promise<number> {
         return this.executeMsgpackUpdate(
             "mark_as_online",
             {},
-            toVoid,
+            markAsOnlineResponse,
             Empty,
             OnlineUsersMarkAsOnlineResponse,
         );
