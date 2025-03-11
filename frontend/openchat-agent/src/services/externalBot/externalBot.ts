@@ -19,15 +19,7 @@ const ApiBotSuccess = Type.Object({
 });
 type ApiBotSuccess = Static<typeof ApiBotSuccess>;
 
-const ApiBotBadRequest = Type.Union([
-    Type.Object({
-        AccessTokenInvalid: Type.String(),
-    }),
-    Type.Literal("AccessTokenNotFound"),
-    Type.Literal("AccessTokenExpired"),
-    Type.Literal("CommandNotFound"),
-    Type.Literal("ArgsInvalid"),
-]);
+const ApiBotBadRequest = Type.Any();
 type ApiBotBadRequest = Static<typeof ApiBotBadRequest>;
 
 const ApiBotInternalError = Type.Any();
@@ -151,7 +143,7 @@ export function callBotCommandEndpoint(
             if (res.ok) {
                 return { Success: await res.json() };
             } else if (res.status === 400) {
-                return { BadRequest: await res.json() };
+                return { BadRequest: await res.text() };
             } else if (res.status === 429) {
                 return "TooManyRequests";
             } else {
