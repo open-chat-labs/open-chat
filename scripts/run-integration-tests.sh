@@ -43,6 +43,12 @@ cd ../..
 ./scripts/download-canister-wasm-dfx.sh event_store || exit 1
 ./scripts/download-canister-wasm-dfx.sh sign_in_with_email || exit 1
 
-cargo test --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS
+function cleanup() {
+  rm -rf ./backend/integration_tests/pocket_ic_state
+}
 
-rm -rf ./backend/integration_tests/pocket_ic_state
+trap cleanup EXIT
+
+cargo test --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS || exit 1
+
+cleanup

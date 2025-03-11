@@ -47,6 +47,10 @@ pub mod happy_path {
     pub fn mark_as_online(env: &mut PocketIc, sender: Principal, online_users_canister_id: CanisterId) {
         let response = super::mark_as_online(env, sender, online_users_canister_id, &Empty {});
 
-        assert!(matches!(response, online_users_canister::mark_as_online::Response::Success));
+        assert!(matches!(
+            response,
+            online_users_canister::mark_as_online::Response::Success
+                | online_users_canister::mark_as_online::Response::SuccessV2(_)
+        ));
     }
 }

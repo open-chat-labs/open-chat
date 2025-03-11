@@ -21,7 +21,7 @@ fn airdrop_end_to_end(v2: bool) {
         ..
     } = wrapper.env();
 
-    // Setup the environment for the test...
+    // Set up the environment for the test...
     // Create 1 owner and 5 other users
     // Owner creates the airdrop community
     // Join other users to the community
@@ -55,6 +55,13 @@ fn airdrop_end_to_end(v2: bool) {
 
     for user in users.iter() {
         client::community::happy_path::join_channel(env, user.principal, community_id, channel_id);
+    }
+
+    if v2 {
+        // Mark the first 5 users online (excluding the 6th)
+        for user in users.iter().take(5) {
+            client::online_users::happy_path::mark_as_online(env, user.principal, canister_ids.online_users);
+        }
     }
 
     tick_many(env, 10);
@@ -130,13 +137,6 @@ fn airdrop_end_to_end(v2: bool) {
 
     // Advance time to just after the airdrop is due
     env.advance_time(Duration::from_millis(1000 + start_airdrop.saturating_sub(now_millis(env))));
-
-    if v2 {
-        // Mark the first 5 users online (excluding the 6th)
-        for user in users.iter().take(5) {
-            client::online_users::happy_path::mark_as_online(env, user.principal, canister_ids.online_users);
-        }
-    }
 
     tick_many(env, 30);
 
