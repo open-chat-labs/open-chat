@@ -96,7 +96,7 @@ fn online_minutes_tracked_correctly() {
 
         assert_eq!(
             i,
-            client::online_users::happy_path::online_minutes(
+            client::online_users::happy_path::minutes_online(
                 env,
                 user.principal,
                 canister_ids.online_users,

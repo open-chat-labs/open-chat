@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Return `minutes_online` in `mark_online` response ([#7572](https://github.com/open-chat-labs/open-chat/pull/7572))
+
+## [[2.0.1538](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1538-online_users)] - 2025-03-11
+
 ### Added
 
 - Sync user minutes online to AirdropBot ([#7563](https://github.com/open-chat-labs/open-chat/pull/7563))

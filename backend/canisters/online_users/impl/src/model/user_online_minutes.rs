@@ -23,19 +23,6 @@ impl UserOnlineMinutes {
             .and_then(|m| m.users.get(&user_id).copied())
             .unwrap_or_default()
     }
-
-    pub fn get_all_for_month(&self, month_key: &MonthKey, min_minutes: u16) -> Vec<(UserId, u16)> {
-        self.months
-            .get(month_key)
-            .map(|m| {
-                m.users
-                    .iter()
-                    .filter(|(_, m)| **m >= min_minutes)
-                    .map(|(u, m)| (*u, *m))
-                    .collect()
-            })
-            .unwrap_or_default()
-    }
 }
 
 #[derive(Serialize, Deserialize, Default)]

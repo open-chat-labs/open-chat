@@ -1,4 +1,4 @@
-import type { OnlineUsersLastOnlineResponse } from "../../typebox";
+import type { OnlineUsersLastOnlineResponse, OnlineUsersMarkAsOnlineResponse } from "../../typebox";
 import { principalBytesToString } from "../../utils/mapping";
 
 export function lastOnlineResponse(value: OnlineUsersLastOnlineResponse): Record<string, number> {
@@ -11,4 +11,11 @@ export function lastOnlineResponse(value: OnlineUsersLastOnlineResponse): Record
         },
         {} as Record<string, number>,
     );
+}
+
+export function markAsOnlineResponse(value: OnlineUsersMarkAsOnlineResponse): number {
+    if (typeof value === "object" && "SuccessV2" in value) {
+        return value.SuccessV2.minutes_online;
+    }
+    return 0;
 }

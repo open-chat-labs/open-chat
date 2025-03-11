@@ -136,14 +136,26 @@ export const ProposalsBotCanisterInstallMode = Type.Union([
 export type ProposalsBotTreasury = Static<typeof ProposalsBotTreasury>;
 export const ProposalsBotTreasury = Type.Union([Type.Literal("ICP"), Type.Literal("SNS")]);
 
-export type OnlineUsersMarkAsOnlineResponse = Static<typeof OnlineUsersMarkAsOnlineResponse>;
-export const OnlineUsersMarkAsOnlineResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("UserNotFound"),
-    Type.Object({
-        InternalError: Type.String(),
-    }),
-]);
+export type OnlineUsersMinutesOnlineArgs = Static<typeof OnlineUsersMinutesOnlineArgs>;
+export const OnlineUsersMinutesOnlineArgs = Type.Object({
+    year: Type.Number(),
+    month: Type.Number(),
+});
+
+export type OnlineUsersMinutesOnlineResponse = Static<typeof OnlineUsersMinutesOnlineResponse>;
+export const OnlineUsersMinutesOnlineResponse = Type.Object({
+    Success: Type.Number(),
+});
+
+export type OnlineUsersMarkAsOnlineSuccessResult = Static<
+    typeof OnlineUsersMarkAsOnlineSuccessResult
+>;
+export const OnlineUsersMarkAsOnlineSuccessResult = Type.Object({
+    timestamp: Type.BigInt(),
+    year: Type.Number(),
+    month: Type.Number(),
+    minutes_online: Type.Number(),
+});
 
 export type GroupSummaryUpdatesArgs = Static<typeof GroupSummaryUpdatesArgs>;
 export const GroupSummaryUpdatesArgs = Type.Object({
@@ -4347,6 +4359,18 @@ export const OnlineUsersLastOnlineUserLastOnline = Type.Object({
     user_id: UserId,
     duration_since_last_online: Type.BigInt(),
 });
+
+export type OnlineUsersMarkAsOnlineResponse = Static<typeof OnlineUsersMarkAsOnlineResponse>;
+export const OnlineUsersMarkAsOnlineResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        SuccessV2: OnlineUsersMarkAsOnlineSuccessResult,
+    }),
+    Type.Literal("UserNotFound"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
 
 export type GroupSearchMessagesArgs = Static<typeof GroupSearchMessagesArgs>;
 export const GroupSearchMessagesArgs = Type.Object({

@@ -379,6 +379,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "minutesOnline":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.minutesOnline(payload.year, payload.month),
+                );
+                break;
+
             case "chatEventsBatch":
                 executeThenReply(
                     payload,

@@ -271,6 +271,7 @@ export type WorkerRequest =
     | ChatEventsWindow
     | LastOnline
     | MarkAsOnline
+    | MinutesOnline
     | GetGroupDetails
     | MarkMessagesRead
     | GetAllCachedUsers
@@ -1210,6 +1211,12 @@ type MarkAsOnline = {
     kind: "markAsOnline";
 };
 
+type MinutesOnline = {
+    year: number;
+    month: number;
+    kind: "minutesOnline";
+};
+
 type FreezeGroup = {
     chatId: GroupChatIdentifier;
     reason: string | undefined;
@@ -1499,12 +1506,11 @@ export type WorkerResponseInner =
     | void
     | bigint
     | boolean
-    | string
+    | number
     | string
     | undefined
     | string[]
     | Uint8Array
-    | undefined
     | [number, number]
     | GenerateChallengeResponse
     | CreateOpenChatIdentityResponse
@@ -2005,7 +2011,9 @@ export type WorkerResult<T> = T extends Init
     : T extends LastOnline
     ? Record<string, number>
     : T extends MarkAsOnline
-    ? void
+    ? number
+    : T extends MinutesOnline
+    ? number
     : T extends ChatEventsBatch
     ? ChatEventsResponse[]
     : T extends ChatEventsWindow

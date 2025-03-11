@@ -3,7 +3,7 @@ use online_users_canister::*;
 
 // Queries
 generate_msgpack_query_call!(last_online);
-generate_msgpack_query_call!(online_minutes);
+generate_msgpack_query_call!(minutes_online);
 
 // Updates
 generate_msgpack_update_call!(mark_as_online);
@@ -26,21 +26,21 @@ pub mod happy_path {
         users
     }
 
-    pub fn online_minutes(
+    pub fn minutes_online(
         env: &PocketIc,
         caller: Principal,
         online_users_canister_id: CanisterId,
         year: u32,
         month: u8,
     ) -> u16 {
-        let response = super::online_minutes(
+        let response = super::minutes_online(
             env,
             caller,
             online_users_canister_id,
-            &online_users_canister::online_minutes::Args { year, month },
+            &online_users_canister::minutes_online::Args { year, month },
         );
 
-        let online_users_canister::online_minutes::Response::Success(minutes) = response;
+        let online_users_canister::minutes_online::Response::Success(minutes) = response;
         minutes
     }
 

@@ -526,6 +526,7 @@ import { addQueryStringParam } from "./utils/url";
 import { setExternalBots } from "./stores";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
 import { ephemeralMessages } from "./stores/ephemeralMessages";
+import { minutesOnlineStore } from "./stores/minutesOnline";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1032,7 +1033,8 @@ export class OpenChat extends EventTarget {
     #startOnlinePoller() {
         if (!this.#liveState.anonUser) {
             new Poller(
-                () => this.#sendRequest({ kind: "markAsOnline" }) ?? Promise.resolve(),
+                () => (this.#sendRequest({ kind: "markAsOnline" }) ?? Promise.resolve())
+                    .then((minutesOnline) => minutesOnlineStore.set(minutesOnline)),
                 MARK_ONLINE_INTERVAL,
                 undefined,
                 true,
