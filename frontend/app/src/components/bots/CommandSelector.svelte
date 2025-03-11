@@ -224,6 +224,7 @@
                 if (!$showingBuilder) {
                     setSelectedCommand(commands);
                     sendCommandIfValid();
+                    ev.preventDefault();
                 }
                 break;
             case "Escape":
