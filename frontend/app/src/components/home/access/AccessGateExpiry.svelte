@@ -3,7 +3,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { getContext } from "svelte";
-    import { msToDays, msToHours, msToMinutes, msToMonths, msToWeeks } from "../../../utils/time";
+    import { msToDays, msToHours, msToMinutes } from "../../../utils/time";
 
     type DurationData = {
         total: number;
@@ -11,8 +11,6 @@
         hours: number;
         minutes: number;
         seconds: number;
-        weeks: number;
-        months: number;
     };
 
     const client = getContext<OpenChat>("client");
@@ -27,24 +25,17 @@
         if (duration === undefined) return undefined;
 
         // TODO - pluralisation & i18n
-        if (duration.minutes > 0) {
-            return `${msToMinutes(duration.total)} minutes`;
+        if (duration.days > 0) {
+            return `${msToDays(duration.total)} days`;
         }
 
         if (duration.hours > 0) {
             return `${msToHours(duration.total)} hours`;
         }
 
-        if (duration.days > 0) {
-            return `${msToDays(duration.total)} days`;
-        }
-
-        if (duration.weeks > 0) {
-            return `${msToWeeks(duration.total)} weeks`;
-        }
-
-        if (duration.months > 0) {
-            return `${msToMonths(duration.total)} months`;
+        // TODO - pluralisation & i18n
+        if (duration.minutes > 0) {
+            return `${msToMinutes(duration.total)} minutes`;
         }
     }
 </script>
