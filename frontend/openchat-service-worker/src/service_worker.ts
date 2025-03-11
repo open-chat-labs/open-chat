@@ -1,11 +1,7 @@
-import { IDL } from "@dfinity/candid";
 import {
-    type ApiNotification,
     deserializeFromMsgPack,
-    NotificationIdl,
     Notification as TNotification,
     notification as toNotification,
-    notificationV2 as toNotificationV2,
     typeboxValidate,
 } from "openchat-agent";
 import type {
@@ -182,19 +178,11 @@ function decodeNotification(bytes: Uint8Array, timestamp: bigint): Notification 
     try {
         const deserialized = deserializeFromMsgPack(bytes);
         const validated = typeboxValidate(deserialized, TNotification);
-        return toNotificationV2(validated, timestamp);
+        return toNotification(validated, timestamp);
     }
     catch {
         // Failed to decode using MsgPack
     }
-
-    // Try to extract the typed notification from the event
-    const candid = IDL.decode([NotificationIdl], bytes.buffer)[0] as unknown as ApiNotification;
-    if (!candid) {
-        return;
-    }
-
-    return toNotification(candid, timestamp);
 }
 
 function toUint8Array(base64String: string): Uint8Array {
