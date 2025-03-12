@@ -419,7 +419,7 @@ impl RuntimeState {
             messages_in_last_day,
             events_in_last_hour,
             events_in_last_day,
-            frozen: self.data.is_frozen(),
+            frozen_at: self.data.frozen.as_ref().map(|f| f.timestamp),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
             community_being_imported_into: self
                 .data
@@ -881,7 +881,7 @@ pub struct Metrics {
     pub messages_in_last_day: u64,
     pub events_in_last_hour: u64,
     pub events_in_last_day: u64,
-    pub frozen: bool,
+    pub frozen_at: Option<TimestampMillis>,
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub community_being_imported_into: Option<CommunityId>,
     pub serialized_chat_state_bytes: u64,

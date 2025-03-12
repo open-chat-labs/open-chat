@@ -156,15 +156,15 @@
     }
 
     .textbox {
+        @include input();
+
         max-height: calc(var(--vh, 1vh) * 50);
         min-height: toRem(30);
         overflow-x: hidden;
-        overflow-y: auto;
         user-select: text;
-        white-space: pre-wrap;
-        overflow-wrap: anywhere;
-
-        @include input();
+        overflow-y: auto;
+        text-overflow: unset;
+        white-space: normal;
 
         &.empty:before {
             content: attr(placeholder);
