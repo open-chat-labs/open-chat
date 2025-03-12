@@ -2,8 +2,8 @@ use crate::{read_state, RuntimeState};
 use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk::query;
 use serde::Serialize;
-use std::collections::HashMap;
-use types::{CanisterId, CyclesTopUpHumanReadable, HttpRequest, HttpResponse, TimestampMillis};
+use std::collections::{BTreeMap, HashMap};
+use types::{BuildVersion, CanisterId, CyclesTopUpHumanReadable, HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -42,12 +42,48 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         })
     }
 
+    fn get_group_canister_versions(state: &RuntimeState) -> HttpResponse {
+        let mut map = BTreeMap::new();
+        for (group_id, group) in state.data.local_groups.iter() {
+            let version = map.entry(group.wasm_version).or_insert(CanisterVersion {
+                version: group.wasm_version,
+                count: 0,
+                canisters: Vec::new(),
+            });
+            version.count += 1;
+            if version.canisters.len() < 100 {
+                version.canisters.push((*group_id).into());
+            }
+        }
+        let vec: Vec<_> = map.values().collect();
+        build_json_response(&vec)
+    }
+
+    fn get_community_canister_versions(state: &RuntimeState) -> HttpResponse {
+        let mut map = BTreeMap::new();
+        for (community_id, community) in state.data.local_communities.iter() {
+            let version = map.entry(community.wasm_version).or_insert(CanisterVersion {
+                version: community.wasm_version,
+                count: 0,
+                canisters: Vec::new(),
+            });
+            version.count += 1;
+            if version.canisters.len() < 100 {
+                version.canisters.push((*community_id).into());
+            }
+        }
+        let vec: Vec<_> = map.values().collect();
+        build_json_response(&vec)
+    }
+
     match extract_route(&request.url) {
         Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(p, qs) if p == "top_ups" => read_state(|state| get_top_ups(qs, state)),
+        Route::Other(p, _) if p == "group_canister_versions" => read_state(get_group_canister_versions),
+        Route::Other(p, _) if p == "community_canister_versions" => read_state(get_community_canister_versions),
         _ => HttpResponse::not_found(),
     }
 }
@@ -56,4 +92,11 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 struct TopUps {
     total: f64,
     top_ups: Vec<CyclesTopUpHumanReadable>,
+}
+
+#[derive(Serialize)]
+struct CanisterVersion {
+    version: BuildVersion,
+    count: u32,
+    canisters: Vec<CanisterId>,
 }
