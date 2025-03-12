@@ -1083,6 +1083,7 @@
     "minutes": "मिनट",
     "moderator": "मध्यस्थ",
     "months": "महीने",
+    "mustBeFutureDateError": "आपको भविष्य की कोई तिथि चुननी होगी",
     "muted": "मौन कर दिया गया",
     "muteNotifications": "सूचनाएं म्यूट करें",
     "myAccount": "मेरा खाता",

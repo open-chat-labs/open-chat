@@ -1083,6 +1083,7 @@
     "minutes": "Protokoll",
     "moderator": "Moderator",
     "months": "Monate",
+    "mustBeFutureDateError": "Sie müssen ein zukünftiges Datum auswählen",
     "muted": "stummgeschaltet",
     "muteNotifications": "Benachrichtigungen stummschalten",
     "myAccount": "Mein Konto",

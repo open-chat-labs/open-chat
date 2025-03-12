@@ -1083,6 +1083,7 @@
     "minutes": "Minuti",
     "moderator": "moderatore",
     "months": "Mesi",
+    "mustBeFutureDateError": "Devi selezionare una data futura",
     "muted": "muto",
     "muteNotifications": "Notifiche mute",
     "myAccount": "Il mio account",

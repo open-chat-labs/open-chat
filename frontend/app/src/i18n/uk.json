@@ -1083,6 +1083,7 @@
     "minutes": "хвилин",
     "moderator": "модератор",
     "months": "Місяці",
+    "mustBeFutureDateError": "Ви повинні вибрати майбутню дату",
     "muted": "приглушено",
     "muteNotifications": "Вимкнути сповіщення",
     "myAccount": "Мій рахунок",

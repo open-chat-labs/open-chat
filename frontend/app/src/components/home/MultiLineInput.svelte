@@ -156,11 +156,6 @@
     }
 
     .textbox {
-        padding: toRem(12) $sp4 $sp3 $sp4;
-        background-color: var(--entry-input-bg);
-        border-radius: var(--entry-input-rd);
-        outline: none;
-        border: 0;
         max-height: calc(var(--vh, 1vh) * 50);
         min-height: toRem(30);
         overflow-x: hidden;
@@ -168,8 +163,8 @@
         user-select: text;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
-        border: var(--bw) solid var(--entry-input-bd);
-        box-shadow: var(--entry-input-sh);
+
+        @include input();
 
         &.empty:before {
             content: attr(placeholder);
