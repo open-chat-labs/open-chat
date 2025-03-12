@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Use unbounded-wait calls to upload wasm chunks ([#7585](https://github.com/open-chat-labs/open-chat/pull/7585))
+
+## [[2.0.1643](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1643-user_index)] - 2025-03-12
+
 ### Added
 
 - Add `versions` to upgrade filter to filter canisters to upgrade by version ([#7531](https://github.com/open-chat-labs/open-chat/pull/7531))
