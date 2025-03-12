@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix upgrade for canisters that were stuck trying to message deleted users ([#7539](https://github.com/open-chat-labs/open-chat/pull/7539))
+- On bot uninstallation also delete the direct chat ([#7583](https://github.com/open-chat-labs/open-chat/pull/7583))
 
 ## [[2.0.1626-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1626-user)] - 2025-03-06
 
