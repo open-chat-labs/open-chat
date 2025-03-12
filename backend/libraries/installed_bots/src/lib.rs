@@ -134,6 +134,10 @@ impl BotApiKeys {
         key
     }
 
+    pub fn delete(&mut self, bot_id: UserId) -> bool {
+        self.keys.remove(&bot_id).is_some()
+    }
+
     pub fn get(&self, bot_id: &UserId) -> Option<&ApiKey> {
         self.keys.get(bot_id)
     }
