@@ -1083,6 +1083,7 @@
     "minutes": "دقایق",
     "moderator": "ناظم",
     "months": "ماه ها",
+    "mustBeFutureDateError": "شما باید تاریخ آینده را انتخاب کنید",
     "muted": "خاموش",
     "muteNotifications": "نادیده گرفتن اعلان ها",
     "myAccount": "حساب من",

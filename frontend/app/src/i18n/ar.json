@@ -1083,6 +1083,7 @@
     "minutes": "دقائق",
     "moderator": "المشرف",
     "months": "شهور",
+    "mustBeFutureDateError": "يجب عليك تحديد تاريخ مستقبلي",
     "muted": "مكتوم",
     "muteNotifications": "كتم صوت الإشعارات",
     "myAccount": "حسابي",
