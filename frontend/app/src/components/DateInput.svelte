@@ -31,10 +31,10 @@
     import SveltyPicker from "svelty-picker";
     import type { ResourceKey } from "openchat-client";
     import { onMount } from "svelte";
-    import CloseCircleOutline from "svelte-material-icons/CloseCircleOutline.svelte";
     import TooltipWrapper from "./TooltipWrapper.svelte";
     import TooltipPopup from "./TooltipPopup.svelte";
     import Translatable from "./Translatable.svelte";
+    import Information from "svelte-material-icons/Information.svelte";
 
     let {
         align = "left",
@@ -69,7 +69,7 @@
     });
 </script>
 
-<div class={`input-wrapper date-time ${align}`}>
+<div class={`input-wrapper date-time ${align} ${!dateIsValid ? "error" : ""}`}>
     <SveltyPicker
         value={localDate}
         {clearBtn}
@@ -99,10 +99,10 @@
         }}
     />
     {#if !dateIsValid}
-        <div class="error">
+        <div class="error-icon">
             <TooltipWrapper position={"top"} align={"middle"}>
                 <div slot="target" class="param" class:required={required}>
-                    <CloseCircleOutline width="1.25rem" height="1.25rem" />
+                    <Information width="1.25rem" height="1.25rem" />
                 </div>
                 <div let:position let:align slot="tooltip">
                     <TooltipPopup {align} {position}>
@@ -134,14 +134,20 @@
 
         :global(input[name="date_input"]) {
             @include input();
-            width: 100%;
+            width: 100%;;
 
             &::placeholder {
                 color: var(--placeholder);
             }
         }
 
-        .error {
+        &.error {
+            :global(input[name="date_input"]) {
+                box-shadow: 0 0 0 1px var(--error);
+            }
+        }
+
+        .error-icon {
             position: absolute;
             right: $sp3;
             width: 1.25rem;
@@ -173,7 +179,7 @@
         --sdt-table-disabled-date: var(--unread-mute-txt); /** disabled dates text color */
         --sdt-table-disabled-date-bg: transparent; /** disabled dates background color */
         --sdt-table-bg: transparent; /** date picker inner table background color */
-        --sdt-table-data-bg-hover: var(--error); /** table selection data hover background color */
+        --sdt-table-data-bg-hover: var(--primary); /** table selection data hover background color */
         --sdt-table-today-indicator: var(--primary); /** date picker current day marker color */
 
         /* action buttons */
