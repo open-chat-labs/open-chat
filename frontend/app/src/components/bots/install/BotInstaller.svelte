@@ -52,6 +52,15 @@
     );
     let busy = $state(false);
     let step = $state<Step>(firstStep());
+    let botExecutionContext = $derived.by(() => {
+        switch (location.kind) {
+            case "direct_chat":
+                // for direct chat, the execution context is the bot's id, the install location is *our* userId
+                return { ...location, userId: bot.id };
+            default:
+                return location;
+        }
+    });
 
     function firstStep(): Step {
         if (bot.definition.commands.length > 0) {
@@ -159,7 +168,7 @@
                         bind:granted={grantedAutonomousPermission}
                         requested={requestedAutonomousPermissions} />
                 {:else if step.kind === "show_api_key"}
-                    <ShowApiKey {bot} botExecutionContext={location} apiKey={step.apiKey} />
+                    <ShowApiKey {bot} {botExecutionContext} apiKey={step.apiKey} />
                 {/if}
             </BotProperties>
         </div>

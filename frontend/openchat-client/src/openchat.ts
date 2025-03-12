@@ -1033,8 +1033,10 @@ export class OpenChat extends EventTarget {
     #startOnlinePoller() {
         if (!this.#liveState.anonUser) {
             new Poller(
-                () => (this.#sendRequest({ kind: "markAsOnline" }) ?? Promise.resolve())
-                    .then((minutesOnline) => minutesOnlineStore.set(minutesOnline)),
+                () =>
+                    (this.#sendRequest({ kind: "markAsOnline" }) ?? Promise.resolve()).then(
+                        (minutesOnline) => minutesOnlineStore.set(minutesOnline),
+                    ),
                 MARK_ONLINE_INTERVAL,
                 undefined,
                 true,
@@ -2698,6 +2700,13 @@ export class OpenChat extends EventTarget {
         return chat.kind === "group_chat" && chat.membership === undefined && !chat.public;
     }
 
+    #uninstalledBotChat(chat: ChatSummary): boolean {
+        if (chat.kind !== "direct_chat") return false;
+        const botId = chat.them.userId;
+        const bot = this.#liveState.externalBots.get(botId);
+        return bot !== undefined && this.#liveState.installedDirectBots.get(botId) === undefined;
+    }
+
     setSelectedChat(
         chatId: ChatIdentifier,
         messageIndex?: number,
@@ -2716,18 +2725,20 @@ export class OpenChat extends EventTarget {
 
         const { selectedChat, focusMessageIndex } = this.#liveState;
         if (selectedChat !== undefined) {
-            if (focusMessageIndex !== undefined) {
-                this.loadEventWindow(chatId, focusMessageIndex, undefined, true).then(() => {
-                    if (serverChat !== undefined) {
-                        this.#loadChatDetails(serverChat);
-                    }
-                });
-            } else {
-                this.loadPreviousMessages(chatId, undefined, true).then(() => {
-                    if (serverChat !== undefined) {
-                        this.#loadChatDetails(serverChat);
-                    }
-                });
+            if (!this.#uninstalledBotChat(selectedChat)) {
+                if (focusMessageIndex !== undefined) {
+                    this.loadEventWindow(chatId, focusMessageIndex, undefined, true).then(() => {
+                        if (serverChat !== undefined) {
+                            this.#loadChatDetails(serverChat);
+                        }
+                    });
+                } else {
+                    this.loadPreviousMessages(chatId, undefined, true).then(() => {
+                        if (serverChat !== undefined) {
+                            this.#loadChatDetails(serverChat);
+                        }
+                    });
+                }
             }
             if (selectedChat.kind === "direct_chat") {
                 const them = this.#liveState.userStore.get(selectedChat.them.userId);
@@ -4777,15 +4788,17 @@ export class OpenChat extends EventTarget {
             kind: "registerBot",
             principal,
             bot,
-        }).then((success) => {
-            if (success) {
-                this.#loadBots();
-            }
-            return success;
-        }).catch((err) => {
-            this.#logger.error("Failed to register bot: ", err);
-            return false;
-        });
+        })
+            .then((success) => {
+                if (success) {
+                    this.#loadBots();
+                }
+                return success;
+            })
+            .catch((err) => {
+                this.#logger.error("Failed to register bot: ", err);
+                return false;
+            });
     }
 
     removeBot(botId: string): Promise<boolean> {
@@ -4814,15 +4827,17 @@ export class OpenChat extends EventTarget {
             avatarUrl,
             endpoint,
             definition,
-        }).then((success) => {
-            if (success) {
-                this.#loadBots();
-            }
-            return success;
-        }).catch((err) => {
-            this.#logger.error("Failed to update registered bot: ", err);
-            return false;
-        });
+        })
+            .then((success) => {
+                if (success) {
+                    this.#loadBots();
+                }
+                return success;
+            })
+            .catch((err) => {
+                this.#logger.error("Failed to update registered bot: ", err);
+                return false;
+            });
     }
 
     registerUser(username: string): Promise<RegisterUserResponse> {
@@ -6877,9 +6892,7 @@ export class OpenChat extends EventTarget {
 
     cachedLocalUserIndexForCommunity(communityId: string): string | undefined {
         const community = this.#liveState.communities.get({ kind: "community", communityId });
-        return community !== undefined
-            ? community.localUserIndex
-            : undefined;
+        return community !== undefined ? community.localUserIndex : undefined;
     }
 
     // This will pretend that the value is english and apply it to the english i18n dictionary temporarily.
@@ -7439,18 +7452,23 @@ export class OpenChat extends EventTarget {
             if (community.membership.index === index) continue;
 
             if (this.#liveState.communityPreviews.has(community.id)) {
-                communityPreviewsStore.update((state) => state.set(community.id, {
-                    ...community,
-                    membership: {
-                        ...community.membership,
-                        index,
-                    },
-                }));
+                communityPreviewsStore.update((state) =>
+                    state.set(community.id, {
+                        ...community,
+                        membership: {
+                            ...community.membership,
+                            index,
+                        },
+                    }),
+                );
             } else {
-                localCommunitySummaryUpdates.updateIndex({
-                    kind: "community",
-                    communityId: community.id.communityId
-                }, index);
+                localCommunitySummaryUpdates.updateIndex(
+                    {
+                        kind: "community",
+                        communityId: community.id.communityId,
+                    },
+                    index,
+                );
 
                 // Queue the update to be sent to the canister
                 updates[community.id.communityId] = index;
