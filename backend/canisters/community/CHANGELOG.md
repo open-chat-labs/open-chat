@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- On bot uninstallation also delete any api key ([#7583](https://github.com/open-chat-labs/open-chat/pull/7583))
+
 ## [[2.0.1639](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1639-community)] - 2025-03-11
 
 ### Changed
@@ -22,7 +26,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Support using command JWT for reading ([#7512](https://github.com/open-chat-labs/open-chat/pull/7512))
-- On bot uninstallation also delete any api key ([#7583](https://github.com/open-chat-labs/open-chat/pull/7583))
 
 ## [[2.0.1618](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1618-community)] - 2025-02-28
 
