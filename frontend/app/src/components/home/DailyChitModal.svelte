@@ -40,7 +40,7 @@
     $: streak = $chitState.streakEnds < $now500 ? 0 : $chitState.streak;
     $: badgesVisible = calculateBadgesVisible(streak);
     $: maxBadgeVisible = badgesVisible[badgesVisible.length - 1];
-    $: percent = calculatePercentage(maxBadgeVisible);
+    $: percent = calculatePercentage(streak, maxBadgeVisible);
     $: remaining = client.formatTimeRemaining($now500, Number($chitState.nextDailyChitClaim), true);
 
     onMount(() => {
@@ -60,8 +60,8 @@
         }
     }
 
-    function calculatePercentage(maxBadge: number): number {
-        const percent = (streak / maxBadge) * 100;
+    function calculatePercentage(currentStreak: number, maxBadge: number): number {
+        const percent = (currentStreak / maxBadge) * 100;
         return percent > 100 ? 100 : percent;
     }
 
