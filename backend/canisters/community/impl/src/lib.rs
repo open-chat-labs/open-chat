@@ -905,15 +905,17 @@ impl Data {
         true
     }
 
-    pub fn uninstall_bot(&mut self, owner_id: UserId, user_id: UserId, now: TimestampMillis) -> bool {
-        if !self.bots.remove(user_id, now) {
+    pub fn uninstall_bot(&mut self, owner_id: UserId, bot_id: UserId, now: TimestampMillis) -> bool {
+        if !self.bots.remove(bot_id, now) {
             return false;
         }
+
+        self.bot_api_keys.delete(bot_id);
 
         // Publish community event
         self.events.push_event(
             CommunityEventInternal::BotRemoved(Box::new(BotRemoved {
-                user_id,
+                user_id: bot_id,
                 removed_by: owner_id,
             })),
             now,
