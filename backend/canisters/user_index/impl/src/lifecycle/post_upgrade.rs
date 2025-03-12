@@ -18,7 +18,7 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
-    for canister_id in data.local_index_map.iter() {
+    for (canister_id, _) in data.local_index_map.iter() {
         data.canisters_requiring_upgrade.enqueue(*canister_id, false);
     }
 
