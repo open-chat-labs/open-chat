@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - On bot uninstallation also delete any api key ([#7583](https://github.com/open-chat-labs/open-chat/pull/7583))
+- Fix channel summary and details last updated date ([#7587](https://github.com/open-chat-labs/open-chat/pull/7587))
 
 ## [[2.0.1639](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1639-community)] - 2025-03-11
 

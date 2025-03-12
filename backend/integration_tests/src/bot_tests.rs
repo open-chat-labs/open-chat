@@ -306,6 +306,7 @@ fn e2e_autonomous_bot_test() {
         BotPermissions::text_only(),
     );
 
+    let initial_time = now_millis(env);
     env.advance_time(Duration::from_millis(1000));
     env.tick();
 
@@ -336,6 +337,20 @@ fn e2e_autonomous_bot_test() {
 
     env.advance_time(Duration::from_millis(1000));
     env.tick();
+
+    // Check the API key is returned in selected_channel_initial
+    let response = client::community::happy_path::selected_channel_initial(env, &owner, community_id, channel_id);
+    assert_eq!(response.api_keys.len(), 1);
+    assert_eq!(response.api_keys[0].bot_id, bot_id);
+
+    // Check the API key is returned in selected_channel_updates
+    let Some(response) =
+        client::community::happy_path::selected_channel_updates(env, owner.principal, community_id, channel_id, initial_time)
+    else {
+        panic!("Expected `selected_channel_updates` Success");
+    };
+    assert_eq!(response.api_keys_generated.len(), 1);
+    assert_eq!(response.api_keys_generated[0].bot_id, bot_id);
 
     // Call execute_bot_action
     let text = "Hello world".to_string();
