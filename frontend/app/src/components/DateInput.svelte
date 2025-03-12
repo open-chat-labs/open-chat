@@ -1,24 +1,18 @@
 <script module lang="ts">
     export interface Props {
         align?: string;
-        clearBtn?: boolean;
-        clearToggle?: boolean;
         disabled?: boolean;
-        disableDatesFn?: (date: Date) => boolean;
         endDate?: string | Date;
         format?: string;
         futureOnly?: boolean;
         inputId?: string;
         inputClasses?: string;
-        minuteIncrement?: number;
         mode?: "date" | "time" | "datetime";
         pickerOnly?: boolean;
         placeholder?: ResourceKey | undefined;
         required?: boolean;
         startDate?: string | Date;
-        todayBtn?: boolean;
         value?: bigint | null | undefined;
-        weekStart?: number;
         onchange?: (val: bigint | null) => void;
     }
 </script>
@@ -38,23 +32,18 @@
 
     let {
         align = "left",
-        clearBtn = true,
-        clearToggle = true,
         disabled = false,
         endDate = undefined,
         format = "dd M yyyy, hh:ii",
         futureOnly = false,
         inputId = undefined,
         inputClasses = "",
-        minuteIncrement = 1,
         mode = "datetime",
         pickerOnly = false,
         placeholder = undefined,
         required = false,
         startDate = undefined,
-        todayBtn = true,
         value = undefined,
-        weekStart = 1,
         onchange = undefined,
     }: Props = $props();
 
@@ -72,21 +61,16 @@
 <div class={`input-wrapper date-time ${align} ${!dateIsValid ? "error" : ""}`}>
     <SveltyPicker
         value={localDate}
-        {clearBtn}
-        {clearToggle}
         {disabled}
         {endDate}
         {format}
         {inputId}
         inputClasses={`date-time ${inputClasses}`}
-        {minuteIncrement}
         {mode}
         {pickerOnly}
         placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
         {required}
         {startDate}
-        {todayBtn}
-        {weekStart}
         onDateChange={({ dateValue }) => {
             if (futureOnly && dateValue instanceof Date && dateValue < new Date()) {
                 dateIsValid = false;
