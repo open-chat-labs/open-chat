@@ -7,21 +7,6 @@ use user_canister::CommunityCanisterEvent;
 
 #[update(guard = "caller_is_known_community_canister", msgpack = true)]
 #[trace]
-fn c2c_notify_community_canister_events(args: user_canister::c2c_notify_community_canister_events::Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| {
-        c2c_notify_community_canister_events_impl(
-            Args {
-                events: args.events.into_iter().map(|e| e.into()).collect(),
-            },
-            state,
-        )
-    })
-}
-
-#[update(guard = "caller_is_known_community_canister", msgpack = true)]
-#[trace]
 fn c2c_community_canister(args: Args) -> Response {
     run_regular_jobs();
 

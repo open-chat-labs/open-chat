@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1649](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1649-user_index)] - 2025-03-12
+
 ### Changed
 
 - Use unbounded-wait calls to upload wasm chunks ([#7585](https://github.com/open-chat-labs/open-chat/pull/7585))

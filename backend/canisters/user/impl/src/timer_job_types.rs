@@ -25,7 +25,6 @@ pub enum TimerJob {
     SendMessageToChannel(Box<SendMessageToChannelJob>),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
     ClaimChitInsurance(ClaimChitInsuranceJob),
-    DedupeMessageIds(DedupeMessageIdsJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -121,11 +120,6 @@ pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call_v2::Args);
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ClaimChitInsuranceJob;
 
-#[derive(Serialize, Deserialize, Clone, Default)]
-pub struct DedupeMessageIdsJob {
-    iteration: u32,
-}
-
 impl Job for TimerJob {
     fn execute(self) {
         if can_borrow_state() {
@@ -146,7 +140,6 @@ impl Job for TimerJob {
             TimerJob::SendMessageToChannel(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
             TimerJob::ClaimChitInsurance(job) => job.execute(),
-            TimerJob::DedupeMessageIds(job) => job.execute(),
         }
     }
 }
@@ -416,33 +409,5 @@ impl Job for ClaimChitInsuranceJob {
                 state.notify_user_index_of_chit(now);
             }
         });
-    }
-}
-
-impl Job for DedupeMessageIdsJob {
-    fn execute(mut self) {
-        mutate_state(|state| {
-            let mut complete = true;
-            let my_user_id: UserId = state.env.canister_id().into();
-            for chat in state.data.direct_chats.iter_mut() {
-                match chat.events.fix_duplicate_message_ids(my_user_id, chat.them) {
-                    Some(true) => {}
-                    Some(false) => {
-                        complete = false;
-                        break;
-                    }
-                    None => error!("Failed to dedupe messageIds"),
-                }
-            }
-            if complete {
-                state.data.message_ids_deduped = true;
-            } else if self.iteration < 100 {
-                let now = state.env.now();
-                self.iteration += 1;
-                state.data.timer_jobs.enqueue_job(TimerJob::DedupeMessageIds(self), now, now);
-            } else {
-                error!("Failed to dedupe messageIds after 100 iterations");
-            }
-        })
     }
 }

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1641](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1641-local_user_index)] - 2025-03-12
+
 ### Added
 
 - Add `DateTime` bot command parameter ([#7496](https://github.com/open-chat-labs/open-chat/pull/7496))

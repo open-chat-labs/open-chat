@@ -3,7 +3,6 @@ pub mod c2c_create_group;
 pub mod c2c_delete_community;
 pub mod c2c_delete_group;
 pub mod c2c_group_index;
-pub mod c2c_notify_group_index_events;
 pub mod c2c_notify_low_balance;
 pub mod c2c_push_wasm_chunk;
 pub mod c2c_set_community_upgrade_concurrency;

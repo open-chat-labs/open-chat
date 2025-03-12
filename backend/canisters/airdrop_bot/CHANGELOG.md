@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1637](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1637-airdrop_bot)] - 2025-03-11
+
 ### Added
 
 - Add `min_minutes_online` to airdrop config ([#7563](https://github.com/open-chat-labs/open-chat/pull/7563))
