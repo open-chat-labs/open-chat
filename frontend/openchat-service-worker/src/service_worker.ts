@@ -123,8 +123,8 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
 
     const bytes = toUint8Array(value);
 
-    const inputNotification = decodeNotification(bytes, timestamp);
-    if (inputNotification === undefined) {
+    const webPushNotification = decodeWebPushNotification(bytes, timestamp);
+    if (webPushNotification === undefined) {
         console.debug("SW: unable to decode notification", id);
         return;
     }
@@ -137,7 +137,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     windowClients.forEach((window) => {
         window.postMessage({
             type: "NOTIFICATION_RECEIVED",
-            data: inputNotification,
+            data: webPushNotification,
         });
     });
 
@@ -145,19 +145,18 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     const isClientFocused = windowClients.some(
         (wc) => wc.focused && wc.visibilityState === "visible",
     );
-    if (isClientFocused && isMessageNotification(inputNotification)) {
+    if (isClientFocused && isMessageNotification(webPushNotification)) {
         console.debug("SW: suppressing notification because client focused", id);
         return;
     }
 
-    const [title, outputNotification] = buildNotification(inputNotification);
+    const [title, notification] = buildNotification(webPushNotification);
 
-    console.debug("SW: about to show notification: ", outputNotification, id);
-    await self.registration.showNotification(title, outputNotification);
+    console.debug("SW: about to show notification: ", notification, id);
+    await self.registration.showNotification(title, notification);
 }
 
 async function handleNotificationClick(event: NotificationEvent): Promise<void> {
-    event.preventDefault();
     event.notification.close();
 
     const windowClients = await self.clients.matchAll({
@@ -167,12 +166,11 @@ async function handleNotificationClick(event: NotificationEvent): Promise<void> 
 
     if (windowClients.length > 0) {
         const window = windowClients[0];
-        window.focus();
-
         window.postMessage({
             type: "NOTIFICATION_CLICKED",
             path: event.notification.data.path,
         });
+        await window.focus();
     } else {
         const urlToOpen = new URL(event.notification.data.path, self.location.origin);
         console.debug("SW: notification clicked no open clients. Opening: ", urlToOpen);
@@ -180,7 +178,7 @@ async function handleNotificationClick(event: NotificationEvent): Promise<void> 
     }
 }
 
-function decodeNotification(bytes: Uint8Array, timestamp: bigint): Notification | undefined {
+function decodeWebPushNotification(bytes: Uint8Array, timestamp: bigint): Notification | undefined {
     try {
         const deserialized = deserializeFromMsgPack(bytes);
         const validated = typeboxValidate(deserialized, TNotification);
@@ -266,22 +264,19 @@ function buildNotification(n: Notification): [string, NotificationOptions] {
     }
 
     const path = notificationPath(n);
-    let tag: string | undefined = undefined;
 
     if (isMessageNotification(n)) {
         if (icon === undefined && n.messageType === "File") {
             icon = FILE_ICON;
         }
-    } else {
-        tag = path;
     }
 
     const notificationBody = {
         body,
         icon,
         image,
-        renotify: tag !== undefined,
-        tag,
+        renotify: true,
+        tag: path,
         timestamp: Number(n.timestamp),
         data: {
             path,
