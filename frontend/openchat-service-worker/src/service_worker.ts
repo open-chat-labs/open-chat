@@ -92,8 +92,7 @@ registerRoute(
 
 // Always install updated SW immediately
 self.addEventListener("install", (ev) => {
-    ev.waitUntil(self.skipWaiting());
-    console.debug("SW: skipWaiting promise resolved")
+    ev.waitUntil(self.skipWaiting().then(() => console.debug("SW: skipWaiting promise resolved")));
 });
 
 self.addEventListener("activate", (ev) => {
