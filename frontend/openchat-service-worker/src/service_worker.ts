@@ -92,7 +92,8 @@ registerRoute(
 
 // Always install updated SW immediately
 self.addEventListener("install", (ev) => {
-    ev.waitUntil(self.skipWaiting().then(() => console.debug("SW: skipWaiting promise resolved")));
+    ev.waitUntil(self.skipWaiting());
+    console.debug("SW: skipWaiting promise resolved")
 });
 
 self.addEventListener("activate", (ev) => {
@@ -122,8 +123,8 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
 
     const bytes = toUint8Array(value);
 
-    const notification = decodeNotification(bytes, timestamp);
-    if (notification === undefined) {
+    const inputNotification = decodeNotification(bytes, timestamp);
+    if (inputNotification === undefined) {
         console.debug("SW: unable to decode notification", id);
         return;
     }
@@ -136,7 +137,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     windowClients.forEach((window) => {
         window.postMessage({
             type: "NOTIFICATION_RECEIVED",
-            data: notification,
+            data: inputNotification,
         });
     });
 
@@ -144,14 +145,19 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     const isClientFocused = windowClients.some(
         (wc) => wc.focused && wc.visibilityState === "visible",
     );
-    if (isClientFocused && isMessageNotification(notification)) {
+    if (isClientFocused && isMessageNotification(inputNotification)) {
         console.debug("SW: suppressing notification because client focused", id);
         return;
     }
-    await showNotification(notification, id);
+
+    const [title, outputNotification] = buildNotification(inputNotification);
+
+    console.debug("SW: about to show notification: ", outputNotification, id);
+    await self.registration.showNotification(title, outputNotification);
 }
 
 async function handleNotificationClick(event: NotificationEvent): Promise<void> {
+    event.preventDefault();
     event.notification.close();
 
     const windowClients = await self.clients.matchAll({
@@ -189,10 +195,7 @@ function toUint8Array(base64String: string): Uint8Array {
     return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
 }
 
-const MAX_NOTIFICATIONS = 50;
-const MAX_NOTIFICATIONS_PER_GROUP = 20;
-
-async function showNotification(n: Notification, id: string): Promise<void> {
+function buildNotification(n: Notification): [string, NotificationOptions] {
     let icon = "/_/raw/icon.png";
     let image = undefined;
     let title: string;
@@ -273,16 +276,7 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         tag = path;
     }
 
-    const existing = await self.registration.getNotifications();
-    const matching = existing.filter((n) => n.data.path === path);
-    const closed = closeExcessNotifications(matching, MAX_NOTIFICATIONS_PER_GROUP);
-
-    if (existing.length - closed >= MAX_NOTIFICATIONS) {
-        const existing = await self.registration.getNotifications();
-        closeExcessNotifications(existing, MAX_NOTIFICATIONS);
-    }
-
-    const toShow = {
+    const notificationBody = {
         body,
         icon,
         image,
@@ -295,19 +289,7 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         },
     };
 
-    console.debug("SW: about to show notification: ", toShow, id);
-    await self.registration.showNotification(title, toShow);
-}
-
-function closeExcessNotifications(
-    notifications: globalThis.Notification[],
-    maxCount: number,
-): number {
-    const toClose = Math.max(notifications.length + 1 - maxCount, 0);
-    if (toClose > 0) {
-        notifications.slice(0, toClose).forEach((n) => n.close());
-    }
-    return toClose;
+    return [title, notificationBody];
 }
 
 function messageText(
