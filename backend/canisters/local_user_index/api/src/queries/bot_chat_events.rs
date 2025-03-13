@@ -21,7 +21,7 @@ pub struct Args {
     pub auth_token: AuthToken,
 }
 
-#[ts_export(local_user_index, chat_events)]
+#[ts_export(local_user_index, bot_chat_events)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(EventsResponse),
