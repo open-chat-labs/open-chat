@@ -171,6 +171,7 @@ import {
     loadMessagesByMessageIndex,
     mergeSuccessResponses,
     recordFailedMessage,
+    removeCachedChannelApiKeys,
     removeFailedMessage,
     setCachedCommunityDetails,
     setCachedEvents,
@@ -1079,6 +1080,10 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 lastUpdated: updatesResponse.lastUpdated,
             };
         }
+
+        updatesResponse.botsRemoved.forEach((botId) =>
+            removeCachedChannelApiKeys(this.principal, this.communityId, botId),
+        );
 
         return mergeCommunityDetails(previous, updatesResponse);
     }
