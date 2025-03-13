@@ -10,4 +10,5 @@ pub type Args = Empty;
 pub enum Response {
     Success(CanisterId),
     NewRegistrationsClosed,
+    Error(u16, Option<String>),
 }

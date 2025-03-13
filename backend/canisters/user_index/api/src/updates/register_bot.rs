@@ -22,6 +22,7 @@ pub enum Response {
     InvalidRequest(String),
     InternalError(String),
     UserSuspended,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user_index, register_bot)]

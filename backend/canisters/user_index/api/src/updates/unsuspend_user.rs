@@ -16,4 +16,5 @@ pub enum Response {
     UserNotSuspended,
     UserNotFound,
     InternalError(String),
+    Error(u16, Option<String>),
 }

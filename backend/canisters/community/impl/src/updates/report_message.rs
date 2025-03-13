@@ -27,6 +27,7 @@ async fn report_message(args: Args) -> Response {
                 c2c_report_message::Response::Success => Success,
                 c2c_report_message::Response::AlreadyReported => AlreadyReported,
                 c2c_report_message::Response::InternalError(error) => InternalError(error),
+                c2c_report_message::Response::Error(code, message) => Error(code, message),
             }
         }
         Err(err) => InternalError(format!("{err:?}")),

@@ -8,4 +8,5 @@ pub type Args = Empty;
 pub enum Response {
     Success,
     CommunityNotFound,
+    Error(u16, Option<String>),
 }

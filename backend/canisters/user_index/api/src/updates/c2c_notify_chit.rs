@@ -7,4 +7,5 @@ pub type Args = NotifyChit;
 pub enum Response {
     Success,
     UserNotFound,
+    Error(u16, Option<String>),
 }

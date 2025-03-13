@@ -19,6 +19,7 @@ pub enum Response {
     TermTooShort(u8),
     TermTooLong(u8),
     InvalidTerm,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user_index, explore_bots)]

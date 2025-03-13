@@ -33,4 +33,5 @@ pub enum Response {
     NewOwnerSuspended,
     DescriptionTooLong,
     TooManyCommands,
+    Error(u16, Option<String>),
 }

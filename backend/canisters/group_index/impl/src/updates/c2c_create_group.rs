@@ -86,6 +86,7 @@ async fn validate_caller() -> Result<(UserId, Principal), Response> {
     {
         Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => Ok((caller, r.principal)),
         Ok(user_index_canister::c2c_lookup_user::Response::UserNotFound) => Err(UserNotFound),
+        Ok(user_index_canister::c2c_lookup_user::Response::Error(code, message)) => Err(Error(code, message)),
         Err(_) => Err(InternalError),
     }
 }

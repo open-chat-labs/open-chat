@@ -12,6 +12,7 @@ pub struct Args {
 pub enum Response {
     Success,
     LocalUserIndexNotFound,
+    Error(u16, Option<String>),
 }
 
 #[derive(Serialize)]

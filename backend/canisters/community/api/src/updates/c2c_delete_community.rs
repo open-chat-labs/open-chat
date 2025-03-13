@@ -12,4 +12,5 @@ pub enum Response {
     UserSuspended,
     InternalError(String),
     UserLapsed,
+    Error(u16, Option<String>),
 }

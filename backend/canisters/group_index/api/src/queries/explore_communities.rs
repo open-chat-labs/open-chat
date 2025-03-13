@@ -21,6 +21,7 @@ pub enum Response {
     TermTooLong(u8),
     InvalidTerm,
     InvalidFlags,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(group_index, explore_communities)]

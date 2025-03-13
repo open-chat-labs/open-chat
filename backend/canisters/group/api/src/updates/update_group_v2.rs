@@ -43,6 +43,7 @@ pub enum Response {
     UserLapsed,
     ChatFrozen,
     InternalError,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(group, update_group)]

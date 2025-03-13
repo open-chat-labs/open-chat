@@ -14,6 +14,7 @@ pub enum Response {
     TermTooShort(u8),
     TermTooLong(u8),
     InvalidTerm,
+    Error(u16, Option<String>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

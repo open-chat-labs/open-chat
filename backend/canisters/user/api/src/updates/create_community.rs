@@ -40,6 +40,7 @@ pub enum Response {
     Unauthorized,
     DefaultChannelsInvalid,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user, create_community)]

@@ -18,4 +18,5 @@ pub enum Response {
     MalformedSignature(String),
     DelegationTooOld,
     UserNotFound,
+    Error(u16, Option<String>),
 }

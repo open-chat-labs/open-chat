@@ -13,6 +13,7 @@ pub enum Response {
     Success,
     AlreadyPlatformModerator,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[derive(Serialize)]

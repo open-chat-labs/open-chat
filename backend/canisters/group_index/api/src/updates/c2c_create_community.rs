@@ -24,6 +24,7 @@ pub enum Response {
     NameTaken,
     UserNotFound,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

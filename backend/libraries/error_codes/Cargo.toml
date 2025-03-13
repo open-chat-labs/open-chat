@@ -1,0 +1,7 @@
+[package]
+name = "oc_error_codes"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+enum-repr = { workspace = true }

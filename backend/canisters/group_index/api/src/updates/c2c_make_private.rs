@@ -8,4 +8,5 @@ pub type Args = Empty;
 pub enum Response {
     Success,
     ChatNotFound,
+    Error(u16, Option<String>),
 }

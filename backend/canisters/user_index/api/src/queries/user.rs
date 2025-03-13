@@ -15,4 +15,5 @@ pub struct Args {
 pub enum Response {
     Success(UserSummary),
     UserNotFound,
+    Error(u16, Option<String>),
 }

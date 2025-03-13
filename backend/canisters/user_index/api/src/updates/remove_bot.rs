@@ -16,6 +16,7 @@ pub enum Response {
     Success,
     BotNotFound,
     NotAuthorised,
+    Error(u16, Option<String>),
 }
 
 #[derive(Serialize)]

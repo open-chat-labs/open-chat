@@ -15,6 +15,7 @@ pub type Args = Empty;
 pub enum Response {
     Success(SuccessResult),
     UserNotFound,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user_index, current_user)]

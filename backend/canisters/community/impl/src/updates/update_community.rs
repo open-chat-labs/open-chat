@@ -45,6 +45,10 @@ async fn update_community(mut args: Args) -> Response {
                     error!(chat_id = %prepare_result.community_id, "Community not found in index");
                     return InternalError;
                 }
+                c2c_make_community_private::Response::Error(code, message) => {
+                    error!(chat_id = %prepare_result.community_id, "Error updating community: {}", code);
+                    return Error(code, message);
+                }
                 c2c_make_community_private::Response::Success => {}
             },
             Err(_) => return InternalError,

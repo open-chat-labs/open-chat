@@ -18,4 +18,5 @@ pub enum Response {
     UserLapsed,
     CommunityFrozen,
     InternalError(String),
+    Error(u16, Option<String>),
 }

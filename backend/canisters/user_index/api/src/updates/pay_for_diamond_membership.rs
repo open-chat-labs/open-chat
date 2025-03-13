@@ -57,6 +57,7 @@ pub enum Response {
     InsufficientFunds(u64), // Returns the account balance in e8s
     TransferFailed(String),
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user_index, pay_for_diamond_membership)]

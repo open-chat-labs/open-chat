@@ -16,6 +16,7 @@ pub enum Response {
     InsufficientBudget,
     Expired,
     AlreadyAwarded,
+    Error(u16, Option<String>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -24,6 +24,7 @@ pub enum Response {
     CyclesBalanceTooLow,
     UserNotFound,
     InternalError,
+    Error(u16, Option<String>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -44,6 +44,7 @@ pub enum Response {
     CommunityFrozen,
     InvalidLanguage,
     UserLapsed,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, update_community)]

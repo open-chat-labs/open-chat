@@ -13,4 +13,5 @@ pub enum Response {
     Success,
     AlreadyAdded,
     InternalError(String),
+    Error(u16, Option<String>),
 }

@@ -14,6 +14,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     NotFound,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(group_index, lookup_channel_by_group_id)]

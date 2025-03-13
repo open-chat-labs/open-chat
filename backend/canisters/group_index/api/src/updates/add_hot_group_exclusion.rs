@@ -17,4 +17,5 @@ pub enum Response {
     ChatNotFound,
     NotAuthorized,
     InternalError(String),
+    Error(u16, Option<String>),
 }

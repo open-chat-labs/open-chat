@@ -17,4 +17,5 @@ pub enum Response {
     UsernameInvalid,
     UsernameTooShort(u16),
     UsernameTooLong(u16),
+    Error(u16, Option<String>),
 }

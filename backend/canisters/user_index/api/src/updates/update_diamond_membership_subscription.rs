@@ -16,4 +16,5 @@ pub enum Response {
     Success,
     NotDiamondMember,
     AlreadyLifetimeDiamondMember,
+    Error(u16, Option<String>),
 }

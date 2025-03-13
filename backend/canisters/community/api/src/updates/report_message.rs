@@ -26,4 +26,5 @@ pub enum Response {
     AlreadyReported,
     InternalError(String),
     UserLapsed,
+    Error(u16, Option<String>),
 }

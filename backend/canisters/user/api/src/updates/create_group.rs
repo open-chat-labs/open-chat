@@ -38,6 +38,7 @@ pub enum Response {
     UserSuspended,
     UnauthorizedToCreatePublicGroup,
     InternalError,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user, create_group)]

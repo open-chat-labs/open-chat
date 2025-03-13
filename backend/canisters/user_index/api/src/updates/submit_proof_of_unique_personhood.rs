@@ -15,4 +15,5 @@ pub enum Response {
     Success,
     Invalid(String),
     UserNotFound,
+    Error(u16, Option<String>),
 }
