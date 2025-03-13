@@ -1,8 +1,9 @@
 #![allow(deprecated)]
 use crate::message_content_internal::icrc1::AccountInternal;
 use crate::stable_memory::tests::test_values::{
-    AUDIO1, CRYPTO1, CUSTOM1, DELETED1, FILE1, GIPHY1, GOVERNANCE_PROPOSAL1, IMAGE1, MESSAGE_REMINDER1,
-    MESSAGE_REMINDER_CREATED1, P2P_SWAP1, POLL1, PRIZE1, PRIZE_WINNER1, REPORTED_MESSAGE1, TEXT1, VIDEO1, VIDEO_CALL1,
+    AUDIO1, CRYPTO1, CRYPTO2, CUSTOM1, DELETED1, FILE1, GIPHY1, GOVERNANCE_PROPOSAL1, IMAGE1, MESSAGE_REMINDER1,
+    MESSAGE_REMINDER_CREATED1, P2P_SWAP1, P2P_SWAP2, POLL1, PRIZE1, PRIZE2, PRIZE_WINNER1, PRIZE_WINNER2, REPORTED_MESSAGE1,
+    TEXT1, VIDEO1, VIDEO_CALL1,
 };
 use crate::stable_memory::{bytes_to_event, event_to_bytes};
 use crate::{
@@ -151,6 +152,7 @@ fn crypto_content() {
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Crypto(_)));
     assert!(matches!(test_deserialization(CRYPTO1), MessageContentInternal::Crypto(_)));
+    assert!(matches!(test_deserialization(CRYPTO2), MessageContentInternal::Crypto(_)));
 }
 
 #[test]
@@ -264,6 +266,7 @@ fn prize_content() {
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Prize(_)));
     assert!(matches!(test_deserialization(PRIZE1), MessageContentInternal::Prize(_)));
+    assert!(matches!(test_deserialization(PRIZE2), MessageContentInternal::Prize(_)));
 }
 
 #[test]
@@ -281,6 +284,10 @@ fn prize_winner_content() {
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::PrizeWinner(_)));
     assert!(matches!(
         test_deserialization(PRIZE_WINNER1),
+        MessageContentInternal::PrizeWinner(_)
+    ));
+    assert!(matches!(
+        test_deserialization(PRIZE_WINNER2),
         MessageContentInternal::PrizeWinner(_)
     ));
 }
@@ -374,6 +381,7 @@ fn p2p_swap_content() {
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::P2PSwap(_)));
     assert!(matches!(test_deserialization(P2P_SWAP1), MessageContentInternal::P2PSwap(_)));
+    assert!(matches!(test_deserialization(P2P_SWAP2), MessageContentInternal::P2PSwap(_)));
 }
 
 #[test]
