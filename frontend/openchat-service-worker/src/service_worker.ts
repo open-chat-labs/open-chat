@@ -122,8 +122,8 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
 
     const bytes = toUint8Array(value);
 
-    const notification = decodeNotification(bytes, timestamp);
-    if (notification === undefined) {
+    const webPushNotification = decodeWebPushNotification(bytes, timestamp);
+    if (webPushNotification === undefined) {
         console.debug("SW: unable to decode notification", id);
         return;
     }
@@ -136,7 +136,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     windowClients.forEach((window) => {
         window.postMessage({
             type: "NOTIFICATION_RECEIVED",
-            data: notification,
+            data: webPushNotification,
         });
     });
 
@@ -144,11 +144,19 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     const isClientFocused = windowClients.some(
         (wc) => wc.focused && wc.visibilityState === "visible",
     );
-    if (isClientFocused && isMessageNotification(notification)) {
+    if (isClientFocused && isMessageNotification(webPushNotification)) {
         console.debug("SW: suppressing notification because client focused", id);
         return;
     }
-    await showNotification(notification, id);
+
+    const [title, notification] = buildNotification(webPushNotification);
+
+    console.debug("SW: about to show notification: ", notification, id);
+    await self.registration.showNotification(title, notification);
+
+    // Hack to make sure the notification is always displayed before this function returns in order to avoid
+    // the generic "This site was updated in the background" notification from appearing
+    await delay(100);
 }
 
 async function handleNotificationClick(event: NotificationEvent): Promise<void> {
@@ -161,12 +169,11 @@ async function handleNotificationClick(event: NotificationEvent): Promise<void> 
 
     if (windowClients.length > 0) {
         const window = windowClients[0];
-        window.focus();
-
         window.postMessage({
             type: "NOTIFICATION_CLICKED",
             path: event.notification.data.path,
         });
+        await window.focus();
     } else {
         const urlToOpen = new URL(event.notification.data.path, self.location.origin);
         console.debug("SW: notification clicked no open clients. Opening: ", urlToOpen);
@@ -174,7 +181,7 @@ async function handleNotificationClick(event: NotificationEvent): Promise<void> 
     }
 }
 
-function decodeNotification(bytes: Uint8Array, timestamp: bigint): Notification | undefined {
+function decodeWebPushNotification(bytes: Uint8Array, timestamp: bigint): Notification | undefined {
     try {
         const deserialized = deserializeFromMsgPack(bytes);
         const validated = typeboxValidate(deserialized, TNotification);
@@ -189,10 +196,7 @@ function toUint8Array(base64String: string): Uint8Array {
     return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
 }
 
-const MAX_NOTIFICATIONS = 50;
-const MAX_NOTIFICATIONS_PER_GROUP = 20;
-
-async function showNotification(n: Notification, id: string): Promise<void> {
+function buildNotification(n: Notification): [string, NotificationOptions] {
     let icon = "/_/raw/icon.png";
     let image = undefined;
     let title: string;
@@ -263,8 +267,8 @@ async function showNotification(n: Notification, id: string): Promise<void> {
     }
 
     const path = notificationPath(n);
-    let tag: string | undefined = undefined;
 
+    let tag: string | undefined = undefined;
     if (isMessageNotification(n)) {
         if (icon === undefined && n.messageType === "File") {
             icon = FILE_ICON;
@@ -273,16 +277,7 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         tag = path;
     }
 
-    const existing = await self.registration.getNotifications();
-    const matching = existing.filter((n) => n.data.path === path);
-    const closed = closeExcessNotifications(matching, MAX_NOTIFICATIONS_PER_GROUP);
-
-    if (existing.length - closed >= MAX_NOTIFICATIONS) {
-        const existing = await self.registration.getNotifications();
-        closeExcessNotifications(existing, MAX_NOTIFICATIONS);
-    }
-
-    const toShow = {
+    const notificationBody = {
         body,
         icon,
         image,
@@ -295,19 +290,7 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         },
     };
 
-    console.debug("SW: about to show notification: ", toShow, id);
-    await self.registration.showNotification(title, toShow);
-}
-
-function closeExcessNotifications(
-    notifications: globalThis.Notification[],
-    maxCount: number,
-): number {
-    const toClose = Math.max(notifications.length + 1 - maxCount, 0);
-    if (toClose > 0) {
-        notifications.slice(0, toClose).forEach((n) => n.close());
-    }
-    return toClose;
+    return [title, notificationBody];
 }
 
 function messageText(
@@ -426,6 +409,10 @@ function avatarUrl(canisterId: string, avatarId: bigint): string {
 
 function channelAvatarUrl(channel: ChannelIdentifier, avatarId: bigint): string {
     return `https://${channel.communityId}.raw.icp0.io/channel/${channel.channelId}/avatar/${avatarId}`;
+}
+
+function delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 type TimestampedNotification = {
