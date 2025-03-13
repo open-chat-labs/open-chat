@@ -153,6 +153,10 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
 
     console.debug("SW: about to show notification: ", notification, id);
     await self.registration.showNotification(title, notification);
+
+    // Hack to make sure the notification is always displayed before this function returns in order to avoid
+    // the generic "This site was updated in the background" notification from appearing
+    await delay(100);
 }
 
 async function handleNotificationClick(event: NotificationEvent): Promise<void> {
@@ -264,10 +268,13 @@ function buildNotification(n: Notification): [string, NotificationOptions] {
 
     const path = notificationPath(n);
 
+    let tag: string | undefined = undefined;
     if (isMessageNotification(n)) {
         if (icon === undefined && n.messageType === "File") {
             icon = FILE_ICON;
         }
+    } else {
+        tag = path;
     }
 
     const notificationBody = {
@@ -275,7 +282,7 @@ function buildNotification(n: Notification): [string, NotificationOptions] {
         icon,
         image,
         renotify: true,
-        tag: path,
+        tag,
         timestamp: Number(n.timestamp),
         data: {
             path,
@@ -402,6 +409,10 @@ function avatarUrl(canisterId: string, avatarId: bigint): string {
 
 function channelAvatarUrl(channel: ChannelIdentifier, avatarId: bigint): string {
     return `https://${channel.communityId}.raw.icp0.io/channel/${channel.channelId}/avatar/${avatarId}`;
+}
+
+function delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 type TimestampedNotification = {
