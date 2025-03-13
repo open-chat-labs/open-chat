@@ -2724,7 +2724,6 @@ export function publicApiKeyDetails(value: ApiPublicApiKeyDetails): PublicApiKey
 export function groupDetailsUpdatesResponse(
     value: GroupSelectedUpdatesResponse | CommunitySelectedChannelUpdatesResponse,
 ): GroupChatDetailsUpdatesResponse {
-    console.log("group details updates: ", value);
     if (typeof value === "object") {
         if ("Success" in value) {
             return {
