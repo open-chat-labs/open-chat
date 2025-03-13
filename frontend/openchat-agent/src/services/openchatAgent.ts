@@ -3155,7 +3155,7 @@ export class OpenChatAgent extends EventTarget {
 
     payForDiamondMembership(
         userId: string,
-        token: string,
+        ledger: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint,
@@ -3164,7 +3164,7 @@ export class OpenChatAgent extends EventTarget {
 
         return this._userIndexClient.payForDiamondMembership(
             userId,
-            token,
+            ledger,
             duration,
             recurring,
             expectedPriceE8s,

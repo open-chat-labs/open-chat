@@ -120,7 +120,7 @@
         confirming = true;
         client
             .payForDiamondMembership(
-                tokenDetails.symbol,
+                tokenDetails.ledger,
                 selectedDuration,
                 autoRenew && selectedDuration !== "lifetime",
                 toPayE8s,
