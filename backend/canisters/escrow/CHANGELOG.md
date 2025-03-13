@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Remove the `Cryptocurrency` type from public APIs (part 1) ([#7510](https://github.com/open-chat-labs/open-chat/pull/7510))
 - Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
 
 ## [[2.0.1597](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1597-escrow)] - 2025-01-31
