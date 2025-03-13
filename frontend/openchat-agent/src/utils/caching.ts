@@ -1474,6 +1474,10 @@ export async function setActivityFeedEvents(activity: MessageActivityEvent[]): P
     (await db).put("activityFeed", activity, "value");
 }
 
+/**
+ * When a bot is uninstalled from a community we need to remove all of the api keys for each
+ * of the channels in the community. This is unfortunately a bit messy.
+ */
 export async function removeCachedChannelApiKeys(
     principal: Principal,
     communityId: string,
@@ -1484,7 +1488,8 @@ export async function removeCachedChannelApiKeys(
     if (chats !== undefined) {
         const community = chats.communities.find((c) => c.id.communityId === communityId);
         if (community !== undefined) {
-            community.channels.forEach(async ({ id }) => {
+            const tx = (await db).transaction(["group_details"], "readwrite");
+            for (const { id } of community.channels) {
                 const cacheKey = `${id.communityId}_${id.channelId}`;
                 if (db === undefined) return;
                 const details = await getCachedGroupDetails(db, cacheKey);
@@ -1492,7 +1497,8 @@ export async function removeCachedChannelApiKeys(
                     details.apiKeys.delete(botId);
                     await setCachedGroupDetails(db, cacheKey, details);
                 }
-            });
+            }
+            tx.commit();
         }
     }
 }
