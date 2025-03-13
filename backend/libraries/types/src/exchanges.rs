@@ -20,39 +20,11 @@ pub struct CancelOrderRequest {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "TokenInfoCombined")]
 pub struct TokenInfo {
     pub symbol: String,
-    pub token: crate::Cryptocurrency,
     pub ledger: CanisterId,
     pub decimals: u8,
     pub fee: u128,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct TokenInfoCombined {
-    pub symbol: Option<String>,
-    pub token: Option<crate::Cryptocurrency>,
-    pub ledger: CanisterId,
-    pub decimals: u8,
-    pub fee: u128,
-}
-
-impl From<TokenInfoCombined> for TokenInfo {
-    fn from(value: TokenInfoCombined) -> Self {
-        let symbol = value
-            .symbol
-            .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
-
-        TokenInfo {
-            token: symbol.clone().into(),
-            symbol,
-            ledger: value.ledger,
-            decimals: value.decimals,
-            fee: value.fee,
-        }
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]

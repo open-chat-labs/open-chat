@@ -106,8 +106,6 @@ impl Job for RecurringDiamondMembershipPayment {
 
             let args = Args {
                 duration,
-                #[allow(deprecated)]
-                token: if pay_in_chat { types::Cryptocurrency::CHAT } else { types::Cryptocurrency::InternetComputer },
                 ledger: if pay_in_chat { CHAT_LEDGER_CANISTER_ID } else { ICP_LEDGER_CANISTER_ID },
                 expected_price_e8s: price_e8s,
                 recurring: true,

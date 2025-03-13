@@ -149,7 +149,6 @@ fn process_charge(
                 user_id,
                 timestamp: now,
                 expires_at,
-                token: token_symbol.to_string().into(),
                 ledger: args.ledger,
                 token_symbol: token_symbol.to_string(),
                 amount_e8s: args.expected_price_e8s,

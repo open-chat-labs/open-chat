@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, ChannelId, MessageId, MessageIndex, UserId};
@@ -10,8 +9,7 @@ pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub ledger: CanisterId,
-    pub token_symbol: Option<String>,
-    pub token: Option<types::Cryptocurrency>,
+    pub token_symbol: String,
     pub amount: u128,
     pub decimals: u8,
     pub username: String,

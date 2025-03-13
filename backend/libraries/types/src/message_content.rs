@@ -1,9 +1,9 @@
 #![allow(deprecated)]
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency,
-    MessageIndex, MessagePermission, Milliseconds, P2PSwapStatus, PendingCryptoTransaction, ProposalContent, TimestampMillis,
-    TokenInfo, TotalVotes, User, UserId, VideoCallType,
+    Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, MessageIndex,
+    MessagePermission, Milliseconds, P2PSwapStatus, PendingCryptoTransaction, ProposalContent, TimestampMillis, TokenInfo,
+    TotalVotes, User, UserId, VideoCallType,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -357,7 +357,6 @@ impl From<MessageContentInitial> for MessageContent {
                 winners: Vec::new(),
                 winner_count: 0,
                 user_is_winner: false,
-                token: c.transfer.token_symbol().to_string().into(),
                 token_symbol: c.transfer.token_symbol().to_string(),
                 ledger: c.transfer.ledger_canister_id(),
                 end_date: c.end_date,
@@ -587,14 +586,12 @@ pub struct PrizeContentInitial {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "PrizeContentCombined")]
 pub struct PrizeContent {
     pub prizes_remaining: u32,
     pub prizes_pending: u32,
     pub winners: Vec<UserId>,
     pub winner_count: u32,
     pub user_is_winner: bool,
-    pub token: Cryptocurrency,
     pub token_symbol: String,
     pub ledger: CanisterId,
     pub end_date: TimestampMillis,
@@ -603,49 +600,6 @@ pub struct PrizeContent {
     pub lifetime_diamond_only: bool,
     pub unique_person_only: bool,
     pub streak_only: u16,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct PrizeContentCombined {
-    pub prizes_remaining: u32,
-    pub prizes_pending: u32,
-    pub winners: Vec<UserId>,
-    pub winner_count: u32,
-    pub user_is_winner: bool,
-    pub token: Option<Cryptocurrency>,
-    #[serde(default)]
-    pub token_symbol: String,
-    pub ledger: CanisterId,
-    pub end_date: TimestampMillis,
-    pub caption: Option<String>,
-    pub diamond_only: bool,
-    pub lifetime_diamond_only: bool,
-    pub unique_person_only: bool,
-    pub streak_only: u16,
-}
-
-impl From<PrizeContentCombined> for PrizeContent {
-    fn from(value: PrizeContentCombined) -> Self {
-        let token_symbol = value.token.map_or(value.token_symbol, |t| t.token_symbol().to_string());
-
-        PrizeContent {
-            prizes_remaining: value.prizes_remaining,
-            prizes_pending: value.prizes_pending,
-            winners: value.winners,
-            winner_count: value.winner_count,
-            user_is_winner: value.user_is_winner,
-            token: token_symbol.clone().into(),
-            token_symbol,
-            ledger: value.ledger,
-            end_date: value.end_date,
-            caption: value.caption,
-            diamond_only: value.diamond_only,
-            lifetime_diamond_only: value.lifetime_diamond_only,
-            unique_person_only: value.unique_person_only,
-            streak_only: value.streak_only,
-        }
-    }
 }
 
 #[ts_export]

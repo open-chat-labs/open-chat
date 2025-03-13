@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 use candid::Principal;
 use ic_cdk::call::RejectCode;
 use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
@@ -24,7 +23,6 @@ pub fn create_pending_transaction(
         ledger,
         fee,
         token_symbol: token_symbol.clone(),
-        token: token_symbol.into(),
         amount,
         to: user_id.into(),
         memo: memo.map(|bytes| bytes.to_vec().into()),

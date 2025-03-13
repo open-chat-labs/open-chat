@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{now_nanos, tick_many};
@@ -8,10 +7,7 @@ use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
-use types::{
-    ChatEvent, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent, MessageContentInitial,
-    PendingCryptoTransaction,
-};
+use types::{ChatEvent, CryptoContent, CryptoTransaction, MessageContent, MessageContentInitial, PendingCryptoTransaction};
 
 #[test_case(false, false)]
 #[test_case(true, false)]
@@ -48,7 +44,6 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
             ledger,
             fee,
             token_symbol: ICP_SYMBOL.to_string(),
-            token: Cryptocurrency::InternetComputer,
             amount,
             from: random_principal.into(),
             to: user2.user_id.into(),
@@ -63,7 +58,6 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
             ledger,
             fee,
             token_symbol: ICP_SYMBOL.to_string(),
-            token: Cryptocurrency::InternetComputer,
             amount,
             to: user2.user_id.into(),
             memo: None,
@@ -156,7 +150,6 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
             ledger,
             fee,
             token_symbol: ICP_SYMBOL.to_string(),
-            token: Cryptocurrency::InternetComputer,
             amount,
             from: random_principal.into(),
             to: user2.user_id.into(),
@@ -171,7 +164,6 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
             ledger,
             fee,
             token_symbol: ICP_SYMBOL.to_string(),
-            token: Cryptocurrency::InternetComputer,
             amount,
             to: user2.user_id.into(),
             memo: None,

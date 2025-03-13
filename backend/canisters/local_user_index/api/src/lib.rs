@@ -1,6 +1,4 @@
-#![allow(deprecated)]
 use candid::{CandidType, Principal};
-use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
@@ -174,12 +172,10 @@ pub struct UserJoinedCommunityOrChannel {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "DiamondMembershipPaymentReceivedCombined")]
 pub struct DiamondMembershipPaymentReceived {
     pub user_id: UserId,
     pub timestamp: TimestampMillis,
     pub expires_at: TimestampMillis,
-    pub token: types::Cryptocurrency,
     pub ledger: CanisterId,
     pub token_symbol: String,
     pub amount_e8s: u64,
@@ -187,49 +183,6 @@ pub struct DiamondMembershipPaymentReceived {
     pub duration: DiamondMembershipPlanDuration,
     pub recurring: bool,
     pub send_bot_message: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct DiamondMembershipPaymentReceivedCombined {
-    user_id: UserId,
-    timestamp: TimestampMillis,
-    expires_at: TimestampMillis,
-    ledger: Option<CanisterId>,
-    token_symbol: Option<String>,
-    token: Option<types::Cryptocurrency>,
-    amount_e8s: u64,
-    block_index: u64,
-    duration: DiamondMembershipPlanDuration,
-    recurring: bool,
-    send_bot_message: bool,
-}
-
-impl From<DiamondMembershipPaymentReceivedCombined> for DiamondMembershipPaymentReceived {
-    fn from(value: DiamondMembershipPaymentReceivedCombined) -> Self {
-        let token_symbol = value
-            .token_symbol
-            .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
-
-        let token: types::Cryptocurrency = token_symbol.clone().into();
-
-        DiamondMembershipPaymentReceived {
-            user_id: value.user_id,
-            timestamp: value.timestamp,
-            expires_at: value.expires_at,
-            token: token.clone(),
-            ledger: if matches!(token, types::Cryptocurrency::InternetComputer) {
-                ICP_LEDGER_CANISTER_ID
-            } else {
-                CHAT_LEDGER_CANISTER_ID
-            },
-            token_symbol,
-            amount_e8s: value.amount_e8s,
-            block_index: value.block_index,
-            duration: value.duration,
-            recurring: value.recurring,
-            send_bot_message: value.send_bot_message,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

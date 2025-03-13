@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 use crate::env::ENV;
 use crate::utils::{chat_token_info, icp_token_info, now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
@@ -12,8 +11,8 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    Chat, ChatType, CryptoContent, CryptoTransaction, Cryptocurrency, GroupReplyContext, MessageContentInitial,
-    P2PSwapContentInitial, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, TextContent, TotalVotes,
+    Chat, ChatType, CryptoContent, CryptoTransaction, GroupReplyContext, MessageContentInitial, P2PSwapContentInitial,
+    PendingCryptoTransaction, PollConfig, PollContent, PollVotes, TextContent, TotalVotes,
 };
 use user_canister::MessageActivity;
 
@@ -197,7 +196,6 @@ fn send_crypto_message_and_check_activity_feed(chat_type: ChatType) {
         ledger: canister_ids.icp_ledger,
         fee: 10_000,
         token_symbol: ICP_SYMBOL.to_string(),
-        token: Cryptocurrency::InternetComputer,
         amount,
         to: us.user_id.into(),
         memo: None,

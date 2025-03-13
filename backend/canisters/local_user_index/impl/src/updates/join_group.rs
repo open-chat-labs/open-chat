@@ -11,16 +11,12 @@ async fn join_group(args: Args) -> Response {
     let user_details =
         mutate_state(|state| state.get_calling_user_and_process_credentials(args.verified_credential_args.as_ref()));
 
-    let is_bot = user_details.user_type.is_bot();
-
-    #[allow(deprecated)]
     let c2c_args = group_canister::c2c_join_group::Args {
         user_id: user_details.user_id,
         principal: user_details.principal,
         invite_code: args.invite_code,
         correlation_id: args.correlation_id,
         is_platform_moderator: user_details.is_platform_moderator,
-        is_bot,
         user_type: user_details.user_type,
         diamond_membership_expires_at: user_details.diamond_membership_expires_at,
         verified_credential_args: args.verified_credential_args.clone(),
@@ -30,7 +26,7 @@ async fn join_group(args: Args) -> Response {
         Ok(response) => match response {
             group_canister::c2c_join_group::Response::Success(s)
             | group_canister::c2c_join_group::Response::AlreadyInGroupV2(s) => {
-                if !is_bot {
+                if !user_details.user_type.is_bot() {
                     mutate_state(|state| {
                         commit(
                             user_details.user_id,

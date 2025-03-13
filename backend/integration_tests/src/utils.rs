@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 use candid::Principal;
 use constants::{
     CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE,
@@ -8,7 +7,7 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use std::path::Path;
 use std::time::SystemTime;
 use std::{path::PathBuf, time::UNIX_EPOCH};
-use types::{Cryptocurrency, Hash, TimestampMillis, TimestampNanos, TokenInfo};
+use types::{Hash, TimestampMillis, TimestampNanos, TokenInfo};
 
 pub fn principal_to_username(principal: Principal) -> String {
     principal.to_string()[0..5].to_string()
@@ -58,7 +57,6 @@ pub fn generate_seed() -> Hash {
 pub fn chat_token_info() -> TokenInfo {
     TokenInfo {
         symbol: CHAT_SYMBOL.to_string(),
-        token: Cryptocurrency::CHAT,
         ledger: CHAT_LEDGER_CANISTER_ID,
         decimals: 8,
         fee: CHAT_TRANSFER_FEE,
@@ -68,7 +66,6 @@ pub fn chat_token_info() -> TokenInfo {
 pub fn icp_token_info() -> TokenInfo {
     TokenInfo {
         symbol: ICP_SYMBOL.to_string(),
-        token: Cryptocurrency::InternetComputer,
         ledger: ICP_LEDGER_CANISTER_ID,
         decimals: 8,
         fee: ICP_TRANSFER_FEE,

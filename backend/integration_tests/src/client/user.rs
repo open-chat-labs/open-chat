@@ -373,7 +373,6 @@ pub mod happy_path {
                 amount,
                 fee,
                 decimals: 8,
-                token: token_symbol.clone().into(),
                 token_symbol,
                 pin: None,
             },

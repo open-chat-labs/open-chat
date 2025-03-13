@@ -46,7 +46,6 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
     mutate_state(|state| {
         let caller = state.env.caller();
 
-        #[allow(deprecated)]
         if let Some(response) = join_community_impl(
             &c2c_join_community::Args {
                 user_id: caller.into(),
@@ -54,7 +53,6 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
                 invite_code: None,
                 referred_by: None,
                 is_platform_moderator: false,
-                is_bot: true,
                 user_type: UserType::OcControlledBot,
                 diamond_membership_expires_at: None,
                 verified_credential_args: None,
