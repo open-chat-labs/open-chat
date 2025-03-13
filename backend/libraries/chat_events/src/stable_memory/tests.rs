@@ -20,7 +20,7 @@ use crate::{
 use constants::CHAT_SYMBOL;
 use rand::rngs::StdRng;
 use rand::{Rng, RngCore, SeedableRng};
-use testing::rng::{random_from_principal, random_from_u128, random_from_u32, random_principal, random_string};
+use testing::rng::deterministic::{random_from_principal, random_from_u128, random_from_u32, random_principal, random_string};
 use types::{
     Cryptocurrency, EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal,
     ProposalDecisionStatus, ProposalRewardStatus, Reaction, SnsProposal, Tally, ThumbnailData, Tips, TokenInfo,
