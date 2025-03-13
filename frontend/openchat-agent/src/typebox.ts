@@ -2389,7 +2389,6 @@ export type UserIndexDiamondMembershipFeesDiamondMembershipFees = Static<
 >;
 export const UserIndexDiamondMembershipFeesDiamondMembershipFees = Type.Object({
     token: Cryptocurrency,
-    token_symbol: Type.String(),
     one_month: Type.BigInt(),
     three_months: Type.BigInt(),
     one_year: Type.BigInt(),
@@ -2604,7 +2603,6 @@ export type UserIndexPayForDiamondMembershipArgs = Static<
 export const UserIndexPayForDiamondMembershipArgs = Type.Object({
     duration: DiamondMembershipPlanDuration,
     token: Cryptocurrency,
-    ledger: TSPrincipal,
     expected_price_e8s: Type.BigInt(),
     recurring: Type.Boolean(),
 });
@@ -6026,7 +6024,6 @@ export const BotCommandArgValue = Type.Union([
 export type PendingCryptoTransactionICRC2 = Static<typeof PendingCryptoTransactionICRC2>;
 export const PendingCryptoTransactionICRC2 = Type.Object({
     ledger: TSPrincipal,
-    token_symbol: Type.String(),
     token: Cryptocurrency,
     amount: Type.BigInt(),
     from: AccountICRC1,
@@ -7190,7 +7187,6 @@ export const UserTipMessageArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     message_id: MessageId,
     ledger: TSPrincipal,
-    token_symbol: Type.String(),
     token: Cryptocurrency,
     amount: Type.BigInt(),
     fee: Type.BigInt(),
