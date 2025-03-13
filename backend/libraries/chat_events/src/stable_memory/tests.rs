@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 use crate::message_content_internal::icrc1::AccountInternal;
 use crate::stable_memory::tests::test_values::{
     AUDIO_CURRENT, AUDIO_PREV1, CRYPTO_CURRENT, CRYPTO_PREV1, CUSTOM_CURRENT, CUSTOM_PREV1, DELETED_CURRENT, DELETED_PREV1,
@@ -22,9 +21,8 @@ use rand::rngs::StdRng;
 use rand::{Rng, RngCore, SeedableRng};
 use testing::rng::deterministic::{random_from_principal, random_from_u128, random_from_u32, random_principal, random_string};
 use types::{
-    Cryptocurrency, EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal,
-    ProposalDecisionStatus, ProposalRewardStatus, Reaction, SnsProposal, Tally, ThumbnailData, Tips, TokenInfo,
-    VideoCallPresence, VideoCallType,
+    EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal, ProposalDecisionStatus,
+    ProposalRewardStatus, Reaction, SnsProposal, Tally, ThumbnailData, Tips, TokenInfo, VideoCallPresence, VideoCallType,
 };
 
 mod test_values;
@@ -413,11 +411,12 @@ fn reported_message_content() {
 fn p2p_swap_content() {
     let mut rng = get_fresh_rng();
     let symbol = random_string(&mut rng);
+    #[allow(deprecated)]
     let content = MessageContentInternal::P2PSwap(P2PSwapContentInternal {
         swap_id: rng.gen(),
         token0: TokenInfo {
             symbol: CHAT_SYMBOL.to_string(),
-            token: Cryptocurrency::CHAT,
+            token: types::Cryptocurrency::CHAT,
             ledger: random_principal(&mut rng),
             decimals: rng.gen(),
             fee: rng.gen(),
@@ -425,7 +424,7 @@ fn p2p_swap_content() {
         token0_amount: rng.gen(),
         token1: TokenInfo {
             symbol: symbol.clone(),
-            token: Cryptocurrency::Other(symbol),
+            token: types::Cryptocurrency::Other(symbol),
             ledger: random_principal(&mut rng),
             decimals: rng.gen(),
             fee: rng.gen(),
