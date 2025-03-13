@@ -1327,6 +1327,7 @@ export type DirectChatsUpdates = {
     added: DirectChatSummary[];
     pinned?: DirectChatIdentifier[];
     updated: DirectChatSummaryUpdates[];
+    removed: DirectChatIdentifier[];
 };
 
 export type GroupChatsUpdates = {

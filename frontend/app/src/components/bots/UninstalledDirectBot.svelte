@@ -18,13 +18,14 @@
     interface Props {
         chatId: DirectChatIdentifier;
         botId: string;
+        onClose: () => void;
     }
 
-    let { botId, chatId }: Props = $props();
+    let { botId, chatId, onClose }: Props = $props();
 
     let bot = $derived($externalBots.get(botId));
 
-    function onClose(installed: boolean) {
+    function closeInstaller(installed: boolean) {
         if (!installed) {
             if (
                 $pathParams.kind === "global_chat_selected_route" &&
@@ -34,6 +35,7 @@
             }
             tick().then(() => client.removeChat(chatId));
         }
+        onClose();
     }
 </script>
 
@@ -42,6 +44,6 @@
         level={"group"}
         location={{ kind: "direct_chat", userId: $currentUser.userId }}
         {bot}
-        {onClose}
+        onClose={closeInstaller}
         installedBots={$installedDirectBots} />
 {/if}

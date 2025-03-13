@@ -33,14 +33,23 @@
 
     let middlePanel: HTMLElement | undefined;
 
+    let botId = $derived.by(() => {
+        if ($selectedChatStore === undefined) return undefined;
+        if ($selectedChatStore.kind !== "direct_chat") return undefined;
+        return $externalBots.get($selectedChatStore.them.userId)?.id;
+    });
+
     let uninstalledBotId = $derived.by(() => {
-        if ($selectedChatStore === undefined) return false;
-        if ($selectedChatStore.kind !== "direct_chat") return false;
-        const botId = $selectedChatStore.them.userId;
-        const bot = $externalBots.get(botId);
-        return bot !== undefined && $installedDirectBots.get(botId) === undefined
+        return botId !== undefined && $installedDirectBots.get(botId) === undefined
             ? botId
             : undefined;
+    });
+
+    let installingBot = $state(false);
+    $effect(() => {
+        if (uninstalledBotId !== undefined) {
+            installingBot = true;
+        }
     });
 
     function alignVideoCall(
@@ -118,8 +127,11 @@
                 <NoChatSelected on:newchat />
             </div>
         {/if}
-    {:else if uninstalledBotId && $selectedChatId.kind === "direct_chat"}
-        <UninstalledDirectBot chatId={$selectedChatId} botId={uninstalledBotId} />
+    {:else if installingBot && botId && $selectedChatId.kind === "direct_chat"}
+        <UninstalledDirectBot
+            onClose={() => (installingBot = false)}
+            chatId={$selectedChatId}
+            {botId} />
     {:else if $selectedChatStore !== undefined}
         <CurrentChat
             bind:currentChatMessages

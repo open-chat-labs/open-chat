@@ -20,6 +20,7 @@ import type {
     CommunityCanisterCommunitySummaryUpdates,
     ChannelIdentifier,
     UserGroupDetails,
+    DirectChatIdentifier,
 } from "openchat-shared";
 import {
     ChatMap,
@@ -74,6 +75,9 @@ export function mergeCommunityDetails(
     previous: CommunityDetails,
     updates: CommunityDetailsUpdates,
 ): CommunityDetails {
+    updates.botsRemoved.forEach((id) => {
+        previous.apiKeys.delete(id);
+    });
     return {
         lastUpdated: updates.lastUpdated,
         members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
@@ -133,6 +137,9 @@ export function mergeGroupChatDetails(
     previous: GroupChatDetails,
     updates: GroupChatDetailsUpdates,
 ): GroupChatDetails {
+    updates.botsRemoved.forEach((id) => {
+        previous.apiKeys.delete(id);
+    });
     return {
         timestamp: updates.timestamp,
         members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
@@ -188,42 +195,49 @@ function mergeParticipants(_: Member | undefined, updated: Member) {
 export function mergeDirectChatUpdates(
     directChats: DirectChatSummary[],
     updates: DirectChatSummaryUpdates[],
+    removed: DirectChatIdentifier[],
 ): DirectChatSummary[] {
     const lookup = ChatMap.fromList(updates);
+    const toRemove = new Set<string>(removed.map((id) => id.userId));
 
-    return directChats.map((c) => {
-        const u = lookup.get(c.id);
+    return directChats
+        .filter((c) => !toRemove.has(c.them.userId))
+        .map((c) => {
+            const u = lookup.get(c.id);
 
-        if (u === undefined) return c;
+            if (u === undefined) return c;
 
-        return {
-            kind: "direct_chat",
-            id: c.id,
-            them: c.them,
-            readByThemUpTo: u.readByThemUpTo ?? c.readByThemUpTo,
-            dateCreated: c.dateCreated,
-            lastUpdated: u.lastUpdated,
-            latestEventIndex: u.latestEventIndex ?? c.latestEventIndex,
-            latestMessage: u.latestMessage ?? c.latestMessage,
-            latestMessageIndex: u.latestMessageIndex ?? c.latestMessageIndex,
-            metrics: u.metrics ?? c.metrics,
-            eventsTTL: applyOptionUpdate(c.eventsTTL, u.eventsTTL),
-            eventsTtlLastUpdated: bigIntMax(
-                c.eventsTtlLastUpdated ?? BigInt(0),
-                u.eventsTtlLastUpdated ?? BigInt(0),
-            ),
-            videoCallInProgress: applyOptionUpdate(c.videoCallInProgress, u.videoCallInProgress),
-            membership: {
-                ...c.membership,
-                readByMeUpTo: u.readByMeUpTo ?? c.membership.readByMeUpTo,
-                notificationsMuted: u.notificationsMuted ?? c.membership.notificationsMuted,
-                myMetrics: u.myMetrics ?? c.membership.myMetrics,
-                archived: u.archived ?? c.membership.archived,
-                rulesAccepted: false,
-                lapsed: false,
-            },
-        };
-    });
+            return {
+                kind: "direct_chat",
+                id: c.id,
+                them: c.them,
+                readByThemUpTo: u.readByThemUpTo ?? c.readByThemUpTo,
+                dateCreated: c.dateCreated,
+                lastUpdated: u.lastUpdated,
+                latestEventIndex: u.latestEventIndex ?? c.latestEventIndex,
+                latestMessage: u.latestMessage ?? c.latestMessage,
+                latestMessageIndex: u.latestMessageIndex ?? c.latestMessageIndex,
+                metrics: u.metrics ?? c.metrics,
+                eventsTTL: applyOptionUpdate(c.eventsTTL, u.eventsTTL),
+                eventsTtlLastUpdated: bigIntMax(
+                    c.eventsTtlLastUpdated ?? BigInt(0),
+                    u.eventsTtlLastUpdated ?? BigInt(0),
+                ),
+                videoCallInProgress: applyOptionUpdate(
+                    c.videoCallInProgress,
+                    u.videoCallInProgress,
+                ),
+                membership: {
+                    ...c.membership,
+                    readByMeUpTo: u.readByMeUpTo ?? c.membership.readByMeUpTo,
+                    notificationsMuted: u.notificationsMuted ?? c.membership.notificationsMuted,
+                    myMetrics: u.myMetrics ?? c.membership.myMetrics,
+                    archived: u.archived ?? c.membership.archived,
+                    rulesAccepted: false,
+                    lapsed: false,
+                },
+            };
+        });
 }
 
 export function mergeGroupChatUpdates(
