@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
 use std::cmp::max;
-use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{BTreeMap, HashSet};
+use std::collections::btree_map::Entry::{Occupied, Vacant};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
@@ -2437,7 +2437,7 @@ pub struct RemoveExpiredEventsResult {
 
 pub struct ExpiredThread {
     pub root_message_index: MessageIndex,
-    pub followers: HashSet<UserId>,
+    pub followers: BTreeSet<UserId>,
 }
 
 #[derive(Copy, Clone)]
