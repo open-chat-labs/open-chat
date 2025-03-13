@@ -54,13 +54,13 @@ docker pull --platform linux/amd64 openchatlabs/open-chat:latest
 
 In case you get an _unauthorised error_ when calling this command, please use `docker logout` / `docker login` to re-authorise.
 
-**NOTE:** For _Apple Silicon_ users we are unfortunatelly unable to provide `arm64` image (yet), so using _Docker Desktop_ to pull the image won't work, and you will need to do this step manually in terminal.
+> **Note:** You may be able to use _Docker Desktop_ app to download the image, but if your arch is different to `amd64` you may get an error if you try to pull the image. We are unfortunatelly unable to provide `arm64` image (yet), so we would recommend this step to be done in terminal.
 
-### Building an image
+### Building the image
 
-If you would prefer to build an image yourself, make sure to position yourself at the root of this repository.
+If you would prefer to build the image yourself, make sure to position yourself at the root of this repository.
 
-To build the image from the repository you may use the following command:
+Run the following command to build the image from the repository:
 ```shell
 docker build -t open-chat -f Dockerfile.oc .
 ```
@@ -70,7 +70,7 @@ Or, in case you're having build issues due to the arch of your host machine, you
 docker buildx build -t open-chat -f Dockerfile.oc --platform linux/amd64 --load .
 ```
 
-**NOTE:** it may take up to 10+ minutes to build the image.
+> **Note:** it may take up to 10+ minutes to build the image.
 
 ### Running the image
 
@@ -79,9 +79,9 @@ To run the `open-chat` image, once it's downloaded or built use either _Docker D
 docker run --platform linux/amd64 -d -p 5002:80 -p 8080:8080 --name open-chat openchatlabs/open-chat:latest
 ```
 
-If you've built the image yourself, then the last argument should be equal to the value provided after the `-t` flag in the `docker build` command. In our examples that value was `open-chat`.
+If you've built the image yourself, then the last argument should be equal to the value provided after the `-t` flag in the `docker build` command. In our build examples that value was `open-chat`.
 
-**NOTE:** It may take _**up to a minute**_ for the container to start serving OC app once it's started.
+> **Important**: It may take _up to a minute_ for the container to initialise _dfx_ and start serving OC app correctly!
 
 Once the container is fully running, the app UI should be available on [http://localhost:5002](http://localhost:5002).
 
