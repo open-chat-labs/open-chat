@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Remove the `Cryptocurrency` type from public APIs (part 2) ([#7592](https://github.com/open-chat-labs/open-chat/pull/7592))
+
 ## [[2.0.1646](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1646-local_group_index)] - 2025-03-12
 
 ### Added
