@@ -1473,3 +1473,26 @@ export async function setActivityFeedEvents(activity: MessageActivityEvent[]): P
     if (db === undefined) return;
     (await db).put("activityFeed", activity, "value");
 }
+
+export async function removeCachedChannelApiKeys(
+    principal: Principal,
+    communityId: string,
+    botId: string,
+): Promise<void> {
+    if (db === undefined) return;
+    const chats = await getCachedChats(db, principal);
+    if (chats !== undefined) {
+        const community = chats.communities.find((c) => c.id.communityId === communityId);
+        if (community !== undefined) {
+            community.channels.forEach(async ({ id }) => {
+                const cacheKey = `${id.communityId}_${id.channelId}`;
+                if (db === undefined) return;
+                const details = await getCachedGroupDetails(db, cacheKey);
+                if (details !== undefined) {
+                    details.apiKeys.delete(botId);
+                    await setCachedGroupDetails(db, cacheKey, details);
+                }
+            });
+        }
+    }
+}

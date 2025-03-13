@@ -633,7 +633,7 @@ export function botCommandArg(api: BotCommandArg): SlashCommandParamInstance {
             kind: "dateTime",
             name,
             value: value.DateTime,
-        }
+        };
     }
     throw new Error(`Unexpected ApiBotCommandArg type received, ${api}`);
 }
@@ -2724,6 +2724,7 @@ export function publicApiKeyDetails(value: ApiPublicApiKeyDetails): PublicApiKey
 export function groupDetailsUpdatesResponse(
     value: GroupSelectedUpdatesResponse | CommunitySelectedChannelUpdatesResponse,
 ): GroupChatDetailsUpdatesResponse {
+    console.log("group details updates: ", value);
     if (typeof value === "object") {
         if ("Success" in value) {
             return {
@@ -3271,18 +3272,22 @@ export function apiDexId(dex: DexId): TExchangeId {
 
 export function externalBotPermissions(value: ApiExternalBotPermissions): ExternalBotPermissions {
     return {
-        communityPermissions: permissionsFromBits(value.community ?? 0, [...communityPermissionsList]),
+        communityPermissions: permissionsFromBits(value.community ?? 0, [
+            ...communityPermissionsList,
+        ]),
         chatPermissions: permissionsFromBits(value.chat ?? 0, [...botChatPermissionList]),
         messagePermissions: permissionsFromBits(value.message ?? 0, [...messagePermissionsList]),
     };
 }
 
-export function apiExternalBotPermissions(value: ExternalBotPermissions): ApiExternalBotPermissions {
+export function apiExternalBotPermissions(
+    value: ExternalBotPermissions,
+): ApiExternalBotPermissions {
     return {
         community: permissionsToBits(value.communityPermissions, [...communityPermissionsList]),
         chat: permissionsToBits(value.chatPermissions, [...botChatPermissionList]),
         message: permissionsToBits(value.messagePermissions, [...messagePermissionsList]),
-    }
+    };
 }
 
 function permissionsFromBits<T>(bits: number, allPermissions: T[]): T[] {
@@ -3383,12 +3388,12 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
             minValue: paramType.DecimalParam.min_value,
             maxValue: paramType.DecimalParam.max_value,
             choices: paramType.DecimalParam.choices,
-        };    
+        };
     } else if ("DateTimeParam" in paramType) {
         return {
             kind: "dateTime",
             future_only: paramType.DateTimeParam.future_only,
-        }
+        };
     }
     throw new UnsupportedValueError("Unexpected ApiSlashCommandParamType value", paramType);
 }

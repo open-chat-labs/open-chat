@@ -1807,10 +1807,17 @@ export class OpenChatAgent extends EventTarget {
                 userResponse.botsAddedOrUpdated.forEach((b) =>
                     installedBots.set(b.id, b.permissions),
                 );
-                userResponse.botsRemoved.forEach((b) => installedBots.delete(b));
                 userResponse.apiKeysGenerated.forEach((api) => apiKeys.set(api.botId, api));
+                userResponse.botsRemoved.forEach((b) => {
+                    installedBots.delete(b);
+                    apiKeys.delete(b);
+                });
                 directChats = userResponse.directChats.added.concat(
-                    mergeDirectChatUpdates(directChats, userResponse.directChats.updated),
+                    mergeDirectChatUpdates(
+                        directChats,
+                        userResponse.directChats.updated,
+                        userResponse.directChats.removed,
+                    ),
                 );
                 directChatUpdates = userResponse.directChats.updated;
 
