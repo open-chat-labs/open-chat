@@ -281,7 +281,7 @@ function buildNotification(n: Notification): [string, NotificationOptions] {
         body,
         icon,
         image,
-        renotify: true,
+        renotify: tag !== undefined,
         tag,
         timestamp: Number(n.timestamp),
         data: {
