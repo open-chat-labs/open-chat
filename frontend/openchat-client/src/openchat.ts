@@ -8219,7 +8219,6 @@ export class OpenChat extends EventTarget {
                 perm = this.#liveState.installedDirectBots.get(botId);
                 localGlobalUpdates.removeBot(botId);
                 this.removeChat({ kind: "direct_chat", userId: botId });
-                this.archiveChat({ kind: "direct_chat", userId: botId });
                 break;
         }
         return perm;
@@ -8246,7 +8245,6 @@ export class OpenChat extends EventTarget {
                 if (perm === undefined) return perm;
                 previousPermissions = this.#liveState.installedDirectBots.get(botId);
                 localGlobalUpdates.installBot(botId, perm);
-                this.unarchiveChat({ kind: "direct_chat", userId: botId });
                 break;
         }
         return previousPermissions;

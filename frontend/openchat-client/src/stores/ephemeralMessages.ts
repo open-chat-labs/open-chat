@@ -12,6 +12,9 @@ export type EphemeralMessages = MessageContextMap<EphemeralState>;
 
 function createEphemeralStore() {
     const store = writable<EphemeralMessages>(new MessageContextMap<EphemeralState>());
+    let storeValue: EphemeralMessages = new MessageContextMap<EphemeralState>();
+    store.subscribe((v) => (storeValue = v));
+
     return {
         subscribe: store.subscribe,
         add: (key: MessageContext, message: EventWrapper<Message>): void => {
@@ -23,6 +26,9 @@ function createEphemeralStore() {
                 }
                 return state;
             });
+        },
+        contains: (key: MessageContext, messageId: bigint): boolean => {
+            return storeValue.get(key)?.has(messageId) ?? false;
         },
     };
 }
