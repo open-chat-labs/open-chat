@@ -4,7 +4,7 @@ use candid::Principal;
 use constants::{MEMO_PRIZE_FEE, MEMO_PRIZE_REFUND, OPENCHAT_TREASURY_CANISTER_ID, PRIZE_FEE_PERCENT};
 use ledger_utils::{create_pending_transaction, format_crypto_amount};
 use search::simple::Document;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::{HashMap, HashSet};
 use types::icrc1::{Account, CryptoAccount};
@@ -1555,11 +1555,11 @@ impl From<ReportedMessage> for ReportedMessageInternal {
 pub struct P2PSwapContentInternal {
     #[serde(rename = "i", alias = "swap_id")]
     pub swap_id: u32,
-    #[serde(rename = "t0", alias = "token0")]
+    #[serde(rename = "t0", alias = "token0", deserialize_with = "deserialize_token_info")]
     pub token0: TokenInfo,
     #[serde(rename = "a0", alias = "token0_amount")]
     pub token0_amount: u128,
-    #[serde(rename = "t1", alias = "token1")]
+    #[serde(rename = "t1", alias = "token1", deserialize_with = "deserialize_token_info")]
     pub token1: TokenInfo,
     #[serde(rename = "a1", alias = "token1_amount")]
     pub token1_amount: u128,
@@ -1860,6 +1860,36 @@ impl From<&MessageContentInternal> for MessageContentType {
             MessageContentInternal::P2PSwap(_) => MessageContentType::P2PSwap,
             MessageContentInternal::VideoCall(_) => MessageContentType::VideoCall,
             MessageContentInternal::Custom(c) => MessageContentType::Custom(c.kind.clone()),
+        }
+    }
+}
+
+fn deserialize_token_info<'de, D: Deserializer<'de>>(d: D) -> Result<TokenInfo, D::Error> {
+    let token_info: TokenInfoCombined = Deserialize::deserialize(d)?;
+    Ok(token_info.into())
+}
+
+// We need this in order to deserialize old messages stored in stable memory
+#[derive(Deserialize)]
+struct TokenInfoCombined {
+    symbol: Option<String>,
+    token: Option<Cryptocurrency>,
+    ledger: CanisterId,
+    decimals: u8,
+    fee: u128,
+}
+
+impl From<TokenInfoCombined> for TokenInfo {
+    fn from(value: TokenInfoCombined) -> Self {
+        let symbol = value
+            .symbol
+            .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
+
+        TokenInfo {
+            symbol,
+            ledger: value.ledger,
+            decimals: value.decimals,
+            fee: value.fee,
         }
     }
 }
