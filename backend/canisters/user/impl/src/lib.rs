@@ -30,7 +30,7 @@ use notifications_canister::c2c_push_notification;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use stable_memory_map::BaseKeyPrefix;
+use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
@@ -339,6 +339,29 @@ impl RuntimeState {
                 icp_ledger: ICP_LEDGER_CANISTER_ID,
             },
         }
+    }
+
+    pub fn delete_direct_chat(&mut self, user_id: UserId, block_user: bool, now: TimestampMillis) -> bool {
+        let Some(chat) = self.data.direct_chats.remove(user_id.into(), now) else {
+            return false;
+        };
+
+        if block_user {
+            self.block_user(user_id, now);
+        }
+
+        self.data
+            .stable_memory_keys_to_garbage_collect
+            .push(BaseKeyPrefix::from(ChatEventKeyPrefix::new_from_direct_chat(user_id, None)));
+
+        for message_index in chat.events.thread_keys() {
+            self.data.stable_memory_keys_to_garbage_collect.push(BaseKeyPrefix::from(
+                ChatEventKeyPrefix::new_from_direct_chat(user_id, Some(message_index)),
+            ));
+        }
+
+        jobs::garbage_collect_stable_memory::start_job_if_required(self);
+        true
     }
 }
 

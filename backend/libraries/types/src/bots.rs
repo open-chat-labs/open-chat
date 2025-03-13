@@ -53,7 +53,6 @@ pub enum BotCommandParamType {
     BooleanParam,
     StringParam(StringParam),
     IntegerParam(IntegerParam),
-    #[serde(alias = "NumberParam")]
     DecimalParam(DecimalParam),
     DateTimeParam(DateTimeParam),
 }
@@ -101,7 +100,6 @@ pub struct BotCommandOptionChoice<T> {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
-#[serde(from = "BotPermissionsCombined")]
 pub struct BotPermissions {
     #[serde(skip_serializing_if = "is_zero")]
     #[ts(as = "Option::<u32>", optional)]
@@ -280,58 +278,6 @@ fn union_bits(x: u32, y: u32) -> u32 {
     u32::from_be_bytes(union)
 }
 
-#[derive(Deserialize)]
-#[serde(untagged)]
-enum BotPermissionsCombined {
-    New(BotPermissionsNew),
-    Old(BotPermissionsPrevious),
-}
-
-#[derive(Deserialize)]
-struct BotPermissionsNew {
-    #[serde(default)]
-    community: u32,
-    #[serde(default)]
-    chat: u32,
-    #[serde(default)]
-    message: u32,
-}
-
-impl From<BotPermissionsNew> for BotPermissions {
-    fn from(value: BotPermissionsNew) -> Self {
-        BotPermissions {
-            community: value.community,
-            chat: value.chat,
-            message: value.message,
-        }
-    }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
-struct BotPermissionsPrevious {
-    community: HashSet<CommunityPermission>,
-    chat: HashSet<ChatPermission>,
-    message: HashSet<MessagePermission>,
-}
-
-impl From<BotPermissionsPrevious> for BotPermissions {
-    fn from(value: BotPermissionsPrevious) -> Self {
-        BotPermissions::default()
-            .with_community(&value.community)
-            .with_chat(&value.chat)
-            .with_message(&value.message)
-    }
-}
-
-impl From<BotPermissionsCombined> for BotPermissions {
-    fn from(value: BotPermissionsCombined) -> Self {
-        match value {
-            BotPermissionsCombined::New(p) => p.into(),
-            BotPermissionsCombined::Old(p) => p.into(),
-        }
-    }
-}
-
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct BotMessage {
@@ -421,7 +367,6 @@ pub struct BotCommandArg {
 pub enum BotCommandArgValue {
     String(String),
     Integer(i64),
-    #[serde(alias = "Number")]
     Decimal(f64),
     Boolean(bool),
     User(UserId),
@@ -531,11 +476,9 @@ pub struct ApiKey {
     pub generated_at: TimestampMillis,
 }
 
-// TODO remove default after release - currently useful for migration
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotRegistrationStatus {
-    #[default]
     Public,
     Private(Option<BotInstallationLocation>),
 }

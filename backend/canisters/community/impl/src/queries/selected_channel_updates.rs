@@ -9,7 +9,8 @@ fn selected_channel_updates_v2(args: Args) -> Response {
 
 fn selected_channel_updates_impl(args: Args, state: &RuntimeState) -> Response {
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
-        let last_updated = channel.chat.details_last_updated();
+        let last_updated = channel.details_last_updated();
+
         if last_updated <= args.updates_since {
             return SuccessNoUpdates(last_updated);
         }

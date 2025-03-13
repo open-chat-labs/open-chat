@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- On bot uninstallation also delete any api key ([#7583](https://github.com/open-chat-labs/open-chat/pull/7583))
+
+## [[2.0.1645](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1645-group)] - 2025-03-12
+
+### Fixed
+
+- Fix upgrade for groups which ran into issue due to disappearing messages ([#7578](https://github.com/open-chat-labs/open-chat/pull/7578))
+
+## [[2.0.1634](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1634-group)] - 2025-03-11
+
 ### Added
 
 - Post in dormant groups that they'll be deleted in 30 days if still inactive ([#7554](https://github.com/open-chat-labs/open-chat/pull/7554))

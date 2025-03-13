@@ -4,11 +4,9 @@ use crate::stable_memory::ChatEventsStableStorage;
 use crate::{ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
-use tracing::{error, info};
 use types::{
     Chat, ChatEvent, ChatEventType, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
     Mention, Message, MessageId, MessageIndex, TimestampMillis, UserId,
@@ -16,88 +14,14 @@ use types::{
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEventsList {
-    #[serde(alias = "stable_events_map")]
     events_map: HybridMap<ChatEventsStableStorage>,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
-    #[serde(skip)]
-    events_with_duplicate_message_ids: BTreeSet<EventIndex>,
 }
 
 impl ChatEventsList {
-    pub fn fix_duplicate_message_ids(&mut self, my_user_id: UserId, their_user_id: UserId) -> Option<bool> {
-        let message_id_zero_event = self.message_id_map.remove(&MessageId::from(0u64));
-
-        if message_id_zero_event.is_none() && self.message_id_map.len() == self.message_event_indexes.len() {
-            return Some(true);
-        }
-
-        if ic_cdk::api::instruction_counter() > 2_000_000_000 {
-            return Some(false);
-        }
-
-        if self.events_with_duplicate_message_ids.is_empty() {
-            self.events_with_duplicate_message_ids = self.message_event_indexes.iter().copied().collect();
-            for event_index in self.message_id_map.values() {
-                self.events_with_duplicate_message_ids.remove(event_index);
-            }
-            if let Some(event_index) = message_id_zero_event {
-                self.events_with_duplicate_message_ids.insert(event_index);
-            }
-        }
-
-        let mut count = 0;
-        let mut my_messages_index = 0;
-        let mut their_messages_index = 0;
-        while let Some(event_index) = self.events_with_duplicate_message_ids.pop_first() {
-            if let Some(mut event_wrapper) = self.get_event(event_index.into(), EventIndex::default(), None) {
-                if let ChatEventInternal::Message(m) = &mut event_wrapper.event {
-                    if m.sender == my_user_id {
-                        m.message_id = self.new_message_id(
-                            my_user_id,
-                            their_user_id,
-                            my_messages_index,
-                            m.content.text().unwrap_or_default(),
-                        );
-                        my_messages_index += 1;
-                    } else {
-                        m.message_id = self.new_message_id(
-                            their_user_id,
-                            my_user_id,
-                            their_messages_index,
-                            m.content.text().unwrap_or_default(),
-                        );
-                        their_messages_index += 1;
-                    }
-                    if self.message_id_map.insert(m.message_id, event_index).is_some() {
-                        error!(%my_user_id, %their_user_id, "Duplicate message Id: {}", m.message_id);
-                        return None;
-                    };
-                    self.events_map.insert(event_wrapper);
-                    count += 1;
-                    continue;
-                }
-            }
-            error!(?event_index, "Message not found when de-duping messageIds");
-            return None;
-        }
-
-        info!(count, "MessageIds deduped");
-        Some(self.message_id_map.len() == self.message_event_indexes.len())
-    }
-
-    fn new_message_id(&self, user_id1: UserId, user_id2: UserId, index: u32, text: &str) -> MessageId {
-        let mut hasher = Sha256::new();
-        hasher.update(user_id1.as_slice());
-        hasher.update(user_id2.as_slice());
-        hasher.update(index.to_be_bytes());
-        hasher.update(text.as_bytes());
-        let value: [u8; 32] = hasher.finalize().into();
-        MessageId::from(u128::from_be_bytes(value[..16].try_into().unwrap()))
-    }
-
     pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
         self.events_map.set_stable_memory_prefix(chat, thread_root_message_index);
     }
@@ -109,7 +33,6 @@ impl ChatEventsList {
             message_event_indexes: Vec::new(),
             latest_event_index: None,
             latest_event_timestamp: None,
-            events_with_duplicate_message_ids: BTreeSet::new(),
         }
     }
 

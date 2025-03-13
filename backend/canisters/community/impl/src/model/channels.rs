@@ -310,7 +310,7 @@ impl Channel {
 
         Some(CommunityCanisterChannelSummary {
             channel_id: self.id,
-            last_updated: max(self.chat.last_updated(user_id), self.date_imported.unwrap_or_default()),
+            last_updated: self.last_updated(user_id),
             name: chat.name.value.clone(),
             description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
@@ -348,6 +348,10 @@ impl Channel {
         .into_iter()
         .max()
         .unwrap()
+    }
+
+    pub fn details_last_updated(&self) -> TimestampMillis {
+        max(self.chat.details_last_updated(), self.bot_api_keys.last_updated())
     }
 
     pub fn summary_updates(

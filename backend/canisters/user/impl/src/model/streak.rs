@@ -10,19 +10,12 @@ const MS_IN_DAY: Milliseconds = 1000 * 60 * 60 * 24;
 pub struct Streak {
     start_day: u16,
     end_day: u16,
-    #[serde(default)]
     max_streak: u16,
-    #[serde(default)]
     insurance_last_updated: TimestampMillis,
-    #[serde(default)]
     days_insured: u8,
-    #[serde(default)]
     days_missed: u8,
-    #[serde(default)]
     payment_lock: bool,
-    #[serde(default)]
     payments: Vec<UserCanisterStreakInsurancePayment>,
-    #[serde(default)]
     claims: Vec<UserCanisterStreakInsuranceClaim>,
 }
 
@@ -97,10 +90,6 @@ impl Streak {
 
     pub fn max_streak(&self) -> u16 {
         self.max_streak
-    }
-
-    pub fn set_max_streak(&mut self, max_streak: u16) {
-        self.max_streak = max_streak;
     }
 
     pub fn timestamp_to_day(ts: TimestampMillis) -> Option<u16> {

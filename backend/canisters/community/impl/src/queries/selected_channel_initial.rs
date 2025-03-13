@@ -24,7 +24,7 @@ fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> Response {
         }
 
         let chat = &channel.chat;
-        let last_updated = chat.details_last_updated();
+        let last_updated = channel.details_last_updated();
         let min_visible_message_index = user_id
             .and_then(|u| chat.members.get(&u))
             .map(|m| m.min_visible_message_index())
@@ -58,7 +58,7 @@ fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> Response {
             invited_users: chat.invited_users.users(),
             pinned_messages: chat.pinned_messages(min_visible_message_index),
             chat_rules: chat.rules.value.clone().into(),
-            api_keys: state.data.bot_api_keys.generated_since(0),
+            api_keys: channel.bot_api_keys.generated_since(0),
         })
     } else {
         ChannelNotFound
