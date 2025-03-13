@@ -6,7 +6,7 @@ use ledger_utils::{create_pending_transaction, format_crypto_amount};
 use search::simple::Document;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_bytes::ByteBuf;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use types::icrc1::{Account, CryptoAccount};
 use types::{
     is_default, AudioContent, BlobReference, CallParticipant, CanisterId, CompletedCryptoTransaction, ContentValidationError,
@@ -1277,8 +1277,8 @@ pub struct ProposalContentInternal {
     pub governance_canister_id: CanisterId,
     #[serde(rename = "p")]
     pub proposal: Proposal,
-    #[serde(rename = "v", default, skip_serializing_if = "HashMap::is_empty")]
-    pub votes: HashMap<UserId, bool>,
+    #[serde(rename = "v", default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub votes: BTreeMap<UserId, bool>,
 }
 
 impl From<ProposalContent> for ProposalContentInternal {
@@ -1286,7 +1286,7 @@ impl From<ProposalContent> for ProposalContentInternal {
         ProposalContentInternal {
             governance_canister_id: value.governance_canister_id,
             proposal: value.proposal,
-            votes: HashMap::new(),
+            votes: BTreeMap::new(),
         }
     }
 }
@@ -1307,10 +1307,10 @@ impl MessageContentInternalSubtype for ProposalContentInternal {
 pub struct PrizeContentInternal {
     #[serde(rename = "p", alias = "p2", default, skip_serializing_if = "Vec::is_empty")]
     pub prizes_remaining: Vec<u128>,
-    #[serde(rename = "r", default, skip_serializing_if = "HashSet::is_empty")]
-    pub reservations: HashSet<UserId>,
+    #[serde(rename = "r", default, skip_serializing_if = "BTreeSet::is_empty")]
+    pub reservations: BTreeSet<UserId>,
     #[serde(rename = "w")]
-    pub winners: HashSet<UserId>,
+    pub winners: BTreeSet<UserId>,
     #[serde(rename = "t")]
     pub transaction: CompletedCryptoTransactionInternal,
     #[serde(rename = "e")]
@@ -1339,8 +1339,8 @@ impl PrizeContentInternal {
     pub fn new(content: PrizeContentInitial, transaction: CompletedCryptoTransactionInternal) -> PrizeContentInternal {
         PrizeContentInternal {
             prizes_remaining: content.prizes_v2,
-            reservations: HashSet::new(),
-            winners: HashSet::new(),
+            reservations: BTreeSet::new(),
+            winners: BTreeSet::new(),
             transaction,
             end_date: content.end_date,
             caption: content.caption,
@@ -1711,7 +1711,7 @@ pub struct VideoCallContentInternal {
     #[serde(rename = "e", default, skip_serializing_if = "is_default")]
     pub ended: Option<TimestampMillis>,
     #[serde(rename = "p", default)]
-    pub participants: HashMap<UserId, CallParticipantInternal>,
+    pub participants: BTreeMap<UserId, CallParticipantInternal>,
 }
 
 impl VideoCallContentInternal {

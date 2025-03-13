@@ -1,7 +1,7 @@
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::MessageContentInternal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::ops::DerefMut;
 use types::{
     is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated,
@@ -225,7 +225,7 @@ pub struct MessageInternal {
     #[serde(rename = "p", default, skip_serializing_if = "Option::is_none")]
     pub replies_to: Option<ReplyContextInternal>,
     #[serde(rename = "r", default, skip_serializing_if = "Vec::is_empty")]
-    pub reactions: Vec<(Reaction, HashSet<UserId>)>,
+    pub reactions: Vec<(Reaction, BTreeSet<UserId>)>,
     #[serde(rename = "ti", default, skip_serializing_if = "Vec::is_empty")]
     pub tips: Tips,
     #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
@@ -391,7 +391,7 @@ pub struct ThreadSummaryInternal {
     #[serde(rename = "p")]
     pub participants: Vec<UserId>,
     #[serde(rename = "f")]
-    pub followers: HashSet<UserId>,
+    pub followers: BTreeSet<UserId>,
     #[serde(rename = "r")]
     pub reply_count: u32,
     #[serde(rename = "e")]

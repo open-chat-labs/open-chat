@@ -5,7 +5,7 @@ use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
 use sns_governance_canister::types::{get_proposal_response, ProposalId};
 use std::cell::Cell;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::time::Duration;
 use tracing::{error, trace};
@@ -92,7 +92,7 @@ async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatI
         content: MessageContentInternal::GovernanceProposal(ProposalContentInternal {
             governance_canister_id,
             proposal: proposal.clone(),
-            votes: HashMap::new(),
+            votes: BTreeMap::new(),
         }),
         sender_name: "ProposalsBot".to_string(),
         sender_display_name: None,
@@ -128,7 +128,7 @@ async fn push_channel_proposal(
         content: MessageContentInternal::GovernanceProposal(ProposalContentInternal {
             governance_canister_id,
             proposal: proposal.clone(),
-            votes: HashMap::new(),
+            votes: BTreeMap::new(),
         }),
         sender_name: "ProposalsBot".to_string(),
         sender_display_name: None,
