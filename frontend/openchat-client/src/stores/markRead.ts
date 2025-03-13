@@ -16,6 +16,7 @@ import {
 import { unconfirmed } from "./unconfirmed";
 import type { OpenChat } from "../openchat";
 import { offlineStore } from "./network";
+import { ephemeralMessages } from "./ephemeralMessages";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -406,6 +407,8 @@ export class MessageReadTracker {
     isRead(context: MessageContext, messageIndex: number, messageId: bigint | undefined): boolean {
         if (messageId !== undefined && unconfirmed.contains(context, messageId)) {
             return this.waiting.get(context)?.has(messageId) ?? false;
+        } else if (messageId !== undefined && ephemeralMessages.contains(context, messageId)) {
+            return true;
         } else if (context.threadRootMessageIndex !== undefined) {
             const serverState = this.serverState.get(context.chatId);
             if ((serverState?.threads[context.threadRootMessageIndex] ?? -1) >= messageIndex)
