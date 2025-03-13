@@ -742,6 +742,7 @@ export const UserClaimDailyChitSuccessResult = Type.Object({
     chit_earned: Type.Number(),
     chit_balance: Type.Number(),
     streak: Type.Number(),
+    max_streak: Type.Number(),
     next_claim: Type.BigInt(),
 });
 
@@ -2388,6 +2389,7 @@ export type UserIndexDiamondMembershipFeesDiamondMembershipFees = Static<
 >;
 export const UserIndexDiamondMembershipFeesDiamondMembershipFees = Type.Object({
     token: Cryptocurrency,
+    token_symbol: Type.String(),
     one_month: Type.BigInt(),
     three_months: Type.BigInt(),
     one_year: Type.BigInt(),
@@ -2602,6 +2604,7 @@ export type UserIndexPayForDiamondMembershipArgs = Static<
 export const UserIndexPayForDiamondMembershipArgs = Type.Object({
     duration: DiamondMembershipPlanDuration,
     token: Cryptocurrency,
+    ledger: TSPrincipal,
     expected_price_e8s: Type.BigInt(),
     recurring: Type.Boolean(),
 });
@@ -3025,6 +3028,12 @@ export const LocalUserIndexJoinChannelArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
     referred_by: Type.Optional(UserId),
     verified_credential_args: Type.Optional(VerifiedCredentialGateArgs),
+});
+
+export type LocalUserIndexBotChatDetailsArgs = Static<typeof LocalUserIndexBotChatDetailsArgs>;
+export const LocalUserIndexBotChatDetailsArgs = Type.Object({
+    channel_id: Type.Optional(ChannelId),
+    auth_token: AuthToken,
 });
 
 export type LocalUserIndexInviteUsersToChannelFailedResult = Static<
@@ -5485,6 +5494,7 @@ export const MessagePinned = Type.Object({
 export type PendingCryptoTransactionICRC1 = Static<typeof PendingCryptoTransactionICRC1>;
 export const PendingCryptoTransactionICRC1 = Type.Object({
     ledger: TSPrincipal,
+    token_symbol: Type.String(),
     token: Cryptocurrency,
     amount: Type.BigInt(),
     to: AccountICRC1,
@@ -5508,6 +5518,8 @@ export const PrizeContent = Type.Object({
     winner_count: Type.Number(),
     user_is_winner: Type.Boolean(),
     token: Cryptocurrency,
+    token_symbol: Type.String(),
+    ledger: TSPrincipal,
     end_date: Type.BigInt(),
     caption: Type.Optional(Type.String()),
     diamond_only: Type.Boolean(),
@@ -5723,6 +5735,7 @@ export const StartVideoCallArgs = Type.Object({
 
 export type TokenInfo = Static<typeof TokenInfo>;
 export const TokenInfo = Type.Object({
+    symbol: Type.String(),
     token: Cryptocurrency,
     ledger: TSPrincipal,
     decimals: Type.Number(),
@@ -5927,6 +5940,7 @@ export const UsersInvited = Type.Object({
 export type PendingCryptoTransactionNNS = Static<typeof PendingCryptoTransactionNNS>;
 export const PendingCryptoTransactionNNS = Type.Object({
     ledger: TSPrincipal,
+    token_symbol: Type.String(),
     token: Cryptocurrency,
     amount: Tokens,
     to: UserOrAccount,
@@ -6017,6 +6031,7 @@ export const BotCommandArgValue = Type.Union([
 export type PendingCryptoTransactionICRC2 = Static<typeof PendingCryptoTransactionICRC2>;
 export const PendingCryptoTransactionICRC2 = Type.Object({
     ledger: TSPrincipal,
+    token_symbol: Type.String(),
     token: Cryptocurrency,
     amount: Type.BigInt(),
     from: AccountICRC1,
@@ -6700,6 +6715,13 @@ export const LocalUserIndexInviteUsersToChannelResponse = Type.Union([
     }),
 ]);
 
+export type LocalUserIndexBotChatEventsArgs = Static<typeof LocalUserIndexBotChatEventsArgs>;
+export const LocalUserIndexBotChatEventsArgs = Type.Object({
+    channel_id: Type.Optional(ChannelId),
+    events: LocalUserIndexChatEventsEventsSelectionCriteria,
+    auth_token: AuthToken,
+});
+
 export type LocalUserIndexReportMessageArgs = Static<typeof LocalUserIndexReportMessageArgs>;
 export const LocalUserIndexReportMessageArgs = Type.Object({
     chat_id: MultiUserChat,
@@ -7173,6 +7195,7 @@ export const UserTipMessageArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     message_id: MessageId,
     ledger: TSPrincipal,
+    token_symbol: Type.String(),
     token: Cryptocurrency,
     amount: Type.BigInt(),
     fee: Type.BigInt(),
@@ -9127,6 +9150,30 @@ export const Message = Type.Object({
     block_level_markdown: Type.Boolean(),
 });
 
+export type ChatDetails = Static<typeof ChatDetails>;
+export const ChatDetails = Type.Object({
+    name: Type.String(),
+    description: Type.String(),
+    avatar_id: Type.Optional(Type.BigInt()),
+    is_public: Type.Boolean(),
+    history_visible_to_new_joiners: Type.Boolean(),
+    messages_visible_to_non_members: Type.Boolean(),
+    permissions: GroupPermissions,
+    rules: VersionedRules,
+    events_ttl: Type.Optional(Type.BigInt()),
+    events_ttl_last_updated: Type.Optional(Type.BigInt()),
+    gate_config: Type.Optional(AccessGateConfig),
+    video_call_in_progress: Type.Optional(VideoCall),
+    verified: Type.Optional(Type.Boolean()),
+    frozen: Type.Optional(FrozenGroupInfo),
+    date_last_pinned: Type.Optional(Type.BigInt()),
+    last_updated: Type.BigInt(),
+    external_url: Type.Optional(Type.String()),
+    latest_event_index: EventIndex,
+    latest_message_index: Type.Optional(MessageIndex),
+    member_count: Type.Number(),
+});
+
 export type CommunityMatch = Static<typeof CommunityMatch>;
 export const CommunityMatch = Type.Object({
     id: CommunityId,
@@ -9302,6 +9349,24 @@ export const GroupIndexExploreCommunitiesResponse = Type.Union([
     }),
     Type.Literal("InvalidTerm"),
     Type.Literal("InvalidFlags"),
+]);
+
+export type LocalUserIndexBotChatDetailsResponse = Static<
+    typeof LocalUserIndexBotChatDetailsResponse
+>;
+export const LocalUserIndexBotChatDetailsResponse = Type.Union([
+    Type.Object({
+        Success: ChatDetails,
+    }),
+    Type.Object({
+        FailedAuthentication: Type.String(),
+    }),
+    Type.Literal("DirectChatUnsupported"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("NotFound"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
 ]);
 
 export type CommunityUndeleteMessagesSuccessResult = Static<
@@ -9928,6 +9993,23 @@ export const LocalUserIndexJoinChannelResponse = Type.Union([
     }),
 ]);
 
+export type LocalUserIndexBotChatEventsResponse = Static<
+    typeof LocalUserIndexBotChatEventsResponse
+>;
+export const LocalUserIndexBotChatEventsResponse = Type.Union([
+    Type.Object({
+        Success: EventsResponse,
+    }),
+    Type.Object({
+        FailedAuthentication: Type.String(),
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("NotFound"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
 export type LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesResponse = Static<
     typeof LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesResponse
 >;
@@ -10046,6 +10128,7 @@ export const UserInitialStateSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     streak_ends: Type.BigInt(),
+    max_streak: Type.Number(),
     streak_insurance: Type.Optional(StreakInsurance),
     next_daily_claim: Type.BigInt(),
     is_unique_person: Type.Boolean(),
@@ -10080,6 +10163,7 @@ export const UserUpdatesSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     streak_ends: Type.BigInt(),
+    max_streak: Type.Number(),
     streak_insurance: OptionUpdateStreakInsurance,
     next_daily_claim: Type.BigInt(),
     is_unique_person: Type.Optional(Type.Boolean()),
