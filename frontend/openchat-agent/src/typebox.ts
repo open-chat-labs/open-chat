@@ -2456,20 +2456,6 @@ export const LocalUserIndexBotCreateChannelResponse = Type.Union([
     }),
 ]);
 
-export type LocalUserIndexAccessTokenResponse = Static<typeof LocalUserIndexAccessTokenResponse>;
-export const LocalUserIndexAccessTokenResponse = Type.Union([
-    Type.Object({
-        Success: Type.String(),
-    }),
-    Type.Literal("NotAuthorized"),
-    Type.Object({
-        InternalError: Type.String(),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
 export type LocalUserIndexBotDeleteChannelArgs = Static<typeof LocalUserIndexBotDeleteChannelArgs>;
 export const LocalUserIndexBotDeleteChannelArgs = Type.Object({
     channel_id: ChannelId,
@@ -6986,12 +6972,6 @@ export const LocalUserIndexJoinGroupArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
     verified_credential_args: Type.Optional(VerifiedCredentialGateArgs),
     correlation_id: Type.BigInt(),
-});
-
-export type LocalUserIndexAccessTokenArgs = Static<typeof LocalUserIndexAccessTokenArgs>;
-export const LocalUserIndexAccessTokenArgs = Type.Object({
-    token_type: AccessTokenType,
-    chat: Chat,
 });
 
 export type LocalUserIndexUninstallBotArgs = Static<typeof LocalUserIndexUninstallBotArgs>;
