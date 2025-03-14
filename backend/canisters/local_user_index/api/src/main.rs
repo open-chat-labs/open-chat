@@ -18,7 +18,6 @@ fn main() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
 
-    generate_ts_method!(local_user_index, access_token);
     generate_ts_method!(local_user_index, access_token_v2);
     generate_ts_method!(local_user_index, chat_events);
     generate_ts_method!(local_user_index, group_and_community_summary_updates);
