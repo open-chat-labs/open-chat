@@ -8,7 +8,7 @@ use ts_export::ts_export;
 pub struct OCError(u16, Option<String>);
 
 impl OCError {
-    pub fn new(code: OCErrorCode, message: String) -> Self {
+    pub const fn new(code: OCErrorCode, message: String) -> Self {
         OCError(code as u16, Some(message))
     }
 }
@@ -21,12 +21,50 @@ impl From<OCErrorCode> for OCError {
 
 #[EnumRepr(type = "u16", implicit = true)]
 pub enum OCErrorCode {
-    C2CError = 100,
-    NotAuthorized,
-    UserNotInChat,
-    UserNotInCommunity,
-    MemberLapsed,
+    // NotAuthorized
+    InitiatorNotFound = 100,
+    InitiatorNotAuthorized,
+    InitiatorSuspended,
+    InitiatorNotInChat,
+    InitiatorNotInCommunity,
+    InitiatorLapsed,
+
+    // Invalid
+    ChatNotFound = 200,
+    MessageNotFound,
+    CommunityNotFound,
+    ThreadNotFound,
+    CanisterNotFound,
+    SwapNotFound,
+    VideoCall,
+    BotNotFound,
+    OwnerNotFound,
+    NewOwnerNotFound,
+    InvalidRequest,
+    InvalidReaction,
+    InvalidPrincipal,
+    InvalidAvatar,
+    InvalidEndpoint,
+    InvalidFlags,
+    InvalidTerm,
+    InvalidLanguage,
+    InvalidAccessGate,
+    NameTooShort,
+    NameTooLong,
+    TermTooShort,
+    TermTooLong,
+    DescriptionTooLong,
+    AlreadyRegistered,
+    PrincipalAlreadyUsed,
+    AlreadyAdded,
+    AlreadySet,
+    AlreadyAwarded,
+    AlreadyLifetimeDiamondMember,
+    AlreadyReported,
+    OwnerSuspended,
+    NewOwnerSuspended,
     ChatFrozen,
+    CommunityFrozen,
     InsufficientFunds,
     PinRequired,
     PinIncorrect,
@@ -49,52 +87,8 @@ pub enum OCErrorCode {
     UnexpectedIndex,
     NoChange,
 
-    // NotFound
-    CallerNotFound = 200,
-    ChatNotFound,
-    MessageNotFound,
-    CommunityNotFound,
-    ThreadNotFound,
-    CanisterNotFound,
-    SwapNotFound,
-    VideoCall,
-    BotNotFound,
-    OwnerNotFound,
-    NewOwnerNotFound,
-
-    // Invalid
-    InvalidRequest = 300,
-    InvalidReaction,
-    InvalidPrincipal,
-    InvalidAvatar,
-    InvalidEndpoint,
-    InvalidFlags,
-    InvalidTerm,
-    InvalidLanguage,
-    InvalidAccessGate,
-
-    // AlreadyXyz
-    AlreadyRegistered = 400,
-    PrincipalAlreadyUsed,
-    AlreadyAdded,
-    AlreadySet,
-    AlreadyAwarded,
-    AlreadyLifetimeDiamondMember,
-    AlreadyReported,
-
-    // TooShort
-    NameTooShort = 500,
-    TermTooShort,
-
-    // TooLong
-    NameTooLong = 600,
-    DescriptionTooLong,
-    TermTooLong,
-
-    // Suspended
-    UserSuspended = 700,
-    OwnerSuspended,
-    NewOwnerSuspended,
+    // InternalError
+    C2CError = 300,
 }
 
 impl TryFrom<u16> for OCErrorCode {
