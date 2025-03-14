@@ -58,7 +58,7 @@ export const selectedCommandArgs = writable<CommandArg[]>([]);
 export const showingBuilder = writable(false);
 
 export const prefixParts = derived(prefix, (prefix) => parseCommand(prefix));
-export const maybeParams = derived(prefixParts, (prefixParts) => prefixParts.slice(1) ?? []);
+export const maybeArgs = derived(prefixParts, (prefixParts) => prefixParts.slice(1) ?? []);
 export const parsedPrefix = derived(
     prefixParts,
     (prefixParts) => prefixParts[0]?.slice(1)?.toLocaleLowerCase() ?? "",
@@ -145,7 +145,7 @@ export function createBotInstance(command: FlattenedCommand): BotCommandInstance
                 endpoint: command.botEndpoint,
                 command: {
                     name: command.name,
-                    params: get(selectedCommandArgs),
+                    arguments: get(selectedCommandArgs),
                     placeholder: command.placeholder,
                 },
             };
@@ -154,7 +154,7 @@ export function createBotInstance(command: FlattenedCommand): BotCommandInstance
                 kind: "internal_bot",
                 command: {
                     name: command.name,
-                    params: get(selectedCommandArgs),
+                    arguments: get(selectedCommandArgs),
                 },
             };
     }
@@ -169,7 +169,7 @@ export function setSelectedCommand(commands: FlattenedCommand[], cmd?: Flattened
         if (cmd !== undefined) {
             focusedCommandIndex.set(0);
             if (cmd.params.length > 0) {
-                selectedCommandArgs.set(createArgsFromSchema(cmd.params, get(maybeParams)));
+                selectedCommandArgs.set(createArgsFromSchema(cmd.params, get(maybeArgs)));
             }
             // if the instance is not already valid (via inline params) show the builder modal
             showingBuilder.set(!get(instanceValid));

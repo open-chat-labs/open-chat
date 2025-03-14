@@ -250,7 +250,7 @@ export type ExternalBotPermissions = {
 
 export type CommandInstance = {
     name: string;
-    params: CommandArg[];
+    arguments: CommandArg[];
     placeholder?: string;
 };
 

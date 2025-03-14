@@ -439,6 +439,8 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
 
     getAccessToken(accessType: AccessTokenType): Promise<string | undefined> {
         if (accessType.kind === "bot_action_by_command") {
+            const args = apiAccessTokenType(accessType);
+            console.log("Mapped access token type: ", args);
             return this.executeMsgpackQuery(
                 "access_token_v2",
                 apiAccessTokenType(accessType),

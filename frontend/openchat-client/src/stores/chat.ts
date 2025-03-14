@@ -366,7 +366,6 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         currentChatBlockedOrSuspendedUsers,
         currentUserIdStore,
         messageFiltersStore,
-        ephemeralMessages,
     ],
     ([
         summaries,
@@ -378,7 +377,6 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         blockedOrSuspendedUsers,
         $currentUserId,
         $messageFilters,
-        $ephemeralMessages,
     ]) => {
         const mergedSummaries = mergeLocalSummaryUpdates(
             currentScope,
@@ -401,7 +399,6 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
                         blockedOrSuspendedUsers,
                         $currentUserId,
                         $messageFilters,
-                        [...($ephemeralMessages.get({ chatId })?.values() ?? [])],
                     ),
                 );
                 return result;
