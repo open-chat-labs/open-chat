@@ -1,6 +1,7 @@
 #![allow(deprecated)]
 use candid::CandidType;
 use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CanisterId, Cryptocurrency, DiamondMembershipPlanDuration, DiamondMembershipSubscription, TimestampMillis};
@@ -57,7 +58,7 @@ pub enum Response {
     InsufficientFunds(u64), // Returns the account balance in e8s
     TransferFailed(String),
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(user_index, pay_for_diamond_membership)]

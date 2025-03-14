@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::ChannelId;
@@ -16,5 +17,5 @@ pub enum Response {
     NotInvited,
     ChannelNotFound,
     UserNotInCommunity,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

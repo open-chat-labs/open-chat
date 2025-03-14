@@ -1,3 +1,4 @@
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{Milliseconds, PublicGroupActivity};
 
@@ -11,5 +12,5 @@ pub struct Args {
 pub enum Response {
     Success,
     ChatNotFound,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

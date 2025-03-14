@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{MessageIndex, MessagesResponse, TimestampMillis};
@@ -20,5 +21,5 @@ pub enum Response {
     UserSuspended,
     UserLapsed,
     ReplicaNotUpToDateV2(TimestampMillis),
-    Error(u16, Option<String>),
+    Error(OCError),
 }

@@ -1,6 +1,11 @@
+use candid::CandidType;
 use enum_repr::EnumRepr;
+use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
-pub type OCError = (u16, Option<String>);
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct OCError(u16, Option<String>);
 
 #[EnumRepr(type = "u16", implicit = true)]
 pub enum OCErrorCode {

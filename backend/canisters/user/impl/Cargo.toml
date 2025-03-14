@@ -60,6 +60,7 @@ nns_governance_canister = { path = "../../../external_canisters/nns_governance/a
 nns_governance_canister_c2c_client = { path = "../../../external_canisters/nns_governance/c2c_client" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }

@@ -4,4 +4,8 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+candid = { workspace = true }
 enum-repr = { workspace = true }
+serde = { workspace = true }
+ts_export = { path = "../ts_export" }
+ts-rs = { workspace = true }

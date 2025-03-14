@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
@@ -16,7 +17,7 @@ pub enum Response {
     UserSuspended,
     UserLapsed,
     ChatFrozen,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(group, enable_invite_code)]

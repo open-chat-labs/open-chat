@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::ChannelMatch;
@@ -20,7 +21,7 @@ pub enum Response {
     TermTooLong(u8),
     InvalidTerm,
     PrivateCommunity,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(community, explore_channels)]

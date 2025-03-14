@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use ts_export::ts_export;
@@ -21,7 +22,7 @@ pub enum Response {
     TermTooShort(u8),
     TooManyUsers(u8),
     CallerNotInGroup,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(group, search_messages)]

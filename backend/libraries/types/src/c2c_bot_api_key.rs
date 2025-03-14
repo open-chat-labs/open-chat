@@ -1,4 +1,5 @@
 use crate::UserId;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -12,5 +13,5 @@ pub enum Response {
     Success(String),
     NotAuthorized,
     NotFound,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{MessageIndex, ThreadPreview, TimestampMillis};
@@ -16,7 +17,7 @@ pub enum Response {
     Success(SuccessResult),
     CallerNotInGroup,
     ReplicaNotUpToDate(TimestampMillis),
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(group, thread_previews)]

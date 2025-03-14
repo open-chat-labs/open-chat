@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, MessageId, VideoCallPresence};
@@ -24,5 +25,5 @@ pub enum Response {
     ChannelNotFound,
     UserNotInChannel,
     UserLapsed,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

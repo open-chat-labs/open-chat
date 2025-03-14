@@ -26,7 +26,7 @@ async fn c2c_delete_community(args: Args) -> Response {
     .await
     {
         Ok(local_group_index_canister::c2c_delete_community::Response::Success) => Success,
-        Ok(local_group_index_canister::c2c_delete_community::Response::Error(code, message)) => Error(code, message),
+        Ok(local_group_index_canister::c2c_delete_community::Response::Error(error)) => Error(error),
         Ok(local_group_index_canister::c2c_delete_community::Response::CommunityNotFound) => CommunityNotFound,
         Err(error) => InternalError(format!("{error:?}")),
     }

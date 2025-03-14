@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{AccessGateConfig, AuthToken, ChannelId, Document, GroupPermissions, Milliseconds, Rules};
@@ -29,7 +30,7 @@ pub enum Response {
     NotAuthorized,
     Frozen,
     C2CError(i32, String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(local_user_index, bot_create_channel)]

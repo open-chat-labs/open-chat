@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::Empty;
@@ -10,5 +11,5 @@ pub type Args = Empty;
 pub enum Response {
     Success(String),
     NotInitialised,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

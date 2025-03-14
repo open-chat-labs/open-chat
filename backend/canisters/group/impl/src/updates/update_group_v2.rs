@@ -33,9 +33,9 @@ async fn update_group_v2(mut args: Args) -> Response {
                     error!(chat_id = %prepare_result.chat_id, "Group not found in index");
                     return InternalError;
                 }
-                c2c_make_private::Response::Error(code, message) => {
-                    error!("Failed to make group private: {code}");
-                    return Error(code, message);
+                c2c_make_private::Response::Error(error) => {
+                    error!("Failed to make group private: {error:?}");
+                    return Error(error);
                 }
                 c2c_make_private::Response::Success => {}
             },

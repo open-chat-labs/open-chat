@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::GroupMatch;
@@ -18,7 +19,7 @@ pub enum Response {
     TermTooShort(u8),
     TermTooLong(u8),
     InvalidTerm,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(group_index, explore_groups)]

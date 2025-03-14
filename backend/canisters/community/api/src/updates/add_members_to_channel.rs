@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, UserId};
@@ -28,7 +29,7 @@ pub enum Response {
     UserLimitReached(u32),
     NotAuthorized,
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(community, add_members_to_channel)]

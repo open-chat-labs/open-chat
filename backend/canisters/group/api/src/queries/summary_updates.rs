@@ -1,4 +1,5 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{GroupCanisterGroupChatSummaryUpdates, TimestampMillis};
@@ -18,7 +19,7 @@ pub enum Response {
     Success(SuccessResult),
     SuccessNoUpdates,
     CallerNotInGroup,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(group, summary_updates)]

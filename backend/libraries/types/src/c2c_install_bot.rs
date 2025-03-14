@@ -1,5 +1,6 @@
 use crate::{BotPermissions, UserId};
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -15,5 +16,5 @@ pub enum Response {
     Frozen,
     NotAuthorized,
     AlreadyAdded,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

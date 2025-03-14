@@ -7,6 +7,7 @@ mod queries;
 mod updates;
 
 pub use lifecycle::*;
+use oc_error_codes::OCError;
 pub use queries::*;
 pub use updates::*;
 
@@ -21,7 +22,7 @@ pub enum EventsResponse {
     UserSuspended,
     UserLapsed,
     ReplicaNotUpToDateV2(types::TimestampMillis),
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

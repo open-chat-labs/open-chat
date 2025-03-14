@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, MessageContent, MessageId, MessageIndex};
@@ -22,7 +23,7 @@ pub enum Response {
     NotAuthorized,
     MessageNotFound,
     MessageHardDeleted,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(community, deleted_message)]

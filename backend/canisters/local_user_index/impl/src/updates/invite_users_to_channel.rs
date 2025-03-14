@@ -63,7 +63,7 @@ async fn invite_users_to_channel(args: Args) -> Response {
             c2c_invite_users_to_channel::Response::Failed(r) => Failed(FailedResult {
                 failed_users: r.failed_users,
             }),
-            c2c_invite_users_to_channel::Response::Error(code, message) => Error(code, message),
+            c2c_invite_users_to_channel::Response::Error(error) => Error(error),
             c2c_invite_users_to_channel::Response::UserNotInCommunity => UserNotInCommunity,
             c2c_invite_users_to_channel::Response::ChannelNotFound => ChannelNotFound,
             c2c_invite_users_to_channel::Response::UserNotInChannel => UserNotInChannel,

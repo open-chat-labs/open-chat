@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{BotPermissions, UserId};
@@ -17,5 +18,5 @@ pub enum Response {
     ChatFrozen,
     NotAuthorized,
     NotFound,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

@@ -1,3 +1,4 @@
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{ChatId, UserId};
 
@@ -18,5 +19,5 @@ pub enum Response {
     UserLapsed,
     ChatFrozen,
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }

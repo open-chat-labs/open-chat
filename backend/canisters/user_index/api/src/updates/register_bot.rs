@@ -1,4 +1,5 @@
 use candid::Principal;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{BotDefinition, BotInstallationLocation, UserId};
@@ -22,7 +23,7 @@ pub enum Response {
     InvalidRequest(String),
     InternalError(String),
     UserSuspended,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(user_index, register_bot)]

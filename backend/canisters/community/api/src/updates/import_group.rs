@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, ChatId};
@@ -24,7 +25,7 @@ pub enum Response {
     GroupFrozen,
     InternalError(String),
     UserLapsed,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(community, import_group)]

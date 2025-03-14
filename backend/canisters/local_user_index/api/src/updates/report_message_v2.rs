@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{EventIndex, MessageIndex, MultiUserChat};
@@ -18,5 +19,5 @@ pub struct Args {
 pub enum Response {
     Success,
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }

@@ -9,6 +9,7 @@ use chat_events::MessageContentInternal;
 use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT, SECOND_IN_MS};
 use escrow_canister::deposit_subaccount;
 use ic_cdk::call::RejectCode;
+use oc_error_codes::OCError;
 use tracing::error;
 use types::icrc1::Account;
 use types::{
@@ -110,7 +111,7 @@ async fn send_message_with_transfer_to_channel(
                     transfer: completed_transaction,
                 })
             }
-            Response::Error(code, message) => Error(code, message),
+            Response::Error(error) => Error(error),
             Response::UserNotInCommunity => UserNotInCommunity(Some(completed_transaction)),
             Response::UserNotInChannel => UserNotInChannel(completed_transaction),
             Response::ChannelNotFound => ChannelNotFound(completed_transaction),
@@ -237,7 +238,7 @@ async fn send_message_with_transfer_to_group(
                 })
             }
             Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
-            Response::Error(code, message) => Error(code, message),
+            Response::Error(error) => Error(error),
             Response::UserSuspended => UserSuspended,
             Response::UserLapsed => UserLapsed,
             Response::ChatFrozen => ChatFrozen,
@@ -405,7 +406,7 @@ pub(crate) async fn set_up_p2p_swap(
 
     let id = match escrow_canister_c2c_client::create_swap(escrow_canister_id, &args).await {
         Ok(escrow_canister::create_swap::Response::Success(result)) => result.id,
-        Ok(escrow_canister::create_swap::Response::Error(code, message)) => return Err(Error(code, message)),
+        Ok(escrow_canister::create_swap::Response::Error(error)) => return Err(Error(error)),
         Ok(escrow_canister::create_swap::Response::InvalidSwap(message)) => return Err(InvalidSwap(message)),
         Err(error) => return Err(InternalError(format!("{error:?}"))),
     };
@@ -447,7 +448,7 @@ pub(crate) async fn set_up_p2p_swap(
 pub(crate) enum SetUpP2PSwapError {
     InvalidSwap(String),
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 impl From<SetUpP2PSwapError> for send_message_with_transfer_to_channel::Response {
@@ -456,7 +457,7 @@ impl From<SetUpP2PSwapError> for send_message_with_transfer_to_channel::Response
         match value {
             SetUpP2PSwapError::InvalidSwap(message) => InvalidRequest(message),
             SetUpP2PSwapError::InternalError(error) => P2PSwapSetUpFailed(error),
-            SetUpP2PSwapError::Error(code, message) => Error(code, message),
+            SetUpP2PSwapError::Error(error) => Error(error),
         }
     }
 }
@@ -467,7 +468,7 @@ impl From<SetUpP2PSwapError> for send_message_with_transfer_to_group::Response {
         match value {
             SetUpP2PSwapError::InvalidSwap(message) => InvalidRequest(message),
             SetUpP2PSwapError::InternalError(error) => P2PSwapSetUpFailed(error),
-            SetUpP2PSwapError::Error(code, message) => Error(code, message),
+            SetUpP2PSwapError::Error(error) => Error(error),
         }
     }
 }
@@ -478,7 +479,7 @@ impl From<SetUpP2PSwapError> for send_message_v2::Response {
         match value {
             SetUpP2PSwapError::InvalidSwap(message) => InvalidRequest(message),
             SetUpP2PSwapError::InternalError(error) => P2PSwapSetUpFailed(error),
-            SetUpP2PSwapError::Error(code, message) => Error(code, message),
+            SetUpP2PSwapError::Error(error) => Error(error),
         }
     }
 }

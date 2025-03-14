@@ -1,5 +1,6 @@
 use crate::chat_events::EventsSelectionCriteria;
 use candid::Deserialize;
+use oc_error_codes::OCError;
 use serde::Serialize;
 use ts_export::ts_export;
 use types::{
@@ -29,7 +30,7 @@ pub enum Response {
     NotAuthorized,
     NotFound,
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export]

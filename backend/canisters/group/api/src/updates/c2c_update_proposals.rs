@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::ProposalUpdate;
 
@@ -12,5 +13,5 @@ pub struct Args {
 pub enum Response {
     Success,
     CallerNotInGroup,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

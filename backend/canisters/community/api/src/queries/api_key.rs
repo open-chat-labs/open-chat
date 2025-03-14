@@ -1,3 +1,4 @@
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, UserId};
@@ -17,7 +18,7 @@ pub enum Response {
     NotAuthorized,
     NotFound,
     ChannelNotFound,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 impl From<Response> for types::c2c_bot_api_key::Response {
@@ -27,7 +28,7 @@ impl From<Response> for types::c2c_bot_api_key::Response {
             Response::NotAuthorized => types::c2c_bot_api_key::Response::NotAuthorized,
             Response::NotFound => types::c2c_bot_api_key::Response::NotFound,
             Response::ChannelNotFound => types::c2c_bot_api_key::Response::NotFound,
-            Response::Error(code, message) => types::c2c_bot_api_key::Response::Error(code, message),
+            Response::Error(error) => types::c2c_bot_api_key::Response::Error(error),
         }
     }
 }

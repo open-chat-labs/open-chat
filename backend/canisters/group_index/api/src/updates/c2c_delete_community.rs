@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::UserId;
 
@@ -14,5 +15,5 @@ pub enum Response {
     Success,
     CommunityNotFound,
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }

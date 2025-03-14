@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
@@ -40,7 +41,7 @@ pub enum Response {
     ChatFrozen,
     RulesNotAccepted,
     MessageAlreadyExists,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(group, send_message)]

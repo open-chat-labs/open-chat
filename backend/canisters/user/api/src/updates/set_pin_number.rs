@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use ts_export::ts_export;
@@ -30,5 +31,5 @@ pub enum Response {
     TooManyFailedPinAttempts(Milliseconds),
     MalformedSignature(String),
     DelegationTooOld,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

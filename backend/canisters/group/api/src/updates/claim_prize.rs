@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CompletedCryptoTransaction, FailedCryptoTransaction, MessageId};
@@ -26,5 +27,5 @@ pub enum Response {
     TransferFailed(String, FailedCryptoTransaction),
     FailedAfterTransfer(String, CompletedCryptoTransaction),
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }

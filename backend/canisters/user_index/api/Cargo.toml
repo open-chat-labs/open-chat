@@ -12,6 +12,7 @@ constants = { path = "../../../libraries/constants" }
 human_readable = { path = "../../../libraries/human_readable" }
 ic-ledger-types = { workspace = true }
 modclub_canister = { path = "../../../external_canisters/modclub/api" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 ts_export = { path = "../../../libraries/ts_export" }

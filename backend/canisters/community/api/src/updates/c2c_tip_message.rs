@@ -1,5 +1,6 @@
 #![allow(deprecated)]
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, ChannelId, MessageId, MessageIndex, UserId};
 
@@ -30,5 +31,5 @@ pub enum Response {
     ChannelNotFound,
     UserSuspended,
     UserLapsed,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

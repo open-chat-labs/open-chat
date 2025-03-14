@@ -1,4 +1,5 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{
     ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, GateCheckFailedReason, TimestampMillis,
@@ -36,5 +37,5 @@ pub enum Response {
     CommunityFrozen,
     NotInvited,
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }

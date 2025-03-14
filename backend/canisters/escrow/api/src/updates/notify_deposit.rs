@@ -1,3 +1,4 @@
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::UserId;
 
@@ -16,7 +17,7 @@ pub enum Response {
     SwapExpired,
     SwapNotFound,
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[derive(Serialize, Deserialize, Debug)]

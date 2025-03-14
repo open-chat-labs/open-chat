@@ -1,4 +1,5 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{
     CommunityCanisterCommunitySummary, GateCheckFailedReason, TimestampMillis, UniquePersonProof, UserId, UserType,
@@ -31,5 +32,5 @@ pub enum Response {
     MemberLimitReached(u32),
     CommunityFrozen,
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }

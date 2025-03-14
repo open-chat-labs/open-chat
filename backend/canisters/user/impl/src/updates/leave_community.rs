@@ -34,7 +34,7 @@ async fn leave_community(args: Args) -> Response {
                     Success
                 }
             }
-            c2c_leave_community::Response::Error(code, message) => Error(code, message),
+            c2c_leave_community::Response::Error(error) => Error(error),
             c2c_leave_community::Response::LastOwnerCannotLeave => LastOwnerCannotLeave,
             c2c_leave_community::Response::UserSuspended => UserSuspended,
             c2c_leave_community::Response::CommunityFrozen => CommunityFrozen,

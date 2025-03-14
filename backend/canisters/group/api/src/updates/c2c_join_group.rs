@@ -1,4 +1,5 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{
     GateCheckFailedReason, GroupCanisterGroupChatSummary, TimestampMillis, UniquePersonProof, UserId, UserType,
@@ -33,5 +34,5 @@ pub enum Response {
     ParticipantLimitReached(u32),
     ChatFrozen,
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }

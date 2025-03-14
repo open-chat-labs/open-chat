@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CommunityId, UserId};
@@ -21,5 +22,5 @@ pub enum Response {
     TooManyInvites(u32),
     UserSuspended,
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }

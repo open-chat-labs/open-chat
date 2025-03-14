@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
@@ -18,7 +19,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     PrivateCommunity,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(community, selected_initial)]

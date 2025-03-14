@@ -1,4 +1,5 @@
 use candid::Principal;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo};
 
@@ -18,7 +19,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     InvalidSwap(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[derive(Serialize, Deserialize, Debug)]

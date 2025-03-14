@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::DiamondMembershipSubscription;
@@ -16,5 +17,5 @@ pub enum Response {
     Success,
     NotDiamondMember,
     AlreadyLifetimeDiamondMember,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

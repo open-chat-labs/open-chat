@@ -31,7 +31,7 @@ async fn invite_users_to_community(args: Args) -> Response {
                 });
                 Success
             }
-            community_canister::c2c_invite_users::Response::Error(code, message) => Error(code, message),
+            community_canister::c2c_invite_users::Response::Error(error) => Error(error),
             community_canister::c2c_invite_users::Response::UserNotInCommunity => UserNotInCommunity,
             community_canister::c2c_invite_users::Response::NotAuthorized => NotAuthorized,
             community_canister::c2c_invite_users::Response::CommunityFrozen => CommunityFrozen,

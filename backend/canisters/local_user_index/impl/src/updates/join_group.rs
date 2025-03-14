@@ -43,7 +43,7 @@ async fn join_group(args: Args) -> Response {
                 }
                 Success(s)
             }
-            group_canister::c2c_join_group::Response::Error(code, message) => Error(code, message),
+            group_canister::c2c_join_group::Response::Error(error) => Error(error),
             group_canister::c2c_join_group::Response::AlreadyInGroup => AlreadyInGroup,
             group_canister::c2c_join_group::Response::GateCheckFailed(msg) => GateCheckFailed(msg),
             group_canister::c2c_join_group::Response::NotInvited => NotInvited,

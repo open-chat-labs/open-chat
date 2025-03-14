@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::UserId;
@@ -24,14 +25,14 @@ pub enum Response {
     UserSuspended,
     UserLapsed,
     ChatFrozen,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 impl From<crate::remove_participant::Response> for Response {
     fn from(response: crate::remove_participant::Response) -> Self {
         match response {
             crate::remove_participant::Response::Success => Response::Success,
-            crate::remove_participant::Response::Error(code, message) => Response::Error(code, message),
+            crate::remove_participant::Response::Error(error) => Response::Error(error),
             crate::remove_participant::Response::CallerNotInGroup => Response::CallerNotInGroup,
             crate::remove_participant::Response::CannotRemoveSelf => Response::CannotBlockSelf,
             crate::remove_participant::Response::CannotRemoveUser => Response::CannotBlockUser,

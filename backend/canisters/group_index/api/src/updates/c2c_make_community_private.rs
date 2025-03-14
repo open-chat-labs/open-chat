@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::Empty;
 
@@ -8,5 +9,5 @@ pub type Args = Empty;
 pub enum Response {
     Success,
     CommunityNotFound,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

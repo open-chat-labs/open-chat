@@ -61,7 +61,7 @@ async fn c2c_create_group(args: Args) -> Response {
                 local_user_index_canister_id: result.local_user_index_canister_id,
             })
         }
-        Ok(local_group_index_canister::c2c_create_group::Response::Error(code, message)) => Error(code, message),
+        Ok(local_group_index_canister::c2c_create_group::Response::Error(error)) => Error(error),
         Ok(local_group_index_canister::c2c_create_group::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
         Ok(local_group_index_canister::c2c_create_group::Response::InternalError(_)) => InternalError,
         Err(_) => {
@@ -87,7 +87,7 @@ async fn validate_caller() -> Result<(UserId, Principal), Response> {
     {
         Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => Ok((caller, r.principal)),
         Ok(user_index_canister::c2c_lookup_user::Response::UserNotFound) => Err(UserNotFound),
-        Ok(user_index_canister::c2c_lookup_user::Response::Error(code, message)) => Err(Error(code, message)),
+        Ok(user_index_canister::c2c_lookup_user::Response::Error(error)) => Err(Error(error)),
         Err(_) => Err(InternalError),
     }
 }

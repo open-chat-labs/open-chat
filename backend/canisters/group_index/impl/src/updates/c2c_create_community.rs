@@ -63,11 +63,11 @@ pub(crate) async fn create_community_impl(
             }
             Err(error)
         }
-        Ok(local_group_index_canister::c2c_create_community::Response::Error(code, message)) => {
+        Ok(local_group_index_canister::c2c_create_community::Response::Error(error)) => {
             if args.is_public {
                 mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
             }
-            Err(format!("{code}: {message:?}"))
+            Err(format!("{error:?}"))
         }
         Err(error) => {
             if args.is_public {
@@ -92,7 +92,7 @@ async fn validate_caller() -> Result<(UserId, Principal), Response> {
     {
         Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => Ok((caller, r.principal)),
         Ok(user_index_canister::c2c_lookup_user::Response::UserNotFound) => Err(UserNotFound),
-        Ok(user_index_canister::c2c_lookup_user::Response::Error(code, message)) => Err(Error(code, message)),
+        Ok(user_index_canister::c2c_lookup_user::Response::Error(error)) => Err(Error(error)),
         Err(error) => Err(InternalError(format!("{error:?}"))),
     }
 }

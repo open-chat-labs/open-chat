@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::UserId;
@@ -15,5 +16,5 @@ pub struct Args {
 pub enum Response {
     Success,
     ChatNotFound,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

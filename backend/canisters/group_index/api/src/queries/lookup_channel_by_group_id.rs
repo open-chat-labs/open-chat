@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, ChatId, CommunityId};
@@ -14,7 +15,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     NotFound,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(group_index, lookup_channel_by_group_id)]

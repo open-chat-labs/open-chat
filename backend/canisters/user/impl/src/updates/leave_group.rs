@@ -34,7 +34,7 @@ async fn leave_group(args: Args) -> Response {
                     Success
                 }
             }
-            c2c_leave_group::Response::Error(code, message) => Error(code, message),
+            c2c_leave_group::Response::Error(error) => Error(error),
             c2c_leave_group::Response::OwnerCannotLeave => OwnerCannotLeave,
             c2c_leave_group::Response::UserSuspended => UserSuspended,
             c2c_leave_group::Response::ChatFrozen => ChatFrozen,

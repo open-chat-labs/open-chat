@@ -1,5 +1,6 @@
 #![allow(deprecated)]
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CanisterId, Chat, Cryptocurrency, MessageId, MessageIndex, Milliseconds, PinNumberWrapper, UserId};
@@ -77,5 +78,5 @@ pub enum Response {
     UserLapsed,
     Retrying(String),
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }

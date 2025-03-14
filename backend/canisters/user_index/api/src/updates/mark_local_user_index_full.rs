@@ -1,5 +1,6 @@
 use candid::CandidType;
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::CanisterId;
 
@@ -12,7 +13,7 @@ pub struct Args {
 pub enum Response {
     Success,
     LocalUserIndexNotFound,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[derive(Serialize)]

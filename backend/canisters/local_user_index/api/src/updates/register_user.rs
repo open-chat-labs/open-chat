@@ -1,5 +1,6 @@
 use candid::CandidType;
 use ic_ledger_types::AccountIdentifier;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::UserId;
@@ -29,7 +30,7 @@ pub enum Response {
     ReferralCodeInvalid,
     ReferralCodeAlreadyClaimed,
     ReferralCodeExpired,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(local_user_index, register_user)]

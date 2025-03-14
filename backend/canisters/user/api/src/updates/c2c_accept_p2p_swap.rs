@@ -1,5 +1,6 @@
 use candid::CandidType;
 use icrc_ledger_types::icrc1::transfer::TransferError;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{Milliseconds, P2PSwapLocation, PinNumberWrapper, TimestampMillis, TokenInfo, UserId};
 
@@ -26,5 +27,5 @@ pub enum Response {
     PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
-    Error(u16, Option<String>),
+    Error(OCError),
 }

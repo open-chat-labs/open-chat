@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
@@ -20,5 +21,5 @@ pub enum Response {
     DisplayNameTooShort(u16),
     DisplayNameTooLong(u16),
     UserLapsed,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

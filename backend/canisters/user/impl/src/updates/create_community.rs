@@ -42,7 +42,7 @@ async fn create_community(mut args: Args) -> Response {
                 })
             }
             c2c_create_community::Response::NameTaken => NameTaken,
-            c2c_create_community::Response::Error(code, message) => Error(code, message),
+            c2c_create_community::Response::Error(error) => Error(error),
             c2c_create_community::Response::UserNotFound => InternalError("User not found".to_string()),
             c2c_create_community::Response::InternalError(error) => InternalError(error),
         },

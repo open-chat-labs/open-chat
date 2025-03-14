@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::Empty;
@@ -11,7 +12,7 @@ pub enum Response {
     Success(SuccessResult),
     UserNotInCommunity,
     NotAuthorized,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[ts_export(community, invite_code)]

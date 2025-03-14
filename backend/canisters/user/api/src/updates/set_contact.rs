@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use ts_export::ts_export;
@@ -26,5 +27,5 @@ pub enum Response {
     NicknameTooShort(FieldTooShortResult),
     NicknameTooLong(FieldTooLongResult),
     UserSuspended,
-    Error(u16, Option<String>),
+    Error(OCError),
 }

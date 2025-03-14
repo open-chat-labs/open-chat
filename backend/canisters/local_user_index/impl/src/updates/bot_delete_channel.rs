@@ -38,7 +38,7 @@ async fn bot_delete_channel(args: Args) -> Response {
     {
         Ok(response) => match response {
             community_canister::c2c_bot_delete_channel::Response::Success => Success,
-            community_canister::c2c_bot_delete_channel::Response::Error(code, message) => Error(code, message),
+            community_canister::c2c_bot_delete_channel::Response::Error(error) => Error(error),
             community_canister::c2c_bot_delete_channel::Response::NotAuthorized => NotAuthorized,
             community_canister::c2c_bot_delete_channel::Response::CommunityFrozen => Frozen,
             community_canister::c2c_bot_delete_channel::Response::ChannelNotFound => ChannelNotFound,

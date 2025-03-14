@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::UserId;
 
@@ -16,7 +17,7 @@ pub enum Response {
     InsufficientBudget,
     Expired,
     AlreadyAwarded,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

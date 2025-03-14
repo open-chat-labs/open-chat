@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{ChannelId, MessageId, Milliseconds, UserId, VideoCallType};
 
@@ -17,5 +18,5 @@ pub struct Args {
 pub enum Response {
     Success,
     NotAuthorized,
-    Error(u16, Option<String>),
+    Error(OCError),
 }
