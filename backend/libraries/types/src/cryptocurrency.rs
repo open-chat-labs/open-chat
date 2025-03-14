@@ -393,48 +393,15 @@ pub mod nns {
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-    #[serde(from = "PendingCryptoTransactionCombined")]
     #[ts(rename = "PendingCryptoTransactionNNS")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
         pub token_symbol: String,
-        pub token: Cryptocurrency,
         pub amount: Tokens,
         pub to: UserOrAccount,
         pub fee: Option<Tokens>,
         pub memo: Option<u64>,
         pub created: TimestampNanos,
-    }
-
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-    struct PendingCryptoTransactionCombined {
-        ledger: CanisterId,
-        token_symbol: Option<String>,
-        token: Option<Cryptocurrency>,
-        amount: Tokens,
-        to: UserOrAccount,
-        fee: Option<Tokens>,
-        memo: Option<u64>,
-        created: TimestampNanos,
-    }
-
-    impl From<PendingCryptoTransactionCombined> for PendingCryptoTransaction {
-        fn from(value: PendingCryptoTransactionCombined) -> Self {
-            let token_symbol = value
-                .token_symbol
-                .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
-
-            PendingCryptoTransaction {
-                ledger: value.ledger,
-                token_symbol: token_symbol.clone(),
-                token: token_symbol.into(),
-                amount: value.amount,
-                to: value.to,
-                fee: value.fee,
-                memo: value.memo,
-                created: value.created,
-            }
-        }
     }
 
     #[ts_export]
@@ -512,49 +479,16 @@ pub mod icrc1 {
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-    #[serde(from = "PendingCryptoTransactionCombined")]
     #[ts(rename = "PendingCryptoTransactionICRC1")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
         pub token_symbol: String,
-        pub token: Cryptocurrency,
         pub amount: u128,
         pub to: Account,
         pub fee: u128,
         #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
-    }
-
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-    struct PendingCryptoTransactionCombined {
-        ledger: CanisterId,
-        token: Option<Cryptocurrency>,
-        token_symbol: Option<String>,
-        amount: u128,
-        to: Account,
-        fee: u128,
-        memo: Option<Memo>,
-        created: TimestampNanos,
-    }
-
-    impl From<PendingCryptoTransactionCombined> for PendingCryptoTransaction {
-        fn from(value: PendingCryptoTransactionCombined) -> Self {
-            let token_symbol = value
-                .token_symbol
-                .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
-
-            PendingCryptoTransaction {
-                ledger: value.ledger,
-                token_symbol: token_symbol.clone(),
-                token: token_symbol.into(),
-                amount: value.amount,
-                to: value.to,
-                fee: value.fee,
-                memo: value.memo,
-                created: value.created,
-            }
-        }
     }
 
     #[ts_export]
@@ -615,12 +549,10 @@ pub mod icrc2 {
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-    #[serde(from = "PendingCryptoTransactionCombined")]
     #[ts(rename = "PendingCryptoTransactionICRC2")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
         pub token_symbol: String,
-        pub token: Cryptocurrency,
         pub amount: u128,
         pub from: Account,
         pub to: Account,
@@ -628,39 +560,6 @@ pub mod icrc2 {
         #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
-    }
-
-    #[derive(Serialize, Deserialize, Clone, Debug)]
-    struct PendingCryptoTransactionCombined {
-        ledger: CanisterId,
-        token_symbol: Option<String>,
-        token: Option<Cryptocurrency>,
-        amount: u128,
-        from: Account,
-        to: Account,
-        fee: u128,
-        memo: Option<Memo>,
-        created: TimestampNanos,
-    }
-
-    impl From<PendingCryptoTransactionCombined> for PendingCryptoTransaction {
-        fn from(value: PendingCryptoTransactionCombined) -> Self {
-            let token_symbol = value
-                .token_symbol
-                .unwrap_or_else(|| value.token.unwrap().token_symbol().to_string());
-
-            PendingCryptoTransaction {
-                ledger: value.ledger,
-                token_symbol: token_symbol.clone(),
-                token: token_symbol.into(),
-                amount: value.amount,
-                from: value.from,
-                to: value.to,
-                fee: value.fee,
-                memo: value.memo,
-                created: value.created,
-            }
-        }
     }
 
     #[ts_export]
@@ -749,7 +648,6 @@ impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {
         nns::PendingCryptoTransaction {
             ledger: value.ledger,
             token_symbol: value.token_symbol,
-            token: value.token,
             amount: Tokens::from_e8s(value.amount.try_into().unwrap()),
             to: UserOrAccount::Account(AccountIdentifier::new(
                 &value.to.owner,

@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 use crate::env::ENV;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
@@ -7,7 +6,7 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::{Chat, ChatEvent, Cryptocurrency};
+use types::{Chat, ChatEvent};
 
 #[test]
 fn tip_direct_message_succeeds() {
@@ -211,7 +210,6 @@ fn tip_group_message_retries_if_c2c_call_fails() {
             message_id,
             ledger: canister_ids.icp_ledger,
             token_symbol: ICP_SYMBOL.to_string(),
-            token: Cryptocurrency::InternetComputer,
             amount: tip_amount,
             fee: ICP_TRANSFER_FEE,
             decimals: 8,
@@ -286,7 +284,6 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
             message_id,
             ledger: canister_ids.icp_ledger,
             token_symbol: ICP_SYMBOL.to_string(),
-            token: Cryptocurrency::InternetComputer,
             amount: tip_amount,
             fee: ICP_TRANSFER_FEE,
             decimals: 8,

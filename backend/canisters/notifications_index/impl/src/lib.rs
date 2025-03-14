@@ -160,7 +160,6 @@ impl Data {
         registry_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
-        #[allow(deprecated)]
         Data {
             governance_principals: governance_principals.into_iter().collect(),
             notifications_canisters: HashMap::default(),

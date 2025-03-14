@@ -1,7 +1,6 @@
 use std::env;
 use ts_export::generate_ts_method;
 
-#[allow(deprecated)]
 fn main() {
     let directory = env::current_dir().unwrap().join("tsBindings/user");
     if directory.exists() {

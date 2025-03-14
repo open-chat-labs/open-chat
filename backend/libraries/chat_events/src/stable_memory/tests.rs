@@ -3,9 +3,9 @@ use crate::stable_memory::tests::test_values::{
     AUDIO_CURRENT, AUDIO_PREV1, CRYPTO_CURRENT, CRYPTO_PREV1, CUSTOM_CURRENT, CUSTOM_PREV1, DELETED_CURRENT, DELETED_PREV1,
     FILE_CURRENT, FILE_PREV1, GIPHY_CURRENT, GIPHY_PREV1, GOVERNANCE_PROPOSAL_CURRENT, GOVERNANCE_PROPOSAL_PREV1,
     IMAGE_CURRENT, IMAGE_PREV1, MESSAGE_REMINDER_CREATED_CURRENT, MESSAGE_REMINDER_CREATED_PREV1, MESSAGE_REMINDER_CURRENT,
-    MESSAGE_REMINDER_PREV1, P2P_SWAP_CURRENT, P2P_SWAP_PREV1, POLL_CURRENT, POLL_PREV1, PRIZE_CURRENT, PRIZE_PREV1,
-    PRIZE_WINNER_CURRENT, PRIZE_WINNER_PREV1, REPORTED_MESSAGE_CURRENT, REPORTED_MESSAGE_PREV1, TEXT_CURRENT, TEXT_PREV1,
-    VIDEO_CALL_CURRENT, VIDEO_CALL_PREV1, VIDEO_CURRENT, VIDEO_PREV1,
+    MESSAGE_REMINDER_PREV1, P2P_SWAP_CURRENT, P2P_SWAP_PREV1, P2P_SWAP_PREV2, POLL_CURRENT, POLL_PREV1, PRIZE_CURRENT,
+    PRIZE_PREV1, PRIZE_WINNER_CURRENT, PRIZE_WINNER_PREV1, REPORTED_MESSAGE_CURRENT, REPORTED_MESSAGE_PREV1, TEXT_CURRENT,
+    TEXT_PREV1, VIDEO_CALL_CURRENT, VIDEO_CALL_PREV1, VIDEO_CURRENT, VIDEO_PREV1,
 };
 use crate::stable_memory::{bytes_to_event, event_to_bytes};
 use crate::{
@@ -29,7 +29,7 @@ mod test_values;
 
 #[test]
 fn text_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Text(TextContentInternal {
         text: random_string(&mut rng),
     });
@@ -43,7 +43,7 @@ fn text_content() {
 
 #[test]
 fn image_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Image(ImageContentInternal {
         width: rng.next_u32(),
         height: rng.next_u32(),
@@ -65,7 +65,7 @@ fn image_content() {
 
 #[test]
 fn video_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Video(VideoContentInternal {
         width: rng.next_u32(),
         height: rng.next_u32(),
@@ -91,7 +91,7 @@ fn video_content() {
 
 #[test]
 fn audio_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Audio(AudioContentInternal {
         caption: Some(random_string(&mut rng)),
         mime_type: random_string(&mut rng),
@@ -110,7 +110,7 @@ fn audio_content() {
 
 #[test]
 fn file_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::File(FileContentInternal {
         name: random_string(&mut rng),
         caption: Some(random_string(&mut rng)),
@@ -131,7 +131,7 @@ fn file_content() {
 
 #[test]
 fn poll_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Poll(PollContentInternal {
         config: PollConfigInternal {
             text: Some(random_string(&mut rng)),
@@ -160,7 +160,7 @@ fn poll_content() {
 
 #[test]
 fn crypto_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Crypto(CryptoContentInternal {
         recipient: random_from_principal(&mut rng),
         transfer: CompletedCryptoTransactionInternal::ICRC1(crate::icrc1::CompletedCryptoTransactionInternal {
@@ -192,7 +192,7 @@ fn crypto_content() {
 
 #[test]
 fn deleted_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Deleted(DeletedByInternal {
         deleted_by: random_from_principal(&mut rng),
         timestamp: rng.gen(),
@@ -207,7 +207,7 @@ fn deleted_content() {
 
 #[test]
 fn giphy_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Giphy(GiphyContentInternal {
         caption: Some(random_string(&mut rng)),
         title: random_string(&mut rng),
@@ -234,7 +234,7 @@ fn giphy_content() {
 
 #[test]
 fn governance_proposal() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::GovernanceProposal(ProposalContentInternal {
         governance_canister_id: random_principal(&mut rng),
         proposal: Proposal::SNS(SnsProposal {
@@ -279,7 +279,7 @@ fn governance_proposal() {
 
 #[test]
 fn prize_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Prize(PrizeContentInternal {
         prizes_remaining: vec![rng.gen(), rng.gen(), rng.gen()],
         reservations: [
@@ -329,7 +329,7 @@ fn prize_content() {
 
 #[test]
 fn prize_winner_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
         winner: random_from_principal(&mut rng),
         ledger: random_principal(&mut rng),
@@ -349,7 +349,7 @@ fn prize_winner_content() {
 
 #[test]
 fn message_reminder_created_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::MessageReminderCreated(MessageReminderCreatedContentInternal {
         reminder_id: rng.gen(),
         remind_at: rng.gen(),
@@ -369,7 +369,7 @@ fn message_reminder_created_content() {
 
 #[test]
 fn message_reminder_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::MessageReminder(MessageReminderContentInternal {
         reminder_id: rng.gen(),
         notes: Some(random_string(&mut rng)),
@@ -387,7 +387,7 @@ fn message_reminder_content() {
 
 #[test]
 fn reported_message_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::ReportedMessage(ReportedMessageInternal {
         reports: vec![MessageReport {
             reported_by: random_from_principal(&mut rng),
@@ -409,14 +409,12 @@ fn reported_message_content() {
 
 #[test]
 fn p2p_swap_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let symbol = random_string(&mut rng);
-    #[allow(deprecated)]
     let content = MessageContentInternal::P2PSwap(P2PSwapContentInternal {
         swap_id: rng.gen(),
         token0: TokenInfo {
             symbol: CHAT_SYMBOL.to_string(),
-            token: types::Cryptocurrency::CHAT,
             ledger: random_principal(&mut rng),
             decimals: rng.gen(),
             fee: rng.gen(),
@@ -424,7 +422,6 @@ fn p2p_swap_content() {
         token0_amount: rng.gen(),
         token1: TokenInfo {
             symbol: symbol.clone(),
-            token: types::Cryptocurrency::Other(symbol),
             ledger: random_principal(&mut rng),
             decimals: rng.gen(),
             fee: rng.gen(),
@@ -443,14 +440,14 @@ fn p2p_swap_content() {
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, P2P_SWAP_CURRENT);
 
-    for test in [P2P_SWAP_CURRENT, P2P_SWAP_PREV1] {
+    for test in [P2P_SWAP_CURRENT, P2P_SWAP_PREV1, P2P_SWAP_PREV2] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::P2PSwap(_)));
     }
 }
 
 #[test]
 fn video_call_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::VideoCall(VideoCallContentInternal {
         call_type: VideoCallType::Broadcast,
         ended: Some(rng.next_u64()),
@@ -493,7 +490,7 @@ fn video_call_content() {
 
 #[test]
 fn custom_content() {
-    let mut rng = get_fresh_rng();
+    let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::Custom(CustomContentInternal {
         kind: random_string(&mut rng),
         data: rng.gen::<[u8; 32]>().to_vec(),
@@ -578,7 +575,7 @@ fn generate_value<R: RngCore>(content: MessageContentInternal, rng: &mut R) -> E
     }
 }
 
-fn get_fresh_rng() -> StdRng {
+fn get_deterministic_rng() -> StdRng {
     let seed = [0; 32];
     StdRng::from_seed(seed)
 }

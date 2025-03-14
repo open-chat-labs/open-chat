@@ -65,7 +65,6 @@ impl CommunityMembers {
         let mut principal_to_user_id_map = PrincipalToUserIdMap::default();
         principal_to_user_id_map.insert(creator_principal, creator_user_id);
 
-        #[allow(deprecated)]
         CommunityMembers {
             members_map: MembersStableStorage::new(member),
             members_and_channels: [(creator_user_id, public_channels)].into_iter().collect(),
