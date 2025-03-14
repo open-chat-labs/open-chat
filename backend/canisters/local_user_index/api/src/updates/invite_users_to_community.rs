@@ -21,4 +21,5 @@ pub enum Response {
     TooManyInvites(u32),
     UserSuspended,
     InternalError(String),
+    Error(u16, Option<String>),
 }

@@ -14,6 +14,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     PrivateCommunity,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, community_members)]

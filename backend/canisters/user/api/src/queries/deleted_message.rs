@@ -19,6 +19,7 @@ pub enum Response {
     NotAuthorized,
     MessageNotFound,
     MessageHardDeleted,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user, deleted_message)]

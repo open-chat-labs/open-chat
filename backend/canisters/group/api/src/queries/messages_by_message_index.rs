@@ -20,4 +20,5 @@ pub enum Response {
     UserSuspended,
     UserLapsed,
     ReplicaNotUpToDateV2(TimestampMillis),
+    Error(u16, Option<String>),
 }

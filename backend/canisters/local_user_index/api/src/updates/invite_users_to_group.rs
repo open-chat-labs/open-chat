@@ -22,4 +22,5 @@ pub enum Response {
     ChatFrozen,
     TooManyInvites(u32),
     InternalError(String),
+    Error(u16, Option<String>),
 }

@@ -22,6 +22,7 @@ pub enum Response {
     UserLapsed,
     NotAuthorized,
     TooManyInvites(u32),
+    Error(u16, Option<String>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

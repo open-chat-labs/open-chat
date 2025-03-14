@@ -36,4 +36,5 @@ pub enum Response {
     CommunityFrozen,
     NotInvited,
     InternalError(String),
+    Error(u16, Option<String>),
 }

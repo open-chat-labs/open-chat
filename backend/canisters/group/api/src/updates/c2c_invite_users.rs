@@ -16,6 +16,7 @@ pub enum Response {
     NotAuthorized,
     ChatFrozen,
     TooManyInvites(u32),
+    Error(u16, Option<String>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

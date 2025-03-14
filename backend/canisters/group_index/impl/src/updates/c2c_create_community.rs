@@ -63,6 +63,12 @@ pub(crate) async fn create_community_impl(
             }
             Err(error)
         }
+        Ok(local_group_index_canister::c2c_create_community::Response::Error(code, message)) => {
+            if args.is_public {
+                mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
+            }
+            Err(format!("{code}: {message:?}"))
+        }
         Err(error) => {
             if args.is_public {
                 mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));

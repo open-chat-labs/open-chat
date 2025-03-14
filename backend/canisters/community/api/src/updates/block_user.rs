@@ -23,12 +23,14 @@ pub enum Response {
     CommunityFrozen,
     InternalError(String),
     UserLapsed,
+    Error(u16, Option<String>),
 }
 
 impl From<crate::remove_member::Response> for Response {
     fn from(response: crate::remove_member::Response) -> Self {
         match response {
             crate::remove_member::Response::Success => Response::Success,
+            crate::remove_member::Response::Error(error, reason) => Response::Error(error, reason),
             crate::remove_member::Response::UserNotInCommunity => Response::UserNotInCommunity,
             crate::remove_member::Response::CannotRemoveSelf => Response::CannotBlockSelf,
             crate::remove_member::Response::CannotRemoveUser => Response::CannotBlockUser,

@@ -20,6 +20,7 @@ pub enum Response {
     TermTooLong(u8),
     InvalidTerm,
     PrivateCommunity,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, explore_channels)]

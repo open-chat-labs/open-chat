@@ -24,4 +24,5 @@ pub enum Response {
     ChatFrozen,
     NotPlatformModerator,
     InternalError(String),
+    Error(u16, Option<String>),
 }

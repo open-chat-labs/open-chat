@@ -29,6 +29,7 @@ pub enum Response {
     NotAuthorized,
     Frozen,
     C2CError(i32, String),
+    Error(u16, Option<String>),
 }
 
 #[ts_export(local_user_index, bot_create_channel)]

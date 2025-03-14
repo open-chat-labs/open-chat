@@ -17,4 +17,5 @@ pub enum Response {
     ChatNotFound,
     StatusError(SwapStatusError),
     SwapNotFound,
+    Error(u16, Option<String>),
 }

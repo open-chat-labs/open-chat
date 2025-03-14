@@ -22,6 +22,7 @@ pub enum Response {
     CommunityFrozen,
     UserSuspended,
     UserLapsed,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, create_user_group)]

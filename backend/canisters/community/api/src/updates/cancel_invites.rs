@@ -18,4 +18,5 @@ pub enum Response {
     ChannelNotFound,
     UserSuspended,
     UserLapsed,
+    Error(u16, Option<String>),
 }

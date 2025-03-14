@@ -17,4 +17,5 @@ pub struct Args {
 pub enum Response {
     Success(ChatDetails),
     NotAuthorized,
+    Error(u16, Option<String>),
 }

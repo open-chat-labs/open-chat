@@ -27,6 +27,7 @@ pub enum Response {
     NotAuthorized,
     TooManyInvites(u32),
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[ts_export(local_user_index, invite_users_to_channel)]

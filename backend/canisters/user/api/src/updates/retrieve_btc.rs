@@ -16,4 +16,5 @@ pub enum Response {
     ApproveError(String),
     RetrieveBtcError(String),
     InternalError(String),
+    Error(u16, Option<String>),
 }

@@ -12,4 +12,5 @@ pub enum Response {
     Success,
     MessageNotFound,
     AlreadyEnded,
+    Error(u16, Option<String>),
 }

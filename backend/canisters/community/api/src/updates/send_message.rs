@@ -44,6 +44,7 @@ pub enum Response {
     MessageAlreadyExists,
     CommunityRulesNotAccepted,
     UserLapsed,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, send_message)]

@@ -17,6 +17,7 @@ pub enum Response {
     NotAuthorized,
     NotFound,
     ChannelNotFound,
+    Error(u16, Option<String>),
 }
 
 impl From<Response> for types::c2c_bot_api_key::Response {
@@ -26,6 +27,7 @@ impl From<Response> for types::c2c_bot_api_key::Response {
             Response::NotAuthorized => types::c2c_bot_api_key::Response::NotAuthorized,
             Response::NotFound => types::c2c_bot_api_key::Response::NotFound,
             Response::ChannelNotFound => types::c2c_bot_api_key::Response::NotFound,
+            Response::Error(code, message) => types::c2c_bot_api_key::Response::Error(code, message),
         }
     }
 }

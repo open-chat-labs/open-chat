@@ -10,4 +10,5 @@ pub type Args = Empty;
 pub enum Response {
     Success(String),
     InternalError(String),
+    Error(u16, Option<String>),
 }

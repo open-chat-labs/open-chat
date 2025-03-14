@@ -30,4 +30,5 @@ pub enum Response {
     TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
     UserLapsed,
+    Error(u16, Option<String>),
 }

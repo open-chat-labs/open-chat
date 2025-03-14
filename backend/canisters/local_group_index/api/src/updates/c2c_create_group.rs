@@ -24,6 +24,7 @@ pub enum Response {
     Success(SuccessResult),
     CyclesBalanceTooLow,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

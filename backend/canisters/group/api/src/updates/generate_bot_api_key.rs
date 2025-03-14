@@ -17,6 +17,7 @@ pub enum Response {
     BotNotFound,
     ChatFrozen,
     NotAuthorized,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(group, generate_bot_api_key)]

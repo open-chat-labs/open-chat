@@ -29,6 +29,7 @@ pub enum EventsResponse {
     ChatNotFound,
     ThreadMessageNotFound,
     ReplicaNotUpToDateV2(TimestampMillis),
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user)]

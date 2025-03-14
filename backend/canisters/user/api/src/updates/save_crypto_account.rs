@@ -12,4 +12,5 @@ pub enum Response {
     Invalid,
     NameTaken,
     UserSuspended,
+    Error(u16, Option<String>),
 }

@@ -19,12 +19,14 @@ pub enum Response {
     AlreadyAdded,
     NotFound,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 impl From<types::c2c_install_bot::Response> for Response {
     fn from(response: types::c2c_install_bot::Response) -> Self {
         match response {
             types::c2c_install_bot::Response::Success => Response::Success,
+            types::c2c_install_bot::Response::Error(code, message) => Response::Error(code, message),
             types::c2c_install_bot::Response::Frozen => Response::Frozen,
             types::c2c_install_bot::Response::NotAuthorized => Response::NotAuthorized,
             types::c2c_install_bot::Response::AlreadyAdded => Response::AlreadyAdded,

@@ -15,12 +15,14 @@ pub enum Response {
     Success,
     NotAuthorized,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 impl From<types::c2c_uninstall_bot::Response> for Response {
     fn from(response: types::c2c_uninstall_bot::Response) -> Self {
         match response {
             types::c2c_uninstall_bot::Response::Success => Response::Success,
+            types::c2c_uninstall_bot::Response::Error(code, message) => Response::Error(code, message),
             types::c2c_uninstall_bot::Response::NotAuthorized => Response::NotAuthorized,
         }
     }

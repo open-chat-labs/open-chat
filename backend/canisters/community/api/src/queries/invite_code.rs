@@ -11,6 +11,7 @@ pub enum Response {
     Success(SuccessResult),
     UserNotInCommunity,
     NotAuthorized,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, invite_code)]

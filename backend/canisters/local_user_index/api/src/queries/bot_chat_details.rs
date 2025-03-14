@@ -23,6 +23,7 @@ pub enum Response {
     NotAuthorized,
     NotFound,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 impl From<c2c_bot_group_details::Response> for Response {
@@ -30,6 +31,7 @@ impl From<c2c_bot_group_details::Response> for Response {
         match r {
             c2c_bot_group_details::Response::Success(details) => Response::Success(details),
             c2c_bot_group_details::Response::NotAuthorized => Response::NotAuthorized,
+            c2c_bot_group_details::Response::Error(code, message) => Response::Error(code, message),
         }
     }
 }
@@ -39,6 +41,7 @@ impl From<c2c_bot_channel_details::Response> for Response {
         match r {
             c2c_bot_channel_details::Response::Success(details) => Response::Success(details),
             c2c_bot_channel_details::Response::NotAuthorized => Response::NotAuthorized,
+            c2c_bot_channel_details::Response::Error(code, message) => Response::Error(code, message),
         }
     }
 }

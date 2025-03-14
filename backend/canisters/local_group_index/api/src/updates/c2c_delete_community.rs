@@ -11,4 +11,5 @@ pub struct Args {
 pub enum Response {
     Success,
     CommunityNotFound,
+    Error(u16, Option<String>),
 }

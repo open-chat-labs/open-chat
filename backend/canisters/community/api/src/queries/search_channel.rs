@@ -24,6 +24,7 @@ pub enum Response {
     UserNotInCommunity,
     ChannelNotFound,
     UserNotInChannel,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, search_channel)]

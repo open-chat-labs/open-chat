@@ -17,4 +17,5 @@ pub enum Response {
     PaymentAlreadyInProgress,
     PaymentFailed(String),
     InternalError(String),
+    Error(u16, Option<String>),
 }

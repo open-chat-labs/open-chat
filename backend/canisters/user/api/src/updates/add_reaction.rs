@@ -23,4 +23,5 @@ pub enum Response {
     MessageNotFound,
     ChatNotFound,
     UserSuspended,
+    Error(u16, Option<String>),
 }

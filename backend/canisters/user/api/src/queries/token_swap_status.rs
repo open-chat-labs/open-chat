@@ -14,6 +14,7 @@ pub struct Args {
 pub enum Response {
     Success(TokenSwapStatus),
     NotFound,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user, token_swap_status)]

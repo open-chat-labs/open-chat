@@ -16,6 +16,7 @@ pub enum Response {
     Success(SuccessResult),
     BotNotFound,
     NotAuthorized,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user, generate_bot_api_key)]

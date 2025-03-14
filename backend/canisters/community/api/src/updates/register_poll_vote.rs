@@ -28,4 +28,5 @@ pub enum Response {
     PollEnded,
     OptionIndexOutOfRange,
     UserLapsed,
+    Error(u16, Option<String>),
 }

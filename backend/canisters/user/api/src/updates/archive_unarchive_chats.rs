@@ -17,6 +17,7 @@ pub enum Response {
     PartialSuccess(PartialSuccessResult),
     Failure,
     UserSuspended,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user, archive_unarchive_chats)]

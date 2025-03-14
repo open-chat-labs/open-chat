@@ -29,6 +29,7 @@ pub enum Response {
     ReferralCodeInvalid,
     ReferralCodeAlreadyClaimed,
     ReferralCodeExpired,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(local_user_index, register_user)]

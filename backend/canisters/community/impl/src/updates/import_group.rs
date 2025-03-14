@@ -51,6 +51,7 @@ async fn import_group_impl(group_id: ChatId, user_id: UserId, group_index_canist
             let channel_id = state.generate_channel_id();
             commit_group_to_import(user_id, group_id, channel_id, total_bytes, false, state)
         }),
+        Ok(C2cResponse::Error(code, message)) => Error(code, message),
         Ok(C2cResponse::UserNotInGroup) => UserNotInGroup,
         Ok(C2cResponse::NotAuthorized) => UserNotGroupOwner,
         Ok(C2cResponse::UserSuspended) => UserSuspended,

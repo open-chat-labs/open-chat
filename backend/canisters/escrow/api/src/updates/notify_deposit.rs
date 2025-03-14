@@ -16,6 +16,7 @@ pub enum Response {
     SwapExpired,
     SwapNotFound,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[derive(Serialize, Deserialize, Debug)]

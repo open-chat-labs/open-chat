@@ -13,4 +13,5 @@ pub enum Response {
     LastOwnerCannotLeave,
     UserSuspended,
     CommunityFrozen,
+    Error(u16, Option<String>),
 }

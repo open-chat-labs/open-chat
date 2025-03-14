@@ -20,4 +20,5 @@ pub enum Response {
     UserSuspended,
     ChatFrozen,
     InternalError(String),
+    Error(u16, Option<String>),
 }

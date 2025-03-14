@@ -17,4 +17,5 @@ pub enum Response {
     UserSuspended,
     NotAuthorized,
     NotFound,
+    Error(u16, Option<String>),
 }

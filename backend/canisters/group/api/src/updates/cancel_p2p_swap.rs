@@ -18,4 +18,5 @@ pub enum Response {
     SwapNotFound,
     UserNotInGroup,
     ChatFrozen,
+    Error(u16, Option<String>),
 }

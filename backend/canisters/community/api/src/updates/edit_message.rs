@@ -25,4 +25,5 @@ pub enum Response {
     CommunityFrozen,
     ChannelNotFound,
     UserLapsed,
+    Error(u16, Option<String>),
 }

@@ -20,4 +20,5 @@ pub enum Response {
     UserSuspended,
     UserLapsed,
     GroupFrozen,
+    Error(u16, Option<String>),
 }

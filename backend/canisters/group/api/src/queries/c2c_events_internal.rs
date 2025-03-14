@@ -13,6 +13,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     ThreadMessageNotFound,
+    Error(u16, Option<String>),
 }
 
 #[derive(Serialize, Deserialize, Debug)]

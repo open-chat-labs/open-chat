@@ -16,4 +16,5 @@ pub enum Response {
     Success,
     TooLong(FieldTooLongResult),
     UserSuspended,
+    Error(u16, Option<String>),
 }

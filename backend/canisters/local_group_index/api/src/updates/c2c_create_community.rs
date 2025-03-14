@@ -25,6 +25,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[derive(Serialize, Deserialize, Debug)]

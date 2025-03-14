@@ -40,6 +40,7 @@ pub enum Response {
     ChatFrozen,
     RulesNotAccepted,
     MessageAlreadyExists,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(group, send_message)]

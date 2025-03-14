@@ -14,6 +14,7 @@ pub enum Response {
     Success,
     NotFound,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[derive(Serialize)]

@@ -25,6 +25,7 @@ pub enum Response {
     ThreadNotFound,
     MessageAlreadyFinalised,
     C2CError(i32, String),
+    Error(u16, Option<String>),
 }
 
 #[ts_export(local_user_index, bot_send_message)]

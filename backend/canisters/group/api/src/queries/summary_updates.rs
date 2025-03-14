@@ -18,6 +18,7 @@ pub enum Response {
     Success(SuccessResult),
     SuccessNoUpdates,
     CallerNotInGroup,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(group, summary_updates)]

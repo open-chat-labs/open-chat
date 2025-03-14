@@ -10,4 +10,5 @@ pub enum Response {
     NotAuthorized,
     ChatFrozen,
     InternalError(String),
+    Error(u16, Option<String>),
 }

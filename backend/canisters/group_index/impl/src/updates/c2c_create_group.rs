@@ -61,6 +61,7 @@ async fn c2c_create_group(args: Args) -> Response {
                 local_user_index_canister_id: result.local_user_index_canister_id,
             })
         }
+        Ok(local_group_index_canister::c2c_create_group::Response::Error(code, message)) => Error(code, message),
         Ok(local_group_index_canister::c2c_create_group::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
         Ok(local_group_index_canister::c2c_create_group::Response::InternalError(_)) => InternalError,
         Err(_) => {

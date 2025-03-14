@@ -12,4 +12,5 @@ pub enum Response {
     SwapExpired,
     SwapNotFound,
     NotAuthorized,
+    Error(u16, Option<String>),
 }

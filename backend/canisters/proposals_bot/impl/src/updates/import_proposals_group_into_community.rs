@@ -27,6 +27,7 @@ async fn import_proposals_group_into_community(args: Args) -> Response {
                 });
                 Success
             }
+            Ok(community_canister::c2c_import_proposals_group::Response::Error(code, message)) => Error(code, message),
             Ok(community_canister::c2c_import_proposals_group::Response::InternalError(error)) => InternalError(error),
             Err(error) => InternalError(format!("{error:?}")),
         }

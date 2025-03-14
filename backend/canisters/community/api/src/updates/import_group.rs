@@ -24,6 +24,7 @@ pub enum Response {
     GroupFrozen,
     InternalError(String),
     UserLapsed,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, import_group)]

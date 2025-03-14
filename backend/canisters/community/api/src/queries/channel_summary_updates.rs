@@ -22,4 +22,5 @@ pub enum Response {
     PrivateCommunity,
     ChannelNotFound,
     PrivateChannel,
+    Error(u16, Option<String>),
 }

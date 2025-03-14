@@ -16,6 +16,7 @@ pub enum Response {
     Success(SuccessResult),
     CallerNotInGroup,
     ReplicaNotUpToDate(TimestampMillis),
+    Error(u16, Option<String>),
 }
 
 #[ts_export(group, thread_previews)]

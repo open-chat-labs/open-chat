@@ -23,4 +23,5 @@ pub enum Response {
     NotAuthorized,
     NoChange,
     UserLapsed,
+    Error(u16, Option<String>),
 }

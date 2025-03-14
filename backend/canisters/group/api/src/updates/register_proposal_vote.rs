@@ -24,4 +24,5 @@ pub enum Response {
     UserLapsed,
     ChatFrozen,
     InternalError(String),
+    Error(u16, Option<String>),
 }

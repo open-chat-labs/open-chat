@@ -19,6 +19,7 @@ pub enum Response {
     Success(SuccessResult),
     SuccessNoUpdates(TimestampMillis),
     PrivateCommunity,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, selected_updates)]

@@ -37,6 +37,7 @@ pub enum SummaryUpdatesResponse {
     SuccessNoUpdates,
     NotFound,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 impl From<community_canister::summary::Response> for SummaryUpdatesResponse {
@@ -44,6 +45,7 @@ impl From<community_canister::summary::Response> for SummaryUpdatesResponse {
         match value {
             community_canister::summary::Response::Success(summary) => Self::SuccessCommunity(summary),
             community_canister::summary::Response::PrivateCommunity => Self::NotFound,
+            community_canister::summary::Response::Error(code, message) => Self::Error(code, message),
         }
     }
 }
@@ -54,6 +56,7 @@ impl From<community_canister::summary_updates::Response> for SummaryUpdatesRespo
             community_canister::summary_updates::Response::Success(updates) => Self::SuccessCommunityUpdates(updates),
             community_canister::summary_updates::Response::SuccessNoUpdates => Self::SuccessNoUpdates,
             community_canister::summary_updates::Response::PrivateCommunity => Self::NotFound,
+            community_canister::summary_updates::Response::Error(code, message) => Self::Error(code, message),
         }
     }
 }
@@ -63,6 +66,7 @@ impl From<group_canister::summary::Response> for SummaryUpdatesResponse {
         match value {
             group_canister::summary::Response::Success(result) => Self::SuccessGroup(result.summary),
             group_canister::summary::Response::CallerNotInGroup => Self::NotFound,
+            group_canister::summary::Response::Error(code, message) => Self::Error(code, message),
         }
     }
 }
@@ -73,6 +77,7 @@ impl From<group_canister::summary_updates::Response> for SummaryUpdatesResponse 
             group_canister::summary_updates::Response::Success(result) => Self::SuccessGroupUpdates(result.updates),
             group_canister::summary_updates::Response::SuccessNoUpdates => Self::SuccessNoUpdates,
             group_canister::summary_updates::Response::CallerNotInGroup => Self::NotFound,
+            group_canister::summary_updates::Response::Error(code, message) => Self::Error(code, message),
         }
     }
 }

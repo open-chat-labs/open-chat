@@ -27,4 +27,5 @@ pub enum Response {
     ProposalNotAcceptingVotes,
     InternalError(String),
     UserLapsed,
+    Error(u16, Option<String>),
 }

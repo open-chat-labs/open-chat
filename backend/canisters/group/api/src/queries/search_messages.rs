@@ -21,6 +21,7 @@ pub enum Response {
     TermTooShort(u8),
     TooManyUsers(u8),
     CallerNotInGroup,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(group, search_messages)]

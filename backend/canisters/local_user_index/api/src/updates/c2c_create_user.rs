@@ -16,4 +16,5 @@ pub enum Response {
     AlreadyRegistered,
     CyclesBalanceTooLow,
     InternalError(String),
+    Error(u16, Option<String>),
 }

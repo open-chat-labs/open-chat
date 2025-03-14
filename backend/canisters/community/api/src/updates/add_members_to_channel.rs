@@ -28,6 +28,7 @@ pub enum Response {
     UserLimitReached(u32),
     NotAuthorized,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, add_members_to_channel)]

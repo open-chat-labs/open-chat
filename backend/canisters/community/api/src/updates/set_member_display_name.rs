@@ -20,4 +20,5 @@ pub enum Response {
     DisplayNameTooShort(u16),
     DisplayNameTooLong(u16),
     UserLapsed,
+    Error(u16, Option<String>),
 }

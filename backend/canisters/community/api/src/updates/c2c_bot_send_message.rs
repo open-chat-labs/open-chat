@@ -46,6 +46,7 @@ pub enum Response {
     ThreadNotFound,
     InvalidRequest(String),
     MessageAlreadyFinalised,
+    Error(u16, Option<String>),
 }
 
 impl From<send_message::Response> for Response {
@@ -62,6 +63,7 @@ impl From<send_message::Response> for Response {
             send_message::Response::InvalidRequest(reason) => InvalidRequest(reason),
             send_message::Response::CommunityFrozen => CommunityFrozen,
             send_message::Response::MessageAlreadyExists => MessageAlreadyFinalised,
+            send_message::Response::Error(error, reason) => Error(error, reason),
             send_message::Response::NotAuthorized
             | send_message::Response::UserNotInCommunity
             | send_message::Response::UserNotInChannel

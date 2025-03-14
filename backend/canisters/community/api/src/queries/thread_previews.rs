@@ -19,6 +19,7 @@ pub enum Response {
     ChannelNotFound,
     UserNotInChannel,
     ReplicaNotUpToDate(TimestampMillis),
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, thread_previews)]

@@ -20,6 +20,7 @@ pub enum Response {
     Success(String),
     NotAuthorized,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[ts_export]

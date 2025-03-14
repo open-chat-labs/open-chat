@@ -19,6 +19,7 @@ pub enum EventsResponse {
     UserSuspended,
     UserLapsed,
     ReplicaNotUpToDateV2(types::TimestampMillis),
+    Error(u16, Option<String>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

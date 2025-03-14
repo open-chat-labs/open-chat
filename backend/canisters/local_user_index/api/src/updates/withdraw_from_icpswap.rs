@@ -21,4 +21,5 @@ pub enum Response {
     SwapNotFound,
     AmountNotSpecified,
     InternalError(String),
+    Error(u16, Option<String>),
 }

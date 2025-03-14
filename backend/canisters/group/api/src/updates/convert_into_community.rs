@@ -23,6 +23,7 @@ pub enum Response {
     UserLapsed,
     ChatFrozen,
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[ts_export(group, convert_into_community)]

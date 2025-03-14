@@ -12,4 +12,5 @@ pub enum Response {
     Success(String),
     NotAuthorized,
     NotFound,
+    Error(u16, Option<String>),
 }

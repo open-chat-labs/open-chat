@@ -30,4 +30,5 @@ pub enum Response {
     TooManyFailedPinAttempts(Milliseconds),
     MalformedSignature(String),
     DelegationTooOld,
+    Error(u16, Option<String>),
 }

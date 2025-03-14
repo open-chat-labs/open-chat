@@ -77,4 +77,5 @@ pub enum Response {
     UserLapsed,
     Retrying(String),
     InternalError(String),
+    Error(u16, Option<String>),
 }

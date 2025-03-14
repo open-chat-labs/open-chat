@@ -16,6 +16,7 @@ pub enum Response {
     CommunityFrozen,
     TooManyInvites(u32),
     UserSuspended,
+    Error(u16, Option<String>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

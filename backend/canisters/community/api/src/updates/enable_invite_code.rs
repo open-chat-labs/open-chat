@@ -13,6 +13,7 @@ pub enum Response {
     UserSuspended,
     CommunityFrozen,
     UserLapsed,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, enable_invite_code)]

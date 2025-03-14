@@ -60,6 +60,7 @@ pub enum Response {
     PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user, swap_tokens)]

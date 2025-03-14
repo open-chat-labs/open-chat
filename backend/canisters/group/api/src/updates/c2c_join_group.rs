@@ -33,4 +33,5 @@ pub enum Response {
     ParticipantLimitReached(u32),
     ChatFrozen,
     InternalError(String),
+    Error(u16, Option<String>),
 }

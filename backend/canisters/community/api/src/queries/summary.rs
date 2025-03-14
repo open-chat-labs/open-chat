@@ -18,4 +18,5 @@ pub struct Args {
 pub enum Response {
     Success(CommunityCanisterCommunitySummary),
     PrivateCommunity,
+    Error(u16, Option<String>),
 }

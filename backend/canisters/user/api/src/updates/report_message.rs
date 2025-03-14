@@ -21,4 +21,5 @@ pub enum Response {
     MessageNotFound,
     AlreadyReported,
     InternalError(String),
+    Error(u16, Option<String>),
 }

@@ -16,4 +16,5 @@ pub enum Response {
     Success(SelectedGroupUpdates),
     SuccessNoUpdates(TimestampMillis),
     CallerNotInGroup,
+    Error(u16, Option<String>),
 }

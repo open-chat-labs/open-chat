@@ -15,6 +15,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     NotAuthorized,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(group, public_summary)]

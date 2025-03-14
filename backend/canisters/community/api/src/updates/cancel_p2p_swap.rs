@@ -21,4 +21,5 @@ pub enum Response {
     UserNotInCommunity,
     UserNotInChannel,
     ChatFrozen,
+    Error(u16, Option<String>),
 }

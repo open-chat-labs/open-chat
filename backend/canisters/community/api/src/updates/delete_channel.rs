@@ -20,4 +20,5 @@ pub enum Response {
     UserNotInChannel,
     NotAuthorized,
     UserLapsed,
+    Error(u16, Option<String>),
 }

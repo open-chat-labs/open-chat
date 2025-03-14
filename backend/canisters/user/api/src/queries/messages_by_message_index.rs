@@ -19,4 +19,5 @@ pub enum Response {
     ChatNotFound,
     ThreadMessageNotFound,
     ReplicaNotUpToDateV2(TimestampMillis),
+    Error(u16, Option<String>),
 }

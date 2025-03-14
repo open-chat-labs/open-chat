@@ -20,4 +20,5 @@ pub enum Response {
     Success(CommunityCanisterCommunitySummaryUpdates),
     SuccessNoUpdates,
     PrivateCommunity,
+    Error(u16, Option<String>),
 }

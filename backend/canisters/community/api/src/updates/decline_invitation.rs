@@ -16,4 +16,5 @@ pub enum Response {
     NotInvited,
     ChannelNotFound,
     UserNotInCommunity,
+    Error(u16, Option<String>),
 }

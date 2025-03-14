@@ -19,6 +19,7 @@ pub enum Response {
     TermTooLong(u8),
     TermTooShort(u8),
     ChatNotFound,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user, search_messages)]

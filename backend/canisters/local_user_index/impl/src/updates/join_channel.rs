@@ -43,6 +43,7 @@ async fn join_channel(args: Args) -> Response {
                 }
                 SuccessJoinedCommunity(s)
             }
+            community_canister::c2c_join_channel::Response::Error(code, message) => Error(code, message),
             community_canister::c2c_join_channel::Response::GateCheckFailed(msg) => GateCheckFailed(msg),
             community_canister::c2c_join_channel::Response::UserNotInCommunity => CommunityNotPublic,
             community_canister::c2c_join_channel::Response::ChannelNotFound => ChannelNotFound,

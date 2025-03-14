@@ -15,4 +15,5 @@ pub enum Response {
     Frozen,
     NotAuthorized,
     AlreadyAdded,
+    Error(u16, Option<String>),
 }

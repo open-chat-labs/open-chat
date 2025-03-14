@@ -22,4 +22,5 @@ pub enum Response {
     UserNotInChannel,
     ProposalMessageNotFound,
     UserLapsed,
+    Error(u16, Option<String>),
 }

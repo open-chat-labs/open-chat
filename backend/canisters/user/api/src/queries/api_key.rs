@@ -14,12 +14,14 @@ pub enum Response {
     Success(String),
     NotAuthorized,
     NotFound,
+    Error(u16, Option<String>),
 }
 
 impl From<Response> for types::c2c_bot_api_key::Response {
     fn from(value: Response) -> Self {
         match value {
             Response::Success(s) => types::c2c_bot_api_key::Response::Success(s),
+            Response::Error(code, message) => types::c2c_bot_api_key::Response::Error(code, message),
             Response::NotAuthorized => types::c2c_bot_api_key::Response::NotAuthorized,
             Response::NotFound => types::c2c_bot_api_key::Response::NotFound,
         }

@@ -19,6 +19,7 @@ pub enum Response {
     ChannelNotFound,
     CommunityFrozen,
     NotAuthorized,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, generate_bot_api_key)]

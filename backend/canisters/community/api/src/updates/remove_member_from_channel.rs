@@ -24,4 +24,5 @@ pub enum Response {
     CannotRemoveSelf,
     NotAuthorized,
     UserLapsed,
+    Error(u16, Option<String>),
 }

@@ -12,4 +12,5 @@ pub struct Args {
 pub enum Response {
     Success,
     UserNotInGroup,
+    Error(u16, Option<String>),
 }

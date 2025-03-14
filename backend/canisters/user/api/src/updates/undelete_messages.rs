@@ -18,6 +18,7 @@ pub enum Response {
     Success(SuccessResult),
     ChatNotFound,
     UserSuspended,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(user, undelete_messages)]

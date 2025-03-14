@@ -22,6 +22,7 @@ pub enum Response {
     UserSuspended,
     CommunityFrozen,
     UserLapsed,
+    Error(u16, Option<String>),
 }
 
 #[ts_export(community, undelete_messages)]

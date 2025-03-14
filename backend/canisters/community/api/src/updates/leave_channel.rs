@@ -19,4 +19,5 @@ pub enum Response {
     ChannelNotFound,
     UserNotInChannel,
     LastOwnerCannotLeave,
+    Error(u16, Option<String>),
 }

@@ -31,4 +31,5 @@ pub enum Response {
     MemberLimitReached(u32),
     CommunityFrozen,
     InternalError(String),
+    Error(u16, Option<String>),
 }

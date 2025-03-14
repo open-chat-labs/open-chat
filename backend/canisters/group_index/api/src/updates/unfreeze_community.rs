@@ -17,4 +17,5 @@ pub enum Response {
     CommunityNotFound,
     NotAuthorized,
     InternalError(String),
+    Error(u16, Option<String>),
 }
