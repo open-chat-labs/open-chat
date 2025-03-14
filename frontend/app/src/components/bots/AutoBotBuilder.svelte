@@ -6,7 +6,7 @@
         validateBot,
         ValidationErrors,
         type ExternalBot,
-        type SlashCommandSchema,
+        type CommandDefinition,
         type ValidationErrorMessages,
         userStore,
         type BotDefinition,
@@ -52,7 +52,7 @@
         nameDirty,
         mode,
     }: Props = $props();
-    let selectedCommand = $state<SlashCommandSchema | undefined>(undefined);
+    let selectedCommand = $state<CommandDefinition | undefined>(undefined);
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
     let schemaLoading = $state(false);
@@ -136,7 +136,7 @@
         e.preventDefault();
     }
 
-    function onSelectCommand(cmd: SlashCommandSchema, index: number) {
+    function onSelectCommand(cmd: CommandDefinition, index: number) {
         selectedCommand = cmd;
         selectedCommandIndex = index;
     }
@@ -262,21 +262,23 @@
         bind:value={principal}>
     </ValidatingInput>
 
-    <Legend
-        required
-        label={i18nKey("bots.builder.ownerLabel")}
-        rules={i18nKey("bots.builder.ownerRules")}></Legend>
-    <SingleUserSelector
-        invalid={errors.has("bot_owner")}
-        error={errors.get("bot_owner")}
-        border={false}
-        direction={"up"}
-        mentionSelf
-        on:userSelected={(ev) => (candidate.ownerId = ev.detail.userId)}
-        on:userRemoved={(_) => (candidate.ownerId = "")}
-        selectedReceiver={$userStore.get(candidate.ownerId)}
-        placeholder={"bots.builder.ownerLabel"}
-        autofocus={false} />
+    {#if mode === "update"}
+        <Legend
+            required
+            label={i18nKey("bots.builder.ownerLabel")}
+            rules={i18nKey("bots.builder.ownerRules")}></Legend>
+        <SingleUserSelector
+            invalid={errors.has("bot_owner")}
+            error={errors.get("bot_owner")}
+            border={false}
+            direction={"up"}
+            mentionSelf
+            on:userSelected={(ev) => (candidate.ownerId = ev.detail.userId)}
+            on:userRemoved={(_) => (candidate.ownerId = "")}
+            selectedReceiver={$userStore.get(candidate.ownerId)}
+            placeholder={"bots.builder.ownerLabel"}
+            autofocus={false} />
+    {/if}
 
     {#if mode === "register"}
         <Legend

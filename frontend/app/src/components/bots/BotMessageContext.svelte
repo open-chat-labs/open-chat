@@ -1,10 +1,5 @@
 <script lang="ts">
-    import {
-        AvatarSize,
-        OpenChat,
-        userStore,
-        type SlashCommandParamInstance,
-    } from "openchat-client";
+    import { AvatarSize, OpenChat, userStore, type CommandArg } from "openchat-client";
     import Markdown from "../home/Markdown.svelte";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Avatar from "../Avatar.svelte";
@@ -41,7 +36,7 @@
     });
     let user = $derived($userStore.get(botCommand.initiator));
 
-    function paramValue(param: SlashCommandParamInstance): string {
+    function paramValue(param: CommandArg): string {
         switch (param.kind) {
             case "boolean":
                 return param.value?.toString() ?? "false";

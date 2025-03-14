@@ -11,7 +11,7 @@ import type {
     JoinVideoCall,
     MessageContext,
     RegisterUserResponse,
-    SlashCommandParamInstance,
+    CommandArg,
     StartVideoCall,
     VerifiedCredentialArgs,
     VideoCallType,
@@ -94,11 +94,22 @@ export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAcces
                     scope: apiBotActionScope(domain.scope),
                     command: {
                         name: domain.command.commandName,
-                        args: domain.command.arguments.map(apiBotCommandArg),
+                        args: domain.command.arguments
+                            .filter(commandArgumentHasValue)
+                            .map(apiBotCommandArg),
                         meta: domain.command.meta,
                     },
                 },
             };
+    }
+}
+
+function commandArgumentHasValue(arg: CommandArg): boolean {
+    switch (arg.kind) {
+        case "user":
+            return arg.userId != null;
+        default:
+            return arg.value != null;
     }
 }
 
@@ -121,14 +132,14 @@ export function apiBotActionScope(domain: BotActionScope): ApiBotActionScope {
     }
 }
 
-export function apiBotCommandArg(domain: SlashCommandParamInstance): BotCommandArg {
+export function apiBotCommandArg(domain: CommandArg): BotCommandArg {
     return {
         name: domain.name,
         value: apiBotCommandArgValue(domain),
     };
 }
 
-export function apiBotCommandArgValue(domain: SlashCommandParamInstance): BotCommandArgValue {
+export function apiBotCommandArgValue(domain: CommandArg): BotCommandArgValue {
     switch (domain.kind) {
         case "boolean":
             return {
@@ -153,7 +164,7 @@ export function apiBotCommandArgValue(domain: SlashCommandParamInstance): BotCom
         case "dateTime":
             return {
                 DateTime: domain.value!,
-            }
+            };
     }
 }
 

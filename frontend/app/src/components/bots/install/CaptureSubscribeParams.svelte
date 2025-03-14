@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { createParamInstancesFromSchema, type FlattenedCommand } from "openchat-client";
-    import CommandParam from "../CommandParamInstance.svelte";
+    import { createArgsFromSchema, type FlattenedCommand } from "openchat-client";
+    import CommandParam from "../CommandArg.svelte";
     import Legend from "@src/components/Legend.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import { instanceIsValid } from "../botState";
@@ -12,10 +12,10 @@
 
     let { command, valid = $bindable() }: Props = $props();
 
-    let paramInstances = $state(createParamInstancesFromSchema(command.params, []));
+    let args = $state(createArgsFromSchema(command.params, []));
 
     $effect(() => {
-        const isValid = instanceIsValid(command, paramInstances);
+        const isValid = instanceIsValid(command, args);
         if (isValid !== valid) {
             valid = isValid;
         }
@@ -28,5 +28,5 @@
 
 <Legend large label={i18nKey("bots.add.subscribeParams")}></Legend>
 {#each command.params as param, i}
-    <CommandParam onChange={onParamChange} instance={paramInstances[i]} {param} />
+    <CommandParam onChange={onParamChange} arg={args[i]} {param} />
 {/each}

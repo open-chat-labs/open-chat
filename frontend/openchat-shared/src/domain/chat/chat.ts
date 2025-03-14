@@ -36,11 +36,7 @@ import type {
 } from "../community";
 import type { ChitEarned } from "../chit";
 import type { WalletConfig } from "../crypto";
-import type {
-    InstalledBotDetails,
-    ExternalBotPermissions,
-    SlashCommandParamInstance,
-} from "../bots";
+import type { InstalledBotDetails, ExternalBotPermissions, CommandArg } from "../bots";
 import type { OCError } from "../error";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
@@ -669,7 +665,7 @@ export type Message<T extends MessageContent = MessageContent> = {
 
 export type BotContextCommand = {
     name: string;
-    args: SlashCommandParamInstance[];
+    args: CommandArg[];
     initiator: string;
 };
 
@@ -2003,7 +1999,12 @@ export type ExternalUrlUpdated = {
     updatedBy: string;
 };
 
-export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended" | OCError;
+export type SetAvatarResponse =
+    | "avatar_too_big"
+    | "success"
+    | "internal_error"
+    | "user_suspended"
+    | OCError;
 
 export type ChangeRoleResponse = "failure" | "success" | "offline";
 

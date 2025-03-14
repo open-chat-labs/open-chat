@@ -9,7 +9,7 @@
         selectedCommunity,
         type ExternalBotPermissions,
         type ResourceKey,
-        type SlashCommandSchema,
+        type CommandDefinition,
     } from "openchat-client";
     import { type ChatSummary, type OpenChat, userStore } from "openchat-client";
     import { _ } from "svelte-i18n";
@@ -25,7 +25,7 @@
     const client = getContext<OpenChat>("client");
 
     type BotState = {
-        commands: SlashCommandSchema[];
+        commands: CommandDefinition[];
         grantedPermissions: ExternalBotPermissions;
     };
 

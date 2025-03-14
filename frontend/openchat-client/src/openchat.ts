@@ -8063,13 +8063,13 @@ export class OpenChat extends EventTarget {
         } else if (bot.command.name === "poll") {
             this.dispatchEvent(new CreatePoll(context));
         } else if (bot.command.name === "gif") {
-            const param = bot.command.params[0];
+            const param = bot.command.arguments[0];
             if (param !== undefined && param.kind === "string" && param.value !== undefined) {
                 this.dispatchEvent(new AttachGif([context, param.value]));
             }
         } else if (bot.command.name === "crypto") {
             const ev = new TokenTransfer({ context: context });
-            const [token, amount] = bot.command.params;
+            const [token, amount] = bot.command.arguments;
             if (
                 token !== undefined &&
                 token.kind === "string" &&
@@ -8090,7 +8090,7 @@ export class OpenChat extends EventTarget {
             }
             this.dispatchEvent(ev);
         } else if (bot.command.name === "test-msg") {
-            const param = bot.command.params[0];
+            const param = bot.command.arguments[0];
             if (param !== undefined && param.kind === "decimal" && param.value !== null) {
                 this.dispatchEvent(new CreateTestMessages([context, param.value]));
             }
@@ -8100,15 +8100,17 @@ export class OpenChat extends EventTarget {
             this.sendMessageWithAttachment(context, msg, false, undefined, []);
         } else if (bot.command.name === "faq") {
             const topic =
-                bot.command.params[0]?.kind === "string" ? bot.command.params[0]?.value : undefined;
+                bot.command.arguments[0]?.kind === "string"
+                    ? bot.command.arguments[0]?.value
+                    : undefined;
             const url = topic === undefined || topic === "" ? "/faq" : `/faq?q=${topic}`;
             const msg =
                 topic === undefined
                     ? `[🤔 FAQs](/faq)`
                     : `[🤔 FAQ: ${this.config.i18nFormatter(`faq.${topic}_q`)}](${url})`;
             this.sendMessageWithAttachment(context, msg, false, undefined, []);
-        } else if (bot.command.name === "search" && bot.command.params[0]?.kind === "string") {
-            this.dispatchEvent(new SearchChat(bot.command.params[0]?.value ?? ""));
+        } else if (bot.command.name === "search" && bot.command.arguments[0]?.kind === "string") {
+            this.dispatchEvent(new SearchChat(bot.command.arguments[0]?.value ?? ""));
         }
         return Promise.resolve("success");
     }
@@ -8143,7 +8145,7 @@ export class OpenChat extends EventTarget {
                     command: {
                         initiator: this.#liveState.user.userId,
                         commandName: bot.command.name,
-                        arguments: bot.command.params,
+                        arguments: bot.command.arguments,
                         meta: {
                             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                             language: this.#liveState.locale.substring(0, 2),
@@ -8331,7 +8333,7 @@ export class OpenChat extends EventTarget {
             finalised: false,
             command: {
                 name: bot.command.name,
-                args: bot.command.params,
+                args: bot.command.arguments,
                 initiator: this.#liveState.user.userId,
             },
         };

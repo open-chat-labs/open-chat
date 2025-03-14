@@ -1,7 +1,7 @@
 <script lang="ts">
     import { random64, type FlattenedCommand, type MessageContext } from "openchat-shared";
-    import CommandParam from "./CommandParamInstance.svelte";
-    import { createBotInstance, instanceValid, selectedCommandParamInstances } from "./botState";
+    import CommandArg from "./CommandArg.svelte";
+    import { createBotInstance, instanceValid, selectedCommandArgs } from "./botState";
     import { getContext, onMount } from "svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -87,7 +87,7 @@
     function onParamChange() {
         // this is a nasty little hack to get the reactivity we need
         setTimeout(() => {
-            $selectedCommandParamInstances = $selectedCommandParamInstances;
+            $selectedCommandArgs = $selectedCommandArgs;
         }, 0);
     }
 </script>
@@ -99,12 +99,9 @@
             {#if command.description}
                 <p><Translatable resourceKey={i18nKey(command.description)} /></p>
             {/if}
-            {#if $selectedCommandParamInstances.length === command?.params?.length}
+            {#if $selectedCommandArgs.length === command?.params?.length}
                 {#each command?.params ?? [] as param, i}
-                    <CommandParam
-                        onChange={onParamChange}
-                        instance={$selectedCommandParamInstances[i]}
-                        {param} />
+                    <CommandArg onChange={onParamChange} arg={$selectedCommandArgs[i]} {param} />
                 {/each}
             {/if}
         </form>

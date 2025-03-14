@@ -1,9 +1,5 @@
 <script lang="ts">
-    import {
-        type SlashCommandParam,
-        type SlashCommandSchema,
-        ValidationErrors,
-    } from "openchat-client";
+    import { type CommandParam, type CommandDefinition, ValidationErrors } from "openchat-client";
     import Input from "../Input.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Legend from "../Legend.svelte";
@@ -22,21 +18,21 @@
     interface Props {
         errors: ValidationErrors;
         errorPath: string;
-        command: SlashCommandSchema;
+        command: CommandDefinition;
         onNext?: () => void;
         onPrevious?: () => void;
     }
 
     let { command, errors, errorPath, onNext, onPrevious }: Props = $props();
 
-    let selectedParam = $state<SlashCommandParam | undefined>(undefined);
+    let selectedParam = $state<CommandParam | undefined>(undefined);
     let selectedParamIndex = $state<number | undefined>(undefined);
     let showNext = $derived(
         selectedParamIndex !== undefined && selectedParamIndex < command.params.length - 1,
     );
     let showPrev = $derived(selectedParamIndex !== undefined && selectedParamIndex > 0);
 
-    function onSelectParam(param: SlashCommandParam, index: number) {
+    function onSelectParam(param: CommandParam, index: number) {
         selectedParam = param;
         selectedParamIndex = index;
     }

@@ -43,7 +43,7 @@
                     endpoint: bot.endpoint,
                     command: {
                         name: "sync_api_key",
-                        params: [{ name: "api_key", kind: "string", value: apiKey }],
+                        arguments: [{ name: "api_key", kind: "string", value: apiKey }],
                     },
                 },
             )

@@ -141,7 +141,9 @@ export function getUsersToMakeRtcConnectionsWith(
     }
 
     const activeUsers = getRecentlyActiveUsers(chat, events, MAX_RTC_CONNECTIONS_PER_CHAT);
-    return activeUsers.has(myUserId) ? Array.from(activeUsers).filter((u) => u !== myUserId && !blocked.has(u)) : [];
+    return activeUsers.has(myUserId)
+        ? Array.from(activeUsers).filter((u) => u !== myUserId && !blocked.has(u))
+        : [];
 }
 
 export function makeRtcConnections(
@@ -464,14 +466,10 @@ export function mergeUnconfirmedIntoSummary(
     blockedUsers: Set<string>,
     currentUserId: string,
     messageFilters: MessageFilter[],
-    ephemeralMessages: EventWrapper<Message>[],
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
-    const unconfirmedMessages = [
-        ...(unconfirmed.get({ chatId: chatSummary.id })?.messages ?? []),
-        ...ephemeralMessages,
-    ];
+    const unconfirmedMessages = [...(unconfirmed.get({ chatId: chatSummary.id })?.messages ?? [])];
 
     let latestMessage = chatSummary.latestMessage;
     let latestEventIndex = chatSummary.latestEventIndex;
@@ -656,9 +654,7 @@ export function groupEvents(
     );
 }
 
-export function flattenTimeline(
-    grouped: EventWrapper<ChatEvent>[][][],
-): TimelineItem<ChatEvent>[] {
+export function flattenTimeline(grouped: EventWrapper<ChatEvent>[][][]): TimelineItem<ChatEvent>[] {
     const timeline: TimelineItem<ChatEvent>[] = [];
     grouped.forEach((dayGroup) => {
         const date: TimelineItem<ChatEvent> = {

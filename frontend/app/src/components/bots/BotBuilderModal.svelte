@@ -43,12 +43,8 @@
     function register() {
         if (botState.current !== undefined && valid) {
             busy = true;
-            const snapshot = $state.snapshot(botState.current);
             client
-                .registerBot(principal, {
-                    ...snapshot,
-                    ownerId: $currentUser.userId,
-                })
+                .registerBot(principal, $state.snapshot(botState.current))
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("Unable to register test bot"));

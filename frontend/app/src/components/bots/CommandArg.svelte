@@ -1,10 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type {
-        SlashCommandParam,
-        SlashCommandParamInstance,
-        UserSummary,
-    } from "openchat-client";
+    import type { CommandParam, CommandArg, UserSummary } from "openchat-client";
     import Legend from "../Legend.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Input from "../Input.svelte";
@@ -17,30 +13,30 @@
     import DateInput from "../DateInput.svelte";
 
     interface Props {
-        param: SlashCommandParam;
-        instance: SlashCommandParamInstance;
+        param: CommandParam;
+        arg: CommandArg;
         onChange: () => void;
     }
 
-    let { param, instance, onChange }: Props = $props();
+    let { param, arg, onChange }: Props = $props();
 </script>
 
 <div class="param">
-    {#if instance.kind === "user" && param.kind === "user"}
+    {#if arg.kind === "user" && param.kind === "user"}
         <Legend label={i18nKey(param.name)} required={param.required} />
         <SingleUserSelector
             on:userSelected={(ev: CustomEvent<UserSummary>) => {
-                instance.userId = ev.detail.userId;
+                arg.userId = ev.detail.userId;
                 onChange();
             }}
             on:userRemoved={() => {
-                instance.userId = undefined;
+                arg.userId = undefined;
                 onChange();
             }}
             autofocus={false}
             direction={"down"}
             placeholder={$_(param.placeholder ?? "")} />
-    {:else if instance.kind === "string" && param.kind === "string"}
+    {:else if arg.kind === "string" && param.kind === "string"}
         <Legend
             label={i18nKey(param.name)}
             required={param.required}
@@ -48,7 +44,7 @@
                 ? undefined
                 : i18nKey(`Max length ${param.maxLength}`)} />
         {#if param.choices?.length ?? 0 > 0}
-            <Select onchange={onChange} bind:value={instance.value}>
+            <Select onchange={onChange} bind:value={arg.value}>
                 <option value={""} selected disabled>{`Choose ${$_(param.name)}`}</option>
                 {#each param.choices as choice}
                     <option value={choice.value}>
@@ -61,27 +57,26 @@
                 minLines={2}
                 placeholder={i18nKey(param.description ?? "")}
                 oninput={onChange}
-                bind:value={instance.value}
-                />
+                bind:value={arg.value} />
         {:else}
             <Input
                 minlength={param.minLength}
                 maxlength={param.maxLength}
                 placeholder={i18nKey(param.placeholder ?? "")}
                 on:change={onChange}
-                bind:value={instance.value} />
+                bind:value={arg.value} />
         {/if}
-    {:else if instance.kind === "boolean" && param.kind === "boolean"}
+    {:else if arg.kind === "boolean" && param.kind === "boolean"}
         <Legend label={i18nKey(param.name)} required={param.required} />
-        <Select bind:value={instance.value} onchange={onChange}>
+        <Select bind:value={arg.value} onchange={onChange}>
             <option value={""} selected disabled>{`Choose ${$_(param.name)}`}</option>
             <option value={true}>True</option>
             <option value={false}>False</option>
         </Select>
-    {:else if (instance.kind === "integer" && param.kind === "integer") || (instance.kind === "decimal" && param.kind === "decimal")}
+    {:else if (arg.kind === "integer" && param.kind === "integer") || (arg.kind === "decimal" && param.kind === "decimal")}
         <Legend label={i18nKey(param.name)} required={param.required} />
         {#if param.choices?.length ?? 0 > 0}
-            <Select bind:value={instance.value} onchange={onChange}>
+            <Select bind:value={arg.value} onchange={onChange}>
                 <option value={null} selected disabled>{`Choose ${$_(param.name)}`}</option>
                 {#each param.choices as choice}
                     <option value={choice.value}>
@@ -89,33 +84,33 @@
                     </option>
                 {/each}
             </Select>
-        {:else if instance.kind === "integer" && param.kind === "integer"}
+        {:else if arg.kind === "integer" && param.kind === "integer"}
             <IntegerInput
                 min={param.minValue}
                 max={param.maxValue}
                 shouldClamp={false}
                 change={onChange}
                 placeholder={i18nKey(param.placeholder ?? "")}
-                bind:value={instance.value} />
-        {:else if instance.kind === "decimal" && param.kind === "decimal"}
+                bind:value={arg.value} />
+        {:else if arg.kind === "decimal" && param.kind === "decimal"}
             <NumberInput
                 min={param.minValue}
                 max={param.maxValue}
                 shouldClamp={false}
                 on:change={onChange}
                 placeholder={i18nKey(param.placeholder ?? "")}
-                bind:value={instance.value} />
+                bind:value={arg.value} />
         {/if}
-    {:else if instance.kind === "dateTime" && param.kind === "dateTime"}
+    {:else if arg.kind === "dateTime" && param.kind === "dateTime"}
         <Legend label={i18nKey(param.name)} required={param.required} />
         <DateInput
-            value={instance.value}
+            value={arg.value}
             futureOnly={param.future_only}
             placeholder={i18nKey(param.placeholder ?? "")}
             onchange={(value) => {
-                instance.value = value;
+                arg.value = value;
                 onChange();
-            }}/>
+            }} />
     {/if}
 </div>
 

@@ -3,7 +3,7 @@
         hasEveryRequiredPermission,
         ValidationErrors,
         type ExternalBotPermissions,
-        type SlashCommandSchema,
+        type CommandDefinition,
     } from "openchat-client";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
@@ -11,9 +11,9 @@
 
     interface Props {
         grantedPermissions?: ExternalBotPermissions;
-        commands: SlashCommandSchema[];
+        commands: CommandDefinition[];
         centered?: boolean;
-        onClick?: (command: SlashCommandSchema, index: number) => void;
+        onClick?: (command: CommandDefinition, index: number) => void;
         errors?: ValidationErrors;
     }
 
