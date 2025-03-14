@@ -1,4 +1,5 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -13,6 +14,7 @@ pub enum Response {
     OwnerCannotLeave,
     UserSuspended,
     ChatFrozen,
+    Error(OCError),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

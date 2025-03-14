@@ -30,6 +30,7 @@ async fn c2c_delete_community(_args: Args) -> Response {
                 InternalError("Community not found in group index".to_string())
             }
             c2c_delete_community::Response::Success => Success,
+            c2c_delete_community::Response::Error(error) => Error(error),
             c2c_delete_community::Response::InternalError(error) => InternalError(error),
         },
         Err(error) => InternalError(format!("{error:?}")),

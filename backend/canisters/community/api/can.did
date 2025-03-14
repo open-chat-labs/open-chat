@@ -16,6 +16,7 @@ type DeletedMessageResponse = variant {
     NotAuthorized;
     MessageNotFound;
     MessageHardDeleted;
+    Error : OCError;
 };
 
 type EventsArgs = record {
@@ -53,6 +54,7 @@ type EventsResponse = variant {
     UserSuspended;
     UserLapsed;
     ReplicaNotUpToDateV2 : TimestampMillis;
+    Error : OCError;
 };
 
 type ExploreChannelsArgs = record {
@@ -71,6 +73,7 @@ type ExploreChannelsResponse = variant {
     TermTooLong : nat8;
     InvalidTerm;
     PrivateCommunity;
+    Error : OCError;
 };
 
 type InviteCodeResponse = variant {
@@ -79,6 +82,7 @@ type InviteCodeResponse = variant {
     };
     UserNotInCommunity;
     NotAuthorized;
+    Error : OCError;
 };
 
 type LocalUserIndexResponse = variant {
@@ -94,6 +98,7 @@ type LookupMembersResponse = variant {
         members : vec CommunityMember;
     };
     PrivateCommunity;
+    Error : OCError;
 };
 
 type MessagesByMessageIndexArgs = record {
@@ -112,6 +117,7 @@ type MessagesByMessageIndexResponse = variant {
     UserSuspended;
     UserLapsed;
     ReplicaNotUpToDateV2 : TimestampMillis;
+    Error : OCError;
 };
 
 type SearchChannelArgs = record {
@@ -132,6 +138,7 @@ type SearchChannelResponse = variant {
     UserNotInCommunity;
     ChannelNotFound;
     UserNotInChannel;
+    Error : OCError;
 };
 
 type SelectedChannelInitialArgs = record {
@@ -154,6 +161,7 @@ type SelectedChannelInitialResponse = variant {
     PrivateCommunity;
     ChannelNotFound;
     PrivateChannel;
+    Error : OCError;
 };
 
 type SelectedChannelUpdatesArgs = record {
@@ -167,6 +175,7 @@ type SelectedChannelUpdatesV2Response = variant {
     PrivateCommunity;
     ChannelNotFound;
     PrivateChannel;
+    Error : OCError;
 };
 
 type SelectedInitialArgs = record {
@@ -176,6 +185,7 @@ type SelectedInitialArgs = record {
 type SelectedInitialResponse = variant {
     Success : SelectedInitialSuccess;
     PrivateCommunity;
+    Error : OCError;
 };
 
 type SelectedInitialSuccess = record {
@@ -202,6 +212,7 @@ type SelectedUpdatesV2Response = variant {
     Success : SelectedUpdatesSuccess;
     SuccessNoUpdates : TimestampMillis;
     PrivateCommunity;
+    Error : OCError;
 };
 
 type SelectedUpdatesSuccess = record {
@@ -238,6 +249,7 @@ type ChannelSummaryResponse = variant {
     PrivateCommunity;
     ChannelNotFound;
     PrivateChannel;
+    Error : OCError;
 };
 
 type SummaryArgs = record {
@@ -248,6 +260,7 @@ type SummaryArgs = record {
 type SummaryResponse = variant {
     Success : CommunityCanisterCommunitySummary;
     PrivateCommunity;
+    Error : OCError;
 };
 
 type ChannelSummaryUpdatesArgs = record {
@@ -263,6 +276,7 @@ type ChannelSummaryUpdatesResponse = variant {
     PrivateCommunity;
     ChannelNotFound;
     PrivateChannel;
+    Error : OCError;
 };
 
 type SummaryUpdatesArgs = record {
@@ -275,6 +289,7 @@ type SummaryUpdatesResponse = variant {
     Success : CommunityCanisterCommunitySummaryUpdates;
     SuccessNoUpdates;
     PrivateCommunity;
+    Error : OCError;
 };
 
 type ThreadPreviewsArgs = record {
@@ -292,6 +307,7 @@ type ThreadPreviewsResponse = variant {
     ChannelNotFound;
     UserNotInChannel;
     ReplicaNotUpToDate : TimestampMillis;
+    Error : OCError;
 };
 
 type VideoCallParticipantsArgs = record {
@@ -306,6 +322,7 @@ type VideoCallParticipantsResponse = variant {
     UserNotInCommunity;
     UserNotInChannel;
     ChannelNotFound;
+    Error : OCError;
 };
 
 type AcceptP2PSwapArgs = record {
@@ -331,6 +348,7 @@ type AcceptP2PSwapResponse = variant {
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
+    Error : OCError;
 };
 
 type CancelP2PSwapArgs = record {
@@ -347,6 +365,7 @@ type CancelP2PSwapResponse = variant {
     UserNotInCommunity;
     UserNotInChannel;
     ChatFrozen;
+    Error : OCError;
 };
 
 type CancelInvitesArgs = record {
@@ -360,6 +379,7 @@ type CancelInvitesResponse = variant {
     ChannelNotFound;
     UserSuspended;
     UserLapsed;
+    Error : OCError;
 };
 
 type AddMembersToChannelArgs = record {
@@ -383,6 +403,7 @@ type AddMembersToChannelResponse = variant {
     UserLimitReached : nat32;
     NotAuthorized;
     InternalError : text;
+    Error : OCError;
 };
 
 type AddMembersToChannelPartialSuccess = record {
@@ -425,6 +446,7 @@ type AddReactionResponse = variant {
     UserSuspended;
     UserLapsed;
     CommunityFrozen;
+    Error : OCError;
 };
 
 type BlockUserArgs = record {
@@ -443,6 +465,7 @@ type BlockUserResponse = variant {
     UserLapsed;
     CommunityFrozen;
     InternalError : text;
+    Error : OCError;
 };
 
 type ChangeChannelRoleArgs = record {
@@ -462,6 +485,7 @@ type ChangeChannelRoleResponse = variant {
     TargetUserNotInChannel;
     NotAuthorized;
     Invalid;
+    Error : OCError;
 };
 
 type ChangeRoleArgs = record {
@@ -479,6 +503,7 @@ type ChangeRoleResponse = variant {
     Invalid;
     CommunityFrozen;
     InternalError : text;
+    Error : OCError;
 };
 
 type ClaimPrizeArgs = record {
@@ -502,6 +527,7 @@ type ClaimPrizeResponse = variant {
     TransferFailed : record { text; FailedCryptoTransaction };
     FailedAfterTransfer : record { text; CompletedCryptoTransaction };
     InternalError : text;
+    Error : OCError;
 };
 
 type CreateChannelArgs = record {
@@ -539,6 +565,7 @@ type CreateChannelResponse = variant {
     CommunityFrozen;
     ExternalUrlInvalid;
     InternalError : text;
+    Error : OCError;
 };
 
 type CreateUserGroupArgs = record {
@@ -558,6 +585,7 @@ type CreateUserGroupResponse = variant {
     CommunityFrozen;
     UserSuspended;
     UserLapsed;
+    Error : OCError;
 };
 
 type DeclineInvitationArgs = record {
@@ -569,6 +597,7 @@ type DeclineInvitationResponse = variant {
     NotInvited;
     UserNotInCommunity;
     ChannelNotFound;
+    Error : OCError;
 };
 
 type DeleteChannelArgs = record {
@@ -584,6 +613,7 @@ type DeleteChannelResponse = variant {
     ChannelNotFound;
     UserNotInChannel;
     NotAuthorized;
+    Error : OCError;
 };
 
 type DeleteMessagesArgs = record {
@@ -605,6 +635,7 @@ type DeleteMessagesResponse = variant {
     CommunityFrozen;
     NotPlatformModerator;
     InternalError : text;
+    Error : OCError;
 };
 
 type DeleteUserGroupsArgs = record {
@@ -617,6 +648,7 @@ type DeleteUserGroupsResponse = variant {
     CommunityFrozen;
     UserSuspended;
     UserLapsed;
+    Error : OCError;
 };
 
 type DisableInviteCodeResponse = variant {
@@ -625,6 +657,7 @@ type DisableInviteCodeResponse = variant {
     UserSuspended;
     UserLapsed;
     CommunityFrozen;
+    Error : OCError;
 };
 
 type EditMessageArgs = record {
@@ -645,6 +678,7 @@ type EditMessageResponse = variant {
     UserLapsed;
     CommunityFrozen;
     ChannelNotFound;
+    Error : OCError;
 };
 
 type EnableInviteCodeResponse = variant {
@@ -655,6 +689,7 @@ type EnableInviteCodeResponse = variant {
     UserSuspended;
     UserLapsed;
     CommunityFrozen;
+    Error : OCError;
 };
 
 type EndVideoCallArgs = record {
@@ -666,6 +701,7 @@ type EndVideoCallResponse = variant {
     Success;
     MessageNotFound;
     AlreadyEnded;
+    Error : OCError;
 };
 
 type ImportGroupArgs = record {
@@ -688,6 +724,7 @@ type ImportGroupResponse = variant {
     GroupImportingToAnotherCommunity;
     GroupFrozen;
     InternalError : text;
+    Error : OCError;
 };
 
 type JoinVideoCallArgs = record {
@@ -706,6 +743,7 @@ type JoinVideoCallResponse = variant {
     UserLapsed;
     ChannelNotFound;
     UserNotInChannel;
+    Error : OCError;
 };
 
 type LeaveChannelArgs = record {
@@ -720,6 +758,7 @@ type LeaveChannelResponse = variant {
     ChannelNotFound;
     UserNotInChannel;
     LastOwnerCannotLeave;
+    Error : OCError;
 };
 
 type PinMessageArgs = record {
@@ -738,6 +777,7 @@ type PinMessageResponse = variant {
     MessageNotFound;
     NotAuthorized;
     NoChange;
+    Error : OCError;
 };
 
 type RegisterPollVoteArgs = record {
@@ -761,6 +801,7 @@ type RegisterPollVoteResponse = variant {
     PollEnded;
     OptionIndexOutOfRange;
     UserCannotChangeVote;
+    Error : OCError;
 };
 
 type RegisterProposalVoteArgs = record {
@@ -783,6 +824,7 @@ type RegisterProposalVoteResponse = variant {
     ProposalNotFound;
     ProposalNotAcceptingVotes;
     InternalError : text;
+    Error : OCError;
 };
 
 type RegisterProposalVoteV2Response = variant {
@@ -794,6 +836,7 @@ type RegisterProposalVoteV2Response = variant {
     ChannelNotFound;
     UserNotInChannel;
     ProposalMessageNotFound;
+    Error : OCError;
 };
 
 type RemoveMemberArgs = record {
@@ -811,6 +854,7 @@ type RemoveMemberResponse = variant {
     UserLapsed;
     CommunityFrozen;
     InternalError : text;
+    Error : OCError;
 };
 
 type RemoveMemberFromChannelArgs = record {
@@ -830,6 +874,7 @@ type RemoveMemberFromChannelResponse = variant {
     TargetUserNotInChannel;
     CannotRemoveSelf;
     NotAuthorized;
+    Error : OCError;
 };
 
 type RemoveReactionArgs = record {
@@ -850,6 +895,7 @@ type RemoveReactionResponse = variant {
     UserSuspended;
     UserLapsed;
     CommunityFrozen;
+    Error : OCError;
 };
 
 type ReportMessageArgs = record {
@@ -871,6 +917,7 @@ type ReportMessageResponse = variant {
     MessageNotFound;
     AlreadyReported;
     InternalError : text;
+    Error : OCError;
 };
 
 type SendMessageArgs = record {
@@ -907,6 +954,7 @@ type SendMessageResponse = variant {
     RulesNotAccepted;
     CommunityRulesNotAccepted;
     MessageAlreadyExists;
+    Error : OCError;
 };
 
 type SendMessageSuccess = record {
@@ -930,6 +978,7 @@ type SetMemberDisplayNameResponse = variant {
     DisplayNameInvalid;
     DisplayNameTooShort : nat16;
     DisplayNameTooLong : nat16;
+    Error : OCError;
 };
 
 type SetVideoCallPresenceArgs = record {
@@ -949,6 +998,7 @@ type SetVideoCallPresenceResponse = variant {
     UserLapsed;
     ChannelNotFound;
     UserNotInChannel;
+    Error : OCError;
 };
 
 type StartVideoCallArgs = record {
@@ -964,6 +1014,7 @@ type StartVideoCallArgs = record {
 type StartVideoCallResponse = variant {
     Success;
     NotAuthorized;
+    Error : OCError;
 };
 
 type ToggleMuteNotificationsArgs = record {
@@ -979,6 +1030,7 @@ type ToggleMuteNotificationsResponse = variant {
     UserLapsed;
     ChannelNotFound;
     UserNotInChannel;
+    Error : OCError;
 };
 
 type UnblockUserArgs = record {
@@ -994,6 +1046,7 @@ type UnblockUserResponse = variant {
     UserSuspended;
     UserLapsed;
     CommunityFrozen;
+    Error : OCError;
 };
 
 type UndeleteMessagesArgs = record {
@@ -1013,6 +1066,7 @@ type UndeleteMessagesResponse = variant {
     UserSuspended;
     UserLapsed;
     CommunityFrozen;
+    Error : OCError;
 };
 
 type UpdateChannelArgs = record {
@@ -1050,6 +1104,7 @@ type UpdateChannelResponse = variant {
     UserLapsed;
     CommunityFrozen;
     ExternalUrlInvalid;
+    Error : OCError;
 };
 
 type UpdateCommunityArgs = record {
@@ -1085,6 +1140,7 @@ type UpdateCommunityResponse = variant {
     UserLapsed;
     CommunityFrozen;
     InvalidLanguage;
+    Error : OCError;
 };
 
 type UpdateUserGroupArgs = record {
@@ -1105,6 +1161,7 @@ type UpdateUserGroupResponse = variant {
     CommunityFrozen;
     UserSuspended;
     UserLapsed;
+    Error : OCError;
 };
 
 type FollowThreadArgs = record {
@@ -1123,6 +1180,7 @@ type FollowThreadResponse = variant {
     UserSuspended;
     UserLapsed;
     CommunityFrozen;
+    Error : OCError;
 };
 
 type UnfollowThreadArgs = record {
@@ -1140,6 +1198,7 @@ type UnfollowThreadResponse = variant {
     UserSuspended;
     UserLapsed;
     CommunityFrozen;
+    Error : OCError;
 };
 
 service : {

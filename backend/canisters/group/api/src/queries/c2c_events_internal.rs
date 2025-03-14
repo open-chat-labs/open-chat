@@ -1,4 +1,5 @@
 use chat_events::ChatEventInternal;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{EventIndex, EventWrapper, MessageIndex};
 
@@ -13,6 +14,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     ThreadMessageNotFound,
+    Error(OCError),
 }
 
 #[derive(Serialize, Deserialize, Debug)]

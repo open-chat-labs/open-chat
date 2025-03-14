@@ -11,6 +11,7 @@ getrandom = { workspace = true }
 hex = { workspace = true }
 ic-ledger-types = { workspace = true }
 icrc-ledger-types = { workspace = true }
+oc_error_codes = { path = "../error_codes" }
 rand = { workspace = true }
 range-set = { workspace = true }
 serde = { workspace = true }

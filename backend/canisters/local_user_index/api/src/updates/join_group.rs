@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChatId, GateCheckFailedReason, GroupCanisterGroupChatSummary, VerifiedCredentialGateArgs};
@@ -27,4 +28,5 @@ pub enum Response {
     UserSuspended,
     ChatFrozen,
     InternalError(String),
+    Error(OCError),
 }

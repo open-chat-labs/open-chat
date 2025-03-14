@@ -1554,6 +1554,7 @@ dependencies = [
  "candid",
  "candid_gen",
  "chat_events",
+ "oc_error_codes",
  "serde",
  "serde_bytes",
  "ts-rs",
@@ -2270,6 +2271,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "enum-repr"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bad30c9c0fa1aaf1ae5010dab11f1117b15d35faf62cda4bbbc53b9987950f18"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "env_logger"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2313,6 +2325,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "icrc-ledger-types",
+ "oc_error_codes",
  "serde",
  "sha256",
  "types",
@@ -2818,6 +2831,7 @@ dependencies = [
  "candid",
  "candid_gen",
  "chat_events",
+ "oc_error_codes",
  "serde",
  "serde_bytes",
  "ts-rs",
@@ -2953,6 +2967,7 @@ dependencies = [
  "candid",
  "candid_gen",
  "human_readable",
+ "oc_error_codes",
  "serde",
  "serde_bytes",
  "ts-rs",
@@ -4630,6 +4645,7 @@ dependencies = [
  "candid",
  "event_store_canister",
  "ic-ledger-types",
+ "oc_error_codes",
  "serde",
  "serde_bytes",
  "types",
@@ -4694,6 +4710,7 @@ dependencies = [
  "event_store_canister",
  "group_canister",
  "ic-ledger-types",
+ "oc_error_codes",
  "serde",
  "serde_bytes",
  "ts-rs",
@@ -5400,6 +5417,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oc_error_codes"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "enum-repr",
+ "serde",
+ "ts-rs",
+ "ts_export",
+]
+
+[[package]]
 name = "oid-registry"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6019,6 +6047,7 @@ dependencies = [
  "candid_gen",
  "human_readable",
  "icrc-ledger-types",
+ "oc_error_codes",
  "serde",
  "serde_bytes",
  "ts-rs",
@@ -7026,9 +7055,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.216"
+version = "1.0.219"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b9781016e935a97e8beecf0c933758c97a5520d32930e460142b4cd80c6338e"
+checksum = "5f0e2c6ed6606019b4e29e69dbaba95b11854410e5347d525002456dbbb786b6"
 dependencies = [
  "serde_derive",
 ]
@@ -7064,9 +7093,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.216"
+version = "1.0.219"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46f859dbbf73865c6627ed570e78961cd3ac92407a2d117204c49232485da55e"
+checksum = "5b0276cf7f2c73365f7157c8123c21cd9a50fbbd844757af28ca1f5925fc2a00"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -8432,6 +8461,7 @@ dependencies = [
  "hex",
  "ic-ledger-types",
  "icrc-ledger-types",
+ "oc_error_codes",
  "rand 0.8.5",
  "range-set",
  "serde",
@@ -8532,6 +8562,7 @@ dependencies = [
  "constants",
  "ic-ledger-types",
  "icrc-ledger-types",
+ "oc_error_codes",
  "proposals_bot_canister",
  "serde",
  "ts-rs",
@@ -8618,6 +8649,7 @@ dependencies = [
  "nns_governance_canister_c2c_client",
  "notifications_canister",
  "notifications_canister_c2c_client",
+ "oc_error_codes",
  "rand 0.8.5",
  "search",
  "serde",
@@ -8660,6 +8692,7 @@ dependencies = [
  "human_readable",
  "ic-ledger-types",
  "modclub_canister",
+ "oc_error_codes",
  "serde",
  "serde_bytes",
  "ts-rs",

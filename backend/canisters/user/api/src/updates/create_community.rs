@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{AccessGateConfig, CommunityId, CommunityPermissions, Document, FieldTooLongResult, FieldTooShortResult, Rules};
@@ -40,6 +41,7 @@ pub enum Response {
     Unauthorized,
     DefaultChannelsInvalid,
     InternalError(String),
+    Error(OCError),
 }
 
 #[ts_export(user, create_community)]

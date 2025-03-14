@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CanisterId, ExchangeId, Milliseconds, PinNumberWrapper, TokenInfo};
@@ -60,6 +61,7 @@ pub enum Response {
     PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
+    Error(OCError),
 }
 
 #[ts_export(user, swap_tokens)]

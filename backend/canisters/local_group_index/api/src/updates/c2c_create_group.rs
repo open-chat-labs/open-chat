@@ -1,4 +1,5 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{AccessGateConfig, CanisterId, ChatId, Document, GroupPermissions, GroupSubtype, Milliseconds, Rules, UserId};
 
@@ -24,6 +25,7 @@ pub enum Response {
     Success(SuccessResult),
     CyclesBalanceTooLow,
     InternalError(String),
+    Error(OCError),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

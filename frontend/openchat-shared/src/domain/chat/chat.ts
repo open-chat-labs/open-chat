@@ -37,6 +37,7 @@ import type {
 import type { ChitEarned } from "../chit";
 import type { WalletConfig } from "../crypto";
 import type { InstalledBotDetails, ExternalBotPermissions, CommandArg } from "../bots";
+import type { OCError } from "../error";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -1582,12 +1583,14 @@ export type ChatMembership = {
 export type GroupCanisterSummaryResponse =
     | GroupCanisterGroupChatSummary
     | CallerNotInGroup
-    | CanisterNotFound;
+    | CanisterNotFound
+    | OCError;
 
 export type GroupCanisterSummaryUpdatesResponse =
     | GroupCanisterGroupChatSummaryUpdates
     | { kind: "success_no_updates" }
-    | CallerNotInGroup;
+    | CallerNotInGroup
+    | OCError;
 
 export type GroupCanisterGroupChatSummary = AccessControlled &
     Permissioned<ChatPermissions> & {
@@ -1827,7 +1830,8 @@ export type SendMessageResponse =
     | DuplicateMessageId
     | PinNumberFailures
     | MessageThrottled
-    | MessageAlreadyExists;
+    | MessageAlreadyExists
+    | OCError;
 
 export type MessageAlreadyExists = {
     kind: "message_already_exists";
@@ -1995,7 +1999,12 @@ export type ExternalUrlUpdated = {
     updatedBy: string;
 };
 
-export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
+export type SetAvatarResponse =
+    | "avatar_too_big"
+    | "success"
+    | "internal_error"
+    | "user_suspended"
+    | OCError;
 
 export type ChangeRoleResponse = "failure" | "success" | "offline";
 
@@ -2015,7 +2024,8 @@ export type BlockUserResponse =
     | "user_suspended"
     | "user_lapsed"
     | "chat_frozen"
-    | "offline";
+    | "offline"
+    | OCError;
 
 export type UnblockUserResponse =
     | "success"
@@ -2026,7 +2036,8 @@ export type UnblockUserResponse =
     | "user_suspended"
     | "user_lapsed"
     | "chat_frozen"
-    | "offline";
+    | "offline"
+    | OCError;
 
 export type LeaveGroupResponse = "success" | "owner_cannot_leave" | "failure" | "offline";
 
@@ -2079,7 +2090,8 @@ export type UpdateGroupResponse =
     | { kind: "internal_error" }
     | { kind: "failure" }
     | { kind: "access_gate_invalid" }
-    | Offline;
+    | Offline
+    | OCError;
 
 export type UpdatePermissionsResponse =
     | "success"
@@ -2132,6 +2144,7 @@ export type DeletedDirectMessageResponse =
     | { kind: "message_not_found" }
     | { kind: "message_not_deleted" }
     | { kind: "message_hard_deleted" }
+    | OCError
     | Offline;
 
 export type RegisterPollVoteResponse = "success" | "failure" | "offline";
@@ -2416,7 +2429,8 @@ export type AcceptP2PSwapResponse =
     | { kind: "chat_frozen" }
     | { kind: "insufficient_funds" }
     | PinNumberFailures
-    | { kind: "internal_error"; text: string };
+    | { kind: "internal_error"; text: string }
+    | OCError;
 
 export type CancelP2PSwapResponse =
     | { kind: "success" }
@@ -2443,7 +2457,8 @@ export type CancelP2PSwapResponse =
     | { kind: "user_not_in_community" }
     | { kind: "user_not_in_channel" }
     | { kind: "chat_frozen" }
-    | { kind: "internal_error"; text: string };
+    | { kind: "internal_error"; text: string }
+    | OCError;
 
 export type JoinVideoCallResponse = "success" | "failure" | "ended";
 
@@ -2465,6 +2480,7 @@ export type SetPinNumberResponse =
     | { kind: "too_short"; minLength: number }
     | { kind: "too_long"; maxLength: number }
     | { kind: "delegation_too_old" }
-    | { kind: "malformed_signature" };
+    | { kind: "malformed_signature" }
+    | OCError;
 
 export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAttempts;

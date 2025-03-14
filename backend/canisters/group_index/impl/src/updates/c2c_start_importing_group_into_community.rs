@@ -23,6 +23,7 @@ async fn c2c_start_importing_group_into_community(args: Args) -> Response {
     .await
     {
         Ok(group_canister::c2c_start_import_into_community::Response::Success(total_bytes)) => Success(total_bytes),
+        Ok(group_canister::c2c_start_import_into_community::Response::Error(error)) => Error(error),
         Ok(group_canister::c2c_start_import_into_community::Response::AlreadyImportingToAnotherCommunity) => {
             AlreadyImportingToAnotherCommunity
         }

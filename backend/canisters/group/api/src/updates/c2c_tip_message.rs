@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, MessageId, MessageIndex, UserId};
 
@@ -26,4 +27,5 @@ pub enum Response {
     UserNotInGroup,
     UserSuspended,
     UserLapsed,
+    Error(OCError),
 }

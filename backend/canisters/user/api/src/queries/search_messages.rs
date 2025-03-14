@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{MessageMatch, UserId};
@@ -19,6 +20,7 @@ pub enum Response {
     TermTooLong(u8),
     TermTooShort(u8),
     ChatNotFound,
+    Error(OCError),
 }
 
 #[ts_export(user, search_messages)]

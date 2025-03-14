@@ -129,6 +129,7 @@ import type {
     CommandArg,
     GenerateBotKeyResponse,
     PublicApiKeyDetails,
+    OCError,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -251,6 +252,7 @@ import type {
     MessageReminderCreatedContent as TMessageReminderCreatedContent,
     MessagesResponse as TMessagesResponse,
     MultiUserChat as TMultiUserChat,
+    OCError as TOCError,
     P2PSwapContent as TP2PSwapContent,
     P2PSwapContentInitial as TP2PSwapContentInitial,
     P2PSwapStatus as TP2PSwapStatus,
@@ -2453,6 +2455,9 @@ export function updateGroupResponse(
         if ("RulesTooShort" in value) {
             return { kind: "rules_too_short" };
         }
+        if ("Error" in value) {
+            return ocError(value.Error);
+        }
     }
 
     console.log("Failed to update group: ", value);
@@ -2529,7 +2534,7 @@ export function createGroupResponse(
         if ("DescriptionTooLong" in value) {
             return { kind: "description_too_long" };
         }
-        if ("InternalError" in value) {
+        if ("InternalError" in value || "Error" in value) {
             return { kind: "internal_error" };
         }
         if ("RulesTooLong" in value) {
@@ -2637,7 +2642,8 @@ export function groupDetailsResponse(
         value === "PrivateChannel" ||
         value === "ChannelNotFound" ||
         "UserNotInChannel" in value ||
-        "UserNotInCommunity" in value
+        "UserNotInCommunity" in value ||
+        "Error" in value
     ) {
         console.warn("GetGroupDetails failed with ", value);
         return "failure";
@@ -2993,6 +2999,9 @@ export function registerProposalVoteResponse(
         if ("InternalError" in value) {
             return "internal_error";
         }
+        if ("Error" in value) {
+            return "internal_error";
+        }
     }
     if (value === "Success") {
         return "success";
@@ -3109,6 +3118,9 @@ export function acceptP2PSwapResponse(
         if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
             return pinNumberFailureResponseV2(value);
         }
+        if ("Error" in value) {
+            return ocError(value.Error);
+        }
     }
     if (value === "ChatNotFound") return { kind: "chat_not_found" };
     if (value === "UserNotInGroup") return { kind: "user_not_in_group" };
@@ -3133,6 +3145,9 @@ export function cancelP2PSwapResponse(
     }
     if (typeof value === "object" && "StatusError" in value) {
         return statusError(value.StatusError);
+    }
+    if (typeof value === "object" && "Error" in value) {
+        return ocError(value.Error);
     }
     if (value === "ChatNotFound") return { kind: "chat_not_found" };
     if (value === "UserNotInGroup") return { kind: "user_not_in_group" };
@@ -3213,6 +3228,9 @@ export function setPinNumberResponse(value: UserSetPinNumberResponse): SetPinNum
 
         if ("MalformedSignature" in value) {
             return { kind: "malformed_signature" };
+        }
+        if ("Error" in value) {
+            return ocError(value.Error);
         }
     }
     if (value === "PinRequired") {
@@ -3370,4 +3388,12 @@ export function principalToIcrcAccount(principal: string): AccountICRC1 {
         owner: principalStringToBytes(principal),
         subaccount: undefined,
     };
+}
+
+export function ocError(error: TOCError): OCError {
+    return {
+        kind: "error",
+        code: error[0],
+        message: error[1] ?? undefined,
+    }
 }

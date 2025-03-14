@@ -1,4 +1,5 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
@@ -15,4 +16,5 @@ pub enum Response {
     Success,
     Invalid(String),
     UserNotFound,
+    Error(OCError),
 }

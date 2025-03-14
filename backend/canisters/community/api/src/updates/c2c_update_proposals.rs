@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{ChannelId, ProposalUpdate};
 
@@ -15,4 +16,5 @@ pub enum Response {
     UserNotInCommunity,
     ChannelNotFound,
     UserNotInChannel,
+    Error(OCError),
 }

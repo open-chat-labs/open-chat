@@ -1,5 +1,6 @@
 import type { ChitState, MultiUserChat, PinNumberFailures } from "../chat";
 import type { DataContent } from "../data/data";
+import type { OCError } from "../error";
 import type {
     Failure,
     InternalError,
@@ -327,7 +328,8 @@ export type CheckUsernameResponse =
     | "username_too_short"
     | "username_too_long"
     | "username_invalid"
-    | "offline";
+    | "offline"
+    | OCError;
 
 export type SetUsernameResponse =
     | "success"
@@ -336,7 +338,8 @@ export type SetUsernameResponse =
     | "username_too_short"
     | "username_too_long"
     | "username_invalid"
-    | "offline";
+    | "offline"
+    | OCError;
 
 export type SetDisplayNameResponse =
     | "success"
@@ -344,11 +347,12 @@ export type SetDisplayNameResponse =
     | "display_name_too_short"
     | "display_name_too_long"
     | "display_name_invalid"
-    | "offline";
+    | "offline"
+    | OCError;
 
 export type InvalidCurrency = { kind: "invalid_currency" };
 
-export type SetBioResponse = "success" | "bio_too_long" | "user_suspended" | "offline";
+export type SetBioResponse = "success" | "bio_too_long" | "user_suspended" | "offline" | OCError;
 
 export type RegisterUserResponse =
     | {
@@ -370,6 +374,7 @@ export type RegisterUserResponse =
     | { kind: "referral_code_already_claimed" }
     | { kind: "referral_code_expired" }
     | { kind: "registration_in_progress" }
+    | OCError
     | Offline;
 
 export type PinChatResponse = "success" | "failure" | "offline";
@@ -405,6 +410,7 @@ export type PayForDiamondMembershipResponse =
     | { kind: "user_not_found" }
     | { kind: "insufficient_funds" }
     | { kind: "already_lifetime_diamond_member" }
+    | OCError
     | Offline;
 
 export type SetUserUpgradeConcurrencyResponse = "success" | "offline";
@@ -453,7 +459,8 @@ export type SwapTokensResponse =
           kind: "swap_failed";
       }
     | PinNumberFailures
-    | InternalError;
+    | InternalError
+    | OCError;
 
 export type Result<T> =
     | {
@@ -477,7 +484,8 @@ export type TokenSwapStatusResponse =
       }
     | {
           kind: "not_found";
-      };
+      }
+    | OCError;
 
 export type ApproveTransferResponse =
     | Success
@@ -493,7 +501,7 @@ export type DiamondMembershipFees = {
     lifetime: bigint;
 };
 
-export type SubmitProofOfUniquePersonhoodResponse = Success | Invalid | UserNotFound;
+export type SubmitProofOfUniquePersonhoodResponse = Success | Invalid | UserNotFound | OCError;
 
 export type ReferralStatus = "registered" | "diamond" | "unique_person" | "lifetime_diamond";
 

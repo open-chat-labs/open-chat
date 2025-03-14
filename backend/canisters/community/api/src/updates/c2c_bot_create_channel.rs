@@ -1,3 +1,4 @@
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{AccessGateConfig, BotInitiator, Document, GroupPermissions, Milliseconds, Rules, UserId};
 
@@ -46,6 +47,7 @@ pub enum Response {
     CommunityFrozen,
     InvalidRequest(String),
     InternalError(String),
+    Error(OCError),
 }
 
 impl From<create_channel::Response> for Response {
@@ -54,6 +56,7 @@ impl From<create_channel::Response> for Response {
 
         match value {
             create_channel::Response::Success(r) => Success(r),
+            create_channel::Response::Error(error) => Error(error),
             create_channel::Response::NameTooShort(r) => {
                 InvalidRequest(format!("Name too short, min: {:?} chars", r.min_length))
             }

@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{Milliseconds, UserId};
@@ -18,4 +19,5 @@ pub enum Response {
     UserAlreadySuspended,
     UserNotFound,
     InternalError(String),
+    Error(OCError),
 }

@@ -1,4 +1,5 @@
 pub use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::TimestampMillis;
@@ -14,6 +15,7 @@ pub struct Args {
 pub enum Response {
     Success(TokenSwapStatus),
     NotFound,
+    Error(OCError),
 }
 
 #[ts_export(user, token_swap_status)]

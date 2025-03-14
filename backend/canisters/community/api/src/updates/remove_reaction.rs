@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, MessageId, MessageIndex, Reaction};
@@ -25,4 +26,5 @@ pub enum Response {
     UserSuspended,
     CommunityFrozen,
     UserLapsed,
+    Error(OCError),
 }

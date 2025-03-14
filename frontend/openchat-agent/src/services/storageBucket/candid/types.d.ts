@@ -132,33 +132,55 @@ export interface BotAdded { 'added_by' : UserId, 'user_id' : UserId }
 export interface BotCommand {
   'initiator' : UserId,
   'args' : Array<BotCommandArg>,
+  'meta' : [] | [BotCommandMeta],
   'name' : string,
 }
 export interface BotCommandArg { 'value' : BotCommandArgValue, 'name' : string }
 export type BotCommandArgValue = { 'User' : UserId } |
   { 'String' : string } |
   { 'Boolean' : boolean } |
+  { 'DateTime' : TimestampMillis } |
   { 'Decimal' : number } |
   { 'Integer' : bigint };
+export interface BotCommandDefinition {
+  'permissions' : BotPermissions,
+  'default_role' : [] | [GroupRole],
+  'name' : string,
+  'description' : [] | [string],
+  'placeholder' : [] | [string],
+  'params' : Array<BotCommandParam>,
+}
+export interface BotCommandMeta { 'timezone' : string, 'language' : string }
+export interface BotCommandParam {
+  'name' : string,
+  'description' : [] | [string],
+  'required' : boolean,
+  'placeholder' : [] | [string],
+  'param_type' : BotCommandParamType,
+}
+export type BotCommandParamType = { 'UserParam' : null } |
+  { 'StringParam' : StringParam } |
+  { 'DateTimeParam' : DateTimeParam } |
+  { 'IntegerParam' : IntegerParam } |
+  { 'DecimalParam' : DecimalParam } |
+  { 'BooleanParam' : null };
 export interface BotConfig {
   'can_be_added_to_groups' : boolean,
   'is_oc_controlled' : boolean,
   'supports_direct_messages' : boolean,
 }
 export interface BotGroupConfig { 'permissions' : BotPermissions }
-export interface BotGroupDetails {
-  'permissions' : BotPermissions,
-  'added_by' : UserId,
-  'user_id' : UserId,
-}
+export type BotInstallationLocation = { 'Group' : CanisterId } |
+  { 'User' : UserId } |
+  { 'Community' : CanisterId };
 export interface BotMessageContext {
   'command' : [] | [BotCommand],
   'finalised' : boolean,
 }
 export interface BotPermissions {
-  'chat' : Array<GroupPermission>,
-  'community' : Array<CommunityPermission>,
-  'message' : Array<MessagePermission>,
+  'chat' : number,
+  'community' : number,
+  'message' : number,
 }
 export interface BotRemoved { 'user_id' : UserId, 'removed_by' : UserId }
 export interface BotUpdated { 'updated_by' : UserId, 'user_id' : UserId }
@@ -272,6 +294,9 @@ export type ChatEvent = { 'Empty' : null } |
   { 'DirectChatCreated' : DirectChatCreated } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
+export type ChatEventType = { 'MembershipUpdate' : null } |
+  { 'Message' : null } |
+  { 'ChatDetailsUpdate' : null };
 export interface ChatEventWrapper {
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
@@ -528,6 +553,7 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
+export interface DateTimeParam { 'future_only' : boolean }
 export interface DecimalParam {
   'max_value' : number,
   'min_value' : number,
@@ -659,6 +685,7 @@ export interface EventsSuccessResult {
   'chat_last_updated' : TimestampMillis,
   'events' : Array<ChatEventWrapper>,
   'latest_event_index' : number,
+  'unauthorized' : Uint32Array | number[],
   'expired_event_ranges' : Array<[EventIndex, EventIndex]>,
 }
 export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
@@ -946,6 +973,7 @@ export interface GroupNameChanged {
   'previous_name' : string,
 }
 export type GroupPermission = { 'StartVideoCall' : null } |
+  { 'ReadMessages' : null } |
   { 'DeleteMessages' : null } |
   { 'RemoveMembers' : null } |
   { 'UpdateGroup' : null } |
@@ -953,6 +981,8 @@ export type GroupPermission = { 'StartVideoCall' : null } |
   { 'AddMembers' : null } |
   { 'InviteUsers' : null } |
   { 'MentionAllMembers' : null } |
+  { 'ReadMembership' : null } |
+  { 'ReadChatDetails' : null } |
   { 'PinMessages' : null } |
   { 'ChangeRoles' : null };
 export interface GroupPermissions {
@@ -1101,7 +1131,7 @@ export interface Icrc1PendingCryptoTransaction {
   'to' : Icrc1Account,
   'fee' : bigint,
   'created' : TimestampNanos,
-  'token' : Cryptocurrency,
+  'token_symbol' : string,
   'memo' : [] | [Memo],
   'ledger' : CanisterId,
   'amount' : bigint,
@@ -1134,7 +1164,7 @@ export interface Icrc2PendingCryptoTransaction {
   'to' : Icrc1Account,
   'fee' : bigint,
   'created' : TimestampNanos,
-  'token' : Cryptocurrency,
+  'token_symbol' : string,
   'from' : Icrc1Account,
   'memo' : [] | [Memo],
   'ledger' : CanisterId,
@@ -1151,6 +1181,11 @@ export interface ImageContent {
 export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
+}
+export interface InstalledBotDetails {
+  'permissions' : BotPermissions,
+  'added_by' : UserId,
+  'user_id' : UserId,
 }
 export interface IntegerParam {
   'max_value' : bigint,
@@ -1326,7 +1361,7 @@ export interface NnsPendingCryptoTransaction {
   'to' : NnsUserOrAccount,
   'fee' : [] | [Tokens],
   'created' : TimestampNanos,
-  'token' : Cryptocurrency,
+  'token_symbol' : string,
   'memo' : [] | [bigint],
   'ledger' : CanisterId,
   'amount' : Tokens,
@@ -1372,6 +1407,7 @@ export interface NotificationEnvelope {
   'recipients' : Array<UserId>,
   'timestamp' : TimestampMillis,
 }
+export type OCError = [number, [] | [string]];
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
   'manage_user_groups' : [] | [CommunityPermissionRole],
@@ -1517,10 +1553,11 @@ export interface PollVotes {
 export interface PrizeContent {
   'winner_count' : number,
   'streak_only' : number,
-  'token' : Cryptocurrency,
+  'token_symbol' : string,
   'lifetime_diamond_only' : boolean,
   'end_date' : TimestampMillis,
   'prizes_remaining' : number,
+  'ledger' : CanisterId,
   'prizes_pending' : number,
   'caption' : [] | [string],
   'diamond_only' : boolean,
@@ -1632,32 +1669,13 @@ export interface SelectedGroupUpdates {
   'invited_users' : [] | [Array<UserId>],
   'last_updated' : TimestampMillis,
   'members_added_or_updated' : Array<Participant>,
-  'bots_added_or_updated' : Array<BotGroupDetails>,
+  'bots_added_or_updated' : Array<InstalledBotDetails>,
   'pinned_messages_added' : Uint32Array | number[],
   'chat_rules' : [] | [VersionedRules],
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'blocked_users_added' : Array<UserId>,
-}
-export interface SlashCommandParam {
-  'name' : string,
-  'description' : [] | [string],
-  'required' : boolean,
-  'placeholder' : [] | [string],
-  'param_type' : SlashCommandParamType,
-}
-export type SlashCommandParamType = { 'UserParam' : null } |
-  { 'StringParam' : StringParam } |
-  { 'IntegerParam' : IntegerParam } |
-  { 'DecimalParam' : DecimalParam } |
-  { 'BooleanParam' : null };
-export interface SlashCommandSchema {
-  'permissions' : BotPermissions,
-  'name' : string,
-  'description' : [] | [string],
-  'placeholder' : [] | [string],
-  'params' : Array<SlashCommandParam>,
 }
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
@@ -1684,6 +1702,7 @@ export interface SnsProposal {
 }
 export interface StringParam {
   'min_length' : number,
+  'multi_line' : boolean,
   'max_length' : number,
   'choices' : Array<StringParamChoice>,
 }
@@ -1765,8 +1784,8 @@ export interface TokenBalanceGate {
 export interface TokenInfo {
   'fee' : bigint,
   'decimals' : number,
-  'token' : Cryptocurrency,
   'ledger' : CanisterId,
+  'symbol' : string,
 }
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
@@ -1810,6 +1829,7 @@ export interface UserGroup {
 export type UserId = CanisterId;
 export interface UserSummary {
   'streak' : number,
+  'max_streak' : number,
   'username' : string,
   'total_chit_earned' : number,
   'diamond_member' : boolean,
@@ -1838,6 +1858,7 @@ export interface UserSummaryV2 {
 }
 export interface UserSummaryVolatile {
   'streak' : number,
+  'max_streak' : number,
   'total_chit_earned' : number,
   'chit_balance' : number,
 }

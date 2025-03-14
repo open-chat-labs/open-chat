@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{MessageId, MessageIndex};
@@ -24,4 +25,5 @@ pub enum Response {
     ChatFrozen,
     NotPlatformModerator,
     InternalError(String),
+    Error(OCError),
 }

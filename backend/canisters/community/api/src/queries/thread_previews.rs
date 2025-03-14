@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, MessageIndex, ThreadPreview, TimestampMillis};
@@ -19,6 +20,7 @@ pub enum Response {
     ChannelNotFound,
     UserNotInChannel,
     ReplicaNotUpToDate(TimestampMillis),
+    Error(OCError),
 }
 
 #[ts_export(community, thread_previews)]

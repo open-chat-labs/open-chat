@@ -1,3 +1,4 @@
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{BotInstallationLocation, UserId};
@@ -15,12 +16,14 @@ pub enum Response {
     Success,
     NotAuthorized,
     InternalError(String),
+    Error(OCError),
 }
 
 impl From<types::c2c_uninstall_bot::Response> for Response {
     fn from(response: types::c2c_uninstall_bot::Response) -> Self {
         match response {
             types::c2c_uninstall_bot::Response::Success => Response::Success,
+            types::c2c_uninstall_bot::Response::Error(error) => Response::Error(error),
             types::c2c_uninstall_bot::Response::NotAuthorized => Response::NotAuthorized,
         }
     }

@@ -16,6 +16,7 @@ import type {
     GroupMembershipUpdates,
 } from "../chat";
 import type { DataContent } from "../data";
+import type { OCError } from "../error";
 import type { OptionUpdate } from "../optionUpdate";
 import type {
     ChatPermissions,
@@ -138,7 +139,8 @@ export type AddMembersToChannelResponse =
     | CommunityFrozen
     | InternalError
     | Offline
-    | CommunityPublic;
+    | CommunityPublic
+    | OCError;
 
 export type BlockCommunityUserResponse = Success | Failure | Offline;
 
@@ -187,7 +189,8 @@ export type CommunitySummaryResponse = Failure | CommunitySummary;
 export type CommunitySummaryUpdatesResponse =
     | SuccessNoUpdates
     | Failure
-    | CommunityCanisterCommunitySummaryUpdates;
+    | CommunityCanisterCommunitySummaryUpdates
+    | OCError;
 
 export type CommunityCanisterCommunitySummaryUpdates = {
     id: CommunityIdentifier;
@@ -333,7 +336,8 @@ export type SetMemberDisplayNameResponse =
     | "display_name_too_short"
     | "display_name_too_long"
     | "display_name_invalid"
-    | "offline";
+    | "offline"
+    | OCError;
 
 export type FollowThreadResponse = "success" | "unchanged" | "failed" | "offline";
 

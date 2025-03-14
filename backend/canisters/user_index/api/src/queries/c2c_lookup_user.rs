@@ -1,4 +1,5 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::UserDetails;
 
@@ -11,4 +12,5 @@ pub struct Args {
 pub enum Response {
     Success(UserDetails),
     UserNotFound,
+    Error(OCError),
 }

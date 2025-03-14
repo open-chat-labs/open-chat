@@ -1,3 +1,4 @@
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -12,4 +13,5 @@ pub enum Response {
     SwapExpired,
     SwapNotFound,
     NotAuthorized,
+    Error(OCError),
 }

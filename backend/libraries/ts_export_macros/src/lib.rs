@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use std::fmt::Write;
 use syn::punctuated::Punctuated;
-use syn::{parse_macro_input, parse_quote, Attribute, Field, Ident, Item, PathSegment, Token, Type};
+use syn::{parse_macro_input, parse_quote, Attribute, Field, Fields, Ident, Item, PathSegment, Token, Type};
 
 struct MethodAttribute {
     canister_name: String,
@@ -35,8 +35,9 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
             insert_container_attributes(&mut s.attrs, &s.ident, export_to, prefix);
             let derives_serde = any_derives_serde(&s.attrs);
 
+            let is_tuple = matches!(s.fields, Fields::Unnamed(_));
             for field in s.fields.iter_mut() {
-                insert_field_attributes(field, false, derives_serde);
+                insert_field_attributes(field, is_tuple, derives_serde);
             }
         }
         Item::Enum(e) => {
@@ -97,35 +98,37 @@ const PRINCIPAL_ALIASES: [&str; 3] = ["Principal", "CanisterId", "AccessorId"];
 fn insert_field_attributes(field: &mut Field, is_tuple: bool, derives_serde: bool) {
     if let Type::Path(type_path) = &field.ty {
         if type_path.qself.is_none() && type_path.path.leading_colon.is_none() && type_path.path.segments.len() == 1 {
-            if !is_tuple && type_path.path.segments[0].ident == "Option" {
-                field.attrs.push(parse_quote!( #[ts(optional)] ));
-                if derives_serde {
-                    field
-                        .attrs
-                        .push(parse_quote!( #[serde(skip_serializing_if = "Option::is_none")] ));
-                }
-            } else if PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a) {
+            if PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a) {
                 field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSPrincipal")] ));
             } else if field.attrs.iter().any(is_using_serde_bytes) {
                 field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSBytes")] ));
-            } else if let Some(Defaults {
-                func: _,
-                default_override: _,
-                type_override: _,
-            }) = skip_serializing_if_default(&type_path.path.segments[0])
-            {
-                if derives_serde {
-                    field.attrs.push(parse_quote!( #[serde(default)] ));
+            } else if !is_tuple {
+                if type_path.path.segments[0].ident == "Option" {
+                    field.attrs.push(parse_quote!( #[ts(optional)] ));
+                    if derives_serde {
+                        field
+                            .attrs
+                            .push(parse_quote!( #[serde(skip_serializing_if = "Option::is_none")] ));
+                    }
+                } else if let Some(Defaults {
+                    func: _,
+                    default_override: _,
+                    type_override: _,
+                }) = skip_serializing_if_default(&type_path.path.segments[0])
+                {
+                    if derives_serde {
+                        field.attrs.push(parse_quote!( #[serde(default)] ));
+                    }
+                    // field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #func)]));
+                    //
+                    // if let Some(default_override) = default_override {
+                    //     let doc_comment = format!(" @default {default_override}");
+                    //     field.attrs.push(parse_quote!( #[doc = #doc_comment]));
+                    // }
+                    // if let Some(type_override) = type_override {
+                    //     field.attrs.push(parse_quote!( #[ts(as = #type_override)]));
+                    // }
                 }
-                // field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #func)]));
-                //
-                // if let Some(default_override) = default_override {
-                //     let doc_comment = format!(" @default {default_override}");
-                //     field.attrs.push(parse_quote!( #[doc = #doc_comment]));
-                // }
-                // if let Some(type_override) = type_override {
-                //     field.attrs.push(parse_quote!( #[ts(as = #type_override)]));
-                // }
             }
         }
     }

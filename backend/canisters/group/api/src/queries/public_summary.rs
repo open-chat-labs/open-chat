@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::PublicGroupSummary;
@@ -15,6 +16,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     NotAuthorized,
+    Error(OCError),
 }
 
 #[ts_export(group, public_summary)]

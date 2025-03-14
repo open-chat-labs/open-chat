@@ -1,3 +1,9 @@
+export type OCError = {
+    kind: "error";
+    code: number;
+    message: string | undefined;
+}
+
 export class UnsupportedValueError extends Error {
     constructor(msg: string, value: never) {
         super(`${msg}: ${value}`);

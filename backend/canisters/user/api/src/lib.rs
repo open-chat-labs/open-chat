@@ -17,6 +17,7 @@ mod _updates;
 
 pub use _updates::*;
 pub use lifecycle::*;
+use oc_error_codes::OCError;
 pub use queries::*;
 use ts_export::ts_export;
 
@@ -27,6 +28,7 @@ pub enum EventsResponse {
     ChatNotFound,
     ThreadMessageNotFound,
     ReplicaNotUpToDateV2(TimestampMillis),
+    Error(OCError),
 }
 
 #[ts_export(user)]

@@ -54,6 +54,7 @@ type SearchResponse = variant {
     TermTooShort : nat8;
     TermTooLong : nat8;
     InvalidTerm;
+    Error : OCError;
 };
 
 type SearchSuccessResult = record {
@@ -75,6 +76,7 @@ type ExploreCommunitiesResponse = variant {
     TermTooLong : nat8;
     InvalidTerm;
     InvalidFlags;
+    Error : OCError;
 };
 
 type ExploreCommunitiesSuccess = record {
@@ -93,6 +95,7 @@ type ExploreGroupsResponse = variant {
     TermTooShort : nat8;
     TermTooLong : nat8;
     InvalidTerm;
+    Error : OCError;
 };
 
 type ExploreGroupsSuccess = record {
@@ -110,6 +113,7 @@ type LookupChannelByGroupIdResponse = variant {
         channel_id : ChannelId;
     };
     NotFound;
+    Error : OCError;
 };
 
 type RevokeCommunityVerificationArgs = record {

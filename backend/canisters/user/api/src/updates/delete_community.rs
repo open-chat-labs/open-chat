@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::CommunityId;
@@ -18,4 +19,5 @@ pub enum Response {
     UserLapsed,
     CommunityFrozen,
     InternalError(String),
+    Error(OCError),
 }

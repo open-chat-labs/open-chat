@@ -37,6 +37,7 @@ async fn join_community(args: Args) -> Response {
                 }
                 AlreadyInCommunity(s)
             }
+            community_canister::c2c_join_community::Response::Error(error) => Error(error),
             community_canister::c2c_join_community::Response::GateCheckFailed(msg) => GateCheckFailed(msg),
             community_canister::c2c_join_community::Response::NotInvited => NotInvited,
             community_canister::c2c_join_community::Response::UserBlocked => UserBlocked,

@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{Message, MessageIndex, MultiUserChat, UserId};
 
@@ -17,4 +18,5 @@ pub enum Response {
     Success,
     AlreadyReported,
     InternalError(String),
+    Error(OCError),
 }

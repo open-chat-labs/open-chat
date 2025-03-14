@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use ts_export::ts_export;
@@ -16,4 +17,5 @@ pub enum Response {
     Success,
     TooLong(FieldTooLongResult),
     UserSuspended,
+    Error(OCError),
 }

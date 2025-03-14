@@ -62,6 +62,7 @@ async fn c2c_join_channel(args: Args) -> Response {
             community_canister::c2c_join_community::Response::AlreadyInCommunity(_) => {
                 check_gate_then_join_channel(&args).await
             }
+            community_canister::c2c_join_community::Response::Error(error) => Error(error),
             community_canister::c2c_join_community::Response::GateCheckFailed(r) => GateCheckFailed(r),
             community_canister::c2c_join_community::Response::NotInvited => NotInvited,
             community_canister::c2c_join_community::Response::UserBlocked => UserBlocked,

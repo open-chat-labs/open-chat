@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::CanisterId;
 
@@ -13,4 +14,5 @@ pub enum Response {
     Success,
     AlreadyAdded,
     InternalError(String),
+    Error(OCError),
 }

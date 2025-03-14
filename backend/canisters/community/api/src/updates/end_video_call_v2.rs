@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{ChannelId, MessageId};
 
@@ -13,4 +14,5 @@ pub enum Response {
     Success,
     MessageNotFound,
     AlreadyEnded,
+    Error(OCError),
 }

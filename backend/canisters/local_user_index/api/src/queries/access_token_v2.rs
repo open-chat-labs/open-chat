@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{BotActionScope, BotCommandArg, BotCommandMeta, Chat, UserId, VideoCallType};
@@ -20,6 +21,7 @@ pub enum Response {
     Success(String),
     NotAuthorized,
     InternalError(String),
+    Error(OCError),
 }
 
 #[ts_export]

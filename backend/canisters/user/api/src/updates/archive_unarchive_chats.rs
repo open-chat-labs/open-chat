@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::Chat;
@@ -17,6 +18,7 @@ pub enum Response {
     PartialSuccess(PartialSuccessResult),
     Failure,
     UserSuspended,
+    Error(OCError),
 }
 
 #[ts_export(user, archive_unarchive_chats)]

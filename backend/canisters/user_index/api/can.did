@@ -3,11 +3,13 @@ import "../../../libraries/types/can.did";
 type UserRegistrationCanisterResponse = variant {
     Success : CanisterId;
     NewRegistrationsClosed;
+    Error : OCError;
 };
 
 type PublicKeyResponse = variant {
     Success : text;
     NotInitialised;
+    Error : OCError;
 };
 
 type BotUpdatesArgs = record {
@@ -50,6 +52,7 @@ type CheckUsernameResponse = variant {
     UsernameInvalid;
     UsernameTooShort : nat16;
     UsernameTooLong : nat16;
+    Error : OCError;
 };
 
 type CurrentUserResponse = variant {
@@ -73,6 +76,7 @@ type CurrentUserResponse = variant {
         is_unique_person : bool;
     };
     UserNotFound;
+    Error : OCError;
 };
 
 type UserArgs = record {
@@ -83,6 +87,7 @@ type UserArgs = record {
 type UserResponse = variant {
     Success : UserSummary;
     UserNotFound;
+    Error : OCError;
 };
 
 type UsersArgs = record {
@@ -117,6 +122,7 @@ type ExploreBotsResponse = variant {
     TermTooShort : nat8;
     TermTooLong : nat8;
     InvalidTerm;
+    Error : OCError;
 };
 
 type BotMatch = record {
@@ -173,6 +179,7 @@ type PublishBotResponse = variant {
     Success;
     NotFound;
     NotAuthorised;
+    Error : OCError;
 };
 
 type UpdateBotArgs = record {
@@ -199,6 +206,7 @@ type UpdateBotResponse = variant {
     NewOwnerSuspended;
     DescriptionTooLong;
     TooManyCommands;
+    Error : OCError;
 };
 
 type RemoveBotArgs = record {
@@ -209,6 +217,7 @@ type RemoveBotResponse = variant {
     Success;
     BotNotFound;
     NotAuthorised;
+    Error : OCError;
 };
 
 type BotDefinition = record {
@@ -326,6 +335,7 @@ type AwardExternalAchievementResponse = variant {
     AlreadyAwarded;
     InsufficientBudget;
     Expired;
+    Error : OCError;
 };
 
 service : {

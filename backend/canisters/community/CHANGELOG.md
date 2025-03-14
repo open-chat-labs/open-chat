@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Introduce standardised error codes ([#7599](https://github.com/open-chat-labs/open-chat/pull/7599))
+
 ### Changed
 
 - Remove the `Cryptocurrency` type from public APIs (part 2) ([#7592](https://github.com/open-chat-labs/open-chat/pull/7592))
