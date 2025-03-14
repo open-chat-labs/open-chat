@@ -27,6 +27,8 @@ type TransactionHash = blob;
 type UserId = CanisterId;
 type Version = nat32;
 
+type OCError = record { nat16; opt text; };
+
 type Chat = variant {
     Direct : ChatId;
     Group : ChatId;
