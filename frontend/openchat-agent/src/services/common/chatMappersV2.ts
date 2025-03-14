@@ -122,11 +122,11 @@ import type {
     ExternalBotPermissions,
     InstalledBotDetails,
     BotDefinition,
-    SlashCommandSchema,
-    SlashCommandParamType,
-    SlashCommandParam,
+    CommandDefinition,
+    CommandParamType,
+    CommandParam,
     BotMessageContext,
-    SlashCommandParamInstance,
+    CommandArg,
     GenerateBotKeyResponse,
     PublicApiKeyDetails,
 } from "openchat-shared";
@@ -294,9 +294,9 @@ import type {
     BotPermissions as ApiExternalBotPermissions,
     CommunityUpdateBotResponse,
     GroupUpdateBotResponse,
-    BotCommandDefinition as ApiSlashCommandSchema,
-    BotCommandParamType as ApiSlashCommandParamType,
-    BotCommandParam as ApiSlashCommandParam,
+    BotCommandDefinition as ApiCommandDefinition,
+    BotCommandParamType as ApiCommandParamType,
+    BotCommandParam as ApiCommandParam,
     BotCommandArg,
     BotDefinition as ApiBotDefinition,
     CommunityGenerateBotApiKeyResponse,
@@ -591,7 +591,7 @@ export function botMessageContext(value: TBotMessageContext): BotMessageContext 
     };
 }
 
-export function botCommandArg(api: BotCommandArg): SlashCommandParamInstance {
+export function botCommandArg(api: BotCommandArg): CommandArg {
     const { name, value } = api;
     if ("Boolean" in value) {
         return {
@@ -3306,7 +3306,7 @@ export function externalBotDefinition(value: ApiBotDefinition): BotDefinition {
     };
 }
 
-export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommandSchema {
+export function externalBotCommand(command: ApiCommandDefinition): CommandDefinition {
     return {
         name: command.name,
         description: command.description,
@@ -3317,14 +3317,14 @@ export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommand
     };
 }
 
-export function externalBotParam(param: ApiSlashCommandParam): SlashCommandParam {
+export function externalBotParam(param: ApiCommandParam): CommandParam {
     return {
         ...param,
         ...customParamFields(param.param_type),
     };
 }
 
-export function customParamFields(paramType: ApiSlashCommandParamType): SlashCommandParamType {
+export function customParamFields(paramType: ApiCommandParamType): CommandParamType {
     if (paramType === "UserParam") {
         return {
             kind: "user",
@@ -3362,7 +3362,7 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
             future_only: paramType.DateTimeParam.future_only,
         };
     }
-    throw new UnsupportedValueError("Unexpected ApiSlashCommandParamType value", paramType);
+    throw new UnsupportedValueError("Unexpected ApiCommandParamType value", paramType);
 }
 
 export function principalToIcrcAccount(principal: string): AccountICRC1 {

@@ -1,13 +1,13 @@
 import {
     builtinBot,
-    createParamInstancesFromSchema,
+    createArgsFromSchema,
     externalBots,
-    paramInstanceIsValid,
+    argIsValid,
     type BotCommandInstance,
     type FlattenedCommand,
     type MessageFormatter,
-    type SlashCommandParam,
-    type SlashCommandParamInstance,
+    type CommandParam,
+    type CommandArg,
 } from "openchat-client";
 import { derived, get, writable } from "svelte/store";
 import { _ } from "svelte-i18n";
@@ -54,7 +54,7 @@ export const error = writable<string | undefined>(undefined);
 export const prefix = writable<string>("");
 export const selectedCommand = writable<FlattenedCommand | undefined>(undefined);
 export const focusedCommandIndex = writable(0);
-export const selectedCommandParamInstances = writable<SlashCommandParamInstance[]>([]);
+export const selectedCommandArgs = writable<CommandArg[]>([]);
 export const showingBuilder = writable(false);
 
 export const prefixParts = derived(prefix, (prefix) => parseCommand(prefix));
@@ -104,25 +104,19 @@ export const commands = derived(
     },
 );
 export const instanceValid = derived(
-    [selectedCommand, selectedCommandParamInstances],
-    ([selectedCommand, selectedCommandParamInstances]) => {
+    [selectedCommand, selectedCommandArgs],
+    ([selectedCommand, selectedCommandArgs]) => {
         if (selectedCommand === undefined) return false;
-        return instanceIsValid(selectedCommand, selectedCommandParamInstances);
+        return instanceIsValid(selectedCommand, selectedCommandArgs);
     },
 );
 
-export function instanceIsValid(
-    command: FlattenedCommand,
-    params: SlashCommandParamInstance[],
-): boolean {
+export function instanceIsValid(command: FlattenedCommand, params: CommandArg[]): boolean {
     if (params.length !== command.params.length) {
         return false;
     }
-    const pairs: [SlashCommandParam, SlashCommandParamInstance][] = command.params.map((p, i) => [
-        p,
-        params[i],
-    ]);
-    return pairs.every(([p, i]) => paramInstanceIsValid(p, i));
+    const pairs: [CommandParam, CommandArg][] = command.params.map((p, i) => [p, params[i]]);
+    return pairs.every(([p, i]) => argIsValid(p, i));
 }
 
 function commandsMatch(a: FlattenedCommand | undefined, b: FlattenedCommand | undefined): boolean {
@@ -151,7 +145,7 @@ export function createBotInstance(command: FlattenedCommand): BotCommandInstance
                 endpoint: command.botEndpoint,
                 command: {
                     name: command.name,
-                    params: get(selectedCommandParamInstances),
+                    params: get(selectedCommandArgs),
                     placeholder: command.placeholder,
                 },
             };
@@ -160,7 +154,7 @@ export function createBotInstance(command: FlattenedCommand): BotCommandInstance
                 kind: "internal_bot",
                 command: {
                     name: command.name,
-                    params: get(selectedCommandParamInstances),
+                    params: get(selectedCommandArgs),
                 },
             };
     }
@@ -175,9 +169,7 @@ export function setSelectedCommand(commands: FlattenedCommand[], cmd?: Flattened
         if (cmd !== undefined) {
             focusedCommandIndex.set(0);
             if (cmd.params.length > 0) {
-                selectedCommandParamInstances.set(
-                    createParamInstancesFromSchema(cmd.params, get(maybeParams)),
-                );
+                selectedCommandArgs.set(createArgsFromSchema(cmd.params, get(maybeParams)));
             }
             // if the instance is not already valid (via inline params) show the builder modal
             showingBuilder.set(!get(instanceValid));
@@ -191,6 +183,6 @@ export function cancel() {
     error.set(undefined);
     prefix.set("");
     focusedCommandIndex.set(0);
-    selectedCommandParamInstances.set([]);
+    selectedCommandArgs.set([]);
     showingBuilder.set(false);
 }

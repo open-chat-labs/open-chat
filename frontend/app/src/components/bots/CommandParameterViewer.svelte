@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type ValidationErrors, type SlashCommandParam } from "openchat-client";
+    import { type ValidationErrors, type CommandParam } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import Legend from "../Legend.svelte";
     import Select from "../Select.svelte";
@@ -19,7 +19,7 @@
     interface Props {
         errorPath: string;
         errors: ValidationErrors;
-        param: SlashCommandParam;
+        param: CommandParam;
         onNext?: () => void;
         onPrevious?: () => void;
     }

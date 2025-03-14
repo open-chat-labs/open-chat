@@ -1,4 +1,4 @@
-import type { ExternalBotPermissions, SlashCommandParamInstance } from "./bots";
+import type { ExternalBotPermissions, CommandArg } from "./bots";
 import type { ChatIdentifier, VideoCallType } from "./chat";
 import type { CommunityIdentifier } from "./community";
 import type { OptionUpdate } from "./optionUpdate";
@@ -208,7 +208,7 @@ export type StartVideoCall = {
 export type BotCommand = {
     initiator: string;
     commandName: string;
-    arguments: SlashCommandParamInstance[];
+    arguments: CommandArg[];
     meta?: BotCommandMeta;
 };
 

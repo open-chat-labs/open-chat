@@ -23,9 +23,9 @@ import type {
     ExternalAchievement,
     ChitLeaderboardResponse,
     ExploreBotsResponse,
-    SlashCommandSchema,
+    CommandDefinition,
     BotMatch,
-    SlashCommandParam,
+    CommandParam,
     BotsResponse,
     ExternalBot,
     BotDefinition,
@@ -71,9 +71,9 @@ import type {
     UserIndexExternalAchievementsExternalAchievement,
     UserIndexExploreBotsResponse,
     BotMatch as ApiBotMatch,
-    BotCommandDefinition as ApiSlashCommandSchema,
-    BotCommandParam as ApiSlashCommandParam,
-    BotCommandParamType as ApiSlashCommandParamType,
+    BotCommandDefinition as ApiCommandDefinition,
+    BotCommandParam as ApiCommandParam,
+    BotCommandParamType as ApiCommandParamType,
     BotDefinition as ApiBotDefinition,
     UserIndexBotUpdatesResponse,
     UserIndexBotUpdatesBotDetails,
@@ -631,7 +631,7 @@ function externalAchievement(
     };
 }
 
-export function apiCustomParamFields(param: SlashCommandParam): ApiSlashCommandParamType {
+export function apiCustomParamFields(param: CommandParam): ApiCommandParamType {
     switch (param.kind) {
         case "user":
             return "UserParam";
@@ -674,7 +674,7 @@ export function apiCustomParamFields(param: SlashCommandParam): ApiSlashCommandP
     }
 }
 
-export function apiExternalBotParam(param: SlashCommandParam): ApiSlashCommandParam {
+export function apiExternalBotParam(param: CommandParam): ApiCommandParam {
     return {
         ...param,
         param_type: apiCustomParamFields(param),
@@ -696,7 +696,7 @@ export function apiAutonomousConfig(domain: AutonomousBotConfig): AutonomousConf
     };
 }
 
-export function apiExternalBotCommand(command: SlashCommandSchema): ApiSlashCommandSchema {
+export function apiExternalBotCommand(command: CommandDefinition): ApiCommandDefinition {
     return {
         name: command.name,
         description: command.description,

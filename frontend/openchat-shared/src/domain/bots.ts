@@ -37,7 +37,7 @@ export type BotsResponse = {
 };
 
 // This can be expanded as necessary to include things like ChatParam (e.g. for a /goto bot)
-export type SlashCommandParamType =
+export type CommandParamType =
     | UserParam
     | BooleanParam
     | StringParam
@@ -45,7 +45,7 @@ export type SlashCommandParamType =
     | DecimalParam
     | DateTimeParam;
 
-export type CommandParam = {
+export type CommandParamCommon = {
     name: string;
     description?: string;
     placeholder?: string;
@@ -64,7 +64,7 @@ export type StringParam = {
     kind: "string";
     minLength: number;
     maxLength: number;
-    choices: SlashCommandOptionChoice<string>[];
+    choices: CommandOptionChoice<string>[];
     multi_line: boolean;
 };
 
@@ -72,14 +72,14 @@ export type IntegerParam = {
     kind: "integer";
     minValue: bigint;
     maxValue: bigint;
-    choices: SlashCommandOptionChoice<bigint>[];
+    choices: CommandOptionChoice<bigint>[];
 };
 
 export type DecimalParam = {
     kind: "decimal";
     minValue: number;
     maxValue: number;
-    choices: SlashCommandOptionChoice<number>[];
+    choices: CommandOptionChoice<number>[];
 };
 
 export type DateTimeParam = {
@@ -87,14 +87,14 @@ export type DateTimeParam = {
     future_only: boolean;
 };
 
-export type SlashCommandOptionChoice<T> = {
+export type CommandOptionChoice<T> = {
     name: string;
     value: T;
 };
 
-export type SlashCommandParam = CommandParam & SlashCommandParamType;
+export type CommandParam = CommandParamCommon & CommandParamType;
 
-function defaultCommonParam(param?: SlashCommandParam): CommandParam {
+function defaultCommonParam(param?: CommandParam): CommandParamCommon {
     return {
         name: param?.name ?? "",
         description: param?.description ?? "",
@@ -103,14 +103,14 @@ function defaultCommonParam(param?: SlashCommandParam): CommandParam {
     };
 }
 
-export function defaultBooleanParam(param?: SlashCommandParam): SlashCommandParam {
+export function defaultBooleanParam(param?: CommandParam): CommandParam {
     return {
         kind: "boolean",
         ...defaultCommonParam(param),
     };
 }
 
-export function defaultStringParam(param?: SlashCommandParam): SlashCommandParam {
+export function defaultStringParam(param?: CommandParam): CommandParam {
     return {
         kind: "string",
         ...defaultCommonParam(param),
@@ -121,7 +121,7 @@ export function defaultStringParam(param?: SlashCommandParam): SlashCommandParam
     };
 }
 
-export function defaultIntegerParam(param?: SlashCommandParam): SlashCommandParam {
+export function defaultIntegerParam(param?: CommandParam): CommandParam {
     return {
         kind: "integer",
         ...defaultCommonParam(param),
@@ -131,7 +131,7 @@ export function defaultIntegerParam(param?: SlashCommandParam): SlashCommandPara
     };
 }
 
-export function defaultDecimalParam(param?: SlashCommandParam): SlashCommandParam {
+export function defaultDecimalParam(param?: CommandParam): CommandParam {
     return {
         kind: "decimal",
         ...defaultCommonParam(param),
@@ -141,14 +141,14 @@ export function defaultDecimalParam(param?: SlashCommandParam): SlashCommandPara
     };
 }
 
-export function defaultUserParam(param?: SlashCommandParam): SlashCommandParam {
+export function defaultUserParam(param?: CommandParam): CommandParam {
     return {
         kind: "user",
         ...defaultCommonParam(param),
     };
 }
 
-export function defaultDateTimeParam(param?: SlashCommandParam): SlashCommandParam {
+export function defaultDateTimeParam(param?: CommandParam): CommandParam {
     return {
         kind: "dateTime",
         ...defaultCommonParam(param),
@@ -156,7 +156,7 @@ export function defaultDateTimeParam(param?: SlashCommandParam): SlashCommandPar
     };
 }
 
-export function emptySlashCommand(): SlashCommandSchema {
+export function emptyBotCommand(): CommandDefinition {
     return {
         name: "",
         description: "",
@@ -166,11 +166,11 @@ export function emptySlashCommand(): SlashCommandSchema {
     };
 }
 
-export type SlashCommandSchema = {
+export type CommandDefinition = {
     name: string;
     description?: string;
     placeholder?: string;
-    params: SlashCommandParam[];
+    params: CommandParam[];
     permissions: ExternalBotPermissions;
     devmode?: boolean;
     defaultRole: MemberRole;
@@ -248,9 +248,9 @@ export type ExternalBotPermissions = {
     messagePermissions: MessagePermission[];
 };
 
-export type SlashCommandInstance = {
+export type CommandInstance = {
     name: string;
-    params: SlashCommandParamInstance[];
+    params: CommandArg[];
     placeholder?: string;
 };
 
@@ -301,7 +301,7 @@ export type InternalBot = BotCommon & {
 export type BotDefinition = {
     kind: "bot_definition";
     description: string;
-    commands: SlashCommandSchema[];
+    commands: CommandDefinition[];
     autonomousConfig?: AutonomousBotConfig;
 };
 
@@ -323,17 +323,17 @@ export type ExternalBotCommandInstance = {
     kind: "external_bot";
     id: string;
     endpoint: string;
-    command: SlashCommandInstance;
+    command: CommandInstance;
 };
 
 export type InternalBotCommandInstance = {
     kind: "internal_bot";
-    command: SlashCommandInstance;
+    command: CommandInstance;
 };
 
 // Not sure about this just yet, but I feel like it's probably a thing
 
-export type FlattenedExternalCommand = SlashCommandSchema & {
+export type FlattenedExternalCommand = CommandDefinition & {
     kind: "external_bot";
     botName: string;
     avatarUrl?: string;
@@ -342,7 +342,7 @@ export type FlattenedExternalCommand = SlashCommandSchema & {
     botDescription?: string;
 };
 
-export type FlattenedInternalCommand = SlashCommandSchema & {
+export type FlattenedInternalCommand = CommandDefinition & {
     kind: "internal_bot";
     botName: string;
     botDescription?: string;
@@ -350,71 +350,68 @@ export type FlattenedInternalCommand = SlashCommandSchema & {
 
 export type FlattenedCommand = FlattenedExternalCommand | FlattenedInternalCommand;
 
-export type CommandParamInstance = {
+export type CommandArgCommon = {
     name: string;
 };
 
-export type UserParamInstance = {
+export type UserArg = {
     kind: "user";
     userId?: string;
 };
 
-export type BooleanParamInstance = {
+export type BooleanArg = {
     kind: "boolean";
     value?: boolean;
 };
 
-export type StringParamInstance = {
+export type StringArg = {
     kind: "string";
     value?: string;
 };
 
-export type IntegerParamInstance = {
+export type IntegerArg = {
     kind: "integer";
     value: bigint | null;
 };
 
-export type DecimalParamInstance = {
+export type DecimalArg = {
     kind: "decimal";
     value: number | null; // this is to do with how number input binding works
 };
 
-export type DateTimeParamInstance = {
+export type DateTimeArg = {
     kind: "dateTime";
     value?: bigint | null;
 };
 
-export type SlashCommandParamTypeInstance =
-    | UserParamInstance
-    | BooleanParamInstance
-    | StringParamInstance
-    | IntegerParamInstance
-    | DecimalParamInstance
-    | DateTimeParamInstance;
+export type CommandArgType =
+    | UserArg
+    | BooleanArg
+    | StringArg
+    | IntegerArg
+    | DecimalArg
+    | DateTimeArg;
 
-export type SlashCommandParamInstance = CommandParamInstance & SlashCommandParamTypeInstance;
+export type CommandArg = CommandArgCommon & CommandArgType;
 
-export function createParamInstancesFromSchema(
-    params: SlashCommandParam[],
-    maybeParams: string[],
-): SlashCommandParamInstance[] {
+export function createArgsFromSchema(params: CommandParam[], maybeArgs: string[]): CommandArg[] {
     return params.map((p, i) => {
         switch (p.kind) {
             case "user":
                 return { kind: "user", name: p.name };
             case "boolean": {
-                const boolVal = (maybeParams[i] ?? "false").toLocaleLowerCase() === "true";
+                const boolVal = (maybeArgs[i] ?? "false").toLocaleLowerCase() === "true";
                 return { kind: "boolean", name: p.name, value: boolVal };
             }
             case "integer": {
-                let value: bigint | null = parseBigInt(maybeParams[i]) ?? null;
+                let value: bigint | null = parseBigInt(maybeArgs[i]) ?? null;
                 if (p.choices.length > 0) {
                     value = p.choices.find((c) => c.value === value)?.value ?? null;
                 }
                 return { kind: p.kind, name: p.name, value };
             }
             case "decimal": {
-                const numParam = Number(maybeParams[i]);
+                const numParam = Number(maybeArgs[i]);
                 let value = isNaN(numParam) ? null : numParam;
                 if (p.choices.length > 0) {
                     value = p.choices.find((c) => c.value === value)?.value ?? null;
@@ -422,7 +419,7 @@ export function createParamInstancesFromSchema(
                 return { kind: p.kind, name: p.name, value };
             }
             case "string": {
-                let strParam = maybeParams[i] ?? "";
+                let strParam = maybeArgs[i] ?? "";
                 if (p.choices.length > 0) {
                     strParam =
                         p.choices.find(
@@ -434,7 +431,7 @@ export function createParamInstancesFromSchema(
                 return { kind: "string", name: p.name, value: strParam };
             }
             case "dateTime": {
-                const arg = maybeParams[i];
+                const arg = maybeArgs[i];
                 return {
                     name: p.name,
                     kind: "dateTime",
@@ -461,37 +458,30 @@ function parseDateTime(value: string): bigint | null {
     return BigInt(date.getTime());
 }
 
-export function paramInstanceIsValid(
-    schema: SlashCommandParam,
-    instance: SlashCommandParamInstance,
-): boolean {
-    if (schema.kind === "user" && instance.kind === "user") {
-        return !schema.required || instance.userId !== undefined;
-    } else if (schema.kind === "boolean" && instance.kind === "boolean") {
-        return !schema.required || instance.value !== undefined;
-    } else if (schema.kind === "string" && instance.kind === "string") {
+export function argIsValid(schema: CommandParam, arg: CommandArg): boolean {
+    if (schema.kind === "user" && arg.kind === "user") {
+        return !schema.required || arg.userId !== undefined;
+    } else if (schema.kind === "boolean" && arg.kind === "boolean") {
+        return !schema.required || arg.value !== undefined;
+    } else if (schema.kind === "string" && arg.kind === "string") {
         return (
             !schema.required ||
-            (instance.value !== undefined &&
-                instance.value.length > schema.minLength &&
-                instance.value.length < schema.maxLength)
+            (arg.value !== undefined &&
+                arg.value.length > schema.minLength &&
+                arg.value.length < schema.maxLength)
         );
-    } else if (schema.kind === "integer" && instance.kind === "integer") {
+    } else if (schema.kind === "integer" && arg.kind === "integer") {
         return (
-            (!schema.required && instance.value === null) ||
-            (instance.value !== null &&
-                instance.value >= schema.minValue &&
-                instance.value <= schema.maxValue)
+            (!schema.required && arg.value === null) ||
+            (arg.value !== null && arg.value >= schema.minValue && arg.value <= schema.maxValue)
         );
-    } else if (schema.kind === "decimal" && instance.kind === "decimal") {
+    } else if (schema.kind === "decimal" && arg.kind === "decimal") {
         return (
-            (!schema.required && instance.value === null) ||
-            (instance.value !== null &&
-                instance.value >= schema.minValue &&
-                instance.value <= schema.maxValue)
+            (!schema.required && arg.value === null) ||
+            (arg.value !== null && arg.value >= schema.minValue && arg.value <= schema.maxValue)
         );
-    } else if (schema.kind === "dateTime" && instance.kind === "dateTime") {
-        return !schema.required || (instance.value !== undefined && instance.value !== null);
+    } else if (schema.kind === "dateTime" && arg.kind === "dateTime") {
+        return !schema.required || (arg.value !== undefined && arg.value !== null);
     }
 
     return false;
@@ -571,7 +561,7 @@ export function validateBot(
 }
 
 function validateCommand(
-    command: SlashCommandSchema,
+    command: CommandDefinition,
     errorPath: string,
     errors: ValidationErrors,
 ): boolean {
@@ -597,18 +587,18 @@ function validateCommand(
     return valid;
 }
 
-function containsDuplicateCommands(commands: SlashCommandSchema[]): boolean {
+function containsDuplicateCommands(commands: CommandDefinition[]): boolean {
     const set = new Set(commands.map((c) => c.name));
     return set.size < commands.length;
 }
 
-function containsDuplicateParams(params: SlashCommandParam[]): boolean {
+function containsDuplicateParams(params: CommandParam[]): boolean {
     const set = new Set(params.map((p) => p.name));
     return set.size < params.length;
 }
 
 function validateParameter(
-    param: SlashCommandParam,
+    param: CommandParam,
     errorPath: string,
     errors: ValidationErrors,
 ): boolean {

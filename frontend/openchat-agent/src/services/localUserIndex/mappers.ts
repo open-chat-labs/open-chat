@@ -11,7 +11,7 @@ import type {
     JoinVideoCall,
     MessageContext,
     RegisterUserResponse,
-    SlashCommandParamInstance,
+    CommandArg,
     StartVideoCall,
     VerifiedCredentialArgs,
     VideoCallType,
@@ -120,14 +120,14 @@ export function apiBotActionScope(domain: BotActionScope): ApiBotActionScope {
     }
 }
 
-export function apiBotCommandArg(domain: SlashCommandParamInstance): BotCommandArg {
+export function apiBotCommandArg(domain: CommandArg): BotCommandArg {
     return {
         name: domain.name,
         value: apiBotCommandArgValue(domain),
     };
 }
 
-export function apiBotCommandArgValue(domain: SlashCommandParamInstance): BotCommandArgValue {
+export function apiBotCommandArgValue(domain: CommandArg): BotCommandArgValue {
     switch (domain.kind) {
         case "boolean":
             return {
@@ -152,7 +152,7 @@ export function apiBotCommandArgValue(domain: SlashCommandParamInstance): BotCom
         case "dateTime":
             return {
                 DateTime: domain.value!,
-            }
+            };
     }
 }
 
