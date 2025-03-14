@@ -141,11 +141,7 @@ import {
     isAccountIdentifierValid,
     toBigInt32,
     toBigInt64,
-    CHAT_SYMBOL,
-    CKBTC_SYMBOL,
     ICP_SYMBOL,
-    KINIC_SYMBOL,
-    SNS1_SYMBOL,
     communityPermissionsList,
     botChatPermissionList,
     messagePermissionsList,
@@ -199,7 +195,6 @@ import type {
     CompletedCryptoTransaction as TCompletedCryptoTransaction,
     CryptoContent as TCryptoContent,
     CryptoTransaction as TCryptoTransaction,
-    Cryptocurrency as TCryptocurrency,
     CustomContent as TCustomContent,
     DeletedBy as TDeletedBy,
     EventWrapperChatEvent as TEventWrapperChatEvent,
@@ -793,7 +788,7 @@ function prizeContent(value: TPrizeContent): PrizeContent {
         uniquePersonOnly: value.unique_person_only,
         streakOnly: value.streak_only,
         winners: value.winners.map(principalBytesToString),
-        token: token(value.token),
+        token: value.token_symbol,
         endDate: value.end_date,
         caption: value.caption,
     };
@@ -844,7 +839,7 @@ function tokenInfo(value: TTokenInfo): TokenInfo {
     return {
         fee: value.fee,
         decimals: value.decimals,
-        symbol: token(value.token),
+        symbol: value.symbol,
         ledger: principalBytesToString(value.ledger),
     };
 }
@@ -1076,33 +1071,6 @@ function cryptoContent(value: TCryptoContent, sender: string): CryptocurrencyCon
     };
 }
 
-export function token(value: TCryptocurrency): string {
-    if (value === "InternetComputer") return ICP_SYMBOL;
-    if (value === "SNS1") return SNS1_SYMBOL;
-    if (value === "CKBTC") return CKBTC_SYMBOL;
-    if (value === "CHAT") return CHAT_SYMBOL;
-    if (value === "KINIC") return KINIC_SYMBOL;
-    if ("Other" in value) return value.Other;
-    throw new UnsupportedValueError("Unexpected Cryptocurrency type received", value);
-}
-
-export function apiToken(token: string): TCryptocurrency {
-    switch (token) {
-        case ICP_SYMBOL:
-            return "InternetComputer";
-        case SNS1_SYMBOL:
-            return "SNS1";
-        case CKBTC_SYMBOL:
-            return "CKBTC";
-        case CHAT_SYMBOL:
-            return "CHAT";
-        case KINIC_SYMBOL:
-            return "KINIC";
-        default:
-            return { Other: token };
-    }
-}
-
 function cryptoTransfer(
     value: TCryptoTransaction,
     sender: string,
@@ -1129,7 +1097,7 @@ function pendingCryptoTransfer(
         return {
             kind: "pending",
             ledger: principalBytesToString(trans.ledger),
-            token: token(trans.token),
+            token: trans.token_symbol,
             recipient,
             amountE8s: trans.amount.e8s,
             feeE8s: mapOptional(trans.fee, (f) => f.e8s),
@@ -1141,7 +1109,7 @@ function pendingCryptoTransfer(
         return {
             kind: "pending",
             ledger: principalBytesToString(value.ICRC1.ledger),
-            token: token(value.ICRC1.token),
+            token: value.ICRC1.token_symbol,
             recipient,
             amountE8s: value.ICRC1.amount,
             feeE8s: value.ICRC1.fee,
@@ -1987,7 +1955,7 @@ function apiTokenInfo(domain: TokenInfo): TTokenInfo {
     return {
         fee: domain.fee,
         decimals: domain.decimals,
-        token: apiToken(domain.symbol),
+        symbol: domain.symbol,
         ledger: principalStringToBytes(domain.ledger),
     };
 }
@@ -2007,7 +1975,7 @@ export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): TCr
                 Pending: {
                     NNS: {
                         ledger: principalStringToBytes(domain.ledger),
-                        token: apiToken(domain.token),
+                        token_symbol: domain.token,
                         to: {
                             User: principalStringToBytes(domain.recipient),
                         },
@@ -2023,7 +1991,7 @@ export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): TCr
                 Pending: {
                     ICRC1: {
                         ledger: principalStringToBytes(domain.ledger),
-                        token: apiToken(domain.token),
+                        token_symbol: domain.token,
                         to: principalToIcrcAccount(domain.recipient),
                         amount: domain.amountE8s,
                         fee: domain.feeE8s ?? BigInt(0),
@@ -2046,7 +2014,7 @@ export function apiPendingCryptocurrencyWithdrawal(
             withdrawal: {
                 NNS: {
                     ledger: principalStringToBytes(domain.ledger),
-                    token: apiToken(domain.token),
+                    token_symbol: domain.token,
                     to: {
                         Account: [...hexStringToBytes(domain.to)] as [
                             number,
@@ -2096,7 +2064,7 @@ export function apiPendingCryptocurrencyWithdrawal(
             withdrawal: {
                 ICRC1: {
                     ledger: principalStringToBytes(domain.ledger),
-                    token: apiToken(domain.token),
+                    token_symbol: domain.token,
                     to: principalToIcrcAccount(domain.to),
                     amount: domain.amountE8s,
                     fee: domain.feeE8s ?? BigInt(0),

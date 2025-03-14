@@ -1,11 +1,8 @@
-#![allow(deprecated)]
-use constants::{
-    CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE, DAY_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_TRANSFER_FEE, LIFETIME_DIAMOND_TIMESTAMP,
-};
+use constants::{CHAT_LEDGER_CANISTER_ID, DAY_IN_MS, LIFETIME_DIAMOND_TIMESTAMP};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{
-    is_default, CanisterId, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
+    is_default, CanisterId, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
     DiamondMembershipStatusFull, DiamondMembershipSubscription, TimestampMillis,
 };
 
@@ -24,51 +21,14 @@ pub struct DiamondMembershipDetailsInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(from = "DiamondMembershipPaymentCombined")]
 pub struct DiamondMembershipPayment {
     pub timestamp: TimestampMillis,
-    pub token: Cryptocurrency,
     pub ledger: CanisterId,
     pub fee: u128,
     pub amount_e8s: u64,
     pub block_index: u64,
     pub duration: DiamondMembershipPlanDuration,
     pub manual_payment: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-struct DiamondMembershipPaymentCombined {
-    timestamp: TimestampMillis,
-    token: Option<Cryptocurrency>,
-    ledger: Option<CanisterId>,
-    fee: Option<u128>,
-    amount_e8s: u64,
-    block_index: u64,
-    duration: DiamondMembershipPlanDuration,
-    manual_payment: bool,
-}
-
-impl From<DiamondMembershipPaymentCombined> for DiamondMembershipPayment {
-    fn from(value: DiamondMembershipPaymentCombined) -> Self {
-        let token = value
-            .token
-            .unwrap_or(if matches!(value.ledger, Some(CHAT_LEDGER_CANISTER_ID)) {
-                Cryptocurrency::CHAT
-            } else {
-                Cryptocurrency::InternetComputer
-            });
-
-        DiamondMembershipPayment {
-            timestamp: value.timestamp,
-            token: token.clone(),
-            ledger: if matches!(token, Cryptocurrency::CHAT) { CHAT_LEDGER_CANISTER_ID } else { ICP_LEDGER_CANISTER_ID },
-            fee: if matches!(token, Cryptocurrency::CHAT) { CHAT_TRANSFER_FEE } else { ICP_TRANSFER_FEE },
-            amount_e8s: value.amount_e8s,
-            block_index: value.block_index,
-            duration: value.duration,
-            manual_payment: value.manual_payment,
-        }
-    }
 }
 
 impl DiamondMembershipDetailsInternal {
@@ -155,11 +115,6 @@ impl DiamondMembershipDetailsInternal {
     ) {
         let payment = DiamondMembershipPayment {
             timestamp: now,
-            token: if ledger == CHAT_LEDGER_CANISTER_ID {
-                Cryptocurrency::CHAT
-            } else {
-                Cryptocurrency::InternetComputer
-            },
             ledger,
             fee: transfer_fee,
             amount_e8s,

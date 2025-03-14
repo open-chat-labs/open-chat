@@ -1716,7 +1716,7 @@ type ClaimPrize = {
 
 type PayForDiamondMembership = {
     userId: string;
-    token: string;
+    ledger: string;
     duration: DiamondMembershipDuration;
     recurring: boolean;
     expectedPriceE8s: bigint;

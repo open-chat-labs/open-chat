@@ -129,7 +129,6 @@ import {
     leaveGroupResponse,
     deleteGroupResponse,
     apiChatIdentifier,
-    apiToken,
     acceptP2PSwapResponse,
     cancelP2PSwapResponse,
     joinVideoCallResponse,
@@ -1086,7 +1085,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 message_id: messageId,
                 fee: transfer.feeE8s ?? 0n,
                 decimals,
-                token: apiToken(transfer.token),
+                token_symbol: transfer.token,
                 recipient: principalStringToBytes(transfer.recipient),
                 ledger: principalStringToBytes(transfer.ledger),
                 amount: transfer.amountE8s,
@@ -1437,13 +1436,13 @@ export class UserClient extends MsgpackCanisterAgent {
             {
                 swap_id: swapId,
                 input_token: {
-                    token: apiToken(inputToken.symbol),
+                    symbol: inputToken.symbol,
                     ledger: principalStringToBytes(inputToken.ledger),
                     decimals: inputToken.decimals,
                     fee: inputToken.transferFee,
                 },
                 output_token: {
-                    token: apiToken(outputToken.symbol),
+                    symbol: outputToken.symbol,
                     ledger: principalStringToBytes(outputToken.ledger),
                     decimals: outputToken.decimals,
                     fee: outputToken.transferFee,

@@ -1925,7 +1925,6 @@ export type UserIndexDiamondMembershipFeesDiamondMembershipFees = Static<
     typeof UserIndexDiamondMembershipFeesDiamondMembershipFees
 >;
 export const UserIndexDiamondMembershipFeesDiamondMembershipFees = Type.Object({
-    token: Cryptocurrency,
     token_symbol: Type.String(),
     one_month: Type.BigInt(),
     three_months: Type.BigInt(),
@@ -2155,7 +2154,6 @@ export type UserIndexPayForDiamondMembershipArgs = Static<
 >;
 export const UserIndexPayForDiamondMembershipArgs = Type.Object({
     duration: DiamondMembershipPlanDuration,
-    token: Cryptocurrency,
     ledger: TSPrincipal,
     expected_price_e8s: Type.BigInt(),
     recurring: Type.Boolean(),
@@ -5864,7 +5862,6 @@ export type PendingCryptoTransactionICRC1 = Static<typeof PendingCryptoTransacti
 export const PendingCryptoTransactionICRC1 = Type.Object({
     ledger: TSPrincipal,
     token_symbol: Type.String(),
-    token: Cryptocurrency,
     amount: Type.BigInt(),
     to: AccountICRC1,
     fee: Type.BigInt(),
@@ -5886,7 +5883,6 @@ export const PrizeContent = Type.Object({
     winners: Type.Array(UserId),
     winner_count: Type.Number(),
     user_is_winner: Type.Boolean(),
-    token: Cryptocurrency,
     token_symbol: Type.String(),
     ledger: TSPrincipal,
     end_date: Type.BigInt(),
@@ -6105,7 +6101,6 @@ export const StartVideoCallArgs = Type.Object({
 export type TokenInfo = Static<typeof TokenInfo>;
 export const TokenInfo = Type.Object({
     symbol: Type.String(),
-    token: Cryptocurrency,
     ledger: TSPrincipal,
     decimals: Type.Number(),
     fee: Type.BigInt(),
@@ -6310,7 +6305,6 @@ export type PendingCryptoTransactionNNS = Static<typeof PendingCryptoTransaction
 export const PendingCryptoTransactionNNS = Type.Object({
     ledger: TSPrincipal,
     token_symbol: Type.String(),
-    token: Cryptocurrency,
     amount: Tokens,
     to: UserOrAccount,
     fee: Type.Optional(Tokens),
@@ -6401,7 +6395,6 @@ export type PendingCryptoTransactionICRC2 = Static<typeof PendingCryptoTransacti
 export const PendingCryptoTransactionICRC2 = Type.Object({
     ledger: TSPrincipal,
     token_symbol: Type.String(),
-    token: Cryptocurrency,
     amount: Type.BigInt(),
     from: AccountICRC1,
     to: AccountICRC1,
@@ -7616,7 +7609,6 @@ export const UserTipMessageArgs = Type.Object({
     message_id: MessageId,
     ledger: TSPrincipal,
     token_symbol: Type.String(),
-    token: Cryptocurrency,
     amount: Type.BigInt(),
     fee: Type.BigInt(),
     decimals: Type.Number(),

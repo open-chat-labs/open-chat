@@ -6429,7 +6429,7 @@ export class OpenChat extends EventTarget {
     }
 
     payForDiamondMembership(
-        token: string,
+        ledger: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint,
@@ -6437,7 +6437,7 @@ export class OpenChat extends EventTarget {
         return this.#sendRequest({
             kind: "payForDiamondMembership",
             userId: this.#liveState.user.userId,
-            token,
+            ledger,
             duration,
             recurring,
             expectedPriceE8s,

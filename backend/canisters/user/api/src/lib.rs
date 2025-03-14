@@ -1,13 +1,11 @@
-#![allow(deprecated)]
 use candid::CandidType;
 use chat_events::MessageContentInternal;
-use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    Achievement, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency,
-    DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    P2PSwapStatus, PhoneNumber, Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
+    Achievement, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, DiamondMembershipPlanDuration,
+    EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
+    Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -175,11 +173,9 @@ pub struct UserJoinedCommunityOrChannel {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "DiamondMembershipPaymentReceivedCombined")]
 pub struct DiamondMembershipPaymentReceived {
     pub timestamp: TimestampMillis,
     pub expires_at: TimestampMillis,
-    pub token: Cryptocurrency,
     pub ledger: CanisterId,
     pub token_symbol: String,
     pub amount_e8s: u64,
@@ -187,43 +183,6 @@ pub struct DiamondMembershipPaymentReceived {
     pub duration: DiamondMembershipPlanDuration,
     pub recurring: bool,
     pub send_bot_message: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct DiamondMembershipPaymentReceivedCombined {
-    timestamp: TimestampMillis,
-    expires_at: TimestampMillis,
-    ledger: Option<CanisterId>,
-    token_symbol: Option<String>,
-    token: Cryptocurrency,
-    amount_e8s: u64,
-    block_index: u64,
-    duration: DiamondMembershipPlanDuration,
-    recurring: bool,
-    send_bot_message: bool,
-}
-
-impl From<DiamondMembershipPaymentReceivedCombined> for DiamondMembershipPaymentReceived {
-    fn from(value: DiamondMembershipPaymentReceivedCombined) -> Self {
-        DiamondMembershipPaymentReceived {
-            timestamp: value.timestamp,
-            expires_at: value.expires_at,
-            token: value.token.clone(),
-            ledger: value
-                .ledger
-                .unwrap_or(if matches!(value.token, Cryptocurrency::InternetComputer) {
-                    ICP_LEDGER_CANISTER_ID
-                } else {
-                    CHAT_LEDGER_CANISTER_ID
-                }),
-            token_symbol: value.token_symbol.unwrap_or_else(|| value.token.token_symbol().to_string()),
-            amount_e8s: value.amount_e8s,
-            block_index: value.block_index,
-            duration: value.duration,
-            recurring: value.recurring,
-            send_bot_message: value.send_bot_message,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -301,8 +260,7 @@ pub struct TipMessageArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub ledger: CanisterId,
-    pub token_symbol: Option<String>,
-    pub token: Option<Cryptocurrency>,
+    pub token_symbol: String,
     pub amount: u128,
     pub decimals: u8,
     pub username: String,

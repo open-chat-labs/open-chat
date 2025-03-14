@@ -41,7 +41,7 @@ import {
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
-import { apiExternalBotPermissions, externalBotDefinition, token } from "../common/chatMappersV2";
+import { apiExternalBotPermissions, externalBotDefinition } from "../common/chatMappersV2";
 import type {
     CurrentUserSummary as TCurrentUserSummary,
     DiamondMembershipDetails as TDiamondMembershipDetails,
@@ -550,7 +550,7 @@ export function diamondMembershipFeesResponse(
 ): DiamondMembershipFees[] {
     if ("Success" in value) {
         return value.Success.map((f) => ({
-            token: token(f.token) as "CHAT" | "ICP",
+            token: f.token_symbol as "CHAT" | "ICP",
             oneMonth: f.one_month,
             threeMonths: f.three_months,
             oneYear: f.one_year,

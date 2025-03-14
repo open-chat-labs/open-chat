@@ -2,7 +2,6 @@ use candid_gen::generate_candid_method;
 use std::env;
 use ts_export::generate_ts_method;
 
-#[allow(deprecated)]
 fn main() {
     generate_candid_method!(community, channel_summary_updates, query);
     generate_candid_method!(community, channel_summary, query);

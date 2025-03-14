@@ -22,7 +22,7 @@ import {
     ProposalsBotTopUpNeuronArgs,
     ProposalsBotTopUpNeuronResponse,
 } from "../../typebox";
-import { apiToken, principalToIcrcAccount } from "../common/chatMappersV2";
+import { principalToIcrcAccount } from "../common/chatMappersV2";
 
 export class ProposalsBotClient extends MsgpackCanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
@@ -43,7 +43,7 @@ export class ProposalsBotClient extends MsgpackCanisterAgent {
             proposal: proposalToSubmit(proposal),
             transaction: {
                 ledger: principalStringToBytes(ledger),
-                token: apiToken(token),
+                token_symbol: token,
                 amount: proposalRejectionFee,
                 from: principalToIcrcAccount(userId),
                 to: principalToIcrcAccount(this.canisterId),

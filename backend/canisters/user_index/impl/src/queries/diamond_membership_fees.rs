@@ -13,8 +13,6 @@ fn diamond_membership_fees_impl(state: &RuntimeState) -> Response {
 
     let fees = vec![
         DiamondMembershipFees {
-            #[allow(deprecated)]
-            token: types::Cryptocurrency::CHAT,
             token_symbol: CHAT_SYMBOL.to_string(),
             one_month: fees.chat_fees.one_month,
             three_months: fees.chat_fees.three_months,
@@ -22,8 +20,6 @@ fn diamond_membership_fees_impl(state: &RuntimeState) -> Response {
             lifetime: fees.chat_fees.lifetime,
         },
         DiamondMembershipFees {
-            #[allow(deprecated)]
-            token: types::Cryptocurrency::InternetComputer,
             token_symbol: ICP_SYMBOL.to_string(),
             one_month: fees.icp_fees.one_month,
             three_months: fees.icp_fees.three_months,

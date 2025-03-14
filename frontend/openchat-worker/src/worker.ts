@@ -1188,7 +1188,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     correlationId,
                     agent.payForDiamondMembership(
                         payload.userId,
-                        payload.token,
+                        payload.ledger,
                         payload.duration,
                         payload.recurring,
                         payload.expectedPriceE8s,

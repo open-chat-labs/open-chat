@@ -125,7 +125,6 @@ import {
     UserIndexUsersArgs,
     UserIndexUsersResponse,
 } from "../../typebox";
-import { apiToken } from "../common/chatMappersV2";
 import type { DelegationChain } from "@dfinity/identity";
 import { signedDelegation } from "../../utils/id";
 
@@ -474,7 +473,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
 
     payForDiamondMembership(
         userId: string,
-        token: string,
+        ledger: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint,
@@ -482,7 +481,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "pay_for_diamond_membership",
             {
-                token: apiToken(token),
+                ledger,
                 duration: apiJsonDiamondDuration(duration),
                 recurring,
                 expected_price_e8s: expectedPriceE8s,
