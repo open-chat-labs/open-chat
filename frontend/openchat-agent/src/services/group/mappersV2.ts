@@ -55,6 +55,7 @@ import {
     mentions,
     messageEvent,
     messagesSuccessResponse,
+    ocError,
     threadSyncDetails,
     updatedEvent,
 } from "../common/chatMappersV2";
@@ -88,6 +89,9 @@ export function apiRole(role: MemberRole): GroupRole | undefined {
 export function summaryResponse(value: GroupSummaryResponse): GroupCanisterSummaryResponse {
     if (typeof value === "object" && "Success" in value) {
         return groupChatSummary(value.Success.summary);
+    }
+    if (typeof value === "object" && "Error" in value) {
+        return ocError(value.Error);
     }
     return {
         kind: mapCommonResponses(value, "GroupSummaryResponse"),
@@ -153,6 +157,9 @@ export function summaryUpdatesResponse(
 ): GroupCanisterSummaryUpdatesResponse {
     if (typeof value === "object" && "Success" in value) {
         return groupChatSummaryUpdates(value.Success.updates);
+    }
+    if (typeof value === "object" && "Error" in value) {
+        return ocError(value.Error);
     }
     return {
         kind: mapCommonResponses(value, "GroupSummaryUpdates"),
@@ -257,6 +264,9 @@ export function unblockUserResponse(value: GroupUnblockUserResponse): UnblockUse
     if (value === "CannotUnblockSelf") {
         return "cannot_unblock_self";
     }
+    if (typeof value === "object" && "Error" in value) {
+        return ocError(value.Error);
+    }
     return mapCommonResponses(value, "GroupUnblockUser");
 }
 
@@ -266,6 +276,9 @@ export function blockUserResponse(value: GroupBlockUserResponse): BlockUserRespo
     }
     if (value === "CannotBlockUser") {
         return "cannot_block_user";
+    }
+    if (typeof value === "object" && "Error" in value) {
+        return ocError(value.Error);
     }
     return mapCommonResponses(value, "GroupBlockUser");
 }
@@ -289,6 +302,9 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
         }
         if ("InvalidPoll" in value) {
             return { kind: "invalid_poll" };
+        }
+        if ("Error" in value) {
+            return ocError(value.Error);
         }
     }
     if (value === "MessageEmpty") {

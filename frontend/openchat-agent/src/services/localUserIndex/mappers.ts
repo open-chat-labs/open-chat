@@ -56,6 +56,7 @@ import {
     communitySummary,
     eventsSuccessResponse,
     gateCheckFailedReason,
+    ocError,
 } from "../common/chatMappersV2";
 import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
 import { communitySummaryUpdates } from "../community/mappersV2";
@@ -209,6 +210,11 @@ export function groupAndCommunitySummaryUpdates(
             results.push({
                 kind: "error",
                 error: result.InternalError,
+            });
+        } else if ("Error" in result) {
+            results.push({
+                kind: "error",
+                error: JSON.stringify(result.Error),
             });
         } else {
             throw new UnsupportedValueError(
@@ -412,6 +418,9 @@ export function registerUserResponse(
     }
     if ("PublicKeyInvalid" in value) {
         return { kind: "public_key_invalid" };
+    }
+    if ("Error" in value) {
+        return ocError(value.Error);
     }
 
     throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", value);

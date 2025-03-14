@@ -41,7 +41,7 @@ import {
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
-import { apiExternalBotPermissions, externalBotDefinition } from "../common/chatMappersV2";
+import { apiExternalBotPermissions, externalBotDefinition, ocError } from "../common/chatMappersV2";
 import type {
     CurrentUserSummary as TCurrentUserSummary,
     DiamondMembershipDetails as TDiamondMembershipDetails,
@@ -403,6 +403,9 @@ export function checkUsernameResponse(
     if ("UsernameTooLong" in value) {
         return "username_too_long";
     }
+    if ("Error" in value) {
+        return ocError(value.Error);
+    }
     throw new UnsupportedValueError("Unexpected CheckUsernameResponse type received", value);
 }
 
@@ -425,6 +428,9 @@ export function setUsernameResponse(value: UserIndexSetUsernameResponse): SetUse
     if ("UsernameTooLong" in value) {
         return "username_too_long";
     }
+    if ("Error" in value) {
+        return ocError(value.Error)
+    }
     throw new UnsupportedValueError("Unexpected SetUsernameResponse type received", value);
 }
 
@@ -446,6 +452,9 @@ export function setDisplayNameResponse(
     if ("DisplayNameTooLong" in value) {
         return "display_name_too_long";
     }
+    if ("Error" in value) {
+        return ocError(value.Error);
+    }
     throw new UnsupportedValueError("Unexpected SetDisplayNameResponse type received", value);
 }
 
@@ -459,7 +468,7 @@ export function suspendUserResponse(value: UserIndexSuspendUserResponse): Suspen
     if (value === "UserNotFound") {
         return "user_not_found";
     }
-    if ("InternalError" in value) {
+    if ("InternalError" in value || "Error" in value) {
         return "internal_error";
     }
     throw new UnsupportedValueError("Unexpected SuspendUserResponse type received", value);
@@ -477,7 +486,7 @@ export function unsuspendUserResponse(
     if (value === "UserNotSuspended") {
         return "user_not_suspended";
     }
-    if ("InternalError" in value) {
+    if ("InternalError" in value || "Error" in value) {
         return "internal_error";
     }
     throw new UnsupportedValueError("Unexpected UnsuspendUserResponse type received", value);
@@ -520,6 +529,9 @@ export function payForDiamondMembershipResponse(
     }
     if ("InsufficientFunds" in value) {
         return { kind: "insufficient_funds" };
+    }
+    if ("Error" in value) {
+        return ocError(value.Error);
     }
     throw new UnsupportedValueError(
         "Unexpected ApiPayForDiamondMembershipResponse type received",
@@ -595,6 +607,9 @@ export function submitProofOfUniquePersonhoodResponse(
     }
     if ("Invalid" in value) {
         return CommonResponses.invalid();
+    }
+    if ("Error" in value) {
+        return ocError(value.Error);
     }
     throw new UnsupportedValueError(
         "Unexpected SubmitProofOfUniquePersonhoodResponse type received",
@@ -752,6 +767,9 @@ export function exploreBotsResponse(
             ),
             total: value.Success.total,
         };
+    }
+    if ("Error" in value) {
+        return ocError(value.Error);
     }
     throw new UnsupportedValueError("Unexpected ExploreBotsResponse type received", value);
 }

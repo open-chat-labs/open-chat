@@ -80,6 +80,7 @@ import {
     memberRole,
     mentions,
     messageEvent,
+    ocError,
     publicApiKeyDetails,
     threadSyncDetails,
     updatedEvent,
@@ -100,6 +101,9 @@ export function addMembersToChannelResponse(
         }
         if ("UserLimitReached" in value) {
             return CommonResponses.userLimitReached();
+        }
+        if ("Error" in value) {
+            return ocError(value.Error);
         }
     }
     return {
@@ -279,6 +283,9 @@ export function summaryUpdatesResponse(
 ): CommunitySummaryUpdatesResponse {
     if (typeof value === "object" && "Success" in value) {
         return communitySummaryUpdates(value.Success);
+    }
+    if (typeof value === "object" && "Error" in value) {
+        return ocError(value.Error);
     }
     if (value === "SuccessNoUpdates") {
         return CommonResponses.successNoUpdates();
@@ -597,6 +604,9 @@ export function setMemberDisplayNameResponse(
         }
         if ("DisplayNameTooLong" in value) {
             return "display_name_too_long";
+        }
+        if ("Error" in value) {
+            return ocError(value.Error);
         }
     }
     if (value === "DisplayNameInvalid") {
