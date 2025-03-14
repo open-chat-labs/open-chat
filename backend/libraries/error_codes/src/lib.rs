@@ -7,6 +7,18 @@ use ts_export::ts_export;
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct OCError(u16, Option<String>);
 
+impl OCError {
+    pub fn new(code: OCErrorCode, message: String) -> Self {
+        OCError(code as u16, Some(message))
+    }
+}
+
+impl From<OCErrorCode> for OCError {
+    fn from(value: OCErrorCode) -> Self {
+        OCError(value as u16, None)
+    }
+}
+
 #[EnumRepr(type = "u16", implicit = true)]
 pub enum OCErrorCode {
     C2CError = 100,
