@@ -1,6 +1,7 @@
 use candid::Deserialize;
 use community_canister::c2c_bot_channel_details;
 use group_canister::c2c_bot_group_details;
+use oc_error_codes::OCError;
 use serde::Serialize;
 use ts_export::ts_export;
 use types::{AuthToken, ChannelId};
@@ -23,6 +24,7 @@ pub enum Response {
     NotAuthorized,
     NotFound,
     InternalError(String),
+    Error(OCError),
 }
 
 impl From<c2c_bot_group_details::Response> for Response {
@@ -30,6 +32,7 @@ impl From<c2c_bot_group_details::Response> for Response {
         match r {
             c2c_bot_group_details::Response::Success(details) => Response::Success(details),
             c2c_bot_group_details::Response::NotAuthorized => Response::NotAuthorized,
+            c2c_bot_group_details::Response::Error(error) => Response::Error(error),
         }
     }
 }
@@ -39,6 +42,7 @@ impl From<c2c_bot_channel_details::Response> for Response {
         match r {
             c2c_bot_channel_details::Response::Success(details) => Response::Success(details),
             c2c_bot_channel_details::Response::NotAuthorized => Response::NotAuthorized,
+            c2c_bot_channel_details::Response::Error(error) => Response::Error(error),
         }
     }
 }

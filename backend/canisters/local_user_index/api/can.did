@@ -7,6 +7,8 @@ type Milliseconds = nat64;
 type TimestampMillis = nat64;
 type UserId = CanisterId;
 
+type OCError = record { nat16; opt text; };
+
 type BlobReference = record {
     canister_id : CanisterId;
     blob_id : nat;
@@ -245,6 +247,7 @@ type BotCreateChannelResponse = variant {
     NotAuthorized;
     Frozen;
     C2CError : record {int32; text};
+    Error : OCError;
 };
 
 type BotDeleteChannelArgs = record {
@@ -260,6 +263,7 @@ type BotDeleteChannelResponse = variant {
     ChannelNotFound;
     Frozen;
     C2CError : record {int32; text};
+    Error : OCError;
 };
 
 type BotSendMessageArgs = record {
@@ -286,6 +290,7 @@ type BotSendMessageResponse = variant {
     ThreadNotFound;
     MessageAlreadyFinalised;
     C2CError : record {int32; text};
+    Error : OCError;
 };
 
 service : {

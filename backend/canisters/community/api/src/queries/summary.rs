@@ -1,4 +1,5 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::CommunityCanisterCommunitySummary;
@@ -18,4 +19,5 @@ pub struct Args {
 pub enum Response {
     Success(CommunityCanisterCommunitySummary),
     PrivateCommunity,
+    Error(OCError),
 }

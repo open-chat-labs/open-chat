@@ -1,4 +1,5 @@
 use candid::Deserialize;
+use oc_error_codes::OCError;
 use serde::Serialize;
 use ts_export::ts_export;
 use types::UserId;
@@ -21,4 +22,5 @@ pub enum Response {
     SwapNotFound,
     AmountNotSpecified,
     InternalError(String),
+    Error(OCError),
 }

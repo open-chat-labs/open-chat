@@ -1,3 +1,4 @@
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{BotInitiator, BotMessageContent, MessageId, MessageIndex, UserId};
 
@@ -39,6 +40,7 @@ pub enum Response {
     ThreadNotFound,
     InvalidRequest(String),
     MessageAlreadyFinalised,
+    Error(OCError),
 }
 
 impl From<send_message_v2::Response> for Response {
@@ -47,6 +49,7 @@ impl From<send_message_v2::Response> for Response {
 
         match value {
             send_message_v2::Response::Success(success_result) => Success(success_result),
+            send_message_v2::Response::Error(error) => Error(error),
             send_message_v2::Response::MessageEmpty => InvalidRequest("Message empty".to_string()),
             send_message_v2::Response::TextTooLong(max) => InvalidRequest(format!("Text too long, max: {max}")),
             send_message_v2::Response::InvalidPoll(reason) => InvalidRequest(format!("Invalid poll, reason: {reason:?}")),

@@ -1,4 +1,5 @@
 use candid::Principal;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{AccessGateConfig, CanisterId, CommunityId, CommunityPermissions, Document, Rules, SourceGroup, UserId};
 
@@ -25,6 +26,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     InternalError(String),
+    Error(OCError),
 }
 
 #[derive(Serialize, Deserialize, Debug)]

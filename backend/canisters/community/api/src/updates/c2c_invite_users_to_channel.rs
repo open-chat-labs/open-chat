@@ -1,4 +1,5 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{ChannelId, UserId};
 
@@ -22,6 +23,7 @@ pub enum Response {
     UserLapsed,
     NotAuthorized,
     TooManyInvites(u32),
+    Error(OCError),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

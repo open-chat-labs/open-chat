@@ -125,6 +125,7 @@ members = [
     "backend/libraries/constants",
     "backend/libraries/cycles_dispenser_client",
     "backend/libraries/dynamodb_index_store",
+    "backend/libraries/error_codes",
     "backend/libraries/fire_and_forget_handler",
     "backend/libraries/gated_groups",
     "backend/libraries/group_chat_core",
@@ -191,6 +192,7 @@ ct-codecs = "1.1.1"
 data-encoding = "2.6.0"
 dataurl = "0.1.2"
 dotenv = "0.15.0"
+enum-repr = "0.2.6"
 event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "6d818189fee50159408de2c2c14923a0aef78ffb" }
 event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "6d818189fee50159408de2c2c14923a0aef78ffb" }
 event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "6d818189fee50159408de2c2c14923a0aef78ffb" }

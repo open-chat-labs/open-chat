@@ -3,6 +3,7 @@ import type { BotDefinition } from "../bots";
 import type { ChatIdentifier, GroupChatIdentifier, GroupSubtype } from "../chat/chat";
 import type { ChannelMatch, CommunityIdentifier } from "../community";
 import type { DataContent } from "../data/data";
+import type { OCError } from "../error";
 import type { ChatNotFound, Failure, Offline } from "../response";
 
 export type GroupMatch = DataContent & {
@@ -45,10 +46,10 @@ export type BotMatch = {
     endpoint: string;
 };
 
-export type ExploreCommunitiesResponse = TermInvalid | ExploreSuccess | Offline;
-export type GroupSearchResponse = TermInvalid | GroupSearchSuccess | Offline;
+export type ExploreCommunitiesResponse = TermInvalid | ExploreSuccess | Offline | OCError;
+export type GroupSearchResponse = TermInvalid | GroupSearchSuccess | Offline | OCError;
 export type ExploreChannelsResponse = Failure | ExploreChannelsSuccess | Offline;
-export type ExploreBotsResponse = TermInvalid | ExploreBotsSuccess | Offline;
+export type ExploreBotsResponse = TermInvalid | ExploreBotsSuccess | Offline | OCError;
 
 export type TooManyUsers = {
     kind: "too_many_users";
@@ -89,7 +90,7 @@ export type SearchSuccess = {
 
 export type SearchGroupChatResponse = SearchMessagesSuccess | Failure | Offline;
 
-export type SearchDirectChatResponse = SearchMessagesSuccess | ChatNotFound | TermInvalid | Offline;
+export type SearchDirectChatResponse = SearchMessagesSuccess | ChatNotFound | TermInvalid | OCError | Offline;
 
 export type SearchMessagesSuccess = {
     kind: "success";

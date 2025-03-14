@@ -1,4 +1,5 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{BotDefinition, OptionUpdate, UserId};
@@ -33,4 +34,5 @@ pub enum Response {
     NewOwnerSuspended,
     DescriptionTooLong,
     TooManyCommands,
+    Error(OCError),
 }

@@ -153,7 +153,7 @@
         if (resp.kind === "user_suspended") return i18nKey("userSuspended");
         if (resp.kind === "user_lapsed") return i18nKey("userLapsed");
         if (resp.kind === "chat_frozen") return i18nKey("chatFrozen");
-        if (resp.kind === "failure") return i18nKey("failure");
+        if (resp.kind === "failure" || resp.kind === "error") return i18nKey("failure");
         if (resp.kind === "offline") return i18nKey("offlineError");
         if (resp.kind === "access_gate_invalid") return i18nKey("access.gateInvalid");
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);

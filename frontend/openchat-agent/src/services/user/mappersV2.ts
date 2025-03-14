@@ -159,6 +159,7 @@ import {
     eventsSuccessResponse,
     installedBotDetails,
     publicApiKeyDetails,
+    ocError,
 } from "../common/chatMappersV2";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -467,6 +468,9 @@ export function setBioResponse(value: UserSetBioResponse): SetBioResponse {
     if (typeof value === "object" && "TooLong" in value) {
         return "bio_too_long";
     }
+    if (typeof value === "object" && "Error" in value) {
+        return ocError(value.Error);
+    }
     return mapCommonResponses(value, "SetBio");
 }
 
@@ -496,6 +500,9 @@ export function searchDirectChatResponse(
         return {
             kind: "term_invalid",
         };
+    }
+    if ("Error" in value) {
+        return ocError(value.Error);
     }
     throw new UnsupportedValueError(
         "Unknown UserIndex.ApiSearchMessagesResponse type received",
@@ -539,6 +546,9 @@ export function setAvatarResponse(value: UserSetAvatarResponse): SetAvatarRespon
     }
     if (typeof value === "object" && "AvatarTooBig" in value) {
         return "avatar_too_big";
+    }
+    if (typeof value === "object" && "Error" in value) {
+        return ocError(value.Error);
     }
     throw new UnsupportedValueError("Unexpected ApiSetAvatarResponse type received", value);
 }
@@ -656,7 +666,7 @@ export function sendMessageResponse(
         if ("TextTooLong" in value) {
             return { kind: "text_too_long" };
         }
-        if ("InternalError" in value) {
+        if ("InternalError" in value || "Error" in value) {
             return { kind: "internal_error" };
         }
         if ("TransferFailed" in value) {
@@ -728,6 +738,9 @@ export async function getEventsResponse(
                 latestKnownUpdatePreRequest ?? BigInt(-1),
                 false,
             );
+        }
+        if ("Error" in value) {
+            return "events_failed";
         }
     }
     if (value === "ChatNotFound" || value === "ThreadMessageNotFound") {
@@ -1238,6 +1251,9 @@ export function deletedMessageResponse(
                 content: messageContent(value.Success.content, "unknown"),
             };
         }
+        if ("Error" in value) {
+            return ocError(value.Error);
+        }
     }
     if (value === "MessageHardDeleted") {
         return { kind: "message_hard_deleted" };
@@ -1296,6 +1312,9 @@ export function swapTokensResponse(value: UserSwapTokensResponse): SwapTokensRes
                 error: value.InternalError,
             };
         }
+        if ("Error" in value) {
+            return ocError(value.Error);
+        }
         if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
             return pinNumberFailureResponseV2(value);
         }
@@ -1314,16 +1333,21 @@ export function swapTokensResponse(value: UserSwapTokensResponse): SwapTokensRes
 export function tokenSwapStatusResponse(
     value: UserTokenSwapStatusResponse,
 ): TokenSwapStatusResponse {
-    if (typeof value === "object" && "Success" in value) {
-        return {
-            kind: "success",
-            started: value.Success.started,
-            depositAccount: mapOptional(value.Success.deposit_account, result),
-            transfer: mapOptional(value.Success.transfer, result),
-            notifyDex: mapOptional(value.Success.notify_dex, result),
-            amountSwapped: mapOptional(value.Success.amount_swapped, resultOfResult),
-            withdrawnFromDex: mapOptional(value.Success.withdraw_from_dex, result),
-        };
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return {
+                kind: "success",
+                started: value.Success.started,
+                depositAccount: mapOptional(value.Success.deposit_account, result),
+                transfer: mapOptional(value.Success.transfer, result),
+                notifyDex: mapOptional(value.Success.notify_dex, result),
+                amountSwapped: mapOptional(value.Success.amount_swapped, resultOfResult),
+                withdrawnFromDex: mapOptional(value.Success.withdraw_from_dex, result),
+            };
+        }
+        if ("Error" in value) {
+            return ocError(value.Error);
+        }
     }
     if (value === "NotFound") {
         return {
@@ -1370,6 +1394,9 @@ export function approveTransferResponse(
     if (typeof value === "object") {
         if ("InternalError" in value) {
             return { kind: "internal_error", error: value.InternalError };
+        }
+        if ("Error" in value) {
+            return { kind: "internal_error", error: JSON.stringify(value.Error) };
         }
         if ("ApproveError" in value) {
             return { kind: "approve_error", error: JSON.stringify(value.ApproveError) };

@@ -1,4 +1,5 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CommunityCanisterCommunitySummaryUpdates, TimestampMillis};
@@ -20,4 +21,5 @@ pub enum Response {
     Success(CommunityCanisterCommunitySummaryUpdates),
     SuccessNoUpdates,
     PrivateCommunity,
+    Error(OCError),
 }

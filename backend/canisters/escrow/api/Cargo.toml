@@ -8,6 +8,7 @@ edition.workspace = true
 [dependencies]
 candid = { workspace = true }
 icrc-ledger-types = { workspace = true }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 serde = { workspace = true }
 sha256 = { path = "../../../libraries/sha256" }
 types = { path = "../../../libraries/types" }

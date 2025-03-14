@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::CommunityId;
 
@@ -11,4 +12,5 @@ pub struct Args {
 pub enum Response {
     Success,
     CommunityNotFound,
+    Error(OCError),
 }

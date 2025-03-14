@@ -1,5 +1,6 @@
 use candid::CandidType;
 use ic_ledger_types::AccountIdentifier;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
@@ -15,6 +16,7 @@ pub type Args = Empty;
 pub enum Response {
     Success(SuccessResult),
     UserNotFound,
+    Error(OCError),
 }
 
 #[ts_export(user_index, current_user)]

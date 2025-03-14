@@ -50,6 +50,7 @@ async fn tip_message(args: Args) -> Response {
             use group_canister::c2c_tip_message::Response;
             match group_canister_c2c_client::c2c_tip_message(group_id.into(), &c2c_args).await {
                 Ok(Response::Success) => Success,
+                Ok(Response::Error(error)) => Error(error),
                 Ok(Response::MessageNotFound) => MessageNotFound,
                 Ok(Response::CannotTipSelf) => CannotTipSelf,
                 Ok(Response::RecipientMismatch) => TransferNotToMessageSender,
@@ -68,6 +69,7 @@ async fn tip_message(args: Args) -> Response {
             use community_canister::c2c_tip_message::Response;
             match community_canister_c2c_client::c2c_tip_message(community_id.into(), &c2c_args).await {
                 Ok(Response::Success) => Success,
+                Ok(Response::Error(error)) => Error(error),
                 Ok(Response::MessageNotFound) => MessageNotFound,
                 Ok(Response::CannotTipSelf) => CannotTipSelf,
                 Ok(Response::RecipientMismatch) => TransferNotToMessageSender,

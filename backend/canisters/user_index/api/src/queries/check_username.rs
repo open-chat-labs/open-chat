@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
@@ -17,4 +18,5 @@ pub enum Response {
     UsernameInvalid,
     UsernameTooShort(u16),
     UsernameTooLong(u16),
+    Error(OCError),
 }

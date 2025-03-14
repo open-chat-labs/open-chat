@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, MessageIndex, PollVotes, VoteOperation};
@@ -28,4 +29,5 @@ pub enum Response {
     PollEnded,
     OptionIndexOutOfRange,
     UserLapsed,
+    Error(OCError),
 }

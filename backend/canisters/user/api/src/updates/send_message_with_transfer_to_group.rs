@@ -1,5 +1,6 @@
 #![allow(deprecated)]
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
@@ -48,6 +49,7 @@ pub enum Response {
     PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
+    Error(OCError),
 }
 
 #[ts_export(user, send_message_with_transfer_to_group)]

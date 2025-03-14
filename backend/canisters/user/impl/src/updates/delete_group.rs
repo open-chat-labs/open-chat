@@ -22,6 +22,7 @@ async fn delete_group(args: Args) -> Response {
                 mutate_state(|state| state.data.remove_group(args.chat_id, state.env.now()));
                 Success
             }
+            c2c_delete_group::Response::Error(error) => Error(error),
             c2c_delete_group::Response::NotAuthorized => NotAuthorized,
             c2c_delete_group::Response::ChatFrozen => ChatFrozen,
             c2c_delete_group::Response::InternalError(error) => InternalError(error),

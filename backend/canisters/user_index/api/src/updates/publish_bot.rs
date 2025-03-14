@@ -1,5 +1,6 @@
 use candid::{CandidType, Principal};
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::UserId;
@@ -16,6 +17,7 @@ pub enum Response {
     Success,
     NotFound,
     NotAuthorised,
+    Error(OCError),
 }
 
 #[derive(Serialize)]

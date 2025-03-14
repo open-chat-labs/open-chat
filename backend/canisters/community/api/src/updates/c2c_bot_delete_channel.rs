@@ -1,3 +1,4 @@
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{BotInitiator, ChannelId, UserId};
 
@@ -16,6 +17,7 @@ pub enum Response {
     NotAuthorized,
     CommunityFrozen,
     ChannelNotFound,
+    Error(OCError),
 }
 
 impl From<delete_channel::Response> for Response {
@@ -26,6 +28,7 @@ impl From<delete_channel::Response> for Response {
             delete_channel::Response::Success => Success,
             delete_channel::Response::CommunityFrozen => CommunityFrozen,
             delete_channel::Response::ChannelNotFound => ChannelNotFound,
+            delete_channel::Response::Error(error) => Error(error),
             delete_channel::Response::UserSuspended
             | delete_channel::Response::UserNotInCommunity
             | delete_channel::Response::UserNotInChannel

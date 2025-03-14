@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{CommunityId, UserId};
 
@@ -17,4 +18,5 @@ pub enum Response {
     UserSuspended,
     UserLapsed,
     ChatFrozen,
+    Error(OCError),
 }

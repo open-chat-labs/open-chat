@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CanisterId, DiamondMembershipPlanDuration, DiamondMembershipSubscription, TimestampMillis};
@@ -24,6 +25,7 @@ pub enum Response {
     InsufficientFunds(u64), // Returns the account balance in e8s
     TransferFailed(String),
     InternalError(String),
+    Error(OCError),
 }
 
 #[ts_export(user_index, pay_for_diamond_membership)]

@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, CommunityId, UserId};
@@ -27,6 +28,7 @@ pub enum Response {
     NotAuthorized,
     TooManyInvites(u32),
     InternalError(String),
+    Error(OCError),
 }
 
 #[ts_export(local_user_index, invite_users_to_channel)]

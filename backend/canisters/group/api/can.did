@@ -30,6 +30,7 @@ type SendMessageResponse = variant {
     ChatFrozen;
     RulesNotAccepted;
     MessageAlreadyExists;
+    Error : OCError;
 };
 
 type SendMessageSuccess = record {
@@ -55,6 +56,7 @@ type EditMessageResponse = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type StartVideoCallArgs = record {
@@ -69,6 +71,7 @@ type StartVideoCallArgs = record {
 type StartVideoCallResponse = variant {
     Success;
     NotAuthorized;
+    Error : OCError;
 };
 
 type EndVideoCallArgs = record {
@@ -79,6 +82,7 @@ type EndVideoCallResponse = variant {
     Success;
     MessageNotFound;
     AlreadyEnded;
+    Error : OCError;
 };
 
 type JoinVideoCallArgs = record {
@@ -94,6 +98,7 @@ type JoinVideoCallResponse = variant {
     UserNotInGroup;
     UserSuspended;
     UserLapsed;
+    Error : OCError;
 };
 
 type SetVideoCallPresenceArgs = record {
@@ -110,6 +115,7 @@ type SetVideoCallPresenceResponse = variant {
     UserNotInGroup;
     UserSuspended;
     UserLapsed;
+    Error : OCError;
 };
 
 type DeleteMessagesArgs = record {
@@ -129,6 +135,7 @@ type DeleteMessagesResponse = variant {
     ChatFrozen;
     NotPlatformModerator;
     InternalError : text;
+    Error : OCError;
 };
 
 type UndeleteMessagesArgs = record {
@@ -146,6 +153,7 @@ type UndeleteMessagesResponse = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type RegisterPollVoteArgs = record {
@@ -167,6 +175,7 @@ type RegisterPollVoteResponse = variant {
     UserLapsed;
     ChatFrozen;
     UserCannotChangeVote;
+    Error : OCError;
 };
 
 type AcceptP2PSwapArgs = record {
@@ -189,6 +198,7 @@ type AcceptP2PSwapResponse = variant {
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
     InternalError : text;
+    Error : OCError;
 };
 
 type CancelP2PSwapArgs = record {
@@ -202,6 +212,7 @@ type CancelP2PSwapResponse = variant {
     SwapNotFound;
     UserNotInGroup;
     ChatFrozen;
+    Error : OCError;
 };
 
 type AddReactionArgs = record {
@@ -224,6 +235,7 @@ type AddReactionResponse = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type RemoveReactionArgs = record {
@@ -242,6 +254,7 @@ type RemoveReactionResponse = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type ReportMessageArgs = record {
@@ -260,6 +273,7 @@ type ReportMessageResponse = variant {
     MessageNotFound;
     AlreadyReported;
     InternalError : text;
+    Error : OCError;
 };
 
 type BlockUserArgs = record {
@@ -279,6 +293,7 @@ type BlockUserResponse = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type UnblockUserArgs = record {
@@ -295,6 +310,7 @@ type UnblockUserResponse = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type RemoveParticipantArgs = record {
@@ -313,6 +329,7 @@ type RemoveParticipantResponse = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type ChangeRoleArgs = record {
@@ -331,6 +348,7 @@ type ChangeRoleResponse = variant {
     UserLapsed;
     ChatFrozen;
     InternalError : text;
+    Error : OCError;
 };
 
 type UpdateGroupV2Args = record {
@@ -365,6 +383,7 @@ type UpdateGroupV2Response = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type PinMessageArgs = record {
@@ -382,6 +401,7 @@ type PinMessageV2Response = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type UnpinMessageArgs = record {
@@ -398,6 +418,7 @@ type UnpinMessageResponse = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type RegisterProposalVoteArgs = record {
@@ -417,6 +438,7 @@ type RegisterProposalVoteResponse = variant {
     UserLapsed;
     ChatFrozen;
     InternalError : text;
+    Error : OCError;
 };
 
 type RegisterProposalVoteV2Response = variant {
@@ -426,6 +448,7 @@ type RegisterProposalVoteV2Response = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type ClaimPrizeArgs = record {
@@ -447,6 +470,7 @@ type ClaimPrizeResponse = variant {
     TransferFailed : record { text; FailedCryptoTransaction };
     FailedAfterTransfer : record { text; CompletedCryptoTransaction };
     InternalError : text;
+    Error : OCError;
 };
 
 type ConvertIntoCommunityArgs = record {
@@ -468,6 +492,7 @@ type ConvertIntoCommunityResponse = variant {
     UserLapsed;
     ChatFrozen;
     InternalError : text;
+    Error : OCError;
 };
 
 type SummaryArgs = record {
@@ -479,6 +504,7 @@ type SummaryResponse = variant {
         summary : GroupCanisterGroupChatSummary;
     };
     CallerNotInGroup;
+    Error : OCError;
 };
 
 type SummaryUpdatesArgs = record {
@@ -492,6 +518,7 @@ type SummaryUpdatesResponse = variant {
     };
     SuccessNoUpdates;
     CallerNotInGroup;
+    Error : OCError;
 };
 
 type SelectedInitialArgs = record {};
@@ -513,6 +540,7 @@ type SelectedInitialSuccess = record {
 type SelectedInitialResponse = variant {
     Success : SelectedInitialSuccess;
     CallerNotInGroup;
+    Error : OCError;
 };
 
 type SelectedUpdatesV2Args = record {
@@ -523,6 +551,7 @@ type SelectedUpdatesV2Response = variant {
     Success : SelectedGroupUpdates;
     SuccessNoUpdates : TimestampMillis;
     CallerNotInGroup;
+    Error : OCError;
 };
 
 type EventsArgs = record {
@@ -555,6 +584,7 @@ type EventsResponse = variant {
     UserSuspended;
     UserLapsed;
     ReplicaNotUpToDateV2 : TimestampMillis;
+    Error : OCError;
 };
 
 type LocalUserIndexArgs = record {};
@@ -576,6 +606,7 @@ type MessagesByMessageIndexResponse = variant {
     UserSuspended;
     UserLapsed;
     ReplicaNotUpToDateV2 : TimestampMillis;
+    Error : OCError;
 };
 
 type ThreadPreviewsArgs = record {
@@ -590,6 +621,7 @@ type ThreadPreviewsResponse = variant {
     };
     CallerNotInGroup;
     ReplicaNotUpToDate : TimestampMillis;
+    Error : OCError;
 };
 
 type DeletedMessageArgs = record {
@@ -605,6 +637,7 @@ type DeletedMessageResponse = variant {
     NotAuthorized;
     MessageNotFound;
     MessageHardDeleted;
+    Error : OCError;
 };
 
 type VideoCallParticipantsArgs = record {
@@ -616,6 +649,7 @@ type VideoCallParticipantsResponse = variant {
     Success : VideoCallParticipants;
     VideoCallNotFound;
     CallerNotInGroup;
+    Error : OCError;
 };
 
 type SearchMessagesArgs = record {
@@ -631,6 +665,7 @@ type SearchMessagesResponse = variant {
     TooManyUsers : nat8;
     InvalidTerm;
     CallerNotInGroup;
+    Error : OCError;
 };
 
 type SearchMessagesSuccessResult = record {
@@ -644,6 +679,7 @@ type PublicSummaryArgs = record {
 type PublicSummaryResponse = variant {
     Success : PublicSummarySuccess;
     NotAuthorized;
+    Error : OCError;
 };
 
 type PublicSummarySuccess = record {
@@ -658,6 +694,7 @@ type RulesArgs = record {
 type RulesResponse = variant {
     Success : RulesSuccess;
     NotAuthorized;
+    Error : OCError;
 };
 
 type RulesSuccess = record {
@@ -667,6 +704,7 @@ type RulesSuccess = record {
 type DeclineInvitationResponse = variant {
     Success;
     NotInvited;
+    Error : OCError;
 };
 
 type ToggleMuteNotificationsArgs = record {
@@ -676,6 +714,7 @@ type ToggleMuteNotificationsArgs = record {
 type ToggleMuteNotificationsResponse = variant {
     Success;
     CallerNotInGroup;
+    Error : OCError;
 };
 
 type InviteCodeArgs = record {};
@@ -685,6 +724,7 @@ type InviteCodeResponse = variant {
         code : opt nat64;
     };
     NotAuthorized;
+    Error : OCError;
 };
 
 type EnableInviteCodeArgs = record {
@@ -699,6 +739,7 @@ type EnableInviteCodeResponse = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type DisableInviteCodeArgs = record {
@@ -711,6 +752,7 @@ type DisableInviteCodeResponse = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type ResetInviteCodeArgs = record {
@@ -725,6 +767,7 @@ type ResetInviteCodeResponse = variant {
     UserSuspended;
     UserLapsed;
     ChatFrozen;
+    Error : OCError;
 };
 
 type FollowThreadArgs = record {
@@ -740,6 +783,7 @@ type FollowThreadResponse = variant {
     UserSuspended;
     UserLapsed;
     GroupFrozen;
+    Error : OCError;
 };
 
 type UnfollowThreadArgs = record {
@@ -754,6 +798,7 @@ type UnfollowThreadResponse = variant {
     UserSuspended;
     UserLapsed;
     GroupFrozen;
+    Error : OCError;
 };
 
 type CancelInvitesArgs = record {
@@ -765,6 +810,7 @@ type CancelInvitesResponse = variant {
     NotAuthorized;
     UserSuspended;
     UserLapsed;
+    Error : OCError;
 };
 
 service : {

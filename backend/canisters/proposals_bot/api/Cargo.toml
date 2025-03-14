@@ -10,6 +10,7 @@ candid = { workspace = true }
 candid_gen = { path = "../../../libraries/candid_gen" }
 human_readable = { path = "../../../libraries/human_readable" }
 icrc-ledger-types = { workspace = true }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 ts_export = { path = "../../../libraries/ts_export" }

@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{AuthToken, BotMessageContent, ChannelId, EventIndex, MessageId, MessageIndex, TimestampMillis};
@@ -25,6 +26,7 @@ pub enum Response {
     ThreadNotFound,
     MessageAlreadyFinalised,
     C2CError(i32, String),
+    Error(OCError),
 }
 
 #[ts_export(local_user_index, bot_send_message)]

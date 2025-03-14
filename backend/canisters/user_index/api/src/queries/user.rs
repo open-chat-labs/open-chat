@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{UserId, UserSummary};
@@ -15,4 +16,5 @@ pub struct Args {
 pub enum Response {
     Success(UserSummary),
     UserNotFound,
+    Error(OCError),
 }

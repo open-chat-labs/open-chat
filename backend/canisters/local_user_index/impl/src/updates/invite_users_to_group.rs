@@ -32,6 +32,7 @@ async fn invite_users_to_group(args: Args) -> Response {
                 });
                 Success
             }
+            group_canister::c2c_invite_users::Response::Error(error) => Error(error),
             group_canister::c2c_invite_users::Response::CallerNotInGroup => CallerNotInGroup,
             group_canister::c2c_invite_users::Response::NotAuthorized => NotAuthorized,
             group_canister::c2c_invite_users::Response::ChatFrozen => ChatFrozen,

@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{BotInitiator, ChatDetails, UserId};
@@ -16,4 +17,5 @@ pub struct Args {
 pub enum Response {
     Success(ChatDetails),
     NotAuthorized,
+    Error(OCError),
 }

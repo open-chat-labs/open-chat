@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CommunityCanisterCommunitySummary, CommunityId, GateCheckFailedReason, UserId, VerifiedCredentialGateArgs};
@@ -26,4 +27,5 @@ pub enum Response {
     UserSuspended,
     CommunityFrozen,
     InternalError(String),
+    Error(OCError),
 }

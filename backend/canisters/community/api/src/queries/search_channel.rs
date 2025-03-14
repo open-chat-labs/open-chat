@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use ts_export::ts_export;
@@ -24,6 +25,7 @@ pub enum Response {
     UserNotInCommunity,
     ChannelNotFound,
     UserNotInChannel,
+    Error(OCError),
 }
 
 #[ts_export(community, search_channel)]

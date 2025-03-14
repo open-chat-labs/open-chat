@@ -19,7 +19,7 @@ import type {
 } from "openchat-shared";
 import { toBigInt32, UnsupportedValueError } from "openchat-shared";
 import { publicGroupSummary } from "../common/publicSummaryMapperV2";
-import { accessGateConfig, groupSubtype } from "../common/chatMappersV2";
+import { accessGateConfig, groupSubtype, ocError } from "../common/chatMappersV2";
 import type {
     CommunityMatch as TCommunityMatch,
     GroupIndexActiveGroupsResponse,
@@ -103,6 +103,9 @@ export function exploreCommunitiesResponse(
             total: value.Success.total,
         };
     }
+    if ("Error" in value) {
+        return ocError(value.Error);
+    }
     throw new UnsupportedValueError(
         "Unexpected GroupIndex.ExploreCommunitiesResponse type received",
         value,
@@ -119,6 +122,9 @@ export function exploreGroupsResponse(value: GroupIndexExploreGroupsResponse): G
             matches: value.Success.matches.map(groupMatch),
             total: value.Success.total,
         };
+    }
+    if ("Error" in value) {
+        return ocError(value.Error);
     }
     throw new UnsupportedValueError(
         "Unexpected GroupIndex.ExploreGroupsResponse type received",
@@ -190,7 +196,7 @@ export function unfreezeCommunityResponse(
     if ("Success" in value) {
         return "success";
     }
-    if ("InternalError" in value) {
+    if ("InternalError" in value || "Error" in value) {
         return "internal_error";
     }
     throw new UnsupportedValueError("Unexpected ApiUnfreezeCommunityResponse type received", value);
@@ -219,7 +225,7 @@ export function unfreezeGroupResponse(
             expiresAt: mapOptional(value.Success.expires_at, Number),
         };
     }
-    if ("InternalError" in value) {
+    if ("InternalError" in value || "Error" in value) {
         return "internal_error";
     }
     throw new UnsupportedValueError("Unexpected ApiUnfreezeGroupResponse type received", value);
@@ -261,7 +267,7 @@ export function addHotGroupExclusionResponse(
     if (value === "NotAuthorized") {
         return "not_authorized";
     }
-    if ("InternalError" in value) {
+    if ("InternalError" in value || "Error" in value) {
         return "internal_error";
     }
     throw new UnsupportedValueError(

@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{AcceptSwapSuccess, ChannelId, MessageId, MessageIndex, Milliseconds, PinNumberWrapper, SwapStatusError};
@@ -30,4 +31,5 @@ pub enum Response {
     TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
     UserLapsed,
+    Error(OCError),
 }

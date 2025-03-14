@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{MessageId, UserId};
@@ -19,4 +20,5 @@ pub enum Response {
     UserSuspended,
     UserBlocked,
     ChatNotFound,
+    Error(OCError),
 }
