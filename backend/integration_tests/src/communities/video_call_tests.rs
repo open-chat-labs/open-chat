@@ -4,12 +4,13 @@ use crate::utils::{generate_seed, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use jwt_simple::algorithms::{ECDSAP256PublicKeyLike, ES256PublicKey};
+use local_user_index_canister::access_token_v2::StartVideoCallArgs;
 use pocket_ic::PocketIc;
 use std::error::Error;
 use std::ops::Deref;
 use std::time::SystemTime;
 use testing::rng::random_string;
-use types::{AccessTokenType, ChannelId, CommunityId, StartVideoCallClaims, VideoCallAccessTokenArgs, VideoCallType};
+use types::{ChannelId, Chat, CommunityId, StartVideoCallClaims, VideoCallType};
 
 #[test]
 fn access_token_valid() {
@@ -41,9 +42,8 @@ fn access_token_valid() {
         env,
         &user1,
         canister_ids.local_user_index(env, community_id),
-        community_id,
-        channel_id,
-        AccessTokenType::StartVideoCallV2(VideoCallAccessTokenArgs {
+        &local_user_index_canister::access_token_v2::Args::StartVideoCall(StartVideoCallArgs {
+            chat: Chat::Channel(community_id, channel_id),
             call_type: VideoCallType::Broadcast,
         }),
     );
