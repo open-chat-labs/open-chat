@@ -1,4 +1,3 @@
-pub mod access_token;
 pub mod access_token_v2;
 pub mod bot_chat_details;
 pub mod bot_chat_events;

@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the `Cryptocurrency` type from public APIs (part 2) ([#7592](https://github.com/open-chat-labs/open-chat/pull/7592))
 
+### Removed
+
+- Remove the old `access_token` endpoint ([#7602](https://github.com/open-chat-labs/open-chat/pull/7602))
+
 ## [[2.0.1641](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1641-local_user_index)] - 2025-03-12
 
 ### Added

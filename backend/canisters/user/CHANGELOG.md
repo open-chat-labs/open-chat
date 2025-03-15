@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the `Cryptocurrency` type from public APIs (part 2) ([#7592](https://github.com/open-chat-labs/open-chat/pull/7592))
 
+### Removed
+
+- Remove the old `c2c_can_issue_access_token` endpoint ([#7602](https://github.com/open-chat-labs/open-chat/pull/7602))
+
 ### Fixed
 
 - On bot uninstallation also delete the direct chat ([#7583](https://github.com/open-chat-labs/open-chat/pull/7583))
