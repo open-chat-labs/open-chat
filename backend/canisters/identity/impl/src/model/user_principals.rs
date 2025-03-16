@@ -206,6 +206,19 @@ impl UserPrincipals {
         }
     }
 
+    pub fn get_originating_canisters_by_user_id_slow(&self, user_id: UserId) -> Vec<(CanisterId, bool)> {
+        if let Some(user_principal) = self.user_principals.iter().find(|u| u.user_id == Some(user_id)) {
+            user_principal
+                .auth_principals
+                .iter()
+                .filter_map(|p| self.auth_principals.get(p))
+                .map(|p| (p.originating_canister, p.is_ii_principal))
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
+
     pub fn bump_last_used(&mut self, auth_principal: &Principal, now: TimestampMillis) {
         if let Some(principal) = self.auth_principals.get_mut(auth_principal) {
             principal.last_used = now;
