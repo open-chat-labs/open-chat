@@ -1,7 +1,7 @@
 use crate::model::direct_chat::DirectChat;
 use chat_events::{ChatInternal, ChatMetricsInternal};
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::Vacant;
+use std::cell::LazyCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use types::{ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
 
@@ -26,18 +26,16 @@ impl DirectChats {
         self.direct_chats.get_mut(chat_id)
     }
 
-    pub fn create(
+    pub fn get_or_create<F: FnOnce() -> u128>(
         &mut self,
         their_user_id: UserId,
         their_user_type: UserType,
-        anonymized_id: u128,
+        anonymized_id: LazyCell<u128, F>,
         now: TimestampMillis,
     ) -> &mut DirectChat {
-        if let Vacant(e) = self.direct_chats.entry(their_user_id.into()) {
-            e.insert(DirectChat::new(their_user_id, their_user_type, None, anonymized_id, now))
-        } else {
-            unreachable!()
-        }
+        self.direct_chats
+            .entry(their_user_id.into())
+            .or_insert_with(|| DirectChat::new(their_user_id, their_user_type, None, *anonymized_id, now))
     }
 
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &DirectChat> {

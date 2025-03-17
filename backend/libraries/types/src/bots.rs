@@ -348,6 +348,12 @@ pub struct BotCommand {
     pub meta: Option<BotCommandMeta>,
 }
 
+impl BotCommand {
+    pub fn arg(&self, name: &str) -> Option<BotCommandArgValue> {
+        self.args.iter().find(|arg| arg.name == name).map(|arg| arg.value.clone())
+    }
+}
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BotCommandMeta {
@@ -371,6 +377,16 @@ pub enum BotCommandArgValue {
     Boolean(bool),
     User(UserId),
     DateTime(TimestampMillis),
+}
+
+impl BotCommandArgValue {
+    pub fn as_string(&self) -> Option<&str> {
+        if let Self::String(s) = self {
+            Some(s)
+        } else {
+            None
+        }
+    }
 }
 
 #[ts_export]

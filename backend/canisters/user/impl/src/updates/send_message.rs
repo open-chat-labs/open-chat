@@ -10,10 +10,15 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
 use chat_events::EditMessageResult;
+use chat_events::TextContentInternal;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult};
 use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
+use event_store_producer::NullRuntime;
 use event_store_producer_cdk_runtime::CdkRuntime;
 use rand::Rng;
+use std::cell::LazyCell;
+use std::ops::Not;
+use std::str::FromStr;
 use types::BotCaller;
 use types::BotPermissions;
 use types::DirectMessageNotification;
@@ -188,6 +193,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
             initiator: args.initiator.clone(),
         };
 
+        let my_user_id = state.env.canister_id().into();
         let args: Args = args.into();
         let message_content: MessageContent = args.content.clone().into();
 
@@ -279,9 +285,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                                 sender_avatar_id: None,
                                 crypto_transfer: message_content.notification_crypto_transfer_details(&[]),
                             });
-                            let recipient = state.env.canister_id().into();
-
-                            state.push_notification(Some(bot_id), recipient, notification);
+                            state.push_notification(Some(bot_id), my_user_id, notification);
                         }
 
                         return c2c_bot_send_message::Response::Success(SuccessResult {
@@ -295,6 +299,51 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                 }
 
                 return c2c_bot_send_message::Response::MessageAlreadyFinalised;
+            }
+        }
+
+        // Check if the associated command is the special `direct message` command.
+        // In which case rather than just posting the bot's message, we should first post the user's message.
+        // This allows the user to have a more natural conversation with the bot rather than using a /command.
+        let mut user_message = false;
+        if let Some(command) = bot_caller.initiator.command() {
+            if command.name == "direct message" {
+                if let (Some(text), Some(message_id)) = (
+                    command.arg("message").and_then(|v| v.as_string().map(String::from)),
+                    command
+                        .arg("user_message_id")
+                        .and_then(|v| v.as_string().and_then(|s| u64::from_str(s).ok()))
+                        .map(MessageId::from),
+                ) {
+                    let chat = state.data.direct_chats.get_or_create(
+                        bot_id,
+                        UserType::BotV2,
+                        LazyCell::new(|| state.env.rng().gen()),
+                        now,
+                    );
+
+                    chat.push_message::<NullRuntime>(
+                        true,
+                        PushMessageArgs {
+                            thread_root_message_index: args.thread_root_message_index,
+                            message_id,
+                            sender: my_user_id,
+                            content: MessageContentInternal::Text(TextContentInternal { text }),
+                            mentioned: Vec::new(),
+                            replies_to: None,
+                            forwarded: false,
+                            sender_is_bot: false,
+                            block_level_markdown: args.block_level_markdown,
+                            correlation_id: 0,
+                            now,
+                            bot_context: None,
+                        },
+                        None,
+                        None,
+                    );
+
+                    user_message = true;
+                }
             }
         }
 
@@ -317,7 +366,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                 block_level_markdown: args.block_level_markdown,
                 now,
             },
-            Some(bot_caller),
+            user_message.not().then_some(bot_caller),
             finalised,
             state,
         );
@@ -443,14 +492,11 @@ fn send_message_impl(
         bot_context: None,
     };
 
-    let chat = if let Some(c) = state.data.direct_chats.get_mut(&recipient.into()) {
-        c
-    } else {
+    let chat =
         state
             .data
             .direct_chats
-            .create(recipient, recipient_type.into(), state.env.rng().gen(), now)
-    };
+            .get_or_create(recipient, recipient_type.into(), LazyCell::new(|| state.env.rng().gen()), now);
 
     let message_event = chat.push_message(true, push_message_args, None, Some(&mut state.data.event_store_client));
 
