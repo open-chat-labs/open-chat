@@ -9,6 +9,10 @@ use utils::canister_timers::run_now_then_interval;
 
 const REFRESH_VOTING_POWER_INTERVAL: Milliseconds = 30 * DAY_IN_MS;
 
+// Neuron voting power will be gradually reduced if the `voting_power_refreshed_timestamp_seconds`
+// value is more than 180 days in the past.
+// So we filter to neurons where it is at least 90 days in the past and then refresh the voting
+// power for those neurons.
 pub fn start_job() {
     run_now_then_interval(Duration::from_millis(REFRESH_VOTING_POWER_INTERVAL), || {
         ic_cdk::futures::spawn(run_async())
@@ -19,16 +23,17 @@ async fn run_async() {
     let (nns_governance_canister_id, neurons_to_refresh) = read_state(|state| {
         let now = state.env.now();
         let cutoff = now.saturating_sub(90 * DAY_IN_MS);
-        // Neuron voting power will be gradually reduced if the
-        // `voting_power_refreshed_timestamp_seconds` value is more than 180 days in the past.
-        // So we filter to neurons where it is at least 90 days in the past and then refresh the
-        // voting power for those neurons.
+        let cutoff_seconds = cutoff / 1000;
+
         let neurons: Vec<_> = state
             .data
             .neurons
             .active_neurons
             .iter()
-            .filter(|n| n.voting_power_refreshed_timestamp_seconds.is_none_or(|ts| ts < cutoff))
+            .filter(|n| {
+                n.voting_power_refreshed_timestamp_seconds
+                    .is_none_or(|ts| ts < cutoff_seconds)
+            })
             .filter_map(|n| n.id.as_ref().map(|id| (id.id)))
             .collect();
 
