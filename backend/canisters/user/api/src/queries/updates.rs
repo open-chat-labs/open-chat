@@ -55,6 +55,7 @@ pub struct SuccessResult {
     pub bots_added_or_updated: Vec<InstalledBotDetails>,
     pub bots_removed: Vec<UserId>,
     pub api_keys_generated: Vec<PublicApiKeyDetails>,
+    pub btc_address: Option<String>,
 }
 
 #[ts_export(user, updates)]

@@ -47,6 +47,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let wallet_config = state.data.wallet_config.if_set_after(updates_since).cloned();
     let referrals = state.data.referrals.updated_since(updates_since);
     let streak_insurance_updated = state.data.streak.insurance_last_updated() > updates_since;
+    let btc_address_updated = state.data.btc_address.as_ref().is_some_and(|a| a.timestamp > updates_since);
 
     let has_any_updates = username.is_some()
         || display_name.has_update()
@@ -59,6 +60,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         || is_unique_person_updated
         || !referrals.is_empty()
         || streak_insurance_updated
+        || btc_address_updated
         || state.data.direct_chats.any_updated(updates_since)
         || state.data.group_chats.any_updated(updates_since)
         || state.data.favourite_chats.any_updated(updates_since)
@@ -166,6 +168,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     } else {
         OptionUpdate::NoChange
     };
+    let btc_address = if btc_address_updated { state.data.btc_address.as_ref().map(|a| a.value.clone()) } else { None };
 
     let mut bots_changed = HashSet::new();
     let mut bots_added_or_updated = Vec::new();
@@ -220,5 +223,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         bots_added_or_updated,
         bots_removed,
         api_keys_generated: state.data.bot_api_keys.generated_since(updates_since),
+        btc_address,
     })
 }

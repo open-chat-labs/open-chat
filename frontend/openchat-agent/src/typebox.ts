@@ -1239,11 +1239,6 @@ export const BotPermissions = Type.Object({
     message: Type.Optional(Type.Number()),
 });
 
-export type VideoCallAccessTokenArgs = Static<typeof VideoCallAccessTokenArgs>;
-export const VideoCallAccessTokenArgs = Type.Object({
-    call_type: VideoCallType,
-});
-
 export type DateTimeParam = Static<typeof DateTimeParam>;
 export const DateTimeParam = Type.Object({
     future_only: Type.Boolean(),
@@ -6227,15 +6222,6 @@ export const OptionUpdateOptionalMessagePermissions = Type.Union(
     { default: "NoChange" },
 );
 
-export type AccessTokenType = Static<typeof AccessTokenType>;
-export const AccessTokenType = Type.Union([
-    Type.Object({
-        StartVideoCallV2: VideoCallAccessTokenArgs,
-    }),
-    Type.Literal("JoinVideoCall"),
-    Type.Literal("MarkVideoCallAsEnded"),
-]);
-
 export type FailedCryptoTransactionICRC2 = Static<typeof FailedCryptoTransactionICRC2>;
 export const FailedCryptoTransactionICRC2 = Type.Object({
     ledger: TSPrincipal,
@@ -10685,6 +10671,7 @@ export const UserInitialStateSuccessResult = Type.Object({
     message_activity_summary: UserMessageActivitySummary,
     bots: Type.Array(InstalledBotDetails),
     api_keys: Type.Array(PublicApiKeyDetails),
+    btc_address: Type.Optional(Type.String()),
 });
 
 export type UserInitialStateResponse = Static<typeof UserInitialStateResponse>;
@@ -10721,6 +10708,7 @@ export const UserUpdatesSuccessResult = Type.Object({
     bots_added_or_updated: Type.Array(InstalledBotDetails),
     bots_removed: Type.Array(UserId),
     api_keys_generated: Type.Array(PublicApiKeyDetails),
+    btc_address: Type.Optional(Type.String()),
 });
 
 export type UserUpdatesResponse = Static<typeof UserUpdatesResponse>;
