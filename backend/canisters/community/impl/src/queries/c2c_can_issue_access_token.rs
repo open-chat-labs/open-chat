@@ -3,10 +3,8 @@ use crate::read_state;
 use crate::RuntimeState;
 use canister_api_macros::query;
 use community_canister::c2c_can_issue_access_token::*;
-use group_chat_core::{GroupChatCore, GroupRoleInternal};
 use types::c2c_can_issue_access_token::AccessTypeArgs;
 use types::BotPermissions;
-use types::VideoCallType;
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_can_issue_access_token(args: Args) -> Response {
@@ -77,8 +75,8 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
 
     match &args_outer.access_type {
         AccessTypeArgs::JoinVideoCall(_) | AccessTypeArgs::MarkVideoCallAsEnded(_) => Response::Success,
-        AccessTypeArgs::StartVideoCall(args) => {
-            if can_start_video_call(member.role(), args.call_type, &channel.chat) {
+        AccessTypeArgs::StartVideoCall(_) => {
+            if member.role().is_permitted(channel.chat.permissions.start_video_call) {
                 Response::Success
             } else {
                 Response::Failure
@@ -86,12 +84,4 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         }
         _ => unreachable!(),
     }
-}
-
-fn can_start_video_call(member_role: GroupRoleInternal, call_type: VideoCallType, chat: &GroupChatCore) -> bool {
-    if !member_role.is_permitted(chat.permissions.start_video_call) {
-        return false;
-    }
-
-    !chat.is_public.value || matches!(call_type, VideoCallType::Broadcast)
 }
