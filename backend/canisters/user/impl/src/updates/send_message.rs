@@ -16,7 +16,6 @@ use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 use event_store_producer::NullRuntime;
 use event_store_producer_cdk_runtime::CdkRuntime;
 use rand::Rng;
-use std::cell::LazyCell;
 use std::ops::Not;
 use types::BotCaller;
 use types::BotPermissions;
@@ -311,12 +310,10 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                 command.args.first().and_then(|a| a.value.as_string().map(String::from)),
                 user_message_id,
             ) {
-                let chat = state.data.direct_chats.get_or_create(
-                    bot_id,
-                    UserType::BotV2,
-                    LazyCell::new(|| state.env.rng().gen()),
-                    now,
-                );
+                let chat = state
+                    .data
+                    .direct_chats
+                    .get_or_create(bot_id, UserType::BotV2, || state.env.rng().gen(), now);
 
                 chat.push_message::<NullRuntime>(
                     true,
@@ -487,11 +484,10 @@ fn send_message_impl(
         bot_context: None,
     };
 
-    let chat =
-        state
-            .data
-            .direct_chats
-            .get_or_create(recipient, recipient_type.into(), LazyCell::new(|| state.env.rng().gen()), now);
+    let chat = state
+        .data
+        .direct_chats
+        .get_or_create(recipient, recipient_type.into(), || state.env.rng().gen(), now);
 
     let message_event = chat.push_message(true, push_message_args, None, Some(&mut state.data.event_store_client));
 

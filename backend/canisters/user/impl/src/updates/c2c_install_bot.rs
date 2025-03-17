@@ -1,5 +1,3 @@
-use std::cell::LazyCell;
-
 use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
@@ -35,7 +33,7 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     state
         .data
         .direct_chats
-        .get_or_create(args.bot_id, UserType::BotV2, LazyCell::new(|| state.env.rng().gen()), now);
+        .get_or_create(args.bot_id, UserType::BotV2, || state.env.rng().gen(), now);
 
     Success
 }
