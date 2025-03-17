@@ -3,10 +3,9 @@ use constants::DAY_IN_MS;
 use nns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use nns_governance_canister::types::neuron::DissolveState;
-use nns_governance_canister::types::Empty;
 use std::time::Duration;
 use tracing::info;
-use types::Milliseconds;
+use types::{Empty, Milliseconds};
 use utils::canister_timers::run_now_then_interval;
 
 const REFRESH_NEURON_INTERVAL: Milliseconds = DAY_IN_MS;
