@@ -9,7 +9,6 @@ fn main() {
 
     generate_ts_method!(user, api_key);
     generate_ts_method!(user, bio);
-    generate_ts_method!(user, cached_btc_address);
     generate_ts_method!(user, chit_events);
     generate_ts_method!(user, contacts);
     generate_ts_method!(user, deleted_message);
@@ -34,7 +33,6 @@ fn main() {
     generate_ts_method!(user, approve_transfer);
     generate_ts_method!(user, archive_unarchive_chats);
     generate_ts_method!(user, block_user);
-    generate_ts_method!(user, btc_address);
     generate_ts_method!(user, cancel_message_reminder);
     generate_ts_method!(user, cancel_p2p_swap);
     generate_ts_method!(user, claim_daily_chit);
@@ -47,6 +45,7 @@ fn main() {
     generate_ts_method!(user, delete_messages);
     generate_ts_method!(user, edit_message_v2);
     generate_ts_method!(user, generate_bot_api_key);
+    generate_ts_method!(user, generate_btc_address);
     generate_ts_method!(user, join_video_call);
     generate_ts_method!(user, leave_community);
     generate_ts_method!(user, leave_group);
