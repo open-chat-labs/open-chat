@@ -336,14 +336,6 @@ export const UserUnblockUserResponse = Type.Union([
 export type UserAddHotGroupExclusionsResponse = Static<typeof UserAddHotGroupExclusionsResponse>;
 export const UserAddHotGroupExclusionsResponse = Type.Literal("Success");
 
-export type UserCachedBtcAddressResponse = Static<typeof UserCachedBtcAddressResponse>;
-export const UserCachedBtcAddressResponse = Type.Union([
-    Type.Object({
-        Success: Type.String(),
-    }),
-    Type.Literal("NotFound"),
-]);
-
 export type UserUpdatesArgs = Static<typeof UserUpdatesArgs>;
 export const UserUpdatesArgs = Type.Object({
     updates_since: Type.BigInt(),
@@ -4813,6 +4805,19 @@ export const UserSearchMessagesArgs = Type.Object({
     max_results: Type.Number(),
 });
 
+export type UserGenerateBtcAddressResponse = Static<typeof UserGenerateBtcAddressResponse>;
+export const UserGenerateBtcAddressResponse = Type.Union([
+    Type.Object({
+        Success: Type.String(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type UserManageFavouriteChatsResponse = Static<typeof UserManageFavouriteChatsResponse>;
 export const UserManageFavouriteChatsResponse = Type.Union([
     Type.Literal("Success"),
@@ -5116,19 +5121,6 @@ export type UserMuteNotificationsResponse = Static<typeof UserMuteNotificationsR
 export const UserMuteNotificationsResponse = Type.Union([
     Type.Literal("Success"),
     Type.Literal("ChatNotFound"),
-    Type.Object({
-        InternalError: Type.String(),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
-export type UserBtcAddressResponse = Static<typeof UserBtcAddressResponse>;
-export const UserBtcAddressResponse = Type.Union([
-    Type.Object({
-        Success: Type.String(),
-    }),
     Type.Object({
         InternalError: Type.String(),
     }),

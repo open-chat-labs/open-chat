@@ -4,11 +4,11 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
 use types::Timestamped;
-use user_canister::btc_address::{Response::*, *};
+use user_canister::generate_btc_address::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
-async fn btc_address(_args: Args) -> Response {
+async fn generate_btc_address(_args: Args) -> Response {
     run_regular_jobs();
 
     if let Some(btc_address) = read_state(|state| state.data.btc_address.as_ref().map(|a| a.value.clone())) {
