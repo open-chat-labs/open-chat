@@ -10,11 +10,9 @@ use utils::canister_timers::run_now_then_interval;
 const REFRESH_VOTING_POWER_INTERVAL: Milliseconds = 30 * DAY_IN_MS;
 
 pub fn start_job() {
-    run_now_then_interval(Duration::from_millis(REFRESH_VOTING_POWER_INTERVAL), run);
-}
-
-fn run() {
-    ic_cdk::futures::spawn(run_async());
+    run_now_then_interval(Duration::from_millis(REFRESH_VOTING_POWER_INTERVAL), || {
+        ic_cdk::futures::spawn(run_async())
+    });
 }
 
 async fn run_async() {
