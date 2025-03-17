@@ -6,7 +6,7 @@ use types::Empty;
 
 pub type Args = Empty;
 
-#[ts_export(user, btc_address)]
+#[ts_export(user, generate_btc_address)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(String),

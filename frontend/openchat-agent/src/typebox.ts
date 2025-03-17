@@ -336,14 +336,6 @@ export const UserUnblockUserResponse = Type.Union([
 export type UserAddHotGroupExclusionsResponse = Static<typeof UserAddHotGroupExclusionsResponse>;
 export const UserAddHotGroupExclusionsResponse = Type.Literal("Success");
 
-export type UserCachedBtcAddressResponse = Static<typeof UserCachedBtcAddressResponse>;
-export const UserCachedBtcAddressResponse = Type.Union([
-    Type.Object({
-        Success: Type.String(),
-    }),
-    Type.Literal("NotFound"),
-]);
-
 export type UserUpdatesArgs = Static<typeof UserUpdatesArgs>;
 export const UserUpdatesArgs = Type.Object({
     updates_since: Type.BigInt(),
@@ -1237,11 +1229,6 @@ export const BotPermissions = Type.Object({
     community: Type.Optional(Type.Number()),
     chat: Type.Optional(Type.Number()),
     message: Type.Optional(Type.Number()),
-});
-
-export type VideoCallAccessTokenArgs = Static<typeof VideoCallAccessTokenArgs>;
-export const VideoCallAccessTokenArgs = Type.Object({
-    call_type: VideoCallType,
 });
 
 export type DateTimeParam = Static<typeof DateTimeParam>;
@@ -4818,6 +4805,19 @@ export const UserSearchMessagesArgs = Type.Object({
     max_results: Type.Number(),
 });
 
+export type UserGenerateBtcAddressResponse = Static<typeof UserGenerateBtcAddressResponse>;
+export const UserGenerateBtcAddressResponse = Type.Union([
+    Type.Object({
+        Success: Type.String(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type UserManageFavouriteChatsResponse = Static<typeof UserManageFavouriteChatsResponse>;
 export const UserManageFavouriteChatsResponse = Type.Union([
     Type.Literal("Success"),
@@ -5121,19 +5121,6 @@ export type UserMuteNotificationsResponse = Static<typeof UserMuteNotificationsR
 export const UserMuteNotificationsResponse = Type.Union([
     Type.Literal("Success"),
     Type.Literal("ChatNotFound"),
-    Type.Object({
-        InternalError: Type.String(),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
-export type UserBtcAddressResponse = Static<typeof UserBtcAddressResponse>;
-export const UserBtcAddressResponse = Type.Union([
-    Type.Object({
-        Success: Type.String(),
-    }),
     Type.Object({
         InternalError: Type.String(),
     }),
@@ -6226,15 +6213,6 @@ export const OptionUpdateOptionalMessagePermissions = Type.Union(
     ],
     { default: "NoChange" },
 );
-
-export type AccessTokenType = Static<typeof AccessTokenType>;
-export const AccessTokenType = Type.Union([
-    Type.Object({
-        StartVideoCallV2: VideoCallAccessTokenArgs,
-    }),
-    Type.Literal("JoinVideoCall"),
-    Type.Literal("MarkVideoCallAsEnded"),
-]);
 
 export type FailedCryptoTransactionICRC2 = Static<typeof FailedCryptoTransactionICRC2>;
 export const FailedCryptoTransactionICRC2 = Type.Object({
@@ -10685,6 +10663,7 @@ export const UserInitialStateSuccessResult = Type.Object({
     message_activity_summary: UserMessageActivitySummary,
     bots: Type.Array(InstalledBotDetails),
     api_keys: Type.Array(PublicApiKeyDetails),
+    btc_address: Type.Optional(Type.String()),
 });
 
 export type UserInitialStateResponse = Static<typeof UserInitialStateResponse>;
@@ -10721,6 +10700,7 @@ export const UserUpdatesSuccessResult = Type.Object({
     bots_added_or_updated: Type.Array(InstalledBotDetails),
     bots_removed: Type.Array(UserId),
     api_keys_generated: Type.Array(PublicApiKeyDetails),
+    btc_address: Type.Optional(Type.String()),
 });
 
 export type UserUpdatesResponse = Static<typeof UserUpdatesResponse>;

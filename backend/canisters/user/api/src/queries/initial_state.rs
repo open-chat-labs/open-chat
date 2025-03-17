@@ -43,6 +43,7 @@ pub struct SuccessResult {
     pub message_activity_summary: MessageActivitySummary,
     pub bots: Vec<InstalledBotDetails>,
     pub api_keys: Vec<PublicApiKeyDetails>,
+    pub btc_address: Option<String>,
 }
 
 #[ts_export(user, initial_state)]
