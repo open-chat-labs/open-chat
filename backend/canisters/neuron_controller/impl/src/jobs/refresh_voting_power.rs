@@ -19,6 +19,10 @@ async fn run_async() {
     let (nns_governance_canister_id, neurons_to_refresh) = read_state(|state| {
         let now = state.env.now();
         let cutoff = now.saturating_sub(90 * DAY_IN_MS);
+        // Neuron voting power will be gradually reduced if the
+        // `voting_power_refreshed_timestamp_seconds` value is more than 180 days in the past.
+        // So we filter to neurons where it is at least 90 days in the past and then refresh the
+        // voting power for those neurons.
         let neurons: Vec<_> = state
             .data
             .neurons
