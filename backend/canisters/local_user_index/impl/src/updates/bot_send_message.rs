@@ -22,6 +22,7 @@ async fn bot_send_message(args: Args) -> Response {
                 chat_id,
                 context.thread,
                 context.message_id,
+                context.user_message_id,
                 args.content,
                 args.block_level_markdown,
                 args.finalised,
@@ -67,6 +68,7 @@ struct MessageAccessContext {
     chat: Chat,
     thread: Option<MessageIndex>,
     message_id: MessageId,
+    user_message_id: Option<MessageId>,
 }
 
 fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Result<MessageAccessContext, Response> {
@@ -74,7 +76,7 @@ fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Resu
 
     let context = extract_access_context(&args.auth_token, state).map_err(FailedAuthentication)?;
 
-    let (chat, thread, message_id) = match context.scope {
+    let (chat, thread, message_id, user_message_id) = match context.scope {
         BotActionScope::Chat(details) => {
             if let Some(message_id) = args.message_id {
                 if matches!(context.initiator, BotInitiator::Command(_)) && message_id != details.message_id {
@@ -84,7 +86,7 @@ fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Resu
                 }
             }
             let message_id = args.message_id.unwrap_or(details.message_id);
-            (details.chat, details.thread, message_id)
+            (details.chat, details.thread, message_id, details.user_message_id)
         }
         BotActionScope::Community(details) => {
             let Some(channel_id) = args.channel_id else {
@@ -92,7 +94,7 @@ fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Resu
             };
             let chat = Chat::Channel(details.community_id, channel_id);
             let message_id = args.message_id.unwrap_or_else(|| state.env.rng().gen::<u64>().into());
-            (chat, None, message_id)
+            (chat, None, message_id, None)
         }
     };
 
@@ -103,6 +105,7 @@ fn extract_message_access_context(args: &Args, state: &mut RuntimeState) -> Resu
         chat,
         thread,
         message_id,
+        user_message_id,
     })
 }
 
@@ -215,6 +218,7 @@ async fn send_message_to_user(
     chat_id: ChatId,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
+    user_message_id: Option<MessageId>,
     content: BotMessageContent,
     block_level_markdown: bool,
     finalised: bool,
@@ -228,6 +232,7 @@ async fn send_message_to_user(
             initiator,
             thread_root_message_index,
             message_id,
+            user_message_id,
             content,
             bot_name,
             block_level_markdown,

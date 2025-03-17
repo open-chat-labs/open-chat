@@ -18,7 +18,6 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use rand::Rng;
 use std::cell::LazyCell;
 use std::ops::Not;
-use std::str::FromStr;
 use types::BotCaller;
 use types::BotPermissions;
 use types::DirectMessageNotification;
@@ -188,6 +187,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
         let finalised = args.finalised;
         let bot_id = args.bot_id;
         let bot_name = args.bot_name.clone();
+        let user_message_id = args.user_message_id;
         let bot_caller = BotCaller {
             bot: args.bot_id,
             initiator: args.initiator.clone(),
@@ -302,48 +302,43 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
             }
         }
 
-        // Check if the associated command is the special `direct message` command.
+        // If the user_message_id is set, then the user is sending a direct message to the bot.
         // In which case rather than just posting the bot's message, we should first post the user's message.
         // This allows the user to have a more natural conversation with the bot rather than using a /command.
         let mut user_message = false;
         if let Some(command) = bot_caller.initiator.command() {
-            if command.name == "direct message" {
-                if let (Some(text), Some(message_id)) = (
-                    command.arg("message").and_then(|v| v.as_string().map(String::from)),
-                    command
-                        .arg("user_message_id")
-                        .and_then(|v| v.as_string().and_then(|s| u64::from_str(s).ok()))
-                        .map(MessageId::from),
-                ) {
-                    let chat = state.data.direct_chats.get_or_create(
-                        bot_id,
-                        UserType::BotV2,
-                        LazyCell::new(|| state.env.rng().gen()),
+            if let (Some(text), Some(message_id)) = (
+                command.args.first().and_then(|a| a.value.as_string().map(String::from)),
+                user_message_id,
+            ) {
+                let chat = state.data.direct_chats.get_or_create(
+                    bot_id,
+                    UserType::BotV2,
+                    LazyCell::new(|| state.env.rng().gen()),
+                    now,
+                );
+
+                chat.push_message::<NullRuntime>(
+                    true,
+                    PushMessageArgs {
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_id,
+                        sender: my_user_id,
+                        content: MessageContentInternal::Text(TextContentInternal { text }),
+                        mentioned: Vec::new(),
+                        replies_to: None,
+                        forwarded: false,
+                        sender_is_bot: false,
+                        block_level_markdown: args.block_level_markdown,
+                        correlation_id: 0,
                         now,
-                    );
+                        bot_context: None,
+                    },
+                    None,
+                    None,
+                );
 
-                    chat.push_message::<NullRuntime>(
-                        true,
-                        PushMessageArgs {
-                            thread_root_message_index: args.thread_root_message_index,
-                            message_id,
-                            sender: my_user_id,
-                            content: MessageContentInternal::Text(TextContentInternal { text }),
-                            mentioned: Vec::new(),
-                            replies_to: None,
-                            forwarded: false,
-                            sender_is_bot: false,
-                            block_level_markdown: args.block_level_markdown,
-                            correlation_id: 0,
-                            now,
-                            bot_context: None,
-                        },
-                        None,
-                        None,
-                    );
-
-                    user_message = true;
-                }
+                user_message = true;
             }
         }
 

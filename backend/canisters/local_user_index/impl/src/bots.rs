@@ -106,6 +106,7 @@ fn to_bot_action_scope(scope: AccessTokenScope, state: &mut RuntimeState) -> Bot
             chat,
             thread: None,
             message_id: state.env.rng().gen::<u64>().into(),
+            user_message_id: None,
         }),
         AccessTokenScope::Community(community_id) => BotActionScope::Community(BotActionCommunityDetails { community_id }),
     }
