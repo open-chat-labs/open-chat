@@ -65,7 +65,7 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
     match args_outer {
         AccessTypeArgs::JoinVideoCall(_) | AccessTypeArgs::MarkVideoCallAsEnded(_) => Response::Success,
         AccessTypeArgs::StartVideoCall(args) => {
-            if can_start_video_call(member.role(), args.call_type, &state.data.chat) {
+            if member.role().is_permitted(state.data.chat.permissions.start_video_call) {
                 Response::Success
             } else {
                 Response::Failure
@@ -73,12 +73,4 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         }
         _ => unreachable!(),
     }
-}
-
-fn can_start_video_call(member_role: GroupRoleInternal, call_type: VideoCallType, chat: &GroupChatCore) -> bool {
-    if !member_role.is_permitted(chat.permissions.start_video_call) {
-        return false;
-    }
-
-    !chat.is_public.value || matches!(call_type, VideoCallType::Broadcast)
 }
