@@ -1,10 +1,7 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
-use types::TimestampMillis;
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct Empty {}
+use types::{Empty, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BallotInfo {
@@ -32,6 +29,7 @@ pub struct Neuron {
     pub not_for_profit: bool,
     pub joined_community_fund_timestamp_seconds: Option<u64>,
     pub known_neuron_data: Option<KnownNeuronData>,
+    pub voting_power_refreshed_timestamp_seconds: Option<u64>,
     pub dissolve_state: Option<neuron::DissolveState>,
 }
 
@@ -243,6 +241,7 @@ pub mod manage_neuron {
         MergeMaturity(MergeMaturity),
         Merge(Merge),
         StakeMaturity(StakeMaturity),
+        RefreshVotingPower(Empty),
     }
 }
 
@@ -274,6 +273,7 @@ pub mod manage_neuron_response {
         MergeMaturity(Empty),
         Merge(Empty),
         StakeMaturity(Empty),
+        RefreshVotingPower(Empty),
     }
 }
 

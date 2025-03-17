@@ -26,6 +26,7 @@ type Command = variant {
   StakeMaturity : StakeMaturity;
   MergeMaturity : MergeMaturity;
   Disburse : Disburse;
+  RefreshVotingPower : RefreshVotingPower;
 };
 type Configure = record { operation : opt Operation };
 type Disburse = record {
@@ -66,6 +67,7 @@ type Operation = variant {
   LeaveCommunityFund : record {};
   SetDissolveTimestamp : SetDissolveTimestamp;
 };
+type RefreshVotingPower = record {};
 type RegisterVote = record { vote : int32; proposal : opt NeuronId };
 type RemoveHotKey = record { hot_key_to_remove : opt principal };
 type SetDissolveTimestamp = record { dissolve_timestamp_seconds : nat64 };
