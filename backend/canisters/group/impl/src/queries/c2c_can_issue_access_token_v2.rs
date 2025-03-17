@@ -62,7 +62,7 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
 
     match args_outer {
         AccessTypeArgs::JoinVideoCall(_) | AccessTypeArgs::MarkVideoCallAsEnded(_) => Response::Success,
-        AccessTypeArgs::StartVideoCall(args) => {
+        AccessTypeArgs::StartVideoCall(_) => {
             if member.role().is_permitted(state.data.chat.permissions.start_video_call) {
                 Response::Success
             } else {
