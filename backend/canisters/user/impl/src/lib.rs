@@ -402,7 +402,7 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub pin_number: PinNumber,
-    pub btc_address: Option<String>,
+    pub btc_address: Option<Timestamped<String>>,
     pub chit_events: ChitEarnedEvents,
     pub streak: Streak,
     pub achievements: HashSet<Achievement>,

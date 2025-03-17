@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Remove the `Cryptocurrency` type from public APIs (part 2) ([#7592](https://github.com/open-chat-labs/open-chat/pull/7592))
+- Return `btc_address` in user canister updates ([#7608](https://github.com/open-chat-labs/open-chat/pull/7608))
 
 ### Removed
 
