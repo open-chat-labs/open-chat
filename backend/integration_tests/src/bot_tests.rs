@@ -13,9 +13,9 @@ use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
     AccessTokenScope, AuthToken, AutonomousConfig, BotActionByCommandClaims, BotActionChatDetails, BotActionScope,
-    BotApiKeyToken, BotCommandArgValue, BotCommandDefinition, BotDefinition, BotInstallationLocation, BotMessageContent,
-    BotPermissions, CanisterId, Chat, ChatEvent, ChatPermission, ChatType, CommunityPermission, MessageContent,
-    MessagePermission, Rules, TextContent, UserId,
+    BotApiKeyToken, BotCommandArg, BotCommandArgValue, BotCommandDefinition, BotCommandParam, BotCommandParamType,
+    BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, ChatPermission,
+    ChatType, CommunityPermission, MessageContent, MessageId, MessagePermission, Rules, StringParam, TextContent, UserId,
 };
 use utils::base64;
 
@@ -95,6 +95,7 @@ fn e2e_command_bot_test() {
             chat,
             thread: None,
             message_id,
+            user_message_id: None,
         }),
     });
 
@@ -443,6 +444,7 @@ fn send_api_key_test(chat_type: ChatType) {
             chat,
             thread: None,
             message_id: random_from_u128(),
+            user_message_id: None,
         }),
     });
 
@@ -690,6 +692,7 @@ fn read_messages_by_command() {
         params: vec![],
         permissions: BotPermissions::from_chat_permission(ChatPermission::ReadMessages),
         default_role: None,
+        direct_messages: false,
     }];
 
     let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
@@ -735,6 +738,7 @@ fn read_messages_by_command() {
             chat,
             thread: None,
             message_id,
+            user_message_id: None,
         }),
     });
 
@@ -766,6 +770,142 @@ fn read_messages_by_command() {
 
     assert_eq!(result.events.len(), 1);
     assert!(result.unauthorized.is_empty());
+}
+
+#[test]
+fn send_direct_message() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+
+    let local_user_index = canister_ids.local_user_index(env, owner.user_id);
+
+    // Register a bot
+    let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        "EchoBot".to_string(),
+        "https://my.bot.xyz/".to_string(),
+        BotDefinition {
+            description: "Echo user input".to_string(),
+            commands: vec![BotCommandDefinition {
+                name: "echo".to_string(),
+                description: Some("Echo user input".to_string()),
+                placeholder: None,
+                params: vec![BotCommandParam {
+                    name: "message".to_string(),
+                    description: None,
+                    required: true,
+                    param_type: BotCommandParamType::StringParam(StringParam {
+                        min_length: 1,
+                        max_length: 10000,
+                        choices: vec![],
+                        multi_line: true,
+                    }),
+                    placeholder: None,
+                }],
+                permissions: BotPermissions::text_only(),
+                default_role: None,
+                direct_messages: true,
+            }],
+            autonomous_config: None,
+        },
+    );
+
+    // Install the bot as a direct chat
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::User(owner.user_id.into()),
+        bot_id,
+        BotPermissions::text_only(),
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    // Get an access token to call the "direct_message" command
+    let message_id = random_from_u128();
+    let user_message_id: MessageId = random_from_u128();
+    let message_text = "Hello, world!".to_string();
+    let access_token_args = access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
+        bot_id,
+        command: BotCommandInitial {
+            name: "echo".to_string(),
+            args: vec![BotCommandArg {
+                name: "message".to_string(),
+                value: BotCommandArgValue::String(message_text.clone()),
+            }],
+            meta: None,
+        },
+        scope: BotActionScope::Chat(BotActionChatDetails {
+            chat: Chat::Direct(owner.user_id.into()),
+            thread: None,
+            message_id,
+            user_message_id: Some(user_message_id),
+        }),
+    });
+    let access_token =
+        match client::local_user_index::access_token_v2(env, owner.principal, local_user_index, &access_token_args) {
+            local_user_index_canister::access_token_v2::Response::Success(access_token) => access_token,
+            response => panic!("'access_token' error: {response:?}"),
+        };
+
+    // Send message
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_send_message::Args {
+            channel_id: None,
+            message_id: None,
+            content: BotMessageContent::Text(TextContent {
+                text: message_text.clone(),
+            }),
+            block_level_markdown: false,
+            finalised: true,
+            auth_token: AuthToken::Jwt(access_token.clone()),
+        },
+    );
+
+    if !matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)) {
+        panic!("'bot_send_message' error: {response:?}");
+    }
+
+    // Call `events` and confirm the last but one event is a text message from the user
+    // and the latest event is a message from the bot
+    let response = client::user::happy_path::events(env, &owner, bot_id, 0.into(), true, 5, 10);
+
+    assert_eq!(response.events.len(), 3);
+
+    let user_event = &response.events[1];
+    let ChatEvent::Message(message) = &user_event.event else {
+        panic!("Expected user event to be a message: {user_event:?}");
+    };
+    let MessageContent::Text(text_content) = &message.content else {
+        panic!("Expected message to be text");
+    };
+    assert_eq!(&text_content.text, &message_text);
+    assert!(message.bot_context.is_none());
+
+    let bot_event = &response.events[2];
+    let ChatEvent::Message(message) = &bot_event.event else {
+        panic!("Expected bot event to be a message: {bot_event:?}");
+    };
+    let MessageContent::Text(text_content) = &message.content else {
+        panic!("Expected message to be text");
+    };
+    assert_eq!(&text_content.text, &message_text);
+    assert!(message.bot_context.is_none());
 }
 
 #[test_case(ChatType::Direct)]
@@ -837,6 +977,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             chat,
             thread: None,
             message_id,
+            user_message_id: None,
         }),
     });
     let access_token =
@@ -968,6 +1109,7 @@ fn register_bot(
         params: vec![],
         permissions: BotPermissions::text_only(),
         default_role: None,
+        direct_messages: false,
     }];
 
     client::user_index::happy_path::register_bot(
