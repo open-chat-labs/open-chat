@@ -195,10 +195,10 @@ function mergeParticipants(_: Member | undefined, updated: Member) {
 export function mergeDirectChatUpdates(
     directChats: DirectChatSummary[],
     updates: DirectChatSummaryUpdates[],
-    removed: DirectChatIdentifier[],
+    removed: string[],
 ): DirectChatSummary[] {
     const lookup = ChatMap.fromList(updates);
-    const toRemove = new Set<string>(removed.map((id) => id.userId));
+    const toRemove = new Set<string>(removed);
 
     return directChats
         .filter((c) => !toRemove.has(c.them.userId))
