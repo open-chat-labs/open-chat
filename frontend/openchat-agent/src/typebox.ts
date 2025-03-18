@@ -345,6 +345,12 @@ export const UserUnblockUserResponse = Type.Union([
 export type UserAddHotGroupExclusionsResponse = Static<typeof UserAddHotGroupExclusionsResponse>;
 export const UserAddHotGroupExclusionsResponse = Type.Literal("Success");
 
+export type UserWithdrawBtcArgs = Static<typeof UserWithdrawBtcArgs>;
+export const UserWithdrawBtcArgs = Type.Object({
+    amount: Type.BigInt(),
+    address: Type.String(),
+});
+
 export type UserUpdatesArgs = Static<typeof UserUpdatesArgs>;
 export const UserUpdatesArgs = Type.Object({
     updates_since: Type.BigInt(),
@@ -416,12 +422,6 @@ export const UserPublicProfilePublicProfile = Type.Object({
     is_premium: Type.Boolean(),
     phone_is_verified: Type.Boolean(),
     created: Type.BigInt(),
-});
-
-export type UserRetrieveBtcArgs = Static<typeof UserRetrieveBtcArgs>;
-export const UserRetrieveBtcArgs = Type.Object({
-    amount: Type.BigInt(),
-    address: Type.String(),
 });
 
 export type UserMarkReadResponse = Static<typeof UserMarkReadResponse>;
@@ -5006,6 +5006,25 @@ export const UserChannelSummaryUpdates = Type.Object({
     date_read_pinned: Type.Optional(Type.BigInt()),
 });
 
+export type UserWithdrawBtcResponse = Static<typeof UserWithdrawBtcResponse>;
+export const UserWithdrawBtcResponse = Type.Union([
+    Type.Object({
+        Success: Type.BigInt(),
+    }),
+    Type.Object({
+        ApproveError: Type.String(),
+    }),
+    Type.Object({
+        RetrieveBtcError: Type.String(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type UserPinChatResponse = Static<typeof UserPinChatResponse>;
 export const UserPinChatResponse = Type.Union([
     Type.Literal("Success"),
@@ -5347,25 +5366,6 @@ export type UserPublicProfileResponse = Static<typeof UserPublicProfileResponse>
 export const UserPublicProfileResponse = Type.Object({
     Success: UserPublicProfilePublicProfile,
 });
-
-export type UserRetrieveBtcResponse = Static<typeof UserRetrieveBtcResponse>;
-export const UserRetrieveBtcResponse = Type.Union([
-    Type.Object({
-        Success: Type.BigInt(),
-    }),
-    Type.Object({
-        ApproveError: Type.String(),
-    }),
-    Type.Object({
-        RetrieveBtcError: Type.String(),
-    }),
-    Type.Object({
-        InternalError: Type.String(),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
 
 export type UserEventsByIndexArgs = Static<typeof UserEventsByIndexArgs>;
 export const UserEventsByIndexArgs = Type.Object({
