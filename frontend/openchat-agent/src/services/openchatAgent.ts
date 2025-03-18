@@ -3786,9 +3786,9 @@ export class OpenChatAgent extends EventTarget {
         if (allUtxos.length > 0) {
             const ckBtcMinterClient = new CkbtcMinterClient(this.identity, this._agent, this.config.bitcoinMainnetEnabled);
             const knownUtxos = await ckBtcMinterClient.getKnownUtxos(userId);
-            const utxoSet = new Set(allUtxos.map((utxo) => bytesToHexString(utxo.outpoint.txid)));
+            const allUtxosSet = new Set(allUtxos.map((utxo) => bytesToHexString(utxo.outpoint.txid)));
 
-            if (knownUtxos.some((utxo) => !utxoSet.has(bytesToHexString(utxo.outpoint.txid)))) {
+            if (knownUtxos.some((utxo) => !allUtxosSet.has(bytesToHexString(utxo.outpoint.txid)))) {
                 return await this.userClient.updateBtcBalance();
             }
         }
