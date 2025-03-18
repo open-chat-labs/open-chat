@@ -34,7 +34,6 @@
     $: tokenDetails1 = $cryptoLookup[ledger1];
     $: symbol0 = tokenDetails0.symbol;
     $: symbol1 = tokenDetails1.symbol;
-    $: howToBuyUrl = tokenDetails1.howToBuyUrl;
     $: transferFees = BigInt(2) * tokenDetails1.transferFee;
     $: valid = error === undefined && !insufficient;
     $: insufficient = cryptoBalance <= amount1 + transferFees;
@@ -82,9 +81,6 @@
                     </p>
                     <AccountInfo ledger={ledger1} user={$user} />
                     <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
-                    <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                        <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol1 })} />
-                    </a>
                 {:else}
                     <Translatable
                         resourceKey={i18nKey("p2pSwap.confirmAccept", {

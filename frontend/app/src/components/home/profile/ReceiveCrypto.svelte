@@ -21,7 +21,6 @@
 
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
-    $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: title = i18nKey(`cryptoAccount.receiveToken`, { symbol });
     $: userId = $user.userId;
 
@@ -51,9 +50,6 @@
         {:else}
             <AccountInfo qrSize={"larger"} centered {ledger} user={$user} />
         {/if}
-        <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-            <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
-        </a>
         {#if error}
             <ErrorMessage>{error}</ErrorMessage>
         {/if}

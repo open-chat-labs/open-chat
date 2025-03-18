@@ -856,7 +856,6 @@
     "homepage": "首页",
     "hotGroups": "热门群聊",
     "hours": "小时",
-    "howToBuyToken": "我需要购买 {token} 的帮助",
     "human": {
         "already": "恭喜！您已验证您是一个真实而独特的人！",
         "failed": "抱歉，我们无法确认您是否拥有“唯一人员”可验证凭证。如果您尚未获得该凭证，请按照以下说明操作并重试。",
@@ -1417,7 +1416,6 @@
             "enterTitle": "输入标题",
             "enterUrl": "输入可选网址",
             "header": "提出建议",
-            "howToBuyUrl": "如何购买网址",
             "ledgerCanisterId": "分类帐容器 ID",
             "maxAwards": "最大用户奖励",
             "maxAwardsRules": "至少 {value}",

@@ -22,7 +22,6 @@ impl Tokens {
         fee: u128,
         logo: String,
         info_url: String,
-        how_to_buy_url: String,
         transaction_url_format: String,
         supported_standards: Vec<String>,
         payment: Option<Payment>,
@@ -48,7 +47,6 @@ impl Tokens {
                 logo,
                 logo_id,
                 info_url,
-                how_to_buy_url,
                 transaction_url_format,
                 supported_standards,
                 added: now,
@@ -71,9 +69,6 @@ impl Tokens {
             }
             if let Some(info_url) = args.info_url {
                 token.info_url = info_url;
-            }
-            if let Some(how_to_buy_url) = args.how_to_buy_url {
-                token.how_to_buy_url = how_to_buy_url;
             }
             if let Some(transaction_url_format) = args.transaction_url_format {
                 token.transaction_url_format = transaction_url_format;
@@ -151,7 +146,6 @@ pub struct TokenMetrics {
     logo_length: usize,
     logo_id: Option<u128>,
     info_url: String,
-    how_to_buy_url: String,
     transaction_url_format: String,
     supported_standards: Vec<String>,
     added: TimestampMillis,
@@ -171,7 +165,6 @@ impl From<&TokenDetails> for TokenMetrics {
             logo_length: value.logo.len(),
             logo_id: value.logo_id,
             info_url: value.info_url.clone(),
-            how_to_buy_url: value.how_to_buy_url.clone(),
             transaction_url_format: value.transaction_url_format.clone(),
             supported_standards: value.supported_standards.clone(),
             added: value.added,

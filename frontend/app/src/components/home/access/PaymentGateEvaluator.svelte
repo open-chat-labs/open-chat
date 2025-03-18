@@ -128,9 +128,6 @@
     {#if insufficientFunds}
         <AccountInfo ledger={gate.ledgerCanister} user={$user} />
         <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
-        <a rel="noreferrer" class="how-to" href={token.howToBuyUrl} target="_blank">
-            <Translatable resourceKey={i18nKey("howToBuyToken", { token: token.symbol })} />
-        </a>
     {/if}
 </div>
 <div>

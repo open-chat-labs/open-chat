@@ -21,7 +21,6 @@ async fn add_token(args: Args) -> Response {
         args.payer,
         None,
         Some(args.info_url),
-        Some(args.how_to_buy_url),
         Some(args.transaction_url_format),
     )
     .await
@@ -34,7 +33,6 @@ pub(crate) async fn add_sns_token(nervous_system: NervousSystemDetails) {
         Some(nervous_system),
         None,
         None,
-        None,
     )
     .await;
 }
@@ -45,7 +43,6 @@ pub(crate) async fn add_token_impl(
     payer: Option<UserId>,
     nervous_system: Option<NervousSystemDetails>,
     info_url: Option<String>,
-    how_to_buy_url: Option<String>,
     transaction_url_format: Option<String>,
 ) -> Response {
     let metadata = match icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await {
@@ -64,9 +61,8 @@ pub(crate) async fn add_token_impl(
 
     let Urls {
         info_url,
-        how_to_buy_url,
         transaction_url_format,
-    } = match extract_urls(info_url, how_to_buy_url, transaction_url_format, nervous_system.as_ref()) {
+    } = match extract_urls(info_url, transaction_url_format, nervous_system.as_ref()) {
         Ok(urls) => urls,
         Err(error) => {
             error!(%ledger_canister_id, error);
@@ -149,7 +145,6 @@ pub(crate) async fn add_token_impl(
             metadata_helper.fee(),
             logo,
             info_url,
-            how_to_buy_url,
             transaction_url_format,
             standards,
             payment,
@@ -163,13 +158,11 @@ pub(crate) async fn add_token_impl(
 
 struct Urls {
     info_url: String,
-    how_to_buy_url: String,
     transaction_url_format: String,
 }
 
 fn extract_urls(
     info_url: Option<String>,
-    how_to_buy_url: Option<String>,
     transaction_url_format: Option<String>,
     nervous_system: Option<&NervousSystemDetails>,
 ) -> Result<Urls, &'static str> {
@@ -181,16 +174,6 @@ fn extract_urls(
     }) {
         Some(url) => url,
         _ => return Err("'info_url' must be provided for non-SNS tokens"),
-    };
-
-    let how_to_buy_url = match how_to_buy_url.or_else(|| {
-        nervous_system
-            .as_ref()
-            .is_some_and(|ns| !ns.is_nns)
-            .then_some("https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens".to_string())
-    }) {
-        Some(url) => url,
-        _ => return Err("'how_to_buy_url' must be provided for non-SNS tokens"),
     };
 
     let transaction_url_format = match transaction_url_format.or_else(|| {
@@ -206,7 +189,6 @@ fn extract_urls(
 
     Ok(Urls {
         info_url,
-        how_to_buy_url,
         transaction_url_format,
     })
 }

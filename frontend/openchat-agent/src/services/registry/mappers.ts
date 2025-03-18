@@ -81,7 +81,6 @@ function tokenDetails(
                   )
                 : value.logo,
         infoUrl: value.info_url,
-        howToBuyUrl: value.how_to_buy_url,
         transactionUrlFormat: value.transaction_url_format,
         supportedStandards: value.supported_standards,
         added: value.added,

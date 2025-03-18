@@ -25,7 +25,6 @@ fn add_token_succeeds() {
     let test_data = init_test_data(env, canister_ids, *controller);
 
     let info_url = "info".to_string();
-    let how_to_buy_url = "how to buy".to_string();
     let transaction_url_format = "transaction format".to_string();
 
     let add_token_response = client::registry::add_token(
@@ -37,7 +36,6 @@ fn add_token_succeeds() {
             payer: Some(test_data.user.user_id),
             token_standard: TokenStandard::ICRC1,
             info_url: info_url.clone(),
-            how_to_buy_url: how_to_buy_url.clone(),
             transaction_url_format: transaction_url_format.clone(),
         },
     );
@@ -72,7 +70,6 @@ fn add_token_succeeds() {
         assert_eq!(token.decimals, 8);
         assert_eq!(token.fee, 10_000);
         assert_eq!(token.info_url, info_url);
-        assert_eq!(token.how_to_buy_url, how_to_buy_url);
         assert_eq!(token.transaction_url_format, transaction_url_format);
         assert_eq!(token.last_updated, now);
     } else {
@@ -105,7 +102,6 @@ fn update_token_succeeds() {
     let test_data = init_test_data(env, canister_ids, *controller);
 
     let info_url = "info".to_string();
-    let how_to_buy_url = "how to buy".to_string();
     let transaction_url_format = "transaction format".to_string();
 
     client::registry::add_token(
@@ -117,7 +113,6 @@ fn update_token_succeeds() {
             payer: Some(test_data.user.user_id),
             token_standard: TokenStandard::ICRC1,
             info_url: info_url.clone(),
-            how_to_buy_url: how_to_buy_url.clone(),
             transaction_url_format: transaction_url_format.clone(),
         },
     );
@@ -135,7 +130,6 @@ fn update_token_succeeds() {
             name: Some(new_name.clone()),
             symbol: None,
             info_url: None,
-            how_to_buy_url: None,
             transaction_url_format: None,
             logo: None,
             fee: None,

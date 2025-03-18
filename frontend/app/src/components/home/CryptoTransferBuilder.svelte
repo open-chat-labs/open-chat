@@ -51,7 +51,6 @@
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
-    $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: transferFees = tokenDetails.transferFee;
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalance =
@@ -179,9 +178,6 @@
                         </p>
                     {/if}
                     <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
-                    <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                        <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
-                    </a>
                 {:else}
                     {#if multiUserChat}
                         <div class="receiver">
