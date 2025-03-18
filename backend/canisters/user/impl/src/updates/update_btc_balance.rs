@@ -1,8 +1,8 @@
-use crate::{mutate_state, run_regular_jobs};
+use crate::{mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ckbtc_minter_canister::update_balance::{UpdateBalanceError, UtxoStatus};
-use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
+use ckbtc_minter_canister::{CKBTC_MINTER_CANISTER_ID, TESTNET_CKBTC_MINTER_CANISTER_ID};
 use ledger_utils::format_crypto_amount;
 use tracing::error;
 use user_canister::update_btc_balance::{Response::*, *};
@@ -12,8 +12,11 @@ use user_canister::update_btc_balance::{Response::*, *};
 async fn update_btc_balance(_args: Args) -> Response {
     run_regular_jobs();
 
+    let test_mode = read_state(|state| state.data.test_mode);
+    let ckbtc_minter_canister_id = if test_mode { CKBTC_MINTER_CANISTER_ID } else { TESTNET_CKBTC_MINTER_CANISTER_ID };
+
     match ckbtc_minter_canister_c2c_client::update_balance(
-        CKBTC_MINTER_CANISTER_ID,
+        ckbtc_minter_canister_id,
         &ckbtc_minter_canister::update_balance::Args::default(),
     )
     .await
