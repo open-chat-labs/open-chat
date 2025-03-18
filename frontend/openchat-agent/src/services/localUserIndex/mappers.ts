@@ -105,6 +105,7 @@ export function apiBotActionScope(domain: BotActionScope): ApiBotActionScope {
                     chat: apiChatIdentifier(domain.chatId),
                     thread: domain.threadRootMessageIndex,
                     message_id: domain.messageId,
+                    user_message_id: domain.userMessageId,
                 },
             };
         case "community_scope":

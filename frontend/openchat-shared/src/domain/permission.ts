@@ -222,6 +222,7 @@ export type BotActionChatScope = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
+    userMessageId?: bigint;
 };
 
 export type BotActionCommunityScope = {

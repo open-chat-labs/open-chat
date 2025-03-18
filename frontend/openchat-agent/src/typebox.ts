@@ -6532,6 +6532,7 @@ export const BotActionChatDetails = Type.Object({
     chat: Chat,
     thread: Type.Optional(MessageIndex),
     message_id: MessageId,
+    user_message_id: Type.Optional(MessageId),
 });
 
 export type ReportedMessage = Static<typeof ReportedMessage>;
@@ -8752,6 +8753,7 @@ export const BotCommandDefinition = Type.Object({
     params: Type.Array(BotCommandParam),
     permissions: BotPermissions,
     default_role: Type.Optional(GroupRole),
+    direct_messages: Type.Boolean(),
 });
 
 export type CompositeGate = Static<typeof CompositeGate>;
