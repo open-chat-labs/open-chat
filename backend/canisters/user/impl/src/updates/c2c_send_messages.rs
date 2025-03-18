@@ -141,14 +141,10 @@ pub(crate) fn handle_message_impl(
     let replies_to = convert_reply_context(args.replies_to, args.sender, state);
     let files = args.content.blob_references();
 
-    let chat = if let Some(c) = state.data.direct_chats.get_mut(&chat_id) {
-        c
-    } else {
-        state
-            .data
-            .direct_chats
-            .create(args.sender, args.sender_user_type, state.env.rng().gen(), args.now)
-    };
+    let chat = state
+        .data
+        .direct_chats
+        .get_or_create(args.sender, args.sender_user_type, || state.env.rng().gen(), args.now);
 
     let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 

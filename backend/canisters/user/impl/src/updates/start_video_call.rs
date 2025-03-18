@@ -107,14 +107,11 @@ pub fn handle_start_video_call(
         bot_context: None,
     };
 
-    let chat = if let Some(c) = state.data.direct_chats.get_mut(&other.into()) {
-        c
-    } else {
-        state
-            .data
-            .direct_chats
-            .create(other, UserType::User, state.env.rng().gen(), now)
-    };
+    let chat = state
+        .data
+        .direct_chats
+        .get_or_create(other, UserType::User, || state.env.rng().gen(), now);
+
     let mute_notification = their_message_index.is_some() || chat.notifications_muted.value;
 
     let message_event = chat.push_message(

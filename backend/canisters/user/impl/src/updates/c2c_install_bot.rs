@@ -30,12 +30,10 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     // If there isn't already a direct chat with the bot, create one now
-    if !state.data.direct_chats.exists(&args.bot_id.into()) {
-        state
-            .data
-            .direct_chats
-            .create(args.bot_id, UserType::BotV2, state.env.rng().gen(), now);
-    }
+    state
+        .data
+        .direct_chats
+        .get_or_create(args.bot_id, UserType::BotV2, || state.env.rng().gen(), now);
 
     Success
 }

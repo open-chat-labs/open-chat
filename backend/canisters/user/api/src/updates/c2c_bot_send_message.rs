@@ -10,6 +10,7 @@ pub struct Args {
     pub initiator: BotInitiator,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
+    pub user_message_id: Option<MessageId>,
     pub content: BotMessageContent,
     pub bot_name: String,
     pub block_level_markdown: bool,

@@ -75,6 +75,7 @@ pub struct BotActionChatDetails {
     pub chat: Chat,
     pub thread: Option<MessageIndex>,
     pub message_id: MessageId,
+    pub user_message_id: Option<MessageId>,
 }
 
 #[ts_export]
