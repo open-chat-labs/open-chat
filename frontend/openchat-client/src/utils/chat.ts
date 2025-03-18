@@ -262,13 +262,14 @@ export function createMessage(
     blockLevelMarkdown: boolean,
     replyingTo: ReplyContext | undefined,
     forwarded: boolean,
+    messageId: bigint = random64(),
 ): Message {
     return {
         kind: "message",
         content,
         sender: userId,
         repliesTo: replyingTo,
-        messageId: random64(),
+        messageId,
         messageIndex,
         reactions: [],
         tips: {},

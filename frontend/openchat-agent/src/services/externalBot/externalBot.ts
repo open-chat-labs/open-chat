@@ -40,7 +40,7 @@ const ApiBotResponse = Type.Union([
 type ApiBotResponse = Static<typeof ApiBotResponse>;
 
 export function getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
-    return fetch(`${endpoint}`)
+    return fetch(`${endpoint}/bot_definition`)
         .then((res) => {
             if (res.ok) {
                 return res.json();
@@ -54,10 +54,10 @@ export function getBotDefinition(endpoint: string): Promise<BotDefinitionRespons
                 };
             }
         })
-        .then(validateSchema);
+        .then(validateBotDefinition);
 }
 
-function validateSchema(json: unknown): BotDefinitionResponse {
+function validateBotDefinition(json: unknown): BotDefinitionResponse {
     try {
         const value = typeboxValidate(json, BotDefinition);
         return externalBotDefinition(value);

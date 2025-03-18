@@ -3992,6 +3992,7 @@ export class OpenChat extends EventTarget {
         mentioned: User[] = [],
         forwarded: boolean = false,
         msgFn?: (idx: number) => Message,
+        messageId: bigint = random64(),
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = this.#liveState.chatSummaries.get(chatId);
@@ -4015,6 +4016,7 @@ export class OpenChat extends EventTarget {
                   blockLevelMarkdown,
                   draftMessage?.replyingTo,
                   forwarded,
+                  messageId,
               );
 
         const timestamp = Date.now();
@@ -8271,9 +8273,9 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    #sendPlaceholderBotMessage(
+    sendPlaceholderBotMessage(
         scope: BotActionScope,
-        botContext: BotMessageContext,
+        botContext: BotMessageContext | undefined,
         content: MessageContent,
         msgId: bigint,
         senderId: string,
@@ -8328,22 +8330,25 @@ export class OpenChat extends EventTarget {
     executeBotCommand(
         scope: BotActionScope,
         bot: BotCommandInstance,
+        direct: boolean = false,
     ): Promise<"success" | "failure" | "too_many_requests"> {
-        const botContext = {
-            finalised: false,
-            command: {
-                name: bot.command.name,
-                args: bot.command.arguments,
-                initiator: this.#liveState.user.userId,
-            },
-        };
+        const botContext = direct
+            ? undefined
+            : {
+                  finalised: false,
+                  command: {
+                      name: bot.command.name,
+                      args: bot.command.arguments,
+                      initiator: this.#liveState.user.userId,
+                  },
+              };
         let removePlaceholder: (() => void) | undefined = undefined;
         switch (bot.kind) {
             case "external_bot":
                 return this.#getAuthTokenForBotCommand(scope, bot)
                     .then(([token, msgId]) => {
                         if (bot.command.name !== "sync_api_key") {
-                            removePlaceholder = this.#sendPlaceholderBotMessage(
+                            removePlaceholder = this.sendPlaceholderBotMessage(
                                 scope,
                                 botContext,
                                 bot.command.placeholder !== undefined
@@ -8374,7 +8379,7 @@ export class OpenChat extends EventTarget {
                                 if (resp.message.ephemeral) {
                                     removePlaceholder?.();
                                 }
-                                removePlaceholder = this.#sendPlaceholderBotMessage(
+                                removePlaceholder = this.sendPlaceholderBotMessage(
                                     scope,
                                     { ...botContext, finalised: resp.message.finalised },
                                     resp.message.messageContent,

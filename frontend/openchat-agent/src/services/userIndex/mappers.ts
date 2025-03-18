@@ -429,7 +429,7 @@ export function setUsernameResponse(value: UserIndexSetUsernameResponse): SetUse
         return "username_too_long";
     }
     if ("Error" in value) {
-        return ocError(value.Error)
+        return ocError(value.Error);
     }
     throw new UnsupportedValueError("Unexpected SetUsernameResponse type received", value);
 }
@@ -719,6 +719,7 @@ export function apiExternalBotCommand(command: CommandDefinition): ApiCommandDef
         params: command.params.map(apiExternalBotParam),
         default_role: apiMemberRole(command.defaultRole),
         permissions: apiExternalBotPermissions(command.permissions),
+        direct_messages: command.directMessages,
     };
 }
 

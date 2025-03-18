@@ -129,9 +129,10 @@
 </script>
 
 {#if event.event.kind === "message"}
+    {@const sender = $userStore.get(event.event.sender)}
     {#if !hidden}
         <ChatMessage
-            sender={$userStore.get(event.event.sender)}
+            {sender}
             senderTyping={client.isTyping($typing, event.event.sender, messageContext)}
             {focused}
             {observer}
@@ -151,7 +152,7 @@
             {canPin}
             {canBlockUsers}
             {canDelete}
-            canQuoteReply={canSendAny}
+            canQuoteReply={canSendAny && sender?.kind !== "bot"}
             {canReact}
             canStartThread={canReplyInThread}
             {publicGroup}
