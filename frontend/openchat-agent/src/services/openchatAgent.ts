@@ -1876,7 +1876,7 @@ export class OpenChatAgent extends EventTarget {
                 walletConfig = userResponse.walletConfig ?? current.walletConfig;
                 messageActivitySummary =
                     userResponse.messageActivitySummary ?? current.messageActivitySummary;
-                bitcoinAddress = bitcoinAddress ?? userResponse.bitcoinAddress;
+                bitcoinAddress ??= userResponse.bitcoinAddress;
                 anyUpdates = true;
             }
         }
