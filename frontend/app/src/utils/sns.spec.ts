@@ -17,6 +17,7 @@ function createTestBot(): ExternalBot {
                 {
                     name: "command_one",
                     defaultRole: "member",
+                    directMessages: false,
                     description: "this is a test command",
                     permissions: {
                         chatPermissions: ["addMembers"],

@@ -16,6 +16,7 @@ export const builtinBot: InternalBot = {
             {
                 name: "crypto",
                 defaultRole: "member",
+                directMessages: false,
                 description: "bots.crypto.desc",
                 directBotDisabled: true,
                 permissions: {
@@ -49,6 +50,7 @@ export const builtinBot: InternalBot = {
             {
                 name: "diamond",
                 defaultRole: "member",
+                directMessages: false,
                 description: "bots.diamond.desc",
                 permissions: {
                     ...emptyPermissions,
@@ -60,6 +62,7 @@ export const builtinBot: InternalBot = {
             {
                 name: "gif",
                 defaultRole: "member",
+                directMessages: false,
                 description: "bots.gif.desc",
                 permissions: {
                     ...emptyPermissions,
@@ -83,6 +86,7 @@ export const builtinBot: InternalBot = {
             {
                 name: "faq",
                 defaultRole: "member",
+                directMessages: false,
                 description: "bots.faq.desc",
                 permissions: {
                     ...emptyPermissions,
@@ -171,6 +175,7 @@ export const builtinBot: InternalBot = {
             {
                 name: "poll",
                 defaultRole: "member",
+                directMessages: false,
                 description: "bots.poll.desc",
                 permissions: {
                     ...emptyPermissions,
@@ -182,6 +187,7 @@ export const builtinBot: InternalBot = {
             {
                 name: "register_bot",
                 defaultRole: "member",
+                directMessages: false,
                 description: "bots.register_bot.desc",
                 permissions: emptyPermissions,
                 params: [],
@@ -190,6 +196,7 @@ export const builtinBot: InternalBot = {
             {
                 name: "search",
                 defaultRole: "member",
+                directMessages: false,
                 description: "bots.search.desc",
                 permissions: emptyPermissions,
                 params: [
@@ -202,7 +209,7 @@ export const builtinBot: InternalBot = {
                         description: "bots.search.params.term.desc",
                         placeholder: "bots.search.params.term.placeholder",
                         choices: [],
-                        multi_line: false
+                        multi_line: false,
                     },
                 ],
                 directBotDisabled: false,
@@ -210,6 +217,7 @@ export const builtinBot: InternalBot = {
             {
                 name: "test-msg",
                 defaultRole: "member",
+                directMessages: false,
                 description: "Create and send a number of test messages",
                 devmode: true,
                 permissions: {
@@ -233,6 +241,7 @@ export const builtinBot: InternalBot = {
             {
                 name: "update_bot",
                 defaultRole: "member",
+                directMessages: false,
                 description: "bots.update_bot.desc",
                 permissions: emptyPermissions,
                 params: [],
@@ -241,6 +250,7 @@ export const builtinBot: InternalBot = {
             {
                 name: "remove_bot",
                 defaultRole: "member",
+                directMessages: false,
                 description: "bots.update_bot.removeDesc",
                 permissions: emptyPermissions,
                 params: [],
@@ -249,6 +259,7 @@ export const builtinBot: InternalBot = {
             {
                 name: "witch",
                 defaultRole: "member",
+                directMessages: false,
                 description: "bots.witch.desc",
                 permissions: emptyPermissions,
                 params: [],

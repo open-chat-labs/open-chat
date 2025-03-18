@@ -24,6 +24,8 @@
         UserOrUserGroup,
         AttachmentContent,
         MessageContext,
+        BotActionScope,
+        ExternalBot,
     } from "openchat-client";
     import {
         chatIdentifiersEqual,
@@ -32,6 +34,10 @@
         currentCommunityUserGroups as userGroups,
         anonUser,
         selectedCommunity,
+        externalBots,
+        random64,
+        directMessageCommandInstance,
+        currentUser,
     } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
@@ -102,6 +108,7 @@
     let textboxId = Symbol();
 
     $: directChatBotId = client.directChatWithBot(chat);
+    $: directBot = directChatBotId ? $externalBots.get(directChatBotId) : undefined;
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && attachment === undefined;
     $: canSendAny = !$anonUser && client.canSendMessage(chat.id, mode);
     $: permittedMessages = client.permittedMessages(chat.id, mode);
@@ -288,16 +295,50 @@
         });
     }
 
+    function sendADirectBotMessage(bot: ExternalBot) {
+        const txt = inp.textContent?.trim() ?? "";
+        const userMessageId = random64();
+        const botMessageId = random64();
+
+        const commandInstance = directMessageCommandInstance(bot, txt);
+        if (commandInstance !== undefined) {
+            const scope: BotActionScope = {
+                kind: "chat_scope",
+                chatId: messageContext.chatId,
+                threadRootMessageIndex: messageContext.threadRootMessageIndex,
+                messageId: botMessageId,
+                userMessageId,
+            };
+            client.sendPlaceholderBotMessage(
+                scope,
+                undefined,
+                { kind: "text_content", text: txt },
+                userMessageId,
+                $currentUser.userId,
+                $useBlockLevelMarkdown,
+                false,
+            );
+            client.executeBotCommand(scope, commandInstance, true);
+            afterSendMessage();
+        } else {
+            showDirectBotChatWarning = true;
+        }
+    }
+
     function keyPress(e: KeyboardEvent) {
-        if (e.key === "Enter" && !e.shiftKey) {
-            if ($enterSend && !e.shiftKey && !showCommandSelector && !directChatBotId) {
+        if (e.key === "Enter" && !e.shiftKey && $enterSend) {
+            if (directBot) {
+                if (!showCommandSelector && !messageIsEmpty) {
+                    sendADirectBotMessage(directBot);
+                } else if (!commandSent && $selectedCommand === undefined) {
+                    showDirectBotChatWarning = true;
+                }
                 e.preventDefault();
-                sendMessage();
-            } else if (directChatBotId && !commandSent && $selectedCommand === undefined) {
-                e.preventDefault();
-                showDirectBotChatWarning = true;
-            } else if (directChatBotId && commandSent) {
-                e.preventDefault();
+            } else {
+                if (!showCommandSelector) {
+                    e.preventDefault();
+                    sendMessage();
+                }
             }
             commandSent = false;
         }
@@ -370,6 +411,11 @@
         if (!parseCommands(txt)) {
             dispatch("sendMessage", expandMentions(txt));
         }
+
+        afterSendMessage();
+    }
+
+    function afterSendMessage() {
         inp.textContent = "";
         dispatch("setTextContent", undefined);
 

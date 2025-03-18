@@ -26,12 +26,12 @@ function filterCommand(
     }
 
     if (prefixParts.length > 1) {
-        return c.name.toLocaleLowerCase() === parsedPrefix.toLocaleLowerCase();
+        return c.name.toLocaleLowerCase() === parsedPrefix;
     } else {
         const desc = c.description ? formatter(c.description).toLocaleLowerCase() : undefined;
         return (
-            c.name.toLocaleLowerCase().includes(parsedPrefix.toLocaleLowerCase()) ||
-            (desc?.includes(parsedPrefix.toLocaleLowerCase()) ?? false)
+            c.name.toLocaleLowerCase().includes(parsedPrefix) ||
+            (desc?.includes(parsedPrefix) ?? false)
         );
     }
 }
@@ -64,43 +64,60 @@ export const parsedPrefix = derived(
     (prefixParts) => prefixParts[0]?.slice(1)?.toLocaleLowerCase() ?? "",
 );
 
+function sortByPrefix(prefix: string): (a: FlattenedCommand, b: FlattenedCommand) => number {
+    return (a, b) => {
+        const aStartsWithPrefix = a.name.toLocaleLowerCase().startsWith(prefix);
+        const bStartsWithPrefix = b.name.toLocaleLowerCase().startsWith(prefix);
+
+        if (aStartsWithPrefix && !bStartsWithPrefix) {
+            return -1;
+        } else if (!aStartsWithPrefix && bStartsWithPrefix) {
+            return 1;
+        } else {
+            return a.name.localeCompare(b.name);
+        }
+    };
+}
+
 export const commands = derived(
     [_, externalBots, selectedCommand, parsedPrefix, prefixParts],
     ([$_, externalBots, selectedCommand, parsedPrefix, prefixParts]) => {
         const bots = [builtinBot, ...externalBots.values()];
-        return bots.flatMap((b) => {
-            switch (b.kind) {
-                case "external_bot":
-                    return b.definition.commands
-                        .map((c) => {
-                            return {
-                                ...c,
-                                kind: b.kind,
-                                botName: b.name,
-                                avatarUrl: b.avatarUrl,
-                                botId: b.id,
-                                botEndpoint: b.endpoint,
-                                botDescription: b.definition.description,
-                            };
-                        })
-                        .filter((c) =>
-                            filterCommand($_, c, selectedCommand, parsedPrefix, prefixParts),
-                        ) as FlattenedCommand[];
-                case "internal_bot":
-                    return b.definition.commands
-                        .map((c) => {
-                            return {
-                                ...c,
-                                kind: b.kind,
-                                botName: b.name,
-                                botDescription: b.definition.description,
-                            };
-                        })
-                        .filter((c) =>
-                            filterCommand($_, c, selectedCommand, parsedPrefix, prefixParts),
-                        ) as FlattenedCommand[];
-            }
-        });
+        return bots
+            .flatMap((b) => {
+                switch (b.kind) {
+                    case "external_bot":
+                        return b.definition.commands
+                            .map((c) => {
+                                return {
+                                    ...c,
+                                    kind: b.kind,
+                                    botName: b.name,
+                                    avatarUrl: b.avatarUrl,
+                                    botId: b.id,
+                                    botEndpoint: b.endpoint,
+                                    botDescription: b.definition.description,
+                                };
+                            })
+                            .filter((c) =>
+                                filterCommand($_, c, selectedCommand, parsedPrefix, prefixParts),
+                            ) as FlattenedCommand[];
+                    case "internal_bot":
+                        return b.definition.commands
+                            .map((c) => {
+                                return {
+                                    ...c,
+                                    kind: b.kind,
+                                    botName: b.name,
+                                    botDescription: b.definition.description,
+                                };
+                            })
+                            .filter((c) =>
+                                filterCommand($_, c, selectedCommand, parsedPrefix, prefixParts),
+                            ) as FlattenedCommand[];
+                }
+            })
+            .sort(sortByPrefix(parsedPrefix));
     },
 );
 export const instanceValid = derived(

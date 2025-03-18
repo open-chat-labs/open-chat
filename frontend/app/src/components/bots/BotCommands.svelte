@@ -8,6 +8,7 @@
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
     import ShieldAccount from "svelte-material-icons/ShieldAccount.svelte";
+    import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
 
     interface Props {
         grantedPermissions?: ExternalBotPermissions;
@@ -18,6 +19,10 @@
     }
 
     let { grantedPermissions, commands, centered = false, onClick, errors }: Props = $props();
+
+    function commandSupportsDirectMessages(command: CommandDefinition): boolean {
+        return command.directMessages && command.params[0]?.kind === "string";
+    }
 </script>
 
 <div class="commands" class:centered>
@@ -36,6 +41,9 @@
                 class:not_permitted={!permitted}>
                 {#if command.defaultRole === "owner" || command.defaultRole === "admin"}
                     <ShieldAccount size={"1rem"} color={"var(--button-txt)"} />
+                {/if}
+                {#if commandSupportsDirectMessages(command)}
+                    <SwapHorizontal size={"1rem"} color={"var(--button-txt)"} />
                 {/if}
                 {`/${command.name}`}
             </div>

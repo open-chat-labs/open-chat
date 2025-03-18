@@ -163,6 +163,7 @@ export function emptyBotCommand(): CommandDefinition {
         params: [],
         defaultRole: "member",
         permissions: emptyExternalBotPermissions(),
+        directMessages: false,
     };
 }
 
@@ -175,6 +176,7 @@ export type CommandDefinition = {
     devmode?: boolean;
     defaultRole: MemberRole;
     directBotDisabled?: boolean;
+    directMessages: boolean;
 };
 
 export function emptyExternalBotPermissions(): ExternalBotPermissions {
@@ -394,7 +396,14 @@ export type CommandArgType =
 
 export type CommandArg = CommandArgCommon & CommandArgType;
 
+function singleStringParam(params: CommandParam[]): boolean {
+    return params.length === 1 && params[0].kind === "string";
+}
+
 export function createArgsFromSchema(params: CommandParam[], maybeArgs: string[]): CommandArg[] {
+    if (singleStringParam(params)) {
+        return [{ kind: "string", name: params[0].name, value: maybeArgs.join(" ") }];
+    }
     return params.map((p, i) => {
         switch (p.kind) {
             case "user":
@@ -768,5 +777,26 @@ export function botActionScopeFromInstallLocation(
                 messageId: random64(),
                 threadRootMessageIndex: undefined,
             };
+    }
+}
+
+export function directMessageCommandInstance(
+    bot: ExternalBot,
+    text: string,
+): BotCommandInstance | undefined {
+    const command = bot.definition.commands.find((c) => {
+        return c.directMessages && c.params[0]?.kind === "string";
+    });
+    if (command) {
+        return {
+            kind: "external_bot",
+            id: bot.id,
+            endpoint: bot.endpoint,
+            command: {
+                name: command.name,
+                arguments: createArgsFromSchema(command.params, [text]),
+                placeholder: command.placeholder,
+            },
+        };
     }
 }
