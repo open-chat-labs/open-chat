@@ -19,6 +19,7 @@ import {
     setActivityFeedEvents,
     getCachedBots,
     setCachedBots,
+    deleteEventsForChat,
 } from "../utils/caching";
 import { isMainnet } from "../utils/network";
 import { getAllUsers, clearCache as clearUserCache, isUserIdDeleted } from "../utils/userCache";
@@ -1816,13 +1817,17 @@ export class OpenChatAgent extends EventTarget {
                     installedBots.delete(b);
                     apiKeys.delete(b);
                 });
+                const removeDirectChatIds = userResponse.directChats.removed.map((id) => id.userId);
                 directChats = userResponse.directChats.added.concat(
                     mergeDirectChatUpdates(
                         directChats,
                         userResponse.directChats.updated,
-                        userResponse.directChats.removed,
+                        removeDirectChatIds,
                     ),
                 );
+                removeDirectChatIds.forEach((id) => {
+                    deleteEventsForChat(this.db, id);
+                });
                 directChatUpdates = userResponse.directChats.updated;
 
                 groupsAdded = userResponse.groupChats.added;
