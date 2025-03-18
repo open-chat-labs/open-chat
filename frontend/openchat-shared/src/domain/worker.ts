@@ -155,7 +155,6 @@ import type {
     FreezeCommunityResponse,
     UnfreezeCommunityResponse,
 } from "./community";
-import type { UpdateBtcBalanceResponse } from "./bitcoin";
 import type { RegistryValue } from "./registry";
 import type {
     StakeNeuronForSubmittingProposalsResponse,
@@ -1404,6 +1403,7 @@ type GetCachePrimerTimestamps = {
 
 type UpdateBtcBalance = {
     userId: string;
+    bitcoinAddress: string;
     kind: "updateBtcBalance";
 };
 
@@ -1639,7 +1639,6 @@ export type WorkerResponseInner =
     | ProposedResponse
     | PendingDeploymentResponse
     | JoinVideoCallResponse
-    | UpdateBtcBalanceResponse
     | WebAuthnKeyFull
     | GenerateMagicLinkResponse
     | SiwePrepareLoginResponse
@@ -2325,7 +2324,7 @@ export type WorkerResult<T> = T extends Init
     : T extends GetLocalUserIndexForUser
     ? string
     : T extends UpdateBtcBalance
-    ? UpdateBtcBalanceResponse
+    ? boolean
     : T extends CurrentUserWebAuthnKey
     ? WebAuthnKeyFull | undefined
     : T extends LookupWebAuthnPubKey

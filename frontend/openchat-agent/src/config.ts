@@ -25,6 +25,7 @@ export type AgentConfig = {
     signInWithEmailCanister: string;
     signInWithEthereumCanister: string;
     signInWithSolanaCanister: string;
+    bitcoinMainnetEnabled: boolean;
     groupInvite?: GroupInvite;
     logger: Logger;
 };

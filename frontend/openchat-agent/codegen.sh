@@ -17,6 +17,9 @@ didc bind ../../backend/canisters/storage_index/api/can.did -t js > ./src/servic
 didc bind ../../backend/canisters/translations/api/can.did -t ts > ./src/services/translations/candid/types.d.ts
 didc bind ../../backend/canisters/translations/api/can.did -t js > ./src/services/translations/candid/idl.js
 
+didc bind ./src/services/bitcoin/candid/can.did -t ts > ./src/services/bitcoin/candid/types.d.ts
+didc bind ./src/services/bitcoin/candid/can.did -t js > ./src/services/bitcoin/candid/idl.js
+
 didc bind ./src/services/dexes/icpSwap/index/candid/can.did -t ts > ./src/services/dexes/icpSwap/index/candid/types.d.ts
 didc bind ./src/services/dexes/icpSwap/index/candid/can.did -t js > ./src/services/dexes/icpSwap/index/candid/idl.js
 

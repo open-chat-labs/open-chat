@@ -217,6 +217,15 @@ export const GroupSelectedUpdatesArgs = Type.Object({
 export type GroupSummaryArgs = Static<typeof GroupSummaryArgs>;
 export const GroupSummaryArgs = Type.Object({});
 
+export type UserUpdateBtcBalanceResponse = Static<typeof UserUpdateBtcBalanceResponse>;
+export const UserUpdateBtcBalanceResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NoUpdates"),
+    Type.Object({
+        Error: Type.String(),
+    }),
+]);
+
 export type UserMessageActivitySummary = Static<typeof UserMessageActivitySummary>;
 export const UserMessageActivitySummary = Type.Object({
     read_up_to: Type.BigInt(),

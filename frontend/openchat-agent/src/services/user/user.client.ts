@@ -262,6 +262,7 @@ import {
     UserUndeleteMessagesResponse,
     UserUnpinChatArgs,
     UserUnpinChatResponse,
+    UserUpdateBtcBalanceResponse,
     UserUpdatesArgs,
     UserUpdatesResponse,
     UserWithdrawCryptoArgs,
@@ -1706,6 +1707,16 @@ export class UserClient extends MsgpackCanisterAgent {
             },
             UserApiKeyArgs,
             UserApiKeyResponse,
+        );
+    }
+
+    updateBtcBalance(): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_btc_balance",
+            {},
+            (resp) => resp === "Success",
+            TEmpty,
+            UserUpdateBtcBalanceResponse
         );
     }
 }

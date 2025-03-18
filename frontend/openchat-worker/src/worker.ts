@@ -1762,7 +1762,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "updateBtcBalance":
-                executeThenReply(payload, correlationId, agent.updateBtcBalance(payload.userId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateBtcBalance(payload.userId, payload.bitcoinAddress)
+                );
                 break;
 
             case "currentUserWebAuthnKey":

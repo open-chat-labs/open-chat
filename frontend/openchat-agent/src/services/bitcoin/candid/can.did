@@ -1,0 +1,44 @@
+type network = variant {
+  mainnet;
+  testnet;
+  regtest;
+};
+
+type satoshi = nat64;
+
+type address = text;
+
+type block_hash = blob;
+
+type block_height = nat32;
+
+type outpoint = record {
+  txid : blob;
+  vout : nat32;
+};
+
+type utxo = record {
+  outpoint : outpoint;
+  value : satoshi;
+  height : block_height;
+};
+
+type get_utxos_request = record {
+  network : network;
+  address : address;
+  filter : opt variant {
+    min_confirmations : nat32;
+    page : blob;
+  };
+};
+
+type get_utxos_response = record {
+  utxos : vec utxo;
+  tip_block_hash : block_hash;
+  tip_height : block_height;
+  next_page : opt blob;
+};
+
+service bitcoin : {
+  bitcoin_get_utxos_query : (get_utxos_request) -> (get_utxos_response) query;
+};
