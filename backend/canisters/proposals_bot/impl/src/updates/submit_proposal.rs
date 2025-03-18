@@ -24,6 +24,17 @@ const OC_ROOT_URL: &str = "https://oc.app/";
 #[update(msgpack = true)]
 #[trace]
 async fn submit_proposal(args: Args) -> Response {
+    let governance_canister_id = args.governance_canister_id;
+    let response = submit_proposal_impl(args).await;
+
+    if !matches!(response, Success) {
+        error!(%governance_canister_id, ?response, "User failed to submit proposal");
+    }
+
+    response
+}
+
+async fn submit_proposal_impl(args: Args) -> Response {
     let PrepareResult {
         caller,
         this_canister_id,
