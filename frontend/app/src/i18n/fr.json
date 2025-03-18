@@ -856,7 +856,6 @@
     "homepage": "Page d'accueil",
     "hotGroups": "Groupes chauds",
     "hours": "Heures",
-    "howToBuyToken": "J'ai besoin d'aide pour acheter {token}",
     "human": {
         "already": "Toutes nos félicitations! Vous avez déjà vérifié que vous êtes une personne réelle et unique !",
         "failed": "Désolé, nous n'avons pas pu confirmer que vous possédez l'identifiant vérifiable « Personne unique ». Si vous ne disposez pas encore des informations d'identification, suivez les instructions ci-dessous et réessayez.",
@@ -1417,7 +1416,6 @@
             "enterTitle": "Entrez un titre",
             "enterUrl": "Entrez une URL facultative",
             "header": "Faire une proposition",
-            "howToBuyUrl": "Comment acheter une URL",
             "ledgerCanisterId": "Identifiant de la cartouche du grand livre",
             "maxAwards": "Nombre maximal d'utilisateurs récompensés",
             "maxAwardsRules": "au moins {value}",

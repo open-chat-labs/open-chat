@@ -23,7 +23,6 @@ export type CryptocurrencyDetails = {
     decimals: number;
     transferFee: bigint;
     logo: string;
-    howToBuyUrl: string;
     infoUrl: string;
     transactionUrlFormat: string;
     supportedStandards: string[];

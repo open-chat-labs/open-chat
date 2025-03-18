@@ -255,16 +255,6 @@
                         </p>
                     {/if}
                     <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
-                    <a
-                        rel="noreferrer"
-                        class="how-to"
-                        href={tokenDetails.howToBuyUrl}
-                        target="_blank">
-                        <Translatable
-                            resourceKey={i18nKey("howToBuyToken", {
-                                token: tokenDetails.symbol,
-                            })} />
-                    </a>
                 {:else}
                     {#if exchangeRate > 0}
                         <div class="amounts">

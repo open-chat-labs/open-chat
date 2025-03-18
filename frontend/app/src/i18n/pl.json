@@ -856,7 +856,6 @@
     "homepage": "Strona główna",
     "hotGroups": "Gorące grupy",
     "hours": "godziny",
-    "howToBuyToken": "Potrzebuję pomocy w zakupie {token}",
     "human": {
         "already": "Gratulacje! Już zweryfikowałeś, że jesteś prawdziwą, wyjątkową osobą!",
         "failed": "Przepraszamy, nie mogliśmy potwierdzić, że posiadasz weryfikowalne dane uwierzytelniające „Wyjątkowa osoba”. Jeżeli nie posiadasz jeszcze poświadczeń, postępuj zgodnie z poniższymi instrukcjami i spróbuj ponownie.",
@@ -1417,7 +1416,6 @@
             "enterTitle": "Wpisz tytuł",
             "enterUrl": "Wprowadź opcjonalny adres URL",
             "header": "Zaproponować",
-            "howToBuyUrl": "Jak kupić url",
             "ledgerCanisterId": "Identyfikator pojemnika księgi głównej",
             "maxAwards": "Maksymalna liczba nagrodzonych użytkowników",
             "maxAwardsRules": "przynajmniej {value}",

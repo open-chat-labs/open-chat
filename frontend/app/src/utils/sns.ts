@@ -9,14 +9,12 @@ export function createAddTokenPayload(
     ledgerCanisterId: string,
     userId: string,
     infoUrl: string,
-    howToBuyUrl: string,
     transactionUrlFormat: string,
 ): Uint8Array {
     return new Uint8Array(
         IDL.encode(
             [
                 IDL.Record({
-                    how_to_buy_url: IDL.Text,
                     info_url: IDL.Text,
                     payer: IDL.Opt(IDL.Principal),
                     token_standard: IDL.Variant({ icrc1: IDL.Null }),
@@ -26,7 +24,6 @@ export function createAddTokenPayload(
             ],
             [
                 {
-                    how_to_buy_url: howToBuyUrl,
                     info_url: infoUrl,
                     payer: [Principal.fromText(userId)],
                     token_standard: { icrc1: null },
@@ -43,14 +40,12 @@ export function createUpdateTokenPayload(
     name: string | undefined,
     symbol: string | undefined,
     infoUrl: string | undefined,
-    howToBuyUrl: string | undefined,
     transactionUrlFormat: string | undefined,
 ): Uint8Array {
     return new Uint8Array(
         IDL.encode(
             [
                 IDL.Record({
-                    how_to_buy_url: IDL.Opt(IDL.Text),
                     info_url: IDL.Opt(IDL.Text),
                     name: IDL.Opt(IDL.Text),
                     ledger_canister_id: IDL.Principal,
@@ -60,7 +55,6 @@ export function createUpdateTokenPayload(
             ],
             [
                 {
-                    how_to_buy_url: optionalStringToCandid(howToBuyUrl),
                     info_url: optionalStringToCandid(infoUrl),
                     name: optionalStringToCandid(name),
                     ledger_canister_id: Principal.fromText(ledgerCanisterId),

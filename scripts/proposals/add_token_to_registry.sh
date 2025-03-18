@@ -5,8 +5,7 @@ TOKEN_NAME=$1
 LEDGER_CANISTER_ID=$2
 TOKEN_STANDARD=$3
 INFO_URL=$4
-HOW_TO_BUY_URL=$5
-TRANSACTION_URL_FORMAT=$6
+TRANSACTION_URL_FORMAT=$5
 
 # Set current directory to the scripts root
 SCRIPT=$(readlink -f "$0")
@@ -21,7 +20,6 @@ ARGS="(record {
     ledger_canister_id=principal \"$LEDGER_CANISTER_ID\";
     token_standard=variant { \"$TOKEN_STANDARD\" };
     info_url=\"$INFO_URL\";
-    how_to_buy_url=\"$HOW_TO_BUY_URL\";
     transaction_url_format=\"$TRANSACTION_URL_FORMAT\";
 })"
 

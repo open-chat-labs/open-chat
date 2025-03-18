@@ -87,7 +87,6 @@
     $: toPay = amount(toPayE8s);
     $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
     $: tokenDetails = $cryptoLookup[ledger];
-    $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: selectedDuration = indexToDuration[selectedOption?.index ?? 0] ?? "one_month";
 
     const indexToDuration: Record<number, DiamondMembershipDuration> = {
@@ -224,12 +223,6 @@
                             token: tokenDetails.symbol,
                             amount: `${toPay} ${tokenDetails.symbol}`,
                         })} /></ErrorMessage>
-                <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                    <Translatable
-                        resourceKey={i18nKey("howToBuyToken", {
-                            token: tokenDetails.symbol,
-                        })} />
-                </a>
             {/if}
 
             {#if error}

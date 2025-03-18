@@ -856,7 +856,6 @@
     "homepage": "Startseite",
     "hotGroups": "Heiße Gruppen",
     "hours": "Std",
-    "howToBuyToken": "Ich brauche Hilfe beim Kauf von {token}",
     "human": {
         "already": "Herzlichen Glückwunsch! Sie haben bereits bestätigt, dass Sie eine echte, einzigartige Person sind!",
         "failed": "Leider konnten wir Ihren Besitz der verifizierbaren Berechtigung „Eindeutige Person“ nicht bestätigen. Wenn Sie die Berechtigung noch nicht haben, folgen Sie den nachstehenden Anweisungen und versuchen Sie es erneut.",
@@ -1417,7 +1416,6 @@
             "enterTitle": "Geben Sie einen Titel ein",
             "enterUrl": "Geben Sie eine optionale URL ein",
             "header": "Mache einen Antrag",
-            "howToBuyUrl": "So kaufen Sie eine URL",
             "ledgerCanisterId": "Hauptbuchkanister-ID",
             "maxAwards": "Maximale Anzahl an vergebenen Benutzern",
             "maxAwardsRules": "zumindest {value}",

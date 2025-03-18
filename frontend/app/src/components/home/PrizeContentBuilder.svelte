@@ -72,7 +72,6 @@
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
-    $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: transferFee = tokenDetails.transferFee;
     $: transferFees = transferFee * BigInt(numberOfWinners ?? 0);
     $: prizeFees = transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n;
@@ -306,9 +305,6 @@
                         </p>
                     {/if}
                     <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
-                    <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                        <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
-                    </a>
                 {:else}
                     <div class="transfer">
                         <TokenInput

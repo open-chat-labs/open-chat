@@ -190,7 +190,6 @@ impl Data {
             10_000,
             IC_LOGO.to_string(),
             "https://dashboard.internetcomputer.org/transactions".to_string(),
-            "https://www.finder.com/uk/how-to-buy-internet-computer".to_string(),
             "https://dashboard.internetcomputer.org/transaction/{transaction_index}".to_string(),
             ["ICRC-1".to_string(), "ICRC-2".to_string()].to_vec(),
             None,

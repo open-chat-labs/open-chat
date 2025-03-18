@@ -115,7 +115,6 @@
     $: ledger = tokenDetails.ledger;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: symbol = tokenDetails.symbol;
-    $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: transferFee = tokenDetails.transferFee;
     $: proposalCost = nervousSystem.proposalRejectionFee;
     $: requiredFunds = proposalCost + BigInt(3) * transferFee;
@@ -141,7 +140,6 @@
         achivementName.length >= MIN_ACHIEVEMENT_NAME_LENGTH &&
         achivementName.length <= MAX_ACHIEVEMENT_NAME_LENGTH;
     $: addOrUpdateTokenLedgerCanisterId = "";
-    $: addOrUpdateTokenHowToBuyUrl = "";
     $: addOrUpdateTokenInfoUrl = "";
     $: addOrUpdateTokenTransactionUrlFormat = "";
     $: logo = "";
@@ -172,12 +170,10 @@
                 isPrincipalValid(awardingAchievementCanisterId)) ||
             (selectedProposalType === "add_token" &&
                 isPrincipalValid(addOrUpdateTokenLedgerCanisterId) &&
-                addOrUpdateTokenHowToBuyUrl.length > 0 &&
                 addOrUpdateTokenTransactionUrlFormat.length > 0) ||
             (selectedProposalType === "update_token" &&
                 isPrincipalValid(addOrUpdateTokenLedgerCanisterId) &&
-                (addOrUpdateTokenHowToBuyUrl.length > 0 ||
-                    addOrUpdateTokenTransactionUrlFormat.length > 0)));
+                addOrUpdateTokenTransactionUrlFormat.length > 0));
     $: canSubmit =
         step === 2 ||
         (step === 1 &&
@@ -303,7 +299,6 @@
                         addOrUpdateTokenLedgerCanisterId,
                         $user.userId,
                         addOrUpdateTokenInfoUrl,
-                        addOrUpdateTokenHowToBuyUrl,
                         addOrUpdateTokenTransactionUrlFormat,
                     ),
                 };
@@ -317,7 +312,6 @@
                         undefined,
                         undefined,
                         addOrUpdateTokenInfoUrl,
-                        addOrUpdateTokenHowToBuyUrl,
                         addOrUpdateTokenTransactionUrlFormat,
                     ),
                 };
@@ -433,9 +427,6 @@
             <div class="topup hidden" class:visible={step === 0}>
                 <AccountInfo {ledger} user={$user} />
                 <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
-                <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                    <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
-                </a>
             </div>
             <div class="common hidden" class:visible={step === 1}>
                 <section class="type">
@@ -699,18 +690,6 @@
                                 bind:value={addOrUpdateTokenInfoUrl}
                                 countdown
                                 placeholder={i18nKey("https://token.com/info")} />
-                        </section>
-                        <section>
-                            <Legend
-                                label={i18nKey("proposal.maker.howToBuyUrl")}
-                                required={selectedProposalType === "add_token"} />
-                            <Input
-                                disabled={busy}
-                                minlength={1}
-                                maxlength={100}
-                                bind:value={addOrUpdateTokenHowToBuyUrl}
-                                countdown
-                                placeholder={i18nKey("https://token.com/how-to-buy")} />
                         </section>
                         <section>
                             <Legend

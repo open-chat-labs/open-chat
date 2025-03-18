@@ -856,7 +856,6 @@
     "homepage": "página de inicio",
     "hotGroups": "Grupos calientes",
     "hours": "Horas",
-    "howToBuyToken": "Necesito ayuda para comprar {token}",
     "human": {
         "already": "¡Felicidades! ¡Ya has comprobado que eres una persona real y única!",
         "failed": "Lo sentimos, no pudimos confirmar su posesión de la credencial verificable de \"Persona única\". Si aún no tiene la credencial, siga las instrucciones a continuación e inténtelo nuevamente.",
@@ -1417,7 +1416,6 @@
             "enterTitle": "Introduce un título",
             "enterUrl": "Introduce una URL opcional",
             "header": "Hacer una proposición",
-            "howToBuyUrl": "como comprar URL",
             "ledgerCanisterId": "ID del contenedor del libro mayor",
             "maxAwards": "Máximo de usuarios premiados",
             "maxAwardsRules": "al menos {value}",

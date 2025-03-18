@@ -1908,7 +1908,6 @@ export const RegistryTokenDetails = Type.Object({
     logo: Type.String(),
     logo_id: Type.Optional(Type.BigInt()),
     info_url: Type.String(),
-    how_to_buy_url: Type.String(),
     transaction_url_format: Type.String(),
     supported_standards: Type.Array(Type.String()),
     added: Type.BigInt(),

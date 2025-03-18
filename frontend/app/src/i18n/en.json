@@ -856,7 +856,6 @@
     "homepage": "Home page",
     "hotGroups": "Hot groups",
     "hours": "Hours",
-    "howToBuyToken": "I need help buying {token}",
     "human": {
         "already": "Congratulations! You have already verified that you are a real, unique person!",
         "failed": "Sorry we were not able to confirm your possession of the \"Unique Person\" verifiable credential. If you do not yet have the credential, follow the instructions below and try again.",
@@ -1417,7 +1416,6 @@
             "enterTitle": "Enter a title",
             "enterUrl": "Enter an optional url",
             "header": "Make a proposal",
-            "howToBuyUrl": "How to buy url",
             "ledgerCanisterId": "Ledger canister Id",
             "maxAwards": "Max users awarded",
             "maxAwardsRules": "at least {value}",

@@ -856,7 +856,6 @@
     "homepage": "trang chủ",
     "hotGroups": "Nhóm nóng",
     "hours": "Giờ",
-    "howToBuyToken": "Tôi cần trợ giúp mua {token}",
     "human": {
         "already": "Chúc mừng! Bạn đã xác minh rằng bạn là một người thực sự, độc nhất!",
         "failed": "Rất tiếc, chúng tôi không thể xác nhận việc bạn sở hữu thông tin xác thực \"Người duy nhất\". Nếu bạn chưa có thông tin xác thực, hãy làm theo hướng dẫn bên dưới và thử lại.",
@@ -1417,7 +1416,6 @@
             "enterTitle": "Nhập tiêu đề",
             "enterUrl": "Nhập url tùy chọn",
             "header": "Đưa ra đề xuất",
-            "howToBuyUrl": "Làm thế nào để mua url",
             "ledgerCanisterId": "Id hộp sổ cái",
             "maxAwards": "Người dùng tối đa được trao giải",
             "maxAwardsRules": "ít nhất {value}",

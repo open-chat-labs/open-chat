@@ -5,7 +5,6 @@ type AddTokenArgs = record {
     payer : opt UserId;
     token_standard : TokenStandard;
     info_url : text;
-    how_to_buy_url : text;
     transaction_url_format : text;
 };
 
@@ -56,7 +55,6 @@ type TokenDetails = record {
     logo : text;
     logo_id : opt nat;
     info_url : text;
-    how_to_buy_url : text;
     transaction_url_format : text;
     supported_standards : vec text;
     added : TimestampMillis;

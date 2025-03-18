@@ -856,7 +856,6 @@
     "homepage": "Pagina iniziale",
     "hotGroups": "Gruppi caldi",
     "hours": "Ore",
-    "howToBuyToken": "Ho bisogno di aiuto per l'acquisto di {token}",
     "human": {
         "already": "Congratulazioni! Hai già verificato che sei una persona reale, unica!",
         "failed": "Siamo spiacenti, non siamo stati in grado di confermare il tuo possesso della credenziale verificabile \"Persona unica\". Se non hai ancora la credenziale, segui le istruzioni riportate di seguito e riprova.",
@@ -1417,7 +1416,6 @@
             "enterTitle": "Inserisci un titolo",
             "enterUrl": "Inserisci un URL facoltativo",
             "header": "Fai una proposta",
-            "howToBuyUrl": "Come acquistare l'URL",
             "ledgerCanisterId": "ID contenitore registro",
             "maxAwards": "Numero massimo di utenti assegnati",
             "maxAwardsRules": "almeno {value}",

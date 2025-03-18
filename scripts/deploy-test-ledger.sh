@@ -37,6 +37,5 @@ dfx --identity $IDENTITY canister call registry add_token "(record {
     payer = null;
     token_standard = variant { icrc1 };
     info_url = \"https://dashboard.internetcomputer.org/sns/3e3x2-xyaaa-aaaaq-aaalq-cai\";
-    how_to_buy_url = \"https://dashboard.internetcomputer.org/sns/3e3x2-xyaaa-aaaaq-aaalq-cai\";
     transaction_url_format = \"https://dashboard.internetcomputer.org/sns/3e3x2-xyaaa-aaaaq-aaalq-cai/transactions/{transaction_index}\";
 })"

@@ -10,7 +10,6 @@ pub struct Args {
     pub payer: Option<UserId>,
     pub token_standard: TokenStandard,
     pub info_url: String,
-    pub how_to_buy_url: String,
     pub transaction_url_format: String,
 }
 
@@ -29,7 +28,6 @@ pub struct HumanReadableArgs {
     payer: Option<HumanReadablePrincipal>,
     token_standard: String,
     info_url: String,
-    how_to_buy_url: String,
     transaction_url_format: String,
 }
 
@@ -42,7 +40,6 @@ impl ToHumanReadable for Args {
             payer: self.payer.map(|user_id| Principal::from(user_id).into()),
             token_standard: self.token_standard.to_string(),
             info_url: self.info_url.clone(),
-            how_to_buy_url: self.how_to_buy_url.clone(),
             transaction_url_format: self.transaction_url_format.clone(),
         }
     }

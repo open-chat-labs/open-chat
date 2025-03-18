@@ -26,7 +26,6 @@ pub struct TokenDetails {
     pub logo: String,
     pub logo_id: Option<u128>,
     pub info_url: String,
-    pub how_to_buy_url: String,
     pub transaction_url_format: String,
     pub supported_standards: Vec<String>,
     pub added: TimestampMillis,

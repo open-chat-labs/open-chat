@@ -9,7 +9,6 @@ pub struct Args {
     pub name: Option<String>,
     pub symbol: Option<String>,
     pub info_url: Option<String>,
-    pub how_to_buy_url: Option<String>,
     pub transaction_url_format: Option<String>,
     pub logo: Option<String>,
     pub fee: Option<u128>,
@@ -22,7 +21,6 @@ impl Args {
             name: None,
             symbol: None,
             info_url: None,
-            how_to_buy_url: None,
             transaction_url_format: None,
             logo: None,
             fee: None,
@@ -33,7 +31,6 @@ impl Args {
         self.name.is_some()
             || self.symbol.is_some()
             || self.info_url.is_some()
-            || self.how_to_buy_url.is_some()
             || self.transaction_url_format.is_some()
             || self.logo.is_some()
             || self.fee.is_some()
@@ -52,7 +49,6 @@ pub struct HumanReadableArgs {
     name: Option<String>,
     symbol: Option<String>,
     info_url: Option<String>,
-    how_to_buy_url: Option<String>,
     transaction_url_format: Option<String>,
     logo: Option<String>,
 }
@@ -66,7 +62,6 @@ impl ToHumanReadable for Args {
             name: self.name.clone(),
             symbol: self.symbol.clone(),
             info_url: self.info_url.clone(),
-            how_to_buy_url: self.how_to_buy_url.clone(),
             transaction_url_format: self.transaction_url_format.clone(),
             logo: self.logo.clone(),
         }
