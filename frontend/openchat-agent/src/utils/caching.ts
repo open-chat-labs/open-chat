@@ -441,6 +441,19 @@ export async function setCachedChats(
     await tx.done;
 }
 
+export async function deleteEventsForChat(db: Database, chatId: string) {
+    const tx = (await db).transaction("chat_events", "readwrite");
+    const store = tx.objectStore("chat_events");
+    const cursor = await store.openCursor(IDBKeyRange.lowerBound(chatId));
+    while (cursor?.key !== undefined) {
+        if (cursor.key.startsWith(chatId)) {
+            await store.delete(cursor.key);
+        }
+        await cursor.continue();
+    }
+    await tx.done;
+}
+
 export async function getCachedEvents(
     db: Database,
     eventIndexRange: IndexRange,
