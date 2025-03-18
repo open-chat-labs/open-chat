@@ -20,7 +20,6 @@ import type {
     CommunityCanisterCommunitySummaryUpdates,
     ChannelIdentifier,
     UserGroupDetails,
-    DirectChatIdentifier,
 } from "openchat-shared";
 import {
     ChatMap,
