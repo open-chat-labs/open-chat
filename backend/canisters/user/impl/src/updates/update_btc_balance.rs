@@ -13,7 +13,7 @@ async fn update_btc_balance(_args: Args) -> Response {
     run_regular_jobs();
 
     let test_mode = read_state(|state| state.data.test_mode);
-    let ckbtc_minter_canister_id = if test_mode { CKBTC_MINTER_CANISTER_ID } else { TESTNET_CKBTC_MINTER_CANISTER_ID };
+    let ckbtc_minter_canister_id = if test_mode { TESTNET_CKBTC_MINTER_CANISTER_ID } else { CKBTC_MINTER_CANISTER_ID };
 
     match ckbtc_minter_canister_c2c_client::update_balance(
         ckbtc_minter_canister_id,
