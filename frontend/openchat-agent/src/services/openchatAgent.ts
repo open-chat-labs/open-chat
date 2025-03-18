@@ -3783,7 +3783,7 @@ export class OpenChatAgent extends EventTarget {
         const bitcoinClient = new BitcoinClient(this.identity, this._agent, this.config.bitcoinMainnetEnabled);
         const allUtxos = await bitcoinClient.getUtxos(bitcoinAddress);
 
-        if (allUtxos.length !== 0) {
+        if (allUtxos.length > 0) {
             const ckBtcMinterClient = new CkbtcMinterClient(this.identity, this._agent, this.config.bitcoinMainnetEnabled);
             const knownUtxos = await ckBtcMinterClient.getKnownUtxos(userId);
             const utxoSet = new Set(allUtxos.map((utxo) => bytesToHexString(utxo.outpoint.txid)));
