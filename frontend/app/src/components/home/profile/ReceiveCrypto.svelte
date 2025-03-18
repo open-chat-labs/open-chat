@@ -10,7 +10,8 @@
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import { currentUser as user, cryptoLookup, cryptoBalance } from "openchat-client";
+    import { BTC_SYMBOL, currentUser as user, cryptoLookup, cryptoBalance } from "openchat-client";
+    import BitcoinAccountInfo from "@components/home/BitcoinAccountInfo.svelte";
 
     export let ledger: string;
 
@@ -22,6 +23,7 @@
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: title = i18nKey(`cryptoAccount.receiveToken`, { symbol });
+    $: userId = $user.userId;
 
     function onBalanceRefreshed() {
         error = undefined;
@@ -44,7 +46,11 @@
             on:error={onBalanceRefreshError} />
     </span>
     <form class="body" slot="body">
-        <AccountInfo qrSize={"larger"} centered {ledger} user={$user} />
+        {#if symbol === BTC_SYMBOL}
+            <BitcoinAccountInfo qrSize={"larger"} centered {userId} />
+        {:else}
+            <AccountInfo qrSize={"larger"} centered {ledger} user={$user} />
+        {/if}
         <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
             <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
         </a>

@@ -400,6 +400,7 @@ export type WorkerRequest =
     | JoinVideoCall
     | GetAccessToken
     | GetLocalUserIndexForUser
+    | GenerateBtcAddress
     | UpdateBtcBalance
     | CurrentUserWebAuthnKey
     | LookupWebAuthnPubKey
@@ -1401,6 +1402,10 @@ type GetCachePrimerTimestamps = {
     kind: "getCachePrimerTimestamps";
 };
 
+type GenerateBtcAddress = {
+    kind: "generateBtcAddress";
+}
+
 type UpdateBtcBalance = {
     userId: string;
     bitcoinAddress: string;
@@ -2322,6 +2327,8 @@ export type WorkerResult<T> = T extends Init
     : T extends GetAccessToken
     ? string | undefined
     : T extends GetLocalUserIndexForUser
+    ? string
+    : T extends GenerateBtcAddress
     ? string
     : T extends UpdateBtcBalance
     ? boolean
