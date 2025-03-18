@@ -27,14 +27,7 @@ async fn add_token(args: Args) -> Response {
 }
 
 pub(crate) async fn add_sns_token(nervous_system: NervousSystemDetails) {
-    add_token_impl(
-        nervous_system.ledger_canister_id,
-        None,
-        Some(nervous_system),
-        None,
-        None,
-    )
-    .await;
+    add_token_impl(nervous_system.ledger_canister_id, None, Some(nervous_system), None, None).await;
 }
 
 #[allow(clippy::too_many_arguments)]
