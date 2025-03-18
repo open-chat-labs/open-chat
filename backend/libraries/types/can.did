@@ -2109,6 +2109,7 @@ type BotCommandDefinition = record {
     params : vec BotCommandParam;
     permissions : BotPermissions;
     default_role : opt GroupRole;
+    direct_messages : bool;
 };
 
 type BotCommandParam = record {

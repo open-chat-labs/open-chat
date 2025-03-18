@@ -16,7 +16,6 @@ pub struct BotDefinition {
     pub description: String,
     pub commands: Vec<BotCommandDefinition>,
     pub autonomous_config: Option<AutonomousConfig>,
-    pub direct_messages: bool,
 }
 
 #[ts_export]
@@ -28,6 +27,7 @@ pub struct BotCommandDefinition {
     pub params: Vec<BotCommandParam>,
     pub permissions: BotPermissions,
     pub default_role: Option<GroupRole>,
+    pub direct_messages: bool,
 }
 
 #[ts_export]
