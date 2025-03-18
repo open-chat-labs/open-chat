@@ -3776,6 +3776,10 @@ export class OpenChatAgent extends EventTarget {
             });
     }
 
+    generateBtcAddress(): Promise<string> {
+        return this.userClient.generateBtcAddress();
+    }
+
     // Query the Bitcoin canister to check for any new UTXOs for this user, if there are any, then also query the ckBTC
     // minter to check that it has processed them, if it has not, call `update_btc_balance` on the user canister which
     // will then call into `update_balance` on the ckBTC minter to pull in the new UTXOs.

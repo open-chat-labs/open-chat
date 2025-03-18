@@ -275,6 +275,7 @@ import {
     UserUpdateBotResponse,
     UserGenerateBotApiKeyArgs,
     UserGenerateBotApiKeyResponse,
+    UserGenerateBtcAddressResponse,
     UserApiKeyArgs,
     UserApiKeyResponse,
 } from "../../typebox";
@@ -1708,6 +1709,22 @@ export class UserClient extends MsgpackCanisterAgent {
             UserApiKeyArgs,
             UserApiKeyResponse,
         );
+    }
+
+    generateBtcAddress(): Promise<string> {
+        return this.executeMsgpackUpdate(
+            "generate_btc_address",
+            {},
+            (resp) => {
+                if ("Success" in resp) {
+                    return resp.Success;
+                } else {
+                    throw new Error(`Failed to generate btc address: ${resp}`);
+                }
+            },
+            TEmpty,
+            UserGenerateBtcAddressResponse,
+        )
     }
 
     updateBtcBalance(): Promise<boolean> {

@@ -7165,6 +7165,18 @@ export class OpenChat extends EventTarget {
         })
     }
 
+    async getBtcAddress(): Promise<string> {
+        const storeValue = get(bitcoinAddress);
+        if (storeValue !== undefined) {
+            return Promise.resolve(storeValue);
+        }
+        const address = await this.#sendRequest({
+            kind: "generateBtcAddress",
+        });
+        bitcoinAddress.set(address);
+        return address;
+    }
+
     async #updateBtcBalance(address: string): Promise<void> {
         await this.#sendRequest({
             kind: "updateBtcBalance",

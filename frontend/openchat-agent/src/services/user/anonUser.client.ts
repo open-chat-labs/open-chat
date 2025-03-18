@@ -513,6 +513,10 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
+    generateBtcAddress(): Promise<string> {
+        throw new AnonymousOperationError();
+    }
+
     updateBtcBalance(): Promise<boolean> {
         throw new AnonymousOperationError();
     }

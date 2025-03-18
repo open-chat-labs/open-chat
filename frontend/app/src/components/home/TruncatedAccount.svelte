@@ -64,8 +64,8 @@
         }
 
         .copy {
+            display: flex;
             cursor: pointer;
-            width: 30px;
         }
     }
 </style>
