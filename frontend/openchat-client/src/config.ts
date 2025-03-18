@@ -31,5 +31,6 @@ export type OpenChatConfig = {
     websiteVersion: string;
     rollbarApiKey: string;
     env: string;
+    bitcoinMainnetEnabled: boolean;
     groupInvite?: GroupInvite;
 };

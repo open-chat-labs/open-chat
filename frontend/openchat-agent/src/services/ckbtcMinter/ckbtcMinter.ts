@@ -1,25 +1,31 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import type { UpdateBtcBalanceResponse } from "openchat-shared";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { idlFactory, type CkbtcMinterService } from "./candid/idl";
-import { updateBtcBalanceResponse } from "./mappers";
-import { apiOptional } from "../common/chatMappers";
+import { utxo } from "../bitcoin/mappers";
+import type { Utxo } from "openchat-shared";
 
-const CKBTC_MINTER_CANISTER_ID = "mqygn-kiaaa-aaaar-qaadq-cai";
+const MAINNET_CKBTC_MINTER_CANISTER_ID = "mqygn-kiaaa-aaaar-qaadq-cai";
+const TESTNET_CKBTC_MINTER_CANISTER_ID = "ml52i-qqaaa-aaaar-qaaba-cai";
 
 export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
-    constructor(identity: Identity, agent: HttpAgent) {
-        super(identity, agent, CKBTC_MINTER_CANISTER_ID, idlFactory, "CkbtcMinter");
+    constructor(identity: Identity, agent: HttpAgent, mainnetEnabled: boolean) {
+        super(
+            identity,
+            agent,
+            mainnetEnabled ? MAINNET_CKBTC_MINTER_CANISTER_ID : TESTNET_CKBTC_MINTER_CANISTER_ID,
+            idlFactory,
+            "CkbtcMinter"
+        );
     }
 
-    updateBalance(userId: string): Promise<UpdateBtcBalanceResponse> {
-        return this.handleResponse(
-            this.service.update_balance({
-                owner: apiOptional((u) => Principal.fromText(u), userId),
+    getKnownUtxos(userId: string): Promise<Utxo[]> {
+        return this.handleQueryResponse(
+            () => this.service.get_known_utxos({
+                owner: [Principal.fromText(userId)],
                 subaccount: [],
             }),
-            updateBtcBalanceResponse,
-        );
+            (resp) => resp.map(utxo),
+        )
     }
 }

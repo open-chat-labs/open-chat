@@ -37,6 +37,7 @@ interface ImportMetaEnv {
     readonly OC_VIDEO_BRIDGE_URL: string;
     readonly OC_WALLET_CONNECT_PROJECT_ID: string;
     readonly OC_WEBAUTHN_ORIGIN: string;
+    readonly OC_BITCOIN_MAINNET_ENABLED: string;
 }
 
 interface ImportMeta {

@@ -130,6 +130,7 @@ export class AnonUserClient {
             },
             bots: new Map(),
             apiKeys: new Map(),
+            bitcoinAddress: undefined,
         });
     }
 
@@ -509,6 +510,10 @@ export class AnonUserClient {
     }
 
     getApiKey(_botId: string): Promise<string | undefined> {
+        throw new AnonymousOperationError();
+    }
+
+    updateBtcBalance(): Promise<boolean> {
         throw new AnonymousOperationError();
     }
 }

@@ -873,6 +873,7 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
                 m.set(k.botId, k);
                 return m;
             }, new Map<string, PublicApiKeyDetails>()),
+            bitcoinAddress: result.btc_address,
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${value}`);
@@ -1050,6 +1051,7 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
             botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
             botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
             apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
+            bitcoinAddress: value.Success.btc_address,
         };
     }
 

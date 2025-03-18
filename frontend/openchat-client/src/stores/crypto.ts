@@ -11,6 +11,7 @@ import {
 import { toRecord } from "../utils/list";
 import { localGlobalUpdates } from "./localGlobalUpdates";
 import { createSetStore } from "./setStore";
+import { safeWritable } from "./safeWritable";
 
 type LedgerCanister = string;
 type GovernanceCanister = string;
@@ -32,6 +33,8 @@ export const cryptoBalance = {
         });
     },
 };
+
+export const bitcoinAddress = safeWritable<string | undefined>(undefined);
 
 const lastCryptoSentStore = writable<string | undefined>(
     localStorage.getItem(configKeys.lastCryptoSent) ?? undefined,

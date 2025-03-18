@@ -13,5 +13,6 @@ export OC_BLOB_URL_PATTERN=https://{canisterId}.raw.icp0.io/{blobType}
 export OC_ACHIEVEMENT_URL_PATH=https://{canisterId}.raw.icp0.io
 export OC_WALLET_CONNECT_PROJECT_ID=b9aafebed2abfaf8341afd9428c947d5
 export OC_PREVIEW_PROXY_URL=https://dy7sqxe9if6te.cloudfront.net
+export OC_BITCOIN_MAINNET_ENABLED=false
 
 npx rollup -c

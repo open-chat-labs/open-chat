@@ -1070,6 +1070,7 @@ export type ChatStateFull = {
     messageActivitySummary: MessageActivitySummary;
     installedBots: Map<string, ExternalBotPermissions>;
     apiKeys: Map<string, PublicApiKeyDetails>;
+    bitcoinAddress: string | undefined;
 };
 
 export type ChitState = {
@@ -1239,6 +1240,7 @@ export type InitialStateResponse = {
     messageActivitySummary: MessageActivitySummary;
     bots: Map<string, ExternalBotPermissions>;
     apiKeys: Map<string, PublicApiKeyDetails>;
+    bitcoinAddress: string | undefined;
 };
 
 export type MessageActivitySummary = {
@@ -1318,6 +1320,7 @@ export type UpdatesSuccessResponse = {
     botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: Set<string>;
     apiKeysGenerated: PublicApiKeyDetails[];
+    bitcoinAddress: string | undefined;
 };
 
 export type DirectChatsUpdates = {

@@ -94,6 +94,7 @@
             websiteVersion: import.meta.env.OC_WEBSITE_VERSION!,
             rollbarApiKey: import.meta.env.OC_ROLLBAR_ACCESS_TOKEN!,
             env: import.meta.env.OC_BUILD_ENV!,
+            bitcoinMainnetEnabled: import.meta.env.OC_BITCOIN_MAINNET_ENABLED! === "true",
         });
     }
 

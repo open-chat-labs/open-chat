@@ -195,7 +195,6 @@ import type {
     ChatEventsResponse,
     JoinVideoCallResponse,
     AccessTokenType,
-    UpdateBtcBalanceResponse,
     GenerateMagicLinkResponse,
     GetDelegationResponse,
     PrepareDelegationResponse,
@@ -282,6 +281,8 @@ import {
 import { mean } from "../utils/maths";
 import type { DelegationChain } from "@dfinity/identity";
 import { callBotCommandEndpoint } from "./externalBot/externalBot";
+import { BitcoinClient } from "./bitcoin/bitcoin.client";
+import { bytesToHexString } from "../utils/mapping";
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -1722,6 +1723,7 @@ export class OpenChatAgent extends EventTarget {
         let messageActivitySummary: MessageActivitySummary;
         let installedBots: Map<string, ExternalBotPermissions>;
         let apiKeys: Map<string, PublicApiKeyDetails>;
+        let bitcoinAddress: string | undefined = undefined;
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1771,6 +1773,7 @@ export class OpenChatAgent extends EventTarget {
             anyUpdates = true;
             installedBots = userResponse.bots;
             apiKeys = userResponse.apiKeys;
+            bitcoinAddress = userResponse.bitcoinAddress;
         } else {
             directChats = current.directChats;
             currentGroups = current.groupChats;
@@ -1778,6 +1781,7 @@ export class OpenChatAgent extends EventTarget {
             latestActiveGroupsCheck = current.latestActiveGroupsCheck;
             installedBots = current.installedBots;
             apiKeys = current.apiKeys;
+            bitcoinAddress = current.bitcoinAddress;
 
             const userResponse = await this.userClient.getUpdates(
                 current.latestUserCanisterUpdates,
@@ -1872,6 +1876,7 @@ export class OpenChatAgent extends EventTarget {
                 walletConfig = userResponse.walletConfig ?? current.walletConfig;
                 messageActivitySummary =
                     userResponse.messageActivitySummary ?? current.messageActivitySummary;
+                bitcoinAddress ??= userResponse.bitcoinAddress;
                 anyUpdates = true;
             }
         }
@@ -2054,6 +2059,7 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary,
             installedBots,
             apiKeys,
+            bitcoinAddress,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -3770,8 +3776,24 @@ export class OpenChatAgent extends EventTarget {
             });
     }
 
-    updateBtcBalance(userId: string): Promise<UpdateBtcBalanceResponse> {
-        return new CkbtcMinterClient(this.identity, this._agent).updateBalance(userId);
+    // Query the Bitcoin canister to check for any new UTXOs for this user, if there are any, then also query the ckBTC
+    // minter to check that it has processed them, if it has not, call `update_btc_balance` on the user canister which
+    // will then call into `update_balance` on the ckBTC minter to pull in the new UTXOs.
+    async updateBtcBalance(userId: string, bitcoinAddress: string): Promise<boolean> {
+        const bitcoinClient = new BitcoinClient(this.identity, this._agent, this.config.bitcoinMainnetEnabled);
+        const allUtxos = await bitcoinClient.getUtxos(bitcoinAddress);
+
+        if (allUtxos.length > 0) {
+            const ckBtcMinterClient = new CkbtcMinterClient(this.identity, this._agent, this.config.bitcoinMainnetEnabled);
+            const knownUtxos = await ckBtcMinterClient.getKnownUtxos(userId);
+            const allUtxosSet = new Set(allUtxos.map((utxo) => bytesToHexString(utxo.outpoint.txid)));
+
+            if (knownUtxos.some((utxo) => !allUtxosSet.has(bytesToHexString(utxo.outpoint.txid)))) {
+                return await this.userClient.updateBtcBalance();
+            }
+        }
+
+        return false;
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {

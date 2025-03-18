@@ -109,6 +109,7 @@ import {
     selectedMessageContext,
 } from "./stores/chat";
 import {
+    bitcoinAddress,
     cryptoBalance,
     cryptoLookup,
     exchangeRatesLookupStore,
@@ -347,7 +348,6 @@ import type {
     RejectReason,
     JoinVideoCallResponse,
     AccessTokenType,
-    UpdateBtcBalanceResponse,
     ApproveAccessGatePaymentResponse,
     ClientJoinGroupResponse,
     ClientJoinCommunityResponse,
@@ -978,6 +978,7 @@ export class OpenChat extends EventTarget {
         initNotificationStores();
         if (!this.#liveState.anonUser) {
             this.#startOnlinePoller();
+            this.#startBtcBalanceUpdateJob();
             this.#sendRequest({ kind: "getUserStorageLimits" })
                 .then(storageStore.set)
                 .catch((err) => {
@@ -6055,6 +6056,8 @@ export class OpenChat extends EventTarget {
                     window.setTimeout(() => this.#refreshBalancesInSeries(), 0);
                 }
             }
+
+            bitcoinAddress.set(chatsResponse.state.bitcoinAddress);
         }
     }
 
@@ -7153,10 +7156,20 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    updateBtcBalance(): Promise<UpdateBtcBalanceResponse> {
-        return this.#sendRequest({
+    #startBtcBalanceUpdateJob() {
+        bitcoinAddress.subscribe((addr) => {
+            if (addr !== undefined) {
+                const poller = new Poller(() => this.#updateBtcBalance(addr), ONE_MINUTE_MILLIS);
+                return () => poller.stop();
+            }
+        })
+    }
+
+    async #updateBtcBalance(address: string): Promise<void> {
+        await this.#sendRequest({
             kind: "updateBtcBalance",
             userId: this.#liveState.user.userId,
+            bitcoinAddress: address,
         });
     }
 
@@ -8642,6 +8655,7 @@ export class OpenChat extends EventTarget {
                     websiteVersion: this.config.websiteVersion,
                     rollbarApiKey: this.config.rollbarApiKey,
                     env: this.config.env,
+                    bitcoinMainnetEnabled: this.config.bitcoinMainnetEnabled,
                     groupInvite: this.config.groupInvite,
                 },
                 true,
