@@ -224,7 +224,6 @@ type BotDefinition = record {
     description : text;
     commands : vec BotCommandDefinition;
     autonomous_config : opt AutonomousConfig;
-    direct_messages : bool;
 };
 
 type AutonomousConfig = record {
