@@ -206,14 +206,14 @@ ic-agent = "0.39.3"
 ic-canister-sig-creation = "1.1.0"
 ic-captcha = "1.0.0"
 ic-cbor = "2.5.0"
-ic-cdk = "0.18.0-alpha.1"
-ic-cdk-macros = "0.18.0-alpha.1"
-ic-cdk-timers = "0.12.0-alpha.1"
+ic-cdk = "0.18.0-alpha.2"
+ic-cdk-macros = "0.18.0-alpha.2"
+ic-cdk-timers = "0.12.0-alpha.2"
 ic-certificate-verification = "2.4.0"
 ic-certification = "2.5.0"
 ic-http-certification = "2.5.0"
-ic-ledger-types = "0.15.0-alpha.1"
-ic-management-canister-types = "0.2.1"
+ic-ledger-types = "0.15.0-alpha.2"
+ic-management-canister-types = "0.3.0"
 ic_principal = "0.1.1"
 ic-stable-structures = "0.6.8"
 ic-transport-types = "0.39.1"
@@ -272,10 +272,5 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "b2596b5d45b87c204ed21b4b115f3a5b7dd2135a" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "b2596b5d45b87c204ed21b4b115f3a5b7dd2135a" }
-ic-cdk-timers = { git = "https://github.com/hpeebles/cdk-rs", rev = "b2596b5d45b87c204ed21b4b115f3a5b7dd2135a" }
-ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "b2596b5d45b87c204ed21b4b115f3a5b7dd2135a" }
-ic-management-canister-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "b2596b5d45b87c204ed21b4b115f3a5b7dd2135a" }
 rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
 ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "c584e25ce28fa27b64964c208725b6bc100fbdac" }
