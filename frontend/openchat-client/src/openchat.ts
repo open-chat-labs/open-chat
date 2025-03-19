@@ -7179,6 +7179,14 @@ export class OpenChat extends EventTarget {
         return address;
     }
 
+    withdrawBtc(address: string, amount: bigint): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "withdrawBtc",
+            address,
+            amount,
+        });
+    }
+
     async #updateBtcBalance(address: string): Promise<void> {
         await this.#sendRequest({
             kind: "updateBtcBalance",

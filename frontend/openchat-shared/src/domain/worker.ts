@@ -403,6 +403,7 @@ export type WorkerRequest =
     | GetLocalUserIndexForUser
     | GenerateBtcAddress
     | UpdateBtcBalance
+    | WithdrawBtc
     | GetCkbtcMinterDepositInfo
     | GetCkbtcMinterWithdrawalInfo
     | CurrentUserWebAuthnKey
@@ -1407,12 +1408,18 @@ type GetCachePrimerTimestamps = {
 
 type GenerateBtcAddress = {
     kind: "generateBtcAddress";
-}
+};
 
 type UpdateBtcBalance = {
     userId: string;
     bitcoinAddress: string;
     kind: "updateBtcBalance";
+};
+
+type WithdrawBtc = {
+    address: string;
+    amount: bigint;
+    kind: "withdrawBtc";
 };
 
 type GetCkbtcMinterDepositInfo = {
@@ -2344,6 +2351,8 @@ export type WorkerResult<T> = T extends Init
     : T extends GenerateBtcAddress
     ? string
     : T extends UpdateBtcBalance
+    ? boolean
+    : T extends WithdrawBtc
     ? boolean
     : T extends GetCkbtcMinterDepositInfo
     ? CkbtcMinterDepositInfo

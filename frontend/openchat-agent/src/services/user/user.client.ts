@@ -278,6 +278,8 @@ import {
     UserGenerateBtcAddressResponse,
     UserApiKeyArgs,
     UserApiKeyResponse,
+    UserWithdrawBtcArgs,
+    UserWithdrawBtcResponse,
 } from "../../typebox";
 import { toggleNotificationsResponse } from "../notifications/mappers";
 
@@ -1734,6 +1736,25 @@ export class UserClient extends MsgpackCanisterAgent {
             (resp) => resp === "Success",
             TEmpty,
             UserUpdateBtcBalanceResponse
+        );
+    }
+
+    withdrawBtc(address: string, amount: bigint): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "withdraw_btc",
+            {
+                address,
+                amount,
+            },
+            (resp) => {
+                if ("Success" in resp) {
+                    return true;
+                }
+                console.log("Failed to withdraw BTC", resp);
+                return false;
+            },
+            UserWithdrawBtcArgs,
+            UserWithdrawBtcResponse
         );
     }
 }

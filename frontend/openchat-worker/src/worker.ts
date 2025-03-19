@@ -1773,6 +1773,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "withdrawBtc":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.withdrawBtc(payload.address, payload.amount)
+                );
+                break;
+
             case "ckbtcMinterDepositInfo":
                 executeThenReply(
                     payload,

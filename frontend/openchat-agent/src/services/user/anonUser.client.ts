@@ -520,4 +520,8 @@ export class AnonUserClient {
     updateBtcBalance(): Promise<boolean> {
         throw new AnonymousOperationError();
     }
+
+    withdrawBtc(): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
 }
