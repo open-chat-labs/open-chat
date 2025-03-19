@@ -780,13 +780,16 @@ export function botActionScopeFromInstallLocation(
     }
 }
 
+export function commandSupportsDirectMessages(command: CommandDefinition): boolean {
+    const [first, ...rest] = command.params;
+    return command.directMessages && first?.kind === "string" && rest.every((p) => !p.required);
+}
+
 export function directMessageCommandInstance(
     bot: ExternalBot,
     text: string,
 ): BotCommandInstance | undefined {
-    const command = bot.definition.commands.find((c) => {
-        return c.directMessages && c.params[0]?.kind === "string";
-    });
+    const command = bot.definition.commands.find(commandSupportsDirectMessages);
     if (command) {
         return {
             kind: "external_bot",
