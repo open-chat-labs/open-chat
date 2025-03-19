@@ -9,8 +9,8 @@
     import IntegerInput from "../IntegerInput.svelte";
     import NumberInput from "../NumberInput.svelte";
     import Translatable from "../Translatable.svelte";
-    import MultiLineInput from "../home/MultiLineInput.svelte";
     import DateInput from "../DateInput.svelte";
+    import TextArea from "../TextArea.svelte";
 
     interface Props {
         param: CommandParam;
@@ -53,10 +53,12 @@
                 {/each}
             </Select>
         {:else if param.multi_line}
-            <MultiLineInput
-                minLines={2}
-                placeholder={i18nKey(param.description ?? "")}
-                oninput={onChange}
+            <TextArea
+                rows={2}
+                placeholder={i18nKey(param.placeholder ?? "")}
+                minlength={param.minLength}
+                maxlength={param.maxLength}
+                onchange={onChange}
                 bind:value={arg.value} />
         {:else}
             <Input
@@ -64,6 +66,7 @@
                 maxlength={param.maxLength}
                 placeholder={i18nKey(param.placeholder ?? "")}
                 on:change={onChange}
+                countdown
                 bind:value={arg.value} />
         {/if}
     {:else if arg.kind === "boolean" && param.kind === "boolean"}
