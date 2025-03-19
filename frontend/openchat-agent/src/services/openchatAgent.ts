@@ -247,6 +247,7 @@ import {
     Stream,
     getOrAdd,
     waitAll,
+    Lazy,
     MessageMap,
     MAX_ACTIVITY_EVENTS,
     messageContextToString,
@@ -292,8 +293,6 @@ export class OpenChatAgent extends EventTarget {
     private _groupIndexClient: GroupIndexClient;
     private _userClient?: UserClient | AnonUserClient;
     private _notificationClient: NotificationsClient;
-    private _proposalsBotClient: ProposalsBotClient;
-    private _marketMakerClient: MarketMakerClient;
     private _registryClient: RegistryClient;
     private _dataClient: DataClient;
     private _localUserIndexClients: Record<string, LocalUserIndexClient>;
@@ -302,16 +301,20 @@ export class OpenChatAgent extends EventTarget {
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
     private _exchangeRateClients: ExchangeRateClient[];
-    private _signInWithEmailClient: SignInWithEmailClient;
-    private _signInWithEthereumClient: SignInWithEthereumClient;
-    private _signInWithSolanaClient: SignInWithSolanaClient;
-    private _dexesAgent: DexesAgent;
     private _groupInvite: GroupInvite | undefined;
     private _communityInvite: CommunityInvite | undefined;
     private _registryValue: RegistryValue | undefined;
     private db: Database;
     private _logger: Logger;
-    public translationsClient: TranslationsClient;
+
+    // Lazy loaded clients which may never end up being used
+    private _dexesAgent: Lazy<DexesAgent>;
+    private _marketMakerClient: Lazy<MarketMakerClient>;
+    private _proposalsBotClient: Lazy<ProposalsBotClient>;
+    private _signInWithEmailClient: Lazy<SignInWithEmailClient>;
+    private _signInWithEthereumClient: Lazy<SignInWithEthereumClient>;
+    private _signInWithSolanaClient: Lazy<SignInWithSolanaClient>;
+    private _translationsClient: Lazy<TranslationsClient>;
 
     constructor(
         private identity: Identity,
@@ -338,16 +341,6 @@ export class OpenChatAgent extends EventTarget {
             this._agent,
             config.notificationsCanister,
         );
-        this._proposalsBotClient = new ProposalsBotClient(
-            identity,
-            this._agent,
-            config.proposalBotCanister,
-        );
-        this._marketMakerClient = new MarketMakerClient(
-            identity,
-            this._agent,
-            config.marketMakerCanister,
-        );
         this._registryClient = new RegistryClient(
             identity,
             this._agent,
@@ -359,33 +352,44 @@ export class OpenChatAgent extends EventTarget {
             new IcpCoinsClient(identity, this._agent),
             new IcpSwapClient(identity, this._agent),
         ];
-        this.translationsClient = new TranslationsClient(
-            identity,
-            this._agent,
-            config.translationsCanister,
-        );
-        this._signInWithEmailClient = new SignInWithEmailClient(
-            identity,
-            this._agent,
-            config.signInWithEmailCanister,
-        );
-        this._signInWithEthereumClient = new SignInWithEthereumClient(
-            identity,
-            this._agent,
-            config.signInWithEthereumCanister,
-        );
-        this._signInWithSolanaClient = new SignInWithSolanaClient(
-            identity,
-            this._agent,
-            config.signInWithSolanaCanister,
-        );
         this._localUserIndexClients = {};
         this._ledgerClients = {};
         this._ledgerIndexClients = {};
         this._groupClients = {};
         this._communityClients = {};
-        this._dexesAgent = new DexesAgent(this._agent);
         this._groupInvite = config.groupInvite;
+
+        this._dexesAgent = new Lazy(() => new DexesAgent(this._agent));
+        this._marketMakerClient = new Lazy(() => new MarketMakerClient(
+            identity,
+            this._agent,
+            config.marketMakerCanister,
+        ));
+        this._proposalsBotClient = new Lazy(() => new ProposalsBotClient(
+            identity,
+            this._agent,
+            config.proposalBotCanister,
+        ));
+        this._signInWithEmailClient = new Lazy(() => new SignInWithEmailClient(
+            identity,
+            this._agent,
+            config.signInWithEmailCanister,
+        ));
+        this._signInWithEthereumClient = new Lazy(() => new SignInWithEthereumClient(
+            identity,
+            this._agent,
+            config.signInWithEthereumCanister,
+        ));
+        this._signInWithSolanaClient = new Lazy(() => new SignInWithSolanaClient(
+            identity,
+            this._agent,
+            config.signInWithSolanaCanister,
+        ));
+        this._translationsClient = new Lazy(() => new TranslationsClient(
+            identity,
+            this._agent,
+            config.translationsCanister,
+        ));
     }
 
     private get principal(): Principal {
@@ -511,6 +515,10 @@ export class OpenChatAgent extends EventTarget {
 
     private getCommunityReferral(communityId: string): Promise<string | undefined> {
         return getCommunityReferral(communityId, Date.now());
+    }
+
+    translationsClient(): TranslationsClient {
+        return this._translationsClient.get();
     }
 
     editMessage(
@@ -3219,7 +3227,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<StakeNeuronForSubmittingProposalsResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this._proposalsBotClient.stakeNeuronForSubmittingProposals(
+        return this._proposalsBotClient.get().stakeNeuronForSubmittingProposals(
             governanceCanisterId,
             stake,
         );
@@ -3231,7 +3239,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<TopUpNeuronResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this._proposalsBotClient.topUpNeuron(governanceCanisterId, amount);
+        return this._proposalsBotClient.get().topUpNeuron(governanceCanisterId, amount);
     }
 
     updateMarketMakerConfig(
@@ -3239,7 +3247,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<UpdateMarketMakerConfigResponse> {
         if (offline()) return Promise.resolve("offline");
 
-        return this._marketMakerClient.updateConfig(config);
+        return this._marketMakerClient.get().updateConfig(config);
     }
 
     setMessageReminder(
@@ -3322,7 +3330,7 @@ export class OpenChatAgent extends EventTarget {
                         };
                         setCachedRegistry(updated);
                         this._registryValue = updated;
-                        this._dexesAgent.updateTokenDetails(updated.tokenDetails);
+                        this._dexesAgent.get().updateTokenDetails(updated.tokenDetails);
                         resolve([updated, true], true);
                     } else if (updates.kind === "success_no_updates" && current !== undefined) {
                         resolve([current, false], true);
@@ -3431,7 +3439,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<SubmitProposalResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this._proposalsBotClient.submitProposal(
+        return this._proposalsBotClient.get().submitProposal(
             currentUserId,
             governanceCanisterId,
             proposal,
@@ -3474,14 +3482,14 @@ export class OpenChatAgent extends EventTarget {
     }
 
     canSwap(tokenLedgers: Set<string>): Promise<Set<string>> {
-        return this._dexesAgent.canSwap(tokenLedgers, this.swapProviders());
+        return this._dexesAgent.get().canSwap(tokenLedgers, this.swapProviders());
     }
 
     getTokenSwaps(
         inputTokenLedger: string,
         outputTokenLedgers: string[],
     ): Promise<Record<string, DexId[]>> {
-        return this._dexesAgent
+        return this._dexesAgent.get()
             .getSwapPools(inputTokenLedger, new Set(outputTokenLedgers), this.swapProviders())
             .then((pools) => {
                 return pools.reduce(swapReducer, {} as Record<string, DexId[]>);
@@ -3504,7 +3512,7 @@ export class OpenChatAgent extends EventTarget {
         outputTokenLedger: string,
         amountIn: bigint,
     ): Promise<[DexId, bigint][]> {
-        return this._dexesAgent
+        return this._dexesAgent.get()
             .quoteSwap(inputTokenLedger, outputTokenLedger, amountIn, this.swapProviders())
             .then((quotes) => {
                 // Sort the quotes by amount descending so the first quote is the best
@@ -3535,7 +3543,7 @@ export class OpenChatAgent extends EventTarget {
         dex: DexId,
         pin: string | undefined,
     ): Promise<SwapTokensResponse> {
-        return this._dexesAgent
+        return this._dexesAgent.get()
             .getSwapPools(
                 inputTokenDetails.ledger,
                 new Set([outputTokenDetails.ledger]),
@@ -3806,7 +3814,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {
-        return this._signInWithEmailClient.generateMagicLink(email, sessionKey);
+        return this._signInWithEmailClient.get().generateMagicLink(email, sessionKey);
     }
 
     getSignInWithEmailDelegation(
@@ -3814,15 +3822,15 @@ export class OpenChatAgent extends EventTarget {
         sessionKey: Uint8Array,
         expiration: bigint,
     ): Promise<GetDelegationResponse> {
-        return this._signInWithEmailClient.getDelegation(email, sessionKey, expiration);
+        return this._signInWithEmailClient.get().getDelegation(email, sessionKey, expiration);
     }
 
     siwePrepareLogin(address: string): Promise<SiwePrepareLoginResponse> {
-        return this._signInWithEthereumClient.prepareLogin(address);
+        return this._signInWithEthereumClient.get().prepareLogin(address);
     }
 
     siwsPrepareLogin(address: string): Promise<SiwsPrepareLoginResponse> {
-        return this._signInWithSolanaClient.prepareLogin(address);
+        return this._signInWithSolanaClient.get().prepareLogin(address);
     }
 
     loginWithWallet(
@@ -3833,9 +3841,9 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<PrepareDelegationResponse> {
         switch (token) {
             case "eth":
-                return this._signInWithEthereumClient.login(signature, address, sessionKey);
+                return this._signInWithEthereumClient.get().login(signature, address, sessionKey);
             case "sol":
-                return this._signInWithSolanaClient.login(signature, address, sessionKey);
+                return this._signInWithSolanaClient.get().login(signature, address, sessionKey);
         }
     }
 
@@ -3847,13 +3855,13 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<GetDelegationResponse> {
         switch (token) {
             case "eth":
-                return this._signInWithEthereumClient.getDelegation(
+                return this._signInWithEthereumClient.get().getDelegation(
                     address,
                     sessionKey,
                     expiration,
                 );
             case "sol":
-                return this._signInWithSolanaClient.getDelegation(address, sessionKey, expiration);
+                return this._signInWithSolanaClient.get().getDelegation(address, sessionKey, expiration);
         }
     }
 
