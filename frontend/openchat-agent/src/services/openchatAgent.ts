@@ -3828,8 +3828,8 @@ export class OpenChatAgent extends EventTarget {
         return this._ckbtcMinterClient.get().getDepositInfo();
     }
 
-    getCkbtcMinterWithdrawalFeeEstimate(amount: bigint): Promise<bigint> {
-        return this._ckbtcMinterClient.get().getWithdrawalFeeEstimate(amount);
+    getCkbtcMinterWithdrawalInfo(amount: bigint): Promise<CkbtcMinterWithdrawalInfo> {
+        return this._ckbtcMinterClient.get().getWithdrawalInfo(amount);
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {

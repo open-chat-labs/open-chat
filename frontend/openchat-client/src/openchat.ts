@@ -7192,9 +7192,9 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    getCkbtcMinterWithdrawalFeeEstimate(amount: bigint): Promise<bigint> {
+    getCkbtcMinterWithdrawalInfo(amount: bigint): Promise<bigint> {
         return this.#sendRequest({
-            kind: "ckbtcMinterWithdrawalFeeEstimate",
+            kind: "ckbtcMinterWithdrawalInfo",
             amount,
         });
     }

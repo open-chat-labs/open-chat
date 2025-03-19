@@ -213,7 +213,7 @@ import type {
     ExternalBot,
     ExternalBotPermissions,
 } from "./bots";
-import type { CkbtcMinterDepositInfo } from "./bitcoin";
+import type { CkbtcMinterDepositInfo, CkbtcMinterWithdrawalInfo } from "./bitcoin";
 
 /**
  * Worker request types
@@ -404,7 +404,7 @@ export type WorkerRequest =
     | GenerateBtcAddress
     | UpdateBtcBalance
     | GetCkbtcMinterDepositInfo
-    | GetCkbtcMinterWithdrawalFeeEstimate
+    | GetCkbtcMinterWithdrawalInfo
     | CurrentUserWebAuthnKey
     | LookupWebAuthnPubKey
     | SetCachedWebAuthnKey
@@ -1419,9 +1419,9 @@ type GetCkbtcMinterDepositInfo = {
     kind: "ckbtcMinterDepositInfo";
 };
 
-type GetCkbtcMinterWithdrawalFeeEstimate = {
+type GetCkbtcMinterWithdrawalInfo = {
     amount: bigint;
-    kind: "ckbtcMinterWithdrawalFeeEstimate";
+    kind: "ckbtcMinterWithdrawalInfo";
 };
 
 type CurrentUserWebAuthnKey = {
@@ -2347,8 +2347,8 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends GetCkbtcMinterDepositInfo
     ? CkbtcMinterDepositInfo
-    : T extends GetCkbtcMinterWithdrawalFeeEstimate
-    ? bigint
+    : T extends GetCkbtcMinterWithdrawalInfo
+    ? CkbtcMinterWithdrawalInfo
     : T extends CurrentUserWebAuthnKey
     ? WebAuthnKeyFull | undefined
     : T extends LookupWebAuthnPubKey

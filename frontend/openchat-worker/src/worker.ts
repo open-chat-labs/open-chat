@@ -1781,11 +1781,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "ckbtcMinterWithdrawalFeeEstimate":
+            case "ckbtcMinterWithdrawalInfo":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getCkbtcMinterWithdrawalFeeEstimate(payload.amount),
+                    agent.getCkbtcMinterWithdrawalInfo(payload.amount),
                 );
                 break;
 
