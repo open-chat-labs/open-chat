@@ -4,6 +4,7 @@
         ValidationErrors,
         type ExternalBotPermissions,
         type CommandDefinition,
+        commandSupportsDirectMessages,
     } from "openchat-client";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
@@ -19,10 +20,6 @@
     }
 
     let { grantedPermissions, commands, centered = false, onClick, errors }: Props = $props();
-
-    function commandSupportsDirectMessages(command: CommandDefinition): boolean {
-        return command.directMessages && command.params[0]?.kind === "string";
-    }
 </script>
 
 <div class="commands" class:centered>
