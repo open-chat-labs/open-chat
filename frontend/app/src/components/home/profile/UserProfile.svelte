@@ -56,7 +56,6 @@
         verificationSectionOpen,
         accountsSectionOpen,
         deleteAccountSectionOpen,
-        disableChit,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Toggle from "../../Toggle.svelte";
@@ -314,16 +313,14 @@
             class="tab">
             <Translatable resourceKey={i18nKey("communities.communityLabel")} />
         </div>
-        {#if !$disableChit}
-            <div
-                tabindex="0"
-                role="button"
-                onclick={() => (view = "chit")}
-                class:selected={view === "chit"}
-                class="tab">
-                <Translatable resourceKey={i18nKey("CHIT")} />
-            </div>
-        {/if}
+        <div
+            tabindex="0"
+            role="button"
+            onclick={() => (view = "chit")}
+            class:selected={view === "chit"}
+            class="tab">
+            <Translatable resourceKey={i18nKey("CHIT")} />
+        </div>
     </div>
 {/if}
 
@@ -539,12 +536,6 @@
                         on:change={() => hideMessagesFromDirectBlocked.toggle()}
                         label={i18nKey("hideBlocked")}
                         checked={$hideMessagesFromDirectBlocked} />
-                    <Toggle
-                        id={"disable-chit"}
-                        small
-                        on:change={() => disableChit.set(!$disableChit)}
-                        label={i18nKey("hideChit")}
-                        checked={$disableChit} />
                 </CollapsibleCard>
             </div>
             <div class="video">
@@ -700,7 +691,7 @@
     {#if selectedCommunity !== undefined}
         <CommunityProfile on:upgrade community={selectedCommunity} />
     {/if}
-{:else if view === "chit" && !$disableChit}
+{:else if view === "chit"}
     <ChitEvents />
 {/if}
 
