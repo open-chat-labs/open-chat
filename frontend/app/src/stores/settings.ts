@@ -10,6 +10,7 @@ export const showHomeScreenPrompt = createLsBoolStore(
 );
 export const chitPopup = createLsBoolStore(configKeys.chitPopup, true);
 export const hideChitIcon = createLsBoolStore(configKeys.hideChitIcon, false);
+export const disableChit = createLsBoolStore(configKeys.disableChit, false);
 export const enterSend = createLsBoolStore(configKeys.enterSend, !isTouchDevice);
 export const lowBandwidth = createLsBoolStore(configKeys.lowBandwidth, false);
 export const renderPreviews = createLsBoolStore(configKeys.renderPreviews, true);

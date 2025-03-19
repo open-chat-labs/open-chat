@@ -25,7 +25,7 @@
     import { now } from "../../../stores/time";
     import LighteningBolt from "./LighteningBolt.svelte";
     import { activityFeedShowing } from "../../../stores/activity";
-    import { hideChitIcon } from "../../../stores/settings";
+    import { hideChitIcon, disableChit } from "../../../stores/settings";
     import {
         AvatarSize,
         type CommunitySummary,
@@ -226,7 +226,7 @@
             </LeftNavItem>
         {/if}
         {#if !$anonUser}
-            {#if claimChitAvailable || !$hideChitIcon}
+            {#if !$disableChit && (claimChitAvailable || !$hideChitIcon)}
                 <LeftNavItem
                     label={i18nKey(
                         claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",

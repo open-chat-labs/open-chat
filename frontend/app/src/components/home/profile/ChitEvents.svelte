@@ -11,7 +11,7 @@
     import ChitBalance from "./ChitBalance.svelte";
     import Toggle from "../../Toggle.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { chitPopup, hideChitIcon, utcMode } from "../../../stores/settings";
+    import { chitPopup, disableChit, hideChitIcon, utcMode } from "../../../stores/settings";
     import Translatable from "../../Translatable.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import { calendarState, type DateRange } from "../../calendar/calendarState.svelte";
@@ -87,59 +87,68 @@
 </script>
 
 <div use:menuCloser class="chit-events">
-    <div class="header">
-        {#if streak > 0}
-            <div class="streak">
-                You are on a
-                <div class="streak-txt">{streak}</div>
-                day streak!
-            </div>
-        {/if}
-        <ChitBalance
-            size={"large"}
-            me
-            balance={$chitState.chitBalance}
-            totalEarned={$chitState.totalChitEarned} />
-    </div>
-    <Calendar {dateSelected}>
-        {#snippet monthTitleTemplate()}
-            <div class="month-title">
-                <div class="month">{calendarState.monthTitle}</div>
-                <div class="chit-earned">{totalEarned.toLocaleString()} CHIT</div>
-            </div>
-        {/snippet}
-        {#snippet dayTemplate(day)}
-            <ChitEventsForDay
-                {day}
-                selectedMonth={calendarState.selectedMonth}
-                events={chitEventsForDay(events, day)} />
-        {/snippet}
-    </Calendar>
+    {#if !$disableChit}
+        <div class="header">
+            {#if streak > 0}
+                <div class="streak">
+                    You are on a
+                    <div class="streak-txt">{streak}</div>
+                    day streak!
+                </div>
+            {/if}
+            <ChitBalance
+                size={"large"}
+                me
+                balance={$chitState.chitBalance}
+                totalEarned={$chitState.totalChitEarned} />
+        </div>
+        <Calendar {dateSelected}>
+            {#snippet monthTitleTemplate()}
+                <div class="month-title">
+                    <div class="month">{calendarState.monthTitle}</div>
+                    <div class="chit-earned">{totalEarned.toLocaleString()} CHIT</div>
+                </div>
+            {/snippet}
+            {#snippet dayTemplate(day)}
+                <ChitEventsForDay
+                    {day}
+                    selectedMonth={calendarState.selectedMonth}
+                    events={chitEventsForDay(events, day)} />
+            {/snippet}
+        </Calendar>
+
+        <Toggle
+            id={"utc-mode"}
+            on:change={changeMode}
+            small
+            label={i18nKey("dailyChit.utcMode")}
+            bind:checked={$utcMode} />
+
+        <div class="utc">
+            <Translatable resourceKey={i18nKey("dailyChit.utcInfo")} />
+        </div>
+
+        <Toggle
+            id={"chit-popup"}
+            small
+            on:change={() => chitPopup.set(!$chitPopup)}
+            label={i18nKey("learnToEarn.showChitPopup")}
+            checked={$chitPopup} />
+
+        <Toggle
+            id={"hide-chit-icon"}
+            small
+            on:change={() => hideChitIcon.set(!$hideChitIcon)}
+            label={i18nKey("dailyChit.hideWhenClaimed")}
+            checked={$hideChitIcon} />
+    {/if}
 
     <Toggle
-        id={"utc-mode"}
-        on:change={changeMode}
+        id={"disable-chit"}
         small
-        label={i18nKey("dailyChit.utcMode")}
-        bind:checked={$utcMode} />
-
-    <div class="utc">
-        <Translatable resourceKey={i18nKey("dailyChit.utcInfo")} />
-    </div>
-
-    <Toggle
-        id={"chit-popup"}
-        small
-        on:change={() => chitPopup.set(!$chitPopup)}
-        label={i18nKey("learnToEarn.showChitPopup")}
-        checked={$chitPopup} />
-
-    <Toggle
-        id={"hide-chit-icon"}
-        small
-        on:change={() => hideChitIcon.set(!$hideChitIcon)}
-        label={i18nKey("dailyChit.hideWhenClaimed")}
-        checked={$hideChitIcon} />
+        on:change={() => disableChit.set(!$disableChit)}
+        label={i18nKey("hideChit")}
+        checked={$disableChit} />
 </div>
 
 <style lang="scss">

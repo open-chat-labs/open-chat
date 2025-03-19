@@ -852,6 +852,7 @@
     "here": "here",
     "hideAuthProviders": "Hide options",
     "hideBlocked": "Hide messages from users I have blocked",
+    "hideChit": "Hide all CHIT related features",
     "historyOffInfo": "New joiners will only see messages arriving after they join. 🤫",
     "historyOnInfo": "Full chat history will be visible to new joiners. Careful now! 🤐",
     "historyVisible": "visible chat history",
