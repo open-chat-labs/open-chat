@@ -35,9 +35,8 @@
         ? "/assets/btc_logo.svg"
         : "/assets/ckbtc_nobackground.svg");
 
-    $effect(() => {
-        client.getBtcAddress().then((addr) => btcAddress = addr).catch((e) => error = e);
-    });
+    let btcDepositFeePromise: Promise<bigint> = client.getCkbtcMinterDepositInfo().then((depositInfo) => depositInfo.depositFee);
+    client.getBtcAddress().then((addr) => btcAddress = addr).catch((e) => error = e);
 </script>
 
 <div class="account-info">
@@ -66,6 +65,15 @@
         <TruncatedAccount {centered} {account} />
     {/if}
 
+    {#if selectedNetwork === BTC_SYMBOL}
+        {#await btcDepositFeePromise}
+            <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
+        {:then fee}
+            <span class="label">{$_("cryptoAccount.depositFee", { values: { amount: `${client.formatTokens(fee, 8)} BTC` }})}</span>
+        {:catch}
+            <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
+        {/await}
+    {/if}
 </div>
 
 <style lang="scss">
