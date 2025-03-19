@@ -1,23 +1,48 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import { interpolate } from "../i18n/i18n";
     import { translatable } from "../actions/translatable";
     import type { ResourceKey } from "openchat-client";
 
     let inp: HTMLTextAreaElement;
-    export let disabled: boolean = false;
-    export let invalid: boolean = false;
-    export let value: string = "";
-    export let autofocus: boolean = false;
-    export let placeholder: ResourceKey | undefined = undefined;
-    export let minlength: number = 0;
-    export let maxlength: number = Number.MAX_VALUE;
-    export let rows: number = 4;
-    export let margin: boolean = true;
-    export let scroll: boolean = false;
-    export let outerHeight: number = 0;
-    export let innerHeight: number = 0;
+
+    interface Props {
+        disabled?: boolean;
+        invalid?: boolean;
+        value?: string;
+        autofocus?: boolean;
+        placeholder?: ResourceKey | undefined;
+        minlength?: number;
+        maxlength?: number;
+        rows?: number;
+        margin?: boolean;
+        scroll?: boolean;
+        outerHeight?: number;
+        innerHeight?: number;
+        children?: Snippet;
+        onchange?: () => void;
+    }
+
+    let {
+        disabled = false,
+        invalid = false,
+        value = $bindable(""),
+        autofocus = false,
+        placeholder = undefined,
+        minlength = 0,
+        maxlength = Number.MAX_VALUE,
+        rows = 4,
+        margin = true,
+        scroll = false,
+        outerHeight = $bindable(0),
+        innerHeight = $bindable(0),
+        children,
+        onchange,
+    }: Props = $props();
+
+    outerHeight;
+    innerHeight;
 
     onMount(() => {
         if (autofocus) {
@@ -25,8 +50,8 @@
         }
     });
 
-    $: remaining = typeof value === "string" ? maxlength - value.length : 0;
-    $: warn = remaining <= 5;
+    let remaining = $derived(typeof value === "string" ? maxlength - value.length : 0);
+    let warn = $derived(remaining <= 5);
 </script>
 
 <div class="outer-wrapper" class:margin bind:clientHeight={outerHeight}>
@@ -45,13 +70,14 @@
             placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
             use:translatable={{ key: placeholder, position: "absolute", right: 12, top: 12 }}
             bind:value
+            oninput={onchange}
             class="textbox"
-            class:scroll />
+            class:scroll></textarea>
     </div>
     {#if !disabled && maxlength < Number.MAX_VALUE}
         <div class:warn class="countdown">{value.length}/{maxlength}</div>
     {/if}
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">
