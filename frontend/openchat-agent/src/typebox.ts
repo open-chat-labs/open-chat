@@ -345,12 +345,6 @@ export const UserUnblockUserResponse = Type.Union([
 export type UserAddHotGroupExclusionsResponse = Static<typeof UserAddHotGroupExclusionsResponse>;
 export const UserAddHotGroupExclusionsResponse = Type.Literal("Success");
 
-export type UserWithdrawBtcArgs = Static<typeof UserWithdrawBtcArgs>;
-export const UserWithdrawBtcArgs = Type.Object({
-    amount: Type.BigInt(),
-    address: Type.String(),
-});
-
 export type UserUpdatesArgs = Static<typeof UserUpdatesArgs>;
 export const UserUpdatesArgs = Type.Object({
     updates_since: Type.BigInt(),
@@ -5017,6 +5011,13 @@ export const UserWithdrawBtcResponse = Type.Union([
     Type.Object({
         RetrieveBtcError: Type.String(),
     }),
+    Type.Literal("PinRequired"),
+    Type.Object({
+        PinIncorrect: Type.BigInt(),
+    }),
+    Type.Object({
+        TooManyFailedPinAttempts: Type.BigInt(),
+    }),
     Type.Object({
         InternalError: Type.String(),
     }),
@@ -5024,6 +5025,13 @@ export const UserWithdrawBtcResponse = Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type UserWithdrawBtcArgs = Static<typeof UserWithdrawBtcArgs>;
+export const UserWithdrawBtcArgs = Type.Object({
+    amount: Type.BigInt(),
+    address: Type.String(),
+    pin: Type.Optional(PinNumberWrapper),
+});
 
 export type UserPinChatResponse = Static<typeof UserPinChatResponse>;
 export const UserPinChatResponse = Type.Union([
