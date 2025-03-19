@@ -3826,8 +3826,8 @@ export class OpenChatAgent extends EventTarget {
         return false;
     }
 
-    withdrawBtc(address: string, amount: bigint): Promise<WithdrawBtcResponse> {
-        return this.userClient.withdrawBtc(address, amount);
+    withdrawBtc(address: string, amount: bigint, pin: string | undefined): Promise<WithdrawBtcResponse> {
+        return this.userClient.withdrawBtc(address, amount, pin);
     }
 
     getCkbtcMinterDepositInfo(): Promise<CkbtcMinterDepositInfo> {

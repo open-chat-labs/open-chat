@@ -79,6 +79,7 @@ import {
     searchDirectChatResponse,
     setAvatarResponse,
     setBioResponse,
+    withdrawBtcResponse,
     withdrawCryptoResponse,
     sendMessageResponse,
     sendMessageWithTransferToChannelResponse,
@@ -1740,20 +1741,15 @@ export class UserClient extends MsgpackCanisterAgent {
         );
     }
 
-    withdrawBtc(address: string, amount: bigint): Promise<WithdrawBtcResponse> {
+    withdrawBtc(address: string, amount: bigint, pin: string | undefined): Promise<WithdrawBtcResponse> {
         return this.executeMsgpackUpdate(
             "withdraw_btc",
             {
                 address,
                 amount,
+                pin,
             },
-            (resp) => {
-                if ("Success" in resp) {
-                    return { kind: "success" };
-                }
-                console.log("Failed to withdraw BTC", resp);
-                return { kind: "failure", message: JSON.stringify(resp) };
-            },
+            withdrawBtcResponse,
             UserWithdrawBtcArgs,
             UserWithdrawBtcResponse
         );

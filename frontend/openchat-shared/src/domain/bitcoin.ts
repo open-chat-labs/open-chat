@@ -1,3 +1,5 @@
+import type { PinNumberFailures } from "./chat";
+
 export type Utxo = {
     height: number;
     value: bigint;
@@ -9,6 +11,7 @@ export type Utxo = {
 
 export type WithdrawBtcResponse =
     | { kind: "success" }
+    | PinNumberFailures
     | { kind: "failure", message: string };
 
 export type CkbtcMinterDepositInfo = {

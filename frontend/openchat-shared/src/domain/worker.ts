@@ -1423,6 +1423,7 @@ type UpdateBtcBalance = {
 type WithdrawBtc = {
     address: string;
     amount: bigint;
+    pin : string | undefined;
     kind: "withdrawBtc";
 };
 

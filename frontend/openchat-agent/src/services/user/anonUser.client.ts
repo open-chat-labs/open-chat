@@ -522,7 +522,11 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    withdrawBtc(): Promise<WithdrawBtcResponse> {
+    withdrawBtc(
+        _address: string,
+        _amount: bigint,
+        _pin: string | undefined
+    ): Promise<WithdrawBtcResponse> {
         throw new AnonymousOperationError();
     }
 }

@@ -1777,7 +1777,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.withdrawBtc(payload.address, payload.amount)
+                    agent.withdrawBtc(payload.address, payload.amount, payload.pin)
                 );
                 break;
 
