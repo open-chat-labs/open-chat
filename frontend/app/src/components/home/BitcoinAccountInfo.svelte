@@ -29,15 +29,15 @@
 
     let btcAddress: string | undefined = $state();
     let selectedNetwork = $state(BTC_SYMBOL);
-    let account = $derived(selectedNetwork === BTC_SYMBOL ? btcAddress : userId);
     let error = $state();
-    let logo = $derived(selectedNetwork === BTC_SYMBOL
+
+    const account = $derived(selectedNetwork === BTC_SYMBOL ? btcAddress : userId);
+    const logo = $derived(selectedNetwork === BTC_SYMBOL
         ? "/assets/btc_logo.svg"
         : "/assets/ckbtc_nobackground.svg");
 
-    $effect(() => {
-        client.getBtcAddress().then((addr) => btcAddress = addr).catch((e) => error = e);
-    });
+    const btcDepositFeePromise: Promise<bigint> = client.getCkbtcMinterDepositInfo().then((depositInfo) => depositInfo.depositFee);
+    client.getBtcAddress().then((addr) => btcAddress = addr).catch((e) => error = e);
 </script>
 
 <div class="account-info">
@@ -66,6 +66,15 @@
         <TruncatedAccount {centered} {account} />
     {/if}
 
+    {#if selectedNetwork === BTC_SYMBOL}
+        {#await btcDepositFeePromise}
+            <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
+        {:then fee}
+            <span class="label">{$_("cryptoAccount.depositFee", { values: { amount: `${client.formatTokens(fee, 8)} BTC` }})}</span>
+        {:catch}
+            <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
+        {/await}
+    {/if}
 </div>
 
 <style lang="scss">
