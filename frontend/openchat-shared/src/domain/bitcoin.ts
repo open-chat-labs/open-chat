@@ -6,3 +6,13 @@ export type Utxo = {
         vout: number;
     };
 };
+
+export type CkbtcMinterDepositInfo = {
+    minConfirmations: number;
+    depositFee: bigint;
+}
+
+export type CkbtcMinterWithdrawalInfo = {
+    minWithdrawalAmount: bigint;
+    feeEstimate: bigint;
+}

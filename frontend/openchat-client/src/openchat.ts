@@ -410,6 +410,8 @@ import type {
     WebAuthnKeyFull,
     BotInstallationLocation,
     BotActionScope,
+    CkbtcMinterDepositInfo,
+    CkbtcMinterWithdrawalInfo,
 } from "openchat-shared";
 import {
     Stream,
@@ -7182,6 +7184,19 @@ export class OpenChat extends EventTarget {
             kind: "updateBtcBalance",
             userId: this.#liveState.user.userId,
             bitcoinAddress: address,
+        });
+    }
+
+    getCkbtcMinterDepositInfo(): Promise<CkbtcMinterDepositInfo> {
+        return this.#sendRequest({
+            kind: "ckbtcMinterDepositInfo",
+        });
+    }
+
+    getCkbtcMinterWithdrawalInfo(amount: bigint): Promise<CkbtcMinterWithdrawalInfo> {
+        return this.#sendRequest({
+            kind: "ckbtcMinterWithdrawalInfo",
+            amount,
         });
     }
 

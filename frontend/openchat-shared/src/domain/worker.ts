@@ -213,6 +213,7 @@ import type {
     ExternalBot,
     ExternalBotPermissions,
 } from "./bots";
+import type { CkbtcMinterDepositInfo, CkbtcMinterWithdrawalInfo } from "./bitcoin";
 
 /**
  * Worker request types
@@ -402,6 +403,8 @@ export type WorkerRequest =
     | GetLocalUserIndexForUser
     | GenerateBtcAddress
     | UpdateBtcBalance
+    | GetCkbtcMinterDepositInfo
+    | GetCkbtcMinterWithdrawalInfo
     | CurrentUserWebAuthnKey
     | LookupWebAuthnPubKey
     | SetCachedWebAuthnKey
@@ -1412,6 +1415,15 @@ type UpdateBtcBalance = {
     kind: "updateBtcBalance";
 };
 
+type GetCkbtcMinterDepositInfo = {
+    kind: "ckbtcMinterDepositInfo";
+};
+
+type GetCkbtcMinterWithdrawalInfo = {
+    amount: bigint;
+    kind: "ckbtcMinterWithdrawalInfo";
+};
+
 type CurrentUserWebAuthnKey = {
     kind: "currentUserWebAuthnKey";
 };
@@ -1644,6 +1656,7 @@ export type WorkerResponseInner =
     | ProposedResponse
     | PendingDeploymentResponse
     | JoinVideoCallResponse
+    | CkbtcMinterDepositInfo
     | WebAuthnKeyFull
     | GenerateMagicLinkResponse
     | SiwePrepareLoginResponse
@@ -2332,6 +2345,10 @@ export type WorkerResult<T> = T extends Init
     ? string
     : T extends UpdateBtcBalance
     ? boolean
+    : T extends GetCkbtcMinterDepositInfo
+    ? CkbtcMinterDepositInfo
+    : T extends GetCkbtcMinterWithdrawalInfo
+    ? CkbtcMinterWithdrawalInfo
     : T extends CurrentUserWebAuthnKey
     ? WebAuthnKeyFull | undefined
     : T extends LookupWebAuthnPubKey

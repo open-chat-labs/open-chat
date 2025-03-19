@@ -1,56 +1,18 @@
-// The result of an [update_balance] call.
-type UtxoStatus = variant {
-    // The minter ignored this UTXO because UTXO's value is too small to pay
-    // the KYT fees. This state is final, retrying [update_balance] call will
-    // have no effect on this UTXO.
-    ValueTooSmall : Utxo;
-    // The KYT provider considered this UTXO to be tainted. This UTXO state is
-    // final, retrying [update_balance] call will have no effect on this UTXO.
-    Tainted : Utxo;
-    // The UTXO passed the KYT check, but the minter failed to mint ckBTC
-    // because the Ledger was unavailable. Retrying the [update_balance] call
-    // should eventually advance the UTXO to the [Minted] state.
-    Checked : Utxo;
-    // The UTXO passed the KYT check, and ckBTC has been minted.
-    Minted : record {
-        block_index : nat64;
-        minted_amount : nat64;
-        utxo : Utxo;
-    };
-};
-
-// Utxos that don't have enough confirmations to be processed.
-type PendingUtxo = record {
-    outpoint : record { txid : vec nat8; vout : nat32 };
-    value : nat64;
-    confirmations: nat32;
-};
-
-type UpdateBalanceError = variant {
-    // There are no new UTXOs to process.
-    NoNewUtxos : record {
-        current_confirmations: opt nat32;
-        required_confirmations: nat32;
-        pending_utxos: opt vec PendingUtxo;
-    };
-    // The minter is already processing another update balance request for the caller.
-    AlreadyProcessing;
-    // The minter is overloaded, retry the request.
-    // The payload contains a human-readable message explaining what caused the unavailability.
-    TemporarilyUnavailable : text;
-    // A generic error reserved for future extensions.
-    GenericError : record { error_message : text; error_code : nat64 };
-};
-
 type Utxo = record {
     outpoint : record { txid : vec nat8; vout : nat32 };
     value : nat64;
     height : nat32;
 };
 
+type MinterInfo = record {
+    min_confirmations : nat32;
+    retrieve_btc_min_amount : nat64;
+    kyt_fee : nat64;
+};
+
 service : {
     get_known_utxos: (record { owner: opt principal; subaccount : opt blob }) -> (vec Utxo) query;
-    update_balance : (record { owner: opt principal; subaccount : opt blob }) -> (variant { Ok : vec UtxoStatus; Err : UpdateBalanceError });
     estimate_withdrawal_fee : (record { amount : opt nat64 }) -> (record { bitcoin_fee : nat64; minter_fee : nat64 }) query;
     get_deposit_fee: () -> (nat64) query;
+    get_minter_info : () -> (MinterInfo) query;
 }

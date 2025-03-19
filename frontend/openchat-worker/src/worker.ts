@@ -1773,6 +1773,22 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "ckbtcMinterDepositInfo":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getCkbtcMinterDepositInfo(),
+                );
+                break;
+
+            case "ckbtcMinterWithdrawalInfo":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getCkbtcMinterWithdrawalInfo(payload.amount),
+                );
+                break;
+
             case "currentUserWebAuthnKey":
                 executeThenReply(
                     payload,
