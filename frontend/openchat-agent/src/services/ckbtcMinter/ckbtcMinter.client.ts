@@ -26,6 +26,6 @@ export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
                 subaccount: [],
             }),
             (resp) => resp.map(utxo),
-        )
+        );
     }
 }
