@@ -58,7 +58,6 @@ fn main() {
     generate_ts_method!(user, remove_reaction);
     generate_ts_method!(user, reclaim_swap_tokens);
     generate_ts_method!(user, report_message);
-    generate_ts_method!(user, retrieve_btc);
     generate_ts_method!(user, save_crypto_account);
     generate_ts_method!(user, send_message_with_transfer_to_channel);
     generate_ts_method!(user, send_message_with_transfer_to_group);
@@ -77,6 +76,7 @@ fn main() {
     generate_ts_method!(user, unpin_chat_v2);
     generate_ts_method!(user, update_bot);
     generate_ts_method!(user, update_btc_balance);
+    generate_ts_method!(user, withdraw_btc);
     generate_ts_method!(user, withdraw_crypto_v2);
 
     candid::export_service!();

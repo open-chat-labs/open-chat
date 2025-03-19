@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Return `btc_address` in user canister updates ([#7608](https://github.com/open-chat-labs/open-chat/pull/7608))
 - Remove `cached_btc_address` and rename `generate_btc_address` ([#7609](https://github.com/open-chat-labs/open-chat/pull/7609))
 - Support bot `direct message` scenario ([#7607](https://github.com/open-chat-labs/open-chat/pull/7607))
+- Rename `retrieve_btc` to `withdraw_btc` ([#7620](https://github.com/open-chat-labs/open-chat/pull/7620))
 
 ### Removed
 

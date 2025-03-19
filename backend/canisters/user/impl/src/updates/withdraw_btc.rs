@@ -4,11 +4,11 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
 use constants::{CKBTC_LEDGER_CANISTER_ID, MINUTE_IN_MS, NANOS_PER_MILLISECOND};
-use user_canister::retrieve_btc::{Response::*, *};
+use user_canister::withdraw_btc::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
-async fn retrieve_btc(args: Args) -> Response {
+async fn withdraw_btc(args: Args) -> Response {
     run_regular_jobs();
 
     let now_nanos = read_state(|state| state.env.now_nanos());

@@ -326,7 +326,7 @@
     }
 
     function keyPress(e: KeyboardEvent) {
-        if (e.key === "Enter" && !e.shiftKey && $enterSend) {
+        if (e.key === "Enter" && !e.shiftKey) {
             if (directBot) {
                 if (!showCommandSelector && !messageIsEmpty) {
                     sendADirectBotMessage(directBot);
@@ -335,7 +335,7 @@
                 }
                 e.preventDefault();
             } else {
-                if (!showCommandSelector) {
+                if (!showCommandSelector && $enterSend) {
                     e.preventDefault();
                     sendMessage();
                 }
