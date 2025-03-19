@@ -67,6 +67,7 @@ import type {
     MessageActivityFeedResponse,
     ExternalBotPermissions,
     GenerateBotKeyResponse,
+    WithdrawBtcResponse,
 } from "openchat-shared";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
@@ -1739,7 +1740,7 @@ export class UserClient extends MsgpackCanisterAgent {
         );
     }
 
-    withdrawBtc(address: string, amount: bigint): Promise<boolean> {
+    withdrawBtc(address: string, amount: bigint): Promise<WithdrawBtcResponse> {
         return this.executeMsgpackUpdate(
             "withdraw_btc",
             {
@@ -1748,10 +1749,10 @@ export class UserClient extends MsgpackCanisterAgent {
             },
             (resp) => {
                 if ("Success" in resp) {
-                    return true;
+                    return { kind: "success" };
                 }
                 console.log("Failed to withdraw BTC", resp);
-                return false;
+                return { kind: "failure", message: JSON.stringify(resp) };
             },
             UserWithdrawBtcArgs,
             UserWithdrawBtcResponse

@@ -236,6 +236,7 @@ import type {
     PublicApiKeyDetails,
     CkbtcMinterDepositInfo,
     CkbtcMinterWithdrawalInfo,
+    WithdrawBtcResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3825,7 +3826,7 @@ export class OpenChatAgent extends EventTarget {
         return false;
     }
 
-    withdrawBtc(address: string, amount: bigint): Promise<boolean> {
+    withdrawBtc(address: string, amount: bigint): Promise<WithdrawBtcResponse> {
         return this.userClient.withdrawBtc(address, amount);
     }
 

@@ -7,6 +7,10 @@ export type Utxo = {
     };
 };
 
+export type WithdrawBtcResponse =
+    | { kind: "success" }
+    | { kind: "failure", message: string };
+
 export type CkbtcMinterDepositInfo = {
     minConfirmations: number;
     depositFee: bigint;

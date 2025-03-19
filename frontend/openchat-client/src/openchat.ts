@@ -412,6 +412,7 @@ import type {
     BotActionScope,
     CkbtcMinterDepositInfo,
     CkbtcMinterWithdrawalInfo,
+    WithdrawBtcResponse,
 } from "openchat-shared";
 import {
     Stream,
@@ -7179,7 +7180,7 @@ export class OpenChat extends EventTarget {
         return address;
     }
 
-    withdrawBtc(address: string, amount: bigint): Promise<boolean> {
+    withdrawBtc(address: string, amount: bigint): Promise<WithdrawBtcResponse> {
         return this.#sendRequest({
             kind: "withdrawBtc",
             address,

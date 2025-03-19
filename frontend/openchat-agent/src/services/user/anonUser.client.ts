@@ -12,6 +12,7 @@ import type {
     Verification,
     VideoCallPresence,
     WalletConfig,
+    WithdrawBtcResponse,
 } from "openchat-shared";
 import type { AcceptP2PSwapResponse } from "openchat-shared";
 import type {
@@ -521,7 +522,7 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    withdrawBtc(): Promise<boolean> {
+    withdrawBtc(): Promise<WithdrawBtcResponse> {
         throw new AnonymousOperationError();
     }
 }

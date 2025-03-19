@@ -213,7 +213,11 @@ import type {
     ExternalBot,
     ExternalBotPermissions,
 } from "./bots";
-import type { CkbtcMinterDepositInfo, CkbtcMinterWithdrawalInfo } from "./bitcoin";
+import type {
+    CkbtcMinterDepositInfo,
+    CkbtcMinterWithdrawalInfo,
+    WithdrawBtcResponse
+} from "./bitcoin";
 
 /**
  * Worker request types
@@ -2353,7 +2357,7 @@ export type WorkerResult<T> = T extends Init
     : T extends UpdateBtcBalance
     ? boolean
     : T extends WithdrawBtc
-    ? boolean
+    ? WithdrawBtcResponse
     : T extends GetCkbtcMinterDepositInfo
     ? CkbtcMinterDepositInfo
     : T extends GetCkbtcMinterWithdrawalInfo
