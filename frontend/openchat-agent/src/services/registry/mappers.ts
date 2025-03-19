@@ -5,7 +5,7 @@ import type {
     DexId,
 } from "openchat-shared";
 import { mapOptional, principalBytesToString } from "../../utils/mapping";
-import { UnsupportedValueError } from "openchat-shared";
+import { BTC_SYMBOL, CKBTC_SYMBOL, UnsupportedValueError } from "openchat-shared";
 import { buildTokenLogoUrl } from "../../utils/chat";
 import type {
     ExchangeId as TExchangeId,
@@ -65,7 +65,7 @@ function tokenDetails(
 ): CryptocurrencyDetails {
     const ledger = principalBytesToString(value.ledger_canister_id);
 
-    return {
+    const tokenDetails = {
         ledger,
         name: value.name,
         symbol: value.symbol,
@@ -87,6 +87,15 @@ function tokenDetails(
         enabled: value.enabled,
         lastUpdated: value.last_updated,
     };
+
+    if (tokenDetails.symbol === CKBTC_SYMBOL) {
+        // Override ckBTC to BTC
+        tokenDetails.name = "Bitcoin";
+        tokenDetails.symbol = BTC_SYMBOL;
+        tokenDetails.logo = "/assets/btc_logo.svg";
+    }
+
+    return tokenDetails;
 }
 
 function nervousSystemSummary(value: RegistryNervousSystemSummary): NervousSystemSummary {
