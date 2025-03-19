@@ -1,5 +1,6 @@
 use crate::guards::caller_is_owner;
-use crate::{read_state, run_regular_jobs};
+use crate::model::pin_number::VerifyPinError;
+use crate::{mutate_state, read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
@@ -10,6 +11,14 @@ use user_canister::withdraw_btc::{Response::*, *};
 #[trace]
 async fn withdraw_btc(args: Args) -> Response {
     run_regular_jobs();
+
+    if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_deref(), state.env.now())) {
+        return match error {
+            VerifyPinError::PinRequired => PinRequired,
+            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
+            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
+        };
+    }
 
     let now_nanos = read_state(|state| state.env.now_nanos());
 
