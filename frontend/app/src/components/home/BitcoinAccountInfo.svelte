@@ -29,13 +29,14 @@
 
     let btcAddress: string | undefined = $state();
     let selectedNetwork = $state(BTC_SYMBOL);
-    let account = $derived(selectedNetwork === BTC_SYMBOL ? btcAddress : userId);
     let error = $state();
-    let logo = $derived(selectedNetwork === BTC_SYMBOL
+
+    const account = $derived(selectedNetwork === BTC_SYMBOL ? btcAddress : userId);
+    const logo = $derived(selectedNetwork === BTC_SYMBOL
         ? "/assets/btc_logo.svg"
         : "/assets/ckbtc_nobackground.svg");
 
-    let btcDepositFeePromise: Promise<bigint> = client.getCkbtcMinterDepositInfo().then((depositInfo) => depositInfo.depositFee);
+    const btcDepositFeePromise: Promise<bigint> = client.getCkbtcMinterDepositInfo().then((depositInfo) => depositInfo.depositFee);
     client.getBtcAddress().then((addr) => btcAddress = addr).catch((e) => error = e);
 </script>
 
