@@ -849,6 +849,7 @@
     "here": "こちら",
     "hideAuthProviders": "オプションを非表示にする",
     "hideBlocked": "ブロックしたユーザーからのメッセージを非表示にする",
+    "hideChit": "CHIT関連の機能を非表示にする",
     "historyOffInfo": "新しい参加者には、参加後に到着するメッセージのみが表示されます。 🤫",
     "historyOnInfo": "新規参加者にも、過去のチャット内容が表示されます。注意してください🤐",
     "historyVisible": "閲覧可能なチャット履歴",

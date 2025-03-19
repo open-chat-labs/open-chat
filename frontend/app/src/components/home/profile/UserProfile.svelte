@@ -56,6 +56,7 @@
         verificationSectionOpen,
         accountsSectionOpen,
         deleteAccountSectionOpen,
+        disableChit,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Toggle from "../../Toggle.svelte";
@@ -89,58 +90,69 @@
     const dispatch = createEventDispatcher();
     const MAX_BIO_LENGTH = 2000;
 
-    export let user: UserSummary;
+    interface Props {
+        user: UserSummary;
+    }
 
-    let originalBio = "";
-    let userbio = "";
-    let selectedLocale = ($locale as string).substring(0, 2);
-    let usernameError: string | undefined = undefined;
-    let displayNameError: string | undefined = undefined;
-    let bioError: string | undefined = undefined;
-    let saving = false;
-    let username = "";
-    let usernameValid = true;
-    let displayName: string | undefined = undefined;
-    let displayNameValid = true;
-    let checkingUsername: boolean;
-    let view: "global" | "communities" | "chit" = "global";
-    let selectedCommunityId = "";
-    let deleting = false;
-    let confirmDelete = false;
-    let botConfigData: BotClientConfigData | undefined = undefined;
+    let { user }: Props = $props();
 
-    $: originalUsername = user?.username ?? "";
-    $: originalDisplayName = user?.displayName ?? undefined;
-    $: adultEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Adult);
-    $: offensiveEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Offensive);
-    $: underReviewEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.UnderReview);
-    $: selectedCommunity = $communities.get({
-        kind: "community",
-        communityId: selectedCommunityId,
-    });
-    $: readonly = $suspendedUser || $anonUser;
-    $: verified = user.isUniquePerson;
+    let originalBio = $state("");
+    let userbio = $state("");
+    let selectedLocale = $state(($locale as string).substring(0, 2));
+    let usernameError: string | undefined = $state(undefined);
+    let displayNameError: string | undefined = $state(undefined);
+    let bioError: string | undefined = $state(undefined);
+    let saving = $state(false);
+    let username = $state("");
+    let usernameValid = $state(true);
+    let displayName: string | undefined = $state(undefined);
+    let displayNameValid = $state(true);
+    let checkingUsername: boolean = $state(false);
+    let view: "global" | "communities" | "chit" = $state("global");
+    let selectedCommunityId = $state("");
+    let deleting = $state(false);
+    let confirmDelete = $state(false);
+    let botConfigData: BotClientConfigData | undefined = $state(undefined);
+
+    let originalUsername = $derived(user?.username ?? "");
+    let originalDisplayName = $derived(user?.displayName ?? undefined);
+    let adultEnabled = $derived(client.hasModerationFlag($moderationFlags, ModerationFlags.Adult));
+    let offensiveEnabled = $derived(
+        client.hasModerationFlag($moderationFlags, ModerationFlags.Offensive),
+    );
+    let underReviewEnabled = $derived(
+        client.hasModerationFlag($moderationFlags, ModerationFlags.UnderReview),
+    );
+    let selectedCommunity = $derived(
+        $communities.get({
+            kind: "community",
+            communityId: selectedCommunityId,
+        }),
+    );
+    let readonly = $derived($suspendedUser || $anonUser);
+    let verified = $derived(user.isUniquePerson);
 
     //@ts-ignore
     let version = window.OC_WEBSITE_VERSION;
 
-    $: {
+    $effect(() => {
         setLocale(selectedLocale);
-    }
+    });
 
-    $: bioDirty = userbio !== originalBio;
-    $: usernameDirty = username !== originalUsername;
-    $: displayNameDirty = displayName !== originalDisplayName;
-    $: buttonEnabled =
+    let bioDirty = $derived(userbio !== originalBio);
+    let usernameDirty = $derived(username !== originalUsername);
+    let displayNameDirty = $derived(displayName !== originalDisplayName);
+    let buttonEnabled = $derived(
         usernameValid &&
-        displayNameValid &&
-        bioError === undefined &&
-        (bioDirty || usernameDirty || displayNameDirty) &&
-        !saving &&
-        !readonly;
-    $: canEditTranslations = !$locale?.startsWith("en");
-    $: referrals = $globalState.referrals;
-    $: referredUserIds = new Set(referrals.map((r) => r.userId));
+            displayNameValid &&
+            bioError === undefined &&
+            (bioDirty || usernameDirty || displayNameDirty) &&
+            !saving &&
+            !readonly,
+    );
+    let canEditTranslations = $derived(!$locale?.startsWith("en"));
+    let referrals = $derived($globalState.referrals);
+    let referredUserIds = $derived(new Set(referrals.map((r) => r.userId)));
 
     onMount(() => {
         if (!$anonUser) {
@@ -154,7 +166,9 @@
         client.setModerationFlags($moderationFlags ^ flag);
     }
 
-    function saveUser() {
+    function saveUser(e: Event) {
+        e.preventDefault();
+
         if ($anonUser) return;
 
         saving = true;
@@ -275,7 +289,7 @@
 
 <SectionHeader border={false} flush shadow>
     <h4 class="title"><Translatable resourceKey={i18nKey("profile.title")} /></h4>
-    <span title={$_("close")} class="close" on:click={closeProfile}>
+    <span title={$_("close")} class="close" onclick={closeProfile}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -287,7 +301,7 @@
         <div
             tabindex="0"
             role="button"
-            on:click={() => (view = "global")}
+            onclick={() => (view = "global")}
             class:selected={view === "global"}
             class="tab">
             <Translatable resourceKey={i18nKey("profile.global")} />
@@ -295,19 +309,21 @@
         <div
             tabindex="0"
             role="button"
-            on:click={() => (view = "communities")}
+            onclick={() => (view = "communities")}
             class:selected={view === "communities"}
             class="tab">
             <Translatable resourceKey={i18nKey("communities.communityLabel")} />
         </div>
-        <div
-            tabindex="0"
-            role="button"
-            on:click={() => (view = "chit")}
-            class:selected={view === "chit"}
-            class="tab">
-            <Translatable resourceKey={i18nKey("CHIT")} />
-        </div>
+        {#if !$disableChit}
+            <div
+                tabindex="0"
+                role="button"
+                onclick={() => (view = "chit")}
+                class:selected={view === "chit"}
+                class="tab">
+                <Translatable resourceKey={i18nKey("CHIT")} />
+            </div>
+        {/if}
     </div>
 {/if}
 
@@ -316,7 +332,7 @@
 {/if}
 
 {#if view === "global"}
-    <form use:menuCloser class="user-form" on:submit|preventDefault={saveUser}>
+    <form use:menuCloser class="user-form" onsubmit={saveUser}>
         <div class="user">
             <CollapsibleCard
                 on:toggle={userInfoOpen.toggle}
@@ -523,6 +539,12 @@
                         on:change={() => hideMessagesFromDirectBlocked.toggle()}
                         label={i18nKey("hideBlocked")}
                         checked={$hideMessagesFromDirectBlocked} />
+                    <Toggle
+                        id={"disable-chit"}
+                        small
+                        on:change={() => disableChit.set(!$disableChit)}
+                        label={i18nKey("hideChit")}
+                        checked={$disableChit} />
                 </CollapsibleCard>
             </div>
             <div class="video">
@@ -613,7 +635,7 @@
                         <Legend label={i18nKey("userId")} rules={i18nKey("alsoCanisterId")} />
                         <div class="userid-txt">
                             <div>{user.userId}</div>
-                            <div role="button" tabindex="0" on:click={onCopy} class="copy">
+                            <div role="button" tabindex="0" onclick={onCopy} class="copy">
                                 <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
                             </div>
                         </div>
@@ -678,7 +700,7 @@
     {#if selectedCommunity !== undefined}
         <CommunityProfile on:upgrade community={selectedCommunity} />
     {/if}
-{:else if view === "chit"}
+{:else if view === "chit" && !$disableChit}
     <ChitEvents />
 {/if}
 

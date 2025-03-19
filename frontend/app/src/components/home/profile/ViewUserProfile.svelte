@@ -35,6 +35,7 @@
     import WithRole from "./WithRole.svelte";
     import RoleIcon from "./RoleIcon.svelte";
     import ChitBalance from "./ChitBalance.svelte";
+    import { disableChit } from "@src/stores/settings";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -320,7 +321,7 @@
                 <div class="avatar">
                     <Avatar url={avatarUrl} {userId} size={AvatarSize.Large} />
                 </div>
-                {#if user !== undefined}
+                {#if user !== undefined && !$disableChit}
                     <ChitBalance
                         size={"small"}
                         {me}

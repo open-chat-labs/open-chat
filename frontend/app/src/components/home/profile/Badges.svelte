@@ -3,6 +3,7 @@
     import Diamond from "../../icons/Diamond.svelte";
     import Streak from "./Streak.svelte";
     import Verified from "../../icons/Verified.svelte";
+    import { disableChit } from "@src/stores/settings";
 
     export let diamondStatus: DiamondMembershipStatus["kind"] | undefined = undefined;
     export let streak: number = 0;
@@ -11,4 +12,6 @@
 
 <Diamond status={diamondStatus} />
 <Verified size={"small"} verified={uniquePerson} />
-<Streak days={streak} />
+{#if !$disableChit}
+    <Streak days={streak} />
+{/if}
