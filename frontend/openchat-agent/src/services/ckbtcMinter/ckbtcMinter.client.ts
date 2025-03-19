@@ -10,7 +10,7 @@ const MAINNET_CKBTC_MINTER_CANISTER_ID = "mqygn-kiaaa-aaaar-qaadq-cai";
 const TESTNET_CKBTC_MINTER_CANISTER_ID = "ml52i-qqaaa-aaaar-qaaba-cai";
 
 export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
-    #minterInfo: CkbtcMinterInfo | undefined;
+    #cachedMinterInfo: CkbtcMinterInfo | undefined;
 
     constructor(identity: Identity, agent: HttpAgent, mainnetEnabled: boolean) {
         super(
@@ -63,7 +63,7 @@ export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
     }
 
     private async getMinterInfoCached(): Promise<CkbtcMinterInfo> {
-        return this.#minterInfo ??= await this.getMinterInfo();
+        return this.#cachedMinterInfo ??= await this.getMinterInfo();
     }
 
     private getMinterInfo(): Promise<CkbtcMinterInfo> {
