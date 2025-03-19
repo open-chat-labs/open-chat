@@ -4,33 +4,10 @@ export const idlFactory = ({ IDL }) => {
     'value' : IDL.Nat64,
     'outpoint' : IDL.Record({ 'txid' : IDL.Vec(IDL.Nat8), 'vout' : IDL.Nat32 }),
   });
-  const UtxoStatus = IDL.Variant({
-    'ValueTooSmall' : Utxo,
-    'Tainted' : Utxo,
-    'Minted' : IDL.Record({
-      'minted_amount' : IDL.Nat64,
-      'block_index' : IDL.Nat64,
-      'utxo' : Utxo,
-    }),
-    'Checked' : Utxo,
-  });
-  const PendingUtxo = IDL.Record({
-    'confirmations' : IDL.Nat32,
-    'value' : IDL.Nat64,
-    'outpoint' : IDL.Record({ 'txid' : IDL.Vec(IDL.Nat8), 'vout' : IDL.Nat32 }),
-  });
-  const UpdateBalanceError = IDL.Variant({
-    'GenericError' : IDL.Record({
-      'error_message' : IDL.Text,
-      'error_code' : IDL.Nat64,
-    }),
-    'TemporarilyUnavailable' : IDL.Text,
-    'AlreadyProcessing' : IDL.Null,
-    'NoNewUtxos' : IDL.Record({
-      'required_confirmations' : IDL.Nat32,
-      'pending_utxos' : IDL.Opt(IDL.Vec(PendingUtxo)),
-      'current_confirmations' : IDL.Opt(IDL.Nat32),
-    }),
+  const MinterInfo = IDL.Record({
+    'retrieve_btc_min_amount' : IDL.Nat64,
+    'min_confirmations' : IDL.Nat32,
+    'kyt_fee' : IDL.Nat64,
   });
   return IDL.Service({
     'estimate_withdrawal_fee' : IDL.Func(
@@ -49,21 +26,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(Utxo)],
         ['query'],
       ),
-    'update_balance' : IDL.Func(
-        [
-          IDL.Record({
-            'owner' : IDL.Opt(IDL.Principal),
-            'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-          }),
-        ],
-        [
-          IDL.Variant({
-            'Ok' : IDL.Vec(UtxoStatus),
-            'Err' : UpdateBalanceError,
-          }),
-        ],
-        [],
-      ),
+    'get_minter_info' : IDL.Func([], [MinterInfo], ['query']),
   });
 };
 export const init = ({ IDL }) => { return []; };

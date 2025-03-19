@@ -234,6 +234,7 @@ import type {
     BotCommandResponse,
     BotInstallationLocation,
     PublicApiKeyDetails,
+    CkbtcMinterDepositInfo,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3821,6 +3822,14 @@ export class OpenChatAgent extends EventTarget {
         }
 
         return false;
+    }
+
+    getCkbtcMinterDepositInfo(): Promise<CkbtcMinterDepositInfo> {
+        return this._ckbtcMinterClient.get().getDepositInfo();
+    }
+
+    getCkbtcMinterWithdrawalFeeEstimate(amount: bigint): Promise<bigint> {
+        return this._ckbtcMinterClient.get().getWithdrawalFeeEstimate(amount);
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {
