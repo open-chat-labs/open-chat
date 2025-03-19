@@ -235,6 +235,7 @@ import type {
     BotInstallationLocation,
     PublicApiKeyDetails,
     CkbtcMinterDepositInfo,
+    CkbtcMinterWithdrawalInfo,
 } from "openchat-shared";
 import {
     UnsupportedValueError,

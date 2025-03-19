@@ -411,6 +411,7 @@ import type {
     BotInstallationLocation,
     BotActionScope,
     CkbtcMinterDepositInfo,
+    CkbtcMinterWithdrawalInfo,
 } from "openchat-shared";
 import {
     Stream,
@@ -7192,7 +7193,7 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    getCkbtcMinterWithdrawalInfo(amount: bigint): Promise<bigint> {
+    getCkbtcMinterWithdrawalInfo(amount: bigint): Promise<CkbtcMinterWithdrawalInfo> {
         return this.#sendRequest({
             kind: "ckbtcMinterWithdrawalInfo",
             amount,
