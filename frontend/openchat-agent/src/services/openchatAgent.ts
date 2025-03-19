@@ -308,6 +308,8 @@ export class OpenChatAgent extends EventTarget {
     private _logger: Logger;
 
     // Lazy loaded clients which may never end up being used
+    private _bitcoinClient = Lazy<BitcoinClient>;
+    private _ckbtcMinterClient = Lazy<CkbtcMinterClient>;
     private _dexesAgent: Lazy<DexesAgent>;
     private _marketMakerClient: Lazy<MarketMakerClient>;
     private _proposalsBotClient: Lazy<ProposalsBotClient>;
@@ -359,6 +361,16 @@ export class OpenChatAgent extends EventTarget {
         this._communityClients = {};
         this._groupInvite = config.groupInvite;
 
+        this._bitcoinClient = new Lazy(() => new BitcoinClient(
+            this.identity,
+            this._agent,
+            this.config.bitcoinMainnetEnabled,
+        ));
+        this._ckbtcMinterClient = new Lazy(() => new CkbtcMinterClient(
+            this.identity,
+            this._agent,
+            this.config.bitcoinMainnetEnabled,
+        ));
         this._dexesAgent = new Lazy(() => new DexesAgent(this._agent));
         this._marketMakerClient = new Lazy(() => new MarketMakerClient(
             identity,
@@ -3797,12 +3809,10 @@ export class OpenChatAgent extends EventTarget {
     // minter to check that it has processed them, if it has not, call `update_btc_balance` on the user canister which
     // will then call into `update_balance` on the ckBTC minter to pull in the new UTXOs.
     async updateBtcBalance(userId: string, bitcoinAddress: string): Promise<boolean> {
-        const bitcoinClient = new BitcoinClient(this.identity, this._agent, this.config.bitcoinMainnetEnabled);
-        const allUtxos = await bitcoinClient.getUtxos(bitcoinAddress);
+        const allUtxos = await this._bitcoinClient.get().getUtxos(bitcoinAddress);
 
         if (allUtxos.length > 0) {
-            const ckBtcMinterClient = new CkbtcMinterClient(this.identity, this._agent, this.config.bitcoinMainnetEnabled);
-            const knownUtxos = await ckBtcMinterClient.getKnownUtxos(userId);
+            const knownUtxos = await this._ckbtcMinterClient.get().getKnownUtxos(userId);
             const allUtxosSet = new Set(allUtxos.map((utxo) => bytesToHexString(utxo.outpoint.txid)));
 
             if (knownUtxos.some((utxo) => !allUtxosSet.has(bytesToHexString(utxo.outpoint.txid)))) {
