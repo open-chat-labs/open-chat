@@ -267,7 +267,7 @@ import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
 import { IcpSwapClient } from "./icpSwap/icpSwapClient";
 import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
 import { TranslationsClient } from "./translations/translations.client";
-import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter";
+import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
 import { SignInWithEmailClient } from "./signInWithEmail/signInWithEmail.client";
 import { SignInWithEthereumClient } from "./signInWithEthereum/signInWithEthereum.client";
 import { SignInWithSolanaClient } from "./signInWithSolana/signInWithSolana.client";
@@ -308,8 +308,8 @@ export class OpenChatAgent extends EventTarget {
     private _logger: Logger;
 
     // Lazy loaded clients which may never end up being used
-    private _bitcoinClient = Lazy<BitcoinClient>;
-    private _ckbtcMinterClient = Lazy<CkbtcMinterClient>;
+    private _bitcoinClient: Lazy<BitcoinClient>;
+    private _ckbtcMinterClient: Lazy<CkbtcMinterClient>;
     private _dexesAgent: Lazy<DexesAgent>;
     private _marketMakerClient: Lazy<MarketMakerClient>;
     private _proposalsBotClient: Lazy<ProposalsBotClient>;

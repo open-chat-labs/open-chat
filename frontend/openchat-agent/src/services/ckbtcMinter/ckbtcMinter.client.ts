@@ -3,7 +3,8 @@ import { Principal } from "@dfinity/principal";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { idlFactory, type CkbtcMinterService } from "./candid/idl";
 import { utxo } from "../bitcoin/mappers";
-import type { Utxo } from "openchat-shared";
+import type { CkbtcMinterDepositInfo, Utxo } from "openchat-shared";
+import { identity } from "../../utils/mapping";
 
 const MAINNET_CKBTC_MINTER_CANISTER_ID = "mqygn-kiaaa-aaaar-qaadq-cai";
 const TESTNET_CKBTC_MINTER_CANISTER_ID = "ml52i-qqaaa-aaaar-qaaba-cai";
@@ -26,6 +27,32 @@ export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
                 subaccount: [],
             }),
             (resp) => resp.map(utxo),
+        );
+    }
+
+
+    async getDepositInfo(): Promise<CkbtcMinterDepositInfo> {
+        const minConfirmationsPromise = this.handleQueryResponse(
+            () => this.service.get_minter_info(),
+            (resp) => resp.min_confirmations
+        );
+        const depositFeePromise = this.handleQueryResponse(
+            () => this.service.get_deposit_fee(),
+            identity
+        );
+
+        const [minConfirmations, depositFee] = await Promise.all([minConfirmationsPromise, depositFeePromise]);
+
+        return {
+            minConfirmations,
+            depositFee,
+        }
+    }
+
+    getWithdrawalFeeEstimate(amount: bigint): Promise<bigint> {
+        return this.handleQueryResponse(
+            () => this.service.estimate_withdrawal_fee({ amount: [amount] }),
+            (resp) => resp.minter_fee + resp.bitcoin_fee,
         )
     }
 }
