@@ -128,7 +128,7 @@
     import DailyChitModal from "./DailyChitModal.svelte";
     import ChallengeModal from "./ChallengeModal.svelte";
     import ChitEarned from "./ChitEarned.svelte";
-    import { chitPopup } from "../../stores/settings";
+    import { chitPopup, disableChit } from "../../stores/settings";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
     import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
     import { scream } from "../../utils/scream";
@@ -1421,7 +1421,7 @@
 
 <svelte:body on:profile-clicked={profileLinkClicked} />
 
-{#if $chitPopup}
+{#if $chitPopup && !$disableChit}
     <ChitEarned />
 {/if}
 
