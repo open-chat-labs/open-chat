@@ -4,6 +4,7 @@ export * from "./emailSignInSessionStorage";
 export * from "./i18n";
 export * from "./identity";
 export * from "./identityStorage";
+export * from "./lazy";
 export * from "./logging";
 export * from "./map";
 export * from "./network";

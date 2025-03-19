@@ -1634,7 +1634,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.translationsClient.propose(payload.locale, payload.key, payload.value),
+                    agent.translationsClient().propose(payload.locale, payload.key, payload.value),
                 );
                 break;
 
@@ -1642,7 +1642,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.translationsClient.approve(payload.id),
+                    agent.translationsClient().approve(payload.id),
                 );
                 break;
 
@@ -1650,23 +1650,23 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.translationsClient.reject(payload.id, payload.reason),
+                    agent.translationsClient().reject(payload.id, payload.reason),
                 );
                 break;
 
             case "getProposedTranslations":
-                executeThenReply(payload, correlationId, agent.translationsClient.proposed());
+                executeThenReply(payload, correlationId, agent.translationsClient().proposed());
                 break;
 
             case "markTranslationsDeployed":
-                executeThenReply(payload, correlationId, agent.translationsClient.markDeployed());
+                executeThenReply(payload, correlationId, agent.translationsClient().markDeployed());
                 break;
 
             case "getTranslationsPendingDeployment":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.translationsClient.pendingDeployment(),
+                    agent.translationsClient().pendingDeployment(),
                 );
                 break;
 
