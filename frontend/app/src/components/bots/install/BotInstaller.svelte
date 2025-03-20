@@ -75,12 +75,14 @@
     function nextStep(current: Step) {
         switch (current.kind) {
             case "choose_command_permissions":
+                busy = true;
                 install(() => {
                     if (bot.definition.autonomousConfig !== undefined) {
                         step = {
                             kind: "configure_autonomous_access",
                             config: bot.definition.autonomousConfig,
                         };
+                        busy = false;
                     } else {
                         onClose(true);
                     }
@@ -90,8 +92,11 @@
                 step = { kind: "choose_autonomous_permissions", config: current.config };
                 break;
             case "choose_autonomous_permissions":
-                generateApiKey((apiKey: string) => {
-                    step = { kind: "show_api_key", apiKey, config: current.config };
+                busy = true;
+                install(() => {
+                    generateApiKey((apiKey: string) => {
+                        step = { kind: "show_api_key", apiKey, config: current.config };
+                    });
                 });
                 break;
             case "show_api_key":
@@ -124,7 +129,6 @@
                 onClose(true);
             }
         } else {
-            busy = true;
             client
                 .installBot(location, bot.id, $state.snapshot(grantedCommandPermissions))
                 .then((success) => {
@@ -137,8 +141,7 @@
                             onClose(true);
                         }
                     }
-                })
-                .finally(() => (busy = false));
+                });
         }
     }
 </script>
