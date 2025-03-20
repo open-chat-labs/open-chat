@@ -65,7 +65,7 @@ If you are running _x86/amd64_ architecture, run the following command to build 
 docker build -t open-chat -f Dockerfile.oc .
 ```
 
-Or, in case your machine is based on _arm64_ architecture, build with _buildx_ for _adm64_ platform (uses QUEMU under the bonnet):
+Or, in case your machine is based on _arm64_ architecture, build with _buildx_ for _amd64_ platform (uses QUEMU under the bonnet):
 ```shell
 docker buildx build -t open-chat -f Dockerfile.oc --platform linux/amd64 --load .
 ```
