@@ -48,6 +48,7 @@ This image runs the Open Chat canisters and UI within the container, therefore r
 ### DockerHub registry
 
 You may pull the latest _open-chat_ image from the [DockerHub](https://hub.docker.com/r/openchatlabs/open-chat/tags):
+
 ```
 docker pull --platform linux/amd64 openchatlabs/open-chat:latest
 ```
@@ -75,21 +76,23 @@ docker buildx build -t open-chat -f Dockerfile.oc --platform linux/amd64 --load 
 ### Running the image
 
 To run the `open-chat` image, once it's downloaded or built use either _Docker Desktop_, or from terminal:
+
 ```shell
-docker run --platform linux/amd64 -d -p 5002:80 -p 8080:8080 --name open-chat openchatlabs/open-chat:latest
+docker run --platform linux/amd64 -d -p 5001:80 -p 8080:8080 --name open-chat openchatlabs/open-chat:latest
 ```
 
 If you've built the image yourself, then the last argument should be equal to the value provided after the `-t` flag in the `docker build` command. In our build examples that value was `open-chat`.
 
 > **Important**: It may take _up to a minute_ for the container to initialise _dfx_ and start serving OC app correctly!
 
-Once the container is fully running, the app UI should be available on [http://localhost:5002](http://localhost:5002).
+Once the container is fully running, the app UI should be available on [http://localhost:5001](http://localhost:5001).
 
 ### Offchain vs Canister bots
 
 With the offchain bots, there are no additional steps to take to get the bot connected to the OC app. It should be enough for the bot to run on another available localhost port, and for the OC app to be able to access it.
 
 For the canister bots, make sure your `dfx.json` has the following _networks_ entry:
+
 ```
 {
   ...
