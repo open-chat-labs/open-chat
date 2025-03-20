@@ -1,0 +1,36 @@
+name: PR Created
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+    branches:
+      - master
+
+jobs:
+  post-pr-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Post PR data
+        env:
+          OC_BOT_URL: ${{ secrets.OC_BOT_URL }}
+          OC_API_KEY: ${{ secrets.OC_API_KEY }}
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          REPO_TITLE="${{ github.event.repository.name }}"
+
+          DATA=$(jq -n \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg author "$PR_AUTHOR" \
+            --arg repo "$REPO_TITLE" \
+            '{repo: $repo, title: $title, url: $url, author: $author}')
+
+          curl -X POST "$OC_BOT_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: $OC_API_KEY" \
+            -d "$DATA"
