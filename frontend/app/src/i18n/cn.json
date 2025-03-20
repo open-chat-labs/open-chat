@@ -1769,6 +1769,7 @@
         "max": "最大余额",
         "message": "信息",
         "messagePlaceholder": "包括可选消息",
+        "min": "最小值：{amount}",
         "pendingSent": "{sender} 正在向 {receiver} 发送 {amount} {token}",
         "pendingSentByYou": "您正在向 {receiver} 发送 {amount} {token}",
         "receiver": "接收者",

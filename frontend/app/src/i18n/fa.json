@@ -1769,6 +1769,7 @@
         "max": "حداکثر",
         "message": "پیام",
         "messagePlaceholder": "شامل یک پیام اختیاری",
+        "min": "حداقل: {amount}",
         "pendingSent": "{sender} در حال ارسال {amount} {token} به {receiver} است",
         "pendingSentByYou": "شما در حال ارسال {amount} {token} به {receiver} هستید",
         "receiver": "گیرنده",

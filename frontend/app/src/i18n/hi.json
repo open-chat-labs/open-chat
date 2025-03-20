@@ -1769,6 +1769,7 @@
         "max": "अधिकतम",
         "message": "संदेश",
         "messagePlaceholder": "एक वैकल्पिक संदेश शामिल करें",
+        "min": "न्यूनतम: {amount}",
         "pendingSent": "{sender} {amount} {token} को {receiver} भेज रहा है",
         "pendingSentByYou": "आप {amount} {token} को {receiver} पर भेज रहे हैं",
         "receiver": "प्राप्तकर्ता",

@@ -1769,6 +1769,7 @@
         "max": "Максимум",
         "message": "Сообщение",
         "messagePlaceholder": "Включить необязательное сообщение",
+        "min": "минимум: {amount}",
         "pendingSent": "{sender} отправляет {amount} {token} {receiver}",
         "pendingSentByYou": "вы отправляете {amount} {token} {receiver}",
         "receiver": "Получатель",

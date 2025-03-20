@@ -1769,6 +1769,7 @@
         "max": "tối đa",
         "message": "Tin nhắn",
         "messagePlaceholder": "Bao gồm một tin nhắn tùy chọn",
+        "min": "tối thiểu: {amount}",
         "pendingSent": "{sender} đang gửi {token} {amount} đến {receiver}",
         "pendingSentByYou": "bạn đang gửi {token} {amount} đến {receiver}",
         "receiver": "Người nhận",

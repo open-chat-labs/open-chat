@@ -1769,6 +1769,7 @@
         "max": "Massimo",
         "message": "Messaggio",
         "messagePlaceholder": "Includi un messaggio facoltativo",
+        "min": "min: {amount}",
         "pendingSent": "{sender} sta inviando {amount} {token} a {receiver}",
         "pendingSentByYou": "stai inviando {amount} {token} a {receiver}",
         "receiver": "Destinatario",

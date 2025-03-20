@@ -1769,6 +1769,7 @@
         "max": "מקסימום",
         "message": "הוֹדָעָה",
         "messagePlaceholder": "כלול הודעה אופציונלית",
+        "min": "מינימום: {amount}",
         "pendingSent": "{sender} שולח את {token} {amount} אל {receiver}",
         "pendingSentByYou": "אתה שולח {token} {amount} אל {receiver}",
         "receiver": "מקבל",

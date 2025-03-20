@@ -1769,6 +1769,7 @@
         "max": "Max",
         "message": "Message",
         "messagePlaceholder": "Include an optional message",
+        "min": "min: {amount}",
         "pendingSent": "{sender} is sending {amount} {token} to {receiver}",
         "pendingSentByYou": "you are sending {amount} {token} to {receiver}",
         "receiver": "Recipient",

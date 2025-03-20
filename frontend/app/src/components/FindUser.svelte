@@ -12,6 +12,7 @@
     import MatchingUser from "./MatchingUser.svelte";
     import Translatable from "./Translatable.svelte";
     import { trimLeadingAtSymbol } from "../utils/user";
+    import { Debouncer } from "../utils/debouncer";
 
     export let mode: "add" | "edit";
     export let enabled = true;
@@ -22,12 +23,12 @@
 
     const dispatch = createEventDispatcher();
     let inp: HTMLInputElement;
-    let timer: number | undefined = undefined;
     let searchTerm: string = "";
     let communityMembers: UserSummary[] = [];
     let users: UserSummary[] = [];
     let searching: boolean = false;
     let hovering = false;
+    const debouncer = new Debouncer(searchUsers, 350);
 
     onMount(() => {
         // this focus seems to cause a problem with the animation of the right panel without
@@ -48,26 +49,23 @@
         inp.focus();
     }
 
-    function debounce(value: string) {
-        if (timer) window.clearTimeout(timer);
-        timer = window.setTimeout(() => {
-            if (value === "") {
-                users = [];
-                return;
-            }
-            searching = true;
-            userLookup(value)
-                .then((p) => {
-                    communityMembers = p[0];
-                    users = p[1];
-                })
-                .catch((_err) => toastStore.showFailureToast(i18nKey("userSearchFailed")))
-                .finally(() => (searching = false));
-        }, 350);
+    function searchUsers(value: string) {
+        if (value === "") {
+            users = [];
+            return;
+        }
+        searching = true;
+        userLookup(value)
+            .then((p) => {
+                communityMembers = p[0];
+                users = p[1];
+            })
+            .catch((_err) => toastStore.showFailureToast(i18nKey("userSearchFailed")))
+            .finally(() => (searching = false));
     }
 
     function onInput() {
-        debounce(trimLeadingAtSymbol(inp.value));
+        debouncer.execute(trimLeadingAtSymbol(inp.value));
     }
 
     function clearFilter() {
