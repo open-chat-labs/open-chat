@@ -60,6 +60,7 @@ import type {
     UserUpdatesGroupChatsUpdates,
     UserUpdatesResponse,
     UserWalletConfig,
+    UserWithdrawBtcResponse,
     UserWithdrawCryptoResponse,
     UserMessageActivityFeedResponse,
     UserMessageActivityEvent,
@@ -132,6 +133,7 @@ import type {
     MessageActivitySummary,
     ExternalBotPermissions,
     PublicApiKeyDetails,
+    WithdrawBtcResponse,
 } from "openchat-shared";
 import {
     nullMembership,
@@ -1464,4 +1466,22 @@ export function apiVerification(domain: Verification): UserSetPinNumberPinNumber
         case "pin_verification":
             return { PIN: domain.pin };
     }
+}
+
+export function withdrawBtcResponse(value: UserWithdrawBtcResponse): WithdrawBtcResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return {
+                kind: "success",
+            };
+        }
+        if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
+            return pinNumberFailureResponseV2(value);
+        }
+    }
+    if (value === "PinRequired") {
+        return pinNumberFailureResponseV2(value);
+    }
+    console.log("Failed to withdraw BTC", value);
+    return { kind: "failure", message: JSON.stringify(value) };
 }

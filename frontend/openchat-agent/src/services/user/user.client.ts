@@ -67,6 +67,7 @@ import type {
     MessageActivityFeedResponse,
     ExternalBotPermissions,
     GenerateBotKeyResponse,
+    WithdrawBtcResponse,
 } from "openchat-shared";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
@@ -78,6 +79,7 @@ import {
     searchDirectChatResponse,
     setAvatarResponse,
     setBioResponse,
+    withdrawBtcResponse,
     withdrawCryptoResponse,
     sendMessageResponse,
     sendMessageWithTransferToChannelResponse,
@@ -278,6 +280,8 @@ import {
     UserGenerateBtcAddressResponse,
     UserApiKeyArgs,
     UserApiKeyResponse,
+    UserWithdrawBtcArgs,
+    UserWithdrawBtcResponse,
 } from "../../typebox";
 import { toggleNotificationsResponse } from "../notifications/mappers";
 
@@ -1734,6 +1738,20 @@ export class UserClient extends MsgpackCanisterAgent {
             (resp) => resp === "Success",
             TEmpty,
             UserUpdateBtcBalanceResponse
+        );
+    }
+
+    withdrawBtc(address: string, amount: bigint, pin: string | undefined): Promise<WithdrawBtcResponse> {
+        return this.executeMsgpackUpdate(
+            "withdraw_btc",
+            {
+                address,
+                amount,
+                pin,
+            },
+            withdrawBtcResponse,
+            UserWithdrawBtcArgs,
+            UserWithdrawBtcResponse
         );
     }
 }

@@ -412,6 +412,7 @@ import type {
     BotActionScope,
     CkbtcMinterDepositInfo,
     CkbtcMinterWithdrawalInfo,
+    WithdrawBtcResponse,
 } from "openchat-shared";
 import {
     Stream,
@@ -7177,6 +7178,30 @@ export class OpenChat extends EventTarget {
         });
         bitcoinAddress.set(address);
         return address;
+    }
+
+    async withdrawBtc(address: string, amount: bigint): Promise<WithdrawBtcResponse> {
+        let pin: string | undefined = undefined;
+
+        if (this.#liveState.pinNumberRequired) {
+            pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
+        const response = await this.#sendRequest({
+            kind: "withdrawBtc",
+            address,
+            amount,
+            pin,
+        });
+
+        if (
+            response.kind === "pin_incorrect" ||
+            response.kind === "pin_required" ||
+            response.kind === "too_main_failed_pin_attempts"
+        ) {
+            pinNumberFailureStore.set(response as PinNumberFailures);
+        }
+        return response;
     }
 
     async #updateBtcBalance(address: string): Promise<void> {
