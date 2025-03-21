@@ -13,6 +13,7 @@ canister_time = { path = "../canister_time" }
 constants = { path = "../constants" }
 cycles_dispenser_client = { path = "../cycles_dispenser_client" }
 dataurl = { workspace = true }
+futures = { workspace = true }
 getrandom = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
