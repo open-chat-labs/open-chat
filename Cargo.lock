@@ -8815,6 +8815,7 @@ dependencies = [
  "constants",
  "cycles_dispenser_client",
  "dataurl",
+ "futures",
  "getrandom 0.2.15",
  "ic-cdk 0.18.0-alpha.1",
  "ic-cdk-timers",
