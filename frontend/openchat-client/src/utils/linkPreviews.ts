@@ -1,3 +1,5 @@
+import { extractUrls } from "./url";
+
 const LINK_REMOVED = "#LINK_REMOVED";
 const LINK_REMOVED_REGEX = new RegExp(LINK_REMOVED, "g");
 
@@ -31,19 +33,12 @@ export function disableLinksInText(text: string, urls: string[]): string {
 }
 
 function extractLinkUrls(text: string): {url: string; preview: boolean}[] {
-    const links: { url: string; preview: boolean }[] = [];
-    const matches = text.match(URL_REGEX);
-    if (matches) {
-        for (const match of matches) {
-            const preview = !match.endsWith(LINK_REMOVED);
-            const url = preview
-                ? match
-                : match.substring(0, match.length - LINK_REMOVED.length);
-
-            // Dedup by url
-            if (url && links.find((l) => l.url === url) === undefined) {
-                links.push({ url, preview });
-            }
+    const links = [];
+    for (const url of extractUrls(text)) {
+        if (url.endsWith(LINK_REMOVED)) {
+            links.push({ url: url.substring(0, url.length - LINK_REMOVED.length), preview: false });
+        } else {
+            links.push({ url: url, preview: true });
         }
     }
     return links;
