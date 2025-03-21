@@ -91,9 +91,9 @@ impl Debug for CanisterWasmBytes {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub struct UpgradesFilter {
     pub versions: HashSet<BuildVersion>,
+    pub active_since: Option<TimestampMillis>,
     pub include: HashSet<CanisterId>,
     pub exclude: HashSet<CanisterId>,
-    pub active_since: Option<TimestampMillis>,
 }
 
 #[derive(Serialize, Deserialize, Default)]
