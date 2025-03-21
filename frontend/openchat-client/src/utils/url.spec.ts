@@ -13,8 +13,8 @@ const testCases: { input: string, expectedUrls: string[] }[] = [{
     input: `aerugr "https://oc.app/blah-123" and https://oc.app/blah-123;`,
     expectedUrls: ["https://oc.app/blah-123"]
 }, {
-    input: "http://abc.com https://abc.org https://abc.xyz",
-    expectedUrls: ["http://abc.com", "https://abc.org", "https://abc.xyz"]
+    input: "http://abc.com https://abc.org https://abc.xyz#LINK_REMOVED",
+    expectedUrls: ["http://abc.com", "https://abc.org", "https://abc.xyz#LINK_REMOVED"]
 }]
 
 describe("extractUrls", () => {
