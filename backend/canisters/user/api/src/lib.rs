@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use candid::CandidType;
 use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
@@ -178,6 +179,7 @@ pub struct DiamondMembershipPaymentReceived {
     pub expires_at: TimestampMillis,
     pub ledger: CanisterId,
     pub token_symbol: String,
+    pub token: Option<types::Cryptocurrency>,
     pub amount_e8s: u64,
     pub block_index: u64,
     pub duration: DiamondMembershipPlanDuration,
