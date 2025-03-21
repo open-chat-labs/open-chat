@@ -1,13 +1,14 @@
 <script lang="ts">
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import TokenInput from "../TokenInput.svelte";
-    import type { NamedAccount, OpenChat, ResourceKey } from "openchat-client";
+    import type { CkbtcMinterWithdrawalInfo, NamedAccount, OpenChat, ResourceKey } from "openchat-client";
     import {
+        BTC_SYMBOL,
+        ICP_SYMBOL,
         currentUser as user,
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
     } from "openchat-client";
-    import { ICP_SYMBOL } from "openchat-client";
     import Input from "../../Input.svelte";
     import { _ } from "svelte-i18n";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
@@ -26,6 +27,8 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
+    import BitcoinNetworkSelector from "../BitcoinNetworkSelector.svelte";
+    import { Debouncer } from "../../../utils/debouncer";
 
     export let ledger: string;
 
@@ -34,6 +37,7 @@
 
     let error: ResourceKey | undefined = undefined;
     let amountToSend: bigint;
+    let ckbtcMinterWithdrawalInfo: CkbtcMinterWithdrawalInfo | undefined = undefined;
     let busy = false;
     let valid = false;
     let validAccountName = false;
@@ -44,20 +48,32 @@
     let accounts: NamedAccount[] = [];
     let saveAccountElement: SaveAccount;
     let balanceWithRefresh: BalanceWithRefresh;
+    const ckbtcMinterInfoDebouncer = new Debouncer(getCkbtcMinterWithdrawalInfo, 500);
 
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: tokenDetails = $cryptoLookup[ledger];
     $: account = tokenDetails.symbol === ICP_SYMBOL ? $user.cryptoAccount : $user.userId;
-    $: transferFees = tokenDetails.transferFee;
     $: symbol = tokenDetails.symbol;
+    $: selectedBtcNetwork = BTC_SYMBOL;
+    $: isBtc = symbol === BTC_SYMBOL;
+    $: isBtcNetwork = isBtc && selectedBtcNetwork === BTC_SYMBOL;
+    // For BTC network transfers the ckBTC transfer fee is paid twice because the transfer is made via ICRC2
+    // (approve + transfer_from). The BTC network fees are then taken out of the transfer amount.
+    $: transferFees = isBtcNetwork ? BigInt(2) * tokenDetails.transferFee : tokenDetails.transferFee;
     $: targetAccountValid =
         targetAccount.length > 0 &&
         targetAccount !== account &&
-        (isPrincipalValid(targetAccount) ||
-            (symbol === "ICP" && isAccountIdentifierValid(targetAccount)));
+        isBtcNetwork
+            ? targetAccount.length >= 14
+            : (
+                isPrincipalValid(targetAccount) ||
+                (symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount))
+            );
+    $: minAmount = isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined ? ckbtcMinterWithdrawalInfo.minWithdrawalAmount : BigInt(0);
     $: validSend = validAmount && targetAccountValid;
     $: {
-        valid = capturingAccount ? validAccountName : validSend;
+        // If sending via the BTC network we must wait until the ckbtc minter info is loaded to correctly apply the min amount
+        valid = (capturingAccount ? validAccountName : validSend) && (!isBtcNetwork || ckbtcMinterWithdrawalInfo !== undefined);
     }
     $: title = i18nKey("cryptoAccount.sendToken", { symbol });
 
@@ -68,7 +84,21 @@
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();
+
+        if (isBtc) {
+            getCkbtcMinterWithdrawalInfo(BigInt(0));
+        }
     });
+
+    $: {
+        if (isBtcNetwork && amountToSend > 0) {
+            ckbtcMinterInfoDebouncer.execute(amountToSend);
+        }
+    }
+
+    function getCkbtcMinterWithdrawalInfo(amountToSend: bigint) {
+        client.getCkbtcMinterWithdrawalInfo(amountToSend).then((i) => ckbtcMinterWithdrawalInfo = i);
+    }
 
     function saveAccount() {
         if (saveAccountElement !== undefined) {
@@ -101,18 +131,22 @@
         busy = true;
         error = undefined;
 
-        client
-            .withdrawCryptocurrency({
-                kind: "pending",
-                ledger,
-                token: symbol,
-                to: targetAccount,
-                amountE8s: amountToSend,
-                feeE8s: transferFees,
-                createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
-            })
+        const withdrawTokensPromise = isBtcNetwork
+            ? client.withdrawBtc(targetAccount, amountToSend)
+            : client
+                .withdrawCryptocurrency({
+                    kind: "pending",
+                    ledger,
+                    token: symbol,
+                    to: targetAccount,
+                    amountE8s: amountToSend,
+                    feeE8s: transferFees,
+                    createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+                });
+
+        withdrawTokensPromise
             .then((resp) => {
-                if (resp.kind === "completed") {
+                if (resp.kind === "completed" || resp.kind === "success") {
                     amountToSend = BigInt(0);
                     balanceWithRefresh.refresh();
                     toastStore.showSuccessToast(
@@ -180,10 +214,15 @@
         {:else}
             <Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
 
+            {#if isBtc}
+                <BitcoinNetworkSelector bind:selectedNetwork={selectedBtcNetwork} />
+            {/if}
+
             <div class="token-input">
                 <TokenInput
                     {ledger}
                     {transferFees}
+                    {minAmount}
                     maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
                     bind:valid={validAmount}
                     bind:amount={amountToSend} />

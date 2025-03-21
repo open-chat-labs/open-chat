@@ -1769,6 +1769,7 @@
         "max": "最大",
         "message": "メッセージ",
         "messagePlaceholder": "オプションのメッセージを含める",
+        "min": "最小値: {amount}",
         "pendingSent": "{sender}は{amount}{token}を{receiver}に送信しています",
         "pendingSentByYou": "{amount}{token}を{receiver}に送信しています",
         "receiver": "受信者",

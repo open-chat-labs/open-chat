@@ -1769,6 +1769,7 @@
         "max": "الأعلى",
         "message": "رسالة",
         "messagePlaceholder": "تضمين رسالة اختيارية",
+        "min": "الحد الأدنى: {amount}",
         "pendingSent": "{sender} يرسل {amount} {token} إلى {receiver}",
         "pendingSentByYou": "أنت ترسل {amount} {token} إلى {receiver}",
         "receiver": "متلقي",

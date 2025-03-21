@@ -1769,6 +1769,7 @@
         "max": "Макс",
         "message": "повідомлення",
         "messagePlaceholder": "Додайте додаткове повідомлення",
+        "min": "мінімум: {amount}",
         "pendingSent": "{sender} надсилає {amount} {token} до {receiver}",
         "pendingSentByYou": "ви надсилаєте {amount} {token} до {receiver}",
         "receiver": "одержувач",
