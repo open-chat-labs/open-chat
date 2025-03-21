@@ -2,7 +2,7 @@
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import {
         routeForChatIdentifier,

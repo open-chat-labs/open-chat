@@ -82,6 +82,7 @@
     let buildingMeme = false;
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
+    //@ts-ignore
     let memeBuilder: MemeBuilder;
     let showSearchHeader = false;
     let searchTerm = "";
@@ -335,7 +336,11 @@
     }
 
     function sendMessageWithContent(ev: CustomEvent<{ content: MessageContent }>) {
-        client.sendMessageWithContent(messageContext, ev.detail.content, false);
+        onSendMessageWithContent(ev.detail.content);
+    }
+
+    function onSendMessageWithContent(content: MessageContent) {
+        client.sendMessageWithContent(messageContext, content, false);
     }
 </script>
 
@@ -347,9 +352,9 @@
 
 {#if importToCommunities !== undefined}
     <ImportToCommunity
-        on:successfulImport
+        onSuccessfulImport={(channelId) => dispatch("successfulImport", channelId)}
         groupId={chat.id}
-        on:cancel={() => (importToCommunities = undefined)}
+        onCancel={() => (importToCommunities = undefined)}
         ownedCommunities={importToCommunities} />
 {/if}
 
@@ -391,10 +396,7 @@
     bind:this={giphySelector}
     bind:open={selectingGif} />
 
-<MemeBuilder
-    on:sendMessageWithContent={sendMessageWithContent}
-    bind:this={memeBuilder}
-    bind:open={buildingMeme} />
+<MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
 <div class="wrapper">
     {#if showSearchHeader}

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Feature } from "openchat-client";
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import ButtonGroup from "../../ButtonGroup.svelte";

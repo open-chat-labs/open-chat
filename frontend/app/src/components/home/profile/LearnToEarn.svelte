@@ -10,7 +10,7 @@
         currentUser as user,
         globalStateStore as globalState,
     } from "openchat-client";
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
     import { _ } from "svelte-i18n";
@@ -117,7 +117,7 @@
     });
 </script>
 
-<Overlay dismissible>
+<Overlay onClose={() => dispatch("close")} dismissible>
     <ModalContent closeIcon on:close>
         <span class="header" slot="header"
             ><Translatable resourceKey={i18nKey("learnToEarn.title")} /></span>

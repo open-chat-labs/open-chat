@@ -152,7 +152,7 @@
 </script>
 
 {#if showSuspendUserModal}
-    <SuspendModal {userId} on:close={() => (showSuspendUserModal = false)} />
+    <SuspendModal {userId} onClose={() => (showSuspendUserModal = false)} />
 {/if}
 
 <SectionHeader shadow flush>

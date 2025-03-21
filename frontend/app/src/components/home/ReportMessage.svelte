@@ -6,7 +6,7 @@
     import Checkbox from "../Checkbox.svelte";
     import Markdown from "./Markdown.svelte";
     import Legend from "../Legend.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import ModalContent from "../ModalContentLegacy.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -58,7 +58,7 @@
     }
 </script>
 
-<Overlay on:close dismissible>
+<Overlay onClose={() => dispatch("close")} dismissible>
     <ModalContent on:close closeIcon>
         <span class="header" slot="header">
             <Flag size={$iconSize} color={"var(--error)"} />

@@ -15,7 +15,7 @@
     import CryptoSelector from "../CryptoSelector.svelte";
     import Legend from "../../Legend.svelte";
     import SwapProgress from "./SwapProgress.svelte";
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";

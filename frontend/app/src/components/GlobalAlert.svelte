@@ -9,7 +9,7 @@
     import Link from "./Link.svelte";
     import page from "page";
 
-    let show = true;
+    let show = $state(true);
 
     function close() {
         show = false;
@@ -26,25 +26,27 @@
 {#if show}
     <Overlay dismissible={false}>
         <ModalContent>
-            <span class="header" slot="header">
-                <AlertOutline size={"1.5em"} color={"currentColor"} />
-                <span>Service update</span>
-            </span>
-            <span slot="body">
+            {#snippet header()}
+                <span class="header">
+                    <AlertOutline size={"1.5em"} color={"currentColor"} />
+                    <span>Service update</span>
+                </span>
+            {/snippet}
+            {#snippet body()}
                 <span>
                     We are experiencing ongoing issues at the moment as described
                     <Link underline={"hover"} on:click={showMessage}>here</Link>. We are working
                     hard to resolve them as soon as possible but you may experience some disruption
                     in the meantime.
                 </span>
-            </span>
-            <span slot="footer">
+            {/snippet}
+            {#snippet footer()}
                 <ButtonGroup>
                     <Button small on:click={close}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>
-            </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}

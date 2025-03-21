@@ -4,7 +4,7 @@
     import type { OpenChat } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import ModalContent from "../ModalContentLegacy.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";

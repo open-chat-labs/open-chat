@@ -224,7 +224,7 @@
 
 {#if selectedCommand !== undefined && selectedCommandIndex !== undefined}
     <CommandViewer
-        on:close={() => (selectedCommand = undefined)}
+        onClose={() => (selectedCommand = undefined)}
         errorPath={`command_${selectedCommandIndex}`}
         onNext={showNext ? nextCommand : undefined}
         onPrevious={showPrev ? previousCommand : undefined}

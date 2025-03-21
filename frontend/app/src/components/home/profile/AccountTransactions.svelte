@@ -13,7 +13,7 @@
     import type { RemoteData as RD } from "../../../utils/remoteData";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { toastStore } from "../../../stores/toast";
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";

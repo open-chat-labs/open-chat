@@ -6,7 +6,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import Radio from "../Radio.svelte";
     import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import ModalContent from "../ModalContentLegacy.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";
     import { _ } from "svelte-i18n";
@@ -70,10 +70,12 @@
 
     function answerIsValid(answer: string): boolean {
         const trimmed = answer?.trim();
-        return trimmed !== undefined
-            && trimmed.length > 0
-            && trimmed.length <= MAX_ANSWER_LENGTH
-            && !poll.pollAnswers.has(trimmed.toUpperCase());
+        return (
+            trimmed !== undefined &&
+            trimmed.length > 0 &&
+            trimmed.length <= MAX_ANSWER_LENGTH &&
+            !poll.pollAnswers.has(trimmed.toUpperCase())
+        );
     }
 
     function addAnswer() {

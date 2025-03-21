@@ -15,28 +15,36 @@
     onMount(() => {
         show = !installed && $showHomeScreenPrompt;
     });
+
+    function onClose() {
+        dismissed = true;
+    }
 </script>
 
 {#if show && !dismissed && !$isLoading}
-    <Overlay dismissible>
-        <ModalContent on:close={() => (dismissed = true)} closeIcon hideFooter>
-            <div slot="header" class="header">
-                <Translatable resourceKey={i18nKey("install.title")} />
-            </div>
-            <div slot="body" class="body">
-                <div class="msg">
-                    <Translatable resourceKey={i18nKey("install.message")} />
+    <Overlay dismissible {onClose}>
+        <ModalContent {onClose} closeIcon hideFooter>
+            {#snippet header()}
+                <div class="header">
+                    <Translatable resourceKey={i18nKey("install.title")} />
                 </div>
-                <img class="how" src="/assets/add_home_ios.gif" alt="add to home screen" />
-                <div class="dont-show">
-                    <Checkbox
-                        id="dont_show"
-                        label={i18nKey("install.dontShow")}
-                        checked={!$showHomeScreenPrompt}
-                        on:change={showHomeScreenPrompt.toggle}>
-                    </Checkbox>
+            {/snippet}
+            {#snippet body()}
+                <div class="body">
+                    <div class="msg">
+                        <Translatable resourceKey={i18nKey("install.message")} />
+                    </div>
+                    <img class="how" src="/assets/add_home_ios.gif" alt="add to home screen" />
+                    <div class="dont-show">
+                        <Checkbox
+                            id="dont_show"
+                            label={i18nKey("install.dontShow")}
+                            checked={!$showHomeScreenPrompt}
+                            on:change={showHomeScreenPrompt.toggle}>
+                        </Checkbox>
+                    </div>
                 </div>
-            </div>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}

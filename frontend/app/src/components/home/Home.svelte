@@ -1192,8 +1192,8 @@
         forgotPin = true;
     }
 
-    function onPinNumberComplete(ev: CustomEvent<string>) {
-        $pinNumberStore?.resolve(ev.detail);
+    function onPinNumberComplete(pin: string) {
+        $pinNumberStore?.resolve(pin);
     }
 
     function onPinNumberClose() {
@@ -1321,9 +1321,7 @@
 
 {#if modal.kind === "registering"}
     <Overlay>
-        <Register
-            on:logout={() => client.logout()}
-            on:createdUser={(ev) => client.onRegisteredUser(ev.detail)} />
+        <Register onCreatedUser={(user) => client.onRegisteredUser(user)} />
     </Overlay>
 {:else if modal.kind !== "none"}
     <Overlay
@@ -1331,11 +1329,11 @@
             modal.kind !== "not_found" &&
             modal.kind !== "make_proposal"}
         alignLeft={modal.kind === "select_chat"}
-        on:close={closeModal}>
+        onClose={closeModal}>
         {#if modal.kind === "select_chat"}
             <SelectChatModal on:close={onCloseSelectChat} on:select={onSelectChat} />
         {:else if modal.kind === "suspended"}
-            <SuspendedModal on:close={closeModal} />
+            <SuspendedModal onClose={closeModal} />
         {:else if modal.kind === "register_bot"}
             <BotBuilderModal mode={"register"} onClose={closeModal} />
         {:else if modal.kind === "update_bot"}
@@ -1343,11 +1341,11 @@
         {:else if modal.kind === "remove_bot"}
             <BotBuilderModal mode={"remove"} onClose={closeModal} />
         {:else if modal.kind === "no_access"}
-            <NoAccess on:close={closeNoAccess} />
+            <NoAccess onClose={closeNoAccess} />
         {:else if modal.kind === "not_found"}
             <NotFound on:close={closeNoAccess} />
         {:else if modal.kind === "gate_check_failed"}
-            <GateCheckFailed on:close={closeModal} gates={modal.gates} />
+            <GateCheckFailed onClose={closeModal} gates={modal.gates} />
         {:else if modal.kind === "evaluating_access_gates"}
             <AccessGateEvaluator
                 gates={modal.gates}
@@ -1368,8 +1366,8 @@
             <AccountsModal on:close={closeModal} />
         {:else if modal.kind === "hall_of_fame"}
             <HallOfFame
-                on:streak={() => (modal = { kind: "claim_daily_chit" })}
-                on:close={closeModal} />
+                onStreak={() => (modal = { kind: "claim_daily_chit" })}
+                onClose={closeModal} />
         {:else if modal.kind === "make_proposal"}
             <MakeProposalModal
                 selectedMultiUserChat={modal.chat}
@@ -1406,16 +1404,16 @@
 {:else if forgotPin}
     <Overlay>
         <SetPinNumberModal
-            on:pinSet={onPinNumberComplete}
+            on:pinSet={(e) => onPinNumberComplete(e.detail)}
             on:close={() => (forgotPin = false)}
             type={{ kind: "forgot", while: { kind: "enter" } }} />
     </Overlay>
 {:else if $pinNumberStore !== undefined}
     <Overlay>
         <PinNumberModal
-            on:close={onPinNumberClose}
-            on:complete={onPinNumberComplete}
-            on:forgot={onForgotPin} />
+            onClose={onPinNumberClose}
+            onComplete={onPinNumberComplete}
+            onForgot={onForgotPin} />
     </Overlay>
 {/if}
 

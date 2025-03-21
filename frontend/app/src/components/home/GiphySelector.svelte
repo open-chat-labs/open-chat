@@ -4,7 +4,7 @@
     import Input from "../Input.svelte";
     import Link from "../Link.svelte";
     import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import ModalContent from "../ModalContentLegacy.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";

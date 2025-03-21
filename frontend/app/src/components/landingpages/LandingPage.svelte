@@ -32,14 +32,14 @@
         client.logout();
     }
 
-    function createdUser(ev: CustomEvent<CreatedUser>) {
-        client.onCreatedUser(ev.detail);
+    function createdUser(user: CreatedUser) {
+        client.onCreatedUser(user);
     }
 </script>
 
 {#if $identityState.kind === "registering"}
     <Overlay>
-        <Register on:logout={logout} on:createdUser={createdUser} />
+        <Register onCreatedUser={createdUser} />
     </Overlay>
 {/if}
 

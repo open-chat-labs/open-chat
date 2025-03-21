@@ -37,7 +37,7 @@
 </script>
 
 {#if linking}
-    <Overlay>
+    <Overlay onClose={refresh}>
         <LinkAccountsModal on:close={refresh}>
             <LinkAccounts
                 explanations={[i18nKey("identity.linkedAccounts.linkAdvice")]}
@@ -50,7 +50,7 @@
 {/if}
 
 {#if unlinking != null}
-    <Overlay>
+    <Overlay onClose={refresh}>
         <LinkAccountsModal on:close={refresh}>
             <UnlinkAccounts account={unlinking} onClose={refresh} />
         </LinkAccountsModal>

@@ -35,7 +35,7 @@
 {/if}
 
 {#if $layoutStore.rightPanel === "floating"}
-    <Overlay on:close={closeRightPanel} dismissible>
+    <Overlay onClose={closeRightPanel} dismissible>
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
