@@ -1,10 +1,9 @@
 use crate::canister;
 use crate::canister::{convert_cdk_error, is_out_of_cycles_error};
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use constants::CYCLES_REQUIRED_FOR_UPGRADE;
-use ic_cdk::api::canister_version;
-use ic_cdk::call::{Call, CallResult, RejectCode};
-use ic_cdk::management_canister::{self, CanisterInstallMode, ChunkHash, InstallChunkedCodeArgs};
+use ic_cdk::call::RejectCode;
+use ic_cdk::management_canister::{self, CanisterInstallMode, ChunkHash};
 use tracing::{error, trace};
 use types::{BuildVersion, CanisterId, CanisterWasm, CanisterWasmBytes, Cycles, Hash};
 
@@ -156,41 +155,9 @@ enum InstallCodeArgs {
 impl InstallCodeArgs {
     async fn install(&self) -> Result<(), (RejectCode, String)> {
         match self {
-            InstallCodeArgs::Default(args) => install_code(args).await,
-            InstallCodeArgs::Chunked(args) => install_chunked_code(args).await,
+            InstallCodeArgs::Default(args) => management_canister::install_code(args).await,
+            InstallCodeArgs::Chunked(args) => management_canister::install_chunked_code(args).await,
         }
         .map_err(convert_cdk_error)
     }
-}
-
-// Copied from CDK but modified to use `unbounded_wait`
-async fn install_code(arg: &management_canister::InstallCodeArgs) -> CallResult<()> {
-    let complete_arg = ic_management_canister_types::InstallCodeArgs {
-        mode: arg.mode,
-        canister_id: arg.canister_id,
-        wasm_module: arg.wasm_module.clone(),
-        arg: arg.arg.clone(),
-        sender_canister_version: Some(canister_version()),
-    };
-    Ok(Call::unbounded_wait(Principal::management_canister(), "install_code")
-        .with_arg(&complete_arg)
-        .await?
-        .candid()?)
-}
-
-// Copied from CDK but modified to use `unbounded_wait`
-async fn install_chunked_code(arg: &InstallChunkedCodeArgs) -> CallResult<()> {
-    let complete_arg = ic_management_canister_types::InstallChunkedCodeArgs {
-        mode: arg.mode,
-        target_canister: arg.target_canister,
-        store_canister: arg.store_canister,
-        chunk_hashes_list: arg.chunk_hashes_list.clone(),
-        wasm_module_hash: arg.wasm_module_hash.clone(),
-        arg: arg.arg.clone(),
-        sender_canister_version: Some(canister_version()),
-    };
-    Ok(Call::unbounded_wait(Principal::management_canister(), "install_chunked_code")
-        .with_arg(&complete_arg)
-        .await?
-        .candid()?)
 }

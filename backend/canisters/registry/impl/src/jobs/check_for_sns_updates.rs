@@ -1,7 +1,6 @@
 use crate::updates::add_token::add_sns_token;
 use crate::{mutate_state, read_state};
 use constants::HOUR_IN_MS;
-use ic_cdk::api::management_canister::main::CanisterId;
 use ic_cdk::call::RejectCode;
 use registry_canister::NervousSystemDetails;
 use sns_governance_canister::types::governance::SnsMetadata;
@@ -10,7 +9,7 @@ use sns_wasm_canister::list_deployed_snses::DeployedSns;
 use std::collections::HashSet;
 use std::time::Duration;
 use tracing::{error, info};
-use types::{Empty, TimestampMillis};
+use types::{CanisterId, Empty, TimestampMillis};
 use utils::canister_timers::run_now_then_interval;
 
 const LIFECYCLE_COMMITTED: i32 = 3;

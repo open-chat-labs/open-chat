@@ -47,6 +47,6 @@ async fn bot_create_channel(args: Args) -> Response {
             community_canister::c2c_bot_create_channel::Response::InvalidRequest(message) => InvalidRequest(message),
             community_canister::c2c_bot_create_channel::Response::InternalError(message) => C2CError(0, message),
         },
-        Err((code, message)) => C2CError(u32::from(code) as i32, message),
+        Err((code, message)) => C2CError(code as i32, message),
     }
 }

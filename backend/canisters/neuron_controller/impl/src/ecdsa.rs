@@ -1,7 +1,7 @@
 use ic_cdk::call::RejectCode;
 use ic_cdk::management_canister::{
-    self, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgs, HttpHeader, HttpMethod, HttpRequestArgs, SignWithEcdsaArgs,
-    TransformContext, TransformFunc,
+    self, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgs, HttpHeader, HttpMethod, HttpRequestArgs, SignCallError,
+    SignWithEcdsaArgs, TransformContext, TransformFunc,
 };
 use ic_transport_types::{to_request_id, EnvelopeContent};
 use serde::Serialize;
@@ -9,8 +9,6 @@ use sha256::sha256;
 use tracing::{error, info};
 use types::CanisterId;
 use utils::canister::convert_cdk_error;
-
-const SIGN_WITH_ECDSA_FEE: u128 = 26_153_846_153;
 
 pub fn get_key_id(is_local_dev_mode: bool) -> EcdsaKeyId {
     let key_name = if is_local_dev_mode { "dfx_test_key" } else { "key_1" };
@@ -51,23 +49,20 @@ pub async fn make_canister_call_via_ecdsa(request: CanisterEcdsaRequest) -> Resu
         Err(error) => return Err(format!("Failed to sign envelope: {error:?}")),
     };
 
-    let response = management_canister::http_request_with_cycles(
-        &HttpRequestArgs {
-            url: request.request_url,
-            max_response_bytes: Some(1024 * 1024), // 1 MB
-            method: HttpMethod::POST,
-            headers: vec![HttpHeader {
-                name: "content-type".to_string(),
-                value: "application/cbor".to_string(),
-            }],
-            body: Some(body),
-            transform: Some(TransformContext {
-                function: TransformFunc::new(request.this_canister_id, "transform_http_response".to_string()),
-                context: Vec::new(),
-            }),
-        },
-        100_000_000_000,
-    )
+    let response = management_canister::http_request(&HttpRequestArgs {
+        url: request.request_url,
+        max_response_bytes: Some(1024 * 1024), // 1 MB
+        method: HttpMethod::POST,
+        headers: vec![HttpHeader {
+            name: "content-type".to_string(),
+            value: "application/cbor".to_string(),
+        }],
+        body: Some(body),
+        transform: Some(TransformContext {
+            function: TransformFunc::new(request.this_canister_id, "transform_http_response".to_string()),
+            context: Vec::new(),
+        }),
+    })
     .await
     .map_err(|error| format!("Failed to make http request: {error:?}"))?;
 
@@ -106,20 +101,21 @@ async fn sign_envelope(
 async fn sign(key_id: EcdsaKeyId, message: &[u8]) -> Result<Vec<u8>, (RejectCode, String)> {
     let message_hash = sha256(message);
 
-    match management_canister::sign_with_ecdsa_with_cycles(
-        &SignWithEcdsaArgs {
-            message_hash: message_hash.to_vec(),
-            derivation_path: Vec::new(),
-            key_id,
-        },
-        SIGN_WITH_ECDSA_FEE,
-    )
+    match management_canister::sign_with_ecdsa(&SignWithEcdsaArgs {
+        message_hash: message_hash.to_vec(),
+        derivation_path: Vec::new(),
+        key_id,
+    })
     .await
     {
         Ok(res) => Ok(res.signature),
         Err(error) => {
             error!(?error, "Error calling 'sign_with_ecdsa'");
-            Err(convert_cdk_error(error))
+            Err(match error {
+                SignCallError::SignCostError(e) => (RejectCode::SysUnknown, e.to_string()),
+                SignCallError::CallFailed(f) => (RejectCode::SysUnknown, f.to_string()),
+                SignCallError::CandidDecodeFailed(f) => (RejectCode::SysUnknown, f.to_string()),
+            })
         }
     }
 }

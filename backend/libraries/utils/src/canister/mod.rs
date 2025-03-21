@@ -1,4 +1,4 @@
-use ic_cdk::call::{CallFailed, Error, RejectCode};
+use ic_cdk::call::{Error, RejectCode};
 use std::cmp::Ordering;
 use types::{BuildVersion, CanisterId, UpgradesFilter};
 
@@ -68,8 +68,9 @@ pub fn should_perform_upgrade(
 
 pub fn convert_cdk_error(error: Error) -> (RejectCode, String) {
     match error {
-        Error::CallFailed(CallFailed::CallPerformFailed(f)) => (RejectCode::SysTransient, f.to_string()),
-        Error::CallFailed(CallFailed::CallRejected(r)) => (r.reject_code(), r.to_string()),
+        Error::InsufficientLiquidCycleBalance(cb) => (RejectCode::SysTransient, cb.to_string()),
+        Error::CallPerformFailed(f) => (RejectCode::SysTransient, f.to_string()),
+        Error::CallRejected(r) => (r.reject_code().unwrap_or(RejectCode::SysUnknown), r.to_string()),
         Error::CandidDecodeFailed(f) => (RejectCode::CanisterReject, f.to_string()),
     }
 }

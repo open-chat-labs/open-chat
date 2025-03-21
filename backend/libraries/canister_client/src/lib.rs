@@ -71,8 +71,12 @@ pub async fn make_c2c_call_raw(
         }
         Err(error) => {
             let (error_code, error_message) = match error {
+                CallFailed::InsufficientLiquidCycleBalance(cb) => (RejectCode::SysTransient, cb.to_string()),
                 CallFailed::CallPerformFailed(f) => (RejectCode::SysUnknown, f.to_string()),
-                CallFailed::CallRejected(r) => (r.reject_code(), r.reject_message().to_string()),
+                CallFailed::CallRejected(r) => (
+                    r.reject_code().unwrap_or(RejectCode::SysUnknown),
+                    r.reject_message().to_string(),
+                ),
             };
             tracing::error!(method_name, %canister_id, ?error_code, error_message, "Error calling c2c");
             Err((error_code, error_message))
