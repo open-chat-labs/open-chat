@@ -10,7 +10,6 @@ const ONE_MB: usize = 1024 * 1024;
 pub async fn upload_wasm_in_chunks(wasm: &[u8], store_canister_id: CanisterId) -> Result<Vec<Hash>, (RejectCode, String)> {
     futures::future::try_join_all(
         wasm.chunks(ONE_MB)
-            .into_iter()
             .map(|chunk| upload_chunk_and_return_hash(store_canister_id, chunk.to_vec())),
     )
     .await
