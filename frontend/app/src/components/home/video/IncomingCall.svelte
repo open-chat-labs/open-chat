@@ -16,6 +16,7 @@
         type ChatIdentifier,
     } from "openchat-client";
     import {
+        activeVideoCall,
         incomingVideoCall,
         ringtoneUrls,
         type IncomingVideoCall,
@@ -35,8 +36,9 @@
 
     const client = getContext<OpenChat>("client");
 
-    let chat = $derived(normaliseChatSummary($incomingVideoCall));
-    let ringtoneUrl = $derived(ringtoneUrls[$selectedRingtone as RingtoneKey]);
+    const chat = $derived(normaliseChatSummary($incomingVideoCall));
+    const ringtoneUrl = $derived(ringtoneUrls[$selectedRingtone as RingtoneKey]);
+    const isOnAnotherCall = $derived(activeVideoCall !== undefined);
 
     function normaliseChatSummary(call: IncomingVideoCall | undefined) {
         if (call) {
@@ -88,8 +90,10 @@
 </script>
 
 {#if chat !== undefined}
-    <audio playsinline={true} autoplay={true} src={ringtoneUrl} muted={false} preload="auto"
-    ></audio>
+    {#if !isOnAnotherCall}
+        <audio playsinline={true} autoplay={true} src={ringtoneUrl} muted={false} preload="auto">
+        </audio>
+    {/if}
 
     <Overlay on:close={cancel} dismissible>
         <ModalContent hideHeader hideFooter closeIcon>
