@@ -65,7 +65,7 @@ export type ActiveVideoCall = {
 };
 
 const activeStore = writable<ActiveVideoCall | undefined>(undefined);
-export const incomingStore = writable<IncomingVideoCall | undefined>(undefined);
+const incomingStore = writable<IncomingVideoCall | undefined>(undefined);
 
 export const microphone = writable<boolean>(false);
 export const hasPresence = writable<boolean>(false);
