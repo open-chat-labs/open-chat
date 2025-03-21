@@ -1,6 +1,8 @@
 const LINK_REMOVED = "#LINK_REMOVED";
 const LINK_REMOVED_REGEX = new RegExp(LINK_REMOVED, "g");
-const URL_REGEX = new RegExp((`https?://[^\\s)]+`), "g");
+
+// Taken from here - https://stackoverflow.com/a/6041965
+const URL_REGEX = new RegExp((`(https?):\\/\\/([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])`), "g");
 
 export function stripLinkDisabledMarker(text: string): string {
     return text.replace(LINK_REMOVED_REGEX, () => "");
