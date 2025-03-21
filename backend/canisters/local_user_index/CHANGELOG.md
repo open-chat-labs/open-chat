@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Introduce standardised error codes ([#7599](https://github.com/open-chat-labs/open-chat/pull/7599))
+- Support only upgrading users who have been active since a chosen date ([#7642](https://github.com/open-chat-labs/open-chat/pull/7642))
 
 ### Changed
 
