@@ -21,10 +21,12 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
-    if data.test_mode {
-        data.online_users_canister_id = CanisterId::from_text("7dlom-nqaaa-aaaaf-ab2da-cai").unwrap();
-    } else {
-        data.online_users_canister_id = CanisterId::from_text("3vlw6-fiaaa-aaaaf-aaa3a-cai").unwrap();
+    if data.online_users_canister_id == CanisterId::anonymous() {
+        if data.test_mode {
+            data.online_users_canister_id = CanisterId::from_text("7dlom-nqaaa-aaaaf-ab2da-cai").unwrap();
+        } else {
+            data.online_users_canister_id = CanisterId::from_text("3vlw6-fiaaa-aaaaf-aaa3a-cai").unwrap();
+        }
     }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
