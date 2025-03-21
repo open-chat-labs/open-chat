@@ -37,6 +37,8 @@ jwt = { path = "../../../libraries/jwt" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
+online_users_canister = { path = "../../online_users/api" }
+online_users_canister_c2c_client = { path = "../../online_users/c2c_client" }
 p256_key_pair = { path = "../../../libraries/p256_key_pair" }
 principal_to_user_id_map = { path = "../../../libraries/principal_to_user_id_map" }
 proof_of_unique_personhood = { path = "../../../libraries/proof_of_unique_personhood" }
