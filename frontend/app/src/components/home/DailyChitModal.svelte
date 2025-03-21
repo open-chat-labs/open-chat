@@ -3,7 +3,7 @@
     import { Confetti } from "svelte-confetti";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
-    import ModalContent from "../ModalContent.svelte";
+    import ModalContent from "../ModalContentLegacy.svelte";
     import {
         type AirdropChannelDetails,
         type OpenChat,
@@ -182,7 +182,7 @@
                 </div>
                 <div class="badges">
                     {#each badgesVisible as badge}
-                        <div class="badge" style="left: {badge * 100 / maxBadgeVisible}%">
+                        <div class="badge" style="left: {(badge * 100) / maxBadgeVisible}%">
                             <Streak disabled={streak < badge} days={badge} />
                         </div>
                     {/each}

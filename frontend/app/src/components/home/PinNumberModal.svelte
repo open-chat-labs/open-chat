@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import ModalContent from "../ModalContent.svelte";
@@ -7,36 +6,42 @@
     import ForgotPinLabel from "./ForgotPinLabel.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        message?: string | undefined;
+        pin?: string | undefined;
+        onComplete: (pin: string) => void;
+        onClose: () => void;
+        onForgot: () => void;
+    }
 
-    export let message: string | undefined = undefined;
-    export let pin: string | undefined = undefined;
-
-    let showError = false;
+    let {
+        message = undefined,
+        pin = $bindable(undefined),
+        onComplete,
+        onClose,
+        onForgot,
+    }: Props = $props();
 
     function onPinComplete(ev: CustomEvent<{ code: string[]; value: string }>) {
-        dispatch("complete", ev.detail.value);
+        onComplete(ev.detail.value);
     }
 </script>
 
-<ModalContent closeIcon hideFooter fitToContent={!mobileWidth} fixedWidth={false} on:close>
-    <div slot="header">
+<ModalContent closeIcon hideFooter fitToContent={!mobileWidth} fixedWidth={false} {onClose}>
+    {#snippet header()}
         <Translatable resourceKey={i18nKey("pinNumber.enterPin")} />
-    </div>
-    <div class="body" slot="body">
-        {#if message !== undefined}
-            <p>
-                <Translatable resourceKey={i18nKey(message)} />
-            </p>
-        {/if}
-        <Pincode type="numeric" length={6} bind:value={pin} on:complete={onPinComplete} />
-        <ForgotPinLabel on:forgot />
-        {#if showError}
-            <div class="error">
-                <Translatable resourceKey={i18nKey("pinNumber.invalid")} />
-            </div>
-        {/if}
-    </div>
+    {/snippet}
+    {#snippet body()}
+        <div class="body">
+            {#if message !== undefined}
+                <p>
+                    <Translatable resourceKey={i18nKey(message)} />
+                </p>
+            {/if}
+            <Pincode type="numeric" length={6} bind:value={pin} on:complete={onPinComplete} />
+            <ForgotPinLabel on:forgot={onForgot} />
+        </div>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">

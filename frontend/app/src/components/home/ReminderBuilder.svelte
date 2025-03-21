@@ -5,7 +5,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
     import Legend from "../Legend.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import ModalContent from "../ModalContentLegacy.svelte";
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../stores/screenDimensions";
     import { createEventDispatcher, getContext } from "svelte";
@@ -106,7 +106,7 @@
     }
 </script>
 
-<Overlay on:close dismissible>
+<Overlay onClose={() => dispatch("close")} dismissible>
     <ModalContent on:close closeIcon>
         <span slot="header">
             <h1>⏰ <Translatable resourceKey={i18nKey("reminders.title")} /></h1>

@@ -10,7 +10,7 @@
     import HashLink from "./HashLink.svelte";
     import ArrowLink from "../ArrowLink.svelte";
     import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import ModalContent from "../ModalContentLegacy.svelte";
     import { location, querystring } from "../../routes";
 
     let linked: number | undefined = undefined;
@@ -39,7 +39,7 @@
 </script>
 
 {#if zooming}
-    <Overlay on:close={() => (zooming = undefined)} dismissible alignBottomOnMobile={false}>
+    <Overlay onClose={() => (zooming = undefined)} dismissible alignBottomOnMobile={false}>
         <ModalContent hideHeader hideFooter fill fitToContent fixedWidth>
             <img slot="body" class="zoomed" src={zooming.url} alt={zooming.alt} />
         </ModalContent>

@@ -35,10 +35,10 @@
 
 <Overlay>
     <ModalContent>
-        <span slot="header">
+        {#snippet header()}
             <Translatable resourceKey={i18nKey("bots.config.title")} />
-        </span>
-        <span slot="body">
+        {/snippet}
+        {#snippet body()}
             {#each properties as prop}
                 <div class="field">
                     <div class="label">
@@ -55,14 +55,14 @@
                     <pre>{data[prop]}</pre>
                 </div>
             {/each}
-        </span>
-        <span slot="footer">
+        {/snippet}
+        {#snippet footer()}
             <ButtonGroup>
                 <Button on:click={onClose}>
                     <Translatable resourceKey={i18nKey("close")} />
                 </Button>
             </ButtonGroup>
-        </span>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

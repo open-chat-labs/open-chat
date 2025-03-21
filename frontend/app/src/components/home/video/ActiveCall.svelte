@@ -313,16 +313,18 @@
 {#if hostEnded}
     <Overlay>
         <ModalContent hideHeader>
-            <div slot="body" class="host-ended">
-                <Translatable resourceKey={i18nKey("videoCall.hostEnded")} />
-            </div>
-            <span slot="footer">
+            {#snippet body()}
+                <div class="host-ended">
+                    <Translatable resourceKey={i18nKey("videoCall.hostEnded")} />
+                </div>
+            {/snippet}
+            {#snippet footer()}
                 <ButtonGroup align={"center"}>
                     <Button on:click={() => (hostEnded = false)}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>
-            </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}
@@ -330,16 +332,20 @@
 {#if denied}
     <Overlay>
         <ModalContent hideHeader>
-            <div slot="body" class="denied">
-                <Translatable resourceKey={i18nKey("videoCall.denied")} />
-            </div>
-            <span slot="footer">
-                <ButtonGroup align={"center"}>
-                    <Button on:click={() => (denied = false)}>
-                        <Translatable resourceKey={i18nKey("close")} />
-                    </Button>
-                </ButtonGroup>
-            </span>
+            {#snippet body()}
+                <div class="denied">
+                    <Translatable resourceKey={i18nKey("videoCall.denied")} />
+                </div>
+            {/snippet}
+            {#snippet footer()}
+                <span>
+                    <ButtonGroup align={"center"}>
+                        <Button on:click={() => (denied = false)}>
+                            <Translatable resourceKey={i18nKey("close")} />
+                        </Button>
+                    </ButtonGroup>
+                </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}

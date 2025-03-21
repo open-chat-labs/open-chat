@@ -1,12 +1,13 @@
 <script lang="ts">
     import type { OpenChat, P2PSwapContent } from "openchat-client";
     import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import ModalContent from "../ModalContentLegacy.svelte";
     import ProgressSteps, { type Result, type Step } from "../ProgressSteps.svelte";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
+    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
     const labelPrefix = "p2pSwap.progress.";
 
@@ -126,7 +127,7 @@
     }
 </script>
 
-<Overlay dismissible on:close>
+<Overlay dismissible onClose={() => dispatch("close")}>
     <ModalContent hideFooter>
         <span slot="header">
             <Translatable resourceKey={title} />

@@ -17,12 +17,12 @@
 
     const client = getContext<OpenChat>("client");
 
-    let challenge: Challenge | undefined = undefined;
-    let error: ResourceKey | undefined = undefined;
-    let chars: string = "";
-    let submitting = false;
+    let challenge: Challenge | undefined = $state(undefined);
+    let error: ResourceKey | undefined = $state(undefined);
+    let chars: string = $state("");
+    let submitting = $state(false);
 
-    $: valid = challenge !== undefined && chars?.length === 4;
+    let valid = $derived(challenge !== undefined && chars?.length === 4);
 
     onMount(() => {
         client.gaTrack("opened_challenge_modal", "registration");
@@ -50,7 +50,8 @@
         });
     }
 
-    function submit() {
+    function submit(e: Event) {
+        e.preventDefault();
         if (!valid || challenge === undefined || chars === undefined) {
             return;
         }
@@ -74,43 +75,47 @@
 
 <div class="challenge">
     <ModalContent fitToContent={!$mobileWidth} fixedWidth={$mobileWidth}>
-        <div class="header login" slot="header">
-            <div class="title">
-                <Translatable resourceKey={i18nKey("challenge.title")} />
+        {#snippet header()}
+            <div class="header login">
+                <div class="title">
+                    <Translatable resourceKey={i18nKey("challenge.title")} />
+                </div>
+                <div title={$_("cancel")} class="close" onclick={cancel}>
+                    <HoverIcon>
+                        <CloseIcon size={"1em"} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </div>
             </div>
-            <div title={$_("cancel")} class="close" on:click={cancel}>
-                <HoverIcon>
-                    <CloseIcon size={"1em"} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            </div>
-        </div>
-        <div class="body" slot="body">
-            {#if challenge === undefined}
-                <div class="loader"><FancyLoader /></div>
-            {:else}
-                <img alt="captcha" src={challenge.pngBase64} />
+        {/snippet}
+        {#snippet body()}
+            <div class="body">
+                {#if challenge === undefined}
+                    <div class="loader"><FancyLoader /></div>
+                {:else}
+                    <img alt="captcha" src={challenge.pngBase64} />
 
-                <form class="chars-wrapper" on:submit|preventDefault={submit}>
-                    <Legend label={i18nKey("challenge.prompt")} />
-                    <Input
-                        invalid={error !== undefined}
-                        autofocus
-                        bind:value={chars}
-                        minlength={4}
-                        maxlength={4} />
-                </form>
-            {/if}
-            {#if error !== undefined}
-                <ErrorMessage><Translatable resourceKey={error} /></ErrorMessage>
-            {/if}
-        </div>
-        <div slot="footer">
+                    <form class="chars-wrapper" onsubmit={submit}>
+                        <Legend label={i18nKey("challenge.prompt")} />
+                        <Input
+                            invalid={error !== undefined}
+                            autofocus
+                            bind:value={chars}
+                            minlength={4}
+                            maxlength={4} />
+                    </form>
+                {/if}
+                {#if error !== undefined}
+                    <ErrorMessage><Translatable resourceKey={error} /></ErrorMessage>
+                {/if}
+            </div>
+        {/snippet}
+        {#snippet footer()}
             <ButtonGroup align={"fill"}>
                 <Button disabled={!valid || submitting} loading={submitting} on:click={submit}
                     >{$_("next")}</Button>
                 <Button secondary on:click={cancel}>{$_("cancel")}</Button>
             </ButtonGroup>
-        </div>
+        {/snippet}
     </ModalContent>
 </div>
 

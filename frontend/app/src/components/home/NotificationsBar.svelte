@@ -17,20 +17,20 @@
 {#if !$anonUser && $notificationStatus === "prompt"}
     <Overlay dismissible>
         <ModalContent>
-            <div slot="header" class="header">
+            {#snippet header()}
                 <Translatable resourceKey={i18nKey("Notifications")} />
-            </div>
-            <div slot="body" class="body">
+            {/snippet}
+            {#snippet body()}
                 <Translatable resourceKey={i18nKey("enableNotifications")} />
-            </div>
-            <span slot="footer">
+            {/snippet}
+            {#snippet footer()}
                 <ButtonGroup>
                     <Button on:click={() => client.askForNotificationPermission()}
                         ><Translatable resourceKey={i18nKey("yesPlease")} /></Button>
                     <Button secondary on:click={() => client.setSoftDisabled(true)}
                         ><Translatable resourceKey={i18nKey("noThanks")} /></Button>
                 </ButtonGroup>
-            </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}

@@ -18,7 +18,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
     import DiamondGateEvaluator from "./DiamondGateEvaluator.svelte";

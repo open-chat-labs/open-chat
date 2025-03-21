@@ -11,7 +11,7 @@
     import { uniquePersonCredentialGate } from "../../../utils/access";
     import Markdown from "../Markdown.svelte";
     import { _ } from "svelte-i18n";
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import LinkAccounts from "./LinkAccounts.svelte";
     import HumanityConfirmation from "../HumanityConfirmation.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";

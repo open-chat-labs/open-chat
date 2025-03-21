@@ -1,7 +1,7 @@
 <script lang="ts">
     import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import { getContext, onMount } from "svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import {
         DEFAULT_TOKENS,
         OpenChat,
@@ -21,6 +21,7 @@
     import MultiToggle, { type Option } from "../../MultiToggle.svelte";
     import { toastStore } from "../../../stores/toast";
 
+    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     export let conversionOptions: Option[];
@@ -117,7 +118,7 @@
     }
 </script>
 
-<Overlay>
+<Overlay onClose={() => dispatch("close")}>
     <ModalContent closeIcon on:close>
         <div slot="header">
             <Translatable resourceKey={i18nKey("cryptoAccount.configureWallet")} />

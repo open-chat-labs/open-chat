@@ -95,48 +95,50 @@
         </audio>
     {/if}
 
-    <Overlay on:close={cancel} dismissible>
+    <Overlay onClose={cancel} dismissible>
         <ModalContent hideHeader hideFooter closeIcon>
-            <span slot="body" class="body">
-                <div class="details">
-                    <div class="avatar">
-                        <Avatar url={chat.avatarUrl} size={AvatarSize.Default} />
+            {#snippet body()}
+                <span class="body">
+                    <div class="details">
+                        <div class="avatar">
+                            <Avatar url={chat.avatarUrl} size={AvatarSize.Default} />
+                        </div>
+                        <div class="txt">
+                            <div class="name">
+                                {chat.name}
+                            </div>
+                            <div class="msg">
+                                <Translatable
+                                    resourceKey={i18nKey("videoCall.remoteStart", {
+                                        name: chat.initiator,
+                                    })} />
+                            </div>
+                        </div>
                     </div>
-                    <div class="txt">
-                        <div class="name">
-                            {chat.name}
-                        </div>
-                        <div class="msg">
-                            <Translatable
-                                resourceKey={i18nKey("videoCall.remoteStart", {
-                                    name: chat.initiator,
-                                })} />
-                        </div>
+                    <div class="btns">
+                        <TooltipWrapper position={"top"} align={"middle"}>
+                            <div slot="target" role="button" onclick={cancel} class="btn ignore">
+                                <PhoneHangup size={$iconSize} color={"var(--txt)"} />
+                            </div>
+                            <div slot="tooltip" let:position let:align>
+                                <TooltipPopup {position} {align}>
+                                    <Translatable resourceKey={i18nKey("videoCall.ignore")} />
+                                </TooltipPopup>
+                            </div>
+                        </TooltipWrapper>
+                        <TooltipWrapper position={"top"} align={"middle"}>
+                            <div slot="target" role="button" onclick={join} class="btn join">
+                                <Phone size={$iconSize} color={"var(--txt)"} />
+                            </div>
+                            <div slot="tooltip" let:position let:align>
+                                <TooltipPopup {position} {align}>
+                                    <Translatable resourceKey={i18nKey("videoCall.join")} />
+                                </TooltipPopup>
+                            </div>
+                        </TooltipWrapper>
                     </div>
-                </div>
-                <div class="btns">
-                    <TooltipWrapper position={"top"} align={"middle"}>
-                        <div slot="target" role="button" onclick={cancel} class="btn ignore">
-                            <PhoneHangup size={$iconSize} color={"var(--txt)"} />
-                        </div>
-                        <div slot="tooltip" let:position let:align>
-                            <TooltipPopup {position} {align}>
-                                <Translatable resourceKey={i18nKey("videoCall.ignore")} />
-                            </TooltipPopup>
-                        </div>
-                    </TooltipWrapper>
-                    <TooltipWrapper position={"top"} align={"middle"}>
-                        <div slot="target" role="button" onclick={join} class="btn join">
-                            <Phone size={$iconSize} color={"var(--txt)"} />
-                        </div>
-                        <div slot="tooltip" let:position let:align>
-                            <TooltipPopup {position} {align}>
-                                <Translatable resourceKey={i18nKey("videoCall.join")} />
-                            </TooltipPopup>
-                        </div>
-                    </TooltipWrapper>
-                </div>
-            </span>
+                </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}

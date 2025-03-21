@@ -92,20 +92,27 @@
     }
 </script>
 
-<Overlay dismissible on:close={onCancel}>
-    <ModalContent closeIcon on:close={onCancel} overflowVisible={true}>
-        <div slot="header">{commandName}</div>
-        <form bind:this={form} slot="body" onsubmit={onSubmit}>
-            {#if command.description}
-                <p><Translatable resourceKey={i18nKey(command.description)} /></p>
-            {/if}
-            {#if $selectedCommandArgs.length === command?.params?.length}
-                {#each command?.params ?? [] as param, i}
-                    <CommandArg onChange={onParamChange} arg={$selectedCommandArgs[i]} {param} />
-                {/each}
-            {/if}
-        </form>
-        <div slot="footer">
+<Overlay dismissible onClose={onCancel}>
+    <ModalContent closeIcon onClose={onCancel} overflowVisible={true}>
+        {#snippet header()}
+            {commandName}
+        {/snippet}
+        {#snippet body()}
+            <form bind:this={form} onsubmit={onSubmit}>
+                {#if command.description}
+                    <p><Translatable resourceKey={i18nKey(command.description)} /></p>
+                {/if}
+                {#if $selectedCommandArgs.length === command?.params?.length}
+                    {#each command?.params ?? [] as param, i}
+                        <CommandArg
+                            onChange={onParamChange}
+                            arg={$selectedCommandArgs[i]}
+                            {param} />
+                    {/each}
+                {/if}
+            </form>
+        {/snippet}
+        {#snippet footer()}
             <Button
                 disabled={!$instanceValid || busy}
                 loading={busy}
@@ -114,6 +121,6 @@
                 tiny={$mobileWidth}>
                 <Translatable resourceKey={i18nKey("Submit")} />
             </Button>
-        </div>
+        {/snippet}
     </ModalContent>
 </Overlay>
