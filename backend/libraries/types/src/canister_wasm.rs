@@ -1,4 +1,4 @@
-use crate::{BuildVersion, CanisterId, Hash};
+use crate::{BuildVersion, CanisterId, Hash, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -93,6 +93,7 @@ pub struct UpgradesFilter {
     pub versions: HashSet<BuildVersion>,
     pub include: HashSet<CanisterId>,
     pub exclude: HashSet<CanisterId>,
+    pub active_since: Option<TimestampMillis>,
 }
 
 #[derive(Serialize, Deserialize, Default)]

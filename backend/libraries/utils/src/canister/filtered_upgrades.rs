@@ -14,6 +14,7 @@ pub fn build_filter_map<F: Fn(CanisterId) -> Option<CanisterId>>(
 
     let default = UpgradesFilter {
         versions: filter.versions.clone(),
+        active_since: filter.active_since,
         ..Default::default()
     };
 
