@@ -152,7 +152,7 @@
             {canPin}
             {canBlockUsers}
             {canDelete}
-            canQuoteReply={canSendAny && sender?.kind !== "bot"}
+            canQuoteReply={canSendAny}
             {canReact}
             canStartThread={canReplyInThread}
             {publicGroup}
