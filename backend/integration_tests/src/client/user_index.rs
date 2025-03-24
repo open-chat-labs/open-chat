@@ -38,7 +38,7 @@ generate_msgpack_update_call!(update_bot);
 
 pub mod happy_path {
     use candid::Principal;
-    use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID};
+    use constants::{CHAT_LEDGER_CANISTER_ID, CHUNK_STORE_CHUNK_SIZE, ICP_LEDGER_CANISTER_ID};
     use event_store_canister::TimestampMillis;
     use pocket_ic::PocketIc;
     use sha256::sha256;
@@ -424,7 +424,7 @@ pub mod happy_path {
         wasm: &[u8],
         canister_type: ChildCanisterType,
     ) {
-        for (index, chunk) in wasm.chunks(1_000_000).enumerate() {
+        for (index, chunk) in wasm.chunks(CHUNK_STORE_CHUNK_SIZE).enumerate() {
             let response = super::upload_wasm_chunk(
                 env,
                 sender,
