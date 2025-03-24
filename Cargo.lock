@@ -4818,10 +4818,12 @@ dependencies = [
  "futures",
  "ic-agent",
  "ic-utils",
+ "pocket-ic",
  "serde",
  "serde_json",
  "tokio",
  "types",
+ "url",
 ]
 
 [[package]]
