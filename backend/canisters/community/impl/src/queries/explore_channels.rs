@@ -28,7 +28,7 @@ fn explore_channels_impl(args: Args, state: &RuntimeState) -> Response {
         return PrivateCommunity;
     }
 
-    let is_caller_community_owner = state.data.members.get(caller).is_some_and(|m| m.is_owner());
+    let is_caller_community_owner = state.data.members.get(caller).is_some_and(|m| m.role().is_owner());
 
     let (matches, total) =
         state
