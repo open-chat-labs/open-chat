@@ -343,7 +343,6 @@ struct Data {
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub online_users_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub website_canister_id: CanisterId,
