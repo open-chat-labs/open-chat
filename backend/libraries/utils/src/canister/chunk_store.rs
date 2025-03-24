@@ -22,7 +22,7 @@ pub async fn clear_chunk_store(store_canister_id: CanisterId) -> Result<(), (Rej
 }
 
 async fn upload_chunk_and_return_hash(store_canister_id: CanisterId, chunk: Vec<u8>) -> Result<Hash, (RejectCode, String)> {
-    upload_chunk(&UploadChunkArgs {
+    management_canister::upload_chunk(&UploadChunkArgs {
         canister_id: store_canister_id,
         chunk,
     })
