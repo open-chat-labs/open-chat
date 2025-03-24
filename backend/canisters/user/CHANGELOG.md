@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1663-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1663-user)] - 2025-03-21
+
 ### Added
 
 - Introduce standardised error codes ([#7599](https://github.com/open-chat-labs/open-chat/pull/7599))
