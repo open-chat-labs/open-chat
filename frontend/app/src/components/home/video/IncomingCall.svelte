@@ -38,7 +38,7 @@
 
     const chat = $derived(normaliseChatSummary($incomingVideoCall));
     const ringtoneUrl = $derived(ringtoneUrls[$selectedRingtone as RingtoneKey]);
-    const isOnAnotherCall = $derived(activeVideoCall !== undefined);
+    const isOnAnotherCall = $derived($activeVideoCall !== undefined);
 
     function normaliseChatSummary(call: IncomingVideoCall | undefined) {
         if (call) {
