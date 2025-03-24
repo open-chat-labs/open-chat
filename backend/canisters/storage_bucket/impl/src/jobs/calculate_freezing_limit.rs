@@ -1,5 +1,5 @@
 use crate::{mutate_state, read_state};
-use ic_cdk::api::management_canister::main::CanisterIdRecord;
+use ic_cdk::management_canister::CanisterStatusArgs;
 use std::time::Duration;
 use tracing::{info, trace};
 use types::{CanisterId, Cycles, Timestamped};
@@ -19,12 +19,12 @@ fn run() {
 }
 
 async fn run_async(this_canister_id: CanisterId) {
-    if let Ok(status) = ic_cdk::api::management_canister::main::canister_status(CanisterIdRecord {
+    if let Ok(status) = ic_cdk::management_canister::canister_status(&CanisterStatusArgs {
         canister_id: this_canister_id,
     })
     .await
     {
-        if let Ok(cycles_per_day) = Cycles::try_from(status.0.idle_cycles_burned_per_day.0) {
+        if let Ok(cycles_per_day) = Cycles::try_from(status.idle_cycles_burned_per_day.0) {
             let freezing_limit = cycles_per_day * FREEZING_THRESHOLD_DAYS;
 
             mutate_state(|state| {

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1660](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1660-registry)] - 2025-03-21
+
 ### Changed
 
 - Remove "How to buy" urls from tokens ([#7618](https://github.com/open-chat-labs/open-chat/pull/7618))
