@@ -302,10 +302,6 @@
         return Promise.resolve();
     }
 
-    function sendMessageWithContent(ev: CustomEvent<{ content: MessageContent }>) {
-        onSendMessageWithContent(ev.detail.content);
-    }
-
     function onSendMessageWithContent(content: MessageContent) {
         client.sendMessageWithContent(messageContext, content, false);
     }
@@ -315,10 +311,7 @@
     <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
 {/if}
 
-<PollBuilder
-    on:sendMessageWithContent={sendMessageWithContent}
-    bind:this={pollBuilder}
-    bind:open={creatingPoll} />
+<PollBuilder onSend={onSendMessageWithContent} bind:this={pollBuilder} bind:open={creatingPoll} />
 
 {#if creatingP2PSwapMessage}
     <P2PSwapContentBuilder

@@ -335,10 +335,6 @@
         return $currentChatReplyingTo?.sender?.userId;
     }
 
-    function sendMessageWithContent(ev: CustomEvent<{ content: MessageContent }>) {
-        onSendMessageWithContent(ev.detail.content);
-    }
-
     function onSendMessageWithContent(content: MessageContent) {
         client.sendMessageWithContent(messageContext, content, false);
     }
@@ -358,10 +354,7 @@
         ownedCommunities={importToCommunities} />
 {/if}
 
-<PollBuilder
-    on:sendMessageWithContent={sendMessageWithContent}
-    bind:this={pollBuilder}
-    bind:open={creatingPoll} />
+<PollBuilder onSend={onSendMessageWithContent} bind:this={pollBuilder} bind:open={creatingPoll} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
