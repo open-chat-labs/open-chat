@@ -459,7 +459,7 @@
         {chatId}
         {eventIndex}
         {threadRootMessageIndex}
-        on:close={() => (showRemindMe = false)} />
+        onClose={() => (showRemindMe = false)} />
 {/if}
 
 {#if showReport}

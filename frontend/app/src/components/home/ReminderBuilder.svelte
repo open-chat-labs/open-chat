@@ -5,26 +5,30 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
     import Legend from "../Legend.svelte";
-    import ModalContent from "../ModalContentLegacy.svelte";
+    import ModalContent from "../ModalContent.svelte";
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { now } from "../../stores/time";
     import type { ChatIdentifier, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
-    export let chatId: ChatIdentifier;
-    export let eventIndex: number;
-    export let threadRootMessageIndex: number | undefined;
+    interface Props {
+        chatId: ChatIdentifier;
+        eventIndex: number;
+        threadRootMessageIndex: number | undefined;
+        onClose: () => void;
+    }
 
-    const dispatch = createEventDispatcher();
+    let { chatId, eventIndex, threadRootMessageIndex, onClose }: Props = $props();
+
     const client = getContext<OpenChat>("client");
 
-    let busy = false;
-    let note: string = "";
-    let selectedIntervalIndex = 0;
+    let busy = $state(false);
+    let note: string = $state("");
+    let selectedIntervalIndex = $state(0);
     let intervals = [
         {
             label: i18nKey("reminders.twentyMinutes"),
@@ -47,9 +51,6 @@
             index: 4,
         },
     ];
-
-    $: remindAtMs = deriveRemindAt($now, selectedIntervalIndex);
-    $: remindAtDate = new Date(remindAtMs);
 
     function deriveRemindAt(now: number, interval: number): number {
         if (interval === 0) {
@@ -102,16 +103,18 @@
                 }
             })
             .finally(() => (busy = false));
-        dispatch("close");
+        onClose();
     }
+    let remindAtMs = $derived(deriveRemindAt($now, selectedIntervalIndex));
+    let remindAtDate = $derived(new Date(remindAtMs));
 </script>
 
-<Overlay onClose={() => dispatch("close")} dismissible>
-    <ModalContent on:close closeIcon>
-        <span slot="header">
+<Overlay {onClose} dismissible>
+    <ModalContent {onClose} closeIcon>
+        {#snippet header()}
             <h1>⏰ <Translatable resourceKey={i18nKey("reminders.title")} /></h1>
-        </span>
-        <span slot="body">
+        {/snippet}
+        {#snippet body()}
             <div class="interval">
                 <Legend label={i18nKey("reminders.menu")} />
                 <Select bind:value={selectedIntervalIndex}>
@@ -136,14 +139,10 @@
                         datetime: client.toDatetimeString(remindAtDate),
                     })} />
             </div>
-        </span>
-        <span slot="footer">
+        {/snippet}
+        {#snippet footer()}
             <ButtonGroup>
-                <Button
-                    secondary
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}
-                    on:click={() => dispatch("close")}
+                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}
                     ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 <Button
                     disabled={busy}
@@ -153,7 +152,7 @@
                     on:click={createReminder}
                     ><Translatable resourceKey={i18nKey("reminders.create")} /></Button>
             </ButtonGroup>
-        </span>
+        {/snippet}
     </ModalContent>
 </Overlay>
 
