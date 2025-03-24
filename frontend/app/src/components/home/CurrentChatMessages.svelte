@@ -326,7 +326,7 @@
                             on:removePreview
                             on:editEvent={onEditEvent}
                             on:goToMessageIndex={goToMessageIndex}
-                            on:expandMessage={() => toggleMessageExpansion(evt, true)}
+                            onExpandMessage={() => toggleMessageExpansion(evt, true)}
                             on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                             on:upgrade
                             on:verifyHumanity

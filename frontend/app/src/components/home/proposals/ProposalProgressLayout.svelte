@@ -1,18 +1,26 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
+    interface Props {
+        adopt: Snippet;
+        reject: Snippet;
+        progress: Snippet;
+    }
+
+    let { adopt, reject, progress }: Props = $props();
 </script>
 
 <div class="votes">
     {#if $mobileWidth}
         <div class="buttons">
-            <slot name="adopt" />
-            <slot name="reject" />
+            {@render adopt()}
+            {@render reject()}
         </div>
-        <slot name="progress" />
+        {@render progress()}
     {:else}
-        <slot name="adopt" />
-        <slot name="progress" />
-        <slot name="reject" />
+        {@render adopt()}
+        {@render progress()}
+        {@render reject()}
     {/if}
 </div>
 

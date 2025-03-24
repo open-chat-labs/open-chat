@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import ModalContent from "../ModalContent.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
@@ -12,7 +12,6 @@
     import HoverIcon from "../HoverIcon.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     interface Props {
         onClose: () => void;
@@ -90,7 +89,6 @@
     }
 
     function streak() {
-        dispatch("close");
         onClose();
         tick().then(onStreak);
     }
@@ -182,10 +180,8 @@
                     {#if supportsGame}
                         <div onclick={() => (showGame = true)} class="joystick">🕹️</div>
                     {/if}
-                    <Button
-                        tiny={$mobileWidth}
-                        small={!$mobileWidth}
-                        on:click={() => dispatch("close")}>{$_("close")}</Button>
+                    <Button tiny={$mobileWidth} small={!$mobileWidth} on:click={onClose}
+                        >{$_("close")}</Button>
                 {/if}
             </ButtonGroup>
         </div>

@@ -56,7 +56,9 @@
     export let chat: ChatSummary;
 
     let chatEventList: ChatEventList | undefined;
+    //@ts-ignore
     let pollBuilder: PollBuilder;
+    //@ts-ignore
     let giphySelector: GiphySelector;
     //@ts-ignore
     let memeBuilder: MemeBuilder;
@@ -302,10 +304,6 @@
         return Promise.resolve();
     }
 
-    function sendMessageWithContent(ev: CustomEvent<{ content: MessageContent }>) {
-        onSendMessageWithContent(ev.detail.content);
-    }
-
     function onSendMessageWithContent(content: MessageContent) {
         client.sendMessageWithContent(messageContext, content, false);
     }
@@ -315,10 +313,7 @@
     <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
 {/if}
 
-<PollBuilder
-    on:sendMessageWithContent={sendMessageWithContent}
-    bind:this={pollBuilder}
-    bind:open={creatingPoll} />
+<PollBuilder onSend={onSendMessageWithContent} bind:this={pollBuilder} bind:open={creatingPoll} />
 
 {#if creatingP2PSwapMessage}
     <P2PSwapContentBuilder
@@ -329,7 +324,7 @@
 {/if}
 
 <GiphySelector
-    on:sendMessageWithContent={sendMessageWithContent}
+    onSend={onSendMessageWithContent}
     bind:this={giphySelector}
     bind:open={selectingGif} />
 

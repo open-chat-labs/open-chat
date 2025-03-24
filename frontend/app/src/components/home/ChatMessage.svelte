@@ -107,6 +107,7 @@
     export let collapsed: boolean = false;
     export let threadRootMessage: Message | undefined;
     export let botContext: BotMessageContextType | undefined;
+    export let onExpandMessage: (() => void) | undefined = undefined;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -423,7 +424,7 @@
 {#if tipping !== undefined}
     <TipBuilder
         ledger={tipping}
-        on:close={() => (tipping = undefined)}
+        onClose={() => (tipping = undefined)}
         {msg}
         {messageContext}
         {user} />
@@ -459,7 +460,7 @@
         {chatId}
         {eventIndex}
         {threadRootMessageIndex}
-        on:close={() => (showRemindMe = false)} />
+        onClose={() => (showRemindMe = false)} />
 {/if}
 
 {#if showReport}
@@ -468,7 +469,7 @@
         messageId={msg.messageId}
         {chatId}
         {canDelete}
-        on:close={() => (showReport = false)} />
+        onClose={() => (showReport = false)} />
 {/if}
 
 {#if expiresAt === undefined || percentageExpired < 100}
@@ -619,7 +620,7 @@
                             on:verifyHumanity
                             on:claimDailyChit
                             on:startVideoCall
-                            on:expandMessage />
+                            {onExpandMessage} />
 
                         {#if !inert && !isPrize}
                             <TimeAndTicks

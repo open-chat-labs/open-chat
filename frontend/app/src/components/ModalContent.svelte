@@ -73,8 +73,8 @@
     let position = $state("");
     let style = $derived(
         useAlignTo
-            ? `${position} ${bgStyle} visibility: hidden;`
-            : `${position} ${bgStyle} visibility: visible;`,
+            ? `${bgStyle} visibility: hidden; ${position}`
+            : `${bgStyle} visibility: visible; ${position}`,
     );
 
     function closeMenus() {

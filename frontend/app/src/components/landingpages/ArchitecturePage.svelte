@@ -10,38 +10,39 @@
     import HashLink from "./HashLink.svelte";
     import ArrowLink from "../ArrowLink.svelte";
     import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContentLegacy.svelte";
     import { location, querystring } from "../../routes";
+    import ModalContent from "../ModalContent.svelte";
 
-    let linked: number | undefined = undefined;
-    let zooming: { url: string; alt: string } | undefined = undefined;
+    let linked: number | undefined = $state(undefined);
+    let zooming: { url: string; alt: string } | undefined = $state(undefined);
 
-    $: copySize = $mobileWidth ? "14px" : "16px";
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
 
-    function zoomImage(ev: CustomEvent<{ url: string; alt: string }>) {
-        zooming = ev.detail;
+    function zoomImage(url: string, alt: string) {
+        zooming = { url, alt };
     }
 
-    function onCopyUrl(ev: CustomEvent<string>): void {
-        copyUrl(ev.detail);
-    }
-
-    function copyUrl(section: string): void {
+    function onCopyUrl(e: Event, section: string): void {
+        e.stopPropagation();
         copyToClipboard(`${window.location.origin}${$location}?section=${section}`);
     }
 
-    $: {
+    $effect(() => {
         const section = $querystring.get("section");
         if (section) {
             linked = scrollToSection(section);
         }
-    }
+    });
 </script>
 
 {#if zooming}
     <Overlay onClose={() => (zooming = undefined)} dismissible alignBottomOnMobile={false}>
         <ModalContent hideHeader hideFooter fill fitToContent fixedWidth>
-            <img slot="body" class="zoomed" src={zooming.url} alt={zooming.alt} />
+            {#snippet body()}
+                {#if zooming}
+                    <img class="zoomed" src={zooming.url} alt={zooming.alt} />
+                {/if}
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}
@@ -54,7 +55,7 @@
             <span class="subtitle">1</span>
             <div class="title">
                 System overview
-                <div class="copy" on:click|stopPropagation={() => copyUrl("1")}>
+                <div class="copy" onclick={(e) => onCopyUrl(e, "1")}>
                     <Copy size={copySize} color={"var(--landing-txt)"} />
                 </div>
             </div>
@@ -70,7 +71,7 @@
             </p>
 
             <ZoomableImage
-                on:zoom={zoomImage}
+                onZoom={zoomImage}
                 url={"/assets/architecture/simple.svg"}
                 alt="High level architecture" />
         </div>
@@ -81,7 +82,7 @@
             <span class="subtitle">2</span>
             <div class="title">
                 System components in depth
-                <div class="copy" on:click|stopPropagation={() => copyUrl("2")}>
+                <div class="copy" onclick={(e) => onCopyUrl(e, "2")}>
                     <Copy size={copySize} color={"var(--landing-txt)"} />
                 </div>
             </div>
@@ -95,13 +96,13 @@
             </p>
 
             <ZoomableImage
-                on:zoom={zoomImage}
+                onZoom={zoomImage}
                 url={"/assets/architecture/complex.svg"}
                 alt="Complete architecture" />
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1">Canister components</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1">Canister components</HashLinkTarget>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-1">User canister</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1-1">User canister</HashLinkTarget>
 
             <p>
                 A key decision was made to give each user their own canister. This holds the user’s
@@ -119,7 +120,7 @@
                 scalability of the system.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-2">User index canister</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1-2">User index canister</HashLinkTarget>
 
             <p>
                 The user index canister essentially holds the global registry of OpenChat users.
@@ -138,7 +139,7 @@
                 cross that bridge later.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-3">Group canister</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1-3">Group canister</HashLinkTarget>
 
             <p>
                 As for users, each group has its own canister. This stores and manages the group
@@ -151,7 +152,7 @@
                 outgrow their canister. The same goes for user canisters.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-4">Group index canister</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1-4">Group index canister</HashLinkTarget>
 
             <p>
                 The group index canister essentially holds the global registry of OpenChat groups.
@@ -162,7 +163,7 @@
                 provides a searchable index of public groups and maintains a list of hot groups.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-5">OpenStorage</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1-5">OpenStorage</HashLinkTarget>
 
             <p>
                 <ExternalLink href="https://github.com/open-chat-labs/open-storage"
@@ -187,7 +188,7 @@
                 or forward the same file multiple times without additional cost.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-6">Notifications</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1-6">Notifications</HashLinkTarget>
 
             <p>
                 The notifications canister holds a queue of notifications sent from user or group
@@ -197,15 +198,14 @@
                 >. It also holds a set of web push subscriptions for each user.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-6">Proposals bot</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1-6">Proposals bot</HashLinkTarget>
 
             <p>
                 The proposals bot canister syncs proposals from the NNS and each registered SNS with
                 the equivalent proposals group in OpenChat.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-7"
-                >Online users aggregator</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1-7">Online users aggregator</HashLinkTarget>
 
             <p>
                 The online users aggregator canister has one simple responsibility. Every 61
@@ -218,7 +218,7 @@
                 purely to take update load away from the user index canister.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-8">Assets canister</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1-8">Assets canister</HashLinkTarget>
 
             <p>
                 The assets canister (via the service worker) serves the static assets for the web
@@ -230,7 +230,7 @@
                 html which loads it, cannot be served by the assets canister.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-9">Cycles dispenser</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1-9">Cycles dispenser</HashLinkTarget>
 
             <p>
                 The cycles dispenser is a canister responsible for topping up the other canisters
@@ -244,7 +244,7 @@
                 proposal can be made periodically to keep the whole system topped up with cycles.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-10">Deployment / Upgrade</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1-10">Deployment / Upgrade</HashLinkTarget>
 
             <p>
                 User and group canisters are upgraded in batches with an API call to their
@@ -252,7 +252,7 @@
                 and going forward, only by the SNS.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1-11">APIs</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1-11">APIs</HashLinkTarget>
 
             <p>
                 The client-facing APIs all use candid which is the standard for the Internet
@@ -283,17 +283,16 @@
                 >.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-2">Off-chain components</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-2">Off-chain components</HashLinkTarget>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-2-1">SMS relay oracle</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-2-1">SMS relay oracle</HashLinkTarget>
 
             <p>
                 This is used as part of the phone number verification process we currently use. Once
                 we start using NFID for proof of unique personhood we can remove it.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-2-2"
-                >Notification relay oracle</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-2-2">Notification relay oracle</HashLinkTarget>
 
             <p>
                 This is currently required to support push notifications. Once the Internet Computer
@@ -301,7 +300,7 @@
                 to directly send notifications to web push notifications servers.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-2-3"
+            <HashLinkTarget {onCopyUrl} id="2-2-3"
                 >Landing page assets and service worker</HashLinkTarget>
 
             <p>
@@ -313,14 +312,14 @@
                 page assets into the assets canister. At this point we will have no need for AWS s3.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-3">Frontend components</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-3">Frontend components</HashLinkTarget>
 
             <ZoomableImage
-                on:zoom={zoomImage}
+                onZoom={zoomImage}
                 url={"/assets/architecture/frontend.svg"}
                 alt="Frontend architecture" />
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-3-1">Landing pages</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-3-1">Landing pages</HashLinkTarget>
 
             <p>
                 When a user navigates to <ExternalLink href="https://oc.app">oc.app</ExternalLink> for
@@ -329,7 +328,7 @@
                 page javascript is loaded it installs the service worker.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-3-2">Service worker</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-3-2">Service worker</HashLinkTarget>
 
             <p>
                 Our forked service worker allows us to modify the default behaviour in two key ways.
@@ -354,7 +353,7 @@
 
             <p>The service worker has also been modified to handle web push notifications.</p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-3-3">Chat app</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-3-3">Chat app</HashLinkTarget>
 
             <p>
                 The OpenChat app is written in typescript and Svelte and is composed of three
@@ -376,7 +375,7 @@
                 </li>
             </ul>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-3-3-1">Agent</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-3-3-1">Agent</HashLinkTarget>
 
             <p>
                 The OpenChat agent runs in a separate thread from the UI as a web worker which helps
@@ -394,7 +393,7 @@
                 IndexDB.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-3-3-2">Client library</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-3-3-2">Client library</HashLinkTarget>
 
             <p>
                 When the client library is loaded it registers a web worker running the OpenChat
@@ -412,7 +411,7 @@
 
             <p>It maintains local user settings in the browser’s local storage.</p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-3-3-3">User interface</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-3-3-3">User interface</HashLinkTarget>
 
             <p>
                 The UI is composed of svelte components which call into APIs and react to svelte
@@ -421,7 +420,7 @@
                 multi-language text resources.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-3-3-4">WebRTC</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-3-3-4">WebRTC</HashLinkTarget>
 
             <p>
                 The client library uses <ExternalLink href="https://en.wikipedia.org/wiki/WebRTC"
@@ -446,7 +445,7 @@
             <span class="subtitle">3</span>
             <div class="title">
                 Verification of canister code
-                <div class="copy" on:click|stopPropagation={() => copyUrl("3")}>
+                <div class="copy" onclick={(e) => onCopyUrl(e, "3")}>
                     <Copy size={copySize} color={"var(--landing-txt)"} />
                 </div>
             </div>
@@ -505,13 +504,13 @@
             <span class="subtitle">4</span>
             <div class="title">
                 External system dependencies
-                <div class="copy" on:click|stopPropagation={() => copyUrl("4")}>
+                <div class="copy" onclick={(e) => onCopyUrl(e, "4")}>
                     <Copy size={copySize} color={"var(--landing-txt)"} />
                 </div>
             </div>
         </div>
         <div class="body">
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-1">Internet Identity (II)</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="4-1">Internet Identity (II)</HashLinkTarget>
 
             <p>
                 II is the standard authentication mechanism supported by the InternetComputer and
@@ -521,7 +520,7 @@
                 >.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-2">NFID</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="4-2">NFID</HashLinkTarget>
 
             <p>
                 <ExternalLink href="https://docs.nfid.one/">NFID</ExternalLink> is a very interesting
@@ -541,7 +540,7 @@
                 point we expect to keep II as the default authentication provider for OpenChat.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-3">Ledgers</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="4-3">Ledgers</HashLinkTarget>
 
             <p>
                 OpenChat currently integrates with the NNS ledger and is poised to integrate with
@@ -551,7 +550,7 @@
                 users.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-4">Governance</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="4-4">Governance</HashLinkTarget>
 
             <p>
                 Likewise we integrate with the NNS governance canister and very soon the OpenChat
@@ -561,7 +560,7 @@
                 conveniently vote with all linked neurons in one operation.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-5">UserGeek</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="4-5">UserGeek</HashLinkTarget>
 
             <p>
                 We integrate with <ExternalLink
@@ -572,7 +571,7 @@
             </p>
 
             <ZoomableImage
-                on:zoom={zoomImage}
+                onZoom={zoomImage}
                 url={"/assets/architecture/usergeek.png"}
                 alt="UserGeek charts" />
         </div>
