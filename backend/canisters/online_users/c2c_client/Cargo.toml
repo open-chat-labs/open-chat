@@ -9,6 +9,7 @@ edition.workspace = true
 candid = { workspace = true }
 canister_client = { path = "../../../libraries/canister_client" }
 ic-cdk = { workspace = true }
+msgpack = { path = "../../../libraries/msgpack" }
 online_users_canister = { path = "../api" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }

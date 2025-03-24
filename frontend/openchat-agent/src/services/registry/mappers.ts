@@ -14,6 +14,8 @@ import type {
     RegistryUpdatesResponse as TRegistryUpdatesResponse,
 } from "../../typebox";
 
+const CKBTC_TO_BTC_OVERRIDE_ENABLED = false;
+
 export function updatesResponse(
     value: TRegistryUpdatesResponse,
     blobUrlPattern: string,
@@ -88,7 +90,7 @@ function tokenDetails(
         lastUpdated: value.last_updated,
     };
 
-    if (tokenDetails.symbol === CKBTC_SYMBOL) {
+    if (CKBTC_TO_BTC_OVERRIDE_ENABLED && tokenDetails.symbol === CKBTC_SYMBOL) {
         // Override ckBTC to BTC
         tokenDetails.name = "Bitcoin";
         tokenDetails.symbol = BTC_SYMBOL;

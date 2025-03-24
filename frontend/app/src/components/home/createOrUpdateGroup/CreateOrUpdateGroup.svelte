@@ -1,5 +1,5 @@
 <script lang="ts">
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import Button from "../../Button.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import GroupDetails from "./GroupDetails.svelte";

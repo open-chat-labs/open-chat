@@ -80,8 +80,11 @@
     let creatingP2PSwapMessage = false;
     let selectingGif = false;
     let buildingMeme = false;
+    //@ts-ignore
     let pollBuilder: PollBuilder;
+    //@ts-ignore
     let giphySelector: GiphySelector;
+    //@ts-ignore
     let memeBuilder: MemeBuilder;
     let showSearchHeader = false;
     let searchTerm = "";
@@ -334,8 +337,8 @@
         return $currentChatReplyingTo?.sender?.userId;
     }
 
-    function sendMessageWithContent(ev: CustomEvent<{ content: MessageContent }>) {
-        client.sendMessageWithContent(messageContext, ev.detail.content, false);
+    function onSendMessageWithContent(content: MessageContent) {
+        client.sendMessageWithContent(messageContext, content, false);
     }
 </script>
 
@@ -347,16 +350,13 @@
 
 {#if importToCommunities !== undefined}
     <ImportToCommunity
-        on:successfulImport
+        onSuccessfulImport={(channelId) => dispatch("successfulImport", channelId)}
         groupId={chat.id}
-        on:cancel={() => (importToCommunities = undefined)}
+        onCancel={() => (importToCommunities = undefined)}
         ownedCommunities={importToCommunities} />
 {/if}
 
-<PollBuilder
-    on:sendMessageWithContent={sendMessageWithContent}
-    bind:this={pollBuilder}
-    bind:open={creatingPoll} />
+<PollBuilder onSend={onSendMessageWithContent} bind:this={pollBuilder} bind:open={creatingPoll} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
@@ -387,14 +387,11 @@
 {/if}
 
 <GiphySelector
-    on:sendMessageWithContent={sendMessageWithContent}
+    onSend={onSendMessageWithContent}
     bind:this={giphySelector}
     bind:open={selectingGif} />
 
-<MemeBuilder
-    on:sendMessageWithContent={sendMessageWithContent}
-    bind:this={memeBuilder}
-    bind:open={buildingMeme} />
+<MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
 <div class="wrapper">
     {#if showSearchHeader}

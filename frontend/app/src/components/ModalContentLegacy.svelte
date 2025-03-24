@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, tick, type Snippet } from "svelte";
+    import { createEventDispatcher, onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
     import Button from "./Button.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -12,70 +12,35 @@
     import Translatable from "./Translatable.svelte";
     import { i18nKey } from "../i18n/i18n";
 
-    type OnClose = (() => void) | undefined;
+    const dispatch = createEventDispatcher();
 
-    interface Props {
-        fill?: boolean;
-        large?: boolean;
-        hideHeader?: boolean;
-        hideBody?: boolean;
-        hideFooter?: boolean;
-        compactFooter?: boolean;
-        fadeDuration?: number;
-        fadeDelay?: number;
-        fixedWidth?: boolean;
-        fitToContent?: boolean;
-        alignTo?: DOMRect | undefined;
-        actualWidth?: number;
-        closeIcon?: boolean;
-        square?: boolean;
-        backgroundImage?: string | undefined;
-        // if your modal *definitely* overflows on mobile you might need to set height explicitly
-        overflows?: boolean;
-        // It will probably overflow if you have a datetime picker in the modal!
-        overflowVisible?: boolean;
-        header?: Snippet<[OnClose]>;
-        body?: Snippet<[OnClose]>;
-        footer?: Snippet<[OnClose]>;
-        onClose?: OnClose;
-    }
+    export let fill: boolean = false;
+    export let large: boolean = false;
+    export let hideHeader: boolean = false;
+    export let hideBody: boolean = false;
+    export let hideFooter: boolean = false;
+    export let compactFooter: boolean = false;
+    export let fadeDuration = 100;
+    export let fadeDelay = 200;
+    export let fixedWidth: boolean = true;
+    export let fitToContent: boolean = false;
+    export let alignTo: DOMRect | undefined = undefined;
+    export let actualWidth: number = 0;
+    export let closeIcon: boolean = false;
+    export let square: boolean = false;
+    export let backgroundImage: string | undefined = undefined;
 
-    let {
-        fill = false,
-        large = false,
-        hideHeader = false,
-        hideBody = false,
-        hideFooter = false,
-        compactFooter = false,
-        fadeDuration = 100,
-        fadeDelay = 200,
-        fixedWidth = true,
-        fitToContent = false,
-        alignTo = undefined,
-        actualWidth = $bindable(0),
-        closeIcon = false,
-        square = false,
-        backgroundImage = undefined,
-        overflows = false,
-        overflowVisible = false,
-        header,
-        body,
-        footer,
-        onClose,
-    }: Props = $props();
+    // if your modal *definitely* overflows on mobile you might need to set height explicitly
+    export let overflows: boolean = false;
 
-    actualWidth;
+    // It will probably overflow if you have a datetime picker in the modal!
+    export let overflowVisible: boolean = false;
 
     let divElement: HTMLElement;
 
-    let useAlignTo = $derived(alignTo !== undefined && !$mobileWidth);
-    let bgStyle = $derived(backgroundImage ? `--custom-bg: url(${backgroundImage});` : "");
-    let position = $state("");
-    let style = $derived(
-        useAlignTo
-            ? `${bgStyle} visibility: hidden; ${position}`
-            : `${bgStyle} visibility: visible; ${position}`,
-    );
+    $: useAlignTo = alignTo !== undefined && !$mobileWidth;
+    $: bgStyle = backgroundImage ? `--custom-bg: url(${backgroundImage});` : "";
+    $: style = useAlignTo ? `${bgStyle} visibility: hidden;` : `${bgStyle} visibility: visible;`;
 
     function closeMenus() {
         menuStore.hideMenu();
@@ -90,7 +55,7 @@
             divElement.addEventListener("click", closeMenus);
         } catch (e: any) {
             console.error("Failed to open modal", e);
-            onClose?.();
+            onClose();
         }
         return () => {
             divElement.removeEventListener("click", closeMenus);
@@ -102,23 +67,27 @@
             let modalRect = divElement.getBoundingClientRect();
             let top = Math.min(alignTo.top - 8, window.innerHeight - (modalRect.height + 10));
 
-            position = `position: absolute; visibility: visible; top: ${top}px; `;
+            style = `position: absolute; visibility: visible; top: ${top}px; `;
 
             if ($rtlStore) {
                 let right = Math.min(
                     window.innerWidth - alignTo.left + 8,
                     window.innerWidth - modalRect.width - 10,
                 );
-                position += `right: ${right}px;`;
+                style += `right: ${right}px;`;
             } else {
                 let left = Math.min(alignTo.right + 8, window.innerWidth - (modalRect.width + 10));
-                position += `left: ${left}px;`;
+                style += `left: ${left}px;`;
             }
         }
     }
+
+    function onClose() {
+        dispatch("close");
+    }
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
     bind:this={divElement}
     {style}
@@ -135,11 +104,11 @@
     {#if !hideHeader}
         <div class="header">
             <h4>
-                {@render header?.(onClose)}
+                <slot {onClose} name="header" />
             </h4>
             {#if closeIcon}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <span title={$_("close")} class="close" class:rtl={$rtlStore} onclick={onClose}>
+                <span title={$_("close")} class="close" class:rtl={$rtlStore} on:click={onClose}>
                     <HoverIcon>
                         <Close size={"1em"} color={"var(--icon-txt)"} />
                     </HoverIcon>
@@ -149,16 +118,16 @@
     {/if}
     {#if !hideBody}
         <div class="body" class:fill class:overflow-visible={overflowVisible}>
-            {@render body?.(onClose)}
+            <slot {onClose} name="body" />
         </div>
     {/if}
     {#if !hideFooter}
         <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
-            {#if footer}{@render footer(onClose)}{:else}
-                <Button on:click={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
+            <slot {onClose} name="footer">
+                <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
                     <Translatable resourceKey={i18nKey("close")} />
                 </Button>
-            {/if}
+            </slot>
         </div>
     {/if}
 </div>

@@ -18,7 +18,7 @@
     import SaveAccount from "./SaveAccount.svelte";
     import AccountSelector from "./AccountSelector.svelte";
     import { isAccountIdentifierValid, isPrincipalValid } from "openchat-shared";
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";

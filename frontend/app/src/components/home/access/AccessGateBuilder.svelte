@@ -43,9 +43,16 @@
         editable: boolean;
         level: Level;
         valid: boolean;
+        onClose: () => void;
     }
 
-    let { gateConfig = $bindable(), editable, level, valid = $bindable() }: Props = $props();
+    let {
+        gateConfig = $bindable(),
+        editable,
+        level,
+        valid = $bindable(),
+        onClose,
+    }: Props = $props();
 
     let gateValidity: boolean[] = $state([]);
     let selectedGateIndex: number | undefined = $state(undefined);
@@ -114,120 +121,126 @@
     }
 </script>
 
-<Overlay>
-    <ModalContent closeIcon on:close>
-        <div slot="header">
+<Overlay {onClose}>
+    <ModalContent closeIcon {onClose}>
+        {#snippet header()}
             <Translatable resourceKey={title} />
-        </div>
-        <div slot="body" class="body access-gate-builder">
-            {#if isLeafGate(gateConfig.gate)}
-                <LeafGateBuilder
-                    {gateBindings}
-                    {neuronGateBindings}
-                    {paymentGateBindings}
-                    {balanceGateBindings}
-                    allowNone
-                    bind:gate={gateConfig.gate}
-                    {editable}
-                    {level}
-                    bind:valid={gateValidity[0]} />
-            {:else if isCompositeGate(gateConfig.gate)}
-                {#each gateConfig.gate.gates as subgate, i (`${subgate.kind} + ${i}`)}
-                    <CollapsibleCard
-                        transition={false}
-                        open={selectedGateIndex === i}
-                        on:opened={() => (selectedGateIndex = i)}>
-                        <div slot="titleSlot" class="sub-header" class:invalid={!gateValidity[i]}>
-                            <AccessGateIcon
-                                {level}
-                                showNoGate
-                                gateConfig={{ expiry: undefined, gate: subgate }} />
-                            <Translatable resourceKey={getGateText(subgate)} />
-                            {#if editable}
-                                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                <div onclick={() => deleteGate(i)} class="delete">
-                                    <Delete
-                                        viewBox={"0 -3 24 24"}
-                                        size={$iconSize}
-                                        color={"var(--icon-txt)"} />
-                                </div>
-                            {/if}
-                        </div>
-                        <LeafGateBuilder
-                            {gateBindings}
-                            {neuronGateBindings}
-                            {paymentGateBindings}
-                            {balanceGateBindings}
-                            allowNone={false}
-                            bind:gate={gateConfig.gate.gates[i]}
-                            {editable}
-                            {level}
-                            bind:valid={gateValidity[i]} />
-                    </CollapsibleCard>
-                {/each}
-            {/if}
-            {#if editable}
-                <div class="add">
-                    <Button tiny disabled={!canAdd} on:click={addLeaf}>
-                        <Translatable resourceKey={i18nKey("access.addGate")} />
-                    </Button>
-                    <div class="icon">
-                        <TooltipWrapper position={"top"} align={"middle"}>
-                            <InformationOutline
-                                slot="target"
-                                size={$iconSize}
-                                color={"var(--txt)"} />
-                            <div let:position let:align slot="tooltip">
-                                <TooltipPopup {position} {align}>
-                                    <Translatable resourceKey={i18nKey("access.addGateInfo")} />
-                                </TooltipPopup>
-                            </div>
-                        </TooltipWrapper>
-                    </div>
-                </div>
-            {/if}
-
-            {#if gateConfig.gate.kind !== "no_gate"}
-                {#if editable}
-                    <div class="section expiry">
-                        <Checkbox
-                            id="evaluation-interval"
-                            on:change={toggleEvaluationInterval}
-                            label={i18nKey("access.evaluationInterval")}
-                            align={"start"}
-                            checked={gateConfig.expiry !== undefined}>
-                            <div class="section-title disappear">
-                                <Translatable resourceKey={i18nKey("access.evaluationInterval")} />
-                            </div>
-                            <div class="info">
-                                <Translatable
-                                    resourceKey={i18nKey(
-                                        "access.evaluationIntervalInfo",
-                                        undefined,
-                                        level,
-                                        true,
-                                    )} />
-                            </div>
-                            <div class="info">
-                                {#if gateConfig.expiry !== undefined}
-                                    <DurationPicker
-                                        bind:valid={evaluationIntervalValid}
-                                        bind:milliseconds={gateConfig.expiry}
-                                        unitFilter={(u) => !["minutes", "hours"].includes(u)} />
+        {/snippet}
+        {#snippet body()}
+            <div class="body access-gate-builder">
+                {#if isLeafGate(gateConfig.gate)}
+                    <LeafGateBuilder
+                        {gateBindings}
+                        {neuronGateBindings}
+                        {paymentGateBindings}
+                        {balanceGateBindings}
+                        allowNone
+                        bind:gate={gateConfig.gate}
+                        {editable}
+                        {level}
+                        bind:valid={gateValidity[0]} />
+                {:else if isCompositeGate(gateConfig.gate)}
+                    {#each gateConfig.gate.gates as subgate, i (`${subgate.kind} + ${i}`)}
+                        <CollapsibleCard
+                            transition={false}
+                            open={selectedGateIndex === i}
+                            on:opened={() => (selectedGateIndex = i)}>
+                            <div
+                                slot="titleSlot"
+                                class="sub-header"
+                                class:invalid={!gateValidity[i]}>
+                                <AccessGateIcon
+                                    {level}
+                                    showNoGate
+                                    gateConfig={{ expiry: undefined, gate: subgate }} />
+                                <Translatable resourceKey={getGateText(subgate)} />
+                                {#if editable}
+                                    <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                    <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                    <div onclick={() => deleteGate(i)} class="delete">
+                                        <Delete
+                                            viewBox={"0 -3 24 24"}
+                                            size={$iconSize}
+                                            color={"var(--icon-txt)"} />
+                                    </div>
                                 {/if}
                             </div>
-                        </Checkbox>
-                    </div>
-                {:else if gateConfig.expiry !== undefined}
-                    <div class="section expiry">
-                        <AccessGateExpiry expiry={gateConfig.expiry} />
+                            <LeafGateBuilder
+                                {gateBindings}
+                                {neuronGateBindings}
+                                {paymentGateBindings}
+                                {balanceGateBindings}
+                                allowNone={false}
+                                bind:gate={gateConfig.gate.gates[i]}
+                                {editable}
+                                {level}
+                                bind:valid={gateValidity[i]} />
+                        </CollapsibleCard>
+                    {/each}
+                {/if}
+                {#if editable}
+                    <div class="add">
+                        <Button tiny disabled={!canAdd} on:click={addLeaf}>
+                            <Translatable resourceKey={i18nKey("access.addGate")} />
+                        </Button>
+                        <div class="icon">
+                            <TooltipWrapper position={"top"} align={"middle"}>
+                                <InformationOutline
+                                    slot="target"
+                                    size={$iconSize}
+                                    color={"var(--txt)"} />
+                                <div let:position let:align slot="tooltip">
+                                    <TooltipPopup {position} {align}>
+                                        <Translatable resourceKey={i18nKey("access.addGateInfo")} />
+                                    </TooltipPopup>
+                                </div>
+                            </TooltipWrapper>
+                        </div>
                     </div>
                 {/if}
-            {/if}
-        </div>
 
-        <div let:onClose slot="footer">
+                {#if gateConfig.gate.kind !== "no_gate"}
+                    {#if editable}
+                        <div class="section expiry">
+                            <Checkbox
+                                id="evaluation-interval"
+                                on:change={toggleEvaluationInterval}
+                                label={i18nKey("access.evaluationInterval")}
+                                align={"start"}
+                                checked={gateConfig.expiry !== undefined}>
+                                <div class="section-title disappear">
+                                    <Translatable
+                                        resourceKey={i18nKey("access.evaluationInterval")} />
+                                </div>
+                                <div class="info">
+                                    <Translatable
+                                        resourceKey={i18nKey(
+                                            "access.evaluationIntervalInfo",
+                                            undefined,
+                                            level,
+                                            true,
+                                        )} />
+                                </div>
+                                <div class="info">
+                                    {#if gateConfig.expiry !== undefined}
+                                        <DurationPicker
+                                            bind:valid={evaluationIntervalValid}
+                                            bind:milliseconds={gateConfig.expiry}
+                                            unitFilter={(u) => !["minutes", "hours"].includes(u)} />
+                                    {/if}
+                                </div>
+                            </Checkbox>
+                        </div>
+                    {:else if gateConfig.expiry !== undefined}
+                        <div class="section expiry">
+                            <AccessGateExpiry expiry={gateConfig.expiry} />
+                        </div>
+                    {/if}
+                {/if}
+            </div>
+        {/snippet}
+
+        {#snippet footer()}
             <div class="access-gate-builder footer">
                 {#if isCompositeGate(gateConfig.gate)}
                     <div class="operator">
@@ -248,7 +261,7 @@
                     </Button>
                 </ButtonGroup>
             </div>
-        </div>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

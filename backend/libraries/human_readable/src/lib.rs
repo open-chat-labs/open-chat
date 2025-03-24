@@ -1,7 +1,9 @@
 use candid::Principal;
 use serde::{Serialize, Serializer};
 use sha256::sha256_string;
-use types::{BuildVersion, CanisterWasm, Empty, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs, UpgradesFilter};
+use types::{
+    BuildVersion, CanisterWasm, Empty, TimestampMillis, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs, UpgradesFilter,
+};
 
 pub use human_readable_derive::HumanReadable;
 
@@ -116,6 +118,7 @@ impl From<&CanisterWasm> for CanisterWasmTrimmed {
 #[derive(Serialize)]
 pub struct HumanReadableUpgradesFilter {
     versions: Vec<BuildVersion>,
+    active_since: Option<TimestampMillis>,
     include: Vec<HumanReadablePrincipal>,
     exclude: Vec<HumanReadablePrincipal>,
 }
@@ -124,6 +127,7 @@ impl From<&UpgradesFilter> for HumanReadableUpgradesFilter {
     fn from(value: &UpgradesFilter) -> Self {
         HumanReadableUpgradesFilter {
             versions: value.versions.iter().cloned().collect(),
+            active_since: value.active_since,
             include: value.include.iter().copied().map(|c| c.into()).collect(),
             exclude: value.exclude.iter().copied().map(|c| c.into()).collect(),
         }

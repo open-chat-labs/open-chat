@@ -10,20 +10,31 @@
     import Translatable from "./Translatable.svelte";
     import type { ResourceKey } from "openchat-client";
 
-    export let message: ResourceKey | undefined = undefined;
-    export let action: (yes: boolean) => Promise<void>;
-    export let doubleCheck: { challenge: ResourceKey; response: ResourceKey } | undefined =
-        undefined;
-    export let title: ResourceKey | undefined = i18nKey("areYouSure");
-    export let yesLabel: ResourceKey | undefined = i18nKey("yesPlease");
-    export let noLabel: ResourceKey | undefined = i18nKey("noThanks");
+    interface Props {
+        message?: ResourceKey | undefined;
+        action: (yes: boolean) => Promise<void>;
+        doubleCheck?: { challenge: ResourceKey; response: ResourceKey } | undefined;
+        title?: ResourceKey | undefined;
+        yesLabel?: ResourceKey | undefined;
+        noLabel?: ResourceKey | undefined;
+    }
 
-    let inProgress = false;
-    let response = "";
+    let {
+        message = undefined,
+        action,
+        doubleCheck = undefined,
+        title = i18nKey("areYouSure"),
+        yesLabel = i18nKey("yesPlease"),
+        noLabel = i18nKey("noThanks"),
+    }: Props = $props();
 
-    $: canConfirm =
+    let inProgress = $state(false);
+    let response = $state("");
+
+    let canConfirm = $derived(
         !inProgress &&
-        (doubleCheck === undefined || response === interpolate($_, doubleCheck.response));
+            (doubleCheck === undefined || response === interpolate($_, doubleCheck.response)),
+    );
 
     function onClick(yes: boolean) {
         if (yes) {
@@ -38,12 +49,12 @@
 
 <Overlay>
     <ModalContent hideBody={message === undefined}>
-        <span slot="header">
+        {#snippet header()}
             {#if title !== undefined}
                 <Translatable resourceKey={title} />
             {/if}
-        </span>
-        <span slot="body">
+        {/snippet}
+        {#snippet body()}
             {#if message !== undefined}
                 <Markdown inline={false} text={interpolate($_, message)} />
 
@@ -61,8 +72,8 @@
                         countdown={false} />
                 {/if}
             {/if}
-        </span>
-        <span slot="footer">
+        {/snippet}
+        {#snippet footer()}
             <ButtonGroup>
                 <Button disabled={inProgress} small on:click={() => onClick(false)} secondary>
                     {#if noLabel !== undefined}
@@ -79,7 +90,7 @@
                     {/if}
                 </Button>
             </ButtonGroup>
-        </span>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

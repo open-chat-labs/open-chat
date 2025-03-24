@@ -48,10 +48,10 @@
 
 <Overlay>
     <ModalContent>
-        <span slot="header">
+        {#snippet header()}
             <Translatable resourceKey={i18nKey("danger.deleteAccount")} />
-        </span>
-        <span slot="body">
+        {/snippet}
+        {#snippet body()}
             {#if authenticating}
                 <ReAuthenticate on:success={deleteAccount} message={i18nKey("danger.reauth")} />
             {:else}
@@ -59,8 +59,8 @@
                     inline={false}
                     text={interpolate($_, i18nKey("danger.deleteAccountConfirm"))} />
             {/if}
-        </span>
-        <span slot="footer">
+        {/snippet}
+        {#snippet footer()}
             <ButtonGroup>
                 <Button small on:click={onClose} secondary>
                     <Translatable resourceKey={i18nKey("cancel")} />
@@ -79,6 +79,6 @@
                     </Button>
                 {/if}
             </ButtonGroup>
-        </span>
+        {/snippet}
     </ModalContent>
 </Overlay>

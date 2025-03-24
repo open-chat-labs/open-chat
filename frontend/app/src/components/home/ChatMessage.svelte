@@ -31,7 +31,7 @@
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import ModalContent from "../ModalContentLegacy.svelte";
     import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
     import Translatable from "../Translatable.svelte";
@@ -107,6 +107,7 @@
     export let collapsed: boolean = false;
     export let threadRootMessage: Message | undefined;
     export let botContext: BotMessageContextType | undefined;
+    export let onExpandMessage: (() => void) | undefined = undefined;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -423,14 +424,14 @@
 {#if tipping !== undefined}
     <TipBuilder
         ledger={tipping}
-        on:close={() => (tipping = undefined)}
+        onClose={() => (tipping = undefined)}
         {msg}
         {messageContext}
         {user} />
 {/if}
 
 {#if showEmojiPicker && canReact}
-    <Overlay on:close={() => (showEmojiPicker = false)} dismissible>
+    <Overlay onClose={() => (showEmojiPicker = false)} dismissible>
         <ModalContent hideFooter hideHeader fill>
             <span slot="body">
                 <div class="emoji-header">
@@ -459,7 +460,7 @@
         {chatId}
         {eventIndex}
         {threadRootMessageIndex}
-        on:close={() => (showRemindMe = false)} />
+        onClose={() => (showRemindMe = false)} />
 {/if}
 
 {#if showReport}
@@ -468,7 +469,7 @@
         messageId={msg.messageId}
         {chatId}
         {canDelete}
-        on:close={() => (showReport = false)} />
+        onClose={() => (showReport = false)} />
 {/if}
 
 {#if expiresAt === undefined || percentageExpired < 100}
@@ -619,7 +620,7 @@
                             on:verifyHumanity
                             on:claimDailyChit
                             on:startVideoCall
-                            on:expandMessage />
+                            {onExpandMessage} />
 
                         {#if !inert && !isPrize}
                             <TimeAndTicks

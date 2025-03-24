@@ -117,7 +117,7 @@
 {#if actionMode !== "none" && selectedLedger !== undefined}
     <Overlay
         dismissible={actionMode === "receive" || actionMode === "transactions"}
-        on:close={hideManageModal}>
+        onClose={hideManageModal}>
         {#if actionMode === "receive"}
             <ReceiveCrypto ledger={selectedLedger} on:close={hideManageModal} />
         {:else if actionMode === "send"}
@@ -130,7 +130,7 @@
                 on:close={hideManageModal}
                 urlFormat={transactionsFormat} />
         {:else if actionMode === "restricted"}
-            <RestrictedFeature on:close={hideManageModal} feature="swap" />
+            <RestrictedFeature onClose={hideManageModal} feature="swap" />
         {/if}
     </Overlay>
 {/if}

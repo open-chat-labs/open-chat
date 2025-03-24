@@ -23,11 +23,15 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let group: GroupChatSummary | undefined;
+    interface Props {
+        group: GroupChatSummary | undefined;
+    }
+
+    let { group = $bindable() }: Props = $props();
 
     let scope: ChatListScope["kind"] | undefined;
 
-    let state: "idle" | "converting" | "converted" | "error" = "idle";
+    let state: "idle" | "converting" | "converted" | "error" = $state("idle");
     let channelId: ChannelIdentifier | undefined;
 
     function convert() {
@@ -55,33 +59,37 @@
 </script>
 
 {#if group !== undefined}
-    <Overlay dismissible on:close={close}>
-        <ModalContent closeIcon on:close={close}>
-            <div slot="header"><Translatable resourceKey={i18nKey("communities.convert")} /></div>
-            <div
-                class="body convert-to-community"
-                class:error={state === "error"}
-                class:loading={state === "converting" || state === "converted"}
-                slot="body">
-                {#if state === "converting"}
-                    <div class="spinner">
-                        <FancyLoader />
-                    </div>
-                    <p class="para">
-                        <Translatable resourceKey={i18nKey("communities.pleaseWait")} />
-                    </p>
-                {:else if state === "idle"}
-                    <Markdown inline={false} text={$_("communities.convertInfo")} />
-                {:else if state === "converted"}
-                    <Congratulations para={i18nKey("communities.converted")} />
-                {:else if state === "error"}
-                    <div class="error-img" />
-                    <p class="para">
-                        <Translatable resourceKey={i18nKey("communities.errors.convertFailed")} />
-                    </p>
-                {/if}
-            </div>
-            <div slot="footer">
+    <Overlay dismissible onClose={close}>
+        <ModalContent closeIcon onClose={close}>
+            {#snippet header()}
+                <Translatable resourceKey={i18nKey("communities.convert")} />
+            {/snippet}
+            {#snippet body()}
+                <div
+                    class="body convert-to-community"
+                    class:error={state === "error"}
+                    class:loading={state === "converting" || state === "converted"}>
+                    {#if state === "converting"}
+                        <div class="spinner">
+                            <FancyLoader />
+                        </div>
+                        <p class="para">
+                            <Translatable resourceKey={i18nKey("communities.pleaseWait")} />
+                        </p>
+                    {:else if state === "idle"}
+                        <Markdown inline={false} text={$_("communities.convertInfo")} />
+                    {:else if state === "converted"}
+                        <Congratulations para={i18nKey("communities.converted")} />
+                    {:else if state === "error"}
+                        <div class="error-img"></div>
+                        <p class="para">
+                            <Translatable
+                                resourceKey={i18nKey("communities.errors.convertFailed")} />
+                        </p>
+                    {/if}
+                </div>
+            {/snippet}
+            {#snippet footer()}
                 <ButtonGroup>
                     {#if state === "converted"}
                         <Button secondary on:click={close}
@@ -99,7 +107,7 @@
                                 resourceKey={i18nKey("communities.convertButton")} /></Button>
                     {/if}
                 </ButtonGroup>
-            </div>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}

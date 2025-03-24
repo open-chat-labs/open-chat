@@ -56,8 +56,11 @@
     export let chat: ChatSummary;
 
     let chatEventList: ChatEventList | undefined;
+    //@ts-ignore
     let pollBuilder: PollBuilder;
+    //@ts-ignore
     let giphySelector: GiphySelector;
+    //@ts-ignore
     let memeBuilder: MemeBuilder;
     let creatingPoll = false;
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
@@ -301,8 +304,8 @@
         return Promise.resolve();
     }
 
-    function sendMessageWithContent(ev: CustomEvent<{ content: MessageContent }>) {
-        client.sendMessageWithContent(messageContext, ev.detail.content, false);
+    function onSendMessageWithContent(content: MessageContent) {
+        client.sendMessageWithContent(messageContext, content, false);
     }
 </script>
 
@@ -310,10 +313,7 @@
     <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
 {/if}
 
-<PollBuilder
-    on:sendMessageWithContent={sendMessageWithContent}
-    bind:this={pollBuilder}
-    bind:open={creatingPoll} />
+<PollBuilder onSend={onSendMessageWithContent} bind:this={pollBuilder} bind:open={creatingPoll} />
 
 {#if creatingP2PSwapMessage}
     <P2PSwapContentBuilder
@@ -324,14 +324,11 @@
 {/if}
 
 <GiphySelector
-    on:sendMessageWithContent={sendMessageWithContent}
+    onSend={onSendMessageWithContent}
     bind:this={giphySelector}
     bind:open={selectingGif} />
 
-<MemeBuilder
-    on:sendMessageWithContent={sendMessageWithContent}
-    bind:this={memeBuilder}
-    bind:open={buildingMeme} />
+<MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder

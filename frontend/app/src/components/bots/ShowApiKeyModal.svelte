@@ -21,14 +21,16 @@
     let { onClose, ...rest }: Props = $props();
 </script>
 
-<Overlay dismissible>
-    <ModalContent hideFooter closeIcon on:close={onClose}>
-        <div class="header" slot="header">
+<Overlay dismissible {onClose}>
+    <ModalContent hideFooter closeIcon {onClose}>
+        {#snippet header()}
             <Translatable resourceKey={i18nKey("bots.manage.generated")}></Translatable>
-        </div>
-        <div class="body" slot="body">
-            <ShowApiKey {...rest} />
-        </div>
+        {/snippet}
+        {#snippet body()}
+            <div class="body">
+                <ShowApiKey {...rest} />
+            </div>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

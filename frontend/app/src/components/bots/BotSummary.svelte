@@ -160,46 +160,52 @@
     ></ShowApiKeyModal>
 {/if}
 
-<Overlay dismissible>
-    <ModalContent closeIcon on:close={onClose}>
-        <div class="header" slot="header">
-            <Translatable resourceKey={title}></Translatable>
-        </div>
-        <div class="body" slot="body">
-            <BotProperties
-                {bot}
-                installing={busy}
-                {showCommands}
-                grantedCommandPermissions={grantedPermissions}>
-                {#if currentApiKey !== undefined}
-                    <Legend large label={i18nKey("bots.manage.currentApiKey")}></Legend>
-                    <ApiKey {bot} botExecutionContext={mode.id} apiKey={currentApiKey}></ApiKey>
-                {/if}
-                {#if choosePermissions}
-                    <ChoosePermissions
-                        {level}
-                        title={i18nKey("bots.add.choosePermissions")}
-                        subtitle={i18nKey("bots.add.permissionsInfo")}
-                        granted={grantedPermissions}
-                        requested={mode.requested} />
-                {/if}
-            </BotProperties>
-        </div>
-        <div class="footer" slot="footer">
-            <ButtonGroup>
-                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}>
-                    <Translatable resourceKey={i18nKey("cancel")} />
-                </Button>
-                <Button
-                    on:click={mainButton}
-                    loading={busy}
-                    disabled={busy}
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}>
-                    <Translatable resourceKey={cta} />
-                </Button>
-            </ButtonGroup>
-        </div>
+<Overlay dismissible {onClose}>
+    <ModalContent closeIcon {onClose}>
+        {#snippet header()}
+            <div class="header">
+                <Translatable resourceKey={title}></Translatable>
+            </div>
+        {/snippet}
+        {#snippet body()}
+            <div class="body">
+                <BotProperties
+                    {bot}
+                    installing={busy}
+                    {showCommands}
+                    grantedCommandPermissions={grantedPermissions}>
+                    {#if currentApiKey !== undefined}
+                        <Legend large label={i18nKey("bots.manage.currentApiKey")}></Legend>
+                        <ApiKey {bot} botExecutionContext={mode.id} apiKey={currentApiKey}></ApiKey>
+                    {/if}
+                    {#if choosePermissions}
+                        <ChoosePermissions
+                            {level}
+                            title={i18nKey("bots.add.choosePermissions")}
+                            subtitle={i18nKey("bots.add.permissionsInfo")}
+                            granted={grantedPermissions}
+                            requested={mode.requested} />
+                    {/if}
+                </BotProperties>
+            </div>
+        {/snippet}
+        {#snippet footer()}
+            <div class="footer">
+                <ButtonGroup>
+                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}>
+                        <Translatable resourceKey={i18nKey("cancel")} />
+                    </Button>
+                    <Button
+                        on:click={mainButton}
+                        loading={busy}
+                        disabled={busy}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}>
+                        <Translatable resourceKey={cta} />
+                    </Button>
+                </ButtonGroup>
+            </div>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

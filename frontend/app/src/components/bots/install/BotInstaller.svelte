@@ -75,12 +75,14 @@
     function nextStep(current: Step) {
         switch (current.kind) {
             case "choose_command_permissions":
+                busy = true;
                 install(() => {
                     if (bot.definition.autonomousConfig !== undefined) {
                         step = {
                             kind: "configure_autonomous_access",
                             config: bot.definition.autonomousConfig,
                         };
+                        busy = false;
                     } else {
                         onClose(true);
                     }
@@ -90,8 +92,11 @@
                 step = { kind: "choose_autonomous_permissions", config: current.config };
                 break;
             case "choose_autonomous_permissions":
-                generateApiKey((apiKey: string) => {
-                    step = { kind: "show_api_key", apiKey, config: current.config };
+                busy = true;
+                install(() => {
+                    generateApiKey((apiKey: string) => {
+                        step = { kind: "show_api_key", apiKey, config: current.config };
+                    });
                 });
                 break;
             case "show_api_key":
@@ -124,7 +129,6 @@
                 onClose(true);
             }
         } else {
-            busy = true;
             client
                 .installBot(location, bot.id, $state.snapshot(grantedCommandPermissions))
                 .then((success) => {
@@ -137,55 +141,60 @@
                             onClose(true);
                         }
                     }
-                })
-                .finally(() => (busy = false));
+                });
         }
     }
 </script>
 
-<Overlay dismissible>
-    <ModalContent closeIcon on:close={() => onClose(false)}>
-        <div class="header" slot="header">
-            <Translatable resourceKey={i18nKey("bots.add.title", undefined, level, true)}
-            ></Translatable>
-        </div>
-        <div class="body" slot="body">
-            <BotProperties installing={busy} {grantedCommandPermissions} {bot}>
-                {#if step.kind === "choose_command_permissions"}
-                    <ChoosePermissions
-                        {level}
-                        title={i18nKey("bots.add.chooseCommandPermissions")}
-                        subtitle={i18nKey("bots.add.commandPermissionsInfo")}
-                        bind:granted={grantedCommandPermissions}
-                        requested={requestedCommandPermissions} />
-                {:else if step.kind === "configure_autonomous_access"}
-                    <EnableAutonomousAccess {level} />
-                {:else if step.kind === "choose_autonomous_permissions"}
-                    <ChoosePermissions
-                        {level}
-                        title={i18nKey("bots.add.chooseAutonomousPermissions")}
-                        subtitle={i18nKey("bots.add.autonomousPermissionsInfo")}
-                        bind:granted={grantedAutonomousPermission}
-                        requested={requestedAutonomousPermissions} />
-                {:else if step.kind === "show_api_key"}
-                    <ShowApiKey {bot} {botExecutionContext} apiKey={step.apiKey} />
-                {/if}
-            </BotProperties>
-        </div>
-        <div class="footer" slot="footer">
-            <ButtonGroup>
-                {#if step.kind === "configure_autonomous_access"}
-                    {@render button(i18nKey("bots.add.skip"), () => onClose(true), true)}
-                    {@render button(i18nKey("bots.add.configureNow"), () => nextStep(step))}
-                {:else if step.kind === "choose_autonomous_permissions"}
-                    {@render button(i18nKey("bots.add.generateApiKey"), () => nextStep(step))}
-                {:else if step.kind === "show_api_key"}
-                    {@render button(i18nKey("bots.add.continue"), () => nextStep(step))}
-                {:else}
-                    {@render button(i18nKey("bots.add.install"), () => nextStep(step))}
-                {/if}
-            </ButtonGroup>
-        </div>
+<Overlay dismissible onClose={() => onClose(false)}>
+    <ModalContent closeIcon onClose={() => onClose(false)}>
+        {#snippet header()}
+            <div class="header">
+                <Translatable resourceKey={i18nKey("bots.add.title", undefined, level, true)}
+                ></Translatable>
+            </div>
+        {/snippet}
+        {#snippet body()}
+            <div class="body">
+                <BotProperties installing={busy} {grantedCommandPermissions} {bot}>
+                    {#if step.kind === "choose_command_permissions"}
+                        <ChoosePermissions
+                            {level}
+                            title={i18nKey("bots.add.chooseCommandPermissions")}
+                            subtitle={i18nKey("bots.add.commandPermissionsInfo")}
+                            bind:granted={grantedCommandPermissions}
+                            requested={requestedCommandPermissions} />
+                    {:else if step.kind === "configure_autonomous_access"}
+                        <EnableAutonomousAccess {level} />
+                    {:else if step.kind === "choose_autonomous_permissions"}
+                        <ChoosePermissions
+                            {level}
+                            title={i18nKey("bots.add.chooseAutonomousPermissions")}
+                            subtitle={i18nKey("bots.add.autonomousPermissionsInfo")}
+                            bind:granted={grantedAutonomousPermission}
+                            requested={requestedAutonomousPermissions} />
+                    {:else if step.kind === "show_api_key"}
+                        <ShowApiKey {bot} {botExecutionContext} apiKey={step.apiKey} />
+                    {/if}
+                </BotProperties>
+            </div>
+        {/snippet}
+        {#snippet footer()}
+            <div class="footer">
+                <ButtonGroup>
+                    {#if step.kind === "configure_autonomous_access"}
+                        {@render button(i18nKey("bots.add.skip"), () => onClose(true), true)}
+                        {@render button(i18nKey("bots.add.configureNow"), () => nextStep(step))}
+                    {:else if step.kind === "choose_autonomous_permissions"}
+                        {@render button(i18nKey("bots.add.generateApiKey"), () => nextStep(step))}
+                    {:else if step.kind === "show_api_key"}
+                        {@render button(i18nKey("bots.add.continue"), () => nextStep(step))}
+                    {:else}
+                        {@render button(i18nKey("bots.add.install"), () => nextStep(step))}
+                    {/if}
+                </ButtonGroup>
+            </div>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

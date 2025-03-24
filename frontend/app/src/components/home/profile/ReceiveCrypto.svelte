@@ -2,7 +2,7 @@
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import AccountInfo from "../AccountInfo.svelte";

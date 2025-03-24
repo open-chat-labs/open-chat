@@ -21,9 +21,10 @@
         command: CommandDefinition;
         onNext?: () => void;
         onPrevious?: () => void;
+        onClose: () => void;
     }
 
-    let { command, errors, errorPath, onNext, onPrevious }: Props = $props();
+    let { command, errors, errorPath, onNext, onPrevious, onClose }: Props = $props();
 
     let selectedParam = $state<CommandParam | undefined>(undefined);
     let selectedParamIndex = $state<number | undefined>(undefined);
@@ -62,17 +63,17 @@
         {errors}
         onNext={showNext ? nextParam : undefined}
         onPrevious={showPrev ? previousParam : undefined}
-        on:close={() => (selectedParam = undefined)}
+        onClose={() => (selectedParam = undefined)}
         param={selectedParam}></CommandParameterViewer>
 {/if}
 
-<Overlay dismissible>
-    <ModalContent closeIcon on:close>
-        <div slot="header">
+<Overlay dismissible {onClose}>
+    <ModalContent closeIcon {onClose}>
+        {#snippet header()}
             <Translatable resourceKey={i18nKey("bots.builder.commandLabel", { name: command.name })}
             ></Translatable>
-        </div>
-        <div slot="body">
+        {/snippet}
+        {#snippet body()}
             <section>
                 <Legend required label={i18nKey("bots.builder.commandNameLabel")}></Legend>
                 <ValidatingInput
@@ -132,18 +133,20 @@
             {#if errors.has(`${errorPath}_duplicate_params`)}
                 <ErrorMessage>{errors.get(`${errorPath}_duplicate_params`)}</ErrorMessage>
             {/if}
-        </div>
+        {/snippet}
 
-        <div slot="footer" class="footer">
-            <div class="navigate">
-                <HoverIcon disabled={onPrevious === undefined} onclick={onPrevious}>
-                    <ChevronLeft size={$iconSize} color={"var(--icon-txt)"}></ChevronLeft>
-                </HoverIcon>
-                <HoverIcon disabled={onNext === undefined} onclick={onNext}>
-                    <ChevronRight size={$iconSize} color={"var(--icon-txt)"}></ChevronRight>
-                </HoverIcon>
+        {#snippet footer()}
+            <div class="footer">
+                <div class="navigate">
+                    <HoverIcon disabled={onPrevious === undefined} onclick={onPrevious}>
+                        <ChevronLeft size={$iconSize} color={"var(--icon-txt)"}></ChevronLeft>
+                    </HoverIcon>
+                    <HoverIcon disabled={onNext === undefined} onclick={onNext}>
+                        <ChevronRight size={$iconSize} color={"var(--icon-txt)"}></ChevronRight>
+                    </HoverIcon>
+                </div>
             </div>
-        </div>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

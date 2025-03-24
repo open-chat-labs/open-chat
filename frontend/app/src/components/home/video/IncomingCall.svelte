@@ -16,6 +16,7 @@
         type ChatIdentifier,
     } from "openchat-client";
     import {
+        activeVideoCall,
         incomingVideoCall,
         ringtoneUrls,
         type IncomingVideoCall,
@@ -35,8 +36,9 @@
 
     const client = getContext<OpenChat>("client");
 
-    let chat = $derived(normaliseChatSummary($incomingVideoCall));
-    let ringtoneUrl = $derived(ringtoneUrls[$selectedRingtone as RingtoneKey]);
+    const chat = $derived(normaliseChatSummary($incomingVideoCall));
+    const ringtoneUrl = $derived(ringtoneUrls[$selectedRingtone as RingtoneKey]);
+    const isOnAnotherCall = $derived(activeVideoCall !== undefined);
 
     function normaliseChatSummary(call: IncomingVideoCall | undefined) {
         if (call) {
@@ -88,51 +90,55 @@
 </script>
 
 {#if chat !== undefined}
-    <audio playsinline={true} autoplay={true} src={ringtoneUrl} muted={false} preload="auto"
-    ></audio>
+    {#if !isOnAnotherCall}
+        <audio playsinline={true} autoplay={true} src={ringtoneUrl} muted={false} preload="auto">
+        </audio>
+    {/if}
 
-    <Overlay on:close={cancel} dismissible>
+    <Overlay onClose={cancel} dismissible>
         <ModalContent hideHeader hideFooter closeIcon>
-            <span slot="body" class="body">
-                <div class="details">
-                    <div class="avatar">
-                        <Avatar url={chat.avatarUrl} size={AvatarSize.Default} />
+            {#snippet body()}
+                <span class="body">
+                    <div class="details">
+                        <div class="avatar">
+                            <Avatar url={chat.avatarUrl} size={AvatarSize.Default} />
+                        </div>
+                        <div class="txt">
+                            <div class="name">
+                                {chat.name}
+                            </div>
+                            <div class="msg">
+                                <Translatable
+                                    resourceKey={i18nKey("videoCall.remoteStart", {
+                                        name: chat.initiator,
+                                    })} />
+                            </div>
+                        </div>
                     </div>
-                    <div class="txt">
-                        <div class="name">
-                            {chat.name}
-                        </div>
-                        <div class="msg">
-                            <Translatable
-                                resourceKey={i18nKey("videoCall.remoteStart", {
-                                    name: chat.initiator,
-                                })} />
-                        </div>
+                    <div class="btns">
+                        <TooltipWrapper position={"top"} align={"middle"}>
+                            <div slot="target" role="button" onclick={cancel} class="btn ignore">
+                                <PhoneHangup size={$iconSize} color={"var(--txt)"} />
+                            </div>
+                            <div slot="tooltip" let:position let:align>
+                                <TooltipPopup {position} {align}>
+                                    <Translatable resourceKey={i18nKey("videoCall.ignore")} />
+                                </TooltipPopup>
+                            </div>
+                        </TooltipWrapper>
+                        <TooltipWrapper position={"top"} align={"middle"}>
+                            <div slot="target" role="button" onclick={join} class="btn join">
+                                <Phone size={$iconSize} color={"var(--txt)"} />
+                            </div>
+                            <div slot="tooltip" let:position let:align>
+                                <TooltipPopup {position} {align}>
+                                    <Translatable resourceKey={i18nKey("videoCall.join")} />
+                                </TooltipPopup>
+                            </div>
+                        </TooltipWrapper>
                     </div>
-                </div>
-                <div class="btns">
-                    <TooltipWrapper position={"top"} align={"middle"}>
-                        <div slot="target" role="button" onclick={cancel} class="btn ignore">
-                            <PhoneHangup size={$iconSize} color={"var(--txt)"} />
-                        </div>
-                        <div slot="tooltip" let:position let:align>
-                            <TooltipPopup {position} {align}>
-                                <Translatable resourceKey={i18nKey("videoCall.ignore")} />
-                            </TooltipPopup>
-                        </div>
-                    </TooltipWrapper>
-                    <TooltipWrapper position={"top"} align={"middle"}>
-                        <div slot="target" role="button" onclick={join} class="btn join">
-                            <Phone size={$iconSize} color={"var(--txt)"} />
-                        </div>
-                        <div slot="tooltip" let:position let:align>
-                            <TooltipPopup {position} {align}>
-                                <Translatable resourceKey={i18nKey("videoCall.join")} />
-                            </TooltipPopup>
-                        </div>
-                    </TooltipWrapper>
-                </div>
-            </span>
+                </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}

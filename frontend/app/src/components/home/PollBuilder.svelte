@@ -10,7 +10,6 @@
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
     import type { PollContent, TotalPollVotes, ResourceKey } from "openchat-client";
@@ -18,7 +17,6 @@
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
-    const dispatch = createEventDispatcher();
     const MAX_QUESTION_LENGTH = 250;
     const MAX_ANSWER_LENGTH = 50;
     const MAX_ANSWERS = 10;
@@ -36,17 +34,18 @@
         pollAnswers: Map<string, string>;
     };
 
-    export let open: boolean;
+    interface Props {
+        open: boolean;
+        onSend: (content: PollContent) => void;
+    }
 
-    let poll: CandidatePoll = emptyPoll();
-    let nextAnswer: string = "";
-    let answerError: ResourceKey | undefined = undefined;
-    let selectedDuration: Duration = "oneDay";
-    let showSettings = false;
+    let { open = $bindable(), onSend }: Props = $props();
 
-    $: valid =
-        poll.pollAnswers.size >= 2 ||
-        (poll.pollAnswers.size === 1 && nextAnswer.length > 0 && answerIsValid(nextAnswer));
+    let poll: CandidatePoll = $state(emptyPoll());
+    let nextAnswer: string = $state("");
+    let answerError: ResourceKey | undefined = $state(undefined);
+    let selectedDuration: Duration = $state("oneDay");
+    let showSettings = $state(false);
 
     export function resetPoll() {
         selectedDuration = "oneDay";
@@ -70,10 +69,12 @@
 
     function answerIsValid(answer: string): boolean {
         const trimmed = answer?.trim();
-        return trimmed !== undefined
-            && trimmed.length > 0
-            && trimmed.length <= MAX_ANSWER_LENGTH
-            && !poll.pollAnswers.has(trimmed.toUpperCase());
+        return (
+            trimmed !== undefined &&
+            trimmed.length > 0 &&
+            trimmed.length <= MAX_ANSWER_LENGTH &&
+            !poll.pollAnswers.has(trimmed.toUpperCase())
+        );
     }
 
     function addAnswer() {
@@ -144,17 +145,23 @@
     function start() {
         const poll = createPollContent();
         if (poll) {
-            dispatch("sendMessageWithContent", { content: poll });
+            onSend(poll);
             open = false;
         }
     }
+    let valid = $derived(
+        poll.pollAnswers.size >= 2 ||
+            (poll.pollAnswers.size === 1 && nextAnswer.length > 0 && answerIsValid(nextAnswer)),
+    );
 </script>
 
 {#if open}
     <Overlay>
         <ModalContent>
-            <span slot="header"><Translatable resourceKey={i18nKey("poll.create")} /></span>
-            <span slot="body">
+            {#snippet header()}
+                <Translatable resourceKey={i18nKey("poll.create")} />
+            {/snippet}
+            {#snippet body()}
                 <div class="buttons">
                     <ButtonGroup align={"start"}>
                         <Button
@@ -193,7 +200,7 @@
                                     <div class="answer-text">
                                         {answer}
                                     </div>
-                                    <div class="delete" on:click={() => deleteAnswer(answer)}>
+                                    <div class="delete" onclick={() => deleteAnswer(answer)}>
                                         <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
                                     </div>
                                 </div>
@@ -220,7 +227,7 @@
                                             {/if}
                                         </Input>
                                     </div>
-                                    <div class="add-btn" on:click={addAnswer}>
+                                    <div class="add-btn" onclick={addAnswer}>
                                         <PlusCircleOutline
                                             size={$iconSize}
                                             color={"var(--icon-txt)"} />
@@ -281,8 +288,8 @@
                         {/each}
                     {/if}
                 {/if}
-            </span>
-            <span slot="footer">
+            {/snippet}
+            {#snippet footer()}
                 <ButtonGroup>
                     <Button
                         small={!$mobileWidth}
@@ -295,7 +302,7 @@
                         tiny={$mobileWidth}
                         on:click={start}>{$_("poll.start")}</Button>
                 </ButtonGroup>
-            </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}

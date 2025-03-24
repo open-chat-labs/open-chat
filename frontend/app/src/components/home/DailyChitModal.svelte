@@ -1,7 +1,7 @@
 <script lang="ts">
     import TrophyOutline from "svelte-material-icons/TrophyOutline.svelte";
     import { Confetti } from "svelte-confetti";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
     import ModalContent from "../ModalContent.svelte";
     import {
@@ -27,21 +27,19 @@
     import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    let busy = false;
-    let claimed = false;
-    let additional: number | undefined = undefined;
-    let learnToEarn = false;
-    let airdropChannel: AirdropChannelDetails | undefined = undefined;
+    interface Props {
+        onClose: () => void;
+        onLeaderboard: () => void;
+    }
+
+    let { onClose, onLeaderboard }: Props = $props();
+    let busy = $state(false);
+    let claimed = $state(false);
+    let additional: number | undefined = $state(undefined);
+    let learnToEarn = $state(false);
+    let airdropChannel: AirdropChannelDetails | undefined = $state(undefined);
     let isMemberOfAirdropChannel = false;
-
-    $: available = $chitState.nextDailyChitClaim < $now500;
-    $: streak = $chitState.streakEnds < $now500 ? 0 : $chitState.streak;
-    $: badgesVisible = calculateBadgesVisible(streak);
-    $: maxBadgeVisible = badgesVisible[badgesVisible.length - 1];
-    $: percent = calculatePercentage(streak, maxBadgeVisible);
-    $: remaining = client.formatTimeRemaining($now500, Number($chitState.nextDailyChitClaim), true);
 
     onMount(() => {
         isMemberOfAirdropChannel = client.isMemberOfAirdropChannel();
@@ -65,10 +63,6 @@
         return percent > 100 ? 100 : percent;
     }
 
-    function close() {
-        dispatch("close");
-    }
-
     function claim() {
         if (!available) return;
 
@@ -89,7 +83,7 @@
             })
             .catch((err) => {
                 toastStore.showFailureToast(i18nKey("dailyChit.failedToClaim"), err);
-                close();
+                onClose();
             })
             .finally(() => {
                 busy = false;
@@ -109,101 +103,111 @@
     }
 
     function leaderboard() {
-        close();
-        tick().then(() => dispatch("leaderboard"));
+        onClose();
+        tick().then(onLeaderboard);
     }
 
-    function earnMore() {
+    function earnMore(e: Event) {
+        e.preventDefault();
+        e.stopPropagation();
         learnToEarn = true;
     }
+    let available = $derived($chitState.nextDailyChitClaim < $now500);
+    let streak = $derived($chitState.streakEnds < $now500 ? 0 : $chitState.streak);
+    let badgesVisible = $derived(calculateBadgesVisible(streak));
+    let maxBadgeVisible = $derived(badgesVisible[badgesVisible.length - 1]);
+    let percent = $derived(calculatePercentage(streak, maxBadgeVisible));
+    let remaining = $derived(
+        client.formatTimeRemaining($now500, Number($chitState.nextDailyChitClaim), true),
+    );
 </script>
 
 {#if learnToEarn}
-    <LearnToEarn on:close={() => (learnToEarn = false)} />
+    <LearnToEarn onClose={() => (learnToEarn = false)} />
 {/if}
 
-<ModalContent closeIcon on:close={close}>
-    <div class="header" slot="header">
-        <div class="leaderboard">
-            <HoverIcon onclick={leaderboard}>
-                <TrophyOutline size={$iconSize} color={"var(--icon-txt)"} />
-            </HoverIcon>
-        </div>
-        <Translatable resourceKey={i18nKey("dailyChit.title")} />
-    </div>
-    <div class="body" slot="body">
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div class:available class="logo" on:click={claim}>
-            <FancyLoader loop={busy} />
-            <div class="streak">{streak}</div>
-        </div>
-
-        <div class="balance">
-            <div class="spacer"></div>
-            <div class="current">
-                <ChitBalance
-                    balance={$chitState.chitBalance}
-                    totalEarned={$chitState.totalChitEarned}
-                    me={false}
-                    size={"large"} />
+<ModalContent closeIcon {onClose}>
+    {#snippet header()}
+        <div class="header">
+            <div class="leaderboard">
+                <HoverIcon onclick={leaderboard}>
+                    <TrophyOutline size={$iconSize} color={"var(--icon-txt)"} />
+                </HoverIcon>
             </div>
-            <div class="additional">
-                {#if additional}
-                    <div transition:fade={{ duration: 500 }}>{`+ ${additional}`}</div>
-                {/if}
-            </div>
+            <Translatable resourceKey={i18nKey("dailyChit.title")} />
         </div>
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <!-- svelte-ignore a11y-missing-attribute -->
-        <a
-            class="earn-more"
-            tabindex="0"
-            on:click|preventDefault|stopPropagation={earnMore}
-            role="button">
-            <Translatable resourceKey={i18nKey("profile.earnMore")} />
-        </a>
+    {/snippet}
+    {#snippet body()}
+        <div class="body">
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div class:available class="logo" onclick={claim}>
+                <FancyLoader loop={busy} />
+                <div class="streak">{streak}</div>
+            </div>
 
-        <p>
-            <Translatable
-                resourceKey={i18nKey(
-                    available ? "dailyChit.available" : "dailyChit.alreadyClaimed",
-                )} />
-        </p>
-        <p class="info">
-            <Translatable resourceKey={i18nKey("dailyChit.info")} />
-        </p>
-
-        <div class="progress-wrapper">
-            <div class="progress">
-                <Progress size={"20px"} {percent}></Progress>
-                <div class="marker" style="left: {percent}%">
-                    <div class="line"></div>
+            <div class="balance">
+                <div class="spacer"></div>
+                <div class="current">
+                    <ChitBalance
+                        balance={$chitState.chitBalance}
+                        totalEarned={$chitState.totalChitEarned}
+                        me={false}
+                        size={"large"} />
                 </div>
-                <div class="badges">
-                    {#each badgesVisible as badge}
-                        <div class="badge" style="left: {badge * 100 / maxBadgeVisible}%">
-                            <Streak disabled={streak < badge} days={badge} />
-                        </div>
-                    {/each}
+                <div class="additional">
+                    {#if additional}
+                        <div transition:fade={{ duration: 500 }}>{`+ ${additional}`}</div>
+                    {/if}
                 </div>
             </div>
-        </div>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_missing_attribute -->
+            <a class="earn-more" tabindex="0" onclick={earnMore} role="button">
+                <Translatable resourceKey={i18nKey("profile.earnMore")} />
+            </a>
 
-        {#if airdropChannel !== undefined}
-            <AlertBox>
-                <Markdown
-                    text={$_("airdropWarning", {
-                        values: {
-                            url: airdropChannel.url,
-                            channelName: airdropChannel.channelName,
-                            communityName: airdropChannel.communityName,
-                        },
-                    })}></Markdown>
-            </AlertBox>
-        {/if}
-    </div>
-    <div slot="footer">
+            <p>
+                <Translatable
+                    resourceKey={i18nKey(
+                        available ? "dailyChit.available" : "dailyChit.alreadyClaimed",
+                    )} />
+            </p>
+            <p class="info">
+                <Translatable resourceKey={i18nKey("dailyChit.info")} />
+            </p>
+
+            <div class="progress-wrapper">
+                <div class="progress">
+                    <Progress size={"20px"} {percent}></Progress>
+                    <div class="marker" style="left: {percent}%">
+                        <div class="line"></div>
+                    </div>
+                    <div class="badges">
+                        {#each badgesVisible as badge}
+                            <div class="badge" style="left: {(badge * 100) / maxBadgeVisible}%">
+                                <Streak disabled={streak < badge} days={badge} />
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+            </div>
+
+            {#if airdropChannel !== undefined}
+                <AlertBox>
+                    <Markdown
+                        text={$_("airdropWarning", {
+                            values: {
+                                url: airdropChannel.url,
+                                channelName: airdropChannel.channelName,
+                                communityName: airdropChannel.communityName,
+                            },
+                        })}></Markdown>
+                </AlertBox>
+            {/if}
+        </div>
+    {/snippet}
+    {#snippet footer()}
         {#if claimed}
             <div class="confetti">
                 <Confetti colorArray={["url(../assets/chit.svg)"]} />
@@ -219,7 +223,7 @@
                 {/if}
             </Button>
         </ButtonGroup>
-    </div>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">

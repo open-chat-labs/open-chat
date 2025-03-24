@@ -38,6 +38,7 @@
         random64,
         directMessageCommandInstance,
         currentUser,
+        draftMessagesStore,
     } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
@@ -319,6 +320,7 @@
                 false,
             );
             client.executeBotCommand(scope, commandInstance, true);
+            draftMessagesStore.delete(messageContext);
             afterSendMessage();
         } else {
             showDirectBotChatWarning = true;

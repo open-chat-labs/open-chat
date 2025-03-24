@@ -158,7 +158,7 @@ async fn send_message_to_channel(
             community_canister::c2c_bot_send_message::Response::InvalidRequest(message) => InvalidRequest(message),
             community_canister::c2c_bot_send_message::Response::MessageAlreadyFinalised => MessageAlreadyFinalised,
         },
-        Err((code, message)) => C2CError(u32::from(code) as i32, message),
+        Err((code, message)) => C2CError(code as i32, message),
     }
 }
 
@@ -206,7 +206,7 @@ async fn send_message_to_group(
             group_canister::c2c_bot_send_message::Response::InvalidRequest(message) => InvalidRequest(message),
             group_canister::c2c_bot_send_message::Response::MessageAlreadyFinalised => MessageAlreadyFinalised,
         },
-        Err((code, message)) => C2CError(u32::from(code) as i32, message),
+        Err((code, message)) => C2CError(code as i32, message),
     }
 }
 
@@ -255,6 +255,6 @@ async fn send_message_to_user(
             user_canister::c2c_bot_send_message::Response::InvalidRequest(message) => InvalidRequest(message),
             user_canister::c2c_bot_send_message::Response::MessageAlreadyFinalised => MessageAlreadyFinalised,
         },
-        Err((code, message)) => C2CError(u32::from(code) as i32, message),
+        Err((code, message)) => C2CError(code as i32, message),
     }
 }

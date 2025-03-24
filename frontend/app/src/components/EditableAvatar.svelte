@@ -11,11 +11,21 @@
     import Translatable from "./Translatable.svelte";
     const dispatch = createEventDispatcher();
 
-    export let image: string | null | undefined;
-    export let disabled = false;
-    export let size: Size = "large";
-    export let mode: Mode = "avatar";
-    export let overlayIcon = false;
+    interface Props {
+        image: string | null | undefined;
+        disabled?: boolean;
+        size?: Size;
+        mode?: Mode;
+        overlayIcon?: boolean;
+    }
+
+    let {
+        image = $bindable(),
+        disabled = false,
+        size = "large",
+        mode = "avatar",
+        overlayIcon = false,
+    }: Props = $props();
 
     type Dimensions = { width: number; height: number };
     type Mode = "banner" | "avatar";
@@ -23,16 +33,10 @@
     type CropShape = "round" | "rect";
 
     let fileinput: HTMLInputElement;
-    let avatar: string | null | undefined;
+    let avatar: string | null | undefined = $state();
     let originalImage = new Image();
-    let showModal = false;
-    $: SAVE_DIMS = getSaveDimensions(mode);
-    $: CROP_SHAPE = mode === "avatar" ? "round" : ("rect" as CropShape);
+    let showModal = $state(false);
     let cropData: CropData | undefined = undefined;
-
-    $: width = 0;
-    $: height = width / (600 / 300);
-    $: iconSize = getIconSize(size);
 
     function getSaveDimensions(mode: Mode): Dimensions {
         switch (mode) {
@@ -116,13 +120,21 @@
     function onCrop(ev: CustomEvent<CropData>): void {
         cropData = ev.detail;
     }
+    let SAVE_DIMS = $derived(getSaveDimensions(mode));
+    let CROP_SHAPE = $derived(mode === "avatar" ? "round" : ("rect" as CropShape));
+    let width = $state(0);
+
+    let height = $derived(width / (600 / 300));
+    let iconSize = $derived(getIconSize(size));
 </script>
 
 {#if showModal}
     <Overlay>
         <ModalContent fill>
-            <span slot="header">Crop image</span>
-            <span slot="body">
+            {#snippet header()}
+                Crop image
+            {/snippet}
+            {#snippet body()}
                 <div class="cropper">
                     <Cropper
                         image={avatar}
@@ -131,15 +143,15 @@
                         aspect={mode === "banner" ? SAVE_DIMS.width / SAVE_DIMS.height : 1}
                         cropShape={CROP_SHAPE} />
                 </div>
-            </span>
-            <span slot="footer">
+            {/snippet}
+            {#snippet footer()}
                 <ButtonGroup>
                     <Button tiny secondary on:click={() => (showModal = false)}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <Button tiny on:click={cropImage}
                         ><Translatable resourceKey={i18nKey("apply")} /></Button>
                 </ButtonGroup>
-            </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}
@@ -148,15 +160,15 @@
     hidden
     type="file"
     accept=".jpg, .jpeg, .png, .gif, .svg"
-    on:change={onFileSelected}
+    onchange={onFileSelected}
     bind:this={fileinput} />
 
 {#if mode === "banner"}
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
         bind:clientWidth={width}
         class={`photo-section ${mode}`}
-        on:click={addPhoto}
+        onclick={addPhoto}
         style={image
             ? `height: ${height}px; background-image: url(${image})`
             : `height: ${height}px`}>
@@ -165,11 +177,11 @@
         </div>
     </div>
 {:else}
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <div class={`photo-section ${mode}`} on:click={addPhoto}>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class={`photo-section ${mode}`} onclick={addPhoto}>
         <div class={`photo-icon ${size} ${mode}`}>
             {#if image}
-                <div class="avatar" style={`background-image: url(${image})`} />
+                <div class="avatar" style={`background-image: url(${image})`}></div>
                 {#if overlayIcon}
                     <div class="overlay">
                         <ChooseImage size={iconSize} color={"#fff"} />

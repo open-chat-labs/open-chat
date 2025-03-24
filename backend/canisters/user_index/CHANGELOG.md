@@ -6,14 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1659](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1659-user_index)] - 2025-03-21
+
 ### Added
 
 - Introduce standardised error codes ([#7599](https://github.com/open-chat-labs/open-chat/pull/7599))
+- Support only upgrading users who have been active since a chosen date ([#7642](https://github.com/open-chat-labs/open-chat/pull/7642))
 
 ### Changed
 
 - Remove the `Cryptocurrency` type from public APIs (part 2) ([#7592](https://github.com/open-chat-labs/open-chat/pull/7592))
 - Support bot `direct message` scenario ([#7607](https://github.com/open-chat-labs/open-chat/pull/7607))
+- Parallelise uploading wasm chunks ([#7643](https://github.com/open-chat-labs/open-chat/pull/7643))
 
 ## [[2.0.1649](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1649-user_index)] - 2025-03-12
 

@@ -65,6 +65,7 @@
     export let supportsReply: boolean;
     export let collapsed: boolean;
     export let threadRootMessage: Message | undefined;
+    export let onExpandMessage: (() => void) | undefined = undefined;
 
     let userSummary: UserSummary | undefined = undefined;
 
@@ -152,7 +153,7 @@
             {canPin}
             {canBlockUsers}
             {canDelete}
-            canQuoteReply={canSendAny && sender?.kind !== "bot"}
+            canQuoteReply={canSendAny}
             {canReact}
             canStartThread={canReplyInThread}
             {publicGroup}
@@ -172,7 +173,7 @@
             on:verifyHumanity
             on:claimDailyChit
             on:forward
-            on:expandMessage
+            {onExpandMessage}
             on:collapseMessage
             on:removePreview={removePreview}
             on:initiateThread={initiateThread}

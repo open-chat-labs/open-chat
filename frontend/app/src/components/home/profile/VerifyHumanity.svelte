@@ -1,7 +1,7 @@
 <script lang="ts">
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import type { OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -18,14 +18,20 @@
     import LinkAccountsModal from "./LinkAccountsModal.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    let failed = false;
-    let verifying = false;
-    let step: "linking" | "verification" = "linking";
-    let confirmed = false;
-    let iiPrincipal: string | undefined = undefined;
-    let checkingPrincipal = true;
+    interface Props {
+        onClose: () => void;
+        onSuccess: () => void;
+    }
+
+    let { onClose, onSuccess }: Props = $props();
+
+    let failed = $state(false);
+    let verifying = $state(false);
+    let step: "linking" | "verification" = $state("linking");
+    let confirmed = $state(false);
+    let iiPrincipal: string | undefined = $state(undefined);
+    let checkingPrincipal = $state(true);
 
     onMount(() => {
         client
@@ -57,7 +63,7 @@
                             if (resp.kind !== "success") {
                                 failed = true;
                             } else {
-                                dispatch("success");
+                                onSuccess();
                             }
                         });
                 }
@@ -69,11 +75,13 @@
 
 {#if checkingPrincipal}
     <ModalContent hideFooter hideHeader fadeDelay={0} fadeDuration={0}>
-        <div slot="body">
-            <div class="loader">
-                <FancyLoader />
+        {#snippet body()}
+            <div>
+                <div class="loader">
+                    <FancyLoader />
+                </div>
             </div>
-        </div>
+        {/snippet}
     </ModalContent>
 {:else if step === "linking"}
     <LinkAccountsModal>
@@ -85,51 +93,57 @@
     </LinkAccountsModal>
 {:else}
     <ModalContent fadeDelay={0} fadeDuration={0}>
-        <div slot="header" class="header">
-            <AccountCheck size={$iconSize} color={"var(--txt)"} />
-            <div class="title">
-                <Translatable resourceKey={i18nKey("access.uniquePerson")} />
+        {#snippet header()}
+            <div class="header">
+                <AccountCheck size={$iconSize} color={"var(--txt)"} />
+                <div class="title">
+                    <Translatable resourceKey={i18nKey("access.uniquePerson")} />
+                </div>
             </div>
-        </div>
-        <div slot="body">
-            {#if failed}
-                <p class="info">
-                    <ErrorMessage>
-                        <Translatable resourceKey={i18nKey("human.failed")} />
-                    </ErrorMessage>
-                </p>
-                <p class="question">
-                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
-                </p>
+        {/snippet}
+        {#snippet body()}
+            <div>
+                {#if failed}
+                    <p class="info">
+                        <ErrorMessage>
+                            <Translatable resourceKey={i18nKey("human.failed")} />
+                        </ErrorMessage>
+                    </p>
+                    <p class="question">
+                        <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
+                    </p>
 
-                <p class="answer">
-                    <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
-                </p>
+                    <p class="answer">
+                        <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
+                    </p>
 
-                <p class="answer">
-                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
-                </p>
-            {:else}
-                <p class="info">
-                    <Translatable resourceKey={i18nKey("human.instruction")} />
-                </p>
-                <HumanityConfirmation bind:confirmed />
-            {/if}
-        </div>
+                    <p class="answer">
+                        <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
+                    </p>
+                {:else}
+                    <p class="info">
+                        <Translatable resourceKey={i18nKey("human.instruction")} />
+                    </p>
+                    <HumanityConfirmation bind:confirmed />
+                {/if}
+            </div>
+        {/snippet}
 
-        <div slot="footer">
-            <ButtonGroup>
-                <Button secondary on:click={() => dispatch("close")}
-                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                <!-- <Button secondary on:click={() => (step = "linking")}
-                    ><Translatable resourceKey={i18nKey("identity.back")} /></Button> -->
-                <Button
-                    loading={verifying}
-                    disabled={verifying || !confirmed || iiPrincipal === undefined}
-                    on:click={verify}
-                    ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
-            </ButtonGroup>
-        </div>
+        {#snippet footer()}
+            <div>
+                <ButtonGroup>
+                    <Button secondary on:click={onClose}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    <!-- <Button secondary on:click={() => (step = "linking")}
+                        ><Translatable resourceKey={i18nKey("identity.back")} /></Button> -->
+                    <Button
+                        loading={verifying}
+                        disabled={verifying || !confirmed || iiPrincipal === undefined}
+                        on:click={verify}
+                        ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
+                </ButtonGroup>
+            </div>
+        {/snippet}
     </ModalContent>
 {/if}
 

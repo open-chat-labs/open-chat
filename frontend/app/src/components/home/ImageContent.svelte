@@ -7,7 +7,7 @@
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import ContentCaption from "./ContentCaption.svelte";
     import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import ModalContent from "../ModalContentLegacy.svelte";
     import { isTouchDevice } from "../../utils/devices";
     import { lowBandwidth } from "../../stores/settings";
     import Button from "../Button.svelte";
@@ -146,7 +146,7 @@
 <ContentCaption caption={normalised.caption} {edited} {blockLevelMarkdown} />
 
 {#if zoomable && zoom}
-    <Overlay on:close={() => (zoom = false)} dismissible alignBottomOnMobile={false}>
+    <Overlay onClose={() => (zoom = false)} dismissible alignBottomOnMobile={false}>
         <ModalContent hideHeader hideFooter fill fitToContent fixedWidth={false}>
             <span class="body" slot="body">
                 <img

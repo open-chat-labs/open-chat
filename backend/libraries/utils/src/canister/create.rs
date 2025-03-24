@@ -38,14 +38,14 @@ pub async fn create_and_install<A: CandidType>(
 }
 
 pub async fn create(cycles_to_use: Cycles) -> Result<Principal, (RejectCode, String)> {
-    match management_canister::create_canister_with_cycles(
+    match management_canister::create_canister_with_extra_cycles(
         &CreateCanisterArgs {
             settings: Some(CanisterSettings {
                 controllers: Some(vec![ic_cdk::api::canister_self()]),
                 ..Default::default()
             }),
         },
-        cycles_to_use,
+        cycles_to_use.saturating_sub(ic_cdk::api::cost_create_canister()),
     )
     .await
     {

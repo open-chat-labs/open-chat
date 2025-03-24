@@ -3,8 +3,13 @@
     import type { ResourceKey } from "openchat-client";
     import Translatable from "../Translatable.svelte";
 
-    export let disabled = false;
-    export let label: ResourceKey;
+    interface Props {
+        disabled?: boolean;
+        label: ResourceKey;
+        onClick: (e: MouseEvent) => void;
+    }
+
+    let { disabled = false, label, onClick }: Props = $props();
 
     let buttonScale = spring(1);
 
@@ -16,9 +21,9 @@
 
 <button
     style={`transform: scale(${$buttonScale})`}
-    on:mousedown={mouseDown}
+    onmousedown={mouseDown}
     {disabled}
-    on:click|preventDefault
+    onclick={onClick}
     class="amount">
     <Translatable resourceKey={label} />
 </button>

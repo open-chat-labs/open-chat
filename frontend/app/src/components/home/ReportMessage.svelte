@@ -11,23 +11,27 @@
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
     import Flag from "svelte-material-icons/Flag.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import type { ChatIdentifier, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
-    export let chatId: ChatIdentifier;
-    export let messageId: bigint;
-    export let threadRootMessageIndex: number | undefined;
-    export let canDelete: boolean;
+    interface Props {
+        chatId: ChatIdentifier;
+        messageId: bigint;
+        threadRootMessageIndex: number | undefined;
+        canDelete: boolean;
+        onClose: () => void;
+    }
 
-    const dispatch = createEventDispatcher();
+    let { chatId, messageId, threadRootMessageIndex, canDelete, onClose }: Props = $props();
+
     const client = getContext<OpenChat>("client");
 
-    let deleteMessage = false;
+    let deleteMessage = $state(false);
     let busy = false;
-    let selectedReasonIndex = -1;
+    let selectedReasonIndex = $state(-1);
     let reasons = [
         "report.pleaseSelect",
         "report.threat",
@@ -38,11 +42,11 @@
         "report.scam",
     ];
 
-    $: valid = selectedReasonIndex > -1;
+    let valid = $derived(selectedReasonIndex > -1);
 
     function createReport() {
         report();
-        dispatch("close");
+        onClose();
     }
 
     function report() {
@@ -58,54 +62,56 @@
     }
 </script>
 
-<Overlay on:close dismissible>
-    <ModalContent on:close closeIcon>
-        <span class="header" slot="header">
-            <Flag size={$iconSize} color={"var(--error)"} />
-            <h1><Translatable resourceKey={i18nKey("report.title")} /></h1>
-        </span>
-        <span slot="body">
-            <div class="reason">
-                <Legend label={i18nKey("report.reason")} />
-                <Select bind:value={selectedReasonIndex}>
-                    {#each reasons as reason, i}
-                        <option disabled={i === 0} value={i - 1}
-                            ><Translatable resourceKey={i18nKey(reason)} /></option>
-                    {/each}
-                </Select>
-            </div>
-            {#if canDelete}
-                <div class="delete">
-                    <Checkbox
-                        id={"delete_message"}
-                        label={i18nKey("report.deleteMessage")}
-                        bind:checked={deleteMessage} />
+<Overlay {onClose} dismissible>
+    <ModalContent {onClose} closeIcon>
+        {#snippet header()}
+            <span class="header">
+                <Flag size={$iconSize} color={"var(--error)"} />
+                <h1><Translatable resourceKey={i18nKey("report.title")} /></h1>
+            </span>
+        {/snippet}
+        {#snippet body()}
+            <span>
+                <div class="reason">
+                    <Legend label={i18nKey("report.reason")} />
+                    <Select bind:value={selectedReasonIndex}>
+                        {#each reasons as reason, i}
+                            <option disabled={i === 0} value={i - 1}
+                                ><Translatable resourceKey={i18nKey(reason)} /></option>
+                        {/each}
+                    </Select>
                 </div>
-            {/if}
-            <div class="advice">
-                <Markdown
-                    text={$_("report.advice", {
-                        values: { rules: "https://oc.app/guidelines?section=3" },
-                    })} />
-            </div>
-        </span>
-        <span slot="footer">
-            <ButtonGroup>
-                <Button
-                    secondary
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}
-                    on:click={() => dispatch("close")}
-                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                <Button
-                    disabled={busy || !valid}
-                    loading={busy}
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}
-                    on:click={createReport}
-                    ><Translatable resourceKey={i18nKey("report.menu")} /></Button>
-            </ButtonGroup>
-        </span>
+                {#if canDelete}
+                    <div class="delete">
+                        <Checkbox
+                            id={"delete_message"}
+                            label={i18nKey("report.deleteMessage")}
+                            bind:checked={deleteMessage} />
+                    </div>
+                {/if}
+                <div class="advice">
+                    <Markdown
+                        text={$_("report.advice", {
+                            values: { rules: "https://oc.app/guidelines?section=3" },
+                        })} />
+                </div>
+            </span>
+        {/snippet}
+        {#snippet footer()}
+            <span>
+                <ButtonGroup>
+                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    <Button
+                        disabled={busy || !valid}
+                        loading={busy}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={createReport}
+                        ><Translatable resourceKey={i18nKey("report.menu")} /></Button>
+                </ButtonGroup>
+            </span>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

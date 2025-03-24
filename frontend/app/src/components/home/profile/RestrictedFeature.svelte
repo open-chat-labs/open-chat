@@ -5,31 +5,31 @@
     import { i18nKey } from "../../../i18n/i18n";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
-    import { createEventDispatcher } from "svelte";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        feature: Feature;
+        onClose: () => void;
+    }
 
-    export let feature: Feature;
+    let { feature, onClose }: Props = $props();
 </script>
 
 <ModalContent>
-    <span class="header" slot="header">
+    {#snippet header()}
         <Translatable resourceKey={i18nKey("restricted.title")} />
-    </span>
-    <form class="body" slot="body">
-        {#if feature === "swap"}
-            <Translatable resourceKey={i18nKey("restricted.swap")} />
-        {:else}
-            <Translatable resourceKey={i18nKey("restricted.generic")} />
-        {/if}
-    </form>
-    <span slot="footer">
+    {/snippet}
+    {#snippet body()}
+        <form class="body">
+            {#if feature === "swap"}
+                <Translatable resourceKey={i18nKey("restricted.swap")} />
+            {:else}
+                <Translatable resourceKey={i18nKey("restricted.generic")} />
+            {/if}
+        </form>
+    {/snippet}
+    {#snippet footer()}
         <ButtonGroup>
-            <Button on:click={() => dispatch("close")}
-                ><Translatable resourceKey={i18nKey("close")} /></Button>
+            <Button on:click={onClose}><Translatable resourceKey={i18nKey("close")} /></Button>
         </ButtonGroup>
-    </span>
+    {/snippet}
 </ModalContent>
-
-<style lang="scss">
-</style>
