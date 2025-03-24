@@ -1,4 +1,5 @@
 use canister_client::{generate_candid_query_call, generate_candid_update_call};
+use constants::CHUNK_STORE_CHUNK_SIZE;
 use group_index_canister::*;
 use ic_agent::Agent;
 use types::CanisterId;
@@ -21,7 +22,7 @@ pub async fn upload_wasm_in_chunks(
     wasm: &[u8],
     canister_type: ChildCanisterType,
 ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
-    for (index, chunk) in wasm.chunks(1_000_000).enumerate() {
+    for (index, chunk) in wasm.chunks(CHUNK_STORE_CHUNK_SIZE).enumerate() {
         let response = upload_wasm_chunk(
             agent,
             canister_id,

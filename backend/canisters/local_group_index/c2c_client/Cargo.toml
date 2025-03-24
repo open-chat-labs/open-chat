@@ -7,6 +7,7 @@ edition.workspace = true
 
 [dependencies]
 canister_client = { path = "../../../libraries/canister_client" }
+constants = { path = "../../../libraries/constants" }
 ic-cdk = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
 tracing = { workspace = true }

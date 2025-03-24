@@ -1848,6 +1848,7 @@ type ChannelMatch = record {
     gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     subtype : opt GroupSubtype;
+    is_public : bool;
 };
 
 type ThreadPreview = record {
