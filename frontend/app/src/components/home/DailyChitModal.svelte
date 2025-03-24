@@ -119,7 +119,7 @@
 </script>
 
 {#if learnToEarn}
-    <LearnToEarn on:close={() => (learnToEarn = false)} />
+    <LearnToEarn onClose={() => (learnToEarn = false)} />
 {/if}
 
 <ModalContent closeIcon on:close={close}>
