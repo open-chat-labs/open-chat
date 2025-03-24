@@ -20,9 +20,9 @@
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
-    import ModalContent from "../ModalContentLegacy.svelte";
+    import ModalContent from "../ModalContent.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
@@ -34,65 +34,32 @@
     import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
     const increments: Increment[] = [1, 10, 100];
     type Increment = 1 | 10 | 100;
 
-    export let ledger: string;
-    export let msg: Message;
-    export let user: CreatedUser;
-    export let messageContext: MessageContext;
+    interface Props {
+        ledger: string;
+        msg: Message;
+        user: CreatedUser;
+        messageContext: MessageContext;
+        onClose: () => void;
+    }
 
-    let refreshing = false;
-    let error: string | undefined = undefined;
-    let toppingUp = false;
-    let tokenChanging = true;
+    let { ledger = $bindable(), msg, user, messageContext, onClose }: Props = $props();
+
+    let refreshing = $state(false);
+    let error: string | undefined = $state(undefined);
+    let toppingUp = $state(false);
+    let tokenChanging = $state(true);
     let balanceWithRefresh: BalanceWithRefresh;
     let dollar: HTMLElement;
     let dollarTop = tweened(-1000);
     let dollarOpacity = tweened(0);
     let dollarScale = tweened(0);
-    let centAmount = 0;
-    let showCustomTip = false;
-    let validAmount: boolean = false;
-    let draftAmount = 0n;
-
-    $: tokenDetails = $cryptoLookup[ledger];
-    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? 0n;
-    $: exchangeRate = to2SigFigs(
-        $exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD ?? 0,
-    );
-    $: displayDraftAmount = client.formatTokens(draftAmount, tokenDetails.decimals);
-    $: displayFee = client.formatTokens(tokenDetails.transferFee, tokenDetails.decimals);
-    $: remainingBalance =
-        draftAmount > 0n ? cryptoBalance - draftAmount - tokenDetails.transferFee : cryptoBalance;
-    $: valid = draftAmount > 0n && remainingBalance >= 0n && error === undefined && !tokenChanging;
-    $: zero = cryptoBalance <= tokenDetails.transferFee && !tokenChanging;
-    $: transferFees = tokenDetails.transferFee;
-
-    $: {
-        if (ledger !== undefined) {
-            // reset when ledger changes
-            centAmount = 0;
-            tokenChanging = true;
-            draftAmount = 0n;
-        }
-    }
-
-    $: {
-        centAmount = calculateCentAmount(draftAmount, exchangeRate);
-    }
-
-    $: {
-        if (dollar) {
-            dollar.style.setProperty("top", `${$dollarTop}px`);
-            dollar.style.setProperty("opacity", `${$dollarOpacity}`);
-            dollar.style.setProperty(
-                "transform",
-                `scale(${$dollarScale}) rotate(${$dollarScale}turn)`,
-            );
-        }
-    }
+    let centAmount = $state(0);
+    let showCustomTip = $state(false);
+    let validAmount: boolean = $state(false);
+    let draftAmount = $state(0n);
 
     onMount(() => {
         let d = document.getElementById("tip-dollar");
@@ -133,7 +100,7 @@
 
     function cancel() {
         toppingUp = false;
-        dispatch("close");
+        onClose();
     }
 
     function onBalanceRefreshed() {
@@ -184,6 +151,7 @@
     }
 
     function clickAmount(e: MouseEvent, increment: Increment) {
+        e.preventDefault();
         bounceMoneyMouthFrom(e.target as HTMLElement);
         centAmount += increment;
         draftAmount = calculateAmount(centAmount, exchangeRate);
@@ -193,7 +161,8 @@
         return balance - transferFees;
     }
 
-    function send() {
+    function send(e: Event) {
+        e.preventDefault();
         const transfer: PendingCryptocurrencyTransfer = {
             kind: "pending",
             ledger,
@@ -215,138 +184,185 @@
             }
         });
 
-        dispatch("close");
+        onClose();
     }
+    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? 0n);
+    let exchangeRate = $derived(
+        to2SigFigs($exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD ?? 0),
+    );
+    $effect(() => {
+        if (ledger !== undefined) {
+            // reset when ledger changes
+            centAmount = 0;
+            tokenChanging = true;
+            draftAmount = 0n;
+        }
+    });
+    let displayDraftAmount = $derived(client.formatTokens(draftAmount, tokenDetails.decimals));
+    let displayFee = $derived(client.formatTokens(tokenDetails.transferFee, tokenDetails.decimals));
+    let remainingBalance = $state(0n);
+    $effect(() => {
+        remainingBalance =
+            draftAmount > 0n
+                ? cryptoBalance - draftAmount - tokenDetails.transferFee
+                : cryptoBalance;
+    });
+    let valid = $derived(
+        draftAmount > 0n && remainingBalance >= 0n && error === undefined && !tokenChanging,
+    );
+    let zero = $derived(cryptoBalance <= tokenDetails.transferFee && !tokenChanging);
+    let transferFees = $derived(tokenDetails.transferFee);
+    $effect(() => {
+        centAmount = calculateCentAmount(draftAmount, exchangeRate);
+    });
+    $effect(() => {
+        if (dollar) {
+            dollar.style.setProperty("top", `${$dollarTop}px`);
+            dollar.style.setProperty("opacity", `${$dollarOpacity}`);
+            dollar.style.setProperty(
+                "transform",
+                `scale(${$dollarScale}) rotate(${$dollarScale}turn)`,
+            );
+        }
+    });
 </script>
 
 <Overlay dismissible>
     <ModalContent fill>
-        <span class="header" slot="header">
-            <div class="left">
-                <div class="main-title">
-                    <div><Translatable resourceKey={i18nKey("tip.title")} /></div>
-                    <div>
-                        <CryptoSelector bind:ledger />
+        {#snippet header()}
+            <span class="header">
+                <div class="left">
+                    <div class="main-title">
+                        <div><Translatable resourceKey={i18nKey("tip.title")} /></div>
+                        <div>
+                            <CryptoSelector bind:ledger />
+                        </div>
                     </div>
                 </div>
-            </div>
-            <BalanceWithRefresh
-                bind:toppingUp
-                bind:this={balanceWithRefresh}
-                {ledger}
-                value={remainingBalance}
-                label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                bold
-                showTopUp
-                bind:refreshing
-                on:refreshed={onBalanceRefreshed}
-                on:error={onBalanceRefreshError} />
-        </span>
-        <form slot="body">
-            <div class="body" class:zero={zero || toppingUp}>
-                {#if zero || toppingUp}
-                    <AccountInfo {ledger} {user} />
-                    {#if zero}
-                        <p>
-                            <Translatable
-                                resourceKey={i18nKey("tokenTransfer.zeroBalance", {
-                                    token: tokenDetails.symbol,
-                                })} />
-                        </p>
-                    {/if}
-                    <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
-                {:else}
-                    {#if exchangeRate > 0}
-                        <div class="amounts">
-                            {#each increments as increment}
-                                <TipButton
-                                    label={i18nKey(amountLabel(increment))}
-                                    on:click={(e) => clickAmount(e, increment)}
-                                    disabled={exchangeRate === 0 ||
-                                        calculateAmount(centAmount + increment, exchangeRate) >
-                                            cryptoBalance - tokenDetails.transferFee} />
-                            {/each}
-                        </div>
-                        <div in:fade|local={{ duration: 300 }} class="message">
-                            {#if draftAmount > 0}
-                                <div class="summary">
-                                    <div class="dollar-amount">
-                                        ${(centAmount / 100).toFixed(2)}
+                <BalanceWithRefresh
+                    bind:toppingUp
+                    bind:this={balanceWithRefresh}
+                    {ledger}
+                    value={remainingBalance}
+                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
+                    bold
+                    showTopUp
+                    bind:refreshing
+                    on:refreshed={onBalanceRefreshed}
+                    on:error={onBalanceRefreshError} />
+            </span>
+        {/snippet}
+        {#snippet body()}
+            <form onsubmit={send}>
+                <div class="body" class:zero={zero || toppingUp}>
+                    {#if zero || toppingUp}
+                        <AccountInfo {ledger} {user} />
+                        {#if zero}
+                            <p>
+                                <Translatable
+                                    resourceKey={i18nKey("tokenTransfer.zeroBalance", {
+                                        token: tokenDetails.symbol,
+                                    })} />
+                            </p>
+                        {/if}
+                        <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
+                    {:else}
+                        {#if exchangeRate > 0}
+                            <div class="amounts">
+                                {#each increments as increment}
+                                    <TipButton
+                                        label={i18nKey(amountLabel(increment))}
+                                        onClick={(e) => clickAmount(e, increment)}
+                                        disabled={exchangeRate === 0 ||
+                                            calculateAmount(centAmount + increment, exchangeRate) >
+                                                cryptoBalance - tokenDetails.transferFee} />
+                                {/each}
+                            </div>
+                            <div in:fade|local={{ duration: 300 }} class="message">
+                                {#if draftAmount > 0}
+                                    <div class="summary">
+                                        <div class="dollar-amount">
+                                            ${(centAmount / 100).toFixed(2)}
+                                        </div>
+                                        <div class="token-amount">
+                                            {displayDraftAmount}
+                                            {tokenDetails.symbol}
+                                        </div>
+                                        <div class="fee">
+                                            <Translatable
+                                                resourceKey={i18nKey("tip.plusFee", {
+                                                    fee: displayFee,
+                                                    token: tokenDetails.symbol,
+                                                })} />
+                                        </div>
                                     </div>
-                                    <div class="token-amount">
-                                        {displayDraftAmount}
-                                        {tokenDetails.symbol}
+                                {:else}
+                                    <div class="summary">
+                                        <Translatable resourceKey={i18nKey("tip.advice")} />
                                     </div>
-                                    <div class="fee">
-                                        <Translatable
-                                            resourceKey={i18nKey("tip.plusFee", {
-                                                fee: displayFee,
-                                                token: tokenDetails.symbol,
-                                            })} />
-                                    </div>
-                                </div>
-                            {:else}
-                                <div class="summary">
-                                    <Translatable resourceKey={i18nKey("tip.advice")} />
+                                {/if}
+                            </div>
+                        {/if}
+                        <div class="custom-tip">
+                            {#if !showCustomTip && exchangeRate > 0}
+                                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                <!-- svelte-ignore a11y_missing_attribute -->
+                                <a
+                                    role="button"
+                                    tabindex="0"
+                                    onclick={() => (showCustomTip = true)}
+                                    class="options"
+                                    in:fade|local={{ duration: 500 }}
+                                    class:expanded={showCustomTip}>
+                                    <Translatable resourceKey={i18nKey("tip.showCustom")} />
+                                </a>
+                            {/if}
+
+                            {#if showCustomTip || exchangeRate <= 0}
+                                <div in:fade|local={{ duration: 500 }} class="custom-tip-amount">
+                                    <TokenInput
+                                        {ledger}
+                                        {transferFees}
+                                        bind:valid={validAmount}
+                                        maxAmount={maxAmount(cryptoBalance)}
+                                        bind:amount={draftAmount} />
                                 </div>
                             {/if}
                         </div>
-                    {/if}
-                    <div class="custom-tip">
-                        {#if !showCustomTip && exchangeRate > 0}
-                            <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <!-- svelte-ignore a11y-missing-attribute -->
-                            <a
-                                role="button"
-                                tabindex="0"
-                                on:click={() => (showCustomTip = true)}
-                                class="options"
-                                in:fade|local={{ duration: 500 }}
-                                class:expanded={showCustomTip}>
-                                <Translatable resourceKey={i18nKey("tip.showCustom")} />
-                            </a>
-                        {/if}
-
-                        {#if showCustomTip || exchangeRate <= 0}
-                            <div in:fade|local={{ duration: 500 }} class="custom-tip-amount">
-                                <TokenInput
-                                    {ledger}
-                                    {transferFees}
-                                    bind:valid={validAmount}
-                                    maxAmount={maxAmount(cryptoBalance)}
-                                    bind:amount={draftAmount} />
+                        {#if error !== undefined}
+                            <div class="error">
+                                <ErrorMessage>{$_(error)}</ErrorMessage>
                             </div>
                         {/if}
-                    </div>
-                    {#if error !== undefined}
-                        <div class="error">
-                            <ErrorMessage>{$_(error)}</ErrorMessage>
-                        </div>
                     {/if}
-                {/if}
-            </div>
-        </form>
-        <span slot="footer">
-            <ButtonGroup>
-                <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
-                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                {#if toppingUp || zero}
-                    <Button
-                        small={!$mobileWidth}
-                        disabled={refreshing}
-                        loading={refreshing}
-                        tiny={$mobileWidth}
-                        on:click={reset}><Translatable resourceKey={i18nKey("refresh")} /></Button>
-                {:else}
-                    <Button
-                        small={!$mobileWidth}
-                        disabled={!valid}
-                        tiny={$mobileWidth}
-                        on:click={send}
-                        ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
-                {/if}
-            </ButtonGroup>
-        </span>
+                </div>
+            </form>
+        {/snippet}
+        {#snippet footer()}
+            <span>
+                <ButtonGroup>
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    {#if toppingUp || zero}
+                        <Button
+                            small={!$mobileWidth}
+                            disabled={refreshing}
+                            loading={refreshing}
+                            tiny={$mobileWidth}
+                            on:click={reset}
+                            ><Translatable resourceKey={i18nKey("refresh")} /></Button>
+                    {:else}
+                        <Button
+                            small={!$mobileWidth}
+                            disabled={!valid}
+                            tiny={$mobileWidth}
+                            on:click={send}
+                            ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
+                    {/if}
+                </ButtonGroup>
+            </span>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

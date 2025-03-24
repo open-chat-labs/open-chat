@@ -423,7 +423,7 @@
 {#if tipping !== undefined}
     <TipBuilder
         ledger={tipping}
-        on:close={() => (tipping = undefined)}
+        onClose={() => (tipping = undefined)}
         {msg}
         {messageContext}
         {user} />
