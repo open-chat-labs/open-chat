@@ -93,7 +93,7 @@
     <AccessGateBuilder
         valid={true}
         {level}
-        on:close={() => (showDetail = false)}
+        onClose={() => (showDetail = false)}
         {gateConfig}
         editable={false} />
 {/if}

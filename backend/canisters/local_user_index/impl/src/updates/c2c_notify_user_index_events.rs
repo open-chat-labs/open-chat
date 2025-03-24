@@ -166,6 +166,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         timestamp: ev.timestamp,
                         expires_at: ev.expires_at,
                         ledger: ev.ledger,
+                        token: Some(ev.token_symbol.clone().into()),
                         token_symbol: ev.token_symbol,
                         amount_e8s: ev.amount_e8s,
                         block_index: ev.block_index,

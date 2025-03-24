@@ -14,25 +14,25 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    $: supportsGame =
-        !isTouchDevice ||
-        //@ts-ignore
-        (window.DeviceOrientationEvent && window.DeviceOrientationEvent.requestPermission);
+    interface Props {
+        onClose: () => void;
+        onStreak: () => void;
+    }
+
+    let { onClose, onStreak }: Props = $props();
 
     let bodyElement: HTMLDivElement;
-    let showGame = false;
-    let mode: "all-time" | "last-month" | "this-month" = "this-month";
+    let showGame = $state(false);
+    let mode: "all-time" | "last-month" | "this-month" = $state("this-month");
     let blankLeader = {
         username: "________",
         userId: "",
         balance: 0,
     };
-    let leaders: ChitUserBalance[] = dummyData();
+    let leaders: ChitUserBalance[] = $state(dummyData());
     let date = new Date();
     let thisMonth = date.getUTCMonth() + 1;
     let lastMonth = thisMonth == 1 ? 12 : thisMonth - 1;
-    $: thisMonthText = buildMonthText(thisMonth);
-    $: lastMonthText = buildMonthText(lastMonth);
 
     onMount(() => {
         if (bodyElement) {
@@ -91,88 +91,105 @@
 
     function streak() {
         dispatch("close");
-        tick().then(() => dispatch("streak"));
+        onClose();
+        tick().then(onStreak);
     }
+    let supportsGame = $derived(
+        !isTouchDevice ||
+            //@ts-ignore
+            (window.DeviceOrientationEvent && window.DeviceOrientationEvent.requestPermission),
+    );
+    let thisMonthText = $derived(buildMonthText(thisMonth));
+    let lastMonthText = $derived(buildMonthText(lastMonth));
 </script>
 
-<ModalContent closeIcon on:close>
-    <div slot="header" class="header">
-        <div class="streak">
-            <HoverIcon onclick={streak}>
-                <LighteningBolt enabled={false} />
-            </HoverIcon>
-        </div>
-        <div class="title-wrapper">
-            <div class="title">{$_("openChat")}</div>
-        </div>
-    </div>
-    <div bind:this={bodyElement} class="body" slot="body">
-        {#if showGame}
-            <Invaders />
-        {:else}
-            <div class="settings">
-                <div
-                    on:click={() => changeMode("last-month")}
-                    class="setting"
-                    class:selected={mode === "last-month"}>
-                    {lastMonthText}
-                </div>
-                <div
-                    on:click={() => changeMode("this-month")}
-                    class="setting"
-                    class:selected={mode === "this-month"}>
-                    {thisMonthText}
-                </div>
-                <div
-                    on:click={() => changeMode("all-time")}
-                    class="setting"
-                    class:selected={mode === "all-time"}>
-                    {$_("halloffame.allTime")}
-                </div>
+<ModalContent closeIcon {onClose}>
+    {#snippet header()}
+        <div class="header">
+            <div class="streak">
+                <HoverIcon onclick={streak}>
+                    <LighteningBolt enabled={false} />
+                </HoverIcon>
             </div>
-            <div class="scoreboard-container">
-                <table cellpadding="3px" class="scoreboard">
-                    <thead class="table-header">
-                        <tr>
-                            {#if !$mobileWidth}
-                                <th class="rank">#</th>
-                            {/if}
-                            <th class="username">{$_("halloffame.username")}</th>
-                            <th class="balance">CHIT</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each leaders as leader, i}
-                            <tr class="table-row">
-                                {#if !$mobileWidth}
-                                    <td class="rank">{i + 1}</td>
-                                {/if}
-                                <td class="username" title={leader.username}>{leader.username}</td>
-                                <td class="balance">{leader.balance}</td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
+            <div class="title-wrapper">
+                <div class="title">{$_("openChat")}</div>
             </div>
-        {/if}
-    </div>
-    <div slot="footer" class="hof-footer">
-        <ButtonGroup align={"end"}>
+        </div>
+    {/snippet}
+    {#snippet body()}
+        <div bind:this={bodyElement} class="body">
             {#if showGame}
-                <div on:click={() => (showGame = false)} class="joystick">🏆️</div>
-                <Button
-                    tiny={$mobileWidth}
-                    small={!$mobileWidth}
-                    on:click={() => (showGame = false)}>{$_("backToResults")}</Button>
+                <Invaders />
             {:else}
-                {#if supportsGame}
-                    <div on:click={() => (showGame = true)} class="joystick">🕹️</div>
-                {/if}
-                <Button tiny={$mobileWidth} small={!$mobileWidth} on:click={() => dispatch("close")}
-                    >{$_("close")}</Button>
+                <div class="settings">
+                    <div
+                        onclick={() => changeMode("last-month")}
+                        class="setting"
+                        class:selected={mode === "last-month"}>
+                        {lastMonthText}
+                    </div>
+                    <div
+                        onclick={() => changeMode("this-month")}
+                        class="setting"
+                        class:selected={mode === "this-month"}>
+                        {thisMonthText}
+                    </div>
+                    <div
+                        onclick={() => changeMode("all-time")}
+                        class="setting"
+                        class:selected={mode === "all-time"}>
+                        {$_("halloffame.allTime")}
+                    </div>
+                </div>
+                <div class="scoreboard-container">
+                    <table cellpadding="3px" class="scoreboard">
+                        <thead class="table-header">
+                            <tr>
+                                {#if !$mobileWidth}
+                                    <th class="rank">#</th>
+                                {/if}
+                                <th class="username">{$_("halloffame.username")}</th>
+                                <th class="balance">CHIT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#each leaders as leader, i}
+                                <tr class="table-row">
+                                    {#if !$mobileWidth}
+                                        <td class="rank">{i + 1}</td>
+                                    {/if}
+                                    <td class="username" title={leader.username}
+                                        >{leader.username}</td>
+                                    <td class="balance">{leader.balance}</td>
+                                </tr>
+                            {/each}
+                        </tbody>
+                    </table>
+                </div>
             {/if}
-        </ButtonGroup>
-    </div>
+        </div>
+    {/snippet}
+    {#snippet footer()}
+        <div class="hof-footer">
+            <ButtonGroup align={"end"}>
+                {#if showGame}
+                    <div onclick={() => (showGame = false)} class="joystick">🏆️</div>
+                    <Button
+                        tiny={$mobileWidth}
+                        small={!$mobileWidth}
+                        on:click={() => (showGame = false)}>{$_("backToResults")}</Button>
+                {:else}
+                    {#if supportsGame}
+                        <div onclick={() => (showGame = true)} class="joystick">🕹️</div>
+                    {/if}
+                    <Button
+                        tiny={$mobileWidth}
+                        small={!$mobileWidth}
+                        on:click={() => dispatch("close")}>{$_("close")}</Button>
+                {/if}
+            </ButtonGroup>
+        </div>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">

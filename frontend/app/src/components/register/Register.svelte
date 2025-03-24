@@ -5,7 +5,7 @@
     import Toast from "../Toast.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import UsernameInput from "../UsernameInput.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
     import { type CreatedUser, type OpenChat, type UserSummary } from "openchat-client";
     import Button from "../Button.svelte";
@@ -21,7 +21,12 @@
     import FindUser from "../FindUser.svelte";
     import UserPill from "../UserPill.svelte";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        onCreatedUser: (user: CreatedUser) => void;
+        onClose?: () => void;
+    }
+
+    let { onCreatedUser, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -30,21 +35,21 @@
 
     type RegisterState = Spinning | AwaitingUsername;
 
-    let state: Writable<RegisterState> = writable({ kind: "awaiting_username" });
+    let registerState: Writable<RegisterState> = writable({ kind: "awaiting_username" });
     let error: Writable<string | undefined> = writable(undefined);
     let usernameStore: Writable<string | undefined> = writable(undefined);
     let createdUser: CreatedUser | undefined = undefined;
     let closed: boolean = false;
-    let showGuidelines = false;
-    let username = "";
-    let usernameValid = false;
-    let checkingUsername: boolean;
-    let badCode = false;
-    let referringUser: UserSummary | undefined = undefined;
+    let showGuidelines = $state(false);
+    let username = $state("");
+    let usernameValid = $state(false);
+    let checkingUsername: boolean = $state(false);
+    let badCode = $state(false);
+    let referringUser: UserSummary | undefined = $state(undefined);
 
-    function clearCodeAndRegister() {
+    function clearCodeAndRegister(e: Event) {
         client.clearReferralCode();
-        register();
+        register(e);
     }
 
     function clearCodeAndLogout() {
@@ -52,7 +57,14 @@
         client.logout();
     }
 
-    function register() {
+    function logout(e: Event) {
+        e.preventDefault();
+        e.stopPropagation();
+        client.logout();
+    }
+
+    function register(e: Event) {
+        e.preventDefault();
         if (usernameValid) {
             usernameStore.set(username);
             registerUser(username);
@@ -65,10 +77,10 @@
     }
 
     function registerUser(username: string): void {
-        state.set({ kind: "spinning" });
+        registerState.set({ kind: "spinning" });
         client.registerUser(username).then((resp) => {
             badCode = false;
-            state.set({ kind: "awaiting_username" });
+            registerState.set({ kind: "awaiting_username" });
             if (resp.kind === "username_taken") {
                 error.set("register.usernameTaken");
             } else if (resp.kind === "username_too_short") {
@@ -109,18 +121,18 @@
                     isBot: false,
                     isUniquePerson: false,
                 };
-                dispatch("createdUser", createdUser);
+                onCreatedUser(createdUser);
             } else {
                 error.set(`Unexpected register user response: ${resp.kind}`);
             }
         });
     }
 
-    let selectedLocale = ($locale as string).substring(0, 2);
-    $: {
+    let selectedLocale = $state(($locale as string).substring(0, 2));
+    $effect(() => {
         setLocale(selectedLocale);
-    }
-    $: busy = $state.kind === "spinning";
+    });
+    let busy = $derived($registerState.kind === "spinning");
 
     function deleteUser() {
         referringUser = undefined;
@@ -139,129 +151,140 @@
     onMount(async () => {
         referringUser = await client.getReferringUser();
     });
+
+    function onCloseGuidelines() {
+        showGuidelines = false;
+    }
 </script>
 
 {#if showGuidelines}
-    <Overlay on:close={() => (showGuidelines = false)} dismissible={false}>
-        <ModalContent large on:close={() => (showGuidelines = false)}>
-            <span class="header" slot="header">
-                <h1>OpenChat Terms</h1>
-            </span>
-            <span class="guidelines-modal" slot="body">
-                <TermsContent />
-            </span>
-            <span let:onClose slot="footer">
-                <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
-                    <Translatable resourceKey={i18nKey("register.agree")} />
-                </Button>
-            </span>
+    <Overlay onClose={onCloseGuidelines} dismissible={false}>
+        <ModalContent large onClose={onCloseGuidelines}>
+            {#snippet header()}
+                <span class="header">
+                    <h1>OpenChat Terms</h1>
+                </span>
+            {/snippet}
+            {#snippet body()}
+                <span class="guidelines-modal">
+                    <TermsContent />
+                </span>
+            {/snippet}
+            {#snippet footer(onClose)}
+                <span>
+                    <Button on:click={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
+                        <Translatable resourceKey={i18nKey("register.agree")} />
+                    </Button>
+                </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}
 
-<ModalContent compactFooter on:close>
-    <div class="header" slot="header">
-        <div class="subtitle">
-            <div class="logo" />
+<ModalContent compactFooter {onClose}>
+    {#snippet header()}
+        <div class="header">
+            <div class="subtitle">
+                <div class="logo"></div>
+                {#if closed}
+                    <h4><Translatable resourceKey={i18nKey("register.closedTitle")} /></h4>
+                {:else if badCode}
+                    <h4><Translatable resourceKey={i18nKey("register.invalidCode")} /></h4>
+                {:else}
+                    <h4><Translatable resourceKey={i18nKey("register.title")} /></h4>
+                {/if}
+            </div>
+        </div>
+    {/snippet}
+    {#snippet body()}
+        <div class="body">
             {#if closed}
-                <h4><Translatable resourceKey={i18nKey("register.closedTitle")} /></h4>
+                <div class="closed">
+                    <h4><Translatable resourceKey={i18nKey("register.closed")} /></h4>
+                </div>
             {:else if badCode}
-                <h4><Translatable resourceKey={i18nKey("register.invalidCode")} /></h4>
+                <div class="bad-code">
+                    <div class="alert">
+                        <Alert size={$iconSize} color={"var(--warn"} />
+                    </div>
+                    <div class="alert-txt">
+                        <h4 class="main">
+                            <Translatable resourceKey={i18nKey("register.referralCodeInvalid")} />
+                        </h4>
+                        <p class="sub">
+                            <Translatable resourceKey={i18nKey("register.doYouWantToProceed")} />
+                        </p>
+                    </div>
+                </div>
             {:else}
-                <h4><Translatable resourceKey={i18nKey("register.title")} /></h4>
+                <form class="username-wrapper" onsubmit={register}>
+                    <div class="form-element">
+                        <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
+                        <UsernameInput
+                            {client}
+                            disabled={busy}
+                            originalUsername={$usernameStore ?? ""}
+                            autofocus={true}
+                            bind:username
+                            bind:usernameValid
+                            bind:checking={checkingUsername}
+                            bind:error={$error} />
+                    </div>
+
+                    <div class="form-element">
+                        {#if referringUser !== undefined}
+                            <Legend label={i18nKey("register.referredBy")} />
+                            <UserPill on:deleteUser={deleteUser} userOrGroup={referringUser} />
+                        {:else}
+                            <Legend label={i18nKey("register.findReferrer")} />
+                            <FindUser
+                                placeholderKey={"register.searchForReferrer"}
+                                {userLookup}
+                                enabled
+                                compact
+                                mode={"add"}
+                                autofocus={false}
+                                on:selectUser={selectUser} />
+                        {/if}
+                    </div>
+                </form>
+
+                {#if $error}
+                    <ErrorMessage><Translatable resourceKey={i18nKey($error)} /></ErrorMessage>
+                {/if}
+                <div onclick={onShowGuidelines} class="smallprint">
+                    <Translatable resourceKey={i18nKey("register.disclaimer")} />
+                </div>
             {/if}
         </div>
-    </div>
-    <div class="body" slot="body">
-        {#if closed}
-            <div class="closed">
-                <h4><Translatable resourceKey={i18nKey("register.closed")} /></h4>
-            </div>
-        {:else if badCode}
-            <div class="bad-code">
-                <div class="alert">
-                    <Alert size={$iconSize} color={"var(--warn"} />
-                </div>
-                <div class="alert-txt">
-                    <h4 class="main">
-                        <Translatable resourceKey={i18nKey("register.referralCodeInvalid")} />
-                    </h4>
-                    <p class="sub">
-                        <Translatable resourceKey={i18nKey("register.doYouWantToProceed")} />
-                    </p>
-                </div>
-            </div>
-        {:else}
-            <form class="username-wrapper" on:submit|preventDefault={register}>
-                <div class="form-element">
-                    <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
-                    <UsernameInput
-                        {client}
-                        disabled={busy}
-                        originalUsername={$usernameStore ?? ""}
-                        autofocus={true}
-                        bind:username
-                        bind:usernameValid
-                        bind:checking={checkingUsername}
-                        bind:error={$error} />
-                </div>
-
-                <div class="form-element">
-                    {#if referringUser !== undefined}
-                        <Legend label={i18nKey("register.referredBy")} />
-                        <UserPill on:deleteUser={deleteUser} userOrGroup={referringUser} />
-                    {:else}
-                        <Legend label={i18nKey("register.findReferrer")} />
-                        <FindUser
-                            placeholderKey={"register.searchForReferrer"}
-                            {userLookup}
-                            enabled
-                            compact
-                            mode={"add"}
-                            autofocus={false}
-                            on:selectUser={selectUser} />
-                    {/if}
-                </div>
-            </form>
-
-            {#if $error}
-                <ErrorMessage><Translatable resourceKey={i18nKey($error)} /></ErrorMessage>
-            {/if}
-            <div on:click={onShowGuidelines} class="smallprint">
-                <Translatable resourceKey={i18nKey("register.disclaimer")} />
-            </div>
-        {/if}
-    </div>
-    <div class="footer" slot="footer">
-        {#if closed}
-            <Button on:click={() => client.logout()}
-                ><Translatable resourceKey={i18nKey("close")} /></Button>
-        {:else if badCode}
-            <ButtonGroup>
-                <Button secondary on:click={clearCodeAndLogout}
-                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+    {/snippet}
+    {#snippet footer()}
+        <div class="footer">
+            {#if closed}
+                <Button on:click={logout}><Translatable resourceKey={i18nKey("close")} /></Button>
+            {:else if badCode}
+                <ButtonGroup>
+                    <Button secondary on:click={clearCodeAndLogout}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    <Button
+                        loading={checkingUsername || busy}
+                        disabled={!usernameValid || busy}
+                        on:click={clearCodeAndRegister}
+                        ><Translatable resourceKey={i18nKey("register.proceed")} /></Button>
+                </ButtonGroup>
+            {:else}
                 <Button
                     loading={checkingUsername || busy}
                     disabled={!usernameValid || busy}
-                    on:click={clearCodeAndRegister}
-                    ><Translatable resourceKey={i18nKey("register.proceed")} /></Button>
-            </ButtonGroup>
-        {:else}
-            <Button
-                loading={checkingUsername || busy}
-                disabled={!usernameValid || busy}
-                on:click={register}>
-                <Translatable resourceKey={i18nKey("register.createUser")} />
-            </Button>
-        {/if}
-    </div>
+                    on:click={register}>
+                    <Translatable resourceKey={i18nKey("register.createUser")} />
+                </Button>
+            {/if}
+        </div>
+    {/snippet}
 </ModalContent>
 
-<a
-    class="logout"
-    role="button"
-    href="/"
-    on:click|preventDefault|stopPropagation={() => dispatch("logout")}>
+<a class="logout" role="button" href="/" onclick={logout}>
     <Translatable resourceKey={i18nKey("logout")} />
 </a>
 

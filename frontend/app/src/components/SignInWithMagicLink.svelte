@@ -5,7 +5,7 @@
     import { i18nKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
     import FancyLoader from "./icons/FancyLoader.svelte";
-    import ModalContent from "./ModalContent.svelte";
+    import ModalContent from "./ModalContentLegacy.svelte";
     import { pageReplace } from "../routes";
     import page from "page";
 

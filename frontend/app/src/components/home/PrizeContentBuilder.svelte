@@ -11,7 +11,7 @@
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import ModalContent from "../ModalContentLegacy.svelte";
     import Legend from "../Legend.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";

@@ -84,3 +84,4 @@ echo "Canisters created"
 ./scripts/get-test-icp.sh "dccg7-xmaaa-aaaaa-qaamq-cai" $IDENTITY
 ./scripts/deploy-test-ledger.sh $IDENTITY
 ./scripts/mint-test-tokens.sh "dccg7-xmaaa-aaaaa-qaamq-cai" $IDENTITY
+./scripts/get-public-key.sh $IDENTITY > ./frontend/app/public/public-key

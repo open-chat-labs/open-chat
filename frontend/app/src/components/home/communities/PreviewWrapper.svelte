@@ -97,7 +97,7 @@
 </script>
 
 {#if checkingAccessGate}
-    <Overlay dismissible on:close={closeModal}>
+    <Overlay dismissible onClose={closeModal}>
         <AccessGateEvaluator
             gates={[checkingAccessGate]}
             on:close={closeModal}
@@ -106,8 +106,8 @@
 {/if}
 
 {#if gateCheckFailed}
-    <Overlay dismissible on:close={closeModal}>
-        <GateCheckFailed on:close={closeModal} gates={[gateCheckFailed]} />
+    <Overlay dismissible onClose={closeModal}>
+        <GateCheckFailed onClose={closeModal} gates={[gateCheckFailed]} />
     </Overlay>
 {/if}
 

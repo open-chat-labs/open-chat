@@ -18,7 +18,7 @@
     import OpenInNew from "svelte-material-icons/OpenInNew.svelte";
     import { toastStore } from "../../../stores/toast";
     import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import { NamedNeurons } from "../../../stores/namedNeurons";
     import { proposalVotes } from "../../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
@@ -260,7 +260,7 @@
 {/if}
 
 {#if showNeuronInfo}
-    <Overlay dismissible>
+    <Overlay dismissible onClose={() => (showNeuronInfo = false)}>
         <ModalContent compactFooter on:close={() => (showNeuronInfo = false)}>
             <div slot="header">
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
@@ -276,7 +276,7 @@
 {/if}
 
 {#if showPayload && !payloadEmpty}
-    <Overlay dismissible>
+    <Overlay dismissible onClose={() => (showPayload = false)}>
         <ModalContent compactFooter on:close={() => (showPayload = false)}>
             <div slot="header"><Translatable resourceKey={i18nKey("proposal.details")} /></div>
             <div class="payload-body" slot="body">

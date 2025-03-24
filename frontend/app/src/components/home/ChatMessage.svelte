@@ -31,7 +31,7 @@
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import ModalContent from "../ModalContentLegacy.svelte";
     import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
     import Translatable from "../Translatable.svelte";
@@ -430,7 +430,7 @@
 {/if}
 
 {#if showEmojiPicker && canReact}
-    <Overlay on:close={() => (showEmojiPicker = false)} dismissible>
+    <Overlay onClose={() => (showEmojiPicker = false)} dismissible>
         <ModalContent hideFooter hideHeader fill>
             <span slot="body">
                 <div class="emoji-header">

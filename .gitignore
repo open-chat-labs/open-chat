@@ -5,6 +5,7 @@ target/
 dist/
 node_modules/
 wasms/
+local/
 
 .DS_Store
 **/*.env

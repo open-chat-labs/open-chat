@@ -125,51 +125,57 @@
     });
 </script>
 
-<ModalContent on:close={onClose}>
-    <div class="header" slot="header">
-        <Translatable resourceKey={titleKey}></Translatable>
-    </div>
-    <div class="body" slot="body">
-        {#if step === "choose"}
-            {#if !busy && (mode === "update" || mode === "remove")}
-                <ChooseBot ownedOnly onSelect={selectBot} />
+<ModalContent {onClose}>
+    {#snippet header()}
+        <div class="header">
+            <Translatable resourceKey={titleKey}></Translatable>
+        </div>
+    {/snippet}
+    {#snippet body()}
+        <div class="body">
+            {#if step === "choose"}
+                {#if !busy && (mode === "update" || mode === "remove")}
+                    <ChooseBot ownedOnly onSelect={selectBot} />
+                {/if}
+                {#if mode === "remove" && busy}
+                    <div class="loader">
+                        <FancyLoader />
+                    </div>
+                {/if}
+            {:else if step === "edit" && botState.current !== undefined && mode !== "remove"}
+                <BotBuilder
+                    {nameDirty}
+                    {mode}
+                    candidate={botState.current}
+                    onUpdate={(b) => (botState.current = b)}
+                    bind:schemaLoaded
+                    bind:valid
+                    bind:principal />
             {/if}
-            {#if mode === "remove" && busy}
-                <div class="loader">
-                    <FancyLoader />
-                </div>
-            {/if}
-        {:else if step === "edit" && botState.current !== undefined && mode !== "remove"}
-            <BotBuilder
-                {nameDirty}
-                {mode}
-                candidate={botState.current}
-                onUpdate={(b) => (botState.current = b)}
-                bind:schemaLoaded
-                bind:valid
-                bind:principal />
-        {/if}
-    </div>
-    <div class="footer" slot="footer">
-        <ButtonGroup>
-            <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}>
-                <Translatable resourceKey={i18nKey("cancel")} />
-            </Button>
-            {#if mode !== "remove"}
-                <Button
-                    on:click={mode === "update" ? update : register}
-                    disabled={!valid || busy}
-                    loading={busy}
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}>
-                    <Translatable
-                        resourceKey={mode === "update"
-                            ? i18nKey("bots.update_bot.action")
-                            : i18nKey("bots.add.action")} />
+        </div>
+    {/snippet}
+    {#snippet footer()}
+        <div class="footer">
+            <ButtonGroup>
+                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}>
+                    <Translatable resourceKey={i18nKey("cancel")} />
                 </Button>
-            {/if}
-        </ButtonGroup>
-    </div>
+                {#if mode !== "remove"}
+                    <Button
+                        on:click={mode === "update" ? update : register}
+                        disabled={!valid || busy}
+                        loading={busy}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}>
+                        <Translatable
+                            resourceKey={mode === "update"
+                                ? i18nKey("bots.update_bot.action")
+                                : i18nKey("bots.add.action")} />
+                    </Button>
+                {/if}
+            </ButtonGroup>
+        </div>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">

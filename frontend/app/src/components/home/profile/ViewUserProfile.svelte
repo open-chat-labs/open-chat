@@ -25,7 +25,7 @@
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import { toastStore } from "../../../stores/toast";
@@ -276,7 +276,7 @@
 <svelte:window on:resize={onWindowResize} />
 
 {#if profile !== undefined}
-    <Overlay dismissible on:close={onClose}>
+    <Overlay dismissible {onClose}>
         <ModalContent
             closeIcon
             fill

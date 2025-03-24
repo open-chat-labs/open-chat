@@ -1,13 +1,24 @@
 <script lang="ts">
-    import { createEventDispatcher, tick } from "svelte";
+    import { tick, type Snippet } from "svelte";
     import { onMount } from "svelte";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        fade?: boolean;
+        alignBottomOnMobile?: boolean;
+        dismissible?: boolean;
+        alignLeft?: boolean;
+        children?: Snippet;
+        onClose?: () => void;
+    }
 
-    export let fade: boolean = true;
-    export let alignBottomOnMobile: boolean = true;
-    export let dismissible: boolean = false;
-    export let alignLeft = false;
+    let {
+        fade = true,
+        alignBottomOnMobile = true,
+        dismissible = false,
+        alignLeft = false,
+        children,
+        onClose,
+    }: Props = $props();
 
     let ref: HTMLElement;
 
@@ -36,36 +47,33 @@
 
     // make sure that the modal is closed if there is a routing event
     function popState() {
-        onClose();
+        onClose?.();
     }
 
     function onMousedown(ev: MouseEvent) {
         if (dismissible && ev.target === ref) {
-            onClose();
+            onClose?.();
         }
     }
 
     function onKeyDown(ev: KeyboardEvent) {
         if (dismissible && ev.key === "Escape") {
-            onClose();
+            onClose?.();
         }
-    }
-
-    function onClose() {
-        dispatch("close");
     }
 </script>
 
-<svelte:window on:keydown={onKeyDown} />
+<svelte:window onkeydown={onKeyDown} />
 
 <div class="blueprint">
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         bind:this={ref}
         class="overlay"
         class:align-bottom={alignBottomOnMobile}
         class:align-left={alignLeft}
-        on:mousedown={onMousedown}>
-        <slot />
+        onmousedown={onMousedown}>
+        {@render children?.()}
     </div>
 </div>
 

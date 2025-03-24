@@ -20,23 +20,29 @@
     let { onClose, title, warning }: Props = $props();
 </script>
 
-<Overlay dismissible>
-    <ModalContent closeIcon on:close={onClose}>
-        <div class="header" slot="header">
-            <Translatable resourceKey={title}></Translatable>
-        </div>
-        <div class="body" slot="body">
-            <AlertBox>
-                <Markdown text={interpolate($_, warning)} />
-            </AlertBox>
-        </div>
-        <div class="footer" slot="footer">
-            <ButtonGroup>
-                <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
-                    <Translatable resourceKey={i18nKey("close")} />
-                </Button>
-            </ButtonGroup>
-        </div>
+<Overlay {onClose} dismissible>
+    <ModalContent closeIcon {onClose}>
+        {#snippet header()}
+            <div class="header">
+                <Translatable resourceKey={title}></Translatable>
+            </div>
+        {/snippet}
+        {#snippet body()}
+            <div class="body">
+                <AlertBox>
+                    <Markdown text={interpolate($_, warning)} />
+                </AlertBox>
+            </div>
+        {/snippet}
+        {#snippet footer()}
+            <div class="footer">
+                <ButtonGroup>
+                    <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+                        <Translatable resourceKey={i18nKey("close")} />
+                    </Button>
+                </ButtonGroup>
+            </div>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

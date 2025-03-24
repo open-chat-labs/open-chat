@@ -3,7 +3,7 @@
     import TuneVertical from "svelte-material-icons/TuneVertical.svelte";
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import ModalContent from "../../ModalContent.svelte";
+    import ModalContent from "../../ModalContentLegacy.svelte";
     import ShieldPlusIcon from "svelte-material-icons/ShieldPlus.svelte";
     import ShieldRemoveIcon from "svelte-material-icons/ShieldRemove.svelte";
     import ShieldRefreshIcon from "svelte-material-icons/ShieldRefresh.svelte";

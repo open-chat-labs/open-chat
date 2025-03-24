@@ -58,6 +58,7 @@
     let chatEventList: ChatEventList | undefined;
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
+    //@ts-ignore
     let memeBuilder: MemeBuilder;
     let creatingPoll = false;
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
@@ -302,7 +303,11 @@
     }
 
     function sendMessageWithContent(ev: CustomEvent<{ content: MessageContent }>) {
-        client.sendMessageWithContent(messageContext, ev.detail.content, false);
+        onSendMessageWithContent(ev.detail.content);
+    }
+
+    function onSendMessageWithContent(content: MessageContent) {
+        client.sendMessageWithContent(messageContext, content, false);
     }
 </script>
 
@@ -328,10 +333,7 @@
     bind:this={giphySelector}
     bind:open={selectingGif} />
 
-<MemeBuilder
-    on:sendMessageWithContent={sendMessageWithContent}
-    bind:this={memeBuilder}
-    bind:open={buildingMeme} />
+<MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder

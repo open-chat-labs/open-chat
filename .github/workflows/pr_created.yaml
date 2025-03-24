@@ -1,0 +1,17 @@
+name: PR Created
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+    branches:
+      - master
+
+jobs:
+  post-pr-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use GitHub Bot Action
+        uses: open-chat-labs/github_bot_action@v1.0.2
+        with:
+          OC_BOT_URL: ${{ secrets.OC_BOT_URL }}
+          OC_API_KEY: ${{ secrets.OC_API_KEY }}

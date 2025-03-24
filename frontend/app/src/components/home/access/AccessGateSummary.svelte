@@ -46,7 +46,7 @@
 </script>
 
 {#if showDetail}
-    <AccessGateBuilder bind:valid {level} on:close={close} bind:gateConfig {editable} />
+    <AccessGateBuilder bind:valid {level} onClose={close} bind:gateConfig {editable} />
 {/if}
 
 {#if gateConfig.gate.kind !== "no_gate" || showNoGate}

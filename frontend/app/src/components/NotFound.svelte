@@ -2,7 +2,7 @@
     import { createEventDispatcher } from "svelte";
     import Translatable from "./Translatable.svelte";
     import { i18nKey } from "../i18n/i18n";
-    import ModalContent from "./ModalContent.svelte";
+    import ModalContent from "./ModalContentLegacy.svelte";
     import Button from "./Button.svelte";
     import { mobileWidth } from "../stores/screenDimensions";
     import ButtonGroup from "./ButtonGroup.svelte";

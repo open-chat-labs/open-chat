@@ -117,7 +117,7 @@
 {#if actionMode !== "none" && selectedLedger !== undefined}
     <Overlay
         dismissible={actionMode === "receive" || actionMode === "transactions"}
-        on:close={hideManageModal}>
+        onClose={hideManageModal}>
         {#if actionMode === "receive"}
             <ReceiveCrypto ledger={selectedLedger} on:close={hideManageModal} />
         {:else if actionMode === "send"}

@@ -76,20 +76,14 @@
         perm: ExternalBotPermissions,
         scope: CommunitySummary | ChatSummary,
     ): ExternalBotPermissions {
-        if (scope.kind === "community") {
-            // chat & message permissions don't apply at the community level
-            return {
-                ...perm,
-                chatPermissions: [],
-                messagePermissions: [],
-            };
-        } else {
+        if (scope.kind !== "community") {
             // community permisisons don't apply at the chat level
             return {
                 ...perm,
                 communityPermissions: [],
             };
         }
+        return perm;
     }
 
     function removeBot() {

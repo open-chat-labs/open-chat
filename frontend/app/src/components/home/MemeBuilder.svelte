@@ -7,21 +7,24 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import MemeFighter from "../icons/MemeFighter.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { createEventDispatcher, tick } from "svelte";
+    import { tick } from "svelte";
     import type { MemeFighterContent as MemeFighterContentType } from "openchat-client";
     import { currentTheme } from "../../theme/themes";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        open: boolean;
+        width?: number;
+        height?: number;
+        onSend: (content: MemeFighterContentType) => void;
+    }
 
-    export let open: boolean;
-    export let width = 500;
-    export let height = 400;
+    let { open = $bindable(), width = 500, height = 400, onSend }: Props = $props();
 
-    let memeUrl = undefined as string | undefined;
+    let memeUrl = $state(undefined as string | undefined);
     let iframe: HTMLIFrameElement;
-    let img: HTMLImageElement | undefined;
+    let img: HTMLImageElement | undefined = $state();
     let placeholder = "/assets/memefighter.svg";
 
     export function reset() {
@@ -52,7 +55,7 @@
                 width: rect.width,
                 height: rect.height,
             };
-            dispatch("sendMessageWithContent", { content });
+            onSend(content);
             open = false;
         }
     }
@@ -73,33 +76,39 @@
 </script>
 
 {#if open}
-    <Overlay dismissible>
-        <ModalContent fill closeIcon on:close={close}>
-            <div class="header" slot="header">
-                <MemeFighter size={$iconSize} color={"var(--icon-txt)"} />
-                <div class="title">Meme Fighter</div>
-            </div>
-            <div slot="body" class="meme-body">
-                {#if memeUrl}
-                    <img bind:this={img} class="meme" src={memeUrl} on:error={error} />
-                {:else}
-                    <iframe
-                        bind:this={iframe}
-                        {width}
-                        {height}
-                        style="border: none; max-width: 100%;" />
-                {/if}
-            </div>
-            <span class="footer" slot="footer">
-                <ButtonGroup align={$mobileWidth ? "center" : "end"}>
-                    <Button tiny secondary on:click={reset}
-                        ><Translatable resourceKey={i18nKey("reset")} /></Button>
-                    <Button tiny secondary on:click={close}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                    <Button tiny disabled={memeUrl === undefined} on:click={send}
-                        ><Translatable resourceKey={i18nKey("send")} /></Button>
-                </ButtonGroup>
-            </span>
+    <Overlay dismissible onClose={close}>
+        <ModalContent fill closeIcon onClose={close}>
+            {#snippet header()}
+                <div class="header">
+                    <MemeFighter size={$iconSize} color={"var(--icon-txt)"} />
+                    <div class="title">Meme Fighter</div>
+                </div>
+            {/snippet}
+            {#snippet body()}
+                <div class="meme-body">
+                    {#if memeUrl}
+                        <img bind:this={img} class="meme" src={memeUrl} onerror={error} />
+                    {:else}
+                        <iframe
+                            bind:this={iframe}
+                            {width}
+                            {height}
+                            style="border: none; max-width: 100%;"></iframe>
+                    {/if}
+                </div>
+            {/snippet}
+            {#snippet footer()}
+                <span class="footer">
+                    <ButtonGroup align={$mobileWidth ? "center" : "end"}>
+                        <Button tiny secondary on:click={reset}
+                            ><Translatable resourceKey={i18nKey("reset")} /></Button>
+                        <Button tiny secondary on:click={close}
+                            ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                        <Button tiny disabled={memeUrl === undefined} on:click={send}
+                            ><Translatable resourceKey={i18nKey("send")} /></Button>
+                    </ButtonGroup>
+                </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}

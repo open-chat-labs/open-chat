@@ -2,7 +2,7 @@
     import Overlay from "./Overlay.svelte";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
-    import ModalContent from "./ModalContent.svelte";
+    import ModalContent from "./ModalContentLegacy.svelte";
     import { createEventDispatcher } from "svelte";
     import Cropper from "svelte-easy-crop";
     import type { CropData } from "svelte-easy-crop";
