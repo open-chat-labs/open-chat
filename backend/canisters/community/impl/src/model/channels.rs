@@ -147,13 +147,19 @@ impl Channels {
         self.channels.values_mut()
     }
 
-    pub fn search(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> (Vec<ChannelMatch>, u32) {
+    pub fn search(
+        &self,
+        search_term: Option<String>,
+        page_index: u32,
+        page_size: u8,
+        include_private: bool,
+    ) -> (Vec<ChannelMatch>, u32) {
         let query = search_term.map(Query::parse);
 
         let mut matches: Vec<_> = self
             .channels
             .values()
-            .filter(|c| c.chat.is_public.value)
+            .filter(|c| c.chat.is_public.value || include_private)
             .map(|c| {
                 let score = if let Some(query) = &query {
                     let document: Document = c.into();
@@ -464,6 +470,7 @@ impl From<&Channel> for ChannelMatch {
             gate: channel.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
             gate_config: channel.chat.gate_config.value.clone().map(|gc| gc.into()),
             subtype: channel.chat.subtype.value.clone(),
+            is_public: channel.chat.is_public.value,
         }
     }
 }

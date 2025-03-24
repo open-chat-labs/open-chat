@@ -8,6 +8,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_bot_delete_channel;
 use community_canister::delete_channel::{Response::*, *};
+use group_community_common::Member;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, UserIdKeyPrefix};
 use types::{BotCaller, Caller, ChannelDeleted, ChannelId};
 
@@ -56,7 +57,13 @@ fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, sta
         return UserLapsed;
     }
 
-    if !channel_member.role().can_delete_group() {
+    if !channel_member.role().can_delete_group()
+        && !state
+            .data
+            .members
+            .get_by_user_id(&caller.agent())
+            .is_some_and(|m| m.is_owner())
+    {
         return NotAuthorized;
     }
 
