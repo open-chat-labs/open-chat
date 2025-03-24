@@ -1380,7 +1380,7 @@
         {:else if modal.kind === "challenge"}
             <ChallengeModal on:close={closeModal} />
         {:else if modal.kind === "verify_humanity"}
-            <VerifyHumanity on:close={closeModal} on:success={closeModal} />
+            <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
         {/if}
     </Overlay>
 {/if}
