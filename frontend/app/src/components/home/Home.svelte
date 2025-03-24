@@ -1376,7 +1376,7 @@
         {:else if modal.kind === "logging_in"}
             <LoggingInModal on:close={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}
-            <DailyChitModal on:leaderboard={leaderboard} on:close={closeModal} />
+            <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "challenge"}
             <ChallengeModal on:close={closeModal} />
         {:else if modal.kind === "verify_humanity"}
