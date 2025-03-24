@@ -10,6 +10,7 @@ pub const WEEK_IN_MS: Milliseconds = DAY_IN_MS * 7;
 pub const NANOS_PER_MILLISECOND: u64 = 1_000_000;
 pub const ONE_MB: u64 = 1024 * 1024;
 pub const ONE_GB: u64 = 1024 * ONE_MB;
+pub const CHUNK_STORE_CHUNK_SIZE: usize = ONE_MB as usize;
 
 // This only applies to the 'top level' canisters (ie. not user + group canisters)
 pub fn min_cycles_balance(test_mode: bool) -> Cycles {

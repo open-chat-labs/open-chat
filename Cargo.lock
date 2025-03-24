@@ -3094,6 +3094,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
+ "constants",
  "group_index_canister",
  "ic-agent",
  "types",
@@ -4841,6 +4842,7 @@ name = "local_group_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client",
+ "constants",
  "ic-cdk 0.18.0-alpha.2",
  "local_group_index_canister",
  "msgpack",
@@ -4911,6 +4913,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
+ "constants",
  "ic-cdk 0.18.0-alpha.2",
  "local_user_index_canister",
  "msgpack",
@@ -5760,6 +5763,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
+ "constants",
  "ic-agent",
  "openchat_installer_canister",
  "types",
@@ -9019,6 +9023,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
+ "constants",
  "ic-agent",
  "types",
  "user_index_canister",
