@@ -1,27 +1,29 @@
 <script lang="ts">
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
-    import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
 
-    const dispatch = createEventDispatcher();
+    let zoom = $state(false);
 
-    let zoom = false;
+    interface Props {
+        url: string;
+        alt: string;
+        onZoom: (url: string, alt: string) => void;
+    }
 
-    export let url: string;
-    export let alt: string;
+    let { url, alt, onZoom }: Props = $props();
 
     function zoomin() {
         if ($mobileWidth) return;
-        dispatch("zoom", { url, alt });
+        onZoom(url, alt);
         zoom = !zoom;
     }
 </script>
 
 {#if zoom}
-    <div class="zoomed" style={`background-image: url(${url})`} />
+    <div class="zoomed" style={`background-image: url(${url})`}></div>
 {/if}
 
-<div class="wrapper" on:click={zoomin}>
+<div class="wrapper" onclick={zoomin}>
     <img class="zoomable" src={url} {alt} />
 
     {#if !$mobileWidth}

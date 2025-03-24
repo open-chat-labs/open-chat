@@ -1,29 +1,34 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import type { Snippet } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
-    const dispatch = createEventDispatcher();
 
-    export let id: string;
+    interface Props {
+        id: string;
+        children?: Snippet;
+        onCopyUrl: (e: Event, id: string) => void;
+    }
 
-    $: matches = [...id.matchAll(/(\d+-?)/g)];
+    let { id, children, onCopyUrl }: Props = $props();
 
-    $: depth = matches.length;
+    let matches = $derived([...id.matchAll(/(\d+-?)/g)]);
 
-    $: size = $mobileWidth ? "14px" : "16px";
+    let depth = $derived(matches.length);
+
+    let size = $derived($mobileWidth ? "14px" : "16px");
 </script>
 
 <div class="wrapper">
     {#if depth === 1}
-        <h2 class="link-target" {id}><slot /></h2>
+        <h2 class="link-target" {id}>{@render children?.()}</h2>
     {:else if depth === 2}
-        <h3 class="link-target" {id}><slot /></h3>
+        <h3 class="link-target" {id}>{@render children?.()}</h3>
     {:else if depth === 3}
-        <h4 class="link-target" {id}><slot /></h4>
+        <h4 class="link-target" {id}>{@render children?.()}</h4>
     {:else if depth === 4}
-        <h5 class="link-target" {id}><slot /></h5>
+        <h5 class="link-target" {id}>{@render children?.()}</h5>
     {/if}
-    <div class="copy" on:click={() => dispatch("copyUrl", id)}>
+    <div class="copy" onclick={(e) => onCopyUrl(e, id)}>
         <Copy {size} color={"var(--landing-txt)"} />
     </div>
 </div>

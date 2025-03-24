@@ -468,7 +468,7 @@
         messageId={msg.messageId}
         {chatId}
         {canDelete}
-        on:close={() => (showReport = false)} />
+        onClose={() => (showReport = false)} />
 {/if}
 
 {#if expiresAt === undefined || percentageExpired < 100}
