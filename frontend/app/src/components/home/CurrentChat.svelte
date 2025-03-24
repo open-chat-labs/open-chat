@@ -80,7 +80,9 @@
     let creatingP2PSwapMessage = false;
     let selectingGif = false;
     let buildingMeme = false;
+    //@ts-ignore
     let pollBuilder: PollBuilder;
+    //@ts-ignore
     let giphySelector: GiphySelector;
     //@ts-ignore
     let memeBuilder: MemeBuilder;

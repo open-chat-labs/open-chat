@@ -56,7 +56,9 @@
     export let chat: ChatSummary;
 
     let chatEventList: ChatEventList | undefined;
+    //@ts-ignore
     let pollBuilder: PollBuilder;
+    //@ts-ignore
     let giphySelector: GiphySelector;
     //@ts-ignore
     let memeBuilder: MemeBuilder;

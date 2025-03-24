@@ -47,7 +47,7 @@
     export let failed: boolean;
     export let timestamp: bigint | undefined = undefined;
     export let blockLevelMarkdown: boolean;
-    export let onExpandMessage: (() => void) | undefined;
+    export let onExpandMessage: (() => void) | undefined = undefined;
 </script>
 
 {#if content.kind === "text_content"}

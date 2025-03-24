@@ -65,7 +65,7 @@
     export let supportsReply: boolean;
     export let collapsed: boolean;
     export let threadRootMessage: Message | undefined;
-    export let onExpandMessage: (() => void) | undefined;
+    export let onExpandMessage: (() => void) | undefined = undefined;
 
     let userSummary: UserSummary | undefined = undefined;
 
