@@ -15,7 +15,7 @@ RUN nodejs --version
 RUN npm --version
 
 # Download and install dfx
-RUN DFX_VERSION=0.26.0-beta.1 DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+RUN DFX_VERSION=0.25.1 DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
 ENV PATH="/root/.local/share/dfx/bin:${PATH}"
 RUN dfx --help
 
@@ -54,7 +54,7 @@ RUN apt-get update
 RUN apt-get install -y curl nginx jq libunwind-dev
 
 # Download and install dfx (again)
-RUN DFX_VERSION=0.26.0-beta.1 DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+RUN DFX_VERSION=0.25.1 DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
 ENV PATH="/root/.local/share/dfx/bin:${PATH}"
 RUN dfx --help
 
