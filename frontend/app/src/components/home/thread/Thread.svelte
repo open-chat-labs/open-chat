@@ -222,7 +222,11 @@
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        draftMessagesStore.setAttachment(messageContext, ev.detail);
+        onFileSelected(ev.detail);
+    }
+
+    function onFileSelected(content: AttachmentContent) {
+        draftMessagesStore.setAttachment(messageContext, content);
     }
 
     function tokenTransfer(ev: CustomEvent<{ ledger?: string; amount?: bigint }>) {
@@ -454,7 +458,7 @@
         on:setTextContent={setTextContent}
         on:startTyping={onStartTyping}
         on:stopTyping={onStopTyping}
-        on:fileSelected={fileSelected}
+        {onFileSelected}
         on:audioCaptured={fileSelected}
         on:sendMessage={sendMessage}
         on:attachGif={attachGif}

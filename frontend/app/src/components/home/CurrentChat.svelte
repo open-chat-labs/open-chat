@@ -223,6 +223,11 @@
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
         draftMessagesStore.setAttachment({ chatId: chat.id }, ev.detail);
+        onFileSelected(ev.detail);
+    }
+
+    function onFileSelected(content: AttachmentContent) {
+        draftMessagesStore.setAttachment({ chatId: chat.id }, content);
     }
 
     function attachGif(ev: CustomEvent<string>) {
@@ -483,7 +488,7 @@
             on:setTextContent={setTextContent}
             on:startTyping={() => client.startTyping(chat, $user.userId)}
             on:stopTyping={() => client.stopTyping(chat, $user.userId)}
-            on:fileSelected={fileSelected}
+            {onFileSelected}
             on:audioCaptured={fileSelected}
             on:sendMessage={sendMessage}
             on:attachGif={attachGif}
