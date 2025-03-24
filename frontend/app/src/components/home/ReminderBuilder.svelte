@@ -23,7 +23,7 @@
     const client = getContext<OpenChat>("client");
 
     let busy = false;
-    let note: string;
+    let note: string = "";
     let selectedIntervalIndex = 0;
     let intervals = [
         {
