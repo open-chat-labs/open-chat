@@ -1220,8 +1220,8 @@
             inGlobalContext={showProfileCard.inGlobalContext}
             chatButton={showProfileCard.chatButton}
             alignTo={showProfileCard.alignTo}
-            on:openDirectChat={chatWithFromProfileCard}
-            on:close={() => (showProfileCard = undefined)} />
+            onOpenDirectChat={chatWithFromProfileCard}
+            onClose={() => (showProfileCard = undefined)} />
     {/if}
 {/if}
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Avatar from "../../Avatar.svelte";
     import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
@@ -25,7 +25,7 @@
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContentLegacy.svelte";
+    import ModalContent from "../../ModalContent.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import { toastStore } from "../../../stores/toast";
@@ -38,59 +38,28 @@
     import { disableChit } from "@src/stores/settings";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let userId: string;
-    export let alignTo: DOMRect | undefined = undefined;
-    export let chatButton = true;
-    export let inGlobalContext = false;
+    interface Props {
+        userId: string;
+        alignTo?: DOMRect | undefined;
+        chatButton?: boolean;
+        inGlobalContext?: boolean;
+        onOpenDirectChat: () => void;
+        onClose: () => void;
+    }
 
-    // this is the next thing on the list
+    let {
+        userId,
+        alignTo = undefined,
+        chatButton = true,
+        inGlobalContext = false,
+        onOpenDirectChat,
+        onClose,
+    }: Props = $props();
 
-    let profile: PublicProfile | undefined = undefined;
-    let user: UserSummary | undefined;
-    let lastOnline: number | undefined;
-
-    $: diamondStatus = user?.diamondStatus;
-    $: me = userId === $createdUser.userId;
-    $: isSuspended = user?.suspended ?? false;
-    $: modal = $mobileWidth;
-    $: [status, online] =
-        lastOnline !== undefined && lastOnline !== 0
-            ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
-            : ["", false];
-    $: avatarUrl =
-        profile !== undefined
-            ? client.buildUserAvatarUrl(
-                  import.meta.env.OC_BLOB_URL_PATTERN!,
-                  userId,
-                  profile.avatarId,
-              )
-            : "/assets/unknownUserAvatar.svg";
-    $: joined =
-        profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined;
-    $: displayName = client.getDisplayName(
-        {
-            userId,
-            username: profile?.username ?? "",
-            displayName: profile?.displayName,
-        },
-        inGlobalContext ? undefined : $communityMembers,
-    );
-    $: canBlock = canBlockUser(
-        $selectedChat,
-        $selectedCommunity,
-        $blockedUsers,
-        $currentChatBlockedUsers,
-        $currentCommunityBlockedUsers,
-    );
-    $: canUnblock = canUnblockUser(
-        $selectedChat,
-        $selectedCommunity,
-        $blockedUsers,
-        $currentChatBlockedUsers,
-        $currentCommunityBlockedUsers,
-    );
+    let profile: PublicProfile | undefined = $state();
+    let user: UserSummary | undefined = $state();
+    let lastOnline: number | undefined = $state();
 
     onMount(async () => {
         try {
@@ -224,16 +193,12 @@
     }
 
     function handleOpenDirectChat() {
-        dispatch("openDirectChat");
+        onOpenDirectChat();
     }
 
     function showUserProfile() {
         rightPanelHistory.set([{ kind: "user_profile" }]);
         onClose();
-    }
-
-    function onClose() {
-        dispatch("close");
     }
 
     function onWindowResize() {
@@ -271,12 +236,62 @@
             }
         });
     }
+    let diamondStatus = $derived(user?.diamondStatus);
+    let me = $derived(userId === $createdUser.userId);
+    let isSuspended = $derived(user?.suspended ?? false);
+    let modal = $derived($mobileWidth);
+    let [status, online] = $derived(
+        lastOnline !== undefined && lastOnline !== 0
+            ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
+            : ["", false],
+    );
+    let avatarUrl = $derived(
+        profile !== undefined
+            ? client.buildUserAvatarUrl(
+                  import.meta.env.OC_BLOB_URL_PATTERN!,
+                  userId,
+                  profile.avatarId,
+              )
+            : "/assets/unknownUserAvatar.svg",
+    );
+    let joined = $derived(
+        profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined,
+    );
+    let displayName = $derived(
+        client.getDisplayName(
+            {
+                userId,
+                username: profile?.username ?? "",
+                displayName: profile?.displayName,
+            },
+            inGlobalContext ? undefined : $communityMembers,
+        ),
+    );
+    let canBlock = $derived(
+        canBlockUser(
+            $selectedChat,
+            $selectedCommunity,
+            $blockedUsers,
+            $currentChatBlockedUsers,
+            $currentCommunityBlockedUsers,
+        ),
+    );
+    let canUnblock = $derived(
+        canUnblockUser(
+            $selectedChat,
+            $selectedCommunity,
+            $blockedUsers,
+            $currentChatBlockedUsers,
+            $currentCommunityBlockedUsers,
+        ),
+    );
 </script>
 
-<svelte:window on:resize={onWindowResize} />
+<svelte:window onresize={onWindowResize} />
 
 {#if profile !== undefined}
     <Overlay dismissible {onClose}>
+        <h1>cunt</h1>
         <ModalContent
             closeIcon
             fill
@@ -286,102 +301,111 @@
             fixedWidth={false}
             large={modal}
             {alignTo}
-            on:close>
-            <div class="header" slot="header">
-                <div class="handle">
-                    <div class="display_name">
-                        {displayName}
-                    </div>
-                    <div class="name_and_badges">
-                        <div class="username">
-                            @{profile.username}
+            {onClose}>
+            {#snippet header()}
+                <div class="header">
+                    <div class="handle">
+                        <div class="display_name">
+                            {displayName}
                         </div>
-                        <Badges
-                            uniquePerson={user?.isUniquePerson}
-                            {diamondStatus}
-                            streak={client.getStreak(user?.userId)} />
-                        {#if user !== undefined && $selectedChat !== undefined && $selectedChat.kind !== "direct_chat"}
-                            <WithRole
-                                userId={user.userId}
-                                chatMembers={$chatMembersMap}
-                                communityMembers={$communityMembers}
-                                let:chatRole
-                                let:communityRole>
-                                <RoleIcon level="community" popup role={communityRole} />
-                                <RoleIcon
-                                    level={$selectedChat.kind === "channel" ? "channel" : "group"}
-                                    popup
-                                    role={chatRole} />
-                            </WithRole>
-                        {/if}
-                    </div>
-                </div>
-            </div>
-            <div slot="body" class="body" class:modal>
-                <div class="avatar">
-                    <Avatar url={avatarUrl} {userId} size={AvatarSize.Large} />
-                </div>
-                {#if user !== undefined && !$disableChit}
-                    <ChitBalance
-                        size={"small"}
-                        {me}
-                        balance={user.chitBalance}
-                        totalEarned={user.totalChitEarned} />
-                {/if}
-                {#if profile.bio.length > 0}
-                    <p class="bio"><Markdown inline={false} text={profile.bio} /></p>
-                {/if}
-                <div class="meta">
-                    <div class="left" class:suspended={isSuspended}>
-                        {#if isSuspended}
-                            <Translatable resourceKey={i18nKey("accountSuspended")} />
-                        {:else}
-                            {#if online}
-                                <div class="online"></div>
+                        <div class="name_and_badges">
+                            <div class="username">
+                                @{profile!.username}
+                            </div>
+                            <Badges
+                                uniquePerson={user?.isUniquePerson}
+                                {diamondStatus}
+                                streak={client.getStreak(user?.userId)} />
+                            {#if user !== undefined && $selectedChat !== undefined && $selectedChat.kind !== "direct_chat"}
+                                <WithRole
+                                    userId={user.userId}
+                                    chatMembers={$chatMembersMap}
+                                    communityMembers={$communityMembers}
+                                    let:chatRole
+                                    let:communityRole>
+                                    <RoleIcon level="community" popup role={communityRole} />
+                                    <RoleIcon
+                                        level={$selectedChat.kind === "channel"
+                                            ? "channel"
+                                            : "group"}
+                                        popup
+                                        role={chatRole} />
+                                </WithRole>
                             {/if}
-                            {status === "" ? "..." : status}
-                        {/if}
-                    </div>
-                    <div class="right">
-                        <ClockOutline size={"12px"} color={"var(--txt)"} />
-                        {joined}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div slot="footer" class="footer">
-                <ButtonGroup align={"fill"}>
-                    {#if chatButton && !me}
-                        <Button on:click={handleOpenDirectChat} small
-                            ><Translatable resourceKey={i18nKey("profile.chat")} /></Button>
+            {/snippet}
+            {#snippet body()}
+                <div class="body" class:modal>
+                    <div class="avatar">
+                        <Avatar url={avatarUrl} {userId} size={AvatarSize.Large} />
+                    </div>
+                    {#if user !== undefined && !$disableChit}
+                        <ChitBalance
+                            size={"small"}
+                            {me}
+                            balance={user.chitBalance}
+                            totalEarned={user.totalChitEarned} />
                     {/if}
-                    {#if me}
-                        <Button on:click={showUserProfile} small
-                            ><Translatable resourceKey={i18nKey("profile.settings")} /></Button>
+                    {#if profile!.bio.length > 0}
+                        <p class="bio"><Markdown inline={false} text={profile!.bio} /></p>
                     {/if}
-                    {#if canBlock}
-                        <Button on:click={blockUser} small
-                            ><Translatable resourceKey={i18nKey("profile.block")} /></Button>
-                    {/if}
-                    {#if canUnblock}
-                        <Button on:click={unblockUser} small
-                            ><Translatable resourceKey={i18nKey("profile.unblock")} /></Button>
-                    {/if}
-                </ButtonGroup>
-                {#if $platformModerator}
-                    <div class="suspend">
-                        <ButtonGroup align={"fill"}>
+                    <div class="meta">
+                        <div class="left" class:suspended={isSuspended}>
                             {#if isSuspended}
-                                <Button on:click={unsuspendUser} small
-                                    ><Translatable
-                                        resourceKey={i18nKey("unsuspendUser")} /></Button>
+                                <Translatable resourceKey={i18nKey("accountSuspended")} />
                             {:else}
-                                <Button on:click={suspendUser} small
-                                    ><Translatable resourceKey={i18nKey("suspendUser")} /></Button>
+                                {#if online}
+                                    <div class="online"></div>
+                                {/if}
+                                {status === "" ? "..." : status}
                             {/if}
-                        </ButtonGroup>
+                        </div>
+                        <div class="right">
+                            <ClockOutline size={"12px"} color={"var(--txt)"} />
+                            {joined}
+                        </div>
                     </div>
-                {/if}
-            </div>
+                </div>
+            {/snippet}
+            {#snippet footer()}
+                <div class="footer">
+                    <ButtonGroup align={"fill"}>
+                        {#if chatButton && !me}
+                            <Button on:click={handleOpenDirectChat} small
+                                ><Translatable resourceKey={i18nKey("profile.chat")} /></Button>
+                        {/if}
+                        {#if me}
+                            <Button on:click={showUserProfile} small
+                                ><Translatable resourceKey={i18nKey("profile.settings")} /></Button>
+                        {/if}
+                        {#if canBlock}
+                            <Button on:click={blockUser} small
+                                ><Translatable resourceKey={i18nKey("profile.block")} /></Button>
+                        {/if}
+                        {#if canUnblock}
+                            <Button on:click={unblockUser} small
+                                ><Translatable resourceKey={i18nKey("profile.unblock")} /></Button>
+                        {/if}
+                    </ButtonGroup>
+                    {#if $platformModerator}
+                        <div class="suspend">
+                            <ButtonGroup align={"fill"}>
+                                {#if isSuspended}
+                                    <Button on:click={unsuspendUser} small
+                                        ><Translatable
+                                            resourceKey={i18nKey("unsuspendUser")} /></Button>
+                                {:else}
+                                    <Button on:click={suspendUser} small
+                                        ><Translatable
+                                            resourceKey={i18nKey("suspendUser")} /></Button>
+                                {/if}
+                            </ButtonGroup>
+                        </div>
+                    {/if}
+                </div>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}
