@@ -130,7 +130,7 @@
                 on:close={hideManageModal}
                 urlFormat={transactionsFormat} />
         {:else if actionMode === "restricted"}
-            <RestrictedFeature on:close={hideManageModal} feature="swap" />
+            <RestrictedFeature onClose={hideManageModal} feature="swap" />
         {/if}
     </Overlay>
 {/if}
