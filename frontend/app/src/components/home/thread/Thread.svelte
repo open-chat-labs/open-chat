@@ -329,7 +329,7 @@
 {/if}
 
 <GiphySelector
-    on:sendMessageWithContent={sendMessageWithContent}
+    onSend={onSendMessageWithContent}
     bind:this={giphySelector}
     bind:open={selectingGif} />
 
