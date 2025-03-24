@@ -47,6 +47,7 @@
     export let failed: boolean;
     export let timestamp: bigint | undefined = undefined;
     export let blockLevelMarkdown: boolean;
+    export let onExpandMessage: (() => void) | undefined;
 </script>
 
 {#if content.kind === "text_content"}
@@ -127,7 +128,7 @@
         {collapsed}
         {readonly}
         {reply}
-        on:expandMessage />
+        {onExpandMessage} />
 {:else if content.kind === "message_reminder_created_content" && !content.hidden}
     <MessageReminderCreatedContent {content} />
 {:else if content.kind === "message_reminder_content"}

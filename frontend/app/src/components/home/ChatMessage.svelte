@@ -107,6 +107,7 @@
     export let collapsed: boolean = false;
     export let threadRootMessage: Message | undefined;
     export let botContext: BotMessageContextType | undefined;
+    export let onExpandMessage: (() => void) | undefined;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -619,7 +620,7 @@
                             on:verifyHumanity
                             on:claimDailyChit
                             on:startVideoCall
-                            on:expandMessage />
+                            {onExpandMessage} />
 
                         {#if !inert && !isPrize}
                             <TimeAndTicks
