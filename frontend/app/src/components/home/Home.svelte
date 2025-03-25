@@ -171,6 +171,7 @@
         chatId: MultiUserChatIdentifier;
         level: Level;
         doubleCheck: { challenge: ResourceKey; response: ResourceKey };
+        after?: () => void;
     };
 
     type ConfirmDeleteCommunityEvent = {
@@ -690,6 +691,7 @@
                 return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.level).then(
                     (_) => {
                         rightPanelHistory.set([]);
+                        confirmActionEvent.after?.();
                     },
                 );
             default:

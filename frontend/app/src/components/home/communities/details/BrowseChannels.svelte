@@ -79,6 +79,21 @@
             searchResults = [];
         }
     });
+
+    function deleteChannel(channel: ChannelMatch) {
+        onDeleteChannel({
+            kind: "delete",
+            chatId: $state.snapshot(channel.id),
+            level: "channel",
+            doubleCheck: {
+                challenge: i18nKey("typeGroupName", { name: channel.name }),
+                response: i18nKey(channel.name),
+            },
+            after: () => {
+                search(searchTerm, true);
+            },
+        });
+    }
 </script>
 
 {#if filteredResults.length > 0}
@@ -98,7 +113,7 @@
 
             <div class="channels">
                 {#each filteredResults as channel}
-                    <ChannelCard {onDeleteChannel} {channel} />
+                    <ChannelCard onDeleteChannel={() => deleteChannel(channel)} {channel} />
                 {/each}
                 {#if more}
                     <div class="more">

@@ -27,7 +27,7 @@
 
     interface Props {
         channel: ChannelMatch;
-        onDeleteChannel: (ev: unknown) => void;
+        onDeleteChannel: () => void;
     }
 
     let { channel, onDeleteChannel }: Props = $props();
@@ -43,18 +43,6 @@
             popRightPanelHistory();
         }
         page(routeForChatIdentifier($chatListScope.kind, match.id));
-    }
-
-    function deleteChannel() {
-        onDeleteChannel({
-            kind: "delete",
-            chatId: $state.snapshot(channel.id),
-            level: "channel",
-            doubleCheck: {
-                challenge: i18nKey("typeGroupName", { name: channel.name }),
-                response: i18nKey(channel.name),
-            },
-        });
     }
 </script>
 
@@ -110,7 +98,7 @@
                 {/snippet}
                 {#snippet menuItems()}
                     <Menu>
-                        <MenuItem warning onclick={deleteChannel}>
+                        <MenuItem warning onclick={onDeleteChannel}>
                             {#snippet icon()}
                                 <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} />
                             {/snippet}
