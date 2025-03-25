@@ -2,7 +2,7 @@
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import ModalContent from "../../ModalContentLegacy.svelte";
+    import ModalContent from "../../ModalContent.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import AccountInfo from "../AccountInfo.svelte";
@@ -13,16 +13,20 @@
     import { BTC_SYMBOL, currentUser as user, cryptoLookup, cryptoBalance } from "openchat-client";
     import BitcoinAccountInfo from "@components/home/BitcoinAccountInfo.svelte";
 
-    export let ledger: string;
+    interface Props {
+        ledger: string;
+    }
+
+    let { ledger }: Props = $props();
 
     const dispatch = createEventDispatcher();
 
-    let error: string | undefined = undefined;
+    let error: string | undefined = $state(undefined);
 
-    $: tokenDetails = $cryptoLookup[ledger];
-    $: symbol = tokenDetails.symbol;
-    $: title = i18nKey(`cryptoAccount.receiveToken`, { symbol });
-    $: userId = $user.userId;
+    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let symbol = $derived(tokenDetails.symbol);
+    let title = $derived(i18nKey(`cryptoAccount.receiveToken`, { symbol }));
+    let userId = $derived($user.userId);
 
     function onBalanceRefreshed() {
         error = undefined;
@@ -34,32 +38,38 @@
 </script>
 
 <ModalContent>
-    <span class="header" slot="header">
-        <div class="main-title"><Translatable resourceKey={title} /></div>
-        <BalanceWithRefresh
-            {ledger}
-            value={$cryptoBalance[ledger]}
-            label={i18nKey("cryptoAccount.shortBalanceLabel")}
-            bold
-            on:refreshed={onBalanceRefreshed}
-            on:error={onBalanceRefreshError} />
-    </span>
-    <form class="body" slot="body">
-        {#if symbol === BTC_SYMBOL}
-            <BitcoinAccountInfo qrSize={"larger"} centered {userId} />
-        {:else}
-            <AccountInfo qrSize={"larger"} centered {ledger} user={$user} />
-        {/if}
-        {#if error}
-            <ErrorMessage>{error}</ErrorMessage>
-        {/if}
-    </form>
-    <span slot="footer">
-        <ButtonGroup>
-            <Button tiny={$mobileWidth} on:click={() => dispatch("close")}
-                ><Translatable resourceKey={i18nKey("close")} /></Button>
-        </ButtonGroup>
-    </span>
+    {#snippet header()}
+        <span class="header">
+            <div class="main-title"><Translatable resourceKey={title} /></div>
+            <BalanceWithRefresh
+                {ledger}
+                value={$cryptoBalance[ledger]}
+                label={i18nKey("cryptoAccount.shortBalanceLabel")}
+                bold
+                on:refreshed={onBalanceRefreshed}
+                on:error={onBalanceRefreshError} />
+        </span>
+    {/snippet}
+    {#snippet body()}
+        <form class="body">
+            {#if symbol === BTC_SYMBOL}
+                <BitcoinAccountInfo qrSize={"larger"} centered {userId} />
+            {:else}
+                <AccountInfo qrSize={"larger"} centered {ledger} user={$user} />
+            {/if}
+            {#if error}
+                <ErrorMessage>{error}</ErrorMessage>
+            {/if}
+        </form>
+    {/snippet}
+    {#snippet footer()}
+        <span>
+            <ButtonGroup>
+                <Button tiny={$mobileWidth} on:click={() => dispatch("close")}
+                    ><Translatable resourceKey={i18nKey("close")} /></Button>
+            </ButtonGroup>
+        </span>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">
