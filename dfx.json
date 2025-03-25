@@ -1,5 +1,5 @@
 {
-  "dfx": "0.25.1-beta.1",
+  "dfx": "0.26.0-beta.1",
   "canisters": {
     "openchat_installer": {
       "type": "custom",
