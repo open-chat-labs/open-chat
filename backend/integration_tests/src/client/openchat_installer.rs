@@ -7,6 +7,7 @@ generate_update_call!(upload_wasm_chunk);
 
 pub mod happy_path {
     use candid::Principal;
+    use constants::CHUNK_STORE_CHUNK_SIZE;
     use openchat_installer_canister::CanisterType;
     use pocket_ic::PocketIc;
     use types::{BuildVersion, CanisterId, Hash};
@@ -50,7 +51,7 @@ pub mod happy_path {
         wasm: &[u8],
         canister_type: CanisterType,
     ) {
-        for (index, chunk) in wasm.chunks(1_000_000).enumerate() {
+        for (index, chunk) in wasm.chunks(CHUNK_STORE_CHUNK_SIZE).enumerate() {
             let response = super::upload_wasm_chunk(
                 env,
                 sender,

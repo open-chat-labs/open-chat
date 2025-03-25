@@ -8,6 +8,7 @@ edition.workspace = true
 [dependencies]
 candid = { workspace = true }
 canister_client = { path = "../../../libraries/canister_client" }
+constants = { path = "../../../libraries/constants" }
 ic-agent = { workspace = true }
 openchat_installer_canister = { path = "../api" }
 types = { path = "../../../libraries/types" }

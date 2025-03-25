@@ -3094,6 +3094,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
+ "constants",
  "group_index_canister",
  "ic-agent",
  "types",
@@ -4817,10 +4818,12 @@ dependencies = [
  "futures",
  "ic-agent",
  "ic-utils",
+ "pocket-ic",
  "serde",
  "serde_json",
  "tokio",
  "types",
+ "url",
 ]
 
 [[package]]
@@ -4841,6 +4844,7 @@ name = "local_group_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client",
+ "constants",
  "ic-cdk 0.18.0-alpha.2",
  "local_group_index_canister",
  "msgpack",
@@ -4911,6 +4915,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
+ "constants",
  "ic-cdk 0.18.0-alpha.2",
  "local_user_index_canister",
  "msgpack",
@@ -5760,6 +5765,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
+ "constants",
  "ic-agent",
  "openchat_installer_canister",
  "types",
@@ -5970,15 +5976,6 @@ dependencies = [
  "base64 0.13.1",
  "once_cell",
  "regex",
-]
-
-[[package]]
-name = "pem"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8835c273a76a90455d7344889b0964598e3316e2a79ede8e36f16bdcf2228b8"
-dependencies = [
- "base64 0.13.1",
 ]
 
 [[package]]
@@ -9019,6 +9016,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
+ "constants",
  "ic-agent",
  "types",
  "user_index_canister",
@@ -9312,9 +9310,9 @@ dependencies = [
 
 [[package]]
 name = "web-push"
-version = "0.10.1"
+version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b5c5c6deab45e8820b77c9c8ae168f1ded4595767c746584bb67b9100f2b71d"
+checksum = "1f2332e5400bb42c21bcab3ca2cd3400ab4b1d5ecbe276b533ce9acb59c56602"
 dependencies = [
  "async-trait",
  "base64 0.13.1",
@@ -9325,7 +9323,7 @@ dependencies = [
  "hyper-tls",
  "jwt-simple 0.11.9",
  "log",
- "pem 1.1.1",
+ "pem 3.0.4",
  "sec1_decode",
  "serde",
  "serde_derive",

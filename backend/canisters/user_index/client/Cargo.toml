@@ -8,6 +8,7 @@ edition.workspace = true
 [dependencies]
 candid = { workspace = true }
 canister_client = { path = "../../../libraries/canister_client" }
+constants = { path = "../../../libraries/constants" }
 ic-agent = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_index_canister = { path = "../api" }
