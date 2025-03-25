@@ -14,7 +14,7 @@
     import ModalContent from "../ModalContent.svelte";
     import Legend from "../Legend.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
@@ -41,7 +41,6 @@
     const ONE_WEEK = ONE_DAY * 7;
     const OC_FEE_PERCENTAGE = 5n;
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
     const streaks = ["3", "7", "14", "30", "100"];
 
     interface Props {
@@ -49,9 +48,16 @@
         ledger: string;
         chat: ChatSummary;
         context: MessageContext;
+        onClose: () => void;
     }
 
-    let { draftAmount = $bindable(), ledger = $bindable(), chat, context }: Props = $props();
+    let {
+        draftAmount = $bindable(),
+        ledger = $bindable(),
+        chat,
+        context,
+        onClose,
+    }: Props = $props();
 
     let numberOfWinners = $state(20);
     let distribution: "equal" | "random" = $state("random");
@@ -167,7 +173,7 @@
             .sendMessageWithContent(context, content, false)
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
-                    dispatch("close");
+                    onClose();
                 } else if ($pinNumberErrorMessageStore === undefined) {
                     error = "errorSendingMessage";
                 }
@@ -177,7 +183,7 @@
 
     function cancel() {
         toppingUp = false;
-        dispatch("close");
+        onClose();
     }
 
     function onBalanceRefreshed() {
