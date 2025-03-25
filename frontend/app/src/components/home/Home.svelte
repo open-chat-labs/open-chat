@@ -1250,6 +1250,7 @@
             on:editCommunity={editCommunity}
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
+            on:deleteGroup={triggerConfirm}
             on:leaveGroup={triggerConfirm}
             on:askToSpeak
             on:hangup />

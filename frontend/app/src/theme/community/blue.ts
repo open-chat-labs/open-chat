@@ -172,7 +172,7 @@ export function getTheme(): Theme {
             warn: "#FF2E2E",
             "disabled-txt": hexPercent(txtDark, 50),
             hv: "rgba(226,226,226,0.5)",
-            sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.3)",
+            sh: "0px 10px 10px 0px rgba(85, 85, 85, 0.3)",
             "inverted-sh": "0px -10px 10px 0px rgba(85, 85, 85, 0.3)",
             bd: "transparent",
             separator: "rgba(0,0,0,0.1)",

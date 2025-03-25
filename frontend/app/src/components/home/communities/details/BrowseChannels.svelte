@@ -11,22 +11,27 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let searchTerm: string;
+    interface Props {
+        searchTerm: string;
+        onDeleteChannel: (ev: unknown) => void;
+    }
 
-    $: selectedCommunityId = $selectedCommunity?.id.communityId;
+    let { searchTerm, onDeleteChannel }: Props = $props();
 
-    let searching = false;
+    let selectedCommunityId = $derived($selectedCommunity?.id.communityId);
+
+    let searching = $state(false);
     let pageIndex = 0;
     let pageSize = 100;
-    let searchResults: ChannelMatch[] = [];
-    let total = 0;
-    let autoOpen = false;
+    let searchResults: ChannelMatch[] = $state([]);
+    let total = $state(0);
+    let autoOpen = $state(false);
     let matchedCommunityId: string | undefined = undefined;
-    $: more = total > searchResults.length;
+    let more = $derived(total > searchResults.length);
 
-    $: myChannels = ChatMap.fromList($chatSummariesListStore ?? []);
+    let myChannels = $derived(ChatMap.fromList($chatSummariesListStore ?? []));
 
-    $: filteredResults = searchResults.filter((c) => !myChannels.has(c.id));
+    let filteredResults = $derived(searchResults.filter((c) => !myChannels.has(c.id)));
 
     function search(term: string, reset = false) {
         const communityId = selectedCommunityId;
@@ -67,13 +72,13 @@
             .finally(() => (searching = false));
     }
 
-    $: {
+    $effect(() => {
         if (selectedCommunityId !== undefined) {
             search(searchTerm, true);
         } else {
             searchResults = [];
         }
-    }
+    });
 </script>
 
 {#if filteredResults.length > 0}
@@ -93,7 +98,7 @@
 
             <div class="channels">
                 {#each filteredResults as channel}
-                    <ChannelCard {channel} />
+                    <ChannelCard {onDeleteChannel} {channel} />
                 {/each}
                 {#if more}
                     <div class="more">
