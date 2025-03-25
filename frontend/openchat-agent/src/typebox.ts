@@ -8761,7 +8761,7 @@ export const BotCommandDefinition = Type.Object({
     params: Type.Array(BotCommandParam),
     permissions: BotPermissions,
     default_role: Type.Optional(GroupRole),
-    direct_messages: Type.Boolean(),
+    direct_messages: Type.Optional(Type.Boolean()),
 });
 
 export type CompositeGate = Static<typeof CompositeGate>;
