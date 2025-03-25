@@ -890,11 +890,11 @@
         }
     }
 
-    function accessGatesEvaluated(ev: CustomEvent<GateCheckSucceeded>) {
+    function accessGatesEvaluated(success: GateCheckSucceeded) {
         if (modal.kind === "evaluating_access_gates") {
             const { group, select } = modal;
             closeModal();
-            doJoinGroup(group, select, ev.detail);
+            doJoinGroup(group, select, success);
         }
     }
 
@@ -1354,8 +1354,8 @@
         {:else if modal.kind === "evaluating_access_gates"}
             <AccessGateEvaluator
                 gates={modal.gates}
-                on:close={closeModal}
-                on:success={accessGatesEvaluated} />
+                onClose={closeModal}
+                onSuccess={accessGatesEvaluated} />
         {:else if modal.kind === "new_group"}
             <CreateOrUpdateGroup
                 embeddedContent={modal.embeddedContent}

@@ -38,8 +38,8 @@
         doJoinCommunity(undefined);
     }
 
-    function accessGatesEvaluated(ev: CustomEvent<GateCheckSucceeded>) {
-        doJoinCommunity(ev.detail);
+    function accessGatesEvaluated(success: GateCheckSucceeded) {
+        doJoinCommunity(success);
     }
 
     function doJoinCommunity(gateCheck: GateCheckSucceeded | undefined): Promise<void> {
@@ -100,8 +100,8 @@
     <Overlay dismissible onClose={closeModal}>
         <AccessGateEvaluator
             gates={[checkingAccessGate]}
-            on:close={closeModal}
-            on:success={accessGatesEvaluated} />
+            onClose={closeModal}
+            onSuccess={accessGatesEvaluated} />
     </Overlay>
 {/if}
 
