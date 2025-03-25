@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import TokenInput from "../TokenInput.svelte";
     import type { NamedAccount, OpenChat, ResourceKey } from "openchat-client";
     import {
@@ -29,12 +29,12 @@
 
     interface Props {
         ledger: string;
+        onClose: () => void;
     }
 
-    let { ledger }: Props = $props();
+    let { ledger, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     let error: ResourceKey | undefined = $state(undefined);
     let amountToSend: bigint = $state(0n);
@@ -82,7 +82,7 @@
                 .saveAccount()
                 .then((resp) => {
                     if (resp.kind === "success") {
-                        dispatch("close");
+                        onClose();
                     } else if (resp.kind === "name_taken") {
                         error = i18nKey("tokenTransfer.accountNameTaken");
                     } else {
@@ -129,7 +129,7 @@
                     if (unknownAccount(targetAccount)) {
                         capturingAccount = true;
                     } else {
-                        dispatch("close");
+                        onClose();
                         targetAccount = "";
                     }
                 } else if (resp.kind === "failed" || resp.kind === "currency_not_supported") {
@@ -225,7 +225,7 @@
     {#snippet footer()}
         <span>
             <ButtonGroup>
-                <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
+                <Button secondary tiny={$mobileWidth} on:click={onClose}
                     ><Translatable
                         resourceKey={i18nKey(capturingAccount ? "noThanks" : "cancel")} /></Button>
                 <Button

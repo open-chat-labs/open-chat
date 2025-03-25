@@ -119,11 +119,11 @@
         dismissible={actionMode === "receive" || actionMode === "transactions"}
         onClose={hideManageModal}>
         {#if actionMode === "receive"}
-            <ReceiveCrypto ledger={selectedLedger} on:close={hideManageModal} />
+            <ReceiveCrypto ledger={selectedLedger} onClose={hideManageModal} />
         {:else if actionMode === "send"}
-            <SendCrypto ledger={selectedLedger} on:close={hideManageModal} />
+            <SendCrypto ledger={selectedLedger} onClose={hideManageModal} />
         {:else if actionMode === "swap"}
-            <SwapCrypto bind:ledgerIn={selectedLedger} on:close={hideManageModal} />
+            <SwapCrypto bind:ledgerIn={selectedLedger} onClose={hideManageModal} />
         {:else if actionMode === "transactions"}
             <AccountTransactions
                 ledger={selectedLedger}

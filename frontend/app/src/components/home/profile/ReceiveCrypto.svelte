@@ -4,7 +4,6 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
@@ -15,11 +14,10 @@
 
     interface Props {
         ledger: string;
+        onClose: () => void;
     }
 
-    let { ledger }: Props = $props();
-
-    const dispatch = createEventDispatcher();
+    let { ledger, onClose }: Props = $props();
 
     let error: string | undefined = $state(undefined);
 
@@ -65,7 +63,7 @@
     {#snippet footer()}
         <span>
             <ButtonGroup>
-                <Button tiny={$mobileWidth} on:click={() => dispatch("close")}
+                <Button tiny={$mobileWidth} on:click={onClose}
                     ><Translatable resourceKey={i18nKey("close")} /></Button>
             </ButtonGroup>
         </span>
