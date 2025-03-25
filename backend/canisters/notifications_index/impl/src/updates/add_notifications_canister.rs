@@ -87,6 +87,17 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
             }
         }
 
+        for (user_id, endpoint) in state.data.bot_endpoints.iter() {
+            state.data.notification_canisters_event_sync_queue.push(
+                canister_id,
+                IdempotentEnvelope {
+                    created_at: now,
+                    idempotency_id: state.env.rng().next_u64(),
+                    value: NotificationsIndexEvent::BotEndpointUpdated(*user_id, endpoint.clone()),
+                },
+            );
+        }
+
         Success
     } else {
         AlreadyAdded

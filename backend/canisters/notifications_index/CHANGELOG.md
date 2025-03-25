@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Introduce standardised error codes ([#7599](https://github.com/open-chat-labs/open-chat/pull/7599))
+- Sync bot endpoints to notifications canisters ([#7668](https://github.com/open-chat-labs/open-chat/pull/7668))
 
 ### Changed
 
