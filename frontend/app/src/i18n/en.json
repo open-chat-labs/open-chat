@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "Automatic",
         "autoInfo": "Organise your wallet automatically. Any token with a non-zero token balance or with a dollar value greater than the minimum dollar value entered below will be displayed",
+        "btcNetworkFee": "Bitcoin network fee: ~{amount} BTC",
         "comingSoon": "(coming soon)",
         "configureWallet": "Configure you wallet",
         "configureWalletFailure": "Sorry we were unable to save your wallet config",
@@ -591,6 +592,7 @@
         "manual": "Manual",
         "manualInfo": "Organise your wallet manually by selected exactly the tokens that you want to see",
         "minDollarPlaceholder": "Minimum dollar balance",
+        "network": "Network:",
         "receive": "Receive",
         "receiveToken": "Receive {symbol}",
         "remove": "Remove from wallet",

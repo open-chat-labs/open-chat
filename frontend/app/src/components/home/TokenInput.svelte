@@ -176,7 +176,7 @@
         }
 
         .usd, .min {
-            @include font(light, normal, fs-50);
+            @include font(light, normal, fs-60);
             color: var(--txt-light);
             flex: 1;
             text-align: right;

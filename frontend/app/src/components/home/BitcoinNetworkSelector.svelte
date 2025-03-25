@@ -1,6 +1,8 @@
 <script lang="ts">
     import { BTC_SYMBOL, CKBTC_SYMBOL } from "openchat-client";
     import MultiToggle from "@components/MultiToggle.svelte";
+    import Translatable from "@components/Translatable.svelte";
+    import { i18nKey } from "@i18n/i18n";
 
     type Props = {
         selectedNetwork: string;
@@ -11,7 +13,10 @@
     const networkOptions = [BTC_SYMBOL, CKBTC_SYMBOL].map((n) => ({ id: n, label: n }));
 </script>
 
-<div class="network-selector">Network: <MultiToggle options={networkOptions} bind:selected={selectedNetwork} /></div>
+<div class="network-selector">
+    <Translatable resourceKey={i18nKey("cryptoAccount.network")} />
+    <MultiToggle options={networkOptions} bind:selected={selectedNetwork} />
+</div>
 
 <style lang="scss">
     .network-selector {
@@ -19,5 +24,9 @@
         gap: $sp3;
         margin-bottom: $sp4;
         align-items: center;
+
+        .span {
+            margin: 0 $sp2;
+        }
     }
 </style>

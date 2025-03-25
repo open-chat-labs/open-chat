@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "Automático",
         "autoInfo": "Organiza tu billetera automáticamente. Se mostrarán todos los tokens con un saldo de tokens distinto de cero o con un valor en dólares mayor que el valor mínimo en dólares ingresado a continuación.",
+        "btcNetworkFee": "Tarifa de la red Bitcoin: ~{amount} BTC",
         "comingSoon": "(próximamente)",
         "configureWallet": "Configura tu billetera",
         "configureWalletFailure": "Lo sentimos, no pudimos guardar la configuración de tu billetera.",
@@ -591,6 +592,7 @@
         "manual": "Manual",
         "manualInfo": "Organiza tu billetera manualmente seleccionando exactamente los tokens que deseas ver",
         "minDollarPlaceholder": "Saldo mínimo en dólares",
+        "network": "Red:",
         "receive": "Recibir",
         "receiveToken": "Recibir {symbol}",
         "remove": "Quitar de la billetera",

@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "自動",
         "autoInfo": "ウォレットを自動的に整理します。トークン残高がゼロでないトークン、または以下に入力した最小ドル値を超えるドル値のトークンが表示されます。",
+        "btcNetworkFee": "ビットコインネットワーク手数料: ~{amount} BTC",
         "comingSoon": "（近日公開）",
         "configureWallet": "ウォレットを設定する",
         "configureWalletFailure": "申し訳ありませんが、ウォレットの設定を保存できませんでした",
@@ -591,6 +592,7 @@
         "manual": "マニュアル",
         "manualInfo": "表示したいトークンを正確に選択してウォレットを手動で整理します",
         "minDollarPlaceholder": "最低ドル残高",
+        "network": "ネットワーク：",
         "receive": "受け取る",
         "receiveToken": "{symbol}を受け取る",
         "remove": "ウォレットから削除",

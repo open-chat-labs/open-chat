@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "自动的",
         "autoInfo": "自动整理您的钱包。任何代币余额不为零或美元价值大于下面输入的最低美元价值的代币都将显示",
+        "btcNetworkFee": "比特币网络费用：~{amount} BTC",
         "comingSoon": "（快来了）",
         "configureWallet": "配置你的钱包",
         "configureWalletFailure": "抱歉，我们无法保存您的钱包配置",
@@ -591,6 +592,7 @@
         "manual": "手动的",
         "manualInfo": "通过选择您想要查看的代币来手动组织您的钱包",
         "minDollarPlaceholder": "最低美元余额",
+        "network": "网络：",
         "receive": "接收",
         "receiveToken": "接收 {symbol}",
         "remove": "从钱包中移除",

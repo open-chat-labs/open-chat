@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "Automatique",
         "autoInfo": "Organisez votre portefeuille automatiquement. Tout jeton avec un solde différent de zéro ou avec une valeur en dollars supérieure à la valeur minimale en dollars saisie ci-dessous sera affiché",
+        "btcNetworkFee": "Frais de réseau Bitcoin : ~{amount} BTC",
         "comingSoon": "(Bientôt disponible)",
         "configureWallet": "Configurez votre portefeuille",
         "configureWalletFailure": "Désolé, nous n'avons pas pu enregistrer la configuration de votre portefeuille",
@@ -591,6 +592,7 @@
         "manual": "Manuel",
         "manualInfo": "Organisez votre portefeuille manuellement en sélectionnant exactement les jetons que vous souhaitez voir",
         "minDollarPlaceholder": "Solde minimum en dollars",
+        "network": "Réseau:",
         "receive": "Recevoir",
         "receiveToken": "Recevez {symbol}",
         "remove": "Retirer du portefeuille",

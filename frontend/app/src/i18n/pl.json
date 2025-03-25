@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "Automatyczny",
         "autoInfo": "Zorganizuj swój portfel automatycznie. Każdy token z saldem tokenów innym niż zero lub z wartością w dolarach większą niż minimalna wartość w dolarach wprowadzona poniżej zostanie wyświetlony",
+        "btcNetworkFee": "Opłata za sieć Bitcoin: ~{amount} BTC",
         "comingSoon": "(wkrótce)",
         "configureWallet": "Skonfiguruj swój portfel",
         "configureWalletFailure": "Przepraszamy, nie udało nam się zapisać konfiguracji Twojego portfela",
@@ -591,6 +592,7 @@
         "manual": "Podręcznik",
         "manualInfo": "Zorganizuj swój portfel ręcznie, wybierając dokładnie te tokeny, które chcesz zobaczyć",
         "minDollarPlaceholder": "Minimalne saldo w dolarach",
+        "network": "Sieć:",
         "receive": "Odbierać",
         "receiveToken": "Odbierz {symbol}",
         "remove": "Usuń z portfela",

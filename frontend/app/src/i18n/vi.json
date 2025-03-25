@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "Tự động",
         "autoInfo": "Tự động sắp xếp ví của bạn. Bất kỳ mã thông báo nào có số dư mã thông báo khác không hoặc có giá trị đô la lớn hơn giá trị đô la tối thiểu được nhập bên dưới sẽ được hiển thị",
+        "btcNetworkFee": "Phí mạng Bitcoin: ~{amount} BTC",
         "comingSoon": "(Sắp có)",
         "configureWallet": "Cấu hình ví của bạn",
         "configureWalletFailure": "Xin lỗi, chúng tôi không thể lưu cấu hình ví của bạn",
@@ -591,6 +592,7 @@
         "manual": "Thủ công",
         "manualInfo": "Tổ chức ví của bạn theo cách thủ công bằng cách chọn chính xác các mã thông báo mà bạn muốn xem",
         "minDollarPlaceholder": "Số dư đô la tối thiểu",
+        "network": "Mạng:",
         "receive": "Nhận được",
         "receiveToken": "Nhận {symbol}",
         "remove": "Xóa khỏi ví",

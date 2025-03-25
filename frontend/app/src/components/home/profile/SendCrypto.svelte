@@ -81,6 +81,9 @@
         amountToSend > BigInt(0) ? cryptoBalance - amountToSend - transferFees : cryptoBalance;
 
     $: errorMessage = error !== undefined ? error : $pinNumberErrorMessageStore;
+    $: btcNetworkFee = isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined
+        ? client.formatTokens(ckbtcMinterWithdrawalInfo.feeEstimate, 8)
+        : undefined;
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();
@@ -240,15 +243,25 @@
                 </div>
             </div>
 
-            {#if accounts.length > 0}
-                <div class="accounts">
-                    <AccountSelector bind:targetAccount {accounts} />
+            {#if accounts.length > 0 || btcNetworkFee !== undefined}
+                <div class="lower-container">
+                    {#if accounts.length > 0}
+                        <div class="accounts">
+                            <AccountSelector bind:targetAccount {accounts} />
+                        </div>
+                    {/if}
+
+                    {#if btcNetworkFee !== undefined}
+                        <div class="btc-network-fee">
+                            <Translatable resourceKey={i18nKey("cryptoAccount.btcNetworkFee", { amount: btcNetworkFee })} />
+                        </div>
+                    {/if}
                 </div>
             {/if}
-        {/if}
 
-        {#if errorMessage !== undefined}
-            <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+            {#if errorMessage !== undefined}
+                <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+            {/if}
         {/if}
     </form>
     <span slot="footer">
@@ -295,7 +308,6 @@
     }
 
     .target {
-        margin-bottom: $sp3;
         position: relative;
 
         .qr {
@@ -304,5 +316,16 @@
             right: $sp3;
             cursor: pointer;
         }
+    }
+
+    .lower-container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .btc-network-fee {
+        @include font(light, normal, fs-60);
+        color: var(--txt-light);
+        margin-left: auto;
     }
 </style>

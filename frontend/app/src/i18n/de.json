@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "Automatisch",
         "autoInfo": "Organisieren Sie Ihr Portemonnaie automatisch. Alle Token mit einem Token-Guthaben ungleich Null oder einem Dollarwert, der über dem unten eingegebenen Mindestdollarwert liegt, werden angezeigt.",
+        "btcNetworkFee": "Bitcoin-Netzwerkgebühr: ~{amount} BTC",
         "comingSoon": "(kommt bald)",
         "configureWallet": "Konfigurieren Sie Ihr Wallet",
         "configureWalletFailure": "Leider konnten wir Ihre Wallet-Konfiguration nicht speichern",
@@ -591,6 +592,7 @@
         "manual": "Handbuch",
         "manualInfo": "Organisieren Sie Ihr Wallet manuell, indem Sie genau die Token auswählen, die Sie sehen möchten",
         "minDollarPlaceholder": "Mindestdollarguthaben",
+        "network": "Netzwerk:",
         "receive": "Anfordern",
         "receiveToken": "Erhalte {symbol}",
         "remove": "Aus der Brieftasche entfernen",
