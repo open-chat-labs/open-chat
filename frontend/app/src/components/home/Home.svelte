@@ -171,6 +171,7 @@
         chatId: MultiUserChatIdentifier;
         level: Level;
         doubleCheck: { challenge: ResourceKey; response: ResourceKey };
+        after?: () => void;
     };
 
     type ConfirmDeleteCommunityEvent = {
@@ -690,6 +691,7 @@
                 return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.level).then(
                     (_) => {
                         rightPanelHistory.set([]);
+                        confirmActionEvent.after?.();
                     },
                 );
             default:
@@ -1252,6 +1254,7 @@
             on:editCommunity={editCommunity}
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
+            on:deleteGroup={triggerConfirm}
             on:leaveGroup={triggerConfirm}
             on:askToSpeak
             on:hangup />
@@ -1345,7 +1348,7 @@
         {:else if modal.kind === "no_access"}
             <NoAccess onClose={closeNoAccess} />
         {:else if modal.kind === "not_found"}
-            <NotFound onClose={closeNoAccess} />
+            <NotFound on:close={closeNoAccess} />
         {:else if modal.kind === "gate_check_failed"}
             <GateCheckFailed onClose={closeModal} gates={modal.gates} />
         {:else if modal.kind === "evaluating_access_gates"}

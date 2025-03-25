@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+ - Push event on each BTC deposit ([#7661](https://github.com/open-chat-labs/open-chat/pull/7661))
+
 ## [[2.0.1663-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1663-user)] - 2025-03-21
 
 ### Added

@@ -28,6 +28,7 @@
                 on:communityDetails
                 on:leaveCommunity
                 on:deleteCommunity
+                on:deleteGroup
                 on:editCommunity
                 on:leaveGroup
                 on:askToSpeak
