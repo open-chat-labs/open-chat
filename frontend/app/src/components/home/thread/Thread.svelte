@@ -21,7 +21,7 @@
         LEDGER_CANISTER_ICP,
         TokenTransfer,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -51,6 +51,7 @@
     } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let rootEvent: EventWrapper<Message>;
     export let chat: ChatSummary;
@@ -323,8 +324,8 @@
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         {messageContext}
-        on:upgrade
-        on:close={() => (creatingP2PSwapMessage = false)} />
+        onUpgrade={() => dispatch("upgrade")}
+        onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
 <GiphySelector

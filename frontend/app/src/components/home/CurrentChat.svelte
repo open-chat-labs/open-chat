@@ -387,8 +387,8 @@
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         {messageContext}
-        on:upgrade
-        on:close={() => (creatingP2PSwapMessage = false)} />
+        onUpgrade={() => dispatch("upgrade")}
+        onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
 <GiphySelector

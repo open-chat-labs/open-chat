@@ -4,10 +4,10 @@
     import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContentLegacy.svelte";
+    import ModalContent from "../ModalContent.svelte";
     import Legend from "../Legend.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
@@ -21,33 +21,41 @@
     import { enhancedCryptoLookup as cryptoLookup, isDiamond } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let fromLedger: string;
-    export let messageContext: MessageContext;
+    interface Props {
+        fromLedger: string;
+        messageContext: MessageContext;
+        onUpgrade: () => void;
+        onClose: () => void;
+    }
 
-    let fromAmount: bigint;
-    let fromAmountValid: boolean;
-    let toLedger: string;
-    let toAmount: bigint;
-    let toAmountValid: boolean;
-    let expiresIn: bigint;
-    let message = "";
-    let error: string | undefined = undefined;
-    let tokenInputState: "ok" | "zero" | "too_low" | "too_high";
-    let confirming = false;
-    let sending = false;
+    let { fromLedger = $bindable(), messageContext, onUpgrade, onClose }: Props = $props();
 
-    $: fromDetails = $cryptoLookup[fromLedger];
-    $: toDetails = $cryptoLookup[toLedger];
-    $: totalFees = fromDetails.transferFee * BigInt(2);
-    $: remainingBalance =
-        fromAmount > 0n ? fromDetails.balance - fromAmount - totalFees : fromDetails.balance;
-    $: minAmount = fromDetails.transferFee * BigInt(10);
-    $: valid = error === undefined && fromAmountValid && toAmountValid;
-    $: errorMessage = error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore;
+    let fromAmount: bigint = $state(0n);
+    let fromAmountValid: boolean = $state(false);
+    let toLedger: string = $state("");
+    let toAmount: bigint = $state(0n);
+    let toAmountValid: boolean = $state(false);
+    let expiresIn: bigint = $state(0n);
+    let message = $state("");
+    let error: string | undefined = $state(undefined);
+    let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
+    let confirming = $state(false);
+    let sending = $state(false);
 
-    $: {
+    let fromDetails = $derived($cryptoLookup[fromLedger]);
+    let toDetails = $derived($cryptoLookup[toLedger]);
+    let totalFees = $derived(fromDetails.transferFee * BigInt(2));
+    let remainingBalance = $state(0n);
+    $effect(() => {
+        remainingBalance =
+            fromAmount > 0n ? fromDetails.balance - fromAmount - totalFees : fromDetails.balance;
+    });
+    let minAmount = $derived(fromDetails.transferFee * BigInt(10));
+    let valid = $derived(error === undefined && fromAmountValid && toAmountValid);
+    let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
+
+    $effect(() => {
         if (tokenInputState === "too_low") {
             error = $_("minimumAmount", {
                 values: {
@@ -58,11 +66,11 @@
         } else {
             error = undefined;
         }
-    }
+    });
 
     function onSend() {
         if (!$isDiamond) {
-            dispatch("upgrade");
+            onUpgrade();
             return;
         }
 
@@ -107,7 +115,7 @@
             .sendMessageWithContent(messageContext, content, false)
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
-                    dispatch("close");
+                    onClose();
                 } else if ($pinNumberErrorMessageStore === undefined) {
                     error = "errorSendingMessage";
                 }
@@ -116,7 +124,7 @@
     }
 
     function cancel() {
-        dispatch("close");
+        onClose();
     }
 
     function onBalanceRefreshed() {
@@ -157,89 +165,95 @@
 
 <Overlay dismissible>
     <ModalContent>
-        <span class="header" slot="header">
-            <div class="main-title">
-                <Translatable resourceKey={i18nKey("p2pSwap.builderTitle")} />
-            </div>
-            <BalanceWithRefresh
-                ledger={fromLedger}
-                value={remainingBalance}
-                label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                bold
-                on:refreshed={onBalanceRefreshed}
-                on:error={onBalanceRefreshError} />
-        </span>
-        <form slot="body" class="body swap-builder">
-            <div class="row">
-                <div class="select-from">
-                    <Legend label={i18nKey("cryptoAccount.transactionHeaders.from")} />
-                    <div class="inner">
-                        <CryptoSelector
-                            filter={(t) => t.balance > 0}
-                            bind:ledger={fromLedger}
-                            onSelect={onSelectFromToken} />
+        {#snippet header()}
+            <span class="header">
+                <div class="main-title">
+                    <Translatable resourceKey={i18nKey("p2pSwap.builderTitle")} />
+                </div>
+                <BalanceWithRefresh
+                    ledger={fromLedger}
+                    value={remainingBalance}
+                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
+                    bold
+                    on:refreshed={onBalanceRefreshed}
+                    on:error={onBalanceRefreshError} />
+            </span>
+        {/snippet}
+        {#snippet body()}
+            <form class="body swap-builder">
+                <div class="row">
+                    <div class="select-from">
+                        <Legend label={i18nKey("cryptoAccount.transactionHeaders.from")} />
+                        <div class="inner">
+                            <CryptoSelector
+                                filter={(t) => t.balance > 0}
+                                bind:ledger={fromLedger}
+                                onSelect={onSelectFromToken} />
+                        </div>
+                    </div>
+                    <div class="amount">
+                        <TokenInput
+                            ledger={fromLedger}
+                            {minAmount}
+                            maxAmount={fromDetails.balance - totalFees}
+                            showDollarAmount
+                            bind:state={tokenInputState}
+                            bind:valid={fromAmountValid}
+                            bind:amount={fromAmount} />
                     </div>
                 </div>
-                <div class="amount">
-                    <TokenInput
-                        ledger={fromLedger}
-                        {minAmount}
-                        maxAmount={fromDetails.balance - totalFees}
-                        showDollarAmount
-                        bind:state={tokenInputState}
-                        bind:valid={fromAmountValid}
-                        bind:amount={fromAmount} />
-                </div>
-            </div>
-            <div class="row">
-                <div class="select-to">
-                    <Legend label={i18nKey("cryptoAccount.transactionHeaders.to")} />
-                    <div class="inner">
-                        <CryptoSelector
-                            filter={(t) => t.ledger !== fromLedger}
-                            bind:ledger={toLedger} />
+                <div class="row">
+                    <div class="select-to">
+                        <Legend label={i18nKey("cryptoAccount.transactionHeaders.to")} />
+                        <div class="inner">
+                            <CryptoSelector
+                                filter={(t) => t.ledger !== fromLedger}
+                                bind:ledger={toLedger} />
+                        </div>
+                    </div>
+                    <div class="amount">
+                        <TokenInput
+                            ledger={toLedger}
+                            showDollarAmount
+                            bind:valid={toAmountValid}
+                            bind:amount={toAmount} />
                     </div>
                 </div>
-                <div class="amount">
-                    <TokenInput
-                        ledger={toLedger}
-                        showDollarAmount
-                        bind:valid={toAmountValid}
-                        bind:amount={toAmount} />
+                <div class="duration">
+                    <Legend label={i18nKey("p2pSwap.expiryTime")} />
+                    <DurationPicker bind:milliseconds={expiresIn} />
                 </div>
-            </div>
-            <div class="duration">
-                <Legend label={i18nKey("p2pSwap.expiryTime")} />
-                <DurationPicker bind:milliseconds={expiresIn} />
-            </div>
-            <div class="message">
-                <Legend label={i18nKey("tokenTransfer.message")} />
-                <TextArea
-                    maxlength={200}
-                    rows={3}
-                    autofocus={false}
-                    placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
-                    bind:value={message} />
-            </div>
-            {#if errorMessage !== undefined}
-                <div class="error">
-                    <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+                <div class="message">
+                    <Legend label={i18nKey("tokenTransfer.message")} />
+                    <TextArea
+                        maxlength={200}
+                        rows={3}
+                        autofocus={false}
+                        placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
+                        bind:value={message} />
                 </div>
-            {/if}
-        </form>
-        <span slot="footer">
-            <ButtonGroup>
-                <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
-                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                <Button
-                    small={!$mobileWidth}
-                    disabled={!valid || sending}
-                    loading={sending}
-                    tiny={$mobileWidth}
-                    on:click={onSend}
-                    ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
-            </ButtonGroup>
-        </span>
+                {#if errorMessage !== undefined}
+                    <div class="error">
+                        <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+                    </div>
+                {/if}
+            </form>
+        {/snippet}
+        {#snippet footer()}
+            <span>
+                <ButtonGroup>
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    <Button
+                        small={!$mobileWidth}
+                        disabled={!valid || sending}
+                        loading={sending}
+                        tiny={$mobileWidth}
+                        on:click={onSend}
+                        ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
+                </ButtonGroup>
+            </span>
+        {/snippet}
     </ModalContent>
 </Overlay>
 
