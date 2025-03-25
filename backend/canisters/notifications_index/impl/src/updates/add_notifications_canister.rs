@@ -74,6 +74,19 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
             );
         }
 
+        for (user_id, blocked_users) in state.data.blocked_users.collect_all() {
+            for blocked_user in blocked_users {
+                state.data.notification_canisters_event_sync_queue.push(
+                    canister_id,
+                    IdempotentEnvelope {
+                        created_at: now,
+                        idempotency_id: state.env.rng().next_u64(),
+                        value: NotificationsIndexEvent::UserBlocked(user_id, blocked_user),
+                    },
+                );
+            }
+        }
+
         Success
     } else {
         AlreadyAdded
