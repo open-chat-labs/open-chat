@@ -156,9 +156,10 @@
         onEditMessage,
     }: Props = $props();
 
-    let msgElement: HTMLElement;
-    let msgBubbleWrapperElement: HTMLElement;
-    let msgBubbleElement: HTMLElement;
+    let msgElement: HTMLElement | undefined;
+    let msgBubbleWrapperElement: HTMLElement | undefined;
+    let msgBubbleElement: HTMLElement | undefined;
+    let messageMenu: ChatMessageMenu | undefined;
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = $state(false);
     let debug = false;
@@ -168,7 +169,6 @@
         msg.content.kind === "p2p_swap_content";
     let showRemindMe = $state(false);
     let showReport = $state(false);
-    let messageMenu: ChatMessageMenu;
     let tipping: string | undefined = $state(undefined);
     let percentageExpired = $state(100);
     let mediaCalculatedHeight = $state(undefined as number | undefined);
@@ -178,7 +178,7 @@
     onMount(() => {
         if (!readByMe) {
             tick().then(() => {
-                if (observer !== undefined) {
+                if (observer !== undefined && msgElement !== undefined) {
                     observer.observe(msgElement);
                 }
             });
@@ -352,7 +352,7 @@
                 parseFloat(msgBubbleStyle.borderLeftWidth);
         }
 
-        const messageWrapperWidth = msgBubbleWrapperElement.parentElement?.offsetWidth ?? 0;
+        const messageWrapperWidth = msgBubbleWrapperElement?.parentElement?.offsetWidth ?? 0;
 
         let targetMediaDimensions = client.calculateMediaDimensions(
             mediaDimensions,
