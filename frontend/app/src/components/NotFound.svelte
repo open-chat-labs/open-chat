@@ -2,34 +2,26 @@
     import { createEventDispatcher } from "svelte";
     import Translatable from "./Translatable.svelte";
     import { i18nKey } from "../i18n/i18n";
-    import ModalContent from "./ModalContent.svelte";
+    import ModalContent from "./ModalContentLegacy.svelte";
     import Button from "./Button.svelte";
     import { mobileWidth } from "../stores/screenDimensions";
     import ButtonGroup from "./ButtonGroup.svelte";
 
     const dispatch = createEventDispatcher();
-
-    interface Props {
-        onClose: () => void;
-    }
-
-    let { onClose }: Props = $props();
 </script>
 
-<ModalContent backgroundImage={"/assets/landscape.png"} {onClose}>
-    {#snippet body()}
-        <div class="body">
-            <h1 class="msg">page not found</h1>
-            <div class="not-found"></div>
-        </div>
-    {/snippet}
-    {#snippet footer()}
+<ModalContent backgroundImage={"/assets/landscape.png"} on:close>
+    <div class="body" slot="body">
+        <h1 class="msg">page not found</h1>
+        <div class="not-found" />
+    </div>
+    <div slot="footer">
         <ButtonGroup align={$mobileWidth ? "fill" : "center"}>
             <Button on:click={() => dispatch("close")}>
                 <Translatable resourceKey={i18nKey("goHome")} />
             </Button>
         </ButtonGroup>
-    {/snippet}
+    </div>
 </ModalContent>
 
 <style lang="scss">

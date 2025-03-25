@@ -229,6 +229,7 @@ export function channelMatch(value: TChannelMatch, communityId: string): Channel
         name: value.name,
         description: value.description,
         memberCount: value.member_count,
+        public: value.is_public,
         avatar: {
             blobReference: mapOptional(value.avatar_id, (blobId) => ({
                 blobId,
@@ -242,6 +243,7 @@ export function communityChannelSummaryResponse(
     value: CommunityChannelSummaryResponse,
     communityId: string,
 ): ChannelSummaryResponse {
+    console.log("Channel summary: ", value);
     if (typeof value === "object" && "Success" in value) {
         return communityChannelSummary(value.Success, communityId);
     } else {
