@@ -49,22 +49,25 @@ fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, sta
         return ChannelNotFound;
     };
 
-    let Some(channel_member) = channel.chat.members.get(&caller.agent()) else {
-        return UserNotInChannel;
-    };
+    // A community owner can delete a channel whether or not they are a member of the channel
+    let caller_is_community_owner = state
+        .data
+        .members
+        .get_by_user_id(&caller.agent())
+        .is_some_and(|m| m.is_owner());
 
-    if channel_member.lapsed().value {
-        return UserLapsed;
-    }
+    if !caller_is_community_owner {
+        let Some(channel_member) = channel.chat.members.get(&caller.agent()) else {
+            return UserNotInChannel;
+        };
 
-    if !channel_member.role().can_delete_group()
-        && !state
-            .data
-            .members
-            .get_by_user_id(&caller.agent())
-            .is_some_and(|m| m.is_owner())
-    {
-        return NotAuthorized;
+        if channel_member.lapsed().value {
+            return UserLapsed;
+        }
+
+        if !channel_member.role().can_delete_group() {
+            return NotAuthorized;
+        }
     }
 
     // If the agent is a bot and the initiator is a user (by command), then also check the user has permission
