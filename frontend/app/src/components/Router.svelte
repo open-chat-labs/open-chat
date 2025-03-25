@@ -3,7 +3,7 @@
     import page from "page";
     import Home from "./home/HomeRoute.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";
-    import NotFound from "./NotFound.svelte";
+    import NotFound from "./NotFoundWrapper.svelte";
     import {
         pathContextStore,
         notFound,
