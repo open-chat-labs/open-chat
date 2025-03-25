@@ -9,7 +9,9 @@ clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true }
 ic-agent = { workspace = true }
 ic-utils = { workspace = true }
+pocket-ic = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 types = { path = "../../libraries/types" }
+url = { workspace = true }
