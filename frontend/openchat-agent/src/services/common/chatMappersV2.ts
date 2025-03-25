@@ -3332,7 +3332,7 @@ export function externalBotCommand(command: ApiCommandDefinition): CommandDefini
         params: command.params.map(externalBotParam),
         permissions: externalBotPermissions(command.permissions),
         defaultRole: mapOptional(command.default_role, memberRole) ?? "member",
-        directMessages: command.direct_messages,
+        directMessages: command.direct_messages ?? false,
     };
 }
 
