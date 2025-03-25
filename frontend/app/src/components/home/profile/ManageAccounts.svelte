@@ -1,7 +1,7 @@
 <script lang="ts">
     import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContentLegacy.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import { getContext, onMount } from "svelte";
     import {
         DEFAULT_TOKENS,
         OpenChat,
@@ -21,26 +21,20 @@
     import MultiToggle, { type Option } from "../../MultiToggle.svelte";
     import { toastStore } from "../../../stores/toast";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let conversionOptions: Option[];
-    export let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
+    interface Props {
+        conversionOptions: Option[];
+        selectedConversion?: "none" | "usd" | "icp" | "btc" | "eth";
+        onClose: () => void;
+    }
 
-    let searchTerm = "";
-    let searching = false;
+    let { conversionOptions, selectedConversion = $bindable("none"), onClose }: Props = $props();
 
-    $: valid = config.kind === "manual_wallet" || !isNaN(Number(config.minDollarValue));
-    $: defaultLedgers = getDefaultLedgers($cryptoLookup);
-    $: searchTermLower = searchTerm.toLowerCase();
-    $: filteredTokens = $accountsSorted.filter(
-        (token) =>
-            searchTermLower === "" ||
-            token.name.toLowerCase().includes(searchTermLower) ||
-            token.symbol.toLowerCase().includes(searchTermLower),
-    );
+    let searchTerm = $state("");
+    let searching = $state(false);
 
-    let config: WalletConfig = { ...$walletConfig };
+    let config: WalletConfig = $state({ ...$walletConfig });
 
     onMount(() => {
         config = clone($walletConfig);
@@ -116,90 +110,105 @@
                 break;
         }
     }
+    let valid = $derived(config.kind === "manual_wallet" || !isNaN(Number(config.minDollarValue)));
+    let defaultLedgers = $derived(getDefaultLedgers($cryptoLookup));
+    let searchTermLower = $derived(searchTerm.toLowerCase());
+    let filteredTokens = $derived(
+        $accountsSorted.filter(
+            (token) =>
+                searchTermLower === "" ||
+                token.name.toLowerCase().includes(searchTermLower) ||
+                token.symbol.toLowerCase().includes(searchTermLower),
+        ),
+    );
 </script>
 
-<Overlay onClose={() => dispatch("close")}>
-    <ModalContent closeIcon on:close>
-        <div slot="header">
-            <Translatable resourceKey={i18nKey("cryptoAccount.configureWallet")} />
-        </div>
-        <div slot="body">
-            <div class="select-mode">
-                <div
-                    on:click={() => selectMode("manual_wallet")}
-                    class="mode-label"
-                    class:selected={config.kind === "manual_wallet"}>
-                    <Translatable resourceKey={i18nKey("cryptoAccount.manual")} />
-                </div>
-                <Toggle
-                    checked={config.kind === "auto_wallet"}
-                    on:change={toggleMode}
-                    small
-                    bottomMargin={false}
-                    id={"wallet-mode-select"}></Toggle>
-                <div
-                    on:click={() => selectMode("auto_wallet")}
-                    class="mode-label"
-                    class:selected={config.kind === "auto_wallet"}>
-                    <Translatable resourceKey={i18nKey("cryptoAccount.auto")} />
-                </div>
+<Overlay {onClose}>
+    <ModalContent closeIcon {onClose}>
+        {#snippet header()}
+            <div>
+                <Translatable resourceKey={i18nKey("cryptoAccount.configureWallet")} />
             </div>
-            {#if config.kind === "auto_wallet"}
-                <div class="auto-mode">
+        {/snippet}
+        {#snippet body()}
+            <div>
+                <div class="select-mode">
+                    <div
+                        onclick={() => selectMode("manual_wallet")}
+                        class="mode-label"
+                        class:selected={config.kind === "manual_wallet"}>
+                        <Translatable resourceKey={i18nKey("cryptoAccount.manual")} />
+                    </div>
+                    <Toggle
+                        checked={config.kind === "auto_wallet"}
+                        on:change={toggleMode}
+                        small
+                        bottomMargin={false}
+                        id={"wallet-mode-select"}></Toggle>
+                    <div
+                        onclick={() => selectMode("auto_wallet")}
+                        class="mode-label"
+                        class:selected={config.kind === "auto_wallet"}>
+                        <Translatable resourceKey={i18nKey("cryptoAccount.auto")} />
+                    </div>
+                </div>
+                {#if config.kind === "auto_wallet"}
+                    <div class="auto-mode">
+                        <div class="info">
+                            <Translatable resourceKey={i18nKey("cryptoAccount.autoInfo")} />
+                        </div>
+                        <Legend label={i18nKey("cryptoAccount.minDollarPlaceholder")} />
+                        <Input
+                            invalid={!valid}
+                            bind:value={config.minDollarValue}
+                            placeholder={i18nKey("cryptoAccount.minDollarPlaceholder")} />
+                    </div>
+                {:else if config.kind === "manual_wallet"}
                     <div class="info">
-                        <Translatable resourceKey={i18nKey("cryptoAccount.autoInfo")} />
+                        <Translatable resourceKey={i18nKey("cryptoAccount.manualInfo")} />
                     </div>
-                    <Legend label={i18nKey("cryptoAccount.minDollarPlaceholder")} />
-                    <Input
-                        invalid={!valid}
-                        bind:value={config.minDollarValue}
-                        placeholder={i18nKey("cryptoAccount.minDollarPlaceholder")} />
-                </div>
-            {:else if config.kind === "manual_wallet"}
-                <div class="info">
-                    <Translatable resourceKey={i18nKey("cryptoAccount.manualInfo")} />
-                </div>
-                <div class="token-selection">
-                    <Search
-                        fill
-                        bind:searchTerm
-                        bind:searching
-                        placeholder={i18nKey("cryptoAccount.search")} />
-                    <div class="token-header">
-                        <Translatable resourceKey={i18nKey("cryptoAccount.token")} />
-                        <MultiToggle
-                            options={conversionOptions}
-                            bind:selected={selectedConversion} />
-                    </div>
-                    <div class="tokens">
-                        {#each filteredTokens as token}
-                            <div class="token">
-                                <div class="token-details">
-                                    <img
-                                        alt={token.name}
-                                        class:disabled={!token.enabled}
-                                        class="icon"
-                                        src={token.logo} />
-                                    <div>
-                                        {token.symbol}
+                    <div class="token-selection">
+                        <Search
+                            fill
+                            bind:searchTerm
+                            bind:searching
+                            placeholder={i18nKey("cryptoAccount.search")} />
+                        <div class="token-header">
+                            <Translatable resourceKey={i18nKey("cryptoAccount.token")} />
+                            <MultiToggle
+                                options={conversionOptions}
+                                bind:selected={selectedConversion} />
+                        </div>
+                        <div class="tokens">
+                            {#each filteredTokens as token}
+                                <div class="token">
+                                    <div class="token-details">
+                                        <img
+                                            alt={token.name}
+                                            class:disabled={!token.enabled}
+                                            class="icon"
+                                            src={token.logo} />
+                                        <div>
+                                            {token.symbol}
+                                        </div>
                                     </div>
+                                    <BalanceWithRefresh
+                                        ledger={token.ledger}
+                                        value={token.balance}
+                                        conversion={selectedConversion} />
+                                    <Toggle
+                                        checked={config.tokens.has(token.ledger)}
+                                        on:change={() => toggle(token.ledger)}
+                                        small
+                                        bottomMargin={false}
+                                        id={`token_${token.symbol}_toggle`}></Toggle>
                                 </div>
-                                <BalanceWithRefresh
-                                    ledger={token.ledger}
-                                    value={token.balance}
-                                    conversion={selectedConversion} />
-                                <Toggle
-                                    checked={config.tokens.has(token.ledger)}
-                                    on:change={() => toggle(token.ledger)}
-                                    small
-                                    bottomMargin={false}
-                                    id={`token_${token.symbol}_toggle`}></Toggle>
-                            </div>
-                        {/each}
+                            {/each}
+                        </div>
                     </div>
-                </div>
-            {/if}
-        </div>
+                {/if}
+            </div>
+        {/snippet}
     </ModalContent>
 </Overlay>
 
