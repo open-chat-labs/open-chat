@@ -5,12 +5,23 @@
     import TabHeader from "../TabHeader.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let editing: boolean;
-    export let permissions: ChatPermissions;
-    export let isPublic: boolean;
-    export let isCommunityPublic: boolean;
-    export let isChannel: boolean;
-    export let embeddedContent: boolean;
+    interface Props {
+        editing: boolean;
+        permissions: ChatPermissions;
+        isPublic: boolean;
+        isCommunityPublic: boolean;
+        isChannel: boolean;
+        embeddedContent: boolean;
+    }
+
+    let {
+        editing,
+        permissions = $bindable(),
+        isPublic,
+        isCommunityPublic,
+        isChannel,
+        embeddedContent,
+    }: Props = $props();
 
     let items = embeddedContent
         ? [i18nKey("permissions.general")]
@@ -19,15 +30,15 @@
               i18nKey("permissions.message"),
               i18nKey("permissions.thread"),
           ];
-    let selectedTab = items[0].key;
+    let selectedTab = $state(items[0].key);
     let roles = [...chatRoles];
-    let overrideChatMessages = permissions.threadPermissions !== undefined;
+    let overrideChatMessages = $state(permissions.threadPermissions !== undefined);
 
-    $: {
+    $effect(() => {
         if (!editing) {
             permissions.mentionAllMembers = isPublic && isCommunityPublic ? "admin" : "member";
         }
-    }
+    });
 
     function onOverrideChatMessagesChanged() {
         permissions.threadPermissions = overrideChatMessages

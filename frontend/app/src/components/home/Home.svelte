@@ -1359,9 +1359,9 @@
         {:else if modal.kind === "new_group"}
             <CreateOrUpdateGroup
                 embeddedContent={modal.embeddedContent}
-                candidateGroup={modal.candidate}
-                on:upgrade={upgrade}
-                on:close={closeModal} />
+                templateGroup={modal.candidate}
+                onUpgrade={upgrade}
+                onClose={closeModal} />
         {:else if modal.kind === "edit_community"}
             <EditCommunity
                 originalRules={modal.communityRules}

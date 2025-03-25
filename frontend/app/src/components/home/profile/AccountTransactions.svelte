@@ -36,7 +36,7 @@
     type LoadingMore<T> = { kind: "loading_more"; data: T };
     type RemoteData = RD<AccountTransactions, string> | LoadingMore<AccountTransactions>;
 
-    let transactionData: RemoteData = $state({ kind: "loading" });
+    let transactionData = $state<RemoteData>({ kind: "loading" });
     let accounts: NamedAccount[] = $state([]);
 
     function moreTransactionsAvailable(trans: RemoteData): boolean {
@@ -154,7 +154,7 @@
     );
 </script>
 
-<ModalContent fitToContent={!$mobileWidth} closeIcon on:close>
+<ModalContent fitToContent={!$mobileWidth} closeIcon {onClose}>
     {#snippet header()}
         <div class="header">
             <div class="main-title">
