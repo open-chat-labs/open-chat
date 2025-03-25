@@ -1366,7 +1366,7 @@
             <EditCommunity
                 originalRules={modal.communityRules}
                 original={modal.community}
-                on:close={closeModal} />
+                onClose={closeModal} />
         {:else if modal.kind === "wallet"}
             <AccountsModal onClose={closeModal} />
         {:else if modal.kind === "hall_of_fame"}
