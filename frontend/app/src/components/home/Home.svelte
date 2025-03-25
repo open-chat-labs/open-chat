@@ -1365,7 +1365,7 @@
                 original={modal.community}
                 on:close={closeModal} />
         {:else if modal.kind === "wallet"}
-            <AccountsModal on:close={closeModal} />
+            <AccountsModal onClose={closeModal} />
         {:else if modal.kind === "hall_of_fame"}
             <HallOfFame
                 onStreak={() => (modal = { kind: "claim_daily_chit" })}
