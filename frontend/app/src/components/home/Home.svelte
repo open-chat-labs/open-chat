@@ -1346,7 +1346,7 @@
         {:else if modal.kind === "no_access"}
             <NoAccess onClose={closeNoAccess} />
         {:else if modal.kind === "not_found"}
-            <NotFound onClose={closeNoAccess} />
+            <NotFound on:close={closeNoAccess} />
         {:else if modal.kind === "gate_check_failed"}
             <GateCheckFailed onClose={closeModal} gates={modal.gates} />
         {:else if modal.kind === "evaluating_access_gates"}
