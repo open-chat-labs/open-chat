@@ -127,7 +127,7 @@
         {:else if actionMode === "transactions"}
             <AccountTransactions
                 ledger={selectedLedger}
-                on:close={hideManageModal}
+                onClose={hideManageModal}
                 urlFormat={transactionsFormat} />
         {:else if actionMode === "restricted"}
             <RestrictedFeature onClose={hideManageModal} feature="swap" />
