@@ -52,7 +52,7 @@ Your account has been credited with {formatted} BTC."
                         EventBuilder::new("btc_deposit", now)
                             .with_user(user_id_string.clone(), true)
                             .with_source(user_id_string, true)
-                            .with_json_payload(&BtcDepositEventPayload { amount: total_minted })
+                            .with_json_payload(&BtcDepositOrWithdrawalEventPayload { amount: total_minted })
                             .build(),
                     );
                     state.award_achievement_and_notify(Achievement::DepositedBtc, now);
@@ -85,6 +85,6 @@ Error: {error:?}",
 }
 
 #[derive(Serialize)]
-struct BtcDepositEventPayload {
-    amount: u64,
+pub(crate) struct BtcDepositOrWithdrawalEventPayload {
+    pub amount: u64,
 }
