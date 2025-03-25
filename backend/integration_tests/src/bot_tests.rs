@@ -692,7 +692,7 @@ fn read_messages_by_command() {
         params: vec![],
         permissions: BotPermissions::from_chat_permission(ChatPermission::ReadMessages),
         default_role: None,
-        direct_messages: false,
+        direct_messages: None,
     }];
 
     let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
@@ -814,7 +814,7 @@ fn send_direct_message() {
                 }],
                 permissions: BotPermissions::text_only(),
                 default_role: None,
-                direct_messages: true,
+                direct_messages: Some(true),
             }],
             autonomous_config: None,
         },
@@ -1109,7 +1109,7 @@ fn register_bot(
         params: vec![],
         permissions: BotPermissions::text_only(),
         default_role: None,
-        direct_messages: false,
+        direct_messages: None,
     }];
 
     client::user_index::happy_path::register_bot(
