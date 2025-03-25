@@ -19,6 +19,7 @@
         chatListScopeStore,
         typing,
         routeForMessage,
+        type EnhancedReplyContext,
     } from "openchat-client";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
@@ -66,6 +67,8 @@
     export let collapsed: boolean;
     export let threadRootMessage: Message | undefined;
     export let onExpandMessage: (() => void) | undefined = undefined;
+    export let onReplyTo: (replyContext: EnhancedReplyContext) => void;
+    export let onReplyPrivatelyTo: (replyContext: EnhancedReplyContext) => void;
 
     let userSummary: UserSummary | undefined = undefined;
 
@@ -165,10 +168,10 @@
             botContext={event.event.botContext}
             on:chatWith
             on:goToMessageIndex
-            on:replyPrivatelyTo
-            on:replyTo
+            {onReplyTo}
+            {onReplyPrivatelyTo}
             on:retrySend={retrySend}
-            on:editMessage={editEvent}
+            onEditMessage={editEvent}
             on:upgrade
             on:verifyHumanity
             on:claimDailyChit

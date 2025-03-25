@@ -79,9 +79,9 @@
         chatEventList?.scrollToMessageIndex(messageContext, index, preserveFocus);
     }
 
-    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
+    function replyTo(replyContext: EnhancedReplyContext) {
         if (!canSendAny) return;
-        dispatch("replyTo", ev.detail);
+        dispatch("replyTo", replyContext);
     }
 
     function onEditEvent(ev: CustomEvent<EventWrapper<Message>>) {
@@ -321,8 +321,8 @@
                             pinned={isPinned($currentChatPinnedMessages, evt)}
                             editing={$currentChatEditingEvent === evt}
                             on:chatWith
-                            on:replyTo={replyTo}
-                            on:replyPrivatelyTo
+                            onReplyTo={replyTo}
+                            onReplyPrivatelyTo={(r) => dispatch("replyPrivatelyTo", r)}
                             on:removePreview
                             on:editEvent={onEditEvent}
                             on:goToMessageIndex={goToMessageIndex}

@@ -260,8 +260,8 @@
         }
     }
 
-    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
-        draftMessagesStore.setReplyingTo(messageContext, ev.detail);
+    function replyTo(replyContext: EnhancedReplyContext) {
+        draftMessagesStore.setReplyingTo(messageContext, replyContext);
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {
@@ -419,10 +419,9 @@
                             on:chatWith
                             on:removePreview={onRemovePreview}
                             on:goToMessageIndex={onGoToMessageIndex}
-                            on:replyPrivatelyTo
-                            on:replyTo={replyTo}
+                            onReplyPrivatelyTo={(r) => dispatch("replyPrivatelyTo", r)}
+                            onReplyTo={replyTo}
                             on:editEvent={() => editEvent(evt)}
-                            on:replyTo={replyTo}
                             on:upgrade
                             on:verifyHumanity
                             on:claimDailyChit
