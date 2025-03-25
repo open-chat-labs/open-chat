@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
     import type { ImageContent, MemeFighterContent } from "openchat-client";
@@ -7,34 +5,44 @@
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import ContentCaption from "./ContentCaption.svelte";
     import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContentLegacy.svelte";
+    import ModalContent from "../ModalContent.svelte";
     import { isTouchDevice } from "../../utils/devices";
     import { lowBandwidth } from "../../stores/settings";
     import Button from "../Button.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let content: ImageContent | MemeFighterContent;
-    export let fill: boolean;
-    export let draft: boolean = false;
-    export let reply: boolean = false;
-    export let pinned: boolean = false;
-    export let height: number | undefined = undefined;
-    export let intersecting: boolean = true;
-    export let edited: boolean;
-    export let blockLevelMarkdown: boolean = false;
+    interface Props {
+        content: ImageContent | MemeFighterContent;
+        fill: boolean;
+        draft?: boolean;
+        reply?: boolean;
+        pinned?: boolean;
+        height?: number | undefined;
+        intersecting?: boolean;
+        edited: boolean;
+        blockLevelMarkdown?: boolean;
+    }
+
+    let {
+        content,
+        fill,
+        draft = false,
+        reply = false,
+        pinned = false,
+        height = undefined,
+        intersecting = true,
+        edited,
+        blockLevelMarkdown = false,
+    }: Props = $props();
 
     let imgElement: HTMLImageElement;
-    let zoom = false;
+    let zoom = $state(false);
     let withCaption =
         content.kind === "image_content" && content.caption !== undefined && content.caption !== "";
     let landscape = content.height < content.width;
-    let zoomedWidth: number;
-    let zoomedHeight: number;
-
-    $: normalised = normaliseContent(content);
-    $: hidden = $lowBandwidth && !draft;
-    $: zoomable = !draft && !reply && !pinned;
+    let zoomedWidth: number = $state(0);
+    let zoomedHeight: number = $state(0);
 
     function normaliseContent(content: ImageContent | MemeFighterContent) {
         switch (content.kind) {
@@ -61,7 +69,8 @@
         }
     }
 
-    function onDoubleClick() {
+    function onDoubleClick(e: Event) {
+        e.stopPropagation();
         if (isTouchDevice) {
             toggleZoom();
         }
@@ -96,11 +105,17 @@
         zoomedWidth = imageWidth;
         zoomedHeight = imageHeight;
     }
+    let normalised = $derived(normaliseContent(content));
+    let hidden = $state(false);
+    $effect(() => {
+        hidden = $lowBandwidth && !draft;
+    });
+    let zoomable = $derived(!draft && !reply && !pinned);
 </script>
 
 <svelte:window
-    on:resize={recalculateZoomedDimensions}
-    on:orientationchange={recalculateZoomedDimensions} />
+    onresize={recalculateZoomedDimensions}
+    onorientationchange={recalculateZoomedDimensions} />
 
 {#if normalised.url !== undefined}
     <div class="img-wrapper">
@@ -116,9 +131,9 @@
         {/if}
         <img
             bind:this={imgElement}
-            on:click={onClick}
-            on:dblclick|stopPropagation={onDoubleClick}
-            on:error={() => {
+            onclick={onClick}
+            ondblclick={onDoubleClick}
+            onerror={() => {
                 if (imgElement) {
                     imgElement.src = normalised.fallback;
                 }
@@ -136,7 +151,7 @@
             alt={normalised.caption} />
 
         {#if zoomable && !hidden}
-            <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} on:click={toggleZoom}>
+            <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} onclick={toggleZoom}>
                 <ArrowExpand size={"1em"} color={"#fff"} />
             </div>
         {/if}
@@ -148,21 +163,27 @@
 {#if zoomable && zoom}
     <Overlay onClose={() => (zoom = false)} dismissible alignBottomOnMobile={false}>
         <ModalContent hideHeader hideFooter fill fitToContent fixedWidth={false}>
-            <span class="body" slot="body">
-                <img
-                    class="zoomed"
-                    class:landscape
-                    width={zoomedWidth}
-                    height={zoomedHeight}
-                    on:click={onClick}
-                    on:dblclick={onDoubleClick}
-                    on:error={() => (imgElement.src = normalised.fallback)}
-                    src={normalised.url}
-                    alt={normalised.caption} />
-                <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} on:click={toggleZoom}>
-                    <ArrowCollapse size={"1em"} color={"#fff"} />
-                </div>
-            </span>
+            {#snippet body()}
+                <span class="body">
+                    <img
+                        class="zoomed"
+                        class:landscape
+                        width={zoomedWidth}
+                        height={zoomedHeight}
+                        onclick={onClick}
+                        ondblclick={onDoubleClick}
+                        onerror={() => (imgElement.src = normalised.fallback)}
+                        src={normalised.url}
+                        alt={normalised.caption} />
+                    <div
+                        class="expand"
+                        class:rtl={$rtlStore}
+                        class:zoomed={zoom}
+                        onclick={toggleZoom}>
+                        <ArrowCollapse size={"1em"} color={"#fff"} />
+                    </div>
+                </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}

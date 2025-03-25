@@ -188,7 +188,7 @@
         on:attachGif
         on:makeMeme
         on:clearAttachment
-        on:fileSelected
+        on:fileSelected={(ev) => onFileSelected(ev.detail)}
         on:audioCaptured
         on:joinGroup
         on:upgrade />

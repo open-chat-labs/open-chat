@@ -370,8 +370,7 @@
         draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
         {messageContext}
-        on:upgrade
-        on:close={() => (creatingCryptoTransfer = undefined)} />
+        onClose={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
 {#if creatingPrizeMessage}

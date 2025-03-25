@@ -1379,7 +1379,7 @@
                 nervousSystem={modal.nervousSystem}
                 on:close={closeModal} />
         {:else if modal.kind === "logging_in"}
-            <LoggingInModal on:close={closeModal} />
+            <LoggingInModal onClose={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "challenge"}
