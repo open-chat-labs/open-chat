@@ -28,7 +28,7 @@
 
     interface Props {
         type: PinOperation;
-        onPinSet: (pin: string | undefined) => void;
+        onPinSet?: (pin: string | undefined) => void;
         onClose: () => void;
     }
 
@@ -75,7 +75,7 @@
             .then((resp) => {
                 if (resp.kind === "success") {
                     toastStore.showSuccessToast(i18nKey(`pinNumber.${type.kind}PinSuccess`));
-                    onPinSet(newPin);
+                    onPinSet?.(newPin);
                     onClose();
                 } else {
                     console.log("SetPinNumber failed", resp);

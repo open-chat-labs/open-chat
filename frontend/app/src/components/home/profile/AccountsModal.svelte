@@ -120,7 +120,7 @@
 
 {#if pinAction !== undefined}
     <Overlay>
-        <SetPinNumberModal type={pinAction} on:close={() => (pinAction = undefined)} />
+        <SetPinNumberModal type={pinAction} onClose={() => (pinAction = undefined)} />
     </Overlay>
 {/if}
 
@@ -128,7 +128,7 @@
     <ManageAccounts
         bind:selectedConversion
         {conversionOptions}
-        on:close={() => (managing = false)} />
+        onClose={() => (managing = false)} />
 {/if}
 
 <style lang="scss">

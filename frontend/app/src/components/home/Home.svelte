@@ -1192,8 +1192,10 @@
         forgotPin = true;
     }
 
-    function onPinNumberComplete(pin: string) {
-        $pinNumberStore?.resolve(pin);
+    function onPinNumberComplete(pin: string | undefined) {
+        if (pin) {
+            $pinNumberStore?.resolve(pin);
+        }
     }
 
     function onPinNumberClose() {
@@ -1404,8 +1406,8 @@
 {:else if forgotPin}
     <Overlay>
         <SetPinNumberModal
-            on:pinSet={(e) => onPinNumberComplete(e.detail)}
-            on:close={() => (forgotPin = false)}
+            onPinSet={onPinNumberComplete}
+            onClose={() => (forgotPin = false)}
             type={{ kind: "forgot", while: { kind: "enter" } }} />
     </Overlay>
 {:else if $pinNumberStore !== undefined}
