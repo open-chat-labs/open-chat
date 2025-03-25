@@ -57,9 +57,7 @@
     $: selectedBtcNetwork = BTC_SYMBOL;
     $: isBtc = symbol === BTC_SYMBOL;
     $: isBtcNetwork = isBtc && selectedBtcNetwork === BTC_SYMBOL;
-    // For BTC network transfers the ckBTC transfer fee is paid twice because the transfer is made via ICRC2
-    // (approve + transfer_from). The BTC network fees are then taken out of the transfer amount.
-    $: transferFees = isBtcNetwork ? BigInt(2) * tokenDetails.transferFee : tokenDetails.transferFee;
+    $: transferFees = tokenDetails.transferFee;
     $: targetAccountValid =
         targetAccount.length > 0 &&
         targetAccount !== account &&
