@@ -85,6 +85,7 @@ export const achievements = [
     "referred_10th_user",
     "referred_20th_user",
     "referred_50th_user",
+    "deposited_btc",
 ] as const;
 type AchievementType = typeof achievements;
 export type Achievement = AchievementType[number];

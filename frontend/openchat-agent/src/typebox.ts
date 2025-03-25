@@ -888,6 +888,7 @@ export const Achievement = Type.Union([
     Type.Literal("SetPin"),
     Type.Literal("SwappedFromWallet"),
     Type.Literal("PinnedChat"),
+    Type.Literal("DepositedBtc"),
     Type.Literal("ChangedTheme"),
 ]);
 
