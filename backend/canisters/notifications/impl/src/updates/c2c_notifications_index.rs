@@ -35,6 +35,9 @@ fn c2c_notifications_index_impl(args: Args, state: &mut RuntimeState) -> Respons
                 NotificationsIndexEvent::UserUnblocked(user_id, unblocked) => {
                     state.data.blocked_users.remove(&(unblocked, user_id));
                 }
+                NotificationsIndexEvent::BotEndpointUpdated(user_id, url) => {
+                    state.data.bot_endpoints.insert(user_id, url);
+                }
             }
         }
     }

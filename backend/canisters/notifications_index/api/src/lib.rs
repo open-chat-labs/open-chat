@@ -16,12 +16,14 @@ pub enum NotificationsIndexEvent {
     AllSubscriptionsRemoved(UserId),
     UserBlocked(UserId, UserId),
     UserUnblocked(UserId, UserId),
+    BotEndpointUpdated(UserId, String),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum UserIndexEvent {
     UserBlocked(UserId, UserId),
     UserUnblocked(UserId, UserId),
+    BotEndpointUpdated(UserId, String),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

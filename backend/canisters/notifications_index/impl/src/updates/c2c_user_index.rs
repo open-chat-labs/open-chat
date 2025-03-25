@@ -34,6 +34,13 @@ fn c2c_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
                         *now,
                     );
                 }
+                UserIndexEvent::BotEndpointUpdated(user_id, endpoint) => {
+                    state.data.bot_endpoints.insert(user_id, endpoint.clone());
+                    state.push_event_to_notifications_canisters(
+                        NotificationsIndexEvent::BotEndpointUpdated(user_id, endpoint.clone()),
+                        *now,
+                    );
+                }
             }
         }
     }
