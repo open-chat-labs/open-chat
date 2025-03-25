@@ -74,7 +74,11 @@
     </div>
 
     <div class="units">
-        <Select {disabled} margin={false} onchange={() => updateAmount(amount)} bind:value={unit}>
+        <Select
+            disabled={disabled || supportedDurations.length === 1}
+            margin={false}
+            onchange={() => updateAmount(amount)}
+            bind:value={unit}>
             {#each supportedDurations as duration}
                 <option value={duration}>{$_(duration)}</option>
             {/each}
