@@ -1,7 +1,8 @@
 use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{with_map, KeyPrefix, LazyValue, StableMemoryMap, UserIdsKeyPrefix};
-use types::UserId;
+use std::collections::HashMap;
+use types::{CanisterId, UserId};
 
 #[derive(Serialize, Deserialize)]
 pub struct UserIdsSet {
@@ -50,6 +51,18 @@ impl UserIdsSet {
                 .take_while(|(key, _)| key.user_ids().0 == user_id1)
                 .map(|(key, _)| key.user_ids().1)
                 .collect()
+        })
+    }
+
+    pub fn collect_all(&self) -> Vec<(UserId, Vec<UserId>)> {
+        let min_user_id = UserId::new(CanisterId::from_slice(&[]));
+        with_map(|m| {
+            let mut map: HashMap<UserId, Vec<UserId>> = HashMap::new();
+            for (key, _) in m.range(self.prefix.create_key(&(min_user_id, min_user_id))..) {
+                let (user_id1, user_id2) = key.user_ids();
+                map.entry(user_id1).or_default().push(user_id2);
+            }
+            map.into_iter().collect()
         })
     }
 }
