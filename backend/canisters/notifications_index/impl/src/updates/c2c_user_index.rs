@@ -41,6 +41,10 @@ fn c2c_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
                         *now,
                     );
                 }
+                UserIndexEvent::BotRemoved(user_id) => {
+                    state.data.bot_endpoints.remove(&user_id);
+                    state.push_event_to_notifications_canisters(NotificationsIndexEvent::BotRemoved(user_id), *now);
+                }
             }
         }
     }
