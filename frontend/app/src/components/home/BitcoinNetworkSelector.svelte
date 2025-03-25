@@ -24,9 +24,5 @@
         gap: $sp3;
         margin-bottom: $sp4;
         align-items: center;
-
-        .span {
-            margin: 0 $sp2;
-        }
     }
 </style>
