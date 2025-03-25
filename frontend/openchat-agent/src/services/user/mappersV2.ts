@@ -408,6 +408,8 @@ export function achievementType(value: TAchievement): Achievement {
             return "referred_50th_user";
         case "SetPin":
             return "set_pin";
+        case "DepositedBtc":
+            return "deposited_btc";
         default:
             throw new UnsupportedValueError("Unexpected ApiAchievement received", value);
     }
