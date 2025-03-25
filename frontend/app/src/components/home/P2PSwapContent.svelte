@@ -233,7 +233,7 @@
             onClose={() => (confirming = false)} />
     {/if}
 {:else if showDetails}
-    <P2PSwapProgress {senderId} {content} on:close={() => (showDetails = false)} />
+    <P2PSwapProgress {senderId} {content} onClose={() => (showDetails = false)} />
 {/if}
 
 <div class="swap">
