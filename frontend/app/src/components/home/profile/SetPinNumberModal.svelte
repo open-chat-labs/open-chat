@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import ModalContent from "../../ModalContentLegacy.svelte";
+    import ModalContent from "../../ModalContent.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
     import {
@@ -25,26 +25,19 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let type: PinOperation;
+    interface Props {
+        type: PinOperation;
+        onPinSet: (pin: string | undefined) => void;
+        onClose: () => void;
+    }
 
-    let busy = false;
-    let currPinArray: string[] = [];
-    let newPinArray: string[] = [];
-    let delegation: DelegationChain | undefined = undefined;
+    let { type = $bindable(), onClose, onPinSet }: Props = $props();
 
-    $: title = i18nKey(`pinNumber.${type.kind}PinTitle`);
-    $: message = type.kind === "change" ? undefined : i18nKey(`pinNumber.${type.kind}PinMessage`);
-    $: action = i18nKey(`pinNumber.${type.kind}Pin`);
-    $: verificationValid = isPinValid(currPinArray) || delegation !== undefined;
-    $: changeValid = type.kind === "change" && isPinValid(newPinArray) && verificationValid;
-    $: setValid = type.kind === "set" && isPinValid(newPinArray);
-    $: clearValid = type.kind === "clear" && verificationValid;
-    $: isValid = type.kind === "forgot" || changeValid || setValid || clearValid;
-    $: showCurrentPin = type.kind !== "set" && delegation === undefined;
-
-    $: errorMessage = $pinNumberErrorMessageStore;
+    let busy = $state(false);
+    let currPinArray: string[] = $state([]);
+    let newPinArray: string[] = $state([]);
+    let delegation: DelegationChain | undefined = $state(undefined);
 
     onMount(() => {
         pinNumberFailureStore.set(undefined);
@@ -82,8 +75,8 @@
             .then((resp) => {
                 if (resp.kind === "success") {
                     toastStore.showSuccessToast(i18nKey(`pinNumber.${type.kind}PinSuccess`));
-                    dispatch("pinSet", newPin);
-                    close();
+                    onPinSet(newPin);
+                    onClose();
                 } else {
                     console.log("SetPinNumber failed", resp);
                 }
@@ -122,65 +115,84 @@
         }
     }
 
-    function close() {
-        dispatch("close");
-    }
+    let title = $derived(i18nKey(`pinNumber.${type.kind}PinTitle`));
+    let message = $derived(
+        type.kind === "change" ? undefined : i18nKey(`pinNumber.${type.kind}PinMessage`),
+    );
+    let action = $derived(i18nKey(`pinNumber.${type.kind}Pin`));
+    let verificationValid = $derived(isPinValid(currPinArray) || delegation !== undefined);
+    let changeValid = $derived(
+        type.kind === "change" && isPinValid(newPinArray) && verificationValid,
+    );
+    let setValid = $derived(type.kind === "set" && isPinValid(newPinArray));
+    let clearValid = $derived(type.kind === "clear" && verificationValid);
+    let isValid = $derived(type.kind === "forgot" || changeValid || setValid || clearValid);
+    let showCurrentPin = $derived(type.kind !== "set" && delegation === undefined);
+    let errorMessage = $derived($pinNumberErrorMessageStore);
 </script>
 
-<ModalContent closeIcon fitToContent={!$mobileWidth} fixedWidth={false} on:close>
-    <div class="header" slot="header">
-        <Translatable resourceKey={title} />
-    </div>
-    <div class="body" slot="body">
-        {#if type.kind === "forgot"}
-            {#if message !== undefined}
-                <ReAuthenticate on:success={reauthenticated} {message} />
+<ModalContent closeIcon fitToContent={!$mobileWidth} fixedWidth={false} {onClose}>
+    {#snippet header()}
+        <div class="header">
+            <Translatable resourceKey={title} />
+        </div>
+    {/snippet}
+    {#snippet body()}
+        <div class="body">
+            {#if type.kind === "forgot"}
+                {#if message !== undefined}
+                    <ReAuthenticate on:success={reauthenticated} {message} />
+                {/if}
+            {:else}
+                {#if message !== undefined}
+                    <p>
+                        <Translatable resourceKey={message} />
+                    </p>
+                {/if}
+                {#if showCurrentPin}
+                    <div class="code">
+                        {#if type.kind === "change"}
+                            <div>
+                                <Translatable resourceKey={i18nKey("pinNumber.currentPin")} />
+                            </div>
+                        {/if}
+                        <Pincode type="numeric" length={6} bind:code={currPinArray} />
+                        <ForgotPinLabel on:forgot={onForgot} />
+                    </div>
+                {/if}
+                {#if type.kind !== "clear"}
+                    <div class="code">
+                        {#if type.kind === "change"}
+                            <div><Translatable resourceKey={i18nKey("pinNumber.newPin")} /></div>
+                        {/if}
+                        <Pincode type="numeric" length={6} bind:code={newPinArray} />
+                    </div>
+                {/if}
+                {#if errorMessage !== undefined}
+                    <ErrorMessage>
+                        <Translatable resourceKey={errorMessage} />
+                    </ErrorMessage>
+                {/if}
             {/if}
-        {:else}
-            {#if message !== undefined}
-                <p>
-                    <Translatable resourceKey={message} />
-                </p>
+        </div>
+    {/snippet}
+    {#snippet footer()}
+        <div class="footer">
+            {#if type.kind === "forgot"}
+                <ButtonGroup align="center">
+                    <Button disabled={busy} secondary on:click={close}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                </ButtonGroup>
+            {:else}
+                <ButtonGroup align="center">
+                    <Button disabled={busy} secondary on:click={close}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    <Button loading={busy} disabled={busy || !isValid} on:click={changePin}
+                        ><Translatable resourceKey={action} /></Button>
+                </ButtonGroup>
             {/if}
-            {#if showCurrentPin}
-                <div class="code">
-                    {#if type.kind === "change"}
-                        <div><Translatable resourceKey={i18nKey("pinNumber.currentPin")} /></div>
-                    {/if}
-                    <Pincode type="numeric" length={6} bind:code={currPinArray} />
-                    <ForgotPinLabel on:forgot={onForgot} />
-                </div>
-            {/if}
-            {#if type.kind !== "clear"}
-                <div class="code">
-                    {#if type.kind === "change"}
-                        <div><Translatable resourceKey={i18nKey("pinNumber.newPin")} /></div>
-                    {/if}
-                    <Pincode type="numeric" length={6} bind:code={newPinArray} />
-                </div>
-            {/if}
-            {#if errorMessage !== undefined}
-                <ErrorMessage>
-                    <Translatable resourceKey={errorMessage} />
-                </ErrorMessage>
-            {/if}
-        {/if}
-    </div>
-    <div class="footer" slot="footer">
-        {#if type.kind === "forgot"}
-            <ButtonGroup align="center">
-                <Button disabled={busy} secondary on:click={close}
-                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-            </ButtonGroup>
-        {:else}
-            <ButtonGroup align="center">
-                <Button disabled={busy} secondary on:click={close}
-                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                <Button loading={busy} disabled={busy || !isValid} on:click={changePin}
-                    ><Translatable resourceKey={action} /></Button>
-            </ButtonGroup>
-        {/if}
-    </div>
+        </div>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">
