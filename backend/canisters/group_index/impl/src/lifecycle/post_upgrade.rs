@@ -5,10 +5,8 @@ use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use constants::DAY_IN_MS;
 use group_index_canister::post_upgrade::Args;
-use ic_cdk::management_canister::{CanisterSettings, LogVisibility, UpdateSettingsArgs};
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
-use std::time::Duration;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
 
@@ -51,19 +49,5 @@ fn post_upgrade(args: Args) {
             public = public_active_in_last_year,
             "Number of groups active in the last year"
         );
-    });
-
-    ic_cdk_timers::set_timer(Duration::ZERO, || {
-        ic_cdk::futures::spawn(async {
-            ic_cdk::management_canister::update_settings(&UpdateSettingsArgs {
-                canister_id: ic_cdk::api::canister_self(),
-                settings: CanisterSettings {
-                    log_visibility: Some(LogVisibility::Public),
-                    ..Default::default()
-                },
-            })
-            .await
-            .unwrap()
-        })
-    });
+    })
 }
