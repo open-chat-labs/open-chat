@@ -10,6 +10,8 @@
     import WalletIcon from "svelte-material-icons/WalletOutline.svelte";
     import Accounts from "./Accounts.svelte";
     import Button from "../../Button.svelte";
+    import Eye from "svelte-material-icons/EyeOutline.svelte";
+    import EyeOff from "svelte-material-icons/EyeOffOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import MenuIcon from "../../MenuIconLegacy.svelte";
@@ -18,6 +20,7 @@
     import MenuItem from "../../MenuItemLegacy.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
+    import { hideTokenBalances } from "../../../stores/settings";
     import Overlay from "../../Overlay.svelte";
     import SetPinNumberModal from "./SetPinNumberModal.svelte";
     import ManageAccounts from "./ManageAccounts.svelte";
@@ -46,6 +49,15 @@
             <Translatable resourceKey={i18nKey("wallet")} />
         </div>
         <div class="menu">
+            <div on:click={() => hideTokenBalances.toggle()}>
+                <HoverIcon>
+                    {#if $hideTokenBalances}
+                        <Eye color={"var(--icon-txt)"} />
+                    {:else}
+                        <EyeOff color={"var(--icon-txt)"} />
+                    {/if}
+                </HoverIcon>
+            </div>
             <MenuIcon position={"bottom"} align={"end"}>
                 <div slot="icon">
                     <HoverIcon title={$_("chatMenu")}>
@@ -99,7 +111,7 @@
         </div>
     </div>
     <div slot="body">
-        <Accounts bind:selectedConversion {conversionOptions} />
+        <Accounts bind:selectedConversion {conversionOptions} hideTokenBalances={$hideTokenBalances} />
     </div>
     <div slot="footer">
         <ButtonGroup>
@@ -142,5 +154,10 @@
             align-items: center;
             gap: $sp3;
         }
+    }
+
+    .menu {
+        display: flex;
+        align-items: center;
     }
 </style>

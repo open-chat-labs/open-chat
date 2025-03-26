@@ -53,5 +53,5 @@ export const configKeys = {
     referredUsersOpen: "openchat_referred_users_section",
     browseChannels: "openchat_browse_channels",
     useBlockLevelMarkdown: "openchat_block_markdown",
-    pinEnabled: "openchat_pin_enabled",
+    hideTokenBalances: "openchat_hide_token_balances",
 };
