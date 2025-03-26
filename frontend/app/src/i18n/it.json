@@ -1600,6 +1600,11 @@
         "owner": "Proprietari"
     },
     "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} in {newRole}",
+    "rotationChallenge": {
+        "info": "Ruota l'immagine a sinistra finché non corrisponde all'angolazione dell'immagine a destra",
+        "infoMobile": "Ruota l'immagine in alto finché non corrisponde all'angolazione dell'immagine in basso",
+        "title": "Bilanciare i bot"
+    },
     "rules": {
         "accept": "Accettare",
         "acceptTitle": "Regole della chat",
