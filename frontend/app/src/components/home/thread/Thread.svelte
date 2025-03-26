@@ -21,7 +21,7 @@
         LEDGER_CANISTER_ICP,
         TokenTransfer,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -51,6 +51,7 @@
     } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let rootEvent: EventWrapper<Message>;
     export let chat: ChatSummary;
@@ -222,7 +223,11 @@
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        draftMessagesStore.setAttachment(messageContext, ev.detail);
+        onFileSelected(ev.detail);
+    }
+
+    function onFileSelected(content: AttachmentContent) {
+        draftMessagesStore.setAttachment(messageContext, content);
     }
 
     function tokenTransfer(ev: CustomEvent<{ ledger?: string; amount?: bigint }>) {
@@ -255,8 +260,8 @@
         }
     }
 
-    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
-        draftMessagesStore.setReplyingTo(messageContext, ev.detail);
+    function replyTo(replyContext: EnhancedReplyContext) {
+        draftMessagesStore.setReplyingTo(messageContext, replyContext);
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {
@@ -319,8 +324,8 @@
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         {messageContext}
-        on:upgrade
-        on:close={() => (creatingP2PSwapMessage = false)} />
+        onUpgrade={() => dispatch("upgrade")}
+        onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
 <GiphySelector
@@ -337,8 +342,7 @@
         draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
         {messageContext}
-        on:upgrade
-        on:close={() => (creatingCryptoTransfer = undefined)} />
+        onClose={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
 <ThreadHeader
@@ -415,10 +419,9 @@
                             on:chatWith
                             on:removePreview={onRemovePreview}
                             on:goToMessageIndex={onGoToMessageIndex}
-                            on:replyPrivatelyTo
-                            on:replyTo={replyTo}
+                            onReplyPrivatelyTo={(r) => dispatch("replyPrivatelyTo", r)}
+                            onReplyTo={replyTo}
                             on:editEvent={() => editEvent(evt)}
-                            on:replyTo={replyTo}
                             on:upgrade
                             on:verifyHumanity
                             on:claimDailyChit
@@ -454,7 +457,7 @@
         on:setTextContent={setTextContent}
         on:startTyping={onStartTyping}
         on:stopTyping={onStopTyping}
-        on:fileSelected={fileSelected}
+        {onFileSelected}
         on:audioCaptured={fileSelected}
         on:sendMessage={sendMessage}
         on:attachGif={attachGif}

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import ModalContent from "../ModalContentLegacy.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import {
         AuthProvider,
@@ -21,28 +21,39 @@
     import { EmailPollerError, EmailSigninHandler } from "../../utils/signin";
     import EmailSigninFeedback from "./EmailSigninFeedback.svelte";
 
-    const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
+    interface Props {
+        onClose: () => void;
+    }
 
-    let state: "options" | "logging-in" = "options";
-    let mode: "signin" | "signup" = "signin";
-    let email = "";
-    let error: string | undefined = undefined;
-    let verificationCode: string | undefined = undefined;
-    let emailInvalid = false;
+    let { onClose }: Props = $props();
+
+    const client = getContext<OpenChat>("client");
+
+    let loginState = $state<"options" | "logging-in">("options");
+    let mode: "signin" | "signup" = $state("signin");
+    let email = $state("");
+    let error: string | undefined = $state(undefined);
+    let verificationCode: string | undefined = $state(undefined);
+    let emailInvalid = $state(false);
 
     let emailSigninHandler = new EmailSigninHandler(client, "registration", true);
 
-    $: restrictTo = new Set($querystring.getAll("auth"));
-    $: loggingInWithEmail =
-        state === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL;
-    $: loggingInWithEth = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.ETH;
-    $: loggingInWithSol = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.SOL;
-    $: spinning =
-        state === "logging-in" &&
-        error === undefined &&
-        $selectedAuthProviderStore !== AuthProvider.ETH &&
-        $selectedAuthProviderStore !== AuthProvider.SOL;
+    let restrictTo = $derived(new Set($querystring.getAll("auth")));
+    let loggingInWithEmail = $derived(
+        loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL,
+    );
+    let loggingInWithEth = $derived(
+        loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.ETH,
+    );
+    let loggingInWithSol = $derived(
+        loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.SOL,
+    );
+    let spinning = $derived(
+        loginState === "logging-in" &&
+            error === undefined &&
+            $selectedAuthProviderStore !== AuthProvider.ETH &&
+            $selectedAuthProviderStore !== AuthProvider.SOL,
+    );
 
     onMount(() => {
         emailSigninHandler.addEventListener("email_signin_event", emailEvent);
@@ -62,20 +73,20 @@
         }
     }
 
-    $: {
-        if ($identityState.kind === "anon" && state === "logging-in") {
-            dispatch("close");
+    $effect(() => {
+        if ($identityState.kind === "anon" && loginState === "logging-in") {
+            onClose();
         }
         if ($identityState.kind === "logged_in" || $identityState.kind === "challenging") {
-            dispatch("close");
+            onClose();
         }
-    }
+    });
 
     function cancel() {
         if ($anonUser && $identityState.kind === "logging_in") {
             client.updateIdentityState({ kind: "anon" });
         }
-        dispatch("close");
+        onClose();
     }
 
     function login(ev: CustomEvent<AuthProvider>) {
@@ -92,7 +103,7 @@
 
         localStorage.setItem(configKeys.selectedAuthEmail, email);
         selectedAuthProviderStore.set(provider);
-        state = "logging-in";
+        loginState = "logging-in";
         error = undefined;
 
         if (provider === AuthProvider.EMAIL) {
@@ -127,7 +138,7 @@
     function cancelLink() {
         client.gaTrack("email_signin_cancelled", "registration");
         emailSigninHandler.stopPolling();
-        state = "options";
+        loginState = "options";
     }
 
     function toggleMode() {
@@ -140,72 +151,83 @@
     }
 </script>
 
-<ModalContent hideFooter={!loggingInWithEmail} on:close={cancel} closeIcon>
-    <div class="header login" slot="header">
-        <div class="logo-img">
-            <FancyLoader loop={spinning} />
-        </div>
-        <div class="title">
-            <div>
-                <Translatable
-                    resourceKey={i18nKey(
-                        mode === "signin" ? "loginDialog.title" : "loginDialog.signupTitle",
-                    )} />
+<ModalContent hideFooter={!loggingInWithEmail} onClose={cancel} closeIcon>
+    {#snippet header()}
+        <div class="header login">
+            <div class="logo-img">
+                <FancyLoader loop={spinning} />
             </div>
-            <div class="strapline">
-                <Translatable resourceKey={i18nKey("loginDialog.strapline")} />
-            </div>
-        </div>
-    </div>
-    <div class="login" slot="body">
-        {#if state === "options"}
-            <ChooseSignInOption on:login={login} {mode} {restrictTo} bind:emailInvalid bind:email />
-
-            <div class="change-mode">
-                <Translatable
-                    resourceKey={i18nKey(
-                        mode === "signin" ? "loginDialog.noAccount" : "loginDialog.haveAccount",
-                    )} />
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <!-- svelte-ignore a11y-missing-attribute -->
-                <a role="button" tabindex="0" on:click={toggleMode}>
+            <div class="title">
+                <div>
                     <Translatable
                         resourceKey={i18nKey(
-                            mode === "signin" ? "loginDialog.signup" : "loginDialog.signin",
+                            mode === "signin" ? "loginDialog.title" : "loginDialog.signupTitle",
                         )} />
-                </a>
+                </div>
+                <div class="strapline">
+                    <Translatable resourceKey={i18nKey("loginDialog.strapline")} />
+                </div>
             </div>
-        {:else if loggingInWithEmail}
-            <EmailSigninFeedback
-                code={verificationCode}
-                polling={$emailSigninHandler}
-                on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
-            {#if error !== undefined}
-                <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
+        </div>
+    {/snippet}
+    {#snippet body()}
+        <div class="login">
+            {#if loginState === "options"}
+                <ChooseSignInOption
+                    on:login={login}
+                    {mode}
+                    {restrictTo}
+                    bind:emailInvalid
+                    bind:email />
+
+                <div class="change-mode">
+                    <Translatable
+                        resourceKey={i18nKey(
+                            mode === "signin" ? "loginDialog.noAccount" : "loginDialog.haveAccount",
+                        )} />
+                    <!-- svelte-ignore a11y_click_events_have_key_events -->
+                    <!-- svelte-ignore a11y_missing_attribute -->
+                    <a role="button" tabindex="0" onclick={toggleMode}>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                mode === "signin" ? "loginDialog.signup" : "loginDialog.signin",
+                            )} />
+                    </a>
+                </div>
+            {:else if loggingInWithEmail}
+                <EmailSigninFeedback
+                    code={verificationCode}
+                    polling={$emailSigninHandler}
+                    on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
+                {#if error !== undefined}
+                    <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
+                {/if}
+            {:else if loggingInWithEth}
+                {#await import("./SigninWithEth.svelte")}
+                    <div class="loading">...</div>
+                {:then { default: SigninWithEth }}
+                    <SigninWithEth />
+                {/await}
+            {:else if loggingInWithSol}
+                {#await import("./SigninWithSol.svelte")}
+                    <div class="loading">...</div>
+                {:then { default: SigninWithSol }}
+                    <SigninWithSol />
+                {/await}
             {/if}
-        {:else if loggingInWithEth}
-            {#await import("./SigninWithEth.svelte")}
-                <div class="loading">...</div>
-            {:then { default: SigninWithEth }}
-                <SigninWithEth />
-            {/await}
-        {:else if loggingInWithSol}
-            {#await import("./SigninWithSol.svelte")}
-                <div class="loading">...</div>
-            {:then { default: SigninWithSol }}
-                <SigninWithSol />
-            {/await}
-        {/if}
-    </div>
-    <div class="footer login-modal" slot="footer">
-        <ButtonGroup>
-            <Button on:click={cancelLink}
-                ><Translatable
-                    resourceKey={i18nKey(
-                        error === undefined ? "cancel" : "loginDialog.back",
-                    )} /></Button>
-        </ButtonGroup>
-    </div>
+        </div>
+    {/snippet}
+    {#snippet footer()}
+        <div class="footer login-modal">
+            <ButtonGroup>
+                <Button on:click={cancelLink}
+                    ><Translatable
+                        resourceKey={i18nKey(
+                            error === undefined ? "cancel" : "loginDialog.back",
+                        )} /></Button>
+            </ButtonGroup>
+        </div>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">

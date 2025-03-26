@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import TokenInput from "../TokenInput.svelte";
     import type { DexId, InterpolationValues, OpenChat, ResourceKey } from "openchat-client";
     import {
@@ -15,7 +15,7 @@
     import CryptoSelector from "../CryptoSelector.svelte";
     import Legend from "../../Legend.svelte";
     import SwapProgress from "./SwapProgress.svelte";
-    import ModalContent from "../../ModalContentLegacy.svelte";
+    import ModalContent from "../../ModalContent.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
@@ -28,64 +28,37 @@
     import AlertBox from "../../AlertBox.svelte";
     import Checkbox from "../../Checkbox.svelte";
 
-    export let ledgerIn: string;
-
-    const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
-
-    type State = "quote" | "swap" | "finished";
-    type Result = "success" | "rateChanged" | "insufficientFunds" | "error" | undefined;
-
-    let error: string | undefined = undefined;
-    let amountIn: bigint = BigInt(0);
-    let busy = false;
-    let valid = false;
-    let state: State = "quote";
-    let result: Result = undefined;
-    let validAmount = false;
-    let ledgerOut: string | undefined;
-    let swaps = {} as Record<string, DexId[]>;
-    let swapMessageValues: InterpolationValues | undefined = undefined;
-    let bestQuote: [DexId, bigint] | undefined = undefined;
-    let swapId: bigint | undefined;
-    let userAcceptedWarning = false;
-    let warnValueUnknown = false;
-    let warnValueDropped = false;
-
-    $: initialized = false;
-    $: detailsIn = $cryptoLookup[ledgerIn];
-    $: detailsOut = ledgerOut !== undefined ? $cryptoLookup[ledgerOut] : undefined;
-    $: anySwapsAvailable = Object.keys(swaps).length > 0 && detailsOut !== undefined;
-    $: swapping = state === "swap" && busy;
-    $: amountInText = client.formatTokens(amountIn, detailsIn.decimals);
-    $: {
-        valid =
-            anySwapsAvailable &&
-            validAmount &&
-            (state === "swap"
-                ? (bestQuote !== undefined && userAcceptedWarning) ||
-                  (!warnValueUnknown && !warnValueDropped)
-                : true);
+    interface Props {
+        ledgerIn: string;
+        onClose: () => void;
     }
 
-    $: title =
-        state === "quote"
-            ? i18nKey("tokenSwap.swapToken", { tokenIn: detailsIn.symbol })
-            : i18nKey("tokenSwap.swapTokenTo", {
-                  tokenIn: detailsIn.symbol,
-                  tokenOut: detailsOut!.symbol,
-              });
+    let { ledgerIn = $bindable(), onClose }: Props = $props();
 
-    $: balanceIn = $cryptoBalanceStore[ledgerIn];
-    $: remainingBalance =
-        amountIn > BigInt(0) ? balanceIn - amountIn - detailsIn.transferFee : balanceIn;
+    const client = getContext<OpenChat>("client");
 
-    $: primaryButtonText = getPrimaryButtonText(state, result);
-    $: pinNumberError = $pinNumberErrorMessageStore;
+    type SwapState = "quote" | "swap" | "finished";
+    type Result = "success" | "rateChanged" | "insufficientFunds" | "error" | undefined;
+
+    let error: string | undefined = $state(undefined);
+    let amountIn: bigint = $state(BigInt(0));
+    let busy = $state(false);
+    let valid = $state(false);
+    let swapState = $state<SwapState>("quote");
+    let result: Result = $state(undefined);
+    let validAmount = $state(false);
+    let ledgerOut: string | undefined = $state();
+    let swaps = $state({} as Record<string, DexId[]>);
+    let swapMessageValues: InterpolationValues | undefined = $state(undefined);
+    let bestQuote: [DexId, bigint] | undefined = $state(undefined);
+    let swapId: bigint | undefined = $state();
+    let userAcceptedWarning = $state(false);
+    let warnValueUnknown = $state(false);
+    let warnValueDropped = $state(false);
 
     onMount(() => loadSwaps(ledgerIn));
 
-    function getPrimaryButtonText(state: State, result: Result): ResourceKey {
+    function getPrimaryButtonText(state: SwapState, result: Result): ResourceKey {
         let label;
 
         if (state === "finished") {
@@ -152,7 +125,7 @@
                     };
 
                     if (quote > minAmountOut) {
-                        state = "swap";
+                        swapState = "swap";
                     } else {
                         error = $_("tokenSwap.quoteTooLow", { values: swapMessageValues });
                     }
@@ -242,7 +215,7 @@
         }>,
     ) {
         busy = false;
-        state = "finished";
+        swapState = "finished";
         result = ev.detail.outcome;
 
         client.refreshAccountBalance(ev.detail.ledgerIn);
@@ -250,12 +223,12 @@
     }
 
     function onPrimaryClick() {
-        if (state === "finished" && result === "insufficientFunds") {
+        if (swapState === "finished" && result === "insufficientFunds") {
             amountIn = BigInt(0);
-            state = "quote";
-        } else if (state === "quote" || result === "rateChanged") {
+            swapState = "quote";
+        } else if (swapState === "quote" || result === "rateChanged") {
             quote();
-        } else if (state === "swap") {
+        } else if (swapState === "swap") {
             swap();
         }
     }
@@ -267,127 +240,165 @@
     function onBalanceRefreshError(ev: CustomEvent<string>) {
         error = $_(ev.detail);
     }
+    let initialized = $state(false);
+
+    let detailsIn = $derived($cryptoLookup[ledgerIn]);
+    let detailsOut = $derived(ledgerOut !== undefined ? $cryptoLookup[ledgerOut] : undefined);
+    let anySwapsAvailable = $derived(Object.keys(swaps).length > 0 && detailsOut !== undefined);
+    let swapping = $derived(swapState === "swap" && busy);
+    let amountInText = $derived(client.formatTokens(amountIn, detailsIn.decimals));
+    $effect(() => {
+        valid =
+            anySwapsAvailable &&
+            validAmount &&
+            (swapState === "swap"
+                ? (bestQuote !== undefined && userAcceptedWarning) ||
+                  (!warnValueUnknown && !warnValueDropped)
+                : true);
+    });
+    let title = $derived(
+        swapState === "quote"
+            ? i18nKey("tokenSwap.swapToken", { tokenIn: detailsIn.symbol })
+            : i18nKey("tokenSwap.swapTokenTo", {
+                  tokenIn: detailsIn.symbol,
+                  tokenOut: detailsOut!.symbol,
+              }),
+    );
+    let balanceIn = $derived($cryptoBalanceStore[ledgerIn]);
+    let remainingBalance = $derived(
+        amountIn > BigInt(0) ? balanceIn - amountIn - detailsIn.transferFee : balanceIn,
+    );
+    let primaryButtonText = $derived(getPrimaryButtonText(swapState, result));
+    let pinNumberError = $derived($pinNumberErrorMessageStore);
 </script>
 
 <ModalContent>
-    <span class="header" slot="header">
-        <div class="main-title"><Translatable resourceKey={title} /></div>
-        {#if state === "quote"}
-            <BalanceWithRefresh
-                ledger={ledgerIn}
-                value={remainingBalance}
-                label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                bold
-                on:refreshed={onBalanceRefreshed}
-                on:error={onBalanceRefreshError} />
-        {/if}
-    </span>
-    <form class="body" slot="body">
-        {#if initialized}
-            {#if state === "quote"}
-                <div class="swap">
-                    <div class="select-from">
-                        <Legend label={i18nKey("cryptoAccount.transactionHeaders.from")} />
-                        <div class="inner">
-                            <CryptoSelector
-                                filter={(t) => t.balance > 0 && $swappableTokensStore.has(t.ledger)}
-                                bind:ledger={ledgerIn}
-                                onSelect={onLedgerInSelected} />
-                        </div>
-                    </div>
-                    <div class="amount">
-                        <TokenInput
-                            ledger={ledgerIn}
-                            minAmount={detailsIn.transferFee * BigInt(10)}
-                            maxAmount={detailsIn.balance}
-                            bind:valid={validAmount}
-                            bind:amount={amountIn} />
-                    </div>
-                    <div class="select-to">
-                        <Legend label={i18nKey("cryptoAccount.transactionHeaders.to")} />
-                        <div class="inner">
-                            <CryptoSelector
-                                filter={(t) => Object.keys(swaps).includes(t.ledger)}
-                                bind:ledger={ledgerOut} />
-                        </div>
-                    </div>
-                </div>
+    {#snippet header()}
+        <span class="header">
+            <div class="main-title"><Translatable resourceKey={title} /></div>
+            {#if swapState === "quote"}
+                <BalanceWithRefresh
+                    ledger={ledgerIn}
+                    value={remainingBalance}
+                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
+                    bold
+                    on:refreshed={onBalanceRefreshed}
+                    on:error={onBalanceRefreshError} />
             {/if}
-
-            {#if (swapping || state === "finished") && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
-                <div>
-                    <SwapProgress
-                        {swapId}
-                        tokenIn={detailsIn.symbol}
-                        tokenOut={detailsOut.symbol}
-                        ledgerIn={detailsIn.ledger}
-                        ledgerOut={detailsOut.ledger}
-                        amountIn={amountInText}
-                        decimalsOut={detailsOut.decimals}
-                        dex={dexName(bestQuote[0])}
-                        on:finished={onSwapFinished} />
-                </div>
-            {/if}
-
-            {#if state === "swap" && !swapping}
-                <div>{$_("tokenSwap.bestQuote", { values: swapMessageValues })}</div>
-                <Markdown text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
-
-                {#if warnValueDropped || warnValueUnknown}
-                    <AlertBox>
-                        <div class="warning">
-                            {#if warnValueDropped}
-                                <Translatable
-                                    resourceKey={i18nKey(
-                                        "tokenSwap.warningValueDropped",
-                                        swapMessageValues,
-                                    )} />
-                            {:else}
-                                <Translatable
-                                    resourceKey={i18nKey(
-                                        "tokenSwap.warningValueUnknown",
-                                        swapMessageValues,
-                                    )} />
-                            {/if}
+        </span>
+    {/snippet}
+    {#snippet body()}
+        <form class="body">
+            {#if initialized}
+                {#if swapState === "quote"}
+                    <div class="swap">
+                        <div class="select-from">
+                            <Legend label={i18nKey("cryptoAccount.transactionHeaders.from")} />
+                            <div class="inner">
+                                <CryptoSelector
+                                    filter={(t) =>
+                                        t.balance > 0 && $swappableTokensStore.has(t.ledger)}
+                                    bind:ledger={ledgerIn}
+                                    onSelect={onLedgerInSelected} />
+                            </div>
                         </div>
-                        <Checkbox
-                            id="confirm-understanding"
-                            small
-                            label={i18nKey("tokenSwap.confirmUnderstanding")}
-                            bind:checked={userAcceptedWarning} />
-                    </AlertBox>
+                        <div class="amount">
+                            <TokenInput
+                                ledger={ledgerIn}
+                                minAmount={detailsIn.transferFee * BigInt(10)}
+                                maxAmount={detailsIn.balance}
+                                bind:valid={validAmount}
+                                bind:amount={amountIn} />
+                        </div>
+                        <div class="select-to">
+                            <Legend label={i18nKey("cryptoAccount.transactionHeaders.to")} />
+                            <div class="inner">
+                                <CryptoSelector
+                                    filter={(t) => Object.keys(swaps).includes(t.ledger)}
+                                    bind:ledger={ledgerOut} />
+                            </div>
+                        </div>
+                    </div>
                 {/if}
 
-                <div>{$_("tokenSwap.proceedWithSwap", { values: swapMessageValues })}</div>
-            {/if}
+                {#if (swapping || swapState === "finished") && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
+                    <div>
+                        <SwapProgress
+                            {swapId}
+                            tokenIn={detailsIn.symbol}
+                            tokenOut={detailsOut.symbol}
+                            ledgerIn={detailsIn.ledger}
+                            ledgerOut={detailsOut.ledger}
+                            amountIn={amountInText}
+                            decimalsOut={detailsOut.decimals}
+                            dex={dexName(bestQuote[0])}
+                            on:finished={onSwapFinished} />
+                    </div>
+                {/if}
 
-            {#if error !== undefined || pinNumberError !== undefined}
-                <ErrorMessage>
-                    {#if pinNumberError !== undefined}
-                        <Translatable resourceKey={pinNumberError} />
-                    {:else}
-                        {error}
+                {#if swapState === "swap" && !swapping}
+                    <div>{$_("tokenSwap.bestQuote", { values: swapMessageValues })}</div>
+                    <Markdown
+                        text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
+
+                    {#if warnValueDropped || warnValueUnknown}
+                        <AlertBox>
+                            <div class="warning">
+                                {#if warnValueDropped}
+                                    <Translatable
+                                        resourceKey={i18nKey(
+                                            "tokenSwap.warningValueDropped",
+                                            swapMessageValues,
+                                        )} />
+                                {:else}
+                                    <Translatable
+                                        resourceKey={i18nKey(
+                                            "tokenSwap.warningValueUnknown",
+                                            swapMessageValues,
+                                        )} />
+                                {/if}
+                            </div>
+                            <Checkbox
+                                id="confirm-understanding"
+                                small
+                                label={i18nKey("tokenSwap.confirmUnderstanding")}
+                                bind:checked={userAcceptedWarning} />
+                        </AlertBox>
                     {/if}
-                </ErrorMessage>
+
+                    <div>{$_("tokenSwap.proceedWithSwap", { values: swapMessageValues })}</div>
+                {/if}
+
+                {#if error !== undefined || pinNumberError !== undefined}
+                    <ErrorMessage>
+                        {#if pinNumberError !== undefined}
+                            <Translatable resourceKey={pinNumberError} />
+                        {:else}
+                            {error}
+                        {/if}
+                    </ErrorMessage>
+                {/if}
             {/if}
-        {/if}
-    </form>
-    <span slot="footer">
-        <ButtonGroup>
-            {#if !swapping}
-                <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
-                    ><Translatable resourceKey={i18nKey("close")} /></Button>
-            {/if}
-            {#if result !== "success" && result !== "error"}
-                <Button
-                    disabled={busy || !valid}
-                    loading={busy}
-                    tiny={$mobileWidth}
-                    on:click={onPrimaryClick}
-                    ><Translatable resourceKey={primaryButtonText} /></Button>
-            {/if}
-        </ButtonGroup>
-    </span>
+        </form>
+    {/snippet}
+    {#snippet footer()}
+        <span>
+            <ButtonGroup>
+                {#if !swapping}
+                    <Button secondary tiny={$mobileWidth} on:click={onClose}
+                        ><Translatable resourceKey={i18nKey("close")} /></Button>
+                {/if}
+                {#if result !== "success" && result !== "error"}
+                    <Button
+                        disabled={busy || !valid}
+                        loading={busy}
+                        tiny={$mobileWidth}
+                        on:click={onPrimaryClick}
+                        ><Translatable resourceKey={primaryButtonText} /></Button>
+                {/if}
+            </ButtonGroup>
+        </span>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">

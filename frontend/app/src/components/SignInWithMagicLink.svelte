@@ -1,23 +1,27 @@
 <script lang="ts">
-    import { onMount, getContext, createEventDispatcher, tick } from "svelte";
+    import { onMount, getContext, tick } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
     import FancyLoader from "./icons/FancyLoader.svelte";
-    import ModalContent from "./ModalContentLegacy.svelte";
+    import ModalContent from "./ModalContent.svelte";
     import { pageReplace } from "../routes";
     import page from "page";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
+    interface Props {
+        onClose: () => void;
+    }
+
+    let { onClose }: Props = $props();
     let qs = window.location.search;
-    let status: string | undefined = undefined;
-    let message = "magicLink.closeMessage";
-    let busy = false;
-    let code: string | undefined;
-    let codeRef: HTMLInputElement | undefined;
+    let status: string | undefined = $state(undefined);
+    let message = $state("magicLink.closeMessage");
+    let busy = $state(false);
+    let code: string | undefined = $state();
+    let codeRef: HTMLInputElement | undefined = $state();
 
     onMount(() => {
         pageReplace("/home");
@@ -26,12 +30,6 @@
             codeRef?.focus();
         });
     });
-
-    $: {
-        if (code !== undefined && code.length >= 3 && status === undefined) {
-            onCodeEntered();
-        }
-    }
 
     function onCodeEntered() {
         if (code === undefined || !isCodeValid(code)) {
@@ -48,7 +46,7 @@
             .then((resp) => {
                 if (resp.kind === "success") {
                     page("/communities");
-                    close();
+                    onClose();
                 } else if (resp.kind === "session_not_found") {
                     message = "magicLink.continueMessage";
                     status = "magicLink.success";
@@ -66,43 +64,47 @@
         return Array.from(code).filter((c) => /^[0-9]$/.test(c)).length === 3;
     }
 
-    function close() {
-        dispatch("close");
-    }
+    $effect(() => {
+        if (code !== undefined && code.length >= 3 && status === undefined) {
+            onCodeEntered();
+        }
+    });
 </script>
 
 <div class="magic-link">
     <ModalContent hideFooter>
-        <div class="header" slot="header">
+        {#snippet header()}
             <Translatable resourceKey={i18nKey("magicLink.title")} />
-        </div>
-        <div class="body" slot="body">
-            {#if busy}
-                <div class="loading">
-                    <FancyLoader loop={busy} />
-                </div>
-            {/if}
-
-            {#if status === undefined}
-                {#if !busy}
-                    <div><Translatable resourceKey={i18nKey("magicLink.enterCode")} /></div>
+        {/snippet}
+        {#snippet body()}
+            <div class="body">
+                {#if busy}
+                    <div class="loading">
+                        <FancyLoader loop={busy} />
+                    </div>
                 {/if}
 
-                <input
-                    bind:this={codeRef}
-                    type="text"
-                    inputmode="numeric"
-                    pattern={"[0-9]{1}"}
-                    maxlength={3}
-                    disabled={busy || status !== undefined}
-                    bind:value={code} />
+                {#if status === undefined}
+                    {#if !busy}
+                        <div><Translatable resourceKey={i18nKey("magicLink.enterCode")} /></div>
+                    {/if}
 
-                <!-- <Pincode length={3} on:complete={onCodeEntered} /> -->
-            {:else}
-                <p class="status"><Translatable resourceKey={i18nKey(status)} /></p>
-                <p><Translatable resourceKey={i18nKey(message)} /></p>
-            {/if}
-        </div>
+                    <input
+                        bind:this={codeRef}
+                        type="text"
+                        inputmode="numeric"
+                        pattern={"[0-9]{1}"}
+                        maxlength={3}
+                        disabled={busy || status !== undefined}
+                        bind:value={code} />
+
+                    <!-- <Pincode length={3} on:complete={onCodeEntered} /> -->
+                {:else}
+                    <p class="status"><Translatable resourceKey={i18nKey(status)} /></p>
+                    <p><Translatable resourceKey={i18nKey(message)} /></p>
+                {/if}
+            </div>
+        {/snippet}
     </ModalContent>
 </div>
 

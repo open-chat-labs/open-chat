@@ -4,9 +4,9 @@
     import type { OpenChat } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
-    import ModalContent from "../ModalContentLegacy.svelte";
+    import ModalContent from "../ModalContent.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -18,100 +18,106 @@
     } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let ledger0: string;
-    export let ledger1: string;
-    export let amount0: bigint;
-    export let amount1: bigint;
+    interface Props {
+        ledger0: string;
+        ledger1: string;
+        amount0: bigint;
+        amount1: bigint;
+        onClose: () => void;
+        onAccept: () => void;
+    }
+
+    let { ledger0, ledger1, amount0, amount1, onClose, onAccept }: Props = $props();
 
     let refreshing = false;
     let error: string | undefined = undefined;
+    //@ts-ignore
     let balanceWithRefresh: BalanceWithRefresh;
-
-    $: cryptoBalance = $cryptoBalanceStore[ledger1] ?? BigInt(0);
-    $: tokenDetails0 = $cryptoLookup[ledger0];
-    $: tokenDetails1 = $cryptoLookup[ledger1];
-    $: symbol0 = tokenDetails0.symbol;
-    $: symbol1 = tokenDetails1.symbol;
-    $: transferFees = BigInt(2) * tokenDetails1.transferFee;
-    $: valid = error === undefined && !insufficient;
-    $: insufficient = cryptoBalance <= amount1 + transferFees;
-    $: amount0Text = client.formatTokens(amount0, tokenDetails0.decimals);
-    $: amount1Text = client.formatTokens(amount1 + transferFees, tokenDetails1.decimals);
 
     function reset() {
         balanceWithRefresh.refresh();
     }
 
-    function cancel() {
-        dispatch("close");
-    }
-
-    function accept() {
-        dispatch("accept");
-    }
+    let cryptoBalance = $derived($cryptoBalanceStore[ledger1] ?? BigInt(0));
+    let tokenDetails0 = $derived($cryptoLookup[ledger0]);
+    let tokenDetails1 = $derived($cryptoLookup[ledger1]);
+    let symbol0 = $derived(tokenDetails0.symbol);
+    let symbol1 = $derived(tokenDetails1.symbol);
+    let transferFees = $derived(BigInt(2) * tokenDetails1.transferFee);
+    let insufficient = $derived(cryptoBalance <= amount1 + transferFees);
+    let valid = $derived(error === undefined && !insufficient);
+    let amount0Text = $derived(client.formatTokens(amount0, tokenDetails0.decimals));
+    let amount1Text = $derived(client.formatTokens(amount1 + transferFees, tokenDetails1.decimals));
 </script>
 
 <Overlay dismissible>
     <ModalContent>
-        <span class="header" slot="header">
-            <div>
-                <Translatable
-                    resourceKey={i18nKey(
-                        insufficient ? "p2pSwap.insufficientBalance" : "areYouSure",
-                    )} />
-            </div>
-            <BalanceWithRefresh
-                bind:this={balanceWithRefresh}
-                ledger={ledger1}
-                value={cryptoBalance}
-                label={i18nKey("p2pSwap.tokenBalance", { token: symbol1 })}
-                bold />
-        </span>
-        <form slot="body">
-            <div class="body" class:insufficient>
-                {#if insufficient}
-                    <p class="info">
+        {#snippet header()}
+            <span class="header">
+                <div>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            insufficient ? "p2pSwap.insufficientBalance" : "areYouSure",
+                        )} />
+                </div>
+                <BalanceWithRefresh
+                    bind:this={balanceWithRefresh}
+                    ledger={ledger1}
+                    value={cryptoBalance}
+                    label={i18nKey("p2pSwap.tokenBalance", { token: symbol1 })}
+                    bold />
+            </span>
+        {/snippet}
+        {#snippet body()}
+            <form>
+                <div class="body" class:insufficient>
+                    {#if insufficient}
+                        <p class="info">
+                            <Translatable
+                                resourceKey={i18nKey("p2pSwap.insufficientBalanceMessage", {
+                                    amount: amount1Text,
+                                    token: symbol1,
+                                })} />
+                        </p>
+                        <AccountInfo ledger={ledger1} user={$user} />
+                        <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
+                    {:else}
                         <Translatable
-                            resourceKey={i18nKey("p2pSwap.insufficientBalanceMessage", {
+                            resourceKey={i18nKey("p2pSwap.confirmAccept", {
                                 amount: amount1Text,
                                 token: symbol1,
+                                amountOther: amount0Text,
+                                tokenOther: symbol0,
                             })} />
-                    </p>
-                    <AccountInfo ledger={ledger1} user={$user} />
-                    <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
-                {:else}
-                    <Translatable
-                        resourceKey={i18nKey("p2pSwap.confirmAccept", {
-                            amount: amount1Text,
-                            token: symbol1,
-                            amountOther: amount0Text,
-                            tokenOther: symbol0,
-                        })} />
-                {/if}
-            </div>
-        </form>
-        <span slot="footer">
-            <ButtonGroup>
-                <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
-                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                {#if insufficient}
-                    <Button
-                        small={!$mobileWidth}
-                        disabled={refreshing}
-                        loading={refreshing}
-                        tiny={$mobileWidth}
-                        on:click={reset}><Translatable resourceKey={i18nKey("refresh")} /></Button>
-                {:else}
-                    <Button
-                        small={!$mobileWidth}
-                        disabled={!valid}
-                        tiny={$mobileWidth}
-                        on:click={accept}><Translatable resourceKey={i18nKey("yes")} /></Button>
-                {/if}
-            </ButtonGroup>
-        </span>
+                    {/if}
+                </div>
+            </form>
+        {/snippet}
+        {#snippet footer()}
+            <span>
+                <ButtonGroup>
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={onClose}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    {#if insufficient}
+                        <Button
+                            small={!$mobileWidth}
+                            disabled={refreshing}
+                            loading={refreshing}
+                            tiny={$mobileWidth}
+                            on:click={reset}
+                            ><Translatable resourceKey={i18nKey("refresh")} /></Button>
+                    {:else}
+                        <Button
+                            small={!$mobileWidth}
+                            disabled={!valid}
+                            tiny={$mobileWidth}
+                            on:click={onAccept}
+                            ><Translatable resourceKey={i18nKey("yes")} /></Button>
+                    {/if}
+                </ButtonGroup>
+            </span>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

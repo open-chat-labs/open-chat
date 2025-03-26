@@ -229,11 +229,11 @@
             ledger1={content.token1.ledger}
             amount0={content.token0Amount}
             amount1={content.token1Amount}
-            on:accept={accept}
-            on:close={() => (confirming = false)} />
+            onAccept={accept}
+            onClose={() => (confirming = false)} />
     {/if}
 {:else if showDetails}
-    <P2PSwapProgress {senderId} {content} on:close={() => (showDetails = false)} />
+    <P2PSwapProgress {senderId} {content} onClose={() => (showDetails = false)} />
 {/if}
 
 <div class="swap">

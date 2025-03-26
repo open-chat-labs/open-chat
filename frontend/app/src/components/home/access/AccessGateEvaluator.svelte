@@ -13,13 +13,14 @@
         type EnhancedAccessGate,
         type LeafGate,
         type PaymentGateApprovals,
+        type GateCheckSucceeded,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import ModalContent from "../../ModalContentLegacy.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import { getContext, onMount } from "svelte";
     import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
     import DiamondGateEvaluator from "./DiamondGateEvaluator.svelte";
     import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
@@ -29,20 +30,26 @@
     import { iconSize } from "../../../stores/iconSize";
     import Radio from "../../Radio.svelte";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let gates: EnhancedAccessGate[];
+    interface Props {
+        gates: EnhancedAccessGate[];
+        onSuccess: (success: GateCheckSucceeded) => void;
+        onClose: () => void;
+    }
+
+    let { gates, onSuccess, onClose }: Props = $props();
 
     let result: IteratorResult<EnhancedAccessGate>;
     let iterator = preprocessGates(gates, needsPreprocessing);
-    let currentGate: EnhancedAccessGate | undefined;
+    let currentGate: EnhancedAccessGate | undefined = $state();
     let credentials: string[] = [];
     let paymentApprovals: PaymentGateApprovals = new Map();
-    let optionalGatesByIndex: Map<number, LeafGate> = new Map();
-    $: optionalInvalid =
+    let optionalGatesByIndex: Map<number, LeafGate> = $state(new Map());
+    let optionalInvalid = $derived(
         currentGate?.kind === "composite_gate" &&
-        optionalGatesByIndex.size >= currentGate.gates.length;
+            optionalGatesByIndex.size >= currentGate.gates.length,
+    );
 
     onMount(nextGate);
 
@@ -80,7 +87,7 @@
             }
         } else {
             currentGate = undefined;
-            dispatch("success", { credentials, paymentApprovals });
+            onSuccess({ credentials, paymentApprovals });
         }
     }
 
@@ -142,88 +149,92 @@
     hideHeader
     hideFooter={currentGate !== undefined && currentGate.kind !== "composite_gate"}
     closeIcon
-    on:close>
-    <div let:onClose class="body access-gate-evaluator" slot="body">
-        {#if currentGate}
-            {#if isCompositeGate(currentGate) && currentGate.operator === "or"}
-                <div class="header">
-                    <div class="icon">
-                        <VectorCombine size={$iconSize} color={"var(--txt)"} />
+    {onClose}>
+    {#snippet body()}
+        <div class="body access-gate-evaluator">
+            {#if currentGate}
+                {#if isCompositeGate(currentGate) && currentGate.operator === "or"}
+                    <div class="header">
+                        <div class="icon">
+                            <VectorCombine size={$iconSize} color={"var(--txt)"} />
+                        </div>
+                        <p class="title">
+                            <Translatable resourceKey={i18nKey("access.chooseOneGate")} />
+                        </p>
                     </div>
-                    <p class="title">
-                        <Translatable resourceKey={i18nKey("access.chooseOneGate")} />
+                    <p class="subtitle">
+                        <Translatable resourceKey={i18nKey("access.chooseOneGateInfo")} />
                     </p>
-                </div>
-                <p class="subtitle">
-                    <Translatable resourceKey={i18nKey("access.chooseOneGateInfo")} />
-                </p>
 
-                {#each currentGate.gates as subgate, i}
-                    <div class="optional-gate">
-                        <Radio
-                            group={"optional_gates"}
-                            checked={!optionalGatesByIndex.has(i)}
-                            on:change={() => toggleIndex(i, currentGate)}
-                            label={i18nKey(subgate.kind)}
-                            id={`subgate_${i}`}>
-                            <AccessGateSummary
-                                editable={false}
-                                level={currentGate.level}
-                                showNoGate={false}
-                                gateConfig={{ expiry: undefined, gate: subgate }} />
-                        </Radio>
-                    </div>
-                {/each}
-            {:else if isCredentialGate(currentGate)}
-                <CredentialGateEvaluator
-                    on:close={onClose}
-                    on:credentialReceived={credentialReceived}
-                    gate={currentGate}
-                    level={currentGate.level} />
-            {:else if isUniquePersonGate(currentGate)}
-                <UniqueHumanGateEvaluator
-                    on:credentialReceived={credentialReceived}
-                    on:close={onClose}
-                    expiry={currentGate.expiry}
-                    level={currentGate.level} />
-            {:else if isPaymentGate(currentGate)}
-                <PaymentGateEvaluator
-                    {paymentApprovals}
-                    gate={currentGate}
-                    level={currentGate.level}
-                    on:approvePayment={approvePayment}
-                    on:close={onClose} />
-            {:else if isLifetimeDiamondGate(currentGate)}
-                <DiamondGateEvaluator
-                    level={currentGate.level}
-                    lifetime
-                    on:credentialReceived={credentialReceived}
-                    on:cancel={onClose} />
-            {:else if isDiamondGate(currentGate)}
-                <DiamondGateEvaluator
-                    level={currentGate.level}
-                    lifetime={false}
-                    on:credentialReceived={credentialReceived}
-                    on:cancel={onClose} />
+                    {#each currentGate.gates as subgate, i}
+                        <div class="optional-gate">
+                            <Radio
+                                group={"optional_gates"}
+                                checked={!optionalGatesByIndex.has(i)}
+                                on:change={() => toggleIndex(i, currentGate)}
+                                label={i18nKey(subgate.kind)}
+                                id={`subgate_${i}`}>
+                                <AccessGateSummary
+                                    editable={false}
+                                    level={currentGate.level}
+                                    showNoGate={false}
+                                    gateConfig={{ expiry: undefined, gate: subgate }} />
+                            </Radio>
+                        </div>
+                    {/each}
+                {:else if isCredentialGate(currentGate)}
+                    <CredentialGateEvaluator
+                        on:close={onClose}
+                        on:credentialReceived={credentialReceived}
+                        gate={currentGate}
+                        level={currentGate.level} />
+                {:else if isUniquePersonGate(currentGate)}
+                    <UniqueHumanGateEvaluator
+                        on:credentialReceived={credentialReceived}
+                        on:close={onClose}
+                        expiry={currentGate.expiry}
+                        level={currentGate.level} />
+                {:else if isPaymentGate(currentGate)}
+                    <PaymentGateEvaluator
+                        {paymentApprovals}
+                        gate={currentGate}
+                        level={currentGate.level}
+                        on:approvePayment={approvePayment}
+                        on:close={onClose} />
+                {:else if isLifetimeDiamondGate(currentGate)}
+                    <DiamondGateEvaluator
+                        level={currentGate.level}
+                        lifetime
+                        on:credentialReceived={credentialReceived}
+                        on:cancel={onClose} />
+                {:else if isDiamondGate(currentGate)}
+                    <DiamondGateEvaluator
+                        level={currentGate.level}
+                        lifetime={false}
+                        on:credentialReceived={credentialReceived}
+                        on:cancel={onClose} />
+                {/if}
             {/if}
-        {/if}
-    </div>
+        </div>
+    {/snippet}
 
-    <div let:onClose slot="footer">
-        <ButtonGroup>
-            {#if currentGate !== undefined}
-                {#if isCompositeGate(currentGate)}
-                    <Button disabled={optionalInvalid} on:click={nextGate}>
-                        <Translatable resourceKey={i18nKey("access.next")} />
+    {#snippet footer()}
+        <div>
+            <ButtonGroup>
+                {#if currentGate !== undefined}
+                    {#if isCompositeGate(currentGate)}
+                        <Button disabled={optionalInvalid} on:click={nextGate}>
+                            <Translatable resourceKey={i18nKey("access.next")} />
+                        </Button>
+                    {/if}
+                {:else}
+                    <Button on:click={onClose}>
+                        <Translatable resourceKey={i18nKey("access.join")} />
                     </Button>
                 {/if}
-            {:else}
-                <Button on:click={onClose}>
-                    <Translatable resourceKey={i18nKey("access.join")} />
-                </Button>
-            {/if}
-        </ButtonGroup>
-    </div>
+            </ButtonGroup>
+        </div>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">

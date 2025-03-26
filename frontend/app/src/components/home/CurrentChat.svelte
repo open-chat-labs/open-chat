@@ -223,6 +223,11 @@
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
         draftMessagesStore.setAttachment({ chatId: chat.id }, ev.detail);
+        onFileSelected(ev.detail);
+    }
+
+    function onFileSelected(content: AttachmentContent) {
+        draftMessagesStore.setAttachment({ chatId: chat.id }, content);
     }
 
     function attachGif(ev: CustomEvent<string>) {
@@ -365,8 +370,7 @@
         draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
         {messageContext}
-        on:upgrade
-        on:close={() => (creatingCryptoTransfer = undefined)} />
+        onClose={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
 {#if creatingPrizeMessage}
@@ -375,15 +379,15 @@
         {chat}
         ledger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         draftAmount={0n}
-        on:close={() => (creatingPrizeMessage = false)} />
+        onClose={() => (creatingPrizeMessage = false)} />
 {/if}
 
 {#if creatingP2PSwapMessage}
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         {messageContext}
-        on:upgrade
-        on:close={() => (creatingP2PSwapMessage = false)} />
+        onUpgrade={() => dispatch("upgrade")}
+        onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
 <GiphySelector
@@ -483,7 +487,7 @@
             on:setTextContent={setTextContent}
             on:startTyping={() => client.startTyping(chat, $user.userId)}
             on:stopTyping={() => client.stopTyping(chat, $user.userId)}
-            on:fileSelected={fileSelected}
+            {onFileSelected}
             on:audioCaptured={fileSelected}
             on:sendMessage={sendMessage}
             on:attachGif={attachGif}

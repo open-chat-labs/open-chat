@@ -18,32 +18,51 @@
         AttachmentContent,
         MessageContext,
     } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import ModalContent from "../ModalContentLegacy.svelte";
+    import ModalContent from "../ModalContent.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let blocked: boolean;
-    export let preview: boolean;
-    export let lapsed: boolean;
-    export let joining: MultiUserChat | undefined;
-    export let chat: ChatSummary;
-    export let attachment: AttachmentContent | undefined;
-    export let editingEvent: EventWrapper<Message> | undefined;
-    export let replyingTo: EnhancedReplyContext | undefined;
-    export let textContent: string | undefined;
-    export let user: CreatedUser;
-    export let mode: "thread" | "message" = "message";
-    export let externalContent: boolean = false;
-    export let messageContext: MessageContext;
+    interface Props {
+        blocked: boolean;
+        preview: boolean;
+        lapsed: boolean;
+        joining: MultiUserChat | undefined;
+        chat: ChatSummary;
+        attachment: AttachmentContent | undefined;
+        editingEvent: EventWrapper<Message> | undefined;
+        replyingTo: EnhancedReplyContext | undefined;
+        textContent: string | undefined;
+        user: CreatedUser;
+        mode?: "thread" | "message";
+        externalContent?: boolean;
+        messageContext: MessageContext;
+        onFileSelected: (content: AttachmentContent) => void;
+    }
 
-    const dispatch = createEventDispatcher();
+    let {
+        blocked,
+        preview,
+        lapsed,
+        joining,
+        chat,
+        attachment,
+        editingEvent,
+        replyingTo,
+        textContent,
+        user,
+        mode = "message",
+        externalContent = false,
+        messageContext,
+        onFileSelected,
+    }: Props = $props();
 
-    let messageAction: MessageAction = undefined;
+    let messageAction: MessageAction = $state(undefined);
+    //@ts-ignore
     let messageEntry: MessageEntry;
 
     function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
@@ -63,7 +82,7 @@
                 .then((content) => {
                     let permission = client.contentTypeToPermission(content.kind);
                     if (client.canSendMessage(chat.id, mode, permission)) {
-                        dispatch("fileSelected", content);
+                        onFileSelected(content);
                     } else {
                         const errorMessage = i18nKey("permissions.notPermitted", {
                             permission: $_(`permissions.threadPermissions.${permission}`),
@@ -106,18 +125,22 @@
 {#if messageAction === "emoji"}
     <div class={`emoji-overlay ${mode}`}>
         <ModalContent hideFooter hideHeader fill>
-            <span slot="body">
-                <div class="emoji-header">
-                    <h4><Translatable resourceKey={i18nKey("pickEmoji")} /></h4>
-                    <span title={$_("close")} class="close-emoji">
-                        <HoverIcon onclick={() => (messageAction = undefined)}>
-                            <Close size={$iconSize} color={"var(--icon-txt)"} />
-                        </HoverIcon>
-                    </span>
-                </div>
-                <EmojiPicker on:emojiSelected={emojiSelected} {mode} />
-            </span>
-            <span slot="footer"></span>
+            {#snippet body()}
+                <span>
+                    <div class="emoji-header">
+                        <h4><Translatable resourceKey={i18nKey("pickEmoji")} /></h4>
+                        <span title={$_("close")} class="close-emoji">
+                            <HoverIcon onclick={() => (messageAction = undefined)}>
+                                <Close size={$iconSize} color={"var(--icon-txt)"} />
+                            </HoverIcon>
+                        </span>
+                    </div>
+                    <EmojiPicker on:emojiSelected={emojiSelected} {mode} />
+                </span>
+            {/snippet}
+            {#snippet footer()}
+                <span></span>
+            {/snippet}
         </ModalContent>
     </div>
 {/if}
@@ -165,7 +188,7 @@
         on:attachGif
         on:makeMeme
         on:clearAttachment
-        on:fileSelected
+        on:fileSelected={(ev) => onFileSelected(ev.detail)}
         on:audioCaptured
         on:joinGroup
         on:upgrade />
