@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Allow community owners to delete channels and explore private channels ([#7652](https://github.com/open-chat-labs/open-chat/pull/7652))
+- Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
 
 ## [[2.0.1657](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1657-community)] - 2025-03-17
 
