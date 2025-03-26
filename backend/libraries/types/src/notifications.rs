@@ -61,7 +61,7 @@ impl UserNotificationEnvelope {
 
 impl BotNotificationEnvelope {
     pub fn approx_size(&self) -> usize {
-        100 + self.recipients.len() * CANISTER_PRINCIPAL_LEN
+        125 + self.recipients.len() * CANISTER_PRINCIPAL_LEN
     }
 }
 
