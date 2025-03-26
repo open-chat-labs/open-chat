@@ -19,17 +19,16 @@
     let { onClose, onResult, imagePath = "/assets/robot.svg" }: Props = $props();
 
     let leftImage: HTMLImageElement;
-    let targetRotation: number = $state(0);
+    const targetRotation = normaliseAngle(Math.random() * 2 * Math.PI);
+    const rightImageTransform = `rotate(${targetRotation}rad)`;
     let userRotation: number = $state(0);
     let leftImageTransform = $derived(`rotate(${userRotation}rad)`);
-    let rightImageTransform = $derived(`rotate(${targetRotation}rad)`);
     let isDragging = $state(false);
     let startAngle = $state(0);
     let diff = $derived(Math.abs(userRotation - targetRotation));
     let correct = $derived(diff < TOLERANCE);
 
     onMount(() => {
-        targetRotation = normaliseAngle(Math.random() * 2 * Math.PI);
         userRotation = normaliseAngle(Math.random() * 2 * Math.PI);
         document.addEventListener("mouseup", mouseUp);
         document.addEventListener("touchend", mouseUp);
