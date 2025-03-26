@@ -9,6 +9,8 @@
     import WalletIcon from "svelte-material-icons/WalletOutline.svelte";
     import Accounts from "./Accounts.svelte";
     import Button from "../../Button.svelte";
+    import Eye from "svelte-material-icons/EyeOutline.svelte";
+    import EyeOff from "svelte-material-icons/EyeOffOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import MenuIcon from "../../MenuIcon.svelte";
@@ -17,6 +19,7 @@
     import MenuItem from "../../MenuItem.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
+    import { hideTokenBalances } from "../../../stores/settings";
     import Overlay from "../../Overlay.svelte";
     import SetPinNumberModal from "./SetPinNumberModal.svelte";
     import ManageAccounts from "./ManageAccounts.svelte";
@@ -48,6 +51,13 @@
                 <Translatable resourceKey={i18nKey("wallet")} />
             </div>
             <div class="menu">
+                <HoverIcon onclick={() => hideTokenBalances.toggle()}>
+                    {#if $hideTokenBalances}
+                        <Eye color={"var(--icon-txt)"} />
+                    {:else}
+                        <EyeOff color={"var(--icon-txt)"} />
+                    {/if}
+                </HoverIcon>
                 <MenuIcon position={"bottom"} align={"end"}>
                     {#snippet menuIcon()}
                         <div>
@@ -122,26 +132,25 @@
         </div>
     {/snippet}
     {#snippet body()}
-        <div>
-            <Accounts bind:selectedConversion {conversionOptions} />
-        </div>
+        <Accounts
+            bind:selectedConversion
+            {conversionOptions}
+            hideTokenBalances={$hideTokenBalances} />
     {/snippet}
     {#snippet footer()}
-        <div>
-            <ButtonGroup>
-                <Button
-                    secondary
-                    on:click={() => (managing = true)}
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}>
-                    <Translatable resourceKey={i18nKey("cryptoAccount.manage")} />
-                </Button>
+        <ButtonGroup>
+            <Button
+                secondary
+                on:click={() => (managing = true)}
+                small={!$mobileWidth}
+                tiny={$mobileWidth}>
+                <Translatable resourceKey={i18nKey("cryptoAccount.manage")} />
+            </Button>
 
-                <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
-                    <Translatable resourceKey={i18nKey("close")} />
-                </Button>
-            </ButtonGroup>
-        </div>
+            <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+                <Translatable resourceKey={i18nKey("close")} />
+            </Button>
+        </ButtonGroup>
     {/snippet}
 </ModalContent>
 
@@ -169,5 +178,10 @@
             align-items: center;
             gap: $sp3;
         }
+    }
+
+    .menu {
+        display: flex;
+        align-items: center;
     }
 </style>

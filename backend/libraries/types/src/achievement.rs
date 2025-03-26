@@ -58,6 +58,7 @@ pub enum Achievement {
     SetPin,
     SwappedFromWallet,
     PinnedChat,
+    DepositedBtc,
 
     // Not implemented yet
     ChangedTheme,
@@ -120,6 +121,7 @@ impl Achievement {
             Achievement::Referred10thUser => 20000,
             Achievement::Referred20thUser => 30000,
             Achievement::Referred50thUser => 50000,
+            Achievement::DepositedBtc => 4000,
         }
     }
 }

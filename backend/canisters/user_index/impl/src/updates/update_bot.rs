@@ -32,6 +32,7 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let mut bot = bot.clone();
     let mut user = user.clone();
+    let now = state.env.now();
 
     if let Some(principal) = args.principal {
         user.principal = principal;
@@ -43,6 +44,10 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     if let Some(endpoint) = args.endpoint {
         bot.endpoint = endpoint.clone();
+        state.push_event_to_notifications_index(
+            notifications_index_canister::UserIndexEvent::BotEndpointUpdated(args.bot_id, endpoint),
+            now,
+        );
     }
 
     match args.avatar {
@@ -63,7 +68,6 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         bot.autonomous_config = definition.autonomous_config.clone();
     }
 
-    let now = state.env.now();
     let owner = bot.owner;
 
     bot.last_updated = now;

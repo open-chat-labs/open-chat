@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
  - Push event on each BTC deposit ([#7661](https://github.com/open-chat-labs/open-chat/pull/7661))
+ - Add `DepositedBtc` achievement ([#7663](https://github.com/open-chat-labs/open-chat/pull/7663))
+ - Push event on each BTC withdrawal ([#7664](https://github.com/open-chat-labs/open-chat/pull/7664))
 
 ## [[2.0.1663-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1663-user)] - 2025-03-21
 

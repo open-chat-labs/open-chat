@@ -19,11 +19,13 @@
     export let showRefresh = true;
     export let refreshing = false;
     export let conversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
+    export let hideBalance = false;
 
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
-    $: formattedValue =
-        conversion === "none"
+    $: formattedValue = hideBalance
+        ? "*****"
+        : conversion === "none"
             ? client.formatTokens(value, tokenDetails.decimals)
             : convertValue(conversion, tokenDetails);
 
@@ -77,8 +79,8 @@
     <div class="amount" class:bold>
         {formattedValue}
     </div>
-    {#if showRefresh}
-        <div class="refresh" class:refreshing on:click={refresh}>
+    {#if showRefresh && !hideBalance}
+        <div class="refresh" class:refreshing on:click={refresh} >
             <Refresh size={"1em"} color={"var(--icon-txt)"} />
         </div>
     {/if}
@@ -109,6 +111,10 @@
             height: 21.59px;
             width: 21.59px;
         }
+    }
+
+    .hideBalance {
+        visibility: hidden;
     }
 
     .refresh {
