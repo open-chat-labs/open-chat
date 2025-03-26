@@ -37,7 +37,7 @@
 
     export let conversionOptions: Option[];
     export let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
-    export let hideTokenBalances = false;
+    export let hideTokenBalances: boolean = false;
 
     let balanceError: string | undefined;
     let actionMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted";
