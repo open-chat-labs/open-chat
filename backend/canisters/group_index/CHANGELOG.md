@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Introduce standardised error codes ([#7599](https://github.com/open-chat-labs/open-chat/pull/7599))
 
+### Changed
+
+- Make canister logs public ([#7675](https://github.com/open-chat-labs/open-chat/pull/7675))
+
 ## [[2.0.1636](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1636-group_index)] - 2025-03-11
 
 ### Changed
