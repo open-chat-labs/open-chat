@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Expose minutes online via http request ([#7670](https://github.com/open-chat-labs/open-chat/pull/7670))
+
 ## [[2.0.1648](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1648-online_users)] - 2025-03-12
 
 ### Changed
