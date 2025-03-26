@@ -44,6 +44,7 @@ export const groupAdvancedOpen = createLsBoolStore(configKeys.groupAdvancedSecti
 export const exploreGroupsDismissed = createLsBoolStore(configKeys.exploreGroupsDismissed, false);
 export const browseChannels = createLsBoolStore(configKeys.browseChannels, true);
 export const useBlockLevelMarkdown = createLsBoolStore(configKeys.useBlockLevelMarkdown, false);
+export const hideTokenBalances = createLsBoolStore(configKeys.hideChitIcon, false);
 
 export const communityVisibilityOpen = createLsBoolStore(
     configKeys.communityVisibilitySection,

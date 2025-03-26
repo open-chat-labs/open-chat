@@ -37,6 +37,7 @@
 
     export let conversionOptions: Option[];
     export let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
+    export let hideTokenBalances: boolean = false;
 
     let balanceError: string | undefined;
     let actionMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted";
@@ -49,8 +50,9 @@
             .filter((ns) => !ns.isNns)
             .map((ns) => ns.ledgerCanisterId),
     );
-    $: total =
-        selectedConversion === "none" ? "" : calculateTotal($accountsSorted, selectedConversion);
+    $: total = selectedConversion === "none"
+        ? ""
+        : calculateTotal($accountsSorted, selectedConversion);
 
     onMount(() => client.refreshSwappableTokens());
 
@@ -140,7 +142,7 @@
         <tr>
             <th class="token-header"
                 ><Translatable resourceKey={i18nKey("cryptoAccount.token")} /></th>
-            <th class="balance-header" colspan="2">
+            <th class="balance-header" colspan="2" class:hideTokenBalances>
                 <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
             </th>
         </tr>
@@ -164,6 +166,7 @@
                     ledger={token.ledger}
                     value={token.balance}
                     conversion={selectedConversion}
+                    hideBalance={hideTokenBalances}
                     on:refreshed={onBalanceRefreshed}
                     on:error={onBalanceRefreshError} />
             </td>
@@ -244,7 +247,7 @@
             </td>
         </tr>
     {/each}
-    {#if selectedConversion !== "none"}
+    {#if selectedConversion !== "none" && !hideTokenBalances}
         <tr class="total">
             <td>
                 <div class="token">
@@ -341,6 +344,10 @@
             &.disabled {
                 filter: grayscale(1);
             }
+        }
+
+        .hideTokenBalances {
+            visibility: hidden;
         }
     }
 </style>
