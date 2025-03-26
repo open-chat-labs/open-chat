@@ -8,6 +8,7 @@
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { rtlStore } from "../../stores/rtl";
+    import { lowBandwidth } from "@src/stores/settings";
 
     type Preview = SpotifyPreview | YoutubePreview | TwitterPreview | GenericPreview;
 
@@ -126,6 +127,8 @@
     }
 
     function adjustScroll(wrapper: HTMLElement) {
+        if ($lowBandwidth) return;
+
         list = list || closestAncestor(wrapper, ".scrollable-list");
         if (list) {
             list.scrollTop = list.scrollTop + wrapper.offsetHeight;
