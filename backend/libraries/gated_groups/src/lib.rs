@@ -1,7 +1,10 @@
 use candid::Principal;
+use std::cmp::min;
+use std::collections::BTreeSet;
 // use ic_verifiable_credentials::issuer_api::{ArgumentValue, CredentialSpec};
 // use ic_verifiable_credentials::VcFlowSigners;
-use constants::{DAY_IN_MS, MEMO_JOINING_FEE, NANOS_PER_MILLISECOND};
+use constants::{CHAT_LEDGER_CANISTER_ID, DAY_IN_MS, ICP_LEDGER_CANISTER_ID, MEMO_JOINING_FEE, NANOS_PER_MILLISECOND};
+use group_community_common::{PaymentRecipient, PendingPayment, PendingPaymentReason};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use sns_governance_canister::types::neuron::DissolveState;
@@ -10,6 +13,8 @@ use types::{
     AccessGate, AccessGateNonComposite, AccessGateScope, CanisterId, CompositeGate, GateCheckFailedReason, PaymentGate,
     SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId, VerifiedCredentialGate,
 };
+
+const SNS_FEE_SHARE_PERCENT: u128 = 2;
 
 pub enum CheckIfPassesGateResult {
     Success(Vec<GatePayment>),
@@ -332,5 +337,100 @@ fn dissolve_delay_seconds(neuron: &Neuron, now_seconds: u64) -> u64 {
         Some(DissolveState::DissolveDelaySeconds(d)) => d,
         Some(DissolveState::WhenDissolvedTimestampSeconds(ts)) => ts.saturating_sub(now_seconds),
         None => 0,
+    }
+}
+
+struct GatePaymentSplit {
+    owner_share: u128,
+    treasury_share: u128,
+}
+
+pub fn calculate_gate_payments(payment: GatePayment, owners: &BTreeSet<UserId>) -> Vec<PendingPayment> {
+    let is_chat = payment.ledger_canister_id == CHAT_LEDGER_CANISTER_ID;
+    let GatePaymentSplit {
+        owner_share,
+        treasury_share,
+    } = calculate_gate_payment_split(payment.amount, payment.fee, owners.len() as u128, is_chat);
+
+    let mut payments = Vec::new();
+    if owner_share > 0 {
+        payments.extend(owners.iter().map(|u| PendingPayment {
+            amount: owner_share,
+            fee: payment.fee,
+            ledger_canister: payment.ledger_canister_id,
+            recipient: PaymentRecipient::Member(*u),
+            reason: PendingPaymentReason::AccessGate,
+        }));
+    }
+    if treasury_share > 0 {
+        let is_icp = payment.ledger_canister_id == ICP_LEDGER_CANISTER_ID;
+        payments.push(PendingPayment {
+            amount: treasury_share,
+            fee: if is_chat { 0 } else { payment.fee }, // No fee for BURNing
+            ledger_canister: payment.ledger_canister_id,
+            recipient: if is_chat || is_icp { PaymentRecipient::SnsTreasury } else { PaymentRecipient::TreasuryCanister },
+            reason: PendingPaymentReason::AccessGate,
+        });
+    }
+    payments
+}
+
+fn calculate_gate_payment_split(
+    payment_amount: u128,
+    fee: u128,
+    owner_count: u128,
+    treasury_is_burn: bool,
+) -> GatePaymentSplit {
+    let max = (payment_amount / owner_count).saturating_sub(fee);
+    let owner_share = min(
+        ((payment_amount + fee) * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count,
+        max,
+    );
+
+    let owner_total_cost = (owner_share + fee) * owner_count;
+    let treasury_share = payment_amount
+        .saturating_sub(owner_total_cost)
+        .saturating_sub(if treasury_is_burn { 0 } else { fee });
+
+    GatePaymentSplit {
+        owner_share,
+        treasury_share,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_case::test_case;
+
+    #[test_case(0, 10_000, 1, false, 0, 0)]
+    #[test_case(0, 10_000, 1, true, 0, 0)]
+    #[test_case(990_000, 10_000, 1, false, 980000, 0)]
+    #[test_case(990_000, 10_000, 1, true, 980000, 0)]
+    #[test_case(9_990_000, 10_000, 2, false, 4900000, 160000)]
+    #[test_case(9_990_000, 10_000, 2, true, 4900000, 170000)]
+    fn calculate_gate_payment_split_tests(
+        payment_amount: u128,
+        fee: u128,
+        owner_count: u128,
+        treasury_is_burn: bool,
+        expected_owner_share: u128,
+        expected_treasury_share: u128,
+    ) {
+        let split = calculate_gate_payment_split(payment_amount, fee, owner_count, treasury_is_burn);
+        assert_eq!(split.owner_share, expected_owner_share);
+        assert_eq!(split.treasury_share, expected_treasury_share);
+
+        let mut total_amount_required = 0;
+        if split.owner_share > 0 {
+            total_amount_required += (split.owner_share + fee) * owner_count;
+        }
+        if split.treasury_share > 0 {
+            total_amount_required += split.treasury_share;
+            if !treasury_is_burn {
+                total_amount_required += fee;
+            }
+        }
+        assert!(total_amount_required <= payment_amount);
     }
 }

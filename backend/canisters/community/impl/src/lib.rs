@@ -10,15 +10,15 @@ use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, ChatMetricsInternal};
 use community_canister::add_members_to_channel::UserFailedError;
 use community_canister::EventsResponse;
-use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
+use constants::{ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
-use gated_groups::GatePayment;
+use gated_groups::{calculate_gate_payments, GatePayment};
 use group_chat_core::{AccessRulesInternal, AddResult};
 use group_community_common::{
-    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PaymentRecipient,
-    PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
+    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PendingPaymentsQueue,
+    UserCache,
 };
 use installed_bots::{BotApiKeys, InstalledBots};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
@@ -37,6 +37,7 @@ use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
+use types::CommunityId;
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator,
     BotPermissions, BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics,
@@ -44,7 +45,6 @@ use types::{
     EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
     TimestampMillis, Timestamped, UserId, UserType,
 };
-use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
@@ -124,36 +124,8 @@ impl RuntimeState {
     }
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
-        // Queue a payment to each owner less the fee
-        let owners = self.data.members.owners();
-
-        let owner_count = owners.len() as u128;
-        let owner_share = (payment.amount * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count;
-        if owner_share > payment.fee {
-            for owner in owners {
-                self.data.pending_payments_queue.push(PendingPayment {
-                    amount: owner_share,
-                    fee: payment.fee,
-                    ledger_canister: payment.ledger_canister_id,
-                    recipient: PaymentRecipient::Member(*owner),
-                    reason: PendingPaymentReason::AccessGate,
-                });
-            }
-        }
-
-        // Queue the remainder to the treasury less the fee
-        let treasury_share = payment.amount.saturating_sub(owner_share * owner_count);
-        let amount = treasury_share.saturating_sub(payment.fee);
-        if amount > 0 {
-            let is_chat = payment.ledger_canister_id == CHAT_LEDGER_CANISTER_ID;
-            let is_icp = payment.ledger_canister_id == ICP_LEDGER_CANISTER_ID;
-            self.data.pending_payments_queue.push(PendingPayment {
-                amount,
-                fee: if is_chat { 0 } else { payment.fee }, // No fee for BURNing
-                ledger_canister: payment.ledger_canister_id,
-                recipient: if is_chat || is_icp { PaymentRecipient::SnsTreasury } else { PaymentRecipient::TreasuryCanister },
-                reason: PendingPaymentReason::AccessGate,
-            });
+        for payment in calculate_gate_payments(payment, self.data.members.owners()) {
+            self.data.pending_payments_queue.push(payment);
         }
 
         jobs::make_pending_payments::start_job_if_required(self);
