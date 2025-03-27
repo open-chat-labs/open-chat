@@ -8423,6 +8423,7 @@ export class OpenChat extends EventTarget {
         let removePlaceholder: (() => void) | undefined = undefined;
         switch (bot.kind) {
             case "external_bot":
+                this.getMissingUsers([bot.id]);
                 return this.#getAuthTokenForBotCommand(scope, bot)
                     .then(([token, msgId]) => {
                         if (bot.command.name !== "sync_api_key") {
