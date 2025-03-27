@@ -181,7 +181,6 @@
             on:removePreview={removePreview}
             on:initiateThread={initiateThread}
             on:deleteFailedMessage={deleteFailedMessage}
-            on:startVideoCall
             eventIndex={event.index}
             timestamp={event.timestamp}
             expiresAt={event.expiresAt}

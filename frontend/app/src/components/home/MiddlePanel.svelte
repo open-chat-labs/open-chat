@@ -139,7 +139,6 @@
             chat={$selectedChatStore}
             events={$eventsStore}
             filteredProposals={$filteredProposalsStore}
-            on:startVideoCall
             on:successfulImport
             on:clearSelection
             on:leaveGroup

@@ -239,7 +239,6 @@
             on:searchChat
             on:showProposalFilters
             on:makeProposal
-            on:startVideoCall
             on:showGroupMembers
             on:createPoll
             on:upgrade
@@ -247,7 +246,7 @@
             on:leaveGroup />
     {/if}
 
-    <ActiveBroadcastSummary on:startVideoCall />
+    <ActiveBroadcastSummary />
 </SectionHeader>
 
 <style lang="scss">
