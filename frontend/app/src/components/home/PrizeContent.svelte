@@ -5,6 +5,7 @@
         type OpenChat,
         type PrizeContent,
         chitStateStore,
+        currentUser,
     } from "openchat-client";
     import {
         currentUser as user,
@@ -29,48 +30,34 @@
     import Verified from "../icons/Verified.svelte";
     import Streak from "./profile/Streak.svelte";
     import SecureButton from "../SecureButton.svelte";
+    import RotationChallenge from "../RotationChallenge.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
+    const suspiciousUserIds = import.meta.env.OC_SUSPICIOUS_USERIDS! ?? [];
 
-    export let content: PrizeContent;
-    export let chatId: ChatIdentifier;
-    export let messageId: bigint;
-    export let me: boolean;
+    interface Props {
+        content: PrizeContent;
+        chatId: ChatIdentifier;
+        messageId: bigint;
+        me: boolean;
+    }
 
-    $: logo =
-        Object.values($cryptoLookup).find(
-            (t) => t.symbol.toLowerCase() === content.token.toLowerCase(),
-        )?.logo ?? "";
-    $: total = content.prizesRemaining + content.prizesPending + content.winners.length;
-    $: percentage = (content.winners.length / total) * 100;
-    $: claimedByYou = content.winners.includes($user.userId);
-    $: finished = $now500 >= Number(content.endDate);
-    $: allClaimed = content.prizesRemaining <= 0;
-    $: disabled = finished || claimedByYou || allClaimed || !userEligible;
-    $: timeRemaining = finished
-        ? $_("prizes.finished")
-        : client.formatTimeRemaining($now500, Number(content.endDate));
+    let { content, chatId, messageId, me }: Props = $props();
 
-    $: diamondStatus = (
-        content.lifetimeDiamondOnly ? "lifetime" : content.diamondOnly ? "active" : "inactive"
-    ) as DiamondMembershipStatus["kind"];
+    let progressWidth = $state(0);
 
-    $: restrictedPrize =
-        content.diamondOnly ||
-        content.lifetimeDiamondOnly ||
-        content.uniquePersonOnly ||
-        content.streakOnly > 0;
+    function requiresChallenge(passed: boolean) {
+        return !passed && suspiciousUserIds.includes($currentUser.userId);
+    }
 
-    $: userEligible =
-        (!content.diamondOnly || $isDiamond) &&
-        (!content.lifetimeDiamondOnly || $isLifetimeDiamond) &&
-        (!content.uniquePersonOnly || $user.isUniquePerson) &&
-        content.streakOnly <= $chitStateStore.streak;
+    function claim(e: MouseEvent, passedChallenge: boolean) {
+        if (requiresChallenge(passedChallenge)) {
+            showChallenge = true;
+            return;
+        }
 
-    let progressWidth = 0;
-
-    function claim(e: MouseEvent) {
+        showChallenge = false;
         if (e.isTrusted && chatId.kind !== "direct_chat" && !me && userEligible) {
             claimsStore.add(messageId);
             client
@@ -95,7 +82,56 @@
     function onStreakClick() {
         dispatch("claimDailyChit");
     }
+    let logo = $derived(
+        Object.values($cryptoLookup).find(
+            (t) => t.symbol.toLowerCase() === content.token.toLowerCase(),
+        )?.logo ?? "",
+    );
+    let total = $derived(content.prizesRemaining + content.prizesPending + content.winners.length);
+    let percentage = $derived((content.winners.length / total) * 100);
+    let claimedByYou = $derived(content.winners.includes($user.userId));
+    let finished = $derived($now500 >= Number(content.endDate));
+    let allClaimed = $derived(content.prizesRemaining <= 0);
+    let userEligible = $derived(
+        (!content.diamondOnly || $isDiamond) &&
+            (!content.lifetimeDiamondOnly || $isLifetimeDiamond) &&
+            (!content.uniquePersonOnly || $user.isUniquePerson) &&
+            content.streakOnly <= $chitStateStore.streak,
+    );
+    let disabled = $derived(finished || claimedByYou || allClaimed || !userEligible);
+    let timeRemaining = $derived(
+        finished
+            ? $_("prizes.finished")
+            : client.formatTimeRemaining($now500, Number(content.endDate)),
+    );
+    let diamondStatus = $derived(
+        (content.lifetimeDiamondOnly
+            ? "lifetime"
+            : content.diamondOnly
+              ? "active"
+              : "inactive") as DiamondMembershipStatus["kind"],
+    );
+    let restrictedPrize = $derived(
+        content.diamondOnly ||
+            content.lifetimeDiamondOnly ||
+            content.uniquePersonOnly ||
+            content.streakOnly > 0,
+    );
+    let showChallenge = $state(false);
+
+    function onChallengeResult(e: MouseEvent, success: boolean) {
+        if (success) {
+            claim(e, success);
+        } else {
+            toastStore.showFailureToast(i18nKey("Sorry you failed the challenge!"));
+            showChallenge = false;
+        }
+    }
 </script>
+
+{#if showChallenge}
+    <RotationChallenge onClose={() => (showChallenge = false)} onResult={onChallengeResult} />
+{/if}
 
 <div class={`prize ${content.token}`}>
     <div class="top">
@@ -130,7 +166,7 @@
                 <div class="restricted">
                     <Translatable resourceKey={i18nKey("prizes.restrictedMessage")} />
                     {#if content.diamondOnly || content.lifetimeDiamondOnly}
-                        <div on:click={onDiamondClick}>
+                        <div onclick={onDiamondClick}>
                             <div>
                                 <Diamond
                                     status={content.lifetimeDiamondOnly ? "lifetime" : "active"} />
@@ -145,7 +181,7 @@
                         </div>
                     {/if}
                     {#if content.uniquePersonOnly}
-                        <div on:click={onUniquePersonClick}>
+                        <div onclick={onUniquePersonClick}>
                             <div>
                                 <Verified
                                     size={"small"}
@@ -156,7 +192,7 @@
                         </div>
                     {/if}
                     {#if content.streakOnly > 0}
-                        <div on:click={onStreakClick}>
+                        <div onclick={onStreakClick}>
                             <div><Streak days={content.streakOnly} /></div>
                             <Translatable
                                 resourceKey={i18nKey("prizes.streakFull", {
@@ -178,7 +214,8 @@
             <div
                 class="claimed"
                 class:rtl={$rtlStore}
-                style="background-size: {progressWidth}px 100%; width: {percentage}%" />
+                style="background-size: {progressWidth}px 100%; width: {percentage}%">
+            </div>
         </div>
         <div class="number-claimed">
             {content.winners.length}/{total}
@@ -197,7 +234,7 @@
                     <SecureButton
                         label={"Prize message clicked"}
                         loading={$claimsStore.has(messageId)}
-                        onClick={claim}
+                        onClick={(e) => claim(e, false)}
                         {disabled}
                         hollow
                         ><Translatable

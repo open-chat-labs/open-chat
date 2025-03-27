@@ -1600,6 +1600,11 @@
         "owner": "Owners"
     },
     "roleChanged": "{changedBy} changed the role of {changed} to {newRole}",
+    "rotationChallenge": {
+        "info": "Rotate the image on the left until it matches the angle of the image on the right",
+        "infoMobile": "Rotate the top image until it matches the ange of the bottom image",
+        "title": "Balance the bots"
+    },
     "rules": {
         "accept": "Accept",
         "acceptTitle": "Chat rules",

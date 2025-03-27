@@ -1603,8 +1603,14 @@ function mergeLocalUpdates(
             if (!message.content.winners.includes(localUpdates.prizeClaimed)) {
                 message.content = { ...message.content };
                 message.content.winners.push(localUpdates.prizeClaimed);
-                message.content.prizesRemaining -= 1;
-                message.content.prizesPending += 1;
+                // We can't tell for sure if this user's claim was contained within the `prizesPending` count or not,
+                // but it doesn't actually matter, so if any were pending, then decrement `prizesPending`, else
+                // decrement `prizesRemaining`
+                if (message.content.prizesPending > 0) {
+                    message.content.prizesPending -= 1;
+                } else {
+                    message.content.prizesRemaining -= 1;
+                }
             }
         }
     }
