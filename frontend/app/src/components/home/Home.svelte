@@ -965,13 +965,13 @@
         showUpgrade = true;
     }
 
-    function onSelectChat(ev: CustomEvent<ChatIdentifier>) {
+    function onSelectChat(chatId: ChatIdentifier) {
         closeModal();
         if (messageToForward !== undefined) {
-            forwardToChat(ev.detail);
+            forwardToChat(chatId);
             messageToForward = undefined;
         } else {
-            shareWithChat(ev.detail);
+            shareWithChat(chatId);
         }
     }
 
@@ -1336,7 +1336,7 @@
         alignLeft={modal.kind === "select_chat"}
         onClose={closeModal}>
         {#if modal.kind === "select_chat"}
-            <SelectChatModal on:close={onCloseSelectChat} on:select={onSelectChat} />
+            <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
         {:else if modal.kind === "suspended"}
             <SuspendedModal onClose={closeModal} />
         {:else if modal.kind === "register_bot"}
