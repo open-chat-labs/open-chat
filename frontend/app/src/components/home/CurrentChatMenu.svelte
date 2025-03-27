@@ -46,6 +46,7 @@
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import { activeVideoCall } from "../../stores/video";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -267,7 +268,7 @@
     }
 
     function startVideoCall() {
-        dispatch("startVideoCall", {
+        publish("startVideoCall", {
             chat: selectedChatSummary,
             join: videoCallInProgress,
         });

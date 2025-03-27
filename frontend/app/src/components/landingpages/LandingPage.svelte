@@ -1,3 +1,7 @@
+<script module lang="ts">
+    export type LandingPageType = Component;
+</script>
+
 <script lang="ts">
     import FeaturesPage from "./FeaturesPage.svelte";
     import HomePage from "./HomePage.svelte";
@@ -14,7 +18,7 @@
         isWhitepaperRoute,
         pathParams,
     } from "../../routes";
-    import { getContext } from "svelte";
+    import { getContext, type Component } from "svelte";
     import { type CreatedUser, type OpenChat, identityState } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
@@ -26,7 +30,7 @@
 
     const client = getContext<OpenChat>("client");
 
-    $: showMenu = showMenuForLandingRoute($pathParams);
+    let showMenu = $derived(showMenuForLandingRoute($pathParams));
 
     function logout() {
         client.logout();

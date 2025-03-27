@@ -7,15 +7,15 @@
         selectedChatStore as selectedChat,
         selectedMessageContext,
     } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import Button from "../../Button.svelte";
     import { activeVideoCall } from "../../../stores/video";
     import page from "page";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     $: hasCall = $selectedChat !== undefined && $selectedChat.videoCallInProgress !== undefined;
     $: isPublic = $selectedChat !== undefined && !client.isChatPrivate($selectedChat);
@@ -27,7 +27,7 @@
 
     function join() {
         if (!incall && $selectedChat) {
-            dispatch("startVideoCall", { chat: $selectedChat, join: true });
+            publish("startVideoCall", { chat: $selectedChat, join: true });
         }
     }
 

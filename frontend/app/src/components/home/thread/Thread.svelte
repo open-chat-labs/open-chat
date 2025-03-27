@@ -425,7 +425,6 @@
                             on:upgrade
                             on:verifyHumanity
                             on:claimDailyChit
-                            on:startVideoCall
                             on:forward />
                     {/each}
                 {/each}

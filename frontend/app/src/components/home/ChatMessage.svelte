@@ -669,7 +669,6 @@
                             on:upgrade
                             on:verifyHumanity
                             on:claimDailyChit
-                            on:startVideoCall
                             {onExpandMessage} />
 
                         {#if !inert && !isPrize}

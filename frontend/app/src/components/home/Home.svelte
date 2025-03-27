@@ -1255,15 +1255,12 @@
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
             on:deleteGroup={triggerConfirm}
-            on:leaveGroup={triggerConfirm}
-            on:askToSpeak
-            on:hangup />
+            on:leaveGroup={triggerConfirm} />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel
             {joining}
             bind:currentChatMessages
-            on:startVideoCall
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:leaveGroup={triggerConfirm}
@@ -1290,7 +1287,6 @@
         on:showGroupMembers={showGroupMembers}
         on:chatWith={chatWith}
         on:upgrade={upgrade}
-        on:startVideoCall
         on:deleteGroup={triggerConfirm}
         on:editGroup={editGroup}
         on:editCommunity={editCommunity}
