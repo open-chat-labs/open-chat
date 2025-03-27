@@ -1,5 +1,5 @@
-@use 'sass:math';
-@use 'sass:map';
+@use "sass:math";
+@use "sass:map";
 
 @function toRem($value: 16) {
     $remValue: math.div($value, 16) + rem;
@@ -139,11 +139,6 @@ $avatar-mod-offset-small: toRem(-3);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-@mixin fullHeight() {
-    height: 100vh;
-    height: calc(var(--vh, 1vh) * 100);
 }
 
 /* Media query stuff */

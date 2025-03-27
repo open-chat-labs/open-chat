@@ -252,7 +252,7 @@ export default {
                                 <meta name="twitter:image:alt" content="OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain.">
                                 <meta http-equiv="Content-Security-Policy" content="${csp}" />
                                 <meta charset="utf-8" />
-                                <meta name="viewport" content="width=device-width, initial-scale=1">
+                                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
                                 <meta name="apple-mobile-web-app-title" content="OpenChat" />
                                 <meta name="twitter:widgets:autoload" content="off">
                                 <meta name="twitter:dnt" content="on">
