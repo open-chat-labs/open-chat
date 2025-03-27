@@ -111,17 +111,18 @@
                         transactionData = { kind: "idle" };
                         toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
                     } else {
+                        // Filter out approvals
+                        const transactions = result.transactions.filter((t) => t.kind !== "approve");
                         if (transactionData.kind === "loading") {
-                            transactionData = { kind: "success", data: result };
-                        }
-                        if (transactionData.kind === "loading_more") {
+                            transactionData = { kind: "success", data: { ...result, transactions }};
+                        } else if (transactionData.kind === "loading_more") {
                             transactionData = {
                                 kind: "success",
                                 data: {
                                     oldestTransactionId: result.oldestTransactionId,
                                     transactions: [
                                         ...transactionData.data.transactions,
-                                        ...result.transactions,
+                                        ...transactions,
                                     ],
                                 },
                             };
