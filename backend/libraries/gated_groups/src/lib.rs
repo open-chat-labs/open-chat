@@ -381,14 +381,16 @@ fn calculate_gate_payment_split(
     owner_count: u128,
     treasury_is_burn: bool,
 ) -> GatePaymentSplit {
-    let max = (payment_amount / owner_count).saturating_sub(fee);
+    // Subtract 1 fee due to the initial approval
+    let usable_amount = payment_amount.saturating_sub(fee);
+    let max = (usable_amount / owner_count).saturating_sub(fee);
     let owner_share = min(
-        ((payment_amount + fee) * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count,
+        ((usable_amount + fee) * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count,
         max,
     );
 
     let owner_total_cost = (owner_share + fee) * owner_count;
-    let treasury_share = payment_amount
+    let treasury_share = usable_amount
         .saturating_sub(owner_total_cost)
         .saturating_sub(if treasury_is_burn { 0 } else { fee });
 
@@ -405,10 +407,12 @@ mod tests {
 
     #[test_case(0, 10_000, 1, false, 0, 0)]
     #[test_case(0, 10_000, 1, true, 0, 0)]
-    #[test_case(990_000, 10_000, 1, false, 980000, 0)]
-    #[test_case(990_000, 10_000, 1, true, 980000, 0)]
-    #[test_case(9_990_000, 10_000, 2, false, 4900000, 160000)]
-    #[test_case(9_990_000, 10_000, 2, true, 4900000, 170000)]
+    #[test_case(1_000_000, 10_000, 1, false, 980000, 0)]
+    #[test_case(1_000_000, 100_000, 1, true, 800_000, 0)]
+    #[test_case(10_000_000, 10_000, 2, false, 4900000, 160000)]
+    #[test_case(10_000_000, 100_000, 2, true, 4_850_000, 0)]
+    #[test_case(100_000_000, 10_000, 1, false, 98_000_000, 1970000)]
+    #[test_case(100_000_000, 100_000, 1, true, 98_000_000, 1800000)]
     fn calculate_gate_payment_split_tests(
         payment_amount: u128,
         fee: u128,
@@ -431,6 +435,6 @@ mod tests {
                 total_amount_required += fee;
             }
         }
-        assert!(total_amount_required <= payment_amount);
+        assert!(total_amount_required <= payment_amount.saturating_sub(fee));
     }
 }
