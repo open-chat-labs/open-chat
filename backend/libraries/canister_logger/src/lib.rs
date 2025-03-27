@@ -5,14 +5,14 @@ use serde::{Deserialize, Serialize};
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::io::Write;
+use tracing::level_filters::LevelFilter;
 use tracing::Level;
-use tracing_subscriber::fmt::format::{FmtSpan, Writer};
+use tracing_subscriber::fmt::format::Writer;
 use tracing_subscriber::fmt::time::FormatTime;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
-use tracing_subscriber::fmt::Layer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::Registry;
+use tracing_subscriber::{fmt, Layer, Registry};
 
 thread_local! {
     static INITIALIZED: Cell<bool> = Cell::default();
@@ -22,42 +22,31 @@ thread_local! {
 }
 
 pub fn init(enable_trace: bool) {
-    if INITIALIZED.with(|i| i.replace(true)) {
+    if INITIALIZED.replace(true) {
         panic!("Logger already initialized");
     }
 
-    let error_layer = Layer::default()
-        .with_writer((|| LogWriter::new(Level::ERROR)).with_max_level(Level::ERROR))
-        .json()
-        .with_timer(Timer {})
-        .with_file(true)
-        .with_line_number(true)
-        .with_current_span(false)
-        .with_span_list(false);
+    let build_writer = |level| (move || LogWriter::new(level)).with_max_level(level);
 
-    let log_layer = Layer::default()
-        .with_writer((|| LogWriter::new(Level::INFO)).with_max_level(Level::INFO))
-        .json()
-        .with_timer(Timer {})
-        .with_file(true)
-        .with_line_number(true)
-        .with_current_span(false)
-        .with_span_list(false);
+    let writer = build_writer(Level::ERROR)
+        .and(build_writer(Level::INFO))
+        .and(build_writer(Level::TRACE));
 
-    if enable_trace {
-        let trace_layer = Layer::default()
-            .with_writer(|| LogWriter::new(Level::TRACE))
-            .json()
-            .with_timer(Timer {})
-            .with_file(true)
-            .with_line_number(true)
-            .with_current_span(false)
-            .with_span_events(FmtSpan::ENTER);
+    let level_filter = if enable_trace { LevelFilter::TRACE } else { LevelFilter::INFO };
 
-        Registry::default().with(error_layer).with(log_layer).with(trace_layer).init();
-    } else {
-        Registry::default().with(error_layer).with(log_layer).init();
-    }
+    Registry::default()
+        .with(
+            fmt::Layer::default()
+                .with_writer(writer)
+                .json()
+                .with_timer(Timer {})
+                .with_file(true)
+                .with_line_number(true)
+                .with_current_span(false)
+                .with_span_list(false)
+                .with_filter(level_filter),
+        )
+        .init();
 }
 
 pub fn init_with_logs(enable_trace: bool, errors: Vec<LogEntry>, logs: Vec<LogEntry>, traces: Vec<LogEntry>) {
