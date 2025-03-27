@@ -1570,13 +1570,11 @@ impl GroupChatCore {
                         NameValidationError::Reserved => NameReserved,
                     });
                 }
-            } else {
-                if let Err(error) = validate_channel_name(name) {
-                    return Err(match error {
-                        StringLengthValidationError::TooShort(s) => NameTooShort(s),
-                        StringLengthValidationError::TooLong(l) => NameTooLong(l),
-                    });
-                }
+            } else if let Err(error) = validate_channel_name(name) {
+                return Err(match error {
+                    StringLengthValidationError::TooShort(s) => NameTooShort(s),
+                    StringLengthValidationError::TooLong(l) => NameTooLong(l),
+                });
             }
         }
 
