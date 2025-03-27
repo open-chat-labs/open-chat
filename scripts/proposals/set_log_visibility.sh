@@ -9,8 +9,6 @@ TITLE="Set canister log visibility to public"
 URL=""
 SUMMARY="The will open up the canister logs so that error details can be viewed.
 
-This is a repeat of proposal 1772, but this time without the GroupIndex, NotificationsIndex and UserIndex, because these canisters are now controlled by the OpenChatInstaller.
-
 This change will be applied to the following canisters -
 - AirdropBot
 - CyclesDispenser
