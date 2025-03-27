@@ -55,7 +55,7 @@
     }
 
     function askToSpeak() {
-        publish("askToSpeak", undefined);
+        publish("askToSpeak");
     }
 
     function normaliseChatSummary(chatId: ChatIdentifier | undefined) {
@@ -115,7 +115,7 @@
     }
 
     function hangup() {
-        publish("hangup", undefined);
+        publish("hangup");
     }
 </script>
 

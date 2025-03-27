@@ -6,6 +6,10 @@ type Events = {
     askToSpeak: undefined;
 };
 
+type NoPayloadEvents = {
+    [K in keyof Events]: Events[K] extends undefined ? K : never;
+}[keyof Events];
+
 type Subscriptions = {
     [K in keyof Events]?: ((payload: Events[K]) => void)[];
 };
@@ -34,6 +38,8 @@ export function subscribe<K extends keyof Events>(name: K, value: Subscription<K
     };
 }
 
-export function publish<K extends keyof Events>(name: K, payload: Events[K]): void {
-    subscriptions[name]?.forEach((sub) => sub(payload));
+export function publish<K extends NoPayloadEvents>(name: K): void;
+export function publish<K extends keyof Events>(name: K, payload: Events[K]): void;
+export function publish<K extends keyof Events>(name: K, payload?: Events[K]): void {
+    subscriptions[name]?.forEach((sub) => sub(payload as Events[K]));
 }
