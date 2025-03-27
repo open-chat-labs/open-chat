@@ -1,7 +1,7 @@
 <script lang="ts">
     import "@styles/global.scss";
 
-    import { setContext } from "svelte";
+    import { onMount, setContext } from "svelte";
     import "@i18n/i18n";
     import "@utils/markdown";
     import "@utils/scream";
@@ -119,6 +119,30 @@
     let upgrading = $derived(
         $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user",
     );
+
+    let lastScrollY = $state(window.scrollY);
+
+    onMount(() => {
+        window.addEventListener("scroll", trackVirtualKeyboard);
+        window.addEventListener("resize", trackVirtualKeyboard);
+        return () => {
+            window.removeEventListener("scroll", trackVirtualKeyboard);
+            window.removeEventListener("resize", trackVirtualKeyboard);
+        };
+    });
+
+    // We will interpret a significant leap in window.scrollY to indicate the opening of the virtual keyboard
+    function trackVirtualKeyboard() {
+        const threshold = 100; // prevent accidental triggering
+        const delta = window.scrollY - lastScrollY;
+        const keyboardVisible = delta > threshold;
+        lastScrollY = window.scrollY;
+        if (keyboardVisible) {
+            document.body.classList.add("keyboard");
+        } else {
+            document.body.classList.remove("keyboard");
+        }
+    }
 
     $effect(() => {
         // subscribe to the rtl store so that we can set the overall page direction at the right time

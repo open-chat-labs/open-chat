@@ -627,7 +627,7 @@
 
         &.modal {
             background: var(--panel-right-modal);
-            @include fullHeight();
+            height: 100%;
             min-width: 500px;
 
             &.resized {

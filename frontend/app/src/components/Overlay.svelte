@@ -96,7 +96,7 @@
         align-items: center;
         top: 0;
         left: 0;
-        @include fullHeight();
+        height: 100%;
         width: 100%;
         overflow: hidden;
 

@@ -114,7 +114,7 @@
             }
         }
 
-        @include fullHeight();
+        height: 100%;
     }
     .modal-page-panel {
         padding: $sp5 $sp6;
