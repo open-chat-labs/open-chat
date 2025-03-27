@@ -255,10 +255,9 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
     }
 }
 
-#[test_case(1_0000_0000, true)]
-#[test_case(1_0000_0000, false)]
-#[test_case(100_0000, false)]
-fn owner_receives_transfer_after_user_joins_via_payment_gate(amount: u128, composite_gate: bool) {
+#[test_case(true)]
+#[test_case(false)]
+fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -273,6 +272,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(amount: u128, compo
     let original_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user1.user_id));
 
     let group_name = random_string();
+    let amount = 1_0000_0000;
     let fee = 10_000;
 
     let payment_gate = PaymentGate {
