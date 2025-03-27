@@ -7,7 +7,7 @@ cd $SCRIPT_DIR/..
 
 TITLE="Set canister log visibility to public"
 URL=""
-SUMMARY="The will open up the canister logs so that error details can be viewed.
+SUMMARY="This will open up the canister logs so that error details can be viewed.
 
 This change will be applied to the following canisters -
 - AirdropBot
