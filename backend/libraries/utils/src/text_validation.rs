@@ -87,6 +87,10 @@ pub fn validate_community_name(name: &str, is_public: bool) -> Result<(), NameVa
     validate_group_name(name, is_public, None)
 }
 
+pub fn validate_channel_name(name: &str) -> Result<(), StringLengthValidationError> {
+    validate_string_length(name, MIN_GROUP_NAME_LENGTH, MAX_GROUP_NAME_LENGTH)
+}
+
 pub fn validate_group_name(name: &str, is_public: bool, subtype: Option<&GroupSubtype>) -> Result<(), NameValidationError> {
     match validate_string_length(name, MIN_GROUP_NAME_LENGTH, MAX_GROUP_NAME_LENGTH) {
         Ok(()) => {
@@ -94,7 +98,7 @@ pub fn validate_group_name(name: &str, is_public: bool, subtype: Option<&GroupSu
                 && !subtype
                     .map(|t| matches!(t, GroupSubtype::GovernanceProposals(_)))
                     .unwrap_or_default()
-                && name.to_lowercase().contains("proposals")
+                && name.to_lowercase().ends_with("proposals")
             {
                 Err(NameValidationError::Reserved)
             } else {

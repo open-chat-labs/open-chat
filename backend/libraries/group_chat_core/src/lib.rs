@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
-    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, CustomPermission,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, Chat, CustomPermission,
     Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse, ExternalUrlUpdated,
     FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
     GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, MemberLeft,
@@ -26,7 +26,8 @@ use types::{
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
-    validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
+    validate_channel_name, validate_description, validate_group_name, validate_rules, NameValidationError,
+    RulesValidationError, StringLengthValidationError,
 };
 
 mod invited_users;
@@ -1561,12 +1562,21 @@ impl GroupChatCore {
         let avatar_update = avatar.as_ref().expand();
 
         if let Some(name) = name {
-            if let Err(error) = validate_group_name(name, self.is_public.value, self.subtype.value.as_ref()) {
-                return Err(match error {
-                    NameValidationError::TooShort(s) => NameTooShort(s),
-                    NameValidationError::TooLong(l) => NameTooLong(l),
-                    NameValidationError::Reserved => NameReserved,
-                });
+            if matches!(self.events.chat(), Chat::Group(_)) {
+                if let Err(error) = validate_group_name(name, self.is_public.value, self.subtype.value.as_ref()) {
+                    return Err(match error {
+                        NameValidationError::TooShort(s) => NameTooShort(s),
+                        NameValidationError::TooLong(l) => NameTooLong(l),
+                        NameValidationError::Reserved => NameReserved,
+                    });
+                }
+            } else {
+                if let Err(error) = validate_channel_name(name) {
+                    return Err(match error {
+                        StringLengthValidationError::TooShort(s) => NameTooShort(s),
+                        StringLengthValidationError::TooLong(l) => NameTooLong(l),
+                    });
+                }
             }
         }
 

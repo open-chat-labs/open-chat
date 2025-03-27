@@ -9,7 +9,7 @@ use types::{CanisterId, CommunityId};
 use user_canister::create_community::{Response::*, *};
 use utils::document::{validate_avatar, validate_banner};
 use utils::text_validation::{
-    validate_community_name, validate_description, validate_group_name, validate_rules, NameValidationError,
+    validate_channel_name, validate_community_name, validate_description, validate_rules, NameValidationError,
     RulesValidationError,
 };
 
@@ -124,11 +124,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
 }
 
 fn default_channels_valid(default_channels: &[String]) -> bool {
-    if default_channels.is_empty()
-        || default_channels
-            .iter()
-            .any(|channel| validate_group_name(channel, true, None).is_err())
-    {
+    if default_channels.is_empty() || default_channels.iter().any(|channel| validate_channel_name(channel).is_err()) {
         return false;
     }
 
