@@ -469,6 +469,9 @@
         width: 500px;
         overflow: auto;
         overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
 
         @include mobile() {
             width: 100%;
