@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
 - Parallelise uploading wasm chunks ([#7643](https://github.com/open-chat-labs/open-chat/pull/7643))
+- Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
 
 ## [[2.0.1549](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1549-openchat_installer)] - 2025-01-06
 
