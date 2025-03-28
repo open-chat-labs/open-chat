@@ -112,7 +112,7 @@
     {#if $pathParams.kind === "explore_groups_route"}
         <RecommendedGroups {joining} />
     {:else if $pathParams.kind === "communities_route"}
-        <ExploreCommunities on:createCommunity />
+        <ExploreCommunities />
     {:else if $pathParams.kind === "admin_route"}
         {#await import("./admin/Admin.svelte")}
             <div class="loading">

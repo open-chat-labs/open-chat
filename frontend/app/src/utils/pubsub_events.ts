@@ -52,4 +52,5 @@ export type PubSubEvents = {
         group: MultiUserChat;
         select: boolean;
     };
+    createCommunity: undefined;
 };

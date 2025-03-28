@@ -274,6 +274,7 @@
             subscribe("profile", showProfile),
             subscribe("claimDailyChit", claimDailyChit),
             subscribe("joinGroup", joinGroup),
+            subscribe("createCommunity", createCommunity),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1260,8 +1261,7 @@
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage}
-            on:convertGroupToCommunity={convertGroupToCommunity}
-            on:createCommunity={createCommunity} />
+            on:convertGroupToCommunity={convertGroupToCommunity} />
     {/if}
     <RightPanel
         on:goToMessageIndex={goToMessageIndex}
