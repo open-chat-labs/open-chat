@@ -27,4 +27,4 @@
 
 <GroupDetailsHeader level={chat.level} {canEdit} on:close={clickClose} on:editGroup={editGroup} />
 
-<GroupDetailsBody {chat} {memberCount} on:deleteGroup />
+<GroupDetailsBody {chat} {memberCount} />

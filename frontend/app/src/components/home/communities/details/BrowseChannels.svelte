@@ -8,15 +8,15 @@
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
     import { selectedCommunity, chatSummariesListStore } from "openchat-client";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         searchTerm: string;
-        onDeleteChannel: (ev: unknown) => void;
     }
 
-    let { searchTerm, onDeleteChannel }: Props = $props();
+    let { searchTerm }: Props = $props();
 
     let selectedCommunityId = $derived($selectedCommunity?.id.communityId);
 
@@ -81,7 +81,7 @@
     });
 
     function deleteChannel(channel: ChannelMatch) {
-        onDeleteChannel({
+        publish("deleteGroup", {
             kind: "delete",
             chatId: $state.snapshot(channel.id),
             level: "channel",

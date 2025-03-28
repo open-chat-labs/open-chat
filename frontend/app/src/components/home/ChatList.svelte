@@ -237,10 +237,6 @@
                 return match.userId;
         }
     }
-
-    function deleteChannel(ev: unknown) {
-        dispatch("deleteGroup", ev);
-    }
 </script>
 
 <!-- svelte-ignore missing-declaration -->
@@ -406,7 +402,7 @@
                 </div>
             {/if}
             {#if showBrowseChannnels}
-                <BrowseChannels onDeleteChannel={deleteChannel} {searchTerm} />
+                <BrowseChannels {searchTerm} />
             {/if}
         {/if}
     </div>

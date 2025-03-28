@@ -1,4 +1,11 @@
-import type { ChatSummary, DirectChatIdentifier, EnhancedReplyContext } from "openchat-client";
+import type {
+    ChatSummary,
+    DirectChatIdentifier,
+    EnhancedReplyContext,
+    Level,
+    MultiUserChatIdentifier,
+    ResourceKey,
+} from "openchat-client";
 
 export type PubSubEvents = {
     startVideoCall: { chat: ChatSummary; join: boolean };
@@ -10,4 +17,11 @@ export type PubSubEvents = {
     showGroupMembers: undefined;
     upgrade: undefined;
     verifyHumanity: undefined;
+    deleteGroup: {
+        kind: "delete";
+        chatId: MultiUserChatIdentifier;
+        level: Level;
+        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
+        after?: () => void;
+    };
 };

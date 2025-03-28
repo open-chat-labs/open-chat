@@ -399,7 +399,6 @@
                 memberCount={$currentChatMembers.length}
                 community={$selectedCommunity}
                 selectedTab="channel"
-                on:deleteGroup
                 on:editGroup
                 on:editCommunity
                 on:close={popRightPanelHistory} />
@@ -408,7 +407,6 @@
                 chat={$multiUserChat}
                 memberCount={$currentChatMembers.length}
                 on:close={popRightPanelHistory}
-                on:deleteGroup
                 on:editGroup />
         {/if}
     {:else if lastState.kind === "call_participants_panel"}
@@ -565,7 +563,6 @@
                 community={$selectedCommunity}
                 memberCount={$currentChatMembers.length}
                 selectedTab="community"
-                on:deleteGroup
                 on:editGroup
                 on:editCommunity
                 on:close={popRightPanelHistory} />

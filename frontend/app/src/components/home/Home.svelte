@@ -265,6 +265,7 @@
             subscribe("showGroupMembers", showGroupMembers),
             subscribe("upgrade", upgrade),
             subscribe("verifyHumanity", verifyHumanity),
+            subscribe("deleteGroup", triggerConfirm),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -674,8 +675,12 @@
         }
     }
 
-    function triggerConfirm(ev: CustomEvent<ConfirmActionEvent>) {
-        confirmActionEvent = ev.detail;
+    function triggerConfirm(detail: ConfirmActionEvent) {
+        confirmActionEvent = detail;
+    }
+
+    function onTriggerConfirm(ev: CustomEvent<ConfirmActionEvent>) {
+        triggerConfirm(ev.detail);
     }
 
     function onConfirmAction(yes: boolean): Promise<void> {
@@ -1247,10 +1252,9 @@
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:newChannel={newChannel}
             on:editCommunity={editCommunity}
-            on:leaveCommunity={triggerConfirm}
-            on:deleteCommunity={triggerConfirm}
-            on:deleteGroup={triggerConfirm}
-            on:leaveGroup={triggerConfirm} />
+            on:leaveCommunity={onTriggerConfirm}
+            on:deleteCommunity={onTriggerConfirm}
+            on:leaveGroup={onTriggerConfirm} />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel
@@ -1258,7 +1262,7 @@
             bind:currentChatMessages
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
-            on:leaveGroup={triggerConfirm}
+            on:leaveGroup={onTriggerConfirm}
             on:showProposalFilters={showProposalFilters}
             on:makeProposal={showMakeProposalModal}
             on:joinGroup={joinGroup}
@@ -1271,10 +1275,9 @@
     {/if}
     <RightPanel
         on:goToMessageIndex={goToMessageIndex}
-        on:deleteGroup={triggerConfirm}
         on:editGroup={editGroup}
         on:editCommunity={editCommunity}
-        on:deleteCommunity={triggerConfirm}
+        on:deleteCommunity={onTriggerConfirm}
         on:newChannel={newChannel}
         on:groupCreated={groupCreated} />
 </main>

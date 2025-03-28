@@ -19,7 +19,6 @@
     <RightPanel
         on:goToMessageIndex
         on:claimDailyChit
-        on:deleteGroup
         on:editGroup
         on:editCommunity
         on:deleteCommunity
@@ -34,7 +33,6 @@
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
             <RightPanel
                 on:goToMessageIndex
-                on:deleteGroup
                 on:editGroup
                 on:editCommunity
                 on:deleteCommunity
