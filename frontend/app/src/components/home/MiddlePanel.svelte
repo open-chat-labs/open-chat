@@ -140,9 +140,7 @@
             events={$eventsStore}
             filteredProposals={$filteredProposalsStore}
             on:clearSelection
-            on:showProposalFilters
-            on:goToMessageIndex
-            on:convertGroupToCommunity />
+            on:goToMessageIndex />
     {/if}
 </section>
 

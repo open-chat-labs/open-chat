@@ -412,10 +412,8 @@
         {:else}
             <CurrentChatHeader
                 on:clearSelection
-                on:showProposalFilters
                 on:createPoll={createPoll}
                 on:searchChat={searchChat}
-                on:convertGroupToCommunity
                 on:importToCommunity={importToCommunity}
                 {blocked}
                 {readonly}

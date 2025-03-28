@@ -280,6 +280,8 @@
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("newChannel", newChannel),
             subscribe("successfulImport", successfulImport),
+            subscribe("showProposalFilters", showProposalFilters),
+            subscribe("convertGroupToCommunity", convertGroupToCommunity),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1174,9 +1176,9 @@
         };
     }
 
-    function convertGroupToCommunity(ev: CustomEvent<GroupChatSummary>) {
+    function convertGroupToCommunity(group: GroupChatSummary) {
         rightPanelHistory.set([]);
-        convertGroup = ev.detail;
+        convertGroup = group;
     }
 
     function successfulImport(id: ChannelIdentifier) {
@@ -1241,7 +1243,7 @@
 
 <main class:anon={$anonUser} class:offline={$offlineStore}>
     {#if $layoutStore.showNav}
-        <LeftNav onClaimDailyChit={claimDailyChit} />
+        <LeftNav />
     {/if}
 
     {#if $layoutStore.showLeft}
@@ -1252,9 +1254,7 @@
             {joining}
             bind:currentChatMessages
             on:clearSelection={() => page(routeForScope($chatListScope))}
-            on:showProposalFilters={showProposalFilters}
-            on:goToMessageIndex={goToMessageIndex}
-            on:convertGroupToCommunity={convertGroupToCommunity} />
+            on:goToMessageIndex={goToMessageIndex} />
     {/if}
     <RightPanel
         on:goToMessageIndex={goToMessageIndex}

@@ -55,12 +55,6 @@
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;
 
-    interface Props {
-        onClaimDailyChit: () => void;
-    }
-
-    let { onClaimDailyChit }: Props = $props();
-
     let user = $derived($userStore.get($createdUser.userId));
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
     let communityExplorer = $derived($pathParams.kind === "communities_route");
@@ -229,7 +223,7 @@
                     label={i18nKey(
                         claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
                     )}
-                    onClick={onClaimDailyChit}>
+                    onClick={() => publish("claimDailyChit")}>
                     <div class="hover streak">
                         <LighteningBolt enabled={claimChitAvailable} />
                     </div>

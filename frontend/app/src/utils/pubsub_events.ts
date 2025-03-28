@@ -6,6 +6,7 @@ import type {
     CommunitySummary,
     DirectChatIdentifier,
     EnhancedReplyContext,
+    GroupChatSummary,
     Level,
     Message,
     MultiUserChat,
@@ -64,4 +65,6 @@ export type PubSubEvents = {
     };
     newChannel: boolean;
     successfulImport: ChannelIdentifier;
+    showProposalFilters: undefined;
+    convertGroupToCommunity: GroupChatSummary;
 };

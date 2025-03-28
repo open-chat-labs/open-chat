@@ -169,7 +169,7 @@
     }
 
     function showProposalFilters() {
-        dispatch("showProposalFilters");
+        publish("showProposalFilters");
     }
 
     function showGroupMembers() {
@@ -218,7 +218,7 @@
             publish("upgrade");
         } else {
             if (selectedChatSummary.kind === "group_chat") {
-                dispatch("convertGroupToCommunity", selectedChatSummary);
+                publish("convertGroupToCommunity", selectedChatSummary);
             }
         }
     }

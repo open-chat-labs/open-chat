@@ -233,11 +233,9 @@
             {hasPinned}
             {selectedChatSummary}
             {blocked}
-            on:convertGroupToCommunity
             on:importToCommunity
             on:showGroupDetails={showGroupDetails}
             on:searchChat
-            on:showProposalFilters
             on:createPoll />
     {/if}
 
