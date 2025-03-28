@@ -23,13 +23,7 @@
     import VirtualList from "../../VirtualList.svelte";
 
     const client = getContext<OpenChat>("client");
-    let selectedEvent: MessageActivityEvent | undefined = undefined;
-
-    $: {
-        if (!uptodate($global, $activityEvents)) {
-            loadActivity();
-        }
-    }
+    let selectedEvent: MessageActivityEvent | undefined = $state(undefined);
 
     function uptodate({ messageActivitySummary }: GlobalState, events: MessageActivityEvent[]) {
         const latest = events[0]?.timestamp;
@@ -55,6 +49,11 @@
             event.activity
         }`;
     }
+    $effect(() => {
+        if (!uptodate($global, $activityEvents)) {
+            loadActivity();
+        }
+    });
 </script>
 
 <SectionHeader slim border={false}>

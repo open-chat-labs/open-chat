@@ -17,12 +17,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    $: previewingCommunity =
-        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed;
-    $: locked = isLocked($selectedCommunity?.gateConfig?.gate);
-
-    $: [title, message] = getMessageForScope($chatListScope.kind);
-
     function cancelPreview() {
         if ($selectedCommunity) {
             client.removeCommunity($selectedCommunity.id);
@@ -44,37 +38,44 @@
                 return ["noChatSelected", "selectAChat"];
         }
     }
+    let previewingCommunity = $derived(
+        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed,
+    );
+    let locked = $derived(isLocked($selectedCommunity?.gateConfig?.gate));
+    let [title, message] = $derived(getMessageForScope($chatListScope.kind));
 </script>
 
 {#if previewingCommunity && $selectedCommunity}
     <div class="wrapper community">
-        <PreviewWrapper let:joinCommunity let:joiningCommunity>
-            <CommunityCard
-                id={$selectedCommunity.id.communityId}
-                name={$selectedCommunity.name}
-                description={$selectedCommunity.description}
-                banner={$selectedCommunity.banner}
-                memberCount={0}
-                channelCount={0}
-                language={$selectedCommunity.primaryLanguage}
-                flags={0}
-                header
-                gateConfig={$selectedCommunity.gateConfig}
-                avatar={$selectedCommunity.avatar}
-                verified={$selectedCommunity.verified} />
-            <div class="join">
-                <Button
-                    loading={joiningCommunity}
-                    disabled={locked || joiningCommunity}
-                    on:click={joinCommunity}
-                    ><Translatable
-                        resourceKey={locked
-                            ? i18nKey("access.lockedGate", undefined, "community", true)
-                            : i18nKey("communities.joinCommunity")} /></Button>
-                <Button secondary small on:click={cancelPreview}>
-                    <Translatable resourceKey={i18nKey("leave")} />
-                </Button>
-            </div>
+        <PreviewWrapper>
+            {#snippet children(joiningCommunity, joinCommunity)}
+                <CommunityCard
+                    id={$selectedCommunity.id.communityId}
+                    name={$selectedCommunity.name}
+                    description={$selectedCommunity.description}
+                    banner={$selectedCommunity.banner}
+                    memberCount={0}
+                    channelCount={0}
+                    language={$selectedCommunity.primaryLanguage}
+                    flags={0}
+                    header
+                    gateConfig={$selectedCommunity.gateConfig}
+                    avatar={$selectedCommunity.avatar}
+                    verified={$selectedCommunity.verified} />
+                <div class="join">
+                    <Button
+                        loading={joiningCommunity}
+                        disabled={locked || joiningCommunity}
+                        on:click={joinCommunity}
+                        ><Translatable
+                            resourceKey={locked
+                                ? i18nKey("access.lockedGate", undefined, "community", true)
+                                : i18nKey("communities.joinCommunity")} /></Button>
+                    <Button secondary small on:click={cancelPreview}>
+                        <Translatable resourceKey={i18nKey("leave")} />
+                    </Button>
+                </div>
+            {/snippet}
         </PreviewWrapper>
     </div>
 {:else}

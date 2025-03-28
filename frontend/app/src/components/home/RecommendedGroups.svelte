@@ -25,11 +25,15 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let joining: MultiUserChat | undefined;
+    interface Props {
+        joining: MultiUserChat | undefined;
+    }
+
+    let { joining }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
-    let hotGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
+    let hotGroups: RemoteData<GroupChatSummary[], string> = $state({ kind: "idle" });
 
     onMount(loadData);
 
@@ -63,7 +67,7 @@
     <div class="wrapper">
         <SectionHeader>
             {#if $mobileWidth}
-                <div class="back" class:rtl={$rtlStore} on:click={cancelRecommendations}>
+                <div class="back" class:rtl={$rtlStore} onclick={cancelRecommendations}>
                     <HoverIcon>
                         {#if $rtlStore}
                             <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
