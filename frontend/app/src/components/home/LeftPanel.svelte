@@ -17,7 +17,6 @@
         {:else}
             <ChatList
                 on:halloffame
-                on:profile
                 on:logout
                 on:unarchiveChat
                 on:toggleMuteNotifications

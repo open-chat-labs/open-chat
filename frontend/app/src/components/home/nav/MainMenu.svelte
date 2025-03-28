@@ -24,12 +24,6 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { publish } from "@src/utils/pubsub";
 
-    interface Props {
-        onProfile: () => void;
-    }
-
-    let { onProfile }: Props = $props();
-
     const client = getContext<OpenChat>("client");
 
     let admin = $derived($platformOperator);
@@ -43,7 +37,7 @@
                 <Translatable resourceKey={i18nKey("wallet")} />
             </span>
         </MenuItem>
-        <MenuItem onclick={onProfile}>
+        <MenuItem onclick={() => publish("profile")}>
             <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text"><Translatable resourceKey={i18nKey("profile.title")} /></span>
         </MenuItem>

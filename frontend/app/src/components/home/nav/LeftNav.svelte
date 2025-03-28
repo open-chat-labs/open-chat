@@ -50,16 +50,16 @@
         globalStateStore as globalState,
         favouritesStore,
     } from "openchat-client";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;
 
     interface Props {
-        onProfile: () => void;
         onClaimDailyChit: () => void;
     }
 
-    let { onProfile, onClaimDailyChit, ...rest }: Props = $props();
+    let { onClaimDailyChit }: Props = $props();
 
     let user = $derived($userStore.get($createdUser.userId));
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
@@ -126,7 +126,7 @@
 
     function viewProfile() {
         activityFeedShowing.set(false);
-        onProfile();
+        publish("profile");
     }
 
     function exploreCommunities() {
@@ -181,7 +181,7 @@
                         </HoverIcon>
                     </span>
                     <span slot="menu">
-                        <MainMenu {...rest} {onProfile} />
+                        <MainMenu />
                     </span>
                 </MenuIcon>
             </div>

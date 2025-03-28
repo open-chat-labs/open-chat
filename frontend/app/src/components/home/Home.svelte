@@ -271,6 +271,7 @@
             subscribe("leaveGroup", onTriggerConfirm),
             subscribe("newGroup", () => newGroup("group")),
             subscribe("wallet", showWallet),
+            subscribe("profile", showProfile),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1238,13 +1239,12 @@
 
 <main class:anon={$anonUser} class:offline={$offlineStore}>
     {#if $layoutStore.showNav}
-        <LeftNav onProfile={showProfile} onClaimDailyChit={claimDailyChit} />
+        <LeftNav onClaimDailyChit={claimDailyChit} />
     {/if}
 
     {#if $layoutStore.showLeft}
         <LeftPanel
             on:halloffame={() => (modal = { kind: "hall_of_fame" })}
-            on:profile={showProfile}
             on:logout={() => client.logout()}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
