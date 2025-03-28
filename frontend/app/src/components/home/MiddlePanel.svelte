@@ -142,7 +142,6 @@
             on:successfulImport
             on:clearSelection
             on:showProposalFilters
-            on:toggleMuteNotifications
             on:goToMessageIndex
             on:convertGroupToCommunity />
     {/if}

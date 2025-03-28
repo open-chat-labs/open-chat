@@ -277,6 +277,7 @@
             subscribe("createCommunity", createCommunity),
             subscribe("unarchiveChat", unarchiveChat),
             subscribe("forward", forwardMessage),
+            subscribe("toggleMuteNotifications", toggleMuteNotifications),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1129,9 +1130,9 @@
         };
     }
 
-    function toggleMuteNotifications(ev: CustomEvent<{ chatId: ChatIdentifier; mute: boolean }>) {
-        const op = ev.detail.mute ? "muted" : "unmuted";
-        client.toggleMuteNotifications(ev.detail.chatId, ev.detail.mute).then((success) => {
+    function toggleMuteNotifications(detail: { chatId: ChatIdentifier; mute: boolean }) {
+        const op = detail.mute ? "muted" : "unmuted";
+        client.toggleMuteNotifications(detail.chatId, detail.mute).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(
                     i18nKey("toggleMuteNotificationsFailed", {
@@ -1242,9 +1243,7 @@
     {/if}
 
     {#if $layoutStore.showLeft}
-        <LeftPanel
-            on:toggleMuteNotifications={toggleMuteNotifications}
-            on:newChannel={newChannel} />
+        <LeftPanel on:newChannel={newChannel} />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel
@@ -1253,7 +1252,6 @@
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:showProposalFilters={showProposalFilters}
-            on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
             on:convertGroupToCommunity={convertGroupToCommunity} />
     {/if}

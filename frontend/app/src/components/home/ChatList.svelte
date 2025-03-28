@@ -29,7 +29,7 @@
         unreadCommunityChannelCounts,
         type BotMatch,
     } from "openchat-client";
-    import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, tick } from "svelte";
+    import { afterUpdate, beforeUpdate, getContext, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import page from "page";
     import Button from "../Button.svelte";
@@ -63,8 +63,6 @@
     let chatsScrollTop: number = 0;
     let previousScope: ChatListScope | undefined = $chatListScope;
     let previousView: "chats" | "threads" = $chatListView;
-
-    const dispatch = createEventDispatcher();
 
     $: showPreview =
         $mobileWidth &&
@@ -291,9 +289,7 @@
                         {chatSummary}
                         selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
-                        onChatSelected={chatSelected}
-                        onToggleMuteNotifications={(chatId, mute) =>
-                            dispatch("toggleMuteNotifications", { chatId, mute })} />
+                        onChatSelected={chatSelected} />
                 {/each}
 
                 {#if userAndBotSearchResults !== undefined}

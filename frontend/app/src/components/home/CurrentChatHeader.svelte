@@ -235,7 +235,6 @@
             {blocked}
             on:convertGroupToCommunity
             on:importToCommunity
-            on:toggleMuteNotifications
             on:showGroupDetails={showGroupDetails}
             on:searchChat
             on:showProposalFilters

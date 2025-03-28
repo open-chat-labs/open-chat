@@ -413,7 +413,6 @@
         {:else}
             <CurrentChatHeader
                 on:clearSelection
-                on:toggleMuteNotifications
                 on:showProposalFilters
                 on:createPoll={createPoll}
                 on:searchChat={searchChat}

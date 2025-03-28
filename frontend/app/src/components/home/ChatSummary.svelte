@@ -66,12 +66,10 @@
         chatSummary: ChatSummary;
         selected: boolean;
         visible: boolean;
-        onToggleMuteNotifications: (chatId: ChatIdentifier, mute: boolean) => void;
         onChatSelected: (chat: ChatSummary) => void;
     }
 
-    let { chatSummary, selected, visible, onToggleMuteNotifications, onChatSelected }: Props =
-        $props();
+    let { chatSummary, selected, visible, onChatSelected }: Props = $props();
 
     let userId = $derived($user.userId);
     let externalContent = $derived(
@@ -287,7 +285,7 @@
     }
 
     function toggleMuteNotifications(mute: boolean) {
-        onToggleMuteNotifications(chatSummary.id, mute);
+        publish("toggleMuteNotifications", { chatId: chatSummary.id, mute });
     }
 
     function archiveChat() {

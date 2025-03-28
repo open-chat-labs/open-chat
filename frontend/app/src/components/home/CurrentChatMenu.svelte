@@ -141,7 +141,7 @@
     }
 
     function toggleMuteNotifications(mute: boolean) {
-        dispatch("toggleMuteNotifications", { chatId: selectedChatSummary.id, mute });
+        publish("toggleMuteNotifications", { chatId: selectedChatSummary.id, mute });
     }
 
     function addToFavourites() {

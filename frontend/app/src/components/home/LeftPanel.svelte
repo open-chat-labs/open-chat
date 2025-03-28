@@ -15,7 +15,7 @@
         {#if $activityFeedShowing}
             <ActivityFeed />
         {:else}
-            <ChatList on:toggleMuteNotifications on:newChannel />
+            <ChatList on:newChannel />
         {/if}
     </div>
 </section>
