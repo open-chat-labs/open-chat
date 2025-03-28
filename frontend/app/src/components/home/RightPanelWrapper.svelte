@@ -7,24 +7,33 @@
     import RightPanel from "./RightPanel.svelte";
     import { pageReplace } from "../../routes";
 
+    interface Props {
+        onGoToMessageIndex: (details: { index: number; preserveFocus: boolean }) => void;
+    }
+    let { onGoToMessageIndex }: Props = $props();
+
     function closeRightPanel() {
         if ($rightPanelHistory.find((panel) => panel.kind === "message_thread_panel")) {
             pageReplace(removeQueryStringParam("open"));
         }
         rightPanelHistory.set([]);
     }
+
+    function onclick(e: Event) {
+        e.stopPropagation();
+    }
 </script>
 
 {#if $layoutStore.rightPanel === "inline"}
-    <RightPanel on:goToMessageIndex />
+    <RightPanel {onGoToMessageIndex} />
 {/if}
 
 {#if $layoutStore.rightPanel === "floating"}
     <Overlay onClose={closeRightPanel} dismissible>
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
-            <RightPanel on:goToMessageIndex />
+        <div {onclick} class="right-wrapper" class:rtl={$rtlStore}>
+            <RightPanel {onGoToMessageIndex} />
         </div>
     </Overlay>
 {/if}

@@ -27,9 +27,10 @@
     interface Props {
         joining: MultiUserChat | undefined;
         currentChatMessages: CurrentChatMessages | undefined;
+        onGoToMessageIndex: (details: { index: number; preserveFocus: boolean }) => void;
     }
 
-    let { joining, currentChatMessages = $bindable() }: Props = $props();
+    let { joining, currentChatMessages = $bindable(), onGoToMessageIndex }: Props = $props();
 
     let middlePanel: HTMLElement | undefined;
 
@@ -139,7 +140,7 @@
             chat={$selectedChatStore}
             events={$eventsStore}
             filteredProposals={$filteredProposalsStore}
-            on:goToMessageIndex />
+            on:goToMessageIndex={(ev) => onGoToMessageIndex(ev.detail)} />
     {/if}
 </section>
 

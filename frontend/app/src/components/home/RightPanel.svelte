@@ -19,7 +19,7 @@
         Level,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import type { Readable } from "svelte/store";
     import { _ } from "svelte-i18n";
     import { fullWidth } from "../../stores/layout";
@@ -60,21 +60,26 @@
     } from "openchat-client";
     import { publish } from "@src/utils/pubsub";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        onGoToMessageIndex: (details: { index: number; preserveFocus: boolean }) => void;
+    }
 
     const client = getContext<OpenChat>("client");
 
-    let invitingUsers = false;
-    let section: HTMLElement;
-    let resized = false;
-    let resizing = false;
-    let resizedWidth = "7";
+    let { onGoToMessageIndex }: Props = $props();
+    let invitingUsers = $state(false);
+    let section: HTMLElement | undefined = $state();
+    let resized = $state(false);
+    let resizing = $state(false);
+    let resizedWidth = $state("7");
 
-    $: user = $userStore.get($currentUser.userId) ?? client.nullUser("unknown");
-    $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
-    $: modal = !$fullWidth;
-    $: multiUserChat = selectedChat as Readable<MultiUserChat>;
-    $: empty = $rightPanelHistory.length === 0;
+    let user = $derived($userStore.get($currentUser.userId) ?? client.nullUser("unknown"));
+    let lastState = $derived(
+        $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" },
+    );
+    let modal = $derived(!$fullWidth);
+    let multiUserChat = $derived(selectedChat as Readable<MultiUserChat>);
+    let empty = $derived($rightPanelHistory.length === 0);
 
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         const canInvite =
@@ -183,7 +188,7 @@
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>): void {
-        dispatch("goToMessageIndex", ev.detail);
+        onGoToMessageIndex(ev.detail);
         if (modal) {
             popRightPanelHistory();
         }
@@ -370,18 +375,19 @@
         }
     }
 
-    $: threadRootEvent =
+    let threadRootEvent = $derived(
         lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
             ? findMessage($eventsStore, lastState.threadRootMessageId)
-            : undefined;
+            : undefined,
+    );
 
-    $: level = (
-        lastState.kind === "invite_community_users"
+    let level = $derived(
+        (lastState.kind === "invite_community_users"
             ? "community"
             : $selectedChat?.kind === "channel"
               ? "channel"
-              : "group"
-    ) as Level;
+              : "group") as Level,
+    );
 </script>
 
 <section

@@ -644,8 +644,8 @@
         filterByChatType($selectedChatStore);
     }
 
-    function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
-        waitAndScrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
+    function goToMessageIndex(detail: { index: number; preserveFocus: boolean }) {
+        waitAndScrollToMessageIndex(detail.index, detail.preserveFocus);
     }
 
     function leaderboard() {
@@ -1229,9 +1229,9 @@
         <LeftPanel />
     {/if}
     {#if $layoutStore.showMiddle}
-        <MiddlePanel {joining} bind:currentChatMessages on:goToMessageIndex={goToMessageIndex} />
+        <MiddlePanel {joining} bind:currentChatMessages onGoToMessageIndex={goToMessageIndex} />
     {/if}
-    <RightPanel on:goToMessageIndex={goToMessageIndex} />
+    <RightPanel onGoToMessageIndex={goToMessageIndex} />
 </main>
 
 {#if $anonUser}
