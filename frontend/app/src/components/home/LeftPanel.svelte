@@ -17,7 +17,6 @@
         {:else}
             <ChatList
                 on:halloffame
-                on:newGroup
                 on:profile
                 on:logout
                 on:unarchiveChat

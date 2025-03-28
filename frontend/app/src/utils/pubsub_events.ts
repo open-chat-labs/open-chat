@@ -43,4 +43,5 @@ export type PubSubEvents = {
         chatId: MultiUserChatIdentifier;
         level: Level;
     };
+    newGroup: undefined;
 };

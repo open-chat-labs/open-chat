@@ -269,6 +269,7 @@
             subscribe("leaveCommunity", onTriggerConfirm),
             subscribe("makeProposal", showMakeProposalModal),
             subscribe("leaveGroup", onTriggerConfirm),
+            subscribe("newGroup", () => newGroup("group")),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1242,7 +1243,6 @@
     {#if $layoutStore.showLeft}
         <LeftPanel
             on:halloffame={() => (modal = { kind: "hall_of_fame" })}
-            on:newGroup={() => newGroup("group")}
             on:profile={showProfile}
             on:logout={() => client.logout()}
             on:wallet={showWallet}

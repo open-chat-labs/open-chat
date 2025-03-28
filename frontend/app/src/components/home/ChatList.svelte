@@ -244,7 +244,7 @@
     {#if $chatListScope.kind === "favourite"}
         <FavouriteChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
     {:else if $chatListScope.kind === "group_chat"}
-        <GroupChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} on:newGroup />
+        <GroupChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
     {:else if $chatListScope.kind === "direct_chat"}
         <DirectChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
     {:else if $selectedCommunity && $chatListScope.kind === "community"}

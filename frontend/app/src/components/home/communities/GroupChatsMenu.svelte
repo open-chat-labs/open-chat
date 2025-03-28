@@ -14,6 +14,7 @@
     import { identityState, anonUser } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -37,7 +38,7 @@
                 postLogin: { kind: "create_group" },
             });
         } else {
-            dispatch("newGroup");
+            publish("newGroup");
         }
     }
 </script>
