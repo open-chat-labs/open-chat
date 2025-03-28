@@ -410,7 +410,6 @@
                 on:close={popRightPanelHistory}
                 on:deleteGroup
                 on:editGroup
-                on:chatWith
                 on:showGroupMembers />
         {/if}
     {:else if lastState.kind === "call_participants_panel"}
@@ -460,8 +459,7 @@
                 on:changeGroupRole={onChangeGroupRole}
                 on:cancelGroupInvite={onCancelGroupInvite}
                 on:cancelCommunityInvite={onCancelCommunityInvite}
-                on:close={popRightPanelHistory}
-                on:chatWith />
+                on:close={popRightPanelHistory} />
         {:else}
             <Members
                 closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
@@ -476,7 +474,6 @@
                 on:close={popRightPanelHistory}
                 on:blockUser={onBlockCommunityUser}
                 on:unblockUser={onUnblockCommnityUser}
-                on:chatWith
                 on:showInviteUsers={showInviteCommunityUsers}
                 on:removeMember={onRemoveCommunityMember}
                 on:changeRole={onChangeCommunityRole}
@@ -520,7 +517,6 @@
             on:close={popRightPanelHistory}
             on:blockUser={onBlockGroupUser}
             on:unblockUser={onUnblockGroupUser}
-            on:chatWith
             on:showInviteUsers={showInviteGroupUsers}
             on:removeMember={onRemoveGroupMember}
             on:changeRole={onChangeGroupRole}
@@ -542,12 +538,10 @@
             on:showInviteGroupUsers={showInviteGroupUsers}
             on:changeGroupRole={onChangeGroupRole}
             on:close={popRightPanelHistory}
-            on:chatWith
             on:cancelGroupInvite={onCancelGroupInvite}
             on:cancelCommunityInvite={onCancelCommunityInvite} />
     {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
-            on:chatWith
             on:goToMessageIndex={goToMessageIndex}
             chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
@@ -562,7 +556,6 @@
             on:closeProfile={popRightPanelHistory} />
     {:else if threadRootEvent !== undefined && $selectedChat !== undefined}
         <Thread
-            on:chatWith
             on:upgrade
             on:verifyHumanity
             on:claimDailyChit

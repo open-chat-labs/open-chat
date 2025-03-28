@@ -52,6 +52,7 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -161,7 +162,7 @@
             : $chatSummariesListStore;
 
     function chatWith(userId: string): void {
-        dispatch("chatWith", { kind: "direct_chat", userId });
+        publish("chatWith", { kind: "direct_chat", userId });
     }
 
     /**

@@ -118,7 +118,6 @@
         on:close
         on:blockUser={onBlockCommunityUser}
         on:unblockUser={onUnblockCommunityUser}
-        on:chatWith
         on:showInviteUsers={showInviteCommunityUsers}
         on:removeMember={onRemoveCommunityMember}
         on:changeRole={onChangeCommunityRole}
@@ -138,7 +137,6 @@
         on:close
         on:blockUser={onBlockGroupUser}
         on:unblockUser={onUnblockGroupUser}
-        on:chatWith
         on:showInviteUsers={showInviteGroupUsers}
         on:removeMember={onRemoveGroupMember}
         on:changeRole={onChangeGroupRole}

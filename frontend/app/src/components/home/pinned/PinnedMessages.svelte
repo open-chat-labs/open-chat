@@ -2,13 +2,7 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type {
-        DirectChatIdentifier,
-        EventWrapper,
-        Message,
-        MultiUserChatIdentifier,
-        OpenChat,
-    } from "openchat-client";
+    import type { EventWrapper, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
     import { currentUser as user, messagesRead } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -18,12 +12,19 @@
     import PinnedMessage from "./PinnedMessage.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { subscribe } from "@src/utils/pubsub";
 
     export let pinned: Set<number>;
     export let chatId: MultiUserChatIdentifier;
     export let dateLastPinned: bigint | undefined;
 
     const client = getContext<OpenChat>("client");
+
+    onMount(() => {
+        return subscribe("chatWith", (_) => {
+            dispatch("close");
+        });
+    });
 
     let unread: boolean = false;
     let messagesDiv: HTMLDivElement | undefined;
@@ -35,11 +36,6 @@
     function close() {
         dispatch("close");
         messages = { kind: "idle" };
-    }
-
-    function chatWith(ev: CustomEvent<DirectChatIdentifier>) {
-        dispatch("close");
-        dispatch("chatWith", ev.detail);
     }
 
     function scrollBottom() {
@@ -127,7 +123,6 @@
                         user={$user}
                         senderId={message.event.sender}
                         msg={message.event}
-                        on:chatWith={chatWith}
                         on:goToMessageIndex />
                 {/each}
             </div>

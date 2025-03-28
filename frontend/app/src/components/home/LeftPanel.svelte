@@ -16,7 +16,6 @@
             <ActivityFeed />
         {:else}
             <ChatList
-                on:chatWith
                 on:halloffame
                 on:newGroup
                 on:profile

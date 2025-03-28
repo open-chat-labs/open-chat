@@ -1,26 +1,23 @@
-import type { ChatSummary } from "openchat-client";
-
-type Events = {
-    startVideoCall: { chat: ChatSummary; join: boolean };
-    hangup: undefined;
-    askToSpeak: undefined;
-};
+import type { PubSubEvents } from "./pubsub_events";
 
 type NoPayloadEvents = {
-    [K in keyof Events]: Events[K] extends undefined ? K : never;
-}[keyof Events];
+    [K in keyof PubSubEvents]: PubSubEvents[K] extends undefined ? K : never;
+}[keyof PubSubEvents];
 
 type Subscriptions = {
-    [K in keyof Events]?: ((payload: Events[K]) => void)[];
+    [K in keyof PubSubEvents]?: ((payload: PubSubEvents[K]) => void)[];
 };
 
-type Subscription<K extends keyof Events> = (payload: Events[K]) => void;
+type Subscription<K extends keyof PubSubEvents> = (payload: PubSubEvents[K]) => void;
 
 type Unsubscribe = () => void;
 
 const subscriptions: Subscriptions = {};
 
-export function subscribe<K extends keyof Events>(name: K, value: Subscription<K>): Unsubscribe {
+export function subscribe<K extends keyof PubSubEvents>(
+    name: K,
+    value: Subscription<K>,
+): Unsubscribe {
     if (subscriptions[name] === undefined) {
         subscriptions[name] = [];
     }
@@ -39,7 +36,7 @@ export function subscribe<K extends keyof Events>(name: K, value: Subscription<K
 }
 
 export function publish<K extends NoPayloadEvents>(name: K): void;
-export function publish<K extends keyof Events>(name: K, payload: Events[K]): void;
-export function publish<K extends keyof Events>(name: K, payload?: Events[K]): void {
-    subscriptions[name]?.forEach((sub) => sub(payload as Events[K]));
+export function publish<K extends keyof PubSubEvents>(name: K, payload: PubSubEvents[K]): void;
+export function publish<K extends keyof PubSubEvents>(name: K, payload?: PubSubEvents[K]): void {
+    subscriptions[name]?.forEach((sub) => sub(payload as PubSubEvents[K]));
 }

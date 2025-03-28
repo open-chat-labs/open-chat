@@ -438,7 +438,6 @@
             bind:this={currentChatMessages}
             on:replyPrivatelyTo
             on:replyTo={replyTo}
-            on:chatWith
             on:upgrade
             on:verifyHumanity
             on:claimDailyChit

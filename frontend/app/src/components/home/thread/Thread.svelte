@@ -416,7 +416,6 @@
                             canInvite={false}
                             canReplyInThread={false}
                             collapsed={false}
-                            on:chatWith
                             on:removePreview={onRemovePreview}
                             on:goToMessageIndex={onGoToMessageIndex}
                             onReplyPrivatelyTo={(r) => dispatch("replyPrivatelyTo", r)}

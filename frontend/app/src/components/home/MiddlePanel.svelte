@@ -147,7 +147,6 @@
             on:showProposalFilters
             on:makeProposal
             on:showGroupMembers
-            on:chatWith
             on:joinGroup
             on:upgrade
             on:verifyHumanity

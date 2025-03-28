@@ -21,7 +21,6 @@
         on:replyPrivatelyTo
         on:showInviteGroupUsers
         on:showGroupMembers
-        on:chatWith
         on:upgrade
         on:verifyHumanity
         on:claimDailyChit
@@ -43,7 +42,6 @@
                 on:replyPrivatelyTo
                 on:showInviteGroupUsers
                 on:showGroupMembers
-                on:chatWith
                 on:upgrade
                 on:verifyHumanity
                 on:deleteGroup

@@ -320,7 +320,6 @@
                                 chat.public}
                             pinned={isPinned($currentChatPinnedMessages, evt)}
                             editing={$currentChatEditingEvent === evt}
-                            on:chatWith
                             onReplyTo={replyTo}
                             onReplyPrivatelyTo={(r) => dispatch("replyPrivatelyTo", r)}
                             on:removePreview

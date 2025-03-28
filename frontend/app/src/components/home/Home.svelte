@@ -134,6 +134,7 @@
     import { scream } from "../../utils/scream";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
+    import { subscribe } from "@src/utils/pubsub";
 
     type ViewProfileConfig = {
         userId: string;
@@ -258,6 +259,7 @@
     }
 
     onMount(() => {
+        const unsubEvents = [subscribe("chatWith", chatWith)];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
 
@@ -267,6 +269,7 @@
 
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
+            unsubEvents.forEach((u) => u());
         };
     });
 
@@ -760,12 +763,12 @@
         return Promise.resolve();
     }
 
-    function chatWith(ev: CustomEvent<DirectChatIdentifier>) {
+    function chatWith(chatId: DirectChatIdentifier) {
         const chat = $chatSummariesListStore.find((c) => {
-            return c.kind === "direct_chat" && c.them === ev.detail;
+            return c.kind === "direct_chat" && c.them === chatId;
         });
 
-        page(routeForChatIdentifier(chat ? $chatListScope.kind : "direct_chat", ev.detail));
+        page(routeForChatIdentifier(chat ? $chatListScope.kind : "direct_chat", chatId));
     }
 
     function showInviteGroupUsers(ev: CustomEvent<boolean>) {
@@ -1180,11 +1183,7 @@
 
     function chatWithFromProfileCard() {
         if (showProfileCard === undefined) return;
-        chatWith(
-            new CustomEvent("chatWith", {
-                detail: { kind: "direct_chat", userId: showProfileCard.userId },
-            }),
-        );
+        chatWith({ kind: "direct_chat", userId: showProfileCard.userId });
         showProfileCard = undefined;
     }
 
@@ -1240,7 +1239,6 @@
 
     {#if $layoutStore.showLeft}
         <LeftPanel
-            on:chatWith={chatWith}
             on:halloffame={() => (modal = { kind: "hall_of_fame" })}
             on:newGroup={() => newGroup("group")}
             on:profile={showProfile}
@@ -1264,7 +1262,6 @@
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:leaveGroup={triggerConfirm}
-            on:chatWith={chatWith}
             on:replyPrivatelyTo={replyPrivatelyTo}
             on:showInviteGroupUsers={showInviteGroupUsers}
             on:showProposalFilters={showProposalFilters}
@@ -1285,7 +1282,6 @@
         on:replyPrivatelyTo={replyPrivatelyTo}
         on:showInviteGroupUsers={showInviteGroupUsers}
         on:showGroupMembers={showGroupMembers}
-        on:chatWith={chatWith}
         on:upgrade={upgrade}
         on:deleteGroup={triggerConfirm}
         on:editGroup={editGroup}
