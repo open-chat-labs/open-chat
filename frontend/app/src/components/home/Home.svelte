@@ -275,6 +275,8 @@
             subscribe("claimDailyChit", claimDailyChit),
             subscribe("joinGroup", joinGroup),
             subscribe("createCommunity", createCommunity),
+            subscribe("unarchiveChat", unarchiveChat),
+            subscribe("forward", forwardMessage),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -655,10 +657,6 @@
         page(routeForScope(client.getDefaultScope()));
     }
 
-    function onUnarchiveChat(ev: CustomEvent<ChatIdentifier>) {
-        unarchiveChat(ev.detail);
-    }
-
     function unarchiveChat(chatId: ChatIdentifier) {
         client.unarchiveChat(chatId).then((success) => {
             if (!success) {
@@ -822,8 +820,8 @@
         }
     }
 
-    function forwardMessage(ev: CustomEvent<Message>) {
-        messageToForward = ev.detail;
+    function forwardMessage(message: Message) {
+        messageToForward = message;
         modal = { kind: "select_chat" };
     }
 
@@ -1245,9 +1243,6 @@
 
     {#if $layoutStore.showLeft}
         <LeftPanel
-            on:halloffame={() => (modal = { kind: "hall_of_fame" })}
-            on:logout={() => client.logout()}
-            on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:newChannel={newChannel} />
     {/if}
@@ -1260,7 +1255,6 @@
             on:showProposalFilters={showProposalFilters}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
-            on:forward={forwardMessage}
             on:convertGroupToCommunity={convertGroupToCommunity} />
     {/if}
     <RightPanel

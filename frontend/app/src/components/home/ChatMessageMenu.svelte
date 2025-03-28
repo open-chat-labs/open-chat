@@ -181,7 +181,7 @@
     }
 
     function forward() {
-        dispatch("forward", msg);
+        publish("forward", msg);
     }
 
     function retrySend() {

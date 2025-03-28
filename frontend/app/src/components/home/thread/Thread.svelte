@@ -417,8 +417,7 @@
                             on:removePreview={onRemovePreview}
                             on:goToMessageIndex={onGoToMessageIndex}
                             onReplyTo={replyTo}
-                            on:editEvent={() => editEvent(evt)}
-                            on:forward />
+                            on:editEvent={() => editEvent(evt)} />
                     {/each}
                 {/each}
             {/if}

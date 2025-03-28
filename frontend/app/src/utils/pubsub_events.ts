@@ -1,10 +1,12 @@
 import type {
+    ChatIdentifier,
     ChatSummary,
     CommunityIdentifier,
     CommunitySummary,
     DirectChatIdentifier,
     EnhancedReplyContext,
     Level,
+    Message,
     MultiUserChat,
     MultiUserChatIdentifier,
     ResourceKey,
@@ -53,4 +55,6 @@ export type PubSubEvents = {
         select: boolean;
     };
     createCommunity: undefined;
+    unarchiveChat: ChatIdentifier;
+    forward: Message;
 };

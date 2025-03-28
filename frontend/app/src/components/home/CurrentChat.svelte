@@ -415,7 +415,6 @@
                 on:clearSelection
                 on:toggleMuteNotifications
                 on:showProposalFilters
-                on:leaveGroup
                 on:createPoll={createPoll}
                 on:searchChat={searchChat}
                 on:convertGroupToCommunity
@@ -432,7 +431,6 @@
         <CurrentChatMessages
             bind:this={currentChatMessages}
             on:replyTo={replyTo}
-            on:forward
             on:retrySend
             on:removePreview={onRemovePreview}
             {privateChatPreview}

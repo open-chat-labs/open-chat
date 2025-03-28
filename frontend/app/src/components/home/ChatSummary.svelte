@@ -8,7 +8,6 @@
         CommunitySummary,
         DiamondMembershipStatus,
         ChatIdentifier,
-        Level,
     } from "openchat-client";
     import {
         userStore,
@@ -69,17 +68,10 @@
         visible: boolean;
         onToggleMuteNotifications: (chatId: ChatIdentifier, mute: boolean) => void;
         onChatSelected: (chat: ChatSummary) => void;
-        onUnarchiveChat: (chatId: ChatIdentifier) => void;
     }
 
-    let {
-        chatSummary,
-        selected,
-        visible,
-        onToggleMuteNotifications,
-        onChatSelected,
-        onUnarchiveChat,
-    }: Props = $props();
+    let { chatSummary, selected, visible, onToggleMuteNotifications, onChatSelected }: Props =
+        $props();
 
     let userId = $derived($user.userId);
     let externalContent = $derived(
@@ -323,7 +315,7 @@
     }
 
     function unarchiveChat() {
-        onUnarchiveChat(chatSummary.id);
+        publish("unarchiveChat", chatSummary.id);
     }
 
     function leaveGroup() {

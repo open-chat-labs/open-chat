@@ -745,7 +745,6 @@
                             }}
                             {canReact}
                             on:collapseMessage
-                            on:forward
                             on:reply={reply}
                             on:retrySend
                             on:initiateThread

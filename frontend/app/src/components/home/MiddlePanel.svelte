@@ -141,12 +141,10 @@
             filteredProposals={$filteredProposalsStore}
             on:successfulImport
             on:clearSelection
-            on:leaveGroup
             on:showProposalFilters
             on:toggleMuteNotifications
             on:goToMessageIndex
-            on:convertGroupToCommunity
-            on:forward />
+            on:convertGroupToCommunity />
     {/if}
 </section>
 

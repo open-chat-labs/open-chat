@@ -326,7 +326,6 @@
                             on:goToMessageIndex={goToMessageIndex}
                             onExpandMessage={() => toggleMessageExpansion(evt, true)}
                             on:collapseMessage={() => toggleMessageExpansion(evt, false)}
-                            on:forward
                             on:retrySend
                             event={evt} />
                     {/each}

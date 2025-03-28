@@ -169,7 +169,6 @@
             {onReplyTo}
             on:retrySend={retrySend}
             onEditMessage={editEvent}
-            on:forward
             {onExpandMessage}
             on:collapseMessage
             on:removePreview={removePreview}

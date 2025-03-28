@@ -15,13 +15,7 @@
         {#if $activityFeedShowing}
             <ActivityFeed />
         {:else}
-            <ChatList
-                on:halloffame
-                on:logout
-                on:unarchiveChat
-                on:toggleMuteNotifications
-                on:leaveGroup
-                on:newChannel />
+            <ChatList on:toggleMuteNotifications on:newChannel />
         {/if}
     </div>
 </section>

@@ -239,8 +239,7 @@
             on:showGroupDetails={showGroupDetails}
             on:searchChat
             on:showProposalFilters
-            on:createPoll
-            on:leaveGroup />
+            on:createPoll />
     {/if}
 
     <ActiveBroadcastSummary />
