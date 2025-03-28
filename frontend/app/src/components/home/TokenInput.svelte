@@ -124,7 +124,7 @@
     {/if}
 </div>
 <div class="wrapper">
-    {#if transferFees !== undefined}
+    {#if transferFees !== undefined && transferFees > 0n}
         <div class="fee">
             <Alert size={$iconSize} color={"var(--warn)"} />
             <span>
