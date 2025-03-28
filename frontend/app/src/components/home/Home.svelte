@@ -16,12 +16,10 @@
         Notification,
         CandidateGroupChat,
         EventWrapper,
-        ChatType,
         CommunitySummary,
         Level,
         ChatIdentifier,
         DirectChatIdentifier,
-        GroupChatIdentifier,
         CommunityIdentifier,
         MultiUserChat,
         MultiUserChatIdentifier,
@@ -57,7 +55,6 @@
         selectedChatId,
         chatsInitialised,
         draftMessagesStore,
-        chatStateStore,
         chatListScopeStore as chatListScope,
         currentCommunityRules,
         communities,
@@ -72,7 +69,7 @@
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
-    import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import page from "page";
     import { pageRedirect, pageReplace, pathParams, routeForScope } from "../../routes";
     import type { RouteParams } from "../../routes";
@@ -85,7 +82,6 @@
     import {
         filterByChatType,
         filterRightPanelHistory,
-        pushRightPanelHistory,
         rightPanelHistory,
     } from "../../stores/rightPanel";
     import Upgrade from "./upgrade/Upgrade.svelte";
@@ -134,6 +130,7 @@
     import { scream } from "../../utils/scream";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
+    import { subscribe } from "@src/utils/pubsub";
 
     type ViewProfileConfig = {
         userId: string;
@@ -156,13 +153,11 @@
     type ConfirmLeaveCommunityEvent = {
         kind: "leave_community";
         communityId: CommunityIdentifier;
-        chatType: ChatType;
     };
 
     type ConfirmLeaveEvent = {
         kind: "leave";
         chatId: MultiUserChatIdentifier;
-        chatType: ChatType;
         level: Level;
     };
 
@@ -245,9 +240,9 @@
             $identityState.postLogin?.kind === "join_group" &&
             $chatsInitialised
         ) {
-            const ev = new CustomEvent("joinGroup", { detail: { ...$identityState.postLogin } });
+            const join = { ...$identityState.postLogin };
             client.clearPostLoginState();
-            tick().then(() => joinGroup(ev));
+            tick().then(() => joinGroup(join));
         }
     }
 
@@ -258,6 +253,36 @@
     }
 
     onMount(() => {
+        const unsubEvents = [
+            subscribe("chatWith", chatWith),
+            subscribe("showInviteGroupUsers", showInviteGroupUsers),
+            subscribe("replyPrivatelyTo", replyPrivatelyTo),
+            subscribe("showGroupMembers", showGroupMembers),
+            subscribe("upgrade", upgrade),
+            subscribe("verifyHumanity", verifyHumanity),
+            subscribe("deleteGroup", onTriggerConfirm),
+            subscribe("deleteCommunity", onTriggerConfirm),
+            subscribe("communityDetails", communityDetails),
+            subscribe("editCommunity", editCommunity),
+            subscribe("leaveCommunity", onTriggerConfirm),
+            subscribe("makeProposal", showMakeProposalModal),
+            subscribe("leaveGroup", onTriggerConfirm),
+            subscribe("newGroup", () => newGroup("group")),
+            subscribe("wallet", showWallet),
+            subscribe("profile", showProfile),
+            subscribe("claimDailyChit", claimDailyChit),
+            subscribe("joinGroup", joinGroup),
+            subscribe("createCommunity", createCommunity),
+            subscribe("unarchiveChat", unarchiveChat),
+            subscribe("forward", forwardMessage),
+            subscribe("toggleMuteNotifications", toggleMuteNotifications),
+            subscribe("newChannel", newChannel),
+            subscribe("successfulImport", successfulImport),
+            subscribe("showProposalFilters", showProposalFilters),
+            subscribe("convertGroupToCommunity", convertGroupToCommunity),
+            subscribe("clearSelection", () => page(routeForScope($chatListScope))),
+            subscribe("editGroup", editGroup),
+        ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
 
@@ -267,6 +292,7 @@
 
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
+            unsubEvents.forEach((u) => u());
         };
     });
 
@@ -430,7 +456,7 @@
             resetRightPanel();
 
             if (autojoin && chat.kind !== "direct_chat") {
-                joinGroup(new CustomEvent("joinGroup", { detail: { group: chat, select: true } }));
+                joinGroup({ group: chat, select: true });
             }
         }
     }
@@ -618,8 +644,8 @@
         filterByChatType($selectedChatStore);
     }
 
-    function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
-        waitAndScrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
+    function goToMessageIndex(detail: { index: number; preserveFocus: boolean }) {
+        waitAndScrollToMessageIndex(detail.index, detail.preserveFocus);
     }
 
     function leaderboard() {
@@ -634,10 +660,6 @@
     function closeNoAccess() {
         closeModal();
         page(routeForScope(client.getDefaultScope()));
-    }
-
-    function onUnarchiveChat(ev: CustomEvent<ChatIdentifier>) {
-        unarchiveChat(ev.detail);
     }
 
     function unarchiveChat(chatId: ChatIdentifier) {
@@ -665,8 +687,8 @@
         }
     }
 
-    function triggerConfirm(ev: CustomEvent<ConfirmActionEvent>) {
-        confirmActionEvent = ev.detail;
+    function onTriggerConfirm(detail: ConfirmActionEvent) {
+        confirmActionEvent = detail;
     }
 
     function onConfirmAction(yes: boolean): Promise<void> {
@@ -760,17 +782,17 @@
         return Promise.resolve();
     }
 
-    function chatWith(ev: CustomEvent<DirectChatIdentifier>) {
+    function chatWith(chatId: DirectChatIdentifier) {
         const chat = $chatSummariesListStore.find((c) => {
-            return c.kind === "direct_chat" && c.them === ev.detail;
+            return c.kind === "direct_chat" && c.them === chatId;
         });
 
-        page(routeForChatIdentifier(chat ? $chatListScope.kind : "direct_chat", ev.detail));
+        page(routeForChatIdentifier(chat ? $chatListScope.kind : "direct_chat", chatId));
     }
 
-    function showInviteGroupUsers(ev: CustomEvent<boolean>) {
+    function showInviteGroupUsers(show: boolean) {
         if ($selectedChatId !== undefined) {
-            if (ev.detail) {
+            if (show) {
                 rightPanelHistory.set([{ kind: "invite_group_users" }]);
             } else {
                 rightPanelHistory.update((history) => {
@@ -780,22 +802,22 @@
         }
     }
 
-    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
-        if (ev.detail.sender === undefined) return;
+    function replyPrivatelyTo(context: EnhancedReplyContext) {
+        if (context.sender === undefined) return;
 
         const chat = $chatSummariesListStore.find((c) => {
             return (
                 c.kind === "direct_chat" &&
                 chatIdentifiersEqual(c.them, {
                     kind: "direct_chat",
-                    userId: ev.detail.sender!.userId,
+                    userId: context.sender!.userId,
                 })
             );
         });
 
-        const chatId = chat?.id ?? { kind: "direct_chat", userId: ev.detail.sender.userId };
+        const chatId = chat?.id ?? { kind: "direct_chat", userId: context.sender.userId };
         draftMessagesStore.setTextContent({ chatId }, "");
-        draftMessagesStore.setReplyingTo({ chatId }, ev.detail);
+        draftMessagesStore.setReplyingTo({ chatId }, context);
         if (chat) {
             page(routeForChatIdentifier($chatListScope.kind, chatId));
         } else {
@@ -803,18 +825,14 @@
         }
     }
 
-    function forwardMessage(ev: CustomEvent<Message>) {
-        messageToForward = ev.detail;
+    function forwardMessage(message: Message) {
+        messageToForward = message;
         modal = { kind: "select_chat" };
     }
 
-    function showGroupMembers(ev: CustomEvent<boolean>) {
+    function showGroupMembers() {
         if ($selectedChatId !== undefined) {
-            if (ev.detail) {
-                rightPanelHistory.set([{ kind: "show_group_members" }]);
-            } else {
-                pushRightPanelHistory({ kind: "show_group_members" });
-            }
+            rightPanelHistory.set([{ kind: "show_group_members" }]);
         }
     }
 
@@ -844,7 +862,7 @@
         }
     }
 
-    function communityDetails() {
+    function communityDetails(_: CommunitySummary) {
         // what do we do here if the community is not selected
         // do we select it?
         if ($chatListScope.kind === "community") {
@@ -869,17 +887,15 @@
         }
     }
 
-    async function joinGroup(
-        ev: CustomEvent<{ group: MultiUserChat; select: boolean }>,
-    ): Promise<void> {
+    async function joinGroup(detail: { group: MultiUserChat; select: boolean }): Promise<void> {
         if ($anonUser) {
             client.updateIdentityState({
                 kind: "logging_in",
-                postLogin: { kind: "join_group", ...ev.detail },
+                postLogin: { kind: "join_group", ...detail },
             });
             return;
         }
-        const { group, select } = ev.detail;
+        const { group, select } = detail;
 
         // it's possible that we got here via a postLogin capture in which case it's possible
         // that we are actually already a member of this group, so we should double check here
@@ -1004,33 +1020,12 @@
         draftMessagesStore.setTextContent({ chatId }, text);
     }
 
-    function groupCreated(
-        ev: CustomEvent<{ chatId: GroupChatIdentifier; isPublic: boolean; rules: Rules }>,
-    ) {
-        const { chatId, isPublic, rules } = ev.detail;
-        chatStateStore.setProp(chatId, "rules", { ...rules, version: 0 });
-        if (isPublic) {
-            client.trackEvent("public_group_created");
-        } else {
-            client.trackEvent("private_group_created");
-        }
-        rightPanelHistory.set(
-            $screenWidth === ScreenWidth.ExtraExtraLarge
-                ? [
-                      {
-                          kind: "group_details",
-                      },
-                  ]
-                : [],
-        );
-    }
-
     function showWallet() {
         modal = { kind: "wallet" };
     }
 
-    function newChannel(ev: CustomEvent<boolean>) {
-        newGroup("channel", ev.detail);
+    function newChannel(embeddedContent: boolean) {
+        newGroup("channel", embeddedContent);
     }
 
     function newGroup(level: Level = "group", embeddedContent: boolean = false) {
@@ -1085,10 +1080,10 @@
         };
     }
 
-    function editGroup(ev: CustomEvent<{ chat: MultiUserChat; rules: UpdatedRules | undefined }>) {
-        const chat = ev.detail.chat;
+    function editGroup(detail: { chat: MultiUserChat; rules: UpdatedRules | undefined }) {
+        const chat = detail.chat;
         let level: Level = chat.id.kind === "group_chat" ? "group" : "channel";
-        let rules = ev.detail.rules ?? { ...defaultChatRules(level), newVersion: false };
+        let rules = detail.rules ?? { ...defaultChatRules(level), newVersion: false };
         modal = {
             kind: "new_group",
             embeddedContent: chat.kind === "channel" && chat.externalUrl !== undefined,
@@ -1118,9 +1113,9 @@
         };
     }
 
-    function toggleMuteNotifications(ev: CustomEvent<{ chatId: ChatIdentifier; mute: boolean }>) {
-        const op = ev.detail.mute ? "muted" : "unmuted";
-        client.toggleMuteNotifications(ev.detail.chatId, ev.detail.mute).then((success) => {
+    function toggleMuteNotifications(detail: { chatId: ChatIdentifier; mute: boolean }) {
+        const op = detail.mute ? "muted" : "unmuted";
+        client.toggleMuteNotifications(detail.chatId, detail.mute).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(
                     i18nKey("toggleMuteNotificationsFailed", {
@@ -1152,21 +1147,21 @@
         };
     }
 
-    function editCommunity(ev: CustomEvent<CommunitySummary>) {
+    function editCommunity(community: CommunitySummary) {
         modal = {
             kind: "edit_community",
-            community: ev.detail,
+            community,
             communityRules: $currentCommunityRules ?? defaultChatRules("community"),
         };
     }
 
-    function convertGroupToCommunity(ev: CustomEvent<GroupChatSummary>) {
+    function convertGroupToCommunity(group: GroupChatSummary) {
         rightPanelHistory.set([]);
-        convertGroup = ev.detail;
+        convertGroup = group;
     }
 
-    function successfulImport(ev: CustomEvent<ChannelIdentifier>) {
-        page(`/community/${ev.detail.communityId}`);
+    function successfulImport(id: ChannelIdentifier) {
+        page(`/community/${id.communityId}`);
     }
 
     function profileLinkClicked(ev: CustomEvent<ProfileLinkClickedEvent>) {
@@ -1180,11 +1175,7 @@
 
     function chatWithFromProfileCard() {
         if (showProfileCard === undefined) return;
-        chatWith(
-            new CustomEvent("chatWith", {
-                detail: { kind: "direct_chat", userId: showProfileCard.userId },
-            }),
-        );
+        chatWith({ kind: "direct_chat", userId: showProfileCard.userId });
         showProfileCard = undefined;
     }
 
@@ -1231,69 +1222,16 @@
 
 <main class:anon={$anonUser} class:offline={$offlineStore}>
     {#if $layoutStore.showNav}
-        <LeftNav
-            onProfile={showProfile}
-            onWallet={showWallet}
-            onUpgrade={upgrade}
-            onClaimDailyChit={claimDailyChit} />
+        <LeftNav />
     {/if}
 
     {#if $layoutStore.showLeft}
-        <LeftPanel
-            on:chatWith={chatWith}
-            on:halloffame={() => (modal = { kind: "hall_of_fame" })}
-            on:newGroup={() => newGroup("group")}
-            on:profile={showProfile}
-            on:communityDetails={communityDetails}
-            on:logout={() => client.logout()}
-            on:wallet={showWallet}
-            on:upgrade={upgrade}
-            on:unarchiveChat={onUnarchiveChat}
-            on:toggleMuteNotifications={toggleMuteNotifications}
-            on:newChannel={newChannel}
-            on:editCommunity={editCommunity}
-            on:leaveCommunity={triggerConfirm}
-            on:deleteCommunity={triggerConfirm}
-            on:deleteGroup={triggerConfirm}
-            on:leaveGroup={triggerConfirm} />
+        <LeftPanel />
     {/if}
     {#if $layoutStore.showMiddle}
-        <MiddlePanel
-            {joining}
-            bind:currentChatMessages
-            on:successfulImport={successfulImport}
-            on:clearSelection={() => page(routeForScope($chatListScope))}
-            on:leaveGroup={triggerConfirm}
-            on:chatWith={chatWith}
-            on:replyPrivatelyTo={replyPrivatelyTo}
-            on:showInviteGroupUsers={showInviteGroupUsers}
-            on:showProposalFilters={showProposalFilters}
-            on:makeProposal={showMakeProposalModal}
-            on:showGroupMembers={showGroupMembers}
-            on:joinGroup={joinGroup}
-            on:upgrade={upgrade}
-            on:verifyHumanity={verifyHumanity}
-            on:claimDailyChit={claimDailyChit}
-            on:toggleMuteNotifications={toggleMuteNotifications}
-            on:goToMessageIndex={goToMessageIndex}
-            on:forward={forwardMessage}
-            on:convertGroupToCommunity={convertGroupToCommunity}
-            on:createCommunity={createCommunity} />
+        <MiddlePanel {joining} bind:currentChatMessages onGoToMessageIndex={goToMessageIndex} />
     {/if}
-    <RightPanel
-        on:goToMessageIndex={goToMessageIndex}
-        on:replyPrivatelyTo={replyPrivatelyTo}
-        on:showInviteGroupUsers={showInviteGroupUsers}
-        on:showGroupMembers={showGroupMembers}
-        on:chatWith={chatWith}
-        on:upgrade={upgrade}
-        on:deleteGroup={triggerConfirm}
-        on:editGroup={editGroup}
-        on:editCommunity={editCommunity}
-        on:deleteCommunity={triggerConfirm}
-        on:newChannel={newChannel}
-        on:groupCreated={groupCreated}
-        on:verifyHumanity={verifyHumanity} />
+    <RightPanel onGoToMessageIndex={goToMessageIndex} />
 </main>
 
 {#if $anonUser}
@@ -1356,7 +1294,6 @@
             <CreateOrUpdateGroup
                 embeddedContent={modal.embeddedContent}
                 templateGroup={modal.candidate}
-                onUpgrade={upgrade}
                 onClose={closeModal} />
         {:else if modal.kind === "edit_community"}
             <EditCommunity

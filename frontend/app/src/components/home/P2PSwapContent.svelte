@@ -18,7 +18,7 @@
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
     import SpinningToken from "../icons/SpinningToken.svelte";
@@ -31,9 +31,9 @@
     import { calculateDollarAmount } from "../../utils/exchange";
     import P2PSwapProgress from "./P2PSwapProgress.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     export let senderId: string;
     export let content: P2PSwapContent;
@@ -131,7 +131,7 @@
     function onAcceptOrCancel(e: MouseEvent) {
         if (e.isTrusted && !buttonDisabled) {
             if (!me && !$isDiamond) {
-                dispatch("upgrade");
+                publish("upgrade");
             } else {
                 confirming = true;
             }

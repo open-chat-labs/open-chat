@@ -1,10 +1,14 @@
 <script lang="ts">
-    export let size: "small" | "medium" | "large" = "medium";
+    interface Props {
+        size?: "small" | "medium" | "large";
+    }
+
+    let { size = "medium" }: Props = $props();
 
     let cls = `loading ${size}`;
 </script>
 
-<div class={cls} />
+<div class={cls}></div>
 
 <style lang="scss">
     .loading {

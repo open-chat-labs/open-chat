@@ -51,15 +51,7 @@
         </div>
     </div>
     <span class="menu">
-        <CommunityMenu
-            on:newChannel
-            on:communityDetails
-            on:leaveCommunity
-            on:editCommunity
-            on:deleteCommunity
-            on:markAllRead
-            {canMarkAllRead}
-            {community} />
+        <CommunityMenu on:markAllRead {canMarkAllRead} {community} />
     </span>
 </SectionHeader>
 

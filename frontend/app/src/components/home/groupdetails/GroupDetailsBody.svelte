@@ -195,7 +195,7 @@
                 on:toggle={groupAdvancedOpen.toggle}
                 open={$groupAdvancedOpen}
                 headerText={i18nKey("group.advanced")}>
-                <AdvancedSection on:deleteGroup group={chat} />
+                <AdvancedSection group={chat} />
             </CollapsibleCard>
         {/if}
     </div>

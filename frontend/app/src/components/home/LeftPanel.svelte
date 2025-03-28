@@ -15,23 +15,7 @@
         {#if $activityFeedShowing}
             <ActivityFeed />
         {:else}
-            <ChatList
-                on:chatWith
-                on:halloffame
-                on:newGroup
-                on:profile
-                on:logout
-                on:unarchiveChat
-                on:wallet
-                on:upgrade
-                on:toggleMuteNotifications
-                on:communityDetails
-                on:leaveCommunity
-                on:deleteCommunity
-                on:deleteGroup
-                on:editCommunity
-                on:leaveGroup
-                on:newChannel />
+            <ChatList />
         {/if}
     </div>
 </section>

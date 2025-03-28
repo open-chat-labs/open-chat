@@ -36,17 +36,17 @@
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         chat: DirectChatSummary;
         bot: ExternalBot;
-        onClearSelection: () => void;
         onSearchChat: (term: string) => void;
     }
 
-    let { chat, bot, onClearSelection, onSearchChat }: Props = $props();
+    let { chat, bot, onSearchChat }: Props = $props();
     let botUser = $derived($userStore.get(chat.them.userId));
     let apiKey = $derived($directApiKeys.get(bot.id));
     let grantedPermissions = $derived(
@@ -81,7 +81,7 @@
             {#if $mobileWidth}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div class="back" class:rtl={$rtlStore} onclick={onClearSelection}>
+                <div class="back" class:rtl={$rtlStore} onclick={() => publish("clearSelection")}>
                     <HoverIcon>
                         {#if $rtlStore}
                             <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />

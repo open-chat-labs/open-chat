@@ -7,8 +7,6 @@
         TypersByKey,
         CommunitySummary,
         DiamondMembershipStatus,
-        ChatIdentifier,
-        Level,
     } from "openchat-client";
     import {
         userStore,
@@ -59,6 +57,7 @@
     import VideoCallIcon from "./video/VideoCallIcon.svelte";
     import Badges from "./profile/Badges.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -66,21 +65,10 @@
         chatSummary: ChatSummary;
         selected: boolean;
         visible: boolean;
-        onToggleMuteNotifications: (chatId: ChatIdentifier, mute: boolean) => void;
         onChatSelected: (chat: ChatSummary) => void;
-        onUnarchiveChat: (chatId: ChatIdentifier) => void;
-        onLeaveGroup: (group: { kind: "leave"; chatId: ChatIdentifier; level: Level }) => void;
     }
 
-    let {
-        chatSummary,
-        selected,
-        visible,
-        onToggleMuteNotifications,
-        onChatSelected,
-        onUnarchiveChat,
-        onLeaveGroup,
-    }: Props = $props();
+    let { chatSummary, selected, visible, onChatSelected }: Props = $props();
 
     let userId = $derived($user.userId);
     let externalContent = $derived(
@@ -296,7 +284,7 @@
     }
 
     function toggleMuteNotifications(mute: boolean) {
-        onToggleMuteNotifications(chatSummary.id, mute);
+        publish("toggleMuteNotifications", { chatId: chatSummary.id, mute });
     }
 
     function archiveChat() {
@@ -324,12 +312,12 @@
     }
 
     function unarchiveChat() {
-        onUnarchiveChat(chatSummary.id);
+        publish("unarchiveChat", chatSummary.id);
     }
 
     function leaveGroup() {
         if (chatSummary.kind === "direct_chat") return;
-        onLeaveGroup({
+        publish("leaveGroup", {
             kind: "leave",
             chatId: chatSummary.id,
             level: chatSummary.level,

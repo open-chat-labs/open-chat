@@ -1,31 +1,23 @@
 <script lang="ts">
     import GateCheckFailed from "../access/AccessGateCheckFailed.svelte";
     import Overlay from "../../Overlay.svelte";
-    import { getContext, tick } from "svelte";
+    import { getContext, tick, type Snippet } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "openchat-client";
     import { anonUser, identityState, selectedCommunity } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import AccessGateEvaluator from "../access/AccessGateEvaluator.svelte";
+    interface Props {
+        children?: Snippet<[boolean, () => void]>;
+    }
+
+    let { children }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
-    $: previewingCommunity =
-        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed;
-
-    $: {
-        if (
-            $identityState.kind === "logged_in" &&
-            $identityState.postLogin?.kind === "join_community"
-        ) {
-            client.clearPostLoginState();
-            tick().then(() => joinCommunity());
-        }
-    }
-
-    let joiningCommunity = false;
-    let gateCheckFailed: EnhancedAccessGate | undefined = undefined;
-    let checkingAccessGate: EnhancedAccessGate | undefined = undefined;
+    let joiningCommunity = $state(false);
+    let gateCheckFailed: EnhancedAccessGate | undefined = $state(undefined);
+    let checkingAccessGate: EnhancedAccessGate | undefined = $state(undefined);
 
     function joinCommunity() {
         if ($anonUser) {
@@ -94,6 +86,18 @@
         checkingAccessGate = undefined;
         gateCheckFailed = undefined;
     }
+    let previewingCommunity = $derived(
+        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed,
+    );
+    $effect(() => {
+        if (
+            $identityState.kind === "logged_in" &&
+            $identityState.postLogin?.kind === "join_community"
+        ) {
+            client.clearPostLoginState();
+            tick().then(() => joinCommunity());
+        }
+    });
 </script>
 
 {#if checkingAccessGate}
@@ -111,4 +115,4 @@
     </Overlay>
 {/if}
 
-<slot {joiningCommunity} {joinCommunity} />
+{@render children?.(joiningCommunity, joinCommunity)}
