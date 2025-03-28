@@ -319,16 +319,16 @@
                                 <WithRole
                                     userId={user.userId}
                                     chatMembers={$chatMembersMap}
-                                    communityMembers={$communityMembers}>
-                                    {#snippet children({ chatRole, communityRole })}
-                                        <RoleIcon level="community" popup role={communityRole} />
-                                        <RoleIcon
-                                            level={$selectedChat.kind === "channel"
-                                                ? "channel"
-                                                : "group"}
-                                            popup
-                                            role={chatRole} />
-                                    {/snippet}
+                                    communityMembers={$communityMembers}
+                                    let:chatRole
+                                    let:communityRole>
+                                    <RoleIcon level="community" popup role={communityRole} />
+                                    <RoleIcon
+                                        level={$selectedChat.kind === "channel"
+                                            ? "channel"
+                                            : "group"}
+                                        popup
+                                        role={chatRole} />
                                 </WithRole>
                             {/if}
                         </div>
