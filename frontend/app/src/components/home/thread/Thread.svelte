@@ -21,7 +21,7 @@
         LEDGER_CANISTER_ICP,
         TokenTransfer,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -51,7 +51,6 @@
     } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     export let rootEvent: EventWrapper<Message>;
     export let chat: ChatSummary;
