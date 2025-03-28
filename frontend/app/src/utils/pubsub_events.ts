@@ -44,4 +44,5 @@ export type PubSubEvents = {
         level: Level;
     };
     newGroup: undefined;
+    wallet: undefined;
 };

@@ -20,7 +20,6 @@
                 on:profile
                 on:logout
                 on:unarchiveChat
-                on:wallet
                 on:toggleMuteNotifications
                 on:leaveGroup
                 on:newChannel />

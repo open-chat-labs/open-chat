@@ -26,10 +26,9 @@
 
     interface Props {
         onProfile: () => void;
-        onWallet: () => void;
     }
 
-    let { onProfile, onWallet }: Props = $props();
+    let { onProfile }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -38,7 +37,7 @@
 
 <Menu>
     {#if !$anonUser}
-        <MenuItem onclick={onWallet}>
+        <MenuItem onclick={() => publish("wallet")}>
             <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text">
                 <Translatable resourceKey={i18nKey("wallet")} />

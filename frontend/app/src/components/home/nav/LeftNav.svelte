@@ -57,7 +57,6 @@
     interface Props {
         onProfile: () => void;
         onClaimDailyChit: () => void;
-        onWallet: () => void;
     }
 
     let { onProfile, onClaimDailyChit, ...rest }: Props = $props();
