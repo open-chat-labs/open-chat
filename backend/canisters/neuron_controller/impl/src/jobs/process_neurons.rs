@@ -105,7 +105,7 @@ fn neurons_to_spawn(neurons: &[Neuron], now: TimestampMillis) -> Vec<u64> {
         .filter(|n| {
             // Spawn a new neuron if there is over 1000 ICP maturity or
             // if the neuron is now dissolving and can no longer vote
-            n.maturity_e8s_equivalent > 1000 * E8S_PER_ICP
+            n.maturity_e8s_equivalent > 1_000 * E8S_PER_ICP
                 || n.dissolve_state.as_ref().is_some_and(
                 |ds| matches!(ds, DissolveState::WhenDissolvedTimestampSeconds(ts) if *ts < cut_off_no_longer_accrue_maturity),
             )
@@ -114,17 +114,21 @@ fn neurons_to_spawn(neurons: &[Neuron], now: TimestampMillis) -> Vec<u64> {
         .collect()
 }
 
-fn neurons_to_disburse(neurons: &[Neuron], now: TimestampMillis) -> Vec<u64> {
+// Returns vec of (NeuronId, IsLargeNeuron)
+fn neurons_to_disburse(neurons: &[Neuron], now: TimestampMillis) -> Vec<(u64, bool)> {
     neurons
         .iter()
         .filter(|n| n.is_dissolved(now) && n.cached_neuron_stake_e8s > 0)
-        .filter_map(|n| n.id.as_ref().map(|id| id.id))
+        .filter_map(|n| {
+            n.id.as_ref()
+                .map(|id| (id.id, n.cached_neuron_stake_e8s > 10_000 * E8S_PER_ICP))
+        })
         .collect()
 }
 
 fn neurons_to_refresh_voting_power(neurons: &[Neuron], now: TimestampMillis) -> Vec<u64> {
     let cutoff = now.saturating_sub(90 * DAY_IN_MS);
-    let cutoff_seconds = cutoff / 1000;
+    let cutoff_seconds = cutoff / 1_000;
     neurons
         .iter()
         .filter(|n| {
@@ -164,7 +168,7 @@ async fn spawn_neurons(neuron_ids: Vec<u64>) -> bool {
     }
 }
 
-async fn disburse_neurons(neuron_ids: Vec<u64>) {
+async fn disburse_neurons(neuron_ids: Vec<(u64, bool)>) {
     let (nns_ledger_canister_id, cycles_dispenser_canister_id) =
         read_state(|state| (state.data.nns_ledger_canister_id, state.data.cycles_dispenser_canister_id));
 
@@ -173,15 +177,16 @@ async fn disburse_neurons(neuron_ids: Vec<u64>) {
         .await
         .unwrap_or(true);
 
-    for neuron_id in neuron_ids {
+    for (neuron_id, is_large_neuron) in neuron_ids {
         info!(neuron_id, top_up_cycles_dispenser, "Disbursing neuron");
 
-        let recipient_canister = if top_up_cycles_dispenser {
+        // Always send to the treasury if this is a large neuron
+        let recipient_canister = if is_large_neuron || !top_up_cycles_dispenser {
+            SNS_GOVERNANCE_CANISTER_ID
+        } else {
             // Set to false so that we only top it up once
             top_up_cycles_dispenser = false;
             cycles_dispenser_canister_id
-        } else {
-            SNS_GOVERNANCE_CANISTER_ID
         };
 
         let account = nns_governance_canister::types::AccountIdentifier {
@@ -207,7 +212,7 @@ async fn is_cycles_dispenser_balance_low(
 ) -> Result<bool, (RejectCode, String)> {
     icrc_ledger_canister_c2c_client::icrc1_balance_of(nns_ledger_canister_id, &Account::from(cycles_dispenser_canister_id))
         .await
-        .map(|balance| balance < 10000 * E8S_PER_ICP)
+        .map(|balance| balance < 10_000 * E8S_PER_ICP)
 }
 
 async fn refresh_voting_power(neuron_ids: Vec<u64>) {
