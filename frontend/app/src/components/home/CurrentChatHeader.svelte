@@ -20,7 +20,7 @@
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import type { ChatSummary, DiamondMembershipStatus } from "openchat-client";
@@ -39,7 +39,6 @@
     import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     interface Props {
         selectedChatSummary: ChatSummary;
@@ -65,7 +64,7 @@
     );
 
     function clearSelection() {
-        dispatch("clearSelection");
+        publish("clearSelection");
     }
 
     function showGroupDetails() {

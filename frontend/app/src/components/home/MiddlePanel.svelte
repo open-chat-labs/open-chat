@@ -139,7 +139,6 @@
             chat={$selectedChatStore}
             events={$eventsStore}
             filteredProposals={$filteredProposalsStore}
-            on:clearSelection
             on:goToMessageIndex />
     {/if}
 </section>

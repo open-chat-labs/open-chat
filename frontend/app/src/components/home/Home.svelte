@@ -282,6 +282,7 @@
             subscribe("successfulImport", successfulImport),
             subscribe("showProposalFilters", showProposalFilters),
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
+            subscribe("clearSelection", () => page(routeForScope($chatListScope))),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1250,11 +1251,7 @@
         <LeftPanel />
     {/if}
     {#if $layoutStore.showMiddle}
-        <MiddlePanel
-            {joining}
-            bind:currentChatMessages
-            on:clearSelection={() => page(routeForScope($chatListScope))}
-            on:goToMessageIndex={goToMessageIndex} />
+        <MiddlePanel {joining} bind:currentChatMessages on:goToMessageIndex={goToMessageIndex} />
     {/if}
     <RightPanel
         on:goToMessageIndex={goToMessageIndex}

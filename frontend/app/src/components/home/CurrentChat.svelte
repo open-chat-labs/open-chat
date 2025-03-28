@@ -404,14 +404,9 @@
             on:close={() => (showSearchHeader = false)} />
     {:else if showChatHeader}
         {#if bot !== undefined && chat.kind === "direct_chat"}
-            <DirectChatHeader
-                {bot}
-                {chat}
-                onClearSelection={() => dispatch("clearSelection")}
-                {onSearchChat}></DirectChatHeader>
+            <DirectChatHeader {bot} {chat} {onSearchChat}></DirectChatHeader>
         {:else}
             <CurrentChatHeader
-                on:clearSelection
                 on:createPoll={createPoll}
                 on:searchChat={searchChat}
                 on:importToCommunity={importToCommunity}

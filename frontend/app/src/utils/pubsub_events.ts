@@ -67,4 +67,5 @@ export type PubSubEvents = {
     successfulImport: ChannelIdentifier;
     showProposalFilters: undefined;
     convertGroupToCommunity: GroupChatSummary;
+    clearSelection: undefined;
 };
