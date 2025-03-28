@@ -328,6 +328,7 @@ impl RuntimeState {
             next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
             achievements: self.data.achievements.iter().cloned().collect(),
             unique_person_proof: self.data.unique_person_proof.is_some(),
+            referred_by: self.data.referred_by,
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -588,6 +589,7 @@ pub struct Metrics {
     pub next_daily_claim: TimestampMillis,
     pub achievements: Vec<Achievement>,
     pub unique_person_proof: bool,
+    pub referred_by: Option<UserId>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
