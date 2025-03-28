@@ -1,5 +1,6 @@
 import type {
     ChatSummary,
+    ChatType,
     CommunityIdentifier,
     CommunitySummary,
     DirectChatIdentifier,
@@ -33,4 +34,8 @@ export type PubSubEvents = {
     };
     communityDetails: CommunitySummary;
     editCommunity: CommunitySummary;
+    leaveCommunity: {
+        kind: "leave_community";
+        communityId: CommunityIdentifier;
+    };
 };

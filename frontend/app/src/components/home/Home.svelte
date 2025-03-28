@@ -156,7 +156,6 @@
     type ConfirmLeaveCommunityEvent = {
         kind: "leave_community";
         communityId: CommunityIdentifier;
-        chatType: ChatType;
     };
 
     type ConfirmLeaveEvent = {
@@ -269,6 +268,7 @@
             subscribe("deleteCommunity", triggerConfirm),
             subscribe("communityDetails", communityDetails),
             subscribe("editCommunity", editCommunity),
+            subscribe("leaveCommunity", triggerConfirm),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1253,7 +1253,6 @@
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:newChannel={newChannel}
-            on:leaveCommunity={onTriggerConfirm}
             on:leaveGroup={onTriggerConfirm} />
     {/if}
     {#if $layoutStore.showMiddle}

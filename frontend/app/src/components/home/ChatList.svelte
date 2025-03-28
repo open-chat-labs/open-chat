@@ -252,7 +252,6 @@
             community={$selectedCommunity}
             {canMarkAllRead}
             on:markAllRead={markAllRead}
-            on:leaveCommunity
             on:newChannel />
     {/if}
 

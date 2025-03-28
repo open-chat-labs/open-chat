@@ -23,7 +23,6 @@
                 on:unarchiveChat
                 on:wallet
                 on:toggleMuteNotifications
-                on:leaveCommunity
                 on:leaveGroup
                 on:newChannel />
         {/if}

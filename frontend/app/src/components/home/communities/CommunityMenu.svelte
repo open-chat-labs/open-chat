@@ -44,7 +44,7 @@
     $: isCommunityMuted = $chatSummariesListStore.every((c) => c.membership.notificationsMuted);
 
     function leaveCommunity() {
-        dispatch("leaveCommunity", {
+        publish("leaveCommunity", {
             kind: "leave_community",
             communityId: community.id,
         });
