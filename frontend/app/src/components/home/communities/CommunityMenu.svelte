@@ -62,7 +62,7 @@
     }
 
     function communityDetails() {
-        dispatch("communityDetails", community);
+        publish("communityDetails", community);
     }
 
     function markAllRead() {

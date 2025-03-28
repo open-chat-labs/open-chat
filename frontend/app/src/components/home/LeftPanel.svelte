@@ -23,7 +23,6 @@
                 on:unarchiveChat
                 on:wallet
                 on:toggleMuteNotifications
-                on:communityDetails
                 on:leaveCommunity
                 on:editCommunity
                 on:leaveGroup

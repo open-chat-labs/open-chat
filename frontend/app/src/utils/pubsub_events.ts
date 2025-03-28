@@ -1,6 +1,7 @@
 import type {
     ChatSummary,
     CommunityIdentifier,
+    CommunitySummary,
     DirectChatIdentifier,
     EnhancedReplyContext,
     Level,
@@ -30,4 +31,5 @@ export type PubSubEvents = {
         communityId: CommunityIdentifier;
         doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
+    communityDetails: CommunitySummary;
 };

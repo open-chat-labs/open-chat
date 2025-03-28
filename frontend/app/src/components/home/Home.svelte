@@ -267,6 +267,7 @@
             subscribe("verifyHumanity", verifyHumanity),
             subscribe("deleteGroup", triggerConfirm),
             subscribe("deleteCommunity", triggerConfirm),
+            subscribe("communityDetails", communityDetails),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -855,7 +856,7 @@
         }
     }
 
-    function communityDetails() {
+    function communityDetails(_: CommunitySummary) {
         // what do we do here if the community is not selected
         // do we select it?
         if ($chatListScope.kind === "community") {
@@ -1246,7 +1247,6 @@
             on:halloffame={() => (modal = { kind: "hall_of_fame" })}
             on:newGroup={() => newGroup("group")}
             on:profile={showProfile}
-            on:communityDetails={communityDetails}
             on:logout={() => client.logout()}
             on:wallet={showWallet}
             on:unarchiveChat={onUnarchiveChat}

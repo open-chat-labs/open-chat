@@ -254,7 +254,6 @@
             on:markAllRead={markAllRead}
             on:leaveCommunity
             on:editCommunity
-            on:communityDetails
             on:newChannel />
     {/if}
 

@@ -53,7 +53,6 @@
     <span class="menu">
         <CommunityMenu
             on:newChannel
-            on:communityDetails
             on:leaveCommunity
             on:editCommunity
             on:markAllRead
