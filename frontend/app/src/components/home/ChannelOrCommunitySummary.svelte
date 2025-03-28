@@ -55,7 +55,6 @@
             <GroupDetailsHeader
                 level={"channel"}
                 canEdit={canEditChannel}
-                on:showGroupMembers
                 on:close
                 on:deleteGroup
                 on:editGroup={editGroup} />

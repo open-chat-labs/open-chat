@@ -23,17 +23,8 @@
     function clickClose() {
         dispatch("close");
     }
-
-    function showGroupMembers() {
-        dispatch("showGroupMembers");
-    }
 </script>
 
-<GroupDetailsHeader
-    level={chat.level}
-    {canEdit}
-    on:showGroupMembers={showGroupMembers}
-    on:close={clickClose}
-    on:editGroup={editGroup} />
+<GroupDetailsHeader level={chat.level} {canEdit} on:close={clickClose} on:editGroup={editGroup} />
 
 <GroupDetailsBody {chat} {memberCount} on:deleteGroup />

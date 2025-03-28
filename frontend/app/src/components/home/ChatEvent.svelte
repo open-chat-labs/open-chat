@@ -68,7 +68,6 @@
     export let threadRootMessage: Message | undefined;
     export let onExpandMessage: (() => void) | undefined = undefined;
     export let onReplyTo: (replyContext: EnhancedReplyContext) => void;
-    export let onReplyPrivatelyTo: (replyContext: EnhancedReplyContext) => void;
 
     let userSummary: UserSummary | undefined = undefined;
 
@@ -168,7 +167,6 @@
             botContext={event.event.botContext}
             on:goToMessageIndex
             {onReplyTo}
-            {onReplyPrivatelyTo}
             on:retrySend={retrySend}
             onEditMessage={editEvent}
             on:upgrade

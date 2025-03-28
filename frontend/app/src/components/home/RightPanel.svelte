@@ -58,6 +58,7 @@
         currentCommunityApiKeys,
         currentChatApiKeys,
     } from "openchat-client";
+    import { publish } from "@src/utils/pubsub";
 
     const dispatch = createEventDispatcher();
 
@@ -336,7 +337,7 @@
     }
 
     function showInviteGroupUsers(ev: CustomEvent<boolean>) {
-        dispatch("showInviteGroupUsers", ev.detail);
+        publish("showInviteGroupUsers", ev.detail);
     }
 
     function showInviteCommunityUsers() {
@@ -398,7 +399,6 @@
                 memberCount={$currentChatMembers.length}
                 community={$selectedCommunity}
                 selectedTab="channel"
-                on:showGroupMembers
                 on:deleteGroup
                 on:editGroup
                 on:editCommunity
@@ -409,8 +409,7 @@
                 memberCount={$currentChatMembers.length}
                 on:close={popRightPanelHistory}
                 on:deleteGroup
-                on:editGroup
-                on:showGroupMembers />
+                on:editGroup />
         {/if}
     {:else if lastState.kind === "call_participants_panel"}
         <ActiveCallParticipants
@@ -455,7 +454,6 @@
                 on:blockGroupUser={onBlockGroupUser}
                 on:unblockGroupUser={onUnblockGroupUser}
                 on:removeGroupMember={onRemoveGroupMember}
-                on:showInviteGroupUsers={showInviteGroupUsers}
                 on:changeGroupRole={onChangeGroupRole}
                 on:cancelGroupInvite={onCancelGroupInvite}
                 on:cancelCommunityInvite={onCancelCommunityInvite}
@@ -535,7 +533,6 @@
             on:blockGroupUser={onBlockGroupUser}
             on:unblockGroupUser={onUnblockGroupUser}
             on:removeGroupMember={onRemoveGroupMember}
-            on:showInviteGroupUsers={showInviteGroupUsers}
             on:changeGroupRole={onChangeGroupRole}
             on:close={popRightPanelHistory}
             on:cancelGroupInvite={onCancelGroupInvite}
@@ -559,7 +556,6 @@
             on:upgrade
             on:verifyHumanity
             on:claimDailyChit
-            on:replyPrivatelyTo
             rootEvent={threadRootEvent}
             chat={$selectedChat}
             on:removePreview
@@ -573,7 +569,6 @@
                 community={$selectedCommunity}
                 memberCount={$currentChatMembers.length}
                 selectedTab="community"
-                on:showGroupMembers
                 on:deleteGroup
                 on:editGroup
                 on:editCommunity

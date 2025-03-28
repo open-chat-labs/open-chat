@@ -142,11 +142,8 @@
             on:successfulImport
             on:clearSelection
             on:leaveGroup
-            on:replyPrivatelyTo
-            on:showInviteGroupUsers
             on:showProposalFilters
             on:makeProposal
-            on:showGroupMembers
             on:joinGroup
             on:upgrade
             on:verifyHumanity

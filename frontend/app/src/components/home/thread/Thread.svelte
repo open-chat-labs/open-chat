@@ -418,7 +418,6 @@
                             collapsed={false}
                             on:removePreview={onRemovePreview}
                             on:goToMessageIndex={onGoToMessageIndex}
-                            onReplyPrivatelyTo={(r) => dispatch("replyPrivatelyTo", r)}
                             onReplyTo={replyTo}
                             on:editEvent={() => editEvent(evt)}
                             on:upgrade

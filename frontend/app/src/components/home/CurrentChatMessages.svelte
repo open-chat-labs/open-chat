@@ -321,7 +321,6 @@
                             pinned={isPinned($currentChatPinnedMessages, evt)}
                             editing={$currentChatEditingEvent === evt}
                             onReplyTo={replyTo}
-                            onReplyPrivatelyTo={(r) => dispatch("replyPrivatelyTo", r)}
                             on:removePreview
                             on:editEvent={onEditEvent}
                             on:goToMessageIndex={goToMessageIndex}

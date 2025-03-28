@@ -68,6 +68,7 @@
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
     import { quickReactions } from "../../stores/quickReactions";
     import EphemeralNote from "./EphemeralNote.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -110,7 +111,6 @@
         supportsEdit: boolean;
         supportsReply: boolean;
         onReplyTo?: (replyContext: EnhancedReplyContext) => void;
-        onReplyPrivatelyTo?: (replyContext: EnhancedReplyContext) => void;
         onEditMessage?: () => void;
     }
 
@@ -152,7 +152,6 @@
         supportsEdit,
         supportsReply,
         onReplyTo,
-        onReplyPrivatelyTo,
         onEditMessage,
     }: Props = $props();
 
@@ -229,7 +228,7 @@
     }
 
     function replyPrivately() {
-        onReplyPrivatelyTo?.(createReplyContext());
+        publish("replyPrivatelyTo", createReplyContext());
     }
 
     function cancelReminder(ev: CustomEvent<MessageReminderCreatedContent>) {

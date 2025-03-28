@@ -36,6 +36,7 @@
     import Badges from "./profile/Badges.svelte";
     import ActiveVideoCallResume from "./video/ActiveVideoCallResume.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -78,7 +79,7 @@
     }
 
     function showGroupMembers() {
-        dispatch("showGroupMembers");
+        publish("showGroupMembers");
     }
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
@@ -239,10 +240,8 @@
             on:searchChat
             on:showProposalFilters
             on:makeProposal
-            on:showGroupMembers
             on:createPoll
             on:upgrade
-            on:showInviteGroupUsers
             on:leaveGroup />
     {/if}
 

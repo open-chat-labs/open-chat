@@ -415,10 +415,8 @@
             <CurrentChatHeader
                 on:clearSelection
                 on:toggleMuteNotifications
-                on:showInviteGroupUsers
                 on:showProposalFilters
                 on:makeProposal
-                on:showGroupMembers
                 on:leaveGroup
                 on:upgrade
                 on:createPoll={createPoll}
@@ -436,7 +434,6 @@
     {:else}
         <CurrentChatMessages
             bind:this={currentChatMessages}
-            on:replyPrivatelyTo
             on:replyTo={replyTo}
             on:upgrade
             on:verifyHumanity

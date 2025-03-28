@@ -11,6 +11,7 @@
     import type { Level } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     export let canEdit: boolean;
     export let level: Level;
@@ -20,7 +21,7 @@
         dispatch("close");
     }
     function showGroupMembers() {
-        dispatch("showGroupMembers");
+        publish("showGroupMembers");
     }
     function editGroup() {
         if (canEdit) {

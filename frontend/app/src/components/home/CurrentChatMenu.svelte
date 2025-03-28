@@ -173,7 +173,7 @@
     }
 
     function showGroupMembers() {
-        dispatch("showGroupMembers", true);
+        publish("showGroupMembers");
     }
 
     function blockUser() {
@@ -201,7 +201,7 @@
     }
 
     function showInviteGroupUsers() {
-        dispatch("showInviteGroupUsers", true);
+        publish("showInviteGroupUsers", true);
     }
 
     function leaveGroup() {

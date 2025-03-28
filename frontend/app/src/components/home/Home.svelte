@@ -85,7 +85,6 @@
     import {
         filterByChatType,
         filterRightPanelHistory,
-        pushRightPanelHistory,
         rightPanelHistory,
     } from "../../stores/rightPanel";
     import Upgrade from "./upgrade/Upgrade.svelte";
@@ -259,7 +258,12 @@
     }
 
     onMount(() => {
-        const unsubEvents = [subscribe("chatWith", chatWith)];
+        const unsubEvents = [
+            subscribe("chatWith", chatWith),
+            subscribe("showInviteGroupUsers", showInviteGroupUsers),
+            subscribe("replyPrivatelyTo", replyPrivatelyTo),
+            subscribe("showGroupMembers", showGroupMembers),
+        ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
 
@@ -771,9 +775,9 @@
         page(routeForChatIdentifier(chat ? $chatListScope.kind : "direct_chat", chatId));
     }
 
-    function showInviteGroupUsers(ev: CustomEvent<boolean>) {
+    function showInviteGroupUsers(show: boolean) {
         if ($selectedChatId !== undefined) {
-            if (ev.detail) {
+            if (show) {
                 rightPanelHistory.set([{ kind: "invite_group_users" }]);
             } else {
                 rightPanelHistory.update((history) => {
@@ -783,22 +787,22 @@
         }
     }
 
-    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
-        if (ev.detail.sender === undefined) return;
+    function replyPrivatelyTo(context: EnhancedReplyContext) {
+        if (context.sender === undefined) return;
 
         const chat = $chatSummariesListStore.find((c) => {
             return (
                 c.kind === "direct_chat" &&
                 chatIdentifiersEqual(c.them, {
                     kind: "direct_chat",
-                    userId: ev.detail.sender!.userId,
+                    userId: context.sender!.userId,
                 })
             );
         });
 
-        const chatId = chat?.id ?? { kind: "direct_chat", userId: ev.detail.sender.userId };
+        const chatId = chat?.id ?? { kind: "direct_chat", userId: context.sender.userId };
         draftMessagesStore.setTextContent({ chatId }, "");
-        draftMessagesStore.setReplyingTo({ chatId }, ev.detail);
+        draftMessagesStore.setReplyingTo({ chatId }, context);
         if (chat) {
             page(routeForChatIdentifier($chatListScope.kind, chatId));
         } else {
@@ -811,13 +815,9 @@
         modal = { kind: "select_chat" };
     }
 
-    function showGroupMembers(ev: CustomEvent<boolean>) {
+    function showGroupMembers() {
         if ($selectedChatId !== undefined) {
-            if (ev.detail) {
-                rightPanelHistory.set([{ kind: "show_group_members" }]);
-            } else {
-                pushRightPanelHistory({ kind: "show_group_members" });
-            }
+            rightPanelHistory.set([{ kind: "show_group_members" }]);
         }
     }
 
@@ -1262,11 +1262,8 @@
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:leaveGroup={triggerConfirm}
-            on:replyPrivatelyTo={replyPrivatelyTo}
-            on:showInviteGroupUsers={showInviteGroupUsers}
             on:showProposalFilters={showProposalFilters}
             on:makeProposal={showMakeProposalModal}
-            on:showGroupMembers={showGroupMembers}
             on:joinGroup={joinGroup}
             on:upgrade={upgrade}
             on:verifyHumanity={verifyHumanity}
@@ -1279,9 +1276,6 @@
     {/if}
     <RightPanel
         on:goToMessageIndex={goToMessageIndex}
-        on:replyPrivatelyTo={replyPrivatelyTo}
-        on:showInviteGroupUsers={showInviteGroupUsers}
-        on:showGroupMembers={showGroupMembers}
         on:upgrade={upgrade}
         on:deleteGroup={triggerConfirm}
         on:editGroup={editGroup}
