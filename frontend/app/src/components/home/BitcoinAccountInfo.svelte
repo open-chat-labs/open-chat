@@ -1,11 +1,11 @@
 <script lang="ts">
     import QRCode from "../QRCode.svelte";
-    import { BTC_SYMBOL, CKBTC_SYMBOL, OpenChat } from "openchat-client";
+    import { BTC_SYMBOL, OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import TruncatedAccount from "./TruncatedAccount.svelte";
-    import MultiToggle from "@components/MultiToggle.svelte";
+    import BitcoinNetworkSelector from "./BitcoinNetworkSelector.svelte";
     import { getContext } from "svelte";
 
     type Props = {
@@ -25,7 +25,6 @@
     }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    const networkOptions = [BTC_SYMBOL, CKBTC_SYMBOL].map((n) => ({ id: n, label: n }));
 
     let btcAddress: string | undefined = $state();
     let selectedNetwork = $state(BTC_SYMBOL);
@@ -41,7 +40,7 @@
 </script>
 
 <div class="account-info">
-    <div class="network-selector">Network: <MultiToggle options={networkOptions} bind:selected={selectedNetwork} /></div>
+    <BitcoinNetworkSelector bind:selectedNetwork={selectedNetwork} />
     {#if account === undefined}
         <div class="generating">
             {#if error !== undefined}
@@ -91,13 +90,6 @@
 
     .your-account {
         margin-top: $sp4;
-    }
-
-    .network-selector {
-        display: flex;
-        gap: $sp3;
-        margin-bottom: $sp4;
-        align-items: center;
     }
 
     .generating {

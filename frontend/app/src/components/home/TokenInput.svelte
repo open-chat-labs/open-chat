@@ -36,6 +36,8 @@
               )
             : "???";
 
+    $: minAmountFormatted = `${client.formatTokens(minAmount, tokenDecimals)} ${symbol}`;
+
     onMount(() => {
         if (amount > BigInt(0)) {
             inputElement.value = client.formatTokens(amount, tokenDecimals, ".", true);
@@ -117,10 +119,12 @@
     {/if}
     {#if showDollarAmount && amount > 0}
         <div class="usd">({amountInUsd} USD)</div>
+    {:else if minAmount > BigInt(0)}
+        <div class="min"><Translatable resourceKey={i18nKey("tokenTransfer.min", { amount: minAmountFormatted })} /></div>
     {/if}
 </div>
 <div class="wrapper">
-    {#if transferFees !== undefined}
+    {#if transferFees !== undefined && transferFees > 0n}
         <div class="fee">
             <Alert size={$iconSize} color={"var(--warn)"} />
             <span>
@@ -171,8 +175,8 @@
             }
         }
 
-        .usd {
-            @include font(light, normal, fs-50);
+        .usd, .min {
+            @include font(light, normal, fs-60);
             color: var(--txt-light);
             flex: 1;
             text-align: right;
