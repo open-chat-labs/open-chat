@@ -16,7 +16,7 @@
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
@@ -34,7 +34,6 @@
     import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
     const suspiciousUserIds = import.meta.env.OC_SUSPICIOUS_USERIDS! ?? [];
 
     interface Props {

@@ -9,7 +9,7 @@
         isDiamond,
     } from "openchat-client";
     import Radio from "../Radio.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import Button from "../Button.svelte";
     import DurationPicker from "./DurationPicker.svelte";
     import AccessGateControl from "./access/AccessGateControl.svelte";
@@ -18,7 +18,6 @@
     type T = $$Generic;
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     export let candidate: CandidateGroupChat | CommunitySummary;
     export let editing: boolean;

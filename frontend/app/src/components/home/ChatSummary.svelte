@@ -7,7 +7,6 @@
         TypersByKey,
         CommunitySummary,
         DiamondMembershipStatus,
-        ChatIdentifier,
     } from "openchat-client";
     import {
         userStore,

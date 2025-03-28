@@ -16,7 +16,7 @@
         isDiamond: boolean;
         canExtend: boolean;
         landing?: boolean;
-        onUpgrade: () => void;
+        onUpgrade?: () => void;
     }
 
     let { isDiamond, canExtend, landing = false, onUpgrade }: Props = $props();
@@ -274,10 +274,10 @@
             <Button tiny={$mobileWidth} small={!$mobileWidth} secondary on:click={cancel}
                 ><Translatable resourceKey={i18nKey(isDiamond ? "close" : "cancel")} /></Button>
             {#if !isDiamond}
-                <Button on:click={onUpgrade} tiny={$mobileWidth} small={!$mobileWidth}
+                <Button on:click={() => onUpgrade?.()} tiny={$mobileWidth} small={!$mobileWidth}
                     ><Translatable resourceKey={i18nKey("upgrade.button")} /></Button>
             {:else if canExtend}
-                <Button on:click={onUpgrade} tiny={$mobileWidth} small={!$mobileWidth}
+                <Button on:click={() => onUpgrade?.()} tiny={$mobileWidth} small={!$mobileWidth}
                     ><Translatable resourceKey={i18nKey("upgrade.extendShort")} /></Button>
             {/if}
         </Footer>

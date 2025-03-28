@@ -38,7 +38,7 @@
         if (canEditChannel) {
             publish("editGroup", {
                 chat: channel,
-                rules: { ...$currentChatRules, newVersion: false },
+                rules: { ...($currentChatRules ?? defaultChatRules("channel")), newVersion: false },
             });
         }
     }

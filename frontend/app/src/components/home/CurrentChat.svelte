@@ -3,7 +3,7 @@
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
     import { closeNotificationsForChat } from "../../utils/notifications";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import {
         type ChatEvent,
         type ChatSummary,
@@ -60,8 +60,6 @@
     import { i18nKey } from "../../i18n/i18n";
     import ExternalContent from "./ExternalContent.svelte";
     import DirectChatHeader from "../bots/DirectChatHeader.svelte";
-
-    const dispatch = createEventDispatcher();
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
