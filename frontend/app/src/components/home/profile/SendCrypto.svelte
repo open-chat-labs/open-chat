@@ -41,7 +41,7 @@
 
     let error: ResourceKey | undefined = $state(undefined);
     let amountToSend: bigint = $state(0n);
-    let ckbtcMinterWithdrawalInfo: CkbtcMinterWithdrawalInfo | undefined = $state(undefined);
+    let ckbtcMinterWithdrawalInfo = $state<CkbtcMinterWithdrawalInfo | undefined>(undefined);
     let busy = $state(false);
     let valid = $state(false);
     let validAccountName = $state(false);
@@ -57,11 +57,11 @@
     let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
     let tokenDetails = $derived($cryptoLookup[ledger]);
     let account = $derived(tokenDetails.symbol === ICP_SYMBOL ? $user.cryptoAccount : $user.userId);
-    let transferFees = $derived(tokenDetails.transferFee);
     let symbol = $derived(tokenDetails.symbol);
     let selectedBtcNetwork = $state(BTC_SYMBOL);
     let isBtc = $derived(symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(isBtc && selectedBtcNetwork === BTC_SYMBOL);
+    let transferFees = $derived(isBtcNetwork ? 0n : tokenDetails.transferFee);
     let targetAccountValid = $derived(
         targetAccount.length > 0 &&
         targetAccount !== account &&
