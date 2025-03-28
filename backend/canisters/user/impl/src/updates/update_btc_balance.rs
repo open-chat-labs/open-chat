@@ -3,8 +3,11 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ckbtc_minter_canister::update_balance::{UpdateBalanceError, UtxoStatus};
 use ckbtc_minter_canister::{CKBTC_MINTER_CANISTER_ID, TESTNET_CKBTC_MINTER_CANISTER_ID};
+use event_store_producer::EventBuilder;
 use ledger_utils::format_crypto_amount;
+use serde::Serialize;
 use tracing::error;
+use types::Achievement;
 use user_canister::update_btc_balance::{Response::*, *};
 
 #[update(msgpack = true)]
@@ -43,6 +46,16 @@ Your account has been credited with {formatted} BTC."
                         false,
                         state,
                     );
+                    let user_id_string = state.env.canister_id().to_string();
+                    let now = state.env.now();
+                    state.data.event_store_client.push(
+                        EventBuilder::new("btc_deposit", now)
+                            .with_user(user_id_string.clone(), true)
+                            .with_source(user_id_string, true)
+                            .with_json_payload(&BtcDepositOrWithdrawalEventPayload { amount: total_minted })
+                            .build(),
+                    );
+                    state.award_achievement_and_notify(Achievement::DepositedBtc, now);
                 }
                 for error in errors {
                     crate::openchat_bot::send_text_message(
@@ -69,4 +82,9 @@ Error: {error:?}",
         }
         Err(error) => Error(format!("{error:?}")),
     }
+}
+
+#[derive(Serialize)]
+pub(crate) struct BtcDepositOrWithdrawalEventPayload {
+    pub amount: u64,
 }

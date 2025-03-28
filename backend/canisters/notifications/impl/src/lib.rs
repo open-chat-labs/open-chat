@@ -5,8 +5,8 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashSet};
-use types::{BuildVersion, CanisterId, Cycles, NotificationEnvelope, TimestampMillis, Timestamped};
+use std::collections::{BTreeMap, HashMap, HashSet};
+use types::{BuildVersion, CanisterId, Cycles, NotificationEnvelope, TimestampMillis, Timestamped, UserId};
 use user_ids_set::UserIdsSet;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
@@ -54,6 +54,8 @@ impl RuntimeState {
             queued_notifications: self.data.notifications.len() as u32,
             latest_notification_index: self.data.notifications.latest_event_index(),
             subscriptions: self.data.subscriptions.total(),
+            blocked_user_pairs: self.data.blocked_users.len() as u64,
+            bot_endpoints: self.data.bot_endpoints.len() as u32,
             push_service_principals: self.data.push_service_principals.iter().copied().collect(),
             principals_authorized: self.data.authorized_principals.count_authorized() as u64,
             principals_blocked: self.data.authorized_principals.count_blocked() as u64,
@@ -75,6 +77,8 @@ struct Data {
     pub notifications: EventStream<NotificationEnvelope>,
     pub subscriptions: Subscriptions,
     pub blocked_users: UserIdsSet,
+    #[serde(default)]
+    pub bot_endpoints: HashMap<UserId, String>,
     pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
@@ -96,6 +100,7 @@ impl Data {
             notifications: EventStream::default(),
             subscriptions: Subscriptions::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
+            bot_endpoints: HashMap::default(),
             idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode,
@@ -114,6 +119,7 @@ impl Default for Data {
             notifications: EventStream::default(),
             subscriptions: Subscriptions::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
+            bot_endpoints: HashMap::default(),
             idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode: true,
@@ -132,6 +138,8 @@ pub struct Metrics {
     pub queued_notifications: u32,
     pub latest_notification_index: u64,
     pub subscriptions: u64,
+    pub blocked_user_pairs: u64,
+    pub bot_endpoints: u32,
     pub push_service_principals: Vec<Principal>,
     pub principals_authorized: u64,
     pub principals_blocked: u64,

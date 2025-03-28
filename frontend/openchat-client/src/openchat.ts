@@ -2024,8 +2024,21 @@ export class OpenChat extends EventTarget {
         return this.#communityPredicate(id, canDeleteCommunity);
     }
 
+    canDeleteChannel(id: ChannelIdentifier): boolean {
+        return (
+            this.#communityPredicate(
+                { kind: "community", communityId: id.communityId },
+                canDeleteGroup,
+            ) || this.#multiUserChatPredicate(id, canDeleteGroup)
+        );
+    }
+
     canDeleteGroup(chatId: MultiUserChatIdentifier): boolean {
-        return this.#multiUserChatPredicate(chatId, canDeleteGroup);
+        if (chatId.kind === "channel") {
+            return this.canDeleteChannel(chatId);
+        } else {
+            return this.#multiUserChatPredicate(chatId, canDeleteGroup);
+        }
     }
 
     canChangeVisibility = canChangeVisibility;
@@ -7170,7 +7183,7 @@ export class OpenChat extends EventTarget {
                 );
                 return () => poller.stop();
             }
-        })
+        });
     }
 
     async getBtcAddress(): Promise<string> {

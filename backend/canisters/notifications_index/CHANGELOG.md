@@ -9,12 +9,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Introduce standardised error codes ([#7599](https://github.com/open-chat-labs/open-chat/pull/7599))
+- Sync bot endpoints to notifications canisters ([#7668](https://github.com/open-chat-labs/open-chat/pull/7668))
 
 ### Changed
 
 - Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
 - Use `unbounded_wait` when installing canisters ([#7558](https://github.com/open-chat-labs/open-chat/pull/7558))
 - Log error response if any canister wasm upgrades are rejected ([#7566](https://github.com/open-chat-labs/open-chat/pull/7566))
+
+### Fixed
+
+- Sync blocked users to new notifications canisters ([#7667](https://github.com/open-chat-labs/open-chat/pull/7667))
 
 ## [[2.0.1627](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1627-notifications_index)] - 2025-03-06
 

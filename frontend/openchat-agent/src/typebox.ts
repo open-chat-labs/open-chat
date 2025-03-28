@@ -888,6 +888,7 @@ export const Achievement = Type.Union([
     Type.Literal("SetPin"),
     Type.Literal("SwappedFromWallet"),
     Type.Literal("PinnedChat"),
+    Type.Literal("DepositedBtc"),
     Type.Literal("ChangedTheme"),
 ]);
 
@@ -8760,7 +8761,7 @@ export const BotCommandDefinition = Type.Object({
     params: Type.Array(BotCommandParam),
     permissions: BotPermissions,
     default_role: Type.Optional(GroupRole),
-    direct_messages: Type.Boolean(),
+    direct_messages: Type.Optional(Type.Boolean()),
 });
 
 export type CompositeGate = Static<typeof CompositeGate>;
@@ -9595,6 +9596,7 @@ export const ChannelMatch = Type.Object({
     gate: Type.Optional(AccessGate),
     gate_config: Type.Optional(AccessGateConfig),
     subtype: Type.Optional(GroupSubtype),
+    is_public: Type.Boolean(),
 });
 
 export type Message = Static<typeof Message>;

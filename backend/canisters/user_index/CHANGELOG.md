@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Sync bot endpoints to notifications canisters ([#7668](https://github.com/open-chat-labs/open-chat/pull/7668))
+
 ## [[2.0.1659](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1659-user_index)] - 2025-03-21
 
 ### Added
