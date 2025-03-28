@@ -14,7 +14,7 @@ use types::{BotCaller, BotPermissions, Caller, CommunityPermission, MultiUserCha
 use url::Url;
 use utils::document::validate_avatar;
 use utils::text_validation::{
-    validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
+    validate_channel_name, validate_description, validate_rules, RulesValidationError, StringLengthValidationError,
 };
 
 #[update(msgpack = true)]
@@ -131,11 +131,10 @@ fn create_channel_impl(
         return NotAuthorized;
     }
 
-    if let Err(error) = validate_group_name(&args.name, args.is_public, subtype.as_ref()) {
+    if let Err(error) = validate_channel_name(&args.name) {
         return match error {
-            NameValidationError::TooShort(s) => NameTooShort(s),
-            NameValidationError::TooLong(l) => NameTooLong(l),
-            NameValidationError::Reserved => NameReserved,
+            StringLengthValidationError::TooShort(s) => NameTooShort(s),
+            StringLengthValidationError::TooLong(l) => NameTooLong(l),
         };
     }
 

@@ -2,11 +2,14 @@ use crate::model::authorized_principals::AuthorizedPrincipals;
 use crate::model::subscriptions::Subscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use types::{BuildVersion, CanisterId, Cycles, NotificationEnvelope, TimestampMillis, Timestamped, UserId};
+use types::{
+    BuildVersion, CanisterId, Cycles, IndexedEvent, NotificationEnvelope, TimestampMillis, Timestamped, UserId,
+    UserNotificationEnvelope,
+};
 use user_ids_set::UserIdsSet;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
@@ -74,6 +77,7 @@ struct Data {
     pub push_service_principals: HashSet<Principal>,
     pub authorized_principals: AuthorizedPrincipals,
     pub cycles_dispenser_canister_id: CanisterId,
+    #[serde(deserialize_with = "deserialize_notifications")]
     pub notifications: EventStream<NotificationEnvelope>,
     pub subscriptions: Subscriptions,
     pub blocked_users: UserIdsSet,
@@ -82,6 +86,20 @@ struct Data {
     pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn deserialize_notifications<'de, D: Deserializer<'de>>(d: D) -> Result<EventStream<NotificationEnvelope>, D::Error> {
+    let previous = EventStream::<UserNotificationEnvelope>::deserialize(d)?;
+
+    let events: Vec<_> = previous
+        .iter(0)
+        .map(|e| IndexedEvent {
+            index: e.index,
+            value: NotificationEnvelope::User(e.value),
+        })
+        .collect();
+
+    Ok(EventStream::init(events))
 }
 
 impl Data {

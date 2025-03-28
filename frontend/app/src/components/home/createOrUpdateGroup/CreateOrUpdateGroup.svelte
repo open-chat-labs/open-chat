@@ -1,5 +1,5 @@
 <script lang="ts">
-    import ModalContent from "../../ModalContentLegacy.svelte";
+    import ModalContent from "../../ModalContent.svelte";
     import Button from "../../Button.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import GroupDetails from "./GroupDetails.svelte";
@@ -25,7 +25,7 @@
         selectedCommunity,
     } from "openchat-client";
     import StageHeader from "../StageHeader.svelte";
-    import { createEventDispatcher, getContext, tick } from "svelte";
+    import { getContext, tick } from "svelte";
     import page from "page";
     import AreYouSure from "../../AreYouSure.svelte";
     import VisibilityControl from "../VisibilityControl.svelte";
@@ -33,72 +33,27 @@
     import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let candidateGroup: CandidateGroupChat;
-    export let embeddedContent: boolean;
-
-    let confirming = false;
-    let showingVerificationWarning = false;
-    let busy = false;
-    let step = "details";
-    let actualWidth = 0;
-    let detailsValid = true;
-    let visibilityValid = true;
-    let originalGroup = structuredClone(candidateGroup);
-    let rulesValid = true;
-    $: steps = getSteps(
-        editing,
-        detailsValid,
-        visibilityValid,
-        rulesValid,
-        hideInviteUsers,
-        embeddedContent,
-    );
-    $: editing = !chatIdentifierUnset(candidateGroup.id);
-    $: stepIndex = steps.findIndex((s) => s.key === step) ?? 0;
-    $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.id);
-    $: canEditDisappearingMessages = !editing
-        ? true
-        : client.hasOwnerRights(candidateGroup.membership.role);
-
-    $: permissionsDirty = client.haveGroupPermissionsChanged(
-        originalGroup.permissions,
-        candidateGroup.permissions,
-    );
-    $: rulesDirty =
-        editing &&
-        candidateGroup.rules !== undefined &&
-        (candidateGroup.rules.enabled !== originalGroup.rules.enabled ||
-            candidateGroup.rules.text !== originalGroup.rules.text);
-    $: nameDirty = editing && candidateGroup.name !== originalGroup.name;
-    $: descDirty = editing && candidateGroup.description !== originalGroup.description;
-    $: externalUrlDirty = editing && candidateGroup.externalUrl !== originalGroup.externalUrl;
-    $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
-    $: visDirty = editing && candidateGroup.public !== originalGroup.public;
-    $: infoDirty = nameDirty || descDirty || avatarDirty || externalUrlDirty;
-    $: gateDirty =
-        editing && client.hasAccessGateChanged(candidateGroup.gateConfig, originalGroup.gateConfig);
-    $: ttlDirty = editing && candidateGroup.eventsTTL !== originalGroup.eventsTTL;
-    $: messagesVisibleToNonMembersDirty =
-        editing &&
-        candidateGroup.messagesVisibleToNonMembers !== originalGroup.messagesVisibleToNonMembers;
-    $: dirty =
-        infoDirty ||
-        rulesDirty ||
-        permissionsDirty ||
-        visDirty ||
-        gateDirty ||
-        ttlDirty ||
-        messagesVisibleToNonMembersDirty;
-    $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
-    $: valid = detailsValid && visibilityValid && rulesValid;
-    $: {
-        if (candidateGroup.public) {
-            candidateGroup.permissions.startVideoCall = "admin";
-        }
+    interface Props {
+        templateGroup: CandidateGroupChat;
+        embeddedContent: boolean;
+        onClose: () => void;
+        onUpgrade: () => void;
     }
-    $: verificationWarning = nameDirty && editing && originalGroup.verified;
+
+    let { templateGroup, embeddedContent, onClose, onUpgrade }: Props = $props();
+    let confirming = $state(false);
+    let showingVerificationWarning = $state(false);
+    let busy = $state(false);
+    let step = $state("details");
+    let actualWidth = $state(0);
+    let detailsValid = $state(true);
+    let visibilityValid = $state(true);
+    let originalGroup = $state(structuredClone(templateGroup));
+
+    //TODO: we need to clone the candidate as well here *solely* because Home.svelte is current Svelte 4
+    let candidateGroup = $state(structuredClone(templateGroup));
+    let rulesValid = $state(true);
 
     function getSteps(
         editing: boolean,
@@ -231,7 +186,7 @@
 
         confirming = false;
 
-        const updatedGroup = { ...candidateGroup };
+        const updatedGroup = $state.snapshot(candidateGroup);
 
         return client
             .updateGroup(
@@ -274,7 +229,7 @@
             })
             .finally(() => {
                 busy = false;
-                dispatch("close");
+                onClose();
             });
     }
 
@@ -283,10 +238,8 @@
 
         const level = candidateGroup.level;
 
-        console.log("Candidate Group: ", candidateGroup);
-
         client
-            .createGroupChat(candidateGroup)
+            .createGroupChat($state.snapshot(candidateGroup))
             .then((resp) => {
                 if (resp.kind !== "success") {
                     const resourceKey = groupCreationErrorMessage(resp, level);
@@ -317,13 +270,7 @@
 
     function onGroupCreated(canisterId: MultiUserChatIdentifier) {
         const url = routeForChatIdentifier($chatListScope.kind, canisterId);
-        dispatch("groupCreated", {
-            chatId: canisterId,
-            public: candidateGroup.public,
-            rules: candidateGroup.rules,
-        });
-        dispatch("close");
-
+        onClose();
         // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route
         tick().then(() => page(url)); // trigger the selection of the chat
     }
@@ -331,6 +278,69 @@
     function changeStep(ev: CustomEvent<string>) {
         step = ev.detail;
     }
+    let editing = $derived(!chatIdentifierUnset(candidateGroup.id));
+    let hideInviteUsers = $derived(candidateGroup.level === "channel" && candidateGroup.public);
+    let steps = $derived(
+        getSteps(
+            editing,
+            detailsValid,
+            visibilityValid,
+            rulesValid,
+            hideInviteUsers,
+            embeddedContent,
+        ),
+    );
+    let stepIndex = $derived(steps.findIndex((s) => s.key === step) ?? 0);
+    let canEditPermissions = $derived(
+        !editing ? true : client.canChangePermissions(candidateGroup.id),
+    );
+    let canEditDisappearingMessages = $derived(
+        !editing ? true : client.hasOwnerRights(candidateGroup.membership.role),
+    );
+    let permissionsDirty = $derived(
+        client.haveGroupPermissionsChanged(originalGroup.permissions, candidateGroup.permissions),
+    );
+    let rulesDirty = $derived(
+        editing &&
+            candidateGroup.rules !== undefined &&
+            (candidateGroup.rules.enabled !== originalGroup.rules.enabled ||
+                candidateGroup.rules.text !== originalGroup.rules.text),
+    );
+    let nameDirty = $derived(editing && candidateGroup.name !== originalGroup.name);
+    let descDirty = $derived(editing && candidateGroup.description !== originalGroup.description);
+    let externalUrlDirty = $derived(
+        editing && candidateGroup.externalUrl !== originalGroup.externalUrl,
+    );
+    let avatarDirty = $derived(
+        editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl,
+    );
+    let visDirty = $derived(editing && candidateGroup.public !== originalGroup.public);
+    let infoDirty = $derived(nameDirty || descDirty || avatarDirty || externalUrlDirty);
+    let gateDirty = $derived(
+        editing && client.hasAccessGateChanged(candidateGroup.gateConfig, originalGroup.gateConfig),
+    );
+    let ttlDirty = $derived(editing && candidateGroup.eventsTTL !== originalGroup.eventsTTL);
+    let messagesVisibleToNonMembersDirty = $derived(
+        editing &&
+            candidateGroup.messagesVisibleToNonMembers !==
+                originalGroup.messagesVisibleToNonMembers,
+    );
+    let dirty = $derived(
+        infoDirty ||
+            rulesDirty ||
+            permissionsDirty ||
+            visDirty ||
+            gateDirty ||
+            ttlDirty ||
+            messagesVisibleToNonMembersDirty,
+    );
+    let valid = $derived(detailsValid && visibilityValid && rulesValid);
+    $effect(() => {
+        if (candidateGroup.public) {
+            candidateGroup.permissions.startVideoCall = "admin";
+        }
+    });
+    let verificationWarning = $derived(nameDirty && editing && originalGroup.verified);
 </script>
 
 {#if confirming}
@@ -350,136 +360,142 @@
         action={updateGroup} />
 {/if}
 
-<ModalContent bind:actualWidth closeIcon on:close>
-    <div class="header" slot="header">
-        <Translatable
-            resourceKey={editing
-                ? i18nKey("group.edit", undefined, candidateGroup.level, true)
-                : i18nKey("group.createTitle", undefined, candidateGroup.level, true)} />
-    </div>
-    <div class="body" slot="body">
-        <StageHeader {steps} enabled on:step={changeStep} {step} />
-        <div class="wrapper">
-            {#if step === "details"}
-                <div class="details">
-                    <GroupDetails
-                        {embeddedContent}
-                        bind:valid={detailsValid}
-                        {busy}
-                        bind:candidateGroup />
-                </div>
-            {/if}
-            {#if step === "visibility"}
-                <div class="visibility">
-                    <VisibilityControl
-                        {embeddedContent}
-                        on:upgrade
-                        {editing}
-                        history
-                        {canEditDisappearingMessages}
-                        bind:valid={visibilityValid}
-                        bind:candidate={candidateGroup}
-                        {gateDirty} />
-                </div>
-            {/if}
-            {#if !embeddedContent && step === "rules"}
-                <div class="rules">
-                    <RulesEditor
-                        bind:valid={rulesValid}
-                        level={candidateGroup.level}
-                        bind:rules={candidateGroup.rules}
-                        {editing} />
-                </div>
-            {/if}
-            {#if step === "permissions"}
-                <div use:menuCloser class="permissions">
-                    {#if canEditPermissions}
-                        <GroupPermissionsEditor
+<ModalContent bind:actualWidth closeIcon {onClose}>
+    {#snippet header()}
+        <div class="header">
+            <Translatable
+                resourceKey={editing
+                    ? i18nKey("group.edit", undefined, candidateGroup.level, true)
+                    : i18nKey("group.createTitle", undefined, candidateGroup.level, true)} />
+        </div>
+    {/snippet}
+    {#snippet body()}
+        <div class="body">
+            <StageHeader {steps} enabled on:step={changeStep} {step} />
+            <div class="wrapper">
+                {#if step === "details"}
+                    <div class="details">
+                        <GroupDetails
                             {embeddedContent}
+                            bind:valid={detailsValid}
+                            {busy}
+                            bind:candidateGroup />
+                    </div>
+                {/if}
+                {#if step === "visibility"}
+                    <div class="visibility">
+                        <VisibilityControl
+                            {embeddedContent}
+                            on:upgrade={onUpgrade}
                             {editing}
-                            bind:permissions={candidateGroup.permissions}
-                            isPublic={candidateGroup.public}
-                            isCommunityPublic={$selectedCommunity?.public ?? true}
-                            isChannel={candidateGroup.id.kind === "channel"} />
-                    {:else}
-                        <GroupPermissionsViewer
-                            {embeddedContent}
-                            bind:permissions={candidateGroup.permissions}
-                            isPublic={candidateGroup.public}
-                            isCommunityPublic={$selectedCommunity?.public ?? true}
-                            isChannel={candidateGroup.id.kind === "channel"} />
+                            history
+                            {canEditDisappearingMessages}
+                            bind:valid={visibilityValid}
+                            bind:candidate={candidateGroup}
+                            {gateDirty} />
+                    </div>
+                {/if}
+                {#if !embeddedContent && step === "rules"}
+                    <div class="rules">
+                        <RulesEditor
+                            bind:valid={rulesValid}
+                            level={candidateGroup.level}
+                            bind:rules={candidateGroup.rules}
+                            {editing} />
+                    </div>
+                {/if}
+                {#if step === "permissions"}
+                    <div use:menuCloser class="permissions">
+                        {#if canEditPermissions}
+                            <GroupPermissionsEditor
+                                {embeddedContent}
+                                {editing}
+                                bind:permissions={candidateGroup.permissions}
+                                isPublic={candidateGroup.public}
+                                isCommunityPublic={$selectedCommunity?.public ?? true}
+                                isChannel={candidateGroup.id.kind === "channel"} />
+                        {:else}
+                            <GroupPermissionsViewer
+                                {embeddedContent}
+                                bind:permissions={candidateGroup.permissions}
+                                isPublic={candidateGroup.public}
+                                isCommunityPublic={$selectedCommunity?.public ?? true}
+                                isChannel={candidateGroup.id.kind === "channel"} />
+                        {/if}
+                    </div>
+                {/if}
+                {#if !editing && !hideInviteUsers && step === "invite"}
+                    <div class="members">
+                        <ChooseMembers
+                            userLookup={searchUsers}
+                            bind:members={candidateGroup.members}
+                            {busy} />
+                    </div>
+                {/if}
+            </div>
+        </div>
+    {/snippet}
+    {#snippet footer()}
+        <span class="footer">
+            <div class="group-buttons">
+                <div class="back">
+                    {#if !editing && stepIndex > 0}
+                        <Button
+                            disabled={busy}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
+                            on:click={() => (step = steps[stepIndex - 1].key)}
+                            ><Translatable resourceKey={i18nKey("group.back")} /></Button>
                     {/if}
                 </div>
-            {/if}
-            {#if !editing && !hideInviteUsers && step === "invite"}
-                <div class="members">
-                    <ChooseMembers
-                        userLookup={searchUsers}
-                        bind:members={candidateGroup.members}
-                        {busy} />
-                </div>
-            {/if}
-        </div>
-    </div>
-    <span class="footer" slot="footer">
-        <div class="group-buttons">
-            <div class="back">
-                {#if !editing && stepIndex > 0}
+                <div class="actions">
                     <Button
-                        disabled={busy}
+                        disabled={false}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = steps[stepIndex - 1].key)}
-                        ><Translatable resourceKey={i18nKey("group.back")} /></Button>
-                {/if}
-            </div>
-            <div class="actions">
-                <Button
-                    disabled={false}
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}
-                    on:click={() => dispatch("close")}
-                    secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                        on:click={onClose}
+                        secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
 
-                {#if editing}
-                    <Button
-                        disabled={!dirty || busy || !valid}
-                        loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        on:click={() => updateGroup()}
-                        ><Translatable
-                            resourceKey={i18nKey(
-                                "group.update",
-                                undefined,
-                                candidateGroup.level,
-                                true,
-                            )} /></Button>
-                {:else if stepIndex < steps.length - 1}
-                    <Button
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        on:click={() => (step = steps[stepIndex + 1].key)}
-                        ><Translatable resourceKey={i18nKey("group.next")} />
-                    </Button>
-                {:else}
-                    <Button
-                        disabled={busy || !valid}
-                        loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        on:click={createGroup}
-                        ><Translatable
-                            resourceKey={i18nKey(
-                                "group.create",
-                                undefined,
-                                candidateGroup.level,
-                                true,
-                            )} /></Button>
-                {/if}
+                    {#if editing}
+                        <Button
+                            disabled={!dirty || busy || !valid}
+                            loading={busy}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
+                            on:click={() => updateGroup()}
+                            ><Translatable
+                                resourceKey={i18nKey(
+                                    "group.update",
+                                    undefined,
+                                    candidateGroup.level,
+                                    true,
+                                )} /></Button>
+                    {:else if stepIndex < steps.length - 1}
+                        <Button
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
+                            on:click={() => (step = steps[stepIndex + 1].key)}
+                            ><Translatable resourceKey={i18nKey("group.next")} />
+                        </Button>
+                    {:else}
+                        <Button
+                            disabled={busy || !valid}
+                            loading={busy}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
+                            on:click={createGroup}
+                            ><Translatable
+                                resourceKey={i18nKey(
+                                    "group.create",
+                                    undefined,
+                                    candidateGroup.level,
+                                    true,
+                                )} /></Button>
+                    {/if}
+                </div>
             </div>
-        </div>
-    </span>
+        </span>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">

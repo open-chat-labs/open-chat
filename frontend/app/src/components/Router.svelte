@@ -1,9 +1,12 @@
 <script lang="ts">
-    import { onDestroy, onMount, type SvelteComponent } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import page from "page";
     import Home from "./home/HomeRoute.svelte";
+    import { type HomeType } from "./home/HomeRoute.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";
-    import NotFound from "./NotFound.svelte";
+    import { type LandingPageType } from "./landingpages/LandingPage.svelte";
+    import NotFound from "./NotFoundWrapper.svelte";
+    import { type NotFoundType } from "./NotFoundWrapper.svelte";
     import {
         pathContextStore,
         notFound,
@@ -27,7 +30,7 @@
 
     let { showLandingPage }: Props = $props();
 
-    let route: typeof SvelteComponent<object> | undefined = $state(undefined);
+    let route: HomeType | LandingPageType | NotFoundType | undefined = $state(undefined);
 
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => any) => {
@@ -224,5 +227,5 @@
 
 {#if route !== undefined}
     {@const RouteComponent = route}
-    <RouteComponent {showLandingPage} on:startVideoCall on:askToSpeak on:hangup />
+    <RouteComponent {showLandingPage} />
 {/if}

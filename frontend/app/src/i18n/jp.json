@@ -1602,6 +1602,11 @@
         "owner": "所有者"
     },
     "roleChanged": "{changedBy} は {changed} の役割を {newRole} に変更しました",
+    "rotationChallenge": {
+        "info": "左側の画像を右側の画像の角度と一致するまで回転します",
+        "infoMobile": "上の画像を下の画像の角度と一致するまで回転します",
+        "title": "ボットのバランスをとる"
+    },
     "rules": {
         "accept": "承認",
         "acceptTitle": "チャットのルール",

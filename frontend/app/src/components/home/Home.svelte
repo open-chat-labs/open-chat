@@ -890,11 +890,11 @@
         }
     }
 
-    function accessGatesEvaluated(ev: CustomEvent<GateCheckSucceeded>) {
+    function accessGatesEvaluated(success: GateCheckSucceeded) {
         if (modal.kind === "evaluating_access_gates") {
             const { group, select } = modal;
             closeModal();
-            doJoinGroup(group, select, ev.detail);
+            doJoinGroup(group, select, success);
         }
     }
 
@@ -965,13 +965,13 @@
         showUpgrade = true;
     }
 
-    function onSelectChat(ev: CustomEvent<ChatIdentifier>) {
+    function onSelectChat(chatId: ChatIdentifier) {
         closeModal();
         if (messageToForward !== undefined) {
-            forwardToChat(ev.detail);
+            forwardToChat(chatId);
             messageToForward = undefined;
         } else {
-            shareWithChat(ev.detail);
+            shareWithChat(chatId);
         }
     }
 
@@ -1194,8 +1194,10 @@
         forgotPin = true;
     }
 
-    function onPinNumberComplete(pin: string) {
-        $pinNumberStore?.resolve(pin);
+    function onPinNumberComplete(pin: string | undefined) {
+        if (pin) {
+            $pinNumberStore?.resolve(pin);
+        }
     }
 
     function onPinNumberClose() {
@@ -1253,15 +1255,12 @@
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
             on:deleteGroup={triggerConfirm}
-            on:leaveGroup={triggerConfirm}
-            on:askToSpeak
-            on:hangup />
+            on:leaveGroup={triggerConfirm} />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel
             {joining}
             bind:currentChatMessages
-            on:startVideoCall
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:leaveGroup={triggerConfirm}
@@ -1288,7 +1287,6 @@
         on:showGroupMembers={showGroupMembers}
         on:chatWith={chatWith}
         on:upgrade={upgrade}
-        on:startVideoCall
         on:deleteGroup={triggerConfirm}
         on:editGroup={editGroup}
         on:editCommunity={editCommunity}
@@ -1334,7 +1332,7 @@
         alignLeft={modal.kind === "select_chat"}
         onClose={closeModal}>
         {#if modal.kind === "select_chat"}
-            <SelectChatModal on:close={onCloseSelectChat} on:select={onSelectChat} />
+            <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
         {:else if modal.kind === "suspended"}
             <SuspendedModal onClose={closeModal} />
         {:else if modal.kind === "register_bot"}
@@ -1346,27 +1344,27 @@
         {:else if modal.kind === "no_access"}
             <NoAccess onClose={closeNoAccess} />
         {:else if modal.kind === "not_found"}
-            <NotFound on:close={closeNoAccess} />
+            <NotFound onClose={closeNoAccess} />
         {:else if modal.kind === "gate_check_failed"}
             <GateCheckFailed onClose={closeModal} gates={modal.gates} />
         {:else if modal.kind === "evaluating_access_gates"}
             <AccessGateEvaluator
                 gates={modal.gates}
-                on:close={closeModal}
-                on:success={accessGatesEvaluated} />
+                onClose={closeModal}
+                onSuccess={accessGatesEvaluated} />
         {:else if modal.kind === "new_group"}
             <CreateOrUpdateGroup
                 embeddedContent={modal.embeddedContent}
-                candidateGroup={modal.candidate}
-                on:upgrade={upgrade}
-                on:close={closeModal} />
+                templateGroup={modal.candidate}
+                onUpgrade={upgrade}
+                onClose={closeModal} />
         {:else if modal.kind === "edit_community"}
             <EditCommunity
                 originalRules={modal.communityRules}
                 original={modal.community}
-                on:close={closeModal} />
+                onClose={closeModal} />
         {:else if modal.kind === "wallet"}
-            <AccountsModal on:close={closeModal} />
+            <AccountsModal onClose={closeModal} />
         {:else if modal.kind === "hall_of_fame"}
             <HallOfFame
                 onStreak={() => (modal = { kind: "claim_daily_chit" })}
@@ -1377,7 +1375,7 @@
                 nervousSystem={modal.nervousSystem}
                 on:close={closeModal} />
         {:else if modal.kind === "logging_in"}
-            <LoggingInModal on:close={closeModal} />
+            <LoggingInModal onClose={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "challenge"}
@@ -1407,8 +1405,8 @@
 {:else if forgotPin}
     <Overlay>
         <SetPinNumberModal
-            on:pinSet={(e) => onPinNumberComplete(e.detail)}
-            on:close={() => (forgotPin = false)}
+            onPinSet={onPinNumberComplete}
+            onClose={() => (forgotPin = false)}
             type={{ kind: "forgot", while: { kind: "enter" } }} />
     </Overlay>
 {:else if $pinNumberStore !== undefined}

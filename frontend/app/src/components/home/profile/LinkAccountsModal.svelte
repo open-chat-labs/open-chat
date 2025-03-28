@@ -1,9 +1,18 @@
 <script lang="ts">
-    import ModalContent from "../../ModalContentLegacy.svelte";
+    import type { Snippet } from "svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    interface Props {
+        children?: Snippet;
+        onClose?: () => void;
+    }
+
+    let { children, onClose }: Props = $props();
 </script>
 
-<ModalContent on:close hideHeader hideFooter fadeDelay={0} fadeDuration={0}>
-    <div slot="body">
-        <slot />
-    </div>
+<ModalContent {onClose} hideHeader hideFooter fadeDelay={0} fadeDuration={0}>
+    {#snippet body()}
+        <div>
+            {@render children?.()}
+        </div>
+    {/snippet}
 </ModalContent>

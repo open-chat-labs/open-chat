@@ -409,7 +409,7 @@
             {/if}
         {/if}
     </div>
-    <ActiveCallSummary on:askToSpeak on:hangup />
+    <ActiveCallSummary />
     {#if showPreview}
         <PreviewWrapper let:joiningCommunity let:joinCommunity>
             <div class="join">

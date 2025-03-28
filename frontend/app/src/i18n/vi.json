@@ -1602,6 +1602,11 @@
         "owner": "Những chủ sở hữu"
     },
     "roleChanged": "{changedBy} đã thay đổi vai trò của {changed} thành {newRole}",
+    "rotationChallenge": {
+        "info": "Xoay hình ảnh bên trái cho đến khi nó khớp với góc của hình ảnh bên phải",
+        "infoMobile": "Xoay hình ảnh trên cùng cho đến khi nó khớp với chiều cao của hình ảnh dưới cùng",
+        "title": "Cân bằng các bot"
+    },
     "rules": {
         "accept": "Chấp nhận",
         "acceptTitle": "Quy tắc trò chuyện",

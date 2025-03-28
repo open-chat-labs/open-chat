@@ -12,12 +12,7 @@ pub struct Args {
     pub notification_bytes: ByteBuf,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    Blocked,
-    InternalError(String),
-}
+pub type Response = crate::c2c_push_notifications::Response;
 
 impl Debug for Args {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

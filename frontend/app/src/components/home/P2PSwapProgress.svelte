@@ -1,51 +1,37 @@
 <script lang="ts">
     import type { OpenChat, P2PSwapContent } from "openchat-client";
     import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContentLegacy.svelte";
+    import ModalContent from "../ModalContent.svelte";
     import ProgressSteps, { type Result, type Step } from "../ProgressSteps.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
     const labelPrefix = "p2pSwap.progress.";
 
-    export let senderId: string;
-    export let content: P2PSwapContent;
+    interface Props {
+        senderId: string;
+        content: P2PSwapContent;
+        onClose: () => void;
+    }
 
-    let steps: Step[] = [
+    let { senderId, content, onClose }: Props = $props();
+
+    let steps: Step[] = $state([
         { label: "open", status: "done" },
         { label: "waiting", status: "todo" },
-    ];
-    let result: Result = undefined;
-    let token0TxnOut: string | undefined = undefined;
-    let token1TxnIn: string | undefined = undefined;
-    let token1TxnOut: string | undefined = undefined;
-    let user1: string | undefined = undefined;
+    ]);
+    let result = $state<Result>(undefined);
+    let token0TxnOut: string | undefined = $state(undefined);
+    let token1TxnIn: string | undefined = $state(undefined);
+    let token1TxnOut: string | undefined = $state(undefined);
+    let user1: string | undefined = $state(undefined);
 
-    $: fullSteps = steps.map((step) => ({ label: labelPrefix + step.label, status: step.status }));
-
-    $: fullResult =
-        result !== undefined
-            ? { label: labelPrefix + result.label, status: result.status }
-            : undefined;
-
-    $: labelValues = {
-        token0: content.token0.symbol,
-        token1: content.token1.symbol,
-        amount0: client.formatTokens(content.token0Amount, content.token0.decimals),
-        amount1: client.formatTokens(content.token1Amount, content.token1.decimals),
-        user0: toUser(senderId),
-        user1,
-        token0TxnIn: client.buildTransactionUrl(content.token0TxnIn, content.token0.ledger),
-        token0TxnOut,
-        token1TxnIn,
-        token1TxnOut,
-    };
-    $: title = i18nKey("p2pSwap.swapTokenTo", labelValues);
-
-    $: {
+    function toUser(userId: string): string {
+        return `@UserId(${userId})`;
+    }
+    $effect(() => {
         if (content.status.kind === "p2p_swap_cancelled") {
             if (content.status.token0TxnOut === undefined) {
                 steps = [
@@ -120,21 +106,40 @@
                 content.token0.ledger,
             );
         }
-    }
-
-    function toUser(userId: string): string {
-        return `@UserId(${userId})`;
-    }
+    });
+    let fullSteps = $derived(
+        steps.map((step) => ({ label: labelPrefix + step.label, status: step.status })),
+    );
+    let fullResult = $derived(
+        result !== undefined
+            ? { label: labelPrefix + result.label, status: result.status }
+            : undefined,
+    );
+    let labelValues = $derived({
+        token0: content.token0.symbol,
+        token1: content.token1.symbol,
+        amount0: client.formatTokens(content.token0Amount, content.token0.decimals),
+        amount1: client.formatTokens(content.token1Amount, content.token1.decimals),
+        user0: toUser(senderId),
+        user1,
+        token0TxnIn: client.buildTransactionUrl(content.token0TxnIn, content.token0.ledger),
+        token0TxnOut,
+        token1TxnIn,
+        token1TxnOut,
+    });
+    let title = $derived(i18nKey("p2pSwap.swapTokenTo", labelValues));
 </script>
 
-<Overlay dismissible onClose={() => dispatch("close")}>
+<Overlay dismissible {onClose}>
     <ModalContent hideFooter>
-        <span slot="header">
+        {#snippet header()}
             <Translatable resourceKey={title} />
-        </span>
-        <div slot="body" class="p2p-swap-progress">
-            <ProgressSteps steps={fullSteps} {labelValues} result={fullResult} />
-        </div>
+        {/snippet}
+        {#snippet body()}
+            <div class="p2p-swap-progress">
+                <ProgressSteps steps={fullSteps} {labelValues} result={fullResult} />
+            </div>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

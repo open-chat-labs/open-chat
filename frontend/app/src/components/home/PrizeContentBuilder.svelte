@@ -11,10 +11,10 @@
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
-    import ModalContent from "../ModalContentLegacy.svelte";
+    import ModalContent from "../ModalContent.svelte";
     import Legend from "../Legend.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
@@ -41,51 +41,67 @@
     const ONE_WEEK = ONE_DAY * 7;
     const OC_FEE_PERCENTAGE = 5n;
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
     const streaks = ["3", "7", "14", "30", "100"];
 
-    export let draftAmount: bigint;
-    export let ledger: string;
-    export let chat: ChatSummary;
-    export let context: MessageContext;
+    interface Props {
+        draftAmount: bigint;
+        ledger: string;
+        chat: ChatSummary;
+        context: MessageContext;
+        onClose: () => void;
+    }
 
-    let numberOfWinners = 20;
-    let distribution: "equal" | "random" = "random";
+    let {
+        draftAmount = $bindable(),
+        ledger = $bindable(),
+        chat,
+        context,
+        onClose,
+    }: Props = $props();
+
+    let numberOfWinners = $state(20);
+    let distribution: "equal" | "random" = $state("random");
     const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
     type Duration = "oneHour" | "oneDay" | "oneWeek";
-    let selectedDuration: Duration = "oneDay";
-    let diamondOnly = false;
-    let diamondType: "standard" | "lifetime" = "standard";
-    let uniquePersonOnly = false;
-    let streakOnly = false;
-    let streakValue = "3";
+    let selectedDuration: Duration = $state("oneDay");
+    let diamondOnly = $state(false);
+    let diamondType: "standard" | "lifetime" = $state("standard");
+    let uniquePersonOnly = $state(false);
+    let streakOnly = $state(false);
+    let streakValue = $state("3");
     let refreshing = false;
-    let error: string | undefined = undefined;
-    let message = "";
-    let toppingUp = false;
-    let tokenChanging = true;
+    let error: string | undefined = $state(undefined);
+    let message = $state("");
+    let toppingUp = $state(false);
+    let tokenChanging = $state(true);
     let balanceWithRefresh: BalanceWithRefresh;
-    let tokenInputState: "ok" | "zero" | "too_low" | "too_high";
-    let sending = false;
+    let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
+    let sending = $state(false);
 
-    $: anyUser = !diamondOnly && !uniquePersonOnly && !streakOnly;
-    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
-    $: tokenDetails = $cryptoLookup[ledger];
-    $: symbol = tokenDetails.symbol;
-    $: transferFee = tokenDetails.transferFee;
-    $: transferFees = transferFee * BigInt(numberOfWinners ?? 0);
-    $: prizeFees = transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n;
-    $: totalFees = transferFee + prizeFees;
-    $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
-    $: remainingBalance =
-        draftAmount > 0n ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
-    $: minAmount = 100n * BigInt(numberOfWinners ?? 0) * transferFee;
-    $: maxAmount = bigIntMax(cryptoBalance - totalFees, BigInt(0));
-    $: valid = error === undefined && tokenInputState === "ok" && !tokenChanging;
-    $: zero = cryptoBalance <= transferFee && !tokenChanging;
-    $: errorMessage = error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore;
+    let anyUser = $state(true);
+    $effect(() => {
+        anyUser = !diamondOnly && !uniquePersonOnly && !streakOnly;
+    });
+    let cryptoBalance = $derived($cryptoBalanceStore[ledger] ?? BigInt(0));
+    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let symbol = $derived(tokenDetails.symbol);
+    let transferFee = $derived(tokenDetails.transferFee);
+    let transferFees = $derived(transferFee * BigInt(numberOfWinners ?? 0));
+    let prizeFees = $derived(transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n);
+    let totalFees = $derived(transferFee + prizeFees);
+    let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
+    let remainingBalance = $state(0n);
+    $effect(() => {
+        remainingBalance =
+            draftAmount > 0n ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
+    });
+    let minAmount = $derived(100n * BigInt(numberOfWinners ?? 0) * transferFee);
+    let maxAmount = $derived(bigIntMax(cryptoBalance - totalFees, BigInt(0)));
+    let valid = $derived(error === undefined && tokenInputState === "ok" && !tokenChanging);
+    let zero = $derived(cryptoBalance <= transferFee && !tokenChanging);
+    let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
 
-    $: {
+    $effect(() => {
         if (tokenInputState === "too_low") {
             error = $_("minimumAmount", {
                 values: {
@@ -96,7 +112,7 @@
         } else {
             error = undefined;
         }
-    }
+    });
 
     function reset() {
         balanceWithRefresh.refresh();
@@ -157,7 +173,7 @@
             .sendMessageWithContent(context, content, false)
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
-                    dispatch("close");
+                    onClose();
                 } else if ($pinNumberErrorMessageStore === undefined) {
                     error = "errorSendingMessage";
                 }
@@ -167,7 +183,7 @@
 
     function cancel() {
         toppingUp = false;
-        dispatch("close");
+        onClose();
     }
 
     function onBalanceRefreshed() {
@@ -272,193 +288,203 @@
 
 <Overlay dismissible>
     <ModalContent>
-        <span class="header" slot="header">
-            <div class="left">
-                <div class="main-title">
-                    <div><Translatable resourceKey={i18nKey("prizes.title")} /></div>
-                    <div>
-                        <CryptoSelector bind:ledger />
+        {#snippet header()}
+            <span class="header">
+                <div class="left">
+                    <div class="main-title">
+                        <div><Translatable resourceKey={i18nKey("prizes.title")} /></div>
+                        <div>
+                            <CryptoSelector bind:ledger />
+                        </div>
                     </div>
                 </div>
-            </div>
-            <BalanceWithRefresh
-                bind:toppingUp
-                bind:this={balanceWithRefresh}
-                {ledger}
-                value={remainingBalance}
-                label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                bold
-                showTopUp
-                on:refreshed={onBalanceRefreshed}
-                on:error={onBalanceRefreshError} />
-        </span>
-        <form slot="body">
-            <div class="body" class:zero={zero || toppingUp}>
-                {#if zero || toppingUp}
-                    <AccountInfo {ledger} user={$user} />
-                    {#if zero}
-                        <p>
-                            <Translatable
-                                resourceKey={i18nKey("tokenTransfer.zeroBalance", {
-                                    token: symbol,
-                                })} />
-                        </p>
-                    {/if}
-                    <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
-                {:else}
-                    <div class="transfer">
-                        <TokenInput
-                            {ledger}
-                            label={"prizes.totalAmount"}
-                            autofocus={!multiUserChat}
-                            bind:state={tokenInputState}
-                            transferFees={totalFees}
-                            {minAmount}
-                            {maxAmount}
-                            bind:amount={draftAmount} />
-                    </div>
-                    <div class="message">
-                        <Legend label={i18nKey("tokenTransfer.message")} />
-                        <TextArea
-                            maxlength={200}
-                            rows={3}
-                            autofocus={false}
-                            placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
-                            bind:value={message} />
-                    </div>
-                    <div class="winners">
-                        <Legend
-                            label={i18nKey("prizes.numberOfWinners")}
-                            rules={i18nKey(numberOfWinners?.toString())} />
-                        <div class="pickers">
-                            <Range fat min={1} max={1000} bind:value={numberOfWinners} />
-                            <div class="num-picker">
-                                <NumberInput
-                                    align={"right"}
-                                    defaultValue={20}
-                                    min={1}
-                                    max={1000}
-                                    bind:value={numberOfWinners} />
-                            </div>
+                <BalanceWithRefresh
+                    bind:toppingUp
+                    bind:this={balanceWithRefresh}
+                    {ledger}
+                    value={remainingBalance}
+                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
+                    bold
+                    showTopUp
+                    on:refreshed={onBalanceRefreshed}
+                    on:error={onBalanceRefreshError} />
+            </span>
+        {/snippet}
+        {#snippet body()}
+            <form>
+                <div class="body" class:zero={zero || toppingUp}>
+                    {#if zero || toppingUp}
+                        <AccountInfo {ledger} user={$user} />
+                        {#if zero}
+                            <p>
+                                <Translatable
+                                    resourceKey={i18nKey("tokenTransfer.zeroBalance", {
+                                        token: symbol,
+                                    })} />
+                            </p>
+                        {/if}
+                        <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
+                    {:else}
+                        <div class="transfer">
+                            <TokenInput
+                                {ledger}
+                                label={"prizes.totalAmount"}
+                                autofocus={!multiUserChat}
+                                bind:state={tokenInputState}
+                                transferFees={totalFees}
+                                {minAmount}
+                                {maxAmount}
+                                bind:amount={draftAmount} />
                         </div>
-                    </div>
-                    <Legend label={i18nKey("prizes.distribution")} />
-                    <div class="distributions">
-                        <div
-                            role="button"
-                            tabindex="0"
-                            on:click={() => (distribution = "random")}
-                            class="distribution">
-                            <div class:selected={distribution === "random"} class="dist-icon">
-                                <RandomDistribution size={"100%"} color={"var(--icon-txt)"} />
-                            </div>
-                            <div class="dist-label">
-                                <Translatable resourceKey={i18nKey("prizes.randomDistribution")} />
-                            </div>
+                        <div class="message">
+                            <Legend label={i18nKey("tokenTransfer.message")} />
+                            <TextArea
+                                maxlength={200}
+                                rows={3}
+                                autofocus={false}
+                                placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
+                                bind:value={message} />
                         </div>
-                        <div
-                            role="button"
-                            tabindex="0"
-                            on:click={() => (distribution = "equal")}
-                            class="distribution">
-                            <div class:selected={distribution === "equal"} class="dist-icon">
-                                <EqualDistribution size={"100%"} color={"var(--icon-txt)"} />
-                            </div>
-                            <div class="dist-label">
-                                <Translatable resourceKey={i18nKey("prizes.equalDistribution")} />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="config">
-                        <div class="duration">
-                            <Legend label={i18nKey("prizes.duration")} />
-                            {#each durations as d}
-                                <Radio
-                                    on:change={() => (selectedDuration = d)}
-                                    value={d}
-                                    checked={selectedDuration === d}
-                                    id={`duration_${d}`}
-                                    label={i18nKey(`poll.${d}`)}
-                                    group={"prize_duration"} />
-                            {/each}
-                        </div>
-                        <div class="restrictions">
-                            <Legend label={i18nKey("prizes.whoCanWin")} />
-                            <Checkbox
-                                id="any_user"
-                                label={i18nKey(`prizes.anyone`)}
-                                bind:checked={anyUser}
-                                on:change={onAnyUserChecked} />
-                            <Checkbox
-                                id="diamond_only"
-                                label={i18nKey(`prizes.onlyDiamond`)}
-                                bind:checked={diamondOnly} />
-                            {#if diamondOnly}
-                                <div class="diamond-choice">
-                                    <Radio
-                                        id={"standard-diamond"}
-                                        on:change={() => (diamondType = "standard")}
-                                        checked={diamondType === "standard"}
-                                        label={i18nKey(`prizes.standardDiamond`)}
-                                        group={"diamond"} />
-                                    <Radio
-                                        id={"lifetime-diamond"}
-                                        on:change={() => (diamondType = "lifetime")}
-                                        checked={diamondType === "lifetime"}
-                                        label={i18nKey(`prizes.lifetimeDiamond`)}
-                                        group={"diamond"} />
+                        <div class="winners">
+                            <Legend
+                                label={i18nKey("prizes.numberOfWinners")}
+                                rules={i18nKey(numberOfWinners?.toString())} />
+                            <div class="pickers">
+                                <Range fat min={1} max={1000} bind:value={numberOfWinners} />
+                                <div class="num-picker">
+                                    <NumberInput
+                                        align={"right"}
+                                        defaultValue={20}
+                                        min={1}
+                                        max={1000}
+                                        bind:value={numberOfWinners} />
                                 </div>
-                            {/if}
-                            <Checkbox
-                                id="unique_person_only"
-                                label={i18nKey(`prizes.onlyUniquePerson`)}
-                                bind:checked={uniquePersonOnly} />
-                            <Checkbox
-                                id="streak_only"
-                                label={i18nKey(`prizes.onlyStreak`)}
-                                bind:checked={streakOnly} />
-                            {#if streakOnly}
-                                <Select bind:value={streakValue}>
-                                    {#each streaks as streak}
-                                        <option value={streak}
-                                            >{$_("prizes.streakValue", {
-                                                values: { n: streak },
-                                            })}</option>
-                                    {/each}
-                                </Select>
-                            {/if}
+                            </div>
                         </div>
-                    </div>
-                    {#if errorMessage !== undefined}
-                        <div class="error">
-                            <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+                        <Legend label={i18nKey("prizes.distribution")} />
+                        <div class="distributions">
+                            <div
+                                role="button"
+                                tabindex="0"
+                                onclick={() => (distribution = "random")}
+                                class="distribution">
+                                <div class:selected={distribution === "random"} class="dist-icon">
+                                    <RandomDistribution size={"100%"} color={"var(--icon-txt)"} />
+                                </div>
+                                <div class="dist-label">
+                                    <Translatable
+                                        resourceKey={i18nKey("prizes.randomDistribution")} />
+                                </div>
+                            </div>
+                            <div
+                                role="button"
+                                tabindex="0"
+                                onclick={() => (distribution = "equal")}
+                                class="distribution">
+                                <div class:selected={distribution === "equal"} class="dist-icon">
+                                    <EqualDistribution size={"100%"} color={"var(--icon-txt)"} />
+                                </div>
+                                <div class="dist-label">
+                                    <Translatable
+                                        resourceKey={i18nKey("prizes.equalDistribution")} />
+                                </div>
+                            </div>
                         </div>
+                        <div class="config">
+                            <div class="duration">
+                                <Legend label={i18nKey("prizes.duration")} />
+                                {#each durations as d}
+                                    <Radio
+                                        on:change={() => (selectedDuration = d)}
+                                        value={d}
+                                        checked={selectedDuration === d}
+                                        id={`duration_${d}`}
+                                        label={i18nKey(`poll.${d}`)}
+                                        group={"prize_duration"} />
+                                {/each}
+                            </div>
+                            <div class="restrictions">
+                                <Legend label={i18nKey("prizes.whoCanWin")} />
+                                <Checkbox
+                                    id="any_user"
+                                    label={i18nKey(`prizes.anyone`)}
+                                    bind:checked={anyUser}
+                                    on:change={onAnyUserChecked} />
+                                <Checkbox
+                                    id="diamond_only"
+                                    label={i18nKey(`prizes.onlyDiamond`)}
+                                    bind:checked={diamondOnly} />
+                                {#if diamondOnly}
+                                    <div class="diamond-choice">
+                                        <Radio
+                                            id={"standard-diamond"}
+                                            on:change={() => (diamondType = "standard")}
+                                            checked={diamondType === "standard"}
+                                            label={i18nKey(`prizes.standardDiamond`)}
+                                            group={"diamond"} />
+                                        <Radio
+                                            id={"lifetime-diamond"}
+                                            on:change={() => (diamondType = "lifetime")}
+                                            checked={diamondType === "lifetime"}
+                                            label={i18nKey(`prizes.lifetimeDiamond`)}
+                                            group={"diamond"} />
+                                    </div>
+                                {/if}
+                                <Checkbox
+                                    id="unique_person_only"
+                                    label={i18nKey(`prizes.onlyUniquePerson`)}
+                                    bind:checked={uniquePersonOnly} />
+                                <Checkbox
+                                    id="streak_only"
+                                    label={i18nKey(`prizes.onlyStreak`)}
+                                    bind:checked={streakOnly} />
+                                {#if streakOnly}
+                                    <Select bind:value={streakValue}>
+                                        {#each streaks as streak}
+                                            <option value={streak}
+                                                >{$_("prizes.streakValue", {
+                                                    values: { n: streak },
+                                                })}</option>
+                                        {/each}
+                                    </Select>
+                                {/if}
+                            </div>
+                        </div>
+                        {#if errorMessage !== undefined}
+                            <div class="error">
+                                <ErrorMessage
+                                    ><Translatable resourceKey={errorMessage} /></ErrorMessage>
+                            </div>
+                        {/if}
                     {/if}
-                {/if}
-            </div>
-        </form>
-        <span slot="footer">
-            <ButtonGroup>
-                <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
-                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                {#if toppingUp || zero}
-                    <Button
-                        small={!$mobileWidth}
-                        disabled={refreshing}
-                        loading={refreshing}
-                        tiny={$mobileWidth}
-                        on:click={reset}><Translatable resourceKey={i18nKey("refresh")} /></Button>
-                {:else}
-                    <Button
-                        small={!$mobileWidth}
-                        disabled={!valid || sending}
-                        loading={sending}
-                        tiny={$mobileWidth}
-                        on:click={send}
-                        ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
-                {/if}
-            </ButtonGroup>
-        </span>
+                </div>
+            </form>
+        {/snippet}
+        {#snippet footer()}
+            <span>
+                <ButtonGroup>
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    {#if toppingUp || zero}
+                        <Button
+                            small={!$mobileWidth}
+                            disabled={refreshing}
+                            loading={refreshing}
+                            tiny={$mobileWidth}
+                            on:click={reset}
+                            ><Translatable resourceKey={i18nKey("refresh")} /></Button>
+                    {:else}
+                        <Button
+                            small={!$mobileWidth}
+                            disabled={!valid || sending}
+                            loading={sending}
+                            tiny={$mobileWidth}
+                            on:click={send}
+                            ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
+                    {/if}
+                </ButtonGroup>
+            </span>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

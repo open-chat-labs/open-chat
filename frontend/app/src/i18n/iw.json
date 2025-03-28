@@ -1602,6 +1602,11 @@
         "owner": "בעלים"
     },
     "roleChanged": "{changedBy} שינה את התפקיד של {changed} ל-{newRole}",
+    "rotationChallenge": {
+        "info": "סובב את התמונה משמאל עד שתתאים לזווית התמונה מימין",
+        "infoMobile": "סובב את התמונה העליונה עד שתתאים לזון של התמונה התחתונה",
+        "title": "איזון את הבוטים"
+    },
     "rules": {
         "accept": "לְקַבֵּל",
         "acceptTitle": "כללי צ'אט",

@@ -8368,6 +8368,8 @@ export class OpenChat extends EventTarget {
         // we can't send a placeholder message to a community scope but that's ok
         if (scope.kind === "community_scope") return () => undefined;
 
+        this.getMissingUsers([senderId]);
+
         const context: MessageContext = {
             chatId: scope.chatId,
             threadRootMessageIndex: scope.threadRootMessageIndex,

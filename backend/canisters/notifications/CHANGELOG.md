@@ -9,10 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Store bot endpoints in notifications canisters ([#7668](https://github.com/open-chat-labs/open-chat/pull/7668))
+- Support bot notifications within Notifications canisters ([#7673](https://github.com/open-chat-labs/open-chat/pull/7673))
 
 ### Changed
 
 - Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+- Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
 
 ## [[2.0.1615](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1615-notifications)] - 2025-02-28
 

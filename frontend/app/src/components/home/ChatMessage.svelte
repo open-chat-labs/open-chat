@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import Link from "../Link.svelte";
     import { fade } from "svelte/transition";
@@ -31,14 +29,14 @@
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContentLegacy.svelte";
+    import ModalContent from "../ModalContent.svelte";
     import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
     import Translatable from "../Translatable.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
-    import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";
+    import { getContext, onDestroy, onMount, tick } from "svelte";
     import { dclickReply } from "../../stores/settings";
     import EmoticonOutline from "svelte-material-icons/EmoticonOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -72,110 +70,115 @@
     import EphemeralNote from "./EphemeralNote.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let chatId: ChatIdentifier;
-    export let chatType: ChatType;
-    export let user: CreatedUser;
-    export let sender: UserSummary | undefined;
-    export let msg: Message;
-    export let me: boolean;
-    export let eventIndex: number;
-    export let timestamp: bigint;
-    export let expiresAt: number | undefined;
-    export let first: boolean;
-    export let last: boolean;
-    export let accepted: boolean;
-    export let confirmed: boolean;
-    export let failed: boolean;
-    export let readByThem: boolean;
-    export let readByMe: boolean;
-    export let observer: IntersectionObserver;
-    export let focused: boolean;
-    export let readonly: boolean;
-    export let pinned: boolean;
-    export let canPin: boolean;
-    export let canBlockUsers: boolean;
-    export let canDelete: boolean;
-    export let canQuoteReply: boolean;
-    export let canReact: boolean;
-    export let publicGroup: boolean;
-    export let editing: boolean;
-    export let canStartThread: boolean;
-    export let senderTyping: boolean;
-    export let dateFormatter: (date: Date) => string = (date) => client.toShortTimeString(date);
-    export let collapsed: boolean = false;
-    export let threadRootMessage: Message | undefined;
-    export let botContext: BotMessageContextType | undefined;
-    export let onExpandMessage: (() => void) | undefined = undefined;
+    interface Props {
+        chatId: ChatIdentifier;
+        chatType: ChatType;
+        user: CreatedUser;
+        sender: UserSummary | undefined;
+        msg: Message;
+        me: boolean;
+        eventIndex: number;
+        timestamp: bigint;
+        expiresAt: number | undefined;
+        first: boolean;
+        last: boolean;
+        accepted: boolean;
+        confirmed: boolean;
+        failed: boolean;
+        readByThem: boolean;
+        readByMe: boolean;
+        observer: IntersectionObserver;
+        focused: boolean;
+        readonly: boolean;
+        pinned: boolean;
+        canPin: boolean;
+        canBlockUsers: boolean;
+        canDelete: boolean;
+        canQuoteReply: boolean;
+        canReact: boolean;
+        publicGroup: boolean;
+        editing: boolean;
+        canStartThread: boolean;
+        senderTyping: boolean;
+        dateFormatter?: (date: Date) => string;
+        collapsed?: boolean;
+        threadRootMessage: Message | undefined;
+        botContext: BotMessageContextType | undefined;
+        onExpandMessage?: (() => void) | undefined;
+        // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
+        supportsEdit: boolean;
+        supportsReply: boolean;
+        onReplyTo?: (replyContext: EnhancedReplyContext) => void;
+        onReplyPrivatelyTo?: (replyContext: EnhancedReplyContext) => void;
+        onEditMessage?: () => void;
+    }
 
-    // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
-    export let supportsEdit: boolean;
-    export let supportsReply: boolean;
+    let {
+        chatId,
+        chatType,
+        user,
+        sender,
+        msg,
+        me,
+        eventIndex,
+        timestamp,
+        expiresAt,
+        first,
+        last,
+        accepted,
+        confirmed,
+        failed,
+        readByThem,
+        readByMe,
+        observer,
+        focused,
+        readonly,
+        pinned,
+        canPin,
+        canBlockUsers,
+        canDelete,
+        canQuoteReply,
+        canReact,
+        publicGroup,
+        editing,
+        canStartThread,
+        senderTyping,
+        dateFormatter = (date) => client.toShortTimeString(date),
+        collapsed = false,
+        threadRootMessage,
+        botContext,
+        onExpandMessage = undefined,
+        supportsEdit,
+        supportsReply,
+        onReplyTo,
+        onReplyPrivatelyTo,
+        onEditMessage,
+    }: Props = $props();
 
-    let msgElement: HTMLElement;
-    let msgBubbleWrapperElement: HTMLElement;
-    let msgBubbleElement: HTMLElement;
+    let msgElement: HTMLElement | undefined;
+    let msgBubbleWrapperElement: HTMLElement | undefined;
+    let msgBubbleElement: HTMLElement | undefined;
+    let messageMenu: ChatMessageMenu | undefined;
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
-    let showEmojiPicker = false;
+    let showEmojiPicker = $state(false);
     let debug = false;
     let crypto =
         msg.content.kind === "crypto_content" ||
         msg.content.kind === "prize_content" ||
         msg.content.kind === "p2p_swap_content";
-    let showRemindMe = false;
-    let showReport = false;
-    let messageMenu: ChatMessageMenu;
-    let tipping: string | undefined = undefined;
-    let percentageExpired = 100;
-    let mediaCalculatedHeight = undefined as number | undefined;
-    let msgBubbleCalculatedWidth = undefined as number | undefined;
-    let botProfile: BotProfileProps | undefined = undefined;
-
-    $: maxWidthFraction = $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8;
-    $: canTip = !me && confirmed && !inert && !failed;
-    $: inThread = threadRootMessage !== undefined;
-    $: threadRootMessageIndex =
-        threadRootMessage?.messageId === msg.messageId
-            ? undefined
-            : threadRootMessage?.messageIndex;
-    $: mediaDimensions = extractDimensions(msg.content);
-    $: fill = client.fillMessage(msg);
-    $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
-    $: translated = $translationStore.has(msg.messageId);
-    $: threadSummary = msg.thread;
-    $: msgUrl = `${routeForMessage($chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`;
-    $: isProposal = msg.content.kind === "proposal_content";
-    $: isPrize = msg.content.kind === "prize_content";
-    $: isP2PSwap = msg.content.kind === "p2p_swap_content";
-    $: inert =
-        msg.content.kind === "deleted_content" ||
-        msg.content.kind === "blocked_content" ||
-        collapsed;
-    $: canEdit =
-        me && supportsEdit && !msg.deleted && client.contentTypeSupportsEdit(msg.content.kind);
-    $: undeleting = $undeletingMessagesStore.has(msg.messageId);
-    $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral;
-    $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
-    $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
-    $: messageContext = { chatId, threadRootMessageIndex };
-    $: tips = msg.tips ? Object.entries(msg.tips) : [];
-    $: canBlockUser = canBlockUsers && !$currentChatBlockedUsers.has(msg.sender);
-    $: canRevealBlocked = msg.content.kind === "blocked_content";
-    $: deletedByMe = msg.content.kind === "deleted_content" && msg.content.deletedBy == user.userId;
-    $: permanentlyDeleted =
-        deletedByMe &&
-        me &&
-        msg.content.kind === "deleted_content" &&
-        Number(msg.content.timestamp) < $now - 5 * 60 * 1000;
-    $: canRevealDeleted = deletedByMe && !undeleting && !permanentlyDeleted;
-    $: edited = msg.edited && !botContext?.finalised;
-    $: ephemeral = $ephemeralMessages.get(messageContext)?.has(msg.messageId) ?? false;
+    let showRemindMe = $state(false);
+    let showReport = $state(false);
+    let tipping: string | undefined = $state(undefined);
+    let percentageExpired = $state(100);
+    let mediaCalculatedHeight = $state(undefined as number | undefined);
+    let msgBubbleCalculatedWidth = $state(undefined as number | undefined);
+    let botProfile: BotProfileProps | undefined = $state(undefined);
 
     onMount(() => {
         if (!readByMe) {
             tick().then(() => {
-                if (observer !== undefined) {
+                if (observer !== undefined && msgElement !== undefined) {
                     observer.observe(msgElement);
                 }
             });
@@ -221,12 +224,12 @@
 
     function reply() {
         if (canQuoteReply) {
-            dispatch("replyTo", createReplyContext());
+            onReplyTo?.(createReplyContext());
         }
     }
 
     function replyPrivately() {
-        dispatch("replyPrivatelyTo", createReplyContext());
+        onReplyPrivatelyTo?.(createReplyContext());
     }
 
     function cancelReminder(ev: CustomEvent<MessageReminderCreatedContent>) {
@@ -243,7 +246,7 @@
 
     function editMessage() {
         if (canEdit) {
-            dispatch("editMessage");
+            onEditMessage?.();
         }
     }
 
@@ -349,7 +352,7 @@
                 parseFloat(msgBubbleStyle.borderLeftWidth);
         }
 
-        const messageWrapperWidth = msgBubbleWrapperElement.parentElement?.offsetWidth ?? 0;
+        const messageWrapperWidth = msgBubbleWrapperElement?.parentElement?.offsetWidth ?? 0;
 
         let targetMediaDimensions = client.calculateMediaDimensions(
             mediaDimensions,
@@ -402,10 +405,6 @@
             });
     }
 
-    $: canShare = canShareMessage(msg.content);
-    $: canForward = client.canForward(msg.content);
-    $: canTranslate = (client.getMessageText(msg.content) ?? "").length > 0;
-
     function reportMessage() {
         showReport = true;
     }
@@ -413,9 +412,61 @@
     function remindMe() {
         showRemindMe = true;
     }
+    let maxWidthFraction = $derived($screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8);
+    let inert = $derived(
+        msg.content.kind === "deleted_content" ||
+            msg.content.kind === "blocked_content" ||
+            collapsed,
+    );
+    let canTip = $derived(!me && confirmed && !inert && !failed);
+    let inThread = $derived(threadRootMessage !== undefined);
+    let threadRootMessageIndex = $derived(
+        threadRootMessage?.messageId === msg.messageId
+            ? undefined
+            : threadRootMessage?.messageIndex,
+    );
+    let mediaDimensions = $derived(extractDimensions(msg.content));
+    let fill = $derived(client.fillMessage(msg));
+    let showAvatar = $derived($screenWidth !== ScreenWidth.ExtraExtraSmall);
+    let translated = $derived($translationStore.has(msg.messageId));
+    let threadSummary = $derived(msg.thread);
+    let msgUrl = $derived(
+        `${routeForMessage($chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`,
+    );
+    let isProposal = $derived(msg.content.kind === "proposal_content");
+    let isPrize = $derived(msg.content.kind === "prize_content");
+    let isP2PSwap = $derived(msg.content.kind === "p2p_swap_content");
+    let canEdit = $derived(
+        me && supportsEdit && !msg.deleted && client.contentTypeSupportsEdit(msg.content.kind),
+    );
+    let undeleting = $derived($undeletingMessagesStore.has(msg.messageId));
+    let deletedByMe = $derived(
+        msg.content.kind === "deleted_content" && msg.content.deletedBy == user.userId,
+    );
+    let permanentlyDeleted = $derived(
+        deletedByMe &&
+            me &&
+            msg.content.kind === "deleted_content" &&
+            Number(msg.content.timestamp) < $now - 5 * 60 * 1000,
+    );
+    let canRevealDeleted = $derived(deletedByMe && !undeleting && !permanentlyDeleted);
+    let canRevealBlocked = $derived(msg.content.kind === "blocked_content");
+    let messageContext = $derived({ chatId, threadRootMessageIndex });
+    let ephemeral = $derived($ephemeralMessages.get(messageContext)?.has(msg.messageId) ?? false);
+    let showChatMenu = $derived(
+        (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
+    );
+    let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
+    let senderDisplayName = $derived(client.getDisplayName(sender, $communityMembers));
+    let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
+    let canBlockUser = $derived(canBlockUsers && !$currentChatBlockedUsers.has(msg.sender));
+    let edited = $derived(msg.edited && !botContext?.finalised);
+    let canShare = $derived(canShareMessage(msg.content));
+    let canForward = $derived(client.canForward(msg.content));
+    let canTranslate = $derived((client.getMessageText(msg.content) ?? "").length > 0);
 </script>
 
-<svelte:window on:resize={recalculateMediaDimensions} />
+<svelte:window onresize={recalculateMediaDimensions} />
 
 {#if botProfile !== undefined}
     <BotProfile {...botProfile} />
@@ -433,13 +484,13 @@
 {#if showEmojiPicker && canReact}
     <Overlay onClose={() => (showEmojiPicker = false)} dismissible>
         <ModalContent hideFooter hideHeader fill>
-            <span slot="body">
+            {#snippet body()}
                 <div class="emoji-header">
                     <h4><Translatable resourceKey={i18nKey("chooseReaction")} /></h4>
                     <span
                         title={$_("close")}
                         class="close-emoji"
-                        on:click={() => (showEmojiPicker = false)}>
+                        onclick={() => (showEmojiPicker = false)}>
                         <HoverIcon>
                             <Close size={$iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
@@ -449,8 +500,7 @@
                     on:emojiSelected={selectReaction}
                     on:skintoneChanged={(ev) => quickReactions.reload(ev.detail)}
                     mode={"reaction"} />
-            </span>
-            <span slot="footer" />
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}
@@ -495,7 +545,7 @@
                         {#if first}
                             <!-- svelte-ignore a11y_click_events_have_key_events -->
                             <!-- svelte-ignore a11y_no_static_element_interactions -->
-                            <div class="avatar" on:click={openUserProfile}>
+                            <div class="avatar" onclick={openUserProfile}>
                                 <Avatar
                                     url={client.userAvatarUrl(sender)}
                                     userId={msg.sender}
@@ -516,10 +566,10 @@
                     }`}
                     class:p2pSwap={isP2PSwap}
                     class:proposal={isProposal && !inert}>
-                    <!-- svelte-ignore a11y-no-static-element-interactions -->
+                    <!-- svelte-ignore a11y_no_static_element_interactions -->
                     <div
                         bind:this={msgBubbleElement}
-                        on:dblclick={doubleClickMessage}
+                        ondblclick={doubleClickMessage}
                         use:longpress={() => messageMenu?.showMenu()}
                         class="message-bubble"
                         class:focused
@@ -619,7 +669,6 @@
                             on:upgrade
                             on:verifyHumanity
                             on:claimDailyChit
-                            on:startVideoCall
                             {onExpandMessage} />
 
                         {#if !inert && !isPrize}
@@ -721,7 +770,7 @@
 
                 {#if !collapsed && !msg.deleted && canReact && !failed}
                     <div class="actions" class:touch={isTouchOnlyDevice}>
-                        <div class="reaction" on:click={() => (showEmojiPicker = true)}>
+                        <div class="reaction" onclick={() => (showEmojiPicker = true)}>
                             <HoverIcon>
                                 <EmoticonOutline size={$iconSize} color={"var(--icon-txt)"} />
                             </HoverIcon>

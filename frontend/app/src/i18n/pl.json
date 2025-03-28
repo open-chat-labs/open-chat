@@ -1602,6 +1602,11 @@
         "owner": "Właściciele"
     },
     "roleChanged": "{changedBy} zmienił rolę {changed} na {newRole}",
+    "rotationChallenge": {
+        "info": "Obróć obraz po lewej stronie, aż będzie odpowiadał kątowi obrazu po prawej stronie",
+        "infoMobile": "Obróć górny obraz, aż będzie odpowiadał kątowi dolnego obrazu",
+        "title": "Zrównoważyć boty"
+    },
     "rules": {
         "accept": "Zaakceptować",
         "acceptTitle": "Zasady czatu",

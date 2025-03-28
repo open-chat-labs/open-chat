@@ -232,6 +232,22 @@ body {
     }
 }
 
+// this is designed to target only iOS devices where the app is saved to home screen
+// and the device does not have a home button (hence the min-height check)
+// and the virtual keyboard is not visible
+@supports (-webkit-touch-callout: none) {
+    @media (display-mode: standalone) and (min-height: 668px) {
+        body:not(.keyboard) {
+            $inset: 32px;
+            padding-bottom: $inset;
+
+            .modal-content {
+                padding-bottom: $inset;
+            }
+        }
+    }
+}
+
 h1,
 h2,
 h3,
