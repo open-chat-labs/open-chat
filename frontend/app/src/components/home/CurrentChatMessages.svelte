@@ -320,18 +320,12 @@
                                 chat.public}
                             pinned={isPinned($currentChatPinnedMessages, evt)}
                             editing={$currentChatEditingEvent === evt}
-                            on:chatWith
                             onReplyTo={replyTo}
-                            onReplyPrivatelyTo={(r) => dispatch("replyPrivatelyTo", r)}
                             on:removePreview
                             on:editEvent={onEditEvent}
                             on:goToMessageIndex={goToMessageIndex}
                             onExpandMessage={() => toggleMessageExpansion(evt, true)}
                             on:collapseMessage={() => toggleMessageExpansion(evt, false)}
-                            on:upgrade
-                            on:verifyHumanity
-                            on:claimDailyChit
-                            on:forward
                             on:retrySend
                             event={evt} />
                     {/each}

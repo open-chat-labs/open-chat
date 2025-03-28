@@ -189,9 +189,7 @@
         on:makeMeme
         on:clearAttachment
         on:fileSelected={(ev) => onFileSelected(ev.detail)}
-        on:audioCaptured
-        on:joinGroup
-        on:upgrade />
+        on:audioCaptured />
 </div>
 
 <style lang="scss">

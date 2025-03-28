@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import Button from "../Button.svelte";
     import {
         isLocked,
@@ -14,9 +14,9 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import AccessGateIconsForChat from "./access/AccessGateIconsForChat.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     export let chat: MultiUserChat;
     export let joining: MultiUserChat | undefined;
@@ -31,7 +31,7 @@
     let freezingInProgress = false;
 
     function joinGroup() {
-        dispatch("joinGroup", {
+        publish("joinGroup", {
             group: chat,
             select: false,
         });

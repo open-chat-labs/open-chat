@@ -25,6 +25,7 @@
     import Translatable from "../../Translatable.svelte";
     import { notificationsSupported } from "../../../utils/notifications";
     import { toastStore } from "../../../stores/toast";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -43,14 +44,14 @@
     $: isCommunityMuted = $chatSummariesListStore.every((c) => c.membership.notificationsMuted);
 
     function leaveCommunity() {
-        dispatch("leaveCommunity", {
+        publish("leaveCommunity", {
             kind: "leave_community",
             communityId: community.id,
         });
     }
 
     function deleteCommunity() {
-        dispatch("deleteCommunity", {
+        publish("deleteCommunity", {
             kind: "delete_community",
             communityId: community.id,
             doubleCheck: {
@@ -61,7 +62,7 @@
     }
 
     function communityDetails() {
-        dispatch("communityDetails", community);
+        publish("communityDetails", community);
     }
 
     function markAllRead() {
@@ -69,11 +70,11 @@
     }
 
     function newChannel() {
-        canCreateChannel && dispatch("newChannel", false);
+        canCreateChannel && publish("newChannel", false);
     }
 
     function embedContent() {
-        canCreateChannel && dispatch("newChannel", true);
+        canCreateChannel && publish("newChannel", true);
     }
 
     function showMembers() {
@@ -85,7 +86,7 @@
     }
 
     function editCommunity() {
-        canEdit && dispatch("editCommunity", community);
+        canEdit && publish("editCommunity", community);
     }
 
     function muteAllChannels() {

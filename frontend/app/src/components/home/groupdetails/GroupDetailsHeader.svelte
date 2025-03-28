@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
@@ -11,39 +10,42 @@
     import type { Level } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import { publish } from "@src/utils/pubsub";
 
-    export let canEdit: boolean;
-    export let level: Level;
-
-    const dispatch = createEventDispatcher();
-    function close() {
-        dispatch("close");
+    interface Props {
+        canEdit: boolean;
+        level: Level;
+        onEditGroup: () => void;
+        onClose: () => void;
     }
+
+    let { canEdit, level, onEditGroup, onClose }: Props = $props();
+
     function showGroupMembers() {
-        dispatch("showGroupMembers");
+        publish("showGroupMembers");
     }
     function editGroup() {
         if (canEdit) {
-            dispatch("editGroup");
+            onEditGroup();
         }
     }
 </script>
 
 <SectionHeader border={false} flush={!$mobileWidth} shadow>
-    <span title={$_("members")} class="members" on:click={showGroupMembers}>
+    <span title={$_("members")} class="members" onclick={showGroupMembers}>
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
     {#if canEdit}
-        <span title={$_("group.edit", { values: { level } })} class="edit" on:click={editGroup}>
+        <span title={$_("group.edit", { values: { level } })} class="edit" onclick={editGroup}>
             <HoverIcon>
                 <PencilOutline size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}
     <h4><Translatable resourceKey={i18nKey("groupDetails", undefined, level)} /></h4>
-    <span title={$_("close")} class="close" on:click={close}>
+    <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>

@@ -1,6 +1,6 @@
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
-    import MenuIcon from "../../MenuIconLegacy.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
@@ -50,18 +50,10 @@
         globalStateStore as globalState,
         favouritesStore,
     } from "openchat-client";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;
-
-    interface Props {
-        onProfile: () => void;
-        onClaimDailyChit: () => void;
-        onWallet: () => void;
-        onUpgrade: () => void;
-    }
-
-    let { onProfile, onClaimDailyChit, ...rest }: Props = $props();
 
     let user = $derived($userStore.get($createdUser.userId));
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
@@ -128,7 +120,7 @@
 
     function viewProfile() {
         activityFeedShowing.set(false);
-        onProfile();
+        publish("profile");
     }
 
     function exploreCommunities() {
@@ -177,14 +169,14 @@
         <LeftNavItem separator label={i18nKey("communities.mainMenu")}>
             <div class="hover logo">
                 <MenuIcon position="right" align="start" gutter={20}>
-                    <span slot="icon">
+                    {#snippet menuIcon()}
                         <HoverIcon>
                             <Hamburger size={iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
-                    </span>
-                    <span slot="menu">
-                        <MainMenu {...rest} {onProfile} />
-                    </span>
+                    {/snippet}
+                    {#snippet menuItems()}
+                        <MainMenu />
+                    {/snippet}
                 </MenuIcon>
             </div>
         </LeftNavItem>
@@ -231,7 +223,7 @@
                     label={i18nKey(
                         claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
                     )}
-                    onClick={onClaimDailyChit}>
+                    onClick={() => publish("claimDailyChit")}>
                     <div class="hover streak">
                         <LighteningBolt enabled={claimChitAvailable} />
                     </div>

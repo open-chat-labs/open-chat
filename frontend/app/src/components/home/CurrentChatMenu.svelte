@@ -141,7 +141,7 @@
     }
 
     function toggleMuteNotifications(mute: boolean) {
-        dispatch("toggleMuteNotifications", { chatId: selectedChatSummary.id, mute });
+        publish("toggleMuteNotifications", { chatId: selectedChatSummary.id, mute });
     }
 
     function addToFavourites() {
@@ -169,11 +169,11 @@
     }
 
     function showProposalFilters() {
-        dispatch("showProposalFilters");
+        publish("showProposalFilters");
     }
 
     function showGroupMembers() {
-        dispatch("showGroupMembers", true);
+        publish("showGroupMembers");
     }
 
     function blockUser() {
@@ -201,12 +201,12 @@
     }
 
     function showInviteGroupUsers() {
-        dispatch("showInviteGroupUsers", true);
+        publish("showInviteGroupUsers", true);
     }
 
     function leaveGroup() {
         if (selectedChatSummary.kind === "direct_chat") return;
-        dispatch("leaveGroup", {
+        publish("leaveGroup", {
             kind: "leave",
             chatId: selectedChatSummary.id,
             level: selectedChatSummary.level,
@@ -215,10 +215,10 @@
 
     function convertToCommunity() {
         if (!$isDiamond) {
-            dispatch("upgrade");
+            publish("upgrade");
         } else {
             if (selectedChatSummary.kind === "group_chat") {
-                dispatch("convertGroupToCommunity", selectedChatSummary);
+                publish("convertGroupToCommunity", selectedChatSummary);
             }
         }
     }
@@ -264,7 +264,7 @@
     }
 
     function makeProposal() {
-        dispatch("makeProposal");
+        publish("makeProposal");
     }
 
     function startVideoCall() {
