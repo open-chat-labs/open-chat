@@ -13,7 +13,6 @@ import {
 import { Principal } from "@dfinity/principal";
 import { toCanisterResponseError } from "../error";
 import type { Static, TSchema } from "@sinclair/typebox";
-import { AssertError } from "@sinclair/typebox/value";
 import { CanisterAgent } from "./base";
 import { typeboxValidate } from "../../utils/typebox";
 import { deserializeFromMsgPack, serializeToMsgPack } from "../../utils/msgpack";
@@ -189,16 +188,7 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
         validator: Resp,
     ): Out {
         const response = deserializeFromMsgPack(new Uint8Array(responseBytes));
-        try {
-            const validated = typeboxValidate(response, validator);
-            return mapper(validated);
-        } catch (err) {
-            console.error(
-                "Validation failed for response: ",
-                response,
-                err instanceof AssertError ? err.error : undefined,
-            );
-            throw err;
-        }
+        const validated = typeboxValidate(response, validator);
+        return mapper(validated);
     }
 }
