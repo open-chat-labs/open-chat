@@ -124,7 +124,7 @@
     {:else if $selectedChatId === undefined}
         {#if noChat}
             <div class="no-chat" in:fade>
-                <NoChatSelected on:newchat />
+                <NoChatSelected />
             </div>
         {/if}
     {:else if installingBot && botId && $selectedChatId.kind === "direct_chat"}
