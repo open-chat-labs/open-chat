@@ -333,8 +333,7 @@
     }
 
     .btc-network-fee {
-        @include font(light, normal, fs-60);
-        color: var(--txt-light);
+        @include font(book, normal, fs-60);
         margin-left: auto;
     }
 </style>
