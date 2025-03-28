@@ -46,7 +46,7 @@
     }
 
     function joinGroup(group: GroupChatSummary) {
-        dispatch("joinGroup", {
+        publish("joinGroup", {
             group,
             select: false,
         });

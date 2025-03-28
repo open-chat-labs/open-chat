@@ -242,9 +242,9 @@
             $identityState.postLogin?.kind === "join_group" &&
             $chatsInitialised
         ) {
-            const ev = new CustomEvent("joinGroup", { detail: { ...$identityState.postLogin } });
+            const join = { ...$identityState.postLogin };
             client.clearPostLoginState();
-            tick().then(() => joinGroup(ev));
+            tick().then(() => joinGroup(join));
         }
     }
 
@@ -273,6 +273,7 @@
             subscribe("wallet", showWallet),
             subscribe("profile", showProfile),
             subscribe("claimDailyChit", claimDailyChit),
+            subscribe("joinGroup", joinGroup),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -447,7 +448,7 @@
             resetRightPanel();
 
             if (autojoin && chat.kind !== "direct_chat") {
-                joinGroup(new CustomEvent("joinGroup", { detail: { group: chat, select: true } }));
+                joinGroup({ group: chat, select: true });
             }
         }
     }
@@ -882,17 +883,15 @@
         }
     }
 
-    async function joinGroup(
-        ev: CustomEvent<{ group: MultiUserChat; select: boolean }>,
-    ): Promise<void> {
+    async function joinGroup(detail: { group: MultiUserChat; select: boolean }): Promise<void> {
         if ($anonUser) {
             client.updateIdentityState({
                 kind: "logging_in",
-                postLogin: { kind: "join_group", ...ev.detail },
+                postLogin: { kind: "join_group", ...detail },
             });
             return;
         }
-        const { group, select } = ev.detail;
+        const { group, select } = detail;
 
         // it's possible that we got here via a postLogin capture in which case it's possible
         // that we are actually already a member of this group, so we should double check here
@@ -1258,7 +1257,6 @@
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:showProposalFilters={showProposalFilters}
-            on:joinGroup={joinGroup}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage}

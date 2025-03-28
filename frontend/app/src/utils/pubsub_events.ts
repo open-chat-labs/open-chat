@@ -5,6 +5,7 @@ import type {
     DirectChatIdentifier,
     EnhancedReplyContext,
     Level,
+    MultiUserChat,
     MultiUserChatIdentifier,
     ResourceKey,
 } from "openchat-client";
@@ -47,4 +48,8 @@ export type PubSubEvents = {
     wallet: undefined;
     profile: undefined;
     claimDailyChit: undefined;
+    joinGroup: {
+        group: MultiUserChat;
+        select: boolean;
+    };
 };

@@ -466,7 +466,6 @@
             {blocked}
             {messageContext}
             externalContent={externalUrl !== undefined}
-            on:joinGroup
             on:cancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
             on:clearAttachment={() =>
                 draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}

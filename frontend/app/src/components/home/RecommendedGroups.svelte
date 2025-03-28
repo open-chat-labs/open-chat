@@ -83,8 +83,6 @@
             {#each hotGroups.data as group (group.id.groupId)}
                 <RecommendedGroup
                     on:dismissRecommendation={dismissRecommendation}
-                    on:joinGroup
-                    on:leaveGroup
                     {group}
                     {joining} />
             {/each}

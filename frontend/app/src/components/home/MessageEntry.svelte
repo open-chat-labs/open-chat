@@ -593,7 +593,7 @@
             <Translatable resourceKey={i18nKey("userIsBlocked")} />
         </div>
     {:else if (preview || lapsed) && chat.kind !== "direct_chat"}
-        <PreviewFooter {lapsed} {joining} {chat} on:joinGroup />
+        <PreviewFooter {lapsed} {joining} {chat} />
     {:else if externalContent}
         <div class="disclaimer">
             <Alert size={$iconSize} color={"var(--warn"} />

@@ -440,7 +440,6 @@
         mode={"thread"}
         {blocked}
         {messageContext}
-        on:joinGroup
         on:cancelPreview
         on:cancelReply={cancelReply}
         on:clearAttachment={clearAttachment}

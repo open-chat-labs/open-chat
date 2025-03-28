@@ -110,7 +110,7 @@
     class:offset={$layoutStore.showNav && !$layoutStore.showLeft}
     class:halloween={$currentTheme.name === "halloween"}>
     {#if $pathParams.kind === "explore_groups_route"}
-        <RecommendedGroups {joining} on:joinGroup on:leaveGroup />
+        <RecommendedGroups {joining} />
     {:else if $pathParams.kind === "communities_route"}
         <ExploreCommunities on:createCommunity />
     {:else if $pathParams.kind === "admin_route"}
@@ -143,7 +143,6 @@
             on:clearSelection
             on:leaveGroup
             on:showProposalFilters
-            on:joinGroup
             on:toggleMuteNotifications
             on:goToMessageIndex
             on:convertGroupToCommunity
