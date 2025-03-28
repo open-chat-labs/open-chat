@@ -291,7 +291,6 @@
 
 {#if profile !== undefined}
     <Overlay dismissible {onClose}>
-        <h1>cunt</h1>
         <ModalContent
             closeIcon
             fill
@@ -320,16 +319,16 @@
                                 <WithRole
                                     userId={user.userId}
                                     chatMembers={$chatMembersMap}
-                                    communityMembers={$communityMembers}
-                                    let:chatRole
-                                    let:communityRole>
-                                    <RoleIcon level="community" popup role={communityRole} />
-                                    <RoleIcon
-                                        level={$selectedChat.kind === "channel"
-                                            ? "channel"
-                                            : "group"}
-                                        popup
-                                        role={chatRole} />
+                                    communityMembers={$communityMembers}>
+                                    {#snippet children({ chatRole, communityRole })}
+                                        <RoleIcon level="community" popup role={communityRole} />
+                                        <RoleIcon
+                                            level={$selectedChat.kind === "channel"
+                                                ? "channel"
+                                                : "group"}
+                                            popup
+                                            role={chatRole} />
+                                    {/snippet}
                                 </WithRole>
                             {/if}
                         </div>
