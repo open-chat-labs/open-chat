@@ -31,8 +31,6 @@
                 on:deleteGroup
                 on:editCommunity
                 on:leaveGroup
-                on:askToSpeak
-                on:hangup
                 on:newChannel />
         {/if}
     </div>

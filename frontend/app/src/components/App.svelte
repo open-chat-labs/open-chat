@@ -1,7 +1,7 @@
 <script lang="ts">
     import "@styles/global.scss";
 
-    import { setContext } from "svelte";
+    import { onMount, setContext } from "svelte";
     import "@i18n/i18n";
     import "@utils/markdown";
     import "@utils/scream";
@@ -55,6 +55,7 @@
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import { reviewingTranslations } from "@i18n/i18n";
     import { trackMouseMovement } from "@utils/trace";
+    import { subscribe } from "@src/utils/pubsub";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -119,6 +120,36 @@
     let upgrading = $derived(
         $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user",
     );
+
+    let lastScrollY = $state(window.scrollY);
+
+    onMount(() => {
+        const unsubs = [
+            subscribe("startVideoCall", startVideoCall),
+            subscribe("hangup", hangup),
+            subscribe("askToSpeak", askToSpeak),
+        ];
+        window.addEventListener("scroll", trackVirtualKeyboard);
+        window.addEventListener("resize", trackVirtualKeyboard);
+        return () => {
+            window.removeEventListener("scroll", trackVirtualKeyboard);
+            window.removeEventListener("resize", trackVirtualKeyboard);
+            unsubs.forEach((u) => u());
+        };
+    });
+
+    // We will interpret a significant leap in window.scrollY to indicate the opening of the virtual keyboard
+    function trackVirtualKeyboard() {
+        const threshold = 100; // prevent accidental triggering
+        const delta = window.scrollY - lastScrollY;
+        const keyboardVisible = delta > threshold;
+        lastScrollY = window.scrollY;
+        if (keyboardVisible) {
+            document.body.classList.add("keyboard");
+        } else {
+            document.body.classList.remove("keyboard");
+        }
+    }
 
     $effect(() => {
         // subscribe to the rtl store so that we can set the overall page direction at the right time
@@ -451,8 +482,8 @@
         calculateHeight();
     }
 
-    function startVideoCall(ev: CustomEvent<{ chat: ChatSummary; join: boolean }>) {
-        videoCallElement?.startOrJoinVideoCall(ev.detail.chat, ev.detail.join);
+    function startVideoCall(payload: { chat: ChatSummary; join: boolean }) {
+        videoCallElement?.startOrJoinVideoCall(payload.chat, payload.join);
     }
 
     function askToSpeak() {
@@ -504,11 +535,7 @@
     <Upgrading />
 {:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user" || $identityState.kind === "challenging"}
     {#if !$isLoading || $reviewingTranslations}
-        <Router
-            on:hangup={hangup}
-            on:askToSpeak={askToSpeak}
-            on:startVideoCall={startVideoCall}
-            {showLandingPage} />
+        <Router {showLandingPage} />
     {/if}
 {/if}
 

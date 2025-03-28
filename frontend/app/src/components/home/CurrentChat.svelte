@@ -421,7 +421,6 @@
                 on:showGroupMembers
                 on:leaveGroup
                 on:upgrade
-                on:startVideoCall
                 on:createPoll={createPoll}
                 on:searchChat={searchChat}
                 on:convertGroupToCommunity
@@ -445,7 +444,6 @@
             on:claimDailyChit
             on:forward
             on:retrySend
-            on:startVideoCall
             on:removePreview={onRemovePreview}
             {privateChatPreview}
             {chat}

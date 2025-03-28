@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+
 ## [[2.0.1655](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1655-identity)] - 2025-03-17
 
 ### Added

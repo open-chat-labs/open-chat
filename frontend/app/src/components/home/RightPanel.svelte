@@ -570,7 +570,6 @@
             rootEvent={threadRootEvent}
             chat={$selectedChat}
             on:removePreview
-            on:startVideoCall
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}
         <ProposalGroupFilters selectedChat={$selectedChat} on:close={popRightPanelHistory} />
@@ -627,7 +626,7 @@
 
         &.modal {
             background: var(--panel-right-modal);
-            @include fullHeight();
+            height: 100%;
             min-width: 500px;
 
             &.resized {
