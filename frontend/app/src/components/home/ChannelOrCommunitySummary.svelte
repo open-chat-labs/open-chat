@@ -46,11 +46,7 @@
 <ScopeToggle flush bind:selectedTab>
     <div slot="header">
         {#if selectedTab === "community"}
-            <CommunityDetailsHeader
-                on:editCommunity
-                {community}
-                canEdit={canEditCommunity}
-                level={"community"} />
+            <CommunityDetailsHeader {community} canEdit={canEditCommunity} level={"community"} />
         {:else if selectedTab === "channel"}
             <GroupDetailsHeader
                 level={"channel"}

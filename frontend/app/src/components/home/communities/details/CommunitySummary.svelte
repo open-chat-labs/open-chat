@@ -28,11 +28,7 @@
 </script>
 
 {#if $selectedCommunity}
-    <CommunityDetailsHeader
-        on:editCommunity
-        community={$selectedCommunity}
-        {canEdit}
-        level={"community"} />
+    <CommunityDetailsHeader community={$selectedCommunity} {canEdit} level={"community"} />
     <div class="body">
         <CommunityCard
             id={$selectedCommunity.id.communityId}

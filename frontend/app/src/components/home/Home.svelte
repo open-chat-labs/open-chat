@@ -268,6 +268,7 @@
             subscribe("deleteGroup", triggerConfirm),
             subscribe("deleteCommunity", triggerConfirm),
             subscribe("communityDetails", communityDetails),
+            subscribe("editCommunity", editCommunity),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1164,10 +1165,10 @@
         };
     }
 
-    function editCommunity(ev: CustomEvent<CommunitySummary>) {
+    function editCommunity(community: CommunitySummary) {
         modal = {
             kind: "edit_community",
-            community: ev.detail,
+            community,
             communityRules: $currentCommunityRules ?? defaultChatRules("community"),
         };
     }
@@ -1252,7 +1253,6 @@
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:newChannel={newChannel}
-            on:editCommunity={editCommunity}
             on:leaveCommunity={onTriggerConfirm}
             on:leaveGroup={onTriggerConfirm} />
     {/if}
@@ -1276,7 +1276,6 @@
     <RightPanel
         on:goToMessageIndex={goToMessageIndex}
         on:editGroup={editGroup}
-        on:editCommunity={editCommunity}
         on:newChannel={newChannel}
         on:groupCreated={groupCreated} />
 </main>

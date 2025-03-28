@@ -54,7 +54,6 @@
         <CommunityMenu
             on:newChannel
             on:leaveCommunity
-            on:editCommunity
             on:markAllRead
             {canMarkAllRead}
             {community} />

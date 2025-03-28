@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import SectionHeader from "../../../SectionHeader.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -16,12 +15,12 @@
     import { popRightPanelHistory, pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     export let community: CommunitySummary;
     export let canEdit: boolean;
     export let level: Level;
 
-    const dispatch = createEventDispatcher();
     function close() {
         popRightPanelHistory();
     }
@@ -33,7 +32,7 @@
     }
     function editCommunity() {
         if (canEdit) {
-            dispatch("editCommunity", community);
+            publish("editCommunity", community);
         }
     }
 </script>

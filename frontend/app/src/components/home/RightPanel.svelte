@@ -400,7 +400,6 @@
                 community={$selectedCommunity}
                 selectedTab="channel"
                 on:editGroup
-                on:editCommunity
                 on:close={popRightPanelHistory} />
         {:else}
             <GroupDetails
@@ -564,10 +563,9 @@
                 memberCount={$currentChatMembers.length}
                 selectedTab="community"
                 on:editGroup
-                on:editCommunity
                 on:close={popRightPanelHistory} />
         {:else}
-            <CommunityDetails on:editCommunity />
+            <CommunityDetails />
         {/if}
     {:else if lastState.kind === "community_filters"}
         <CommunityFilters on:close={popRightPanelHistory} />

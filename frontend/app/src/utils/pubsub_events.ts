@@ -32,4 +32,5 @@ export type PubSubEvents = {
         doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
     communityDetails: CommunitySummary;
+    editCommunity: CommunitySummary;
 };

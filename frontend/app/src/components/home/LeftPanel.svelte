@@ -24,7 +24,6 @@
                 on:wallet
                 on:toggleMuteNotifications
                 on:leaveCommunity
-                on:editCommunity
                 on:leaveGroup
                 on:newChannel />
         {/if}

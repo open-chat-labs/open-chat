@@ -86,7 +86,7 @@
     }
 
     function editCommunity() {
-        canEdit && dispatch("editCommunity", community);
+        canEdit && publish("editCommunity", community);
     }
 
     function muteAllChannels() {
