@@ -26,6 +26,7 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -51,7 +52,7 @@
         });
     }
     function leaveGroup(group: GroupChatSummary) {
-        dispatch("leaveGroup", { kind: "leave", chatId: group.id });
+        publish("leaveGroup", { kind: "leave", chatId: group.id, level: "group" });
     }
 </script>
 

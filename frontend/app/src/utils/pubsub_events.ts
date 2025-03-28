@@ -38,4 +38,9 @@ export type PubSubEvents = {
         communityId: CommunityIdentifier;
     };
     makeProposal: undefined;
+    leaveGroup: {
+        kind: "leave";
+        chatId: MultiUserChatIdentifier;
+        level: Level;
+    };
 };

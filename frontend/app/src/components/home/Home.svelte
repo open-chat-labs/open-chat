@@ -16,7 +16,6 @@
         Notification,
         CandidateGroupChat,
         EventWrapper,
-        ChatType,
         CommunitySummary,
         Level,
         ChatIdentifier,
@@ -161,7 +160,6 @@
     type ConfirmLeaveEvent = {
         kind: "leave";
         chatId: MultiUserChatIdentifier;
-        chatType: ChatType;
         level: Level;
     };
 
@@ -264,12 +262,13 @@
             subscribe("showGroupMembers", showGroupMembers),
             subscribe("upgrade", upgrade),
             subscribe("verifyHumanity", verifyHumanity),
-            subscribe("deleteGroup", triggerConfirm),
-            subscribe("deleteCommunity", triggerConfirm),
+            subscribe("deleteGroup", onTriggerConfirm),
+            subscribe("deleteCommunity", onTriggerConfirm),
             subscribe("communityDetails", communityDetails),
             subscribe("editCommunity", editCommunity),
-            subscribe("leaveCommunity", triggerConfirm),
+            subscribe("leaveCommunity", onTriggerConfirm),
             subscribe("makeProposal", showMakeProposalModal),
+            subscribe("leaveGroup", onTriggerConfirm),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -679,12 +678,8 @@
         }
     }
 
-    function triggerConfirm(detail: ConfirmActionEvent) {
+    function onTriggerConfirm(detail: ConfirmActionEvent) {
         confirmActionEvent = detail;
-    }
-
-    function onTriggerConfirm(ev: CustomEvent<ConfirmActionEvent>) {
-        triggerConfirm(ev.detail);
     }
 
     function onConfirmAction(yes: boolean): Promise<void> {
@@ -1253,8 +1248,7 @@
             on:wallet={showWallet}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
-            on:newChannel={newChannel}
-            on:leaveGroup={onTriggerConfirm} />
+            on:newChannel={newChannel} />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel
@@ -1262,7 +1256,6 @@
             bind:currentChatMessages
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
-            on:leaveGroup={onTriggerConfirm}
             on:showProposalFilters={showProposalFilters}
             on:joinGroup={joinGroup}
             on:claimDailyChit={claimDailyChit}

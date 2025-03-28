@@ -59,6 +59,7 @@
     import VideoCallIcon from "./video/VideoCallIcon.svelte";
     import Badges from "./profile/Badges.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -69,7 +70,6 @@
         onToggleMuteNotifications: (chatId: ChatIdentifier, mute: boolean) => void;
         onChatSelected: (chat: ChatSummary) => void;
         onUnarchiveChat: (chatId: ChatIdentifier) => void;
-        onLeaveGroup: (group: { kind: "leave"; chatId: ChatIdentifier; level: Level }) => void;
     }
 
     let {
@@ -79,7 +79,6 @@
         onToggleMuteNotifications,
         onChatSelected,
         onUnarchiveChat,
-        onLeaveGroup,
     }: Props = $props();
 
     let userId = $derived($user.userId);
@@ -329,7 +328,7 @@
 
     function leaveGroup() {
         if (chatSummary.kind === "direct_chat") return;
-        onLeaveGroup({
+        publish("leaveGroup", {
             kind: "leave",
             chatId: chatSummary.id,
             level: chatSummary.level,

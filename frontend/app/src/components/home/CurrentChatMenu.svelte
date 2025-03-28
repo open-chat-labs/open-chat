@@ -206,7 +206,7 @@
 
     function leaveGroup() {
         if (selectedChatSummary.kind === "direct_chat") return;
-        dispatch("leaveGroup", {
+        publish("leaveGroup", {
             kind: "leave",
             chatId: selectedChatSummary.id,
             level: selectedChatSummary.level,

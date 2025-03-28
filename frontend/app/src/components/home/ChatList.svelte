@@ -292,7 +292,6 @@
                         selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
                         onChatSelected={chatSelected}
-                        onLeaveGroup={(ev) => dispatch("leaveGroup", ev)}
                         onUnarchiveChat={(chatId) => dispatch("unarchiveChat", chatId)}
                         onToggleMuteNotifications={(chatId, mute) =>
                             dispatch("toggleMuteNotifications", { chatId, mute })} />
