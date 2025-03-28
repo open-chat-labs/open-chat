@@ -19,7 +19,7 @@
         hasPresence,
     } from "../../../stores/video";
     import page from "page";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import Avatar from "../../Avatar.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Microphone from "svelte-material-icons/Microphone.svelte";
@@ -34,9 +34,9 @@
     import TooltipPopup from "../../TooltipPopup.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     $: show =
         $activeVideoCall?.chatId !== undefined &&
@@ -55,7 +55,7 @@
     }
 
     function askToSpeak() {
-        dispatch("askToSpeak");
+        publish("askToSpeak");
     }
 
     function normaliseChatSummary(chatId: ChatIdentifier | undefined) {
@@ -115,7 +115,7 @@
     }
 
     function hangup() {
-        dispatch("hangup");
+        publish("hangup");
     }
 </script>
 

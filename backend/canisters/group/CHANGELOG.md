@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - On bot uninstallation also delete any api key ([#7583](https://github.com/open-chat-labs/open-chat/pull/7583))
+- Fix small gate payments which were failing to be transferred to owner ([#7686](https://github.com/open-chat-labs/open-chat/pull/7686))
 
 ## [[2.0.1645](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1645-group)] - 2025-03-12
 

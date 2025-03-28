@@ -26,11 +26,11 @@ pub fn init(enable_trace: bool) {
         panic!("Logger already initialized");
     }
 
-    let build_writer = |level| (move || LogWriter::new(level)).with_max_level(level);
+    let build_writer = |level, enabled| (move || LogWriter::new(level, enabled)).with_max_level(level);
 
-    let writer = build_writer(Level::ERROR)
-        .and(build_writer(Level::INFO))
-        .and(build_writer(Level::TRACE));
+    let writer = build_writer(Level::ERROR, true)
+        .and(build_writer(Level::INFO, true))
+        .and(build_writer(Level::TRACE, enable_trace));
 
     let level_filter = if enable_trace { LevelFilter::TRACE } else { LevelFilter::INFO };
 
@@ -58,8 +58,10 @@ pub fn init_with_logs(enable_trace: bool, errors: Vec<LogEntry>, logs: Vec<LogEn
     for log in logs {
         LOG.with_borrow_mut(|l| l.append(log));
     }
-    for trace in traces {
-        TRACE.with_borrow_mut(|t| t.append(trace));
+    if enable_trace {
+        for trace in traces {
+            TRACE.with_borrow_mut(|t| t.append(trace));
+        }
     }
 }
 
@@ -121,13 +123,15 @@ pub struct LogEntry {
 
 struct LogWriter {
     level: Level,
+    enabled: bool,
     buffer: Vec<u8>,
 }
 
 impl LogWriter {
-    fn new(level: Level) -> LogWriter {
+    fn new(level: Level, enabled: bool) -> LogWriter {
         LogWriter {
             level,
+            enabled,
             buffer: Vec::new(),
         }
     }
@@ -135,28 +139,34 @@ impl LogWriter {
 
 impl Write for LogWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.buffer.extend(buf);
-        Ok(buf.len())
+        if self.enabled {
+            self.buffer.extend(buf);
+            Ok(buf.len())
+        } else {
+            Ok(0)
+        }
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        let buffer = std::mem::take(&mut self.buffer);
-        let json = String::from_utf8(buffer).unwrap();
+        if self.enabled {
+            let buffer = std::mem::take(&mut self.buffer);
+            let json = String::from_utf8(buffer).unwrap();
 
-        let log_entry = LogEntry {
-            timestamp: canister_time::now_millis(),
-            message: json,
-        };
+            let log_entry = LogEntry {
+                timestamp: canister_time::now_millis(),
+                message: json,
+            };
 
-        let sink = if self.level == Level::TRACE {
-            &TRACE
-        } else if self.level == Level::INFO {
-            &LOG
-        } else {
-            &ERRORS
-        };
+            let sink = if self.level == Level::TRACE {
+                &TRACE
+            } else if self.level == Level::INFO {
+                &LOG
+            } else {
+                &ERRORS
+            };
 
-        sink.with_borrow_mut(|s| s.append(log_entry));
+            sink.with_borrow_mut(|s| s.append(log_entry));
+        }
         Ok(())
     }
 

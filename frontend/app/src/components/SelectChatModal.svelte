@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { rtlStore } from "../stores/rtl";
     import type {
         ChatIdentifier,
@@ -33,7 +33,11 @@
     import Badges from "./home/profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
+
+    interface Props {
+        onSelect: (chatId: ChatIdentifier) => void;
+        onClose: () => void;
+    }
 
     type ShareTo = {
         directChats: ShareChat[];
@@ -64,19 +68,17 @@
         channels: ShareChat[];
     };
 
-    let searchTerm = "";
-    let targets: ShareTo = {
+    let { onClose, onSelect }: Props = $props();
+    let searchTerm = $state("");
+    let searchTermLower = $derived(searchTerm.toLowerCase());
+    let targets = $state<ShareTo>({
         directChats: [],
         groupChats: [],
         favourites: [],
         communities: [],
-    };
+    });
 
-    $: searchTermLower = searchTerm.toLowerCase();
-
-    let initialGlobalState: GlobalState | undefined = undefined;
-
-    $: {
+    $effect(() => {
         if (initialGlobalState === undefined && $globalState !== undefined) {
             initialGlobalState = $globalState;
         }
@@ -86,8 +88,10 @@
                 (t) => (targets = t),
             );
         }
-    }
-    $: noTargets = getNumberOfTargets(targets) === 0;
+    });
+    let noTargets = $derived(getNumberOfTargets(targets) === 0);
+
+    let initialGlobalState: GlobalState | undefined = $state(undefined);
 
     function getNumberOfTargets(targets: ShareTo): number {
         return (
@@ -107,26 +111,33 @@
         );
     }
 
+    function matchesSearch(thing: ShareChat | ShareCommunity, searchTerm: string): boolean {
+        return (
+            (searchTerm === "" ||
+                thing.name.toLocaleLowerCase().includes(searchTerm) ||
+                (thing.kind === "chat" &&
+                    thing.username?.toLocaleLowerCase()?.includes(searchTerm))) ??
+            false
+        );
+    }
+
     function chatMatchesSearch(chats: ShareChat[], searchTerm: string): ShareChat[] {
-        return chats
-            .filter(
-                (c) =>
-                    searchTerm === "" ||
-                    c.name.toLowerCase().includes(searchTerm) ||
-                    c.username?.toLowerCase()?.includes(searchTerm),
-            )
-            .sort(compare);
+        return chats.filter((c) => matchesSearch(c, searchTerm)).sort(compare);
     }
 
     function communityMatchesSearch(communities: ShareCommunity[], searchTerm: string) {
         return communities
             .reduce((agg, c) => {
-                const filtered = chatMatchesSearch(c.channels, searchTerm);
-                if (filtered.length > 0) {
-                    agg.push({
-                        ...c,
-                        channels: filtered,
-                    });
+                if (matchesSearch(c, searchTerm)) {
+                    agg.push(c);
+                } else {
+                    const filtered = chatMatchesSearch(c.channels, searchTerm);
+                    if (filtered.length > 0) {
+                        agg.push({
+                            ...c,
+                            channels: filtered,
+                        });
+                    }
                 }
                 return agg;
             }, [] as ShareCommunity[])
@@ -147,7 +158,7 @@
         };
         const direct = global.directChats.values().map((d) => ({
             ...d,
-            name: buildDisplayName($userStore, d.them.userId, false)
+            name: buildDisplayName($userStore, d.them.userId, false),
         }));
 
         const group = global.groupChats.values();
@@ -262,10 +273,6 @@
         );
     }
 
-    function selectChat(chatId: ChatIdentifier) {
-        dispatch("select", chatId);
-    }
-
     function compare(a: { name: string }, b: { name: string }): number {
         return a.name.localeCompare(b.name);
     }
@@ -277,12 +284,7 @@
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
         <h4><Translatable resourceKey={i18nKey("sendTo")} /></h4>
-        <span
-            role="button"
-            tabindex="0"
-            title={$_("close")}
-            class="close"
-            on:click={() => dispatch("close")}>
+        <span role="button" tabindex="0" title={$_("close")} class="close" onclick={onClose}>
             <HoverIcon>
                 <Close size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
@@ -317,7 +319,7 @@
                             tabindex="0"
                             class="row"
                             class:rtl={$rtlStore}
-                            on:click={() => selectChat(target.id)}>
+                            onclick={() => onSelect(target.id)}>
                             <div class="avatar">
                                 <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
                             </div>
@@ -361,7 +363,7 @@
                             tabindex="0"
                             class="row"
                             class:rtl={$rtlStore}
-                            on:click={() => selectChat(target.id)}>
+                            onclick={() => onSelect(target.id)}>
                             <div class="avatar">
                                 <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
                             </div>
@@ -394,7 +396,7 @@
                             tabindex="0"
                             class="row"
                             class:rtl={$rtlStore}
-                            on:click={() => selectChat(target.id)}>
+                            onclick={() => onSelect(target.id)}>
                             <div class="avatar">
                                 <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
                             </div>
@@ -428,7 +430,7 @@
                                 tabindex="0"
                                 class="row"
                                 class:rtl={$rtlStore}
-                                on:click={() => selectChat(target.id)}>
+                                onclick={() => onSelect(target.id)}>
                                 <div class="avatar">
                                     <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
                                 </div>
@@ -467,6 +469,9 @@
         width: 500px;
         overflow: auto;
         overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
 
         @include mobile() {
             width: 100%;

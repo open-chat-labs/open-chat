@@ -965,13 +965,13 @@
         showUpgrade = true;
     }
 
-    function onSelectChat(ev: CustomEvent<ChatIdentifier>) {
+    function onSelectChat(chatId: ChatIdentifier) {
         closeModal();
         if (messageToForward !== undefined) {
-            forwardToChat(ev.detail);
+            forwardToChat(chatId);
             messageToForward = undefined;
         } else {
-            shareWithChat(ev.detail);
+            shareWithChat(chatId);
         }
     }
 
@@ -1255,15 +1255,12 @@
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
             on:deleteGroup={triggerConfirm}
-            on:leaveGroup={triggerConfirm}
-            on:askToSpeak
-            on:hangup />
+            on:leaveGroup={triggerConfirm} />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel
             {joining}
             bind:currentChatMessages
-            on:startVideoCall
             on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:leaveGroup={triggerConfirm}
@@ -1290,7 +1287,6 @@
         on:showGroupMembers={showGroupMembers}
         on:chatWith={chatWith}
         on:upgrade={upgrade}
-        on:startVideoCall
         on:deleteGroup={triggerConfirm}
         on:editGroup={editGroup}
         on:editCommunity={editCommunity}
@@ -1336,7 +1332,7 @@
         alignLeft={modal.kind === "select_chat"}
         onClose={closeModal}>
         {#if modal.kind === "select_chat"}
-            <SelectChatModal on:close={onCloseSelectChat} on:select={onSelectChat} />
+            <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
         {:else if modal.kind === "suspended"}
             <SuspendedModal onClose={closeModal} />
         {:else if modal.kind === "register_bot"}

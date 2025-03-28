@@ -121,6 +121,10 @@ impl ChatEvents {
         events
     }
 
+    pub fn chat(&self) -> Chat {
+        self.chat
+    }
+
     pub fn set_chat(&mut self, chat: Chat) {
         self.chat = chat;
         self.main.set_stable_memory_prefix(chat, None);
