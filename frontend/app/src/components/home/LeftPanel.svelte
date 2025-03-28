@@ -15,7 +15,7 @@
         {#if $activityFeedShowing}
             <ActivityFeed />
         {:else}
-            <ChatList on:newChannel />
+            <ChatList />
         {/if}
     </div>
 </section>

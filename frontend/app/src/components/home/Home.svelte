@@ -278,6 +278,7 @@
             subscribe("unarchiveChat", unarchiveChat),
             subscribe("forward", forwardMessage),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
+            subscribe("newChannel", newChannel),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1041,8 +1042,8 @@
         modal = { kind: "wallet" };
     }
 
-    function newChannel(ev: CustomEvent<boolean>) {
-        newGroup("channel", ev.detail);
+    function newChannel(embeddedContent: boolean) {
+        newGroup("channel", embeddedContent);
     }
 
     function newGroup(level: Level = "group", embeddedContent: boolean = false) {
@@ -1243,7 +1244,7 @@
     {/if}
 
     {#if $layoutStore.showLeft}
-        <LeftPanel on:newChannel={newChannel} />
+        <LeftPanel />
     {/if}
     {#if $layoutStore.showMiddle}
         <MiddlePanel
@@ -1258,7 +1259,6 @@
     <RightPanel
         on:goToMessageIndex={goToMessageIndex}
         on:editGroup={editGroup}
-        on:newChannel={newChannel}
         on:groupCreated={groupCreated} />
 </main>
 

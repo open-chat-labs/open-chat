@@ -249,8 +249,7 @@
         <SelectedCommunityHeader
             community={$selectedCommunity}
             {canMarkAllRead}
-            on:markAllRead={markAllRead}
-            on:newChannel />
+            on:markAllRead={markAllRead} />
     {/if}
 
     <ChatListSearch

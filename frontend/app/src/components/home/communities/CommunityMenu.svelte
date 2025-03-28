@@ -70,11 +70,11 @@
     }
 
     function newChannel() {
-        canCreateChannel && dispatch("newChannel", false);
+        canCreateChannel && publish("newChannel", false);
     }
 
     function embedContent() {
-        canCreateChannel && dispatch("newChannel", true);
+        canCreateChannel && publish("newChannel", true);
     }
 
     function showMembers() {

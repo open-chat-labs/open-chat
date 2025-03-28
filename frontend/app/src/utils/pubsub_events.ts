@@ -61,4 +61,5 @@ export type PubSubEvents = {
         chatId: ChatIdentifier;
         mute: boolean;
     };
+    newChannel: boolean;
 };

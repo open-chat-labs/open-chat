@@ -16,7 +16,7 @@
 </script>
 
 {#if $layoutStore.rightPanel === "inline"}
-    <RightPanel on:goToMessageIndex on:editGroup on:newChannel on:groupCreated />
+    <RightPanel on:goToMessageIndex on:editGroup on:groupCreated />
 {/if}
 
 {#if $layoutStore.rightPanel === "floating"}
@@ -24,7 +24,7 @@
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
-            <RightPanel on:goToMessageIndex on:editGroup on:newChannel on:groupCreated />
+            <RightPanel on:goToMessageIndex on:editGroup on:groupCreated />
         </div>
     </Overlay>
 {/if}
