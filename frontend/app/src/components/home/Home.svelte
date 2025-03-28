@@ -272,6 +272,7 @@
             subscribe("newGroup", () => newGroup("group")),
             subscribe("wallet", showWallet),
             subscribe("profile", showProfile),
+            subscribe("claimDailyChit", claimDailyChit),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1258,7 +1259,6 @@
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:showProposalFilters={showProposalFilters}
             on:joinGroup={joinGroup}
-            on:claimDailyChit={claimDailyChit}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage}

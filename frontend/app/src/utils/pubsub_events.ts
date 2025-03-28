@@ -46,4 +46,5 @@ export type PubSubEvents = {
     newGroup: undefined;
     wallet: undefined;
     profile: undefined;
+    claimDailyChit: undefined;
 };

@@ -16,7 +16,7 @@
 </script>
 
 {#if $layoutStore.rightPanel === "inline"}
-    <RightPanel on:goToMessageIndex on:claimDailyChit on:editGroup on:newChannel on:groupCreated />
+    <RightPanel on:goToMessageIndex on:editGroup on:newChannel on:groupCreated />
 {/if}
 
 {#if $layoutStore.rightPanel === "floating"}

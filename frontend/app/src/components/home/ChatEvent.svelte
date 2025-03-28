@@ -169,7 +169,6 @@
             {onReplyTo}
             on:retrySend={retrySend}
             onEditMessage={editEvent}
-            on:claimDailyChit
             on:forward
             {onExpandMessage}
             on:collapseMessage

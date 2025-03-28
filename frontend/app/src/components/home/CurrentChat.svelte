@@ -432,7 +432,6 @@
         <CurrentChatMessages
             bind:this={currentChatMessages}
             on:replyTo={replyTo}
-            on:claimDailyChit
             on:forward
             on:retrySend
             on:removePreview={onRemovePreview}

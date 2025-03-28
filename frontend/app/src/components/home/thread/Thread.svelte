@@ -418,7 +418,6 @@
                             on:goToMessageIndex={onGoToMessageIndex}
                             onReplyTo={replyTo}
                             on:editEvent={() => editEvent(evt)}
-                            on:claimDailyChit
                             on:forward />
                     {/each}
                 {/each}

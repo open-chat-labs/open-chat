@@ -548,7 +548,6 @@
             on:closeProfile={popRightPanelHistory} />
     {:else if threadRootEvent !== undefined && $selectedChat !== undefined}
         <Thread
-            on:claimDailyChit
             rootEvent={threadRootEvent}
             chat={$selectedChat}
             on:removePreview

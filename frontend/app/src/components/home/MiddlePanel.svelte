@@ -144,7 +144,6 @@
             on:leaveGroup
             on:showProposalFilters
             on:joinGroup
-            on:claimDailyChit
             on:toggleMuteNotifications
             on:goToMessageIndex
             on:convertGroupToCommunity

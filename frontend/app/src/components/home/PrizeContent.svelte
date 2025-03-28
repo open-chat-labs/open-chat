@@ -81,7 +81,7 @@
     }
 
     function onStreakClick() {
-        dispatch("claimDailyChit");
+        publish("claimDailyChit");
     }
     let logo = $derived(
         Object.values($cryptoLookup).find(
