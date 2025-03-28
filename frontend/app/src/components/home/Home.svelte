@@ -279,6 +279,7 @@
             subscribe("forward", forwardMessage),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("newChannel", newChannel),
+            subscribe("successfulImport", successfulImport),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1178,8 +1179,8 @@
         convertGroup = ev.detail;
     }
 
-    function successfulImport(ev: CustomEvent<ChannelIdentifier>) {
-        page(`/community/${ev.detail.communityId}`);
+    function successfulImport(id: ChannelIdentifier) {
+        page(`/community/${id.communityId}`);
     }
 
     function profileLinkClicked(ev: CustomEvent<ProfileLinkClickedEvent>) {
@@ -1250,7 +1251,6 @@
         <MiddlePanel
             {joining}
             bind:currentChatMessages
-            on:successfulImport={successfulImport}
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:showProposalFilters={showProposalFilters}
             on:goToMessageIndex={goToMessageIndex}

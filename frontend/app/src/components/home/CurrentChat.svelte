@@ -355,7 +355,6 @@
 
 {#if importToCommunities !== undefined}
     <ImportToCommunity
-        onSuccessfulImport={(channelId) => dispatch("successfulImport", channelId)}
         groupId={chat.id}
         onCancel={() => (importToCommunities = undefined)}
         ownedCommunities={importToCommunities} />

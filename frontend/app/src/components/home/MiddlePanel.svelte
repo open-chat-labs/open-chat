@@ -139,7 +139,6 @@
             chat={$selectedChatStore}
             events={$eventsStore}
             filteredProposals={$filteredProposalsStore}
-            on:successfulImport
             on:clearSelection
             on:showProposalFilters
             on:goToMessageIndex

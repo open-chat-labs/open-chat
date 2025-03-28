@@ -1,4 +1,5 @@
 import type {
+    ChannelIdentifier,
     ChatIdentifier,
     ChatSummary,
     CommunityIdentifier,
@@ -62,4 +63,5 @@ export type PubSubEvents = {
         mute: boolean;
     };
     newChannel: boolean;
+    successfulImport: ChannelIdentifier;
 };
