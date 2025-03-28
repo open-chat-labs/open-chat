@@ -29,13 +29,19 @@ do
         # Derive the remaining variables
         TITLE="Add a new custom SNS function to \\\"$FUNCTION_NAME\\\""
         TARGET_CANISTER_ID=$(dfx -qq canister --network $NETWORK id $TARGET_CANISTER)
-        VALIDATOR_CANISTER=$TARGET_CANISTER
-        VALIDATOR_CANISTER_ID=$(dfx -qq canister --network $NETWORK id $VALIDATOR_CANISTER)
-        VALIDATOR_NAME="${TARGET_NAME}_validate"
+
+        if [ -z $VALIDATOR_CANISTER_ID ]
+        then
+          VALIDATOR_CANISTER_ID=$(dfx -qq canister --network $NETWORK id $TARGET_CANISTER)
+        fi
+
+        if [ -z $VALIDATOR_NAME ]
+        then
+          VALIDATOR_NAME="${TARGET_NAME}_validate"
+        fi
     else
         SERVICE_NAME=${ADDR[1]}
         TARGET_NAME=${ADDR[2]}
-        TARGET_CANISTER_ID=${ADDR[3]}
 
         # Derive the remaining variables
         VALIDATOR_CANISTER_ID=$(dfx -qq canister --network $NETWORK id proposal_validation)
