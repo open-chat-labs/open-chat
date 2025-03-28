@@ -1,12 +1,21 @@
-use crate::{CanisterId, ChannelId, ChatId, CommunityId, EventIndex, MessageIndex, Reaction, TimestampMillis, UserId};
+use crate::{
+    CanisterId, ChannelId, Chat, ChatEventType, ChatId, CommunityId, EventIndex, MessageIndex, Reaction, TimestampMillis,
+    UserId,
+};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::fmt::{Debug, Formatter};
 use ts_export::ts_export;
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum NotificationEnvelope {
+    User(UserNotificationEnvelope),
+    Bot(BotNotificationEnvelope),
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone)]
-pub struct NotificationEnvelope {
+pub struct UserNotificationEnvelope {
     #[serde(rename = "r")]
     pub recipients: Vec<UserId>,
     #[serde(rename = "n")]
@@ -15,11 +24,44 @@ pub struct NotificationEnvelope {
     pub timestamp: TimestampMillis,
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotNotificationEnvelope {
+    #[serde(rename = "ty")]
+    pub event_type: ChatEventType,
+    #[serde(rename = "r")]
+    pub recipients: Vec<UserId>,
+    #[serde(rename = "c")]
+    pub chat: Chat,
+    #[serde(rename = "th")]
+    pub thread: Option<MessageIndex>,
+    #[serde(rename = "i")]
+    pub event_index: EventIndex,
+    #[serde(rename = "l")]
+    pub latest_event_index: EventIndex,
+    #[serde(rename = "t")]
+    pub timestamp: TimestampMillis,
+}
+
 const CANISTER_PRINCIPAL_LEN: usize = 10;
 
 impl NotificationEnvelope {
     pub fn approx_size(&self) -> usize {
+        match self {
+            NotificationEnvelope::User(n) => n.approx_size(),
+            NotificationEnvelope::Bot(n) => n.approx_size(),
+        }
+    }
+}
+
+impl UserNotificationEnvelope {
+    pub fn approx_size(&self) -> usize {
         CANISTER_PRINCIPAL_LEN * self.recipients.len() + self.notification_bytes.len() + 7
+    }
+}
+
+impl BotNotificationEnvelope {
+    pub fn approx_size(&self) -> usize {
+        125 + self.recipients.len() * CANISTER_PRINCIPAL_LEN
     }
 }
 
@@ -345,7 +387,7 @@ pub enum CanPushNotificationsResponse {
     Success(bool),
 }
 
-impl Debug for NotificationEnvelope {
+impl Debug for UserNotificationEnvelope {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("NotificationEnvelope")
             .field("recipients", &self.recipients.len())

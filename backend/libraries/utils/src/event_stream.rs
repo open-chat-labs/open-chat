@@ -27,6 +27,15 @@ impl<T: CandidType + Clone> EventStream<T> {
         Box::new(std::iter::empty())
     }
 
+    pub fn init(events: Vec<IndexedEvent<T>>) -> Self {
+        let latest_event_index = events.last().map(|e| e.index).unwrap_or_default();
+
+        EventStream {
+            events: VecDeque::from(events),
+            latest_event_index,
+        }
+    }
+
     pub fn add(&mut self, event: T) -> u64 {
         self.latest_event_index += 1;
         self.events.push_back(IndexedEvent {
