@@ -41,6 +41,7 @@
 
     let error: ResourceKey | undefined = $state(undefined);
     let amountToSend: bigint = $state(0n);
+    let ckbtcMinterWithdrawalInfo: CkbtcMinterWithdrawalInfo | undefined = $state(undefined);
     let busy = $state(false);
     let valid = $state(false);
     let validAccountName = $state(false);
@@ -58,15 +59,23 @@
     let account = $derived(tokenDetails.symbol === ICP_SYMBOL ? $user.cryptoAccount : $user.userId);
     let transferFees = $derived(tokenDetails.transferFee);
     let symbol = $derived(tokenDetails.symbol);
+    let selectedBtcNetwork = $state(BTC_SYMBOL);
+    let isBtc = $derived(symbol === BTC_SYMBOL);
+    let isBtcNetwork = $derived(isBtc && selectedBtcNetwork === BTC_SYMBOL);
     let targetAccountValid = $derived(
         targetAccount.length > 0 &&
-            targetAccount !== account &&
-            (isPrincipalValid(targetAccount) ||
-                (symbol === "ICP" && isAccountIdentifierValid(targetAccount))),
-    );
+        targetAccount !== account &&
+        isBtcNetwork
+            ? targetAccount.length >= 14
+            : (
+                isPrincipalValid(targetAccount) ||
+                (symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount))
+            ));
+    let minAmount = $derived(isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined ? ckbtcMinterWithdrawalInfo.minWithdrawalAmount : BigInt(0));
     let validSend = $derived(validAmount && targetAccountValid);
     $effect(() => {
-        valid = capturingAccount ? validAccountName : validSend;
+        // If sending via the BTC network we must wait until the ckbtc minter info is loaded to correctly apply the min amount
+        valid = (capturingAccount ? validAccountName : validSend) && (!isBtcNetwork || ckbtcMinterWithdrawalInfo !== undefined);
     });
     let title = $derived(i18nKey("cryptoAccount.sendToken", { symbol }));
 
@@ -75,6 +84,9 @@
     );
 
     let errorMessage = $derived(error !== undefined ? error : $pinNumberErrorMessageStore);
+    let btcNetworkFee = $derived(isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined
+        ? client.formatTokens(ckbtcMinterWithdrawalInfo.feeEstimate, 8)
+        : undefined);
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();
@@ -84,11 +96,11 @@
         }
     });
 
-    $: {
+    $effect(() => {
         if (isBtcNetwork && amountToSend > 0) {
             ckbtcMinterInfoDebouncer.execute(amountToSend);
         }
-    }
+    });
 
     function getCkbtcMinterWithdrawalInfo(amountToSend: bigint) {
         client.getCkbtcMinterWithdrawalInfo(amountToSend).then((i) => ckbtcMinterWithdrawalInfo = i);
@@ -211,10 +223,15 @@
             {:else}
                 <Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
 
+                {#if isBtc}
+                    <BitcoinNetworkSelector bind:selectedNetwork={selectedBtcNetwork} />
+                {/if}
+
                 <div class="token-input">
                     <TokenInput
                         {ledger}
                         {transferFees}
+                        {minAmount}
                         maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
                         bind:valid={validAmount}
                         bind:amount={amountToSend} />
@@ -232,9 +249,19 @@
                     </div>
                 </div>
 
-                {#if accounts.length > 0}
-                    <div class="accounts">
-                        <AccountSelector bind:targetAccount {accounts} />
+                {#if accounts.length > 0 || btcNetworkFee !== undefined}
+                    <div class="lower-container">
+                        {#if accounts.length > 0}
+                            <div class="accounts">
+                                <AccountSelector bind:targetAccount {accounts} />
+                            </div>
+                        {/if}
+
+                        {#if btcNetworkFee !== undefined}
+                            <div class="btc-network-fee">
+                                <Translatable resourceKey={i18nKey("cryptoAccount.btcNetworkFee", { amount: btcNetworkFee })} />
+                            </div>
+                        {/if}
                     </div>
                 {/if}
             {/if}
