@@ -1,6 +1,6 @@
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
-    import MenuIcon from "../../MenuIconLegacy.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
@@ -169,14 +169,14 @@
         <LeftNavItem separator label={i18nKey("communities.mainMenu")}>
             <div class="hover logo">
                 <MenuIcon position="right" align="start" gutter={20}>
-                    <span slot="icon">
+                    {#snippet menuIcon()}
                         <HoverIcon>
                             <Hamburger size={iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
-                    </span>
-                    <span slot="menu">
+                    {/snippet}
+                    {#snippet menuItems()}
                         <MainMenu />
-                    </span>
+                    {/snippet}
                 </MenuIcon>
             </div>
         </LeftNavItem>
