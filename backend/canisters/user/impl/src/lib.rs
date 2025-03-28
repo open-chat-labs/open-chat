@@ -329,7 +329,6 @@ impl RuntimeState {
             achievements: self.data.achievements.iter().cloned().collect(),
             unique_person_proof: self.data.unique_person_proof.is_some(),
             stable_memory_sizes: memory::memory_sizes(),
-            message_ids_deduped: self.data.message_ids_deduped,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -397,7 +396,6 @@ struct Data {
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
-    #[serde(skip_deserializing, default = "user_canister_events_queue")]
     pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
     pub video_call_operators: Vec<Principal>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
@@ -417,17 +415,11 @@ struct Data {
     pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
     #[serde(default)]
-    pub message_ids_deduped: bool,
-    #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
     #[serde(default)]
     pub bots: InstalledBots,
     #[serde(default)]
     bot_api_keys: BotApiKeys,
-}
-
-fn user_canister_events_queue() -> GroupedTimerJobQueue<UserCanisterEventBatch> {
-    GroupedTimerJobQueue::new(10, false)
 }
 
 impl Data {
@@ -496,7 +488,6 @@ impl Data {
             message_activity_events: MessageActivityEvents::default(),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             local_user_index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
-            message_ids_deduped: true,
             idempotency_checker: IdempotencyChecker::default(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
@@ -598,7 +589,6 @@ pub struct Metrics {
     pub achievements: Vec<Achievement>,
     pub unique_person_proof: bool,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
-    pub message_ids_deduped: bool,
     pub canister_ids: CanisterIds,
 }
 
