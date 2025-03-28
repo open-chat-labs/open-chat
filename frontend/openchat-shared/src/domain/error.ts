@@ -68,6 +68,15 @@ export class InvalidDelegationError extends HttpError {
     }
 }
 
+export class TypeboxValidationError extends Error {
+    constructor(error?: Error) {
+        super();
+        this.name = "TypeboxValidationError";
+        this.message = error?.message ?? "";
+        this.stack = error?.stack;
+    }
+}
+
 // We'll use this is the front end tries to do something that the anonymous user should not be able to do
 export class AnonymousOperationError extends Error {
     constructor() {

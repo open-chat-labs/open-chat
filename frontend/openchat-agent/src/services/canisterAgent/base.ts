@@ -5,6 +5,7 @@ import {
     DestinationInvalidError,
     ResponseTooLargeError,
     SessionExpiryError,
+    TypeboxValidationError,
 } from "openchat-shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "../error";
 
@@ -46,6 +47,7 @@ export abstract class CanisterAgent {
                     !(responseErr instanceof SessionExpiryError) &&
                     !(responseErr instanceof DestinationInvalidError) &&
                     !(responseErr instanceof AuthError) &&
+                    !(responseErr instanceof TypeboxValidationError) &&
                     retries < MAX_RETRIES
                 ) {
                     const delay = RETRY_DELAY * Math.pow(2, retries);
