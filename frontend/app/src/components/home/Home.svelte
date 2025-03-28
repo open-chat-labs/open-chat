@@ -20,7 +20,6 @@
         Level,
         ChatIdentifier,
         DirectChatIdentifier,
-        GroupChatIdentifier,
         CommunityIdentifier,
         MultiUserChat,
         MultiUserChatIdentifier,
@@ -56,7 +55,6 @@
         selectedChatId,
         chatsInitialised,
         draftMessagesStore,
-        chatStateStore,
         chatListScopeStore as chatListScope,
         currentCommunityRules,
         communities,
@@ -71,7 +69,7 @@
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
-    import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import page from "page";
     import { pageRedirect, pageReplace, pathParams, routeForScope } from "../../routes";
     import type { RouteParams } from "../../routes";
@@ -283,6 +281,7 @@
             subscribe("showProposalFilters", showProposalFilters),
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
             subscribe("clearSelection", () => page(routeForScope($chatListScope))),
+            subscribe("editGroup", editGroup),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1021,27 +1020,6 @@
         draftMessagesStore.setTextContent({ chatId }, text);
     }
 
-    function groupCreated(
-        ev: CustomEvent<{ chatId: GroupChatIdentifier; isPublic: boolean; rules: Rules }>,
-    ) {
-        const { chatId, isPublic, rules } = ev.detail;
-        chatStateStore.setProp(chatId, "rules", { ...rules, version: 0 });
-        if (isPublic) {
-            client.trackEvent("public_group_created");
-        } else {
-            client.trackEvent("private_group_created");
-        }
-        rightPanelHistory.set(
-            $screenWidth === ScreenWidth.ExtraExtraLarge
-                ? [
-                      {
-                          kind: "group_details",
-                      },
-                  ]
-                : [],
-        );
-    }
-
     function showWallet() {
         modal = { kind: "wallet" };
     }
@@ -1102,10 +1080,10 @@
         };
     }
 
-    function editGroup(ev: CustomEvent<{ chat: MultiUserChat; rules: UpdatedRules | undefined }>) {
-        const chat = ev.detail.chat;
+    function editGroup(detail: { chat: MultiUserChat; rules: UpdatedRules | undefined }) {
+        const chat = detail.chat;
         let level: Level = chat.id.kind === "group_chat" ? "group" : "channel";
-        let rules = ev.detail.rules ?? { ...defaultChatRules(level), newVersion: false };
+        let rules = detail.rules ?? { ...defaultChatRules(level), newVersion: false };
         modal = {
             kind: "new_group",
             embeddedContent: chat.kind === "channel" && chat.externalUrl !== undefined,
@@ -1253,10 +1231,7 @@
     {#if $layoutStore.showMiddle}
         <MiddlePanel {joining} bind:currentChatMessages on:goToMessageIndex={goToMessageIndex} />
     {/if}
-    <RightPanel
-        on:goToMessageIndex={goToMessageIndex}
-        on:editGroup={editGroup}
-        on:groupCreated={groupCreated} />
+    <RightPanel on:goToMessageIndex={goToMessageIndex} />
 </main>
 
 {#if $anonUser}

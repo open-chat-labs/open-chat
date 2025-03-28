@@ -15,6 +15,7 @@
     import GroupDetailsBody from "./groupdetails/GroupDetailsBody.svelte";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import CommunityDetails from "./communities/details/CommunityDetails.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -35,7 +36,7 @@
 
     function editGroup() {
         if (canEditChannel) {
-            dispatch("editGroup", {
+            publish("editGroup", {
                 chat: channel,
                 rules: { ...$currentChatRules, newVersion: false },
             });
@@ -51,8 +52,8 @@
             <GroupDetailsHeader
                 level={"channel"}
                 canEdit={canEditChannel}
-                on:close
-                on:editGroup={editGroup} />
+                onClose={() => dispatch("close")}
+                onEditGroup={editGroup} />
         {/if}
     </div>
     <div slot="channel">

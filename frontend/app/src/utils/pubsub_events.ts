@@ -12,6 +12,7 @@ import type {
     MultiUserChat,
     MultiUserChatIdentifier,
     ResourceKey,
+    UpdatedRules,
 } from "openchat-client";
 
 export type PubSubEvents = {
@@ -68,4 +69,5 @@ export type PubSubEvents = {
     showProposalFilters: undefined;
     convertGroupToCommunity: GroupChatSummary;
     clearSelection: undefined;
+    editGroup: { chat: MultiUserChat; rules: UpdatedRules | undefined };
 };
