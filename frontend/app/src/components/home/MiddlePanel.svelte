@@ -143,7 +143,6 @@
             on:clearSelection
             on:leaveGroup
             on:showProposalFilters
-            on:makeProposal
             on:joinGroup
             on:claimDailyChit
             on:toggleMuteNotifications

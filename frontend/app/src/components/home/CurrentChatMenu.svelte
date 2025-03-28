@@ -264,7 +264,7 @@
     }
 
     function makeProposal() {
-        dispatch("makeProposal");
+        publish("makeProposal");
     }
 
     function startVideoCall() {

@@ -269,6 +269,7 @@
             subscribe("communityDetails", communityDetails),
             subscribe("editCommunity", editCommunity),
             subscribe("leaveCommunity", triggerConfirm),
+            subscribe("makeProposal", showMakeProposalModal),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1263,7 +1264,6 @@
             on:clearSelection={() => page(routeForScope($chatListScope))}
             on:leaveGroup={onTriggerConfirm}
             on:showProposalFilters={showProposalFilters}
-            on:makeProposal={showMakeProposalModal}
             on:joinGroup={joinGroup}
             on:claimDailyChit={claimDailyChit}
             on:toggleMuteNotifications={toggleMuteNotifications}

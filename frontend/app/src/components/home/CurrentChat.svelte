@@ -415,7 +415,6 @@
                 on:clearSelection
                 on:toggleMuteNotifications
                 on:showProposalFilters
-                on:makeProposal
                 on:leaveGroup
                 on:createPoll={createPoll}
                 on:searchChat={searchChat}

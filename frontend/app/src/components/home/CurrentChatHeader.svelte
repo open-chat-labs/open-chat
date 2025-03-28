@@ -239,7 +239,6 @@
             on:showGroupDetails={showGroupDetails}
             on:searchChat
             on:showProposalFilters
-            on:makeProposal
             on:createPoll
             on:leaveGroup />
     {/if}

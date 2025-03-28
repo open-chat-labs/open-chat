@@ -1,6 +1,5 @@
 import type {
     ChatSummary,
-    ChatType,
     CommunityIdentifier,
     CommunitySummary,
     DirectChatIdentifier,
@@ -38,4 +37,5 @@ export type PubSubEvents = {
         kind: "leave_community";
         communityId: CommunityIdentifier;
     };
+    makeProposal: undefined;
 };
