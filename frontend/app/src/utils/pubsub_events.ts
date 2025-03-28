@@ -9,4 +9,5 @@ export type PubSubEvents = {
     replyPrivatelyTo: EnhancedReplyContext;
     showGroupMembers: undefined;
     upgrade: undefined;
+    verifyHumanity: undefined;
 };

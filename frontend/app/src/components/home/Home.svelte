@@ -264,6 +264,7 @@
             subscribe("replyPrivatelyTo", replyPrivatelyTo),
             subscribe("showGroupMembers", showGroupMembers),
             subscribe("upgrade", upgrade),
+            subscribe("verifyHumanity", verifyHumanity),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1261,7 +1262,6 @@
             on:showProposalFilters={showProposalFilters}
             on:makeProposal={showMakeProposalModal}
             on:joinGroup={joinGroup}
-            on:verifyHumanity={verifyHumanity}
             on:claimDailyChit={claimDailyChit}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
@@ -1276,8 +1276,7 @@
         on:editCommunity={editCommunity}
         on:deleteCommunity={triggerConfirm}
         on:newChannel={newChannel}
-        on:groupCreated={groupCreated}
-        on:verifyHumanity={verifyHumanity} />
+        on:groupCreated={groupCreated} />
 </main>
 
 {#if $anonUser}

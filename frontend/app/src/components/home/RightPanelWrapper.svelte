@@ -18,7 +18,6 @@
 {#if $layoutStore.rightPanel === "inline"}
     <RightPanel
         on:goToMessageIndex
-        on:verifyHumanity
         on:claimDailyChit
         on:deleteGroup
         on:editGroup
@@ -35,7 +34,6 @@
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
             <RightPanel
                 on:goToMessageIndex
-                on:verifyHumanity
                 on:deleteGroup
                 on:editGroup
                 on:editCommunity

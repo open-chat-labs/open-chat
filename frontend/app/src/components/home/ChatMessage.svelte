@@ -665,7 +665,6 @@
                             blockLevelMarkdown={msg.blockLevelMarkdown}
                             on:removePreview
                             on:registerVote={registerVote}
-                            on:verifyHumanity
                             on:claimDailyChit
                             {onExpandMessage} />
 

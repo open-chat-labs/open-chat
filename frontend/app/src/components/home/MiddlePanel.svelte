@@ -145,7 +145,6 @@
             on:showProposalFilters
             on:makeProposal
             on:joinGroup
-            on:verifyHumanity
             on:claimDailyChit
             on:toggleMuteNotifications
             on:goToMessageIndex

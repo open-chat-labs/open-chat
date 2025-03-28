@@ -433,7 +433,6 @@
         <CurrentChatMessages
             bind:this={currentChatMessages}
             on:replyTo={replyTo}
-            on:verifyHumanity
             on:claimDailyChit
             on:forward
             on:retrySend

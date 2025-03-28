@@ -431,7 +431,7 @@
                     {:else}
                         <Translatable resourceKey={i18nKey("human.notVerified")} />
                         <div class="full-width-btn">
-                            <Button on:click={() => dispatch("verifyHumanity")} fill small>
+                            <Button on:click={() => publish("verifyHumanity")} fill small>
                                 <Translatable resourceKey={i18nKey("human.verify")} />
                             </Button>
                         </div>

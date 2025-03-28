@@ -77,7 +77,7 @@
     }
 
     function onUniquePersonClick() {
-        dispatch("verifyHumanity");
+        publish("verifyHumanity");
     }
 
     function onStreakClick() {

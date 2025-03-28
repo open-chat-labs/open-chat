@@ -326,7 +326,6 @@
                             on:goToMessageIndex={goToMessageIndex}
                             onExpandMessage={() => toggleMessageExpansion(evt, true)}
                             on:collapseMessage={() => toggleMessageExpansion(evt, false)}
-                            on:verifyHumanity
                             on:claimDailyChit
                             on:forward
                             on:retrySend

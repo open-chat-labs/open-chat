@@ -418,7 +418,6 @@
                             on:goToMessageIndex={onGoToMessageIndex}
                             onReplyTo={replyTo}
                             on:editEvent={() => editEvent(evt)}
-                            on:verifyHumanity
                             on:claimDailyChit
                             on:forward />
                     {/each}
