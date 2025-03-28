@@ -25,7 +25,6 @@
                 on:toggleMuteNotifications
                 on:communityDetails
                 on:leaveCommunity
-                on:deleteCommunity
                 on:editCommunity
                 on:leaveGroup
                 on:newChannel />

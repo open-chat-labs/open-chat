@@ -48,7 +48,6 @@
             header
             verified={$selectedCommunity.verified} />
         <CommunityDetails
-            on:deleteCommunity
             {canDelete}
             {canInvite}
             {rules}

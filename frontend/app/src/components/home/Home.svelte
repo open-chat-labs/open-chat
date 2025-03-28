@@ -266,6 +266,7 @@
             subscribe("upgrade", upgrade),
             subscribe("verifyHumanity", verifyHumanity),
             subscribe("deleteGroup", triggerConfirm),
+            subscribe("deleteCommunity", triggerConfirm),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1253,7 +1254,6 @@
             on:newChannel={newChannel}
             on:editCommunity={editCommunity}
             on:leaveCommunity={onTriggerConfirm}
-            on:deleteCommunity={onTriggerConfirm}
             on:leaveGroup={onTriggerConfirm} />
     {/if}
     {#if $layoutStore.showMiddle}
@@ -1277,7 +1277,6 @@
         on:goToMessageIndex={goToMessageIndex}
         on:editGroup={editGroup}
         on:editCommunity={editCommunity}
-        on:deleteCommunity={onTriggerConfirm}
         on:newChannel={newChannel}
         on:groupCreated={groupCreated} />
 </main>

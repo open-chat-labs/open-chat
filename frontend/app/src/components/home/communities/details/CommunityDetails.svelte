@@ -118,7 +118,7 @@
             on:toggle={communityAdvancedOpen.toggle}
             open={$communityAdvancedOpen}
             headerText={i18nKey("group.advanced")}>
-            <AdvancedSection on:deleteCommunity {community} />
+            <AdvancedSection {community} />
         </CollapsibleCard>
     {/if}
 </div>

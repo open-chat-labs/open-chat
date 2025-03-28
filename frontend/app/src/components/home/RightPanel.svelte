@@ -567,7 +567,7 @@
                 on:editCommunity
                 on:close={popRightPanelHistory} />
         {:else}
-            <CommunityDetails on:deleteCommunity on:editCommunity />
+            <CommunityDetails on:editCommunity />
         {/if}
     {:else if lastState.kind === "community_filters"}
         <CommunityFilters on:close={popRightPanelHistory} />

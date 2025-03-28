@@ -25,6 +25,7 @@
     import Translatable from "../../Translatable.svelte";
     import { notificationsSupported } from "../../../utils/notifications";
     import { toastStore } from "../../../stores/toast";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -50,7 +51,7 @@
     }
 
     function deleteCommunity() {
-        dispatch("deleteCommunity", {
+        publish("deleteCommunity", {
             kind: "delete_community",
             communityId: community.id,
             doubleCheck: {

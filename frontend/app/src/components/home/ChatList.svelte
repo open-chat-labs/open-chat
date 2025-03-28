@@ -253,7 +253,6 @@
             {canMarkAllRead}
             on:markAllRead={markAllRead}
             on:leaveCommunity
-            on:deleteCommunity
             on:editCommunity
             on:communityDetails
             on:newChannel />

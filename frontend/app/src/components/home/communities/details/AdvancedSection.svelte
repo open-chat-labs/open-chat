@@ -1,19 +1,21 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import Button from "../../../Button.svelte";
     import ButtonGroup from "../../../ButtonGroup.svelte";
     import type { CommunitySummary } from "openchat-client";
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
+    import { publish } from "@src/utils/pubsub";
 
-    export let community: CommunitySummary;
+    interface Props {
+        community: CommunitySummary;
+    }
 
-    const dispatch = createEventDispatcher();
+    let { community }: Props = $props();
 
     function deleteCommunity() {
-        dispatch("deleteCommunity", {
+        publish("deleteCommunity", {
             kind: "delete_community",
-            id: community.id,
+            communityId: community.id,
             doubleCheck: {
                 challenge: i18nKey("typeGroupName", { name: community.name }),
                 response: i18nKey(community.name),

@@ -77,7 +77,6 @@
             verified={community.verified}
             header />
         <CommunityDetails
-            on:deleteCommunity
             canDelete={canDeleteCommunity}
             canInvite={canInviteToCommunity}
             {rules}

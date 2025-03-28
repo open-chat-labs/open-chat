@@ -56,7 +56,6 @@
             on:communityDetails
             on:leaveCommunity
             on:editCommunity
-            on:deleteCommunity
             on:markAllRead
             {canMarkAllRead}
             {community} />

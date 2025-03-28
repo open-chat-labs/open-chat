@@ -21,7 +21,6 @@
         on:claimDailyChit
         on:editGroup
         on:editCommunity
-        on:deleteCommunity
         on:newChannel
         on:groupCreated />
 {/if}
@@ -35,7 +34,6 @@
                 on:goToMessageIndex
                 on:editGroup
                 on:editCommunity
-                on:deleteCommunity
                 on:newChannel
                 on:groupCreated />
         </div>

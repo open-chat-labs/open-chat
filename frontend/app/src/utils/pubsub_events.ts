@@ -1,5 +1,6 @@
 import type {
     ChatSummary,
+    CommunityIdentifier,
     DirectChatIdentifier,
     EnhancedReplyContext,
     Level,
@@ -23,5 +24,10 @@ export type PubSubEvents = {
         level: Level;
         doubleCheck: { challenge: ResourceKey; response: ResourceKey };
         after?: () => void;
+    };
+    deleteCommunity: {
+        kind: "delete_community";
+        communityId: CommunityIdentifier;
+        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
 };
