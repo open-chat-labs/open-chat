@@ -263,6 +263,7 @@
             subscribe("showInviteGroupUsers", showInviteGroupUsers),
             subscribe("replyPrivatelyTo", replyPrivatelyTo),
             subscribe("showGroupMembers", showGroupMembers),
+            subscribe("upgrade", upgrade),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -1230,11 +1231,7 @@
 
 <main class:anon={$anonUser} class:offline={$offlineStore}>
     {#if $layoutStore.showNav}
-        <LeftNav
-            onProfile={showProfile}
-            onWallet={showWallet}
-            onUpgrade={upgrade}
-            onClaimDailyChit={claimDailyChit} />
+        <LeftNav onProfile={showProfile} onWallet={showWallet} onClaimDailyChit={claimDailyChit} />
     {/if}
 
     {#if $layoutStore.showLeft}
@@ -1245,7 +1242,6 @@
             on:communityDetails={communityDetails}
             on:logout={() => client.logout()}
             on:wallet={showWallet}
-            on:upgrade={upgrade}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:newChannel={newChannel}
@@ -1265,7 +1261,6 @@
             on:showProposalFilters={showProposalFilters}
             on:makeProposal={showMakeProposalModal}
             on:joinGroup={joinGroup}
-            on:upgrade={upgrade}
             on:verifyHumanity={verifyHumanity}
             on:claimDailyChit={claimDailyChit}
             on:toggleMuteNotifications={toggleMuteNotifications}
@@ -1276,7 +1271,6 @@
     {/if}
     <RightPanel
         on:goToMessageIndex={goToMessageIndex}
-        on:upgrade={upgrade}
         on:deleteGroup={triggerConfirm}
         on:editGroup={editGroup}
         on:editCommunity={editCommunity}
@@ -1346,7 +1340,6 @@
             <CreateOrUpdateGroup
                 embeddedContent={modal.embeddedContent}
                 templateGroup={modal.candidate}
-                onUpgrade={upgrade}
                 onClose={closeModal} />
         {:else if modal.kind === "edit_community"}
             <EditCommunity

@@ -665,7 +665,6 @@
                             blockLevelMarkdown={msg.blockLevelMarkdown}
                             on:removePreview
                             on:registerVote={registerVote}
-                            on:upgrade
                             on:verifyHumanity
                             on:claimDailyChit
                             {onExpandMessage} />
@@ -751,7 +750,6 @@
                             on:forward
                             on:reply={reply}
                             on:retrySend
-                            on:upgrade
                             on:initiateThread
                             on:deleteFailedMessage
                             on:replyPrivately={replyPrivately}

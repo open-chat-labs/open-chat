@@ -386,7 +386,6 @@
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         {messageContext}
-        onUpgrade={() => dispatch("upgrade")}
         onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
@@ -418,7 +417,6 @@
                 on:showProposalFilters
                 on:makeProposal
                 on:leaveGroup
-                on:upgrade
                 on:createPoll={createPoll}
                 on:searchChat={searchChat}
                 on:convertGroupToCommunity
@@ -435,7 +433,6 @@
         <CurrentChatMessages
             bind:this={currentChatMessages}
             on:replyTo={replyTo}
-            on:upgrade
             on:verifyHumanity
             on:claimDailyChit
             on:forward
@@ -473,7 +470,6 @@
             {messageContext}
             externalContent={externalUrl !== undefined}
             on:joinGroup
-            on:upgrade
             on:cancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
             on:clearAttachment={() =>
                 draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}

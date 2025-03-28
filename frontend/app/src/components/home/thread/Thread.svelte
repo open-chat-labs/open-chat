@@ -324,7 +324,6 @@
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         {messageContext}
-        onUpgrade={() => dispatch("upgrade")}
         onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
@@ -420,7 +419,6 @@
                             on:goToMessageIndex={onGoToMessageIndex}
                             onReplyTo={replyTo}
                             on:editEvent={() => editEvent(evt)}
-                            on:upgrade
                             on:verifyHumanity
                             on:claimDailyChit
                             on:forward />
@@ -447,7 +445,6 @@
         {messageContext}
         on:joinGroup
         on:cancelPreview
-        on:upgrade
         on:cancelReply={cancelReply}
         on:clearAttachment={clearAttachment}
         on:cancelEditEvent={cancelEditEvent}

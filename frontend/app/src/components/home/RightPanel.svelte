@@ -547,13 +547,11 @@
     {:else if lastState.kind === "user_profile"}
         <UserProfile
             on:unsubscribeNotifications={() => client.setSoftDisabled(true)}
-            on:upgrade
             on:verifyHumanity
             {user}
             on:closeProfile={popRightPanelHistory} />
     {:else if threadRootEvent !== undefined && $selectedChat !== undefined}
         <Thread
-            on:upgrade
             on:verifyHumanity
             on:claimDailyChit
             rootEvent={threadRootEvent}

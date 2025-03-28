@@ -4,28 +4,44 @@
     import Translatable from "../../Translatable.svelte";
 
     import MoreInfo from "../../InfoIcon.svelte";
+    import type { Snippet } from "svelte";
 
-    export let comingSoon: boolean = false;
-    export let freeInfo: ResourceKey | undefined = undefined;
-    export let diamondInfo: ResourceKey | undefined = undefined;
-    export let landing: boolean = false;
+    interface Props {
+        comingSoon?: boolean;
+        freeInfo?: ResourceKey | undefined;
+        diamondInfo?: ResourceKey | undefined;
+        landing?: boolean;
+        title?: Snippet;
+        free?: Snippet;
+        diamond?: Snippet;
+    }
+
+    let {
+        comingSoon = false,
+        freeInfo = undefined,
+        diamondInfo = undefined,
+        landing = false,
+        title,
+        free,
+        diamond,
+    }: Props = $props();
 </script>
 
 <div class:landing class="title">
-    <slot name="title" />
+    {@render title?.()}
     {#if comingSoon}
         <span class="soon">(<Translatable resourceKey={i18nKey("upgrade.comingSoon")} />)</span>
     {/if}
 </div>
 <div class:landing class="feature free">
-    <slot name="free" />
+    {@render free?.()}
 
     {#if freeInfo !== undefined}
         <MoreInfo><Translatable resourceKey={freeInfo} /></MoreInfo>
     {/if}
 </div>
 <div class:landing class="feature diamond">
-    <slot name="diamond" />
+    {@render diamond?.()}
 
     {#if diamondInfo !== undefined}
         <MoreInfo><Translatable resourceKey={diamondInfo} /></MoreInfo>

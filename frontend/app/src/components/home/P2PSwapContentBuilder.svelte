@@ -19,17 +19,17 @@
     import Translatable from "../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import { enhancedCryptoLookup as cryptoLookup, isDiamond } from "openchat-client";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         fromLedger: string;
         messageContext: MessageContext;
-        onUpgrade: () => void;
         onClose: () => void;
     }
 
-    let { fromLedger = $bindable(), messageContext, onUpgrade, onClose }: Props = $props();
+    let { fromLedger = $bindable(), messageContext, onClose }: Props = $props();
 
     let fromAmount: bigint = $state(0n);
     let fromAmountValid: boolean = $state(false);
@@ -70,7 +70,7 @@
 
     function onSend() {
         if (!$isDiamond) {
-            onUpgrade();
+            publish("upgrade");
             return;
         }
 

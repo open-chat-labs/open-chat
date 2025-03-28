@@ -12,16 +12,17 @@
 
     const dispatch = createEventDispatcher();
 
-    export let isDiamond: boolean;
-    export let canExtend: boolean;
-    export let landing = false;
+    interface Props {
+        isDiamond: boolean;
+        canExtend: boolean;
+        landing?: boolean;
+        onUpgrade: () => void;
+    }
+
+    let { isDiamond, canExtend, landing = false, onUpgrade }: Props = $props();
 
     function cancel() {
         dispatch("cancel");
-    }
-
-    function upgrade() {
-        dispatch("upgrade");
     }
 </script>
 
@@ -33,208 +34,238 @@
 
 <div class:landing class="grid body">
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.textMessages")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.textMessages")} />
+        {/snippet}
+        {#snippet free()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.giphys")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.giphys")} />
+        {/snippet}
+        {#snippet free()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.reactions")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.reactions")} />
+        {/snippet}
+        {#snippet free()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.polls")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.polls")} />
+        {/snippet}
+        {#snippet free()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.reminders")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.reminders")} />
+        {/snippet}
+        {#snippet free()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.crypto")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.crypto")} />
+        {/snippet}
+        {#snippet free()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.videoCalls")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.videoCalls")} />
+        {/snippet}
+        {#snippet free()}
             <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.notifications")} /></div>
-        <div slot="free"><Translatable resourceKey={i18nKey("upgrade.freeNotifications")} /></div>
-        <div slot="diamond">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.notifications")} />
+        {/snippet}
+        {#snippet free()}
+            <Translatable resourceKey={i18nKey("upgrade.freeNotifications")} />
+        {/snippet}
+        {#snippet diamond()}
             <Translatable resourceKey={i18nKey("upgrade.diamondNotifications")} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature
         {landing}
         diamondInfo={i18nKey("upgrade.mediaLimits", { image: "5mb", video: "50mb" })}
         freeInfo={i18nKey("upgrade.mediaLimits", { image: "1mb", video: "5mb" })}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.mediaMessages")} /></div>
-        <div slot="free"><Translatable resourceKey={i18nKey("upgrade.freeMediaMessages")} /></div>
-        <div slot="diamond">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.mediaMessages")} />
+        {/snippet}
+        {#snippet free()}
+            <Translatable resourceKey={i18nKey("upgrade.freeMediaMessages")} />
+        {/snippet}
+        {#snippet diamond()}
             <Translatable resourceKey={i18nKey("upgrade.diamondMediaMessages")} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature
         {landing}
         diamondInfo={i18nKey("upgrade.diamondStorageLimit")}
         freeInfo={i18nKey("upgrade.freeStorageLimit")}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.storage")} /></div>
-        <div slot="free"><Translatable resourceKey={i18nKey("upgrade.freeStorage")} /></div>
-        <div slot="diamond"><Translatable resourceKey={i18nKey("upgrade.diamondStorage")} /></div>
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.storage")} />
+        {/snippet}
+        {#snippet free()}
+            <Translatable resourceKey={i18nKey("upgrade.freeStorage")} />
+        {/snippet}
+        {#snippet diamond()}
+            <Translatable resourceKey={i18nKey("upgrade.diamondStorage")} />
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.createCommunities")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.createCommunities")} />
+        {/snippet}
+        {#snippet free()}
             <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.directChats")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.directChats")} />
+        {/snippet}
+        {#snippet free()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.privateGroups")} /></div>
-        <div slot="free"><Translatable resourceKey={i18nKey("upgrade.freePrivateGroups")} /></div>
-        <div slot="diamond">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.privateGroups")} />
+        {/snippet}
+        {#snippet free()}
+            <Translatable resourceKey={i18nKey("upgrade.freePrivateGroups")} />
+        {/snippet}
+        {#snippet diamond()}
             <Translatable resourceKey={i18nKey("upgrade.diamondPrivateGroups")} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.publicGroups")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.publicGroups")} />
+        {/snippet}
+        {#snippet free()}
             <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Translatable resourceKey={i18nKey("upgrade.diamondPublicGroups")} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.gatedGroups")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.gatedGroups")} />
+        {/snippet}
+        {#snippet free()}
             <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.translations")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.translations")} />
+        {/snippet}
+        {#snippet free()}
             <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.p2pSwap")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.p2pSwap")} />
+        {/snippet}
+        {#snippet free()}
             <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.diamondBadge")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.diamondBadge")} />
+        {/snippet}
+        {#snippet free()}
             <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
+        {/snippet}
+        {#snippet diamond()}
             <Check size={"1em"} color={"limegreen"} />
-        </div>
+        {/snippet}
     </Feature>
 
     <Feature {landing} diamondInfo={i18nKey("upgrade.airdropsInfo")}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.airdrops")} /></div>
-        <div slot="free">
+        {#snippet title()}
+            <Translatable resourceKey={i18nKey("upgrade.airdrops")} />
+        {/snippet}
+        {#snippet free()}
             <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond"><Translatable resourceKey={i18nKey("upgrade.eligible")} /></div>
+        {/snippet}
+        {#snippet diamond()}
+            <Translatable resourceKey={i18nKey("upgrade.eligible")} />
+        {/snippet}
     </Feature>
-
-    <!-- <Feature {landing} comingSoon>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.customThemes")} /></div>
-        <div slot="free">
-            <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
-            <Check size={"1em"} color={"limegreen"} />
-        </div>
-    </Feature>
-
-    <Feature {landing} comingSoon>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.nftProfile")} /></div>
-        <div slot="free">
-            <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
-            <Check size={"1em"} color={"limegreen"} />
-        </div>
-    </Feature> -->
 </div>
 
 {#if !landing}
@@ -243,10 +274,10 @@
             <Button tiny={$mobileWidth} small={!$mobileWidth} secondary on:click={cancel}
                 ><Translatable resourceKey={i18nKey(isDiamond ? "close" : "cancel")} /></Button>
             {#if !isDiamond}
-                <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
+                <Button on:click={onUpgrade} tiny={$mobileWidth} small={!$mobileWidth}
                     ><Translatable resourceKey={i18nKey("upgrade.button")} /></Button>
             {:else if canExtend}
-                <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
+                <Button on:click={onUpgrade} tiny={$mobileWidth} small={!$mobileWidth}
                     ><Translatable resourceKey={i18nKey("upgrade.extendShort")} /></Button>
             {/if}
         </Footer>

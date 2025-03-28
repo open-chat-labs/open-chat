@@ -58,7 +58,6 @@
         onProfile: () => void;
         onClaimDailyChit: () => void;
         onWallet: () => void;
-        onUpgrade: () => void;
     }
 
     let { onProfile, onClaimDailyChit, ...rest }: Props = $props();

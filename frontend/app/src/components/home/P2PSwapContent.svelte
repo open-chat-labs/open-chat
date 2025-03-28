@@ -31,6 +31,7 @@
     import { calculateDollarAmount } from "../../utils/exchange";
     import P2PSwapProgress from "./P2PSwapProgress.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -131,7 +132,7 @@
     function onAcceptOrCancel(e: MouseEvent) {
         if (e.isTrusted && !buttonDisabled) {
             if (!me && !$isDiamond) {
-                dispatch("upgrade");
+                publish("upgrade");
             } else {
                 confirming = true;
             }

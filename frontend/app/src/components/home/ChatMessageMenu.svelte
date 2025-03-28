@@ -52,6 +52,7 @@
     import { isTouchOnlyDevice } from "../../utils/devices";
     import Translatable from "../Translatable.svelte";
     import { quickReactions } from "../../stores/quickReactions";
+    import { publish } from "@src/utils/pubsub";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -223,7 +224,7 @@
 
     function translateMessage() {
         if (!$isDiamond) {
-            dispatch("upgrade");
+            publish("upgrade");
         } else {
             const text = client.getMessageText(msg.content);
             if (text !== undefined) {

@@ -8,4 +8,5 @@ export type PubSubEvents = {
     showInviteGroupUsers: boolean;
     replyPrivatelyTo: EnhancedReplyContext;
     showGroupMembers: undefined;
+    upgrade: undefined;
 };

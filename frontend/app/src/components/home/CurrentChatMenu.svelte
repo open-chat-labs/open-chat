@@ -215,7 +215,7 @@
 
     function convertToCommunity() {
         if (!$isDiamond) {
-            dispatch("upgrade");
+            publish("upgrade");
         } else {
             if (selectedChatSummary.kind === "group_chat") {
                 dispatch("convertGroupToCommunity", selectedChatSummary);

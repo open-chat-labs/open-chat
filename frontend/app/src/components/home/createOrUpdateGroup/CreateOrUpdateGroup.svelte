@@ -38,10 +38,9 @@
         templateGroup: CandidateGroupChat;
         embeddedContent: boolean;
         onClose: () => void;
-        onUpgrade: () => void;
     }
 
-    let { templateGroup, embeddedContent, onClose, onUpgrade }: Props = $props();
+    let { templateGroup, embeddedContent, onClose }: Props = $props();
     let confirming = $state(false);
     let showingVerificationWarning = $state(false);
     let busy = $state(false);
@@ -386,7 +385,6 @@
                     <div class="visibility">
                         <VisibilityControl
                             {embeddedContent}
-                            on:upgrade={onUpgrade}
                             {editing}
                             history
                             {canEditDisappearingMessages}

@@ -26,6 +26,7 @@
     import Fab from "../../../Fab.svelte";
     import { anonUser, offlineStore, identityState, isDiamond } from "openchat-client";
     import { exploreCommunitiesFilters } from "../../../../stores/communityFilters";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -55,7 +56,7 @@
             return;
         }
         if (!$isDiamond) {
-            dispatch("upgrade");
+            publish("upgrade");
         } else {
             dispatch("createCommunity");
         }

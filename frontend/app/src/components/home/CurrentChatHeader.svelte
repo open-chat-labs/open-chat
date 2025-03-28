@@ -241,7 +241,6 @@
             on:showProposalFilters
             on:makeProposal
             on:createPoll
-            on:upgrade
             on:leaveGroup />
     {/if}
 

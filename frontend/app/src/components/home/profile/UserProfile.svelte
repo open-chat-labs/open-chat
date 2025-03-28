@@ -84,6 +84,7 @@
     import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
     import BotConfigData from "./BotConfigData.svelte";
     import Markdown from "../Markdown.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -375,7 +376,6 @@
                     </UsernameInput>
                     <Legend label={i18nKey("displayName")} rules={i18nKey("displayNameRules")} />
                     <DisplayNameInput
-                        on:upgrade
                         {client}
                         {originalDisplayName}
                         disabled={readonly}
@@ -584,7 +584,7 @@
 
                         {#if !$isDiamond}
                             <ButtonGroup align={"fill"}>
-                                <Button on:click={() => dispatch("upgrade")} small
+                                <Button on:click={() => publish("upgrade")} small
                                     ><Translatable
                                         resourceKey={i18nKey("upgrade.button")} /></Button>
                             </ButtonGroup>
@@ -598,7 +598,7 @@
                                         ? $_("upgrade.cannotExtend")
                                         : undefined}
                                     disabled={!$canExtendDiamond}
-                                    on:click={() => dispatch("upgrade")}
+                                    on:click={() => publish("upgrade")}
                                     small
                                     ><Translatable
                                         resourceKey={i18nKey("upgrade.extend")} /></Button>
@@ -689,7 +689,7 @@
         </Select>
     </div>
     {#if selectedCommunity !== undefined}
-        <CommunityProfile on:upgrade community={selectedCommunity} />
+        <CommunityProfile community={selectedCommunity} />
     {/if}
 {:else if view === "chit"}
     <ChitEvents />

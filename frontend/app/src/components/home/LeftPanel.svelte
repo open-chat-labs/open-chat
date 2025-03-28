@@ -22,7 +22,6 @@
                 on:logout
                 on:unarchiveChat
                 on:wallet
-                on:upgrade
                 on:toggleMuteNotifications
                 on:communityDetails
                 on:leaveCommunity

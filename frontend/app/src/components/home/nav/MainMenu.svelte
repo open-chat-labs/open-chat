@@ -22,14 +22,14 @@
     import { anonUser, platformOperator, canExtendDiamond } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { publish } from "@src/utils/pubsub";
 
     interface Props {
         onProfile: () => void;
         onWallet: () => void;
-        onUpgrade: () => void;
     }
 
-    let { onProfile, onWallet, onUpgrade }: Props = $props();
+    let { onProfile, onWallet }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -48,7 +48,7 @@
             <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text"><Translatable resourceKey={i18nKey("profile.title")} /></span>
         </MenuItem>
-        <MenuItem onclick={onUpgrade}>
+        <MenuItem onclick={() => publish("upgrade")}>
             <span class="diamond-icon" slot="icon"></span>
             <span slot="text"
                 ><Translatable

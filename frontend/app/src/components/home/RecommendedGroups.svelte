@@ -82,7 +82,6 @@
         <div class="groups">
             {#each hotGroups.data as group (group.id.groupId)}
                 <RecommendedGroup
-                    on:upgrade
                     on:dismissRecommendation={dismissRecommendation}
                     on:joinGroup
                     on:leaveGroup

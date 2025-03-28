@@ -110,9 +110,9 @@
     class:offset={$layoutStore.showNav && !$layoutStore.showLeft}
     class:halloween={$currentTheme.name === "halloween"}>
     {#if $pathParams.kind === "explore_groups_route"}
-        <RecommendedGroups {joining} on:joinGroup on:leaveGroup on:upgrade />
+        <RecommendedGroups {joining} on:joinGroup on:leaveGroup />
     {:else if $pathParams.kind === "communities_route"}
-        <ExploreCommunities on:upgrade on:createCommunity />
+        <ExploreCommunities on:createCommunity />
     {:else if $pathParams.kind === "admin_route"}
         {#await import("./admin/Admin.svelte")}
             <div class="loading">
@@ -145,7 +145,6 @@
             on:showProposalFilters
             on:makeProposal
             on:joinGroup
-            on:upgrade
             on:verifyHumanity
             on:claimDailyChit
             on:toggleMuteNotifications

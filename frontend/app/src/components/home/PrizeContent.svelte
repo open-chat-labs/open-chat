@@ -31,6 +31,7 @@
     import Streak from "./profile/Streak.svelte";
     import SecureButton from "../SecureButton.svelte";
     import RotationChallenge from "../RotationChallenge.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -72,7 +73,7 @@
     }
 
     function onDiamondClick() {
-        dispatch("upgrade");
+        publish("upgrade");
     }
 
     function onUniquePersonClick() {

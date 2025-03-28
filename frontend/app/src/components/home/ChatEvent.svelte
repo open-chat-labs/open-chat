@@ -169,7 +169,6 @@
             {onReplyTo}
             on:retrySend={retrySend}
             onEditMessage={editEvent}
-            on:upgrade
             on:verifyHumanity
             on:claimDailyChit
             on:forward

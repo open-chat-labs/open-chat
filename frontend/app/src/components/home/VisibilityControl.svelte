@@ -13,6 +13,7 @@
     import Button from "../Button.svelte";
     import DurationPicker from "./DurationPicker.svelte";
     import AccessGateControl from "./access/AccessGateControl.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     type T = $$Generic;
 
@@ -197,7 +198,7 @@
         </div>
         <div class="upgrade info">
             <p><Translatable resourceKey={i18nKey("upgrade.groupMsg")} /></p>
-            <Button on:click={() => dispatch("upgrade")} tiny
+            <Button on:click={() => publish("upgrade")} tiny
                 ><Translatable resourceKey={i18nKey("upgrade.button")} /></Button>
         </div>
     </div>

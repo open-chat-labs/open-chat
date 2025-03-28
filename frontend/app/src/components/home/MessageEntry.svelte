@@ -593,7 +593,7 @@
             <Translatable resourceKey={i18nKey("userIsBlocked")} />
         </div>
     {:else if (preview || lapsed) && chat.kind !== "direct_chat"}
-        <PreviewFooter {lapsed} {joining} {chat} on:joinGroup on:upgrade />
+        <PreviewFooter {lapsed} {joining} {chat} on:joinGroup />
     {:else if externalContent}
         <div class="disclaimer">
             <Alert size={$iconSize} color={"var(--warn"} />
@@ -699,7 +699,6 @@
                         on:attachGif
                         on:makeMeme
                         on:createPoll
-                        on:upgrade
                         on:clearAttachment
                         on:fileSelected />
                 {:else}
