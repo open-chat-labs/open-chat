@@ -71,13 +71,9 @@
     let dragging = false;
 
     onMount(() => {
-        console.log("Mounting leftnav");
         const unsub = communities.subscribe(initCommunitiesList);
         tick().then(() => (scrollingSection.scrollTop = $communityListScrollTop ?? 0));
-        return () => {
-            console.log("Unmounting leftnav");
-            unsub();
-        };
+        return unsub;
     });
 
     function onScroll() {

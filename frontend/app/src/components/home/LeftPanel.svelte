@@ -5,14 +5,6 @@
     import { layoutStore } from "../../stores/layout";
     import { activityFeedShowing } from "../../stores/activity";
     import ActivityFeed from "./activity/ActivityFeed.svelte";
-    import { onMount } from "svelte";
-
-    onMount(() => {
-        console.log("mounting left panel");
-        return () => {
-            console.log("unmounting left panel");
-        };
-    });
 </script>
 
 <section
