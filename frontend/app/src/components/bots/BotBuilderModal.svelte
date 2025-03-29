@@ -146,8 +146,7 @@
                 <BotBuilder
                     {nameDirty}
                     {mode}
-                    candidate={botState.current}
-                    onUpdate={(b) => (botState.current = b)}
+                    bind:candidate={botState.current}
                     bind:schemaLoaded
                     bind:valid
                     bind:principal />

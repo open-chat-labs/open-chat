@@ -28,7 +28,7 @@
         "md5": "^2.3.0",
         "openchat-shared": "*",
         "peerjs": "^1.4.7",
-        "svelte": "^5.1.0",
+        "svelte": "^5.20.4",
         "svelte-i18n": "^4.0.1",
         "usergeek-ic-js": "^1.0.6"
     },
