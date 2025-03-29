@@ -123,34 +123,6 @@
 
     let lastScrollY = $state(window.scrollY);
 
-    onMount(() => {
-        const unsubs = [
-            subscribe("startVideoCall", startVideoCall),
-            subscribe("hangup", hangup),
-            subscribe("askToSpeak", askToSpeak),
-        ];
-        window.addEventListener("scroll", trackVirtualKeyboard);
-        window.addEventListener("resize", trackVirtualKeyboard);
-        return () => {
-            window.removeEventListener("scroll", trackVirtualKeyboard);
-            window.removeEventListener("resize", trackVirtualKeyboard);
-            unsubs.forEach((u) => u());
-        };
-    });
-
-    // We will interpret a significant leap in window.scrollY to indicate the opening of the virtual keyboard
-    function trackVirtualKeyboard() {
-        const threshold = 100; // prevent accidental triggering
-        const delta = window.scrollY - lastScrollY;
-        const keyboardVisible = delta > threshold;
-        lastScrollY = window.scrollY;
-        if (keyboardVisible) {
-            document.body.classList.add("keyboard");
-        } else {
-            document.body.classList.remove("keyboard");
-        }
-    }
-
     $effect(() => {
         // subscribe to the rtl store so that we can set the overall page direction at the right time
         document.dir = $rtlStore ? "rtl" : "ltr";
@@ -164,15 +136,26 @@
         }
     });
 
-    $effect(() => {
+    $effect(calculateHeight);
+
+    onMount(() => {
+        const unsubs = [
+            subscribe("startVideoCall", startVideoCall),
+            subscribe("hangup", hangup),
+            subscribe("askToSpeak", askToSpeak),
+        ];
+        window.addEventListener("scroll", trackVirtualKeyboard);
+        window.addEventListener("resize", trackVirtualKeyboard);
+        window.addEventListener("orientationchange", calculateHeight);
+        window.addEventListener("unhandledrejection", unhandledError);
+        framed.set(window.self !== window.top);
+        client.addEventListener("openchat_event", onUserLoggedIn);
+
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {
             pageReplace(removeQueryStringParam("ref"));
         }
-        calculateHeight();
 
-        window.addEventListener("orientationchange", calculateHeight);
-        window.addEventListener("unhandledrejection", unhandledError);
         //@ts-ignore
         window.platformModerator = {
             addHotGroupExclusion,
@@ -187,6 +170,7 @@
             removeMessageFilter,
             reportedMessages,
         };
+
         //@ts-ignore
         window.platformOperator = {
             addRemoveSwapProvider,
@@ -204,9 +188,28 @@
             resumeEventLoop: () => client.resumeEventLoop(),
         };
 
-        framed.set(window.self !== window.top);
-        client.addEventListener("openchat_event", onUserLoggedIn);
+        return () => {
+            window.removeEventListener("scroll", trackVirtualKeyboard);
+            window.removeEventListener("resize", trackVirtualKeyboard);
+            window.removeEventListener("orientationchange", calculateHeight);
+            window.removeEventListener("unhandledrejection", unhandledError);
+            client.removeEventListener("openchat_event", onUserLoggedIn);
+            unsubs.forEach((u) => u());
+        };
     });
+
+    // We will interpret a significant leap in window.scrollY to indicate the opening of the virtual keyboard
+    function trackVirtualKeyboard() {
+        const threshold = 100; // prevent accidental triggering
+        const delta = window.scrollY - lastScrollY;
+        const keyboardVisible = delta > threshold;
+        lastScrollY = window.scrollY;
+        if (keyboardVisible) {
+            document.body.classList.add("keyboard");
+        } else {
+            document.body.classList.remove("keyboard");
+        }
+    }
 
     function onUserLoggedIn(ev: Event) {
         if (ev instanceof UserLoggedIn) {

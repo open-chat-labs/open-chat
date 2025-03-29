@@ -18,7 +18,7 @@
         onChange: () => void;
     }
 
-    let { param, arg, onChange }: Props = $props();
+    let { param, arg = $bindable(), onChange }: Props = $props();
 </script>
 
 <div class="param">
@@ -92,7 +92,6 @@
                 min={param.minValue}
                 max={param.maxValue}
                 shouldClamp={false}
-                change={onChange}
                 placeholder={i18nKey(param.placeholder ?? "")}
                 bind:value={arg.value} />
         {:else if arg.kind === "decimal" && param.kind === "decimal"}
