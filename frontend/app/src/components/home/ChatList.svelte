@@ -67,6 +67,9 @@
 
     let unreadCounts = $state(emptyCombinedUnreadCounts());
 
+    // TODO this doesn't work properly and I think it's to do with the way
+    // effect dependencies are worked out when you have conditional code
+    // Probably can just be done in a more explicit way but it's not urgent
     $effect.pre(() => {
         if (
             previousScope === $chatListScope &&
@@ -164,6 +167,7 @@
     function onViewChanged() {
         previousView = $chatListView;
         const scrollTop = previousView === "chats" ? chatsScrollTop ?? 0 : 0;
+        console.log("Scroll stuff: ", chatsScrollTop);
         tick().then(() => {
             if (chatListElement !== undefined) {
                 chatListElement.scrollTop = scrollTop;
