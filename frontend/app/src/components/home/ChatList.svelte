@@ -167,7 +167,6 @@
     function onViewChanged() {
         previousView = $chatListView;
         const scrollTop = previousView === "chats" ? chatsScrollTop ?? 0 : 0;
-        console.log("Scroll stuff: ", chatsScrollTop);
         tick().then(() => {
             if (chatListElement !== undefined) {
                 chatListElement.scrollTop = scrollTop;
