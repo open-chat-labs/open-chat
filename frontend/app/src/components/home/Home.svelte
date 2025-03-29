@@ -1224,7 +1224,6 @@
     {#if $layoutStore.showNav}
         <LeftNav />
     {/if}
-
     {#if $layoutStore.showLeft}
         <LeftPanel />
     {/if}

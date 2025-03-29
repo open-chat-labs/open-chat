@@ -17,12 +17,19 @@
         installedDirectBots,
     } from "openchat-client";
     import { pathParams } from "../../routes";
-    import { tick } from "svelte";
+    import { onMount, tick } from "svelte";
     import { currentTheme } from "../../theme/themes";
     import { layoutStore, type Layout, rightPanelWidth } from "../../stores/layout";
     import Loading from "../Loading.svelte";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
     import UninstalledDirectBot from "../bots/UninstalledDirectBot.svelte";
+
+    onMount(() => {
+        console.log("mounting middle panel");
+        return () => {
+            console.log("unmounting middle panel");
+        };
+    });
 
     interface Props {
         joining: MultiUserChat | undefined;
