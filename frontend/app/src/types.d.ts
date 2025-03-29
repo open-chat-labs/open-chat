@@ -1,7 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-
-import type { ProfileLinkClickedEvent } from "./components/web-components/profileLink";
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare module "remount/es5";
 
