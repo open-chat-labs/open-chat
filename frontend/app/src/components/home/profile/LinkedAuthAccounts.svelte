@@ -2,7 +2,7 @@
     import Account from "svelte-material-icons/Account.svelte";
     import LinkOff from "svelte-material-icons/LinkOff.svelte";
     import { AuthProvider, OpenChat, type AuthenticationPrincipal } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import TruncatedAccount from "../TruncatedAccount.svelte";
     import AuthProviderLogo from "./AuthProviderLogo.svelte";
     import Button from "../../Button.svelte";
@@ -25,9 +25,7 @@
     let linking = $state(false);
     let unlinking: AccountType | null = $state(null);
 
-    $effect(() => {
-        (async () => refresh())();
-    });
+    onMount(() => refresh());
 
     async function refresh() {
         linking = false;
