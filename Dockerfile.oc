@@ -30,11 +30,17 @@ RUN cargo --version
 WORKDIR /oc
 COPY . .
 
-# Run dfx, wait for it to start, check it's running, then run local deployment!
+# We need the dfx to bind to all interfaces within the container when running in
+# docker, which will allow outside access when port 8080 is exposed.
+RUN jq '.networks.local.bind = "0.0.0.0:8080"' dfx.json > dfx.json.tmp && mv dfx.json.tmp dfx.json
+
 RUN dfx start --clean > /dev/null 2>&1 & \
     sleep 6 && \
-    curl -I http://127.0.0.1:8080/api/v2/status && \
-    ./scripts/deploy-local.sh
+    curl -I http://0.0.0.0:8080/api/v2/status && \
+    ./scripts/deploy-local.sh && \
+    sleep 6 && \
+    dfx ping && \
+    dfx stop
 
 # Build UI
 WORKDIR /oc/frontend
@@ -86,10 +92,6 @@ COPY --from=build-app /oc/.dfx /oc/.dfx
 COPY --from=build-app /oc/dfx.json /oc/dfx.json
 
 WORKDIR /oc
-
-# We need the dfx to bind to all interfaces within the container when running in
-# docker, which will allow outside access when port 8080 is exposed.
-RUN jq '.networks.local.bind = "0.0.0.0:8080"' dfx.json > dfx.json.tmp && mv dfx.json.tmp dfx.json
 
 # Create a startup script! `dfx stop` makes sure that any files crated by the
 # dfx run in the previous step are removed.
