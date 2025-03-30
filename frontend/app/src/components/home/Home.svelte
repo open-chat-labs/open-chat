@@ -139,10 +139,10 @@
         inGlobalContext: boolean;
     };
 
-    const client = $state(getContext<OpenChat>("client"));
+    const client = getContext<OpenChat>("client");
 
-    let convertGroup: GroupChatSummary | undefined = $state(undefined);
-    let showProfileCard: ViewProfileConfig | undefined = $state(undefined);
+    let convertGroup: GroupChatSummary | undefined = undefined;
+    let showProfileCard: ViewProfileConfig | undefined = undefined;
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -203,14 +203,54 @@
               level: Level;
           };
 
-    let modal: ModalType = $state({ kind: "none" });
-    let confirmActionEvent: ConfirmActionEvent | undefined = $state();
-    let joining: MultiUserChat | undefined = $state(undefined);
-    let showUpgrade: boolean = $state(false);
+    let modal: ModalType = { kind: "none" };
+    let confirmActionEvent: ConfirmActionEvent | undefined;
+    let joining: MultiUserChat | undefined = undefined;
+    let showUpgrade: boolean = false;
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
-    let currentChatMessages: CurrentChatMessages | undefined = $state();
+    let currentChatMessages: CurrentChatMessages | undefined;
+
+    $: confirmMessage = getConfirmMessage(confirmActionEvent);
+
+    $: selectedMultiUserChat =
+        $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
+            ? $selectedChatStore
+            : undefined;
+    $: governanceCanisterId =
+        selectedMultiUserChat !== undefined
+            ? selectedMultiUserChat.subtype?.governanceCanisterId
+            : undefined;
+    $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
+    // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
+    $: {
+        if ($identityState.kind === "registering") {
+            modal = { kind: "registering" };
+        } else if ($identityState.kind === "logging_in") {
+            modal = { kind: "logging_in" };
+        } else if ($identityState.kind === "logged_in" && modal.kind === "registering") {
+            console.log("We are now logged in so we are closing the register modal");
+            closeModal();
+        } else if ($identityState.kind === "challenging") {
+            modal = { kind: "challenge" };
+        }
+        if (
+            $identityState.kind === "logged_in" &&
+            $identityState.postLogin?.kind === "join_group" &&
+            $chatsInitialised
+        ) {
+            const join = { ...$identityState.postLogin };
+            client.clearPostLoginState();
+            tick().then(() => joinGroup(join));
+        }
+    }
+
+    $: {
+        tick().then(() => {
+            routeChange($chatsInitialised, $pathParams);
+        });
+    }
 
     onMount(() => {
         const unsubEvents = [
@@ -245,9 +285,6 @@
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
-        document.body.addEventListener("profile-clicked", (event) => {
-            profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
-        });
 
         if ($suspendedUser) {
             modal = { kind: "suspended" };
@@ -1142,7 +1179,7 @@
         showProfileCard = undefined;
     }
 
-    let forgotPin = $state(false);
+    let forgotPin = false;
 
     function onForgotPin() {
         forgotPin = true;
@@ -1166,45 +1203,8 @@
         modal = { kind: "claim_daily_chit" };
     }
 
-    let confirmMessage = $derived(getConfirmMessage(confirmActionEvent));
-    let selectedMultiUserChat = $derived(
-        $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
-            ? $selectedChatStore
-            : undefined,
-    );
-    let governanceCanisterId = $derived(
-        selectedMultiUserChat !== undefined
-            ? selectedMultiUserChat.subtype?.governanceCanisterId
-            : undefined,
-    );
-    let nervousSystem = $derived(client.tryGetNervousSystem(governanceCanisterId));
-    // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
-    $effect(() => {
-        if ($identityState.kind === "registering") {
-            modal = { kind: "registering" };
-        } else if ($identityState.kind === "logging_in") {
-            modal = { kind: "logging_in" };
-        } else if ($identityState.kind === "logged_in" && modal.kind === "registering") {
-            console.log("We are now logged in so we are closing the register modal");
-            closeModal();
-        } else if ($identityState.kind === "challenging") {
-            modal = { kind: "challenge" };
-        }
-        if (
-            $identityState.kind === "logged_in" &&
-            $identityState.postLogin?.kind === "join_group" &&
-            $chatsInitialised
-        ) {
-            const join = { ...$identityState.postLogin };
-            client.clearPostLoginState();
-            tick().then(() => joinGroup(join));
-        }
-    });
-    $effect(() => {
-        routeChange($chatsInitialised, $pathParams);
-    });
-    let bgHeight = $derived($dimensions.height * 0.9);
-    let bgClip = $derived((($dimensions.height - 32) / bgHeight) * 361);
+    $: bgHeight = $dimensions.height * 0.9;
+    $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
 
 {#if showProfileCard !== undefined}
@@ -1348,7 +1348,7 @@
     </Overlay>
 {/if}
 
-<!-- <svelte:body onprofile-clicked={profileLinkClicked} /> -->
+<svelte:body on:profile-clicked={profileLinkClicked} />
 
 {#if $chitPopup && !$disableChit}
     <ChitEarned />
