@@ -27,7 +27,6 @@
     $effect(() => {
         const section = $querystring.get("section");
         if (section) {
-            console.log("scrolling to section: ", section);
             linked = scrollToSection(section);
         }
     });
