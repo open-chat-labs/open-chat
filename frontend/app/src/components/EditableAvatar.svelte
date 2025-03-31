@@ -146,9 +146,9 @@
             {/snippet}
             {#snippet footer()}
                 <ButtonGroup>
-                    <Button tiny secondary on:click={() => (showModal = false)}
+                    <Button tiny secondary onClick={() => (showModal = false)}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                    <Button tiny on:click={cropImage}
+                    <Button tiny onClick={cropImage}
                         ><Translatable resourceKey={i18nKey("apply")} /></Button>
                 </ButtonGroup>
             {/snippet}

@@ -8,13 +8,27 @@
     const maxDiffX = 10; // max number of X pixels the mouse can move during long press before it is canceled
     const maxDiffY = 10; // max number of Y pixels the mouse can move during long press before it is canceled
 
-    export let hovering: boolean = false;
-    export let longPressed: boolean = false;
-    export let enableLongPress: boolean = false;
-    export let coords: { x: number; y: number } = { x: 0, y: 0 };
-    export let fill = false;
+    interface Props {
+        hovering?: boolean;
+        longPressed?: boolean;
+        enableLongPress?: boolean;
+        coords?: { x: number; y: number };
+        fill?: boolean;
+        children?: import("svelte").Snippet;
+    }
 
-    let containerDiv: HTMLDivElement | undefined;
+    let {
+        hovering = $bindable(false),
+        longPressed = $bindable(false),
+        enableLongPress = false,
+        coords = $bindable({ x: 0, y: 0 }),
+        fill = false,
+        children,
+    }: Props = $props();
+
+    hovering;
+
+    let containerDiv: HTMLDivElement | undefined = $state();
     let hoverTimer: number | undefined;
     let longPressTimer: number | undefined;
 
@@ -128,7 +142,7 @@
 </script>
 
 <div class:fill class="noselect" bind:this={containerDiv}>
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">

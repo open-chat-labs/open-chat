@@ -182,7 +182,7 @@
 
     {#if editable}
         <div class="add">
-            <Button tiny on:click={addArgument}>
+            <Button tiny onClick={addArgument}>
                 <Translatable resourceKey={i18nKey("access.credential.addArgument")} />
             </Button>
         </div>

@@ -5,12 +5,17 @@
     import { emptyUnreadCounts, type ResourceKey } from "openchat-client";
     import Translatable from "../Translatable.svelte";
 
-    export let selected = false;
-    export let title: ResourceKey;
-    export let unread = emptyUnreadCounts();
+    interface Props {
+        selected?: boolean;
+        title: ResourceKey;
+        unread?: any;
+        onClick?: (e: MouseEvent) => void;
+    }
+
+    let { selected = false, title, unread = emptyUnreadCounts(), onClick }: Props = $props();
 </script>
 
-<Button fill={$mobileWidth} hollow={!selected} small={!$mobileWidth} tiny={$mobileWidth} on:click>
+<Button fill={$mobileWidth} hollow={!selected} small={!$mobileWidth} tiny={$mobileWidth} {onClick}>
     <h4 class="title">
         <Translatable resourceKey={title} />
     </h4>

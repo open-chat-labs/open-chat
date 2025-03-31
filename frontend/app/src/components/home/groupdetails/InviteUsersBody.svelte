@@ -182,7 +182,7 @@
             disabled={busy || usersToAddOrInvite.length === 0}
             loading={busy}
             square
-            on:click={selectedTab === "invite_users" ? inviteUsers : addMembers}
+            onClick={selectedTab === "invite_users" ? inviteUsers : addMembers}
             fill
             ><Translatable
                 resourceKey={selectedTab === "invite_users"

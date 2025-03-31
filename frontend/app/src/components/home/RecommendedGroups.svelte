@@ -97,9 +97,9 @@
         <h3 class="title"><Translatable resourceKey={i18nKey("noGroupsFound")} /></h3>
         <p class="subtitle"><Translatable resourceKey={i18nKey("checkBackLater")} /></p>
         <ButtonGroup align={"fill"}>
-            <Button small on:click={cancelRecommendations}
+            <Button small onClick={cancelRecommendations}
                 ><Translatable resourceKey={i18nKey("close")} /></Button>
-            <Button secondary small on:click={loadData}
+            <Button secondary small onClick={loadData}
                 ><Translatable resourceKey={i18nKey("refresh")} /></Button>
         </ButtonGroup>
     </div>

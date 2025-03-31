@@ -100,11 +100,11 @@
             {#snippet footer()}
                 <span class="footer">
                     <ButtonGroup align={$mobileWidth ? "center" : "end"}>
-                        <Button tiny secondary on:click={reset}
+                        <Button tiny secondary onClick={reset}
                             ><Translatable resourceKey={i18nKey("reset")} /></Button>
-                        <Button tiny secondary on:click={close}
+                        <Button tiny secondary onClick={close}
                             ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                        <Button tiny disabled={memeUrl === undefined} on:click={send}
+                        <Button tiny disabled={memeUrl === undefined} onClick={send}
                             ><Translatable resourceKey={i18nKey("send")} /></Button>
                     </ButtonGroup>
                 </span>

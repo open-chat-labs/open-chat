@@ -92,7 +92,7 @@
             <AccessGateIcon clickable level={group.level} gateConfig={group.gateConfig} />
         </div>
         {#if member}
-            <Button tiny on:click={() => leaveGroup(group)}
+            <Button tiny onClick={() => leaveGroup(group)}
                 ><Translatable resourceKey={i18nKey("leave")} /></Button>
         {:else}
             {#if !$suspendedUser}
@@ -101,13 +101,13 @@
                     loading={joining === group}
                     tiny
                     hollow
-                    on:click={() => joinGroup(group)}
+                    onClick={() => joinGroup(group)}
                     ><Translatable
                         resourceKey={locked
                             ? i18nKey("access.lockedGate", undefined, group.level, true)
                             : i18nKey("join")} /></Button>
             {/if}
-            <Button disabled={joining === group} tiny on:click={() => gotoGroup(group)}
+            <Button disabled={joining === group} tiny onClick={() => gotoGroup(group)}
                 ><Translatable resourceKey={i18nKey("preview")} /></Button>
         {/if}
     </Footer>

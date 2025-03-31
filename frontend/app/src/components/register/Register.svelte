@@ -177,7 +177,7 @@
             {/snippet}
             {#snippet footer(onClose)}
                 <span>
-                    <Button on:click={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("register.agree")} />
                     </Button>
                 </span>
@@ -266,22 +266,22 @@
     {#snippet footer()}
         <div class="footer">
             {#if closed}
-                <Button on:click={logout}><Translatable resourceKey={i18nKey("close")} /></Button>
+                <Button onClick={logout}><Translatable resourceKey={i18nKey("close")} /></Button>
             {:else if badCode}
                 <ButtonGroup>
-                    <Button secondary on:click={clearCodeAndLogout}
+                    <Button secondary onClick={clearCodeAndLogout}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <Button
                         loading={checkingUsername || busy}
                         disabled={!usernameValid || busy}
-                        on:click={clearCodeAndRegister}
+                        onClick={clearCodeAndRegister}
                         ><Translatable resourceKey={i18nKey("register.proceed")} /></Button>
                 </ButtonGroup>
             {:else}
                 <Button
                     loading={checkingUsername || busy}
                     disabled={!usernameValid || busy}
-                    on:click={register}>
+                    onClick={register}>
                     <Translatable resourceKey={i18nKey("register.createUser")} />
                 </Button>
             {/if}

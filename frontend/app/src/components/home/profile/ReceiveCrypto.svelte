@@ -63,7 +63,7 @@
     {#snippet footer()}
         <span>
             <ButtonGroup>
-                <Button tiny={$mobileWidth} on:click={onClose}
+                <Button tiny={$mobileWidth} onClick={onClose}
                     ><Translatable resourceKey={i18nKey("close")} /></Button>
             </ButtonGroup>
         </span>

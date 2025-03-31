@@ -4,14 +4,19 @@
     import Translatable from "../../Translatable.svelte";
     import AuthProviderLogo from "./AuthProviderLogo.svelte";
 
-    export let provider: AuthProvider;
-    export let name: ResourceKey;
-    export let hollow: boolean = false;
+    interface Props {
+        provider: AuthProvider;
+        name: ResourceKey;
+        hollow?: boolean;
+        onClick?: (e: MouseEvent) => void;
+    }
+
+    let { provider, name, hollow = false, onClick }: Props = $props();
 </script>
 
 <div class="auth-option">
     <AuthProviderLogo {provider} />
-    <Button fill {hollow} on:click>
+    <Button fill {hollow} {onClick}>
         <Translatable resourceKey={name} />
     </Button>
 </div>

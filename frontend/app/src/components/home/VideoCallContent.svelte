@@ -81,12 +81,12 @@
     </div>
     <div class="video-call-btn">
         {#if incall}
-            <Button fill disabled={content.ended !== undefined} on:click={leaveCall}>
+            <Button fill disabled={content.ended !== undefined} onClick={leaveCall}>
                 <Translatable
                     resourceKey={i18nKey(content.ended ? "videoCall.ended" : "videoCall.leave")} />
             </Button>
         {:else}
-            <Button fill disabled={endedDate !== undefined} on:click={joinCall}>
+            <Button fill disabled={endedDate !== undefined} onClick={joinCall}>
                 <Translatable
                     resourceKey={endedDate
                         ? i18nKey("videoCall.endedAt", {

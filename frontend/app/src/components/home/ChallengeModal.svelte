@@ -111,9 +111,9 @@
         {/snippet}
         {#snippet footer()}
             <ButtonGroup align={"fill"}>
-                <Button disabled={!valid || submitting} loading={submitting} on:click={submit}
+                <Button disabled={!valid || submitting} loading={submitting} onClick={submit}
                     >{$_("next")}</Button>
-                <Button secondary on:click={cancel}>{$_("cancel")}</Button>
+                <Button secondary onClick={cancel}>{$_("cancel")}</Button>
             </ButtonGroup>
         {/snippet}
     </ModalContent>

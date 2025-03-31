@@ -122,7 +122,7 @@
                         <Button
                             disabled={searching}
                             loading={searching}
-                            on:click={() => search(searchTerm, false)}
+                            onClick={() => search(searchTerm, false)}
                             ><Translatable resourceKey={i18nKey("communities.loadMore")} /></Button>
                     </div>
                 {/if}

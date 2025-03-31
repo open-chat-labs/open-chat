@@ -25,9 +25,9 @@
             {/snippet}
             {#snippet footer()}
                 <ButtonGroup>
-                    <Button on:click={() => client.askForNotificationPermission()}
+                    <Button onClick={() => client.askForNotificationPermission()}
                         ><Translatable resourceKey={i18nKey("yesPlease")} /></Button>
-                    <Button secondary on:click={() => client.setSoftDisabled(true)}
+                    <Button secondary onClick={() => client.setSoftDisabled(true)}
                         ><Translatable resourceKey={i18nKey("noThanks")} /></Button>
                 </ButtonGroup>
             {/snippet}

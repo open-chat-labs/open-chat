@@ -90,9 +90,9 @@
             {#snippet footer()}
                 <span>
                     <ButtonGroup>
-                        <Button secondary on:click={onCancel}
+                        <Button secondary onClick={onCancel}
                             ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                        <Button loading={importing} disabled={importing} on:click={performImport}
+                        <Button loading={importing} disabled={importing} onClick={performImport}
                             ><Translatable
                                 resourceKey={i18nKey("communities.importBtn")} /></Button>
                     </ButtonGroup>

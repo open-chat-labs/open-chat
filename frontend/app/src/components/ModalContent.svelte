@@ -155,7 +155,7 @@
     {#if !hideFooter}
         <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
             {#if footer}{@render footer(onClose)}{:else}
-                <Button on:click={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
+                <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
                     <Translatable resourceKey={i18nKey("close")} />
                 </Button>
             {/if}

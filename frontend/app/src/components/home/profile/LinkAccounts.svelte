@@ -76,9 +76,10 @@
 
     $: currentIdentity = accounts.find((a) => a.isCurrentIdentity);
     $: currentProvider = currentIdentity?.provider ?? $selectedAuthProviderStore;
-    $: restrictTo = substep.kind === "approver" && currentProvider !== undefined
-        ? new Set<string>([currentProvider])
-        : new Set<string>();
+    $: restrictTo =
+        substep.kind === "approver" && currentProvider !== undefined
+            ? new Set<string>([currentProvider])
+            : new Set<string>();
 
     onMount(() => {
         client.getAuthenticationPrincipals().then((a) => (accounts = a));
@@ -131,7 +132,8 @@
                 };
             } else {
                 const initiator = substep.initiator;
-                const [identity, delegation, webAuthnKey] = await client.reSignInWithCurrentWebAuthnIdentity();
+                const [identity, delegation, webAuthnKey] =
+                    await client.reSignInWithCurrentWebAuthnIdentity();
                 substep = {
                     kind: "ready_to_link",
                     initiator,
@@ -262,7 +264,9 @@
 
         const { initiator, approver } = substep;
 
-        const approverPrincipal = Principal.selfAuthenticating(new Uint8Array(approver.delegation.publicKey)).toString();
+        const approverPrincipal = Principal.selfAuthenticating(
+            new Uint8Array(approver.delegation.publicKey),
+        ).toString();
 
         if (currentIdentity.principal !== approverPrincipal) {
             console.log("Principal mismatch: ", currentIdentity.principal, approverPrincipal);
@@ -359,7 +363,7 @@
             <Button
                 loading={loggingInInitiator}
                 disabled={loggingInInitiator}
-                on:click={loginInternetIdentity}>
+                onClick={loginInternetIdentity}>
                 <span class="link-ii-logo">
                     <InternetIdentityLogo />
                 </span>
@@ -410,27 +414,27 @@
 
 <div class="footer">
     <ButtonGroup>
-        <Button secondary on:click={() => dispatch("close")}
+        <Button secondary onClick={() => dispatch("close")}
             ><Translatable resourceKey={i18nKey("cancel")} /></Button>
         {#if error !== undefined}
-            <Button secondary on:click={reset}
+            <Button secondary onClick={reset}
                 ><Translatable resourceKey={i18nKey("identity.tryAgain")} /></Button>
         {:else if step === "explain"}
             {#if linkInternetIdentity}
-                <Button on:click={initiateLinking}>
+                <Button onClick={initiateLinking}>
                     <span class="link-ii-logo">
                         <InternetIdentityLogo />
                     </span>
                     <Translatable resourceKey={i18nKey("identity.link")} /></Button>
             {:else}
-                <Button on:click={initiateLinking}>
+                <Button onClick={initiateLinking}>
                     <Translatable resourceKey={i18nKey("identity.linkedAccounts.start")} /></Button>
             {/if}
         {:else if step === "linking"}
-            <Button secondary on:click={reset}
+            <Button secondary onClick={reset}
                 ><Translatable resourceKey={i18nKey("identity.back")} /></Button>
             {#if substep.kind === "ready_to_link"}
-                <Button loading={linking} disabled={linking} on:click={linkIdentities}>
+                <Button loading={linking} disabled={linking} onClick={linkIdentities}>
                     <Translatable resourceKey={i18nKey("identity.link")} /></Button>
             {/if}
         {/if}
