@@ -8,7 +8,7 @@ timer_job_batch!(AirdropBotEventBatch, CanisterId, IdempotentEnvelope<OnlineUser
 impl TimerJobItem for AirdropBotEventBatch {
     async fn process(&self) -> Result<(), bool> {
         let response = airdrop_bot_canister_c2c_client::c2c_online_users(
-            self.args,
+            self.state,
             &airdrop_bot_canister::c2c_online_users::Args {
                 events: self.items.clone(),
             },

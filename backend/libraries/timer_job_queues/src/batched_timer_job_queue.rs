@@ -77,19 +77,19 @@ where
 
 #[macro_export]
 macro_rules! timer_job_batch {
-    ($name:ident, $args_type:ty, $item_type:ty, $batch_size:literal) => {
+    ($name:ident, $state_type:ty, $item_type:ty, $batch_size:literal) => {
         pub struct $name {
-            args: $args_type,
+            state: $state_type,
             items: Vec<$item_type>,
         }
 
         impl timer_job_queues::TimerJobItemBatch for $name {
-            type State = $args_type;
+            type State = $state_type;
             type Item = $item_type;
 
-            fn new(args: $args_type) -> Self {
+            fn new(state: $state_type) -> Self {
                 $name {
-                    args,
+                    state,
                     items: Vec::new(),
                 }
             }

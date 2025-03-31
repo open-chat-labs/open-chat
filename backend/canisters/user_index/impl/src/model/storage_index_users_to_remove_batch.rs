@@ -8,7 +8,7 @@ timer_job_batch!(StorageIndexUsersToRemoveBatch, CanisterId, Principal, 1000);
 impl TimerJobItem for StorageIndexUsersToRemoveBatch {
     async fn process(&self) -> Result<(), bool> {
         let response = storage_index_canister_c2c_client::remove_users(
-            self.args,
+            self.state,
             &storage_index_canister::remove_users::Args {
                 user_ids: self.items.clone(),
             },
