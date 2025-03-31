@@ -259,8 +259,8 @@
         }
     }
 
-    function tipMessage(ev: CustomEvent<string>) {
-        tipping = ev.detail;
+    function tipMessage(ledger: string) {
+        tipping = ledger;
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -802,7 +802,7 @@
             {#if tips.length > 0 && !inert}
                 <div class="tips" class:indent={showAvatar}>
                     {#each tips as [ledger, userTips]}
-                        <TipThumbnail on:click={tipMessage} {canTip} {ledger} {userTips} />
+                        <TipThumbnail onClick={tipMessage} {canTip} {ledger} {userTips} />
                     {/each}
                 </div>
             {/if}

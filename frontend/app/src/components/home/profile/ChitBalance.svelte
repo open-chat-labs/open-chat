@@ -1,18 +1,23 @@
 <script lang="ts">
     import { i18nKey } from "../../../i18n/i18n";
-    import TooltipPopup from "../../TooltipPopup.svelte";
-    import TooltipWrapper from "../../TooltipWrapper.svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import Translatable from "../../Translatable.svelte";
     import LearnToEarn from "./LearnToEarn.svelte";
 
-    export let balance: number;
-    export let totalEarned: number;
-    export let me: boolean;
-    export let size: "small" | "large" = "small";
+    interface Props {
+        balance: number;
+        totalEarned: number;
+        me: boolean;
+        size?: "small" | "large";
+    }
 
-    let learnToEarn = false;
+    let { balance, totalEarned, me, size = "small" }: Props = $props();
 
-    function click() {
+    let learnToEarn = $state(false);
+
+    function click(e: Event) {
+        e.stopPropagation();
+        e.preventDefault();
         if (me) {
             learnToEarn = true;
         }
@@ -24,35 +29,31 @@
 {/if}
 
 {#if totalEarned > 0}
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div on:click={click} class={`balance ${size}`} class:me>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div onclick={click} class={`balance ${size}`} class:me>
         <div class="chit"></div>
         <div class="balances">
-            <TooltipWrapper position="top" align="middle">
-                <div slot="target" class="current">{`${balance.toLocaleString()} CHIT`}</div>
-                <div let:position let:align slot="tooltip">
-                    <TooltipPopup {align} {position}>
-                        <Translatable resourceKey={i18nKey("currentChitBalance")} />
-                    </TooltipPopup>
-                </div>
-            </TooltipWrapper>
-            <TooltipWrapper position="bottom" align="middle">
-                <div slot="target" class="total">{`${totalEarned.toLocaleString()} CHIT`}</div>
-                <div let:position let:align slot="tooltip">
-                    <TooltipPopup {align} {position}>
-                        <Translatable resourceKey={i18nKey("totalChitEarned")} />
-                    </TooltipPopup>
-                </div>
-            </TooltipWrapper>
+            <Tooltip position="top" align="middle">
+                <div class="current">{`${balance.toLocaleString()} CHIT`}</div>
+                {#snippet popupTemplate()}
+                    <Translatable resourceKey={i18nKey("currentChitBalance")} />
+                {/snippet}
+            </Tooltip>
+            <Tooltip position="bottom" align="middle">
+                <div class="total">{`${totalEarned.toLocaleString()} CHIT`}</div>
+                {#snippet popupTemplate()}
+                    <Translatable resourceKey={i18nKey("totalChitEarned")} />
+                {/snippet}
+            </Tooltip>
         </div>
     </div>
 {/if}
 {#if me}
-    <!-- svelte-ignore a11y-interactive-supports-focus -->
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-missing-attribute -->
-    <a on:click|preventDefault|stopPropagation={click} role="button" class={size}>
+    <!-- svelte-ignore a11y_interactive_supports_focus -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_missing_attribute -->
+    <a onclick={click} role="button" class={size}>
         <Translatable resourceKey={i18nKey("profile.earnMore")} />
     </a>
 {/if}
