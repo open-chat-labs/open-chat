@@ -1,14 +1,19 @@
 <script lang="ts">
     import Link from "./Link.svelte";
     import Launch from "./Launch.svelte";
-    import { createEventDispatcher } from "svelte";
-    import { identityState } from "openchat-client";
+    import { getContext } from "svelte";
+    import { identityState, OpenChat } from "openchat-client";
     import { location } from "../../routes";
 
-    export let showBlog: boolean;
+    const client = getContext<OpenChat>("client");
 
-    const dispatch = createEventDispatcher();
-    $: path = $location;
+    interface Props {
+        showBlog: boolean;
+    }
+
+    let { showBlog }: Props = $props();
+
+    let path = $derived($location);
 </script>
 
 <div class="menu-items">
@@ -41,7 +46,7 @@
             <Link selected={path.startsWith("/faq")} mode={"menu"} path="faq">FAQs</Link>
         </div>
         {#if $identityState.kind === "logged_in"}
-            <Link on:linkClicked={() => dispatch("logout")} mode={"menu"}>Logout</Link>
+            <Link onLinkClicked={() => client.logout()} mode={"menu"}>Logout</Link>
         {/if}
         <div class="menu-item">
             <Launch />

@@ -92,7 +92,7 @@
                         canExtend={$canExtendDiamond}
                         isDiamond={$isDiamond}
                         on:cancel
-                        on:upgrade={() => (step = "payment")} />
+                        onUpgrade={() => (step = "payment")} />
                 {/if}
                 {#if step === "payment"}
                     <Payment

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import SectionHeader from "../SectionHeader.svelte";
@@ -19,7 +19,12 @@
     import Translatable from "../Translatable.svelte";
     import { proposalTopicsStore, filteredProposalsStore } from "openchat-client";
 
-    export let selectedChat: ChatSummary;
+    interface Props {
+        selectedChat: ChatSummary;
+        onClose: () => void;
+    }
+
+    let { selectedChat, onClose }: Props = $props();
 
     type SectionLabels = Record<ProposalActionCategory, string>;
 
@@ -39,13 +44,13 @@
     };
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
-    $: topics = [...$proposalTopicsStore];
-    $: groupTopics =
+    let topics = $derived([...$proposalTopicsStore]);
+    let groupTopics = $derived(
         selectedChat.kind !== "direct_chat" &&
-        selectedChat.subtype?.governanceCanisterId === OC_GOVERNANCE_CANISTER_ID;
+            selectedChat.subtype?.governanceCanisterId === OC_GOVERNANCE_CANISTER_ID,
+    );
 
-    $: grouped = [
+    let grouped = $derived([
         ...client.groupBy(topics, ([id, _]) => {
             if (!groupTopics) return "all";
 
@@ -73,11 +78,7 @@
                 return "unknown";
             }
         }),
-    ];
-
-    function close() {
-        dispatch("close");
-    }
+    ]);
 
     function kebab(name: string): string {
         return `topic_${name.toLowerCase().split(" ").join("_")}`;
@@ -86,7 +87,7 @@
 
 <SectionHeader shadow flush={$mobileWidth}>
     <h4><Translatable resourceKey={i18nKey("proposal.filter")} /></h4>
-    <span title={$_("close")} class="close" on:click={close}>
+    <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -105,7 +106,7 @@
     {#each grouped as [category, topicsInCategory]}
         {#if groupTopics}
             <CollapsibleCard
-                on:toggle={() => proposalActionCategories.toggle(category)}
+                onToggle={() => proposalActionCategories.toggle(category)}
                 open={$proposalActionCategories[category]}
                 headerText={i18nKey(sectionLabels[category])}>
                 {#each topicsInCategory as [id, label]}

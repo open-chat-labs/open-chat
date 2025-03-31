@@ -51,15 +51,17 @@
     <Headline>Architecture</Headline>
 
     <CollapsibleCard transition={false} first open={linked === 1}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">1</span>
-            <div class="title">
-                System overview
-                <div class="copy" onclick={(e) => onCopyUrl(e, "1")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">1</span>
+                <div class="title">
+                    System overview
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "1")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 OpenChat is a system composed of canister smart contracts running on the Internet
@@ -78,15 +80,17 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 2}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">2</span>
-            <div class="title">
-                System components in depth
-                <div class="copy" onclick={(e) => onCopyUrl(e, "2")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">2</span>
+                <div class="title">
+                    System components in depth
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "2")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 This diagram shows the OpenChat system enclosed in the box with the dashed orange
@@ -441,15 +445,17 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 3}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">3</span>
-            <div class="title">
-                Verification of canister code
-                <div class="copy" onclick={(e) => onCopyUrl(e, "3")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">3</span>
+                <div class="title">
+                    Verification of canister code
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "3")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 The <ExternalLink href={"https://github.com/open-chat-labs/open-chat"}
@@ -500,15 +506,17 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 4}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">4</span>
-            <div class="title">
-                External system dependencies
-                <div class="copy" onclick={(e) => onCopyUrl(e, "4")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">4</span>
+                <div class="title">
+                    External system dependencies
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "4")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <HashLinkTarget {onCopyUrl} id="4-1">Internet Identity (II)</HashLinkTarget>
 

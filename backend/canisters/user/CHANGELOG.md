@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Push event on each BTC withdrawal ([#7664](https://github.com/open-chat-labs/open-chat/pull/7664))
 - Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
 - Expose `referred_by` in metrics ([#7693](https://github.com/open-chat-labs/open-chat/pull/7693))
+- Reinstate up to 2 missed daily claims per user ([#7703](https://github.com/open-chat-labs/open-chat/pull/7703))
 
 ## [[2.0.1663-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1663-user)] - 2025-03-21
 

@@ -3,7 +3,7 @@
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
     import { closeNotificationsForChat } from "../../utils/notifications";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import {
         type ChatEvent,
         type ChatSummary,
@@ -60,8 +60,6 @@
     import { i18nKey } from "../../i18n/i18n";
     import ExternalContent from "./ExternalContent.svelte";
     import DirectChatHeader from "../bots/DirectChatHeader.svelte";
-
-    const dispatch = createEventDispatcher();
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -355,7 +353,6 @@
 
 {#if importToCommunities !== undefined}
     <ImportToCommunity
-        onSuccessfulImport={(channelId) => dispatch("successfulImport", channelId)}
         groupId={chat.id}
         onCancel={() => (importToCommunities = undefined)}
         ownedCommunities={importToCommunities} />
@@ -386,7 +383,6 @@
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         {messageContext}
-        onUpgrade={() => dispatch("upgrade")}
         onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
@@ -406,24 +402,11 @@
             on:close={() => (showSearchHeader = false)} />
     {:else if showChatHeader}
         {#if bot !== undefined && chat.kind === "direct_chat"}
-            <DirectChatHeader
-                {bot}
-                {chat}
-                onClearSelection={() => dispatch("clearSelection")}
-                {onSearchChat}></DirectChatHeader>
+            <DirectChatHeader {bot} {chat} {onSearchChat}></DirectChatHeader>
         {:else}
             <CurrentChatHeader
-                on:clearSelection
-                on:toggleMuteNotifications
-                on:showInviteGroupUsers
-                on:showProposalFilters
-                on:makeProposal
-                on:showGroupMembers
-                on:leaveGroup
-                on:upgrade
                 on:createPoll={createPoll}
                 on:searchChat={searchChat}
-                on:convertGroupToCommunity
                 on:importToCommunity={importToCommunity}
                 {blocked}
                 {readonly}
@@ -436,13 +419,7 @@
     {:else}
         <CurrentChatMessages
             bind:this={currentChatMessages}
-            on:replyPrivatelyTo
             on:replyTo={replyTo}
-            on:chatWith
-            on:upgrade
-            on:verifyHumanity
-            on:claimDailyChit
-            on:forward
             on:retrySend
             on:removePreview={onRemovePreview}
             {privateChatPreview}
@@ -476,8 +453,6 @@
             {blocked}
             {messageContext}
             externalContent={externalUrl !== undefined}
-            on:joinGroup
-            on:upgrade
             on:cancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
             on:clearAttachment={() =>
                 draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}

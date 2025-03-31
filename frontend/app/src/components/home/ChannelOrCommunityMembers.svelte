@@ -20,6 +20,7 @@
     import Members from "./groupdetails/Members.svelte";
     import MembersHeader from "./groupdetails/MembersHeader.svelte";
     import ScopeToggle from "./communities/ScopeToggle.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -67,8 +68,8 @@
         dispatch("removeGroupMember", ev.detail);
     }
 
-    function showInviteGroupUsers(ev: CustomEvent<unknown>): void {
-        dispatch("showInviteGroupUsers", ev.detail);
+    function showInviteGroupUsers(): void {
+        publish("showInviteGroupUsers", true);
     }
 
     function onChangeGroupRole(ev: CustomEvent<unknown>): void {
@@ -81,7 +82,7 @@
                 dispatch("showInviteCommunityUsers");
                 break;
             case "channel":
-                dispatch("showInviteGroupUsers");
+                publish("showInviteGroupUsers", true);
                 break;
         }
     }
@@ -118,7 +119,6 @@
         on:close
         on:blockUser={onBlockCommunityUser}
         on:unblockUser={onUnblockCommunityUser}
-        on:chatWith
         on:showInviteUsers={showInviteCommunityUsers}
         on:removeMember={onRemoveCommunityMember}
         on:changeRole={onChangeCommunityRole}
@@ -138,7 +138,6 @@
         on:close
         on:blockUser={onBlockGroupUser}
         on:unblockUser={onUnblockGroupUser}
-        on:chatWith
         on:showInviteUsers={showInviteGroupUsers}
         on:removeMember={onRemoveGroupMember}
         on:changeRole={onChangeGroupRole}

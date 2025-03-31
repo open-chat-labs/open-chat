@@ -29,7 +29,7 @@
         unreadCommunityChannelCounts,
         type BotMatch,
     } from "openchat-client";
-    import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, tick } from "svelte";
+    import { getContext, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import page from "page";
     import Button from "../Button.svelte";
@@ -52,68 +52,41 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
-    let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
-    let userAndBotSearchResults: Promise<(UserSummary | BotMatch)[]> | undefined = undefined;
-    let searchTerm: string = "";
-    let searchResultsAvailable: boolean = false;
-    let chatsScrollTop: number = 0;
+    let groupSearchResults: Promise<GroupSearchResponse> | undefined = $state(undefined);
+    let userAndBotSearchResults: Promise<(UserSummary | BotMatch)[]> | undefined =
+        $state(undefined);
+    let searchTerm: string = $state("");
+    let searchResultsAvailable: boolean = $state(false);
+    let chatsScrollTop = $state<number | undefined>();
     let previousScope: ChatListScope | undefined = $chatListScope;
     let previousView: "chats" | "threads" = $chatListView;
 
-    const dispatch = createEventDispatcher();
+    let unreadCounts = $state(emptyCombinedUnreadCounts());
 
-    $: showPreview =
-        $mobileWidth &&
-        $selectedCommunity?.membership.role === "none" &&
-        $selectedChatId === undefined;
-    $: user = $userStore.get($createdUser.userId);
-    $: lowercaseSearch = searchTerm.toLowerCase();
-    $: showExploreGroups =
-        ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
-        !$exploreGroupsDismissed &&
-        !searchResultsAvailable;
-    $: showBrowseChannnels = $chatListScope.kind === "community";
+    // TODO this doesn't work properly and I think it's to do with the way
+    // effect dependencies are worked out when you have conditional code
+    // Probably can just be done in a more explicit way but it's not urgent
+    $effect.pre(() => {
+        if (
+            previousScope === $chatListScope &&
+            $chatListView !== "chats" &&
+            previousView === "chats"
+        ) {
+            chatsScrollTop = chatListElement?.scrollTop;
+        }
+    });
 
-    let unreadCounts = emptyCombinedUnreadCounts();
-    $: {
-        switch ($chatListScope.kind) {
-            case "group_chat": {
-                unreadCounts = $unreadGroupCounts;
-                break;
-            }
-            case "direct_chat": {
-                unreadCounts = $unreadDirectCounts;
-                break;
-            }
-            case "favourite": {
-                unreadCounts = $unreadFavouriteCounts;
-                break;
-            }
-            case "community": {
-                unreadCounts =
-                    $unreadCommunityChannelCounts.get($chatListScope.id) ??
-                    emptyCombinedUnreadCounts();
-                break;
-            }
-            default:
-                unreadCounts = emptyCombinedUnreadCounts();
+    $effect(() => {
+        if (previousScope !== $chatListScope) {
+            onScopeChanged();
+        } else if (previousView !== $chatListView) {
+            onViewChanged();
         }
-    }
-
-    $: canMarkAllRead = anythingUnread(unreadCounts);
-    $: {
-        if ($numberOfThreadsStore === 0) {
-            chatListView.set("chats");
-        }
-    }
-    $: {
-        if ($chatListView === "threads" && searchTerm !== "") {
-            chatListView.set("chats");
-        }
-    }
+    });
 
     function anythingUnread(unread: CombinedUnreadCounts): boolean {
         return (
@@ -155,13 +128,8 @@
         return false;
     }
 
-    $: chats =
-        searchTerm !== ""
-            ? $chatSummariesListStore.filter(chatMatchesSearch)
-            : $chatSummariesListStore;
-
     function chatWith(userId: string): void {
-        dispatch("chatWith", { kind: "direct_chat", userId });
+        publish("chatWith", { kind: "direct_chat", userId });
     }
 
     /**
@@ -179,25 +147,7 @@
         searchTerm = "";
     }
 
-    let chatListElement: HTMLElement;
-
-    beforeUpdate(() => {
-        if (
-            previousScope === $chatListScope &&
-            $chatListView !== "chats" &&
-            previousView === "chats"
-        ) {
-            chatsScrollTop = chatListElement?.scrollTop;
-        }
-    });
-
-    afterUpdate(() => {
-        if (previousScope !== $chatListScope) {
-            onScopeChanged();
-        } else if (previousView !== $chatListView) {
-            onViewChanged();
-        }
-    });
+    let chatListElement = $state<HTMLElement | undefined>();
 
     function setView(view: "chats" | "threads"): void {
         chatListView.set(view);
@@ -216,7 +166,7 @@
 
     function onViewChanged() {
         previousView = $chatListView;
-        const scrollTop = previousView === "chats" ? chatsScrollTop : 0;
+        const scrollTop = previousView === "chats" ? chatsScrollTop ?? 0 : 0;
         tick().then(() => {
             if (chatListElement !== undefined) {
                 chatListElement.scrollTop = scrollTop;
@@ -236,30 +186,74 @@
                 return match.userId;
         }
     }
-
-    function deleteChannel(ev: unknown) {
-        dispatch("deleteGroup", ev);
-    }
+    let showPreview = $derived(
+        $mobileWidth &&
+            $selectedCommunity?.membership.role === "none" &&
+            $selectedChatId === undefined,
+    );
+    let user = $derived($userStore.get($createdUser.userId));
+    let lowercaseSearch = $derived(searchTerm.toLowerCase());
+    let showExploreGroups = $derived(
+        ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
+            !$exploreGroupsDismissed &&
+            !searchResultsAvailable,
+    );
+    let showBrowseChannnels = $derived($chatListScope.kind === "community");
+    $effect(() => {
+        switch ($chatListScope.kind) {
+            case "group_chat": {
+                unreadCounts = $unreadGroupCounts;
+                break;
+            }
+            case "direct_chat": {
+                unreadCounts = $unreadDirectCounts;
+                break;
+            }
+            case "favourite": {
+                unreadCounts = $unreadFavouriteCounts;
+                break;
+            }
+            case "community": {
+                unreadCounts =
+                    $unreadCommunityChannelCounts.get($chatListScope.id) ??
+                    emptyCombinedUnreadCounts();
+                break;
+            }
+            default:
+                unreadCounts = emptyCombinedUnreadCounts();
+        }
+    });
+    let canMarkAllRead = $derived(anythingUnread(unreadCounts));
+    $effect(() => {
+        if ($numberOfThreadsStore === 0) {
+            chatListView.set("chats");
+        }
+    });
+    $effect(() => {
+        if ($chatListView === "threads" && searchTerm !== "") {
+            chatListView.set("chats");
+        }
+    });
+    let chats = $derived(
+        searchTerm !== ""
+            ? $chatSummariesListStore.filter(chatMatchesSearch)
+            : $chatSummariesListStore,
+    );
 </script>
 
-<!-- svelte-ignore missing-declaration -->
+<!-- svelte-ignore missing_declaration -->
 {#if user}
     {#if $chatListScope.kind === "favourite"}
         <FavouriteChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
     {:else if $chatListScope.kind === "group_chat"}
-        <GroupChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} on:newGroup />
+        <GroupChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
     {:else if $chatListScope.kind === "direct_chat"}
         <DirectChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
     {:else if $selectedCommunity && $chatListScope.kind === "community"}
         <SelectedCommunityHeader
             community={$selectedCommunity}
             {canMarkAllRead}
-            on:markAllRead={markAllRead}
-            on:leaveCommunity
-            on:deleteCommunity
-            on:editCommunity
-            on:communityDetails
-            on:newChannel />
+            on:markAllRead={markAllRead} />
     {/if}
 
     <ChatListSearch
@@ -298,11 +292,7 @@
                         {chatSummary}
                         selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
-                        onChatSelected={chatSelected}
-                        onLeaveGroup={(ev) => dispatch("leaveGroup", ev)}
-                        onUnarchiveChat={(chatId) => dispatch("unarchiveChat", chatId)}
-                        onToggleMuteNotifications={(chatId, mute) =>
-                            dispatch("toggleMuteNotifications", { chatId, mute })} />
+                        onChatSelected={chatSelected} />
                 {/each}
 
                 {#if userAndBotSearchResults !== undefined}
@@ -392,39 +382,41 @@
                 {/if}
             </div>
             {#if showExploreGroups}
-                <div class="explore-groups" on:click={() => page("/groups")}>
+                <div class="explore-groups" onclick={() => page("/groups")}>
                     <div class="disc">
                         <Compass size={$iconSize} color={"var(--icon-txt)"} />
                     </div>
                     <div class="label">
                         <Translatable resourceKey={i18nKey("exploreGroups")} />
                     </div>
-                    <div on:click={() => exploreGroupsDismissed.set(true)} class="close">
+                    <div onclick={() => exploreGroupsDismissed.set(true)} class="close">
                         <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
                     </div>
                 </div>
             {/if}
             {#if showBrowseChannnels}
-                <BrowseChannels onDeleteChannel={deleteChannel} {searchTerm} />
+                <BrowseChannels {searchTerm} />
             {/if}
         {/if}
     </div>
     <ActiveCallSummary />
     {#if showPreview}
-        <PreviewWrapper let:joiningCommunity let:joinCommunity>
-            <div class="join">
-                <ButtonGroup align="center">
-                    <Button secondary small on:click={cancelPreview}>
-                        <Translatable resourceKey={i18nKey("leave")} />
-                    </Button>
-                    <Button
-                        loading={joiningCommunity}
-                        disabled={joiningCommunity}
-                        on:click={joinCommunity}
-                        ><Translatable
-                            resourceKey={i18nKey("communities.joinCommunity")} /></Button>
-                </ButtonGroup>
-            </div>
+        <PreviewWrapper>
+            {#snippet children(joiningCommunity, joinCommunity)}
+                <div class="join">
+                    <ButtonGroup align="center">
+                        <Button secondary small on:click={cancelPreview}>
+                            <Translatable resourceKey={i18nKey("leave")} />
+                        </Button>
+                        <Button
+                            loading={joiningCommunity}
+                            disabled={joiningCommunity}
+                            on:click={joinCommunity}
+                            ><Translatable
+                                resourceKey={i18nKey("communities.joinCommunity")} /></Button>
+                    </ButtonGroup>
+                </div>
+            {/snippet}
         </PreviewWrapper>
     {/if}
 {/if}

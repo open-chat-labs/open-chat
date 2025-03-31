@@ -19,7 +19,7 @@
         Level,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import type { Readable } from "svelte/store";
     import { _ } from "svelte-i18n";
     import { fullWidth } from "../../stores/layout";
@@ -58,22 +58,28 @@
         currentCommunityApiKeys,
         currentChatApiKeys,
     } from "openchat-client";
+    import { publish } from "@src/utils/pubsub";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        onGoToMessageIndex: (details: { index: number; preserveFocus: boolean }) => void;
+    }
 
     const client = getContext<OpenChat>("client");
 
-    let invitingUsers = false;
-    let section: HTMLElement;
-    let resized = false;
-    let resizing = false;
-    let resizedWidth = "7";
+    let { onGoToMessageIndex }: Props = $props();
+    let invitingUsers = $state(false);
+    let section: HTMLElement | undefined = $state();
+    let resized = $state(false);
+    let resizing = $state(false);
+    let resizedWidth = $state("7");
 
-    $: user = $userStore.get($currentUser.userId) ?? client.nullUser("unknown");
-    $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
-    $: modal = !$fullWidth;
-    $: multiUserChat = selectedChat as Readable<MultiUserChat>;
-    $: empty = $rightPanelHistory.length === 0;
+    let user = $derived($userStore.get($currentUser.userId) ?? client.nullUser("unknown"));
+    let lastState = $derived(
+        $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" },
+    );
+    let modal = $derived(!$fullWidth);
+    let multiUserChat = $derived(selectedChat as Readable<MultiUserChat>);
+    let empty = $derived($rightPanelHistory.length === 0);
 
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         const canInvite =
@@ -182,7 +188,7 @@
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>): void {
-        dispatch("goToMessageIndex", ev.detail);
+        onGoToMessageIndex(ev.detail);
         if (modal) {
             popRightPanelHistory();
         }
@@ -336,7 +342,7 @@
     }
 
     function showInviteGroupUsers(ev: CustomEvent<boolean>) {
-        dispatch("showInviteGroupUsers", ev.detail);
+        publish("showInviteGroupUsers", ev.detail);
     }
 
     function showInviteCommunityUsers() {
@@ -369,18 +375,19 @@
         }
     }
 
-    $: threadRootEvent =
+    let threadRootEvent = $derived(
         lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
             ? findMessage($eventsStore, lastState.threadRootMessageId)
-            : undefined;
+            : undefined,
+    );
 
-    $: level = (
-        lastState.kind === "invite_community_users"
+    let level = $derived(
+        (lastState.kind === "invite_community_users"
             ? "community"
             : $selectedChat?.kind === "channel"
               ? "channel"
-              : "group"
-    ) as Level;
+              : "group") as Level,
+    );
 </script>
 
 <section
@@ -398,20 +405,12 @@
                 memberCount={$currentChatMembers.length}
                 community={$selectedCommunity}
                 selectedTab="channel"
-                on:showGroupMembers
-                on:deleteGroup
-                on:editGroup
-                on:editCommunity
                 on:close={popRightPanelHistory} />
         {:else}
             <GroupDetails
                 chat={$multiUserChat}
                 memberCount={$currentChatMembers.length}
-                on:close={popRightPanelHistory}
-                on:deleteGroup
-                on:editGroup
-                on:chatWith
-                on:showGroupMembers />
+                on:close={popRightPanelHistory} />
         {/if}
     {:else if lastState.kind === "call_participants_panel"}
         <ActiveCallParticipants
@@ -456,12 +455,10 @@
                 on:blockGroupUser={onBlockGroupUser}
                 on:unblockGroupUser={onUnblockGroupUser}
                 on:removeGroupMember={onRemoveGroupMember}
-                on:showInviteGroupUsers={showInviteGroupUsers}
                 on:changeGroupRole={onChangeGroupRole}
                 on:cancelGroupInvite={onCancelGroupInvite}
                 on:cancelCommunityInvite={onCancelCommunityInvite}
-                on:close={popRightPanelHistory}
-                on:chatWith />
+                on:close={popRightPanelHistory} />
         {:else}
             <Members
                 closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
@@ -476,7 +473,6 @@
                 on:close={popRightPanelHistory}
                 on:blockUser={onBlockCommunityUser}
                 on:unblockUser={onUnblockCommnityUser}
-                on:chatWith
                 on:showInviteUsers={showInviteCommunityUsers}
                 on:removeMember={onRemoveCommunityMember}
                 on:changeRole={onChangeCommunityRole}
@@ -520,7 +516,6 @@
             on:close={popRightPanelHistory}
             on:blockUser={onBlockGroupUser}
             on:unblockUser={onUnblockGroupUser}
-            on:chatWith
             on:showInviteUsers={showInviteGroupUsers}
             on:removeMember={onRemoveGroupMember}
             on:changeRole={onChangeGroupRole}
@@ -539,15 +534,12 @@
             on:blockGroupUser={onBlockGroupUser}
             on:unblockGroupUser={onUnblockGroupUser}
             on:removeGroupMember={onRemoveGroupMember}
-            on:showInviteGroupUsers={showInviteGroupUsers}
             on:changeGroupRole={onChangeGroupRole}
             on:close={popRightPanelHistory}
-            on:chatWith
             on:cancelGroupInvite={onCancelGroupInvite}
             on:cancelCommunityInvite={onCancelCommunityInvite} />
     {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
-            on:chatWith
             on:goToMessageIndex={goToMessageIndex}
             chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
@@ -556,23 +548,16 @@
     {:else if lastState.kind === "user_profile"}
         <UserProfile
             on:unsubscribeNotifications={() => client.setSoftDisabled(true)}
-            on:upgrade
-            on:verifyHumanity
             {user}
             on:closeProfile={popRightPanelHistory} />
     {:else if threadRootEvent !== undefined && $selectedChat !== undefined}
         <Thread
-            on:chatWith
-            on:upgrade
-            on:verifyHumanity
-            on:claimDailyChit
-            on:replyPrivatelyTo
             rootEvent={threadRootEvent}
             chat={$selectedChat}
             on:removePreview
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}
-        <ProposalGroupFilters selectedChat={$selectedChat} on:close={popRightPanelHistory} />
+        <ProposalGroupFilters selectedChat={$selectedChat} onClose={popRightPanelHistory} />
     {:else if lastState.kind === "community_details" && $selectedCommunity !== undefined}
         {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel"}
             <ChannelOrCommunitySummary
@@ -580,16 +565,12 @@
                 community={$selectedCommunity}
                 memberCount={$currentChatMembers.length}
                 selectedTab="community"
-                on:showGroupMembers
-                on:deleteGroup
-                on:editGroup
-                on:editCommunity
                 on:close={popRightPanelHistory} />
         {:else}
-            <CommunityDetails on:deleteCommunity on:editCommunity />
+            <CommunityDetails />
         {/if}
     {:else if lastState.kind === "community_filters"}
-        <CommunityFilters on:close={popRightPanelHistory} />
+        <CommunityFilters onClose={popRightPanelHistory} />
     {/if}
 
     <Resizable {modal} {section} bind:resizedWidth bind:resized bind:resizing />

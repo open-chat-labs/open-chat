@@ -1,24 +1,29 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    export let imageUrl: string;
-    export let hoverImageUrl: string;
-    export let name: string;
-    export let blurb: string;
+    interface Props {
+        imageUrl: string;
+        hoverImageUrl: string;
+        name: string;
+        blurb: string;
+    }
 
-    let hovering = false;
+    let { imageUrl, hoverImageUrl, name, blurb }: Props = $props();
+
+    let hovering = $state(false);
 </script>
 
 <div class="team-card">
     <div
         class="img"
-        on:mouseenter={() => (hovering = true)}
-        on:mouseleave={() => (hovering = false)}
+        onmouseenter={() => (hovering = true)}
+        onmouseleave={() => (hovering = false)}
         style={`background-image: url("${imageUrl}")`}>
         {#if hovering}
             <div
                 transition:fade|local
                 class="overlay"
-                style={`background-image: url("${hoverImageUrl}")`} />
+                style={`background-image: url("${hoverImageUrl}")`}>
+            </div>
         {/if}
     </div>
     <div class="name">

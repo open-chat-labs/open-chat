@@ -21,7 +21,7 @@
         </div>
     </div>
     <span class="menu">
-        <GroupChatsMenu {canMarkAllRead} on:markAllRead on:newGroup />
+        <GroupChatsMenu {canMarkAllRead} on:markAllRead />
     </span>
 </SectionHeader>
 

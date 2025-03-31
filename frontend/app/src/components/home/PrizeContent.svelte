@@ -16,7 +16,7 @@
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
@@ -31,9 +31,9 @@
     import Streak from "./profile/Streak.svelte";
     import SecureButton from "../SecureButton.svelte";
     import RotationChallenge from "../RotationChallenge.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
     const suspiciousUserIds = import.meta.env.OC_SUSPICIOUS_USERIDS! ?? [];
 
     interface Props {
@@ -72,15 +72,15 @@
     }
 
     function onDiamondClick() {
-        dispatch("upgrade");
+        publish("upgrade");
     }
 
     function onUniquePersonClick() {
-        dispatch("verifyHumanity");
+        publish("verifyHumanity");
     }
 
     function onStreakClick() {
-        dispatch("claimDailyChit");
+        publish("claimDailyChit");
     }
     let logo = $derived(
         Object.values($cryptoLookup).find(

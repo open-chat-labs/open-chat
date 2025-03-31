@@ -46,4 +46,4 @@
     }
 </script>
 
-<div bind:this={tweetWrapper} />
+<div bind:this={tweetWrapper}></div>

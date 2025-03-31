@@ -28,7 +28,6 @@
         "md5": "^2.3.0",
         "openchat-shared": "*",
         "peerjs": "^1.4.7",
-        "svelte": "^5.1.0",
         "svelte-i18n": "^4.0.1",
         "usergeek-ic-js": "^1.0.6"
     },
@@ -41,6 +40,7 @@
         "@typescript-eslint/parser": "^6.4.0",
         "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^5.0.0",
+        "svelte": "^5.25.3",
         "typescript": "=5.4.2",
         "vitest": "^2.1.9",
         "wait-on": "^7.0.1"

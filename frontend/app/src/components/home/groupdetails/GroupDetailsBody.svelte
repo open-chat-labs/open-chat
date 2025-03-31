@@ -34,19 +34,24 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let chat: MultiUserChat;
-    export let memberCount: number;
+    interface Props {
+        chat: MultiUserChat;
+        memberCount: number;
+    }
 
-    $: canSend = client.canSendMessage(chat.id, "any");
-    $: canInvite =
-        client.canInviteUsers(chat.id) && (chat.kind !== "channel" || !client.isChatPrivate(chat));
-    $: avatarSrc = client.groupAvatarUrl(chat, $selectedCommunity);
-    $: combinedRulesText = canSend
-        ? client.combineRulesText($currentChatRules, $currentCommunityRules)
-        : "";
-    $: externalUrl = chat.kind === "channel" ? chat.externalUrl : undefined;
-    $: externalContent = externalUrl !== undefined;
-    $: verified = chat.kind === "group_chat" && chat.verified;
+    let { chat = $bindable(), memberCount }: Props = $props();
+
+    let canSend = $derived(client.canSendMessage(chat.id, "any"));
+    let canInvite = $derived(
+        client.canInviteUsers(chat.id) && (chat.kind !== "channel" || !client.isChatPrivate(chat)),
+    );
+    let avatarSrc = $derived(client.groupAvatarUrl(chat, $selectedCommunity));
+    let combinedRulesText = $derived(
+        canSend ? client.combineRulesText($currentChatRules, $currentCommunityRules) : "",
+    );
+    let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);
+    let externalContent = $derived(externalUrl !== undefined);
+    let verified = $derived(chat.kind === "group_chat" && chat.verified);
 
     function description(chat: MultiUserChat): string {
         let description = chat.description;
@@ -62,7 +67,7 @@
 <div class="group-details">
     <div class="inner">
         <CollapsibleCard
-            on:toggle={groupInfoOpen.toggle}
+            onToggle={groupInfoOpen.toggle}
             open={$groupInfoOpen}
             headerText={i18nKey("group.groupInfo", undefined, chat.level)}>
             <div class="sub-section photo">
@@ -99,7 +104,7 @@
             {/if}
         </CollapsibleCard>
         <CollapsibleCard
-            on:toggle={groupVisibilityOpen.toggle}
+            onToggle={groupVisibilityOpen.toggle}
             open={$groupVisibilityOpen}
             headerText={i18nKey("access.visibility")}>
             {#if chat.public}
@@ -157,7 +162,7 @@
         </CollapsibleCard>
         {#if combinedRulesText.length > 0}
             <CollapsibleCard
-                on:toggle={groupRulesOpen.toggle}
+                onToggle={groupRulesOpen.toggle}
                 open={$groupRulesOpen}
                 headerText={i18nKey("rules.rules")}>
                 <Markdown inline={false} text={combinedRulesText} />
@@ -165,14 +170,14 @@
         {/if}
         {#if canInvite}
             <CollapsibleCard
-                on:toggle={groupInviteUsersOpen.toggle}
+                onToggle={groupInviteUsersOpen.toggle}
                 open={$groupInviteUsersOpen}
                 headerText={i18nKey("invite.inviteWithLink", undefined, chat.level, true)}>
                 <InviteUsersWithLink container={chat} />
             </CollapsibleCard>
         {/if}
         <CollapsibleCard
-            on:toggle={groupPermissionsOpen.toggle}
+            onToggle={groupPermissionsOpen.toggle}
             open={$groupPermissionsOpen}
             headerText={i18nKey("permissions.permissions")}>
             <GroupPermissionsViewer
@@ -184,7 +189,7 @@
         </CollapsibleCard>
         {#if !externalContent}
             <CollapsibleCard
-                on:toggle={groupStatsOpen.toggle}
+                onToggle={groupStatsOpen.toggle}
                 open={$groupStatsOpen}
                 headerText={i18nKey("stats.groupStats", undefined, chat.level)}>
                 <Stats showReported={false} stats={chat.metrics} />
@@ -192,10 +197,10 @@
         {/if}
         {#if client.canDeleteGroup(chat.id)}
             <CollapsibleCard
-                on:toggle={groupAdvancedOpen.toggle}
+                onToggle={groupAdvancedOpen.toggle}
                 open={$groupAdvancedOpen}
                 headerText={i18nKey("group.advanced")}>
-                <AdvancedSection on:deleteGroup group={chat} />
+                <AdvancedSection group={chat} />
             </CollapsibleCard>
         {/if}
     </div>

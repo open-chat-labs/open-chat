@@ -11,18 +11,19 @@
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
-    let question: Questions | undefined = undefined;
+    let question: Questions | undefined = $state(undefined);
 
-    $: {
+    $effect(() => {
         const q = $querystring.get("q");
         if (q) {
             question = q as Questions;
         }
-    }
+    });
 
-    $: copySize = $mobileWidth ? "14px" : "16px";
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
 
-    function copyUrl(q: string): void {
+    function copyUrl(e: Event, q: string): void {
+        e.stopPropagation();
         copyToClipboard(`${window.location.origin}${$location}?q=${q}`);
     }
 </script>
@@ -34,16 +35,18 @@
         <CollapsibleCard
             open={question === q}
             transition={false}
-            on:opened={() => (question = q)}
+            onOpened={() => (question = q)}
             headerText={i18nKey(`faq.${q}_q`)}>
-            <div class="header" slot="titleSlot">
-                <div class="title">
-                    <Translatable resourceKey={i18nKey(`faq.${q}_q`)} />
-                    <div class="copy" on:click|stopPropagation={() => copyUrl(q)}>
-                        <ContentCopy size={copySize} color={"var(--landing-txt)"} />
+            {#snippet titleSlot()}
+                <div class="header">
+                    <div class="title">
+                        <Translatable resourceKey={i18nKey(`faq.${q}_q`)} />
+                        <div class="copy" onclick={(e) => copyUrl(e, q)}>
+                            <ContentCopy size={copySize} color={"var(--landing-txt)"} />
+                        </div>
                     </div>
                 </div>
-            </div>
+            {/snippet}
             <div class="body">
                 <Markdown text={$_(`faq.${q}_a`)} />
                 {#if q === "translation"}
