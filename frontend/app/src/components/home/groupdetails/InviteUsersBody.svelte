@@ -9,6 +9,7 @@
         Level,
         MultiUserChat,
         OpenChat,
+        UserOrUserGroup,
         UserSummary,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
@@ -78,13 +79,15 @@
         busy = false;
     }
 
-    function deleteUser(ev: CustomEvent<UserSummary>) {
-        usersToAddOrInvite = usersToAddOrInvite.filter((u) => u.userId !== ev.detail.userId);
+    function deleteUser(user: UserOrUserGroup) {
+        if (user.kind === "user") {
+            usersToAddOrInvite = usersToAddOrInvite.filter((u) => u.userId !== user.userId);
+        }
     }
 
-    function selectUser(ev: CustomEvent<UserSummary>) {
-        if (!usersToAddOrInvite.find((u) => u.userId === ev.detail.userId)) {
-            usersToAddOrInvite = [...usersToAddOrInvite, ev.detail];
+    function selectUser(user: UserSummary) {
+        if (!usersToAddOrInvite.find((u) => u.userId === user.userId)) {
+            usersToAddOrInvite = [...usersToAddOrInvite, user];
         }
     }
 
@@ -140,8 +143,8 @@
                 <SelectUsers
                     {userLookup}
                     mode={"edit"}
-                    on:selectUser={selectUser}
-                    on:deleteUser={deleteUser}
+                    onSelectUser={selectUser}
+                    onDeleteUser={deleteUser}
                     selectedUsers={usersToAddOrInvite} />
             {:else if selectedTab === "add_members" && memberLookup !== undefined}
                 <div class="subheading">
@@ -150,8 +153,8 @@
                 <SelectUsers
                     userLookup={memberLookup}
                     mode={"edit"}
-                    on:selectUser={selectUser}
-                    on:deleteUser={deleteUser}
+                    onSelectUser={selectUser}
+                    onDeleteUser={deleteUser}
                     selectedUsers={usersToAddOrInvite} />
             {:else}
                 <div class="subheading">

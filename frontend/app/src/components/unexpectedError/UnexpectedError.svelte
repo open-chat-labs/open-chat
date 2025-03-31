@@ -4,7 +4,7 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let error = { message: "Unknown error" };
+    let { error = { message: "Unknown error" } } = $props();
 </script>
 
 <ModalPage bgClass="error" minHeight="280px">

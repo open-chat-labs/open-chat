@@ -99,41 +99,44 @@
 {#if chat !== undefined}
     <div class="wrapper">
         <CollapsibleCard
-            on:toggle={() => (open = !open)}
+            onToggle={() => (open = !open)}
             {open}
             headerText={i18nKey("userInfoHeader")}>
-            <div slot="titleSlot" class="header">
-                <div class="avatar">
-                    <Avatar url={chatData.avatarUrl} size={AvatarSize.Default} />
+            {#snippet titleSlot()}
+                <div class="header">
+                    <div class="avatar">
+                        <Avatar url={chatData.avatarUrl} size={AvatarSize.Default} />
+                    </div>
+                    <div class="details">
+                        <div class="title-and-link">
+                            <h4 class="title">
+                                {(chat.kind === "group_chat" || chat.kind === "channel") &&
+                                    chat.name}
+                            </h4>
+                            <LinkButton underline="hover" on:click={selectThread}
+                                ><Translatable
+                                    resourceKey={i18nKey("thread.open")} />&#8594;</LinkButton>
+                        </div>
+                        <div class="root-msg">
+                            <Markdown
+                                text={client.getContentAsText($_, thread.rootMessage.event.content)}
+                                oneLine
+                                suppressLinks />
+                        </div>
+                    </div>
+                    {#if unreadCount > 0}
+                        <div
+                            in:pop={{ duration: 1500 }}
+                            title={$_("chatSummary.unread", {
+                                values: { count: unreadCount.toString() },
+                            })}
+                            class:muted
+                            class="unread">
+                            {unreadCount > 999 ? "999+" : unreadCount}
+                        </div>
+                    {/if}
                 </div>
-                <div class="details">
-                    <div class="title-and-link">
-                        <h4 class="title">
-                            {(chat.kind === "group_chat" || chat.kind === "channel") && chat.name}
-                        </h4>
-                        <LinkButton underline="hover" on:click={selectThread}
-                            ><Translatable
-                                resourceKey={i18nKey("thread.open")} />&#8594;</LinkButton>
-                    </div>
-                    <div class="root-msg">
-                        <Markdown
-                            text={client.getContentAsText($_, thread.rootMessage.event.content)}
-                            oneLine
-                            suppressLinks />
-                    </div>
-                </div>
-                {#if unreadCount > 0}
-                    <div
-                        in:pop={{ duration: 1500 }}
-                        title={$_("chatSummary.unread", {
-                            values: { count: unreadCount.toString() },
-                        })}
-                        class:muted
-                        class="unread">
-                        {unreadCount > 999 ? "999+" : unreadCount}
-                    </div>
-                {/if}
-            </div>
+            {/snippet}
             <IntersectionObserverComponent on:intersecting={isIntersecting}>
                 <div class="body">
                     <div class="root-msg">

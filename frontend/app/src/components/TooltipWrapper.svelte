@@ -33,7 +33,10 @@
 
         await tick();
 
-        tooltipStore.position(target.getDomElement(), position, align, gutter);
+        const dom = target.getDomElement();
+        if (dom !== undefined) {
+            tooltipStore.position(dom, position, align, gutter);
+        }
     }
 
     function closeTooltip() {

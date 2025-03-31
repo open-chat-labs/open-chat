@@ -144,27 +144,26 @@
                         <CollapsibleCard
                             transition={false}
                             open={selectedGateIndex === i}
-                            on:opened={() => (selectedGateIndex = i)}>
-                            <div
-                                slot="titleSlot"
-                                class="sub-header"
-                                class:invalid={!gateValidity[i]}>
-                                <AccessGateIcon
-                                    {level}
-                                    showNoGate
-                                    gateConfig={{ expiry: undefined, gate: subgate }} />
-                                <Translatable resourceKey={getGateText(subgate)} />
-                                {#if editable}
-                                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                    <div onclick={() => deleteGate(i)} class="delete">
-                                        <Delete
-                                            viewBox={"0 -3 24 24"}
-                                            size={$iconSize}
-                                            color={"var(--icon-txt)"} />
-                                    </div>
-                                {/if}
-                            </div>
+                            onOpened={() => (selectedGateIndex = i)}>
+                            {#snippet titleSlot()}
+                                <div class="sub-header" class:invalid={!gateValidity[i]}>
+                                    <AccessGateIcon
+                                        {level}
+                                        showNoGate
+                                        gateConfig={{ expiry: undefined, gate: subgate }} />
+                                    <Translatable resourceKey={getGateText(subgate)} />
+                                    {#if editable}
+                                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                        <div onclick={() => deleteGate(i)} class="delete">
+                                            <Delete
+                                                viewBox={"0 -3 24 24"}
+                                                size={$iconSize}
+                                                color={"var(--icon-txt)"} />
+                                        </div>
+                                    {/if}
+                                </div>
+                            {/snippet}
                             <LeafGateBuilder
                                 {gateBindings}
                                 {neuronGateBindings}

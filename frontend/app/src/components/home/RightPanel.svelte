@@ -557,7 +557,7 @@
             on:removePreview
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}
-        <ProposalGroupFilters selectedChat={$selectedChat} on:close={popRightPanelHistory} />
+        <ProposalGroupFilters selectedChat={$selectedChat} onClose={popRightPanelHistory} />
     {:else if lastState.kind === "community_details" && $selectedCommunity !== undefined}
         {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel"}
             <ChannelOrCommunitySummary
@@ -570,7 +570,7 @@
             <CommunityDetails />
         {/if}
     {:else if lastState.kind === "community_filters"}
-        <CommunityFilters on:close={popRightPanelHistory} />
+        <CommunityFilters onClose={popRightPanelHistory} />
     {/if}
 
     <Resizable {modal} {section} bind:resizedWidth bind:resized bind:resizing />

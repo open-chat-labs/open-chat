@@ -333,7 +333,7 @@
     <form use:menuCloser class="user-form" onsubmit={saveUser}>
         <div class="user">
             <CollapsibleCard
-                on:toggle={userInfoOpen.toggle}
+                onToggle={userInfoOpen.toggle}
                 open={$userInfoOpen}
                 headerText={i18nKey("userInfoHeader")}>
                 <div class="avatar">
@@ -413,7 +413,7 @@
         {#if !$anonUser && uniquePersonGate.enabled}
             <div class="verification">
                 <CollapsibleCard
-                    on:toggle={verificationSectionOpen.toggle}
+                    onToggle={verificationSectionOpen.toggle}
                     open={$verificationSectionOpen}
                     headerText={i18nKey("human.verification")}>
                     {#if verified}
@@ -441,7 +441,7 @@
         {/if}
         <div class="linked-accounts">
             <CollapsibleCard
-                on:toggle={accountsSectionOpen.toggle}
+                onToggle={accountsSectionOpen.toggle}
                 open={$accountsSectionOpen}
                 headerText={i18nKey("identity.linkedAccounts.section")}>
                 <LinkedAuthAccounts />
@@ -449,7 +449,7 @@
         </div>
         <div class="appearance">
             <CollapsibleCard
-                on:toggle={appearanceSectionOpen.toggle}
+                onToggle={appearanceSectionOpen.toggle}
                 open={$appearanceSectionOpen}
                 headerText={i18nKey("appearance")}>
                 <Legend label={i18nKey("preferredLanguage")} />
@@ -482,7 +482,7 @@
         {#if !$anonUser}
             <div class="invite">
                 <CollapsibleCard
-                    on:toggle={referralOpen.toggle}
+                    onToggle={referralOpen.toggle}
                     open={$referralOpen}
                     headerText={i18nKey("referralHeader")}>
                     <ReferUsers />
@@ -491,7 +491,7 @@
             <ReferredUsersList referrals={referredUserIds} />
             <div class="chats">
                 <CollapsibleCard
-                    on:toggle={chatsSectionOpen.toggle}
+                    onToggle={chatsSectionOpen.toggle}
                     open={$chatsSectionOpen}
                     headerText={i18nKey("chats")}>
                     <Toggle
@@ -540,7 +540,7 @@
             </div>
             <div class="video">
                 <CollapsibleCard
-                    on:toggle={videoSectionOpen.toggle}
+                    onToggle={videoSectionOpen.toggle}
                     open={$videoSectionOpen}
                     headerText={i18nKey("profile.videoSettings")}>
                     <VideoCallSettings />
@@ -548,7 +548,7 @@
             </div>
             <div class="restricted">
                 <CollapsibleCard
-                    on:toggle={restrictedSectionOpen.toggle}
+                    onToggle={restrictedSectionOpen.toggle}
                     open={$restrictedSectionOpen}
                     headerText={i18nKey("restrictedContent")}>
                     <p class="blurb">
@@ -577,7 +577,7 @@
             {#if !readonly}
                 <div class="storage">
                     <CollapsibleCard
-                        on:toggle={storageSectionOpen.toggle}
+                        onToggle={storageSectionOpen.toggle}
                         open={$storageSectionOpen}
                         headerText={i18nKey("upgrade.membership")}>
                         <StorageUsage />
@@ -609,7 +609,7 @@
             {/if}
             <div class="stats">
                 <CollapsibleCard
-                    on:toggle={statsSectionOpen.toggle}
+                    onToggle={statsSectionOpen.toggle}
                     open={$statsSectionOpen}
                     headerText={i18nKey("stats.userStats")}>
                     <Stats showReported stats={$userMetrics} />
@@ -618,7 +618,7 @@
         {/if}
         <div class="advanced">
             <CollapsibleCard
-                on:toggle={advancedSectionOpen.toggle}
+                onToggle={advancedSectionOpen.toggle}
                 open={$advancedSectionOpen}
                 headerText={i18nKey("advanced")}>
                 {#if !$anonUser}
@@ -660,7 +660,7 @@
         {#if !$anonUser}
             <div class="danger">
                 <CollapsibleCard
-                    on:toggle={deleteAccountSectionOpen.toggle}
+                    onToggle={deleteAccountSectionOpen.toggle}
                     open={$deleteAccountSectionOpen}
                     headerText={i18nKey("danger.deleteAccount")}>
                     <p class="para">

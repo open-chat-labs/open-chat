@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import type { AttachmentContent } from "openchat-client";
     import VideoContent from "./VideoContent.svelte";
@@ -7,7 +5,11 @@
     import AudioContent from "./AudioContent.svelte";
     import FileContent from "./FileContent.svelte";
 
-    export let content: AttachmentContent;
+    interface Props {
+        content: AttachmentContent;
+    }
+
+    let { content }: Props = $props();
 </script>
 
 <div class="msg-preview">
