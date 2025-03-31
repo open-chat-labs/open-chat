@@ -66,12 +66,12 @@
                     <Button
                         loading={joiningCommunity}
                         disabled={locked || joiningCommunity}
-                        on:click={joinCommunity}
+                        onClick={joinCommunity}
                         ><Translatable
                             resourceKey={locked
                                 ? i18nKey("access.lockedGate", undefined, "community", true)
                                 : i18nKey("communities.joinCommunity")} /></Button>
-                    <Button secondary small on:click={cancelPreview}>
+                    <Button secondary small onClick={cancelPreview}>
                         <Translatable resourceKey={i18nKey("leave")} />
                     </Button>
                 </div>
@@ -85,7 +85,7 @@
         {#if $chatListScope.kind === "community"}
             <Button><Translatable resourceKey={i18nKey("communities.browseChannels")} /></Button>
         {:else if $chatListScope.kind === "group_chat"}
-            <Button on:click={() => page("/groups")}
+            <Button onClick={() => page("/groups")}
                 ><Translatable resourceKey={i18nKey("discoverMoreGroups")} /></Button>
         {/if}
     </div>

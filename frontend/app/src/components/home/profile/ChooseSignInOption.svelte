@@ -52,7 +52,8 @@
 
         if (restrictTo.size > 0) {
             options = options.filter((o) => {
-                return restrictTo.has(o) || (
+                return (
+                    restrictTo.has(o) ||
                     (o === AuthProvider.II && restrictTo.has("II")) ||
                     (o === AuthProvider.EMAIL && restrictTo.has("EMAIL")) ||
                     (o === AuthProvider.PASSKEY && restrictTo.has("PASSKEY")) ||
@@ -115,7 +116,7 @@
                                         : "loginDialog.signupEmailPlaceholder",
                                 )} />
                         </div>
-                        <Button disabled={emailInvalid} tiny on:click={() => login(provider)}>
+                        <Button disabled={emailInvalid} tiny onClick={() => login(provider)}>
                             <div class="center">
                                 <SendIcon size={"1.5em"} />
                             </div>
@@ -128,7 +129,7 @@
                             mode === "signin" ? "loginDialog.signinWith" : "loginDialog.signupWith",
                             { provider: providerName(provider) },
                         )}
-                        on:click={() => login(provider)} />
+                        onClick={() => login(provider)} />
                 {/if}
             </div>
         {/if}

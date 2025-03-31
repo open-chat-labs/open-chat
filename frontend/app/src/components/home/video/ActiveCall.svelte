@@ -320,7 +320,7 @@
             {/snippet}
             {#snippet footer()}
                 <ButtonGroup align={"center"}>
-                    <Button on:click={() => (hostEnded = false)}>
+                    <Button onClick={() => (hostEnded = false)}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>
@@ -340,7 +340,7 @@
             {#snippet footer()}
                 <span>
                     <ButtonGroup align={"center"}>
-                        <Button on:click={() => (denied = false)}>
+                        <Button onClick={() => (denied = false)}>
                             <Translatable resourceKey={i18nKey("close")} />
                         </Button>
                     </ButtonGroup>

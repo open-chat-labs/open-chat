@@ -102,7 +102,7 @@
         <div class={`icon center ${connecting === name ? "connecting" : ""}`}>
             <img src={icon} alt={`${name} icon`} />
         </div>
-        <Button fill on:click={() => connectWallet(name)}>
+        <Button fill onClick={() => connectWallet(name)}>
             <span class="name">{name}</span>
         </Button>
     </div>

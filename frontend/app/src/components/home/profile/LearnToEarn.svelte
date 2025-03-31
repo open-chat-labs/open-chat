@@ -265,7 +265,7 @@
                             })} />
                     </Progress>
                 </div>
-                <Button small on:click={() => dispatch("close")}>
+                <Button small onClick={() => dispatch("close")}>
                     <Translatable resourceKey={i18nKey("close")} />
                 </Button>
             </span>

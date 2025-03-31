@@ -271,13 +271,13 @@
 {#if !landing}
     <div class="footer">
         <Footer>
-            <Button tiny={$mobileWidth} small={!$mobileWidth} secondary on:click={cancel}
+            <Button tiny={$mobileWidth} small={!$mobileWidth} secondary onClick={cancel}
                 ><Translatable resourceKey={i18nKey(isDiamond ? "close" : "cancel")} /></Button>
             {#if !isDiamond}
-                <Button on:click={() => onUpgrade?.()} tiny={$mobileWidth} small={!$mobileWidth}
+                <Button onClick={() => onUpgrade?.()} tiny={$mobileWidth} small={!$mobileWidth}
                     ><Translatable resourceKey={i18nKey("upgrade.button")} /></Button>
             {:else if canExtend}
-                <Button on:click={() => onUpgrade?.()} tiny={$mobileWidth} small={!$mobileWidth}
+                <Button onClick={() => onUpgrade?.()} tiny={$mobileWidth} small={!$mobileWidth}
                     ><Translatable resourceKey={i18nKey("upgrade.extendShort")} /></Button>
             {/if}
         </Footer>

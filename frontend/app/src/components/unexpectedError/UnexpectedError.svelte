@@ -14,7 +14,7 @@
             <p class="error-blurb"><Translatable resourceKey={i18nKey("errorBlurb")} /></p>
         </div>
         <p class="error-message">{error.message}</p>
-        <Button on:click={() => location.reload()}>Reload</Button>
+        <Button onClick={() => location.reload()}>Reload</Button>
     </div>
 </ModalPage>
 

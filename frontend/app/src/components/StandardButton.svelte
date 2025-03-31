@@ -2,26 +2,31 @@
     import { onMount } from "svelte";
     import { currentTheme } from "../theme/themes";
     import { darkenHexColour } from "../theme/utils";
+    import type { ButtonProps } from "./Button.svelte";
 
-    export let cls = "";
-    export let loading: boolean = false;
-    export let disabled: boolean = false;
-    export let secondary: boolean = false;
-    export let small: boolean = false;
-    export let tiny: boolean = false;
-    export let fill: boolean = false;
-    export let hollow: boolean = false;
-    export let title: string | undefined = undefined;
-    export let square: boolean = false;
-    export let danger: boolean = false;
+    let {
+        cls = "",
+        loading = false,
+        disabled = false,
+        secondary = false,
+        small = false,
+        tiny = false,
+        fill = false,
+        hollow = false,
+        title = undefined,
+        square = false,
+        danger = false,
+        children,
+        onClick,
+    }: ButtonProps = $props();
 
     function rand(a: number, b: number) {
         const r = Math.random();
         return a + r * (b - a);
     }
 
-    let height = "100px";
-    let width = "50px";
+    let height = $state("100px");
+    let width = $state("50px");
 
     onMount(() => {
         const h = rand(50, 150);
@@ -29,12 +34,19 @@
         width = `${h / 2}px`;
     });
 
-    $: darkenedDanger = darkenHexColour($currentTheme.toast.failure.bg, 20);
+    let darkenedDanger = $derived(darkenHexColour($currentTheme.toast.failure.bg, 20));
+
+    function click(e: MouseEvent) {
+        if (onClick) {
+            e.stopPropagation();
+            onClick(e);
+        }
+    }
 </script>
 
 <button
     style={`--height: ${height}; --width: ${width}; --darkened-danger: ${darkenedDanger}`}
-    on:click|stopPropagation
+    onclick={click}
     class={cls}
     class:halloween={$currentTheme.name === "halloween"}
     class:loading
@@ -49,7 +61,7 @@
     {title}
     class:fill>
     {#if !loading}
-        <slot />
+        {@render children?.()}
     {/if}
 </button>
 

@@ -97,7 +97,7 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={onClose}
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={onClose}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if insufficient}
                         <Button
@@ -105,14 +105,14 @@
                             disabled={refreshing}
                             loading={refreshing}
                             tiny={$mobileWidth}
-                            on:click={reset}
+                            onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
                             small={!$mobileWidth}
                             disabled={!valid}
                             tiny={$mobileWidth}
-                            on:click={onAccept}
+                            onClick={onAccept}
                             ><Translatable resourceKey={i18nKey("yes")} /></Button>
                     {/if}
                 </ButtonGroup>

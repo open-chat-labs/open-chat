@@ -132,8 +132,8 @@
 </div>
 <div>
     <ButtonGroup>
-        <Button secondary on:click={() => dispatch("close")}>{$_("cancel")}</Button>
-        <Button loading={refreshingBalance} on:click={onClickPrimary}
+        <Button secondary onClick={() => dispatch("close")}>{$_("cancel")}</Button>
+        <Button loading={refreshingBalance} onClick={onClickPrimary}
             ><Translatable
                 resourceKey={i18nKey(insufficientFunds ? "Refresh" : "Approve payment")} /></Button>
     </ButtonGroup>

@@ -192,11 +192,11 @@
         {#snippet footer()}
             <div class="footer">
                 <ButtonGroup>
-                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}>
+                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}>
                         <Translatable resourceKey={i18nKey("cancel")} />
                     </Button>
                     <Button
-                        on:click={mainButton}
+                        onClick={mainButton}
                         loading={busy}
                         disabled={busy}
                         small={!$mobileWidth}

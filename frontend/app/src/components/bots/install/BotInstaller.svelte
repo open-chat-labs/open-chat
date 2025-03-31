@@ -211,7 +211,7 @@
         tiny={$mobileWidth}
         {disabled}
         {loading}
-        on:click={click}>
+        onClick={click}>
         <Translatable resourceKey={txt} />
     </Button>
 {/snippet}

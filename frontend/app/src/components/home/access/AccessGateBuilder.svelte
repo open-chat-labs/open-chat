@@ -178,7 +178,7 @@
                 {/if}
                 {#if editable}
                     <div class="add">
-                        <Button tiny disabled={!canAdd} on:click={addLeaf}>
+                        <Button tiny disabled={!canAdd} onClick={addLeaf}>
                             <Translatable resourceKey={i18nKey("access.addGate")} />
                         </Button>
                         <div class="icon">
@@ -249,7 +249,7 @@
                     </div>
                 {/if}
                 <ButtonGroup>
-                    <Button on:click={onClose}>
+                    <Button onClick={onClose}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>

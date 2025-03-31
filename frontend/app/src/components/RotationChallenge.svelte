@@ -128,7 +128,7 @@
         {/snippet}
         {#snippet footer()}
             <ButtonGroup align="center">
-                <Button on:click={checkAnswer}>Check</Button>
+                <Button onClick={checkAnswer}>Check</Button>
             </ButtonGroup>
         {/snippet}
     </ModalContent>

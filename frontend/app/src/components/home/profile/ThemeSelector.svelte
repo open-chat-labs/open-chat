@@ -52,11 +52,11 @@
 
 <div class="theme-buttons">
     <ButtonGroup nowrap align="fill">
-        <Button on:click={() => themeType.set("system")} secondary={$themeType !== "system"}
+        <Button onClick={() => themeType.set("system")} secondary={$themeType !== "system"}
             ><Translatable resourceKey={i18nKey("theme.system")} /></Button>
-        <Button on:click={() => themeType.set("light")} secondary={$themeType !== "light"}
+        <Button onClick={() => themeType.set("light")} secondary={$themeType !== "light"}
             ><Translatable resourceKey={i18nKey("theme.light")} /></Button>
-        <Button on:click={() => themeType.set("dark")} secondary={$themeType !== "dark"}
+        <Button onClick={() => themeType.set("dark")} secondary={$themeType !== "dark"}
             ><Translatable resourceKey={i18nKey("theme.dark")} /></Button>
     </ButtonGroup>
 </div>

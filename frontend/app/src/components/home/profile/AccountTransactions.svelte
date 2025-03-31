@@ -112,9 +112,14 @@
                         toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
                     } else {
                         // Filter out approvals
-                        const transactions = result.transactions.filter((t) => t.kind !== "approve");
+                        const transactions = result.transactions.filter(
+                            (t) => t.kind !== "approve",
+                        );
                         if (transactionData.kind === "loading") {
-                            transactionData = { kind: "success", data: { ...result, transactions }};
+                            transactionData = {
+                                kind: "success",
+                                data: { ...result, transactions },
+                            };
                         } else if (transactionData.kind === "loading_more") {
                             transactionData = {
                                 kind: "success",
@@ -251,14 +256,14 @@
                 <ButtonGroup>
                     <Button
                         secondary
-                        on:click={() => loadTransactions()}
+                        onClick={() => loadTransactions()}
                         disabled={!moreAvailable && !loading}
                         {loading}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("cryptoAccount.loadMoreTransactions")} />
                     </Button>
-                    <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Button onClick={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>

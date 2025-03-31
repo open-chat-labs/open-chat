@@ -84,7 +84,7 @@
     </div>
 {/each}
 
-<Button on:click={() => (linking = true)}>
+<Button onClick={() => (linking = true)}>
     <Translatable resourceKey={i18nKey("identity.linkedAccounts.linkAnother")} />
 </Button>
 

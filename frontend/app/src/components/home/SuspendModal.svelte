@@ -63,14 +63,10 @@
         {#snippet footer()}
             <div>
                 <ButtonGroup>
-                    <Button on:click={onSuspend} loading={suspending} small>
+                    <Button onClick={onSuspend} loading={suspending} small>
                         <Translatable resourceKey={i18nKey("suspend")} />
                     </Button>
-                    <Button
-                        on:click={() => dispatch("close")}
-                        disabled={suspending}
-                        small
-                        secondary>
+                    <Button onClick={() => dispatch("close")} disabled={suspending} small secondary>
                         <Translatable resourceKey={i18nKey("cancel")} />
                     </Button>
                 </ButtonGroup>

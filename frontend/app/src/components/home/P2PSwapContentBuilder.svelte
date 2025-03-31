@@ -242,14 +242,14 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <Button
                         small={!$mobileWidth}
                         disabled={!valid || sending}
                         loading={sending}
                         tiny={$mobileWidth}
-                        on:click={onSend}
+                        onClick={onSend}
                         ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                 </ButtonGroup>
             </span>

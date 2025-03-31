@@ -22,7 +22,7 @@
     {#snippet footer()}
         <div>
             <ButtonGroup align={$mobileWidth ? "fill" : "center"}>
-                <Button on:click={onClose}>
+                <Button onClick={onClose}>
                     <Translatable resourceKey={i18nKey("goHome")} />
                 </Button>
             </ButtonGroup>

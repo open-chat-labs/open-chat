@@ -127,12 +127,12 @@
     </div>
     <div>
         <ButtonGroup>
-            <Button secondary on:click={() => dispatch("close")}
+            <Button secondary onClick={() => dispatch("close")}
                 ><Translatable resourceKey={i18nKey("cancel")} /></Button>
             <Button
                 loading={verifying}
                 disabled={verifying || !confirmed || iiPrincipal === undefined}
-                on:click={verify}><Translatable resourceKey={i18nKey("access.verify")} /></Button>
+                onClick={verify}><Translatable resourceKey={i18nKey("access.verify")} /></Button>
         </ButtonGroup>
     </div>
 {/if}

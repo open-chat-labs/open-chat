@@ -132,14 +132,14 @@
         {#snippet footer()}
             <div>
                 <ButtonGroup>
-                    <Button secondary on:click={onClose}
+                    <Button secondary onClick={onClose}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <!-- <Button secondary on:click={() => (step = "linking")}
                         ><Translatable resourceKey={i18nKey("identity.back")} /></Button> -->
                     <Button
                         loading={verifying}
                         disabled={verifying || !confirmed || iiPrincipal === undefined}
-                        on:click={verify}
+                        onClick={verify}
                         ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
                 </ButtonGroup>
             </div>

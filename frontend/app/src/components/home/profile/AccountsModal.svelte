@@ -141,13 +141,13 @@
         <ButtonGroup>
             <Button
                 secondary
-                on:click={() => (managing = true)}
+                onClick={() => (managing = true)}
                 small={!$mobileWidth}
                 tiny={$mobileWidth}>
                 <Translatable resourceKey={i18nKey("cryptoAccount.manage")} />
             </Button>
 
-            <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+            <Button onClick={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
                 <Translatable resourceKey={i18nKey("close")} />
             </Button>
         </ButtonGroup>

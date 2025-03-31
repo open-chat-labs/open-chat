@@ -778,7 +778,7 @@
                             disabled={busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
-                            on:click={() => (step = step - 1)}
+                            onClick={() => (step = step - 1)}
                             ><Translatable resourceKey={i18nKey("group.back")} /></Button>
                     {/if}
                 </div>
@@ -787,7 +787,7 @@
                         disabled={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={onClose}
+                        onClick={onClose}
                         secondary>{$_("cancel")}</Button>
 
                     <Button
@@ -797,7 +797,7 @@
                         loading={busy || refreshingBalance}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={onClickPrimary}
+                        onClick={onClickPrimary}
                         ><Translatable
                             resourceKey={i18nKey(
                                 step === 0 ? "refresh" : canSubmit ? "submit" : "group.next",
