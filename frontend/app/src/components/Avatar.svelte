@@ -37,6 +37,7 @@
     let specialisation: Specialisation = $derived(bot ? "bot" : verified ? "verified" : "none");
     let userStatus = $state(UserStatus.None);
     let userStatusUserId: string | undefined = $state(undefined);
+
     $effect(() => {
         if (!showStatus || userId !== userStatusUserId) {
             userStatus = UserStatus.None;

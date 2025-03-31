@@ -16,7 +16,7 @@
     import { getContext, onMount, tick } from "svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
-    import { navOpen } from "../../../stores/layout";
+    import { layoutStore, navOpen } from "../../../stores/layout";
     import { flip } from "svelte/animate";
     import { type DndEvent, dndzone } from "svelte-dnd-action";
     import { isTouchDevice } from "../../../utils/devices";
@@ -164,7 +164,12 @@
 
 <svelte:body onclick={closeIfOpen} />
 
-<section bind:this={navWrapper} class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
+<section
+    class:visible={$layoutStore.showNav}
+    bind:this={navWrapper}
+    class="nav"
+    class:open={$navOpen}
+    class:rtl={$rtlStore}>
     <div class="top">
         <LeftNavItem separator label={i18nKey("communities.mainMenu")}>
             <div class="hover logo">
@@ -368,6 +373,10 @@
             @include mobile() {
                 width: toRem(300);
             }
+        }
+
+        &:not(.visible) {
+            display: none;
         }
     }
 

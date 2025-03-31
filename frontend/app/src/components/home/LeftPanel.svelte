@@ -8,6 +8,7 @@
 </script>
 
 <section
+    class:visible={$layoutStore.showLeft}
     class:offset={$layoutStore.showNav}
     class:rtl={$rtlStore}
     class:halloween={$currentTheme.name === "halloween"}>
@@ -63,6 +64,10 @@
             bottom: 0;
             right: 0;
             transform: scaleY(-1);
+        }
+
+        &:not(.visible) {
+            display: none;
         }
     }
 </style>

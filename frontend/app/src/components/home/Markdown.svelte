@@ -23,11 +23,35 @@
         suppressLinks = false,
     }: Props = $props();
 
-    let sanitized = $state("unsafe");
-
     let singleEmoji = $derived(isSingleEmoji(text));
     let options = $derived({
         breaks: !oneLine,
+    });
+
+    let sanitized = $derived.by(() => {
+        let parsed = replaceEveryone(
+            replaceUserGroupIds(
+                replaceUserIds(replaceDatetimes(client.stripLinkDisabledMarker(text))),
+                $userGroups,
+            ),
+        );
+        try {
+            if (inline) {
+                parsed = marked.parseInline(parsed, options) as string;
+            } else {
+                parsed = marked.parse(parsed, options) as string;
+            }
+        } catch (err: any) {
+            client.logError("Error parsing markdown: ", err);
+        }
+
+        const domPurify = oneLine ? DOMPurifyOneLine : DOMPurifyDefault;
+        try {
+            return domPurify.sanitize(parsed);
+        } catch (err: any) {
+            client.logError("Error sanitizing message content: ", err);
+            return "unsafe";
+        }
     });
 
     function replaceUserIds(text: string): string {
@@ -62,31 +86,6 @@
             return client.toDatetimeString(new Date(Number(p1)));
         });
     }
-
-    $effect(() => {
-        let parsed = replaceEveryone(
-            replaceUserGroupIds(
-                replaceUserIds(replaceDatetimes(client.stripLinkDisabledMarker(text))),
-                $userGroups,
-            ),
-        );
-        try {
-            if (inline) {
-                parsed = marked.parseInline(parsed, options) as string;
-            } else {
-                parsed = marked.parse(parsed, options) as string;
-            }
-        } catch (err: any) {
-            client.logError("Error parsing markdown: ", err);
-        }
-
-        const domPurify = oneLine ? DOMPurifyOneLine : DOMPurifyDefault;
-        try {
-            sanitized = domPurify.sanitize(parsed);
-        } catch (err: any) {
-            client.logError("Error sanitizing message content: ", err);
-        }
-    });
 </script>
 
 <p

@@ -188,6 +188,7 @@ html {
         Cantarell, "Helvetica Neue", sans-serif --font: "Roboto", sans-serif;
     --font: "Roboto", sans-serif;
     --font-bold: "Manrope", sans-serif;
+    --safe-inset: 0;
 }
 
 body {
@@ -239,6 +240,7 @@ body {
     @media (display-mode: standalone) and (min-height: 668px) {
         body:not(.keyboard) {
             $inset: 32px;
+            --safe-inset: 32px;
             padding-bottom: $inset;
 
             .modal-content {

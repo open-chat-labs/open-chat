@@ -108,6 +108,7 @@
 
 <section
     bind:this={middlePanel}
+    class:visible={$layoutStore.showMiddle}
     class:offset={$layoutStore.showNav && !$layoutStore.showLeft}
     class:halloween={$currentTheme.name === "halloween"}>
     {#if $pathParams.kind === "explore_groups_route"}
@@ -173,6 +174,10 @@
             bottom: 0;
             right: 0;
             transform: scaleY(-1);
+        }
+
+        &:not(.visible) {
+            display: none;
         }
     }
 </style>

@@ -87,7 +87,7 @@
     import Upgrade from "./upgrade/Upgrade.svelte";
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import { fullWidth, layoutStore } from "../../stores/layout";
+    import { fullWidth } from "../../stores/layout";
     import { dimensions } from "../../stores/screenDimensions";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import type { Share } from "../../utils/share";
@@ -1221,16 +1221,9 @@
 {/if}
 
 <main class:anon={$anonUser} class:offline={$offlineStore}>
-    {#if $layoutStore.showNav}
-        <LeftNav />
-    {/if}
-
-    {#if $layoutStore.showLeft}
-        <LeftPanel />
-    {/if}
-    {#if $layoutStore.showMiddle}
-        <MiddlePanel {joining} bind:currentChatMessages onGoToMessageIndex={goToMessageIndex} />
-    {/if}
+    <LeftNav />
+    <LeftPanel />
+    <MiddlePanel {joining} bind:currentChatMessages onGoToMessageIndex={goToMessageIndex} />
     <RightPanel onGoToMessageIndex={goToMessageIndex} />
 </main>
 
