@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use `unbounded_wait` when installing canisters ([#7558](https://github.com/open-chat-labs/open-chat/pull/7558))
 - Log error response if any canister wasm upgrades are rejected ([#7566](https://github.com/open-chat-labs/open-chat/pull/7566))
 - Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+- Support passing common args to timer job batches ([#7705](https://github.com/open-chat-labs/open-chat/pull/7705))
 
 ### Fixed
 
