@@ -1,5 +1,5 @@
 use crate::{GroupedTimerJobQueue, TimerJobItemBatch, TimerJobItemGroup};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Serialize, Serializer};
 
 // Use this to process batches of events (eg. sending events to the UserIndex)
 pub struct BatchedTimerJobQueue<T: TimerJobItemBatch>(pub(crate) GroupedTimerJobQueue<T>);
@@ -65,15 +65,15 @@ where
     }
 }
 
-impl<'de, T: TimerJobItemBatch + 'static> Deserialize<'de> for BatchedTimerJobQueue<T>
-where
-    <T as TimerJobItemBatch>::Args: Deserialize<'de>,
-    <T as TimerJobItemBatch>::Item: Deserialize<'de>,
-{
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        GroupedTimerJobQueue::<T>::deserialize(deserializer).map(BatchedTimerJobQueue)
-    }
-}
+// impl<'de, T: TimerJobItemBatch + 'static> Deserialize<'de> for BatchedTimerJobQueue<T>
+// where
+//     <T as TimerJobItemBatch>::Args: Deserialize<'de>,
+//     <T as TimerJobItemBatch>::Item: Deserialize<'de>,
+// {
+//     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+//         GroupedTimerJobQueue::<T>::deserialize(deserializer).map(BatchedTimerJobQueue)
+//     }
+// }
 
 #[macro_export]
 macro_rules! timer_job_batch {

@@ -234,12 +234,22 @@ where
 
 impl<'de, T: TimerJobItemGroup + 'static> Deserialize<'de> for GroupedTimerJobQueue<T>
 where
-    <T as TimerJobItemGroup>::CommonArgs: Deserialize<'de>,
+    <T as TimerJobItemGroup>::CommonArgs: Deserialize<'de> + Default,
     <T as TimerJobItemGroup>::Key: Deserialize<'de>,
     <T as TimerJobItemGroup>::Item: Deserialize<'de>,
 {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let inner = GroupedTimerJobQueueInner::deserialize(deserializer)?;
+        let inner_previous = GroupedTimerJobQueueInnerPrevious::deserialize(deserializer)?;
+        let inner = GroupedTimerJobQueueInner {
+            args: T::CommonArgs::default(),
+            queue: inner_previous.queue,
+            items_map: inner_previous.items_map,
+            in_progress: inner_previous.in_progress,
+            max_concurrency: inner_previous.max_concurrency,
+            defer_processing: inner_previous.defer_processing,
+            timer_id: None,
+        };
+
         let value = GroupedTimerJobQueue::<T> {
             inner: Rc::new(Mutex::new(inner)),
             phantom: PhantomData,
@@ -249,6 +259,15 @@ where
     }
 }
 
+#[derive(Deserialize)]
+struct GroupedTimerJobQueueInnerPrevious<K: Clone + Ord, I> {
+    queue: VecDeque<K>,
+    items_map: BTreeMap<K, VecDeque<I>>,
+    in_progress: BTreeSet<K>,
+    max_concurrency: usize,
+    defer_processing: bool,
+}
+
 pub fn deserialize_batched_timer_job_queue_from_previous<'de, D: Deserializer<'de>, T: TimerJobItemBatch + 'static>(
     deserializer: D,
 ) -> Result<BatchedTimerJobQueue<T>, D::Error>
@@ -256,7 +275,8 @@ where
     T::Args: Ord + Deserialize<'de> + From<Principal>,
     T::Item: Deserialize<'de>,
 {
-    let mut previous: GroupedTimerJobQueueInner<(), T::Args, T::Item> = GroupedTimerJobQueueInner::deserialize(deserializer)?;
+    let mut previous: GroupedTimerJobQueueInnerPrevious<T::Args, T::Item> =
+        GroupedTimerJobQueueInnerPrevious::deserialize(deserializer)?;
 
     let mut new = GroupedTimerJobQueueInner {
         args: T::Args::from(Principal::anonymous()),
