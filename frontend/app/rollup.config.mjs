@@ -81,7 +81,7 @@ export default {
             }),
             compilerOptions: {
                 // immutable: true, // this could be a great optimisation, but we need to plan for it a bit
-                runes: true,
+                // runes: true,
             },
             onwarn: (warning, handler) => {
                 if (warning.code.startsWith("a11y-")) return;
