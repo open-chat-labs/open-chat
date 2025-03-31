@@ -8372,6 +8372,7 @@ dependencies = [
  "futures",
  "ic-cdk 0.18.0-alpha.2",
  "ic-cdk-timers",
+ "ic_principal",
  "serde",
 ]
 

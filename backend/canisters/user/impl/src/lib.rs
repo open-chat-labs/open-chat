@@ -35,7 +35,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
-use timer_job_queues::GroupedTimerJobQueue;
+use timer_job_queues::{deserialize_batched_timer_job_queue_from_previous, BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned,
     ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
@@ -232,14 +232,11 @@ impl RuntimeState {
     }
 
     pub fn push_local_user_index_canister_event(&mut self, event: LocalUserIndexEvent, now: TimestampMillis) {
-        self.data.local_user_index_event_sync_queue.push(
-            self.data.local_user_index_canister_id,
-            IdempotentEnvelope {
-                created_at: now,
-                idempotency_id: self.env.rng().next_u64(),
-                value: event,
-            },
-        );
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        });
     }
 
     pub fn award_achievements_and_notify(&mut self, achievements: Vec<Achievement>, now: TimestampMillis) {
@@ -414,7 +411,8 @@ struct Data {
     pub referrals: Referrals,
     pub message_activity_events: MessageActivityEvents,
     pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
-    pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
+    #[serde(deserialize_with = "deserialize_batched_timer_job_queue_from_previous")]
+    pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
     #[serde(default)]
@@ -488,7 +486,7 @@ impl Data {
             referrals: Referrals::default(),
             message_activity_events: MessageActivityEvents::default(),
             stable_memory_keys_to_garbage_collect: Vec::new(),
-            local_user_index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
+            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, false),
             idempotency_checker: IdempotencyChecker::default(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),

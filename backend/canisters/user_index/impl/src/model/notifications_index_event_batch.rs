@@ -1,9 +1,9 @@
 use notifications_index_canister::UserIndexEvent;
-use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
+use timer_job_queues::{timer_job_batch, TimerJobItem};
 use types::{CanisterId, IdempotentEnvelope};
 use utils::canister::should_retry_failed_c2c_call;
 
-grouped_timer_job_batch!(
+timer_job_batch!(
     NotificationsIndexEventBatch,
     CanisterId,
     IdempotentEnvelope<UserIndexEvent>,
@@ -13,7 +13,7 @@ grouped_timer_job_batch!(
 impl TimerJobItem for NotificationsIndexEventBatch {
     async fn process(&self) -> Result<(), bool> {
         let response = notifications_index_canister_c2c_client::c2c_user_index(
-            self.key,
+            self.state,
             &notifications_index_canister::c2c_user_index::Args {
                 events: self.items.clone(),
             },
