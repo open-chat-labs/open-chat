@@ -791,7 +791,7 @@
                 <div class="message-reactions" class:me class:indent={showAvatar}>
                     {#each msg.reactions as { reaction, userIds } (reaction)}
                         <MessageReaction
-                            on:click={() => toggleReaction(false, reaction)}
+                            onClick={() => toggleReaction(false, reaction)}
                             {reaction}
                             {userIds}
                             myUserId={user?.userId} />

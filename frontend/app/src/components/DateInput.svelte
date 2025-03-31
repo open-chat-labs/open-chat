@@ -25,6 +25,7 @@
     import SveltyPicker from "svelty-picker";
     import type { ResourceKey } from "openchat-client";
     import { onMount } from "svelte";
+    import Tooltip from "./tooltip/Tooltip.svelte";
     import TooltipWrapper from "./TooltipWrapper.svelte";
     import TooltipPopup from "./TooltipPopup.svelte";
     import Translatable from "./Translatable.svelte";
@@ -53,7 +54,7 @@
     let localDate: string | undefined = $state(undefined);
     onMount(() => {
         if (typeof value === "number") {
-            localDate = (new Date(Number(value))).toISOString();
+            localDate = new Date(Number(value)).toISOString();
         }
     });
 </script>
@@ -77,23 +78,18 @@
             } else {
                 dateIsValid = true;
             }
-            dateValue instanceof Date
-                ? onchange?.(BigInt(dateValue.getTime()))
-                : onchange?.(null);
-        }}
-    />
+            dateValue instanceof Date ? onchange?.(BigInt(dateValue.getTime())) : onchange?.(null);
+        }} />
     {#if !dateIsValid}
         <div class="error-icon">
-            <TooltipWrapper position={"top"} align={"middle"}>
-                <div slot="target" class="param" class:required={required}>
+            <Tooltip position={"top"} align={"middle"}>
+                <div class="param" class:required>
                     <Information width="1.25rem" height="1.25rem" />
                 </div>
-                <div let:position let:align slot="tooltip">
-                    <TooltipPopup {align} {position}>
-                        <Translatable resourceKey={i18nKey("mustBeFutureDateError")} />
-                    </TooltipPopup>
-                </div>
-            </TooltipWrapper>
+                {#snippet popupTemplate()}
+                    <Translatable resourceKey={i18nKey("mustBeFutureDateError")} />
+                {/snippet}
+            </Tooltip>
         </div>
     {/if}
 </div>
@@ -118,7 +114,7 @@
 
         :global(input[name="date_input"]) {
             @include input();
-            width: 100%;;
+            width: 100%;
 
             &::placeholder {
                 color: var(--placeholder);
@@ -146,7 +142,6 @@
     }
 
     :global(body) {
-        
         /* general */
         --sdt-bg-main: var(--bd);
         --sdt-shadow-color: var(--bg);
@@ -154,7 +149,7 @@
         --sdt-radius: 4px; /** wrap radius */
         --sdt-color: var(--txt);
         --sdt-color-selected: var(--txt); /** selected data(e.g date/time) text color */
-        --sdt-header-color: var(--txt);; /** header items color (e.g. text & buttons) */
+        --sdt-header-color: var(--txt); /** header items color (e.g. text & buttons) */
         --sdt-header-btn-bg-hover: transparent; /** header items hover background color */
         --sdt-bg-selected: var(--primary);
 
@@ -163,7 +158,9 @@
         --sdt-table-disabled-date: var(--unread-mute-txt); /** disabled dates text color */
         --sdt-table-disabled-date-bg: transparent; /** disabled dates background color */
         --sdt-table-bg: transparent; /** date picker inner table background color */
-        --sdt-table-data-bg-hover: var(--primary); /** table selection data hover background color */
+        --sdt-table-data-bg-hover: var(
+            --primary
+        ); /** table selection data hover background color */
         --sdt-table-today-indicator: var(--primary); /** date picker current day marker color */
 
         /* action buttons */
@@ -178,9 +175,13 @@
         --sdt-clock-selected-bg: var(--sdt-bg-selected); /** selected time background color */
         --sdt-clock-bg: var(--input-bg); /** time picker inner circle background color */
         --sdt-clock-color: var(--txt); /** time picker text color (watch "--sdt-color") */
-        --sdt-clock-color-hover: var(--txt); /** time picker hover text color (watch "--sdt-color") */
+        --sdt-clock-color-hover: var(
+            --txt
+        ); /** time picker hover text color (watch "--sdt-color") */
         --sdt-clock-time-bg: transparent; /** time picker time background color */
-        --sdt-clock-time-bg-hover: var(--primary); /** time picker time selection hover background color */
+        --sdt-clock-time-bg-hover: var(
+            --primary
+        ); /** time picker time selection hover background color */
         --sdt-clock-disabled: var(--unread-mute); /** disabled time picker time text color */
         --sdt-clock-disabled-bg: transparent; /** disabled time picker time background color */
     }
