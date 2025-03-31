@@ -16,13 +16,13 @@
         members = members.filter((m) => m.user.userId !== user.userId);
     }
 
-    function addMember(ev: CustomEvent<UserSummary>): void {
+    function addMember(user: UserSummary): void {
         if (busy) return;
         members = [
             ...members,
             {
                 role: "member",
-                user: ev.detail,
+                user,
             },
         ];
     }
@@ -34,6 +34,6 @@
         enabled={!busy}
         mode={"add"}
         onDeleteUser={deleteMember}
-        on:selectUser={addMember}
+        onSelectUser={addMember}
         {selectedUsers} />
 </div>
