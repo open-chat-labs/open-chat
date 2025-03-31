@@ -12,6 +12,7 @@ use std::time::Duration;
 
 // Use this to process events where events are grouped into batches based on their key.
 // Eg. sending events to User canisters (in this case the User canisterId would be the key).
+#[allow(clippy::type_complexity)]
 pub struct GroupedTimerJobQueue<T: TimerJobItemGroup> {
     inner: Rc<Mutex<GroupedTimerJobQueueInner<T::CommonArgs, T::Key, T::Item>>>,
     phantom: PhantomData<T>,

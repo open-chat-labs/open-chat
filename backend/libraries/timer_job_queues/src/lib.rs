@@ -41,9 +41,7 @@ impl<T: TimerJobItemBatch> TimerJobItemGroup for T {
         T::new(common_args)
     }
 
-    fn key(&self) -> Self::Key {
-        ()
-    }
+    fn key(&self) {}
 
     fn add(&mut self, item: Self::Item) {
         self.add(item);
