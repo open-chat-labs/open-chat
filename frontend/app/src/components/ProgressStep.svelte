@@ -8,9 +8,13 @@
     import Markdown from "./home/Markdown.svelte";
     import type { ResourceKey } from "openchat-client";
 
-    export let label: ResourceKey;
-    export let status: string;
-    export let step = 0;
+    interface Props {
+        label: ResourceKey;
+        status: string;
+        step?: number;
+    }
+
+    let { label, status, step = 0 }: Props = $props();
 </script>
 
 <div class={`step ${status}`}>

@@ -1,13 +1,19 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
     import Arrow from "./Arrow.svelte";
 
-    export let url: string;
-    export let color: string = "#7E52FF";
-    export let target: string | undefined = undefined;
+    interface Props {
+        url: string;
+        color?: string;
+        target?: string | undefined;
+        children?: Snippet;
+    }
+
+    let { url, color = "#7E52FF", target = undefined, children }: Props = $props();
 </script>
 
 <a class="link" href={url} {target}>
-    <slot />
+    {@render children?.()}
     <div class="arrow">
         <Arrow {color} />
     </div>

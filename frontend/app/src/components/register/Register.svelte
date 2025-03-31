@@ -7,7 +7,12 @@
     import UsernameInput from "../UsernameInput.svelte";
     import { getContext, onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
-    import { type CreatedUser, type OpenChat, type UserSummary } from "openchat-client";
+    import {
+        type CreatedUser,
+        type OpenChat,
+        type UserOrUserGroup,
+        type UserSummary,
+    } from "openchat-client";
     import Button from "../Button.svelte";
     import Select from "../Select.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -134,7 +139,7 @@
     });
     let busy = $derived($registerState.kind === "spinning");
 
-    function deleteUser() {
+    function deleteUser(_: UserOrUserGroup) {
         referringUser = undefined;
         client.clearReferralCode();
     }
@@ -234,7 +239,7 @@
                     <div class="form-element">
                         {#if referringUser !== undefined}
                             <Legend label={i18nKey("register.referredBy")} />
-                            <UserPill on:deleteUser={deleteUser} userOrGroup={referringUser} />
+                            <UserPill onDeleteUser={deleteUser} userOrGroup={referringUser} />
                         {:else}
                             <Legend label={i18nKey("register.findReferrer")} />
                             <FindUser

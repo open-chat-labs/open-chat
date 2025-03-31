@@ -5,9 +5,13 @@
     const circum = 471.24;
     const client = getContext<OpenChat>("client");
 
-    export let me: boolean;
-    export let expiresAt: number;
-    export let percentageExpired: number;
+    interface Props {
+        me: boolean;
+        expiresAt: number;
+        percentageExpired: number;
+    }
+
+    let { me, expiresAt, percentageExpired }: Props = $props();
 
     const markers: [number, number][] = [];
     const LINE_RADIUS = 85;
@@ -25,8 +29,8 @@
         ]);
     }
 
-    $: remaining = 100 - percentageExpired;
-    $: degrees = (remaining / 100) * 360;
+    let remaining = $derived(100 - percentageExpired);
+    let degrees = $derived((remaining / 100) * 360);
 </script>
 
 <svg width="0.9em" height="0.9em" class="pie" viewBox="0 0 320 320">
