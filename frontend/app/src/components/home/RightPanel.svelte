@@ -570,7 +570,7 @@
             <CommunityDetails />
         {/if}
     {:else if lastState.kind === "community_filters"}
-        <CommunityFilters on:close={popRightPanelHistory} />
+        <CommunityFilters onClose={popRightPanelHistory} />
     {/if}
 
     <Resizable {modal} {section} bind:resizedWidth bind:resized bind:resizing />

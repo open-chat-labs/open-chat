@@ -12,9 +12,17 @@
         enabled?: boolean;
         userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
         onDeleteUser: (user: UserOrUserGroup) => void;
+        onSelectUser: (user: UserSummary) => void;
     }
 
-    let { mode, selectedUsers, enabled = true, userLookup, onDeleteUser }: Props = $props();
+    let {
+        mode,
+        selectedUsers,
+        enabled = true,
+        userLookup,
+        onDeleteUser,
+        onSelectUser,
+    }: Props = $props();
 
     let error: string | undefined = undefined;
 </script>
@@ -31,7 +39,7 @@
 {/if}
 
 <div class="find-user">
-    <FindUser {userLookup} {enabled} {mode} on:selectUser />
+    <FindUser {userLookup} {enabled} {mode} on:selectUser={(e) => onSelectUser(e.detail)} />
 </div>
 
 <style lang="scss">

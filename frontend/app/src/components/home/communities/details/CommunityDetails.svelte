@@ -97,7 +97,7 @@
     </CollapsibleCard>
     {#if rules !== undefined && rules.enabled}
         <CollapsibleCard
-            ontoggle={communityRulesOpen.toggle}
+            onToggle={communityRulesOpen.toggle}
             open={$communityRulesOpen}
             headerText={i18nKey("rules.levelRules", undefined, community.level)}>
             <Markdown inline={false} text={rules.text} />
