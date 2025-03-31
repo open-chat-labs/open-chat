@@ -27,6 +27,7 @@ pub enum ChitEarnedReason {
     ExternalAchievement(String),
     Referral(ReferralStatus),
     MemeContestWinner,
+    DailyClaimReinstated,
 }
 
 #[ts_export]
