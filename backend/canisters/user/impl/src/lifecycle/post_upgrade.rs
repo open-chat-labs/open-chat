@@ -1,12 +1,13 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
 use crate::model::streak::Streak;
-use crate::{mutate_state, Data, RuntimeState};
+use crate::{mutate_state, openchat_bot, Data, RuntimeState};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use std::collections::BTreeSet;
+use std::time::Duration;
 use tracing::info;
 use types::{ChitEarned, ChitEarnedReason};
 use user_canister::post_upgrade::Args;
@@ -51,7 +52,8 @@ fn reinstate_daily_claims(state: &mut RuntimeState) {
     let (days_to_reinstate, new_start_day) = streak_days_to_reinstate(&chit_claim_days, now_day);
 
     if !days_to_reinstate.is_empty() {
-        for day in days_to_reinstate.iter().copied() {
+        let count = days_to_reinstate.len();
+        for day in days_to_reinstate {
             // Take the last millisecond of the day
             let timestamp = Streak::day_to_timestamp(day + 1) - 1;
             state.data.chit_events.push(ChitEarned {
@@ -62,6 +64,25 @@ fn reinstate_daily_claims(state: &mut RuntimeState) {
         }
         assert!(new_start_day < state.data.streak.start_day());
         state.data.streak.set_start_day(new_start_day);
+        state.data.chit_events.set_last_updated_hack(now);
+        let new_streak = state.data.streak.days(now);
+
+        let first_line = if count == 1 {
+            "1 missed daily claim has been reinstated."
+        } else {
+            "2 missed daily claims have been reinstated."
+        };
+        let message = format!(
+            "{first_line}
+Your new streak length is now {new_streak}!"
+        );
+
+        ic_cdk_timers::set_timer(Duration::ZERO, || {
+            mutate_state(|state| {
+                openchat_bot::send_text_message(message, Vec::new(), false, state);
+                state.notify_user_index_of_chit(state.env.now());
+            });
+        });
     }
 }
 
