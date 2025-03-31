@@ -220,6 +220,7 @@ mod tests {
 
         ChitEarnedEvents {
             events,
+            last_updated_hack: 0,
             total_chit_earned,
         }
     }
