@@ -1,9 +1,9 @@
 use candid::Principal;
-use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
+use timer_job_queues::{timer_job_batch, TimerJobItem};
 use types::CanisterId;
 use utils::canister::should_retry_failed_c2c_call;
 
-grouped_timer_job_batch!(StorageIndexUsersToRemoveBatch, CanisterId, (), Principal, 1000);
+timer_job_batch!(StorageIndexUsersToRemoveBatch, CanisterId, Principal, 1000);
 
 impl TimerJobItem for StorageIndexUsersToRemoveBatch {
     async fn process(&self) -> Result<(), bool> {

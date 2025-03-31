@@ -161,13 +161,10 @@ fn process_charge(
         );
 
         if let Some(user) = state.data.users.get_by_user_id(&user_id) {
-            state.data.storage_index_user_sync_queue.push(
-                (),
-                UserConfig {
-                    user_id: user.principal,
-                    byte_limit: ONE_GB,
-                },
-            );
+            state.data.storage_index_user_sync_queue.push(UserConfig {
+                user_id: user.principal,
+                byte_limit: ONE_GB,
+            });
         }
 
         if recurring {

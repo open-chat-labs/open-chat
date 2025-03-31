@@ -27,7 +27,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
-use timer_job_queues::GroupedTimerJobQueue;
+use timer_job_queues::BatchedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cycles, DiamondMembershipFees, IdempotentEnvelope, Milliseconds,
     TimestampMillis, Timestamped, UserId, UserType,
@@ -157,14 +157,11 @@ impl RuntimeState {
         event: notifications_index_canister::UserIndexEvent,
         now: TimestampMillis,
     ) {
-        self.data.notifications_index_event_sync_queue.push(
-            (),
-            IdempotentEnvelope {
-                created_at: now,
-                idempotency_id: self.env.rng().next_u64(),
-                value: event,
-            },
-        )
+        self.data.notifications_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        })
     }
 
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
@@ -208,7 +205,7 @@ impl RuntimeState {
             self.data.remove_from_online_users_queue.push_back(user.principal);
             jobs::remove_from_online_users_canister::start_job_if_required(self);
 
-            self.data.storage_index_users_to_remove_queue.push((), user.principal);
+            self.data.storage_index_users_to_remove_queue.push(user.principal);
         }
     }
 
@@ -366,10 +363,10 @@ struct Data {
     pub translations_canister_id: CanisterId,
     pub registry_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
-    pub storage_index_user_sync_queue: GroupedTimerJobQueue<StorageIndexUserConfigBatch>,
-    pub storage_index_users_to_remove_queue: GroupedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
+    pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
+    pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    pub notifications_index_event_sync_queue: GroupedTimerJobQueue<NotificationsIndexEventBatch>,
+    pub notifications_index_event_sync_queue: BatchedTimerJobQueue<NotificationsIndexEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,
@@ -450,10 +447,10 @@ impl Data {
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
-            storage_index_user_sync_queue: GroupedTimerJobQueue::new(storage_index_canister_id, 1, false),
-            storage_index_users_to_remove_queue: GroupedTimerJobQueue::new(storage_index_canister_id, 1, false),
+            storage_index_user_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
+            storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            notifications_index_event_sync_queue: GroupedTimerJobQueue::new(notifications_index_canister_id, 1, false),
+            notifications_index_event_sync_queue: BatchedTimerJobQueue::new(notifications_index_canister_id, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -564,10 +561,10 @@ impl Default for Data {
             translations_canister_id: Principal::anonymous(),
             registry_canister_id: Principal::anonymous(),
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
-            storage_index_user_sync_queue: GroupedTimerJobQueue::new(Principal::anonymous(), 1, false),
-            storage_index_users_to_remove_queue: GroupedTimerJobQueue::new(Principal::anonymous(), 1, false),
+            storage_index_user_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
+            storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            notifications_index_event_sync_queue: GroupedTimerJobQueue::new(Principal::anonymous(), 1, false),
+            notifications_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),

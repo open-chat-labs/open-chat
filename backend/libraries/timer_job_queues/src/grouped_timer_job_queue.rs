@@ -9,6 +9,8 @@ use std::rc::Rc;
 use std::sync::Mutex;
 use std::time::Duration;
 
+// Use this to process events where events are grouped into batches based on their key.
+// Eg. sending events to User canisters (in this case the User canisterId would be the key).
 pub struct GroupedTimerJobQueue<T: TimerJobItemGroup> {
     inner: Rc<Mutex<GroupedTimerJobQueueInner<T::CommonArgs, T::Key, T::Item>>>,
     phantom: PhantomData<T>,

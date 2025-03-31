@@ -1,15 +1,9 @@
 use airdrop_bot_canister::c2c_online_users::OnlineUsersEvent;
-use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
+use timer_job_queues::{timer_job_batch, TimerJobItem};
 use types::{CanisterId, IdempotentEnvelope};
 use utils::canister::should_retry_failed_c2c_call;
 
-grouped_timer_job_batch!(
-    AirdropBotEventBatch,
-    CanisterId,
-    (),
-    IdempotentEnvelope<OnlineUsersEvent>,
-    1000
-);
+timer_job_batch!(AirdropBotEventBatch, CanisterId, IdempotentEnvelope<OnlineUsersEvent>, 1000);
 
 impl TimerJobItem for AirdropBotEventBatch {
     async fn process(&self) -> Result<(), bool> {
