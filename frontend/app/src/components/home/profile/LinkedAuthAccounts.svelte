@@ -9,8 +9,7 @@
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { iconSize } from "../../../stores/iconSize";
-    import TooltipWrapper from "../../TooltipWrapper.svelte";
-    import TooltipPopup from "../../TooltipPopup.svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import LinkAccountsModal from "./LinkAccountsModal.svelte";
     import Overlay from "../../Overlay.svelte";
     import LinkAccounts from "./LinkAccounts.svelte";
@@ -62,28 +61,24 @@
         </TruncatedAccount>
         {#if account.isCurrentIdentity}
             <div class="current">
-                <TooltipWrapper position="top" align="end">
-                    <Account slot="target" size={$iconSize} color={"var(--icon-txt)"} />
-                    <div let:position let:align slot="tooltip">
-                        <TooltipPopup {position} {align}>
-                            <Translatable
-                                resourceKey={i18nKey("identity.linkedAccounts.currentAccount")} />
-                        </TooltipPopup>
-                    </div>
-                </TooltipWrapper>
+                <Tooltip position="top" align="end">
+                    <Account size={$iconSize} color={"var(--icon-txt)"} />
+                    {#snippet popupTemplate()}
+                        <Translatable
+                            resourceKey={i18nKey("identity.linkedAccounts.currentAccount")} />
+                    {/snippet}
+                </Tooltip>
             </div>
         {:else}
             <div class="unlink">
-                <TooltipWrapper position="top" align="end">
-                    <HoverIcon slot="target" onclick={() => (unlinking = account)}>
+                <Tooltip position="top" align="end">
+                    <HoverIcon onclick={() => (unlinking = account)}>
                         <LinkOff size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
-                    <div let:position let:align slot="tooltip">
-                        <TooltipPopup {position} {align}>
-                            <Translatable resourceKey={i18nKey("identity.linkedAccounts.unlink")} />
-                        </TooltipPopup>
-                    </div>
-                </TooltipWrapper>
+                    {#snippet popupTemplate()}
+                        <Translatable resourceKey={i18nKey("identity.linkedAccounts.unlink")} />
+                    {/snippet}
+                </Tooltip>
             </div>
         {/if}
     </div>

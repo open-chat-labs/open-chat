@@ -24,8 +24,7 @@
         type RingtoneKey,
     } from "../../../stores/video";
     import Avatar from "../../Avatar.svelte";
-    import TooltipWrapper from "../../TooltipWrapper.svelte";
-    import TooltipPopup from "../../TooltipPopup.svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { iconSize } from "../../../stores/iconSize";
 
     interface Props {
@@ -116,26 +115,22 @@
                         </div>
                     </div>
                     <div class="btns">
-                        <TooltipWrapper position={"top"} align={"middle"}>
-                            <div slot="target" role="button" onclick={cancel} class="btn ignore">
+                        <Tooltip position={"top"} align={"middle"}>
+                            <div role="button" onclick={cancel} class="btn ignore">
                                 <PhoneHangup size={$iconSize} color={"var(--txt)"} />
                             </div>
-                            <div slot="tooltip" let:position let:align>
-                                <TooltipPopup {position} {align}>
-                                    <Translatable resourceKey={i18nKey("videoCall.ignore")} />
-                                </TooltipPopup>
-                            </div>
-                        </TooltipWrapper>
-                        <TooltipWrapper position={"top"} align={"middle"}>
-                            <div slot="target" role="button" onclick={join} class="btn join">
+                            {#snippet popupTemplate()}
+                                <Translatable resourceKey={i18nKey("videoCall.ignore")} />
+                            {/snippet}
+                        </Tooltip>
+                        <Tooltip position={"top"} align={"middle"}>
+                            <div role="button" onclick={join} class="btn join">
                                 <Phone size={$iconSize} color={"var(--txt)"} />
                             </div>
-                            <div slot="tooltip" let:position let:align>
-                                <TooltipPopup {position} {align}>
-                                    <Translatable resourceKey={i18nKey("videoCall.join")} />
-                                </TooltipPopup>
-                            </div>
-                        </TooltipWrapper>
+                            {#snippet popupTemplate()}
+                                <Translatable resourceKey={i18nKey("videoCall.join")} />
+                            {/snippet}
+                        </Tooltip>
                     </div>
                 </span>
             {/snippet}

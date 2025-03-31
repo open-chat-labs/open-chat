@@ -20,8 +20,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import Progress from "../../Progress.svelte";
     import ExternalLink from "../../landingpages/ExternalLink.svelte";
-    import TooltipWrapper from "../../TooltipWrapper.svelte";
-    import TooltipPopup from "../../TooltipPopup.svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { now } from "../../../stores/time";
 
     const dispatch = createEventDispatcher();
@@ -150,20 +149,17 @@
                             class="tab">
                             <Translatable resourceKey={i18nKey("learnToEarn.external")} />
                             <div class="icon">
-                                <TooltipWrapper position={"bottom"} align={"end"}>
+                                <Tooltip position={"bottom"} align={"end"}>
                                     <InformationOutline
-                                        slot="target"
                                         size={"1.2em"}
                                         color={selectedTab === "external"
                                             ? "var(--txt)"
                                             : "var(--txt-light)"} />
-                                    <div let:position let:align slot="tooltip">
-                                        <TooltipPopup {position} {align}>
-                                            <Translatable
-                                                resourceKey={i18nKey("learnToEarn.externalInfo")} />
-                                        </TooltipPopup>
-                                    </div>
-                                </TooltipWrapper>
+                                    {#snippet popupTemplate()}
+                                        <Translatable
+                                            resourceKey={i18nKey("learnToEarn.externalInfo")} />
+                                    {/snippet}
+                                </Tooltip>
                             </div>
                         </div>
                     {/if}

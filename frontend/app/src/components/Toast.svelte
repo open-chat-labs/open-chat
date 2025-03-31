@@ -14,10 +14,9 @@
     } from "openchat-client";
     import { i18nKey, interpolate } from "../i18n/i18n";
     import page from "page";
-    import TooltipWrapper from "./TooltipWrapper.svelte";
-    import TooltipPopup from "./TooltipPopup.svelte";
+    import Tooltip from "./tooltip/Tooltip.svelte";
 
-    $: reactiveResourceKey = $toastStore?.resourceKey;
+    let reactiveResourceKey = $derived($toastStore?.resourceKey);
 
     function report() {
         if (
@@ -49,18 +48,16 @@
             <div class="text"><Translatable resourceKey={$reactiveResourceKey} /></div>
             {#if $toastStore.type === ToastType.Failure}
                 {#if $toastStore.err !== undefined}
-                    <TooltipWrapper position="top" align="middle">
-                        <div slot="target" class="report" on:click={report}>
+                    <Tooltip position="top" align="middle">
+                        <div class="report" onclick={report}>
                             <Bug size={$iconSize} color={"var(--button-txt)"} />
                         </div>
-                        <div let:position let:align slot="tooltip">
-                            <TooltipPopup {align} {position}>
-                                <Translatable resourceKey={i18nKey("reportBug")} />
-                            </TooltipPopup>
-                        </div>
-                    </TooltipWrapper>
+                        {#snippet popupTemplate()}
+                            <Translatable resourceKey={i18nKey("reportBug")} />
+                        {/snippet}
+                    </Tooltip>
                 {/if}
-                <div class="close" on:click={toastStore.hideToast}>
+                <div class="close" onclick={toastStore.hideToast}>
                     <Close size={$iconSize} color={"var(--button-txt)"} />
                 </div>
             {/if}
