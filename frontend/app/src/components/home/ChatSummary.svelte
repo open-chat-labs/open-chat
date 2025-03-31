@@ -40,7 +40,7 @@
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
-    import { getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick, untrack } from "svelte";
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -211,15 +211,21 @@
      * at all times.
      */
     function updateUnreadCounts(chatSummary: ChatSummary) {
-        unreadMessages = client.unreadMessageCount(
-            chatSummary.id,
-            chatSummary.latestMessage?.event.messageIndex,
-        );
-        unreadMentions = getUnreadMentionCount(chatSummary);
+        untrack(() => {
+            console.log(
+                "Updating unread count",
+                chatSummary.kind === "channel" ? chatSummary.name : "",
+            );
+            unreadMessages = client.unreadMessageCount(
+                chatSummary.id,
+                chatSummary.latestMessage?.event.messageIndex,
+            );
+            unreadMentions = getUnreadMentionCount(chatSummary);
 
-        if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
-            unarchiveChat();
-        }
+            if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+                unarchiveChat();
+            }
+        });
     }
 
     function deleteDirectChat(e: Event) {

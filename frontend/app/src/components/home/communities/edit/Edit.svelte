@@ -44,7 +44,7 @@
     let busy = $state(false);
     let confirming = $state(false);
     let showingVerificationWarning = $state(false);
-    let candidate = $state(structuredClone(original));
+    let candidate = $state($state.snapshot(original));
     let candidateRules = $state({ ...originalRules, newVersion: false });
     let members: CandidateMember[] = $state([]);
     let channels: DefaultChannel[] = $state([
