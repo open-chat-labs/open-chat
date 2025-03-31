@@ -6,7 +6,11 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let ttl: bigint | undefined;
+    interface Props {
+        ttl: bigint | undefined;
+    }
+
+    let { ttl }: Props = $props();
 </script>
 
 {#if ttl !== undefined}

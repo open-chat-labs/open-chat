@@ -291,7 +291,6 @@
 
 {#if profile !== undefined}
     <Overlay dismissible {onClose}>
-        <h1>cunt</h1>
         <ModalContent
             closeIcon
             fill

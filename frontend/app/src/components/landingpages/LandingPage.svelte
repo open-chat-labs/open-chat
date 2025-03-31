@@ -32,10 +32,6 @@
 
     let showMenu = $derived(showMenuForLandingRoute($pathParams));
 
-    function logout() {
-        client.logout();
-    }
-
     function createdUser(user: CreatedUser) {
         client.onCreatedUser(user);
     }
@@ -51,7 +47,7 @@
     <HostedLandingPage />
 {:else}
     {#if showMenu}
-        <Header on:logout={logout} />
+        <Header />
     {/if}
 
     <main class="main">

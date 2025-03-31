@@ -29,7 +29,7 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        onClose: () => void;
+        onClose?: () => void;
         onLeaderboard: () => void;
     }
 
@@ -83,7 +83,7 @@
             })
             .catch((err) => {
                 toastStore.showFailureToast(i18nKey("dailyChit.failedToClaim"), err);
-                onClose();
+                onClose?.();
             })
             .finally(() => {
                 busy = false;
@@ -103,7 +103,7 @@
     }
 
     function leaderboard() {
-        onClose();
+        onClose?.();
         tick().then(onLeaderboard);
     }
 

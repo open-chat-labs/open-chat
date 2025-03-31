@@ -12,7 +12,11 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let referrals: Set<string>;
+    interface Props {
+        referrals: Set<string>;
+    }
+
+    let { referrals }: Props = $props();
 
     function showUserProfile(ev: Event, userId: string) {
         ev.target?.dispatchEvent(
@@ -30,15 +34,15 @@
 
 {#if referrals.size > 0}
     <CollapsibleCard
-        on:toggle={referredUsersOpen.toggle}
+        onToggle={referredUsersOpen.toggle}
         open={$referredUsersOpen}
         headerText={i18nKey("invite.referredUsers")}>
         <div class="referrals">
             {#each referrals as referral}
                 {@const u = $userStore.get(referral)}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <!-- svelte-ignore a11y-no-static-element-interactions -->
-                <div class="referral" on:click={(ev) => showUserProfile(ev, referral)}>
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <div class="referral" onclick={(ev) => showUserProfile(ev, referral)}>
                     <div>
                         <Avatar
                             url={client.userAvatarUrl(u)}

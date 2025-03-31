@@ -8,13 +8,25 @@
     const MIN_DISPLAY_NAME_LENGTH = 3;
     const MAX_DISPLAY_NAME_LENGTH = 25;
 
-    export let client: OpenChat;
-    export let originalDisplayName: string | undefined;
-    export let displayName: string | undefined;
-    export let displayNameValid: boolean;
-    export let disabled: boolean;
+    interface Props {
+        client: OpenChat;
+        originalDisplayName: string | undefined;
+        displayName: string | undefined;
+        displayNameValid: boolean;
+        disabled: boolean;
+        children?: import("svelte").Snippet;
+    }
 
-    $: invalid = originalDisplayName !== displayName && !displayNameValid;
+    let {
+        client,
+        originalDisplayName,
+        displayName = $bindable(),
+        displayNameValid = $bindable(),
+        disabled,
+        children,
+    }: Props = $props();
+
+    let invalid = $derived(originalDisplayName !== displayName && !displayNameValid);
 
     onMount(() => {
         displayName = originalDisplayName;
@@ -43,5 +55,5 @@
     maxlength={MAX_DISPLAY_NAME_LENGTH}
     countdown
     placeholder={i18nKey("register.enterDisplayName")}>
-    <slot />
+    {@render children?.()}
 </Input>

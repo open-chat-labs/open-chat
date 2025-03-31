@@ -14,7 +14,7 @@
     export let coords: { x: number; y: number } = { x: 0, y: 0 };
     export let fill = false;
 
-    let containerDiv: HTMLDivElement;
+    let containerDiv: HTMLDivElement | undefined;
     let hoverTimer: number | undefined;
     let longPressTimer: number | undefined;
 
@@ -96,30 +96,30 @@
 
     onMount(() => {
         if (isTouchDevice && enableLongPress) {
-            containerDiv.addEventListener("touchend", handleTouchEnd);
-            containerDiv.addEventListener("touchmove", handleTouchMove);
-            containerDiv.addEventListener("touchstart", handleTouchStart);
-            containerDiv.addEventListener("contextmenu", onContextMenu);
+            containerDiv?.addEventListener("touchend", handleTouchEnd);
+            containerDiv?.addEventListener("touchmove", handleTouchMove);
+            containerDiv?.addEventListener("touchstart", handleTouchStart);
+            containerDiv?.addEventListener("contextmenu", onContextMenu);
         }
-        containerDiv.addEventListener("mouseenter", startHover);
-        containerDiv.addEventListener("mouseleave", endHover);
-        containerDiv.addEventListener("contextmenu", onContextMenu);
+        containerDiv?.addEventListener("mouseenter", startHover);
+        containerDiv?.addEventListener("mouseleave", endHover);
+        containerDiv?.addEventListener("contextmenu", onContextMenu);
 
         return () => {
             if (isTouchDevice) {
-                containerDiv.removeEventListener("touchend", handleTouchEnd);
-                containerDiv.removeEventListener("touchmove", handleTouchMove);
-                containerDiv.removeEventListener("touchstart", handleTouchStart);
-                containerDiv.removeEventListener("contextmenu", onContextMenu);
+                containerDiv?.removeEventListener("touchend", handleTouchEnd);
+                containerDiv?.removeEventListener("touchmove", handleTouchMove);
+                containerDiv?.removeEventListener("touchstart", handleTouchStart);
+                containerDiv?.removeEventListener("contextmenu", onContextMenu);
             }
-            containerDiv.removeEventListener("mouseenter", startHover);
-            containerDiv.removeEventListener("mouseleave", endHover);
-            containerDiv.removeEventListener("contextmenu", onContextMenu);
+            containerDiv?.removeEventListener("mouseenter", startHover);
+            containerDiv?.removeEventListener("mouseleave", endHover);
+            containerDiv?.removeEventListener("contextmenu", onContextMenu);
         };
     });
 
     export function getBoundingClientRect() {
-        return containerDiv.getBoundingClientRect();
+        return containerDiv?.getBoundingClientRect();
     }
 
     export function getDomElement() {

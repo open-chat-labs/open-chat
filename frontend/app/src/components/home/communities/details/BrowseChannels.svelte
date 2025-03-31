@@ -101,15 +101,17 @@
         <CollapsibleCard
             fill
             first
-            on:toggle={browseChannels.toggle}
+            onToggle={browseChannels.toggle}
             open={$browseChannels || autoOpen}
             headerText={i18nKey("communities.otherChannels")}>
-            <div slot="titleSlot" class="browse-channels">
-                <div class="disc">#</div>
-                <div class="label">
-                    <Translatable resourceKey={i18nKey("communities.otherChannels")} />
+            {#snippet titleSlot()}
+                <div class="browse-channels">
+                    <div class="disc">#</div>
+                    <div class="label">
+                        <Translatable resourceKey={i18nKey("communities.otherChannels")} />
+                    </div>
                 </div>
-            </div>
+            {/snippet}
 
             <div class="channels">
                 {#each filteredResults as channel}

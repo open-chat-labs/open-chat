@@ -20,17 +20,28 @@
     import ReferredUsersList from "../../profile/ReferredUsersList.svelte";
     import AccessGateExpiry from "../../access/AccessGateExpiry.svelte";
 
-    export let community: CommunitySummary;
-    export let rules: Rules | undefined;
-    export let metrics: Metrics;
-    export let canDelete: boolean;
-    export let canInvite: boolean;
-    export let referrals: Set<string>;
+    interface Props {
+        community: CommunitySummary;
+        rules: Rules | undefined;
+        metrics: Metrics;
+        canDelete: boolean;
+        canInvite: boolean;
+        referrals: Set<string>;
+    }
+
+    let {
+        community = $bindable(),
+        rules,
+        metrics,
+        canDelete,
+        canInvite,
+        referrals,
+    }: Props = $props();
 </script>
 
 <div class="details">
     <CollapsibleCard
-        on:toggle={communityVisibilityOpen.toggle}
+        onToggle={communityVisibilityOpen.toggle}
         open={$communityVisibilityOpen}
         headerText={i18nKey("access.visibility")}>
         {#if community.public}
@@ -86,7 +97,7 @@
     </CollapsibleCard>
     {#if rules !== undefined && rules.enabled}
         <CollapsibleCard
-            on:toggle={communityRulesOpen.toggle}
+            onToggle={communityRulesOpen.toggle}
             open={$communityRulesOpen}
             headerText={i18nKey("rules.levelRules", undefined, community.level)}>
             <Markdown inline={false} text={rules.text} />
@@ -94,7 +105,7 @@
     {/if}
     {#if canInvite}
         <CollapsibleCard
-            on:toggle={communityInviteUsersOpen.toggle}
+            onToggle={communityInviteUsersOpen.toggle}
             open={$communityInviteUsersOpen}
             headerText={i18nKey("invite.inviteWithLink", undefined, community.level, true)}>
             <InviteUsersWithLink container={community} />
@@ -102,20 +113,20 @@
     {/if}
     <ReferredUsersList {referrals} />
     <CollapsibleCard
-        on:toggle={communityPermissionsOpen.toggle}
+        onToggle={communityPermissionsOpen.toggle}
         open={$communityPermissionsOpen}
         headerText={i18nKey("permissions.permissions")}>
         <PermissionsViewer isPublic={community.public} bind:permissions={community.permissions} />
     </CollapsibleCard>
     <CollapsibleCard
-        on:toggle={communityStatsOpen.toggle}
+        onToggle={communityStatsOpen.toggle}
         open={$communityStatsOpen}
         headerText={i18nKey("stats.groupStats", undefined, community.level)}>
         <Stats showReported={false} stats={metrics} />
     </CollapsibleCard>
     {#if canDelete}
         <CollapsibleCard
-            on:toggle={communityAdvancedOpen.toggle}
+            onToggle={communityAdvancedOpen.toggle}
             open={$communityAdvancedOpen}
             headerText={i18nKey("group.advanced")}>
             <AdvancedSection {community} />

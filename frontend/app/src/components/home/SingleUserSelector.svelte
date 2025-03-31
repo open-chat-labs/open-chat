@@ -36,7 +36,7 @@
         }
     }
 
-    function removeReceiver() {
+    function removeReceiver(_: UserOrUserGroup) {
         selectedReceiver = undefined;
         showMentionPicker = true;
         textValue = "";
@@ -66,7 +66,7 @@
             prefix={textValue.startsWith("@") ? textValue.substring(1) : textValue} />
     {/if}
     {#if selectedReceiver !== undefined}
-        <UserPill on:deleteUser={removeReceiver} userOrGroup={selectedReceiver} />
+        <UserPill onDeleteUser={removeReceiver} userOrGroup={selectedReceiver} />
     {:else}
         <div class="wrapper" bind:clientHeight={inputHeight}>
             <ValidatingInput

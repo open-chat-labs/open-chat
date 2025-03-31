@@ -7,7 +7,7 @@
         type OpenChat,
     } from "openchat-client";
     import Search from "../Search.svelte";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { botSearchState } from "../../stores/search.svelte";
     import BotProperties from "./install/BotProperties.svelte";
 
@@ -23,8 +23,6 @@
     }
 
     let { location, onSelect, fill = false, maxHeight, installingBot }: Props = $props();
-
-    let initialised = $state(false);
 
     function onSearchEntered(reset = false) {
         if (reset) {
@@ -53,12 +51,7 @@
             });
     }
 
-    $effect(() => {
-        if (!initialised) {
-            onSearchEntered(true);
-            initialised = true;
-        }
-    });
+    onMount(() => onSearchEntered(true));
 </script>
 
 <Search

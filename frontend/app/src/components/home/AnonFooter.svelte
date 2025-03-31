@@ -11,12 +11,12 @@
     role="button"
     tabindex="0"
     on:click={() => client.updateIdentityState({ kind: "logging_in" })}
-    class="anon">
+    class="anon-footer">
     <Translatable resourceKey={i18nKey("tapToLogin")} />
 </div>
 
 <style lang="scss">
-    .anon {
+    .anon-footer {
         position: absolute;
         height: toRem(50);
         width: 100%;
@@ -24,6 +24,7 @@
         align-items: center;
         justify-content: center;
         bottom: 0;
+        bottom: var(--safe-inset);
         cursor: pointer;
         @include z-index("anon-banner");
         background-color: var(--notificationBar-bg);

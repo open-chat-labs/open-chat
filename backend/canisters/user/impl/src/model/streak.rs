@@ -6,7 +6,7 @@ use types::{
 const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
 const MS_IN_DAY: Milliseconds = 1000 * 60 * 60 * 24;
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Streak {
     start_day: u16,
     end_day: u16,
@@ -20,6 +20,18 @@ pub struct Streak {
 }
 
 impl Streak {
+    pub fn start_day(&self) -> u16 {
+        self.start_day
+    }
+
+    pub fn set_start_day(&mut self, start_day: u16) {
+        self.start_day = start_day;
+    }
+
+    pub fn end_day(&self) -> u16 {
+        self.end_day
+    }
+
     pub fn days(&self, now: TimestampMillis) -> u16 {
         if let Some(today) = Streak::timestamp_to_day(now) {
             if !self.is_new_streak(today) {
@@ -166,7 +178,7 @@ impl Streak {
         today > (self.end_day + 1)
     }
 
-    fn day_to_timestamp(day: u16) -> TimestampMillis {
+    pub fn day_to_timestamp(day: u16) -> TimestampMillis {
         DAY_ZERO + MS_IN_DAY * day as u64
     }
 
