@@ -233,7 +233,7 @@ impl RuntimeState {
 
     pub fn push_local_user_index_canister_event(&mut self, event: LocalUserIndexEvent, now: TimestampMillis) {
         self.data.local_user_index_event_sync_queue.push(
-            self.data.local_user_index_canister_id,
+            (),
             IdempotentEnvelope {
                 created_at: now,
                 idempotency_id: self.env.rng().next_u64(),
@@ -468,7 +468,7 @@ impl Data {
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),
-            user_canister_events_queue: GroupedTimerJobQueue::new(10, false),
+            user_canister_events_queue: GroupedTimerJobQueue::new((), 10, false),
             video_call_operators,
             event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
@@ -487,7 +487,7 @@ impl Data {
             referrals: Referrals::default(),
             message_activity_events: MessageActivityEvents::default(),
             stable_memory_keys_to_garbage_collect: Vec::new(),
-            local_user_index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
+            local_user_index_event_sync_queue: GroupedTimerJobQueue::new(local_user_index_canister_id, 1, false),
             idempotency_checker: IdempotencyChecker::default(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),

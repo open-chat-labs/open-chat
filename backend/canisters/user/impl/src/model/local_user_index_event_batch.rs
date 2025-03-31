@@ -6,6 +6,7 @@ use utils::canister::should_retry_failed_c2c_call;
 grouped_timer_job_batch!(
     LocalUserIndexEventBatch,
     CanisterId,
+    (),
     IdempotentEnvelope<LocalUserIndexEvent>,
     100
 );
@@ -13,7 +14,7 @@ grouped_timer_job_batch!(
 impl TimerJobItem for LocalUserIndexEventBatch {
     async fn process(&self) -> Result<(), bool> {
         let response = local_user_index_canister_c2c_client::c2c_user_canister(
-            self.key,
+            self.args,
             &local_user_index_canister::c2c_user_canister::Args {
                 events: self.items.clone(),
             },

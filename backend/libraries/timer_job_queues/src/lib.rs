@@ -9,10 +9,11 @@ pub trait TimerJobItem {
 }
 
 pub trait TimerJobItemGroup: TimerJobItem {
+    type CommonArgs: Clone;
     type Key: Clone + Ord;
     type Item;
 
-    fn new(grouping_key: Self::Key) -> Self;
+    fn new(common_args: Self::CommonArgs, grouping_key: Self::Key) -> Self;
     fn key(&self) -> Self::Key;
     fn add(&mut self, item: Self::Item);
     fn into_items(self) -> Vec<Self::Item>;

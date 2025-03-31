@@ -10,14 +10,15 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 pub struct GroupedTimerJobQueue<T: TimerJobItemGroup> {
-    inner: Rc<Mutex<GroupedTimerJobQueueInner<T::Key, T::Item>>>,
+    inner: Rc<Mutex<GroupedTimerJobQueueInner<T::CommonArgs, T::Key, T::Item>>>,
     phantom: PhantomData<T>,
 }
 
 impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
-    pub fn new(max_concurrency: usize, defer_processing: bool) -> Self {
+    pub fn new(args: T::CommonArgs, max_concurrency: usize, defer_processing: bool) -> Self {
         Self {
             inner: Rc::new(Mutex::new(GroupedTimerJobQueueInner {
+                args,
                 queue: VecDeque::new(),
                 items_map: BTreeMap::new(),
                 in_progress: BTreeSet::new(),
@@ -61,14 +62,15 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
         self.within_lock(|i| i.in_progress.len())
     }
 
-    fn within_lock<F: FnOnce(&mut GroupedTimerJobQueueInner<T::Key, T::Item>) -> R, R>(&self, f: F) -> R {
+    fn within_lock<F: FnOnce(&mut GroupedTimerJobQueueInner<T::CommonArgs, T::Key, T::Item>) -> R, R>(&self, f: F) -> R {
         let mut inner = self.inner.try_lock().unwrap();
         f(inner.deref_mut())
     }
 }
 
 #[derive(Serialize, Deserialize)]
-struct GroupedTimerJobQueueInner<K: Clone + Ord, I> {
+struct GroupedTimerJobQueueInner<A: Clone, K: Clone + Ord, I> {
+    args: A,
     queue: VecDeque<K>,
     items_map: BTreeMap<K, VecDeque<I>>,
     in_progress: BTreeSet<K>,
@@ -124,7 +126,7 @@ where
                             continue;
                         }
 
-                        let mut batch = T::new(grouping_key);
+                        let mut batch = T::new(i.args.clone(), grouping_key);
                         let mut empty_batch = true;
                         let queue = e.get_mut();
                         loop {
@@ -214,6 +216,7 @@ impl<T: TimerJobItemGroup> Clone for GroupedTimerJobQueue<T> {
 
 impl<T: TimerJobItemGroup> Serialize for GroupedTimerJobQueue<T>
 where
+    <T as TimerJobItemGroup>::CommonArgs: Serialize,
     <T as TimerJobItemGroup>::Key: Serialize,
     <T as TimerJobItemGroup>::Item: Serialize,
 {
@@ -224,6 +227,7 @@ where
 
 impl<'de, T: TimerJobItemGroup + 'static> Deserialize<'de> for GroupedTimerJobQueue<T>
 where
+    <T as TimerJobItemGroup>::CommonArgs: Deserialize<'de>,
     <T as TimerJobItemGroup>::Key: Deserialize<'de>,
     <T as TimerJobItemGroup>::Item: Deserialize<'de>,
 {
@@ -240,18 +244,24 @@ where
 
 #[macro_export]
 macro_rules! grouped_timer_job_batch {
-    ($name:ident, $key_type:ty, $item_type:ty, $batch_size:literal) => {
+    ($name:ident, $args_type:ty, $key_type:ty, $item_type:ty, $batch_size:literal) => {
         pub struct $name {
+            args: $args_type,
             key: $key_type,
             items: Vec<$item_type>,
         }
 
         impl timer_job_queues::TimerJobItemGroup for $name {
+            type CommonArgs = $args_type;
             type Key = $key_type;
             type Item = $item_type;
 
-            fn new(key: $key_type) -> Self {
-                $name { key, items: Vec::new() }
+            fn new(args: $args_type, key: $key_type) -> Self {
+                $name {
+                    args,
+                    key,
+                    items: Vec::new(),
+                }
             }
 
             fn key(&self) -> $key_type {

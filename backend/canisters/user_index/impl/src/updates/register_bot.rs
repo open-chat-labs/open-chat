@@ -100,7 +100,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     );
 
     state.data.storage_index_user_sync_queue.push(
-        state.data.storage_index_canister_id,
+        (),
         UserConfig {
             user_id: args.principal,
             byte_limit: ONE_GB,

@@ -6,7 +6,7 @@ use timer_job_queues::{grouped_timer_job_batch, TimerJobItem};
 use types::{CanisterId, FileAdded, FileRemoved};
 use utils::canister::should_retry_failed_c2c_call;
 
-grouped_timer_job_batch!(IndexEventBatch, CanisterId, (EventToSync, u64), 1000);
+grouped_timer_job_batch!(IndexEventBatch, CanisterId, (), (EventToSync, u64), 1000);
 
 #[derive(Serialize, Deserialize)]
 pub enum EventToSync {
@@ -34,7 +34,7 @@ impl TimerJobItem for IndexEventBatch {
             args.total_file_bytes = *total_file_bytes;
         }
 
-        let response = storage_index_canister_c2c_client::c2c_sync_bucket(self.key, &args).await;
+        let response = storage_index_canister_c2c_client::c2c_sync_bucket(self.args, &args).await;
 
         match response {
             Ok(storage_index_canister::c2c_sync_bucket::Response::Success(result)) => {

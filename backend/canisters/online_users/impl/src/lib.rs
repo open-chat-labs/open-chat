@@ -106,7 +106,7 @@ impl Data {
                 .build(),
             mark_as_online_count: 0,
             cached_active_users: ActiveUsers::default(),
-            airdrop_bot_event_sync_queue: GroupedTimerJobQueue::new(1, false),
+            airdrop_bot_event_sync_queue: GroupedTimerJobQueue::new(airdrop_bot_canister_id, 1, false),
             sync_online_minutes_to_airdrop_bot_increment,
             rng_seed: [0; 32],
             test_mode,

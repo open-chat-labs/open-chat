@@ -5,6 +5,7 @@ use utils::canister::should_retry_failed_c2c_call;
 
 grouped_timer_job_batch!(
     LocalGroupIndexEventBatch,
+    (),
     CanisterId,
     IdempotentEnvelope<LocalGroupIndexEvent>,
     1000

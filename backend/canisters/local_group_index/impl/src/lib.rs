@@ -242,8 +242,8 @@ impl Data {
                 .build(),
             event_deduper: EventDeduper::default(),
             cycles_balance_check_queue: VecDeque::new(),
-            group_event_sync_queue: GroupedTimerJobQueue::new(10, false),
-            community_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            group_event_sync_queue: GroupedTimerJobQueue::new((), 10, false),
+            community_event_sync_queue: GroupedTimerJobQueue::new((), 10, false),
             idempotency_checker: IdempotencyChecker::default(),
         }
     }

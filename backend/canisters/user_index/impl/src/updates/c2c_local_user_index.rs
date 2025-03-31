@@ -231,7 +231,7 @@ You can change your username at any time by clicking \"Profile settings\" from t
     }
 
     state.data.storage_index_user_sync_queue.push(
-        state.data.storage_index_canister_id,
+        (),
         UserConfig {
             user_id: principal,
             byte_limit: 100 * ONE_MB,

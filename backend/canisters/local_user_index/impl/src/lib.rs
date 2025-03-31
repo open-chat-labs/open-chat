@@ -162,7 +162,7 @@ impl RuntimeState {
 
     pub fn push_event_to_user_index(&mut self, event: UserIndexEvent, now: TimestampMillis) {
         self.data.user_index_event_sync_queue.push(
-            self.data.user_index_canister_id,
+            (),
             IdempotentEnvelope {
                 created_at: now,
                 idempotency_id: self.env.rng().next_u64(),
@@ -420,8 +420,8 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
-            user_event_sync_queue: GroupedTimerJobQueue::new(10, false),
-            user_index_event_sync_queue: GroupedTimerJobQueue::new(1, true),
+            user_event_sync_queue: GroupedTimerJobQueue::new((), 10, false),
+            user_index_event_sync_queue: GroupedTimerJobQueue::new(user_index_canister_id, 1, true),
             test_mode,
             max_concurrent_canister_upgrades: 10,
             user_upgrade_concurrency: 10,

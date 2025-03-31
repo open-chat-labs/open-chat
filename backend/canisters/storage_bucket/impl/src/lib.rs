@@ -93,7 +93,7 @@ impl Data {
             storage_index_canister_id,
             users: Users::default(),
             files: Files::default(),
-            index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
+            index_event_sync_queue: GroupedTimerJobQueue::new(storage_index_canister_id, 1, false),
             created: now,
             freezing_limit: Timestamped::default(),
             rng_seed: [0; 32],
@@ -113,7 +113,7 @@ impl Data {
 
     pub fn push_event_to_index(&mut self, event_to_sync: EventToSync) {
         self.index_event_sync_queue
-            .push(self.storage_index_canister_id, (event_to_sync, self.files.total_file_bytes()));
+            .push((), (event_to_sync, self.files.total_file_bytes()));
     }
 }
 

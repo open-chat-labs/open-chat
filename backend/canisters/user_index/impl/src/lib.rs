@@ -158,7 +158,7 @@ impl RuntimeState {
         now: TimestampMillis,
     ) {
         self.data.notifications_index_event_sync_queue.push(
-            self.data.notifications_index_canister_id,
+            (),
             IdempotentEnvelope {
                 created_at: now,
                 idempotency_id: self.env.rng().next_u64(),
@@ -208,9 +208,7 @@ impl RuntimeState {
             self.data.remove_from_online_users_queue.push_back(user.principal);
             jobs::remove_from_online_users_canister::start_job_if_required(self);
 
-            self.data
-                .storage_index_users_to_remove_queue
-                .push(self.data.storage_index_canister_id, user.principal);
+            self.data.storage_index_users_to_remove_queue.push((), user.principal);
         }
     }
 
@@ -452,10 +450,10 @@ impl Data {
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
-            storage_index_user_sync_queue: GroupedTimerJobQueue::new(1, false),
-            storage_index_users_to_remove_queue: GroupedTimerJobQueue::new(1, false),
+            storage_index_user_sync_queue: GroupedTimerJobQueue::new(storage_index_canister_id, 1, false),
+            storage_index_users_to_remove_queue: GroupedTimerJobQueue::new(storage_index_canister_id, 1, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            notifications_index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
+            notifications_index_event_sync_queue: GroupedTimerJobQueue::new(notifications_index_canister_id, 1, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -566,10 +564,10 @@ impl Default for Data {
             translations_canister_id: Principal::anonymous(),
             registry_canister_id: Principal::anonymous(),
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
-            storage_index_user_sync_queue: GroupedTimerJobQueue::new(1, false),
-            storage_index_users_to_remove_queue: GroupedTimerJobQueue::new(1, false),
+            storage_index_user_sync_queue: GroupedTimerJobQueue::new(Principal::anonymous(), 1, false),
+            storage_index_users_to_remove_queue: GroupedTimerJobQueue::new(Principal::anonymous(), 1, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            notifications_index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
+            notifications_index_event_sync_queue: GroupedTimerJobQueue::new(Principal::anonymous(), 1, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
