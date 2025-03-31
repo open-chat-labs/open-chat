@@ -26,8 +26,6 @@
     import type { ResourceKey } from "openchat-client";
     import { onMount } from "svelte";
     import Tooltip from "./tooltip/Tooltip.svelte";
-    import TooltipWrapper from "./TooltipWrapper.svelte";
-    import TooltipPopup from "./TooltipPopup.svelte";
     import Translatable from "./Translatable.svelte";
     import Information from "svelte-material-icons/Information.svelte";
 

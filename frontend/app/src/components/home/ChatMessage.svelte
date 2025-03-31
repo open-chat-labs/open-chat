@@ -263,6 +263,10 @@
         tipping = ledger;
     }
 
+    function onTipMessage(ev: CustomEvent<string>) {
+        tipMessage(ev.detail);
+    }
+
     function selectReaction(ev: CustomEvent<string>) {
         toggleReaction(false, ev.detail);
     }
@@ -751,7 +755,7 @@
                             on:deleteFailedMessage
                             on:replyPrivately={replyPrivately}
                             on:editMessage={editMessage}
-                            on:tipMessage={tipMessage}
+                            on:tipMessage={onTipMessage}
                             on:reportMessage={reportMessage}
                             on:cancelReminder={cancelReminder}
                             on:remindMe={remindMe} />
