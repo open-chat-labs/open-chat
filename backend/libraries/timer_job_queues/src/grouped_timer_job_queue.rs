@@ -314,21 +314,24 @@ where
 
 #[macro_export]
 macro_rules! grouped_timer_job_batch {
-    ($name:ident, $args_type:ty, $key_type:ty, $item_type:ty, $batch_size:literal) => {
+    ($name:ident, $key_type:ty, $item_type:ty, $batch_size:literal) => {
+        grouped_timer_job_batch!($name, (), $key_type, $item_type, $batch_size);
+    };
+    ($name:ident, $state_type:ty, $key_type:ty, $item_type:ty, $batch_size:literal) => {
         pub struct $name {
-            args: $args_type,
+            state: $state_type,
             key: $key_type,
             items: Vec<$item_type>,
         }
 
         impl timer_job_queues::TimerJobItemGroup for $name {
-            type SharedState = $args_type;
+            type SharedState = $state_type;
             type Key = $key_type;
             type Item = $item_type;
 
-            fn new(args: $args_type, key: $key_type) -> Self {
+            fn new(state: $state_type, key: $key_type) -> Self {
                 $name {
-                    args,
+                    state,
                     key,
                     items: Vec::new(),
                 }
