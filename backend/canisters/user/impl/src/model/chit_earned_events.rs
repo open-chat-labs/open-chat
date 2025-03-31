@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::cmp::max;
 use std::ops::Range;
 use types::{ChitEarned, ChitEarnedReason, TimestampMillis};
 use utils::time::MonthKey;
@@ -7,8 +6,6 @@ use utils::time::MonthKey;
 #[derive(Serialize, Deserialize, Default)]
 pub struct ChitEarnedEvents {
     events: Vec<ChitEarned>,
-    #[serde(default)]
-    last_updated_hack: TimestampMillis,
     total_chit_earned: i32,
 }
 
@@ -84,17 +81,8 @@ impl ChitEarnedEvents {
             .collect()
     }
 
-    // TODO remove this
-    // Temp hack to show the new chit streak length after reinstating missed days
-    pub fn set_last_updated_hack(&mut self, timestamp: TimestampMillis) {
-        self.last_updated_hack = timestamp;
-    }
-
     pub fn last_updated(&self) -> TimestampMillis {
-        max(
-            self.events.last().map(|e| e.timestamp).unwrap_or_default(),
-            self.last_updated_hack,
-        )
+        self.events.last().map(|e| e.timestamp).unwrap_or_default()
     }
 
     fn range(&self, range: Range<TimestampMillis>) -> &[ChitEarned] {
@@ -220,7 +208,6 @@ mod tests {
 
         ChitEarnedEvents {
             events,
-            last_updated_hack: 0,
             total_chit_earned,
         }
     }

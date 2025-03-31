@@ -64,7 +64,6 @@ fn reinstate_daily_claims(state: &mut RuntimeState) {
         }
         assert!(new_start_day < state.data.streak.start_day());
         state.data.streak.set_start_day(new_start_day);
-        state.data.chit_events.set_last_updated_hack(now);
         let new_streak = state.data.streak.days(now);
 
         let first_line = if count == 1 {
