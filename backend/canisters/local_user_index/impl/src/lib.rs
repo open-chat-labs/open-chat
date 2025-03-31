@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::time::Duration;
-use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
+use timer_job_queues::{deserialize_batched_timer_job_queue_from_previous, BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
     CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent,
@@ -347,6 +347,7 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+    #[serde(deserialize_with = "deserialize_batched_timer_job_queue_from_previous")]
     pub user_index_event_sync_queue: BatchedTimerJobQueue<UserIndexEventBatch>,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,

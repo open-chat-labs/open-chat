@@ -2,11 +2,15 @@ use crate::{GroupedTimerJobQueue, TimerJobItemBatch, TimerJobItemGroup};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 // Use this to process batches of events (eg. sending events to the UserIndex)
-pub struct BatchedTimerJobQueue<T: TimerJobItemBatch>(GroupedTimerJobQueue<T>);
+pub struct BatchedTimerJobQueue<T: TimerJobItemBatch>(pub(crate) GroupedTimerJobQueue<T>);
 
 impl<T: TimerJobItemBatch> BatchedTimerJobQueue<T> {
     pub fn new(args: T::Args, defer_processing: bool) -> Self {
         Self(GroupedTimerJobQueue::new(args, 1, defer_processing))
+    }
+
+    pub fn set_args(&mut self, args: T::Args) {
+        self.0.set_common_args(args);
     }
 
     pub fn defer_processing(&self) -> bool {

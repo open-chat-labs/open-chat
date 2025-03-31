@@ -6,7 +6,7 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
-use timer_job_queues::BatchedTimerJobQueue;
+use timer_job_queues::{deserialize_batched_timer_job_queue_from_previous, BatchedTimerJobQueue};
 use types::{BuildVersion, CanisterId, Cycles, FileId, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -80,6 +80,7 @@ struct Data {
     storage_index_canister_id: CanisterId,
     users: Users,
     files: Files,
+    #[serde(deserialize_with = "deserialize_batched_timer_job_queue_from_previous")]
     index_event_sync_queue: BatchedTimerJobQueue<IndexEventBatch>,
     created: TimestampMillis,
     freezing_limit: Timestamped<Option<Cycles>>,

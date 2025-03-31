@@ -35,7 +35,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
-use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
+use timer_job_queues::{deserialize_batched_timer_job_queue_from_previous, BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned,
     ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
@@ -410,6 +410,7 @@ struct Data {
     pub referrals: Referrals,
     pub message_activity_events: MessageActivityEvents,
     pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
+    #[serde(deserialize_with = "deserialize_batched_timer_job_queue_from_previous")]
     pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,

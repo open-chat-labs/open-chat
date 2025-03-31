@@ -1,5 +1,6 @@
-use crate::TimerJobItemGroup;
+use crate::{BatchedTimerJobQueue, TimerJobItemBatch, TimerJobItemGroup};
 use ic_cdk_timers::TimerId;
+use ic_principal::Principal;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::btree_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
@@ -30,6 +31,10 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
             })),
             phantom: PhantomData,
         }
+    }
+
+    pub fn set_common_args(&mut self, args: T::CommonArgs) {
+        self.within_lock(|i| i.args = args);
     }
 
     pub fn max_concurrency(&self) -> usize {
@@ -242,6 +247,39 @@ where
         value.set_timer_if_required();
         Ok(value)
     }
+}
+
+pub fn deserialize_batched_timer_job_queue_from_previous<'de, D: Deserializer<'de>, T: TimerJobItemBatch + 'static>(
+    deserializer: D,
+) -> Result<BatchedTimerJobQueue<T>, D::Error>
+where
+    T::Args: Ord + Deserialize<'de> + From<Principal>,
+    T::Item: Deserialize<'de>,
+{
+    let mut previous: GroupedTimerJobQueueInner<(), T::Args, T::Item> = GroupedTimerJobQueueInner::deserialize(deserializer)?;
+
+    let mut new = GroupedTimerJobQueueInner {
+        args: T::Args::from(Principal::anonymous()),
+        queue: VecDeque::new(),
+        items_map: BTreeMap::new(),
+        in_progress: BTreeSet::new(),
+        max_concurrency: 1,
+        defer_processing: previous.defer_processing,
+        timer_id: None,
+    };
+    if !previous.queue.is_empty() {
+        new.queue.push_back(());
+    }
+    if let Some((_, items)) = previous.items_map.pop_first() {
+        new.items_map.insert((), items);
+    }
+
+    let value = GroupedTimerJobQueue {
+        inner: Rc::new(Mutex::new(new)),
+        phantom: PhantomData,
+    };
+    value.set_timer_if_required();
+    Ok(BatchedTimerJobQueue(value))
 }
 
 #[macro_export]
