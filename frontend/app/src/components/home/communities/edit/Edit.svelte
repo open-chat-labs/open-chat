@@ -307,7 +307,7 @@
                             disabled={busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
-                            on:click={() => (step = steps[stepIndex - 1].key)}
+                            onClick={() => (step = steps[stepIndex - 1].key)}
                             ><Translatable resourceKey={i18nKey("communities.back")} /></Button>
                     {/if}
                 </div>
@@ -316,7 +316,7 @@
                         disabled={false}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={onClose}
+                        onClick={onClose}
                         secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
 
                     {#if editing}
@@ -325,7 +325,7 @@
                             loading={busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
-                            on:click={() => save()}
+                            onClick={() => save()}
                             ><Translatable
                                 resourceKey={i18nKey(
                                     "group.update",
@@ -337,7 +337,7 @@
                         <Button
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
-                            on:click={() => (step = steps[stepIndex + 1].key)}>
+                            onClick={() => (step = steps[stepIndex + 1].key)}>
                             <Translatable resourceKey={i18nKey("communities.next")} />
                         </Button>
                     {:else}
@@ -346,7 +346,7 @@
                             loading={busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
-                            on:click={() => save()}
+                            onClick={() => save()}
                             ><Translatable
                                 resourceKey={i18nKey(
                                     "group.create",

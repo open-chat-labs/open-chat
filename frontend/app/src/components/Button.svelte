@@ -12,6 +12,7 @@
         square?: boolean;
         children?: Snippet;
         danger?: boolean;
+        onClick?: (e: MouseEvent) => void;
     }
 </script>
 
@@ -25,11 +26,11 @@
 </script>
 
 {#if $currentTheme.name === "signals"}
-    <SignalsButton on:click {...rest}>
+    <SignalsButton {...rest}>
         {@render children?.()}
     </SignalsButton>
 {:else}
-    <StandardButton on:click {...rest}>
+    <StandardButton {...rest}>
         {@render children?.()}
     </StandardButton>
 {/if}

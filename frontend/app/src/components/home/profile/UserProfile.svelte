@@ -355,7 +355,7 @@
                 {#if $anonUser}
                     <div class="guest">
                         <p><Translatable resourceKey={i18nKey("guestUser")} /></p>
-                        <Button on:click={() => client.updateIdentityState({ kind: "logging_in" })}
+                        <Button onClick={() => client.updateIdentityState({ kind: "logging_in" })}
                             ><Translatable resourceKey={i18nKey("login")} /></Button>
                     </div>
                 {:else}
@@ -431,7 +431,7 @@
                     {:else}
                         <Translatable resourceKey={i18nKey("human.notVerified")} />
                         <div class="full-width-btn">
-                            <Button on:click={() => publish("verifyHumanity")} fill small>
+                            <Button onClick={() => publish("verifyHumanity")} fill small>
                                 <Translatable resourceKey={i18nKey("human.verify")} />
                             </Button>
                         </div>
@@ -584,7 +584,7 @@
 
                         {#if !$isDiamond}
                             <ButtonGroup align={"fill"}>
-                                <Button on:click={() => publish("upgrade")} small
+                                <Button onClick={() => publish("upgrade")} small
                                     ><Translatable
                                         resourceKey={i18nKey("upgrade.button")} /></Button>
                             </ButtonGroup>
@@ -598,7 +598,7 @@
                                         ? $_("upgrade.cannotExtend")
                                         : undefined}
                                     disabled={!$canExtendDiamond}
-                                    on:click={() => publish("upgrade")}
+                                    onClick={() => publish("upgrade")}
                                     small
                                     ><Translatable
                                         resourceKey={i18nKey("upgrade.extend")} /></Button>
@@ -641,7 +641,7 @@
                         <Translatable resourceKey={i18nKey("clearDataCacheInfo")} />
                     </p>
                     <Button
-                        on:click={() =>
+                        onClick={() =>
                             client.clearCachedData().then(() => window.location.reload())}>
                         <Translatable resourceKey={i18nKey("clearDataCache")} />
                     </Button>
@@ -651,7 +651,7 @@
                     <p class="para smallprint">
                         <Markdown text={interpolate($_, i18nKey("bots.config.info"))}></Markdown>
                     </p>
-                    <Button on:click={getBotConfig}>
+                    <Button onClick={getBotConfig}>
                         <Translatable resourceKey={i18nKey("bots.config.title")} />
                     </Button>
                 </div>
@@ -670,7 +670,7 @@
                         danger
                         disabled={deleting}
                         loading={deleting}
-                        on:click={() => (confirmDelete = true)}>
+                        onClick={() => (confirmDelete = true)}>
                         <Translatable resourceKey={i18nKey("danger.deleteAccount")} />
                     </Button>
                 </CollapsibleCard>

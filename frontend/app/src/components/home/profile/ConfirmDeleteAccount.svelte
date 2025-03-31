@@ -62,7 +62,7 @@
         {/snippet}
         {#snippet footer()}
             <ButtonGroup>
-                <Button small on:click={onClose} secondary>
+                <Button small onClick={onClose} secondary>
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </Button>
                 {#if !authenticating}
@@ -71,7 +71,7 @@
                         disabled={deleting}
                         loading={deleting}
                         small
-                        on:click={() => (authenticating = true)}>
+                        onClick={() => (authenticating = true)}>
                         <Translatable
                             resourceKey={i18nKey(
                                 deleting ? "danger.deleting" : "danger.deleteAccount",

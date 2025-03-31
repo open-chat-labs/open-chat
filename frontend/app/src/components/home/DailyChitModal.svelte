@@ -214,7 +214,7 @@
             </div>
         {/if}
         <ButtonGroup align={"center"}>
-            <Button loading={busy} disabled={!available} on:click={claim}>
+            <Button loading={busy} disabled={!available} onClick={claim}>
                 {#if available}
                     <Translatable resourceKey={i18nKey("dailyChit.claim")} />
                 {:else}

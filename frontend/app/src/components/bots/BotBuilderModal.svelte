@@ -156,12 +156,12 @@
     {#snippet footer()}
         <div class="footer">
             <ButtonGroup>
-                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}>
+                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}>
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </Button>
                 {#if mode !== "remove"}
                     <Button
-                        on:click={mode === "update" ? update : register}
+                        onClick={mode === "update" ? update : register}
                         disabled={!valid || busy}
                         loading={busy}
                         small={!$mobileWidth}

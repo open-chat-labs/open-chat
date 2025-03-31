@@ -100,14 +100,14 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}
+                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <Button
                         disabled={busy || !valid}
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={createReport}
+                        onClick={createReport}
                         ><Translatable resourceKey={i18nKey("report.menu")} /></Button>
                 </ButtonGroup>
             </span>

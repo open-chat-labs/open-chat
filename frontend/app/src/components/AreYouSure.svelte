@@ -75,7 +75,7 @@
         {/snippet}
         {#snippet footer()}
             <ButtonGroup>
-                <Button disabled={inProgress} small on:click={() => onClick(false)} secondary>
+                <Button disabled={inProgress} small onClick={() => onClick(false)} secondary>
                     {#if noLabel !== undefined}
                         <Translatable resourceKey={noLabel} />
                     {/if}
@@ -84,7 +84,7 @@
                     loading={inProgress}
                     disabled={!canConfirm}
                     small
-                    on:click={() => onClick(true)}>
+                    onClick={() => onClick(true)}>
                     {#if yesLabel !== undefined}
                         <Translatable resourceKey={yesLabel} />
                     {/if}

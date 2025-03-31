@@ -168,13 +168,13 @@
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
                             secondary={showSettings}
-                            on:click={() => (showSettings = false)}
+                            onClick={() => (showSettings = false)}
                             ><Translatable resourceKey={i18nKey("poll.poll")} /></Button>
                         <Button
                             small={!$mobileWidth}
                             secondary={!showSettings}
                             tiny={$mobileWidth}
-                            on:click={() => (showSettings = true)}
+                            onClick={() => (showSettings = true)}
                             ><Translatable resourceKey={i18nKey("poll.settings")} /></Button>
                     </ButtonGroup>
                 </div>
@@ -295,12 +295,12 @@
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         secondary
-                        on:click={() => (open = false)}>{$_("cancel")}</Button>
+                        onClick={() => (open = false)}>{$_("cancel")}</Button>
                     <Button
                         small={!$mobileWidth}
                         disabled={!valid}
                         tiny={$mobileWidth}
-                        on:click={start}>{$_("poll.start")}</Button>
+                        onClick={start}>{$_("poll.start")}</Button>
                 </ButtonGroup>
             {/snippet}
         </ModalContent>

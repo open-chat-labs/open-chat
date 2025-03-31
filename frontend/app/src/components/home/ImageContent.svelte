@@ -123,7 +123,7 @@
             <div class="mask">
                 {#if !reply && !draft}
                     <div class="reveal">
-                        <Button on:click={() => (hidden = false)}
+                        <Button onClick={() => (hidden = false)}
                             ><Translatable resourceKey={i18nKey(normalised.loadMsg)} /></Button>
                     </div>
                 {/if}

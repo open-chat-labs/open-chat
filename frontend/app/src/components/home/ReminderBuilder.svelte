@@ -142,14 +142,14 @@
         {/snippet}
         {#snippet footer()}
             <ButtonGroup>
-                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}
+                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}
                     ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 <Button
                     disabled={busy}
                     loading={busy}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
-                    on:click={createReminder}
+                    onClick={createReminder}
                     ><Translatable resourceKey={i18nKey("reminders.create")} /></Button>
             </ButtonGroup>
         {/snippet}

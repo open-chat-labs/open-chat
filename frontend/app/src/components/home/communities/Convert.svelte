@@ -92,17 +92,17 @@
             {#snippet footer()}
                 <ButtonGroup>
                     {#if state === "converted"}
-                        <Button secondary on:click={close}
+                        <Button secondary onClick={close}
                             ><Translatable resourceKey={i18nKey("close")} /></Button>
-                        <Button on:click={go}
+                        <Button onClick={go}
                             ><Translatable resourceKey={i18nKey("communities.goto")} /></Button>
                     {:else if state !== "error"}
-                        <Button secondary on:click={close}
+                        <Button secondary onClick={close}
                             ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                         <Button
                             disabled={state === "converting"}
                             loading={state === "converting"}
-                            on:click={convert}
+                            onClick={convert}
                             ><Translatable
                                 resourceKey={i18nKey("communities.convertButton")} /></Button>
                     {/if}

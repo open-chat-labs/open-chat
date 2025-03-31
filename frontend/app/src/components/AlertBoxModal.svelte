@@ -37,7 +37,7 @@
         {#snippet footer()}
             <div class="footer">
                 <ButtonGroup>
-                    <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Button onClick={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>

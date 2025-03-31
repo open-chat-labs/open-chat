@@ -385,7 +385,7 @@
         <span>
             <ButtonGroup>
                 {#if !swapping}
-                    <Button secondary tiny={$mobileWidth} on:click={onClose}
+                    <Button secondary tiny={$mobileWidth} onClick={onClose}
                         ><Translatable resourceKey={i18nKey("close")} /></Button>
                 {/if}
                 {#if result !== "success" && result !== "error"}
@@ -393,7 +393,7 @@
                         disabled={busy || !valid}
                         loading={busy}
                         tiny={$mobileWidth}
-                        on:click={onPrimaryClick}
+                        onClick={onPrimaryClick}
                         ><Translatable resourceKey={primaryButtonText} /></Button>
                 {/if}
             </ButtonGroup>

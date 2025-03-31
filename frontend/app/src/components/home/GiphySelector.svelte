@@ -272,9 +272,9 @@
                         </span>
                     {/if}
                     <ButtonGroup align={$mobileWidth ? "center" : "end"}>
-                        <Button tiny disabled={selectedGif === undefined} on:click={send}
+                        <Button tiny disabled={selectedGif === undefined} onClick={send}
                             ><Translatable resourceKey={i18nKey("send")} /></Button>
-                        <Button tiny secondary on:click={() => (open = false)}
+                        <Button tiny secondary onClick={() => (open = false)}
                             ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     </ButtonGroup>
                 </span>
