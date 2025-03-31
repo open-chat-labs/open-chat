@@ -29,20 +29,19 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let community: CommunitySummary;
-    export let openedGroupId: number | undefined = undefined;
+    interface Props {
+        community: CommunitySummary;
+        openedGroupId?: number | undefined;
+    }
 
-    let searchTerm = "";
-    let selectedGroup: UserGroupDetails | undefined = undefined;
-    let confirmingDelete = false;
+    let { community, openedGroupId = $bindable(undefined) }: Props = $props();
+
+    let searchTerm = $state("");
+    let selectedGroup: UserGroupDetails | undefined = $state(undefined);
+    let confirmingDelete = $state(false);
     let groupToDelete: UserGroupDetails | undefined = undefined;
-    let communityUsers: Record<string, UserSummary> = {};
-    let communityUsersList: UserSummary[] = [];
-
-    $: searchTermLower = searchTerm.toLowerCase();
-    $: userGroups = [...$userGroupsMap.values()];
-    $: canManageUserGroups = client.canManageUserGroups(community.id);
-    $: matchingGroups = userGroups.filter((ug) => matchesSearch(searchTermLower, ug));
+    let communityUsers: Record<string, UserSummary> = $state({});
+    let communityUsersList: UserSummary[] = $state([]);
 
     onMount(() => {
         communityUsers = createLookup($communityMembers, $userStore);
@@ -107,11 +106,13 @@
             .finally(() => (groupToDelete = undefined));
     }
 
-    function editUserGroup(userGroup: UserGroupDetails) {
+    function editUserGroup(e: Event, userGroup: UserGroupDetails) {
+        e.stopPropagation();
         selectedGroup = userGroup;
     }
 
-    function confirmDeleteUserGroup(userGroup: UserGroupDetails) {
+    function confirmDeleteUserGroup(e: Event, userGroup: UserGroupDetails) {
+        e.stopPropagation();
         groupToDelete = userGroup;
         confirmingDelete = true;
     }
@@ -120,6 +121,10 @@
         selectedGroup = undefined;
         openedGroupId = undefined;
     }
+    let searchTermLower = $derived(searchTerm.toLowerCase());
+    let userGroups = $derived([...$userGroupsMap.values()]);
+    let canManageUserGroups = $derived(client.canManageUserGroups(community.id));
+    let matchingGroups = $derived(userGroups.filter((ug) => matchesSearch(searchTermLower, ug)));
 </script>
 
 {#if confirmingDelete}
@@ -163,37 +168,38 @@
                         <CollapsibleCard
                             open={userGroup.id === openedGroupId}
                             headerText={i18nKey(userGroup.name)}>
-                            <h4 slot="titleSlot" class="name">
-                                {#if canManageUserGroups}
-                                    <div
-                                        role="button"
-                                        tabindex="0"
-                                        on:click|stopPropagation={() => editUserGroup(userGroup)}
-                                        class="edit">
-                                        <PencilOutline
-                                            viewBox={"0 -3 24 24"}
-                                            size={"1.2em"}
-                                            color={"var(--icon-txt)"} />
-                                    </div>
-                                    <div
-                                        role="button"
-                                        tabindex="0"
-                                        on:click|stopPropagation={() =>
-                                            confirmDeleteUserGroup(userGroup)}
-                                        class="delete">
-                                        <DeleteOutline
-                                            viewBox={"0 -3 24 24"}
-                                            size={"1.2em"}
-                                            color={"var(--icon-txt)"} />
-                                    </div>
-                                {/if}
-                                <span class="name-text">{userGroup.name}</span>
-                                <span class="members">
-                                    <span class="num"
-                                        >{userGroup.members.size.toLocaleString()}</span>
-                                    <Translatable resourceKey={i18nKey("members")} />
-                                </span>
-                            </h4>
+                            {#snippet titleSlot()}
+                                <h4 class="name">
+                                    {#if canManageUserGroups}
+                                        <div
+                                            role="button"
+                                            tabindex="0"
+                                            onclick={(e) => editUserGroup(e, userGroup)}
+                                            class="edit">
+                                            <PencilOutline
+                                                viewBox={"0 -3 24 24"}
+                                                size={"1.2em"}
+                                                color={"var(--icon-txt)"} />
+                                        </div>
+                                        <div
+                                            role="button"
+                                            tabindex="0"
+                                            onclick={(e) => confirmDeleteUserGroup(e, userGroup)}
+                                            class="delete">
+                                            <DeleteOutline
+                                                viewBox={"0 -3 24 24"}
+                                                size={"1.2em"}
+                                                color={"var(--icon-txt)"} />
+                                        </div>
+                                    {/if}
+                                    <span class="name-text">{userGroup.name}</span>
+                                    <span class="members">
+                                        <span class="num"
+                                            >{userGroup.members.size.toLocaleString()}</span>
+                                        <Translatable resourceKey={i18nKey("members")} />
+                                    </span>
+                                </h4>
+                            {/snippet}
 
                             {#each userGroup.members as member}
                                 {#if communityUsers[member] !== undefined}

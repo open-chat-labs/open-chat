@@ -27,6 +27,7 @@
     $effect(() => {
         const section = $querystring.get("section");
         if (section) {
+            console.log("scrolling to section: ", section);
             linked = scrollToSection(section);
         }
     });
@@ -36,15 +37,17 @@
     <Headline>OpenChat SNS Whitepaper</Headline>
 
     <CollapsibleCard transition={false} first open={linked === 1}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">1</span>
-            <div class="title">
-                Product / Service Overview
-                <div class="copy" onclick={(e) => onCopyUrl(e, "1")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">1</span>
+                <div class="title">
+                    Product / Service Overview
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "1")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 OpenChat is a fully featured chat application running on the <HashLink id={"2"}
@@ -101,15 +104,17 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 2}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">2</span>
-            <div class="title">
-                Internet Computer Overview
-                <div class="copy" onclick={(e) => onCopyUrl(e, "2")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">2</span>
+                <div class="title">
+                    Internet Computer Overview
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "2")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 The <ExternalLink
@@ -177,15 +182,17 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 3}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">3</span>
-            <div class="title">
-                OpenChat DAO
-                <div class="copy" onclick={(e) => onCopyUrl(e, "3")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">3</span>
+                <div class="title">
+                    OpenChat DAO
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "3")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <HashLinkTarget {onCopyUrl} id="3-1">Summary</HashLinkTarget>
             <ul class="list">
@@ -427,15 +434,17 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 4}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">4</span>
-            <div class="title">
-                Purpose of the CHAT utility token
-                <div class="copy" onclick={(e) => onCopyUrl(e, "4")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">4</span>
+                <div class="title">
+                    Purpose of the CHAT utility token
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "4")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <ul class="list">
                 <li>
@@ -563,15 +572,17 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 5}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">5</span>
-            <div class="title">
-                Token allocation at SNS genesis
-                <div class="copy" onclick={(e) => onCopyUrl(e, "5")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">5</span>
+                <div class="title">
+                    Token allocation at SNS genesis
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "5")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <HashLinkTarget {onCopyUrl} id="5-1">Initial token allocation</HashLinkTarget>
             <p>
@@ -725,15 +736,17 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 6}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">6</span>
-            <div class="title">
-                OpenChat SNS treasury
-                <div class="copy" onclick={(e) => onCopyUrl(e, "6")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">6</span>
+                <div class="title">
+                    OpenChat SNS treasury
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "6")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>The SNS will hold a treasury of ICP tokens and CHAT tokens.</p>
             <p>
@@ -844,15 +857,17 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 7}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">7</span>
-            <div class="title">
-                Tokenomics
-                <div class="copy" onclick={(e) => onCopyUrl(e, "7")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">7</span>
+                <div class="title">
+                    Tokenomics
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "7")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <HashLinkTarget {onCopyUrl} id="7-1">Total supply levers</HashLinkTarget>
             <p>
