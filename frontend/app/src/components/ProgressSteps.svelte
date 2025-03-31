@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
     export type Status = "done" | "doing" | "todo" | "failed";
     export type OverallStatus = "done" | "failed";
 
@@ -23,10 +23,14 @@
     import type { InterpolationValues } from "openchat-client";
     import { i18nKey } from "../i18n/i18n";
 
-    export let steps: Step[];
-    export let result: Result;
-    export let labelValues: InterpolationValues | undefined = undefined;
-    export let percent: number | undefined = undefined;
+    interface Props {
+        steps: Step[];
+        result: Result;
+        labelValues?: InterpolationValues | undefined;
+        percent?: number | undefined;
+    }
+
+    let { steps, result, labelValues = undefined, percent = undefined }: Props = $props();
 </script>
 
 <div>

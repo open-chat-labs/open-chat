@@ -1,16 +1,26 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { type Snippet } from "svelte";
 
-    export let path: string | undefined = undefined;
-    export let mode: "menu" | "link" = "link";
-    export let selected = false;
+    interface Props {
+        path?: string | undefined;
+        mode?: "menu" | "link";
+        selected?: boolean;
+        children?: Snippet;
+        onLinkClicked?: () => void;
+    }
 
-    const dispatch = createEventDispatcher();
+    let {
+        path = undefined,
+        mode = "link",
+        selected = false,
+        children,
+        onLinkClicked,
+    }: Props = $props();
 
     function clickLink(e: MouseEvent) {
         if (path === undefined) {
             e.preventDefault();
-            dispatch("linkClicked");
+            onLinkClicked?.();
         }
     }
 </script>
@@ -19,7 +29,7 @@
     class:menu={mode === "menu"}
     href={path === undefined ? "" : `/${path}`}
     class:selected
-    on:click={clickLink}><slot /></a>
+    onclick={clickLink}>{@render children?.()}</a>
 
 <style lang="scss">
     .menu {

@@ -2,14 +2,19 @@
     import FindUser from "../FindUser.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import UserPill from "../UserPill.svelte";
-    import type { UserSummary } from "openchat-client";
+    import type { UserOrUserGroup, UserSummary } from "openchat-client";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let mode: "add" | "edit";
-    export let selectedUsers: UserSummary[];
-    export let enabled = true;
-    export let userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
+    interface Props {
+        mode: "add" | "edit";
+        selectedUsers: UserSummary[];
+        enabled?: boolean;
+        userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
+        onDeleteUser: (user: UserOrUserGroup) => void;
+    }
+
+    let { mode, selectedUsers, enabled = true, userLookup, onDeleteUser }: Props = $props();
 
     let error: string | undefined = undefined;
 </script>
@@ -17,7 +22,7 @@
 {#if selectedUsers.length > 0}
     <div class="selected">
         {#each selectedUsers as user (user.userId)}
-            <UserPill on:deleteUser userOrGroup={user} />
+            <UserPill {onDeleteUser} userOrGroup={user} />
         {/each}
     </div>
 {/if}

@@ -46,7 +46,7 @@
             <Link selected={path.startsWith("/faq")} mode={"menu"} path="faq">FAQs</Link>
         </div>
         {#if $identityState.kind === "logged_in"}
-            <Link on:linkClicked={() => client.logout()} mode={"menu"}>Logout</Link>
+            <Link onLinkClicked={() => client.logout()} mode={"menu"}>Logout</Link>
         {/if}
         <div class="menu-item">
             <Launch />

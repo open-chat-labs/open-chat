@@ -1,6 +1,6 @@
 <script lang="ts">
     import SelectUsers from "./SelectUsers.svelte";
-    import type { CandidateMember, UserSummary } from "openchat-client";
+    import type { CandidateMember, UserOrUserGroup, UserSummary } from "openchat-client";
 
     export let members: CandidateMember[];
     export let busy: boolean;
@@ -11,9 +11,9 @@
 
     $: selectedUsers = members.map((m) => m.user);
 
-    function deleteMember(ev: CustomEvent<UserSummary>): void {
-        if (busy) return;
-        members = members.filter((m) => m.user.userId !== ev.detail.userId);
+    function deleteMember(user: UserOrUserGroup): void {
+        if (busy || user.kind !== "user") return;
+        members = members.filter((m) => m.user.userId !== user.userId);
     }
 
     function addMember(ev: CustomEvent<UserSummary>): void {
@@ -33,7 +33,7 @@
         {userLookup}
         enabled={!busy}
         mode={"add"}
-        on:deleteUser={deleteMember}
+        onDeleteUser={deleteMember}
         on:selectUser={addMember}
         {selectedUsers} />
 </div>

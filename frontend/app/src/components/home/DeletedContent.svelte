@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import {
@@ -15,12 +13,18 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let content: DeletedContent;
-    export let undeleting: boolean;
+    interface Props {
+        content: DeletedContent;
+        undeleting: boolean;
+    }
 
-    $: date = new Date(Number(content.timestamp));
-    $: timestampStr = `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`;
-    $: username = client.getDisplayNameById(content.deletedBy, $communityMembers);
+    let { content, undeleting }: Props = $props();
+
+    let date = $derived(new Date(Number(content.timestamp)));
+    let timestampStr = $derived(
+        `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`,
+    );
+    let username = $derived(client.getDisplayNameById(content.deletedBy, $communityMembers));
 </script>
 
 <div class="deleted">
