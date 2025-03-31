@@ -10,14 +10,18 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let user: UserSummary | undefined;
-    export let changedBy: string;
-    export let newTimeToLive: bigint | undefined;
-    export let timestamp: bigint;
+    interface Props {
+        user: UserSummary | undefined;
+        changedBy: string;
+        newTimeToLive: bigint | undefined;
+        timestamp: bigint;
+    }
 
-    $: me = changedBy === user?.userId;
-    $: changedByStr = buildDisplayName($userStore, changedBy, me);
-    $: text =
+    let { user, changedBy, newTimeToLive, timestamp }: Props = $props();
+
+    let me = $derived(changedBy === user?.userId);
+    let changedByStr = $derived(buildDisplayName($userStore, changedBy, me));
+    let text = $derived(
         newTimeToLive !== undefined
             ? $_("disappearingMessages.timeUpdatedBy", {
                   values: {
@@ -29,7 +33,8 @@
                   values: {
                       changedBy: changedByStr,
                   },
-              });
+              }),
+    );
 </script>
 
 <NonMessageEvent {text} {timestamp} />

@@ -1,11 +1,13 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import NonMessageEvent from "./NonMessageEvent.svelte";
 
-    export let timestamp: bigint;
-    $: text = $_("directChatCreatedAt");
+    interface Props {
+        timestamp: bigint;
+    }
+
+    let { timestamp }: Props = $props();
+    let text = $derived($_("directChatCreatedAt"));
 </script>
 
 <NonMessageEvent {text} {timestamp} />

@@ -2,32 +2,33 @@
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
 
     const client = getContext<OpenChat>("client");
-    export let ttl: bigint;
+    interface Props {
+        ttl: bigint;
+    }
+
+    let { ttl }: Props = $props();
 </script>
 
-<TooltipWrapper position={"bottom"} align={"end"}>
-    <div slot="target" class="disappears">
+<Tooltip position={"bottom"} align={"end"}>
+    <div class="disappears">
         <div class="expires">
             <CameraTimer size={"1em"} color={"var(--txt-light)"} />
         </div>
         <div class="name">{client.formatDisappearingMessageTime(Number(ttl), $_)}</div>
     </div>
-    <div let:position let:align slot="tooltip">
-        <TooltipPopup {position} {align} textLength={100} longestWord={10}>
-            <Translatable
-                resourceKey={i18nKey("disappearingMessages.summary", {
-                    duration: client.formatDuration(Number(ttl)),
-                })} />
-        </TooltipPopup>
-    </div>
-</TooltipWrapper>
+    {#snippet popupTemplate()}
+        <Translatable
+            resourceKey={i18nKey("disappearingMessages.summary", {
+                duration: client.formatDuration(Number(ttl)),
+            })} />
+    {/snippet}
+</Tooltip>
 
 <style lang="scss">
     .disappears {

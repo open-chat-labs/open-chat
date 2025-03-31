@@ -5,9 +5,13 @@
     import Verified from "../../icons/Verified.svelte";
     import { disableChit } from "@src/stores/settings";
 
-    export let diamondStatus: DiamondMembershipStatus["kind"] | undefined = undefined;
-    export let streak: number = 0;
-    export let uniquePerson: boolean = false;
+    interface Props {
+        diamondStatus?: DiamondMembershipStatus["kind"] | undefined;
+        streak?: number;
+        uniquePerson?: boolean;
+    }
+
+    let { diamondStatus = undefined, streak = 0, uniquePerson = false }: Props = $props();
 </script>
 
 <Diamond status={diamondStatus} />

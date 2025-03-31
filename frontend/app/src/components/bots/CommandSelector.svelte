@@ -42,8 +42,7 @@
         threadPermissionsForSelectedChat,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
     import BotAvatar from "./BotAvatar.svelte";
 
     interface Props {
@@ -261,16 +260,14 @@
                         /{command.name}
                     </div>
                     {#each command?.params ?? [] as param}
-                        <TooltipWrapper position={"top"} align={"middle"}>
-                            <div slot="target" class="param" class:required={param.required}>
+                        <Tooltip position={"top"} align={"middle"}>
+                            <div class="param" class:required={param.required}>
                                 <Translatable resourceKey={i18nKey(param.name)} />
                             </div>
-                            <div let:position let:align slot="tooltip">
-                                <TooltipPopup {align} {position}>
-                                    <Translatable resourceKey={i18nKey(param.description ?? "")} />
-                                </TooltipPopup>
-                            </div>
-                        </TooltipWrapper>
+                            {#snippet popupTemplate()}
+                                <Translatable resourceKey={i18nKey(param.description ?? "")} />
+                            {/snippet}
+                        </Tooltip>
                     {/each}
                 </div>
                 {#if command.description}

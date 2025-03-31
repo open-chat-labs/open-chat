@@ -2,9 +2,13 @@
     import type { ResourceKey } from "openchat-client";
     import Translatable from "./Translatable.svelte";
 
-    export let items: ResourceKey[];
-    export let selected = items[0]?.key;
-    export let underline = false;
+    interface Props {
+        items: ResourceKey[];
+        selected?: any;
+        underline?: boolean;
+    }
+
+    let { items, selected = $bindable(items[0]?.key), underline = false }: Props = $props();
 </script>
 
 {#if items.length > 0}
@@ -13,7 +17,7 @@
             <div
                 tabindex="0"
                 role="button"
-                on:click={() => (selected = item.key)}
+                onclick={() => (selected = item.key)}
                 class:selected={selected === item.key}
                 class="tab">
                 <Translatable resourceKey={item} />

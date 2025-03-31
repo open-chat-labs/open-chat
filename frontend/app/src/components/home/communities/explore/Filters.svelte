@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import SectionHeader from "../../../SectionHeader.svelte";
@@ -12,16 +11,16 @@
     import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
 
-    const dispatch = createEventDispatcher();
-
-    function close() {
-        dispatch("close");
+    interface Props {
+        onClose: () => void;
     }
+
+    let { onClose }: Props = $props();
 </script>
 
 <SectionHeader shadow flush={$mobileWidth}>
     <h4><Translatable resourceKey={i18nKey("communities.filters")} /></h4>
-    <span title={$_("close")} class="close" on:click={close}>
+    <span title={$_("close")} class="close" on:click={onClose}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>

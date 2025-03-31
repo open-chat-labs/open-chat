@@ -259,8 +259,12 @@
         }
     }
 
-    function tipMessage(ev: CustomEvent<string>) {
-        tipping = ev.detail;
+    function tipMessage(ledger: string) {
+        tipping = ledger;
+    }
+
+    function onTipMessage(ev: CustomEvent<string>) {
+        tipMessage(ev.detail);
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -751,7 +755,7 @@
                             on:deleteFailedMessage
                             on:replyPrivately={replyPrivately}
                             on:editMessage={editMessage}
-                            on:tipMessage={tipMessage}
+                            on:tipMessage={onTipMessage}
                             on:reportMessage={reportMessage}
                             on:cancelReminder={cancelReminder}
                             on:remindMe={remindMe} />
@@ -791,7 +795,7 @@
                 <div class="message-reactions" class:me class:indent={showAvatar}>
                     {#each msg.reactions as { reaction, userIds } (reaction)}
                         <MessageReaction
-                            on:click={() => toggleReaction(false, reaction)}
+                            onClick={() => toggleReaction(false, reaction)}
                             {reaction}
                             {userIds}
                             myUserId={user?.userId} />
@@ -802,7 +806,7 @@
             {#if tips.length > 0 && !inert}
                 <div class="tips" class:indent={showAvatar}>
                     {#each tips as [ledger, userTips]}
-                        <TipThumbnail on:click={tipMessage} {canTip} {ledger} {userTips} />
+                        <TipThumbnail onClick={tipMessage} {canTip} {ledger} {userTips} />
                     {/each}
                 </div>
             {/if}

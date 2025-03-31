@@ -1,6 +1,6 @@
 <script lang="ts">
     import { mobileWidth } from "../../stores/screenDimensions";
-    import MenuIcon from "../MenuIconLegacy.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuItems from "./MenuItems.svelte";
     import MobileMenuItems from "./MobileMenuItems.svelte";
@@ -9,7 +9,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { postsBySlug } from "./blog/posts";
 
-    $: showBlog = Object.values(postsBySlug).length > 0;
+    let showBlog = $derived(Object.values(postsBySlug).length > 0);
 
     function home() {
         page("/home");
@@ -18,24 +18,24 @@
 
 <div class="wrapper">
     <div class="header">
-        <div class="logo" on:click={home}>
-            <div class="logo-img" />
+        <div class="logo" onclick={home}>
+            <div class="logo-img"></div>
             <div class="name">OpenChat</div>
         </div>
         {#if $mobileWidth}
             <MenuIcon position={"bottom"} align={"end"}>
-                <div slot="icon">
+                {#snippet menuIcon()}
                     <HoverIcon>
                         <Menu size={$iconSize} color={"var(--landing-txt)"} />
                     </HoverIcon>
-                </div>
-                <div slot="menu">
-                    <MobileMenuItems {showBlog} on:login on:logout />
-                </div>
+                {/snippet}
+                {#snippet menuItems()}
+                    <MobileMenuItems {showBlog} />
+                {/snippet}
             </MenuIcon>
         {:else}
             <div class="menu">
-                <MenuItems {showBlog} on:logout />
+                <MenuItems {showBlog} />
             </div>
         {/if}
     </div>

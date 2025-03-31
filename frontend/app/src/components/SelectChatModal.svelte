@@ -1,3 +1,4 @@
+<!-- svelte-ignore a11y_click_events_have_key_events -->
 <script lang="ts">
     import { getContext } from "svelte";
     import { rtlStore } from "../stores/rtl";
@@ -303,16 +304,19 @@
                     first
                     transition={false}
                     headerText={i18nKey("communities.directChats")}>
-                    <div slot="titleSlot" class="card-header">
-                        <div class="avatar">
-                            <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    {#snippet titleSlot()}
+                        <div class="card-header">
+                            <div class="avatar">
+                                <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
+                            </div>
+                            <div class="details">
+                                <h4 class="title">
+                                    <Translatable
+                                        resourceKey={i18nKey("communities.directChats")} />
+                                </h4>
+                            </div>
                         </div>
-                        <div class="details">
-                            <h4 class="title">
-                                <Translatable resourceKey={i18nKey("communities.directChats")} />
-                            </h4>
-                        </div>
-                    </div>
+                    {/snippet}
                     {#each targets.directChats as target}
                         <div
                             role="button"
@@ -347,16 +351,18 @@
                     transition={false}
                     open={searchTerm !== ""}
                     headerText={i18nKey("communities.groupChats")}>
-                    <div slot="titleSlot" class="card-header">
-                        <div class="avatar">
-                            <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    {#snippet titleSlot()}
+                        <div class="card-header">
+                            <div class="avatar">
+                                <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
+                            </div>
+                            <div class="details">
+                                <h4 class="title">
+                                    <Translatable resourceKey={i18nKey("communities.groupChats")} />
+                                </h4>
+                            </div>
                         </div>
-                        <div class="details">
-                            <h4 class="title">
-                                <Translatable resourceKey={i18nKey("communities.groupChats")} />
-                            </h4>
-                        </div>
-                    </div>
+                    {/snippet}
                     {#each targets.groupChats as target}
                         <div
                             role="button"
@@ -380,16 +386,18 @@
                     transition={false}
                     open={searchTerm !== ""}
                     headerText={i18nKey("communities.favourites")}>
-                    <div slot="titleSlot" class="card-header">
-                        <div class="avatar">
-                            <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    {#snippet titleSlot()}
+                        <div class="card-header">
+                            <div class="avatar">
+                                <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
+                            </div>
+                            <div class="details">
+                                <h4 class="title">
+                                    <Translatable resourceKey={i18nKey("communities.favourites")} />
+                                </h4>
+                            </div>
                         </div>
-                        <div class="details">
-                            <h4 class="title">
-                                <Translatable resourceKey={i18nKey("communities.favourites")} />
-                            </h4>
-                        </div>
-                    </div>
+                    {/snippet}
                     {#each targets.favourites as target}
                         <div
                             role="button"
@@ -414,16 +422,18 @@
                         transition={false}
                         open={searchTerm !== ""}
                         headerText={i18nKey(community.name)}>
-                        <div slot="titleSlot" class="card-header">
-                            <div class="avatar">
-                                <Avatar url={community.avatarUrl} size={AvatarSize.Default} />
+                        {#snippet titleSlot()}
+                            <div class="card-header">
+                                <div class="avatar">
+                                    <Avatar url={community.avatarUrl} size={AvatarSize.Default} />
+                                </div>
+                                <div class="details">
+                                    <h4 class="title">
+                                        {community.name}
+                                    </h4>
+                                </div>
                             </div>
-                            <div class="details">
-                                <h4 class="title">
-                                    {community.name}
-                                </h4>
-                            </div>
-                        </div>
+                        {/snippet}
                         {#each community.channels as target}
                             <div
                                 role="button"

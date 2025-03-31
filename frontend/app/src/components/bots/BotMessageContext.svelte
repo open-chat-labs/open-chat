@@ -5,8 +5,7 @@
     import Avatar from "../Avatar.svelte";
     import { getContext } from "svelte";
     import Typing from "../Typing.svelte";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import type { BotContextCommand } from "openchat-shared";
 
@@ -62,23 +61,21 @@
     <Markdown {text} />
     {#if botCommand.args.length > 0}
         {#if paramMode === "truncated"}
-            <TooltipWrapper position="right" align="middle">
-                <div class="cog" slot="target">
+            <Tooltip position="right" align="middle">
+                <div class="cog">
                     <CogOutline size={"1.2em"} color={"var(--icon-txt)"} />
                 </div>
-                <div let:position let:align slot="tooltip">
-                    <TooltipPopup {align} {position}>
-                        <div class="command-params">
-                            {#each botCommand.args as param}
-                                <div class="param">
-                                    <div class="name">{param.name}:</div>
-                                    <div class="value">{paramValue(param)}</div>
-                                </div>
-                            {/each}
-                        </div>
-                    </TooltipPopup>
-                </div>
-            </TooltipWrapper>
+                {#snippet popupTemplate()}
+                    <div class="command-params">
+                        {#each botCommand.args as param}
+                            <div class="param">
+                                <div class="name">{param.name}:</div>
+                                <div class="value">{paramValue(param)}</div>
+                            </div>
+                        {/each}
+                    </div>
+                {/snippet}
+            </Tooltip>
         {:else}
             {#each paramValues as param}
                 <div class="inline-param">{param}</div>
@@ -130,6 +127,7 @@
             text-align: left;
             gap: $sp2;
             flex-wrap: nowrap;
+            flex-direction: column;
 
             .value {
                 @include font(bold, normal, fs-50);

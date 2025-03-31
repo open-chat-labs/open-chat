@@ -4,31 +4,38 @@
     import { currentUser as createdUser } from "openchat-client";
     import Avatar from "./Avatar.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import FilteredUsername from "./FilteredUsername.svelte";
     import Badges from "./home/profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let searchTerm: string;
-    export let user: UserSummary;
-    export let hovering = false;
-    export let compact = false;
-
-    const dispatch = createEventDispatcher();
-
-    function onSelect(user: UserSummary) {
-        dispatch("onSelect", user);
+    interface Props {
+        searchTerm: string;
+        user: UserSummary;
+        hovering?: boolean;
+        compact?: boolean;
+        onSelect: (user: UserSummary) => void;
     }
+
+    let {
+        searchTerm,
+        user,
+        hovering = $bindable(false),
+        compact = false,
+        onSelect,
+    }: Props = $props();
 </script>
 
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     class="user"
     class:compact
-    on:click={() => onSelect(user)}
-    on:mouseenter={() => (hovering = true)}
-    on:mouseleave={() => (hovering = false)}>
+    onclick={() => onSelect(user)}
+    onmouseenter={() => (hovering = true)}
+    onmouseleave={() => (hovering = false)}>
     <span class="avatar">
         <Avatar
             statusBorder={hovering ? "var(--members-hv)" : "transparent"}

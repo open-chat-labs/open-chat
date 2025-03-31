@@ -30,8 +30,7 @@
     } from "../../../utils/access";
     import { iconSize } from "../../../stores/iconSize";
     import AccessGateIcon from "./AccessGateIcon.svelte";
-    import TooltipWrapper from "../../TooltipWrapper.svelte";
-    import TooltipPopup from "../../TooltipPopup.svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import Checkbox from "../../Checkbox.svelte";
     import DurationPicker from "../DurationPicker.svelte";
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
@@ -144,27 +143,26 @@
                         <CollapsibleCard
                             transition={false}
                             open={selectedGateIndex === i}
-                            on:opened={() => (selectedGateIndex = i)}>
-                            <div
-                                slot="titleSlot"
-                                class="sub-header"
-                                class:invalid={!gateValidity[i]}>
-                                <AccessGateIcon
-                                    {level}
-                                    showNoGate
-                                    gateConfig={{ expiry: undefined, gate: subgate }} />
-                                <Translatable resourceKey={getGateText(subgate)} />
-                                {#if editable}
-                                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                    <div onclick={() => deleteGate(i)} class="delete">
-                                        <Delete
-                                            viewBox={"0 -3 24 24"}
-                                            size={$iconSize}
-                                            color={"var(--icon-txt)"} />
-                                    </div>
-                                {/if}
-                            </div>
+                            onOpened={() => (selectedGateIndex = i)}>
+                            {#snippet titleSlot()}
+                                <div class="sub-header" class:invalid={!gateValidity[i]}>
+                                    <AccessGateIcon
+                                        {level}
+                                        showNoGate
+                                        gateConfig={{ expiry: undefined, gate: subgate }} />
+                                    <Translatable resourceKey={getGateText(subgate)} />
+                                    {#if editable}
+                                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                        <div onclick={() => deleteGate(i)} class="delete">
+                                            <Delete
+                                                viewBox={"0 -3 24 24"}
+                                                size={$iconSize}
+                                                color={"var(--icon-txt)"} />
+                                        </div>
+                                    {/if}
+                                </div>
+                            {/snippet}
                             <LeafGateBuilder
                                 {gateBindings}
                                 {neuronGateBindings}
@@ -184,17 +182,12 @@
                             <Translatable resourceKey={i18nKey("access.addGate")} />
                         </Button>
                         <div class="icon">
-                            <TooltipWrapper position={"top"} align={"middle"}>
-                                <InformationOutline
-                                    slot="target"
-                                    size={$iconSize}
-                                    color={"var(--txt)"} />
-                                <div let:position let:align slot="tooltip">
-                                    <TooltipPopup {position} {align}>
-                                        <Translatable resourceKey={i18nKey("access.addGateInfo")} />
-                                    </TooltipPopup>
-                                </div>
-                            </TooltipWrapper>
+                            <Tooltip position={"top"} align={"middle"}>
+                                <InformationOutline size={$iconSize} color={"var(--txt)"} />
+                                {#snippet popupTemplate()}
+                                    <Translatable resourceKey={i18nKey("access.addGateInfo")} />
+                                {/snippet}
+                            </Tooltip>
                         </div>
                     </div>
                 {/if}
