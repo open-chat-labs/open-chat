@@ -19,7 +19,7 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
-    data.index_event_sync_queue.set_args(data.storage_index_canister_id);
+    data.index_event_sync_queue.set_state(data.storage_index_canister_id);
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 

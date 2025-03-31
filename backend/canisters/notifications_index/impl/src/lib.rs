@@ -176,7 +176,7 @@ impl Data {
             notifications_canister_wasm_for_new_canisters: CanisterWasm::default(),
             notifications_canister_wasm_for_upgrades: CanisterWasm::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            notification_canisters_event_sync_queue: GroupedTimerJobQueue::new((), 5, false),
+            notification_canisters_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             bot_endpoints: HashMap::default(),
             idempotency_checker: IdempotencyChecker::default(),

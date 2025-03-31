@@ -5,12 +5,12 @@ use serde::{Serialize, Serializer};
 pub struct BatchedTimerJobQueue<T: TimerJobItemBatch>(pub(crate) GroupedTimerJobQueue<T>);
 
 impl<T: TimerJobItemBatch> BatchedTimerJobQueue<T> {
-    pub fn new(args: T::Args, defer_processing: bool) -> Self {
-        Self(GroupedTimerJobQueue::new(args, 1, defer_processing))
+    pub fn new(state: T::State, defer_processing: bool) -> Self {
+        Self(GroupedTimerJobQueue::new_with_state(state, 1, defer_processing))
     }
 
-    pub fn set_args(&mut self, args: T::Args) {
-        self.0.set_common_args(args);
+    pub fn set_state(&mut self, state: T::State) {
+        self.0.set_shared_state(state);
     }
 
     pub fn defer_processing(&self) -> bool {
@@ -57,7 +57,7 @@ where
 
 impl<T: TimerJobItemBatch> Serialize for BatchedTimerJobQueue<T>
 where
-    <T as TimerJobItemBatch>::Args: Serialize,
+    <T as TimerJobItemBatch>::State: Serialize,
     <T as TimerJobItemBatch>::Item: Serialize,
 {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -84,7 +84,7 @@ macro_rules! timer_job_batch {
         }
 
         impl timer_job_queues::TimerJobItemBatch for $name {
-            type Args = $args_type;
+            type State = $args_type;
             type Item = $item_type;
 
             fn new(args: $args_type) -> Self {

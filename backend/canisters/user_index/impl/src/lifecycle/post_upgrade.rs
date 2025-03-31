@@ -19,10 +19,10 @@ fn post_upgrade(args: Args) {
         msgpack::deserialize(reader).unwrap();
 
     data.notifications_index_event_sync_queue
-        .set_args(data.notifications_index_canister_id);
-    data.storage_index_user_sync_queue.set_args(data.storage_index_canister_id);
+        .set_state(data.notifications_index_canister_id);
+    data.storage_index_user_sync_queue.set_state(data.storage_index_canister_id);
     data.storage_index_users_to_remove_queue
-        .set_args(data.storage_index_canister_id);
+        .set_state(data.storage_index_canister_id);
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 

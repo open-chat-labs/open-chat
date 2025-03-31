@@ -418,7 +418,7 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
-            user_event_sync_queue: GroupedTimerJobQueue::new((), 10, false),
+            user_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             user_index_event_sync_queue: BatchedTimerJobQueue::new(user_index_canister_id, true),
             test_mode,
             max_concurrent_canister_upgrades: 10,

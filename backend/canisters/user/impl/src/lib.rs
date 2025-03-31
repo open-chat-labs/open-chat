@@ -466,7 +466,7 @@ impl Data {
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),
-            user_canister_events_queue: GroupedTimerJobQueue::new((), 10, false),
+            user_canister_events_queue: GroupedTimerJobQueue::new(10, false),
             video_call_operators,
             event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))

@@ -517,7 +517,7 @@ impl Data {
             expiring_members: ExpiringMembers::default(),
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
-            user_event_sync_queue: GroupedTimerJobQueue::new((), 5, true),
+            user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),

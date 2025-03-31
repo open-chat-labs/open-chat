@@ -24,7 +24,7 @@ fn post_upgrade(args: Args) {
         msgpack::deserialize(reader).unwrap();
 
     data.local_user_index_event_sync_queue
-        .set_args(data.local_user_index_canister_id);
+        .set_state(data.local_user_index_canister_id);
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 

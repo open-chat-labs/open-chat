@@ -11,21 +11,21 @@ pub trait TimerJobItem {
 }
 
 pub trait TimerJobItemBatch: TimerJobItem {
-    type Args: Clone;
+    type State: Clone;
     type Item;
 
-    fn new(args: Self::Args) -> Self;
+    fn new(state: Self::State) -> Self;
     fn add(&mut self, item: Self::Item);
     fn into_items(self) -> Vec<Self::Item>;
     fn is_full(&self) -> bool;
 }
 
 pub trait TimerJobItemGroup: TimerJobItem {
-    type CommonArgs: Clone;
+    type SharedState: Clone;
     type Key: Clone + Ord;
     type Item;
 
-    fn new(common_args: Self::CommonArgs, grouping_key: Self::Key) -> Self;
+    fn new(state: Self::SharedState, grouping_key: Self::Key) -> Self;
     fn key(&self) -> Self::Key;
     fn add(&mut self, item: Self::Item);
     fn into_items(self) -> Vec<Self::Item>;
@@ -33,12 +33,12 @@ pub trait TimerJobItemGroup: TimerJobItem {
 }
 
 impl<T: TimerJobItemBatch> TimerJobItemGroup for T {
-    type CommonArgs = T::Args;
+    type SharedState = T::State;
     type Key = ();
     type Item = T::Item;
 
-    fn new(common_args: Self::CommonArgs, _: Self::Key) -> Self {
-        T::new(common_args)
+    fn new(state: Self::SharedState, _: Self::Key) -> Self {
+        T::new(state)
     }
 
     fn key(&self) {}

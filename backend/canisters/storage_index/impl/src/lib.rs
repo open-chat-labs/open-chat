@@ -125,7 +125,7 @@ impl Data {
             users: HashMap::new(),
             files: Files::default(),
             buckets: Buckets::default(),
-            bucket_event_sync_queue: GroupedTimerJobQueue::new((), 5, false),
+            bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
             cycles_dispenser_config,

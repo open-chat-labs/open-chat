@@ -14,15 +14,24 @@ use std::time::Duration;
 // Eg. sending events to User canisters (in this case the User canisterId would be the key).
 #[allow(clippy::type_complexity)]
 pub struct GroupedTimerJobQueue<T: TimerJobItemGroup> {
-    inner: Rc<Mutex<GroupedTimerJobQueueInner<T::CommonArgs, T::Key, T::Item>>>,
+    inner: Rc<Mutex<GroupedTimerJobQueueInner<T::SharedState, T::Key, T::Item>>>,
     phantom: PhantomData<T>,
 }
 
+impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T>
+where
+    T::SharedState: Default,
+{
+    pub fn new(max_concurrency: usize, defer_processing: bool) -> Self {
+        Self::new_with_state(T::SharedState::default(), max_concurrency, defer_processing)
+    }
+}
+
 impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
-    pub fn new(args: T::CommonArgs, max_concurrency: usize, defer_processing: bool) -> Self {
+    pub fn new_with_state(state: T::SharedState, max_concurrency: usize, defer_processing: bool) -> Self {
         Self {
             inner: Rc::new(Mutex::new(GroupedTimerJobQueueInner {
-                args,
+                state,
                 queue: VecDeque::new(),
                 items_map: BTreeMap::new(),
                 in_progress: BTreeSet::new(),
@@ -34,8 +43,8 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
         }
     }
 
-    pub fn set_common_args(&mut self, args: T::CommonArgs) {
-        self.within_lock(|i| i.args = args);
+    pub fn set_shared_state(&mut self, state: T::SharedState) {
+        self.within_lock(|i| i.state = state);
     }
 
     pub fn max_concurrency(&self) -> usize {
@@ -70,15 +79,15 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
         self.within_lock(|i| i.in_progress.len())
     }
 
-    fn within_lock<F: FnOnce(&mut GroupedTimerJobQueueInner<T::CommonArgs, T::Key, T::Item>) -> R, R>(&self, f: F) -> R {
+    fn within_lock<F: FnOnce(&mut GroupedTimerJobQueueInner<T::SharedState, T::Key, T::Item>) -> R, R>(&self, f: F) -> R {
         let mut inner = self.inner.try_lock().unwrap();
         f(inner.deref_mut())
     }
 }
 
 #[derive(Serialize, Deserialize)]
-struct GroupedTimerJobQueueInner<A: Clone, K: Clone + Ord, I> {
-    args: A,
+struct GroupedTimerJobQueueInner<S: Clone, K: Clone + Ord, I> {
+    state: S,
     queue: VecDeque<K>,
     items_map: BTreeMap<K, VecDeque<I>>,
     in_progress: BTreeSet<K>,
@@ -134,7 +143,7 @@ where
                             continue;
                         }
 
-                        let mut batch = T::new(i.args.clone(), grouping_key);
+                        let mut batch = T::new(i.state.clone(), grouping_key);
                         let mut empty_batch = true;
                         let queue = e.get_mut();
                         loop {
@@ -224,7 +233,7 @@ impl<T: TimerJobItemGroup> Clone for GroupedTimerJobQueue<T> {
 
 impl<T: TimerJobItemGroup> Serialize for GroupedTimerJobQueue<T>
 where
-    <T as TimerJobItemGroup>::CommonArgs: Serialize,
+    <T as TimerJobItemGroup>::SharedState: Serialize,
     <T as TimerJobItemGroup>::Key: Serialize,
     <T as TimerJobItemGroup>::Item: Serialize,
 {
@@ -235,14 +244,14 @@ where
 
 impl<'de, T: TimerJobItemGroup + 'static> Deserialize<'de> for GroupedTimerJobQueue<T>
 where
-    <T as TimerJobItemGroup>::CommonArgs: Deserialize<'de> + Default,
+    <T as TimerJobItemGroup>::SharedState: Deserialize<'de> + Default,
     <T as TimerJobItemGroup>::Key: Deserialize<'de>,
     <T as TimerJobItemGroup>::Item: Deserialize<'de>,
 {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let inner_previous = GroupedTimerJobQueueInnerPrevious::deserialize(deserializer)?;
         let inner = GroupedTimerJobQueueInner {
-            args: T::CommonArgs::default(),
+            state: T::SharedState::default(),
             queue: inner_previous.queue,
             items_map: inner_previous.items_map,
             in_progress: inner_previous.in_progress,
@@ -273,14 +282,14 @@ pub fn deserialize_batched_timer_job_queue_from_previous<'de, D: Deserializer<'d
     deserializer: D,
 ) -> Result<BatchedTimerJobQueue<T>, D::Error>
 where
-    T::Args: Ord + Deserialize<'de> + From<Principal>,
+    T::State: Ord + Deserialize<'de> + From<Principal>,
     T::Item: Deserialize<'de>,
 {
-    let mut previous: GroupedTimerJobQueueInnerPrevious<T::Args, T::Item> =
+    let mut previous: GroupedTimerJobQueueInnerPrevious<T::State, T::Item> =
         GroupedTimerJobQueueInnerPrevious::deserialize(deserializer)?;
 
     let mut new = GroupedTimerJobQueueInner {
-        args: T::Args::from(Principal::anonymous()),
+        state: T::State::from(Principal::anonymous()),
         queue: VecDeque::new(),
         items_map: BTreeMap::new(),
         in_progress: BTreeSet::new(),
@@ -313,7 +322,7 @@ macro_rules! grouped_timer_job_batch {
         }
 
         impl timer_job_queues::TimerJobItemGroup for $name {
-            type CommonArgs = $args_type;
+            type SharedState = $args_type;
             type Key = $key_type;
             type Item = $item_type;
 
