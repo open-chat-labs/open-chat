@@ -212,10 +212,6 @@
      */
     function updateUnreadCounts(chatSummary: ChatSummary) {
         untrack(() => {
-            console.log(
-                "Updating unread count",
-                chatSummary.kind === "channel" ? chatSummary.name : "",
-            );
             unreadMessages = client.unreadMessageCount(
                 chatSummary.id,
                 chatSummary.latestMessage?.event.messageIndex,
