@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::time::Duration;
-use timer_job_queues::GroupedTimerJobQueue;
+use timer_job_queues::{deserialize_batched_timer_job_queue_from_previous, BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
     CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent,
@@ -161,14 +161,11 @@ impl RuntimeState {
     }
 
     pub fn push_event_to_user_index(&mut self, event: UserIndexEvent, now: TimestampMillis) {
-        self.data.user_index_event_sync_queue.push(
-            self.data.user_index_canister_id,
-            IdempotentEnvelope {
-                created_at: now,
-                idempotency_id: self.env.rng().next_u64(),
-                value: event,
-            },
-        );
+        self.data.user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        });
     }
 
     pub fn push_oc_bot_message_to_user(
@@ -350,7 +347,8 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    pub user_index_event_sync_queue: GroupedTimerJobQueue<UserIndexEventBatch>,
+    #[serde(deserialize_with = "deserialize_batched_timer_job_queue_from_previous")]
+    pub user_index_event_sync_queue: BatchedTimerJobQueue<UserIndexEventBatch>,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
     pub user_upgrade_concurrency: u32,
@@ -421,7 +419,7 @@ impl Data {
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
             user_event_sync_queue: GroupedTimerJobQueue::new(10, false),
-            user_index_event_sync_queue: GroupedTimerJobQueue::new(1, true),
+            user_index_event_sync_queue: BatchedTimerJobQueue::new(user_index_canister_id, true),
             test_mode,
             max_concurrent_canister_upgrades: 10,
             user_upgrade_concurrency: 10,

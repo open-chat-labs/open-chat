@@ -54,19 +54,16 @@ fn mark_as_online_impl(user_id: UserId, state: &mut RuntimeState) -> Response {
     if last_online.is_none_or(|lo| now.saturating_sub(lo) > 50 * SECOND_IN_MS) {
         let minutes_online = state.data.user_online_minutes.incr(user_id, now);
         if minutes_online % state.data.sync_online_minutes_to_airdrop_bot_increment == 0 {
-            state.data.airdrop_bot_event_sync_queue.push(
-                state.data.airdrop_bot_canister_id,
-                IdempotentEnvelope {
-                    created_at: now,
-                    idempotency_id: state.env.rng().next_u64(),
-                    value: OnlineUsersEvent::OnlineForMinutes(OnlineForMinutes {
-                        user_id,
-                        year: month_key.year(),
-                        month: month_key.month(),
-                        minutes_online,
-                    }),
-                },
-            )
+            state.data.airdrop_bot_event_sync_queue.push(IdempotentEnvelope {
+                created_at: now,
+                idempotency_id: state.env.rng().next_u64(),
+                value: OnlineUsersEvent::OnlineForMinutes(OnlineForMinutes {
+                    user_id,
+                    year: month_key.year(),
+                    month: month_key.month(),
+                    minutes_online,
+                }),
+            })
         }
     }
     state.data.mark_as_online_count += 1;
