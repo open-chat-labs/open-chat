@@ -61,7 +61,7 @@
     let selectedBtcNetwork = $state(BTC_SYMBOL);
     let isBtc = $derived(symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(isBtc && selectedBtcNetwork === BTC_SYMBOL);
-    let transferFees = $derived(isBtcNetwork ? 0n : tokenDetails.transferFee);
+    let transferFees = $derived(tokenDetails.transferFee);
     let targetAccountValid = $derived(
         targetAccount.length > 0 &&
         targetAccount !== account &&
