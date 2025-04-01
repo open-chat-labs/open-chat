@@ -416,7 +416,6 @@
                 canRemoveMember={client.canRemoveMembers(collection.id)}
                 {searchTerm}
                 on:blockUser
-                on:chatWith
                 on:changeRole
                 on:removeMember />
         </VirtualList>

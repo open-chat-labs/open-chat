@@ -29,7 +29,7 @@
     {/snippet}
     {#snippet footer()}
         <ButtonGroup>
-            <Button on:click={onClose}><Translatable resourceKey={i18nKey("close")} /></Button>
+            <Button onClick={onClose}><Translatable resourceKey={i18nKey("close")} /></Button>
         </ButtonGroup>
     {/snippet}
 </ModalContent>

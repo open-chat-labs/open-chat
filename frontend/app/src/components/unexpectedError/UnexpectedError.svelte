@@ -4,7 +4,7 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let error = { message: "Unknown error" };
+    let { error = { message: "Unknown error" } } = $props();
 </script>
 
 <ModalPage bgClass="error" minHeight="280px">
@@ -14,7 +14,7 @@
             <p class="error-blurb"><Translatable resourceKey={i18nKey("errorBlurb")} /></p>
         </div>
         <p class="error-message">{error.message}</p>
-        <Button on:click={() => location.reload()}>Reload</Button>
+        <Button onClick={() => location.reload()}>Reload</Button>
     </div>
 </ModalPage>
 

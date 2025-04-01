@@ -7,7 +7,12 @@
     import UsernameInput from "../UsernameInput.svelte";
     import { getContext, onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
-    import { type CreatedUser, type OpenChat, type UserSummary } from "openchat-client";
+    import {
+        type CreatedUser,
+        type OpenChat,
+        type UserOrUserGroup,
+        type UserSummary,
+    } from "openchat-client";
     import Button from "../Button.svelte";
     import Select from "../Select.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -134,7 +139,7 @@
     });
     let busy = $derived($registerState.kind === "spinning");
 
-    function deleteUser() {
+    function deleteUser(_: UserOrUserGroup) {
         referringUser = undefined;
         client.clearReferralCode();
     }
@@ -172,7 +177,7 @@
             {/snippet}
             {#snippet footer(onClose)}
                 <span>
-                    <Button on:click={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
                         <Translatable resourceKey={i18nKey("register.agree")} />
                     </Button>
                 </span>
@@ -234,7 +239,7 @@
                     <div class="form-element">
                         {#if referringUser !== undefined}
                             <Legend label={i18nKey("register.referredBy")} />
-                            <UserPill on:deleteUser={deleteUser} userOrGroup={referringUser} />
+                            <UserPill onDeleteUser={deleteUser} userOrGroup={referringUser} />
                         {:else}
                             <Legend label={i18nKey("register.findReferrer")} />
                             <FindUser
@@ -261,22 +266,22 @@
     {#snippet footer()}
         <div class="footer">
             {#if closed}
-                <Button on:click={logout}><Translatable resourceKey={i18nKey("close")} /></Button>
+                <Button onClick={logout}><Translatable resourceKey={i18nKey("close")} /></Button>
             {:else if badCode}
                 <ButtonGroup>
-                    <Button secondary on:click={clearCodeAndLogout}
+                    <Button secondary onClick={clearCodeAndLogout}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <Button
                         loading={checkingUsername || busy}
                         disabled={!usernameValid || busy}
-                        on:click={clearCodeAndRegister}
+                        onClick={clearCodeAndRegister}
                         ><Translatable resourceKey={i18nKey("register.proceed")} /></Button>
                 </ButtonGroup>
             {:else}
                 <Button
                     loading={checkingUsername || busy}
                     disabled={!usernameValid || busy}
-                    on:click={register}>
+                    onClick={register}>
                     <Translatable resourceKey={i18nKey("register.createUser")} />
                 </Button>
             {/if}

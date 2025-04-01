@@ -8372,6 +8372,7 @@ dependencies = [
  "futures",
  "ic-cdk 0.18.0-alpha.2",
  "ic-cdk-timers",
+ "ic_principal",
  "serde",
 ]
 
@@ -8961,6 +8962,7 @@ dependencies = [
  "stable_memory",
  "stable_memory_map",
  "storage_bucket_client",
+ "test-case",
  "timer_job_queues",
  "tracing",
  "types",

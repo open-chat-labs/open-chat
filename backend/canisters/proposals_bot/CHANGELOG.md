@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1665](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1665-proposals_bot)] - 2025-03-27
+
 ### Changed
 
 - Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))

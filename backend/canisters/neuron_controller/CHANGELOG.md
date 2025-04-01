@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Always disburse large neurons to the treasury ([#7697](https://github.com/open-chat-labs/open-chat/pull/7697))
+
+## [[2.0.1667](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1667-neuron_controller)] - 2025-03-28
+
+### Changed
+
 - Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
 - Merge the `refresh_voting_power` job into `process_neurons` ([#7688](https://github.com/open-chat-labs/open-chat/pull/7688))
 

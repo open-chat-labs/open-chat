@@ -6,7 +6,7 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
-use timer_job_queues::GroupedTimerJobQueue;
+use timer_job_queues::{deserialize_batched_timer_job_queue_from_previous, BatchedTimerJobQueue};
 use types::{BuildVersion, CanisterId, Cycles, FileId, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -80,7 +80,8 @@ struct Data {
     storage_index_canister_id: CanisterId,
     users: Users,
     files: Files,
-    index_event_sync_queue: GroupedTimerJobQueue<IndexEventBatch>,
+    #[serde(deserialize_with = "deserialize_batched_timer_job_queue_from_previous")]
+    index_event_sync_queue: BatchedTimerJobQueue<IndexEventBatch>,
     created: TimestampMillis,
     freezing_limit: Timestamped<Option<Cycles>>,
     rng_seed: [u8; 32],
@@ -93,7 +94,7 @@ impl Data {
             storage_index_canister_id,
             users: Users::default(),
             files: Files::default(),
-            index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
+            index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             created: now,
             freezing_limit: Timestamped::default(),
             rng_seed: [0; 32],
@@ -113,7 +114,7 @@ impl Data {
 
     pub fn push_event_to_index(&mut self, event_to_sync: EventToSync) {
         self.index_event_sync_queue
-            .push(self.storage_index_canister_id, (event_to_sync, self.files.total_file_bytes()));
+            .push((event_to_sync, self.files.total_file_bytes()));
     }
 }
 

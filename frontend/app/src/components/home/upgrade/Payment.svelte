@@ -235,7 +235,7 @@
 </div>
 <Footer align={$mobileWidth ? "center" : "end"}>
     {#if confirmed}
-        <Button small={!$mobileWidth} tiny={$mobileWidth} on:click={cancel}
+        <Button small={!$mobileWidth} tiny={$mobileWidth} onClick={cancel}
             ><Translatable resourceKey={i18nKey("close")} /></Button>
     {:else}
         <Button
@@ -243,21 +243,21 @@
             tiny={$mobileWidth}
             small={!$mobileWidth}
             secondary
-            on:click={cancel}><Translatable resourceKey={i18nKey("cancel")} /></Button>
+            onClick={cancel}><Translatable resourceKey={i18nKey("cancel")} /></Button>
         {#if allowBack}
             <Button
                 disabled={confirming}
                 tiny={$mobileWidth}
                 small={!$mobileWidth}
                 secondary
-                on:click={features}
+                onClick={features}
                 ><Translatable resourceKey={i18nKey("upgrade.features")} /></Button>
         {/if}
         <Button
             small={!$mobileWidth}
             disabled={confirming || insufficientFunds}
             loading={confirming || refreshingBalance}
-            on:click={confirm}
+            onClick={confirm}
             tiny={$mobileWidth}><Translatable resourceKey={i18nKey("upgrade.confirm")} /></Button>
     {/if}
 </Footer>

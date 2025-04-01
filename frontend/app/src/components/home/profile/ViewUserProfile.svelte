@@ -291,7 +291,6 @@
 
 {#if profile !== undefined}
     <Overlay dismissible {onClose}>
-        <h1>cunt</h1>
         <ModalContent
             closeIcon
             fill
@@ -373,19 +372,19 @@
                 <div class="footer">
                     <ButtonGroup align={"fill"}>
                         {#if chatButton && !me}
-                            <Button on:click={handleOpenDirectChat} small
+                            <Button onClick={handleOpenDirectChat} small
                                 ><Translatable resourceKey={i18nKey("profile.chat")} /></Button>
                         {/if}
                         {#if me}
-                            <Button on:click={showUserProfile} small
+                            <Button onClick={showUserProfile} small
                                 ><Translatable resourceKey={i18nKey("profile.settings")} /></Button>
                         {/if}
                         {#if canBlock}
-                            <Button on:click={blockUser} small
+                            <Button onClick={blockUser} small
                                 ><Translatable resourceKey={i18nKey("profile.block")} /></Button>
                         {/if}
                         {#if canUnblock}
-                            <Button on:click={unblockUser} small
+                            <Button onClick={unblockUser} small
                                 ><Translatable resourceKey={i18nKey("profile.unblock")} /></Button>
                         {/if}
                     </ButtonGroup>
@@ -393,11 +392,11 @@
                         <div class="suspend">
                             <ButtonGroup align={"fill"}>
                                 {#if isSuspended}
-                                    <Button on:click={unsuspendUser} small
+                                    <Button onClick={unsuspendUser} small
                                         ><Translatable
                                             resourceKey={i18nKey("unsuspendUser")} /></Button>
                                 {:else}
-                                    <Button on:click={suspendUser} small
+                                    <Button onClick={suspendUser} small
                                         ><Translatable
                                             resourceKey={i18nKey("suspendUser")} /></Button>
                                 {/if}

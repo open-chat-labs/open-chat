@@ -7,6 +7,7 @@ import {
     AuthError,
     DestinationInvalidError,
     InvalidDelegationError,
+    TypeboxValidationError,
 } from "openchat-shared";
 
 export class ReplicaNotUpToDateError extends Error {
@@ -40,8 +41,8 @@ function responseTooLarge(error: Error): ResponseTooLargeError | undefined {
 export function toCanisterResponseError(
     error: Error,
     identity: Identity,
-): HttpError | ReplicaNotUpToDateError {
-    if (error instanceof ReplicaNotUpToDateError) {
+): HttpError | ReplicaNotUpToDateError | TypeboxValidationError {
+    if (error instanceof ReplicaNotUpToDateError || error instanceof TypeboxValidationError) {
         return error;
     }
 

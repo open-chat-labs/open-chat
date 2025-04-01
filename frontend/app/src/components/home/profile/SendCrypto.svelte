@@ -274,14 +274,14 @@
     {#snippet footer()}
         <span>
             <ButtonGroup>
-                <Button secondary tiny={$mobileWidth} on:click={onClose}
+                <Button secondary tiny={$mobileWidth} onClick={onClose}
                     ><Translatable
                         resourceKey={i18nKey(capturingAccount ? "noThanks" : "cancel")} /></Button>
                 <Button
                     disabled={busy || !valid}
                     loading={busy}
                     tiny={$mobileWidth}
-                    on:click={onPrimaryClick}
+                    onClick={onPrimaryClick}
                     ><Translatable
                         resourceKey={i18nKey(
                             capturingAccount ? "tokenTransfer.saveAccount" : "tokenTransfer.send",

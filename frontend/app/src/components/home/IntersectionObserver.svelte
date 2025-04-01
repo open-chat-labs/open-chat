@@ -22,7 +22,11 @@
             });
 
             observer.observe(container);
-            return () => observer.unobserve(container);
+            return () => {
+                if (container) {
+                    observer.unobserve(container);
+                }
+            };
         }
     });
 </script>

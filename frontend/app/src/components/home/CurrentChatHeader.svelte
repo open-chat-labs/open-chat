@@ -20,7 +20,7 @@
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import type { ChatSummary, DiamondMembershipStatus } from "openchat-client";
@@ -36,9 +36,9 @@
     import Badges from "./profile/Badges.svelte";
     import ActiveVideoCallResume from "./video/ActiveVideoCallResume.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     interface Props {
         selectedChatSummary: ChatSummary;
@@ -64,7 +64,7 @@
     );
 
     function clearSelection() {
-        dispatch("clearSelection");
+        publish("clearSelection");
     }
 
     function showGroupDetails() {
@@ -78,7 +78,7 @@
     }
 
     function showGroupMembers() {
-        dispatch("showGroupMembers");
+        publish("showGroupMembers");
     }
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
@@ -232,18 +232,10 @@
             {hasPinned}
             {selectedChatSummary}
             {blocked}
-            on:convertGroupToCommunity
             on:importToCommunity
-            on:toggleMuteNotifications
             on:showGroupDetails={showGroupDetails}
             on:searchChat
-            on:showProposalFilters
-            on:makeProposal
-            on:showGroupMembers
-            on:createPoll
-            on:upgrade
-            on:showInviteGroupUsers
-            on:leaveGroup />
+            on:createPoll />
     {/if}
 
     <ActiveBroadcastSummary />

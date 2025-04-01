@@ -77,7 +77,7 @@
                 <img alt={connector.name} src={icons[connector.id] ?? connector.icon} />
             {/if}
         </div>
-        <Button fill on:click={() => connectWith(connector)}>
+        <Button fill onClick={() => connectWith(connector)}>
             <span class="name">{connector.name}</span>
         </Button>
     </div>

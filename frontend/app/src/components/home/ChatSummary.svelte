@@ -7,8 +7,6 @@
         TypersByKey,
         CommunitySummary,
         DiamondMembershipStatus,
-        ChatIdentifier,
-        Level,
     } from "openchat-client";
     import {
         userStore,
@@ -42,7 +40,7 @@
     import Markdown from "./Markdown.svelte";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
-    import { getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick, untrack } from "svelte";
     import { now } from "../../stores/time";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -59,6 +57,7 @@
     import VideoCallIcon from "./video/VideoCallIcon.svelte";
     import Badges from "./profile/Badges.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -66,21 +65,10 @@
         chatSummary: ChatSummary;
         selected: boolean;
         visible: boolean;
-        onToggleMuteNotifications: (chatId: ChatIdentifier, mute: boolean) => void;
         onChatSelected: (chat: ChatSummary) => void;
-        onUnarchiveChat: (chatId: ChatIdentifier) => void;
-        onLeaveGroup: (group: { kind: "leave"; chatId: ChatIdentifier; level: Level }) => void;
     }
 
-    let {
-        chatSummary,
-        selected,
-        visible,
-        onToggleMuteNotifications,
-        onChatSelected,
-        onUnarchiveChat,
-        onLeaveGroup,
-    }: Props = $props();
+    let { chatSummary, selected, visible, onChatSelected }: Props = $props();
 
     let userId = $derived($user.userId);
     let externalContent = $derived(
@@ -223,15 +211,17 @@
      * at all times.
      */
     function updateUnreadCounts(chatSummary: ChatSummary) {
-        unreadMessages = client.unreadMessageCount(
-            chatSummary.id,
-            chatSummary.latestMessage?.event.messageIndex,
-        );
-        unreadMentions = getUnreadMentionCount(chatSummary);
+        untrack(() => {
+            unreadMessages = client.unreadMessageCount(
+                chatSummary.id,
+                chatSummary.latestMessage?.event.messageIndex,
+            );
+            unreadMentions = getUnreadMentionCount(chatSummary);
 
-        if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
-            unarchiveChat();
-        }
+            if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+                unarchiveChat();
+            }
+        });
     }
 
     function deleteDirectChat(e: Event) {
@@ -296,7 +286,7 @@
     }
 
     function toggleMuteNotifications(mute: boolean) {
-        onToggleMuteNotifications(chatSummary.id, mute);
+        publish("toggleMuteNotifications", { chatId: chatSummary.id, mute });
     }
 
     function archiveChat() {
@@ -324,12 +314,12 @@
     }
 
     function unarchiveChat() {
-        onUnarchiveChat(chatSummary.id);
+        publish("unarchiveChat", chatSummary.id);
     }
 
     function leaveGroup() {
         if (chatSummary.kind === "direct_chat") return;
-        onLeaveGroup({
+        publish("leaveGroup", {
             kind: "leave",
             chatId: chatSummary.id,
             level: chatSummary.level,

@@ -59,7 +59,6 @@
     <div class="form-fields">
         <Legend label={i18nKey("displayName")} rules={i18nKey("communityDisplayNameRules")} />
         <DisplayNameInput
-            on:upgrade
             {client}
             {originalDisplayName}
             disabled={false}

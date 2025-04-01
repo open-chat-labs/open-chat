@@ -1,58 +1,55 @@
 <script lang="ts">
     import type { ChitEarned } from "openchat-client";
-    import TooltipWrapper from "../../TooltipWrapper.svelte";
-    import TooltipPopup from "../../TooltipPopup.svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { mobileWidth } from "../../../stores/screenDimensions";
 
-    export let events: ChitEarned[];
-    export let day: Date;
-    export let selectedMonth: number;
+    interface Props {
+        events: ChitEarned[];
+        day: Date;
+        selectedMonth: number;
+    }
 
-    $: otherMonth = day.getMonth() !== selectedMonth;
+    let { events, day, selectedMonth }: Props = $props();
+
+    let otherMonth = $derived(day.getMonth() !== selectedMonth);
 </script>
 
 {#if events.length === 0}
     <div class="day">{day.getDate()}</div>
 {:else}
     <div class="day has-events" class:otherMonth>
-        <TooltipWrapper fill position="top" align={$mobileWidth ? "middle" : "end"}>
-            <div slot="target">
-                {day.getDate()}
-            </div>
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup autoWidth {position} {align}>
-                    <div class="tt">
-                        {#each events as event}
-                            {#if event.reason.kind === "daily_claim"}
-                                <p>{`🚀  Daily claim: ${event.amount.toLocaleString()}`}</p>
-                            {:else if event.reason.kind === "achievement_unlocked"}
-                                <p>
-                                    🔓 <Translatable
-                                        resourceKey={i18nKey(
-                                            `learnToEarn.${event.reason.type}`,
-                                        )} />: {event.amount.toLocaleString()}
-                                </p>
-                            {:else if event.reason.kind === "referral"}
-                                <p>
-                                    🤝 <Translatable
-                                        resourceKey={i18nKey(
-                                            `chitReferralRewardReason.${event.reason.type}`,
-                                        )} />: {event.amount.toLocaleString()}
-                                </p>
-                            {:else if event.reason.kind === "meme_contest_winner"}
-                                <p>{`🏆️ Meme contest win: ${event.amount.toLocaleString()}`}</p>
-                            {:else if event.reason.kind === "external_achievement_unlocked"}
-                                <p>
-                                    🔓 <Translatable resourceKey={i18nKey(event.reason.name)} />: {event.amount.toLocaleString()}
-                                </p>
-                            {/if}
-                        {/each}
-                    </div>
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
+        <Tooltip fill position="top" align={$mobileWidth ? "middle" : "end"}>
+            {day.getDate()}
+            {#snippet popupTemplate()}
+                <div class="tt">
+                    {#each events as event}
+                        {#if event.reason.kind === "daily_claim"}
+                            <p>{`🚀  Daily claim: ${event.amount.toLocaleString()}`}</p>
+                        {:else if event.reason.kind === "achievement_unlocked"}
+                            <p>
+                                🔓 <Translatable
+                                    resourceKey={i18nKey(`learnToEarn.${event.reason.type}`)} />: {event.amount.toLocaleString()}
+                            </p>
+                        {:else if event.reason.kind === "referral"}
+                            <p>
+                                🤝 <Translatable
+                                    resourceKey={i18nKey(
+                                        `chitReferralRewardReason.${event.reason.type}`,
+                                    )} />: {event.amount.toLocaleString()}
+                            </p>
+                        {:else if event.reason.kind === "meme_contest_winner"}
+                            <p>{`🏆️ Meme contest win: ${event.amount.toLocaleString()}`}</p>
+                        {:else if event.reason.kind === "external_achievement_unlocked"}
+                            <p>
+                                🔓 <Translatable resourceKey={i18nKey(event.reason.name)} />: {event.amount.toLocaleString()}
+                            </p>
+                        {/if}
+                    {/each}
+                </div>
+            {/snippet}
+        </Tooltip>
     </div>
 {/if}
 

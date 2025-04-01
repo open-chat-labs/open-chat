@@ -223,12 +223,12 @@
             <ButtonGroup>
                 {#if currentGate !== undefined}
                     {#if isCompositeGate(currentGate)}
-                        <Button disabled={optionalInvalid} on:click={nextGate}>
+                        <Button disabled={optionalInvalid} onClick={nextGate}>
                             <Translatable resourceKey={i18nKey("access.next")} />
                         </Button>
                     {/if}
                 {:else}
-                    <Button on:click={onClose}>
+                    <Button onClick={onClose}>
                         <Translatable resourceKey={i18nKey("access.join")} />
                     </Button>
                 {/if}

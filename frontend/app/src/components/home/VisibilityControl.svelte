@@ -9,15 +9,15 @@
         isDiamond,
     } from "openchat-client";
     import Radio from "../Radio.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import Button from "../Button.svelte";
     import DurationPicker from "./DurationPicker.svelte";
     import AccessGateControl from "./access/AccessGateControl.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     type T = $$Generic;
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     export let candidate: CandidateGroupChat | CommunitySummary;
     export let editing: boolean;
@@ -197,7 +197,7 @@
         </div>
         <div class="upgrade info">
             <p><Translatable resourceKey={i18nKey("upgrade.groupMsg")} /></p>
-            <Button on:click={() => dispatch("upgrade")} tiny
+            <Button onClick={() => publish("upgrade")} tiny
                 ><Translatable resourceKey={i18nKey("upgrade.button")} /></Button>
         </div>
     </div>

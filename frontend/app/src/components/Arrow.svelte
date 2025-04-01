@@ -1,9 +1,13 @@
 <script lang="ts">
-    export let color: string;
-    export let rotate: number = 0;
-    export let size = 16;
+    interface Props {
+        color: string;
+        rotate?: number;
+        size?: number;
+    }
 
-    $: style = rotate === 0 ? "" : `transform: rotate(${rotate}deg)`;
+    let { color, rotate = 0, size = 16 }: Props = $props();
+
+    let style = $derived(rotate === 0 ? "" : `transform: rotate(${rotate}deg)`);
 </script>
 
 <svg

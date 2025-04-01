@@ -116,7 +116,7 @@
             <Button
                 disabled={!$instanceValid || busy}
                 loading={busy}
-                on:click={onSubmit}
+                onClick={onSubmit}
                 small={!$mobileWidth}
                 tiny={$mobileWidth}>
                 <Translatable resourceKey={i18nKey("Submit")} />

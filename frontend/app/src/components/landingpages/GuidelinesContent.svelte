@@ -5,10 +5,15 @@
     import { copyToClipboard } from "../../utils/urls";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
 
-    export let linked: number | undefined = undefined;
-    export let modal: boolean = false;
+    interface Props {
+        linked?: number | undefined;
+        modal?: boolean;
+    }
 
-    function copyUrl(section: string): void {
+    let { linked = undefined, modal = false }: Props = $props();
+
+    function copyUrl(e: Event, section: string): void {
+        e.stopPropagation();
         copyToClipboard(getSectionUrl($location, section));
     }
 
@@ -20,20 +25,22 @@
         return `${window.location.origin}${path}`;
     }
 
-    $: copySize = $mobileWidth ? "14px" : "16px";
-    $: color = modal ? "var(--txt)" : "var(--landing-txt)";
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
+    let color = $derived(modal ? "var(--txt)" : "var(--landing-txt)");
 </script>
 
 <CollapsibleCard transition={false} first open={linked === 1}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">1</span>
-        <div class="title">
-            Introduction
-            <div class="copy" on:click|stopPropagation={() => copyUrl("1")}>
-                <Copy size={copySize} {color} />
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">1</span>
+            <div class="title">
+                Introduction
+                <div class="copy" onclick={(e) => copyUrl(e, "1")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <p>
             OpenChat aims to be an open, productive, enjoyable and safe place for everyone to come
@@ -51,15 +58,17 @@
 </CollapsibleCard>
 
 <CollapsibleCard transition={false} open={linked === 2}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">2</span>
-        <div class="title">
-            High level guidance
-            <div class="copy" on:click|stopPropagation={() => copyUrl("2")}>
-                <Copy size={copySize} {color} />
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">2</span>
+            <div class="title">
+                High level guidance
+                <div class="copy" onclick={(e) => copyUrl(e, "2")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <p>
             OpenChat is not owned by anyone and does not operate in any particular jurisdiction and
@@ -79,15 +88,17 @@
 </CollapsibleCard>
 
 <CollapsibleCard transition={false} open={linked === 3}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">3</span>
-        <div class="title">
-            Content Standards
-            <div class="copy" on:click|stopPropagation={() => copyUrl("3")}>
-                <Copy size={copySize} {color} />
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">3</span>
+            <div class="title">
+                Content Standards
+                <div class="copy" onclick={(e) => copyUrl(e, "3")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <ul class="list">
             <li>
@@ -137,15 +148,17 @@
 </CollapsibleCard>
 
 <CollapsibleCard transition={false} open={linked === 4}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">4</span>
-        <div class="title">
-            Account creation and usage
-            <div class="copy" on:click|stopPropagation={() => copyUrl("4")}>
-                <Copy size={copySize} {color} />
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">4</span>
+            <div class="title">
+                Account creation and usage
+                <div class="copy" onclick={(e) => copyUrl(e, "4")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <p>
             It is against the platform guidelines to buy or sell accounts, or to create multiple
@@ -164,15 +177,17 @@
 </CollapsibleCard>
 
 <CollapsibleCard transition={false} open={linked === 5}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">5</span>
-        <div class="title">
-            Group rules
-            <div class="copy" on:click|stopPropagation={() => copyUrl("5")}>
-                <Copy size={copySize} {color} />
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">5</span>
+            <div class="title">
+                Group rules
+                <div class="copy" onclick={(e) => copyUrl(e, "5")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <p>
             In addition to the platform content standards rules, we urge group owners to enable
@@ -205,15 +220,17 @@
 </CollapsibleCard>
 
 <CollapsibleCard transition={false} open={linked === 6}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">6</span>
-        <div class="title">
-            Content moderation process
-            <div class="copy" on:click|stopPropagation={() => copyUrl("6")}>
-                <Copy size={copySize} {color} />
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">6</span>
+            <div class="title">
+                Content moderation process
+                <div class="copy" onclick={(e) => copyUrl(e, "6")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <p>
             If you see content in a public group which you think violates the group's rules then
@@ -247,15 +264,17 @@
 </CollapsibleCard>
 
 <CollapsibleCard transition={false} open={linked === 7}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">7</span>
-        <div class="title">
-            Governance
-            <div class="copy" on:click|stopPropagation={() => copyUrl("7")}>
-                <Copy size={copySize} {color} />
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">7</span>
+            <div class="title">
+                Governance
+                <div class="copy" onclick={(e) => copyUrl(e, "7")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <p>
             An alternative view is that content moderation should only be done via SNS proposal. Our
@@ -276,15 +295,17 @@
 </CollapsibleCard>
 
 <CollapsibleCard transition={false} open={linked === 8}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">8</span>
-        <div class="title">
-            Full terms
-            <div class="copy" on:click|stopPropagation={() => copyUrl("8")}>
-                <Copy size={copySize} {color} />
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">8</span>
+            <div class="title">
+                Full terms
+                <div class="copy" onclick={(e) => copyUrl(e, "8")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <p>
             You can view the full terms of use of OpenChat <a href={getUrl("/terms")}> here </a>.

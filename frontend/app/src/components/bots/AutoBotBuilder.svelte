@@ -36,7 +36,6 @@
     interface Props {
         valid: boolean;
         schemaLoaded: boolean;
-        onUpdate: (bot: ExternalBot) => void;
         candidate: ExternalBot;
         nameDirty: boolean;
         principal: string;
@@ -46,7 +45,6 @@
     let {
         valid = $bindable(),
         schemaLoaded = $bindable(),
-        onUpdate,
         principal = $bindable(),
         candidate = $bindable(),
         nameDirty,
@@ -122,10 +120,6 @@
         if (isValid !== valid) {
             valid = isValid;
         }
-    });
-
-    $effect(() => {
-        onUpdate($state.snapshot(candidate));
     });
 
     function botAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {

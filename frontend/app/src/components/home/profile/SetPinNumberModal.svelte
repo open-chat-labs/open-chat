@@ -180,14 +180,14 @@
         <div class="footer">
             {#if type.kind === "forgot"}
                 <ButtonGroup align="center">
-                    <Button disabled={busy} secondary on:click={close}
+                    <Button disabled={busy} secondary onClick={close}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 </ButtonGroup>
             {:else}
                 <ButtonGroup align="center">
-                    <Button disabled={busy} secondary on:click={close}
+                    <Button disabled={busy} secondary onClick={close}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                    <Button loading={busy} disabled={busy || !isValid} on:click={changePin}
+                    <Button loading={busy} disabled={busy || !isValid} onClick={changePin}
                         ><Translatable resourceKey={action} /></Button>
                 </ButtonGroup>
             {/if}

@@ -21,7 +21,7 @@
         LEDGER_CANISTER_ICP,
         TokenTransfer,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -51,7 +51,6 @@
     } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     export let rootEvent: EventWrapper<Message>;
     export let chat: ChatSummary;
@@ -324,7 +323,6 @@
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         {messageContext}
-        onUpgrade={() => dispatch("upgrade")}
         onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
@@ -416,16 +414,10 @@
                             canInvite={false}
                             canReplyInThread={false}
                             collapsed={false}
-                            on:chatWith
                             on:removePreview={onRemovePreview}
                             on:goToMessageIndex={onGoToMessageIndex}
-                            onReplyPrivatelyTo={(r) => dispatch("replyPrivatelyTo", r)}
                             onReplyTo={replyTo}
-                            on:editEvent={() => editEvent(evt)}
-                            on:upgrade
-                            on:verifyHumanity
-                            on:claimDailyChit
-                            on:forward />
+                            on:editEvent={() => editEvent(evt)} />
                     {/each}
                 {/each}
             {/if}
@@ -447,9 +439,7 @@
         mode={"thread"}
         {blocked}
         {messageContext}
-        on:joinGroup
         on:cancelPreview
-        on:upgrade
         on:cancelReply={cancelReply}
         on:clearAttachment={clearAttachment}
         on:cancelEditEvent={cancelEditEvent}

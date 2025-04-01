@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Support passing common state to timer job batches ([#7705](https://github.com/open-chat-labs/open-chat/pull/7705))
+
+## [[2.0.1666](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1666-community)] - 2025-03-28
+
+### Changed
+
 - Allow community owners to delete channels and explore private channels ([#7652](https://github.com/open-chat-labs/open-chat/pull/7652))
 - Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
 - Loosen channel name restrictions ([#7683](https://github.com/open-chat-labs/open-chat/pull/7683))

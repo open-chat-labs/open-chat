@@ -9,7 +9,7 @@
     import Button from "../../Button.svelte";
     import page from "page";
 
-    let selectedTab: "translations" | "operator" = "translations";
+    let selectedTab: "translations" | "operator" = $state("translations");
 
     function selectTab(tab: "translations" | "operator") {
         selectedTab = tab;
@@ -21,7 +21,7 @@
         <img class="img" src={"/assets/evil-robot.svg"} alt="Unauthorised" />
         <h2>Unauthorised</h2>
         <p>Only platform operators can access the admin area</p>
-        <Button on:click={() => page("/")}>Back to safety</Button>
+        <Button onClick={() => page("/")}>Back to safety</Button>
     </div>
 {:else}
     <div class="admin">
@@ -39,7 +39,7 @@
             <div
                 tabindex="0"
                 role="button"
-                on:click={() => selectTab("translations")}
+                onclick={() => selectTab("translations")}
                 class:selected={selectedTab === "translations"}
                 class="tab">
                 Translation Corrections
@@ -47,7 +47,7 @@
             <div
                 tabindex="0"
                 role="button"
-                on:click={() => selectTab("operator")}
+                onclick={() => selectTab("operator")}
                 class:selected={selectedTab === "operator"}
                 class="tab">
                 Operator functions

@@ -2,10 +2,11 @@
     import { onMount } from "svelte";
     import { tweened } from "svelte/motion";
 
-    export let enabled: boolean;
+    interface Props {
+        enabled: boolean;
+    }
 
-    $: fill = enabled ? "url(#grad1)" : "transparent";
-    $: stroke = enabled ? "rgb(247, 28, 255)" : "var(--icon-txt)";
+    let { enabled }: Props = $props();
 
     let y1 = tweened(-45, { duration: 1000 });
     let y2 = tweened(55, { duration: 1000 });
@@ -15,12 +16,6 @@
     onMount(() => {
         return () => (destroyed = true);
     });
-
-    $: {
-        if (enabled) {
-            animate(55, 155);
-        }
-    }
 
     function animate(v1: number, v2: number) {
         y1.set(v1);
@@ -33,6 +28,13 @@
             animate(55, 155);
         }, 3000);
     }
+    let fill = $derived(enabled ? "url(#grad1)" : "transparent");
+    let stroke = $derived(enabled ? "rgb(247, 28, 255)" : "var(--icon-txt)");
+    $effect(() => {
+        if (enabled) {
+            animate(55, 155);
+        }
+    });
 </script>
 
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">

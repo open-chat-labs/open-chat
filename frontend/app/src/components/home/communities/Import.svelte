@@ -15,6 +15,7 @@
     import { toastStore } from "../../../stores/toast";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -22,10 +23,9 @@
         ownedCommunities: CommunityMap<CommunitySummary>;
         groupId: ChatIdentifier;
         onCancel: () => void;
-        onSuccessfulImport: (channelId: ChatIdentifier) => void;
     }
 
-    let { ownedCommunities, groupId, onCancel, onSuccessfulImport }: Props = $props();
+    let { ownedCommunities, groupId, onCancel }: Props = $props();
 
     let communitiesList = $derived(ownedCommunities.values());
 
@@ -43,7 +43,7 @@
                     toastStore.showFailureToast(i18nKey("communities.errors.importFailed"));
                 } else {
                     onCancel();
-                    onSuccessfulImport(channelId);
+                    publish("successfulImport", channelId);
                 }
             })
             .finally(() => (importing = false));
@@ -90,9 +90,9 @@
             {#snippet footer()}
                 <span>
                     <ButtonGroup>
-                        <Button secondary on:click={onCancel}
+                        <Button secondary onClick={onCancel}
                             ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                        <Button loading={importing} disabled={importing} on:click={performImport}
+                        <Button loading={importing} disabled={importing} onClick={performImport}
                             ><Translatable
                                 resourceKey={i18nKey("communities.importBtn")} /></Button>
                     </ButtonGroup>

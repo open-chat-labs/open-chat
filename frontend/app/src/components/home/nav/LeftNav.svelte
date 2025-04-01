@@ -1,6 +1,6 @@
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
-    import MenuIcon from "../../MenuIconLegacy.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
@@ -16,7 +16,7 @@
     import { getContext, onMount, tick } from "svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
-    import { navOpen } from "../../../stores/layout";
+    import { layoutStore, navOpen } from "../../../stores/layout";
     import { flip } from "svelte/animate";
     import { type DndEvent, dndzone } from "svelte-dnd-action";
     import { isTouchDevice } from "../../../utils/devices";
@@ -50,18 +50,10 @@
         globalStateStore as globalState,
         favouritesStore,
     } from "openchat-client";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;
-
-    interface Props {
-        onProfile: () => void;
-        onClaimDailyChit: () => void;
-        onWallet: () => void;
-        onUpgrade: () => void;
-    }
-
-    let { onProfile, onClaimDailyChit, ...rest }: Props = $props();
 
     let user = $derived($userStore.get($createdUser.userId));
     let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
@@ -128,7 +120,7 @@
 
     function viewProfile() {
         activityFeedShowing.set(false);
-        onProfile();
+        publish("profile");
     }
 
     function exploreCommunities() {
@@ -172,19 +164,24 @@
 
 <svelte:body onclick={closeIfOpen} />
 
-<section bind:this={navWrapper} class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
+<section
+    class:visible={$layoutStore.showNav}
+    bind:this={navWrapper}
+    class="nav"
+    class:open={$navOpen}
+    class:rtl={$rtlStore}>
     <div class="top">
         <LeftNavItem separator label={i18nKey("communities.mainMenu")}>
             <div class="hover logo">
                 <MenuIcon position="right" align="start" gutter={20}>
-                    <span slot="icon">
+                    {#snippet menuIcon()}
                         <HoverIcon>
                             <Hamburger size={iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
-                    </span>
-                    <span slot="menu">
-                        <MainMenu {...rest} {onProfile} />
-                    </span>
+                    {/snippet}
+                    {#snippet menuItems()}
+                        <MainMenu />
+                    {/snippet}
                 </MenuIcon>
             </div>
         </LeftNavItem>
@@ -231,7 +228,7 @@
                     label={i18nKey(
                         claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
                     )}
-                    onClick={onClaimDailyChit}>
+                    onClick={() => publish("claimDailyChit")}>
                     <div class="hover streak">
                         <LighteningBolt enabled={claimChitAvailable} />
                     </div>
@@ -376,6 +373,10 @@
             @include mobile() {
                 width: toRem(300);
             }
+        }
+
+        &:not(.visible) {
+            display: none;
         }
     }
 

@@ -6,13 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Added
-
-- Expose minutes online via http request ([#7670](https://github.com/open-chat-labs/open-chat/pull/7670))
-
 ### Changed
 
 - Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+- Support passing common state to timer job batches ([#7705](https://github.com/open-chat-labs/open-chat/pull/7705))
+
+## [[2.0.1664](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1664-online_users)] - 2025-03-26
+
+### Added
+
+- Expose minutes online via http request ([#7670](https://github.com/open-chat-labs/open-chat/pull/7670))
 
 ## [[2.0.1648](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1648-online_users)] - 2025-03-12
 

@@ -146,8 +146,7 @@
                 <BotBuilder
                     {nameDirty}
                     {mode}
-                    candidate={botState.current}
-                    onUpdate={(b) => (botState.current = b)}
+                    bind:candidate={botState.current}
                     bind:schemaLoaded
                     bind:valid
                     bind:principal />
@@ -157,12 +156,12 @@
     {#snippet footer()}
         <div class="footer">
             <ButtonGroup>
-                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}>
+                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}>
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </Button>
                 {#if mode !== "remove"}
                     <Button
-                        on:click={mode === "update" ? update : register}
+                        onClick={mode === "update" ? update : register}
                         disabled={!valid || busy}
                         loading={busy}
                         small={!$mobileWidth}

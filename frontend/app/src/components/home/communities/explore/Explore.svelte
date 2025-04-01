@@ -15,7 +15,7 @@
     } from "../../../../stores/screenDimensions";
     import { iconSize } from "../../../../stores/iconSize";
     import type { OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
     import Plus from "svelte-material-icons/Plus.svelte";
@@ -26,9 +26,9 @@
     import Fab from "../../../Fab.svelte";
     import { anonUser, offlineStore, identityState, isDiamond } from "openchat-client";
     import { exploreCommunitiesFilters } from "../../../../stores/communityFilters";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     let searching = $state(false);
     let showFab = $state(false);
@@ -55,9 +55,9 @@
             return;
         }
         if (!$isDiamond) {
-            dispatch("upgrade");
+            publish("upgrade");
         } else {
-            dispatch("createCommunity");
+            publish("createCommunity");
         }
     }
 
@@ -157,7 +157,7 @@
                         placeholder={i18nKey("communities.search")} />
                 </div>
                 <div class="create">
-                    <Button on:click={createCommunity} hollow
+                    <Button onClick={createCommunity} hollow
                         ><Translatable resourceKey={i18nKey("communities.create")} /></Button>
                 </div>
             {/if}
@@ -238,7 +238,7 @@
                 <Button
                     disabled={searching}
                     loading={searching}
-                    on:click={() => search($exploreCommunitiesFilters, false)}
+                    onClick={() => search($exploreCommunitiesFilters, false)}
                     ><Translatable resourceKey={i18nKey("communities.loadMore")} /></Button>
             </div>
         {/if}

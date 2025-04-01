@@ -68,6 +68,7 @@
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
     import { quickReactions } from "../../stores/quickReactions";
     import EphemeralNote from "./EphemeralNote.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -110,7 +111,6 @@
         supportsEdit: boolean;
         supportsReply: boolean;
         onReplyTo?: (replyContext: EnhancedReplyContext) => void;
-        onReplyPrivatelyTo?: (replyContext: EnhancedReplyContext) => void;
         onEditMessage?: () => void;
     }
 
@@ -152,7 +152,6 @@
         supportsEdit,
         supportsReply,
         onReplyTo,
-        onReplyPrivatelyTo,
         onEditMessage,
     }: Props = $props();
 
@@ -229,7 +228,7 @@
     }
 
     function replyPrivately() {
-        onReplyPrivatelyTo?.(createReplyContext());
+        publish("replyPrivatelyTo", createReplyContext());
     }
 
     function cancelReminder(ev: CustomEvent<MessageReminderCreatedContent>) {
@@ -260,8 +259,12 @@
         }
     }
 
-    function tipMessage(ev: CustomEvent<string>) {
-        tipping = ev.detail;
+    function tipMessage(ledger: string) {
+        tipping = ledger;
+    }
+
+    function onTipMessage(ev: CustomEvent<string>) {
+        tipMessage(ev.detail);
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -666,9 +669,6 @@
                             blockLevelMarkdown={msg.blockLevelMarkdown}
                             on:removePreview
                             on:registerVote={registerVote}
-                            on:upgrade
-                            on:verifyHumanity
-                            on:claimDailyChit
                             {onExpandMessage} />
 
                         {#if !inert && !isPrize}
@@ -749,15 +749,13 @@
                             }}
                             {canReact}
                             on:collapseMessage
-                            on:forward
                             on:reply={reply}
                             on:retrySend
-                            on:upgrade
                             on:initiateThread
                             on:deleteFailedMessage
                             on:replyPrivately={replyPrivately}
                             on:editMessage={editMessage}
-                            on:tipMessage={tipMessage}
+                            on:tipMessage={onTipMessage}
                             on:reportMessage={reportMessage}
                             on:cancelReminder={cancelReminder}
                             on:remindMe={remindMe} />
@@ -797,7 +795,7 @@
                 <div class="message-reactions" class:me class:indent={showAvatar}>
                     {#each msg.reactions as { reaction, userIds } (reaction)}
                         <MessageReaction
-                            on:click={() => toggleReaction(false, reaction)}
+                            onClick={() => toggleReaction(false, reaction)}
                             {reaction}
                             {userIds}
                             myUserId={user?.userId} />
@@ -808,7 +806,7 @@
             {#if tips.length > 0 && !inert}
                 <div class="tips" class:indent={showAvatar}>
                     {#each tips as [ledger, userTips]}
-                        <TipThumbnail on:click={tipMessage} {canTip} {ledger} {userTips} />
+                        <TipThumbnail onClick={tipMessage} {canTip} {ledger} {userTips} />
                     {/each}
                 </div>
             {/if}

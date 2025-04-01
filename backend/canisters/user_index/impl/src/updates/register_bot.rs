@@ -99,13 +99,10 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         now,
     );
 
-    state.data.storage_index_user_sync_queue.push(
-        state.data.storage_index_canister_id,
-        UserConfig {
-            user_id: args.principal,
-            byte_limit: ONE_GB,
-        },
-    );
+    state.data.storage_index_user_sync_queue.push(UserConfig {
+        user_id: args.principal,
+        byte_limit: ONE_GB,
+    });
 
     state.data.event_store_client.push(
         EventBuilder::new("user_registered", now)

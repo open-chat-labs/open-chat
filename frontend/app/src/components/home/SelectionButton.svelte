@@ -2,11 +2,16 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import Button from "../Button.svelte";
 
-    export let selected = false;
-    export let title: string;
+    interface Props {
+        selected?: boolean;
+        title: string;
+        onClick?: (e: MouseEvent) => void;
+    }
+
+    let { selected = false, title, onClick }: Props = $props();
 </script>
 
-<Button fill={$mobileWidth} hollow={!selected} small={!$mobileWidth} tiny={$mobileWidth} on:click>
+<Button fill={$mobileWidth} hollow={!selected} small={!$mobileWidth} tiny={$mobileWidth} {onClick}>
     <div class="content">
         {title}
     </div>

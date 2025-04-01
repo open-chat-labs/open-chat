@@ -18,13 +18,15 @@
     </p>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2020</div>
-                <div class="quarter">DEC</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2020</div>
+                    <div class="quarter">DEC</div>
+                </div>
+                <div class="title">Development started</div>
             </div>
-            <div class="title">Development started</div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 Before the Internet Computer mainnet launched and before the grants programme
@@ -40,13 +42,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2021</div>
-                <div class="quarter">Q1-4</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2021</div>
+                    <div class="quarter">Q1-4</div>
+                </div>
+                <div class="title">Test version launched</div>
             </div>
-            <div class="title">Test version launched</div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 On May 7th the Internet Computer mainnet launched and, on June 3rd, the <XL
@@ -88,13 +92,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2022</div>
-                <div class="quarter">Q1</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2022</div>
+                    <div class="quarter">Q1</div>
+                </div>
+                <div class="title">Main version launched</div>
             </div>
-            <div class="title">Main version launched</div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 On Jan 14th, <XL href={x("1482014849479716871")}>OpenChat officially launched</XL>
@@ -130,13 +136,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2022</div>
-                <div class="quarter">Q2</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2022</div>
+                    <div class="quarter">Q2</div>
+                </div>
+                <div class="title">Edit message, forwarding, translations</div>
             </div>
-            <div class="title">Edit message, forwarding, translations</div>
-        </div>
+        {/snippet}
         <div class="body">
             <ul>
                 <li><XL href={x("1512114949480456197")}>Send giphy messages</XL></li>
@@ -153,13 +161,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2022</div>
-                <div class="quarter">Q3</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2022</div>
+                    <div class="quarter">Q3</div>
+                </div>
+                <div class="title">Threads and proposals</div>
             </div>
-            <div class="title">Threads and proposals</div>
-        </div>
+        {/snippet}
         <div class="body">
             <ul>
                 <li><XL href={x("1542920057831002113")}>Pin chats</XL></li>
@@ -177,13 +187,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2022</div>
-                <div class="quarter">Q4</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2022</div>
+                    <div class="quarter">Q4</div>
+                </div>
+                <div class="title">Redesign plus prep for SNS launch</div>
             </div>
-            <div class="title">Redesign plus prep for SNS launch</div>
-        </div>
+        {/snippet}
         <div class="body">
             <ul>
                 <li><XL href={x("1577324722257264641")}>OpenChat goes open source</XL></li>
@@ -204,13 +216,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2023</div>
-                <div class="quarter">Q1</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2023</div>
+                    <div class="quarter">Q1</div>
+                </div>
+                <div class="title">SNS DAO launched</div>
             </div>
-            <div class="title">SNS DAO launched</div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 When the OpenChat SNS was created, control of OpenChat was handed from the core dev
@@ -273,13 +287,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2023</div>
-                <div class="quarter">Q2</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2023</div>
+                    <div class="quarter">Q2</div>
+                </div>
+                <div class="title">CHAT airdrop</div>
             </div>
-            <div class="title">CHAT airdrop</div>
-        </div>
+        {/snippet}
         <div class="body">
             <ul>
                 <li>
@@ -298,13 +314,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2023</div>
-                <div class="quarter">Q3</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2023</div>
+                    <div class="quarter">Q3</div>
+                </div>
+                <div class="title">Communities</div>
             </div>
-            <div class="title">Communities</div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 Communities allow chats and users to be grouped together according to some common
@@ -336,13 +354,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2023</div>
-                <div class="quarter">Q4</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2023</div>
+                    <div class="quarter">Q4</div>
+                </div>
+                <div class="title">Swaps, disappearing messages</div>
             </div>
-            <div class="title">Swaps, disappearing messages</div>
-        </div>
+        {/snippet}
         <div class="body">
             <ul>
                 <li><XL href={x("1712121536461619511")}>Make SNS proposals in OpenChat</XL></li>
@@ -380,13 +400,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2024</div>
-                <div class="quarter">Q1</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2024</div>
+                    <div class="quarter">Q1</div>
+                </div>
+                <div class="title">Voice and video calls</div>
             </div>
-            <div class="title">Voice and video calls</div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 We are pleased to introduce the first phase of video and voice chat support in
@@ -413,13 +435,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2024</div>
-                <div class="quarter">Q2</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2024</div>
+                    <div class="quarter">Q2</div>
+                </div>
+                <div class="title">Tokenisation and Growth</div>
             </div>
-            <div class="title">Tokenisation and Growth</div>
-        </div>
+        {/snippet}
         <div class="body">
             <ul>
                 <li>
@@ -453,13 +477,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2024</div>
-                <div class="quarter">Q3</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2024</div>
+                    <div class="quarter">Q3</div>
+                </div>
+                <div class="title">Tokenisation and Growth continued</div>
             </div>
-            <div class="title">Tokenisation and Growth continued</div>
-        </div>
+        {/snippet}
         <div class="body">
             <ul>
                 <li>
@@ -507,13 +533,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2024</div>
-                <div class="quarter">Q4</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2024</div>
+                    <div class="quarter">Q4</div>
+                </div>
+                <div class="title">Scalability and performance</div>
             </div>
-            <div class="title">Scalability and performance</div>
-        </div>
+        {/snippet}
         <div class="body">
             <ul>
                 <li>
@@ -578,13 +606,15 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="year">2025</div>
-                <div class="quarter">Q1</div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle">
+                    <div class="year">2025</div>
+                    <div class="quarter">Q1</div>
+                </div>
+                <div class="title">Bots and e2e encryption</div>
             </div>
-            <div class="title">Bots and e2e encryption</div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>Here is a list of features we expect to build this year.</p>
             <h4>Bots</h4>
@@ -661,10 +691,12 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle future">Future</div>
-            <div class="title">NFTs, contacts, personas and more</div>
-        </div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle future">Future</div>
+                <div class="title">NFTs, contacts, personas and more</div>
+            </div>
+        {/snippet}
         <div class="body">
             <h4>NFTs</h4>
             <p>
@@ -721,10 +753,12 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle future">Future</div>
-            <div class="title">Native apps</div>
-        </div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle future">Future</div>
+                <div class="title">Native apps</div>
+            </div>
+        {/snippet}
         <div class="body">
             <p>
                 Currently OpenChat is delivered as a responsive progressive web app. This means that
@@ -753,10 +787,12 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle future">Future</div>
-            <div class="title">Blue sky thinking</div>
-        </div>
+        {#snippet titleSlot()}
+            <div class="header">
+                <div class="date subtitle future">Future</div>
+                <div class="title">Blue sky thinking</div>
+            </div>
+        {/snippet}
         <div class="body">
             <p>
                 The list of ways OpenChat could be extended and enhanced is virtually endless. Here

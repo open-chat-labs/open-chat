@@ -6,8 +6,7 @@
         type CommandDefinition,
         commandSupportsDirectMessages,
     } from "openchat-client";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
     import ShieldAccount from "svelte-material-icons/ShieldAccount.svelte";
     import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
 
@@ -27,11 +26,10 @@
         {@const permitted =
             grantedPermissions === undefined ||
             hasEveryRequiredPermission(command.permissions, grantedPermissions)}
-        <TooltipWrapper enable={permitted} position="bottom" align="middle">
+        <Tooltip enable={permitted} position="bottom" align="middle">
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
-                slot="target"
                 class="command"
                 onclick={() => onClick?.(command, i)}
                 class:command-error={errors?.has(`command_${i}`)}
@@ -44,12 +42,10 @@
                 {/if}
                 {`/${command.name}`}
             </div>
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {align} {position}>
-                    {command.description}
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
+            {#snippet popupTemplate()}
+                {command.description}
+            {/snippet}
+        </Tooltip>
     {/each}
 </div>
 

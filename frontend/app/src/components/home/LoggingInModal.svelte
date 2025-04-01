@@ -220,7 +220,7 @@
     {#snippet footer()}
         <div class="footer login-modal">
             <ButtonGroup>
-                <Button on:click={cancelLink}
+                <Button onClick={cancelLink}
                     ><Translatable
                         resourceKey={i18nKey(
                             error === undefined ? "cancel" : "loginDialog.back",

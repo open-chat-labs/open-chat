@@ -84,6 +84,7 @@
     import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
     import BotConfigData from "./BotConfigData.svelte";
     import Markdown from "../Markdown.svelte";
+    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -332,7 +333,7 @@
     <form use:menuCloser class="user-form" onsubmit={saveUser}>
         <div class="user">
             <CollapsibleCard
-                on:toggle={userInfoOpen.toggle}
+                onToggle={userInfoOpen.toggle}
                 open={$userInfoOpen}
                 headerText={i18nKey("userInfoHeader")}>
                 <div class="avatar">
@@ -354,7 +355,7 @@
                 {#if $anonUser}
                     <div class="guest">
                         <p><Translatable resourceKey={i18nKey("guestUser")} /></p>
-                        <Button on:click={() => client.updateIdentityState({ kind: "logging_in" })}
+                        <Button onClick={() => client.updateIdentityState({ kind: "logging_in" })}
                             ><Translatable resourceKey={i18nKey("login")} /></Button>
                     </div>
                 {:else}
@@ -375,7 +376,6 @@
                     </UsernameInput>
                     <Legend label={i18nKey("displayName")} rules={i18nKey("displayNameRules")} />
                     <DisplayNameInput
-                        on:upgrade
                         {client}
                         {originalDisplayName}
                         disabled={readonly}
@@ -413,7 +413,7 @@
         {#if !$anonUser && uniquePersonGate.enabled}
             <div class="verification">
                 <CollapsibleCard
-                    on:toggle={verificationSectionOpen.toggle}
+                    onToggle={verificationSectionOpen.toggle}
                     open={$verificationSectionOpen}
                     headerText={i18nKey("human.verification")}>
                     {#if verified}
@@ -431,7 +431,7 @@
                     {:else}
                         <Translatable resourceKey={i18nKey("human.notVerified")} />
                         <div class="full-width-btn">
-                            <Button on:click={() => dispatch("verifyHumanity")} fill small>
+                            <Button onClick={() => publish("verifyHumanity")} fill small>
                                 <Translatable resourceKey={i18nKey("human.verify")} />
                             </Button>
                         </div>
@@ -441,7 +441,7 @@
         {/if}
         <div class="linked-accounts">
             <CollapsibleCard
-                on:toggle={accountsSectionOpen.toggle}
+                onToggle={accountsSectionOpen.toggle}
                 open={$accountsSectionOpen}
                 headerText={i18nKey("identity.linkedAccounts.section")}>
                 <LinkedAuthAccounts />
@@ -449,7 +449,7 @@
         </div>
         <div class="appearance">
             <CollapsibleCard
-                on:toggle={appearanceSectionOpen.toggle}
+                onToggle={appearanceSectionOpen.toggle}
                 open={$appearanceSectionOpen}
                 headerText={i18nKey("appearance")}>
                 <Legend label={i18nKey("preferredLanguage")} />
@@ -482,7 +482,7 @@
         {#if !$anonUser}
             <div class="invite">
                 <CollapsibleCard
-                    on:toggle={referralOpen.toggle}
+                    onToggle={referralOpen.toggle}
                     open={$referralOpen}
                     headerText={i18nKey("referralHeader")}>
                     <ReferUsers />
@@ -491,7 +491,7 @@
             <ReferredUsersList referrals={referredUserIds} />
             <div class="chats">
                 <CollapsibleCard
-                    on:toggle={chatsSectionOpen.toggle}
+                    onToggle={chatsSectionOpen.toggle}
                     open={$chatsSectionOpen}
                     headerText={i18nKey("chats")}>
                     <Toggle
@@ -540,7 +540,7 @@
             </div>
             <div class="video">
                 <CollapsibleCard
-                    on:toggle={videoSectionOpen.toggle}
+                    onToggle={videoSectionOpen.toggle}
                     open={$videoSectionOpen}
                     headerText={i18nKey("profile.videoSettings")}>
                     <VideoCallSettings />
@@ -548,7 +548,7 @@
             </div>
             <div class="restricted">
                 <CollapsibleCard
-                    on:toggle={restrictedSectionOpen.toggle}
+                    onToggle={restrictedSectionOpen.toggle}
                     open={$restrictedSectionOpen}
                     headerText={i18nKey("restrictedContent")}>
                     <p class="blurb">
@@ -577,14 +577,14 @@
             {#if !readonly}
                 <div class="storage">
                     <CollapsibleCard
-                        on:toggle={storageSectionOpen.toggle}
+                        onToggle={storageSectionOpen.toggle}
                         open={$storageSectionOpen}
                         headerText={i18nKey("upgrade.membership")}>
                         <StorageUsage />
 
                         {#if !$isDiamond}
                             <ButtonGroup align={"fill"}>
-                                <Button on:click={() => dispatch("upgrade")} small
+                                <Button onClick={() => publish("upgrade")} small
                                     ><Translatable
                                         resourceKey={i18nKey("upgrade.button")} /></Button>
                             </ButtonGroup>
@@ -598,7 +598,7 @@
                                         ? $_("upgrade.cannotExtend")
                                         : undefined}
                                     disabled={!$canExtendDiamond}
-                                    on:click={() => dispatch("upgrade")}
+                                    onClick={() => publish("upgrade")}
                                     small
                                     ><Translatable
                                         resourceKey={i18nKey("upgrade.extend")} /></Button>
@@ -609,7 +609,7 @@
             {/if}
             <div class="stats">
                 <CollapsibleCard
-                    on:toggle={statsSectionOpen.toggle}
+                    onToggle={statsSectionOpen.toggle}
                     open={$statsSectionOpen}
                     headerText={i18nKey("stats.userStats")}>
                     <Stats showReported stats={$userMetrics} />
@@ -618,7 +618,7 @@
         {/if}
         <div class="advanced">
             <CollapsibleCard
-                on:toggle={advancedSectionOpen.toggle}
+                onToggle={advancedSectionOpen.toggle}
                 open={$advancedSectionOpen}
                 headerText={i18nKey("advanced")}>
                 {#if !$anonUser}
@@ -641,7 +641,7 @@
                         <Translatable resourceKey={i18nKey("clearDataCacheInfo")} />
                     </p>
                     <Button
-                        on:click={() =>
+                        onClick={() =>
                             client.clearCachedData().then(() => window.location.reload())}>
                         <Translatable resourceKey={i18nKey("clearDataCache")} />
                     </Button>
@@ -651,7 +651,7 @@
                     <p class="para smallprint">
                         <Markdown text={interpolate($_, i18nKey("bots.config.info"))}></Markdown>
                     </p>
-                    <Button on:click={getBotConfig}>
+                    <Button onClick={getBotConfig}>
                         <Translatable resourceKey={i18nKey("bots.config.title")} />
                     </Button>
                 </div>
@@ -660,7 +660,7 @@
         {#if !$anonUser}
             <div class="danger">
                 <CollapsibleCard
-                    on:toggle={deleteAccountSectionOpen.toggle}
+                    onToggle={deleteAccountSectionOpen.toggle}
                     open={$deleteAccountSectionOpen}
                     headerText={i18nKey("danger.deleteAccount")}>
                     <p class="para">
@@ -670,7 +670,7 @@
                         danger
                         disabled={deleting}
                         loading={deleting}
-                        on:click={() => (confirmDelete = true)}>
+                        onClick={() => (confirmDelete = true)}>
                         <Translatable resourceKey={i18nKey("danger.deleteAccount")} />
                     </Button>
                 </CollapsibleCard>
@@ -689,7 +689,7 @@
         </Select>
     </div>
     {#if selectedCommunity !== undefined}
-        <CommunityProfile on:upgrade community={selectedCommunity} />
+        <CommunityProfile community={selectedCommunity} />
     {/if}
 {:else if view === "chit"}
     <ChitEvents />

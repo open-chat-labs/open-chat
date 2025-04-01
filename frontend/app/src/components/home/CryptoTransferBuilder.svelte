@@ -250,7 +250,7 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if toppingUp || zero}
                         <Button
@@ -258,7 +258,7 @@
                             disabled={refreshing}
                             loading={refreshing}
                             tiny={$mobileWidth}
-                            on:click={reset}
+                            onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
@@ -266,7 +266,7 @@
                             disabled={!valid || sending}
                             loading={sending}
                             tiny={$mobileWidth}
-                            on:click={send}
+                            onClick={send}
                             ><Translatable
                                 resourceKey={i18nKey(
                                     confirming ? "tokenTransfer.confirm" : "tokenTransfer.send",

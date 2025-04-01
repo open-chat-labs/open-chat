@@ -7,4 +7,5 @@ edition.workspace = true
 futures = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
+ic_principal = { workspace = true }
 serde = { workspace = true }

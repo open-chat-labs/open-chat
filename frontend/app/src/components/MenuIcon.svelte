@@ -22,12 +22,8 @@
     }: Props = $props();
 
     let menu: HTMLElement;
-    let contextMenu: HTMLElement;
-    let open = $state(false);
-
-    $effect(() => {
-        open = $menuStore === contextMenu;
-    });
+    let contextMenu = $state<HTMLElement>();
+    let open = $derived($menuStore === contextMenu);
 
     onDestroy(() => menuStore.hideMenu());
 

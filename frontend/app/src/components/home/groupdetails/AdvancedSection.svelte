@@ -1,17 +1,19 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import type { MultiUserChat } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import { publish } from "@src/utils/pubsub";
 
-    export let group: MultiUserChat;
+    interface Props {
+        group: MultiUserChat;
+    }
 
-    const dispatch = createEventDispatcher();
+    let { group }: Props = $props();
 
     function deleteGroup() {
-        dispatch("deleteGroup", {
+        publish("deleteGroup", {
             kind: "delete",
             chatId: group.id,
             level: group.level,
@@ -24,6 +26,6 @@
 </script>
 
 <ButtonGroup align="start">
-    <Button on:click={deleteGroup}
+    <Button onClick={deleteGroup}
         ><Translatable resourceKey={i18nKey("deleteGroup", undefined, group.level)} /></Button>
 </ButtonGroup>

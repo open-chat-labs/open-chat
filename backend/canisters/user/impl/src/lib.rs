@@ -35,7 +35,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
-use timer_job_queues::GroupedTimerJobQueue;
+use timer_job_queues::{deserialize_batched_timer_job_queue_from_previous, BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned,
     ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
@@ -232,14 +232,11 @@ impl RuntimeState {
     }
 
     pub fn push_local_user_index_canister_event(&mut self, event: LocalUserIndexEvent, now: TimestampMillis) {
-        self.data.local_user_index_event_sync_queue.push(
-            self.data.local_user_index_canister_id,
-            IdempotentEnvelope {
-                created_at: now,
-                idempotency_id: self.env.rng().next_u64(),
-                value: event,
-            },
-        );
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        });
     }
 
     pub fn award_achievements_and_notify(&mut self, achievements: Vec<Achievement>, now: TimestampMillis) {
@@ -328,8 +325,8 @@ impl RuntimeState {
             next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
             achievements: self.data.achievements.iter().cloned().collect(),
             unique_person_proof: self.data.unique_person_proof.is_some(),
+            referred_by: self.data.referred_by,
             stable_memory_sizes: memory::memory_sizes(),
-            message_ids_deduped: self.data.message_ids_deduped,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -397,7 +394,6 @@ struct Data {
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
-    #[serde(skip_deserializing, default = "user_canister_events_queue")]
     pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
     pub video_call_operators: Vec<Principal>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
@@ -415,19 +411,14 @@ struct Data {
     pub referrals: Referrals,
     pub message_activity_events: MessageActivityEvents,
     pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
-    pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
-    #[serde(default)]
-    pub message_ids_deduped: bool,
+    #[serde(deserialize_with = "deserialize_batched_timer_job_queue_from_previous")]
+    pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
     #[serde(default)]
     pub bots: InstalledBots,
     #[serde(default)]
     bot_api_keys: BotApiKeys,
-}
-
-fn user_canister_events_queue() -> GroupedTimerJobQueue<UserCanisterEventBatch> {
-    GroupedTimerJobQueue::new(10, false)
 }
 
 impl Data {
@@ -495,8 +486,7 @@ impl Data {
             referrals: Referrals::default(),
             message_activity_events: MessageActivityEvents::default(),
             stable_memory_keys_to_garbage_collect: Vec::new(),
-            local_user_index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
-            message_ids_deduped: true,
+            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, false),
             idempotency_checker: IdempotencyChecker::default(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
@@ -597,8 +587,8 @@ pub struct Metrics {
     pub next_daily_claim: TimestampMillis,
     pub achievements: Vec<Achievement>,
     pub unique_person_proof: bool,
+    pub referred_by: Option<UserId>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
-    pub message_ids_deduped: bool,
     pub canister_ids: CanisterIds,
 }
 

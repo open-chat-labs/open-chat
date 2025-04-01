@@ -25,11 +25,15 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let joining: MultiUserChat | undefined;
+    interface Props {
+        joining: MultiUserChat | undefined;
+    }
+
+    let { joining }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
-    let hotGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
+    let hotGroups: RemoteData<GroupChatSummary[], string> = $state({ kind: "idle" });
 
     onMount(loadData);
 
@@ -63,7 +67,7 @@
     <div class="wrapper">
         <SectionHeader>
             {#if $mobileWidth}
-                <div class="back" class:rtl={$rtlStore} on:click={cancelRecommendations}>
+                <div class="back" class:rtl={$rtlStore} onclick={cancelRecommendations}>
                     <HoverIcon>
                         {#if $rtlStore}
                             <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
@@ -82,10 +86,7 @@
         <div class="groups">
             {#each hotGroups.data as group (group.id.groupId)}
                 <RecommendedGroup
-                    on:upgrade
                     on:dismissRecommendation={dismissRecommendation}
-                    on:joinGroup
-                    on:leaveGroup
                     {group}
                     {joining} />
             {/each}
@@ -96,9 +97,9 @@
         <h3 class="title"><Translatable resourceKey={i18nKey("noGroupsFound")} /></h3>
         <p class="subtitle"><Translatable resourceKey={i18nKey("checkBackLater")} /></p>
         <ButtonGroup align={"fill"}>
-            <Button small on:click={cancelRecommendations}
+            <Button small onClick={cancelRecommendations}
                 ><Translatable resourceKey={i18nKey("close")} /></Button>
-            <Button secondary small on:click={loadData}
+            <Button secondary small onClick={loadData}
                 ><Translatable resourceKey={i18nKey("refresh")} /></Button>
         </ButtonGroup>
     </div>

@@ -3,17 +3,21 @@
     import Translatable from "./Translatable.svelte";
     import { _ } from "svelte-i18n";
 
-    export let me = false;
-    export let searchTerm = "";
-    export let username: string | undefined;
+    interface Props {
+        me?: boolean;
+        searchTerm?: string;
+        username: string | undefined;
+    }
 
-    $: name = username ?? $_("unknownUser");
-    $: lower = name.toLowerCase();
-    $: searchTermLower = searchTerm.toLowerCase();
-    $: index = searchTermLower === "" ? -1 : lower.indexOf(searchTermLower);
-    $: prefix = name.substring(0, index);
-    $: match = name.substring(index, index + searchTermLower.length);
-    $: postfix = name.substring(index + searchTermLower.length);
+    let { me = false, searchTerm = "", username }: Props = $props();
+
+    let name = $derived(username ?? $_("unknownUser"));
+    let lower = $derived(name.toLowerCase());
+    let searchTermLower = $derived(searchTerm.toLowerCase());
+    let index = $derived(searchTermLower === "" ? -1 : lower.indexOf(searchTermLower));
+    let prefix = $derived(name.substring(0, index));
+    let match = $derived(name.substring(index, index + searchTermLower.length));
+    let postfix = $derived(name.substring(index + searchTermLower.length));
 </script>
 
 {#if me}

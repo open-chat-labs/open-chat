@@ -42,8 +42,8 @@
      * This is used both for starting a new direct chat and also for adding a member to a group chat
      */
 
-    function onSelect(ev: CustomEvent<UserSummary>) {
-        dispatch("selectUser", ev.detail);
+    function onSelect(user: UserSummary) {
+        dispatch("selectUser", user);
         searchTerm = "";
         users = [];
         inp.focus();
@@ -99,14 +99,14 @@
                 <Translatable resourceKey={i18nKey("communityMembers")} />
             </div>
             {#each communityMembers as user (user.userId)}
-                <MatchingUser {searchTerm} {user} bind:hovering on:onSelect={onSelect} />
+                <MatchingUser {searchTerm} {user} bind:hovering {onSelect} />
             {/each}
         {/if}
         {#if communityMembers?.length > 0 && users?.length > 0}
             <div class="sub-heading"><Translatable resourceKey={i18nKey("otherUsers")} /></div>
         {/if}
         {#each users as user (user.userId)}
-            <MatchingUser {compact} {searchTerm} {user} bind:hovering on:onSelect={onSelect} />
+            <MatchingUser {compact} {searchTerm} {user} bind:hovering {onSelect} />
         {/each}
     {/if}
 </div>

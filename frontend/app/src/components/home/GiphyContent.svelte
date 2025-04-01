@@ -44,7 +44,7 @@
             <div class="mask">
                 {#if !reply}
                     <div class="reveal">
-                        <Button on:click={() => (hidden = false)}
+                        <Button onClick={() => (hidden = false)}
                             ><Translatable resourceKey={i18nKey("loadGif")} /></Button>
                     </div>
                 {/if}

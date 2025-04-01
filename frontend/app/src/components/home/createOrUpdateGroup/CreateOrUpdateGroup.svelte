@@ -35,13 +35,12 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        templateGroup: CandidateGroupChat;
+        candidateGroup: CandidateGroupChat;
         embeddedContent: boolean;
         onClose: () => void;
-        onUpgrade: () => void;
     }
 
-    let { templateGroup, embeddedContent, onClose, onUpgrade }: Props = $props();
+    let { candidateGroup = $bindable(), embeddedContent, onClose }: Props = $props();
     let confirming = $state(false);
     let showingVerificationWarning = $state(false);
     let busy = $state(false);
@@ -49,10 +48,7 @@
     let actualWidth = $state(0);
     let detailsValid = $state(true);
     let visibilityValid = $state(true);
-    let originalGroup = $state(structuredClone(templateGroup));
-
-    //TODO: we need to clone the candidate as well here *solely* because Home.svelte is current Svelte 4
-    let candidateGroup = $state(structuredClone(templateGroup));
+    let originalGroup = $state($state.snapshot(candidateGroup));
     let rulesValid = $state(true);
 
     function getSteps(
@@ -386,7 +382,6 @@
                     <div class="visibility">
                         <VisibilityControl
                             {embeddedContent}
-                            on:upgrade={onUpgrade}
                             {editing}
                             history
                             {canEditDisappearingMessages}
@@ -444,7 +439,7 @@
                             disabled={busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
-                            on:click={() => (step = steps[stepIndex - 1].key)}
+                            onClick={() => (step = steps[stepIndex - 1].key)}
                             ><Translatable resourceKey={i18nKey("group.back")} /></Button>
                     {/if}
                 </div>
@@ -453,7 +448,7 @@
                         disabled={false}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={onClose}
+                        onClick={onClose}
                         secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
 
                     {#if editing}
@@ -462,7 +457,7 @@
                             loading={busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
-                            on:click={() => updateGroup()}
+                            onClick={() => updateGroup()}
                             ><Translatable
                                 resourceKey={i18nKey(
                                     "group.update",
@@ -474,7 +469,7 @@
                         <Button
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
-                            on:click={() => (step = steps[stepIndex + 1].key)}
+                            onClick={() => (step = steps[stepIndex + 1].key)}
                             ><Translatable resourceKey={i18nKey("group.next")} />
                         </Button>
                     {:else}
@@ -483,7 +478,7 @@
                             loading={busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
-                            on:click={createGroup}
+                            onClick={createGroup}
                             ><Translatable
                                 resourceKey={i18nKey(
                                     "group.create",

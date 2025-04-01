@@ -96,14 +96,14 @@
 <div class="footer">
     <ButtonGroup>
         {#if step == "unlink"}
-            <Button secondary disabled={inProgress} on:click={onClose}>
+            <Button secondary disabled={inProgress} onClick={onClose}>
                 <Translatable resourceKey={i18nKey("cancel")} />
             </Button>
-            <Button disabled={inProgress} loading={inProgress} on:click={() => unlinkAccount()}>
+            <Button disabled={inProgress} loading={inProgress} onClick={() => unlinkAccount()}>
                 <Translatable resourceKey={i18nKey("identity.linkedAccounts.unlinkAction")} />
             </Button>
         {:else}
-            <Button secondary on:click={onClose}>
+            <Button secondary onClick={onClose}>
                 <Translatable resourceKey={i18nKey("close")} />
             </Button>
         {/if}

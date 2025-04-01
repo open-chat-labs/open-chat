@@ -7,53 +7,30 @@
     import { getContext, onMount } from "svelte";
     import { writable } from "svelte/store";
     import { iconSize } from "../../stores/iconSize";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
-    export let stats: Metrics;
-    export let showReported: boolean = false;
-
-    let hoveredIndex: number | undefined;
-    let rendered = false;
-    let previousStats: Metrics | undefined = undefined;
-    let totalMessages = 0;
-    let textPerc = writable(12.5);
-    let imagePerc = writable(12.5);
-    let videoPerc = writable(12.5);
-    let audioPerc = writable(12.5);
-    let filePerc = writable(12.5);
-    let pollPerc = writable(12.5);
-    let cryptoPerc = writable(12.5);
-    let giphyPerc = writable(12.5);
-
-    $: cryptoMessages = stats.icpMessages + stats.sns1Messages + stats.ckbtcMessages;
-
-    $: {
-        if (previousStats === undefined || !client.metricsEqual(stats, previousStats)) {
-            totalMessages =
-                stats.textMessages +
-                stats.imageMessages +
-                stats.videoMessages +
-                stats.audioMessages +
-                stats.fileMessages +
-                stats.polls +
-                cryptoMessages +
-                stats.giphyMessages;
-
-            textPerc = slice(stats.textMessages);
-            imagePerc = slice(stats.imageMessages);
-            videoPerc = slice(stats.videoMessages);
-            audioPerc = slice(stats.audioMessages);
-            filePerc = slice(stats.fileMessages);
-            pollPerc = slice(stats.polls);
-            cryptoPerc = slice(cryptoMessages);
-            giphyPerc = slice(stats.giphyMessages);
-            previousStats = stats;
-        }
+    interface Props {
+        stats: Metrics;
+        showReported?: boolean;
     }
+
+    let { stats, showReported = false }: Props = $props();
+
+    let hoveredIndex: number | undefined = $state();
+    let rendered = $state(false);
+    let previousStats: Metrics | undefined = $state(undefined);
+    let totalMessages = $state(0);
+    let textPerc = $state(writable(12.5));
+    let imagePerc = $state(writable(12.5));
+    let videoPerc = $state(writable(12.5));
+    let audioPerc = $state(writable(12.5));
+    let filePerc = $state(writable(12.5));
+    let pollPerc = $state(writable(12.5));
+    let cryptoPerc = $state(writable(12.5));
+    let giphyPerc = $state(writable(12.5));
 
     function percToDegree(perc: number): number {
         return (perc / 100) * 360;
@@ -75,7 +52,35 @@
 
     const circum = 471.24;
 
-    $: percentages = [
+    function sumSlice(from: number, to: number): number {
+        return percentages.slice(from, to).reduce((total, n) => total + percToDegree(n), 0);
+    }
+
+    let cryptoMessages = $derived(stats.icpMessages + stats.sns1Messages + stats.ckbtcMessages);
+    $effect(() => {
+        if (previousStats === undefined || !client.metricsEqual(stats, previousStats)) {
+            totalMessages =
+                stats.textMessages +
+                stats.imageMessages +
+                stats.videoMessages +
+                stats.audioMessages +
+                stats.fileMessages +
+                stats.polls +
+                cryptoMessages +
+                stats.giphyMessages;
+
+            textPerc = slice(stats.textMessages);
+            imagePerc = slice(stats.imageMessages);
+            videoPerc = slice(stats.videoMessages);
+            audioPerc = slice(stats.audioMessages);
+            filePerc = slice(stats.fileMessages);
+            pollPerc = slice(stats.polls);
+            cryptoPerc = slice(cryptoMessages);
+            giphyPerc = slice(stats.giphyMessages);
+            previousStats = stats;
+        }
+    });
+    let percentages = $derived([
         $textPerc,
         $imagePerc,
         $videoPerc,
@@ -84,13 +89,8 @@
         $pollPerc,
         $cryptoPerc,
         $giphyPerc,
-    ];
-
-    function sumSlice(from: number, to: number): number {
-        return percentages.slice(from, to).reduce((total, n) => total + percToDegree(n), 0);
-    }
-
-    $: data = [
+    ]);
+    let data = $derived([
         {
             cls: "text",
             perc: $textPerc,
@@ -131,7 +131,7 @@
             perc: $giphyPerc,
             rotate: sumSlice(0, 7),
         },
-    ];
+    ]);
 </script>
 
 <div class="message-stats">
@@ -146,8 +146,8 @@
 
         {#each data as slice, i}
             <circle
-                on:mouseenter={(_) => (hoveredIndex = i)}
-                on:mouseleave={(_) => (hoveredIndex = undefined)}
+                onmouseenter={(_) => (hoveredIndex = i)}
+                onmouseleave={(_) => (hoveredIndex = undefined)}
                 class={`slice ${slice.cls}`}
                 cx={160}
                 cy={160}
@@ -163,56 +163,56 @@
     </svg>
     <div class="numbers">
         <div class="text legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.textMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.textMessages")} />
             </div>
         </div>
         <div class="image legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.imageMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.imageMessages")} />
             </div>
         </div>
         <div class="video legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.videoMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.videoMessages")} />
             </div>
         </div>
         <div class="audio legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.audioMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.audioMessages")} />
             </div>
         </div>
         <div class="file legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.fileMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.fileMessages")} />
             </div>
         </div>
         <div class="poll legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.polls.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.pollMessages")} />
             </div>
         </div>
         <div class="crypto legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{cryptoMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.cryptoTransfers")} />
             </div>
         </div>
         <div class="giphy legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.giphyMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.giphyMessages")} />
@@ -243,8 +243,8 @@
         <Translatable resourceKey={i18nKey("stats.minutesOnline")} />
     </div>
     {#if showReported}
-        <TooltipWrapper position={"top"} align="middle">
-            <div slot="target" class="reported-messages">
+        <Tooltip longestWord={20} position={"top"} align="middle">
+            <div class="reported-messages">
                 <span>
                     <span class="stat">{stats.reportedMessages.toLocaleString()}</span>
                     <Translatable resourceKey={i18nKey("stats.reportedMessages")} />
@@ -253,14 +253,10 @@
                     <Flag size={$iconSize} color={"var(--accent)"} />
                 </span>
             </div>
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {position} {align} textLength={100} longestWord={20}>
-                    <div>
-                        <Translatable resourceKey={i18nKey("stats.reportedMessagesInfo")} />
-                    </div>
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
+            {#snippet popupTemplate()}
+                <Translatable resourceKey={i18nKey("stats.reportedMessagesInfo")} />
+            {/snippet}
+        </Tooltip>
     {/if}
 </div>
 
