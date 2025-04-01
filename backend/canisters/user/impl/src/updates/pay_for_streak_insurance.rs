@@ -63,6 +63,10 @@ struct PrepareOk {
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let now = state.env.now();
+    if state.data.streak.days(now) == 0 {
+        return Err(NoActiveStreak);
+    }
+
     let days_currently_insured = state
         .data
         .streak
