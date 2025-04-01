@@ -120,7 +120,7 @@
             </div>
         {/snippet}
         {#snippet footer()}
-            <ButtonGroup>
+            <ButtonGroup nowrap>
                 <Button disabled={paying} small secondary onClick={onClose}>
                     <Translatable resourceKey={i18nKey("cancel")}></Translatable>
                 </Button>
