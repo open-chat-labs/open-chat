@@ -1,5 +1,7 @@
 <script lang="ts">
     import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
+    import Equal from "svelte-material-icons/Equal.svelte";
+    import Minus from "svelte-material-icons/Minus.svelte";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import {
@@ -88,7 +90,9 @@
                     </div>
                 </div>
 
-                <div class="column operator">-</div>
+                <div class="column operator">
+                    <Minus color={"var(--txt-light)"} />
+                </div>
 
                 <div class="column">
                     <div class="label">
@@ -99,7 +103,10 @@
                         {$streakInsuranceStore.daysMissed}
                     </div>
                 </div>
-                <div class="column operator">=</div>
+
+                <div class="column operator">
+                    <Equal color={"var(--txt-light)"} />
+                </div>
 
                 <div class="column">
                     <div class="label">
@@ -174,7 +181,7 @@
         }
 
         .operator {
-            margin-top: $sp4;
+            margin-top: $sp5;
             @include font(light, normal, fs-200);
             color: var(--txt-light);
         }
