@@ -7,7 +7,7 @@
         OpenChat,
         cryptoBalance,
         cryptoLookup,
-        serverStreakInsuranceStore,
+        streakInsuranceStore,
     } from "openchat-client";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -33,16 +33,14 @@
     let confirmed = $state(false);
     let refreshingBalance = $state(false);
     let priceE8s = $derived(
-        client.streakInsurancePrice($serverStreakInsuranceStore.daysInsured, additionalDays),
+        client.streakInsurancePrice($streakInsuranceStore.daysInsured, additionalDays),
     );
     let price = $derived(priceE8s / 100_000_000n);
     let remainingBalance = $derived(tokenDetails.balance - priceE8s);
     let insufficientBalance = $derived(remainingBalance < 0);
     let paying = $state(false);
     let remaining = $derived(
-        $serverStreakInsuranceStore.daysInsured +
-            additionalDays -
-            $serverStreakInsuranceStore.daysMissed,
+        $streakInsuranceStore.daysInsured + additionalDays - $streakInsuranceStore.daysMissed,
     );
 
     function pay() {
@@ -51,11 +49,7 @@
             .payForStreakInsurance(additionalDays, priceE8s)
             .then((resp) => {
                 if (resp !== "success") {
-                    toastStore.showFailureToast(
-                        i18nKey(
-                            "Sorry but we were unable to take payment for your streak insurance",
-                        ),
-                    );
+                    toastStore.showFailureToast(i18nKey("streakInsurance.failure"));
                 } else {
                     onClose();
                 }
@@ -71,7 +65,7 @@
                 {#if !confirming && !confirmed}
                     <div class="title">
                         <ShieldHalfFull size={"1em"} />
-                        <Translatable resourceKey={i18nKey("Top up streak insurance")} />
+                        <Translatable resourceKey={i18nKey("streakInsurance.topUpTitle")} />
                     </div>
                     <div class="balance">
                         <BalanceWithRefresh
@@ -86,10 +80,11 @@
             <div class="details">
                 <div class="column">
                     <div class="label">
-                        <Translatable resourceKey={i18nKey("days bought")}></Translatable>
+                        <Translatable resourceKey={i18nKey("streakInsurance.bought")}
+                        ></Translatable>
                     </div>
                     <div class="number">
-                        {$serverStreakInsuranceStore.daysInsured + additionalDays}
+                        {$streakInsuranceStore.daysInsured + additionalDays}
                     </div>
                 </div>
 
@@ -97,17 +92,19 @@
 
                 <div class="column">
                     <div class="label">
-                        <Translatable resourceKey={i18nKey("days missed")}></Translatable>
+                        <Translatable resourceKey={i18nKey("streakInsurance.missed")}
+                        ></Translatable>
                     </div>
                     <div class="number">
-                        {$serverStreakInsuranceStore.daysMissed}
+                        {$streakInsuranceStore.daysMissed}
                     </div>
                 </div>
                 <div class="column operator">=</div>
 
                 <div class="column">
                     <div class="label">
-                        <Translatable resourceKey={i18nKey("days left")}></Translatable>
+                        <Translatable resourceKey={i18nKey("streakInsurance.remaining")}
+                        ></Translatable>
                     </div>
                     <div class="number">
                         {remaining}
@@ -121,7 +118,7 @@
                     <Translatable resourceKey={i18nKey("cancel")}></Translatable>
                 </Button>
                 <Button disabled={paying} small onClick={() => (additionalDays += 1)}>
-                    <Translatable resourceKey={i18nKey("Add a day")}></Translatable>
+                    <Translatable resourceKey={i18nKey("streakInsurance.addDay")}></Translatable>
                 </Button>
                 <Button
                     loading={paying}
@@ -129,7 +126,7 @@
                     small
                     onClick={pay}>
                     <Translatable
-                        resourceKey={i18nKey("Pay {price} CHAT", {
+                        resourceKey={i18nKey("streakInsurance.pay", {
                             price: price.toLocaleString(),
                         })}></Translatable>
                 </Button>

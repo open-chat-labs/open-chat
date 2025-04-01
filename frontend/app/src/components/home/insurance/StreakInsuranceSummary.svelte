@@ -19,43 +19,32 @@
 
 {#if remaining > 0}
     <div class="title">
-        <Translatable
-            resourceKey={i18nKey(
-                "You have {remaining} remaining day(s) of streak insurance. Click Top Up to buy more.",
-                { remaining },
-            )} />
+        <Translatable resourceKey={i18nKey("streakInsurance.remainingAdvice", { remaining })} />
     </div>
 {:else}
     <div class="title">
-        <Legend large label={i18nKey("Your streak is at risk!")}></Legend>
+        <Legend large label={i18nKey("streakInsurance.atRisk")}></Legend>
         <InfoIcon align={"middle"}>
-            <Translatable
-                resourceKey={i18nKey(
-                    "You can insure your streak by choosing a number of days to protect. The price in CHAT doubles for each day you choose to insure so you still need to be careful!",
-                )} />
+            <Translatable resourceKey={i18nKey("streakInsurance.infoPopup")} />
         </InfoIcon>
     </div>
     <div class="info">
-        <Translatable
-            resourceKey={i18nKey(
-                "To protect your streak you can pay a fee to give yourself a safety net in case you accidentally miss the odd day for any reason.",
-            )} />
+        <Translatable resourceKey={i18nKey("streakInsurance.info")} />
     </div>
 {/if}
 
 {#if $streakInsuranceStore.daysMissed > 0}
     <div class="info">
         <Translatable
-            resourceKey={i18nKey(
-                "Your streak insurance has protected you from {missed} missed day(s) so far!",
-                { missed: $streakInsuranceStore.daysMissed },
-            )}>
+            resourceKey={i18nKey("streakInsurance.protected", {
+                missed: $streakInsuranceStore.daysMissed,
+            })}>
         </Translatable>
     </div>
 {/if}
 
 <Button onClick={() => (buy = true)}>
-    <Translatable resourceKey={i18nKey("Top up")}></Translatable>
+    <Translatable resourceKey={i18nKey("streakInsurance.topUpButton")}></Translatable>
 </Button>
 
 <style lang="scss">

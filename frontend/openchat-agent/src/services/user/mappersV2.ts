@@ -67,6 +67,7 @@ import type {
     UserMessageActivity,
     UserMessageActivitySummary,
     StreakInsurance as ApiStreakInsurance,
+    UserPayForStreakInsuranceResponse as ApiPayForStreakInsuranceResponse,
 } from "../../typebox";
 import type {
     EventsResponse,
@@ -136,6 +137,7 @@ import type {
     PublicApiKeyDetails,
     WithdrawBtcResponse,
     StreakInsurance,
+    PayForStreakInsuranceResponse,
 } from "openchat-shared";
 import {
     nullMembership,
@@ -172,6 +174,18 @@ import type { PinNumberSettings } from "openchat-shared";
 import { pinNumberFailureResponseV2 } from "../common/pinNumberErrorMapper";
 import { signedDelegation } from "../../utils/id";
 import { mapCommonResponses } from "../common/commonResponseMapper";
+
+export function payForStreakInsuranceResponse(
+    value: ApiPayForStreakInsuranceResponse,
+): PayForStreakInsuranceResponse {
+    console.log("PayForStreakInsuranceResponse: ", value);
+    if (value === "Success") {
+        return "success";
+    } else {
+        console.log("Something went wrong paying for streak insurance: ", value);
+        return "failure";
+    }
+}
 
 export function messageActivityFeedResponse(
     value: UserMessageActivityFeedResponse,

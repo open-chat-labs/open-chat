@@ -107,6 +107,7 @@ import {
     apiWalletConfig,
     apiVerification,
     messageActivityFeedResponse,
+    payForStreakInsuranceResponse,
 } from "./mappersV2";
 import {
     type Database,
@@ -1772,7 +1773,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 additional_days: additionalDays,
                 expected_price: expectedPrice,
             },
-            () => "success",
+            payForStreakInsuranceResponse,
             UserPayForStreakInsuranceArgs,
             UserPayForStreakInsuranceResponse,
         );

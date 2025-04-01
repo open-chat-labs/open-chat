@@ -105,10 +105,12 @@
                     balance={$chitState.chitBalance}
                     totalEarned={$chitState.totalChitEarned} />
             </div>
-            <CollapsibleCard headerText={i18nKey("Streak insurance")}>
-                <StreakInsuranceSummary />
-            </CollapsibleCard>
-            <CollapsibleCard headerText={i18nKey("Chit events")}>
+            {#if streak > 0}
+                <CollapsibleCard headerText={i18nKey("streakInsurance.title")}>
+                    <StreakInsuranceSummary />
+                </CollapsibleCard>
+            {/if}
+            <CollapsibleCard headerText={i18nKey("dailyChit.events")}>
                 <Calendar {dateSelected}>
                     {#snippet monthTitleTemplate()}
                         <div class="month-title">
@@ -133,7 +135,7 @@
                     <Translatable resourceKey={i18nKey("dailyChit.utcInfo")} />
                 </div>
             </CollapsibleCard>
-            <CollapsibleCard headerText={i18nKey("Chit settings")}>
+            <CollapsibleCard headerText={i18nKey("dailyChit.settings")}>
                 <Toggle
                     id={"chit-popup"}
                     small

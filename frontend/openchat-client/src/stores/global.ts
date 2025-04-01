@@ -23,7 +23,7 @@ import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { serverWalletConfigStore } from "./crypto";
 import { localGlobalUpdates } from "./localGlobalUpdates";
-import { streakInsuranceStore } from "./streakInsurance";
+import { serverStreakInsuranceStore } from "./streakInsurance";
 
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
 
@@ -356,7 +356,7 @@ export function setGlobalState(
     installedServerDirectBots.set(installedBots);
     directApiKeys.set(apiKeys);
     if (streakInsurance !== undefined) {
-        streakInsuranceStore.set(streakInsurance);
+        serverStreakInsuranceStore.set(streakInsurance);
     }
 }
 

@@ -8908,18 +8908,25 @@ export class OpenChat extends EventTarget {
         additionalDays: number,
         expectedPrice: bigint,
     ): Promise<PayForStreakInsuranceResponse> {
-        localGlobalUpdates.updateStreakInsurance({
-            ...this.#liveState.serverStreakInsurance,
-            daysInsured: this.#liveState.serverStreakInsurance.daysInsured + additionalDays,
-        });
         return this.#sendRequest({
             kind: "payForStreakInsurance",
             additionalDays,
             expectedPrice,
-        }).catch((err) => {
-            console.log("Failed to pay for streak insurance: ", err);
-            return "failure";
-        });
+        })
+            .then((resp) => {
+                if (resp === "success") {
+                    localGlobalUpdates.updateStreakInsurance({
+                        ...this.#liveState.serverStreakInsurance,
+                        daysInsured:
+                            this.#liveState.serverStreakInsurance.daysInsured + additionalDays,
+                    });
+                }
+                return resp;
+            })
+            .catch((err) => {
+                console.log("Failed to pay for streak insurance: ", err);
+                return "failure";
+            });
     }
 }
 
