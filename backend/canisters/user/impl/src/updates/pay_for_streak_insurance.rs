@@ -69,10 +69,11 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         .streak_insurance(now)
         .map(|s| s.days_insured)
         .unwrap_or_default();
+
     let price = state
         .data
         .streak
-        .insurance_price(days_currently_insured, args.additional_days);
+        .insurance_price(days_currently_insured, args.additional_days, state.data.test_mode);
 
     if price != args.expected_price {
         Err(IncorrectPrice(price))

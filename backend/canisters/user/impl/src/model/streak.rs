@@ -158,12 +158,16 @@ impl Streak {
         self.payments.push(payment);
     }
 
-    pub fn insurance_price(&self, days_currently_insured: u8, additional_days: u8) -> u128 {
+    pub fn insurance_price(&self, days_currently_insured: u8, additional_days: u8, test_mode: bool) -> u128 {
         let mut total = 0;
         for i in 0..additional_days {
             total += Self::insurance_cost_for_day(days_currently_insured + i);
         }
-        total
+        if test_mode {
+            total / 1000
+        } else {
+            total
+        }
     }
 
     fn set_end_day(&mut self, day: u16) {
