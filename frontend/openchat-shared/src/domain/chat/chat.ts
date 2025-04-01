@@ -703,6 +703,7 @@ export type LocalGlobalUpdates = {
     walletConfig?: WalletConfig;
     installedDirectBots?: Map<string, ExternalBotPermissions>;
     removedDirectBots?: Set<string>;
+    streakInsurance?: StreakInsurance;
     lastUpdated: number;
 };
 
@@ -1071,6 +1072,7 @@ export type ChatStateFull = {
     installedBots: Map<string, ExternalBotPermissions>;
     apiKeys: Map<string, PublicApiKeyDetails>;
     bitcoinAddress: string | undefined;
+    streakInsurance: StreakInsurance | undefined;
 };
 
 export type ChitState = {
@@ -1241,6 +1243,12 @@ export type InitialStateResponse = {
     bots: Map<string, ExternalBotPermissions>;
     apiKeys: Map<string, PublicApiKeyDetails>;
     bitcoinAddress: string | undefined;
+    streakInsurance?: StreakInsurance;
+};
+
+export type StreakInsurance = {
+    daysInsured: number;
+    daysMissed: number;
 };
 
 export type MessageActivitySummary = {
@@ -1321,6 +1329,7 @@ export type UpdatesSuccessResponse = {
     botsRemoved: Set<string>;
     apiKeysGenerated: PublicApiKeyDetails[];
     bitcoinAddress: string | undefined;
+    streakInsurance: OptionUpdate<StreakInsurance>;
 };
 
 export type DirectChatsUpdates = {

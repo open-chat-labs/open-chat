@@ -13,6 +13,7 @@ import type {
     MessageActivitySummary,
     PublicApiKeyDetails,
     Referral,
+    StreakInsurance,
     WalletConfig,
 } from "openchat-shared";
 import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
@@ -22,6 +23,7 @@ import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { serverWalletConfigStore } from "./crypto";
 import { localGlobalUpdates } from "./localGlobalUpdates";
+import { streakInsuranceStore } from "./streakInsurance";
 
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
 
@@ -319,6 +321,7 @@ export function setGlobalState(
     messageActivitySummary: MessageActivitySummary,
     installedBots: Map<string, ExternalBotPermissions>,
     apiKeys: Map<string, PublicApiKeyDetails>,
+    streakInsurance: StreakInsurance | undefined,
 ): void {
     const [channels, directChats, groupChats] = partitionChats(allChats);
 
@@ -352,6 +355,9 @@ export function setGlobalState(
     serverWalletConfigStore.set(walletConfig);
     installedServerDirectBots.set(installedBots);
     directApiKeys.set(apiKeys);
+    if (streakInsurance !== undefined) {
+        streakInsuranceStore.set(streakInsurance);
+    }
 }
 
 function partitionChats(

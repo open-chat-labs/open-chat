@@ -68,6 +68,7 @@ import type {
     ExternalBotPermissions,
     GenerateBotKeyResponse,
     WithdrawBtcResponse,
+    PayForStreakInsuranceResponse,
 } from "openchat-shared";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
@@ -282,6 +283,8 @@ import {
     UserApiKeyResponse,
     UserWithdrawBtcArgs,
     UserWithdrawBtcResponse,
+    UserPayForStreakInsuranceArgs,
+    UserPayForStreakInsuranceResponse,
 } from "../../typebox";
 import { toggleNotificationsResponse } from "../notifications/mappers";
 
@@ -1728,7 +1731,7 @@ export class UserClient extends MsgpackCanisterAgent {
             },
             TEmpty,
             UserGenerateBtcAddressResponse,
-        )
+        );
     }
 
     updateBtcBalance(): Promise<boolean> {
@@ -1737,11 +1740,15 @@ export class UserClient extends MsgpackCanisterAgent {
             {},
             (resp) => resp === "Success",
             TEmpty,
-            UserUpdateBtcBalanceResponse
+            UserUpdateBtcBalanceResponse,
         );
     }
 
-    withdrawBtc(address: string, amount: bigint, pin: string | undefined): Promise<WithdrawBtcResponse> {
+    withdrawBtc(
+        address: string,
+        amount: bigint,
+        pin: string | undefined,
+    ): Promise<WithdrawBtcResponse> {
         return this.executeMsgpackUpdate(
             "withdraw_btc",
             {
@@ -1751,7 +1758,23 @@ export class UserClient extends MsgpackCanisterAgent {
             },
             withdrawBtcResponse,
             UserWithdrawBtcArgs,
-            UserWithdrawBtcResponse
+            UserWithdrawBtcResponse,
+        );
+    }
+
+    payForStreakInsurance(
+        additionalDays: number,
+        expectedPrice: bigint,
+    ): Promise<PayForStreakInsuranceResponse> {
+        return this.executeMsgpackUpdate(
+            "pay_for_streak_insurance",
+            {
+                additional_days: additionalDays,
+                expected_price: expectedPrice,
+            },
+            () => "success",
+            UserPayForStreakInsuranceArgs,
+            UserPayForStreakInsuranceResponse,
         );
     }
 }

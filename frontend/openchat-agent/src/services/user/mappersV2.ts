@@ -66,6 +66,7 @@ import type {
     UserMessageActivityEvent,
     UserMessageActivity,
     UserMessageActivitySummary,
+    StreakInsurance as ApiStreakInsurance,
 } from "../../typebox";
 import type {
     EventsResponse,
@@ -134,6 +135,7 @@ import type {
     ExternalBotPermissions,
     PublicApiKeyDetails,
     WithdrawBtcResponse,
+    StreakInsurance,
 } from "openchat-shared";
 import {
     nullMembership,
@@ -263,6 +265,9 @@ export function chitEarned(value: TChitEarned): ChitEarned {
 export function chitEarnedReason(value: TChitEarnedReason): ChitEarnedReason {
     if (value === "DailyClaim") {
         return { kind: "daily_claim" };
+    }
+    if (value === "DailyClaimReinstated") {
+        return { kind: "daily_claim_reinstated" };
     }
     if (value === "MemeContestWinner") {
         return { kind: "meme_contest_winner" };
@@ -878,9 +883,17 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
                 return m;
             }, new Map<string, PublicApiKeyDetails>()),
             bitcoinAddress: result.btc_address,
+            streakInsurance: mapOptional(result.streak_insurance, streakInsurance),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${value}`);
+}
+
+function streakInsurance({ days_insured, days_missed }: ApiStreakInsurance): StreakInsurance {
+    return {
+        daysInsured: days_insured,
+        daysMissed: days_missed,
+    };
 }
 
 function messageActivitySummary(value: UserMessageActivitySummary): MessageActivitySummary {
@@ -1056,6 +1069,7 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
             botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
             apiKeysGenerated: value.Success.api_keys_generated.map(publicApiKeyDetails),
             bitcoinAddress: value.Success.btc_address,
+            streakInsurance: optionUpdateV2(result.streak_insurance, streakInsurance),
         };
     }
 

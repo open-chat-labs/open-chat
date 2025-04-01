@@ -54,7 +54,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 129;
+const CACHE_VERSION = 130;
 const EARLIEST_SUPPORTED_MIGRATION = 125;
 const MAX_INDEX = 9999999999;
 
@@ -238,6 +238,7 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     127: clearChatsStore,
     128: clearCommunityDetailsStore,
     129: clearChatsStore,
+    130: clearChatsStore,
 };
 
 async function migrate(
