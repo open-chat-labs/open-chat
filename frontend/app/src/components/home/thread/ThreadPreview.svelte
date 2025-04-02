@@ -113,7 +113,7 @@
                                 {(chat.kind === "group_chat" || chat.kind === "channel") &&
                                     chat.name}
                             </h4>
-                            <LinkButton underline="hover" on:click={selectThread}
+                            <LinkButton underline="hover" onClick={selectThread}
                                 ><Translatable
                                     resourceKey={i18nKey("thread.open")} />&#8594;</LinkButton>
                         </div>
@@ -223,7 +223,7 @@
                                 botContext={evt.event.botContext} />
                         {/each}
                     {/each}
-                    <LinkButton underline="hover" on:click={selectThread}
+                    <LinkButton underline="hover" onClick={selectThread}
                         ><Translatable
                             resourceKey={i18nKey("thread.openThread")} />&#8594;</LinkButton>
                 </div>
