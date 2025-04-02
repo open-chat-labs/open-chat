@@ -409,7 +409,7 @@
                                     id="any_user"
                                     label={i18nKey(`prizes.anyone`)}
                                     bind:checked={anyUser}
-                                    on:change={onAnyUserChecked} />
+                                    onChange={onAnyUserChecked} />
                                 <Checkbox
                                     id="diamond_only"
                                     label={i18nKey(`prizes.onlyDiamond`)}

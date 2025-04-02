@@ -126,7 +126,7 @@
         <Checkbox
             id="history-visible"
             disabled={candidate.public || editing}
-            on:change={() => (candidate.historyVisible = !candidate.historyVisible)}
+            onChange={() => (candidate.historyVisible = !candidate.historyVisible)}
             label={i18nKey("historyVisible")}
             align={"start"}
             checked={candidate.historyVisible}>
@@ -149,7 +149,7 @@
         <Checkbox
             id="disappearing-messages"
             disabled={!canEditDisappearingMessages}
-            on:change={toggleDisappearingMessages}
+            onChange={toggleDisappearingMessages}
             label={i18nKey("disappearingMessages.label")}
             align={"start"}
             checked={disappearingMessages}>
@@ -171,7 +171,7 @@
     <div class="section">
         <Checkbox
             id="visible_to_non_members"
-            on:change={toggleVisibleToNonMembers}
+            onChange={toggleVisibleToNonMembers}
             label={i18nKey("access.messagesVisibleToNonMembers")}
             align={"start"}
             checked={candidate.messagesVisibleToNonMembers}>

@@ -113,7 +113,7 @@
                     <div class="toggle">
                         <Checkbox
                             id={kebab(label)}
-                            on:change={() => client.toggleProposalFilter(id)}
+                            onChange={() => client.toggleProposalFilter(id)}
                             label={i18nKey(label)}
                             checked={!$filteredProposalsStore?.hasFilter(id)} />
                     </div>
@@ -124,7 +124,7 @@
                 <div class="toggle">
                     <Checkbox
                         id={kebab(label)}
-                        on:change={() => client.toggleProposalFilter(id)}
+                        onChange={() => client.toggleProposalFilter(id)}
                         label={i18nKey(label)}
                         checked={!$filteredProposalsStore?.hasFilter(id)} />
                 </div>

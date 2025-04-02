@@ -200,7 +200,7 @@
             <div class="autorenew">
                 <Checkbox
                     id="auto-renew"
-                    on:change={() => (autoRenew = !autoRenew)}
+                    onChange={() => (autoRenew = !autoRenew)}
                     label={i18nKey("upgrade.autorenew")}
                     align={"start"}
                     disabled={selectedDuration === "lifetime"}

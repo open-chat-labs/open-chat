@@ -48,7 +48,7 @@
     <Toggle
         small
         id="enable-rules"
-        on:change={toggleRules}
+        onChange={toggleRules}
         label={i18nKey("rules.enable")}
         checked={rules.enabled} />
     <div class="instructions">
@@ -67,7 +67,7 @@
     {#if editing && rules.enabled}
         <Toggle
             id="new-version"
-            on:change={toggleNewVersion}
+            onChange={toggleNewVersion}
             checked={rules.newVersion && rulesDirty}
             label={i18nKey("rules.promptExistingUsers")}
             disabled={!rulesDirty}

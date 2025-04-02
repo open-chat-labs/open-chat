@@ -127,7 +127,7 @@
                 </Calendar>
                 <Toggle
                     id={"utc-mode"}
-                    on:change={changeMode}
+                    onChange={changeMode}
                     small
                     label={i18nKey("dailyChit.utcMode")}
                     bind:checked={$utcMode} />
@@ -139,13 +139,13 @@
                 <Toggle
                     id={"chit-popup"}
                     small
-                    on:change={() => chitPopup.set(!$chitPopup)}
+                    onChange={() => chitPopup.set(!$chitPopup)}
                     label={i18nKey("learnToEarn.showChitPopup")}
                     checked={$chitPopup} />
                 <Toggle
                     id={"hide-chit-icon"}
                     small
-                    on:change={() => hideChitIcon.set(!$hideChitIcon)}
+                    onChange={() => hideChitIcon.set(!$hideChitIcon)}
                     label={i18nKey("dailyChit.hideWhenClaimed")}
                     checked={$hideChitIcon} />
             </CollapsibleCard>
@@ -155,7 +155,7 @@
     <Toggle
         id={"disable-chit"}
         small
-        on:change={() => disableChit.set(!$disableChit)}
+        onChange={() => disableChit.set(!$disableChit)}
         label={i18nKey("hideChit")}
         checked={$disableChit} />
 </div>

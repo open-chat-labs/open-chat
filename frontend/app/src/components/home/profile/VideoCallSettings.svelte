@@ -34,21 +34,21 @@
 <Toggle
     id={"video-camera"}
     small
-    on:change={() => videoCameraOn.toggle()}
+    onChange={() => videoCameraOn.toggle()}
     label={i18nKey("profile.videoCameraOn")}
     checked={$videoCameraOn} />
 
 <Toggle
     id={"video-mic"}
     small
-    on:change={() => videoMicOn.toggle()}
+    onChange={() => videoMicOn.toggle()}
     label={i18nKey("profile.videoMicOn")}
     checked={$videoMicOn} />
 
 <Toggle
     id={"video-speaker-view"}
     small
-    on:change={() => videoSpeakerView.toggle()}
+    onChange={() => videoSpeakerView.toggle()}
     label={i18nKey("profile.videoSpeakerView")}
     checked={$videoSpeakerView} />
 

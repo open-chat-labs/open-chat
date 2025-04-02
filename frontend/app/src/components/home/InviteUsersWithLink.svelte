@@ -177,7 +177,7 @@
         <Toggle
             id="enable-invite-link"
             small
-            on:change={toggleLink}
+            onChange={toggleLink}
             disabled={loading}
             waiting={loading}
             label={i18nKey("invite.enableLink")}

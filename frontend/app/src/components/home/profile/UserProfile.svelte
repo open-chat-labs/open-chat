@@ -463,7 +463,7 @@
                     <Toggle
                         id={"translation-mode"}
                         small
-                        on:change={() => editmode.set(!$editmode)}
+                        onChange={() => editmode.set(!$editmode)}
                         label={i18nKey("toggleTranslationEditMode")}
                         checked={$editmode} />
                 {/if}
@@ -497,13 +497,13 @@
                     <Toggle
                         id={"enter-send"}
                         small
-                        on:change={() => enterSend.toggle()}
+                        onChange={() => enterSend.toggle()}
                         label={i18nKey("enterToSend")}
                         checked={$enterSend} />
                     <Toggle
                         id={"dclick-reply"}
                         small
-                        on:change={() => dclickReply.toggle()}
+                        onChange={() => dclickReply.toggle()}
                         label={i18nKey(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
                         checked={$dclickReply} />
                     {#if notificationsSupported}
@@ -511,7 +511,7 @@
                             id={"notifications"}
                             small
                             disabled={$notificationStatus === "hard-denied"}
-                            on:change={toggleNotifications}
+                            onChange={toggleNotifications}
                             label={$notificationStatus === "hard-denied"
                                 ? i18nKey("notificationsDisabled")
                                 : i18nKey("enableNotificationsMenu")}
@@ -520,20 +520,20 @@
                     <Toggle
                         id={"low-bandwidth"}
                         small
-                        on:change={() => lowBandwidth.toggle()}
+                        onChange={() => lowBandwidth.toggle()}
                         label={i18nKey("lowBandwidth")}
                         checked={$lowBandwidth} />
                     <Toggle
                         id={"render-previews"}
                         disabled={$lowBandwidth}
                         small
-                        on:change={() => renderPreviews.toggle()}
+                        onChange={() => renderPreviews.toggle()}
                         label={i18nKey("renderPreviews")}
                         checked={$renderPreviews && !$lowBandwidth} />
                     <Toggle
                         id={"hide-blocked"}
                         small
-                        on:change={() => hideMessagesFromDirectBlocked.toggle()}
+                        onChange={() => hideMessagesFromDirectBlocked.toggle()}
                         label={i18nKey("hideBlocked")}
                         checked={$hideMessagesFromDirectBlocked} />
                 </CollapsibleCard>
@@ -557,19 +557,19 @@
                     <Toggle
                         id={"offensive"}
                         small
-                        on:change={() => toggleModerationFlag(ModerationFlags.Offensive)}
+                        onChange={() => toggleModerationFlag(ModerationFlags.Offensive)}
                         label={i18nKey("communities.offensive")}
                         checked={offensiveEnabled} />
                     <Toggle
                         id={"adult"}
                         small
-                        on:change={() => toggleModerationFlag(ModerationFlags.Adult)}
+                        onChange={() => toggleModerationFlag(ModerationFlags.Adult)}
                         label={i18nKey("communities.adult")}
                         checked={adultEnabled} />
                     <Toggle
                         id={"underReview"}
                         small
-                        on:change={() => toggleModerationFlag(ModerationFlags.UnderReview)}
+                        onChange={() => toggleModerationFlag(ModerationFlags.UnderReview)}
                         label={i18nKey("communities.underReview")}
                         checked={underReviewEnabled} />
                 </CollapsibleCard>

@@ -1,15 +1,37 @@
 <script lang="ts">
+    import { createBubbler } from "svelte/legacy";
+
+    const bubble = createBubbler();
     import type { ResourceKey } from "openchat-client";
     import { rtlStore } from "../stores/rtl";
     import Translatable from "./Translatable.svelte";
-    export let checked: boolean = false;
-    export let disabled: boolean = false;
-    export let waiting: boolean = false;
-    export let id: string;
-    export let label: ResourceKey | undefined;
-    export let toggle: boolean = false;
-    export let small: boolean = false; // only applies to toggles
-    export let align: "center" | "start" = "center";
+    import type { Snippet } from "svelte";
+
+    interface Props {
+        checked?: boolean;
+        disabled?: boolean;
+        waiting?: boolean;
+        id: string;
+        label: ResourceKey | undefined;
+        toggle?: boolean;
+        small?: boolean; // only applies to toggles
+        align?: "center" | "start";
+        children?: Snippet;
+        onChange?: () => void;
+    }
+
+    let {
+        checked = $bindable(false),
+        disabled = false,
+        waiting = false,
+        id,
+        label,
+        toggle = false,
+        small = false,
+        align = "center",
+        children,
+        onChange,
+    }: Props = $props();
 </script>
 
 <div
@@ -19,13 +41,11 @@
     class:disabled
     class:rtl={$rtlStore}
     class:align-start={align === "start"}>
-    <input {id} type="checkbox" bind:checked {disabled} on:change />
+    <input {id} type="checkbox" bind:checked {disabled} onchange={onChange} />
     <label class:small for={id}>
-        <slot>
-            {#if label !== undefined}
-                <Translatable resourceKey={label} />
-            {/if}
-        </slot>
+        {#if children}{@render children()}{:else if label !== undefined}
+            <Translatable resourceKey={label} />
+        {/if}
     </label>
 </div>
 
