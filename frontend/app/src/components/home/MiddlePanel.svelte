@@ -11,7 +11,6 @@
         type MultiUserChat,
         selectedChatStore,
         selectedChatId,
-        eventsStore,
         filteredProposalsStore,
         externalBots,
         installedDirectBots,
