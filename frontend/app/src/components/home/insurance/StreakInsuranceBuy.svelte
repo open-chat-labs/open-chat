@@ -26,6 +26,8 @@
 
     const MAX_DAYS = 30;
     const ledger = LEDGER_CANISTER_CHAT;
+    const currentDaysInsured = $streakInsuranceStore.daysInsured;
+    const currentDaysMissed = $streakInsuranceStore.daysMissed;
     let { onClose }: Props = $props();
     let tokenDetails = $derived({
         symbol: $cryptoLookup[ledger],
@@ -36,16 +38,16 @@
     let confirmed = $state(false);
     let refreshingBalance = $state(false);
     let priceE8s = $derived(
-        client.streakInsurancePrice($streakInsuranceStore.daysInsured, additionalDays),
+        client.streakInsurancePrice(currentDaysInsured, additionalDays),
     );
     let price = $derived(priceE8s / 100_000_000n);
     let remainingBalance = $derived(tokenDetails.balance - priceE8s);
     let insufficientBalance = $derived(remainingBalance < 0);
     let paying = $state(false);
     let remaining = $derived(
-        $streakInsuranceStore.daysInsured + additionalDays - $streakInsuranceStore.daysMissed,
+        currentDaysInsured + additionalDays - currentDaysMissed,
     );
-    let totalDays = $derived($streakInsuranceStore.daysInsured + additionalDays);
+    let totalDays = $derived(currentDaysInsured + additionalDays);
     let maxReached = $derived(totalDays >= MAX_DAYS);
 
     function pay() {
@@ -103,7 +105,7 @@
                         ></Translatable>
                     </div>
                     <div class="number">
-                        {$streakInsuranceStore.daysMissed}
+                        {currentDaysMissed}
                     </div>
                 </div>
 
