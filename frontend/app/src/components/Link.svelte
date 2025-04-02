@@ -1,10 +1,26 @@
 <script lang="ts">
-    export let underline: "never" | "always" | "hover" = "never";
+    import type { Snippet } from "svelte";
 
-    let anchorElement: HTMLElement;
+    interface Props {
+        underline?: "never" | "always" | "hover";
+        children?: Snippet;
+        onClick?: () => void;
+    }
 
-    export function getBoundingRect(): DOMRect {
-        return anchorElement.getBoundingClientRect();
+    let { underline = "never", children, onClick }: Props = $props();
+
+    let anchorElement: HTMLElement | undefined;
+
+    export function getBoundingRect(): DOMRect | undefined {
+        return anchorElement?.getBoundingClientRect();
+    }
+
+    function click(e: MouseEvent) {
+        if (onClick) {
+            e.preventDefault();
+            e.stopPropagation();
+            onClick();
+        }
     }
 </script>
 
@@ -14,8 +30,8 @@
     href="/"
     class={underline}
     class:hover={underline === "hover"}
-    on:click|preventDefault|stopPropagation>
-    <slot />
+    onclick={click}>
+    {@render children?.()}
 </a>
 
 <style lang="scss">

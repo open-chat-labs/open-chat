@@ -6,6 +6,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import {
         LEDGER_CANISTER_CHAT,
+        LEDGER_CANISTER_ICP,
         OpenChat,
         cryptoBalance,
         cryptoLookup,
@@ -24,7 +25,9 @@
         onClose: () => void;
     }
 
-    const ledger = LEDGER_CANISTER_CHAT;
+    const MAX_DAYS = 30;
+    const ledger =
+        process.env.NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP;
     let { onClose }: Props = $props();
     let tokenDetails = $derived({
         symbol: $cryptoLookup[ledger],
@@ -44,6 +47,8 @@
     let remaining = $derived(
         $streakInsuranceStore.daysInsured + additionalDays - $streakInsuranceStore.daysMissed,
     );
+    let totalDays = $derived($streakInsuranceStore.daysInsured + additionalDays);
+    let maxReached = $derived(totalDays >= MAX_DAYS);
 
     function pay() {
         paying = true;
@@ -86,7 +91,7 @@
                         ></Translatable>
                     </div>
                     <div class="number">
-                        {$streakInsuranceStore.daysInsured + additionalDays}
+                        {totalDays}
                     </div>
                 </div>
 
@@ -124,7 +129,7 @@
                 <Button disabled={paying} small secondary onClick={onClose}>
                     <Translatable resourceKey={i18nKey("cancel")}></Translatable>
                 </Button>
-                <Button disabled={paying} small onClick={() => (additionalDays += 1)}>
+                <Button disabled={paying || maxReached} small onClick={() => (additionalDays += 1)}>
                     <Translatable resourceKey={i18nKey("streakInsurance.addDay")}></Translatable>
                 </Button>
                 <Button
@@ -181,7 +186,7 @@
         }
 
         .operator {
-            margin-top: $sp5;
+            margin-top: $sp6;
             @include font(light, normal, fs-200);
             color: var(--txt-light);
         }

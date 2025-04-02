@@ -1679,10 +1679,11 @@
     "streakInsurance": {
         "addDay": "Einen Tag hinzufügen",
         "atRisk": "Ihre Serie ist gefährdet",
-        "bought": "Tage gekauft",
+        "bought": "Versicherungstage",
         "failure": "Leider konnten wir die Zahlung für Ihre Streak-Versicherung nicht entgegennehmen.",
         "info": "Um Ihre Serie zu schützen, können Sie eine Gebühr bezahlen, um sich ein Sicherheitsnetz zu schaffen für den Fall, dass Sie aus irgendeinem Grund versehentlich einen Tag verpassen.",
         "infoPopup": "Du kannst deine Serie versichern, indem du eine Anzahl von Tagen wählst. Der Preis im CHAT verdoppelt sich für jeden versicherten Tag. Sei also weiterhin vorsichtig!",
+        "link": "Klicken Sie hier, um eine Streak-Versicherung abzuschließen oder aufzuladen",
         "missed": "Tage verpasst",
         "pay": "Bezahlen Sie {price} CHAT",
         "protected": "Ihre Streak-Versicherung hat Sie bisher vor {missed} verpassten Tagen geschützt!",

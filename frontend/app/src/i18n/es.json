@@ -1679,10 +1679,11 @@
     "streakInsurance": {
         "addDay": "Añadir un día",
         "atRisk": "Tu racha está en riesgo",
-        "bought": "días comprados",
+        "bought": "días asegurados",
         "failure": "Lo sentimos, pero no pudimos aceptar el pago de su seguro de raya.",
         "info": "Para proteger tu racha puedes pagar una tarifa que te brindará una red de seguridad en caso de que pierdas accidentalmente algún día por cualquier motivo.",
         "infoPopup": "Puedes asegurar tu racha eligiendo el número de días que deseas proteger. El precio en CHAT se duplica por cada día que elijas asegurar, así que sigue siendo importante tener cuidado.",
+        "link": "Haga clic aquí para comprar o recargar el seguro de racha",
         "missed": "días perdidos",
         "pay": "Pagar {price} CHAT",
         "protected": "¡Tu seguro de racha te ha protegido de {missed} días perdidos hasta ahora!",

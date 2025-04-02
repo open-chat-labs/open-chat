@@ -36,14 +36,14 @@
     </div>
     <div class="action">
         <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
-        <Link on:click={onCopy}>
+        <Link onClick={onCopy}>
             <Translatable resourceKey={i18nKey("copy")} />
         </Link>
     </div>
     {#if canShare()}
         <div class="action">
             <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
-            <Link on:click={onShare}>
+            <Link onClick={onShare}>
                 <Translatable resourceKey={i18nKey("share")} />
             </Link>
         </div>
