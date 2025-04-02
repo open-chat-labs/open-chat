@@ -188,11 +188,12 @@
       "type": "custom",
       "wasm": ""
     },
-    "test_ledger": {
+    "test_chat_ledger": {
       "build": "",
       "candid": "",
       "type": "custom",
-      "wasm": "./wasms/icrc_ledger.wasm.gz"
+      "wasm": "./wasms/icrc_ledger.wasm.gz",
+      "specified_id": "2ouva-viaaa-aaaaq-aaamq-cai"
     }
   },
   "networks": {
