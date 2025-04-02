@@ -9,6 +9,8 @@ import {
     RegistryAddRemoveSwapProviderArgs,
     RegistryAddRemoveSwapProviderResponse,
     RegistryRemoveMessageFilterArgs,
+    RegistrySetAirdropConfigArgs,
+    RegistrySetAirdropConfigResponse,
     RegistrySetTokenEnabledArgs,
     RegistrySetTokenEnabledResponse,
     RegistryUpdatesArgs,
@@ -77,6 +79,19 @@ export class RegistryClient extends MsgpackCanisterAgent {
             RegistryRemoveMessageFilterArgs,
             RegistryAddMessageFilterResponse,
         );
+    }
+
+    setAirdropConfig(channelId: number, channelName: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "set_airdrop_config",
+            {
+                channel_id: BigInt(channelId),
+                channel_name: channelName,
+            },
+            (resp) => resp === "Success",
+            RegistrySetAirdropConfigArgs,
+            RegistrySetAirdropConfigResponse,
+        )
     }
 
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {

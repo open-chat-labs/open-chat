@@ -318,6 +318,7 @@ export type WorkerRequest =
     | AddRemoveSwapProvider
     | AddMessageFilter
     | RemoveMessageFilter
+    | SetAirdropConfig
     | SetTokenEnabled
     | SuspendUser
     | UnsuspendUser
@@ -1286,6 +1287,12 @@ type RemoveMessageFilter = {
     kind: "removeMessageFilter";
 };
 
+type SetAirdropConfig = {
+    channelId: number;
+    channelName: string;
+    kind: "setAirdropConfig";
+};
+
 type SetTokenEnabled = {
     ledger: string;
     enabled: boolean;
@@ -2203,6 +2210,8 @@ export type WorkerResult<T> = T extends Init
     : T extends AddMessageFilter
     ? boolean
     : T extends RemoveMessageFilter
+    ? boolean
+    : T extends SetAirdropConfig
     ? boolean
     : T extends SetTokenEnabled
     ? boolean

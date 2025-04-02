@@ -1063,6 +1063,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.removeMessageFilter(payload.id));
                 break;
 
+            case "setAirdropConfig":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setAirdropConfig(payload.channelId, payload.channelName),
+                );
+                break;
+
             case "setTokenEnabled":
                 executeThenReply(
                     payload,

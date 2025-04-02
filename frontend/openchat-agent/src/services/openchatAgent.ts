@@ -3637,6 +3637,10 @@ export class OpenChatAgent extends EventTarget {
         return this._registryClient.removeMessageFilter(id);
     }
 
+    setAirdropConfig(channelId: number, channelName: string): Promise<boolean> {
+        return this._registryClient.setAirdropConfig(channelId, channelName);
+    }
+
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
         return this._registryClient.setTokenEnabled(ledger, enabled);
     }
