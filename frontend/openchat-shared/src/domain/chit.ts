@@ -26,6 +26,10 @@ export type DailyClaim = {
     kind: "daily_claim";
 };
 
+export type DailyClaimReinstated = {
+    kind: "daily_claim_reinstated";
+};
+
 export type MemeContestWinner = {
     kind: "meme_contest_winner";
 };
@@ -107,6 +111,7 @@ export type ReferralType = {
 
 export type ChitEarnedReason =
     | DailyClaim
+    | DailyClaimReinstated
     | MemeContestWinner
     | AchievementUnlocked
     | ReferralType
@@ -149,3 +154,5 @@ export type ExternalAchievement = {
     expires: bigint;
     budgetExhausted: boolean;
 };
+
+export type PayForStreakInsuranceResponse = "success" | "failure";

@@ -35,9 +35,9 @@
             {#snippet body()}
                 <span>
                     We are experiencing ongoing issues at the moment as described
-                    <Link underline={"hover"} on:click={showMessage}>here</Link>. We are working
-                    hard to resolve them as soon as possible but you may experience some disruption
-                    in the meantime.
+                    <Link underline={"hover"} onClick={showMessage}>here</Link>. We are working hard
+                    to resolve them as soon as possible but you may experience some disruption in
+                    the meantime.
                 </span>
             {/snippet}
             {#snippet footer()}
