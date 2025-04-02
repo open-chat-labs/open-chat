@@ -13,7 +13,7 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { getContext } from "svelte";
     import type { VideoCallChat } from "./callChat";
-    import MenuIcon from "../../MenuIconLegacy.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItemLegacy.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -78,12 +78,12 @@
 {#if $mobileWidth}
     {#if $activeVideoCall?.status === "joined"}
         <MenuIcon position={"bottom"} align={"end"}>
-            <div slot="icon">
+            {#snippet menuIcon()}
                 <HoverIcon title={$_("chatMenu")}>
                     <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
-            </div>
-            <div slot="menu">
+            {/snippet}
+            {#snippet menuItems()}
                 <Menu>
                     {#if !$hasPresence}
                         <MenuItem onclick={onAskToSpeak}>
@@ -128,7 +128,7 @@
                         <Translatable slot="text" resourceKey={i18nKey("videoCall.leave")} />
                     </MenuItem>
                 </Menu>
-            </div>
+            {/snippet}
         </MenuIcon>
     {/if}
 {:else}

@@ -2,24 +2,28 @@
     import type { NamedAccount } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import MenuIcon from "../../MenuIconLegacy.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItemLegacy.svelte";
+    import MenuItem from "../../MenuItem.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
-    export let accounts: NamedAccount[];
-    export let targetAccount: string;
+    interface Props {
+        accounts: NamedAccount[];
+        targetAccount: string;
+    }
 
-    let selectedName: string | undefined = undefined;
-    let menuIcon: MenuIcon;
+    let { accounts, targetAccount = $bindable() }: Props = $props();
 
-    $: {
+    let selectedName: string | undefined = $state(undefined);
+    let menuIconEl: MenuIcon | undefined = $state();
+
+    $effect(() => {
         selectedName = accounts.find((a) => {
             return a.account.toLowerCase() === targetAccount.toLowerCase();
         })?.name;
-    }
+    });
 
     function collapseAccount(account: string) {
         if (account.length > 23) {
@@ -32,36 +36,39 @@
         targetAccount = namedAccount.account;
     }
 
-    function showMenu() {
-        menuIcon.showMenu();
+    function showMenu(e: Event) {
+        e.stopPropagation();
+        menuIconEl?.showMenu();
     }
 </script>
 
-<div role="combobox" tabindex="0" class="selected" on:click|stopPropagation={showMenu}>
+<div role="combobox" tabindex="0" class="selected" onclick={showMenu}>
     <div class="name">
         <Translatable resourceKey={i18nKey(selectedName ?? "tokenTransfer.chooseAddress")} />
     </div>
     <div class="icon">
-        <MenuIcon bind:this={menuIcon} position={$mobileWidth ? "top" : "bottom"} align={"end"}>
-            <div slot="icon">
+        <MenuIcon bind:this={menuIconEl} position={$mobileWidth ? "top" : "bottom"} align={"end"}>
+            {#snippet menuIcon()}
                 <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
-            </div>
-            <div slot="menu">
+            {/snippet}
+            {#snippet menuItems()}
                 <Menu>
                     {#each accounts as namedAccount}
                         <MenuItem unpadded onclick={() => selectAccount(namedAccount)}>
-                            <div slot="text" class="named-account">
-                                <div class="name">
-                                    {namedAccount.name}
+                            {#snippet text()}
+                                <div class="named-account">
+                                    <div class="name">
+                                        {namedAccount.name}
+                                    </div>
+                                    <div class="account">
+                                        {collapseAccount(namedAccount.account)}
+                                    </div>
                                 </div>
-                                <div class="account">
-                                    {collapseAccount(namedAccount.account)}
-                                </div>
-                            </div>
+                            {/snippet}
                         </MenuItem>
                     {/each}
                 </Menu>
-            </div>
+            {/snippet}
         </MenuIcon>
     </div>
 </div>

@@ -20,10 +20,10 @@
         dark: Theme[];
     };
 
-    let partitionedThemes: PartitionedThemes = {
+    let partitionedThemes: PartitionedThemes = $state({
         light: [],
         dark: [],
-    };
+    });
 
     onMount(() => {
         partitionedThemes = Object.values(themes).reduce((p, theme) => {
@@ -41,12 +41,12 @@
         partitionedThemes.dark.sort((a, b) => a.label.localeCompare(b.label));
     });
 
-    function selectLightTheme(ev: CustomEvent<string>) {
-        preferredLightThemeName.set(ev.detail);
+    function selectLightTheme(name: string) {
+        preferredLightThemeName.set(name);
     }
 
-    function selectDarkTheme(ev: CustomEvent<string>) {
-        preferredDarkThemeName.set(ev.detail);
+    function selectDarkTheme(name: string) {
+        preferredDarkThemeName.set(name);
     }
 </script>
 
@@ -64,13 +64,13 @@
 <div class="theme-selection">
     <ThemeButton
         align={"start"}
-        on:select={selectLightTheme}
+        onSelect={selectLightTheme}
         label={i18nKey("theme.preferredLightTheme")}
         theme={$preferredLightTheme}
         otherThemes={partitionedThemes.light} />
     <ThemeButton
         align={"end"}
-        on:select={selectDarkTheme}
+        onSelect={selectDarkTheme}
         label={i18nKey("theme.preferredDarkTheme")}
         theme={$preferredDarkTheme}
         otherThemes={partitionedThemes.dark} />
