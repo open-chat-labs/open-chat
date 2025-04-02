@@ -164,7 +164,7 @@
 <div role="button" class="activity-event" class:selected tabindex="0" on:click>
     <div class="header">
         <div class="name">
-            <Link on:click={goToEventContext}>{chatName}</Link>
+            <Link onClick={goToEventContext}>{chatName}</Link>
         </div>
         <div class="date">
             {client.formatMessageDate(event.timestamp, $_("today"), $_("yesterday"), true, true)}

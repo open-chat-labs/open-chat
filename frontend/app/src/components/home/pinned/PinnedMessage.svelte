@@ -73,7 +73,7 @@
             class:rtl={$rtlStore}>
             {#if !deleted}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
-                    <Link underline={"never"} on:click={openUserProfile}>
+                    <Link underline={"never"} onClick={openUserProfile}>
                         <h4 class="username" class:fill class:crypto>{username}</h4>
                     </Link>
                 </div>

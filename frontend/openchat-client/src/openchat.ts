@@ -413,6 +413,7 @@ import type {
     CkbtcMinterDepositInfo,
     CkbtcMinterWithdrawalInfo,
     WithdrawBtcResponse,
+    PayForStreakInsuranceResponse,
 } from "openchat-shared";
 import {
     Stream,
@@ -5995,6 +5996,7 @@ export class OpenChat extends EventTarget {
                 chatsResponse.state.messageActivitySummary,
                 chatsResponse.state.installedBots,
                 chatsResponse.state.apiKeys,
+                chatsResponse.state.streakInsurance,
             );
 
             const selectedChatId = this.#liveState.selectedChatId;
@@ -8891,6 +8893,39 @@ export class OpenChat extends EventTarget {
                     openStorageIndexCanister: this.config.openStorageIndexCanister,
                     icHost: this.config.icUrl ?? window.location.origin,
                 };
+            });
+    }
+
+    streakInsurancePrice(daysInsured: number, additionalDays: number): bigint {
+        let total = 0n;
+        for (let i = 0; i < additionalDays; i++) {
+            total += 2n ** BigInt(daysInsured + i) * 100_000_000n;
+        }
+        return total;
+    }
+
+    payForStreakInsurance(
+        additionalDays: number,
+        expectedPrice: bigint,
+    ): Promise<PayForStreakInsuranceResponse> {
+        return this.#sendRequest({
+            kind: "payForStreakInsurance",
+            additionalDays,
+            expectedPrice,
+        })
+            .then((resp) => {
+                if (resp === "success") {
+                    localGlobalUpdates.updateStreakInsurance({
+                        ...this.#liveState.serverStreakInsurance,
+                        daysInsured:
+                            this.#liveState.serverStreakInsurance.daysInsured + additionalDays,
+                    });
+                }
+                return resp;
+            })
+            .catch((err) => {
+                console.log("Failed to pay for streak insurance: ", err);
+                return "failure";
             });
     }
 }

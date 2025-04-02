@@ -13,17 +13,15 @@
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
-    import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Progress from "../../Progress.svelte";
     import ExternalLink from "../../landingpages/ExternalLink.svelte";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { now } from "../../../stores/time";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
     const enabled = new Set<string>([
         "streak_3",
@@ -265,7 +263,7 @@
                             })} />
                     </Progress>
                 </div>
-                <Button small onClick={() => dispatch("close")}>
+                <Button small onClick={onClose}>
                     <Translatable resourceKey={i18nKey("close")} />
                 </Button>
             </span>

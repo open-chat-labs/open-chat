@@ -266,7 +266,7 @@
                 <span class="footer" class:selected={selectedGif !== undefined}>
                     {#if selectedGif !== undefined}
                         <span class="close">
-                            <Link underline={"always"} on:click={clearSelectedGif}>
+                            <Link underline={"always"} onClick={clearSelectedGif}>
                                 <Translatable resourceKey={i18nKey("backToResults")} />
                             </Link>
                         </span>
