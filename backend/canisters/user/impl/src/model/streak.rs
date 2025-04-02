@@ -28,10 +28,6 @@ impl Streak {
         self.start_day = start_day;
     }
 
-    pub fn end_day(&self) -> u16 {
-        self.end_day
-    }
-
     pub fn days(&self, now: TimestampMillis) -> u16 {
         if let Some(today) = Streak::timestamp_to_day(now) {
             if !self.is_new_streak(today) {
