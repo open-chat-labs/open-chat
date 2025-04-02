@@ -444,7 +444,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
 @mixin message-list() {
     flex: auto;
     background-color: var(--panel-bg);
-    padding: $sp3 $sp4;
+    padding: $sp3 $sp4 0 $sp4;
     overflow-x: hidden;
     overscroll-behavior-y: contain;
     position: relative;
