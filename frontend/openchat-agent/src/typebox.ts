@@ -5128,6 +5128,7 @@ export const UserSaveCryptoAccountResponse = Type.Union([
 export type UserPayForStreakInsuranceResponse = Static<typeof UserPayForStreakInsuranceResponse>;
 export const UserPayForStreakInsuranceResponse = Type.Union([
     Type.Literal("Success"),
+    Type.Literal("NoActiveStreak"),
     Type.Object({
         IncorrectPrice: Type.BigInt(),
     }),

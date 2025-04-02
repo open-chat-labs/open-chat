@@ -14,6 +14,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
+    NoActiveStreak,
     IncorrectPrice(u128),
     PaymentAlreadyInProgress,
     PaymentFailed(String),

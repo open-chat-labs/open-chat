@@ -37,8 +37,12 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         let (chit_events, _) = state.data.chit_events.events(None, None, 0, 200, false);
         let claims: Vec<_> = chit_events
             .into_iter()
-            .filter(|e| matches!(e.reason, ChitEarnedReason::DailyClaim))
-            .map(|c| (Streak::timestamp_to_day(c.timestamp), c))
+            .filter_map(|e| match e.reason {
+                ChitEarnedReason::DailyClaim => Some((e.timestamp, true)),
+                ChitEarnedReason::DailyClaimReinstated => Some((e.timestamp, false)),
+                _ => None,
+            })
+            .map(|(ts, manual_claim)| (Streak::timestamp_to_day(ts), manual_claim))
             .collect();
 
         build_json_response(&claims)
