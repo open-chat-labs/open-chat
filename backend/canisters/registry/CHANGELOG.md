@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+- Expose airdrop config in metrics ([#7720](https://github.com/open-chat-labs/open-chat/pull/7720))
 
 ## [[2.0.1660](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1660-registry)] - 2025-03-21
 

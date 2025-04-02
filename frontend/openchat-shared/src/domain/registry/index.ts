@@ -1,6 +1,7 @@
 import type { ChannelIdentifier } from "../chat";
 import type { CryptocurrencyDetails, NervousSystemSummary } from "../crypto";
 import type { DexId } from "../dexes";
+import type { OptionUpdate } from "../optionUpdate";
 
 export type RegistryUpdatesResponse =
     | RegistryUpdatesResponseSuccess
@@ -19,7 +20,7 @@ export type RegistryValue = {
     nervousSystemSummary: NervousSystemSummary[];
     swapProviders: DexId[];
     messageFilters: MessageFilterSummary[];
-    currentAirdropChannel: AirdropChannelDetails;
+    currentAirdropChannel: AirdropChannelDetails | undefined;
 };
 
 export type RegistryUpdatesResponseSuccess = {
@@ -30,7 +31,7 @@ export type RegistryUpdatesResponseSuccess = {
     swapProviders: DexId[] | undefined;
     messageFiltersAdded: MessageFilterSummary[];
     messageFiltersRemoved: bigint[];
-    currentAirdropChannel: AirdropChannelDetails;
+    currentAirdropChannel: OptionUpdate<AirdropChannelDetails>;
 };
 
 export type RegistryUpdatesResponseSuccessNoUpdates = {

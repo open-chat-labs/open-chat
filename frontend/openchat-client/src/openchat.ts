@@ -5762,6 +5762,10 @@ export class OpenChat extends EventTarget {
         return this.#sendRequest({ kind: "setDiamondMembershipFees", fees }).catch(() => false);
     }
 
+    setAirdropConfig(channelId: number, channelName: string): Promise<boolean> {
+        return this.#sendRequest({ kind: "setAirdropConfig", channelId, channelName });
+    }
+
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
         return this.#sendRequest({ kind: "setTokenEnabled", ledger, enabled });
     }

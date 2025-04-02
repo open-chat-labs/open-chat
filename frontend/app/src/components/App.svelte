@@ -178,6 +178,7 @@
             setCommunityUpgradeConcurrency,
             setUserUpgradeConcurrency,
             markLocalGroupIndexFull,
+            setAirdropConfig,
             setDiamondMembershipFees,
             setTokenEnabled,
             stakeNeuronForSubmittingProposals,
@@ -397,6 +398,16 @@
                 console.log("LocalGroupIndex marked as full", full);
             } else {
                 console.log("Failed to mark LocalGroupIndex as full", full);
+            }
+        });
+    }
+
+    function setAirdropConfig(channelId: number, channelName: string): void {
+        client.setAirdropConfig(channelId, channelName).then((success) => {
+            if (success) {
+                console.log("Airdrop config set");
+            } else {
+                console.log("Failed to set airdrop config");
             }
         });
     }

@@ -3342,7 +3342,7 @@ export class OpenChatAgent extends EventTarget {
                                 ...(current?.messageFilters ?? []),
                                 ...updates.messageFiltersAdded,
                             ].filter((f) => !updates.messageFiltersRemoved.includes(f.id)),
-                            currentAirdropChannel: updates.currentAirdropChannel,
+                            currentAirdropChannel: applyOptionUpdate(current?.currentAirdropChannel, updates.currentAirdropChannel),
                         };
                         setCachedRegistry(updated);
                         this._registryValue = updated;
@@ -3635,6 +3635,10 @@ export class OpenChatAgent extends EventTarget {
 
     removeMessageFilter(id: bigint): Promise<boolean> {
         return this._registryClient.removeMessageFilter(id);
+    }
+
+    setAirdropConfig(channelId: number, channelName: string): Promise<boolean> {
+        return this._registryClient.setAirdropConfig(channelId, channelName);
     }
 
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
