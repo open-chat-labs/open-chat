@@ -4,7 +4,7 @@
     interface Props {
         underline?: "never" | "always" | "hover";
         children?: Snippet;
-        onClick?: () => void;
+        onClick?: (e: MouseEvent) => void;
     }
 
     let { underline = "never", children, onClick }: Props = $props();
@@ -19,7 +19,7 @@
         if (onClick) {
             e.preventDefault();
             e.stopPropagation();
-            onClick();
+            onClick(e);
         }
     }
 </script>
