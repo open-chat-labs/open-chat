@@ -6,7 +6,6 @@
     import ModalContent from "../../ModalContent.svelte";
     import {
         LEDGER_CANISTER_CHAT,
-        LEDGER_CANISTER_ICP,
         OpenChat,
         cryptoBalance,
         cryptoLookup,
@@ -26,8 +25,7 @@
     }
 
     const MAX_DAYS = 30;
-    const ledger =
-        process.env.NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP;
+    const ledger = LEDGER_CANISTER_CHAT;
     let { onClose }: Props = $props();
     let tokenDetails = $derived({
         symbol: $cryptoLookup[ledger],
