@@ -77,7 +77,7 @@
         <ActivityEvent
             event={item}
             selected={selectedEvent === item}
-            on:click={() => selectEvent(item)} />
+            onClick={() => selectEvent(item)} />
     </VirtualList>
 </div>
 

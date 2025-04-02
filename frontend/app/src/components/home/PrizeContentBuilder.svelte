@@ -28,11 +28,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import {
-        currentUser as user,
-        cryptoBalance as cryptoBalanceStore,
-        cryptoLookup,
-    } from "openchat-client";
+    import { cryptoBalance as cryptoBalanceStore, cryptoLookup } from "openchat-client";
     import Checkbox from "../Checkbox.svelte";
     import Select from "../Select.svelte";
 
@@ -314,7 +310,7 @@
             <form>
                 <div class="body" class:zero={zero || toppingUp}>
                     {#if zero || toppingUp}
-                        <AccountInfo {ledger} user={$user} />
+                        <AccountInfo {ledger} />
                         {#if zero}
                             <p>
                                 <Translatable

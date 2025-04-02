@@ -13,8 +13,12 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let community: CommunitySummary;
-    export let canMarkAllRead: boolean;
+    interface Props {
+        community: CommunitySummary;
+        canMarkAllRead: boolean;
+    }
+
+    let { community, canMarkAllRead }: Props = $props();
 
     function showCommunityMembers() {
         rightPanelHistory.set([{ kind: "show_community_members" }]);
@@ -26,7 +30,7 @@
     <div
         role="button"
         tabindex="0"
-        on:click={showCommunityMembers}
+        onclick={showCommunityMembers}
         class="current-selection"
         class:rtl={$rtlStore}>
         <div class="avatar">
@@ -51,7 +55,7 @@
         </div>
     </div>
     <span class="menu">
-        <CommunityMenu on:markAllRead {canMarkAllRead} {community} />
+        <CommunityMenu {canMarkAllRead} {community} />
     </span>
 </SectionHeader>
 

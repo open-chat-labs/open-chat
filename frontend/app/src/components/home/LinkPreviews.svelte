@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import Tweet from "./Tweet.svelte";
     import YouTubePreview from "./YouTubePreview.svelte";
     import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import type { OpenChat } from "openchat-client";
-    import GenericPreview from "./GenericPreview.svelte";
+    import GenericPreviewComponent from "./GenericPreview.svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { rtlStore } from "../../stores/rtl";
@@ -37,24 +37,21 @@
     };
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let links: string[];
-    export let intersecting: boolean;
-    export let pinned: boolean;
-    export let fill: boolean;
-    export let me: boolean;
+    interface Props {
+        links: string[];
+        intersecting: boolean;
+        pinned: boolean;
+        fill: boolean;
+        me: boolean;
+        onRemove?: (url: string) => void;
+    }
+
+    let { links, intersecting, pinned, fill, me, onRemove }: Props = $props();
 
     let list: HTMLElement | null | undefined = undefined;
-    let previousLinks: string[] = [];
-    let previews: Preview[] = [];
-
-    $: {
-        if (!arraysAreEqual(previousLinks, links)) {
-            previews = links.map(buildPreview);
-            previousLinks = links;
-        }
-    }
+    let previousLinks: string[] = $state([]);
+    let previews: Preview[] = $state([]);
 
     function arraysAreEqual(a: string[], b: string[]) {
         if (a.length !== b.length) {
@@ -137,9 +134,15 @@
 
     function removePreview(preview: Preview | undefined) {
         if (preview) {
-            dispatch("remove", preview.url);
+            onRemove?.(preview.url);
         }
     }
+    $effect(() => {
+        if (!arraysAreEqual(previousLinks, links)) {
+            previews = links.map(buildPreview);
+            previousLinks = links;
+        }
+    });
 </script>
 
 {#each previews as preview (preview.url)}
@@ -150,7 +153,7 @@
         class:me>
         {#if me}
             <div class="remove-wrapper" class:rtl={$rtlStore}>
-                <div class="remove" on:click={() => removePreview(preview)}>
+                <div class="remove" onclick={() => removePreview(preview)}>
                     <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
                 </div>
             </div>
@@ -172,7 +175,7 @@
                     fill={fill && previews.length === 1}
                     matches={preview.regexMatch} />
             {:else}
-                <GenericPreview
+                <GenericPreviewComponent
                     url={preview.url}
                     {intersecting}
                     on:imageLoaded={(ev) => adjustScroll(ev.detail)}

@@ -3,7 +3,6 @@
     import { fade } from "svelte/transition";
     import {
         AvatarSize,
-        type CreatedUser,
         type Message,
         type EnhancedReplyContext,
         type Dimensions,
@@ -22,6 +21,7 @@
         currentChatBlockedUsers,
         type BotMessageContext as BotMessageContextType,
         ephemeralMessages,
+        currentUser,
     } from "openchat-client";
     import { isTouchOnlyDevice } from "../../utils/devices";
     import EmojiPicker from "./EmojiPicker.svelte";
@@ -75,7 +75,6 @@
     interface Props {
         chatId: ChatIdentifier;
         chatType: ChatType;
-        user: CreatedUser;
         sender: UserSummary | undefined;
         msg: Message;
         me: boolean;
@@ -112,12 +111,17 @@
         supportsReply: boolean;
         onReplyTo?: (replyContext: EnhancedReplyContext) => void;
         onEditMessage?: () => void;
+        onCollapseMessage?: () => void;
+        onRetrySend?: () => void;
+        onInitiateThread?: () => void;
+        onDeleteFailedMessage?: () => void;
+        onRemovePreview?: (url: string) => void;
+        onGoToMessageIndex?: (args: { index: number }) => void;
     }
 
     let {
         chatId,
         chatType,
-        user,
         sender,
         msg,
         me,
@@ -153,6 +157,12 @@
         supportsReply,
         onReplyTo,
         onEditMessage,
+        onCollapseMessage,
+        onRetrySend,
+        onInitiateThread,
+        onDeleteFailedMessage,
+        onRemovePreview,
+        onGoToMessageIndex,
     }: Props = $props();
 
     let msgElement: HTMLElement | undefined;
@@ -231,9 +241,9 @@
         publish("replyPrivatelyTo", createReplyContext());
     }
 
-    function cancelReminder(ev: CustomEvent<MessageReminderCreatedContent>) {
+    function cancelReminder(content: MessageReminderCreatedContent) {
         client
-            .cancelMessageReminder(msg.messageId, { ...ev.detail, hidden: true })
+            .cancelMessageReminder(msg.messageId, { ...content, hidden: true })
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(i18nKey("reminders.cancelSuccess"));
@@ -263,10 +273,6 @@
         tipping = ledger;
     }
 
-    function onTipMessage(ev: CustomEvent<string>) {
-        tipMessage(ev.detail);
-    }
-
     function selectReaction(ev: CustomEvent<string>) {
         toggleReaction(false, ev.detail);
     }
@@ -277,19 +283,19 @@
 
     function toggleReaction(isQuickReaction: boolean, reaction: string) {
         if (canReact) {
-            const kind = client.containsReaction(user.userId, reaction, msg.reactions)
+            const kind = client.containsReaction($currentUser.userId, reaction, msg.reactions)
                 ? "remove"
                 : "add";
 
             client
                 .selectReaction(
                     chatId,
-                    user.userId,
+                    $currentUser.userId,
                     threadRootMessageIndex,
                     msg.messageId,
                     reaction,
-                    user.username,
-                    user.displayName,
+                    $currentUser.username,
+                    $currentUser.displayName,
                     kind,
                 )
                 .then((success) => {
@@ -444,7 +450,7 @@
     );
     let undeleting = $derived($undeletingMessagesStore.has(msg.messageId));
     let deletedByMe = $derived(
-        msg.content.kind === "deleted_content" && msg.content.deletedBy == user.userId,
+        msg.content.kind === "deleted_content" && msg.content.deletedBy == $currentUser.userId,
     );
     let permanentlyDeleted = $derived(
         deletedByMe &&
@@ -476,12 +482,7 @@
 {/if}
 
 {#if tipping !== undefined}
-    <TipBuilder
-        ledger={tipping}
-        onClose={() => (tipping = undefined)}
-        {msg}
-        {messageContext}
-        {user} />
+    <TipBuilder ledger={tipping} onClose={() => (tipping = undefined)} {msg} {messageContext} />
 {/if}
 
 {#if showEmojiPicker && canReact}
@@ -535,282 +536,287 @@
                     finalised={botContext.finalised} />
             </div>
         {/if}
-        <IntersectionObserverComponent let:intersecting>
-            <div
-                bind:this={msgElement}
-                class="message"
-                class:me
-                data-index={failed ? "" : msg.messageIndex}
-                data-id={failed ? "" : msg.messageId}
-                id={failed ? "" : `event-${eventIndex}`}>
-                {#if showAvatar}
-                    <div class="avatar-col">
-                        {#if first}
-                            <!-- svelte-ignore a11y_click_events_have_key_events -->
-                            <!-- svelte-ignore a11y_no_static_element_interactions -->
-                            <div class="avatar" onclick={openUserProfile}>
-                                <Avatar
-                                    url={client.userAvatarUrl(sender)}
-                                    userId={msg.sender}
-                                    bot={sender?.kind === "bot"}
-                                    size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
-                            </div>
-                        {/if}
-                    </div>
-                {/if}
-
+        <IntersectionObserverComponent>
+            {#snippet children(intersecting)}
                 <div
-                    bind:this={msgBubbleWrapperElement}
-                    class="bubble-wrapper"
-                    style={`--max-width: ${maxWidthFraction * 100}%; ${
-                        msgBubbleCalculatedWidth !== undefined
-                            ? `flex: 0 0 ${msgBubbleCalculatedWidth}px`
-                            : undefined
-                    }`}
-                    class:p2pSwap={isP2PSwap}
-                    class:proposal={isProposal && !inert}>
-                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                    <div
-                        bind:this={msgBubbleElement}
-                        ondblclick={doubleClickMessage}
-                        use:longpress={() => messageMenu?.showMenu()}
-                        class="message-bubble"
-                        class:focused
-                        class:editing
-                        class:fill={fill && !inert}
-                        class:me
-                        class:inert
-                        class:collapsed
-                        class:first
-                        class:last
-                        class:readByMe
-                        class:crypto
-                        class:failed
-                        class:bot={botContext !== undefined}
-                        class:thread={inThread}
-                        class:rtl={$rtlStore}>
-                        {#if first && !isProposal && !isPrize}
-                            <div class="sender" class:fill class:rtl={$rtlStore}>
-                                <Link underline={"never"} onClick={openUserProfile}>
-                                    <h4 class="username" class:fill class:crypto>
-                                        {senderDisplayName}
-                                    </h4>
-                                    <Badges
-                                        uniquePerson={sender?.isUniquePerson}
-                                        diamondStatus={sender?.diamondStatus}
-                                        streak={client.getStreak(sender?.userId)} />
-                                    {#if sender !== undefined && multiUserChat}
-                                        <WithRole
-                                            userId={sender.userId}
-                                            chatMembers={$chatMembersMap}
-                                            communityMembers={$communityMembers}
-                                            let:chatRole
-                                            let:communityRole>
-                                            <RoleIcon
-                                                level="community"
-                                                popup
-                                                role={communityRole} />
-                                            <RoleIcon
-                                                level={chatType === "channel" ? "channel" : "group"}
-                                                popup
-                                                role={chatRole} />
-                                        </WithRole>
-                                    {/if}
-                                </Link>
-                                {#if senderTyping}
-                                    <span class="typing">
-                                        <Typing />
-                                    </span>
-                                {/if}
-                            </div>
-                        {/if}
-                        {#if msg.forwarded}
-                            <div class="forwarded">
-                                <div>
-                                    <ForwardIcon
-                                        size={$iconSize}
-                                        color={me
-                                            ? "var(--currentChat-msg-me-muted)"
-                                            : "var(--currentChat-msg-muted)"} />
+                    bind:this={msgElement}
+                    class="message"
+                    class:me
+                    data-index={failed ? "" : msg.messageIndex}
+                    data-id={failed ? "" : msg.messageId}
+                    id={failed ? "" : `event-${eventIndex}`}>
+                    {#if showAvatar}
+                        <div class="avatar-col">
+                            {#if first}
+                                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                <div class="avatar" onclick={openUserProfile}>
+                                    <Avatar
+                                        url={client.userAvatarUrl(sender)}
+                                        userId={msg.sender}
+                                        bot={sender?.kind === "bot"}
+                                        size={$mobileWidth
+                                            ? AvatarSize.Small
+                                            : AvatarSize.Default} />
                                 </div>
-                                <div class="text">{"Forwarded"}</div>
-                            </div>
-                        {/if}
-                        {#if msg.repliesTo !== undefined && !inert}
-                            {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                                <RepliesTo
-                                    {readonly}
-                                    {chatId}
-                                    {intersecting}
-                                    on:goToMessageIndex
-                                    repliesTo={msg.repliesTo} />
-                            {:else}
-                                <UnresolvedReply />
                             {/if}
-                        {/if}
+                        </div>
+                    {/if}
 
-                        <ChatMessageContent
-                            senderId={msg.sender}
-                            {readonly}
-                            {fill}
-                            {me}
-                            {messageContext}
-                            {collapsed}
-                            {undeleting}
-                            {intersecting}
-                            {failed}
-                            {timestamp}
-                            messageIndex={msg.messageIndex}
-                            messageId={msg.messageId}
-                            myUserId={user.userId}
-                            content={msg.content}
-                            {edited}
-                            height={mediaCalculatedHeight}
-                            blockLevelMarkdown={msg.blockLevelMarkdown}
-                            on:removePreview
-                            on:registerVote={registerVote}
-                            {onExpandMessage} />
+                    <div
+                        bind:this={msgBubbleWrapperElement}
+                        class="bubble-wrapper"
+                        style={`--max-width: ${maxWidthFraction * 100}%; ${
+                            msgBubbleCalculatedWidth !== undefined
+                                ? `flex: 0 0 ${msgBubbleCalculatedWidth}px`
+                                : undefined
+                        }`}
+                        class:p2pSwap={isP2PSwap}
+                        class:proposal={isProposal && !inert}>
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <div
+                            bind:this={msgBubbleElement}
+                            ondblclick={doubleClickMessage}
+                            use:longpress={() => messageMenu?.showMenu()}
+                            class="message-bubble"
+                            class:focused
+                            class:editing
+                            class:fill={fill && !inert}
+                            class:me
+                            class:inert
+                            class:collapsed
+                            class:first
+                            class:last
+                            class:readByMe
+                            class:crypto
+                            class:failed
+                            class:bot={botContext !== undefined}
+                            class:thread={inThread}
+                            class:rtl={$rtlStore}>
+                            {#if first && !isProposal && !isPrize}
+                                <div class="sender" class:fill class:rtl={$rtlStore}>
+                                    <Link underline={"never"} onClick={openUserProfile}>
+                                        <h4 class="username" class:fill class:crypto>
+                                            {senderDisplayName}
+                                        </h4>
+                                        <Badges
+                                            uniquePerson={sender?.isUniquePerson}
+                                            diamondStatus={sender?.diamondStatus}
+                                            streak={client.getStreak(sender?.userId)} />
+                                        {#if sender !== undefined && multiUserChat}
+                                            <WithRole
+                                                userId={sender.userId}
+                                                chatMembers={$chatMembersMap}
+                                                communityMembers={$communityMembers}
+                                                let:chatRole
+                                                let:communityRole>
+                                                <RoleIcon
+                                                    level="community"
+                                                    popup
+                                                    role={communityRole} />
+                                                <RoleIcon
+                                                    level={chatType === "channel"
+                                                        ? "channel"
+                                                        : "group"}
+                                                    popup
+                                                    role={chatRole} />
+                                            </WithRole>
+                                        {/if}
+                                    </Link>
+                                    {#if senderTyping}
+                                        <span class="typing">
+                                            <Typing />
+                                        </span>
+                                    {/if}
+                                </div>
+                            {/if}
+                            {#if msg.forwarded}
+                                <div class="forwarded">
+                                    <div>
+                                        <ForwardIcon
+                                            size={$iconSize}
+                                            color={me
+                                                ? "var(--currentChat-msg-me-muted)"
+                                                : "var(--currentChat-msg-muted)"} />
+                                    </div>
+                                    <div class="text">{"Forwarded"}</div>
+                                </div>
+                            {/if}
+                            {#if msg.repliesTo !== undefined && !inert}
+                                {#if msg.repliesTo.kind === "rehydrated_reply_context"}
+                                    <RepliesTo
+                                        {readonly}
+                                        {chatId}
+                                        {intersecting}
+                                        {onRemovePreview}
+                                        {onGoToMessageIndex}
+                                        repliesTo={msg.repliesTo} />
+                                {:else}
+                                    <UnresolvedReply />
+                                {/if}
+                            {/if}
 
-                        {#if !inert && !isPrize}
-                            <TimeAndTicks
-                                {pinned}
+                            <ChatMessageContent
+                                senderId={msg.sender}
+                                {readonly}
                                 {fill}
-                                {timestamp}
-                                {expiresAt}
-                                {percentageExpired}
                                 {me}
-                                bot={sender?.kind === "bot"}
-                                {accepted}
-                                {failed}
-                                deleted={msg.deleted}
+                                {messageContext}
+                                {collapsed}
                                 {undeleting}
-                                {readByThem}
-                                {crypto}
-                                {chatType}
-                                {dateFormatter} />
+                                {intersecting}
+                                {failed}
+                                {timestamp}
+                                messageIndex={msg.messageIndex}
+                                messageId={msg.messageId}
+                                content={msg.content}
+                                {edited}
+                                height={mediaCalculatedHeight}
+                                blockLevelMarkdown={msg.blockLevelMarkdown}
+                                {onRemovePreview}
+                                on:registerVote={registerVote}
+                                {onExpandMessage} />
+
+                            {#if !inert && !isPrize}
+                                <TimeAndTicks
+                                    {pinned}
+                                    {fill}
+                                    {timestamp}
+                                    {expiresAt}
+                                    {percentageExpired}
+                                    {me}
+                                    bot={sender?.kind === "bot"}
+                                    {accepted}
+                                    {failed}
+                                    deleted={msg.deleted}
+                                    {undeleting}
+                                    {readByThem}
+                                    {crypto}
+                                    {chatType}
+                                    {dateFormatter} />
+                            {/if}
+
+                            {#if debug}
+                                <pre>Sender: {msg.sender}</pre>
+                                <pre>EventIdx: {eventIndex}</pre>
+                                <pre>MsgIdx: {msg.messageIndex}</pre>
+                                <pre>MsgId: {msg.messageId}</pre>
+                                <pre>Confirmed: {confirmed}</pre>
+                                <pre>ReadByThem: {readByThem}</pre>
+                                <pre>ReadByUs: {readByMe}</pre>
+                                <pre>Pinned: {pinned}</pre>
+                                <pre>edited: {msg.edited}</pre>
+                                <pre>failed: {failed}</pre>
+                                <pre>timestamp: {timestamp}</pre>
+                                <pre>expiresAt: {expiresAt}</pre>
+                                <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
+                                <pre>botContext: {JSON.stringify(botContext, null, 4)}</pre>
+                                <pre>inert: {inert}</pre>
+                                <pre>canRevealDeleted: {canRevealDeleted}</pre>
+                                <pre>canlRevealBlocked: {canRevealBlocked}</pre>
+                                <pre>readonly: {readonly}</pre>
+                                <pre>showChatMenu: {showChatMenu}</pre>
+                                <pre>intersecting: {intersecting}</pre>
+                                <pre>ephemeral: {ephemeral}</pre>
+                            {/if}
+                        </div>
+
+                        {#if showChatMenu && intersecting}
+                            <ChatMessageMenu
+                                bind:this={messageMenu}
+                                {chatId}
+                                {isProposal}
+                                {inert}
+                                {publicGroup}
+                                {confirmed}
+                                {failed}
+                                {canShare}
+                                {me}
+                                {canPin}
+                                {canTip}
+                                {pinned}
+                                {supportsReply}
+                                {canQuoteReply}
+                                {threadRootMessage}
+                                {canStartThread}
+                                {multiUserChat}
+                                {msg}
+                                {canForward}
+                                {canBlockUser}
+                                {canEdit}
+                                {canDelete}
+                                {canUndelete}
+                                {canRevealDeleted}
+                                {canRevealBlocked}
+                                translatable={canTranslate}
+                                {translated}
+                                {selectQuickReaction}
+                                showEmojiPicker={() => {
+                                    showEmojiPicker = true;
+                                }}
+                                {canReact}
+                                {onCollapseMessage}
+                                onReply={reply}
+                                {onRetrySend}
+                                {onInitiateThread}
+                                {onDeleteFailedMessage}
+                                onReplyPrivately={replyPrivately}
+                                onEditMessage={editMessage}
+                                onTipMessage={tipMessage}
+                                onReportMessage={reportMessage}
+                                onCancelReminder={cancelReminder}
+                                onRemindMe={remindMe} />
                         {/if}
 
-                        {#if debug}
-                            <pre>Sender: {msg.sender}</pre>
-                            <pre>EventIdx: {eventIndex}</pre>
-                            <pre>MsgIdx: {msg.messageIndex}</pre>
-                            <pre>MsgId: {msg.messageId}</pre>
-                            <pre>Confirmed: {confirmed}</pre>
-                            <pre>ReadByThem: {readByThem}</pre>
-                            <pre>ReadByUs: {readByMe}</pre>
-                            <pre>Pinned: {pinned}</pre>
-                            <pre>edited: {msg.edited}</pre>
-                            <pre>failed: {failed}</pre>
-                            <pre>timestamp: {timestamp}</pre>
-                            <pre>expiresAt: {expiresAt}</pre>
-                            <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
-                            <pre>botContext: {JSON.stringify(botContext, null, 4)}</pre>
-                            <pre>inert: {inert}</pre>
-                            <pre>canRevealDeleted: {canRevealDeleted}</pre>
-                            <pre>canlRevealBlocked: {canRevealBlocked}</pre>
-                            <pre>readonly: {readonly}</pre>
-                            <pre>showChatMenu: {showChatMenu}</pre>
-                            <pre>intersecting: {intersecting}</pre>
-                            <pre>ephemeral: {ephemeral}</pre>
+                        {#if ephemeral}
+                            <EphemeralNote />
                         {/if}
                     </div>
 
-                    {#if showChatMenu && intersecting}
-                        <ChatMessageMenu
-                            bind:this={messageMenu}
-                            {chatId}
-                            {isProposal}
-                            {inert}
-                            {publicGroup}
-                            {confirmed}
-                            {failed}
-                            {canShare}
-                            {me}
-                            {canPin}
-                            {canTip}
-                            {pinned}
-                            {supportsReply}
-                            {canQuoteReply}
-                            {threadRootMessage}
-                            {canStartThread}
-                            {multiUserChat}
-                            {msg}
-                            {canForward}
-                            {canBlockUser}
-                            {canEdit}
-                            {canDelete}
-                            {canUndelete}
-                            {canRevealDeleted}
-                            {canRevealBlocked}
-                            translatable={canTranslate}
-                            {translated}
-                            {selectQuickReaction}
-                            showEmojiPicker={() => {
-                                showEmojiPicker = true;
-                            }}
-                            {canReact}
-                            on:collapseMessage
-                            on:reply={reply}
-                            on:retrySend
-                            on:initiateThread
-                            on:deleteFailedMessage
-                            on:replyPrivately={replyPrivately}
-                            on:editMessage={editMessage}
-                            on:tipMessage={onTipMessage}
-                            on:reportMessage={reportMessage}
-                            on:cancelReminder={cancelReminder}
-                            on:remindMe={remindMe} />
-                    {/if}
-
-                    {#if ephemeral}
-                        <EphemeralNote />
+                    {#if !collapsed && !msg.deleted && canReact && !failed}
+                        <div class="actions" class:touch={isTouchOnlyDevice}>
+                            <div class="reaction" onclick={() => (showEmojiPicker = true)}>
+                                <HoverIcon>
+                                    <EmoticonOutline size={$iconSize} color={"var(--icon-txt)"} />
+                                </HoverIcon>
+                            </div>
+                        </div>
                     {/if}
                 </div>
 
-                {#if !collapsed && !msg.deleted && canReact && !failed}
-                    <div class="actions" class:touch={isTouchOnlyDevice}>
-                        <div class="reaction" onclick={() => (showEmojiPicker = true)}>
-                            <HoverIcon>
-                                <EmoticonOutline size={$iconSize} color={"var(--icon-txt)"} />
-                            </HoverIcon>
-                        </div>
+                {#if threadSummary !== undefined && !inThread}
+                    <ThreadSummary
+                        {chatId}
+                        threadRootMessageIndex={msg.messageIndex}
+                        selected={($pathParams.kind === "global_chat_selected_route" ||
+                            $pathParams.kind === "selected_channel_route") &&
+                            msg.messageIndex === $pathParams.messageIndex &&
+                            $pathParams.open}
+                        {threadSummary}
+                        indent={showAvatar}
+                        {me}
+                        url={msgUrl} />
+                {/if}
+
+                {#if msg.reactions.length > 0 && !inert}
+                    <div class="message-reactions" class:me class:indent={showAvatar}>
+                        {#each msg.reactions as { reaction, userIds } (reaction)}
+                            <MessageReaction
+                                onClick={() => toggleReaction(false, reaction)}
+                                {reaction}
+                                {userIds} />
+                        {/each}
                     </div>
                 {/if}
-            </div>
 
-            {#if threadSummary !== undefined && !inThread}
-                <ThreadSummary
-                    {chatId}
-                    threadRootMessageIndex={msg.messageIndex}
-                    selected={($pathParams.kind === "global_chat_selected_route" ||
-                        $pathParams.kind === "selected_channel_route") &&
-                        msg.messageIndex === $pathParams.messageIndex &&
-                        $pathParams.open}
-                    {threadSummary}
-                    indent={showAvatar}
-                    {me}
-                    url={msgUrl} />
-            {/if}
-
-            {#if msg.reactions.length > 0 && !inert}
-                <div class="message-reactions" class:me class:indent={showAvatar}>
-                    {#each msg.reactions as { reaction, userIds } (reaction)}
-                        <MessageReaction
-                            onClick={() => toggleReaction(false, reaction)}
-                            {reaction}
-                            {userIds}
-                            myUserId={user?.userId} />
-                    {/each}
-                </div>
-            {/if}
-
-            {#if tips.length > 0 && !inert}
-                <div class="tips" class:indent={showAvatar}>
-                    {#each tips as [ledger, userTips]}
-                        <TipThumbnail onClick={tipMessage} {canTip} {ledger} {userTips} />
-                    {/each}
-                </div>
-            {/if}
+                {#if tips.length > 0 && !inert}
+                    <div class="tips" class:indent={showAvatar}>
+                        {#each tips as [ledger, userTips]}
+                            <TipThumbnail onClick={tipMessage} {canTip} {ledger} {userTips} />
+                        {/each}
+                    </div>
+                {/if}
+            {/snippet}
         </IntersectionObserverComponent>
     </div>
 {/if}

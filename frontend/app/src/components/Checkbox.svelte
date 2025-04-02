@@ -1,7 +1,4 @@
 <script lang="ts">
-    import { createBubbler } from "svelte/legacy";
-
-    const bubble = createBubbler();
     import type { ResourceKey } from "openchat-client";
     import { rtlStore } from "../stores/rtl";
     import Translatable from "./Translatable.svelte";

@@ -1,36 +1,44 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Check from "svelte-material-icons/Check.svelte";
-    import MenuIcon from "../MenuIconLegacy.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItemLegacy.svelte";
+    import MenuItem from "../MenuItem.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import type { ResourceKey } from "openchat-client";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        label: ResourceKey;
+        rolePermission: string | undefined;
+        roles: readonly string[];
+        defaultRole?: string | undefined;
+    }
 
-    export let label: ResourceKey;
-    export let rolePermission: string | undefined;
-    export let roles: readonly string[];
-    export let defaultRole: string | undefined = undefined;
+    let { label, rolePermission = $bindable(), roles, defaultRole = undefined }: Props = $props();
 
-    $: defaultText = $_("role.default");
-    $: defaultRoleText = defaultRole !== undefined ? $_(`role.${defaultRole}`) : undefined;
-    $: selectedRoleText =
+    let defaultText = $derived($_("role.default"));
+    let defaultRoleText = $derived(
+        defaultRole !== undefined ? $_(`role.${defaultRole}`) : undefined,
+    );
+    let selectedRoleText = $derived(
         rolePermission !== undefined
             ? $_(`role.${rolePermission}`)
-            : defaultText + ` (${defaultRoleText})`;
+            : defaultText + ` (${defaultRoleText})`,
+    );
 
     let selecting = false;
-    let menu: MenuIcon;
+    let menu: MenuIcon | undefined = $state();
 
     function select(r: string | undefined) {
         rolePermission = r;
-        dispatch("change", rolePermission);
+    }
+
+    function showMenu(e: Event) {
+        e.stopPropagation();
+        menu?.showMenu();
     }
 </script>
 
@@ -39,49 +47,57 @@
         ><Translatable resourceKey={i18nKey("permissions.whoCan")} />
         <Translatable resourceKey={label} /></span>
 </div>
-<!-- svelte-ignore a11y-no-static-element-interactions -->
-<div class:selecting class="permission-select" on:click|stopPropagation={() => menu.showMenu()}>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class:selecting class="permission-select" onclick={showMenu}>
     <div class="role">
         {selectedRoleText}
     </div>
     <MenuIcon bind:this={menu} position="bottom" align="end">
-        <span class="icon" slot="icon">
-            <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
-        </span>
-        <span slot="menu">
+        {#snippet menuIcon()}
+            <span class="icon">
+                <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
+            </span>
+        {/snippet}
+        {#snippet menuItems()}
             <Menu>
                 {#if defaultRole !== undefined}
                     <MenuItem onclick={() => select(undefined)}>
-                        <Check
-                            viewBox={"0 -3 24 24"}
-                            size={$iconSize}
-                            slot="icon"
-                            color={rolePermission === undefined
-                                ? "var(--icon-inverted-txt)"
-                                : "transparent"} />
-                        <div slot="text">
-                            {defaultText}
-                        </div>
+                        {#snippet icon()}
+                            <Check
+                                viewBox={"0 -3 24 24"}
+                                size={$iconSize}
+                                color={rolePermission === undefined
+                                    ? "var(--icon-inverted-txt)"
+                                    : "transparent"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                {defaultText}
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#each roles as r (r)}
                     <MenuItem onclick={() => select(r)}>
-                        <Check
-                            viewBox={"0 -3 24 24"}
-                            size={$iconSize}
-                            slot="icon"
-                            color={rolePermission !== undefined &&
-                            roles.indexOf(rolePermission) >= roles.indexOf(r) &&
-                            (r !== "none" || rolePermission === "none")
-                                ? "var(--icon-inverted-txt)"
-                                : "transparent"} />
-                        <div slot="text">
-                            {$_(`role.${r}`)}
-                        </div>
+                        {#snippet icon()}
+                            <Check
+                                viewBox={"0 -3 24 24"}
+                                size={$iconSize}
+                                color={rolePermission !== undefined &&
+                                roles.indexOf(rolePermission) >= roles.indexOf(r) &&
+                                (r !== "none" || rolePermission === "none")
+                                    ? "var(--icon-inverted-txt)"
+                                    : "transparent"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                {$_(`role.${r}`)}
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/each}
             </Menu>
-        </span>
+        {/snippet}
     </MenuIcon>
 </div>
 

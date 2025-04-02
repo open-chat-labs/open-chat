@@ -1,7 +1,7 @@
 <!-- <svelte:options immutable /> -->
 <script lang="ts">
     import Poll from "svelte-material-icons/Poll.svelte";
-    import type { OpenChat, PollContent } from "openchat-client";
+    import { currentUser, type OpenChat, type PollContent } from "openchat-client";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
     import PollAnswer from "./PollAnswer.svelte";
@@ -13,7 +13,6 @@
 
     export let content: PollContent;
     export let me: boolean;
-    export let myUserId: string | undefined;
     export let readonly: boolean;
     export let senderId: string;
 
@@ -30,7 +29,7 @@
 
     $: showVotes =
         content.ended ||
-        ((haveIVoted || senderId === myUserId) &&
+        ((haveIVoted || senderId === $currentUser.userId) &&
             (content.config.showVotesBeforeEndDate || content.config.endDate === undefined));
 
     function vote(idx: number) {
@@ -119,7 +118,6 @@
                 {answer}
                 voted={votedFor(i)}
                 {txtColor}
-                {myUserId}
                 {me}
                 voters={voters(i)}
                 numVotes={voteCount(i)}

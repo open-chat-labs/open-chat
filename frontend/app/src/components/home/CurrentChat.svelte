@@ -311,8 +311,11 @@
         draftMessagesStore.setTextContent({ chatId: chat.id }, ev.detail);
     }
 
-    function onRemovePreview(ev: CustomEvent<{ event: EventWrapper<Message>; url: string }>): void {
-        removeLinkPreviewDetails = ev.detail;
+    function onRemovePreview(event: EventWrapper<Message>, url: string): void {
+        removeLinkPreviewDetails = {
+            event,
+            url,
+        };
     }
 
     function removePreview(yes: boolean): Promise<void> {
@@ -418,8 +421,7 @@
         <CurrentChatMessages
             bind:this={currentChatMessages}
             on:replyTo={replyTo}
-            on:retrySend
-            on:removePreview={onRemovePreview}
+            {onRemovePreview}
             {privateChatPreview}
             {chat}
             {filteredProposals}

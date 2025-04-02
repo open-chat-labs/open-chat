@@ -12,7 +12,6 @@
         type DiamondMembershipFees,
         type ResourceKey,
         cryptoLookup,
-        currentUser as user,
     } from "openchat-client";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
@@ -192,7 +191,7 @@
                 {/each}
             </div>
             <div class="right">
-                <AccountInfo fullWidthOnMobile border={false} centered {ledger} user={$user} />
+                <AccountInfo fullWidthOnMobile border={false} centered {ledger} />
             </div>
         </div>
 

@@ -374,7 +374,7 @@
                 canDemoteToAdmin={client.canDemote(collection.id, me.role, "admin")}
                 canDemoteToModerator={client.canDemote(collection.id, me.role, "moderator")}
                 canDemoteToMember={client.canDemote(collection.id, me.role, "member")}
-                on:changeRole />
+                onChangeRole={(args) => dispatch("changeRole", args)} />
         {/if}
 
         {#if bots.length > 0}
@@ -415,9 +415,9 @@
                 canBlockUser={client.canBlockUsers(collection.id)}
                 canRemoveMember={client.canRemoveMembers(collection.id)}
                 {searchTerm}
-                on:blockUser
-                on:changeRole
-                on:removeMember />
+                onBlockUser={(args) => dispatch("blockUser", args)}
+                onChangeRole={(args) => dispatch("changeRole", args)}
+                onRemoveMember={(args) => dispatch("removeMember", args)} />
         </VirtualList>
     {:else if memberView === "blocked"}
         <div use:menuCloser class="user-list">
@@ -427,7 +427,7 @@
                     {user}
                     {searchTerm}
                     canUnblockUser={client.canUnblockUsers(collection.id)}
-                    on:unblockUser />
+                    onUnblockUser={(args) => dispatch("unblockUser", args)} />
             {/each}
         </div>
     {:else if memberView === "invited"}
@@ -438,7 +438,7 @@
                     {user}
                     {searchTerm}
                     canUninviteUser={client.canInviteUsers(collection.id)}
-                    on:cancelInvite />
+                    onCancelInvite={(args) => dispatch("cancelInvite", args)} />
             {/each}
         </div>
     {:else if memberView === "lapsed"}

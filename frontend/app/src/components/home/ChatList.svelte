@@ -174,10 +174,6 @@
         });
     }
 
-    function markAllRead() {
-        client.markAllReadForCurrentScope();
-    }
-
     function userOrBotKey(match: UserSummary | BotMatch): string {
         switch (match.kind) {
             case "bot_match":
@@ -244,16 +240,13 @@
 <!-- svelte-ignore missing_declaration -->
 {#if user}
     {#if $chatListScope.kind === "favourite"}
-        <FavouriteChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
+        <FavouriteChatsHeader {canMarkAllRead} />
     {:else if $chatListScope.kind === "group_chat"}
-        <GroupChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
+        <GroupChatsHeader {canMarkAllRead} />
     {:else if $chatListScope.kind === "direct_chat"}
-        <DirectChatsHeader on:markAllRead={markAllRead} {canMarkAllRead} />
+        <DirectChatsHeader {canMarkAllRead} />
     {:else if $selectedCommunity && $chatListScope.kind === "community"}
-        <SelectedCommunityHeader
-            community={$selectedCommunity}
-            {canMarkAllRead}
-            on:markAllRead={markAllRead} />
+        <SelectedCommunityHeader community={$selectedCommunity} {canMarkAllRead} />
     {/if}
 
     <ChatListSearch

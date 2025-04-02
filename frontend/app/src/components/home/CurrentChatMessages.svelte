@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
@@ -55,6 +53,7 @@
     export let canReplyInThread: boolean;
     export let filteredProposals: FilteredProposals | undefined;
     export let privateChatPreview: boolean;
+    export let onRemovePreview: (event: EventWrapper<Message>, url: string) => void;
 
     $: showAvatar = initialised && shouldShowAvatar(chat, $eventsStore[0]?.index);
     $: messageContext = { chatId: chat.id, threadRootMessageIndex: undefined };
@@ -66,8 +65,8 @@
     let initialised = false;
     let currentChatId: ChatIdentifier | undefined;
 
-    function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
-        doGoToMessageIndex(ev.detail.index);
+    function onGoToMessageIndex(detail: { index: number }) {
+        doGoToMessageIndex(detail.index);
     }
 
     function doGoToMessageIndex(index: number): void {
@@ -84,8 +83,8 @@
         dispatch("replyTo", replyContext);
     }
 
-    function onEditEvent(ev: CustomEvent<EventWrapper<Message>>) {
-        draftMessagesStore.setEditing({ chatId: chat.id }, ev.detail);
+    function onEditEvent(ev: EventWrapper<Message>) {
+        draftMessagesStore.setEditing({ chatId: chat.id }, ev);
     }
 
     function eventKey(e: EventWrapper<ChatEventType>): string {
@@ -300,7 +299,6 @@
                             readByMe={isReadByMe($messagesRead, evt)}
                             chatId={chat.id}
                             chatType={chat.kind}
-                            user={$user}
                             me={isMe(evt)}
                             first={i + 1 === innerGroup.length}
                             last={i === 0}
@@ -321,12 +319,11 @@
                             pinned={isPinned($currentChatPinnedMessages, evt)}
                             editing={$currentChatEditingEvent === evt}
                             onReplyTo={replyTo}
-                            on:removePreview
-                            on:editEvent={onEditEvent}
-                            on:goToMessageIndex={goToMessageIndex}
+                            {onRemovePreview}
+                            {onEditEvent}
+                            {onGoToMessageIndex}
                             onExpandMessage={() => toggleMessageExpansion(evt, true)}
-                            on:collapseMessage={() => toggleMessageExpansion(evt, false)}
-                            on:retrySend
+                            onCollapseMessage={() => toggleMessageExpansion(evt, false)}
                             event={evt} />
                     {/each}
                 {/each}

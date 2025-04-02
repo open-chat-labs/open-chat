@@ -187,8 +187,8 @@
         }
     }
 
-    function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>): void {
-        onGoToMessageIndex(ev.detail);
+    function goToMessageIndex(detail: { index: number; preserveFocus: boolean }): void {
+        onGoToMessageIndex(detail);
         if (modal) {
             popRightPanelHistory();
         }
@@ -540,11 +540,11 @@
             on:cancelCommunityInvite={onCancelCommunityInvite} />
     {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
-            on:goToMessageIndex={goToMessageIndex}
+            onGoToMessageIndex={goToMessageIndex}
             chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
             dateLastPinned={$multiUserChat.dateLastPinned}
-            on:close={popRightPanelHistory} />
+            onClose={popRightPanelHistory} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
             on:unsubscribeNotifications={() => client.setSoftDisabled(true)}

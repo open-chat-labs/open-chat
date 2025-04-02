@@ -279,18 +279,19 @@
         chatEventList?.scrollToMessageIndex(messageContext, index, false);
     }
 
-    function onGoToMessageIndex(
-        ev: CustomEvent<{ index: number; preserveFocus: boolean; messageId: bigint }>,
-    ) {
-        goToMessageIndex(ev.detail.index);
+    function onGoToMessageIndex(detail: { index: number }) {
+        goToMessageIndex(detail.index);
     }
 
     function createP2PSwapMessage() {
         creatingP2PSwapMessage = true;
     }
 
-    function onRemovePreview(ev: CustomEvent<{ event: EventWrapper<Message>; url: string }>): void {
-        removeLinkPreviewDetails = ev.detail;
+    function onRemovePreview(event: EventWrapper<Message>, url: string): void {
+        removeLinkPreviewDetails = {
+            event,
+            url,
+        };
     }
 
     function removePreview(yes: boolean): Promise<void> {
@@ -306,6 +307,12 @@
 
         removeLinkPreviewDetails = undefined;
         return Promise.resolve();
+    }
+
+    function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
+        if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
+            client.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
+        }
     }
 
     function onSendMessageWithContent(content: MessageContent) {
@@ -383,7 +390,6 @@
                         <ChatEvent
                             chatId={chat.id}
                             chatType={chat.kind}
-                            user={$user}
                             event={evt}
                             first={i + 1 === userGroup.length}
                             last={i === 0}
@@ -414,10 +420,12 @@
                             canInvite={false}
                             canReplyInThread={false}
                             collapsed={false}
-                            on:removePreview={onRemovePreview}
-                            on:goToMessageIndex={onGoToMessageIndex}
+                            {onRemovePreview}
+                            {onGoToMessageIndex}
                             onReplyTo={replyTo}
-                            on:editEvent={() => editEvent(evt)} />
+                            onEditEvent={() => editEvent(evt)}
+                            onExpandMessage={() => toggleMessageExpansion(evt, true)}
+                            onCollapseMessage={() => toggleMessageExpansion(evt, false)} />
                     {/each}
                 {/each}
             {/if}

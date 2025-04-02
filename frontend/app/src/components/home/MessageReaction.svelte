@@ -2,6 +2,7 @@
     import { _ } from "svelte-i18n";
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import type { OpenChat, UserLookup } from "openchat-client";
+    import { currentUser } from "openchat-client";
     import { userStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
@@ -14,11 +15,10 @@
     interface Props {
         reaction: string;
         userIds: Set<string>;
-        myUserId: string | undefined;
         onClick?: () => void;
     }
 
-    let { reaction, userIds, myUserId, onClick }: Props = $props();
+    let { reaction, userIds, onClick }: Props = $props();
 
     let reactionCode = $state("unknown");
     let longPressed: boolean = $state(false);
@@ -55,8 +55,8 @@
             onClick?.();
         }
     }
-    let selected = $derived(myUserId !== undefined ? userIds.has(myUserId) : false);
-    let usernames = $derived(buildReactionUsernames($userStore, userIds, myUserId));
+    let selected = $derived(userIds.has($currentUser.userId));
+    let usernames = $derived(buildReactionUsernames($userStore, userIds, $currentUser.userId));
 </script>
 
 <Tooltip
