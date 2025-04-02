@@ -202,15 +202,17 @@
                 </div>
             </div>
 
-            <Link onClick={() => (showInsurance = true)}>
-                <div class="insurance">
-                    <ShieldHalfFull />
-                    <Translatable resourceKey={i18nKey("streakInsurance.link")}></Translatable>
-                    <InfoIcon align={"middle"}>
-                        <Translatable resourceKey={i18nKey("streakInsurance.infoPopup")} />
-                    </InfoIcon>
-                </div>
-            </Link>
+            {#if streak > 0}
+                <Link onClick={() => (showInsurance = true)}>
+                    <div class="insurance">
+                        <ShieldHalfFull />
+                        <Translatable resourceKey={i18nKey("streakInsurance.link")}></Translatable>
+                        <InfoIcon align={"middle"}>
+                            <Translatable resourceKey={i18nKey("streakInsurance.infoPopup")} />
+                        </InfoIcon>
+                    </div>
+                </Link>
+            {/if}
 
             {#if airdropChannel !== undefined}
                 <AlertBox>
