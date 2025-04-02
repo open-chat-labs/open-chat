@@ -1,12 +1,17 @@
 <script lang="ts">
-    export let align: "end" | "fill" | "center" | "start" = "end"; // we may need more options later but I think this covers it at the moment
-    export let nowrap = false;
-    export let nogap = false;
+    interface Props {
+        align?: "end" | "fill" | "center" | "start"; // we may need more options later but I think this covers it at the moment
+        nowrap?: boolean;
+        nogap?: boolean;
+        children?: import("svelte").Snippet;
+    }
+
+    let { align = "end", nowrap = false, nogap = false, children }: Props = $props();
     const cls = `button-group ${align}`;
 </script>
 
 <div class:nowrap class={cls} class:nogap>
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">

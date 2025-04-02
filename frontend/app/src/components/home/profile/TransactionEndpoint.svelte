@@ -10,16 +10,21 @@
     import Avatar from "../../Avatar.svelte";
 
     const client = getContext<OpenChat>("client");
-    export let address: string | undefined;
-    export let accounts: Record<string, NamedAccount>;
-    export let currentUser: CreatedUser;
+    interface Props {
+        address: string | undefined;
+        accounts: Record<string, NamedAccount>;
+        currentUser: CreatedUser;
+    }
 
-    $: user =
+    let { address, accounts, currentUser }: Props = $props();
+
+    let user = $derived(
         address === currentUser.cryptoAccount
             ? $userStore.get(currentUser.userId)
             : address
               ? $userStore.get(address)
-              : undefined;
+              : undefined,
+    );
 </script>
 
 {#if address !== undefined}

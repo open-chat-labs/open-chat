@@ -287,7 +287,7 @@
                         content.status.kind === "p2p_swap_accepted"}
                     disabled={buttonDisabled}
                     hollow
-                    on:click={onAcceptOrCancel}>
+                    onClick={onAcceptOrCancel}>
                     <Translatable resourceKey={buttonText} />
                 </Button>
             </ButtonGroup>

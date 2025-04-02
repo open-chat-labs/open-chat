@@ -7,6 +7,7 @@ import type {
     GenerateBotKeyResponse,
     JoinVideoCallResponse,
     MessageActivityFeedResponse,
+    PayForStreakInsuranceResponse,
     SetPinNumberResponse,
     SetVideoCallPresenceResponse,
     Verification,
@@ -525,8 +526,15 @@ export class AnonUserClient {
     withdrawBtc(
         _address: string,
         _amount: bigint,
-        _pin: string | undefined
+        _pin: string | undefined,
     ): Promise<WithdrawBtcResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    payForStreakInsurance(
+        _additionalDays: number,
+        _expectedPrice: bigint,
+    ): Promise<PayForStreakInsuranceResponse> {
         throw new AnonymousOperationError();
     }
 }

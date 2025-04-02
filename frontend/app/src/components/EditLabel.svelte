@@ -136,10 +136,10 @@
                 <div>
                     <ButtonGroup>
                         {#if saved}
-                            <Button on:click={close}>{"Close"}</Button>
+                            <Button onClick={close}>{"Close"}</Button>
                         {:else}
-                            <Button secondary on:click={close}>{"Cancel"}</Button>
-                            <Button loading={busy} disabled={!valid} on:click={save}
+                            <Button secondary onClick={close}>{"Cancel"}</Button>
+                            <Button loading={busy} disabled={!valid} onClick={save}
                                 >{"Save"}</Button>
                         {/if}
                     </ButtonGroup>

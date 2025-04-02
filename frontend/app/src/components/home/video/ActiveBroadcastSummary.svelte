@@ -51,7 +51,7 @@
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div role="button" tabindex="0" on:click={goto} class="active-broadcast">
         <Translatable resourceKey={i18nKey("videoCall.broadcastCallInProgress")} />
-        <Button on:click={join} tiny hollow>
+        <Button onClick={join} tiny hollow>
             <Translatable resourceKey={i18nKey("videoCall.join")} />
         </Button>
     </div>

@@ -13,18 +13,15 @@
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
-    import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Progress from "../../Progress.svelte";
     import ExternalLink from "../../landingpages/ExternalLink.svelte";
-    import TooltipWrapper from "../../TooltipWrapper.svelte";
-    import TooltipPopup from "../../TooltipPopup.svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { now } from "../../../stores/time";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
     const enabled = new Set<string>([
         "streak_3",
@@ -150,20 +147,17 @@
                             class="tab">
                             <Translatable resourceKey={i18nKey("learnToEarn.external")} />
                             <div class="icon">
-                                <TooltipWrapper position={"bottom"} align={"end"}>
+                                <Tooltip position={"bottom"} align={"end"}>
                                     <InformationOutline
-                                        slot="target"
                                         size={"1.2em"}
                                         color={selectedTab === "external"
                                             ? "var(--txt)"
                                             : "var(--txt-light)"} />
-                                    <div let:position let:align slot="tooltip">
-                                        <TooltipPopup {position} {align}>
-                                            <Translatable
-                                                resourceKey={i18nKey("learnToEarn.externalInfo")} />
-                                        </TooltipPopup>
-                                    </div>
-                                </TooltipWrapper>
+                                    {#snippet popupTemplate()}
+                                        <Translatable
+                                            resourceKey={i18nKey("learnToEarn.externalInfo")} />
+                                    {/snippet}
+                                </Tooltip>
                             </div>
                         </div>
                     {/if}
@@ -269,7 +263,7 @@
                             })} />
                     </Progress>
                 </div>
-                <Button small on:click={() => dispatch("close")}>
+                <Button small onClick={onClose}>
                     <Translatable resourceKey={i18nKey("close")} />
                 </Button>
             </span>

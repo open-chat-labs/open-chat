@@ -112,7 +112,7 @@
     <div class="answers">
         {#each [...content.config.options] as answer, i (answer)}
             <PollAnswer
-                on:click={() => vote(i)}
+                onClick={() => vote(i)}
                 finished={content.ended}
                 {readonly}
                 percent={percentageOfVote(i)}

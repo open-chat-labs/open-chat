@@ -52,6 +52,6 @@
     }
 </script>
 
-<Button on:click={internalOnclick} {...rest}>
+<Button onClick={internalOnclick} {...rest}>
     {@render children?.()}
 </Button>

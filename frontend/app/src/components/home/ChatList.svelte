@@ -265,13 +265,13 @@
     {#if $numberOfThreadsStore > 0}
         <div class="section-selector">
             <ChatListSectionButton
-                on:click={() => setView("chats")}
+                onClick={() => setView("chats")}
                 unread={unreadCounts.chats}
                 title={i18nKey("chats")}
                 selected={$chatListView === "chats"} />
             <ChatListSectionButton
                 unread={unreadCounts.threads}
-                on:click={() => setView("threads")}
+                onClick={() => setView("threads")}
                 title={i18nKey("thread.previewTitle")}
                 selected={$chatListView === "threads"} />
         </div>
@@ -405,13 +405,13 @@
             {#snippet children(joiningCommunity, joinCommunity)}
                 <div class="join">
                     <ButtonGroup align="center">
-                        <Button secondary small on:click={cancelPreview}>
+                        <Button secondary small onClick={cancelPreview}>
                             <Translatable resourceKey={i18nKey("leave")} />
                         </Button>
                         <Button
                             loading={joiningCommunity}
                             disabled={joiningCommunity}
-                            on:click={joinCommunity}
+                            onClick={joinCommunity}
                             ><Translatable
                                 resourceKey={i18nKey("communities.joinCommunity")} /></Button>
                     </ButtonGroup>

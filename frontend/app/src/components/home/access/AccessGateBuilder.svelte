@@ -30,8 +30,7 @@
     } from "../../../utils/access";
     import { iconSize } from "../../../stores/iconSize";
     import AccessGateIcon from "./AccessGateIcon.svelte";
-    import TooltipWrapper from "../../TooltipWrapper.svelte";
-    import TooltipPopup from "../../TooltipPopup.svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import Checkbox from "../../Checkbox.svelte";
     import DurationPicker from "../DurationPicker.svelte";
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
@@ -179,21 +178,16 @@
                 {/if}
                 {#if editable}
                     <div class="add">
-                        <Button tiny disabled={!canAdd} on:click={addLeaf}>
+                        <Button tiny disabled={!canAdd} onClick={addLeaf}>
                             <Translatable resourceKey={i18nKey("access.addGate")} />
                         </Button>
                         <div class="icon">
-                            <TooltipWrapper position={"top"} align={"middle"}>
-                                <InformationOutline
-                                    slot="target"
-                                    size={$iconSize}
-                                    color={"var(--txt)"} />
-                                <div let:position let:align slot="tooltip">
-                                    <TooltipPopup {position} {align}>
-                                        <Translatable resourceKey={i18nKey("access.addGateInfo")} />
-                                    </TooltipPopup>
-                                </div>
-                            </TooltipWrapper>
+                            <Tooltip position={"top"} align={"middle"}>
+                                <InformationOutline size={$iconSize} color={"var(--txt)"} />
+                                {#snippet popupTemplate()}
+                                    <Translatable resourceKey={i18nKey("access.addGateInfo")} />
+                                {/snippet}
+                            </Tooltip>
                         </div>
                     </div>
                 {/if}
@@ -255,7 +249,7 @@
                     </div>
                 {/if}
                 <ButtonGroup>
-                    <Button on:click={onClose}>
+                    <Button onClick={onClose}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>

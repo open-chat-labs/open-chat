@@ -20,8 +20,11 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
+
+    data.local_user_index_event_sync_queue
+        .set_state(data.local_user_index_canister_id);
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
@@ -35,6 +38,10 @@ fn post_upgrade(args: Args) {
 }
 
 fn reinstate_daily_claims(state: &mut RuntimeState) {
+    if state.data.chit_events.any_missed_daily_claims_reinstated() {
+        return;
+    }
+
     let now = state.env.now();
     let now_day = Streak::timestamp_to_day(now).unwrap();
     let current_end_day = state.data.streak.end_day();

@@ -3,25 +3,25 @@
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import type { OpenChat, UserLookup } from "openchat-client";
     import { userStore } from "openchat-client";
-    import { getContext, onMount, createEventDispatcher } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let reaction: string;
-    export let userIds: Set<string>;
-    export let myUserId: string | undefined;
+    interface Props {
+        reaction: string;
+        userIds: Set<string>;
+        myUserId: string | undefined;
+        onClick?: () => void;
+    }
 
-    let reactionCode = "unknown";
-    let longPressed: boolean = false;
+    let { reaction, userIds, myUserId, onClick }: Props = $props();
 
-    $: selected = myUserId !== undefined ? userIds.has(myUserId) : false;
-    $: usernames = buildReactionUsernames($userStore, userIds, myUserId);
+    let reactionCode = $state("unknown");
+    let longPressed: boolean = $state(false);
 
     onMount(async () => {
         reactionCode = (await buildReactionCode(reaction)) ?? "unknown";
@@ -50,37 +50,38 @@
         return code ?? ":unknown:";
     }
 
-    function onClick() {
+    function click() {
         if (!longPressed) {
-            dispatch("click");
+            onClick?.();
         }
     }
+    let selected = $derived(myUserId !== undefined ? userIds.has(myUserId) : false);
+    let usernames = $derived(buildReactionUsernames($userStore, userIds, myUserId));
 </script>
 
-<TooltipWrapper bind:longPressed position={"top"} align={"start"}>
-    <div slot="target" on:click={onClick} class:selected class="message-reaction">
+<Tooltip
+    textLength={usernames.length + reactionCode.length}
+    longestWord={reactionCode.length}
+    bind:longPressed
+    position={"top"}
+    align={"start"}>
+    <div onclick={click} class:selected class="message-reaction">
         {reaction}
         <span class="reaction-count">
             {userIds.size > 999 ? "999+" : userIds.size}
         </span>
     </div>
-    <div let:position let:align slot="tooltip">
-        <TooltipPopup
-            {align}
-            {position}
-            textLength={usernames.length + reactionCode.length}
-            longestWord={reactionCode.length}>
-            <div class="reaction-tooltip-emoji">{reaction}</div>
-            <div>
-                <span class="reaction_usernames">{usernames}</span>
-                <Translatable resourceKey={i18nKey("reactions.reactedWith")} />
-                <span class="reaction_code">
-                    {reactionCode}
-                </span>
-            </div>
-        </TooltipPopup>
-    </div>
-</TooltipWrapper>
+    {#snippet popupTemplate()}
+        <div class="reaction-tooltip-emoji">{reaction}</div>
+        <div>
+            <span class="reaction_usernames">{usernames}</span>
+            <Translatable resourceKey={i18nKey("reactions.reactedWith")} />
+            <span class="reaction_code">
+                {reactionCode}
+            </span>
+        </div>
+    {/snippet}
+</Tooltip>
 
 <style lang="scss">
     .message-reaction {

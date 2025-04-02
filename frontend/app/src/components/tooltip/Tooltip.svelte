@@ -1,16 +1,78 @@
 <script lang="ts">
+    import { rtlStore } from "../../stores/rtl";
+    import { mobileWidth } from "../../stores/screenDimensions";
     import { fade } from "svelte/transition";
-    import { mobileWidth } from "../stores/screenDimensions";
-    import { rtlStore } from "../stores/rtl";
-    import type { Alignment, Position } from "../utils/alignment";
+    import { onDestroy, type Snippet } from "svelte";
+    import { tooltipStore } from "../../stores/tooltip";
+    import { tick } from "svelte";
+    import Hoverable from "../Hoverable.svelte";
+    import type { Alignment, Position } from "../../utils/alignment";
 
-    export let textLength: number = 100;
-    export let longestWord: number = 10;
-    export let position: Position = "top";
-    export let align: Alignment = "start";
-    export let autoWidth = false;
+    interface Props {
+        enable?: boolean;
+        position?: Position;
+        align?: Alignment;
+        fill?: boolean;
+        gutter?: number;
+        longPressed?: boolean;
+        children: Snippet;
+        popupTemplate: Snippet;
+        autoWidth?: boolean;
+        textLength?: number;
+        longestWord?: number;
+        uppercase?: boolean;
+    }
 
-    $: maxWidth = autoWidth ? "unset" : calculateMaxWidth(textLength, longestWord, $mobileWidth);
+    let {
+        enable = true,
+        position = "top",
+        align = "start",
+        fill = false,
+        gutter = 8,
+        longPressed = $bindable(false),
+        children,
+        popupTemplate,
+        autoWidth = false,
+        textLength = 100,
+        longestWord = 10,
+        uppercase = false,
+    }: Props = $props();
+
+    let target: Hoverable;
+    let tooltipContainer: HTMLElement | undefined;
+    let hovering: boolean = $state(false);
+
+    let show = $derived(enable && (hovering || longPressed));
+    let maxWidth = $derived(
+        autoWidth ? "unset" : calculateMaxWidth(textLength, longestWord, $mobileWidth),
+    );
+
+    $effect(() => {
+        if (show) {
+            showTooltip();
+        } else {
+            closeTooltip();
+        }
+    });
+
+    onDestroy(closeTooltip);
+
+    async function showTooltip(): Promise<void> {
+        if (!tooltipContainer) return;
+
+        tooltipStore.show(tooltipContainer);
+
+        await tick();
+
+        const dom = target.getDomElement();
+        if (dom !== undefined) {
+            tooltipStore.position(dom, position, align, gutter);
+        }
+    }
+
+    function closeTooltip() {
+        tooltipStore.hide();
+    }
 
     function calculateMaxWidth(textLength: number, longestWord: number, mobile: boolean): number {
         const MIN_WIDTH = mobile ? 100 : 140;
@@ -28,15 +90,34 @@
     }
 </script>
 
-<div
-    transition:fade={{ duration: 100 }}
-    class={`tooltip-popup ${position} ${align}`}
-    class:rtl={$rtlStore}
-    style={`max-width: ${maxWidth}rem;`}>
-    <slot />
+<Hoverable {fill} bind:this={target} bind:hovering bind:longPressed enableLongPress>
+    {@render children()}
+</Hoverable>
+
+<div class="tooltip-blueprint">
+    <span class="tooltip" bind:this={tooltipContainer}>
+        {#if $tooltipStore === tooltipContainer}
+            <div
+                transition:fade={{ duration: 100 }}
+                class={`tooltip-popup ${position} ${align}`}
+                class:rtl={$rtlStore}
+                class:uppercase
+                style={`max-width: ${maxWidth}rem;`}>
+                {@render popupTemplate()}
+            </div>
+        {/if}
+    </span>
 </div>
 
 <style lang="scss">
+    .tooltip {
+        position: absolute;
+    }
+
+    .tooltip-blueprint {
+        display: none;
+    }
+
     .tooltip-popup {
         background-color: var(--menu-bg);
         border: 1px solid var(--menu-bd);
@@ -56,6 +137,10 @@
         border-radius: $sp3;
         pointer-events: none;
         word-wrap: break-word;
+
+        &.uppercase {
+            text-transform: uppercase;
+        }
 
         &:after {
             display: block;

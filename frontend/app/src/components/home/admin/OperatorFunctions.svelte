@@ -299,7 +299,7 @@
                 tiny
                 disabled={busy.has(0) || groupUpgradeConcurrencyInvalid}
                 loading={busy.has(0)}
-                on:click={setGroupUpgradeConcurrency}>Apply</Button>
+                onClick={setGroupUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -313,7 +313,7 @@
                 tiny
                 disabled={busy.has(1) || communityUpgradeConcurrencyInvalid}
                 loading={busy.has(1)}
-                on:click={setCommunityUpgradeConcurrency}>Apply</Button>
+                onClick={setCommunityUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -325,7 +325,7 @@
                 tiny
                 disabled={busy.has(2) || userUpgradeConcurrencyInvalid}
                 loading={busy.has(2)}
-                on:click={setUserUpgradeConcurrency}>Apply</Button>
+                onClick={setUserUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -369,7 +369,7 @@
                 tiny
                 disabled={busy.has(3)}
                 loading={busy.has(3)}
-                on:click={setDiamondMembershipFees}>Apply</Button>
+                onClick={setDiamondMembershipFees}>Apply</Button>
         </section>
     {/if}
 
@@ -391,7 +391,7 @@
             tiny
             disabled={busy.has(4)}
             loading={busy.has(4)}
-            on:click={stakeNeuronForSubmittingProposals}>Apply</Button>
+            onClick={stakeNeuronForSubmittingProposals}>Apply</Button>
     </section>
 
     <section class="operator-function">
@@ -472,7 +472,7 @@
             tiny
             disabled={busy.has(5) || exchangeIdInvalid}
             loading={busy.has(5)}
-            on:click={updateMarketMakerConfig}>Apply</Button>
+            onClick={updateMarketMakerConfig}>Apply</Button>
     </section>
 
     <section class="operator-function">
@@ -484,21 +484,21 @@
                 tiny
                 disabled={busy.has(6) || !tokenLedgerValid}
                 loading={busy.has(6)}
-                on:click={setTokenEnabled}>Apply</Button>
+                onClick={setTokenEnabled}>Apply</Button>
         </ButtonGroup>
     </section>
 
     <section class="operator-function">
         <ButtonGroup align="fill">
             <h4>Pause event loop</h4>
-            <Button tiny on:click={() => client.pauseEventLoop()}>Pause</Button>
+            <Button tiny onClick={() => client.pauseEventLoop()}>Pause</Button>
         </ButtonGroup>
     </section>
 
     <section class="operator-function">
         <ButtonGroup align="fill">
             <h4>Resume event loop</h4>
-            <Button tiny on:click={() => client.resumeEventLoop()}>Resume</Button>
+            <Button tiny onClick={() => client.resumeEventLoop()}>Resume</Button>
         </ButtonGroup>
     </section>
 

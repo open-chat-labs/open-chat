@@ -1627,7 +1627,7 @@ function mergeLocalUpdates(
     }
 
     if (localUpdates?.reactions !== undefined) {
-        let reactions = [...message.reactions];
+        let reactions = message.reactions.map((r) => ({ ...r }));
         for (const localReaction of localUpdates.reactions) {
             reactions = applyLocalReaction(localReaction, reactions);
         }

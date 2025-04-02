@@ -1,6 +1,5 @@
 <script lang="ts">
-    import TooltipWrapper from "../../TooltipWrapper.svelte";
-    import TooltipPopup from "../../TooltipPopup.svelte";
+    import Tooltip from "../../tooltip/Tooltip.svelte";
 
     type Streak =
         | "none"
@@ -57,16 +56,14 @@
 
 {#if show}
     {#if showTooltip}
-        <TooltipWrapper position="top" align="middle">
-            <div slot="target" class:disabled class={`icon ${streak.replace(/ /g, "_")}`}>
+        <Tooltip uppercase position="top" align="middle">
+            <div class:disabled class={`icon ${streak.replace(/ /g, "_")}`}>
                 {num}
             </div>
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {position} {align}>
-                    {`${streak.toUpperCase()} day streak!`}
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
+            {#snippet popupTemplate()}
+                {`${streak} day streak!`}
+            {/snippet}
+        </Tooltip>
     {:else}
         <div class="wrapper">
             <div>

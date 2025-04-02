@@ -203,10 +203,10 @@
 
     <div class="buttons">
         <ButtonGroup align="fill">
-            <Button on:click={cancel} secondary
+            <Button onClick={cancel} secondary
                 ><Translatable resourceKey={i18nKey("cancel")} /></Button>
             {#if canManageUserGroups}
-                <Button on:click={save} disabled={!dirty || !valid || saving} loading={saving}
+                <Button onClick={save} disabled={!dirty || !valid || saving} loading={saving}
                     ><Translatable resourceKey={i18nKey("save")} /></Button>
             {/if}
         </ButtonGroup>

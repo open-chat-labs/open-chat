@@ -58,7 +58,7 @@
         {/snippet}
         {#snippet footer()}
             <ButtonGroup>
-                <Button on:click={onClose}>
+                <Button onClick={onClose}>
                     <Translatable resourceKey={i18nKey("close")} />
                 </Button>
             </ButtonGroup>

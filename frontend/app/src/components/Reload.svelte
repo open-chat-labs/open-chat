@@ -5,7 +5,7 @@
 <div class="reload">
     <slot />
     <div class="btn">
-        <Button on:click={() => window.location.reload()}>Reload</Button>
+        <Button onClick={() => window.location.reload()}>Reload</Button>
     </div>
 </div>
 

@@ -367,7 +367,7 @@
     class="invaders">
     <canvas height="500" width={containerWidth} bind:this={canvas} />
     {#if state === "not_started"}
-        <div class="start"><Button on:click={start}>{$_("halloffame.start")}</Button></div>
+        <div class="start"><Button onClick={start}>{$_("halloffame.start")}</Button></div>
     {/if}
 </div>
 

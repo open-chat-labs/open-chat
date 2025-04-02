@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { ResourceKey } from "openchat-client";
-    import TooltipPopup from "../TooltipPopup.svelte";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
     import Translatable from "../Translatable.svelte";
 
     interface Props {
@@ -15,14 +14,12 @@
 
 {#if verified}
     {#if tooltip !== undefined}
-        <TooltipWrapper position="top" align="middle">
-            <div slot="target" class={`verified ${size}`}></div>
-            <div let:position let:align slot="tooltip" class="tooltip">
-                <TooltipPopup {position} {align}>
-                    <Translatable resourceKey={tooltip} />
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
+        <Tooltip uppercase position="top" align="middle">
+            <div class={`verified ${size}`}></div>
+            {#snippet popupTemplate()}
+                <Translatable resourceKey={tooltip} />
+            {/snippet}
+        </Tooltip>
     {:else}
         <div class={`verified ${size}`}></div>
     {/if}

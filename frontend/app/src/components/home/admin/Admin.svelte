@@ -21,7 +21,7 @@
         <img class="img" src={"/assets/evil-robot.svg"} alt="Unauthorised" />
         <h2>Unauthorised</h2>
         <p>Only platform operators can access the admin area</p>
-        <Button on:click={() => page("/")}>Back to safety</Button>
+        <Button onClick={() => page("/")}>Back to safety</Button>
     </div>
 {:else}
     <div class="admin">

@@ -157,7 +157,7 @@
                         placeholder={i18nKey("communities.search")} />
                 </div>
                 <div class="create">
-                    <Button on:click={createCommunity} hollow
+                    <Button onClick={createCommunity} hollow
                         ><Translatable resourceKey={i18nKey("communities.create")} /></Button>
                 </div>
             {/if}
@@ -238,7 +238,7 @@
                 <Button
                     disabled={searching}
                     loading={searching}
-                    on:click={() => search($exploreCommunitiesFilters, false)}
+                    onClick={() => search($exploreCommunitiesFilters, false)}
                     ><Translatable resourceKey={i18nKey("communities.loadMore")} /></Button>
             </div>
         {/if}

@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
 - Expose `referred_by` in metrics ([#7693](https://github.com/open-chat-labs/open-chat/pull/7693))
 - Reinstate up to 2 missed daily claims per user ([#7703](https://github.com/open-chat-labs/open-chat/pull/7703))
+- Support passing common state to timer job batches ([#7705](https://github.com/open-chat-labs/open-chat/pull/7705))
+- Only allow paying for streak insurance while on a streak ([#7711](https://github.com/open-chat-labs/open-chat/pull/7711))
+- Ensure the job to reinstate missed daily claims only runs once ([#7712](https://github.com/open-chat-labs/open-chat/pull/7712))
 
 ## [[2.0.1663-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1663-user)] - 2025-03-21
 
