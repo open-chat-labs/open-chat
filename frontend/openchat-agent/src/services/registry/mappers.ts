@@ -4,7 +4,7 @@ import type {
     CryptocurrencyDetails,
     DexId,
 } from "openchat-shared";
-import { mapOptional, principalBytesToString } from "../../utils/mapping";
+import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import { BTC_SYMBOL, CKBTC_SYMBOL, UnsupportedValueError } from "openchat-shared";
 import { buildTokenLogoUrl } from "../../utils/chat";
 import type {
@@ -27,11 +27,6 @@ export function updatesResponse(
         };
     }
     if ("Success" in value) {
-        const communityId = "txydz-jyaaa-aaaaf-bifea-cai";
-        const channelId = 2481490751;
-        const channelName = "March Airdrop 🪂";
-        const communityName = "CHIT for CHAT";
-
         return {
             kind: "success",
             lastUpdated: value.Success.last_updated,
@@ -43,17 +38,21 @@ export function updatesResponse(
             swapProviders: mapOptional(value.Success.swap_providers, (r) => r.map(swapProvider)),
             messageFiltersAdded: value.Success.message_filters_added,
             messageFiltersRemoved: value.Success.message_filters_removed,
-            currentAirdropChannel: {
-                //TODO - fill this in
-                id: {
-                    kind: "channel",
-                    communityId,
-                    channelId,
-                },
-                channelName,
-                communityName,
-                url: `/community/${communityId}/channel/${channelId}`,
-            },
+            currentAirdropChannel: optionUpdateV2(value.Success.airdrop_config, (cfg) => {
+                const communityId = principalBytesToString(cfg.community_id);
+                const channelId = Number(cfg.channel_id);
+
+                return {
+                    id: {
+                        kind: "channel",
+                        communityId,
+                        channelId,
+                    },
+                    channelName: cfg.channel_name,
+                    communityName: cfg.community_name,
+                    url: `/community/${communityId}/channel/${channelId}`
+                };
+            }),
         };
     }
 

@@ -16,6 +16,8 @@
     import { menuCloser } from "../../../actions/closeMenu";
     import { calendarState, type DateRange } from "../../calendar/calendarState.svelte";
     import Calendar from "../../calendar/Calendar.svelte";
+    import CollapsibleCard from "@src/components/CollapsibleCard.svelte";
+    import StreakInsuranceSummary from "../insurance/StreakInsuranceSummary.svelte";
 
     const client = getContext<OpenChat>("client");
     let events = $state<ChitEarned[]>([]);
@@ -88,59 +90,66 @@
 
 <div use:menuCloser class="chit-events">
     {#if !$disableChit}
-        <div class="header">
+        <div class="chit-stuff">
+            <div class="header">
+                {#if streak > 0}
+                    <div class="streak">
+                        You are on a
+                        <div class="streak-txt">{streak}</div>
+                        day streak!
+                    </div>
+                {/if}
+                <ChitBalance
+                    size={"large"}
+                    me
+                    balance={$chitState.chitBalance}
+                    totalEarned={$chitState.totalChitEarned} />
+            </div>
             {#if streak > 0}
-                <div class="streak">
-                    You are on a
-                    <div class="streak-txt">{streak}</div>
-                    day streak!
-                </div>
+                <CollapsibleCard headerText={i18nKey("streakInsurance.title")}>
+                    <StreakInsuranceSummary />
+                </CollapsibleCard>
             {/if}
-            <ChitBalance
-                size={"large"}
-                me
-                balance={$chitState.chitBalance}
-                totalEarned={$chitState.totalChitEarned} />
-        </div>
-        <Calendar {dateSelected}>
-            {#snippet monthTitleTemplate()}
-                <div class="month-title">
-                    <div class="month">{calendarState.monthTitle}</div>
-                    <div class="chit-earned">{totalEarned.toLocaleString()} CHIT</div>
+            <CollapsibleCard headerText={i18nKey("dailyChit.events")}>
+                <Calendar {dateSelected}>
+                    {#snippet monthTitleTemplate()}
+                        <div class="month-title">
+                            <div class="month">{calendarState.monthTitle}</div>
+                            <div class="chit-earned">{totalEarned.toLocaleString()} CHIT</div>
+                        </div>
+                    {/snippet}
+                    {#snippet dayTemplate(day)}
+                        <ChitEventsForDay
+                            {day}
+                            selectedMonth={calendarState.selectedMonth}
+                            events={chitEventsForDay(events, day)} />
+                    {/snippet}
+                </Calendar>
+                <Toggle
+                    id={"utc-mode"}
+                    on:change={changeMode}
+                    small
+                    label={i18nKey("dailyChit.utcMode")}
+                    bind:checked={$utcMode} />
+                <div class="info">
+                    <Translatable resourceKey={i18nKey("dailyChit.utcInfo")} />
                 </div>
-            {/snippet}
-            {#snippet dayTemplate(day)}
-                <ChitEventsForDay
-                    {day}
-                    selectedMonth={calendarState.selectedMonth}
-                    events={chitEventsForDay(events, day)} />
-            {/snippet}
-        </Calendar>
-
-        <Toggle
-            id={"utc-mode"}
-            on:change={changeMode}
-            small
-            label={i18nKey("dailyChit.utcMode")}
-            bind:checked={$utcMode} />
-
-        <div class="utc">
-            <Translatable resourceKey={i18nKey("dailyChit.utcInfo")} />
+            </CollapsibleCard>
+            <CollapsibleCard headerText={i18nKey("dailyChit.settings")}>
+                <Toggle
+                    id={"chit-popup"}
+                    small
+                    on:change={() => chitPopup.set(!$chitPopup)}
+                    label={i18nKey("learnToEarn.showChitPopup")}
+                    checked={$chitPopup} />
+                <Toggle
+                    id={"hide-chit-icon"}
+                    small
+                    on:change={() => hideChitIcon.set(!$hideChitIcon)}
+                    label={i18nKey("dailyChit.hideWhenClaimed")}
+                    checked={$hideChitIcon} />
+            </CollapsibleCard>
         </div>
-
-        <Toggle
-            id={"chit-popup"}
-            small
-            on:change={() => chitPopup.set(!$chitPopup)}
-            label={i18nKey("learnToEarn.showChitPopup")}
-            checked={$chitPopup} />
-
-        <Toggle
-            id={"hide-chit-icon"}
-            small
-            on:change={() => hideChitIcon.set(!$hideChitIcon)}
-            label={i18nKey("dailyChit.hideWhenClaimed")}
-            checked={$hideChitIcon} />
     {/if}
 
     <Toggle
@@ -163,11 +172,8 @@
     }
 
     .header {
-        border: var(--bw) solid var(--bd);
-        border-bottom: none;
         display: flex;
         flex-direction: column;
-        padding: $sp5 0;
         gap: $sp3;
     }
 
@@ -190,9 +196,13 @@
         @include font(book, normal, fs-60);
     }
 
-    .utc {
+    .info {
         @include font(book, normal, fs-80);
         color: var(--txt-light);
+        margin-bottom: $sp4;
+    }
+
+    .chit-stuff {
         margin-bottom: $sp4;
     }
 </style>

@@ -105,7 +105,7 @@
                 {#if canGenerateKey}
                     <div class="chat-subtext apikey">
                         <Link
-                            on:click={apiKeyPermissions !== undefined
+                            onClick={apiKeyPermissions !== undefined
                                 ? reviewApiKey
                                 : generateApiKey}
                             underline="never">

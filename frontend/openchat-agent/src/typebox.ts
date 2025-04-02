@@ -345,6 +345,12 @@ export const UserUnblockUserResponse = Type.Union([
 export type UserAddHotGroupExclusionsResponse = Static<typeof UserAddHotGroupExclusionsResponse>;
 export const UserAddHotGroupExclusionsResponse = Type.Literal("Success");
 
+export type UserPayForStreakInsuranceArgs = Static<typeof UserPayForStreakInsuranceArgs>;
+export const UserPayForStreakInsuranceArgs = Type.Object({
+    additional_days: Type.Number(),
+    expected_price: Type.BigInt(),
+});
+
 export type UserUpdatesArgs = Static<typeof UserUpdatesArgs>;
 export const UserUpdatesArgs = Type.Object({
     updates_since: Type.BigInt(),
@@ -967,6 +973,7 @@ export const ChitEarnedReason = Type.Union([
         Referral: ReferralStatus,
     }),
     Type.Literal("MemeContestWinner"),
+    Type.Literal("DailyClaimReinstated"),
 ]);
 
 export type InvalidPollReason = Static<typeof InvalidPollReason>;
@@ -5113,6 +5120,25 @@ export const UserSaveCryptoAccountResponse = Type.Union([
     Type.Literal("Invalid"),
     Type.Literal("NameTaken"),
     Type.Literal("UserSuspended"),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type UserPayForStreakInsuranceResponse = Static<typeof UserPayForStreakInsuranceResponse>;
+export const UserPayForStreakInsuranceResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NoActiveStreak"),
+    Type.Object({
+        IncorrectPrice: Type.BigInt(),
+    }),
+    Type.Literal("PaymentAlreadyInProgress"),
+    Type.Object({
+        PaymentFailed: Type.String(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
     Type.Object({
         Error: OCError,
     }),

@@ -83,6 +83,8 @@
                 return i18nKey("PRIZE CLAIM");
             case "OC_PRZRF":
                 return i18nKey("PRIZE REFUND");
+            case "OC_INS":
+                return i18nKey("STREAK INSURANCE");
 
             default:
                 return i18nKey("cryptoAccount.unknownTransactionType");

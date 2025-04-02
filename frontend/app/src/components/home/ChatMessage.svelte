@@ -591,7 +591,7 @@
                         class:rtl={$rtlStore}>
                         {#if first && !isProposal && !isPrize}
                             <div class="sender" class:fill class:rtl={$rtlStore}>
-                                <Link underline={"never"} on:click={openUserProfile}>
+                                <Link underline={"never"} onClick={openUserProfile}>
                                     <h4 class="username" class:fill class:crypto>
                                         {senderDisplayName}
                                     </h4>
@@ -679,6 +679,7 @@
                                 {expiresAt}
                                 {percentageExpired}
                                 {me}
+                                bot={sender?.kind === "bot"}
                                 {accepted}
                                 {failed}
                                 deleted={msg.deleted}

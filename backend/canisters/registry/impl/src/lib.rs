@@ -64,6 +64,7 @@ impl RuntimeState {
             nervous_systems: self.data.nervous_systems.get_all().iter().map(|ns| ns.into()).collect(),
             message_filters: self.data.message_filters.added_since(0),
             failed_sns_launches: self.data.failed_sns_launches.iter().copied().collect(),
+            airdrop_config: self.data.airdrop_config.value.clone(),
             stable_memory_sizes: memory::memory_sizes(),
             subnets: self.data.subnets.subnets().to_vec(),
             canister_ids: CanisterIds {
@@ -211,6 +212,7 @@ pub struct Metrics {
     pub nervous_systems: Vec<NervousSystemMetrics>,
     pub message_filters: Vec<MessageFilterSummary>,
     pub failed_sns_launches: Vec<CanisterId>,
+    pub airdrop_config: Option<AirdropConfig>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub subnets: Vec<Subnet>,
     pub canister_ids: CanisterIds,

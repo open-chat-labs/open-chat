@@ -225,6 +225,7 @@ impl RuntimeState {
                     .get(&MonthKey::from_timestamp(now))
                     .copied()
                     .unwrap_or_default(),
+                max_stream: user.max_streak,
                 streak: user.streak(now),
                 streak_ends: user.streak_ends,
                 chit_updated: user.chit_updated,
@@ -661,6 +662,7 @@ pub struct UserMetrics {
     pub moderation_flags_enabled: u32,
     pub chit_balance: i32,
     pub chit_updated: TimestampMillis,
+    pub max_stream: u16,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
 }

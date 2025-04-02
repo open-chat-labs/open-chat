@@ -2,6 +2,7 @@ import {
     GlobalMap,
     type ExternalBotPermissions,
     type LocalGlobalUpdates,
+    type StreakInsurance,
     type WalletConfig,
 } from "openchat-shared";
 import { LocalUpdatesStore } from "./localUpdatesStore";
@@ -14,6 +15,12 @@ class LocalGlobalUpdatesStore extends LocalUpdatesStore<"global", LocalGlobalUpd
     updateWallet(walletConfig: WalletConfig) {
         this.applyUpdate("global", (_) => ({
             walletConfig,
+        }));
+    }
+
+    updateStreakInsurance(streakInsurance: StreakInsurance) {
+        this.applyUpdate("global", (_) => ({
+            streakInsurance,
         }));
     }
 

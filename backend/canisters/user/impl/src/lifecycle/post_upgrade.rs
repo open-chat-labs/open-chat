@@ -38,13 +38,16 @@ fn post_upgrade(args: Args) {
 }
 
 fn reinstate_daily_claims(state: &mut RuntimeState) {
-    let now = state.env.now();
-    let now_day = Streak::timestamp_to_day(now).unwrap();
-    let current_end_day = state.data.streak.end_day();
-    if current_end_day < now_day.saturating_sub(3) {
+    if state.data.chit_events.any_missed_daily_claims_reinstated() {
         return;
     }
 
+    let now = state.env.now();
+    if state.data.streak.days(now) == 0 {
+        return;
+    }
+
+    let now_day = Streak::timestamp_to_day(now).unwrap();
     let chit_claim_days: BTreeSet<_> = state
         .data
         .chit_events

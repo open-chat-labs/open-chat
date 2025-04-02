@@ -372,11 +372,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "markAsOnline":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.markAsOnline(),
-                );
+                executeThenReply(payload, correlationId, agent.markAsOnline());
                 break;
 
             case "minutesOnline":
@@ -1065,6 +1061,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "removeMessageFilter":
                 executeThenReply(payload, correlationId, agent.removeMessageFilter(payload.id));
+                break;
+
+            case "setAirdropConfig":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setAirdropConfig(payload.channelId, payload.channelName),
+                );
                 break;
 
             case "setTokenEnabled":
@@ -1769,7 +1773,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.updateBtcBalance(payload.userId, payload.bitcoinAddress)
+                    agent.updateBtcBalance(payload.userId, payload.bitcoinAddress),
                 );
                 break;
 
@@ -1777,16 +1781,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.withdrawBtc(payload.address, payload.amount, payload.pin)
+                    agent.withdrawBtc(payload.address, payload.amount, payload.pin),
                 );
                 break;
 
             case "ckbtcMinterDepositInfo":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.getCkbtcMinterDepositInfo(),
-                );
+                executeThenReply(payload, correlationId, agent.getCkbtcMinterDepositInfo());
                 break;
 
             case "ckbtcMinterWithdrawalInfo":
@@ -2039,6 +2039,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.amount,
                         payload.fee,
                     ),
+                );
+                break;
+
+            case "payForStreakInsurance":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.payForStreakInsurance(payload.additionalDays, payload.expectedPrice),
                 );
                 break;
 

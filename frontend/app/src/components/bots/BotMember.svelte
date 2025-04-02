@@ -65,7 +65,7 @@
                 {#if canGenerateKey}
                     <div class="apikey">
                         <Link
-                            on:click={apiKeyPermissions !== undefined
+                            onClick={apiKeyPermissions !== undefined
                                 ? reviewApiKey
                                 : generateApiKey}
                             underline="never">

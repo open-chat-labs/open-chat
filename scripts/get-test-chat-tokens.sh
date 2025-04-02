@@ -6,7 +6,7 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-dfx --identity $IDENTITY canister call test_ledger icrc1_transfer "(record {
+dfx --identity $IDENTITY canister call test_chat_ledger icrc1_transfer "(record {
     to = record { owner = principal \"$RECIPIENT\" };
     amount = $AMOUNT:nat;
 })"

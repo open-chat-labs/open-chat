@@ -201,6 +201,7 @@ import type {
     ChitLeaderboardResponse,
     ClaimDailyChitResponse,
     ExternalAchievement,
+    PayForStreakInsuranceResponse,
 } from "./chit";
 import type { DelegationChain, JsonnableDelegationChain } from "@dfinity/identity";
 import type { Verification } from "./wallet";
@@ -216,7 +217,7 @@ import type {
 import type {
     CkbtcMinterDepositInfo,
     CkbtcMinterWithdrawalInfo,
-    WithdrawBtcResponse
+    WithdrawBtcResponse,
 } from "./bitcoin";
 
 /**
@@ -317,6 +318,7 @@ export type WorkerRequest =
     | AddRemoveSwapProvider
     | AddMessageFilter
     | RemoveMessageFilter
+    | SetAirdropConfig
     | SetTokenEnabled
     | SuspendUser
     | UnsuspendUser
@@ -446,7 +448,14 @@ export type WorkerRequest =
     | CallBotCommandEndpoint
     | WithdrawFromIcpSwap
     | GenerateBotApiKey
-    | GetApiKey;
+    | GetApiKey
+    | PayForStreakInsurance;
+
+type PayForStreakInsurance = {
+    kind: "payForStreakInsurance";
+    additionalDays: number;
+    expectedPrice: bigint;
+};
 
 type GetApiKey = {
     kind: "getApiKey";
@@ -1278,6 +1287,12 @@ type RemoveMessageFilter = {
     kind: "removeMessageFilter";
 };
 
+type SetAirdropConfig = {
+    channelId: number;
+    channelName: string;
+    kind: "setAirdropConfig";
+};
+
 type SetTokenEnabled = {
     ledger: string;
     enabled: boolean;
@@ -1423,7 +1438,7 @@ type UpdateBtcBalance = {
 type WithdrawBtc = {
     address: string;
     amount: bigint;
-    pin : string | undefined;
+    pin: string | undefined;
     kind: "withdrawBtc";
 };
 
@@ -1686,7 +1701,8 @@ export type WorkerResponseInner =
     | ExploreBotsResponse
     | BotDefinitionResponse
     | BotCommandResponse
-    | GenerateBotKeyResponse;
+    | GenerateBotKeyResponse
+    | PayForStreakInsuranceResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2195,6 +2211,8 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends RemoveMessageFilter
     ? boolean
+    : T extends SetAirdropConfig
+    ? boolean
     : T extends SetTokenEnabled
     ? boolean
     : T extends DeleteFrozenGroup
@@ -2431,4 +2449,6 @@ export type WorkerResult<T> = T extends Init
     ? GenerateBotKeyResponse
     : T extends GetApiKey
     ? string | undefined
+    : T extends PayForStreakInsurance
+    ? PayForStreakInsuranceResponse
     : never;
