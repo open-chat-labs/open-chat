@@ -57,7 +57,7 @@
     }
 </script>
 
-<Link on:click={zoomToMessage}>
+<Link onClick={zoomToMessage}>
     <div
         class="reply-wrapper"
         class:me

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
+    import InfoIcon from "@src/components/InfoIcon.svelte";
     import TrophyOutline from "svelte-material-icons/TrophyOutline.svelte";
     import { Confetti } from "svelte-confetti";
     import { getContext, onMount, tick } from "svelte";
@@ -25,6 +27,8 @@
     import AlertBox from "../AlertBox.svelte";
     import Markdown from "./Markdown.svelte";
     import { toastStore } from "../../stores/toast";
+    import Link from "../Link.svelte";
+    import StreakInsuranceBuy from "./insurance/StreakInsuranceBuy.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -39,7 +43,8 @@
     let additional: number | undefined = $state(undefined);
     let learnToEarn = $state(false);
     let airdropChannel: AirdropChannelDetails | undefined = $state(undefined);
-    let isMemberOfAirdropChannel = false;
+    let isMemberOfAirdropChannel = $state(false);
+    let showInsurance = $state(false);
 
     onMount(() => {
         isMemberOfAirdropChannel = client.isMemberOfAirdropChannel();
@@ -126,6 +131,10 @@
     <LearnToEarn onClose={() => (learnToEarn = false)} />
 {/if}
 
+{#if showInsurance}
+    <StreakInsuranceBuy onClose={() => (showInsurance = false)} />
+{/if}
+
 <ModalContent closeIcon {onClose}>
     {#snippet header()}
         <div class="header">
@@ -193,6 +202,16 @@
                 </div>
             </div>
 
+            <Link onClick={() => (showInsurance = true)}>
+                <div class="insurance">
+                    <ShieldHalfFull />
+                    <Translatable resourceKey={i18nKey("streakInsurance.link")}></Translatable>
+                    <InfoIcon align={"middle"}>
+                        <Translatable resourceKey={i18nKey("streakInsurance.infoPopup")} />
+                    </InfoIcon>
+                </div>
+            </Link>
+
             {#if airdropChannel !== undefined}
                 <AlertBox>
                     <Markdown
@@ -254,7 +273,6 @@
     .progress-wrapper {
         width: 100%;
         padding: 0 $sp4;
-        margin-bottom: $sp3;
     }
 
     .progress {
@@ -372,5 +390,12 @@
         position: absolute;
         top: $sp3;
         left: $sp3;
+    }
+
+    .insurance {
+        display: flex;
+        gap: $sp2;
+        align-items: center;
+        margin-bottom: $sp3;
     }
 </style>

@@ -973,6 +973,7 @@ export const ChitEarnedReason = Type.Union([
         Referral: ReferralStatus,
     }),
     Type.Literal("MemeContestWinner"),
+    Type.Literal("DailyClaimReinstated"),
 ]);
 
 export type InvalidPollReason = Static<typeof InvalidPollReason>;

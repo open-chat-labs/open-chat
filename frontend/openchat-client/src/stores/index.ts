@@ -28,3 +28,4 @@ export * from "./permission";
 export * from "./bots";
 export * from "./ephemeralMessages";
 export * from "./minutesOnline";
+export * from "./streakInsurance";

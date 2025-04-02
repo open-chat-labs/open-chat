@@ -201,6 +201,7 @@ import type {
     ChitLeaderboardResponse,
     ClaimDailyChitResponse,
     ExternalAchievement,
+    PayForStreakInsuranceResponse,
 } from "./chit";
 import type { DelegationChain, JsonnableDelegationChain } from "@dfinity/identity";
 import type { Verification } from "./wallet";
@@ -216,7 +217,7 @@ import type {
 import type {
     CkbtcMinterDepositInfo,
     CkbtcMinterWithdrawalInfo,
-    WithdrawBtcResponse
+    WithdrawBtcResponse,
 } from "./bitcoin";
 
 /**
@@ -446,7 +447,14 @@ export type WorkerRequest =
     | CallBotCommandEndpoint
     | WithdrawFromIcpSwap
     | GenerateBotApiKey
-    | GetApiKey;
+    | GetApiKey
+    | PayForStreakInsurance;
+
+type PayForStreakInsurance = {
+    kind: "payForStreakInsurance";
+    additionalDays: number;
+    expectedPrice: bigint;
+};
 
 type GetApiKey = {
     kind: "getApiKey";
@@ -1423,7 +1431,7 @@ type UpdateBtcBalance = {
 type WithdrawBtc = {
     address: string;
     amount: bigint;
-    pin : string | undefined;
+    pin: string | undefined;
     kind: "withdrawBtc";
 };
 
@@ -1686,7 +1694,8 @@ export type WorkerResponseInner =
     | ExploreBotsResponse
     | BotDefinitionResponse
     | BotCommandResponse
-    | GenerateBotKeyResponse;
+    | GenerateBotKeyResponse
+    | PayForStreakInsuranceResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2431,4 +2440,6 @@ export type WorkerResult<T> = T extends Init
     ? GenerateBotKeyResponse
     : T extends GetApiKey
     ? string | undefined
+    : T extends PayForStreakInsurance
+    ? PayForStreakInsuranceResponse
     : never;
