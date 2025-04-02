@@ -1683,7 +1683,7 @@
         "failure": "Spiacenti, ma non siamo riusciti ad accettare il pagamento per la tua assicurazione Streak",
         "info": "Per proteggere la tua serie positiva puoi pagare una quota, così da avere una sicurezza nel caso in cui per qualsiasi motivo dovessi saltare qualche giorno.",
         "infoPopup": "Puoi assicurare la tua serie scegliendo un numero di giorni da proteggere. Il prezzo in CHAT raddoppia per ogni giorno che scegli di assicurare, quindi devi comunque stare attento!",
-        "link": "Clicca qui per acquistare o ricaricare l'assicurazione Streak",
+        "link": "Acquista o ricarica l'assicurazione contro le serie",
         "missed": "giorni persi",
         "pay": "Paga {price} CHAT",
         "protected": "Finora la tua assicurazione contro le serie ti ha protetto da {missed} giorni persi!",

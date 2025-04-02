@@ -1683,7 +1683,7 @@
         "failure": "Sorry but we were unable to take payment for your streak insurance",
         "info": "To protect your streak you can pay a fee to give yourself a safety net in case you accidentally miss the odd day for any reason.",
         "infoPopup": "You can insure your streak by choosing a number of days to protect. The price in CHAT doubles for each day you choose to insure so you still need to be careful!",
-        "link": "Click here to buy or top up streak insurance",
+        "link": "Buy or top up streak insurance",
         "missed": "days missed",
         "pay": "Pay {price} CHAT",
         "protected": "Your streak insurance has protected you from {missed} missed day(s) so far!",

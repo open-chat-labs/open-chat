@@ -1683,7 +1683,7 @@
         "failure": "Przepraszamy, ale nie mogliśmy przyjąć płatności za ubezpieczenie od nieszczęśliwych wypadków",
         "info": "Aby chronić swoją passę, możesz uiścić opłatę, która zapewni ci bezpieczeństwo w razie przypadkowej pominięcia danego dnia z jakiegokolwiek powodu.",
         "infoPopup": "Możesz ubezpieczyć swoją passę, wybierając liczbę dni do ochrony. Cena w CHAT podwaja się za każdy dzień, który wybierzesz do ubezpieczenia, więc nadal musisz być ostrożny!",
-        "link": "Kliknij tutaj, aby kupić lub uzupełnić ubezpieczenie serii",
+        "link": "Kup lub uzupełnij ubezpieczenie passy",
         "missed": "dni pominięte",
         "pay": "Zapłać {price} CZAT",
         "protected": "Twoje ubezpieczenie serii ochroniło Cię przed {missed} pominiętymi dniami do tej pory!",

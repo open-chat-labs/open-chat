@@ -1683,7 +1683,7 @@
         "failure": "Rất tiếc nhưng chúng tôi không thể nhận thanh toán cho bảo hiểm streak của bạn",
         "info": "Để bảo vệ chuỗi chiến thắng của mình, bạn có thể trả một khoản phí để đảm bảo an toàn trong trường hợp bạn vô tình bỏ lỡ một ngày nào đó vì bất kỳ lý do gì.",
         "infoPopup": "Bạn có thể bảo hiểm streak của mình bằng cách chọn một số ngày để bảo vệ. Giá trong CHAT tăng gấp đôi cho mỗi ngày bạn chọn để bảo hiểm nên bạn vẫn cần phải cẩn thận!",
-        "link": "Nhấp vào đây để mua hoặc nạp thêm bảo hiểm streak",
+        "link": "Mua hoặc nạp thêm bảo hiểm streak",
         "missed": "ngày bị mất",
         "pay": "Trả {price} CHAT",
         "protected": "Bảo hiểm streak đã bảo vệ bạn khỏi {missed} ngày nghỉ cho đến nay!",

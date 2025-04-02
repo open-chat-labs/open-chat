@@ -1683,7 +1683,7 @@
         "failure": "Désolé, mais nous n'avons pas pu prendre le paiement de votre assurance contre les séquences.",
         "info": "Pour protéger votre séquence, vous pouvez payer des frais pour vous donner un filet de sécurité au cas où vous manqueriez accidentellement un jour étrange pour une raison quelconque.",
         "infoPopup": "Vous pouvez assurer votre série en choisissant un nombre de jours de protection. Le prix dans CHAT double pour chaque jour d'assurance choisi ; restez donc vigilant !",
-        "link": "Cliquez ici pour acheter ou recharger une assurance séquence",
+        "link": "Achetez ou rechargez une assurance séquence",
         "missed": "jours manqués",
         "pay": "Payer {price} CHAT",
         "protected": "Votre assurance contre les séquences vous a protégé de {missed} jours manqués jusqu'à présent !",
