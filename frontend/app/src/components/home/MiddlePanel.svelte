@@ -11,7 +11,6 @@
         type MultiUserChat,
         selectedChatStore,
         selectedChatId,
-        eventsStore,
         filteredProposalsStore,
         externalBots,
         installedDirectBots,
@@ -139,7 +138,6 @@
             bind:currentChatMessages
             {joining}
             chat={$selectedChatStore}
-            events={$eventsStore}
             filteredProposals={$filteredProposalsStore}
             on:goToMessageIndex={(ev) => onGoToMessageIndex(ev.detail)} />
     {/if}

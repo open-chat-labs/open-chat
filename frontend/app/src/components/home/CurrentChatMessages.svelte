@@ -29,6 +29,7 @@
         chatListScopeStore as chatListScope,
         selectedCommunity,
         expandedDeletedMessages,
+        eventsStore,
     } from "openchat-client";
     import InitialChatMessage from "./InitialChatMessage.svelte";
     import page from "page";
@@ -52,11 +53,10 @@
     export let canInvite: boolean;
     export let footer: boolean;
     export let canReplyInThread: boolean;
-    export let events: EventWrapper<ChatEventType>[];
     export let filteredProposals: FilteredProposals | undefined;
     export let privateChatPreview: boolean;
 
-    $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
+    $: showAvatar = initialised && shouldShowAvatar(chat, $eventsStore[0]?.index);
     $: messageContext = { chatId: chat.id, threadRootMessageIndex: undefined };
 
     // treat this as if it might be null so we don't get errors when it's unmounted
@@ -130,7 +130,7 @@
     }
 
     $: timeline = client.groupEvents(
-        [...events].reverse(),
+        [...$eventsStore].reverse(),
         $user.userId,
         $expandedDeletedMessages,
         groupInner(filteredProposals),
@@ -270,7 +270,7 @@
     {unreadMessages}
     {firstUnreadMention}
     {footer}
-    {events}
+    events={$eventsStore}
     {chat}
     bind:initialised
     bind:messagesDiv
