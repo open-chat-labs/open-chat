@@ -679,6 +679,7 @@
                                 {expiresAt}
                                 {percentageExpired}
                                 {me}
+                                bot={sender?.kind === "bot"}
                                 {accepted}
                                 {failed}
                                 deleted={msg.deleted}
