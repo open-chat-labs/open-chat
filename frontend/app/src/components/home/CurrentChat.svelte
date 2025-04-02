@@ -5,7 +5,6 @@
     import { closeNotificationsForChat } from "../../utils/notifications";
     import { getContext, onMount, tick } from "svelte";
     import {
-        type ChatEvent,
         type ChatSummary,
         type EnhancedReplyContext,
         type EventWrapper,
@@ -64,7 +63,6 @@
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
     export let currentChatMessages: CurrentChatMessages | undefined;
-    export let events: EventWrapper<ChatEvent>[];
     export let filteredProposals: FilteredProposals | undefined;
 
     const client = getContext<OpenChat>("client");
@@ -424,7 +422,6 @@
             on:removePreview={onRemovePreview}
             {privateChatPreview}
             {chat}
-            {events}
             {filteredProposals}
             {canPin}
             {canBlockUsers}
