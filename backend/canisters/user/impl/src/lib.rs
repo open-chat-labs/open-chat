@@ -188,8 +188,12 @@ impl RuntimeState {
     }
 
     pub fn mark_streak_insurance_claim(&mut self, claim: UserCanisterStreakInsuranceClaim) {
+        self.data.chit_events.push(ChitEarned {
+            amount: 0,
+            timestamp: claim.timestamp,
+            reason: ChitEarnedReason::StreakInsuranceClaim,
+        });
         let user_id: UserId = self.env.canister_id().into();
-        let now = claim.timestamp;
         self.data.event_store_client.push(
             EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
                 .with_user(user_id.to_string(), true)
@@ -197,6 +201,8 @@ impl RuntimeState {
                 .with_json_payload(&claim)
                 .build(),
         );
+
+        let now = self.env.now();
         self.push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim), now);
     }
 
