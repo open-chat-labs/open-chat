@@ -202,9 +202,6 @@ export default {
             "import.meta.env.OC_SERVICE_WORKER_PATH": JSON.stringify(
                 process.env.OC_SERVICE_WORKER_PATH,
             ),
-            "import.meta.env.OC_SUSPICIOUS_USERIDS": JSON.stringify(
-                process.env.OC_SUSPICIOUS_USERIDS,
-            ),
             "import.meta.env.OC_BITCOIN_MAINNET_ENABLED": JSON.stringify(
                 process.env.OC_BITCOIN_MAINNET_ENABLED,
             ),
