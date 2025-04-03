@@ -151,7 +151,7 @@
 
         {#if selectedTab === "viewers"}
             <VirtualList keyFn={(user) => user.userId} items={hidden}>
-                {#snippet children({ item })}
+                {#snippet children(item)}
                     <ActiveCallParticipant
                         callType={$activeVideoCall.callType}
                         {isOwner}
