@@ -88,10 +88,10 @@
         selectedTab = tab;
     }
 
-    function demote(ev: CustomEvent<string>) {
-        demoted.add(ev.detail);
+    function demote(userId: string) {
+        demoted.add(userId);
         demoted = demoted;
-        activeVideoCall.demote(ev.detail);
+        activeVideoCall.demote(userId);
     }
 </script>
 
@@ -137,7 +137,7 @@
                 <ActiveCallParticipant
                     {isOwner}
                     callType={$activeVideoCall.callType}
-                    on:demote={demote}
+                    onDemote={demote}
                     presence={isOwner && participant.userId === $user.userId ? "owner" : "default"}
                     {participant} />
             {/each}

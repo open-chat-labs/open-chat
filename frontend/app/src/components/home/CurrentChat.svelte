@@ -395,7 +395,6 @@
             <DirectChatHeader {bot} {chat} {onSearchChat}></DirectChatHeader>
         {:else}
             <CurrentChatHeader
-                on:createPoll={createPoll}
                 on:searchChat={searchChat}
                 on:importToCommunity={importToCommunity}
                 {blocked}

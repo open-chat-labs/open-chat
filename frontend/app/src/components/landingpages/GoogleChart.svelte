@@ -1,17 +1,23 @@
 <script lang="ts">
     import { toPixel } from "../../stores/screenDimensions";
 
-    export let originalWidth: number;
-    export let originalHeight: number;
-    export let src: string;
-    export let title: string;
-    export let totalWidth: number;
+    interface Props {
+        originalWidth: number;
+        originalHeight: number;
+        src: string;
+        title: string;
+        totalWidth: number;
+    }
 
-    let windowWidth = 0;
-    $: scale = Math.min(windowWidth - toPixel(2), totalWidth) / originalWidth;
+    let { originalWidth, originalHeight, src, title, totalWidth }: Props = $props();
 
-    $: wrapperStyle = `height: ${originalHeight * scale}px; width: ${originalWidth * scale}px;`;
-    $: iframeStyle = `transform: scale(${scale})`;
+    let windowWidth = $state(0);
+    let scale = $derived(Math.min(windowWidth - toPixel(2), totalWidth) / originalWidth);
+
+    let wrapperStyle = $derived(
+        `height: ${originalHeight * scale}px; width: ${originalWidth * scale}px;`,
+    );
+    let iframeStyle = $derived(`transform: scale(${scale})`);
 </script>
 
 <svelte:window bind:innerWidth={windowWidth} />
@@ -25,7 +31,7 @@
         seamless
         frameborder="0"
         scrolling="no"
-        {src} />
+        {src}></iframe>
 </div>
 
 <style lang="scss">

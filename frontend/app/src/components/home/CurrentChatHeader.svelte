@@ -234,8 +234,7 @@
             {blocked}
             on:importToCommunity
             on:showGroupDetails={showGroupDetails}
-            on:searchChat
-            on:createPoll />
+            on:searchChat />
     {/if}
 
     <ActiveBroadcastSummary />

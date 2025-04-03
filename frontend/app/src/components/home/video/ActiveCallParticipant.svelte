@@ -5,27 +5,30 @@
     import { iconSize } from "../../../stores/iconSize";
     import type { UserSummary, VideoCallPresence, VideoCallType } from "openchat-shared";
     import User from "../../home/groupdetails/User.svelte";
-    import { createEventDispatcher } from "svelte";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        participant: UserSummary;
+        presence: VideoCallPresence;
+        isOwner: boolean;
+        callType: VideoCallType;
+        onDemote?: (userId: string) => void;
+    }
 
-    export let participant: UserSummary;
-    export let presence: VideoCallPresence;
-    export let isOwner: boolean;
-    export let callType: VideoCallType;
+    let { participant, presence, isOwner, callType, onDemote }: Props = $props();
 
-    $: showMenu = isOwner && presence === "default" && callType === "broadcast";
+    let showMenu = $derived(isOwner && presence === "default" && callType === "broadcast");
 
-    function demote() {
-        dispatch("demote", participant.userId);
+    function demote(e: Event) {
+        e.stopPropagation();
+        onDemote?.(participant.userId);
     }
 </script>
 
 <User user={participant}>
     {#if showMenu}
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div on:click|stopPropagation={demote}>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div onclick={demote}>
             <HoverIcon title={$_("videoCall.demoteToHidden")}>
                 <AccountCancel size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>

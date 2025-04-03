@@ -15,7 +15,11 @@
     import { rtlStore } from "../../stores/rtl";
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { AttachmentContent, MessageAction, MessagePermission } from "openchat-client";
+    import {
+        type AttachmentContent,
+        type MessageAction,
+        type MessagePermission,
+    } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 
