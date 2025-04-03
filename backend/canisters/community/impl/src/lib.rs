@@ -26,7 +26,7 @@ use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
-use notifications_canister::c2c_push_notification;
+use notifications_canister_c2c_client::{NotificationPusherState, NotificationsBatch};
 use rand::rngs::StdRng;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
@@ -36,7 +36,7 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::time::Duration;
-use timer_job_queues::GroupedTimerJobQueue;
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::CommunityId;
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator,
@@ -109,17 +109,17 @@ impl RuntimeState {
 
     pub fn push_notification(&mut self, sender: Option<UserId>, recipients: Vec<UserId>, notification: Notification) {
         if !recipients.is_empty() {
-            let args = c2c_push_notification::Args {
-                sender,
-                recipients,
-                authorizer: Some(self.data.local_group_index_canister_id),
-                notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-            };
-            ic_cdk::futures::spawn(push_notification_inner(self.data.notifications_canister_id, args));
-        }
-
-        async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
-            let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
+            self.data.notifications_queue.push(IdempotentEnvelope {
+                created_at: self.env.now(),
+                idempotency_id: self.env.rng().next_u64(),
+                value: notifications_canister::c2c_push_notifications::Notification::User(
+                    notifications_canister::c2c_push_notifications::UserNotification {
+                        sender,
+                        recipients,
+                        notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
+                    },
+                ),
+            });
         }
     }
 
@@ -417,6 +417,18 @@ struct Data {
     bot_api_keys: BotApiKeys,
     verified: Timestamped<bool>,
     idempotency_checker: IdempotencyChecker,
+    #[serde(default = "default_notifications_queue")]
+    notifications_queue: BatchedTimerJobQueue<NotificationsBatch>,
+}
+
+fn default_notifications_queue() -> BatchedTimerJobQueue<NotificationsBatch> {
+    BatchedTimerJobQueue::new(
+        NotificationPusherState {
+            notifications_canister: CanisterId::anonymous(),
+            authorizer: CanisterId::anonymous(),
+        },
+        false,
+    )
 }
 
 impl Data {
@@ -523,6 +535,13 @@ impl Data {
             bot_api_keys: BotApiKeys::default(),
             verified: Timestamped::default(),
             idempotency_checker: IdempotencyChecker::default(),
+            notifications_queue: BatchedTimerJobQueue::new(
+                NotificationPusherState {
+                    notifications_canister: notifications_canister_id,
+                    authorizer: local_group_index_canister_id,
+                },
+                false,
+            ),
         }
     }
 
