@@ -1,6 +1,6 @@
-IDENTITY=${1:-default}
+NETWORK=${1:-local}
 
-RESULT=$(dfx --identity $IDENTITY canister call -qq user_index public_key '(record { })' --query) || exit 1
+RESULT=$(dfx --identity anonymous canister --network $NETWORK call -qq user_index public_key '(record { })' --query) || exit 1
 
 # Use parameter expansion with substring removal to extract the public key
 first_part="${RESULT#*-----BEGIN PUBLIC KEY-----}"  # Remove everything up to and including the first "---"
