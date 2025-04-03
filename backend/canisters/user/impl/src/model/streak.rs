@@ -69,7 +69,8 @@ impl Streak {
                 self.insurance_last_updated = now;
 
                 let claim = UserCanisterStreakInsuranceClaim {
-                    timestamp: now,
+                    // The timestamp of the end of the day for which the claim applied
+                    timestamp: Self::day_to_timestamp(today) - 1,
                     streak_length: self.end_day - self.start_day,
                     new_days_claimed: self.days_missed,
                 };
