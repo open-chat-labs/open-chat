@@ -1,16 +1,25 @@
 use crate::{GroupedTimerJobQueue, TimerJobItemBatch, TimerJobItemGroup};
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 // Use this to process batches of events (eg. sending events to the UserIndex)
-pub struct BatchedTimerJobQueue<T: TimerJobItemBatch>(pub(crate) GroupedTimerJobQueue<T>);
+#[derive(Serialize, Deserialize)]
+#[serde(bound(
+    serialize = "
+        <T as TimerJobItemGroup>::SharedState: Serialize,
+        <T as TimerJobItemGroup>::Key: Serialize,
+        <T as TimerJobItemGroup>::Item: Serialize",
+    deserialize = "
+        T: 'static,
+        <T as TimerJobItemGroup>::SharedState: Deserialize<'de>,
+        <T as TimerJobItemGroup>::Key: Deserialize<'de>,
+        <T as TimerJobItemGroup>::Item: Deserialize<'de>"
+))]
+#[serde(transparent)]
+pub struct BatchedTimerJobQueue<T: TimerJobItemBatch>(GroupedTimerJobQueue<T>);
 
 impl<T: TimerJobItemBatch> BatchedTimerJobQueue<T> {
     pub fn new(state: T::State, defer_processing: bool) -> Self {
         Self(GroupedTimerJobQueue::new_with_state(state, 1, defer_processing))
-    }
-
-    pub fn set_state(&mut self, state: T::State) {
-        self.0.set_shared_state(state);
     }
 
     pub fn defer_processing(&self) -> bool {
@@ -54,26 +63,6 @@ where
         self.0.flush();
     }
 }
-
-impl<T: TimerJobItemBatch> Serialize for BatchedTimerJobQueue<T>
-where
-    <T as TimerJobItemBatch>::State: Serialize,
-    <T as TimerJobItemBatch>::Item: Serialize,
-{
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.0.serialize(serializer)
-    }
-}
-
-// impl<'de, T: TimerJobItemBatch + 'static> Deserialize<'de> for BatchedTimerJobQueue<T>
-// where
-//     <T as TimerJobItemBatch>::Args: Deserialize<'de>,
-//     <T as TimerJobItemBatch>::Item: Deserialize<'de>,
-// {
-//     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-//         GroupedTimerJobQueue::<T>::deserialize(deserializer).map(BatchedTimerJobQueue)
-//     }
-// }
 
 #[macro_export]
 macro_rules! timer_job_batch {

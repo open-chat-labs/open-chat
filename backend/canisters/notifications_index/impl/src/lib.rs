@@ -148,7 +148,6 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub notification_canisters_event_sync_queue: GroupedTimerJobQueue<NotificationCanistersEventBatch>,
     pub blocked_users: UserIdsSet,
-    #[serde(default)]
     pub bot_endpoints: HashMap<UserId, String>,
     pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],

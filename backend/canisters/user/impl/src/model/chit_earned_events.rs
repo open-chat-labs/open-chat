@@ -10,20 +10,6 @@ pub struct ChitEarnedEvents {
 }
 
 impl ChitEarnedEvents {
-    pub fn any_missed_daily_claims_reinstated(&self) -> bool {
-        self.events
-            .iter()
-            .any(|e| matches!(e.reason, ChitEarnedReason::DailyClaimReinstated))
-    }
-
-    pub fn iter_daily_claims(&self) -> impl Iterator<Item = TimestampMillis> + '_ {
-        self.events
-            .iter()
-            .rev()
-            .filter(|e| matches!(e.reason, ChitEarnedReason::DailyClaim))
-            .map(|e| e.timestamp)
-    }
-
     pub fn push(&mut self, event: ChitEarned) {
         let mut sort = false;
 

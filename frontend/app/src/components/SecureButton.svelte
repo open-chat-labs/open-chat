@@ -4,8 +4,6 @@
     import Button from "./Button.svelte";
     import { suspectedAutomationBot } from "../stores/automation";
     import { isTouchDevice } from "../utils/devices";
-    import { trace } from "../utils/trace";
-    import { currentUser } from "openchat-client";
 
     let {
         children,
@@ -33,13 +31,6 @@
     function probablyBot(ev: MouseEvent): boolean {
         const pause = Date.now() - lastMoved;
         const fakePause = pause < PAUSE_TRESHOLD && !isTouchDevice;
-        trace(ev, $currentUser.userId, $currentUser.username, {
-            label,
-            pause,
-            isTouchDevice,
-            isTrusted: ev.isTrusted,
-            isSuspectesdBot: $suspectedAutomationBot,
-        });
         return fakePause || !ev.isTrusted || $suspectedAutomationBot;
     }
 

@@ -35,7 +35,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
-use timer_job_queues::{deserialize_batched_timer_job_queue_from_previous, BatchedTimerJobQueue, GroupedTimerJobQueue};
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned,
     ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
@@ -188,8 +188,12 @@ impl RuntimeState {
     }
 
     pub fn mark_streak_insurance_claim(&mut self, claim: UserCanisterStreakInsuranceClaim) {
+        self.data.chit_events.push(ChitEarned {
+            amount: 0,
+            timestamp: claim.timestamp,
+            reason: ChitEarnedReason::StreakInsuranceClaim,
+        });
         let user_id: UserId = self.env.canister_id().into();
-        let now = claim.timestamp;
         self.data.event_store_client.push(
             EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
                 .with_user(user_id.to_string(), true)
@@ -197,6 +201,8 @@ impl RuntimeState {
                 .with_json_payload(&claim)
                 .build(),
         );
+
+        let now = self.env.now();
         self.push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim), now);
     }
 
@@ -411,13 +417,9 @@ struct Data {
     pub referrals: Referrals,
     pub message_activity_events: MessageActivityEvents,
     pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
-    #[serde(deserialize_with = "deserialize_batched_timer_job_queue_from_previous")]
     pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
-    #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
-    #[serde(default)]
     pub bots: InstalledBots,
-    #[serde(default)]
     bot_api_keys: BotApiKeys,
 }
 

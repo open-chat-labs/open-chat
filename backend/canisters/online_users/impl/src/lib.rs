@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::time::Duration;
-use timer_job_queues::{deserialize_batched_timer_job_queue_from_previous, BatchedTimerJobQueue};
+use timer_job_queues::BatchedTimerJobQueue;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -79,7 +79,6 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub mark_as_online_count: u64,
     pub cached_active_users: ActiveUsers,
-    #[serde(deserialize_with = "deserialize_batched_timer_job_queue_from_previous")]
     pub airdrop_bot_event_sync_queue: BatchedTimerJobQueue<AirdropBotEventBatch>,
     pub sync_online_minutes_to_airdrop_bot_increment: u16,
     pub rng_seed: [u8; 32],

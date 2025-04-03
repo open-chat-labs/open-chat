@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Push CHIT event for each streak insurance claim ([#7728](https://github.com/open-chat-labs/open-chat/pull/7728))
+- Back-fill events for any existing streak insurance claims ([#7729](https://github.com/open-chat-labs/open-chat/pull/7729))
+- Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
+
+## [[2.0.1686-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1686-user)] - 2025-04-02
+
+### Changed
+
 - Push event on each BTC deposit ([#7661](https://github.com/open-chat-labs/open-chat/pull/7661))
 - Add `DepositedBtc` achievement ([#7663](https://github.com/open-chat-labs/open-chat/pull/7663))
 - Push event on each BTC withdrawal ([#7664](https://github.com/open-chat-labs/open-chat/pull/7664))

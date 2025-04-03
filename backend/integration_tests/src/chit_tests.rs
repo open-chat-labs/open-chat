@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{client, TestEnv, User};
 use constants::DAY_IN_MS;
+use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::cmp::max;
 use std::ops::{Add, Deref};
@@ -229,6 +230,25 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
 
     let result = client::user::happy_path::initial_state(env, &user);
     assert!(result.streak_insurance.is_none());
+
+    let chit_events = client::user::happy_path::chit_events(env, &user, None, None, 100).events;
+    // Check the correct amount of StreakInsuranceClaim events have been recorded
+    assert_eq!(
+        chit_events
+            .iter()
+            .filter(|e| matches!(e.reason, ChitEarnedReason::StreakInsuranceClaim))
+            .count(),
+        days_insured as usize
+    );
+    // Check that CHIT days never have both a DailyClaim event and a StreakInsuranceClaim event
+    assert!(chit_events
+        .iter()
+        .filter(|e| matches!(
+            e.reason,
+            ChitEarnedReason::DailyClaim | ChitEarnedReason::StreakInsuranceClaim
+        ))
+        .map(|e| timestamp_to_day(e.timestamp))
+        .all_unique());
 }
 
 fn advance_to_next_month(env: &mut PocketIc) {
@@ -253,4 +273,14 @@ fn claim_then_check_result(env: &mut PocketIc, user: &User, streak: u16, max_str
     let result = client::user::happy_path::claim_daily_chit(env, user);
     assert_eq!(result.streak, streak);
     assert_eq!(result.max_streak, max_streak);
+}
+
+fn timestamp_to_day(ts: TimestampMillis) -> u16 {
+    if ts < DAY_ZERO {
+        unreachable!()
+    }
+
+    let day = (ts - DAY_ZERO) / DAY_IN_MS;
+
+    day.try_into().unwrap()
 }
