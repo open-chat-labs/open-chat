@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Push CHIT event for each streak insurance claim ([#7728](https://github.com/open-chat-labs/open-chat/pull/7728))
+- Backfill events for any existing streak insurance claims ([#7729](https://github.com/open-chat-labs/open-chat/pull/7729))
 
 ## [[2.0.1686-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1686-user)] - 2025-04-02
 
