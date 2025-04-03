@@ -5,19 +5,27 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let timestamp: bigint;
-    export let observer: IntersectionObserver;
-    export let floating: boolean = false;
+    interface Props {
+        timestamp: bigint;
+        observer: IntersectionObserver;
+        floating?: boolean;
+    }
 
-    let element: HTMLElement;
+    let { timestamp, observer, floating = false }: Props = $props();
+
+    let element: HTMLElement | undefined = $state();
 
     onMount(() => {
         if (floating) return;
 
-        if (observer !== undefined) {
+        if (observer !== undefined && element) {
             observer.observe(element);
         }
-        return () => observer.unobserve(element);
+        return () => {
+            if (observer && element) {
+                observer.unobserve(element);
+            }
+        };
     });
 </script>
 
