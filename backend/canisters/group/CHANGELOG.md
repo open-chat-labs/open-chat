@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
+- Switch to new `c2c_push_notifications` endpoint ([#7733](https://github.com/open-chat-labs/open-chat/pull/7733))
 
 ## [[2.0.1684](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1684-group)] - 2025-04-02
 
