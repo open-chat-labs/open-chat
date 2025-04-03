@@ -11,11 +11,6 @@
         subscribe,
     } from "openchat-client";
     import {
-        LoadedMessageWindow,
-        LoadedNewMessages,
-        LoadedPreviousMessages,
-        SendingMessage,
-        SentMessage,
         messageContextsEqual,
         currentUser as user,
         unconfirmed,
@@ -293,15 +288,23 @@
             });
         }
 
-        client.addEventListener("openchat_event", clientEvent);
-
         const unsubs = [
             subscribe("chatUpdated", chatsUpdated),
             subscribe("reactionSelected", afterReaction),
+            subscribe("sendingMessage", sendingMessage),
+            subscribe("sentMessage", sentMessage),
+            subscribe("loadedMessageWindow", onMessageWindowLoaded),
+            subscribe(
+                "loadedNewMessages",
+                (args) => !scrollingToMessage && onLoadedNewMessages(args),
+            ),
+            subscribe(
+                "loadedPreviousMessages",
+                (args) => !scrollingToMessage && onLoadedPreviousMessages(args),
+            ),
         ];
         return () => {
             heightObserver.disconnect();
-            client.removeEventListener("openchat_event", clientEvent);
             unsubs.forEach((u) => u());
             destroyed = true;
         };
@@ -313,22 +316,15 @@
         }
     }
 
-    async function clientEvent(ev: Event): Promise<void> {
-        await tick();
-        if (ev instanceof LoadedNewMessages && !scrollingToMessage) {
-            onLoadedNewMessages(ev.detail);
-        }
-        if (ev instanceof LoadedPreviousMessages && !scrollingToMessage) {
-            onLoadedPreviousMessages(ev.detail.context, ev.detail.initializing);
-        }
-        if (ev instanceof LoadedMessageWindow) {
-            onMessageWindowLoaded(ev.detail.context, ev.detail.messageIndex, ev.detail.initialLoad);
-        }
-        if (ev instanceof SentMessage && messageContextsEqual(ev.detail.context, messageContext)) {
-            afterSendMessage(ev.detail.context, ev.detail.event);
-        }
-        if (ev instanceof SendingMessage && messageContextsEqual(ev.detail, messageContext)) {
+    function sendingMessage(ctx: MessageContext) {
+        if (messageContextsEqual(ctx, messageContext)) {
             scrollToBottomOnSend = insideBottomThreshold();
+        }
+    }
+
+    function sentMessage(payload: { context: MessageContext; event: EventWrapper<Message> }) {
+        if (messageContextsEqual(payload.context, messageContext)) {
+            afterSendMessage(payload.context, payload.event);
         }
     }
 
@@ -571,11 +567,15 @@
         }
     }
 
-    export async function onMessageWindowLoaded(
-        context: MessageContext,
-        messageIndex: number | undefined,
-        initialLoad = false,
-    ) {
+    export async function onMessageWindowLoaded({
+        context,
+        messageIndex,
+        initialLoad,
+    }: {
+        context: MessageContext;
+        messageIndex: number | undefined;
+        initialLoad: boolean;
+    }) {
         if (messageIndex === undefined || initialLoad === false) return;
         await tick();
         if (!messageContextsEqual(context, messageContext)) return;
@@ -583,7 +583,13 @@
         await scrollToMessageIndex(context, messageIndex, false);
     }
 
-    async function onLoadedPreviousMessages(context: MessageContext, initialLoad: boolean) {
+    async function onLoadedPreviousMessages({
+        context,
+        initialLoad,
+    }: {
+        context: MessageContext;
+        initialLoad: boolean;
+    }) {
         if (!messageContextsEqual(context, messageContext)) return;
         await resetScroll(initialLoad);
         if (!messageContextsEqual(context, messageContext)) return;

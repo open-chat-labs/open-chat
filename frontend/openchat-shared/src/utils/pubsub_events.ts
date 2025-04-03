@@ -2,10 +2,12 @@ import type {
     ChannelIdentifier,
     ChatIdentifier,
     ChatSummary,
+    ChitEarned,
     CommunityIdentifier,
     CommunitySummary,
     DirectChatIdentifier,
     EnhancedReplyContext,
+    EventWrapper,
     GroupChatSummary,
     Level,
     Message,
@@ -73,7 +75,36 @@ export type PubSubEvents = {
     editGroup: { chat: MultiUserChat; rules: UpdatedRules | undefined };
     videoCallMessageUpdated: { chatId: ChatIdentifier; messageId: bigint };
     chatUpdated: MessageContext;
+    sendingMessage: MessageContext;
+    sentMessage: {
+        context: MessageContext;
+        event: EventWrapper<Message>;
+    };
     chatsUpdated: undefined;
     userLoggedIn: string;
     reactionSelected: { messageId: bigint; kind: "add" | "remove" };
+    userSuspensionChanged: undefined;
+    selectedChatInvalid: undefined;
+    chitEarned: ChitEarned[];
+    sendMessageFailed: boolean;
+    summonWitch: undefined;
+    registerBot: undefined;
+    updateBot: undefined;
+    removeBot: undefined;
+    loadedMessageWindow: {
+        context: MessageContext;
+        messageIndex: number;
+        initialLoad: boolean;
+    };
+    threadSelected: {
+        initiating: boolean;
+        threadRootEvent: EventWrapper<Message>;
+    };
+    threadClosed: undefined;
+    loadedNewMessages: MessageContext;
+    loadedPreviousMessages: {
+        context: MessageContext;
+        initialLoad: boolean;
+    };
+    createPoll: MessageContext;
 };

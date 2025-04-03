@@ -1,6 +1,6 @@
 <script lang="ts">
     import { spring, tweened } from "svelte/motion";
-    import { ChitEarnedEvent, type OpenChat } from "openchat-client";
+    import { subscribe, type ChitEarned, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import SpinningToken from "../icons/SpinningToken.svelte";
     import { Confetti } from "svelte-confetti";
@@ -22,9 +22,9 @@
     let labels: string[] = [];
     let active = false;
 
-    function trigger(ev: ChitEarnedEvent) {
-        amount = ev.detail.reduce((total, chit) => total + chit.amount, 0);
-        labels = ev.detail.reduce((labels, c) => {
+    function trigger(events: ChitEarned[]) {
+        amount = events.reduce((total, chit) => total + chit.amount, 0);
+        labels = events.reduce((labels, c) => {
             if (c.reason.kind === "achievement_unlocked") {
                 labels.push($_(`learnToEarn.${c.reason.type}`));
             }
@@ -69,17 +69,8 @@
     }
 
     onMount(() => {
-        client.addEventListener("openchat_event", clientEvent);
-        return () => {
-            client.removeEventListener("openchat_event", clientEvent);
-        };
+        return subscribe("chitEarned", trigger);
     });
-
-    function clientEvent(ev: Event): void {
-        if (ev instanceof ChitEarnedEvent) {
-            trigger(ev);
-        }
-    }
 </script>
 
 <svelte:window on:resize={reset} />

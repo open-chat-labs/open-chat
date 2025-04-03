@@ -34,12 +34,14 @@
         blockedUsers as directlyBlockedUsers,
         communities,
         selectedCommunity,
-        CreatePoll,
         CreateTestMessages,
         SearchChat,
         AttachGif,
         TokenTransfer,
         externalBots,
+        type MessageContext,
+        subscribe,
+        messageContextsEqual,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -125,25 +127,26 @@
 
     onMount(() => {
         client.addEventListener("openchat_event", clientEvent);
-        const unsub = messagesRead.subscribe(() => {
-            unreadMessages = getUnreadMessageCount(chat);
-            firstUnreadMention = client.getFirstUnreadMention(chat);
-        });
+        const unsubs = [
+            messagesRead.subscribe(() => {
+                unreadMessages = getUnreadMessageCount(chat);
+                firstUnreadMention = client.getFirstUnreadMention(chat);
+            }),
+            subscribe("createPoll", onCreatePoll),
+        ];
         return () => {
-            unsub();
+            unsubs.forEach((u) => u());
             client.removeEventListener("openchat_event", clientEvent);
         };
     });
 
-    function clientEvent(ev: Event): void {
-        if (ev instanceof CreatePoll) {
-            if (
-                ev.detail.chatId === messageContext.chatId &&
-                ev.detail.threadRootMessageIndex === undefined
-            ) {
-                createPoll();
-            }
+    function onCreatePoll(ctx: MessageContext) {
+        if (messageContextsEqual(ctx, messageContext)) {
+            createPoll();
         }
+    }
+
+    function clientEvent(ev: Event): void {
         if (ev instanceof CreateTestMessages) {
             const [{ chatId, threadRootMessageIndex }, num] = ev.detail;
             if (

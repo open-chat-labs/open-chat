@@ -12,13 +12,15 @@
         User,
         TimelineItem,
         MessageContent,
+        MessageContext,
     } from "openchat-client";
     import {
         AttachGif,
         chatIdentifiersEqual,
-        CreatePoll,
         CreateTestMessages,
         LEDGER_CANISTER_ICP,
+        messageContextsEqual,
+        subscribe,
         TokenTransfer,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -100,21 +102,21 @@
         $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false;
 
     onMount(() => {
+        const unsubs = [subscribe("createPoll", onCreatePoll)];
         client.addEventListener("openchat_event", clientEvent);
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
+            unsubs.forEach((u) => u());
         };
     });
 
-    function clientEvent(ev: Event): void {
-        if (ev instanceof CreatePoll) {
-            if (
-                ev.detail.chatId === messageContext.chatId &&
-                ev.detail.threadRootMessageIndex === messageContext.threadRootMessageIndex
-            ) {
-                createPoll();
-            }
+    function onCreatePoll(ctx: MessageContext) {
+        if (messageContextsEqual(ctx, messageContext)) {
+            createPoll();
         }
+    }
+
+    function clientEvent(ev: Event): void {
         if (ev instanceof TokenTransfer) {
             const { context } = ev.detail;
             if (

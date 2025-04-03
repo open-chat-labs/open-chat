@@ -197,26 +197,10 @@ import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
 import {
     AttachGif,
-    ChitEarnedEvent,
-    CreatePoll,
     CreateTestMessages,
-    LoadedMessageWindow,
-    LoadedNewMessages,
-    LoadedPreviousMessages,
-    RegisterBot,
     RemoteVideoCallStartedEvent,
-    RemoveBot,
     SearchChat,
-    SelectedChatInvalid,
-    SendingMessage,
-    SendMessageFailed,
-    SentMessage,
-    SummonWitch,
-    ThreadClosed,
-    ThreadSelected,
     TokenTransfer,
-    UpdateBot,
-    UserSuspensionChanged,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
@@ -2402,13 +2386,11 @@ export class OpenChat extends EventTarget {
         this.clearThreadEvents();
         await this.#handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
-        this.dispatchEvent(
-            new LoadedMessageWindow(
-                { chatId, threadRootMessageIndex: threadRootEvent.event.messageIndex },
-                messageIndex,
-                initialLoad,
-            ),
-        );
+        publish("loadedMessageWindow", {
+            context: { chatId, threadRootMessageIndex: threadRootEvent.event.messageIndex },
+            messageIndex,
+            initialLoad,
+        });
 
         return messageIndex;
     }
@@ -2456,16 +2438,14 @@ export class OpenChat extends EventTarget {
             }
 
             if (await this.#handleEventsResponse(clientChat, eventsResponse, false)) {
-                this.dispatchEvent(
-                    new LoadedMessageWindow(
-                        {
-                            chatId: clientChat.id,
-                            threadRootMessageIndex: threadRootEvent?.event.messageIndex,
-                        },
-                        messageIndex,
-                        initialLoad,
-                    ),
-                );
+                publish("loadedMessageWindow", {
+                    context: {
+                        chatId: clientChat.id,
+                        threadRootMessageIndex: threadRootEvent?.event.messageIndex,
+                    },
+                    messageIndex,
+                    initialLoad,
+                });
             }
 
             return messageIndex;
@@ -2802,7 +2782,7 @@ export class OpenChat extends EventTarget {
                     this.loadPreviousMessages(context.chatId, threadRootEvent, true);
                 }
             }
-            this.dispatchEvent(new ThreadSelected(threadRootEvent, initiating));
+            publish("threadSelected", { threadRootEvent, initiating });
         }
     }
 
@@ -2812,7 +2792,7 @@ export class OpenChat extends EventTarget {
                 return { chatId: context.chatId };
             }
         });
-        this.dispatchEvent(new ThreadClosed());
+        publish("threadClosed");
     }
 
     clearThreadEvents(): void {
@@ -2872,11 +2852,12 @@ export class OpenChat extends EventTarget {
             }
 
             if (ascending) {
-                this.dispatchEvent(new LoadedNewMessages({ chatId, threadRootMessageIndex }));
+                publish("loadedNewMessages", { chatId, threadRootMessageIndex });
             } else {
-                this.dispatchEvent(
-                    new LoadedPreviousMessages({ chatId, threadRootMessageIndex }, initialLoad),
-                );
+                publish("loadedPreviousMessages", {
+                    context: { chatId, threadRootMessageIndex },
+                    initialLoad,
+                });
             }
         }
     }
@@ -3047,12 +3028,10 @@ export class OpenChat extends EventTarget {
         }
 
         if (await this.#handleEventsResponse(serverChat, eventsResponse)) {
-            this.dispatchEvent(
-                new LoadedPreviousMessages(
-                    { chatId, threadRootMessageIndex: threadRootEvent?.event.messageIndex },
-                    initialLoad,
-                ),
-            );
+            publish("loadedPreviousMessages", {
+                context: { chatId, threadRootMessageIndex: threadRootEvent?.event.messageIndex },
+                initialLoad,
+            });
         }
     }
 
@@ -3132,12 +3111,10 @@ export class OpenChat extends EventTarget {
 
         await this.#handleEventsResponse(serverChat, eventsResponse);
 
-        this.dispatchEvent(
-            new LoadedNewMessages({
-                chatId,
-                threadRootMessageIndex: threadRootEvent?.event.messageIndex,
-            }),
-        );
+        publish("loadedNewMessages", {
+            chatId,
+            threadRootMessageIndex: threadRootEvent?.event.messageIndex,
+        });
     }
 
     morePreviousMessagesAvailable(
@@ -4094,7 +4071,7 @@ export class OpenChat extends EventTarget {
         }
 
         if (!isTransfer(event.event.content)) {
-            this.dispatchEvent(new SendMessageFailed(!canRetry));
+            publish("sendMessageFailed", !canRetry);
         }
     }
 
@@ -4104,7 +4081,7 @@ export class OpenChat extends EventTarget {
         threadRootMessageIndex: number | undefined,
     ) {
         const context = { chatId: chat.id, threadRootMessageIndex };
-        this.dispatchEvent(new SendingMessage(context));
+        publish("sendingMessage", context);
 
         // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
         // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
@@ -4130,7 +4107,7 @@ export class OpenChat extends EventTarget {
 
             if (!isTransfer(messageEvent.event.content)) {
                 this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
-                    this.dispatchEvent(new SentMessage(context, messageEvent));
+                    publish("sentMessage", { context, event: messageEvent });
                 });
             }
         }, 0);
@@ -4613,7 +4590,7 @@ export class OpenChat extends EventTarget {
 
         const context = { chatId, threadRootMessageIndex };
 
-        this.dispatchEvent(new SendingMessage(context));
+        publish("sendingMessage", context);
 
         window.setTimeout(() => {
             unconfirmed.add(context, {
@@ -4625,7 +4602,7 @@ export class OpenChat extends EventTarget {
                 },
             });
 
-            this.dispatchEvent(new SentMessage(context, message.messageEvent));
+            publish("sentMessage", { context, event: message.messageEvent });
         }, 0);
     }
 
@@ -5901,7 +5878,7 @@ export class OpenChat extends EventTarget {
     ): Promise<void> {
         if (initialLoad || chatsResponse.anyUpdates) {
             if (chatsResponse.suspensionChanged !== undefined) {
-                this.dispatchEvent(new UserSuspensionChanged());
+                publish("userSuspensionChanged");
                 return;
             }
 
@@ -6003,7 +5980,7 @@ export class OpenChat extends EventTarget {
             if (selectedChatId !== undefined) {
                 if (this.#liveState.chatSummaries.get(selectedChatId) === undefined) {
                     clearSelectedChat();
-                    this.dispatchEvent(new SelectedChatInvalid());
+                    publish("selectedChatInvalid");
                 } else {
                     const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
                     this.#chatUpdated(selectedChatId, updatedEvents.get(selectedChatId) ?? []);
@@ -6060,7 +6037,7 @@ export class OpenChat extends EventTarget {
                     (a) => a.timestamp > chatsResponse.state.achievementsLastSeen,
                 );
                 if (filtered.length > 0) {
-                    this.dispatchEvent(new ChitEarnedEvent(filtered));
+                    publish("chitEarned", filtered);
                 }
             }
 
@@ -7778,7 +7755,7 @@ export class OpenChat extends EventTarget {
     removeFromFavourites(chatId: ChatIdentifier): Promise<boolean> {
         localChatSummaryUpdates.unfavourite(chatId);
         if (this.#liveState.chatSummariesList.length === 0) {
-            this.dispatchEvent(new SelectedChatInvalid());
+            publish("selectedChatInvalid");
         }
 
         return this.#sendRequest({ kind: "removeFromFavourites", chatId })
@@ -8134,15 +8111,15 @@ export class OpenChat extends EventTarget {
         };
 
         if (bot.command.name === "witch") {
-            this.dispatchEvent(new SummonWitch());
+            publish("summonWitch");
         } else if (bot.command.name === "register_bot") {
-            this.dispatchEvent(new RegisterBot());
+            publish("registerBot");
         } else if (bot.command.name === "update_bot") {
-            this.dispatchEvent(new UpdateBot());
+            publish("updateBot");
         } else if (bot.command.name === "remove_bot") {
-            this.dispatchEvent(new RemoveBot());
+            publish("removeBot");
         } else if (bot.command.name === "poll") {
-            this.dispatchEvent(new CreatePoll(context));
+            publish("createPoll", context);
         } else if (bot.command.name === "gif") {
             const param = bot.command.arguments[0];
             if (param !== undefined && param.kind === "string" && param.value !== undefined) {
@@ -8379,7 +8356,7 @@ export class OpenChat extends EventTarget {
                 context.threadRootMessageIndex !== undefined
                     ? nextEventAndMessageIndexesForThread(currentEvents)
                     : nextEventAndMessageIndexes();
-            this.dispatchEvent(new SendingMessage(context));
+            publish("sendingMessage", context);
             const event: EventWrapper<Message> = {
                 index: eventIndex,
                 timestamp: BigInt(Date.now()),
@@ -8403,7 +8380,7 @@ export class OpenChat extends EventTarget {
             } else {
                 ephemeralMessages.add(context, event);
             }
-            this.dispatchEvent(new SentMessage(context, event));
+            publish("sentMessage", { context, event });
         }
         return () => unconfirmed.delete(context, msgId);
     }

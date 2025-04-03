@@ -32,17 +32,12 @@
         GateCheckSucceeded,
     } from "openchat-client";
     import {
-        SelectedChatInvalid,
-        SendMessageFailed,
-        ThreadClosed,
         RemoteVideoCallStartedEvent,
-        ThreadSelected,
         defaultChatRules,
         chatIdentifiersEqual,
         nullMembership,
         routeForChatIdentifier,
         routeForMessage,
-        UserSuspensionChanged,
         RemoteVideoCallEndedEvent,
         currentUser as user,
         suspendedUser,
@@ -60,11 +55,7 @@
         offlineStore,
         capturePinNumberStore as pinNumberStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
-        SummonWitch,
-        RegisterBot,
-        UpdateBot,
         userStore,
-        RemoveBot,
         subscribe,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
@@ -242,6 +233,15 @@
             subscribe("clearSelection", () => page(routeForScope($chatListScope))),
             subscribe("editGroup", editGroup),
             subscribe("chatsUpdated", chatsUpdated),
+            subscribe("userSuspensionChanged", () => window.location.reload()),
+            subscribe("selectedChatInvalid", selectedChatInvalid),
+            subscribe("sendMessageFailed", sendMessageFailed),
+            subscribe("summonWitch", summonWitch),
+            subscribe("registerBot", registerBot),
+            subscribe("updateBot", updateBot),
+            subscribe("removeBot", removeBot),
+            subscribe("threadSelected", openThread),
+            subscribe("threadClosed", closeThread),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -279,33 +279,33 @@
         });
     }
 
+    function selectedChatInvalid() {
+        pageReplace(routeForScope(client.getDefaultScope()));
+    }
+
+    function sendMessageFailed(alert: boolean) {
+        if (alert) {
+            toastStore.showFailureToast(i18nKey("errorSendingMessage"));
+        }
+    }
+
+    function registerBot() {
+        modal = { kind: "register_bot" };
+    }
+
+    function updateBot() {
+        modal = { kind: "update_bot" };
+    }
+
+    function removeBot() {
+        modal = { kind: "remove_bot" };
+    }
+
     function clientEvent(ev: Event): void {
-        if (ev instanceof ThreadSelected) {
-            openThread(ev.detail);
-        } else if (ev instanceof RegisterBot) {
-            modal = { kind: "register_bot" };
-        } else if (ev instanceof UpdateBot) {
-            modal = { kind: "update_bot" };
-        } else if (ev instanceof RemoveBot) {
-            modal = { kind: "remove_bot" };
-        } else if (ev instanceof SummonWitch) {
-            summonWitch();
-        } else if (ev instanceof RemoteVideoCallStartedEvent) {
+        if (ev instanceof RemoteVideoCallStartedEvent) {
             remoteVideoCallStarted(ev);
         } else if (ev instanceof RemoteVideoCallEndedEvent) {
             remoteVideoCallEnded(ev);
-        } else if (ev instanceof ThreadClosed) {
-            closeThread();
-        } else if (ev instanceof SendMessageFailed) {
-            // This can occur either for chat messages or thread messages so we'll just handle it here
-            if (ev.detail.alert) {
-                toastStore.showFailureToast(i18nKey("errorSendingMessage"));
-            }
-        } else if (ev instanceof SelectedChatInvalid) {
-            pageReplace(routeForScope(client.getDefaultScope()));
-        } else if (ev instanceof UserSuspensionChanged) {
-            // The latest suspension details will be picked up on reload when user_index::current_user is called
-            window.location.reload();
         }
     }
 

@@ -1,33 +1,5 @@
-import type {
-    ChatIdentifier,
-    ChitEarned,
-    EventWrapper,
-    Message,
-    MessageContext,
-    VideoCallContent,
-} from "openchat-shared";
+import type { ChatIdentifier, Message, MessageContext, VideoCallContent } from "openchat-shared";
 import { toBigInt64 } from "openchat-shared";
-
-export class LoadedNewMessages extends CustomEvent<MessageContext> {
-    constructor(context: MessageContext) {
-        super("openchat_event", { detail: context });
-    }
-}
-
-export class SendMessageFailed extends CustomEvent<{ alert: boolean }> {
-    constructor(alert: boolean) {
-        super("openchat_event", { detail: { alert } });
-    }
-}
-
-export class LoadedPreviousMessages extends CustomEvent<{
-    context: MessageContext;
-    initializing: boolean;
-}> {
-    constructor(context: MessageContext, initializing: boolean) {
-        super("openchat_event", { detail: { context, initializing } });
-    }
-}
 
 export class RemoteVideoCallEndedEvent extends CustomEvent<{ messageId: bigint }> {
     constructor(messageId: bigint) {
@@ -78,82 +50,6 @@ export class RemoteVideoCallStartedEvent extends CustomEvent<{
     }
 }
 
-export class SendingMessage extends CustomEvent<MessageContext> {
-    constructor(context: MessageContext) {
-        super("openchat_event", { detail: context });
-    }
-}
-
-export class SentMessage extends CustomEvent<{
-    context: MessageContext;
-    event: EventWrapper<Message>;
-}> {
-    constructor(context: MessageContext, event: EventWrapper<Message>) {
-        super("openchat_event", { detail: { context, event } });
-    }
-}
-
-export class LoadedMessageWindow extends CustomEvent<{
-    context: MessageContext;
-    messageIndex: number;
-    initialLoad: boolean;
-}> {
-    constructor(context: MessageContext, messageIndex: number, initialLoad: boolean) {
-        super("openchat_event", { detail: { context, messageIndex, initialLoad } });
-    }
-}
-
-export class SelectedChatInvalid extends Event {
-    constructor() {
-        super("openchat_event");
-    }
-}
-
-export class UserSuspensionChanged extends Event {
-    constructor() {
-        super("openchat_event");
-    }
-}
-
-export class ThreadSelected extends CustomEvent<{
-    initiating: boolean;
-    threadRootEvent: EventWrapper<Message>;
-}> {
-    constructor(threadRootEvent: EventWrapper<Message>, initiating: boolean) {
-        super("openchat_event", {
-            detail: { threadRootEvent, initiating },
-        });
-    }
-}
-
-export class ThreadClosed extends Event {
-    constructor() {
-        super("openchat_event");
-    }
-}
-
-export class ChitEarnedEvent extends CustomEvent<ChitEarned[]> {
-    constructor(earned: ChitEarned[]) {
-        super("openchat_event", {
-            detail: earned,
-        });
-    }
-}
-
-export class SummonWitch extends Event {
-    constructor() {
-        super("openchat_event");
-    }
-}
-
-export class CreatePoll extends CustomEvent<MessageContext> {
-    constructor(context: MessageContext) {
-        super("openchat_event", {
-            detail: context,
-        });
-    }
-}
-
 export class CreateTestMessages extends CustomEvent<[MessageContext, number]> {
     constructor(detail: [MessageContext, number]) {
         super("openchat_event", {
@@ -187,23 +83,5 @@ export class TokenTransfer extends CustomEvent<{
         super("openchat_event", {
             detail,
         });
-    }
-}
-
-export class RegisterBot extends Event {
-    constructor() {
-        super("openchat_event");
-    }
-}
-
-export class UpdateBot extends Event {
-    constructor() {
-        super("openchat_event");
-    }
-}
-
-export class RemoveBot extends Event {
-    constructor() {
-        super("openchat_event");
     }
 }
