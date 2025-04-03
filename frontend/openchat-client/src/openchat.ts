@@ -7147,7 +7147,12 @@ export class OpenChat extends EventTarget {
     #startBtcBalanceUpdateJob() {
         bitcoinAddress.subscribe((addr) => {
             if (addr !== undefined) {
-                const poller = new Poller(() => this.#updateBtcBalance(addr), ONE_MINUTE_MILLIS);
+                const poller = new Poller(
+                    () => this.#updateBtcBalance(addr),
+                    ONE_MINUTE_MILLIS,
+                    5 * ONE_MINUTE_MILLIS,
+                    true
+                );
                 return () => poller.stop();
             }
         });

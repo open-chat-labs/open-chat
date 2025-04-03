@@ -28,6 +28,7 @@ pub enum ChitEarnedReason {
     Referral(ReferralStatus),
     MemeContestWinner,
     DailyClaimReinstated,
+    StreakInsuranceClaim,
 }
 
 #[ts_export]

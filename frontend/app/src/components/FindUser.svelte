@@ -12,6 +12,7 @@
     import MatchingUser from "./MatchingUser.svelte";
     import Translatable from "./Translatable.svelte";
     import { trimLeadingAtSymbol } from "../utils/user";
+    import { Debouncer } from "../utils/debouncer";
 
     interface Props {
         mode: "add" | "edit";
@@ -34,12 +35,12 @@
     }: Props = $props();
 
     let inp: HTMLInputElement | undefined;
-    let timer: number | undefined = undefined;
     let searchTerm: string = $state("");
     let communityMembers: UserSummary[] = $state([]);
     let users: UserSummary[] = $state([]);
     let searching: boolean = $state(false);
     let hovering = $state(false);
+    const debouncer = new Debouncer(searchUsers, 350);
 
     onMount(() => {
         // this focus seems to cause a problem with the animation of the right panel without
@@ -60,27 +61,24 @@
         inp?.focus();
     }
 
-    function debounce(value: string) {
-        if (timer) window.clearTimeout(timer);
-        timer = window.setTimeout(() => {
-            if (value === "") {
-                users = [];
-                return;
-            }
-            searching = true;
-            userLookup(value)
-                .then((p) => {
-                    communityMembers = p[0];
-                    users = p[1];
-                })
-                .catch((_err) => toastStore.showFailureToast(i18nKey("userSearchFailed")))
-                .finally(() => (searching = false));
-        }, 350);
+    function searchUsers(value: string) {
+        if (value === "") {
+            users = [];
+            return;
+        }
+        searching = true;
+        userLookup(value)
+            .then((p) => {
+                communityMembers = p[0];
+                users = p[1];
+            })
+            .catch((_err) => toastStore.showFailureToast(i18nKey("userSearchFailed")))
+            .finally(() => (searching = false));
     }
 
     function onInput() {
         if (inp) {
-            debounce(trimLeadingAtSymbol(inp.value));
+            debouncer.execute(trimLeadingAtSymbol(inp.value));
         }
     }
 

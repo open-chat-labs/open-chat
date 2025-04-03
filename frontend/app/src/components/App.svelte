@@ -54,7 +54,6 @@
     import InstallPrompt from "./home/InstallPrompt.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import { reviewingTranslations } from "@i18n/i18n";
-    import { trackMouseMovement } from "@utils/trace";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -212,7 +211,6 @@
 
     function onUserLoggedIn(userId: string) {
         broadcastLoggedInUser(userId);
-        trackMouseMovement(userId);
     }
 
     function addHotGroupExclusion(chatId: string): void {

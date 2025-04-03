@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
+
+## [[2.0.1678](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1678-local_user_index)] - 2025-04-02
+
+### Changed
+
 - Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
 - Support passing common state to timer job batches ([#7705](https://github.com/open-chat-labs/open-chat/pull/7705))
 

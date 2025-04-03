@@ -5,7 +5,6 @@
         type OpenChat,
         type PrizeContent,
         chitStateStore,
-        currentUser,
     } from "openchat-client";
     import {
         currentUser as user,
@@ -34,7 +33,6 @@
     import RotationChallenge from "../RotationChallenge.svelte";
 
     const client = getContext<OpenChat>("client");
-    const suspiciousUserIds = import.meta.env.OC_SUSPICIOUS_USERIDS! ?? [];
 
     interface Props {
         content: PrizeContent;
@@ -47,12 +45,8 @@
 
     let progressWidth = $state(0);
 
-    function requiresChallenge(passed: boolean) {
-        return !passed && suspiciousUserIds.includes($currentUser.userId);
-    }
-
     function claim(e: MouseEvent, passedChallenge: boolean) {
-        if (requiresChallenge(passedChallenge)) {
+        if (!passedChallenge) {
             showChallenge = true;
             return;
         }

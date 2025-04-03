@@ -85,4 +85,3 @@ echo "Canisters created"
 ./scripts/deploy-test-chat-ledger.sh $IDENTITY
 ./scripts/get-test-icp.sh "w7lou-c7777-77774-qaamq-cai" $IDENTITY
 ./scripts/get-test-chat-tokens.sh "w7lou-c7777-77774-qaamq-cai" $IDENTITY
-./scripts/get-public-key.sh $IDENTITY > ./frontend/app/public/public-key

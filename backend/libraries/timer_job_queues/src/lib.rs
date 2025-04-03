@@ -3,7 +3,7 @@ mod grouped_timer_job_queue;
 mod timer_job_queue;
 
 pub use batched_timer_job_queue::BatchedTimerJobQueue;
-pub use grouped_timer_job_queue::{deserialize_batched_timer_job_queue_from_previous, GroupedTimerJobQueue};
+pub use grouped_timer_job_queue::GroupedTimerJobQueue;
 pub use timer_job_queue::TimerJobQueue;
 
 pub trait TimerJobItem {
