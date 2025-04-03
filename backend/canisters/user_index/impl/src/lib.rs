@@ -27,7 +27,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
-use timer_job_queues::{deserialize_batched_timer_job_queue_from_previous, BatchedTimerJobQueue};
+use timer_job_queues::BatchedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cycles, DiamondMembershipFees, IdempotentEnvelope, Milliseconds,
     TimestampMillis, Timestamped, UserId, UserType,
@@ -364,12 +364,9 @@ struct Data {
     pub translations_canister_id: CanisterId,
     pub registry_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
-    #[serde(deserialize_with = "deserialize_batched_timer_job_queue_from_previous")]
     pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
-    #[serde(deserialize_with = "deserialize_batched_timer_job_queue_from_previous")]
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    #[serde(deserialize_with = "deserialize_batched_timer_job_queue_from_previous")]
     pub notifications_index_event_sync_queue: BatchedTimerJobQueue<NotificationsIndexEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
@@ -403,7 +400,6 @@ struct Data {
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub streak_insurance_logs: StreakInsuranceLogs,
-    #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
 }
 
