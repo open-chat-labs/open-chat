@@ -3,8 +3,7 @@
     import { getContext } from "svelte";
     import type { OpenChat, MultiUserChat } from "openchat-client";
     import GroupDetailsBody from "./GroupDetailsBody.svelte";
-    import { currentChatRules, defaultChatRules } from "openchat-client";
-    import { publish } from "@src/utils/pubsub";
+    import { currentChatRules, defaultChatRules, publish } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
 

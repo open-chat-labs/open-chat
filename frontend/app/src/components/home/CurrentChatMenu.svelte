@@ -34,6 +34,7 @@
         isProposalGroup,
         currentUser,
         installedDirectBots,
+        publish,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { notificationsSupported } from "../../utils/notifications";
@@ -46,7 +47,6 @@
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import { activeVideoCall } from "../../stores/video";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();

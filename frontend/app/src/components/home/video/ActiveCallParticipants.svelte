@@ -1,11 +1,12 @@
 <script lang="ts">
     import {
-        VideoCallMessageUpdated,
         type MultiUserChatIdentifier,
         type OpenChat,
         type UserSummary,
         chatIdentifiersEqual,
         currentUser as user,
+        type ChatIdentifier,
+        subscribe,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ActiveCallParticipantsHeader from "./ActiveCallParticipantsHeader.svelte";
@@ -54,21 +55,14 @@
     ]);
 
     onMount(() => {
-        client.addEventListener("openchat_event", clientEvent);
+        const unsub = subscribe("videoCallMessageUpdated", videoCallMessageUpdated);
         refresh(true);
-        return () => {
-            client.removeEventListener("openchat_event", clientEvent);
-        };
+        return unsub;
     });
 
-    function clientEvent(ev: Event): void {
-        if (ev instanceof VideoCallMessageUpdated) {
-            if (
-                chatIdentifiersEqual(chatId, ev.detail.chatId) &&
-                messageId === ev.detail.messageId
-            ) {
-                refresh();
-            }
+    function videoCallMessageUpdated(payload: { chatId: ChatIdentifier; messageId: bigint }) {
+        if (chatIdentifiersEqual(chatId, payload.chatId) && messageId === payload.messageId) {
+            refresh();
         }
     }
 

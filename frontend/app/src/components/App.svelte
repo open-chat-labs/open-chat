@@ -30,6 +30,7 @@
         anonUser,
         identityState,
         chatListScopeStore as chatListScope,
+        subscribe,
     } from "openchat-client";
     import {
         isCanisterUrl,
@@ -55,7 +56,6 @@
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import { reviewingTranslations } from "@i18n/i18n";
     import { trackMouseMovement } from "@utils/trace";
-    import { subscribe } from "@src/utils/pubsub";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 

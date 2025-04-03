@@ -22,6 +22,7 @@
         type BotMessageContext as BotMessageContextType,
         ephemeralMessages,
         currentUser,
+        publish,
     } from "openchat-client";
     import { isTouchOnlyDevice } from "../../utils/devices";
     import EmojiPicker from "./EmojiPicker.svelte";
@@ -68,7 +69,6 @@
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
     import { quickReactions } from "../../stores/quickReactions";
     import EphemeralNote from "./EphemeralNote.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

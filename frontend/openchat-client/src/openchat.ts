@@ -221,7 +221,6 @@ import {
     UpdateBot,
     UserLoggedIn,
     UserSuspensionChanged,
-    VideoCallMessageUpdated,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
@@ -470,6 +469,7 @@ import {
     random64,
     random128,
     WEBAUTHN_ORIGINATING_CANISTER,
+    publish,
 } from "openchat-shared";
 import { AIRDROP_BOT_USER_ID } from "./constants";
 import { failedMessagesStore } from "./stores/failedMessages";
@@ -3333,9 +3333,10 @@ export class OpenChat extends EventTarget {
                                   e.event.kind === "message" &&
                                   e.event.content.kind === "video_call_content"
                               ) {
-                                  this.dispatchEvent(
-                                      new VideoCallMessageUpdated(serverChat.id, e.event.messageId),
-                                  );
+                                  publish("videoCallMessageUpdated", {
+                                      chatId: serverChat.id,
+                                      messageId: e.event.messageId,
+                                  });
                               }
                           });
                       }

@@ -18,14 +18,13 @@
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import type { CommunitySummary, OpenChat } from "openchat-client";
-    import { chatSummariesListStore, platformModerator } from "openchat-client";
+    import { chatSummariesListStore, platformModerator, publish } from "openchat-client";
     import { getContext } from "svelte";
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { notificationsSupported } from "../../../utils/notifications";
     import { toastStore } from "../../../stores/toast";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

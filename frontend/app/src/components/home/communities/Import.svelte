@@ -10,12 +10,12 @@
         type CommunityMap,
         type CommunitySummary,
         type OpenChat,
+        publish,
     } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
     import { toastStore } from "../../../stores/toast";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

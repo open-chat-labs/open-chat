@@ -18,8 +18,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import { enhancedCryptoLookup as cryptoLookup, isDiamond } from "openchat-client";
-    import { publish } from "@src/utils/pubsub";
+    import { enhancedCryptoLookup as cryptoLookup, isDiamond, publish } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
 

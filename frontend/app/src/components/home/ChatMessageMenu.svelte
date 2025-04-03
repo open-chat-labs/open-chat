@@ -45,6 +45,7 @@
         cryptoLookup,
         threadsFollowedByMeStore,
         type MessageReminderCreatedContent,
+        publish,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
@@ -53,7 +54,6 @@
     import { isTouchOnlyDevice } from "../../utils/devices";
     import Translatable from "../Translatable.svelte";
     import { quickReactions } from "../../stores/quickReactions";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

@@ -7,13 +7,13 @@
         type CandidateGroupChat,
         type CommunitySummary,
         isDiamond,
+        publish,
     } from "openchat-client";
     import Radio from "../Radio.svelte";
     import { getContext } from "svelte";
     import Button from "../Button.svelte";
     import DurationPicker from "./DurationPicker.svelte";
     import AccessGateControl from "./access/AccessGateControl.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     type T = $$Generic;
 

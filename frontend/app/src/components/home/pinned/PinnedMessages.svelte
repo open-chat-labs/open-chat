@@ -3,7 +3,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import type { EventWrapper, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
-    import { currentUser as user, messagesRead } from "openchat-client";
+    import { currentUser as user, messagesRead, subscribe } from "openchat-client";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
@@ -12,7 +12,6 @@
     import PinnedMessage from "./PinnedMessage.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { subscribe } from "@src/utils/pubsub";
 
     interface Props {
         pinned: Set<number>;

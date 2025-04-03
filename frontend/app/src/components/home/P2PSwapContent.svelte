@@ -13,6 +13,7 @@
         cryptoLookup,
         isDiamond,
         exchangeRatesLookupStore as exchangeRatesLookup,
+        publish,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
@@ -31,7 +32,6 @@
     import { calculateDollarAmount } from "../../utils/exchange";
     import P2PSwapProgress from "./P2PSwapProgress.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

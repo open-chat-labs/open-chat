@@ -84,15 +84,6 @@ export class RemoteVideoCallStartedEvent extends CustomEvent<{
     }
 }
 
-export class VideoCallMessageUpdated extends CustomEvent<{
-    chatId: ChatIdentifier;
-    messageId: bigint;
-}> {
-    constructor(chatId: ChatIdentifier, messageId: bigint) {
-        super("openchat_event", { detail: { chatId, messageId } });
-    }
-}
-
 export class SendingMessage extends CustomEvent<MessageContext> {
     constructor(context: MessageContext) {
         super("openchat_event", { detail: context });

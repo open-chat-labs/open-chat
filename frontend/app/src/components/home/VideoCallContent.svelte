@@ -9,6 +9,7 @@
         selectedChatStore as selectedChat,
         currentCommunityMembers as communityMembers,
         currentUser as user,
+        publish,
     } from "openchat-client";
     import Avatar from "../Avatar.svelte";
     import { getContext } from "svelte";
@@ -16,7 +17,6 @@
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
     import { activeVideoCall } from "../../stores/video";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

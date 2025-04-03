@@ -7,6 +7,7 @@
         type OpenChat,
         platformModerator,
         selectedCommunity,
+        publish,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import page from "page";
@@ -14,7 +15,6 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import AccessGateIconsForChat from "./access/AccessGateIconsForChat.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

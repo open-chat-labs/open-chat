@@ -7,6 +7,7 @@
         currentChatRules,
         currentCommunityRules,
         currentCommunityReferrals,
+        publish,
     } from "openchat-client";
     import ScopeToggle from "./communities/ScopeToggle.svelte";
     import { getContext } from "svelte";
@@ -15,7 +16,6 @@
     import GroupDetailsBody from "./groupdetails/GroupDetailsBody.svelte";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import CommunityDetails from "./communities/details/CommunityDetails.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

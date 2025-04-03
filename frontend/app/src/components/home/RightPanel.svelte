@@ -57,8 +57,8 @@
         currentChatBots,
         currentCommunityApiKeys,
         currentChatApiKeys,
+        publish,
     } from "openchat-client";
-    import { publish } from "@src/utils/pubsub";
 
     interface Props {
         onGoToMessageIndex: (details: { index: number; preserveFocus: boolean }) => void;

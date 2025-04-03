@@ -70,4 +70,5 @@ export type PubSubEvents = {
     convertGroupToCommunity: GroupChatSummary;
     clearSelection: undefined;
     editGroup: { chat: MultiUserChat; rules: UpdatedRules | undefined };
+    videoCallMessageUpdated: { chatId: ChatIdentifier; messageId: bigint };
 };

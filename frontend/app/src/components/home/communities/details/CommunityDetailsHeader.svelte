@@ -11,11 +11,10 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../../stores/iconSize";
-    import type { CommunitySummary, Level } from "openchat-client";
+    import { publish, type CommunitySummary, type Level } from "openchat-client";
     import { popRightPanelHistory, pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     interface Props {
         community: CommunitySummary;

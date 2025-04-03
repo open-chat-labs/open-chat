@@ -10,6 +10,7 @@
         selectedCommunity,
         chatListScopeStore as chatListScope,
         anonUser,
+        publish,
     } from "openchat-client";
     import page from "page";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -36,7 +37,6 @@
     import Badges from "./profile/Badges.svelte";
     import ActiveVideoCallResume from "./video/ActiveVideoCallResume.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

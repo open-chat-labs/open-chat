@@ -19,6 +19,7 @@
         canExtendDiamond,
         globalStateStore as globalState,
         type BotClientConfigData,
+        publish,
     } from "openchat-client";
     import { isTouchDevice } from "../../../utils/devices";
     import Close from "svelte-material-icons/Close.svelte";
@@ -84,7 +85,6 @@
     import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
     import BotConfigData from "./BotConfigData.svelte";
     import Markdown from "../Markdown.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();

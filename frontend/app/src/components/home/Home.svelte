@@ -66,6 +66,7 @@
         UpdateBot,
         userStore,
         RemoveBot,
+        subscribe,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick, untrack } from "svelte";
@@ -130,7 +131,6 @@
     import { scream } from "../../utils/scream";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
-    import { subscribe } from "@src/utils/pubsub";
 
     type ViewProfileConfig = {
         userId: string;

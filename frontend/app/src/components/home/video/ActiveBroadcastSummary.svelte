@@ -6,6 +6,7 @@
         chatListScopeStore as chatListScope,
         selectedChatStore as selectedChat,
         selectedMessageContext,
+        publish,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -13,7 +14,6 @@
     import Button from "../../Button.svelte";
     import { activeVideoCall } from "../../../stores/video";
     import page from "page";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

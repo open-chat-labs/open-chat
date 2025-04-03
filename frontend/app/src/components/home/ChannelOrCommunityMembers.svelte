@@ -16,13 +16,13 @@
         currentChatApiKeys,
         type UserSummary,
         type MemberRole,
+        publish,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Members from "./groupdetails/Members.svelte";
     import MembersHeader from "./groupdetails/MembersHeader.svelte";
     import ScopeToggle from "./communities/ScopeToggle.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

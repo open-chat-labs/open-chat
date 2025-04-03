@@ -11,6 +11,7 @@
         chatListScopeStore as chatListScope,
         chatSummariesStore,
         selectedCommunity,
+        publish,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
@@ -26,7 +27,6 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();

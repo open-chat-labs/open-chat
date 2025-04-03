@@ -1,10 +1,9 @@
 <script lang="ts">
     import Button from "../../../Button.svelte";
     import ButtonGroup from "../../../ButtonGroup.svelte";
-    import type { CommunitySummary } from "openchat-client";
+    import { publish, type CommunitySummary } from "openchat-client";
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     interface Props {
         community: CommunitySummary;

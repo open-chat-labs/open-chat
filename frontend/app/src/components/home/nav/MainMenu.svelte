@@ -19,10 +19,9 @@
     import page from "page";
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
-    import { anonUser, platformOperator, canExtendDiamond } from "openchat-client";
+    import { anonUser, platformOperator, canExtendDiamond, publish } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
