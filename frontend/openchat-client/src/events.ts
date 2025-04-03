@@ -29,12 +29,6 @@ export class LoadedPreviousMessages extends CustomEvent<{
     }
 }
 
-export class ReactionSelected extends CustomEvent<{ messageId: bigint; kind: "add" | "remove" }> {
-    constructor(messageId: bigint, kind: "add" | "remove") {
-        super("openchat_event", { detail: { messageId, kind } });
-    }
-}
-
 export class RemoteVideoCallEndedEvent extends CustomEvent<{ messageId: bigint }> {
     constructor(messageId: bigint) {
         super("openchat_event", {
@@ -109,18 +103,6 @@ export class LoadedMessageWindow extends CustomEvent<{
     }
 }
 
-export class ChatUpdated extends CustomEvent<MessageContext> {
-    constructor(context: MessageContext) {
-        super("openchat_event", { detail: context });
-    }
-}
-
-export class ChatsUpdated extends Event {
-    constructor() {
-        super("openchat_event");
-    }
-}
-
 export class SelectedChatInvalid extends Event {
     constructor() {
         super("openchat_event");
@@ -147,14 +129,6 @@ export class ThreadSelected extends CustomEvent<{
 export class ThreadClosed extends Event {
     constructor() {
         super("openchat_event");
-    }
-}
-
-export class UserLoggedIn extends CustomEvent<string> {
-    constructor(userId: string) {
-        super("openchat_event", {
-            detail: userId,
-        });
     }
 }
 

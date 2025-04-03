@@ -197,15 +197,12 @@ import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
 import {
     AttachGif,
-    ChatsUpdated,
-    ChatUpdated,
     ChitEarnedEvent,
     CreatePoll,
     CreateTestMessages,
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
-    ReactionSelected,
     RegisterBot,
     RemoteVideoCallStartedEvent,
     RemoveBot,
@@ -219,7 +216,6 @@ import {
     ThreadSelected,
     TokenTransfer,
     UpdateBot,
-    UserLoggedIn,
     UserSuspensionChanged,
 } from "./events";
 import { LiveState } from "./liveState";
@@ -678,7 +674,7 @@ export class OpenChat extends EventTarget {
 
         this.#refreshUpdatedEvents(serverChat, updatedEvents);
         this.#loadChatDetails(serverChat);
-        this.dispatchEvent(new ChatUpdated({ chatId, threadRootMessageIndex: undefined }));
+        publish("chatUpdated", { chatId, threadRootMessageIndex: undefined });
     }
 
     clearPostLoginState() {
@@ -989,7 +985,7 @@ export class OpenChat extends EventTarget {
                     console.warn("Unable to retrieve user storage limits", err);
                 });
             this.updateIdentityState({ kind: "logged_in" });
-            this.dispatchEvent(new UserLoggedIn(user.userId));
+            publish("userLoggedIn", user.userId);
         }
     }
 
@@ -2331,7 +2327,7 @@ export class OpenChat extends EventTarget {
             });
         }
 
-        this.dispatchEvent(new ReactionSelected(messageId, kind));
+        publish("reactionSelected", { messageId, kind });
 
         const newAchievement = !this.#liveState.globalState.achievements.has("reacted_to_message");
 
@@ -3606,12 +3602,10 @@ export class OpenChat extends EventTarget {
                         e.event.messageIndex === selectedThreadRootMessageIndex,
                 );
                 if (threadRootEvent !== undefined) {
-                    this.dispatchEvent(
-                        new ChatUpdated({
-                            chatId,
-                            threadRootMessageIndex: selectedThreadRootMessageIndex,
-                        }),
-                    );
+                    publish("chatUpdated", {
+                        chatId,
+                        threadRootMessageIndex: selectedThreadRootMessageIndex,
+                    });
                 }
             }
         } else if (messageContextsEqual(context, this.#liveState.selectedMessageContext)) {
@@ -4428,7 +4422,7 @@ export class OpenChat extends EventTarget {
         const kind = message.added ? "add" : "remove";
 
         if (matchingMessage !== undefined) {
-            this.dispatchEvent(new ReactionSelected(message.messageId, kind));
+            publish("reactionSelected", { messageId: message.messageId, kind });
 
             localMessageUpdates.markReaction(message.messageId, {
                 reaction: message.reaction,
@@ -6059,7 +6053,7 @@ export class OpenChat extends EventTarget {
 
             chatsInitialised.set(true);
 
-            this.dispatchEvent(new ChatsUpdated());
+            publish("chatsUpdated");
 
             if (chatsResponse.newAchievements.length > 0) {
                 const filtered = chatsResponse.newAchievements.filter(

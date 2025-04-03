@@ -8,13 +8,12 @@
         type Mention,
         type MessageContext,
         MessageContextMap,
+        subscribe,
     } from "openchat-client";
     import {
-        ChatUpdated,
         LoadedMessageWindow,
         LoadedNewMessages,
         LoadedPreviousMessages,
-        ReactionSelected,
         SendingMessage,
         SentMessage,
         messageContextsEqual,
@@ -295,12 +294,24 @@
         }
 
         client.addEventListener("openchat_event", clientEvent);
+
+        const unsubs = [
+            subscribe("chatUpdated", chatsUpdated),
+            subscribe("reactionSelected", afterReaction),
+        ];
         return () => {
             heightObserver.disconnect();
             client.removeEventListener("openchat_event", clientEvent);
+            unsubs.forEach((u) => u());
             destroyed = true;
         };
     });
+
+    function chatsUpdated(ctx: MessageContext) {
+        if (messageContextsEqual(ctx, messageContext)) {
+            loadMoreIfRequired();
+        }
+    }
 
     async function clientEvent(ev: Event): Promise<void> {
         await tick();
@@ -313,21 +324,21 @@
         if (ev instanceof LoadedMessageWindow) {
             onMessageWindowLoaded(ev.detail.context, ev.detail.messageIndex, ev.detail.initialLoad);
         }
-        if (ev instanceof ChatUpdated && messageContextsEqual(ev.detail, messageContext)) {
-            loadMoreIfRequired();
-        }
         if (ev instanceof SentMessage && messageContextsEqual(ev.detail.context, messageContext)) {
             afterSendMessage(ev.detail.context, ev.detail.event);
         }
         if (ev instanceof SendingMessage && messageContextsEqual(ev.detail, messageContext)) {
             scrollToBottomOnSend = insideBottomThreshold();
         }
-        if (ev instanceof ReactionSelected) {
-            afterReaction(ev.detail.messageId, ev.detail.kind);
-        }
     }
 
-    async function afterReaction(messageId: bigint, kind: "add" | "remove") {
+    async function afterReaction({
+        messageId,
+        kind,
+    }: {
+        messageId: bigint;
+        kind: "add" | "remove";
+    }) {
         if (
             !client.moreNewMessagesAvailable(chat.id, threadRootEvent) &&
             kind === "add" &&

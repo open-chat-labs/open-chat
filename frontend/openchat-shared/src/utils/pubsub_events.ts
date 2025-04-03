@@ -9,11 +9,12 @@ import type {
     GroupChatSummary,
     Level,
     Message,
+    MessageContext,
     MultiUserChat,
     MultiUserChatIdentifier,
     ResourceKey,
     UpdatedRules,
-} from "openchat-client";
+} from "..";
 
 export type PubSubEvents = {
     startVideoCall: { chat: ChatSummary; join: boolean };
@@ -71,4 +72,8 @@ export type PubSubEvents = {
     clearSelection: undefined;
     editGroup: { chat: MultiUserChat; rules: UpdatedRules | undefined };
     videoCallMessageUpdated: { chatId: ChatIdentifier; messageId: bigint };
+    chatUpdated: MessageContext;
+    chatsUpdated: undefined;
+    userLoggedIn: string;
+    reactionSelected: { messageId: bigint; kind: "add" | "remove" };
 };

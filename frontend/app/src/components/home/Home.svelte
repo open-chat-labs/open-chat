@@ -32,7 +32,6 @@
         GateCheckSucceeded,
     } from "openchat-client";
     import {
-        ChatsUpdated,
         SelectedChatInvalid,
         SendMessageFailed,
         ThreadClosed,
@@ -242,6 +241,7 @@
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
             subscribe("clearSelection", () => page(routeForScope($chatListScope))),
             subscribe("editGroup", editGroup),
+            subscribe("chatsUpdated", chatsUpdated),
         ];
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -258,6 +258,26 @@
             unsubEvents.forEach((u) => u());
         };
     });
+
+    function chatsUpdated() {
+        closeNotifications((notification: Notification) => {
+            if (
+                notification.kind === "channel_notification" ||
+                notification.kind === "direct_notification" ||
+                notification.kind === "group_notification"
+            ) {
+                return client.isMessageRead(
+                    {
+                        chatId: notification.chatId,
+                    },
+                    notification.messageIndex,
+                    undefined,
+                );
+            }
+
+            return false;
+        });
+    }
 
     function clientEvent(ev: Event): void {
         if (ev instanceof ThreadSelected) {
@@ -281,24 +301,6 @@
             if (ev.detail.alert) {
                 toastStore.showFailureToast(i18nKey("errorSendingMessage"));
             }
-        } else if (ev instanceof ChatsUpdated) {
-            closeNotifications((notification: Notification) => {
-                if (
-                    notification.kind === "channel_notification" ||
-                    notification.kind === "direct_notification" ||
-                    notification.kind === "group_notification"
-                ) {
-                    return client.isMessageRead(
-                        {
-                            chatId: notification.chatId,
-                        },
-                        notification.messageIndex,
-                        undefined,
-                    );
-                }
-
-                return false;
-            });
         } else if (ev instanceof SelectedChatInvalid) {
             pageReplace(routeForScope(client.getDefaultScope()));
         } else if (ev instanceof UserSuspensionChanged) {
