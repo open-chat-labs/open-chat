@@ -87,7 +87,7 @@ async fn run_async() {
 
         if neurons_updated {
             // Refresh the neurons again given that they've been updated
-            ic_cdk_timers::set_timer(Duration::ZERO, run);
+            ic_cdk_timers::set_timer(Duration::ZERO, process_neurons);
         }
     }
 }
