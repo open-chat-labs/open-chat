@@ -195,13 +195,7 @@ import {
 import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
-import {
-    AttachGif,
-    CreateTestMessages,
-    RemoteVideoCallStartedEvent,
-    SearchChat,
-    TokenTransfer,
-} from "./events";
+import { RemoteVideoCallStartedEvent } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
 import { indexIsInRanges } from "./utils/range";
@@ -8123,10 +8117,12 @@ export class OpenChat extends EventTarget {
         } else if (bot.command.name === "gif") {
             const param = bot.command.arguments[0];
             if (param !== undefined && param.kind === "string" && param.value !== undefined) {
-                this.dispatchEvent(new AttachGif([context, param.value]));
+                publish("attachGif", [context, param.value]);
             }
         } else if (bot.command.name === "crypto") {
-            const ev = new TokenTransfer({ context: context });
+            const ev: { context: MessageContext; ledger?: string; amount?: bigint } = {
+                context: context,
+            };
             const [token, amount] = bot.command.arguments;
             if (
                 token !== undefined &&
@@ -8139,18 +8135,18 @@ export class OpenChat extends EventTarget {
                     (t) => t.symbol.toLowerCase() === token.value?.toLocaleLowerCase(),
                 );
                 if (tokenDetails !== undefined) {
-                    ev.detail.ledger = tokenDetails.ledger;
-                    ev.detail.amount = this.validateTokenInput(
+                    ev.ledger = tokenDetails.ledger;
+                    ev.amount = this.validateTokenInput(
                         amount.value.toString(),
                         tokenDetails.decimals,
                     ).amount;
                 }
             }
-            this.dispatchEvent(ev);
+            publish("tokenTransfer", ev);
         } else if (bot.command.name === "test-msg") {
             const param = bot.command.arguments[0];
             if (param !== undefined && param.kind === "decimal" && param.value !== null) {
-                this.dispatchEvent(new CreateTestMessages([context, param.value]));
+                publish("createTestMessages", [context, param.value]);
             }
         } else if (bot.command.name === "diamond") {
             const url = addQueryStringParam("diamond", "");
@@ -8168,7 +8164,7 @@ export class OpenChat extends EventTarget {
                     : `[🤔 FAQ: ${this.config.i18nFormatter(`faq.${topic}_q`)}](${url})`;
             this.sendMessageWithAttachment(context, msg, false, undefined, []);
         } else if (bot.command.name === "search" && bot.command.arguments[0]?.kind === "string") {
-            this.dispatchEvent(new SearchChat(bot.command.arguments[0]?.value ?? ""));
+            publish("searchChat", bot.command.arguments[0]?.value ?? "");
         }
         return Promise.resolve("success");
     }

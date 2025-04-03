@@ -96,7 +96,11 @@
     }
 
     export function externalGoToMessage(messageIndex: number): void {
-        chatEventList?.onMessageWindowLoaded(messageContext, messageIndex);
+        chatEventList?.onMessageWindowLoaded({
+            context: messageContext,
+            messageIndex,
+            initialLoad: false,
+        });
     }
 
     // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the

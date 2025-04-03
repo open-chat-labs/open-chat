@@ -107,4 +107,12 @@ export type PubSubEvents = {
         initialLoad: boolean;
     };
     createPoll: MessageContext;
+    attachGif: [MessageContext, string];
+    tokenTransfer: {
+        context: MessageContext;
+        ledger?: string;
+        amount?: bigint;
+    };
+    createTestMessages: [MessageContext, number];
+    searchChat: string;
 };

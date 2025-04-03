@@ -14,15 +14,7 @@
         MessageContent,
         MessageContext,
     } from "openchat-client";
-    import {
-        AttachGif,
-        chatIdentifiersEqual,
-        CreateTestMessages,
-        LEDGER_CANISTER_ICP,
-        messageContextsEqual,
-        subscribe,
-        TokenTransfer,
-    } from "openchat-client";
+    import { LEDGER_CANISTER_ICP, messageContextsEqual, subscribe } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
@@ -102,10 +94,13 @@
         $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false;
 
     onMount(() => {
-        const unsubs = [subscribe("createPoll", onCreatePoll)];
-        client.addEventListener("openchat_event", clientEvent);
+        const unsubs = [
+            subscribe("createPoll", onCreatePoll),
+            subscribe("attachGif", onAttachGif),
+            subscribe("tokenTransfer", onTokenTransfer),
+            subscribe("createTestMessages", onCreateTestMessages),
+        ];
         return () => {
-            client.removeEventListener("openchat_event", clientEvent);
             unsubs.forEach((u) => u());
         };
     });
@@ -116,33 +111,21 @@
         }
     }
 
-    function clientEvent(ev: Event): void {
-        if (ev instanceof TokenTransfer) {
-            const { context } = ev.detail;
-            if (
-                context.chatId === messageContext.chatId &&
-                context.threadRootMessageIndex === messageContext.threadRootMessageIndex
-            ) {
-                tokenTransfer(ev);
-            }
+    function onAttachGif([evContext, search]: [MessageContext, string]) {
+        if (messageContextsEqual(messageContext, evContext)) {
+            attachGif(new CustomEvent("openchat_client", { detail: search }));
         }
-        if (ev instanceof AttachGif) {
-            const [evContext, search] = ev.detail;
-            if (
-                evContext.chatId === messageContext.chatId &&
-                evContext.threadRootMessageIndex === messageContext.threadRootMessageIndex
-            ) {
-                attachGif(new CustomEvent("openchat_client", { detail: search }));
-            }
+    }
+
+    function onTokenTransfer(args: { context: MessageContext; ledger?: string; amount?: bigint }) {
+        if (messageContextsEqual(messageContext, args.context)) {
+            tokenTransfer(new CustomEvent("openchat_client", { detail: args }));
         }
-        if (ev instanceof CreateTestMessages) {
-            const [{ chatId, threadRootMessageIndex }, num] = ev.detail;
-            if (
-                chatIdentifiersEqual(chatId, messageContext.chatId) &&
-                threadRootMessageIndex === messageContext.threadRootMessageIndex
-            ) {
-                createTestMessages(num);
-            }
+    }
+
+    function onCreateTestMessages([ctx, num]: [MessageContext, number]) {
+        if (messageContextsEqual(ctx, messageContext)) {
+            createTestMessages(num);
         }
     }
 
