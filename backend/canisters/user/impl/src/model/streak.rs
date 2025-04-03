@@ -20,6 +20,23 @@ pub struct Streak {
 }
 
 impl Streak {
+    // The timestamps should be the end of the day for which the claim applied to, as opposed to the
+    // start of the day after
+    pub fn fix_streak_claim_timestamps(&mut self) -> Vec<TimestampMillis> {
+        self.claims
+            .iter_mut()
+            .filter_map(|claim| {
+                let day = Self::timestamp_to_day(claim.timestamp).unwrap();
+                if claim.timestamp != Self::final_timestamp_of_day(day) {
+                    claim.timestamp = Self::final_timestamp_of_day(day - 1);
+                    Some(claim.timestamp)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
     pub fn days(&self, now: TimestampMillis) -> u16 {
         if let Some(today) = Streak::timestamp_to_day(now) {
             if !self.is_new_streak(today) {
@@ -70,7 +87,7 @@ impl Streak {
 
                 let claim = UserCanisterStreakInsuranceClaim {
                     // The timestamp of the end of the day for which the claim applied
-                    timestamp: Self::day_to_timestamp(today) - 1,
+                    timestamp: Self::final_timestamp_of_day(today - 1),
                     streak_length: self.end_day - self.start_day,
                     new_days_claimed: self.days_missed,
                 };
@@ -169,6 +186,10 @@ impl Streak {
 
     pub fn day_to_timestamp(day: u16) -> TimestampMillis {
         DAY_ZERO + MS_IN_DAY * day as u64
+    }
+
+    fn final_timestamp_of_day(day: u16) -> TimestampMillis {
+        Self::day_to_timestamp(day + 1) - 1
     }
 
     fn insurance_cost_for_day(day_index: u8) -> u128 {
