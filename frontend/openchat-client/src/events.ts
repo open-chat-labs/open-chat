@@ -1,4 +1,4 @@
-import type { ChatIdentifier, Message, MessageContext, VideoCallContent } from "openchat-shared";
+import type { ChatIdentifier, Message, VideoCallContent } from "openchat-shared";
 import { toBigInt64 } from "openchat-shared";
 
 export class RemoteVideoCallEndedEvent extends CustomEvent<{ messageId: bigint }> {
