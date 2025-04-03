@@ -10,8 +10,8 @@ import typescript from "@rollup/plugin-typescript";
 import inject from "rollup-plugin-inject";
 import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
-import execute from "rollup-plugin-execute";
 import filesize from "rollup-plugin-filesize";
+import execute from "rollup-plugin-shell";
 import styles from "rollup-styles";
 import alias from "@rollup/plugin-alias";
 import autoprefixer from "autoprefixer";
@@ -307,9 +307,10 @@ export default {
             hook: "generateBundle",
         }),
         sourcemapNewline(),
-        execute([
-            `../../scripts/get-public-key.sh ${process.env.OC_DFX_NETWORK} > ../app/public/public-key`
-        ])
+        execute({
+            commands: [`../../scripts/get-public-key.sh ${process.env.OC_DFX_NETWORK} > ./public/public-key`],
+            hook: "buildStart",
+        })
     ],
     watch: {
         clearScreen: false,

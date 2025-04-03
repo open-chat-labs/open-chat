@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import replace from "@rollup/plugin-replace";
+import execute from "rollup-plugin-shell";
 import dfxJson from "../../dfx.json";
 import { defineConfig, type PluginOption } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
@@ -99,6 +100,10 @@ export default defineConfig({
                 },
             },
         }),
+        execute({
+            commands: [`../../scripts/get-public-key.sh ${process.env.OC_DFX_NETWORK} > ./public/public-key`],
+            hook: "buildStart",
+        })
     ],
     resolve: {
         alias: {
