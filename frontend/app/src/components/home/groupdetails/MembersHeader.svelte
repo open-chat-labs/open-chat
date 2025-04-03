@@ -4,28 +4,31 @@
     import Close from "svelte-material-icons/Close.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import type { Level, ResourceKey } from "openchat-client";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    export let closeIcon: "close" | "back";
-    export let canInvite: boolean;
-    export let level: Level;
-    export let title: ResourceKey | undefined = undefined;
-
-    $: titleKey = title ?? i18nKey("membersHeader", undefined, level);
-
-    const dispatch = createEventDispatcher();
-    function close() {
-        dispatch("close");
+    interface Props {
+        closeIcon: "close" | "back";
+        canInvite: boolean;
+        level: Level;
+        title?: ResourceKey | undefined;
+        onClose: () => void;
+        onShowInviteUsers: () => void;
     }
 
-    function showInviteUsers() {
-        dispatch("showInviteUsers");
-    }
+    let {
+        closeIcon,
+        canInvite,
+        level,
+        title = undefined,
+        onClose,
+        onShowInviteUsers,
+    }: Props = $props();
+
+    let titleKey = $derived(title ?? i18nKey("membersHeader", undefined, level));
 </script>
 
 <SectionHeader gap border={false}>
@@ -33,14 +36,14 @@
         <span
             title={interpolate($_, i18nKey("group.inviteUsers", undefined, level, true))}
             class="add"
-            on:click={showInviteUsers}>
+            onclick={onShowInviteUsers}>
             <HoverIcon>
                 <AccountMultiplePlus size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}
     <h4><Translatable resourceKey={titleKey} /></h4>
-    <span title={$_("close")} class="close" on:click={close}>
+    <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
             {#if closeIcon === "close"}
                 <Close size={$iconSize} color={"var(--icon-txt)"} />

@@ -218,8 +218,7 @@
         searchTerm = inputElement.value;
     }
 
-    function mention(ev: CustomEvent<UserOrUserGroup>): void {
-        const userOrGroup = ev.detail;
+    function mention(userOrGroup: UserOrUserGroup): void {
         const username = client.userOrUserGroupName(userOrGroup);
         const userLabel = `@${username}`;
 
@@ -244,8 +243,8 @@
         prefix={mentionPrefix}
         mentionSelf
         usersOnly
-        on:close={cancelMention}
-        on:mention={mention} />
+        onClose={cancelMention}
+        onMention={mention} />
 {/if}
 
 <SectionHeader shadow flush entry bind:height={searchBoxHeight}>

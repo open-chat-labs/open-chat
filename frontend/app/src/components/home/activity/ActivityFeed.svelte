@@ -73,11 +73,13 @@
 </SectionHeader>
 
 <div use:menuCloser class="body">
-    <VirtualList keyFn={eventKey} items={$activityEvents} let:item>
-        <ActivityEvent
-            event={item}
-            selected={selectedEvent === item}
-            onClick={() => selectEvent(item)} />
+    <VirtualList keyFn={eventKey} items={$activityEvents}>
+        {#snippet children(item)}
+            <ActivityEvent
+                event={item}
+                selected={selectedEvent === item}
+                onClick={() => selectEvent(item)} />
+        {/snippet}
     </VirtualList>
 </div>
 

@@ -3,53 +3,64 @@
     import ScopeToggle from "./communities/ScopeToggle.svelte";
     import InviteUsersHeader from "./groupdetails/InviteUsersHeader.svelte";
     import InviteUsersBody from "./groupdetails/InviteUsersBody.svelte";
-    import { createEventDispatcher } from "svelte";
 
-    const dispatch = createEventDispatcher();
-
-    export let channel: ChannelSummary;
-    export let community: CommunitySummary;
-    export let selectedTab: "community" | "channel" = "channel";
-    export let memberLookup:
-        | ((searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>)
-        | undefined = undefined;
-    export let closeIcon: "close" | "back";
-    export let busy = false;
-    export let userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
-
-    function inviteChannelUsers(ev: CustomEvent<UserSummary[]>) {
-        dispatch("inviteChannelUsers", ev.detail);
+    interface Props {
+        channel: ChannelSummary;
+        community: CommunitySummary;
+        selectedTab?: "community" | "channel";
+        memberLookup?:
+            | ((searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>)
+            | undefined;
+        closeIcon: "close" | "back";
+        busy?: boolean;
+        userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
+        onInviteChannelUsers: (users: UserSummary[]) => void;
+        onInviteCommunityUsers: (users: UserSummary[]) => void;
+        onCancelInviteUsers: () => void;
     }
-    function inviteCommunityUsers(ev: CustomEvent<UserSummary[]>) {
-        dispatch("inviteCommunityUsers", ev.detail);
-    }
+
+    let {
+        channel,
+        community,
+        selectedTab = $bindable("channel"),
+        memberLookup = undefined,
+        closeIcon,
+        busy = false,
+        userLookup,
+        onInviteChannelUsers,
+        onInviteCommunityUsers,
+        onCancelInviteUsers,
+    }: Props = $props();
 </script>
 
 <ScopeToggle bind:selectedTab>
-    <InviteUsersHeader
-        slot="header"
-        on:cancelInviteUsers
-        {closeIcon}
-        level={selectedTab}
-        container={selectedTab === "channel" ? channel : community}
-        isCommunityPublic={community.public} />
+    {#snippet header()}
+        <InviteUsersHeader
+            {onCancelInviteUsers}
+            {closeIcon}
+            level={selectedTab}
+            container={selectedTab === "channel" ? channel : community}
+            isCommunityPublic={community.public} />
+    {/snippet}
 
-    <InviteUsersBody
-        slot="channel"
-        on:inviteUsers={inviteChannelUsers}
-        {busy}
-        {userLookup}
-        {memberLookup}
-        level={selectedTab}
-        container={selectedTab === "channel" ? channel : community}
-        isCommunityPublic={community.public} />
-    <InviteUsersBody
-        slot="community"
-        on:inviteUsers={inviteCommunityUsers}
-        {busy}
-        {userLookup}
-        {memberLookup}
-        level={selectedTab}
-        container={selectedTab === "channel" ? channel : community}
-        isCommunityPublic={community.public} />
+    {#snippet channelTab()}
+        <InviteUsersBody
+            onInviteUsers={onInviteChannelUsers}
+            {busy}
+            {userLookup}
+            {memberLookup}
+            level={selectedTab}
+            container={selectedTab === "channel" ? channel : community}
+            isCommunityPublic={community.public} />
+    {/snippet}
+    {#snippet communityTab()}
+        <InviteUsersBody
+            onInviteUsers={onInviteCommunityUsers}
+            {busy}
+            {userLookup}
+            {memberLookup}
+            level={selectedTab}
+            container={selectedTab === "channel" ? channel : community}
+            isCommunityPublic={community.public} />
+    {/snippet}
 </ScopeToggle>

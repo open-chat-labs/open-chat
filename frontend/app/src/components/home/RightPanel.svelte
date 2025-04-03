@@ -91,45 +91,49 @@
         return client.searchCommunityMembersToAdd(term, 20);
     }
 
-    function onChangeGroupRole(
-        ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>,
-    ): void {
+    function onChangeGroupRole(args: {
+        userId: string;
+        newRole: MemberRole;
+        oldRole: MemberRole;
+    }): void {
         if (
             $selectedChatId !== undefined &&
             ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
         ) {
-            let { userId, newRole, oldRole } = ev.detail;
+            let { userId, newRole, oldRole } = args;
             changeGroupRole($selectedChatId, userId, newRole, oldRole);
         }
     }
 
-    function onChangeCommunityRole(
-        ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>,
-    ): void {
+    function onChangeCommunityRole(args: {
+        userId: string;
+        newRole: MemberRole;
+        oldRole: MemberRole;
+    }): void {
         if ($selectedCommunity !== undefined) {
-            const { userId, newRole, oldRole } = ev.detail;
+            const { userId, newRole, oldRole } = args;
             changeCommunityRole($selectedCommunity.id, userId, newRole, oldRole);
         }
     }
 
-    function onRemoveGroupMember(ev: CustomEvent<string>): void {
+    function onRemoveGroupMember(userId: string): void {
         if (
             $selectedChatId !== undefined &&
             ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
         ) {
-            removeGroupMember($selectedChatId, ev.detail);
+            removeGroupMember($selectedChatId, userId);
         }
     }
 
-    function onRemoveCommunityMember(ev: CustomEvent<string>): void {
+    function onRemoveCommunityMember(userId: string): void {
         if ($selectedCommunity !== undefined) {
-            removeCommunityMember($selectedCommunity.id, ev.detail);
+            removeCommunityMember($selectedCommunity.id, userId);
         }
     }
 
-    async function inviteCommunityUsers(ev: CustomEvent<UserSummary[]>) {
+    async function onInviteCommunityUsers(users: UserSummary[]) {
         if ($selectedCommunity !== undefined) {
-            const userIds = ev.detail.map((u) => u.userId);
+            const userIds = users.map((u) => u.userId);
 
             invitingUsers = true;
 
@@ -148,12 +152,12 @@
         }
     }
 
-    async function inviteGroupUsers(ev: CustomEvent<UserSummary[]>) {
+    async function onInviteGroupUsers(users: UserSummary[]) {
         if (
             $multiUserChat !== undefined &&
             ($multiUserChat.id.kind === "group_chat" || $multiUserChat.id.kind === "channel")
         ) {
-            const userIds = ev.detail.map((u) => u.userId);
+            const userIds = users.map((u) => u.userId);
 
             invitingUsers = true;
 
@@ -285,12 +289,12 @@
             });
     }
 
-    async function onBlockGroupUser(ev: CustomEvent<{ userId: string }>) {
+    async function onBlockGroupUser(args: { userId: string }) {
         if (
             $selectedChatId !== undefined &&
             ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
         ) {
-            const success = await client.blockUser($selectedChatId, ev.detail.userId);
+            const success = await client.blockUser($selectedChatId, args.userId);
             if (success) {
                 toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
             } else {
@@ -299,12 +303,9 @@
         }
     }
 
-    async function onBlockCommunityUser(ev: CustomEvent<{ userId: string }>) {
+    async function onBlockCommunityUser(args: { userId: string }) {
         if ($selectedCommunity !== undefined) {
-            const success = await client.blockCommunityUser(
-                $selectedCommunity.id,
-                ev.detail.userId,
-            );
+            const success = await client.blockCommunityUser($selectedCommunity.id, args.userId);
             if (success) {
                 toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
             } else {
@@ -313,12 +314,12 @@
         }
     }
 
-    async function onUnblockGroupUser(ev: CustomEvent<UserSummary>) {
+    async function onUnblockGroupUser(user: UserSummary) {
         if (
             $selectedChatId !== undefined &&
             ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
         ) {
-            const success = await client.unblockUser($selectedChatId, ev.detail.userId);
+            const success = await client.unblockUser($selectedChatId, user.userId);
             if (success) {
                 toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
             } else {
@@ -327,12 +328,9 @@
         }
     }
 
-    async function onUnblockCommnityUser(ev: CustomEvent<UserSummary>) {
+    async function onUnblockCommunityUser(user: UserSummary) {
         if ($selectedCommunity !== undefined) {
-            const success = await client.unblockCommunityUser(
-                $selectedCommunity.id,
-                ev.detail.userId,
-            );
+            const success = await client.unblockCommunityUser($selectedCommunity.id, user.userId);
             if (success) {
                 toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
             } else {
@@ -341,8 +339,8 @@
         }
     }
 
-    function showInviteGroupUsers(ev: CustomEvent<boolean>) {
-        publish("showInviteGroupUsers", ev.detail);
+    function onShowInviteGroupUsers() {
+        publish("showInviteGroupUsers", true);
     }
 
     function showInviteCommunityUsers() {
@@ -351,18 +349,18 @@
         }
     }
 
-    function onCancelCommunityInvite(ev: CustomEvent<string>) {
+    function onCancelCommunityInvite(userId: string) {
         if ($selectedCommunity !== undefined) {
-            cancelInvite($selectedCommunity.id, ev.detail);
+            cancelInvite($selectedCommunity.id, userId);
         }
     }
 
-    async function onCancelGroupInvite(ev: CustomEvent<string>) {
+    async function onCancelGroupInvite(userId: string) {
         if (
             $selectedChatId !== undefined &&
             ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
         ) {
-            cancelInvite($selectedChatId, ev.detail);
+            cancelInvite($selectedChatId, userId);
         }
     }
 
@@ -405,12 +403,12 @@
                 memberCount={$currentChatMembers.length}
                 community={$selectedCommunity}
                 selectedTab="channel"
-                on:close={popRightPanelHistory} />
+                onClose={popRightPanelHistory} />
         {:else}
             <GroupDetails
                 chat={$multiUserChat}
                 memberCount={$currentChatMembers.length}
-                on:close={popRightPanelHistory} />
+                onClose={popRightPanelHistory} />
         {/if}
     {:else if lastState.kind === "call_participants_panel"}
         <ActiveCallParticipants
@@ -426,9 +424,9 @@
                 busy={invitingUsers}
                 closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
                 selectedTab="community"
-                on:inviteCommunityUsers={inviteCommunityUsers}
-                on:inviteChannelUsers={inviteGroupUsers}
-                on:cancelInviteUsers={popRightPanelHistory} />
+                {onInviteCommunityUsers}
+                onInviteChannelUsers={onInviteGroupUsers}
+                onCancelInviteUsers={popRightPanelHistory} />
         {:else}
             <InviteUsers
                 {level}
@@ -437,7 +435,7 @@
                 busy={invitingUsers}
                 closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
                 isCommunityPublic={$selectedCommunity?.public ?? true}
-                on:inviteUsers={inviteCommunityUsers}
+                on:inviteUsers={onInviteCommunityUsers}
                 on:cancelInviteUsers={popRightPanelHistory} />
         {/if}
     {:else if lastState.kind === "show_community_members" && $selectedCommunity !== undefined}
@@ -447,18 +445,18 @@
                 community={$selectedCommunity}
                 closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
                 selectedTab="community"
-                on:showInviteCommunityUsers={showInviteCommunityUsers}
-                on:removeCommunityMember={onRemoveCommunityMember}
-                on:changeCommunityRole={onChangeCommunityRole}
-                on:blockCommunityUser={onBlockCommunityUser}
-                on:unblockCommunityUser={onUnblockCommnityUser}
-                on:blockGroupUser={onBlockGroupUser}
-                on:unblockGroupUser={onUnblockGroupUser}
-                on:removeGroupMember={onRemoveGroupMember}
-                on:changeGroupRole={onChangeGroupRole}
-                on:cancelGroupInvite={onCancelGroupInvite}
-                on:cancelCommunityInvite={onCancelCommunityInvite}
-                on:close={popRightPanelHistory} />
+                onShowInviteCommunityUsers={showInviteCommunityUsers}
+                {onRemoveCommunityMember}
+                {onChangeCommunityRole}
+                {onBlockCommunityUser}
+                {onUnblockCommunityUser}
+                {onBlockGroupUser}
+                {onUnblockGroupUser}
+                {onRemoveGroupMember}
+                {onChangeGroupRole}
+                {onCancelGroupInvite}
+                {onCancelCommunityInvite}
+                onClose={popRightPanelHistory} />
         {:else}
             <Members
                 closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
@@ -470,13 +468,13 @@
                 initialUsergroup={lastState.userGroupId}
                 installedBots={$currentCommunityBots}
                 apiKeys={$currentCommunityApiKeys}
-                on:close={popRightPanelHistory}
-                on:blockUser={onBlockCommunityUser}
-                on:unblockUser={onUnblockCommnityUser}
-                on:showInviteUsers={showInviteCommunityUsers}
-                on:removeMember={onRemoveCommunityMember}
-                on:changeRole={onChangeCommunityRole}
-                on:cancelInvite={onCancelCommunityInvite} />
+                onClose={popRightPanelHistory}
+                onBlockUser={onBlockCommunityUser}
+                onUnblockUser={onUnblockCommunityUser}
+                onShowInviteUsers={showInviteCommunityUsers}
+                onRemoveMember={onRemoveCommunityMember}
+                onChangeRole={onChangeCommunityRole}
+                onCancelInvite={onCancelCommunityInvite} />
         {/if}
     {:else if lastState.kind === "invite_group_users" && $multiUserChat !== undefined}
         {#if $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
@@ -488,9 +486,9 @@
                 busy={invitingUsers}
                 closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
                 selectedTab="channel"
-                on:inviteCommunityUsers={inviteCommunityUsers}
-                on:inviteChannelUsers={inviteGroupUsers}
-                on:cancelInviteUsers={popRightPanelHistory} />
+                {onInviteCommunityUsers}
+                onInviteChannelUsers={onInviteGroupUsers}
+                onCancelInviteUsers={popRightPanelHistory} />
         {:else}
             <InviteUsers
                 container={$multiUserChat}
@@ -500,7 +498,7 @@
                 busy={invitingUsers}
                 closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
                 isCommunityPublic={$selectedCommunity?.public ?? true}
-                on:inviteUsers={inviteGroupUsers}
+                on:inviteUsers={onInviteGroupUsers}
                 on:cancelInviteUsers={popRightPanelHistory} />
         {/if}
     {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "group_chat"}
@@ -513,31 +511,31 @@
             lapsed={$currentChatLapsedMembers}
             installedBots={$currentChatBots}
             apiKeys={$currentChatApiKeys}
-            on:close={popRightPanelHistory}
-            on:blockUser={onBlockGroupUser}
-            on:unblockUser={onUnblockGroupUser}
-            on:showInviteUsers={showInviteGroupUsers}
-            on:removeMember={onRemoveGroupMember}
-            on:changeRole={onChangeGroupRole}
-            on:cancelInvite={onCancelGroupInvite} />
+            onClose={popRightPanelHistory}
+            onBlockUser={onBlockGroupUser}
+            onUnblockUser={onUnblockGroupUser}
+            onShowInviteUsers={onShowInviteGroupUsers}
+            onRemoveMember={onRemoveGroupMember}
+            onChangeRole={onChangeGroupRole}
+            onCancelInvite={onCancelGroupInvite} />
     {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
         <ChannelOrCommunityMembers
             selectedTab="channel"
             channel={$multiUserChat}
             community={$selectedCommunity}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
-            on:showInviteCommunityUsers={showInviteCommunityUsers}
-            on:removeCommunityMember={onRemoveCommunityMember}
-            on:changeCommunityRole={onChangeCommunityRole}
-            on:blockCommunityUser={onBlockCommunityUser}
-            on:unblockCommunityUser={onUnblockCommnityUser}
-            on:blockGroupUser={onBlockGroupUser}
-            on:unblockGroupUser={onUnblockGroupUser}
-            on:removeGroupMember={onRemoveGroupMember}
-            on:changeGroupRole={onChangeGroupRole}
-            on:close={popRightPanelHistory}
-            on:cancelGroupInvite={onCancelGroupInvite}
-            on:cancelCommunityInvite={onCancelCommunityInvite} />
+            onShowInviteCommunityUsers={showInviteCommunityUsers}
+            {onRemoveCommunityMember}
+            {onChangeCommunityRole}
+            {onBlockCommunityUser}
+            {onUnblockCommunityUser}
+            {onBlockGroupUser}
+            {onUnblockGroupUser}
+            {onRemoveGroupMember}
+            {onChangeGroupRole}
+            onClose={popRightPanelHistory}
+            {onCancelGroupInvite}
+            {onCancelCommunityInvite} />
     {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
             onGoToMessageIndex={goToMessageIndex}
@@ -565,7 +563,7 @@
                 community={$selectedCommunity}
                 memberCount={$currentChatMembers.length}
                 selectedTab="community"
-                on:close={popRightPanelHistory} />
+                onClose={popRightPanelHistory} />
         {:else}
             <CommunityDetails />
         {/if}

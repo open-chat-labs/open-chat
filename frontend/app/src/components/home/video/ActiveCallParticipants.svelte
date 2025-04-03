@@ -27,27 +27,31 @@
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let chatId: MultiUserChatIdentifier;
-    export let messageId: bigint;
-    export let isOwner: boolean;
+    interface Props {
+        chatId: MultiUserChatIdentifier;
+        messageId: bigint;
+        isOwner: boolean;
+    }
 
-    let demoted = new Set<string>();
-    let loading = false;
+    let { chatId, messageId, isOwner }: Props = $props();
 
-    let selectedTab: "presenters" | "viewers" = "presenters";
-    let videoParticipants: MappedParticipants = {
+    let demoted = $state(new Set<string>());
+    let loading = $state(false);
+
+    let selectedTab: "presenters" | "viewers" = $state("presenters");
+    let videoParticipants: MappedParticipants = $state({
         participants: {},
         hidden: {},
         lastUpdated: 0n,
-    };
+    });
 
-    $: participants = Object.values(videoParticipants.participants).filter(
-        (u) => !demoted.has(u.userId),
+    let participants = $derived(
+        Object.values(videoParticipants.participants).filter((u) => !demoted.has(u.userId)),
     );
-    $: hidden = [
+    let hidden = $derived([
         ...Object.values(videoParticipants.hidden),
         ...Object.values(videoParticipants.participants).filter((u) => demoted.has(u.userId)),
-    ];
+    ]);
 
     onMount(() => {
         client.addEventListener("openchat_event", clientEvent);
@@ -107,11 +111,11 @@
     {:else}
         {#if $activeVideoCall?.callType === "broadcast"}
             <div class="tabs">
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <div
                     tabindex="0"
                     role="button"
-                    on:click={() => selectTab("presenters")}
+                    onclick={() => selectTab("presenters")}
                     class:selected={selectedTab === "presenters"}
                     class="tab">
                     <Translatable
@@ -119,11 +123,11 @@
                             count: participants.length,
                         })} />
                 </div>
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <div
                     tabindex="0"
                     role="button"
-                    on:click={() => selectTab("viewers")}
+                    onclick={() => selectTab("viewers")}
                     class:selected={selectedTab === "viewers"}
                     class="tab">
                     <Translatable
@@ -146,12 +150,14 @@
         {/if}
 
         {#if selectedTab === "viewers"}
-            <VirtualList keyFn={(user) => user.userId} items={hidden} let:item>
-                <ActiveCallParticipant
-                    callType={$activeVideoCall.callType}
-                    {isOwner}
-                    presence={"hidden"}
-                    participant={item} />
+            <VirtualList keyFn={(user) => user.userId} items={hidden}>
+                {#snippet children({ item })}
+                    <ActiveCallParticipant
+                        callType={$activeVideoCall.callType}
+                        {isOwner}
+                        presence={"hidden"}
+                        participant={item} />
+                {/snippet}
             </VirtualList>
         {/if}
     {/if}

@@ -27,12 +27,12 @@
     let textValue: string = "";
     let inputHeight: number;
 
-    function selectReceiver(ev: CustomEvent<UserOrUserGroup>) {
-        selectedReceiver = ev.detail;
+    function selectReceiver(userOrGroup: UserOrUserGroup) {
+        selectedReceiver = userOrGroup;
         showMentionPicker = false;
         textValue = "";
-        if (ev.detail.kind === "user") {
-            dispatch("userSelected", ev.detail);
+        if (userOrGroup.kind === "user") {
+            dispatch("userSelected", userOrGroup);
         }
     }
 
@@ -60,7 +60,8 @@
             offset={inputHeight}
             {direction}
             {mentionSelf}
-            on:mention={selectReceiver}
+            onMention={selectReceiver}
+            onClose={() => (showMentionPicker = false)}
             {border}
             usersOnly
             prefix={textValue.startsWith("@") ? textValue.substring(1) : textValue} />

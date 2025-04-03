@@ -495,8 +495,7 @@
         rangeToReplace = undefined;
     }
 
-    function mention(ev: CustomEvent<UserOrUserGroup>): void {
-        const userOrGroup = ev.detail;
+    function mention(userOrGroup: UserOrUserGroup): void {
         const username = client.userOrUserGroupName(userOrGroup);
         const userLabel = `@${username}`;
 
@@ -557,8 +556,8 @@
     <MentionPicker
         supportsUserGroups
         offset={messageEntryHeight}
-        on:close={cancelMention}
-        on:mention={mention}
+        onClose={cancelMention}
+        onMention={mention}
         prefix={mentionPrefix} />
 {/if}
 
