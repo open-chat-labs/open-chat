@@ -29,12 +29,18 @@
             ? client.formatTokens(value, tokenDetails.decimals)
             : convertValue(conversion, tokenDetails);
 
-    export function refresh() {
+    $: {
+        if (ledger) {
+            refresh(false);
+        }
+    }
+
+    export function refresh(force: boolean = true) {
         dispatch("click");
         refreshing = true;
 
         return client
-            .refreshAccountBalance(ledger)
+            .refreshAccountBalance(ledger, force)
             .then((val) => {
                 dispatch("refreshed", val);
             })
@@ -64,8 +70,6 @@
                 return t.ethBalance?.toFixed(6) ?? "???";
         }
     }
-
-    refresh();
 </script>
 
 <div class="container">
@@ -76,7 +80,7 @@
         {formattedValue}
     </div>
     {#if showRefresh && !hideBalance}
-        <div class="refresh" class:refreshing on:click={refresh} >
+        <div class="refresh" class:refreshing on:click={() => refresh(true)} >
             <Refresh size={"1em"} color={"var(--icon-txt)"} />
         </div>
     {/if}

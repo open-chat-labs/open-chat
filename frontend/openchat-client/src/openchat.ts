@@ -5283,22 +5283,32 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    refreshAccountBalance(ledger: string): Promise<bigint> {
+    refreshAccountBalance(ledger: string, force: boolean = true): Promise<bigint> {
         const user = this.#liveState.user;
         if (user === undefined) {
             return Promise.resolve(0n);
         }
 
-        return this.#refreshBalanceSemaphore.execute(() => this.#sendRequest({
-            kind: "refreshAccountBalance",
-            ledger,
-            principal: user.userId,
-        }))
-            .then((val) => {
-                cryptoBalance.set(ledger, val);
-                return val;
+
+        return this.#refreshBalanceSemaphore.execute(() => {
+            if (!force) {
+                const valueIfUpdatedRecently = cryptoBalance.valueIfUpdatedRecently(ledger);
+                if (valueIfUpdatedRecently !== undefined) {
+                    return Promise.resolve(valueIfUpdatedRecently);
+                }
+            }
+
+            return this.#sendRequest({
+                kind: "refreshAccountBalance",
+                ledger,
+                principal: user.userId,
             })
-            .catch(() => 0n);
+                .then((val) => {
+                    cryptoBalance.set(ledger, val);
+                    return val;
+                })
+                .catch(() => 0n)
+        });
     }
 
     refreshTranslationsBalance(): Promise<bigint> {
