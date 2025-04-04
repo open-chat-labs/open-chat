@@ -29,12 +29,6 @@
             ? client.formatTokens(value, tokenDetails.decimals)
             : convertValue(conversion, tokenDetails);
 
-    $: {
-        if (ledger) {
-            refresh();
-        }
-    }
-
     export function refresh() {
         dispatch("click");
         refreshing = true;
@@ -70,6 +64,8 @@
                 return t.ethBalance?.toFixed(6) ?? "???";
         }
     }
+
+    refresh();
 </script>
 
 <div class="container">
