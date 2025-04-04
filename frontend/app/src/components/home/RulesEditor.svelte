@@ -4,21 +4,29 @@
     import Legend from "../Legend.svelte";
     import Toggle from "../Toggle.svelte";
     import type { UpdatedRules, Level, ResourceKey } from "openchat-client";
-    import { afterUpdate } from "svelte";
+
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
     const MAX_RULES_LENGTH = 1024;
 
-    export let rules: UpdatedRules;
-    export let level: Level;
-    export let valid: boolean;
-    export let editing: boolean;
+    interface Props {
+        rules: UpdatedRules;
+        level: Level;
+        valid: boolean;
+        editing: boolean;
+    }
+
+    let { rules = $bindable(), level, valid = $bindable(false), editing }: Props = $props();
 
     let originalRules: UpdatedRules = { ...rules };
 
-    $: isValid = !rules.enabled || (rules.text.length > 0 && rules.text.length <= MAX_RULES_LENGTH);
-    $: rulesDirty = rules.text !== originalRules.text || rules.enabled !== originalRules.enabled;
+    let isValid = $derived(
+        !rules.enabled || (rules.text.length > 0 && rules.text.length <= MAX_RULES_LENGTH),
+    );
+    let rulesDirty = $derived(
+        rules.text !== originalRules.text || rules.enabled !== originalRules.enabled,
+    );
 
     function buildRulesExplanation(level: Level): ResourceKey | undefined {
         switch (level) {
@@ -39,8 +47,10 @@
         rules.newVersion = !rules.newVersion;
     }
 
-    afterUpdate(() => {
-        valid = isValid;
+    $effect(() => {
+        if (isValid !== valid) {
+            valid = isValid;
+        }
     });
 </script>
 

@@ -96,7 +96,7 @@
         }
 
         if (ev instanceof EmailPollerSuccess) {
-            authComplete(AuthProvider.EMAIL, ev);
+            authComplete(AuthProvider.EMAIL, ev.detail);
         }
     }
 
@@ -233,7 +233,7 @@
 
     function authComplete(
         provider: AuthProvider.ETH | AuthProvider.SOL | AuthProvider.EMAIL,
-        ev: CustomEvent<{ kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }>,
+        detail: { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain },
     ) {
         providerStep = "choose_provider";
         if (substep.kind === "approver") {
@@ -241,8 +241,8 @@
                 kind: "ready_to_link",
                 initiator: substep.initiator,
                 approver: {
-                    key: ev.detail.key,
-                    delegation: ev.detail.delegation,
+                    key: detail.key,
+                    delegation: detail.delegation,
                     provider,
                 },
             };
@@ -250,8 +250,8 @@
             substep = {
                 kind: "approver",
                 initiator: {
-                    key: ev.detail.key,
-                    delegation: ev.detail.delegation,
+                    key: detail.key,
+                    delegation: detail.delegation,
                     provider,
                 },
             };
@@ -387,7 +387,7 @@
                 {:then { default: SigninWithEth }}
                     <SigninWithEth
                         assumeIdentity={false}
-                        on:connected={(ev) => authComplete(AuthProvider.ETH, ev)} />
+                        onConnected={(ev) => authComplete(AuthProvider.ETH, ev)} />
                 {/await}
             </div>
         {:else if providerStep === "choose_sol_wallet"}
@@ -397,7 +397,7 @@
                 {:then { default: SigninWithSol }}
                     <SigninWithSol
                         assumeIdentity={false}
-                        on:connected={(ev) => authComplete(AuthProvider.SOL, ev)} />
+                        onConnected={(ev) => authComplete(AuthProvider.SOL, ev)} />
                 {/await}
             </div>
         {:else if providerStep === "signing_in_with_email"}

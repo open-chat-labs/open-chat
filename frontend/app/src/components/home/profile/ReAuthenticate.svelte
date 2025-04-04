@@ -51,7 +51,7 @@
         }
 
         if (ev instanceof EmailPollerSuccess) {
-            authComplete(AuthProvider.EMAIL, ev);
+            authComplete(AuthProvider.EMAIL, ev.detail);
         }
     }
 
@@ -126,17 +126,17 @@
 
     function authComplete(
         provider: AuthProvider.ETH | AuthProvider.SOL | AuthProvider.EMAIL,
-        ev: CustomEvent<{ kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }>,
+        detail: { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain },
     ) {
-        const identity = DelegationIdentity.fromDelegation(ev.detail.key, ev.detail.delegation);
+        const identity = DelegationIdentity.fromDelegation(detail.key, detail.delegation);
         const principal = identity.getPrincipal().toString();
         if (principal !== client.AuthPrincipal) {
             authStep = "choose_provider";
             error = "identity.failure.principalMismatch";
         } else {
             dispatch("success", {
-                key: ev.detail.key,
-                delegation: ev.detail.delegation,
+                key: detail.key,
+                delegation: detail.delegation,
                 provider,
             });
         }
@@ -156,7 +156,7 @@
             {:then { default: SigninWithEth }}
                 <SigninWithEth
                     assumeIdentity={false}
-                    on:connected={(ev) => authComplete(AuthProvider.ETH, ev)} />
+                    onConnected={(ev) => authComplete(AuthProvider.ETH, ev)} />
             {/await}
         </div>
     {:else if authStep === "choose_sol_wallet"}
@@ -166,7 +166,7 @@
             {:then { default: SigninWithSol }}
                 <SigninWithSol
                     assumeIdentity={false}
-                    on:connected={(ev) => authComplete(AuthProvider.SOL, ev)} />
+                    onConnected={(ev) => authComplete(AuthProvider.SOL, ev)} />
             {/await}
         </div>
     {:else if authStep === "signing_in_with_email"}
