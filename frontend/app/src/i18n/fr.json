@@ -1606,7 +1606,7 @@
     "roleChanged": "{changedBy} a changé le rôle de {changed} en {newRole}",
     "rotationChallenge": {
         "info": "Faites pivoter l'image de gauche jusqu'à ce qu'elle corresponde à l'angle de l'image de droite",
-        "infoMobile": "Faites pivoter l'image du haut jusqu'à ce qu'elle corresponde à l'angle de l'image du bas",
+        "infoMobile": "Faites pivoter l'image du bas jusqu'à ce qu'elle corresponde à l'angle de l'image du haut",
         "title": "Équilibrer les robots"
     },
     "rules": {

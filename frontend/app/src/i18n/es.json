@@ -1606,7 +1606,7 @@
     "roleChanged": "{changedBy} cambió el rol de {changed} a {newRole}",
     "rotationChallenge": {
         "info": "Gire la imagen de la izquierda hasta que coincida con el ángulo de la imagen de la derecha.",
-        "infoMobile": "Gire la imagen superior hasta que coincida con el ángulo de la imagen inferior.",
+        "infoMobile": "Gire la imagen inferior hasta que coincida con el ángulo de la imagen superior",
         "title": "Equilibrar los bots"
     },
     "rules": {

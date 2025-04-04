@@ -1606,7 +1606,7 @@
     "roleChanged": "{changedBy} đã thay đổi vai trò của {changed} thành {newRole}",
     "rotationChallenge": {
         "info": "Xoay hình ảnh bên trái cho đến khi nó khớp với góc của hình ảnh bên phải",
-        "infoMobile": "Xoay hình ảnh trên cùng cho đến khi nó khớp với chiều cao của hình ảnh dưới cùng",
+        "infoMobile": "Xoay hình ảnh phía dưới cho đến khi nó khớp với góc của hình ảnh phía trên",
         "title": "Cân bằng các bot"
     },
     "rules": {
