@@ -34,18 +34,15 @@
 
     function sendApiKeyToBot() {
         client
-            .executeBotCommand(
-                botActionScopeFromExecutionContext($state.snapshot(botExecutionContext)),
-                {
-                    kind: "external_bot",
-                    id: bot.id,
-                    endpoint: bot.endpoint,
-                    command: {
-                        name: "sync_api_key",
-                        arguments: [{ name: "api_key", kind: "string", value: apiKey }],
-                    },
+            .executeBotCommand(botActionScopeFromExecutionContext(botExecutionContext), {
+                kind: "external_bot",
+                id: bot.id,
+                endpoint: bot.endpoint,
+                command: {
+                    name: "sync_api_key",
+                    arguments: [{ name: "api_key", kind: "string", value: apiKey }],
                 },
-            )
+            })
             .then((resp) => {
                 if (resp !== "success") {
                     toastStore.showFailureToast(i18nKey("bots.add.sendToBotFailed"));
