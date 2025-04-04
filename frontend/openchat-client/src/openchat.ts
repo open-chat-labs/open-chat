@@ -6077,7 +6077,7 @@ export class OpenChat extends EventTarget {
                     this.#initWebRtc();
                     startMessagesReadTracker(this);
                     this.refreshSwappableTokens();
-                    window.setTimeout(() => this.#refreshBalancesInSeries(), 0);
+                    window.setTimeout(() => this.#refreshBalancesInSeries(), 1000);
                 }
             }
 
