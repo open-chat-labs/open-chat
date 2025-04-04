@@ -1,6 +1,6 @@
 export * from "openchat-shared";
 export * from "./stores";
-export { OpenChat } from "./openchat";
+export { OpenChat } from "./openchat.svelte";
 export type { OpenChatConfig } from "./config";
 export * from "./events";
 

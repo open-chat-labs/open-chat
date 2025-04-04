@@ -19,7 +19,7 @@ import { boolFromLS } from "../stores/localStorageSetting";
 import { messagesRead } from "../stores/markRead";
 import { userStore } from "../stores/user";
 import { get } from "svelte/store";
-import type { OpenChat } from "../openchat";
+import type { OpenChat } from "../openchat.svelte";
 import { runOnceIdle } from "./backgroundTasks";
 import { isProposalsChat } from "./chat";
 import { RemoteVideoCallEndedEvent, RemoteVideoCallStartedEvent } from "../events";
@@ -125,7 +125,7 @@ export class CachePrimer {
 
     private getNextBatch(): [string, ChatEventsArgs[]] | undefined {
         const sorted = this.pending.values().sort(compareChats);
-        const batch: ChatEventsArgs[] = []
+        const batch: ChatEventsArgs[] = [];
         let localUserIndexForBatch: string | undefined = undefined;
 
         for (const next of sorted) {
@@ -148,9 +148,7 @@ export class CachePrimer {
             }
         }
 
-        return localUserIndexForBatch !== undefined
-            ? [localUserIndexForBatch, batch]
-            : undefined;
+        return localUserIndexForBatch !== undefined ? [localUserIndexForBatch, batch] : undefined;
     }
 
     private getEventsArgs(chat: ChatSummary): ChatEventsArgs[] {
