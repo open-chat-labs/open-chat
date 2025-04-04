@@ -732,7 +732,7 @@
     function leaveGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
         page(routeForScope($chatListScope));
 
-        client.leaveGroup($state.snapshot(chatId)).then((resp) => {
+        client.leaveGroup(chatId).then((resp) => {
             if (resp !== "success") {
                 if (resp === "owner_cannot_leave") {
                     toastStore.showFailureToast(i18nKey("ownerCantLeave", undefined, level, true));

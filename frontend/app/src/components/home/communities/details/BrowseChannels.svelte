@@ -83,7 +83,7 @@
     function deleteChannel(channel: ChannelMatch) {
         publish("deleteGroup", {
             kind: "delete",
-            chatId: $state.snapshot(channel.id),
+            chatId: channel.id,
             level: "channel",
             doubleCheck: {
                 challenge: i18nKey("typeGroupName", { name: channel.name }),
