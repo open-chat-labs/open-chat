@@ -97,7 +97,7 @@
                     <Features
                         canExtend={$canExtendDiamond}
                         isDiamond={$isDiamond}
-                        on:cancel
+                        {onCancel}
                         onUpgrade={() => (step = "payment")} />
                 {/if}
                 {#if step === "payment"}

@@ -28,7 +28,7 @@
         mode?: "thread" | "message";
         onClearAttachment: () => void;
         onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
-        onCreatePrizeMessage: () => void;
+        onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
         onCreatePoll: () => void;
         onAttachGif: (search: string) => void;
@@ -70,7 +70,7 @@
 
     function createPrizeMessage(e: Event) {
         e.stopPropagation();
-        onCreatePrizeMessage();
+        onCreatePrizeMessage?.();
         drawOpen = false;
     }
 

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { createEventDispatcher, untrack } from "svelte";
     import { eventListScrolling } from "../../stores/scrollPos";
     import { offlineStore } from "openchat-client";
 
@@ -11,18 +10,24 @@
         imageAlt: string | null | undefined;
     };
 
-    const dispatch = createEventDispatcher();
-
     interface Props {
         url: string;
         intersecting: boolean;
         rendered?: boolean;
+        onImageLoaded: (el: HTMLElement) => void;
+        onRendered: (url: string) => void;
     }
 
-    let { url, intersecting, rendered = $bindable(false) }: Props = $props();
+    let {
+        url,
+        intersecting,
+        rendered = $bindable(false),
+        onImageLoaded,
+        onRendered,
+    }: Props = $props();
 
-    let previewWrapper: HTMLElement = $state();
-    let previewPromise: Promise<LinkInfo | undefined> | undefined = $state(undefined);
+    let previewWrapper: HTMLElement | undefined = $state();
+    let previewPromise: Promise<LinkInfo | undefined> | undefined = $state();
 
     async function loadPreview(url: string): Promise<LinkInfo | undefined> {
         const response = await fetch(
@@ -49,7 +54,9 @@
     }
 
     function imageLoaded() {
-        dispatch("imageLoaded", previewWrapper);
+        if (previewWrapper) {
+            onImageLoaded(previewWrapper);
+        }
     }
     $effect(() => {
         if (intersecting && !$eventListScrolling && !rendered && !$offlineStore) {
@@ -58,7 +65,7 @@
             previewPromise.then((preview) => {
                 if (preview && intersecting && !$eventListScrolling) {
                     rendered = true;
-                    dispatch("rendered", url);
+                    onRendered(url);
                 }
             });
         }

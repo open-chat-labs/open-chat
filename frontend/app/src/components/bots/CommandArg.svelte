@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { CommandParam, CommandArg, UserSummary } from "openchat-client";
+    import type { CommandParam, CommandArg } from "openchat-client";
     import Legend from "../Legend.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Input from "../Input.svelte";

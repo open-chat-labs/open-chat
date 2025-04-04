@@ -18,7 +18,7 @@
         valid: boolean;
     }
 
-    let { busy, candidate = $bindable(), valid = $bindable() }: Props = $props();
+    let { busy = $bindable(false), candidate = $bindable(), valid = $bindable() }: Props = $props();
 
     $effect(() => {
         const isValid =

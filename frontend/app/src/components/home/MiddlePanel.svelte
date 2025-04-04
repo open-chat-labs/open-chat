@@ -139,7 +139,7 @@
             {joining}
             chat={$selectedChatStore}
             filteredProposals={$filteredProposalsStore}
-            on:goToMessageIndex={(ev) => onGoToMessageIndex(ev.detail)} />
+            {onGoToMessageIndex} />
     {/if}
 </section>
 

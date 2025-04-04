@@ -1,15 +1,14 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from "svelte";
+    import { onMount } from "svelte";
     import jsQR from "jsqr-es6";
     import type { Point } from "jsqr-es6/dist/locator";
 
     interface Props {
         autoscan?: boolean;
+        onData: (data: string) => void;
     }
 
-    let { autoscan = false }: Props = $props();
-
-    const dispatch = createEventDispatcher();
+    let { autoscan = false, onData }: Props = $props();
 
     let canvasElement: HTMLCanvasElement | undefined = $state();
     let destroyed = false;
@@ -97,7 +96,7 @@
                         code.location.bottomLeftCorner,
                     );
                     drawLine(canvas, code.location.bottomLeftCorner, code.location.topLeftCorner);
-                    dispatch("data", code.data);
+                    onData(code.data);
                 } else {
                     requestAnimationFrame(() => checkResult(video));
                 }

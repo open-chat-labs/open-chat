@@ -116,7 +116,7 @@
         onToggle={communityPermissionsOpen.toggle}
         open={$communityPermissionsOpen}
         headerText={i18nKey("permissions.permissions")}>
-        <PermissionsViewer isPublic={community.public} bind:permissions={community.permissions} />
+        <PermissionsViewer isPublic={community.public} permissions={community.permissions} />
     </CollapsibleCard>
     <CollapsibleCard
         onToggle={communityStatsOpen.toggle}

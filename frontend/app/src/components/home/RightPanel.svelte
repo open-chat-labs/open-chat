@@ -415,6 +415,7 @@
         <ActiveCallParticipants
             isOwner={lastState.isOwner}
             chatId={lastState.chatId}
+            onClose={popRightPanelHistory}
             messageId={lastState.messageId} />
     {:else if lastState.kind === "invite_community_users" && $selectedCommunity !== undefined}
         {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
@@ -546,15 +547,11 @@
             onClose={popRightPanelHistory} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
-            on:unsubscribeNotifications={() => client.setSoftDisabled(true)}
+            onUnsubscribeNotifications={() => client.setSoftDisabled(true)}
             {user}
-            on:closeProfile={popRightPanelHistory} />
+            onCloseProfile={popRightPanelHistory} />
     {:else if threadRootEvent !== undefined && $selectedChat !== undefined}
-        <Thread
-            rootEvent={threadRootEvent}
-            chat={$selectedChat}
-            on:removePreview
-            onCloseThread={closeThread} />
+        <Thread rootEvent={threadRootEvent} chat={$selectedChat} onCloseThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}
         <ProposalGroupFilters selectedChat={$selectedChat} onClose={popRightPanelHistory} />
     {:else if lastState.kind === "community_details" && $selectedCommunity !== undefined}

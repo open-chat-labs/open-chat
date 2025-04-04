@@ -11,7 +11,7 @@
     import { _ } from "svelte-i18n";
     import ActiveCallParticipantsHeader from "./ActiveCallParticipantsHeader.svelte";
     import ActiveCallParticipant from "./ActiveCallParticipant.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { popRightPanelHistory } from "../../../stores/rightPanel";
     import { activeVideoCall } from "../../../stores/video";
     import VirtualList from "../../VirtualList.svelte";
@@ -25,16 +25,16 @@
         lastUpdated: bigint;
     };
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     interface Props {
         chatId: MultiUserChatIdentifier;
         messageId: bigint;
         isOwner: boolean;
+        onClose: () => void;
     }
 
-    let { chatId, messageId, isOwner }: Props = $props();
+    let { chatId, messageId, isOwner, onClose }: Props = $props();
 
     let demoted = $state(new Set<string>());
     let loading = $state(false);
@@ -79,7 +79,7 @@
     }
 
     function close() {
-        dispatch("close");
+        onClose();
         activeVideoCall.participantsOpen(false);
         popRightPanelHistory();
     }
@@ -95,7 +95,7 @@
     }
 </script>
 
-<ActiveCallParticipantsHeader on:close={close} />
+<ActiveCallParticipantsHeader onClose={close} />
 
 {#if $activeVideoCall !== undefined}
     {#if loading}

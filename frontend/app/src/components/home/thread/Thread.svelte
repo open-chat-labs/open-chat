@@ -121,13 +121,13 @@
 
     function onAttachGif([evContext, search]: [MessageContext, string]) {
         if (messageContextsEqual(messageContext, evContext)) {
-            attachGif(new CustomEvent("openchat_client", { detail: search }));
+            attachGif(search);
         }
     }
 
     function onTokenTransfer(args: { context: MessageContext; ledger?: string; amount?: bigint }) {
         if (messageContextsEqual(messageContext, args.context)) {
-            tokenTransfer(new CustomEvent("openchat_client", { detail: args }));
+            tokenTransfer(args);
         }
     }
 
@@ -214,18 +214,14 @@
         client.stopTyping(chat, $user.userId, threadRootMessageIndex);
     }
 
-    function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        onFileSelected(ev.detail);
-    }
-
     function onFileSelected(content: AttachmentContent) {
         draftMessagesStore.setAttachment(messageContext, content);
     }
 
-    function tokenTransfer(ev: CustomEvent<{ ledger?: string; amount?: bigint }>) {
+    function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {
         creatingCryptoTransfer = {
-            ledger: ev.detail.ledger ?? $lastCryptoSent ?? LEDGER_CANISTER_ICP,
-            amount: ev.detail.amount ?? BigInt(0),
+            ledger: detail.ledger ?? $lastCryptoSent ?? LEDGER_CANISTER_ICP,
+            amount: detail.amount ?? BigInt(0),
         };
     }
 
@@ -238,10 +234,10 @@
         creatingPoll = true;
     }
 
-    function attachGif(ev: CustomEvent<string>) {
+    function attachGif(search: string) {
         selectingGif = true;
         if (giphySelector !== undefined) {
-            giphySelector.reset(ev.detail);
+            giphySelector.reset(search);
         }
     }
 
@@ -440,17 +436,16 @@
         {blocked}
         {messageContext}
         {onCancelReply}
-        on:clearAttachment={clearAttachment}
+        onClearAttachment={clearAttachment}
         onCancelEdit={cancelEditEvent}
         {onSetTextContent}
         {onStartTyping}
         {onStopTyping}
         {onFileSelected}
-        on:audioCaptured={fileSelected}
         {onSendMessage}
-        on:attachGif={attachGif}
-        on:makeMeme={makeMeme}
-        on:tokenTransfer={tokenTransfer}
-        on:createP2PSwapMessage={createP2PSwapMessage}
-        on:createPoll={createPoll} />
+        onAttachGif={attachGif}
+        onMakeMeme={makeMeme}
+        onTokenTransfer={tokenTransfer}
+        onCreateP2PSwapMessage={createP2PSwapMessage}
+        onCreatePoll={createPoll} />
 {/if}

@@ -12,7 +12,7 @@
     import type { Component } from "svelte";
 
     interface Props {
-        onClose: () => void;
+        onClose?: () => void;
     }
     let { onClose }: Props = $props();
 </script>

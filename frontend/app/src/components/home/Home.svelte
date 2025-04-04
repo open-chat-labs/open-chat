@@ -1307,7 +1307,7 @@
             <MakeProposalModal
                 selectedMultiUserChat={modal.chat}
                 nervousSystem={modal.nervousSystem}
-                on:close={closeModal} />
+                onClose={closeModal} />
         {:else if modal.kind === "logging_in"}
             <LoggingInModal onClose={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}

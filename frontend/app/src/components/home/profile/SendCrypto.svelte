@@ -232,7 +232,7 @@
                     account={targetAccount}
                     {accounts} />
             {:else}
-                <Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
+                <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
 
                 {#if isBtc}
                     <BitcoinNetworkSelector bind:selectedNetwork={selectedBtcNetwork} />

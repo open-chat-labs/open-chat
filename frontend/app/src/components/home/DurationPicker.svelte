@@ -17,7 +17,7 @@
         valid?: boolean;
         milliseconds?: bigint;
         disabled?: boolean;
-        unitFilter?: any;
+        unitFilter?: (unit: DurationUnit) => void;
     }
 
     let {

@@ -9,7 +9,7 @@
 
     let {
         onBlur: onblur,
-        onfocus,
+        onFocus,
         disabled,
         error,
         value = $bindable(),
@@ -21,7 +21,7 @@
 
     function onFocusInternal() {
         timer = window.setTimeout(() => (showError = true), 250);
-        onfocus?.();
+        onFocus?.();
     }
 
     function onBlurInternal() {

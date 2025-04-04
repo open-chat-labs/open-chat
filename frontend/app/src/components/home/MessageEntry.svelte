@@ -86,7 +86,7 @@
         onSendMessage: (args: [string | undefined, User[], boolean]) => void;
         onClearAttachment: () => void;
         onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
-        onCreatePrizeMessage: () => void;
+        onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
         onCreatePoll: () => void;
         onAttachGif: (search: string) => void;

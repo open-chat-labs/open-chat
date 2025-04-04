@@ -58,7 +58,7 @@
         accountsSectionOpen,
         deleteAccountSectionOpen,
     } from "../../../stores/settings";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import Toggle from "../../Toggle.svelte";
     import {
         editmode,
@@ -87,14 +87,15 @@
     import Markdown from "../Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
     const MAX_BIO_LENGTH = 2000;
 
     interface Props {
         user: UserSummary;
+        onUnsubscribeNotifications: () => void;
+        onCloseProfile: () => void;
     }
 
-    let { user }: Props = $props();
+    let { user, onCloseProfile, onUnsubscribeNotifications }: Props = $props();
 
     let originalBio = $state("");
     let userbio = $state("");
@@ -251,7 +252,7 @@
         if ($notificationStatus !== "granted") {
             client.askForNotificationPermission();
         } else {
-            dispatch("unsubscribeNotifications");
+            onUnsubscribeNotifications();
         }
     }
 
@@ -261,10 +262,6 @@
                 toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
             }
         });
-    }
-
-    function closeProfile() {
-        dispatch("closeProfile");
     }
 
     function onCopy() {
@@ -289,7 +286,7 @@
 
 <SectionHeader border={false} flush shadow>
     <h4 class="title"><Translatable resourceKey={i18nKey("profile.title")} /></h4>
-    <span title={$_("close")} class="close" onclick={closeProfile}>
+    <span title={$_("close")} class="close" onclick={onCloseProfile}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>

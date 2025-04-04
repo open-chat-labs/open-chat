@@ -175,8 +175,8 @@
                 <GenericPreviewComponent
                     url={preview.url}
                     {intersecting}
-                    on:imageLoaded={(ev) => adjustScroll(ev.detail)}
-                    on:rendered={(ev) => renderPreview(ev.detail)} />
+                    onImageLoaded={adjustScroll}
+                    onRendered={renderPreview} />
             {/if}
         </div>
     </div>
