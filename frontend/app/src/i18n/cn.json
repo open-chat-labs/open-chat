@@ -1606,7 +1606,7 @@
     "roleChanged": "{changedBy} 将 {changed} 的角色更改为 {newRole}",
     "rotationChallenge": {
         "info": "旋转左侧图像，直到其与右侧图像的角度匹配",
-        "infoMobile": "旋转顶部图像，直到其与底部图像的角度匹配",
+        "infoMobile": "旋转底部图像，直到其与顶部图像的角度匹配",
         "title": "平衡机器人"
     },
     "rules": {
