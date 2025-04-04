@@ -23,8 +23,8 @@ export const nervousSystemLookup = writable<Record<GovernanceCanister, NervousSy
 export const exchangeRatesLookupStore = writable<Record<string, TokenExchangeRates>>({});
 
 const cryptoBalanceStore = writable<BalanceByCrypto>({});
-let cryptoBalanceStoreValue: BalanceByCrypto = {};
 const cryptoBalancesLastUpdated = new Map<string, number>();
+let cryptoBalanceStoreValue: BalanceByCrypto = {};
 cryptoBalanceStore.subscribe((v) => cryptoBalanceStoreValue = v);
 
 export const cryptoBalance = {
