@@ -22,6 +22,10 @@ impl<T: TimerJobItemBatch> BatchedTimerJobQueue<T> {
         Self(GroupedTimerJobQueue::new_with_state(state, 1, defer_processing))
     }
 
+    pub fn set_state(&mut self, state: T::State) {
+        self.0.set_shared_state(state);
+    }
+
     pub fn defer_processing(&self) -> bool {
         self.0.defer_processing()
     }

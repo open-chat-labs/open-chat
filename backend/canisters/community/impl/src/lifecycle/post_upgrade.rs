@@ -7,6 +7,7 @@ use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
 use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
+use notifications_canister_c2c_client::NotificationPusherState;
 use stable_memory::get_reader;
 use tracing::info;
 
@@ -18,8 +19,13 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
+
+    data.notifications_queue.set_state(NotificationPusherState {
+        notifications_canister: data.notifications_canister_id,
+        authorizer: data.local_group_index_canister_id,
+    });
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
