@@ -283,6 +283,9 @@ export function chitEarnedReason(value: TChitEarnedReason): ChitEarnedReason {
     if (value === "DailyClaimReinstated") {
         return { kind: "daily_claim_reinstated" };
     }
+    if (value === "StreakInsuranceClaim") {
+        return { kind: "streak_insurance_claim" };
+    }
     if (value === "MemeContestWinner") {
         return { kind: "meme_contest_winner" };
     }
