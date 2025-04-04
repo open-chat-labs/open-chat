@@ -198,7 +198,7 @@
                 <EmailSigninFeedback
                     code={verificationCode}
                     polling={$emailSigninHandler}
-                    on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
+                    onCopy={(code) => emailSigninHandler.copyCode(code)} />
                 {#if error !== undefined}
                     <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
                 {/if}

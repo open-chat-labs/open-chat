@@ -118,8 +118,10 @@
         }
     }
 
-    function emojiSelected(ev: CustomEvent<string>) {
-        messageEntry?.replaceSelection(ev.detail);
+    function emojiSelected(code?: string) {
+        if (code) {
+            messageEntry?.replaceSelection(code);
+        }
     }
 </script>
 
@@ -136,7 +138,7 @@
                             </HoverIcon>
                         </span>
                     </div>
-                    <EmojiPicker on:emojiSelected={emojiSelected} {mode} />
+                    <EmojiPicker onEmojiSelected={emojiSelected} {mode} />
                 </span>
             {/snippet}
             {#snippet footer()}

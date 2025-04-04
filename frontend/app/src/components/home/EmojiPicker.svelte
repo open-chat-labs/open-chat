@@ -1,23 +1,36 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from "svelte";
+    import { onMount } from "svelte";
     import "emoji-picker-element";
     import { currentTheme } from "../../theme/themes";
+    import type {
+        EmojiClickEvent,
+        SkinTone,
+        SkinToneChangeEvent,
+    } from "emoji-picker-element/shared";
 
-    export let mode: "message" | "reaction" | "thread" = "message";
+    interface Props {
+        mode?: "message" | "reaction" | "thread";
+        onEmojiSelected: (unicode?: string) => void;
+        onSkintoneChanged?: (tone: SkinTone) => void;
+    }
 
-    const dispatch = createEventDispatcher();
+    let { mode = "message", onEmojiSelected, onSkintoneChanged }: Props = $props();
 
     onMount(() => {
         const emojiPicker = document.querySelector("emoji-picker");
 
-        emojiPicker?.addEventListener("emoji-click", (event) => {
-            dispatch("emojiSelected", event.detail.unicode);
-        });
+        emojiPicker?.addEventListener("emoji-click", onClick);
 
-        emojiPicker?.addEventListener("skin-tone-change", (event) => {
-            dispatch("skintoneChanged", event.detail.skinTone);
-        });
+        emojiPicker?.addEventListener("skin-tone-change", skinToneChanged);
     });
+
+    function skinToneChanged(ev: SkinToneChangeEvent) {
+        onSkintoneChanged?.(ev.detail.skinTone);
+    }
+
+    function onClick(ev: EmojiClickEvent) {
+        onEmojiSelected(ev.detail.unicode);
+    }
 </script>
 
 <emoji-picker
@@ -25,7 +38,7 @@
     class:reaction={mode === "reaction"}
     class:thread={mode === "thread"}
     class:dark={$currentTheme.mode === "dark"}
-    class:light={$currentTheme.mode === "light"} />
+    class:light={$currentTheme.mode === "light"}></emoji-picker>
 
 <style lang="scss">
     emoji-picker {

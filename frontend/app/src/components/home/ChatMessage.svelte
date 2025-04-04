@@ -273,8 +273,10 @@
         tipping = ledger;
     }
 
-    function selectReaction(ev: CustomEvent<string>) {
-        toggleReaction(false, ev.detail);
+    function selectReaction(code?: string) {
+        if (code) {
+            toggleReaction(false, code);
+        }
     }
 
     function selectQuickReaction(unicode: string) {
@@ -501,8 +503,8 @@
                     </span>
                 </div>
                 <EmojiPicker
-                    on:emojiSelected={selectReaction}
-                    on:skintoneChanged={(ev) => quickReactions.reload(ev.detail)}
+                    onEmojiSelected={selectReaction}
+                    onSkintoneChanged={(tone) => quickReactions.reload(tone)}
                     mode={"reaction"} />
             {/snippet}
         </ModalContent>

@@ -1,14 +1,16 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        polling: boolean;
+        code: string | undefined;
+        onCopy?: (code?: string) => void;
+    }
 
-    export let polling: boolean;
-    export let code: string | undefined;
+    let { polling, code, onCopy }: Props = $props();
 </script>
 
 <p>
@@ -20,7 +22,7 @@
             <div class="code">
                 {code}
             </div>
-            <div class="copy" on:click={() => dispatch("copy", code)}>
+            <div class="copy" onclick={() => onCopy?.(code)}>
                 <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
             </div>
         </div>

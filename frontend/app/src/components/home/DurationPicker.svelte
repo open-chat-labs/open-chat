@@ -13,17 +13,26 @@
 
     type DurationUnit = "minutes" | "hours" | "days";
 
-    export let valid = true;
-    export let milliseconds: bigint = BigInt(ONE_HOUR);
-    export let disabled = false;
-    export let unitFilter = (_: DurationUnit) => true;
+    interface Props {
+        valid?: boolean;
+        milliseconds?: bigint;
+        disabled?: boolean;
+        unitFilter?: any;
+    }
+
+    let {
+        valid = $bindable(true),
+        milliseconds = $bindable(BigInt(ONE_HOUR)),
+        disabled = false,
+        unitFilter = (_: DurationUnit) => true,
+    }: Props = $props();
 
     let initialised = false;
-    let amount: string = "";
-    let unit: DurationUnit;
+    let amount: string = $state("");
+    let unit: DurationUnit = $state("days");
 
-    $: allUnits = ["minutes", "hours", "days"] as DurationUnit[];
-    $: supportedDurations = allUnits.filter(unitFilter);
+    let allUnits = $derived(["minutes", "hours", "days"] as DurationUnit[]);
+    let supportedDurations = $derived(allUnits.filter(unitFilter));
 
     onMount(() => {
         const duration = client.durationFromMilliseconds(Number(milliseconds));
@@ -63,9 +72,9 @@
         }
     }
 
-    $: {
+    $effect(() => {
         updateAmount(amount);
-    }
+    });
 </script>
 
 <div class="form">

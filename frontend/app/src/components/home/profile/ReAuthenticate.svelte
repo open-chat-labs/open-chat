@@ -173,7 +173,7 @@
         <EmailSigninFeedback
             code={verificationCode}
             polling={$emailSigninHandler}
-            on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
+            onCopy={(code) => emailSigninHandler.copyCode(code)} />
     {/if}
     {#if error !== undefined}
         <p class="info">
