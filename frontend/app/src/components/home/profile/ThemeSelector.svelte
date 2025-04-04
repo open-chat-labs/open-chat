@@ -7,7 +7,6 @@
         themes,
         themeType,
     } from "../../../theme/themes";
-    import { onMount } from "svelte";
     import type { Theme } from "../../../theme/types";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
@@ -20,26 +19,27 @@
         dark: Theme[];
     };
 
-    let partitionedThemes: PartitionedThemes = $state({
-        light: [],
-        dark: [],
-    });
+    let partitionedThemes = $state<PartitionedThemes>(partition());
 
-    onMount(() => {
-        partitionedThemes = Object.values(themes).reduce((p, theme) => {
-            if (theme.hidden) return p;
+    function partition() {
+        const partitionedThemes = Object.values(themes).reduce(
+            (p, theme) => {
+                if (theme.hidden) return p;
 
-            if (theme.mode === "light") {
-                p.light.push(theme);
-            }
-            if (theme.mode === "dark") {
-                p.dark.push(theme);
-            }
-            return p;
-        }, partitionedThemes);
+                if (theme.mode === "light") {
+                    p.light.push(theme);
+                }
+                if (theme.mode === "dark") {
+                    p.dark.push(theme);
+                }
+                return p;
+            },
+            { light: [], dark: [] } as PartitionedThemes,
+        );
         partitionedThemes.light.sort((a, b) => a.label.localeCompare(b.label));
         partitionedThemes.dark.sort((a, b) => a.label.localeCompare(b.label));
-    });
+        return partitionedThemes;
+    }
 
     function selectLightTheme(name: string) {
         preferredLightThemeName.set(name);

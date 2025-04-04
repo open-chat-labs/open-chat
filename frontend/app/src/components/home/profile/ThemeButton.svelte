@@ -47,29 +47,25 @@
             </div>
         {/snippet}
         {#snippet menuItems()}
-            <span>
-                <Menu>
-                    {#each otherThemes.sort() as theme}
-                        <MenuItem onclick={() => onSelect(theme.name)}>
-                            {#snippet text()}
-                                <div class="theme-item">
-                                    <div class="label">{theme.label}</div>
-                                    {#if theme.author !== undefined && $userStore.get(theme.author) !== undefined}
-                                        <div class="avatar">
-                                            <Avatar
-                                                url={client.userAvatarUrl(
-                                                    $userStore.get(theme.author),
-                                                )}
-                                                userId={theme.author}
-                                                size={AvatarSize.Tiny} />
-                                        </div>
-                                    {/if}
-                                </div>
-                            {/snippet}
-                        </MenuItem>
-                    {/each}
-                </Menu>
-            </span>
+            <Menu>
+                {#each otherThemes.toSorted() as theme}
+                    <MenuItem onclick={() => onSelect(theme.name)}>
+                        {#snippet text()}
+                            <div class="theme-item">
+                                <div class="label">{theme.label}</div>
+                                {#if theme.author !== undefined && $userStore.get(theme.author) !== undefined}
+                                    <div class="avatar">
+                                        <Avatar
+                                            url={client.userAvatarUrl($userStore.get(theme.author))}
+                                            userId={theme.author}
+                                            size={AvatarSize.Tiny} />
+                                    </div>
+                                {/if}
+                            </div>
+                        {/snippet}
+                    </MenuItem>
+                {/each}
+            </Menu>
         {/snippet}
     </MenuIcon>
 </div>

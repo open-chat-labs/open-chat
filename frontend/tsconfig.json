@@ -2,7 +2,7 @@
     "extends": "@tsconfig/svelte/tsconfig.json",
     "compilerOptions": {
         "outDir": "build", // prevents "cannot overwrite file" errors in IDE
-        "module": "ES2022",
+        "module": "ESNext",
         "allowJs": true,
         "checkJs": false,
         "declaration": true,
@@ -13,14 +13,10 @@
         "noUnusedParameters": true,
         "resolveJsonModule": true,
         "sourceMap": false,
-        "target": "ES2022",
+        "target": "ESNext",
         "types": ["jest", "node", "svelte"],
         "useDefineForClassFields": false,
-        "verbatimModuleSyntax": true,
+        "verbatimModuleSyntax": true
     },
-    "exclude": [
-        "build/**/*",
-        "lib/**/*",
-        "node_modules"
-    ]
+    "exclude": ["build/**/*", "lib/**/*", "node_modules"]
 }
