@@ -147,7 +147,7 @@
             </th>
         </tr>
     </thead>
-    {#each $accountsSorted as token}
+    {#each $accountsSorted as token (token.ledger)}
         <tr>
             <td width="99%">
                 <div class="token">
