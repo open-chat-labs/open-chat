@@ -6,12 +6,13 @@
     import OnChainAlt from "./OnChainAlt.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
 
-    $: imgUrl =
+    let imgUrl = $derived(
         $currentTheme.mode === "light"
             ? "/assets/screenshots/intro_light.png"
-            : "/assets/screenshots/intro_dark.png";
+            : "/assets/screenshots/intro_dark.png",
+    );
 
-    $: introStyle = $mobileWidth ? "" : `height: ${$availableHeight}px`;
+    let introStyle = $derived($mobileWidth ? "" : `height: ${$availableHeight}px`);
 </script>
 
 <div class="wrapper" style={introStyle}>
@@ -49,7 +50,8 @@
                     <div
                         class:light={$currentTheme.mode === "light"}
                         class:dark={$currentTheme.mode === "dark"}
-                        class="overlay" />
+                        class="overlay">
+                    </div>
                 {/if}
             </div>
         </div>

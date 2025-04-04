@@ -10,7 +10,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    $: link = `${window.location.origin}/?ref=${$user.userId}`;
+    let link = $derived(`${window.location.origin}/?ref=${$user.userId}`);
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(
