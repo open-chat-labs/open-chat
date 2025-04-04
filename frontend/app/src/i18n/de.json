@@ -1606,7 +1606,7 @@
     "roleChanged": "{changedBy} hat die Rolle von {changed} in {newRole} geändert",
     "rotationChallenge": {
         "info": "Drehen Sie das Bild links, bis es dem Winkel des Bildes rechts entspricht",
-        "infoMobile": "Drehen Sie das obere Bild, bis es mit dem Winkel des unteren Bildes übereinstimmt",
+        "infoMobile": "Drehen Sie das obere Bild, bis es dem Winkel des unteren Bildes entspricht",
         "title": "Balancieren Sie die Bots"
     },
     "rules": {
