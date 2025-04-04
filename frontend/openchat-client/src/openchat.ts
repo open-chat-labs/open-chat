@@ -505,6 +505,7 @@ import { setExternalBots } from "./stores";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
 import { ephemeralMessages } from "./stores/ephemeralMessages";
 import { minutesOnlineStore } from "./stores/minutesOnline";
+import { Semaphore } from "./utils/semaphore";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -563,6 +564,7 @@ export class OpenChat extends EventTarget {
         bigint,
         (response: SendMessageSuccess | TransferSuccess) => void
     > = new Map();
+    #refreshBalanceSemaphore: Semaphore = new Semaphore(10);
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
@@ -5247,22 +5249,32 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    refreshAccountBalance(ledger: string): Promise<bigint> {
+    refreshAccountBalance(ledger: string, force: boolean = true): Promise<bigint> {
         const user = this.#liveState.user;
         if (user === undefined) {
             return Promise.resolve(0n);
         }
 
-        return this.#sendRequest({
-            kind: "refreshAccountBalance",
-            ledger,
-            principal: user.userId,
-        })
-            .then((val) => {
-                cryptoBalance.set(ledger, val);
-                return val;
+
+        return this.#refreshBalanceSemaphore.execute(() => {
+            if (!force) {
+                const valueIfUpdatedRecently = cryptoBalance.valueIfUpdatedRecently(ledger);
+                if (valueIfUpdatedRecently !== undefined) {
+                    return Promise.resolve(valueIfUpdatedRecently);
+                }
+            }
+
+            return this.#sendRequest({
+                kind: "refreshAccountBalance",
+                ledger,
+                principal: user.userId,
             })
-            .catch(() => 0n);
+                .then((val) => {
+                    cryptoBalance.set(ledger, val);
+                    return val;
+                })
+                .catch(() => 0n)
+        });
     }
 
     refreshTranslationsBalance(): Promise<bigint> {
@@ -6041,7 +6053,7 @@ export class OpenChat extends EventTarget {
                     this.#initWebRtc();
                     startMessagesReadTracker(this);
                     this.refreshSwappableTokens();
-                    window.setTimeout(() => this.#refreshBalancesInSeries(), 0);
+                    window.setTimeout(() => this.#refreshBalancesInSeries(), 1000);
                 }
             }
 

@@ -1606,7 +1606,7 @@
     "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} in {newRole}",
     "rotationChallenge": {
         "info": "Ruota l'immagine a sinistra finché non corrisponde all'angolazione dell'immagine a destra",
-        "infoMobile": "Ruota l'immagine superiore finché non corrisponde all'angolazione dell'immagine inferiore",
+        "infoMobile": "Ruota l'immagine in basso finché non corrisponde all'angolazione dell'immagine in alto",
         "title": "Bilanciare i bot"
     },
     "rules": {

@@ -145,7 +145,7 @@
 
         @include mobile() {
             gap: $sp5;
-            flex-direction: column;
+            flex-direction: column-reverse;
         }
     }
 

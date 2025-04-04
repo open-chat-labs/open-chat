@@ -41,12 +41,12 @@
         onError,
     }: Props = $props();
 
-    export function refresh() {
+    export function refresh(force: boolean = true) {
         onClick?.();
         refreshing = true;
 
         return client
-            .refreshAccountBalance(ledger)
+            .refreshAccountBalance(ledger, force)
             .then((val) => {
                 onRefreshed?.(val);
             })
@@ -87,7 +87,7 @@
     );
     $effect(() => {
         if (ledger) {
-            refresh();
+            refresh(false);
         }
     });
 </script>
@@ -100,7 +100,7 @@
         {formattedValue}
     </div>
     {#if showRefresh && !hideBalance}
-        <div class="refresh" class:refreshing onclick={refresh}>
+        <div class="refresh" class:refreshing onclick={() => refresh(true)}>
             <Refresh size={"1em"} color={"var(--icon-txt)"} />
         </div>
     {/if}
