@@ -140,9 +140,9 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
+    function onBalanceRefreshError(err: string) {
         onBalanceRefreshFinished();
-        error = ev.detail;
+        error = err;
     }
 
     function onBalanceRefreshFinished() {
@@ -178,16 +178,16 @@
                     label={i18nKey("cryptoAccount.shortBalanceLabel")}
                     bold
                     showTopUp
-                    on:click={() => (confirming = false)}
-                    on:refreshed={onBalanceRefreshed}
-                    on:error={onBalanceRefreshError} />
+                    onClick={() => (confirming = false)}
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             </span>
         {/snippet}
         {#snippet body()}
             <form>
                 <div class="body" class:zero={zero || toppingUp}>
                     {#if zero || toppingUp}
-                        <AccountInfo {ledger} user={$user} />
+                        <AccountInfo {ledger} />
                         {#if zero}
                             <p>
                                 <Translatable

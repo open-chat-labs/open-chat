@@ -75,6 +75,7 @@
     export let mode: "thread" | "message" = "message";
     export let externalContent: boolean;
     export let messageContext: MessageContext;
+    export let onFileSelected: (content: AttachmentContent) => void;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -674,7 +675,7 @@
                                 bind:percentRecorded
                                 bind:recording
                                 bind:supported={audioSupported}
-                                on:audioCaptured />
+                                onAudioCaptured={onFileSelected} />
                         </div>
                     {:else if canEnterText}
                         <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->

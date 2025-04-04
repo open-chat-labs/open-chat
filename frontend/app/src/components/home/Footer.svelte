@@ -17,6 +17,7 @@
         MultiUserChat,
         AttachmentContent,
         MessageContext,
+        AudioContent,
     } from "openchat-client";
     import { getContext } from "svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -189,7 +190,7 @@
         on:makeMeme
         on:clearAttachment
         on:fileSelected={(ev) => onFileSelected(ev.detail)}
-        on:audioCaptured />
+        {onFileSelected} />
 </div>
 
 <style lang="scss">

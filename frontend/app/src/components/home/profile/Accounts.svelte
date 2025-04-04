@@ -75,8 +75,8 @@
         balanceError = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        balanceError = ev.detail;
+    function onBalanceRefreshError(err: string) {
+        balanceError = err;
     }
 
     function hideManageModal() {
@@ -177,8 +177,8 @@
                     value={token.balance}
                     conversion={selectedConversion}
                     hideBalance={hideTokenBalances}
-                    on:refreshed={onBalanceRefreshed}
-                    on:error={onBalanceRefreshError} />
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             </td>
             <td class="manage-col">
                 <div class="manage">

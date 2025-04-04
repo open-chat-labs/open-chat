@@ -1,55 +1,61 @@
 <script lang="ts">
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { OpenChat, ResourceKey } from "openchat-client";
     import Translatable from "../Translatable.svelte";
     import { enhancedCryptoLookup as cryptoLookup } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let ledger: string;
-    export let value: bigint;
-    export let label: ResourceKey | undefined = undefined;
-    export let bold = false;
-    export let toppingUp = false;
-    export let showTopUp = false;
-    export let showRefresh = true;
-    export let refreshing = false;
-    export let conversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
-    export let hideBalance = false;
-
-    $: tokenDetails = $cryptoLookup[ledger];
-    $: symbol = tokenDetails.symbol;
-    $: formattedValue = hideBalance
-        ? "*****"
-        : conversion === "none"
-            ? client.formatTokens(value, tokenDetails.decimals)
-            : convertValue(conversion, tokenDetails);
-
-    $: {
-        if (ledger) {
-            refresh();
-        }
+    interface Props {
+        ledger: string;
+        value: bigint;
+        label?: ResourceKey | undefined;
+        bold?: boolean;
+        toppingUp?: boolean;
+        showTopUp?: boolean;
+        showRefresh?: boolean;
+        refreshing?: boolean;
+        conversion?: "none" | "usd" | "icp" | "btc" | "eth";
+        hideBalance?: boolean;
+        onClick?: () => void;
+        onRefreshed?: (val: bigint) => void;
+        onError?: (error: string) => void;
     }
 
+    let {
+        ledger,
+        value,
+        label = undefined,
+        bold = false,
+        toppingUp = $bindable(false),
+        showTopUp = false,
+        showRefresh = true,
+        refreshing = $bindable(false),
+        conversion = "none",
+        hideBalance = false,
+        onClick,
+        onRefreshed,
+        onError,
+    }: Props = $props();
+
     export function refresh() {
-        dispatch("click");
+        onClick?.();
         refreshing = true;
 
         return client
             .refreshAccountBalance(ledger)
             .then((val) => {
-                dispatch("refreshed", val);
+                onRefreshed?.(val);
             })
             .catch((err) => {
                 const errorMessage = $_("unableToRefreshAccountBalance", {
                     values: { token: symbol },
                 });
                 client.logError(`Failed to refresh ${symbol} account balance`, err);
-                dispatch("error", errorMessage);
+                onError?.(errorMessage);
             })
             .finally(() => (refreshing = false));
     }
@@ -70,6 +76,20 @@
                 return t.ethBalance?.toFixed(6) ?? "???";
         }
     }
+    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let symbol = $derived(tokenDetails.symbol);
+    let formattedValue = $derived(
+        hideBalance
+            ? "*****"
+            : conversion === "none"
+              ? client.formatTokens(value, tokenDetails.decimals)
+              : convertValue(conversion, tokenDetails),
+    );
+    $effect(() => {
+        if (ledger) {
+            refresh();
+        }
+    });
 </script>
 
 <div class="container">
@@ -80,12 +100,12 @@
         {formattedValue}
     </div>
     {#if showRefresh && !hideBalance}
-        <div class="refresh" class:refreshing on:click={refresh} >
+        <div class="refresh" class:refreshing onclick={refresh}>
             <Refresh size={"1em"} color={"var(--icon-txt)"} />
         </div>
     {/if}
     {#if showTopUp}
-        <div class="top-up" on:click={topUp} title={$_("cryptoAccount.topUp")}>
+        <div class="top-up" onclick={topUp} title={$_("cryptoAccount.topUp")}>
             <Plus size={"1em"} color={toppingUp ? "var(--icon-selected)" : "var(--icon-txt)"} />
         </div>
     {/if}

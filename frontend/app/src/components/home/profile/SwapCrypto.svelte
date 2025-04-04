@@ -237,8 +237,8 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        error = $_(ev.detail);
+    function onBalanceRefreshError(err: string) {
+        error = $_(err);
     }
     let initialized = $state(false);
 
@@ -282,8 +282,8 @@
                     value={remainingBalance}
                     label={i18nKey("cryptoAccount.shortBalanceLabel")}
                     bold
-                    on:refreshed={onBalanceRefreshed}
-                    on:error={onBalanceRefreshError} />
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             {/if}
         </span>
     {/snippet}

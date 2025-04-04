@@ -207,7 +207,6 @@
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        draftMessagesStore.setAttachment({ chatId: chat.id }, ev.detail);
         onFileSelected(ev.detail);
     }
 
@@ -448,7 +447,7 @@
             on:startTyping={() => client.startTyping(chat, $user.userId)}
             on:stopTyping={() => client.stopTyping(chat, $user.userId)}
             {onFileSelected}
-            on:audioCaptured={fileSelected}
+            onAudioCaptured={onFileSelected}
             on:sendMessage={sendMessage}
             on:attachGif={attachGif}
             on:makeMeme={makeMeme}

@@ -37,8 +37,8 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        error = ev.detail;
+    function onBalanceRefreshError(err: string) {
+        error = err;
     }
 
     onMount(() => {
@@ -78,8 +78,8 @@
                                 {ledger}
                                 value={tokenDetails.balance}
                                 bind:refreshing={refreshingBalance}
-                                on:refreshed={onBalanceRefreshed}
-                                on:error={onBalanceRefreshError} />
+                                onRefreshed={onBalanceRefreshed}
+                                onError={onBalanceRefreshError} />
                         </div>
                     {/if}
                 {/if}

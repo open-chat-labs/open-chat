@@ -107,9 +107,9 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
+    function onBalanceRefreshError(err: string) {
         onBalanceRefreshFinished();
-        error = ev.detail;
+        error = err;
     }
 
     function onBalanceRefreshFinished() {
@@ -248,8 +248,8 @@
                     bold
                     showTopUp
                     bind:refreshing
-                    on:refreshed={onBalanceRefreshed}
-                    on:error={onBalanceRefreshError} />
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             </span>
         {/snippet}
         {#snippet body()}

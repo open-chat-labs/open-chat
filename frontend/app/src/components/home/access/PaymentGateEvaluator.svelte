@@ -107,9 +107,9 @@
         value={cryptoBalance}
         label={i18nKey("cryptoAccount.shortBalanceLabel")}
         bold
-        on:click={onStartRefreshingBalance}
-        on:refreshed={onRefreshingBalanceSuccess}
-        on:error={onRefreshingBalanceFailed} />
+        onClick={onStartRefreshingBalance}
+        onRefreshed={onRefreshingBalanceSuccess}
+        onError={onRefreshingBalanceFailed} />
 </div>
 <div>
     <p>

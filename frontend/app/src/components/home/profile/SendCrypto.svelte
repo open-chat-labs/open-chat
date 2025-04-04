@@ -1,7 +1,12 @@
 <script lang="ts">
     import { getContext, onMount } from "svelte";
     import TokenInput from "../TokenInput.svelte";
-    import type { CkbtcMinterWithdrawalInfo, NamedAccount, OpenChat, ResourceKey } from "openchat-client";
+    import type {
+        CkbtcMinterWithdrawalInfo,
+        NamedAccount,
+        OpenChat,
+        ResourceKey,
+    } from "openchat-client";
     import {
         BTC_SYMBOL,
         ICP_SYMBOL,
@@ -63,19 +68,22 @@
     let isBtcNetwork = $derived(isBtc && selectedBtcNetwork === BTC_SYMBOL);
     let transferFees = $derived(tokenDetails.transferFee);
     let targetAccountValid = $derived(
-        targetAccount.length > 0 &&
-        targetAccount !== account &&
-        isBtcNetwork
+        targetAccount.length > 0 && targetAccount !== account && isBtcNetwork
             ? targetAccount.length >= 14
-            : (
-                isPrincipalValid(targetAccount) ||
-                (symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount))
-            ));
-    let minAmount = $derived(isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined ? ckbtcMinterWithdrawalInfo.minWithdrawalAmount : BigInt(0));
+            : isPrincipalValid(targetAccount) ||
+                  (symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount)),
+    );
+    let minAmount = $derived(
+        isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined
+            ? ckbtcMinterWithdrawalInfo.minWithdrawalAmount
+            : BigInt(0),
+    );
     let validSend = $derived(validAmount && targetAccountValid);
     $effect(() => {
         // If sending via the BTC network we must wait until the ckbtc minter info is loaded to correctly apply the min amount
-        valid = (capturingAccount ? validAccountName : validSend) && (!isBtcNetwork || ckbtcMinterWithdrawalInfo !== undefined);
+        valid =
+            (capturingAccount ? validAccountName : validSend) &&
+            (!isBtcNetwork || ckbtcMinterWithdrawalInfo !== undefined);
     });
     let title = $derived(i18nKey("cryptoAccount.sendToken", { symbol }));
 
@@ -84,9 +92,11 @@
     );
 
     let errorMessage = $derived(error !== undefined ? error : $pinNumberErrorMessageStore);
-    let btcNetworkFee = $derived(isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined
-        ? client.formatTokens(ckbtcMinterWithdrawalInfo.feeEstimate, 8)
-        : undefined);
+    let btcNetworkFee = $derived(
+        isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined
+            ? client.formatTokens(ckbtcMinterWithdrawalInfo.feeEstimate, 8)
+            : undefined,
+    );
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();
@@ -103,7 +113,9 @@
     });
 
     function getCkbtcMinterWithdrawalInfo(amountToSend: bigint) {
-        client.getCkbtcMinterWithdrawalInfo(amountToSend).then((i) => ckbtcMinterWithdrawalInfo = i);
+        client
+            .getCkbtcMinterWithdrawalInfo(amountToSend)
+            .then((i) => (ckbtcMinterWithdrawalInfo = i));
     }
 
     function saveAccount() {
@@ -139,16 +151,15 @@
 
         const withdrawTokensPromise = isBtcNetwork
             ? client.withdrawBtc(targetAccount, amountToSend)
-            : client
-                .withdrawCryptocurrency({
-                    kind: "pending",
-                    ledger,
-                    token: symbol,
-                    to: targetAccount,
-                    amountE8s: amountToSend,
-                    feeE8s: transferFees,
-                    createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
-                });
+            : client.withdrawCryptocurrency({
+                  kind: "pending",
+                  ledger,
+                  token: symbol,
+                  to: targetAccount,
+                  amountE8s: amountToSend,
+                  feeE8s: transferFees,
+                  createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+              });
 
         withdrawTokensPromise
             .then((resp) => {
@@ -184,8 +195,8 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        error = i18nKey(ev.detail);
+    function onBalanceRefreshError(err: string) {
+        error = i18nKey(err);
     }
 
     function onPrimaryClick() {
@@ -208,8 +219,8 @@
                 value={remainingBalance}
                 label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
-                on:refreshed={onBalanceRefreshed}
-                on:error={onBalanceRefreshError} />
+                onRefreshed={onBalanceRefreshed}
+                onError={onBalanceRefreshError} />
         </span>
     {/snippet}
     {#snippet body()}
@@ -259,7 +270,10 @@
 
                         {#if btcNetworkFee !== undefined}
                             <div class="btc-network-fee">
-                                <Translatable resourceKey={i18nKey("cryptoAccount.btcNetworkFee", { amount: btcNetworkFee })} />
+                                <Translatable
+                                    resourceKey={i18nKey("cryptoAccount.btcNetworkFee", {
+                                        amount: btcNetworkFee,
+                                    })} />
                             </div>
                         {/if}
                     </div>
