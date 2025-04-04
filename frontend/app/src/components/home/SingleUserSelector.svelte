@@ -72,7 +72,7 @@
         <div class="wrapper" bind:clientHeight={inputHeight}>
             <ValidatingInput
                 onfocus={() => (showMentionPicker = true)}
-                onblur={blur}
+                onBlur={blur}
                 {invalid}
                 {error}
                 {autofocus}

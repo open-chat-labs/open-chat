@@ -214,7 +214,7 @@
                                             minlength={1}
                                             maxlength={MAX_ANSWER_LENGTH}
                                             countdown
-                                            on:enter={addAnswer}
+                                            onEnter={addAnswer}
                                             placeholder={i18nKey(
                                                 poll.pollAnswers.size === MAX_ANSWERS
                                                     ? "poll.maxReached"
@@ -279,7 +279,7 @@
                         <Legend label={i18nKey("poll.pollDuration")} />
                         {#each durations as d}
                             <Radio
-                                on:change={() => (selectedDuration = d)}
+                                onChange={() => (selectedDuration = d)}
                                 value={d}
                                 checked={selectedDuration === d}
                                 id={`duration_${d}`}

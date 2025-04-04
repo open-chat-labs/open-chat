@@ -171,7 +171,7 @@
                             <Radio
                                 group={"optional_gates"}
                                 checked={!optionalGatesByIndex.has(i)}
-                                on:change={() => toggleIndex(i, currentGate)}
+                                onChange={() => toggleIndex(i, currentGate)}
                                 label={i18nKey(subgate.kind)}
                                 id={`subgate_${i}`}>
                                 <AccessGateSummary

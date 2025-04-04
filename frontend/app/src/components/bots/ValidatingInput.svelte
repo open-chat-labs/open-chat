@@ -7,7 +7,14 @@
 
     type Props = InputProps & { error: ResourceKey[] };
 
-    let { onblur, onfocus, disabled, error, value = $bindable(), ...props }: Props = $props();
+    let {
+        onBlur: onblur,
+        onfocus,
+        disabled,
+        error,
+        value = $bindable(),
+        ...props
+    }: Props = $props();
     let showError = $state(disabled);
     let timer = $state<number | undefined>(undefined);
     let firstError = $derived(error[0]);
@@ -27,7 +34,7 @@
 </script>
 
 <div class:error={firstError !== undefined && showError} class="validating-input">
-    <Input onfocus={onFocusInternal} onblur={onBlurInternal} {disabled} {...props} bind:value>
+    <Input onFocus={onFocusInternal} onBlur={onBlurInternal} {disabled} {...props} bind:value>
         {#if firstError !== undefined && showError}
             <div class="error-wrapper" class:disabled>
                 <ErrorMessage>

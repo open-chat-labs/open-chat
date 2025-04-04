@@ -65,7 +65,7 @@
                 minlength={param.minLength}
                 maxlength={param.maxLength}
                 placeholder={i18nKey(param.placeholder ?? "")}
-                on:change={onChange}
+                {onChange}
                 countdown
                 bind:value={arg.value} />
         {/if}
@@ -100,7 +100,7 @@
                 min={param.minValue}
                 max={param.maxValue}
                 shouldClamp={false}
-                on:change={onChange}
+                {onChange}
                 placeholder={i18nKey(param.placeholder ?? "")}
                 bind:value={arg.value} />
         {/if}

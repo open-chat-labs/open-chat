@@ -84,7 +84,7 @@
             minlength={MIN_CHANNEL_LENGTH}
             maxlength={MAX_CHANNEL_LENGTH}
             countdown
-            on:enter={addChannel}
+            onEnter={addChannel}
             placeholder={i18nKey("communities.channelPlaceholder")} />
     </div>
     <div class="add-btn" on:click={addChannel}>

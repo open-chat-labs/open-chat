@@ -109,7 +109,7 @@
                                 bind:value={email}
                                 minlength={10}
                                 maxlength={200}
-                                on:enter={() => login(provider)}
+                                onEnter={() => login(provider)}
                                 placeholder={i18nKey(
                                     mode === "signin"
                                         ? "loginDialog.signinEmailPlaceholder"

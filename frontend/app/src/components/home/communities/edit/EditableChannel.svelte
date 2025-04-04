@@ -38,8 +38,8 @@
             maxlength={max}
             countdown
             invalid={editingChannel.name.length < min || editingChannel.name.length > max}
-            onblur={stopEditing}
-            on:enter={stopEditing}
+            onBlur={stopEditing}
+            onEnter={stopEditing}
             placeholder={i18nKey("communities.updateChannelPlaceholder")}>
             <div class="hash">
                 <Pound size={$iconSize} color={"var(--icon-txt)"} />

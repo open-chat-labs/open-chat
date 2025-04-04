@@ -443,7 +443,7 @@
         <div class="body">
             <div class="sections">
                 <div class="topup hidden" class:visible={step === 0}>
-                    <AccountInfo {ledger} user={$user} />
+                    <AccountInfo {ledger} />
                     <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                 </div>
                 <div class="common hidden" class:visible={step === 1}>

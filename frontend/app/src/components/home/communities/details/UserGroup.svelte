@@ -161,7 +161,7 @@
                 disabled={!canManageUserGroups}
                 countdown
                 invalid={nameDirty && !nameValid}
-                onblur={autoCorrect}
+                onBlur={autoCorrect}
                 placeholder={i18nKey("communities.enterUserGroupName")} />
         </div>
         <div class="search">

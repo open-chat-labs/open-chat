@@ -67,7 +67,7 @@
             label={i18nKey(symbol)}
             disabled={busy}
             checked={treasury === "SNS"}
-            on:change={() => (treasury = "SNS")} />
+            onChange={() => (treasury = "SNS")} />
         <Radio
             id="icp_treasury"
             group="treasury"
@@ -75,7 +75,7 @@
             label={i18nKey("ICP")}
             disabled={busy}
             checked={treasury === "ICP"}
-            on:change={() => (treasury = "ICP")} />
+            onChange={() => (treasury = "ICP")} />
     </section>
     <section>
         <Legend label={i18nKey("proposal.maker.recipientOwner")} required />

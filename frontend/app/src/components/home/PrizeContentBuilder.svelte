@@ -391,7 +391,7 @@
                                 <Legend label={i18nKey("prizes.duration")} />
                                 {#each durations as d}
                                     <Radio
-                                        on:change={() => (selectedDuration = d)}
+                                        onChange={() => (selectedDuration = d)}
                                         value={d}
                                         checked={selectedDuration === d}
                                         id={`duration_${d}`}
@@ -414,13 +414,13 @@
                                     <div class="diamond-choice">
                                         <Radio
                                             id={"standard-diamond"}
-                                            on:change={() => (diamondType = "standard")}
+                                            onChange={() => (diamondType = "standard")}
                                             checked={diamondType === "standard"}
                                             label={i18nKey(`prizes.standardDiamond`)}
                                             group={"diamond"} />
                                         <Radio
                                             id={"lifetime-diamond"}
-                                            on:change={() => (diamondType = "lifetime")}
+                                            onChange={() => (diamondType = "lifetime")}
                                             checked={diamondType === "lifetime"}
                                             label={i18nKey(`prizes.lifetimeDiamond`)}
                                             group={"diamond"} />

@@ -15,9 +15,9 @@
         new Ringtone("siren", "Siren"),
     ];
 
-    function togglePlay(ev: CustomEvent<Ringtone>) {
+    function onTogglePlay(ringtone: Ringtone) {
         ringtones.forEach((r) => {
-            if (r === ev.detail) {
+            if (r === ringtone) {
                 r.toggle();
             } else {
                 r.stop();
@@ -55,5 +55,5 @@
 <Legend label={i18nKey("profile.ringtone")} />
 
 {#each ringtones as ringtone}
-    <VideoCallRingtone on:togglePlay={togglePlay} {ringtone} />
+    <VideoCallRingtone {onTogglePlay} {ringtone} />
 {/each}

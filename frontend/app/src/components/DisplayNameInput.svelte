@@ -33,8 +33,10 @@
         displayNameValid = true;
     });
 
-    function onChange(ev: CustomEvent<string>) {
-        displayName = ev.detail;
+    function onChange(val: string | number | bigint) {
+        if (typeof val !== "string") return;
+
+        displayName = val;
 
         if (displayName.length === 0) {
             displayName = undefined;
@@ -47,7 +49,7 @@
 </script>
 
 <Input
-    on:change={onChange}
+    {onChange}
     value={originalDisplayName ?? ""}
     {disabled}
     {invalid}

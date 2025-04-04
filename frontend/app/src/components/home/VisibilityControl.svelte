@@ -69,7 +69,7 @@
 
 <div class="section">
     <Radio
-        on:change={toggleScope}
+        onChange={toggleScope}
         checked={!candidate.public}
         id={"private"}
         disabled={!canChangeVisibility}
@@ -93,7 +93,7 @@
 
 <div class="section">
     <Radio
-        on:change={toggleScope}
+        onChange={toggleScope}
         checked={candidate.public}
         id={"public"}
         disabled={!canChangeVisibility || requiresUpgrade}
