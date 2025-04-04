@@ -25,7 +25,7 @@
             {#snippet popupTemplate()}
                 <div class="tt">
                     {#each events as event}
-                        {#if event.reason.kind === "daily_claim" || event.reason.kind === "daily_claim_reinstated"}
+                        {#if event.reason.kind === "daily_claim" || event.reason.kind === "daily_claim_reinstated" || event.reason.kind === "streak_insurance_claim"}
                             <p>{`🚀 Daily claim: ${event.amount.toLocaleString()}`}</p>
                         {:else if event.reason.kind === "achievement_unlocked"}
                             <p>

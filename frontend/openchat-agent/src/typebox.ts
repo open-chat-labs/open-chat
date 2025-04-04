@@ -974,6 +974,7 @@ export const ChitEarnedReason = Type.Union([
     }),
     Type.Literal("MemeContestWinner"),
     Type.Literal("DailyClaimReinstated"),
+    Type.Literal("StreakInsuranceClaim"),
 ]);
 
 export type InvalidPollReason = Static<typeof InvalidPollReason>;
