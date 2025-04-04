@@ -9,7 +9,7 @@
         type ResourceKey,
         selectedAuthProviderStore,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
     import { configKeys } from "../../../utils/config";
     import { AuthClient } from "@dfinity/auth-client";
@@ -22,20 +22,28 @@
     import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let message: ResourceKey;
+    interface Props {
+        message: ResourceKey;
+        onSuccess: (args: {
+            key: ECDSAKeyIdentity;
+            delegation: DelegationChain;
+            provider: AuthProvider;
+        }) => void;
+    }
 
-    let error: string | undefined;
+    let { message, onSuccess }: Props = $props();
+
+    let error: string | undefined = $state();
     let emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
-    let emailInvalid = false;
-    let email = "";
+    let emailInvalid = $state(false);
+    let email = $state("");
     let authStep:
         | "choose_provider"
         | "choose_eth_wallet"
         | "choose_sol_wallet"
-        | "signing_in_with_email" = "choose_provider";
-    let verificationCode: string | undefined = undefined;
+        | "signing_in_with_email" = $state("choose_provider");
+    let verificationCode: string | undefined = $state(undefined);
 
     onMount(() => {
         emailSigninHandler.addEventListener("email_signin_event", emailEvent);
@@ -103,7 +111,7 @@
                                 if (principal !== client.AuthPrincipal) {
                                     error = "identity.failure.principalMismatch";
                                 } else {
-                                    dispatch("success", {
+                                    onSuccess({
                                         key: identity,
                                         delegation: DelegationChain.fromJSON(delegation),
                                         provider,
@@ -134,7 +142,7 @@
             authStep = "choose_provider";
             error = "identity.failure.principalMismatch";
         } else {
-            dispatch("success", {
+            onSuccess({
                 key: detail.key,
                 delegation: detail.delegation,
                 provider,

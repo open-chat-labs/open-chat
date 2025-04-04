@@ -87,8 +87,8 @@
     <LinkAccountsModal>
         <LinkAccounts
             bind:iiPrincipal
-            on:close
-            on:proceed={() => (step = "verification")}
+            {onClose}
+            onProceed={() => (step = "verification")}
             explanations={[i18nKey("identity.humanityWarning")]} />
     </LinkAccountsModal>
 {:else}

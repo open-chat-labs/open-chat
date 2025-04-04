@@ -25,11 +25,11 @@
     {#if arg.kind === "user" && param.kind === "user"}
         <Legend label={i18nKey(param.name)} required={param.required} />
         <SingleUserSelector
-            on:userSelected={(ev: CustomEvent<UserSummary>) => {
-                arg.userId = ev.detail.userId;
+            onUserSelected={(user) => {
+                arg.userId = user.userId;
                 onChange();
             }}
-            on:userRemoved={() => {
+            onUserRemoved={() => {
                 arg.userId = undefined;
                 onChange();
             }}

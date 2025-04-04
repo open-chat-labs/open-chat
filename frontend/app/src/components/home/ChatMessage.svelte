@@ -609,19 +609,19 @@
                                             <WithRole
                                                 userId={sender.userId}
                                                 chatMembers={$chatMembersMap}
-                                                communityMembers={$communityMembers}
-                                                let:chatRole
-                                                let:communityRole>
-                                                <RoleIcon
-                                                    level="community"
-                                                    popup
-                                                    role={communityRole} />
-                                                <RoleIcon
-                                                    level={chatType === "channel"
-                                                        ? "channel"
-                                                        : "group"}
-                                                    popup
-                                                    role={chatRole} />
+                                                communityMembers={$communityMembers}>
+                                                {#snippet children(communityRole, chatRole)}
+                                                    <RoleIcon
+                                                        level="community"
+                                                        popup
+                                                        role={communityRole} />
+                                                    <RoleIcon
+                                                        level={chatType === "channel"
+                                                            ? "channel"
+                                                            : "group"}
+                                                        popup
+                                                        role={chatRole} />
+                                                {/snippet}
                                             </WithRole>
                                         {/if}
                                     </Link>

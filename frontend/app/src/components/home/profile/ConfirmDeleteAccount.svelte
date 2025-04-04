@@ -24,17 +24,15 @@
 
     let authenticating = $state(false);
 
-    function deleteAccount(
-        ev: CustomEvent<{
-            key: ECDSAKeyIdentity;
-            delegation: DelegationChain;
-            provider: AuthProvider;
-        }>,
-    ) {
+    function deleteAccount(detail: {
+        key: ECDSAKeyIdentity;
+        delegation: DelegationChain;
+        provider: AuthProvider;
+    }) {
         deleting = true;
         authenticating = false;
         return client
-            .deleteCurrentUser(ev.detail.delegation)
+            .deleteCurrentUser(detail.delegation)
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("danger.deleteAccountFailed"));
@@ -53,7 +51,7 @@
         {/snippet}
         {#snippet body()}
             {#if authenticating}
-                <ReAuthenticate on:success={deleteAccount} message={i18nKey("danger.reauth")} />
+                <ReAuthenticate onSuccess={deleteAccount} message={i18nKey("danger.reauth")} />
             {:else}
                 <Markdown
                     inline={false}

@@ -15,23 +15,34 @@
     import DurationPicker from "./DurationPicker.svelte";
     import AccessGateControl from "./access/AccessGateControl.svelte";
 
-    type T = $$Generic;
-
     const client = getContext<OpenChat>("client");
 
-    export let candidate: CandidateGroupChat | CommunitySummary;
-    export let editing: boolean;
-    export let history: boolean;
-    export let canEditDisappearingMessages: boolean;
-    export let valid: boolean;
-    export let gateDirty: boolean;
-    export let embeddedContent: boolean = false;
+    interface Props {
+        candidate: CandidateGroupChat | CommunitySummary;
+        editing: boolean;
+        history: boolean;
+        canEditDisappearingMessages: boolean;
+        valid: boolean;
+        gateDirty: boolean;
+        embeddedContent?: boolean;
+    }
 
-    let disappearingMessages =
-        candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
+    let {
+        candidate = $bindable(),
+        editing,
+        history,
+        canEditDisappearingMessages,
+        valid = $bindable(),
+        gateDirty,
+        embeddedContent = false,
+    }: Props = $props();
 
-    $: requiresUpgrade = !editing && !$isDiamond && candidate.level !== "channel";
-    $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
+    let disappearingMessages = $state(
+        candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined,
+    );
+
+    let requiresUpgrade = $derived(!editing && !$isDiamond && candidate.level !== "channel");
+    let canChangeVisibility = $derived(!editing ? client.canChangeVisibility(candidate) : true);
 
     function gateUpdated() {
         if (
@@ -76,7 +87,7 @@
         align={"start"}
         group={"visibility"}>
         <div class="section-title">
-            <div class={"img private"} />
+            <div class={"img private"}></div>
             <p>
                 <Translatable
                     resourceKey={i18nKey("group.privateGroup", undefined, candidate.level, true)} />
@@ -100,7 +111,7 @@
         align={"start"}
         group={"visibility"}>
         <div class="section-title">
-            <div class={"img public"} />
+            <div class={"img public"}></div>
             <p>
                 <Translatable
                     resourceKey={i18nKey("group.publicGroup", undefined, candidate.level, true)} />
@@ -184,7 +195,7 @@
 
 {#if !requiresUpgrade}
     <AccessGateControl
-        on:updated={gateUpdated}
+        onUpdated={gateUpdated}
         bind:gateConfig={candidate.gateConfig}
         level={candidate.level}
         bind:valid />

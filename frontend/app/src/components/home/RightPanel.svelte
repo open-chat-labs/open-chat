@@ -436,8 +436,8 @@
                 busy={invitingUsers}
                 closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
                 isCommunityPublic={$selectedCommunity?.public ?? true}
-                on:inviteUsers={onInviteCommunityUsers}
-                on:cancelInviteUsers={popRightPanelHistory} />
+                onInviteUsers={onInviteCommunityUsers}
+                onCancelInviteUsers={popRightPanelHistory} />
         {/if}
     {:else if lastState.kind === "show_community_members" && $selectedCommunity !== undefined}
         {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel"}
@@ -499,8 +499,8 @@
                 busy={invitingUsers}
                 closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
                 isCommunityPublic={$selectedCommunity?.public ?? true}
-                on:inviteUsers={onInviteGroupUsers}
-                on:cancelInviteUsers={popRightPanelHistory} />
+                onInviteUsers={onInviteGroupUsers}
+                onCancelInviteUsers={popRightPanelHistory} />
         {/if}
     {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "group_chat"}
         <Members

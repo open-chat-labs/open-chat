@@ -12,17 +12,24 @@
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
 
-    export let busy: boolean;
-    export let candidate: CommunitySummary;
-    export let valid: boolean;
+    interface Props {
+        busy: boolean;
+        candidate: CommunitySummary;
+        valid: boolean;
+    }
 
-    $: {
-        valid =
+    let { busy, candidate = $bindable(), valid = $bindable() }: Props = $props();
+
+    $effect(() => {
+        const isValid =
             candidate.name.length >= MIN_LENGTH &&
             candidate.name.length <= MAX_LENGTH &&
             candidate.description.length <= MAX_DESC_LENGTH &&
             candidate.description.length > 0;
-    }
+        if (isValid !== valid) {
+            valid = isValid;
+        }
+    });
 
     function communityAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
         candidate.avatar = {

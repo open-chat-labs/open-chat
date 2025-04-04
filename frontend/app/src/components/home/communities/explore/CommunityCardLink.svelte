@@ -1,8 +1,13 @@
 <script lang="ts">
-    export let url: string;
+    interface Props {
+        url: string;
+        children?: import("svelte").Snippet;
+    }
+
+    let { url, children }: Props = $props();
 </script>
 
-<a href={url}><slot /></a>
+<a href={url}>{@render children?.()}</a>
 
 <style lang="scss">
     a {

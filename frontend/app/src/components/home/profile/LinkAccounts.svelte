@@ -17,7 +17,7 @@
         selectedAuthProviderStore,
         type WebAuthnKey,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
     import { configKeys } from "../../../utils/config";
     import { AuthClient } from "@dfinity/auth-client";
@@ -33,12 +33,24 @@
     import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let explanations: ResourceKey[];
-    export let iiPrincipal: string | undefined;
-    export let linkInternetIdentity = true;
-    export let onProceed: () => void = () => dispatch("proceed");
+    interface Props {
+        explanations: ResourceKey[];
+        iiPrincipal: string | undefined;
+        linkInternetIdentity?: boolean;
+        onProceed?: () => void;
+        onClose?: () => void;
+    }
+
+    let {
+        explanations,
+        iiPrincipal = $bindable(),
+        linkInternetIdentity = true,
+        onProceed,
+        onClose,
+    }: Props = $props();
+
+    iiPrincipal;
 
     type IdentityDetail = {
         key: ECDSAKeyIdentity;
@@ -62,24 +74,25 @@
         | "choose_sol_wallet"
         | "signing_in_with_email";
 
-    let error: string | undefined;
+    let error: string | undefined = $state();
     let emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
-    let step: "explain" | "linking" = "explain";
-    let substep: LinkStage = { kind: "initiator" };
-    let emailInvalid = false;
-    let email = "";
-    let providerStep: ProviderStep = "choose_provider";
-    let linking = false;
+    let step: "explain" | "linking" = $state("explain");
+    let substep = $state<LinkStage>({ kind: "initiator" });
+    let emailInvalid = $state(false);
+    let email = $state("");
+    let providerStep: ProviderStep = $state("choose_provider");
+    let linking = $state(false);
     let loggingInInitiator = false;
-    let verificationCode: string | undefined = undefined;
-    let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = [];
+    let verificationCode: string | undefined = $state(undefined);
+    let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = $state([]);
 
-    $: currentIdentity = accounts.find((a) => a.isCurrentIdentity);
-    $: currentProvider = currentIdentity?.provider ?? $selectedAuthProviderStore;
-    $: restrictTo =
+    let currentIdentity = $derived(accounts.find((a) => a.isCurrentIdentity));
+    let currentProvider = $derived(currentIdentity?.provider ?? $selectedAuthProviderStore);
+    let restrictTo = $derived(
         substep.kind === "approver" && currentProvider !== undefined
             ? new Set<string>([currentProvider])
-            : new Set<string>();
+            : new Set<string>(),
+    );
 
     onMount(() => {
         client.getAuthenticationPrincipals().then((a) => (accounts = a));
@@ -288,7 +301,7 @@
             )
             .then((resp) => {
                 if (resp === "success") {
-                    onProceed();
+                    onProceed?.();
                 } else if (resp === "already_linked_to_principal") {
                     console.log("Identity already linked by you: ", resp);
                     error = "identity.failure.alreadyLinked";
@@ -414,7 +427,7 @@
 
 <div class="footer">
     <ButtonGroup>
-        <Button secondary onClick={() => dispatch("close")}
+        <Button secondary onClick={onClose}
             ><Translatable resourceKey={i18nKey("cancel")} /></Button>
         {#if error !== undefined}
             <Button secondary onClick={reset}

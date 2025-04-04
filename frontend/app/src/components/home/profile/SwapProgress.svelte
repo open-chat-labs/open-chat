@@ -1,43 +1,66 @@
+<script lang="ts" module>
+    export type SwapOutcome = "success" | "rateChanged" | "insufficientFunds" | "error";
+</script>
+
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import { Poller } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import ProgressSteps, { type Result, type Step } from "../../ProgressSteps.svelte";
 
-    export let swapId: bigint;
-    export let tokenIn: string;
-    export let tokenOut: string;
-    export let ledgerIn: string;
-    export let ledgerOut: string;
-    export let amountIn: string;
-    export let decimalsOut: number;
-    export let dex: string;
+    interface Props {
+        swapId: bigint;
+        tokenIn: string;
+        tokenOut: string;
+        ledgerIn: string;
+        ledgerOut: string;
+        amountIn: string;
+        decimalsOut: number;
+        dex: string;
+        onFinished: (outcome: SwapOutcome, ledgerIn: string, ledgerOut: string) => void;
+    }
+
+    let {
+        swapId,
+        tokenIn,
+        tokenOut,
+        ledgerIn,
+        ledgerOut,
+        amountIn,
+        decimalsOut,
+        dex,
+        onFinished,
+    }: Props = $props();
+
+    ledgerOut;
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
     const POLL_INTERVAL = 1000;
     const labelPrefix = "tokenSwap.progress.";
 
-    let percent: number | undefined = 0;
-    let amountOut = "";
-    let steps: Step[] = [{ label: "get", status: "doing" }];
-    let result: Result = undefined;
+    let percent: number | undefined = $state(0);
+    let amountOut = $state("");
+    let steps = $state<Step[]>([{ label: "get", status: "doing" }]);
+    let result = $state<Result>(undefined);
     let poller: Poller | undefined = undefined;
 
-    $: fullSteps = steps.map((step) => ({ label: labelPrefix + step.label, status: step.status }));
+    let fullSteps = $derived(
+        steps.map((step) => ({ label: labelPrefix + step.label, status: step.status })),
+    );
 
-    $: fullResult =
+    let fullResult = $derived(
         result !== undefined
             ? { label: labelPrefix + result.label, status: result.status }
-            : undefined;
+            : undefined,
+    );
 
-    $: labelValues = {
+    let labelValues = $derived({
         tokenIn,
         tokenOut,
         amountIn,
         amountOut,
         dex,
-    };
+    });
 
     onMount(() => {
         poller = new Poller(querySwapProgress, POLL_INTERVAL, POLL_INTERVAL, true);
@@ -46,7 +69,7 @@
     });
 
     function notifyFinished(outcome: "success" | "rateChanged" | "insufficientFunds" | "error") {
-        dispatch("finished", { outcome, ledgerIn, ledgerOut });
+        onFinished(outcome, ledgerIn, ledgerIn);
         poller?.stop();
     }
 
@@ -66,11 +89,11 @@
         let response = await client.tokenSwapStatus(swapId);
 
         if (response.kind === "success") {
-            if (response.amountSwapped?.kind === "ok" && response.amountSwapped?.value.kind === "ok") {
-                amountOut = client.formatTokens(
-                    response.amountSwapped.value.value,
-                    decimalsOut,
-                );
+            if (
+                response.amountSwapped?.kind === "ok" &&
+                response.amountSwapped?.value.kind === "ok"
+            ) {
+                amountOut = client.formatTokens(response.amountSwapped.value.value, decimalsOut);
             }
 
             if (response.withdrawnFromDex?.kind === "ok") {

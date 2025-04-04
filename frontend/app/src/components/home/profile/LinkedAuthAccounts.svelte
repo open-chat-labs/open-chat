@@ -41,7 +41,7 @@
                 iiPrincipal={undefined}
                 linkInternetIdentity={false}
                 onProceed={refresh}
-                on:close={refresh} />
+                onClose={refresh} />
         </LinkAccountsModal>
     </Overlay>
 {/if}
