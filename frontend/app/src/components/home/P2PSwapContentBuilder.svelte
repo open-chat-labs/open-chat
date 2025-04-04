@@ -196,7 +196,7 @@
                             {minAmount}
                             maxAmount={fromDetails.balance - totalFees}
                             showDollarAmount
-                            bind:state={tokenInputState}
+                            bind:status={tokenInputState}
                             bind:valid={fromAmountValid}
                             bind:amount={fromAmount} />
                     </div>

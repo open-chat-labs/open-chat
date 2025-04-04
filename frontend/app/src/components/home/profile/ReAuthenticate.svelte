@@ -64,8 +64,7 @@
     }
 
     // This is where we login in with the provider that we are currently signed in with (which can be any provider type)
-    async function login(ev: CustomEvent<AuthProvider>) {
-        const provider = ev.detail;
+    async function login(provider: AuthProvider) {
         if (emailInvalid && provider === AuthProvider.EMAIL) {
             return;
         }
@@ -156,7 +155,7 @@
         <div class="info center">
             <Translatable resourceKey={message} />
         </div>
-        <ChooseSignInOption mode={"signin"} bind:emailInvalid bind:email on:login={login} />
+        <ChooseSignInOption mode={"signin"} bind:emailInvalid bind:email onLogin={login} />
     {:else if authStep === "choose_eth_wallet"}
         <div class="eth-options">
             {#await import("../SigninWithEth.svelte")}

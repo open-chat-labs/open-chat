@@ -17,6 +17,7 @@
         MultiUserChat,
         AttachmentContent,
         MessageContext,
+        User,
     } from "openchat-client";
     import { getContext } from "svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -43,6 +44,18 @@
         messageContext: MessageContext;
         onFileSelected: (content: AttachmentContent) => void;
         onCancelReply: () => void;
+        onSetTextContent: (txt?: string) => void;
+        onStartTyping: () => void;
+        onStopTyping: () => void;
+        onCancelEdit: () => void;
+        onSendMessage: (args: [string | undefined, User[], boolean]) => void;
+        onClearAttachment: () => void;
+        onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
+        onCreatePrizeMessage: () => void;
+        onCreateP2PSwapMessage: () => void;
+        onCreatePoll: () => void;
+        onAttachGif: (search: string) => void;
+        onMakeMeme: () => void;
     }
 
     let {
@@ -61,6 +74,18 @@
         messageContext,
         onFileSelected,
         onCancelReply,
+        onSetTextContent,
+        onCancelEdit,
+        onStartTyping,
+        onStopTyping,
+        onSendMessage,
+        onClearAttachment,
+        onTokenTransfer,
+        onCreatePrizeMessage,
+        onCreateP2PSwapMessage,
+        onCreatePoll,
+        onAttachGif,
+        onMakeMeme,
     }: Props = $props();
 
     let messageAction: MessageAction = $state(undefined);
@@ -104,10 +129,10 @@
         messageContentFromDataTransferItemList([...data.items]);
     }
 
-    function onDrop(e: CustomEvent<DragEvent>) {
-        if (e.detail.dataTransfer) {
-            onDataTransfer(e.detail.dataTransfer);
-            e.detail.preventDefault();
+    function onDrop(e: DragEvent) {
+        if (e.dataTransfer) {
+            onDataTransfer(e.dataTransfer);
+            e.preventDefault();
         }
     }
 
@@ -165,8 +190,8 @@
     <MessageEntry
         bind:this={messageEntry}
         bind:messageAction
-        on:paste={onPaste}
-        on:drop={onDrop}
+        {onPaste}
+        {onDrop}
         {externalContent}
         {mode}
         {preview}
@@ -179,20 +204,18 @@
         {textContent}
         {chat}
         {messageContext}
-        on:sendMessage
-        on:cancelEditEvent
-        on:setTextContent
-        on:startTyping
-        on:stopTyping
-        on:createPoll
-        on:searchChat
-        on:tokenTransfer
-        on:createPrizeMessage
-        on:createP2PSwapMessage
-        on:attachGif
-        on:makeMeme
-        on:clearAttachment
-        on:fileSelected={(ev) => onFileSelected(ev.detail)}
+        {onSendMessage}
+        {onCancelEdit}
+        {onSetTextContent}
+        {onStartTyping}
+        {onStopTyping}
+        {onCreatePoll}
+        {onTokenTransfer}
+        {onCreatePrizeMessage}
+        {onCreateP2PSwapMessage}
+        {onAttachGif}
+        {onMakeMeme}
+        {onClearAttachment}
         {onFileSelected} />
 </div>
 

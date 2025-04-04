@@ -155,7 +155,7 @@
                             </div>
                         {/if}
                         <Pincode type="numeric" length={6} bind:code={currPinArray} />
-                        <ForgotPinLabel on:forgot={onForgot} />
+                        <ForgotPinLabel {onForgot} />
                     </div>
                 {/if}
                 {#if type.kind !== "clear"}

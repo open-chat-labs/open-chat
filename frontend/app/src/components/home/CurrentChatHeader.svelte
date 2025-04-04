@@ -24,7 +24,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary, DiamondMembershipStatus } from "openchat-client";
+    import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "openchat-client";
     import Typing from "../Typing.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
@@ -45,9 +45,18 @@
         blocked: boolean;
         readonly: boolean;
         hasPinned: boolean;
+        onSearchChat: (search: string) => void;
+        onImportToCommunity: (group: GroupChatSummary) => void;
     }
 
-    let { selectedChatSummary, blocked, readonly, hasPinned }: Props = $props();
+    let {
+        selectedChatSummary,
+        blocked,
+        readonly,
+        hasPinned,
+        onSearchChat,
+        onImportToCommunity,
+    }: Props = $props();
 
     let showSuspendUserModal = $state(false);
 
@@ -232,9 +241,9 @@
             {hasPinned}
             {selectedChatSummary}
             {blocked}
-            on:importToCommunity
-            on:showGroupDetails={showGroupDetails}
-            on:searchChat />
+            {onImportToCommunity}
+            onShowGroupDetails={showGroupDetails}
+            {onSearchChat} />
     {/if}
 
     <ActiveBroadcastSummary />

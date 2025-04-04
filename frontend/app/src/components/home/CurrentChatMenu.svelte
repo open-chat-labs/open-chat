@@ -35,8 +35,9 @@
         currentUser,
         installedDirectBots,
         publish,
+        type GroupChatSummary,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -49,13 +50,15 @@
     import { activeVideoCall } from "../../stores/video";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     interface Props {
         selectedChatSummary: ChatSummary;
         blocked: boolean;
         showSuspendUserModal: boolean;
         hasPinned: boolean;
+        onShowGroupDetails: () => void;
+        onSearchChat: (search: string) => void;
+        onImportToCommunity: (group: GroupChatSummary) => void;
     }
 
     let {
@@ -63,6 +66,9 @@
         blocked,
         showSuspendUserModal = $bindable(false),
         hasPinned,
+        onShowGroupDetails,
+        onSearchChat,
+        onImportToCommunity,
     }: Props = $props();
 
     showSuspendUserModal;
@@ -153,7 +159,7 @@
     }
 
     function showGroupDetails() {
-        dispatch("showGroupDetails");
+        onShowGroupDetails();
     }
 
     function showPinned() {
@@ -165,7 +171,7 @@
     }
 
     function searchChat() {
-        dispatch("searchChat", "");
+        onSearchChat("");
     }
 
     function showProposalFilters() {
@@ -225,7 +231,7 @@
 
     function importToCommunity() {
         if (selectedChatSummary.kind === "group_chat") {
-            dispatch("importToCommunity", selectedChatSummary);
+            onImportToCommunity(selectedChatSummary);
         }
     }
 

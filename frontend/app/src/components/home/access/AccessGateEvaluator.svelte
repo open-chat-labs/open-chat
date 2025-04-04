@@ -108,9 +108,15 @@
         }
     }
 
-    function approvePayment({
-        detail: { ledger, amount, approvalFee },
-    }: CustomEvent<{ ledger: string; amount: bigint; approvalFee: bigint }>) {
+    function onApprovePayment({
+        ledger,
+        amount,
+        approvalFee,
+    }: {
+        ledger: string;
+        amount: bigint;
+        approvalFee: bigint;
+    }) {
         const existing = paymentApprovals.get(ledger);
         if (existing !== undefined) {
             // if we already have an approval pending for this ledger we add on the amount
@@ -199,8 +205,8 @@
                         {paymentApprovals}
                         gate={currentGate}
                         level={currentGate.level}
-                        on:approvePayment={approvePayment}
-                        on:close={onClose} />
+                        {onApprovePayment}
+                        {onClose} />
                 {:else if isLifetimeDiamondGate(currentGate)}
                     <DiamondGateEvaluator
                         level={currentGate.level}

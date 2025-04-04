@@ -149,9 +149,9 @@
         send(0);
     }
 
-    function sendMessage(ev: CustomEvent<[string | undefined, User[], boolean]>) {
+    function onSendMessage(detail: [string | undefined, User[], boolean]) {
         if (!canSendAny) return;
-        let [text, mentioned, blockLevelMarkdown] = ev.detail;
+        let [text, mentioned, blockLevelMarkdown] = detail;
         if (editingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
@@ -202,8 +202,8 @@
         draftMessagesStore.delete(messageContext);
     }
 
-    function setTextContent(ev: CustomEvent<string | undefined>) {
-        draftMessagesStore.setTextContent(messageContext, ev.detail);
+    function onSetTextContent(txt?: string) {
+        draftMessagesStore.setTextContent(messageContext, txt);
     }
 
     function onStartTyping() {
@@ -439,16 +439,15 @@
         mode={"thread"}
         {blocked}
         {messageContext}
-        on:cancelPreview
         {onCancelReply}
         on:clearAttachment={clearAttachment}
-        on:cancelEditEvent={cancelEditEvent}
-        on:setTextContent={setTextContent}
-        on:startTyping={onStartTyping}
-        on:stopTyping={onStopTyping}
+        onCancelEdit={cancelEditEvent}
+        {onSetTextContent}
+        {onStartTyping}
+        {onStopTyping}
         {onFileSelected}
         on:audioCaptured={fileSelected}
-        on:sendMessage={sendMessage}
+        {onSendMessage}
         on:attachGif={attachGif}
         on:makeMeme={makeMeme}
         on:tokenTransfer={tokenTransfer}

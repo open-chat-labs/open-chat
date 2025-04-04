@@ -26,7 +26,7 @@
     {#snippet body()}
         <div class="body">
             <Pincode type="numeric" length={6} onComplete={onPinComplete} />
-            <ForgotPinLabel on:forgot={onForgot} />
+            <ForgotPinLabel {onForgot} />
         </div>
     {/snippet}
 </ModalContent>

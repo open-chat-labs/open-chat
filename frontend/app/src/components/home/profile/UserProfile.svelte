@@ -255,8 +255,8 @@
         }
     }
 
-    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
-        client.setUserAvatar(ev.detail.data, ev.detail.url).then((success) => {
+    function userAvatarSelected(detail: { url: string; data: Uint8Array }): void {
+        client.setUserAvatar(detail.data, detail.url).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
             }
@@ -346,7 +346,7 @@
                         <EditableAvatar
                             overlayIcon
                             image={client.userAvatarUrl(user)}
-                            on:imageSelected={userAvatarSelected} />
+                            onImageSelected={userAvatarSelected} />
                     {/if}
                     <div class="human">
                         <Verified size={"large"} {verified} tooltip={i18nKey("human.verified")} />

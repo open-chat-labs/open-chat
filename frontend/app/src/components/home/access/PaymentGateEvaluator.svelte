@@ -6,10 +6,9 @@
         type ResourceKey,
         type Level,
         type PaymentGateApprovals,
-        currentUser as user,
         cryptoBalance as cryptoBalanceStore,
     } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
@@ -23,41 +22,20 @@
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let gate: PaymentGate & { expiry: bigint | undefined };
-    export let level: Level;
-    export let paymentApprovals: PaymentGateApprovals;
+    interface Props {
+        gate: PaymentGate & { expiry: bigint | undefined };
+        level: Level;
+        paymentApprovals: PaymentGateApprovals;
+        onApprovePayment: (args: { ledger: string; amount: bigint; approvalFee: bigint }) => void;
+        onClose: () => void;
+    }
 
-    let error: ResourceKey | undefined = undefined;
-    let balanceWithRefresh: BalanceWithRefresh;
-    let refreshingBalance = false;
+    let { gate, level, paymentApprovals, onApprovePayment, onClose }: Props = $props();
 
-    $: token = client.getTokenDetailsForAccessGate(gate)!;
-    $: originalBalance = $cryptoBalanceStore[token.ledger] ?? BigInt(0);
-    $: cryptoBalance = balanceAfterCurrentCommitments(
-        token.ledger,
-        paymentApprovals,
-        originalBalance,
-    );
-    $: insufficientFunds = cryptoBalance < gate.amount;
-    $: approvalMessage = interpolate(
-        $_,
-        i18nKey(
-            "access.paymentApprovalMessage",
-            {
-                amount: client.formatTokens(gate.amount, token.decimals),
-                token: token.symbol,
-            },
-            level,
-            true,
-        ),
-    );
-    $: distributionMessage = interpolate(
-        $_,
-        i18nKey("access.paymentDistributionMessage", undefined, level, true),
-    );
-    $: errorMessage = error !== undefined ? error : $pinNumberErrorMessageStore;
+    let error: ResourceKey | undefined = $state(undefined);
+    let balanceWithRefresh: BalanceWithRefresh | undefined = $state();
+    let refreshingBalance = $state(false);
 
     function balanceAfterCurrentCommitments(
         ledger: string,
@@ -83,15 +61,39 @@
 
     function onClickPrimary() {
         if (insufficientFunds) {
-            balanceWithRefresh.refresh();
+            balanceWithRefresh?.refresh();
         } else {
-            dispatch("approvePayment", {
+            onApprovePayment({
                 ledger: token.ledger,
                 amount: gate.amount,
                 approvalFee: token.transferFee,
             });
         }
     }
+    let token = $derived(client.getTokenDetailsForAccessGate(gate)!);
+    let originalBalance = $derived($cryptoBalanceStore[token.ledger] ?? BigInt(0));
+    let cryptoBalance = $derived(
+        balanceAfterCurrentCommitments(token.ledger, paymentApprovals, originalBalance),
+    );
+    let insufficientFunds = $derived(cryptoBalance < gate.amount);
+    let approvalMessage = $derived(
+        interpolate(
+            $_,
+            i18nKey(
+                "access.paymentApprovalMessage",
+                {
+                    amount: client.formatTokens(gate.amount, token.decimals),
+                    token: token.symbol,
+                },
+                level,
+                true,
+            ),
+        ),
+    );
+    let distributionMessage = $derived(
+        interpolate($_, i18nKey("access.paymentDistributionMessage", undefined, level, true)),
+    );
+    let errorMessage = $derived(error !== undefined ? error : $pinNumberErrorMessageStore);
 </script>
 
 <div class="header">
@@ -126,13 +128,13 @@
         </div>
     {/if}
     {#if insufficientFunds}
-        <AccountInfo ledger={gate.ledgerCanister} user={$user} />
+        <AccountInfo ledger={gate.ledgerCanister} />
         <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
     {/if}
 </div>
 <div>
     <ButtonGroup>
-        <Button secondary onClick={() => dispatch("close")}>{$_("cancel")}</Button>
+        <Button secondary onClick={onClose}>{$_("cancel")}</Button>
         <Button loading={refreshingBalance} onClick={onClickPrimary}
             ><Translatable
                 resourceKey={i18nKey(insufficientFunds ? "Refresh" : "Approve payment")} /></Button>

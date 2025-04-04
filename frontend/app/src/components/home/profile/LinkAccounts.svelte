@@ -118,12 +118,11 @@
     }
 
     // This is called both for the initiator and the approver
-    async function loginProvider(ev: CustomEvent<AuthProvider>) {
+    async function loginProvider(provider: AuthProvider) {
         if (substep.kind === "ready_to_link") return;
 
         const generalError = `identity.failure.login_${substep.kind}`;
 
-        const provider = ev.detail;
         if (emailInvalid && provider === AuthProvider.EMAIL) {
             return;
         }
@@ -237,11 +236,7 @@
 
     // This is where we login in with the Internet Identity that we want to link to our existing OC account aka the Initiator
     async function loginInternetIdentity() {
-        return loginProvider(
-            new CustomEvent("loginProvider", {
-                detail: AuthProvider.II,
-            }),
-        );
+        return loginProvider(AuthProvider.II);
     }
 
     function authComplete(
@@ -392,7 +387,7 @@
                 showMore={substep.kind === "initiator"}
                 bind:emailInvalid
                 bind:email
-                on:login={loginProvider} />
+                onLogin={loginProvider} />
         {:else if providerStep === "choose_eth_wallet"}
             <div class="eth-options">
                 {#await import("../SigninWithEth.svelte")}

@@ -124,13 +124,13 @@
 
     function onAttachGif([evContext, search]: [MessageContext, string]) {
         if (messageContextsEqual(messageContext, evContext)) {
-            attachGif(new CustomEvent("openchat_client", { detail: search }));
+            attachGif(search);
         }
     }
 
     function onTokenTransfer(args: { context: MessageContext; ledger?: string; amount?: bigint }) {
         if (messageContextsEqual(messageContext, args.context)) {
-            tokenTransfer(new CustomEvent("openchat_client", { detail: args }));
+            tokenTransfer(args);
         }
     }
 
@@ -169,10 +169,10 @@
         creatingPoll = true;
     }
 
-    function tokenTransfer(ev: CustomEvent<{ ledger?: string; amount?: bigint }>) {
+    function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {
         creatingCryptoTransfer = {
-            ledger: ev.detail.ledger ?? $lastCryptoSent ?? LEDGER_CANISTER_ICP,
-            amount: ev.detail.amount ?? BigInt(0),
+            ledger: detail.ledger ?? $lastCryptoSent ?? LEDGER_CANISTER_ICP,
+            amount: detail.amount ?? BigInt(0),
         };
     }
 
@@ -188,10 +188,10 @@
         draftMessagesStore.setAttachment({ chatId: chat.id }, content);
     }
 
-    function attachGif(ev: CustomEvent<string>) {
+    function attachGif(search: string) {
         selectingGif = true;
         if (giphySelector !== undefined) {
-            giphySelector.reset(ev.detail);
+            giphySelector.reset(search);
         }
     }
 
@@ -207,8 +207,8 @@
         draftMessagesStore.setReplyingTo({ chatId: chat.id }, ctx);
     }
 
-    function searchChat(ev: CustomEvent<string>) {
-        onSearchChat(ev.detail);
+    function searchChat(search: string) {
+        onSearchChat(search);
     }
 
     function onSearchChat(term: string) {
@@ -228,9 +228,9 @@
         send(0);
     }
 
-    function sendMessage(ev: CustomEvent<[string | undefined, User[], boolean]>) {
+    function onSendMessage(detail: [string | undefined, User[], boolean]) {
         if (!canSendAny) return;
-        let [text, mentioned, blockLevelMarkdown] = ev.detail;
+        let [text, mentioned, blockLevelMarkdown] = detail;
         if ($currentChatEditingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
@@ -269,8 +269,8 @@
         client.forwardMessage(messageContext, msg);
     }
 
-    function setTextContent(ev: CustomEvent<string | undefined>): void {
-        draftMessagesStore.setTextContent({ chatId: chat.id }, ev.detail);
+    function onSetTextContent(txt?: string): void {
+        draftMessagesStore.setTextContent({ chatId: chat.id }, txt);
     }
 
     function onRemovePreview(event: EventWrapper<Message>, url: string): void {
@@ -403,8 +403,8 @@
             <DirectChatHeader {bot} {chat} {onSearchChat}></DirectChatHeader>
         {:else}
             <CurrentChatHeader
-                on:searchChat={searchChat}
-                on:importToCommunity={importToCommunity}
+                onSearchChat={searchChat}
+                onImportToCommunity={importToCommunity}
                 {blocked}
                 {readonly}
                 selectedChatSummary={chat}
@@ -449,21 +449,20 @@
             {messageContext}
             externalContent={externalUrl !== undefined}
             onCancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
-            on:clearAttachment={() =>
+            onClearAttachment={() =>
                 draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
-            on:cancelEditEvent={() => draftMessagesStore.delete({ chatId: chat.id })}
-            on:setTextContent={setTextContent}
-            on:startTyping={() => client.startTyping(chat, $user.userId)}
-            on:stopTyping={() => client.stopTyping(chat, $user.userId)}
+            onCancelEdit={() => draftMessagesStore.delete({ chatId: chat.id })}
+            {onSetTextContent}
+            onStartTyping={() => client.startTyping(chat, $user.userId)}
+            onStopTyping={() => client.stopTyping(chat, $user.userId)}
             {onFileSelected}
-            on:sendMessage={sendMessage}
-            on:attachGif={attachGif}
-            on:makeMeme={makeMeme}
-            on:tokenTransfer={tokenTransfer}
-            on:createPrizeMessage={createPrizeMessage}
-            on:createP2PSwapMessage={createP2PSwapMessage}
-            on:searchChat={searchChat}
-            on:createPoll={createPoll} />
+            {onSendMessage}
+            onAttachGif={attachGif}
+            onMakeMeme={makeMeme}
+            onTokenTransfer={tokenTransfer}
+            onCreatePrizeMessage={createPrizeMessage}
+            onCreateP2PSwapMessage={createP2PSwapMessage}
+            onCreatePoll={createPoll} />
     {/if}
 </div>
 

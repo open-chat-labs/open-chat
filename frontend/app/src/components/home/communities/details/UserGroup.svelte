@@ -180,7 +180,7 @@
                     items={matchedUsers}>
                     {#snippet children(item)}
                         <User
-                            on:click={() => addUserToGroup(item)}
+                            onClick={() => addUserToGroup(item)}
                             user={item}
                             me={false}
                             profile={false}

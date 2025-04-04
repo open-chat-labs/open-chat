@@ -2,7 +2,6 @@
     import SendIcon from "svelte-material-icons/Send.svelte";
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
     import { AuthProvider } from "openchat-client";
-    import { createEventDispatcher } from "svelte";
     import { configKeys } from "../../../utils/config";
     import Input from "../../Input.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -11,23 +10,25 @@
     import SignInOption from "./SignInOption.svelte";
     import { selectedAuthProviderStore } from "openchat-client";
 
-    const dispatch = createEventDispatcher();
-
-    export let mode: "signin" | "signup" = "signin";
-    export let restrictTo: Set<string> = new Set();
-    export let emailInvalid: boolean;
-    export let email: string;
-    export let currentProvider: AuthProvider | undefined = undefined;
-    export let showMore = false;
-
-    $: options = buildOptions(currentProvider ?? $selectedAuthProviderStore, mode, restrictTo);
-    $: showAllOptions =
-        (currentProvider ?? $selectedAuthProviderStore) === undefined ||
-        showMore ||
-        mode === "signup";
-    $: {
-        emailInvalid = !isEmailValid(email);
+    interface Props {
+        mode?: "signin" | "signup";
+        restrictTo?: Set<string>;
+        emailInvalid: boolean;
+        email: string;
+        currentProvider?: AuthProvider | undefined;
+        showMore?: boolean;
+        onLogin: (provider: AuthProvider) => void;
     }
+
+    let {
+        mode = "signin",
+        restrictTo = new Set(),
+        emailInvalid = $bindable(),
+        email = $bindable(),
+        currentProvider = undefined,
+        showMore = $bindable(false),
+        onLogin,
+    }: Props = $props();
 
     function buildOptions(
         selected: AuthProvider | undefined,
@@ -87,9 +88,20 @@
         return email.length > 0;
     }
 
-    function login(provider: AuthProvider) {
-        dispatch("login", provider);
-    }
+    let options = $derived(
+        buildOptions(currentProvider ?? $selectedAuthProviderStore, mode, restrictTo),
+    );
+    let showAllOptions = $derived(
+        (currentProvider ?? $selectedAuthProviderStore) === undefined ||
+            showMore ||
+            mode === "signup",
+    );
+    $effect(() => {
+        const invalid = !isEmailValid(email);
+        if (emailInvalid !== invalid) {
+            emailInvalid = invalid;
+        }
+    });
 </script>
 
 <div class="sign-in-options">
@@ -109,14 +121,14 @@
                                 bind:value={email}
                                 minlength={10}
                                 maxlength={200}
-                                onEnter={() => login(provider)}
+                                onEnter={() => onLogin(provider)}
                                 placeholder={i18nKey(
                                     mode === "signin"
                                         ? "loginDialog.signinEmailPlaceholder"
                                         : "loginDialog.signupEmailPlaceholder",
                                 )} />
                         </div>
-                        <Button disabled={emailInvalid} tiny onClick={() => login(provider)}>
+                        <Button disabled={emailInvalid} tiny onClick={() => onLogin(provider)}>
                             <div class="center">
                                 <SendIcon size={"1.5em"} />
                             </div>
@@ -129,7 +141,7 @@
                             mode === "signin" ? "loginDialog.signinWith" : "loginDialog.signupWith",
                             { provider: providerName(provider) },
                         )}
-                        onClick={() => login(provider)} />
+                        onClick={() => onLogin(provider)} />
                 {/if}
             </div>
         {/if}
@@ -137,7 +149,7 @@
 
     {#if !showAllOptions && options.length > 1}
         <div class="more">
-            <a role="button" tabindex="0" on:click={() => (showMore = true)}>
+            <a role="button" tabindex="0" onclick={() => (showMore = true)}>
                 <Translatable resourceKey={i18nKey("loginDialog.showMore")} />
             </a>
         </div>

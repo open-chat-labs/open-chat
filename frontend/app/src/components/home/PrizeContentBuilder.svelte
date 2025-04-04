@@ -326,7 +326,7 @@
                                 {ledger}
                                 label={"prizes.totalAmount"}
                                 autofocus={!multiUserChat}
-                                bind:state={tokenInputState}
+                                bind:status={tokenInputState}
                                 transferFees={totalFees}
                                 {minAmount}
                                 {maxAmount}

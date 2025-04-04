@@ -31,17 +31,17 @@
         }
     });
 
-    function communityAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
+    function communityAvatarSelected(detail: { url: string; data: Uint8Array }) {
         candidate.avatar = {
-            blobUrl: ev.detail.url,
-            blobData: ev.detail.data,
+            blobUrl: detail.url,
+            blobData: detail.data,
         };
     }
 
-    function communityBannerSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
+    function communityBannerSelected(detail: { url: string; data: Uint8Array }) {
         candidate.banner = {
-            blobUrl: ev.detail.url,
-            blobData: ev.detail.data,
+            blobUrl: detail.url,
+            blobData: detail.data,
         };
     }
 </script>
@@ -54,14 +54,14 @@
                 mode={"banner"}
                 overlayIcon
                 image={candidate.banner?.blobUrl}
-                on:imageSelected={communityBannerSelected} />
+                onImageSelected={communityBannerSelected} />
         </div>
         <div class="avatar">
             <EditableAvatar
                 overlayIcon
                 size={"medium"}
                 image={candidate.avatar?.blobUrl}
-                on:imageSelected={communityAvatarSelected} />
+                onImageSelected={communityAvatarSelected} />
         </div>
     </div>
 </section>

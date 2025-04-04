@@ -122,8 +122,8 @@
         }
     });
 
-    function botAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
-        candidate.avatarUrl = ev.detail.url;
+    function botAvatarSelected(detail: { url: string; data: Uint8Array }) {
+        candidate.avatarUrl = detail.url;
     }
 
     function onSubmit(e: Event) {
@@ -233,7 +233,7 @@
             overlayIcon
             size={"medium"}
             image={candidate.avatarUrl}
-            on:imageSelected={botAvatarSelected} />
+            onImageSelected={botAvatarSelected} />
     </div>
 
     {#if candidate.registrationStatus.kind === "private" && mode === "register"}

@@ -2,7 +2,7 @@
     import MenuItem from "../MenuItem.svelte";
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
-    import { createEventDispatcher, untrack } from "svelte";
+    import { untrack } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -15,9 +15,11 @@
     interface Props {
         query: string | undefined;
         offset: number;
+        onSelect: (emoji: string) => void;
+        onClose: () => void;
     }
 
-    let { query, offset }: Props = $props();
+    let { query, offset, onSelect, onClose }: Props = $props();
 
     let index = $state(0);
     let matches: EmojiSummary[] = $state([]);
@@ -51,10 +53,8 @@
         });
     }
 
-    const dispatch = createEventDispatcher();
-
     function select(emoji: string) {
-        dispatch("select", emoji);
+        onSelect(emoji);
     }
 
     function onKeyDown(ev: KeyboardEvent): void {
@@ -70,7 +70,7 @@
                 ev.stopPropagation();
                 break;
             case "Escape":
-                dispatch("close");
+                onClose();
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
