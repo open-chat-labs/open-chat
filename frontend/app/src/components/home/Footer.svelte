@@ -17,7 +17,6 @@
         MultiUserChat,
         AttachmentContent,
         MessageContext,
-        AudioContent,
     } from "openchat-client";
     import { getContext } from "svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -43,6 +42,7 @@
         externalContent?: boolean;
         messageContext: MessageContext;
         onFileSelected: (content: AttachmentContent) => void;
+        onCancelReply: () => void;
     }
 
     let {
@@ -60,6 +60,7 @@
         externalContent = false,
         messageContext,
         onFileSelected,
+        onCancelReply,
     }: Props = $props();
 
     let messageAction: MessageAction = $state(undefined);
@@ -153,7 +154,7 @@
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
             <div class="draft-container">
                 {#if replyingTo}
-                    <ReplyingTo readonly on:cancelReply {user} {replyingTo} />
+                    <ReplyingTo readonly {onCancelReply} {user} {replyingTo} />
                 {/if}
                 {#if attachment !== undefined}
                     <DraftMediaMessage content={attachment} />

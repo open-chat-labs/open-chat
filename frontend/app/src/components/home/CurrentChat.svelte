@@ -448,7 +448,7 @@
             {blocked}
             {messageContext}
             externalContent={externalUrl !== undefined}
-            on:cancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
+            onCancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
             on:clearAttachment={() =>
                 draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
             on:cancelEditEvent={() => draftMessagesStore.delete({ chatId: chat.id })}

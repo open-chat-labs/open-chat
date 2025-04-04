@@ -47,6 +47,7 @@
         blockLevelMarkdown: boolean;
         onExpandMessage?: (() => void) | undefined;
         onRemovePreview?: (url: string) => void;
+        onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
     }
 
     let {
@@ -71,6 +72,7 @@
         blockLevelMarkdown,
         onExpandMessage = undefined,
         onRemovePreview,
+        onRegisterVote,
     }: Props = $props();
 </script>
 
@@ -125,7 +127,7 @@
 {:else if content.kind === "prize_winner_content"}
     <PrizeWinnerContent {content} />
 {:else if content.kind === "poll_content"}
-    <PollContent {readonly} {me} {content} {senderId} on:registerVote />
+    <PollContent {readonly} {me} {content} {senderId} {onRegisterVote} />
 {:else if content.kind === "giphy_content"}
     <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "proposal_content"}

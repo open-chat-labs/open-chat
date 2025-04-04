@@ -182,7 +182,7 @@
         );
     }
 
-    function cancelReply() {
+    function onCancelReply() {
         draftMessagesStore.setReplyingTo(messageContext, undefined);
     }
 
@@ -437,7 +437,7 @@
         {blocked}
         {messageContext}
         on:cancelPreview
-        on:cancelReply={cancelReply}
+        {onCancelReply}
         on:clearAttachment={clearAttachment}
         on:cancelEditEvent={cancelEditEvent}
         on:setTextContent={setTextContent}

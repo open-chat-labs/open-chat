@@ -18,17 +18,22 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let chat: MultiUserChat;
-    export let joining: MultiUserChat | undefined;
-    export let lapsed: boolean;
+    interface Props {
+        chat: MultiUserChat;
+        joining: MultiUserChat | undefined;
+        lapsed: boolean;
+    }
 
-    $: isFrozen = client.isChatOrCommunityFrozen(chat, $selectedCommunity);
-    $: previewingCommunity =
-        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed;
-    $: gates = client.accessGatesForChat(chat);
-    $: locked = gates.some((g) => isLocked(g));
+    let { chat, joining, lapsed }: Props = $props();
 
-    let freezingInProgress = false;
+    let isFrozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunity));
+    let previewingCommunity = $derived(
+        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed,
+    );
+    let gates = $derived(client.accessGatesForChat(chat));
+    let locked = $derived(gates.some((g) => isLocked(g)));
+
+    let freezingInProgress = $state(false);
 
     function joinGroup() {
         publish("joinGroup", {

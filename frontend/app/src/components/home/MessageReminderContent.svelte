@@ -4,7 +4,11 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let content: MessageReminderContent;
+    interface Props {
+        content: MessageReminderContent;
+    }
+
+    let { content }: Props = $props();
 </script>
 
 <div class="msg">

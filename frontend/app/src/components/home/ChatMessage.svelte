@@ -397,7 +397,7 @@
         }
     }
 
-    function registerVote(ev: CustomEvent<{ answerIndex: number; type: "register" | "delete" }>) {
+    function onRegisterVote(detail: { answerIndex: number; type: "register" | "delete" }) {
         if (chatId.kind === "direct_chat") return;
 
         client
@@ -406,8 +406,8 @@
                 threadRootMessageIndex,
                 msg.messageId,
                 msg.messageIndex,
-                ev.detail.answerIndex,
-                ev.detail.type,
+                detail.answerIndex,
+                detail.type,
             )
             .then((success) => {
                 if (!success) {
@@ -676,7 +676,7 @@
                                 height={mediaCalculatedHeight}
                                 blockLevelMarkdown={msg.blockLevelMarkdown}
                                 {onRemovePreview}
-                                on:registerVote={registerVote}
+                                {onRegisterVote}
                                 {onExpandMessage} />
 
                             {#if !inert && !isPrize}
