@@ -7,7 +7,7 @@
 
     interface Props {
         timestamp: bigint;
-        observer: IntersectionObserver;
+        observer?: IntersectionObserver;
         floating?: boolean;
     }
 

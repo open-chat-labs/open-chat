@@ -48,7 +48,7 @@
         failed: boolean;
         readByThem: boolean;
         readByMe: boolean;
-        observer: IntersectionObserver;
+        observer?: IntersectionObserver;
         focused: boolean;
         readonly: boolean;
         pinned: boolean;
