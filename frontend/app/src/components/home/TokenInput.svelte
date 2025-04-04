@@ -97,7 +97,7 @@
     }
     let tokenDetails = $derived($cryptoLookup[ledger]);
     let symbol = $derived(tokenDetails?.symbol);
-    let tokenDecimals = $derived(tokenDetails?.decimals);
+    let tokenDecimals = $derived(tokenDetails?.decimals ?? 0);
     let amountInUsd = $derived(
         tokenDetails !== undefined && showDollarAmount
             ? calculateDollarAmount(
