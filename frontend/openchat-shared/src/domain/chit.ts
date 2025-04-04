@@ -30,6 +30,10 @@ export type DailyClaimReinstated = {
     kind: "daily_claim_reinstated";
 };
 
+export type StreakInsuranceClaim = {
+    kind: "streak_insurance_claim";
+}
+
 export type MemeContestWinner = {
     kind: "meme_contest_winner";
 };
@@ -112,6 +116,7 @@ export type ReferralType = {
 export type ChitEarnedReason =
     | DailyClaim
     | DailyClaimReinstated
+    | StreakInsuranceClaim
     | MemeContestWinner
     | AchievementUnlocked
     | ReferralType
