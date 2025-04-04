@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import {
         type EventWrapper,
@@ -37,33 +37,51 @@
     import Witch from "../Witch.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let chat: ChatSummary;
-    export let unreadMessages: number;
-    export let readonly: boolean;
-    export let firstUnreadMention: Mention | undefined;
-    export let canPin: boolean;
-    export let canBlockUsers: boolean;
-    export let canDelete: boolean;
-    export let canSendAny: boolean;
-    export let canReact: boolean;
-    export let canInvite: boolean;
-    export let footer: boolean;
-    export let canReplyInThread: boolean;
-    export let filteredProposals: FilteredProposals | undefined;
-    export let privateChatPreview: boolean;
-    export let onRemovePreview: (event: EventWrapper<Message>, url: string) => void;
+    interface Props {
+        chat: ChatSummary;
+        unreadMessages: number;
+        readonly: boolean;
+        firstUnreadMention: Mention | undefined;
+        canPin: boolean;
+        canBlockUsers: boolean;
+        canDelete: boolean;
+        canSendAny: boolean;
+        canReact: boolean;
+        canInvite: boolean;
+        footer: boolean;
+        canReplyInThread: boolean;
+        filteredProposals: FilteredProposals | undefined;
+        privateChatPreview: boolean;
+        onRemovePreview: (event: EventWrapper<Message>, url: string) => void;
+        onReplyTo: (ctx: EnhancedReplyContext) => void;
+    }
 
-    $: showAvatar = initialised && shouldShowAvatar(chat, $eventsStore[0]?.index);
-    $: messageContext = { chatId: chat.id, threadRootMessageIndex: undefined };
+    let {
+        chat,
+        unreadMessages,
+        readonly,
+        firstUnreadMention,
+        canPin,
+        canBlockUsers,
+        canDelete,
+        canSendAny,
+        canReact,
+        canInvite,
+        footer,
+        canReplyInThread,
+        filteredProposals,
+        privateChatPreview,
+        onRemovePreview,
+        onReplyTo,
+    }: Props = $props();
 
     // treat this as if it might be null so we don't get errors when it's unmounted
-    let chatEventList: ChatEventList | undefined;
-    let messagesDiv: HTMLDivElement | undefined;
-    let messagesDivHeight: number;
-    let initialised = false;
-    let currentChatId: ChatIdentifier | undefined;
+    let chatEventList: ChatEventList | undefined = $state();
+    let messagesDiv: HTMLDivElement | undefined = $state();
+    let messagesDivHeight: number = $state(0);
+    let initialised = $state(false);
+    let currentChatId: ChatIdentifier | undefined = $state();
 
     function onGoToMessageIndex(detail: { index: number }) {
         doGoToMessageIndex(detail.index);
@@ -80,7 +98,7 @@
 
     function replyTo(replyContext: EnhancedReplyContext) {
         if (!canSendAny) return;
-        dispatch("replyTo", replyContext);
+        onReplyTo(replyContext);
     }
 
     function onEditEvent(ev: EventWrapper<Message>) {
@@ -130,33 +148,6 @@
             return keys;
         });
         return firstKey;
-    }
-
-    $: timeline = client.groupEvents(
-        [...$eventsStore].reverse(),
-        $user.userId,
-        $expandedDeletedMessages,
-        groupInner(filteredProposals),
-    );
-
-    $: privateCommunityPreview =
-        $selectedCommunity !== undefined &&
-        ($selectedCommunity.membership.role === "none" || $selectedCommunity.membership.lapsed) &&
-        (!$selectedCommunity.public || $selectedCommunity.gateConfig.gate.kind !== "no_gate");
-
-    $: privatePreview = privateCommunityPreview || privateChatPreview;
-    $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
-
-    $: {
-        if (currentChatId === undefined || !chatIdentifiersEqual(chat.id, currentChatId)) {
-            currentChatId = chat.id;
-            initialised = false;
-
-            // If the chat is empty, there is nothing to initialise, so we can set initialised to true
-            if (isEmptyChat) {
-                initialised = true;
-            }
-        }
     }
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
@@ -260,6 +251,36 @@
         const indexRequired = Math.max(client.earliestAvailableEventIndex(chat), 1);
         return earliestLoadedEventIndex <= indexRequired;
     }
+    let privateCommunityPreview = $derived(
+        $selectedCommunity !== undefined &&
+            ($selectedCommunity.membership.role === "none" ||
+                $selectedCommunity.membership.lapsed) &&
+            (!$selectedCommunity.public || $selectedCommunity.gateConfig.gate.kind !== "no_gate"),
+    );
+    let privatePreview = $derived(privateCommunityPreview || privateChatPreview);
+    let isEmptyChat = $derived(chat.latestEventIndex <= 0 || privatePreview);
+
+    $effect(() => {
+        if (currentChatId === undefined || !chatIdentifiersEqual(chat.id, currentChatId)) {
+            currentChatId = chat.id;
+            initialised = false;
+
+            // If the chat is empty, there is nothing to initialise, so we can set initialised to true
+            if (isEmptyChat) {
+                initialised = true;
+            }
+        }
+    });
+    let showAvatar = $derived(initialised && shouldShowAvatar(chat, $eventsStore[0]?.index));
+    let messageContext = $derived({ chatId: chat.id, threadRootMessageIndex: undefined });
+    let timeline = $derived(
+        client.groupEvents(
+            [...$eventsStore].reverse(),
+            $user.userId,
+            $expandedDeletedMessages,
+            groupInner(filteredProposals),
+        ),
+    );
 </script>
 
 <Witch />

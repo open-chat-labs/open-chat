@@ -58,68 +58,46 @@
     import ExternalContent from "./ExternalContent.svelte";
     import DirectChatHeader from "../bots/DirectChatHeader.svelte";
 
-    export let joining: MultiUserChat | undefined;
-    export let chat: ChatSummary;
-    export let currentChatMessages: CurrentChatMessages | undefined;
-    export let filteredProposals: FilteredProposals | undefined;
+    interface Props {
+        joining: MultiUserChat | undefined;
+        chat: ChatSummary;
+        currentChatMessages: CurrentChatMessages | undefined;
+        filteredProposals: FilteredProposals | undefined;
+        onGoToMessageIndex: (args: { index: number; preserveFocus: boolean }) => void;
+    }
+
+    let {
+        joining,
+        chat,
+        currentChatMessages = $bindable(),
+        filteredProposals,
+        onGoToMessageIndex,
+    }: Props = $props();
+
+    currentChatMessages;
 
     const client = getContext<OpenChat>("client");
 
-    let previousChatId: ChatIdentifier | undefined = undefined;
-    let unreadMessages = 0;
-    let firstUnreadMention: Mention | undefined;
-    let creatingPoll = false;
-    let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
-    let creatingPrizeMessage = false;
-    let creatingP2PSwapMessage = false;
-    let selectingGif = false;
-    let buildingMeme = false;
+    let previousChatId: ChatIdentifier | undefined = $state(undefined);
+    let unreadMessages = $state(0);
+    let firstUnreadMention: Mention | undefined = $state();
+    let creatingPoll = $state(false);
+    let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
+    let creatingPrizeMessage = $state(false);
+    let creatingP2PSwapMessage = $state(false);
+    let selectingGif = $state(false);
+    let buildingMeme = $state(false);
     //@ts-ignore
-    let pollBuilder: PollBuilder;
+    let pollBuilder: PollBuilder = $state();
     //@ts-ignore
-    let giphySelector: GiphySelector;
+    let giphySelector: GiphySelector = $state();
     //@ts-ignore
-    let memeBuilder: MemeBuilder;
-    let showSearchHeader = false;
-    let searchTerm = "";
-    let importToCommunities: CommunityMap<CommunitySummary> | undefined;
+    let memeBuilder: MemeBuilder = $state();
+    let showSearchHeader = $state(false);
+    let searchTerm = $state("");
+    let importToCommunities: CommunityMap<CommunitySummary> | undefined = $state();
     let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
-        undefined;
-
-    $: showChatHeader = !$mobileWidth || !$framed;
-    $: messageContext = { chatId: chat.id };
-    $: showFooter = !showSearchHeader && !$suspendedUser;
-    $: blocked = isBlocked(chat, $directlyBlockedUsers);
-    $: frozen = client.isChatOrCommunityFrozen(chat, $selectedCommunity);
-    $: canSendAny = client.canSendMessage(chat.id, "message");
-    $: preview = client.isPreviewing(chat.id);
-    $: lapsed = client.isLapsed(chat.id);
-    $: canPin = client.canPinMessages(chat.id);
-    $: canBlockUsers = client.canBlockUsers(chat.id);
-    $: canDelete = client.canDeleteOtherUsersMessages(chat.id);
-    $: canReplyInThread = client.canSendMessage(chat.id, "thread");
-    $: canReact = client.canReactToMessages(chat.id);
-    $: canInvite = client.canInviteUsers(chat.id);
-    $: readonly = client.isChatReadOnly(chat.id);
-    $: externalUrl = chat.kind === "channel" ? chat.externalUrl : undefined;
-    $: privateChatPreview = client.maskChatMessages(chat);
-    $: bot = chat.kind === "direct_chat" ? $externalBots.get(chat.them.userId) : undefined;
-
-    $: {
-        if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
-            previousChatId = chat.id;
-            showSearchHeader = false;
-            unreadMessages = getUnreadMessageCount(chat);
-            firstUnreadMention = client.getFirstUnreadMention(chat);
-
-            tick().then(() => {
-                if ($messageToForwardStore !== undefined) {
-                    forwardMessage($messageToForwardStore);
-                    messageToForwardStore.set(undefined);
-                }
-            });
-        }
-    }
+        $state(undefined);
 
     onMount(() => {
         const unsubs = [
@@ -206,10 +184,6 @@
         creatingP2PSwapMessage = true;
     }
 
-    function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        onFileSelected(ev.detail);
-    }
-
     function onFileSelected(content: AttachmentContent) {
         draftMessagesStore.setAttachment({ chatId: chat.id }, content);
     }
@@ -228,9 +202,9 @@
         }
     }
 
-    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
+    function replyTo(ctx: EnhancedReplyContext) {
         showSearchHeader = false;
-        draftMessagesStore.setReplyingTo({ chatId: chat.id }, ev.detail);
+        draftMessagesStore.setReplyingTo({ chatId: chat.id }, ctx);
     }
 
     function searchChat(ev: CustomEvent<string>) {
@@ -332,9 +306,44 @@
     function onSendMessageWithContent(content: MessageContent) {
         client.sendMessageWithContent(messageContext, content, false);
     }
+    let showChatHeader = $derived(!$mobileWidth || !$framed);
+    let messageContext = $derived({ chatId: chat.id });
+    $effect(() => {
+        if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
+            previousChatId = chat.id;
+            showSearchHeader = false;
+            unreadMessages = getUnreadMessageCount(chat);
+            firstUnreadMention = client.getFirstUnreadMention(chat);
+
+            tick().then(() => {
+                if ($messageToForwardStore !== undefined) {
+                    forwardMessage($messageToForwardStore);
+                    messageToForwardStore.set(undefined);
+                }
+            });
+        }
+    });
+    let showFooter = $derived(!showSearchHeader && !$suspendedUser);
+    let blocked = $derived(isBlocked(chat, $directlyBlockedUsers));
+    let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunity));
+    let canSendAny = $derived(client.canSendMessage(chat.id, "message"));
+    let preview = $derived(client.isPreviewing(chat.id));
+    let lapsed = $derived(client.isLapsed(chat.id));
+    let canPin = $derived(client.canPinMessages(chat.id));
+    let canBlockUsers = $derived(client.canBlockUsers(chat.id));
+    let canDelete = $derived(client.canDeleteOtherUsersMessages(chat.id));
+    let canReplyInThread = $derived(client.canSendMessage(chat.id, "thread"));
+    let canReact = $derived(client.canReactToMessages(chat.id));
+    let canInvite = $derived(client.canInviteUsers(chat.id));
+    let readonly = $derived(client.isChatReadOnly(chat.id));
+    let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);
+    let privateChatPreview = $derived(client.maskChatMessages(chat));
+    let bot = $derived(
+        chat.kind === "direct_chat" ? $externalBots.get(chat.them.userId) : undefined,
+    );
 </script>
 
-<svelte:window on:focus={onWindowFocus} />
+<svelte:window onfocus={onWindowFocus} />
 
 {#if removeLinkPreviewDetails !== undefined}
     <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
@@ -387,8 +396,8 @@
         <CurrentChatSearchHeader
             {chat}
             bind:searchTerm
-            on:goToMessageIndex
-            on:close={() => (showSearchHeader = false)} />
+            {onGoToMessageIndex}
+            onClose={() => (showSearchHeader = false)} />
     {:else if showChatHeader}
         {#if bot !== undefined && chat.kind === "direct_chat"}
             <DirectChatHeader {bot} {chat} {onSearchChat}></DirectChatHeader>
@@ -407,7 +416,7 @@
     {:else}
         <CurrentChatMessages
             bind:this={currentChatMessages}
-            on:replyTo={replyTo}
+            onReplyTo={replyTo}
             {onRemovePreview}
             {privateChatPreview}
             {chat}
@@ -447,7 +456,6 @@
             on:startTyping={() => client.startTyping(chat, $user.userId)}
             on:stopTyping={() => client.stopTyping(chat, $user.userId)}
             {onFileSelected}
-            onAudioCaptured={onFileSelected}
             on:sendMessage={sendMessage}
             on:attachGif={attachGif}
             on:makeMeme={makeMeme}

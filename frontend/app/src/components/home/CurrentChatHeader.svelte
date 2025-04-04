@@ -219,7 +219,7 @@
                 <ChatSubtext
                     chat={selectedChatSummary}
                     clickableMembers
-                    on:membersClick={showGroupMembers} />
+                    onMembersClick={showGroupMembers} />
             {:else}
                 <ChatSubtext chat={selectedChatSummary} />
             {/if}

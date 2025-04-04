@@ -20,7 +20,7 @@
         joined: Set<string>;
         messagesDeleted: number[];
         rolesChanged: Map<string, Map<MemberRole, Set<string>>>;
-        observer: IntersectionObserver;
+        observer?: IntersectionObserver;
         readByMe: boolean;
         level: Level;
     }
