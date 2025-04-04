@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
     import type { GiphyContent } from "openchat-client";
@@ -10,21 +8,36 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let content: GiphyContent;
-    export let fill: boolean;
-    export let draft: boolean = false;
-    export let reply: boolean = false;
-    export let height: number | undefined = undefined;
-    export let intersecting: boolean = true;
-    export let edited: boolean;
-    export let blockLevelMarkdown: boolean = false;
+    interface Props {
+        content: GiphyContent;
+        fill: boolean;
+        draft?: boolean;
+        reply?: boolean;
+        height?: number | undefined;
+        intersecting?: boolean;
+        edited: boolean;
+        blockLevelMarkdown?: boolean;
+    }
 
-    $: withCaption = content.caption !== undefined && content.caption !== "";
-    $: image = $mobileWidth ? content.mobile : content.desktop;
-    $: landscape = image.height < image.width;
-    $: style = `${height === undefined ? "" : `height: ${height}px;`} max-width: ${image.width}px;`;
+    let {
+        content,
+        fill,
+        draft = false,
+        reply = false,
+        height = undefined,
+        intersecting = true,
+        edited,
+        blockLevelMarkdown = false,
+    }: Props = $props();
 
-    $: hidden = $lowBandwidth;
+    let withCaption = $derived(content.caption !== undefined && content.caption !== "");
+    let image = $derived($mobileWidth ? content.mobile : content.desktop);
+    let landscape = $derived(image.height < image.width);
+    let style = $derived(
+        `${height === undefined ? "" : `height: ${height}px;`} max-width: ${image.width}px;`,
+    );
+
+    let hidden = $derived($lowBandwidth);
 </script>
 
 <div class="img-wrapper">
@@ -38,7 +51,8 @@
             class:draft
             title={content.caption ?? content.title}
             class:reply
-            class:rtl={$rtlStore} />
+            class:rtl={$rtlStore}>
+        </div>
     {:else if $mobileWidth || hidden}
         {#if hidden && !$mobileWidth}
             <div class="mask">
