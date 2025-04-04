@@ -1,6 +1,10 @@
 <script lang="ts">
-    import type { DiamondMembershipDuration, OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import type {
+        DiamondMembershipDuration,
+        DiamondMembershipStatus,
+        OpenChat,
+    } from "openchat-client";
+    import { getContext, untrack } from "svelte";
     import { now } from "../../../stores/time";
     import { _, locale } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
@@ -9,35 +13,47 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let extendBy: DiamondMembershipDuration | undefined = undefined;
-
-    $: extendByMs = durationToMs(extendBy);
-
-    let expiresIn: string | undefined = undefined;
-    let expiresAt: string | undefined = undefined;
-    let extendTo: string | undefined = undefined;
-
-    $: {
-        if ($diamondStatus.kind === "active") {
-            expiresIn = client.diamondExpiresIn($now, $locale);
-
-            if (extendBy !== "lifetime") {
-                const expiresAtMs = Number($diamondStatus.expiresAt);
-                expiresAt = client.toDateString(new Date(expiresAtMs));
-                if (extendByMs !== undefined) {
-                    extendTo = client.toDateString(new Date(expiresAtMs + extendByMs));
-                }
-            } else {
-                extendTo = $_("upgrade.lifetime");
-            }
-        }
+    interface Props {
+        extendBy?: DiamondMembershipDuration | undefined;
     }
+
+    let { extendBy = undefined }: Props = $props();
+
+    let expiresIn: string | undefined = $state(undefined);
+    let expiresAt: string | undefined = $state(undefined);
+    let extendTo: string | undefined = $state(undefined);
 
     function durationToMs(duration: DiamondMembershipDuration | undefined): number | undefined {
         if (duration !== undefined && duration !== "lifetime") {
             return client.diamondDurationToMs(duration);
         }
         return undefined;
+    }
+    let extendByMs = $derived(durationToMs(extendBy));
+    $effect(() => {
+        refresh($diamondStatus, $now, $locale);
+    });
+
+    function refresh(
+        status: DiamondMembershipStatus,
+        now: number,
+        locale: string | null | undefined,
+    ) {
+        untrack(() => {
+            if (status.kind === "active") {
+                expiresIn = client.diamondExpiresIn(now, locale);
+
+                if (extendBy !== "lifetime") {
+                    const expiresAtMs = Number(status.expiresAt);
+                    expiresAt = client.toDateString(new Date(expiresAtMs));
+                    if (extendByMs !== undefined) {
+                        extendTo = client.toDateString(new Date(expiresAtMs + extendByMs));
+                    }
+                } else {
+                    extendTo = $_("upgrade.lifetime");
+                }
+            }
+        });
     }
 </script>
 

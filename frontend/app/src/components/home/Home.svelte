@@ -1253,7 +1253,7 @@
 <Toast />
 
 {#if showUpgrade && $user}
-    <Upgrade on:cancel={() => (showUpgrade = false)} />
+    <Upgrade onCancel={() => (showUpgrade = false)} />
 {/if}
 
 {#if modal.kind !== "none"}

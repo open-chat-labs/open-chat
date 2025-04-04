@@ -160,10 +160,7 @@
         {/if}
         <div class="inner">
             {#if preview.kind === "twitter"}
-                <Tweet
-                    tweetId={preview.tweetId}
-                    {intersecting}
-                    on:rendered={(ev) => adjustScroll(ev.detail)} />
+                <Tweet tweetId={preview.tweetId} {intersecting} onRendered={adjustScroll} />
             {:else if preview.kind === "youtube"}
                 <YouTubePreview
                     {pinned}

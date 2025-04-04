@@ -1,7 +1,7 @@
 <script lang="ts">
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import Footer from "./Footer.svelte";
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
@@ -23,23 +23,43 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    export let accountBalance = 0;
-    export let error: string | undefined;
-    export let confirming = false;
-    export let confirmed = false;
-    export let refreshingBalance = false;
-    export let ledger: string;
-    export let allowBack = true;
-    export let lifetime = false;
-    export let showExpiry = true;
-    export let padded = true;
+    interface Props {
+        accountBalance?: number;
+        error: string | undefined;
+        confirming?: boolean;
+        confirmed?: boolean;
+        refreshingBalance?: boolean;
+        ledger: string;
+        allowBack?: boolean;
+        lifetime?: boolean;
+        showExpiry?: boolean;
+        padded?: boolean;
+        onCancel: () => void;
+        onFeatures?: () => void;
+        onSuccess?: (proof: string) => void;
+    }
+
+    let {
+        accountBalance = 0,
+        error = $bindable(),
+        confirming = $bindable(false),
+        confirmed = $bindable(false),
+        refreshingBalance = $bindable(false),
+        ledger,
+        allowBack = true,
+        lifetime = false,
+        showExpiry = true,
+        padded = true,
+        onCancel,
+        onFeatures,
+        onSuccess,
+    }: Props = $props();
 
     type FeeKey = keyof Omit<DiamondMembershipFees, "token">;
     type FeeData = RemoteData<Record<"ICP" | "CHAT", DiamondMembershipFees>, string>;
 
     const client = getContext<OpenChat>("client");
 
-    const dispatch = createEventDispatcher();
     const options: Option[] = [
         {
             index: 0,
@@ -67,8 +87,8 @@
         },
     ];
 
-    let autoRenew = true;
-    let selectedOption: Option | undefined = options[lifetime ? 3 : 0];
+    let autoRenew = $state(true);
+    let selectedOption: Option | undefined = $state(options[lifetime ? 3 : 0]);
 
     type Option = {
         index: number;
@@ -77,16 +97,9 @@
         enabled: boolean;
     };
 
-    let diamondFees: FeeData = {
+    let diamondFees: FeeData = $state({
         kind: "idle",
-    };
-
-    $: icpBalance = accountBalance / E8S_PER_TOKEN; //balance in the user's account expressed as ICP
-    $: toPayE8s = amountInE8s(tokenDetails.symbol, diamondFees, selectedOption);
-    $: toPay = amount(toPayE8s);
-    $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
-    $: tokenDetails = $cryptoLookup[ledger];
-    $: selectedDuration = indexToDuration[selectedOption?.index ?? 0] ?? "one_month";
+    });
 
     const indexToDuration: Record<number, DiamondMembershipDuration> = {
         0: "one_month",
@@ -106,14 +119,6 @@
         return fees.data[symbol as "ICP" | "CHAT"][option.fee] ?? 0n;
     }
 
-    function cancel() {
-        dispatch("cancel");
-    }
-
-    function features() {
-        dispatch("features");
-    }
-
     function confirm() {
         confirming = true;
         client
@@ -126,7 +131,7 @@
             .then((resp) => {
                 if (resp.kind === "success") {
                     confirmed = true;
-                    dispatch("success", resp.proof);
+                    onSuccess?.(resp.proof);
                 } else {
                     const errorKey = "upgrade.paymentFailed";
                     error = errorKey;
@@ -150,6 +155,12 @@
                 diamondFees = { kind: "error", error: err };
             });
     });
+    let icpBalance = $derived(accountBalance / E8S_PER_TOKEN); //balance in the user's account expressed as ICP
+    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let toPayE8s = $derived(amountInE8s(tokenDetails.symbol, diamondFees, selectedOption));
+    let toPay = $derived(amount(toPayE8s));
+    let insufficientFunds = $derived(toPay - icpBalance > 0.0001); //we need to account for the fact that js cannot do maths
+    let selectedDuration = $derived(indexToDuration[selectedOption?.index ?? 0] ?? "one_month");
 </script>
 
 <div class="body" class:padded class:confirming class:is-confirmed={confirmed}>
@@ -171,7 +182,7 @@
                         class:disabled={!option.enabled}
                         class:insufficientFunds={insufficientFunds && !refreshingBalance}
                         class:selected={selectedOption?.index === option.index}
-                        on:click={() => {
+                        onclick={() => {
                             if (option.enabled) {
                                 selectedOption = option;
                             }
@@ -234,7 +245,7 @@
 </div>
 <Footer align={$mobileWidth ? "center" : "end"}>
     {#if confirmed}
-        <Button small={!$mobileWidth} tiny={$mobileWidth} onClick={cancel}
+        <Button small={!$mobileWidth} tiny={$mobileWidth} onClick={onCancel}
             ><Translatable resourceKey={i18nKey("close")} /></Button>
     {:else}
         <Button
@@ -242,14 +253,14 @@
             tiny={$mobileWidth}
             small={!$mobileWidth}
             secondary
-            onClick={cancel}><Translatable resourceKey={i18nKey("cancel")} /></Button>
+            onClick={onCancel}><Translatable resourceKey={i18nKey("cancel")} /></Button>
         {#if allowBack}
             <Button
                 disabled={confirming}
                 tiny={$mobileWidth}
                 small={!$mobileWidth}
                 secondary
-                onClick={features}
+                onClick={onFeatures}
                 ><Translatable resourceKey={i18nKey("upgrade.features")} /></Button>
         {/if}
         <Button

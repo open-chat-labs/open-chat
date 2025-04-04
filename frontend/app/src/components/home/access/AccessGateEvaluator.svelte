@@ -126,8 +126,8 @@
         nextGate();
     }
 
-    function credentialReceived(ev: CustomEvent<string>) {
-        credentials.push(ev.detail);
+    function credentialReceived(cred: string) {
+        credentials.push(cred);
         nextGate();
     }
 
@@ -184,14 +184,14 @@
                     {/each}
                 {:else if isCredentialGate(currentGate)}
                     <CredentialGateEvaluator
-                        on:close={onClose}
-                        on:credentialReceived={credentialReceived}
+                        {onClose}
+                        onCredentialReceived={credentialReceived}
                         gate={currentGate}
                         level={currentGate.level} />
                 {:else if isUniquePersonGate(currentGate)}
                     <UniqueHumanGateEvaluator
-                        on:credentialReceived={credentialReceived}
-                        on:close={onClose}
+                        onCredentialReceived={credentialReceived}
+                        {onClose}
                         expiry={currentGate.expiry}
                         level={currentGate.level} />
                 {:else if isPaymentGate(currentGate)}
@@ -205,14 +205,14 @@
                     <DiamondGateEvaluator
                         level={currentGate.level}
                         lifetime
-                        on:credentialReceived={credentialReceived}
-                        on:cancel={onClose} />
+                        onCredentialReceived={credentialReceived}
+                        onCancel={onClose} />
                 {:else if isDiamondGate(currentGate)}
                     <DiamondGateEvaluator
                         level={currentGate.level}
                         lifetime={false}
-                        on:credentialReceived={credentialReceived}
-                        on:cancel={onClose} />
+                        onCredentialReceived={credentialReceived}
+                        onCancel={onClose} />
                 {/if}
             {/if}
         </div>

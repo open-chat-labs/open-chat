@@ -271,9 +271,6 @@
         tick().then(() => page(url)); // trigger the selection of the chat
     }
 
-    function changeStep(ev: CustomEvent<string>) {
-        step = ev.detail;
-    }
     let editing = $derived(!chatIdentifierUnset(candidateGroup.id));
     let hideInviteUsers = $derived(candidateGroup.level === "channel" && candidateGroup.public);
     let steps = $derived(
@@ -367,8 +364,8 @@
     {/snippet}
     {#snippet body()}
         <div class="body">
-            <StageHeader {steps} enabled on:step={changeStep} {step} />
-            <div class="wrapper">
+            <StageHeader {steps} enabled onStep={(s) => (step = s)} {step} />
+            <div use:menuCloser class="wrapper">
                 {#if step === "details"}
                     <div class="details">
                         <GroupDetails
@@ -400,7 +397,7 @@
                     </div>
                 {/if}
                 {#if step === "permissions"}
-                    <div use:menuCloser class="permissions">
+                    <div class="permissions">
                         {#if canEditPermissions}
                             <GroupPermissionsEditor
                                 {embeddedContent}
@@ -412,7 +409,7 @@
                         {:else}
                             <GroupPermissionsViewer
                                 {embeddedContent}
-                                bind:permissions={candidateGroup.permissions}
+                                permissions={candidateGroup.permissions}
                                 isPublic={candidateGroup.public}
                                 isCommunityPublic={$selectedCommunity?.public ?? true}
                                 isChannel={candidateGroup.id.kind === "channel"} />

@@ -13,11 +13,11 @@
         TimelineItem,
         MessageContent,
         MessageContext,
+        ChatIdentifier,
     } from "openchat-client";
     import { LEDGER_CANISTER_ICP, messageContextsEqual, subscribe } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Loading from "../../Loading.svelte";
-    import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
     import MemeBuilder from "../MemeBuilder.svelte";
@@ -46,52 +46,60 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let rootEvent: EventWrapper<Message>;
-    export let chat: ChatSummary;
+    interface Props {
+        rootEvent: EventWrapper<Message>;
+        chat: ChatSummary;
+        onCloseThread: (id: ChatIdentifier) => void;
+    }
 
-    let chatEventList: ChatEventList | undefined;
+    let { rootEvent, chat, onCloseThread }: Props = $props();
+
+    let chatEventList: ChatEventList | undefined = $state();
     //@ts-ignore
-    let pollBuilder: PollBuilder;
+    let pollBuilder: PollBuilder = $state();
     //@ts-ignore
-    let giphySelector: GiphySelector;
+    let giphySelector: GiphySelector = $state();
     //@ts-ignore
-    let memeBuilder: MemeBuilder;
-    let creatingPoll = false;
-    let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
-    let selectingGif = false;
-    let buildingMeme = false;
-    let initialised = false;
-    let messagesDiv: HTMLDivElement | undefined;
-    let messagesDivHeight: number;
-    let creatingP2PSwapMessage = false;
+    let memeBuilder: MemeBuilder = $state();
+    let creatingPoll = $state(false);
+    let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
+    let selectingGif = $state(false);
+    let buildingMeme = $state(false);
+    let initialised = $state(false);
+    let messagesDiv: HTMLDivElement | undefined = $state();
+    let messagesDivHeight: number = $state(0);
+    let creatingP2PSwapMessage = $state(false);
     let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
-        undefined;
+        $state(undefined);
 
-    $: threadRootMessageIndex = rootEvent.event.messageIndex;
-    $: messageContext = { chatId: chat.id, threadRootMessageIndex };
-    $: threadRootMessage = rootEvent.event;
-    $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId);
-    $: draftMessage = readable(draftMessagesStore.get(messageContext), (set) =>
-        draftMessagesStore.subscribe((d) => set(d.get(messageContext) ?? {})),
+    let threadRootMessageIndex = $derived(rootEvent.event.messageIndex);
+    let messageContext = $derived({ chatId: chat.id, threadRootMessageIndex });
+    let threadRootMessage = $derived(rootEvent.event);
+    let blocked = $derived(
+        chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId),
     );
-    $: textContent = derived(draftMessage, (d) => d.textContent);
-    $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
-    $: attachment = derived(draftMessage, (d) => d.attachment);
-    $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
-    $: canSendAny = client.canSendMessage(chat.id, "thread");
-    $: canReact = client.canReactToMessages(chat.id);
-    $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
-    $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
-    $: timeline = client.groupEvents(
-        [...events].reverse(),
-        $user.userId,
-        $expandedDeletedMessages,
-    ) as TimelineItem<Message>[];
-    $: readonly = client.isChatReadOnly(chat.id);
-    $: thread = rootEvent.event.thread;
-    $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
-    $: isFollowedByMe =
-        $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false;
+    let draftMessage = $derived($draftMessagesStore.get(messageContext));
+    let textContent = $derived(draftMessage?.textContent);
+    let replyingTo = $derived(draftMessage?.replyingTo);
+    let attachment = $derived(draftMessage?.attachment);
+    let editingEvent = $derived(draftMessage?.editingEvent);
+    let canSendAny = $derived(client.canSendMessage(chat.id, "thread"));
+    let canReact = $derived(client.canReactToMessages(chat.id));
+    let atRoot = $derived($threadEvents.length === 0 || $threadEvents[0]?.index === 0);
+    let events = $derived(atRoot ? [rootEvent, ...$threadEvents] : $threadEvents);
+    let timeline = $derived(
+        client.groupEvents(
+            [...events].reverse(),
+            $user.userId,
+            $expandedDeletedMessages,
+        ) as TimelineItem<Message>[],
+    );
+    let readonly = $derived(client.isChatReadOnly(chat.id));
+    let thread = $derived(rootEvent.event.thread);
+    let loading = $derived(!initialised && $threadEvents.length === 0 && thread !== undefined);
+    let isFollowedByMe = $derived(
+        $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false,
+    );
 
     onMount(() => {
         const unsubs = [
@@ -144,14 +152,14 @@
     function sendMessage(ev: CustomEvent<[string | undefined, User[], boolean]>) {
         if (!canSendAny) return;
         let [text, mentioned, blockLevelMarkdown] = ev.detail;
-        if ($editingEvent !== undefined) {
+        if (editingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
                     messageContext,
                     text,
                     blockLevelMarkdown,
-                    $attachment,
-                    $editingEvent,
+                    attachment,
+                    editingEvent,
                 )
                 .then((success) => {
                     if (!success) {
@@ -159,7 +167,7 @@
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, blockLevelMarkdown, $attachment, mentioned);
+            sendMessageWithAttachment(text, blockLevelMarkdown, attachment, mentioned);
         }
     }
 
@@ -249,7 +257,7 @@
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {
-        return $replyingTo?.sender?.userId;
+        return replyingTo?.sender?.userId;
     }
 
     function eventKey(e: EventWrapper<ChatEventType>): string {
@@ -335,12 +343,7 @@
         onClose={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
-<ThreadHeader
-    {threadRootMessageIndex}
-    on:createPoll={createPoll}
-    on:closeThread
-    {rootEvent}
-    chatSummary={chat} />
+<ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
 
 <ChatEventList
     threadRootEvent={rootEvent}
@@ -402,7 +405,7 @@
                                 publicGroup={(chat.kind === "group_chat" ||
                                     chat.kind === "channel") &&
                                     chat.public}
-                                editing={$editingEvent === evt}
+                                editing={editingEvent === evt}
                                 canSendAny
                                 {canReact}
                                 canInvite={false}
@@ -425,10 +428,10 @@
 {#if !readonly}
     <Footer
         {chat}
-        attachment={$attachment}
-        editingEvent={$editingEvent}
-        replyingTo={$replyingTo}
-        textContent={$textContent}
+        {attachment}
+        {editingEvent}
+        {replyingTo}
+        {textContent}
         user={$user}
         joining={undefined}
         preview={false}

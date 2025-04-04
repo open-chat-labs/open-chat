@@ -17,6 +17,7 @@
         MultiUserChat,
         MultiUserChatIdentifier,
         Level,
+        ChatIdentifier,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { getContext } from "svelte";
@@ -209,7 +210,7 @@
         return path;
     }
 
-    function closeThread(_ev: CustomEvent<string>) {
+    function closeThread(_id: ChatIdentifier) {
         popRightPanelHistory();
         pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
         activeVideoCall.threadOpen(false);
@@ -553,7 +554,7 @@
             rootEvent={threadRootEvent}
             chat={$selectedChat}
             on:removePreview
-            on:closeThread={closeThread} />
+            onCloseThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}
         <ProposalGroupFilters selectedChat={$selectedChat} onClose={popRightPanelHistory} />
     {:else if lastState.kind === "community_details" && $selectedCommunity !== undefined}

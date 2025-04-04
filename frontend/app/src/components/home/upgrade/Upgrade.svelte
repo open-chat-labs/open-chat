@@ -18,6 +18,12 @@
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
+    interface Props {
+        onCancel: () => void;
+    }
+
+    let { onCancel }: Props = $props();
+
     let ledger: string = $state(
         import.meta.env.OC_NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP,
     );
@@ -102,8 +108,8 @@
                         {ledger}
                         {error}
                         accountBalance={Number(tokenDetails.balance)}
-                        on:cancel
-                        on:features={() => (step = "features")} />
+                        {onCancel}
+                        onFeatures={() => (step = "features")} />
                 {/if}
             </div>
         {/snippet}
