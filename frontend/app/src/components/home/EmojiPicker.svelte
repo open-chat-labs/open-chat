@@ -18,10 +18,11 @@
 
     onMount(() => {
         const emojiPicker = document.querySelector("emoji-picker");
-
         emojiPicker?.addEventListener("emoji-click", onClick);
-
         emojiPicker?.addEventListener("skin-tone-change", skinToneChanged);
+        return () => {
+            emojiPicker?.removeEventListener("emoji-click", onClick);
+        };
     });
 
     function skinToneChanged(ev: SkinToneChangeEvent) {
