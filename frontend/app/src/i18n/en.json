@@ -1332,7 +1332,6 @@
     "privateGroupWithN": "Private {level} with {number} members",
     "prizeMessage": "Prize message",
     "prizes": {
-        "requiresCaptcha": "Requires CAPTCHA",
         "allClaimed": "Fully claimed",
         "anyone": "Any user",
         "claim": "Claim",
@@ -1357,7 +1356,9 @@
         "onlyUniquePerson": "Only Unique humans",
         "prizeFinished": "Your prize message has now finished",
         "randomDistribution": "Random distribution",
+        "requiresCaptcha": "Requires CAPTCHA",
         "restrictedMessage": "This prize has the following restrictions",
+        "restrictions": "Claim restrictions",
         "standardDiamond": "Standard",
         "streak": "Streak",
         "streakFull": "A streak of {n} days or more",
@@ -1366,7 +1367,6 @@
         "totalAmount": "Total prize amount",
         "uniquePerson": "Unique person proof",
         "whoCanWin": "Who can claim a share?",
-        "restrictions": "Claim restrictions",
         "winner": "**{recipient}** won **{amount}** {token}"
     },
     "profile": {
