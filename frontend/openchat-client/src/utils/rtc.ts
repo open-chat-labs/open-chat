@@ -8,7 +8,6 @@ import {
     type WebRtcMessage,
     type CommunityIdentifier,
     type RemoteVideoCallStarted,
-    type RemoteVideoCallEnded,
 } from "openchat-shared";
 import { selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
