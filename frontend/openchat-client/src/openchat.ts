@@ -532,6 +532,7 @@ import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn"
 import { ephemeralMessages } from "./stores/ephemeralMessages";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import { Semaphore } from "./utils/semaphore";
+import { snapshot } from "./snapshot.svelte";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -5289,7 +5290,6 @@ export class OpenChat extends EventTarget {
             return Promise.resolve(0n);
         }
 
-
         return this.#refreshBalanceSemaphore.execute(() => {
             if (!force) {
                 const valueIfUpdatedRecently = cryptoBalance.valueIfUpdatedRecently(ledger);
@@ -5307,7 +5307,7 @@ export class OpenChat extends EventTarget {
                     cryptoBalance.set(ledger, val);
                     return val;
                 })
-                .catch(() => 0n)
+                .catch(() => 0n);
         });
     }
 
@@ -7197,7 +7197,7 @@ export class OpenChat extends EventTarget {
                     () => this.#updateBtcBalance(addr),
                     ONE_MINUTE_MILLIS,
                     5 * ONE_MINUTE_MILLIS,
-                    true
+                    true,
                 );
                 return () => poller.stop();
             }
@@ -8885,7 +8885,7 @@ export class OpenChat extends EventTarget {
         const correlationId = random128().toString();
         try {
             this.#worker.postMessage({
-                ...req,
+                ...snapshot(req),
                 correlationId,
             });
         } catch (err) {

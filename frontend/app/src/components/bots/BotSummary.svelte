@@ -87,7 +87,7 @@
     function updateBot(id: BotInstallationLocation) {
         busy = true;
         client
-            .updateInstalledBot($state.snapshot(id), bot.id, $state.snapshot(grantedPermissions))
+            .updateInstalledBot(id, bot.id, grantedPermissions)
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.edit.failure"));
@@ -111,11 +111,7 @@
                 if (bot.definition.autonomousConfig !== undefined) {
                     busy = true;
                     client
-                        .generateBotApiKey(
-                            $state.snapshot(id),
-                            bot.id,
-                            $state.snapshot(grantedPermissions),
-                        )
+                        .generateBotApiKey(id, bot.id, grantedPermissions)
                         .then((resp) => {
                             if (resp.kind === "success") {
                                 newApiKey = currentApiKey = resp.apiKey;
