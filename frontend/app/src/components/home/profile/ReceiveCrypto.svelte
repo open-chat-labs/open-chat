@@ -30,8 +30,8 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        error = $_(ev.detail);
+    function onBalanceRefreshError(err: string) {
+        error = $_(err);
     }
 </script>
 
@@ -44,8 +44,8 @@
                 value={$cryptoBalance[ledger]}
                 label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
-                on:refreshed={onBalanceRefreshed}
-                on:error={onBalanceRefreshError} />
+                onRefreshed={onBalanceRefreshed}
+                onError={onBalanceRefreshError} />
         </span>
     {/snippet}
     {#snippet body()}
@@ -53,7 +53,7 @@
             {#if symbol === BTC_SYMBOL}
                 <BitcoinAccountInfo qrSize={"larger"} centered {userId} />
             {:else}
-                <AccountInfo qrSize={"larger"} centered {ledger} user={$user} />
+                <AccountInfo qrSize={"larger"} centered {ledger} />
             {/if}
             {#if error}
                 <ErrorMessage>{error}</ErrorMessage>

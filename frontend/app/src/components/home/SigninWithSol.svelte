@@ -6,23 +6,32 @@
         WalletAdapterNetwork,
     } from "@solana/wallet-adapter-base";
     import { Connection, clusterApiUrl } from "@solana/web3.js";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { CoinbaseWalletAdapter } from "@solana/wallet-adapter-coinbase";
     import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
     import { WalletConnectWalletAdapter } from "@solana/wallet-adapter-walletconnect";
     import Button from "../Button.svelte";
     import type { OpenChat, SiwsMessage } from "openchat-client";
     import base58 from "bs58";
+    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
     const localStorageKey = "walletAdapter";
 
-    export let assumeIdentity = true;
+    interface Props {
+        assumeIdentity?: boolean;
+        onConnected?: (args: {
+            kind: "success";
+            key: ECDSAKeyIdentity;
+            delegation: DelegationChain;
+        }) => void;
+    }
 
-    let connecting: WalletName | undefined = undefined;
+    let { assumeIdentity = true, onConnected }: Props = $props();
 
-    $: ({ publicKey, wallet, connect, select, signMessage } = $walletStore);
+    let connecting: WalletName | undefined = $state(undefined);
+
+    let { publicKey, wallet, connect, select, signMessage } = $derived($walletStore);
 
     function walletError(error: WalletError): void {
         console.error("WalletError: ", error);
@@ -46,7 +55,7 @@
                         .signInWithWallet("sol", account, signature, assumeIdentity)
                         .then((resp) => {
                             if (resp.kind === "success") {
-                                dispatch("connected", resp);
+                                onConnected?.(resp);
                             }
                         });
                 }

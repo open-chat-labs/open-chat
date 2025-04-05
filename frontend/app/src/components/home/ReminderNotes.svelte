@@ -1,7 +1,11 @@
 <script lang="ts">
     import Markdown from "./Markdown.svelte";
 
-    export let notes: string | undefined;
+    interface Props {
+        notes: string | undefined;
+    }
+
+    let { notes }: Props = $props();
 </script>
 
 {#if notes !== undefined && notes !== ""}

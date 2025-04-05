@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import NonMessageEvent from "./NonMessageEvent.svelte";
     import { _ } from "svelte-i18n";
@@ -7,25 +5,30 @@
     import { userStore } from "openchat-client";
     import { buildDisplayName } from "../../utils/user";
 
-    export let user: UserSummary | undefined;
-    export let event: GroupRulesChanged;
-    export let timestamp: bigint;
+    interface Props {
+        user: UserSummary | undefined;
+        event: GroupRulesChanged;
+        timestamp: bigint;
+    }
 
-    $: me = event.changedBy === user?.userId;
-    $: changedByStr = buildDisplayName($userStore, event.changedBy, me);
-    $: templateValues = {
+    let { user, event, timestamp }: Props = $props();
+
+    let me = $derived(event.changedBy === user?.userId);
+    let changedByStr = $derived(buildDisplayName($userStore, event.changedBy, me));
+    let templateValues = $derived({
         values: {
             changed: $_("groupRules"),
             changedBy: changedByStr,
         },
-    };
+    });
 
-    $: text =
+    let text = $derived(
         event.enabled && event.enabledPrev
             ? $_("groupChangedBy", templateValues)
             : event.enabled
               ? $_("groupRulesEnabled", templateValues)
-              : $_("groupRulesDisabled", templateValues);
+              : $_("groupRulesDisabled", templateValues),
+    );
 </script>
 
 {#if event.enabled || event.enabledPrev}

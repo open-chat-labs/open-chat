@@ -5,7 +5,11 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let content: MessageReminderCreatedContent;
+    interface Props {
+        content: MessageReminderCreatedContent;
+    }
+
+    let { content }: Props = $props();
     const client = getContext<OpenChat>("client");
 </script>
 

@@ -15,14 +15,13 @@
     import Menu from "../../Menu.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import Login from "svelte-material-icons/Login.svelte";
-    import MenuItem from "../../MenuItemLegacy.svelte";
+    import MenuItem from "../../MenuItem.svelte";
     import page from "page";
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
-    import { anonUser, platformOperator, canExtendDiamond } from "openchat-client";
+    import { anonUser, platformOperator, canExtendDiamond, publish } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -32,78 +31,135 @@
 <Menu>
     {#if !$anonUser}
         <MenuItem onclick={() => publish("wallet")}>
-            <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">
+            {#snippet icon()}
+                <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            {/snippet}
+            {#snippet text()}
                 <Translatable resourceKey={i18nKey("wallet")} />
-            </span>
+            {/snippet}
         </MenuItem>
         <MenuItem onclick={() => publish("profile")}>
-            <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text"><Translatable resourceKey={i18nKey("profile.title")} /></span>
+            {#snippet icon()}
+                <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            {/snippet}
+            {#snippet text()}
+                <Translatable resourceKey={i18nKey("profile.title")} />
+            {/snippet}
         </MenuItem>
         <MenuItem onclick={() => publish("upgrade")}>
-            <span class="diamond-icon" slot="icon"></span>
-            <span slot="text"
-                ><Translatable
+            {#snippet icon()}
+                <span class="diamond-icon"></span>
+            {/snippet}
+            {#snippet text()}
+                <Translatable
                     resourceKey={i18nKey(
                         $canExtendDiamond ? "upgrade.extend" : "upgrade.diamond",
-                    )} /></span>
+                    )} />
+            {/snippet}
         </MenuItem>
         <MenuItem separator />
     {/if}
     <MenuItem onclick={() => page("/home")}>
-        <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">Home page</span>
+        {#snippet icon()}
+            <Home size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            Home page
+        {/snippet}
     </MenuItem>
     <MenuItem onclick={() => page("/features")}>
-        <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">Features</span>
+        {#snippet icon()}
+            <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            Features
+        {/snippet}
     </MenuItem>
     <MenuItem onclick={() => page("/roadmap")}>
-        <Road size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">Roadmap</span>
+        {#snippet icon()}
+            <Road size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            Roadmap
+        {/snippet}
     </MenuItem>
     <MenuItem onclick={() => page("/whitepaper")}>
-        <Note size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">Whitepaper</span>
+        {#snippet icon()}
+            <Note size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            Whitepaper
+        {/snippet}
     </MenuItem>
     <MenuItem onclick={() => page("/architecture")}>
-        <Graph size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">Architecture</span>
+        {#snippet icon()}
+            <Graph size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            Architecture
+        {/snippet}
     </MenuItem>
     <MenuItem onclick={() => page("/blog")}>
-        <Blog size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">Blog</span>
+        {#snippet icon()}
+            <Blog size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            Blog
+        {/snippet}
     </MenuItem>
     <MenuItem onclick={() => page("/faq")}>
-        <Help size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">FAQs</span>
+        {#snippet icon()}
+            <Help size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            FAQs
+        {/snippet}
     </MenuItem>
     <MenuItem onclick={() => page("/guidelines")}>
-        <Security size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">Guidelines</span>
+        {#snippet icon()}
+            <Security size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            Guidelines
+        {/snippet}
     </MenuItem>
     <MenuItem href="https://tokenterminal.com/terminal/projects/openchat">
-        <ChartLine size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">Metrics</span>
+        {#snippet icon()}
+            <ChartLine size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            Metrics
+        {/snippet}
     </MenuItem>
     {#if admin}
         <MenuItem separator />
         <MenuItem onclick={() => page("/admin")}>
-            <CogOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">{"Admin"}</span>
+            {#snippet icon()}
+                <CogOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            {/snippet}
+            {#snippet text()}
+                {"Admin"}
+            {/snippet}
         </MenuItem>
     {/if}
     <MenuItem separator />
     {#if !$anonUser}
         <MenuItem onclick={() => client.logout()}>
-            <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text"><Translatable resourceKey={i18nKey("logout")} /></span>
+            {#snippet icon()}
+                <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            {/snippet}
+            {#snippet text()}
+                <Translatable resourceKey={i18nKey("logout")} />
+            {/snippet}
         </MenuItem>
     {:else}
         <MenuItem onclick={() => client.updateIdentityState({ kind: "logging_in" })}>
-            <Login size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text"><Translatable resourceKey={i18nKey("login")} /></span>
+            {#snippet icon()}
+                <Login size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            {/snippet}
+            {#snippet text()}
+                <Translatable resourceKey={i18nKey("login")} />
+            {/snippet}
         </MenuItem>
     {/if}
 </Menu>

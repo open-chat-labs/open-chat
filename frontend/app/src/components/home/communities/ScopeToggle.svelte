@@ -1,32 +1,46 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    export let selectedTab: "community" | "channel" = "channel";
-    export let flush = false;
+    interface Props {
+        selectedTab?: "community" | "channel";
+        flush?: boolean;
+        header: Snippet;
+        communityTab: Snippet;
+        channelTab: Snippet;
+    }
+
+    let {
+        selectedTab = $bindable("channel"),
+        flush = false,
+        header,
+        communityTab,
+        channelTab,
+    }: Props = $props();
 
     function selectTab(tab: "community" | "channel") {
         selectedTab = tab;
     }
 </script>
 
-<slot name="header" />
+{@render header()}
 
 <div class="button-tabs" class:flush>
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         class:selected={selectedTab === "channel"}
-        on:click={() => selectTab("channel")}
+        onclick={() => selectTab("channel")}
         class="button-tab">
         <Translatable resourceKey={i18nKey("level.channel")} />
     </div>
 
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         class:selected={selectedTab === "community"}
-        on:click={() => selectTab("community")}
+        onclick={() => selectTab("community")}
         class="button-tab">
         <Translatable resourceKey={i18nKey("level.community")} />
     </div>
@@ -34,9 +48,9 @@
 
 <div class="body">
     {#if selectedTab === "community"}
-        <slot name="community" />
+        {@render communityTab()}
     {:else if selectedTab === "channel"}
-        <slot name="channel" />
+        {@render channelTab()}
     {/if}
 </div>
 

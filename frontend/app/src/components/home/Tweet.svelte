@@ -1,25 +1,26 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import { currentTheme } from "../../theme/themes";
-    import { createEventDispatcher, onMount } from "svelte";
+    import { onMount } from "svelte";
     import { eventListScrolling } from "../../stores/scrollPos";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        intersecting: boolean;
+        tweetId: string;
+        onRendered: (el: HTMLDivElement) => void;
+    }
 
-    export let intersecting: boolean;
-    export let tweetId: string;
+    let { intersecting, tweetId, onRendered }: Props = $props();
 
-    let tweetWrapper: HTMLDivElement | undefined;
-    let supported = false;
+    let tweetWrapper: HTMLDivElement | undefined = $state();
+    let supported = $state(false);
 
-    let rendering: Promise<any> | undefined = undefined;
+    let rendering: Promise<any> | undefined = $state(undefined);
 
     onMount(() => {
         supported = (<any>window).twttr !== undefined;
     });
 
-    $: {
+    $effect(() => {
         if (
             intersecting &&
             !$eventListScrolling &&
@@ -36,14 +37,14 @@
 
             rendering
                 .then(() => {
-                    dispatch("rendered", tweetWrapper);
+                    onRendered(tweetWrapper!);
                 })
                 .catch((err: any) => {
                     console.log("Failed to render tweet: ", err);
                     rendering = undefined;
                 });
         }
-    }
+    });
 </script>
 
 <div bind:this={tweetWrapper}></div>

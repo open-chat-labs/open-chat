@@ -9,12 +9,17 @@
     import { i18nKey } from "../../../i18n/i18n";
     import AlertBox from "../../AlertBox.svelte";
 
-    export let gateConfig: AccessGateConfig;
-    export let level: Level;
-    export let valid: boolean;
+    interface Props {
+        gateConfig: AccessGateConfig;
+        level: Level;
+        valid: boolean;
+        onUpdated: () => void;
+    }
+
+    let { gateConfig = $bindable(), level, valid = $bindable(), onUpdated }: Props = $props();
 </script>
 
-<div transition:fade|local={{ duration: 250 }} class="wrapper">
+<div in:fade={{ duration: 250 }} class="wrapper">
     <div class="icon">
         <LockOutline size={$iconSize} color={"var(--icon-txt)"} />
     </div>
@@ -22,7 +27,7 @@
         <div class="section-title">{$_("access.chooseGate")}</div>
         <div class="choose-gate">
             <AccessGateSummary
-                on:updated
+                {onUpdated}
                 showNoGate={true}
                 bind:valid
                 {level}

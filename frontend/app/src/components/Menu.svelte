@@ -15,7 +15,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     oncontextmenu={(e) => e.preventDefault()}
-    transition:fade|local={{ duration: 100 }}
+    in:fade={{ duration: 100 }}
     class="menu"
     class:fit
     class:shadow

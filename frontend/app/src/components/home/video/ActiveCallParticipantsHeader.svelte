@@ -3,20 +3,16 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    const dispatch = createEventDispatcher();
-    function close() {
-        dispatch("close");
-    }
+    let { onClose }: { onClose: () => void } = $props();
 </script>
 
 <SectionHeader gap border={false}>
     <h4><Translatable resourceKey={i18nKey("videoCall.participants")} /></h4>
-    <span title={$_("close")} class="close" on:click={close}>
+    <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>

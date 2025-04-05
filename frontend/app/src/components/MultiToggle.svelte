@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
     export type Option = {
         id: string;
         label: string;
@@ -6,8 +6,12 @@
 </script>
 
 <script lang="ts">
-    export let options: Option[];
-    export let selected: string;
+    interface Props {
+        options: Option[];
+        selected: string;
+    }
+
+    let { options, selected = $bindable() }: Props = $props();
 
     function selectOption(id: string) {
         selected = id;
@@ -23,7 +27,7 @@
             class:selected={id === selected}
             class:first={i === 0}
             class:last={i === options.length - 1}
-            on:click={() => selectOption(id)}>
+            onclick={() => selectOption(id)}>
             {label}
         </div>
     {/each}

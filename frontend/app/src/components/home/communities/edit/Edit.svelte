@@ -88,10 +88,6 @@
         candidateRules = { ...originalRules, newVersion: false };
     });
 
-    function changeStep(ev: CustomEvent<string>) {
-        step = ev.detail;
-    }
-
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         return client.searchUsersForInvite(term, 20, "community", !editing, true);
     }
@@ -245,8 +241,8 @@
     {/snippet}
     {#snippet body()}
         <div class="body">
-            <StageHeader {steps} enabled on:step={changeStep} {step} />
-            <div class="wrapper">
+            <StageHeader {steps} enabled onStep={(s) => (step = s)} {step} />
+            <div use:menuCloser class="wrapper">
                 {#if step === "details"}
                     <div class="details">
                         <Details bind:valid={detailsValid} bind:busy bind:candidate />
@@ -273,7 +269,7 @@
                     </div>
                 {/if}
                 {#if step === "permissions"}
-                    <div use:menuCloser class="permissions">
+                    <div class="permissions">
                         {#if canEditPermissions}
                             <PermissionsEditor bind:permissions={candidate.permissions} />
                         {:else}

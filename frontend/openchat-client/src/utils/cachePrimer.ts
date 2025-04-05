@@ -4,6 +4,7 @@ import {
     type ChatSummary,
     MAX_MESSAGES,
     type Message,
+    publish,
     type VideoCallContent,
 } from "openchat-shared";
 import {
@@ -22,7 +23,7 @@ import { get } from "svelte/store";
 import type { OpenChat } from "../openchat";
 import { runOnceIdle } from "./backgroundTasks";
 import { isProposalsChat } from "./chat";
-import { RemoteVideoCallEndedEvent, RemoteVideoCallStartedEvent } from "../events";
+import { remoteVideoCallEndedEvent, remoteVideoCallStartedEvent } from "../events";
 import { selectedChatId } from "../stores";
 
 const BATCH_SIZE = 20;
@@ -35,8 +36,6 @@ export class CachePrimer {
         private api: OpenChat,
         private userId: string,
         private userCanisterLocalUserIndex: string,
-        private onVideoStart: (ev: RemoteVideoCallStartedEvent) => void,
-        private onVideoEnded: (ev: RemoteVideoCallEndedEvent) => void,
     ) {
         debug("initialized");
     }
@@ -86,8 +85,9 @@ export class CachePrimer {
                             e.event.content.callType === "default"
                         ) {
                             if (e.event.content.ended === undefined) {
-                                this.onVideoStart(
-                                    RemoteVideoCallStartedEvent.create(
+                                publish(
+                                    "remoteVideoCallStarted",
+                                    remoteVideoCallStartedEvent(
                                         request.context.chatId,
                                         this.userId,
                                         e.event as Message<VideoCallContent>,
@@ -95,7 +95,10 @@ export class CachePrimer {
                                     ),
                                 );
                             } else {
-                                this.onVideoEnded(new RemoteVideoCallEndedEvent(e.event.messageId));
+                                publish(
+                                    "remoteVideoCallEnded",
+                                    remoteVideoCallEndedEvent(e.event.messageId),
+                                );
                             }
                         }
                     });
@@ -125,7 +128,7 @@ export class CachePrimer {
 
     private getNextBatch(): [string, ChatEventsArgs[]] | undefined {
         const sorted = this.pending.values().sort(compareChats);
-        const batch: ChatEventsArgs[] = []
+        const batch: ChatEventsArgs[] = [];
         let localUserIndexForBatch: string | undefined = undefined;
 
         for (const next of sorted) {
@@ -148,9 +151,7 @@ export class CachePrimer {
             }
         }
 
-        return localUserIndexForBatch !== undefined
-            ? [localUserIndexForBatch, batch]
-            : undefined;
+        return localUserIndexForBatch !== undefined ? [localUserIndexForBatch, batch] : undefined;
     }
 
     private getEventsArgs(chat: ChatSummary): ChatEventsArgs[] {

@@ -1,3 +1,14 @@
+<script lang="ts" module>
+    export type ChatEventListArgs = {
+        isAccepted: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isConfirmed: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isFailed: (_failed: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isReadByMe: (_store: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        messageObserver: IntersectionObserver | undefined;
+        labelObserver: IntersectionObserver | undefined;
+    };
+</script>
+
 <script lang="ts">
     import {
         type ChatSummary,
@@ -8,15 +19,9 @@
         type Mention,
         type MessageContext,
         MessageContextMap,
+        subscribe,
     } from "openchat-client";
     import {
-        ChatUpdated,
-        LoadedMessageWindow,
-        LoadedNewMessages,
-        LoadedPreviousMessages,
-        ReactionSelected,
-        SendingMessage,
-        SentMessage,
         messageContextsEqual,
         currentUser as user,
         unconfirmed,
@@ -25,7 +30,7 @@
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
     import { rtlStore } from "../../stores/rtl";
-    import { afterUpdate, beforeUpdate, getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick, type Snippet } from "svelte";
     import { pathParams } from "../../routes";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
@@ -47,41 +52,61 @@
     const SCROLL_THRESHOLD = 500;
     const client = getContext<OpenChat>("client");
 
-    export let rootSelector: string;
-    export let unreadMessages: number;
-    export let chat: ChatSummary;
-    export let messagesDiv: HTMLDivElement | undefined;
-    export let messagesDivHeight: number;
-    export let initialised: boolean;
-    export let events: EventWrapper<ChatEventType>[];
-    export let readonly: boolean;
-    export let firstUnreadMention: Mention | undefined;
-    export let footer: boolean;
-    export let threadRootEvent: EventWrapper<Message> | undefined;
-    export let maintainScroll: boolean;
-    export let scrollTopButtonEnabled: boolean = false;
+    interface Props {
+        rootSelector: string;
+        unreadMessages: number;
+        chat: ChatSummary;
+        messagesDiv: HTMLDivElement | undefined;
+        messagesDivHeight: number;
+        initialised: boolean;
+        events: EventWrapper<ChatEventType>[];
+        readonly: boolean;
+        firstUnreadMention: Mention | undefined;
+        footer: boolean;
+        threadRootEvent: EventWrapper<Message> | undefined;
+        maintainScroll: boolean;
+        scrollTopButtonEnabled?: boolean;
+        children?: Snippet<[ChatEventListArgs]>;
+    }
 
-    let interrupt = false;
+    let {
+        rootSelector,
+        unreadMessages,
+        chat,
+        messagesDiv = $bindable(),
+        messagesDivHeight = $bindable(),
+        initialised = $bindable(),
+        events,
+        readonly,
+        firstUnreadMention,
+        footer,
+        threadRootEvent,
+        maintainScroll,
+        scrollTopButtonEnabled = false,
+        children,
+    }: Props = $props();
+
+    let interrupt = $state(false);
     let morePrevAvailable = false;
     let moreNewAvailable = false;
-    let loadingFromUserScroll = false;
+    let loadingFromUserScroll = $state(false);
     let previousScrollHeight: MessageContextMap<number> = new MessageContextMap();
     let previousScrollTopByHeight: MessageContextMap<Record<number, number>> =
         new MessageContextMap();
     let scrollingToMessage = false;
     let scrollToBottomOnSend = false;
     let destroyed = false;
-    let messageObserver: IntersectionObserver;
-    let labelObserver: IntersectionObserver;
+    let messageObserver: IntersectionObserver | undefined = $state();
+    let labelObserver: IntersectionObserver | undefined = $state();
     let heightObserver: MutationObserver;
     let messageReadTimers: Record<number, number> = {};
 
-    $: userId = $user.userId;
-    $: threadSummary = threadRootEvent?.event.thread;
-    $: messageContext = {
+    let userId = $derived($user.userId);
+    let threadSummary = $derived(threadRootEvent?.event.thread);
+    let messageContext = $derived({
         chatId: chat.id,
         threadRootMessageIndex: threadRootEvent?.event.messageIndex,
-    };
+    });
 
     // use this when it's critical that we get the live value from the dom and
     // not a potentially stale value from the captured variable
@@ -126,13 +151,13 @@
         return fromTop() < LOADING_THRESHOLD;
     };
 
-    let showGoToBottom = false;
-    let showGoToTop = false;
-    let floatingTimestamp: bigint | undefined = undefined;
+    let showGoToBottom = $state(false);
+    let showGoToTop = $state(false);
+    let floatingTimestamp: bigint | undefined = $state(undefined);
     let loadingNewMessages = false;
     let loadingPrevMessages = false;
 
-    beforeUpdate(() => {
+    $effect.pre(() => {
         withScrollableElement((el) => {
             const scrollTopByHeight = previousScrollTopByHeight.get(messageContext) ?? {};
             scrollTopByHeight[el.scrollHeight] = el.scrollTop;
@@ -140,7 +165,7 @@
         });
     });
 
-    afterUpdate(() => {
+    $effect(() => {
         updateShowGoToBottom();
         updateShowGoToTop();
     });
@@ -245,7 +270,7 @@
                         const timer = window.setTimeout(() => {
                             if (messageContextsEqual(context, messageContext)) {
                                 client.markMessageRead(messageContext, idx, id);
-                                messageObserver.unobserve(entry.target);
+                                messageObserver?.unobserve(entry.target);
                             }
                             delete messageReadTimers[idx];
                         }, MESSAGE_READ_THRESHOLD);
@@ -294,40 +319,53 @@
             });
         }
 
-        client.addEventListener("openchat_event", clientEvent);
+        const unsubs = [
+            subscribe("chatUpdated", chatsUpdated),
+            subscribe("reactionSelected", afterReaction),
+            subscribe("sendingMessage", sendingMessage),
+            subscribe("sentMessage", sentMessage),
+            subscribe("loadedMessageWindow", onMessageWindowLoaded),
+            subscribe(
+                "loadedNewMessages",
+                (args) => !scrollingToMessage && onLoadedNewMessages(args),
+            ),
+            subscribe(
+                "loadedPreviousMessages",
+                (args) => !scrollingToMessage && onLoadedPreviousMessages(args),
+            ),
+        ];
         return () => {
             heightObserver.disconnect();
-            client.removeEventListener("openchat_event", clientEvent);
+            unsubs.forEach((u) => u());
             destroyed = true;
         };
     });
 
-    async function clientEvent(ev: Event): Promise<void> {
-        await tick();
-        if (ev instanceof LoadedNewMessages && !scrollingToMessage) {
-            onLoadedNewMessages(ev.detail);
-        }
-        if (ev instanceof LoadedPreviousMessages && !scrollingToMessage) {
-            onLoadedPreviousMessages(ev.detail.context, ev.detail.initializing);
-        }
-        if (ev instanceof LoadedMessageWindow) {
-            onMessageWindowLoaded(ev.detail.context, ev.detail.messageIndex, ev.detail.initialLoad);
-        }
-        if (ev instanceof ChatUpdated && messageContextsEqual(ev.detail, messageContext)) {
+    function chatsUpdated(ctx: MessageContext) {
+        if (messageContextsEqual(ctx, messageContext)) {
             loadMoreIfRequired();
-        }
-        if (ev instanceof SentMessage && messageContextsEqual(ev.detail.context, messageContext)) {
-            afterSendMessage(ev.detail.context, ev.detail.event);
-        }
-        if (ev instanceof SendingMessage && messageContextsEqual(ev.detail, messageContext)) {
-            scrollToBottomOnSend = insideBottomThreshold();
-        }
-        if (ev instanceof ReactionSelected) {
-            afterReaction(ev.detail.messageId, ev.detail.kind);
         }
     }
 
-    async function afterReaction(messageId: bigint, kind: "add" | "remove") {
+    function sendingMessage(ctx: MessageContext) {
+        if (messageContextsEqual(ctx, messageContext)) {
+            scrollToBottomOnSend = insideBottomThreshold();
+        }
+    }
+
+    function sentMessage(payload: { context: MessageContext; event: EventWrapper<Message> }) {
+        if (messageContextsEqual(payload.context, messageContext)) {
+            afterSendMessage(payload.context, payload.event);
+        }
+    }
+
+    async function afterReaction({
+        messageId,
+        kind,
+    }: {
+        messageId: bigint;
+        kind: "add" | "remove";
+    }) {
         if (
             !client.moreNewMessagesAvailable(chat.id, threadRootEvent) &&
             kind === "add" &&
@@ -560,11 +598,15 @@
         }
     }
 
-    export async function onMessageWindowLoaded(
-        context: MessageContext,
-        messageIndex: number | undefined,
-        initialLoad = false,
-    ) {
+    export async function onMessageWindowLoaded({
+        context,
+        messageIndex,
+        initialLoad,
+    }: {
+        context: MessageContext;
+        messageIndex: number | undefined;
+        initialLoad: boolean;
+    }) {
         if (messageIndex === undefined || initialLoad === false) return;
         await tick();
         if (!messageContextsEqual(context, messageContext)) return;
@@ -572,7 +614,13 @@
         await scrollToMessageIndex(context, messageIndex, false);
     }
 
-    async function onLoadedPreviousMessages(context: MessageContext, initialLoad: boolean) {
+    async function onLoadedPreviousMessages({
+        context,
+        initialLoad,
+    }: {
+        context: MessageContext;
+        initialLoad: boolean;
+    }) {
         if (!messageContextsEqual(context, messageContext)) return;
         await resetScroll(initialLoad);
         if (!messageContextsEqual(context, messageContext)) return;
@@ -668,17 +716,24 @@
     }
 </script>
 
-{#if floatingTimestamp !== undefined}
+{#if floatingTimestamp !== undefined && labelObserver !== undefined}
     <TimelineDate observer={labelObserver} timestamp={BigInt(floatingTimestamp)} floating />
 {/if}
 <div
     id={`scrollable-list-${rootSelector}`}
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
-    on:scroll={onUserScroll}
+    onscroll={onUserScroll}
     class:interrupt
     class={`scrollable-list ${rootSelector}`}>
-    <slot {isAccepted} {isConfirmed} {isFailed} {isReadByMe} {messageObserver} {labelObserver} />
+    {@render children?.({
+        isAccepted,
+        isConfirmed,
+        isFailed,
+        isReadByMe,
+        messageObserver,
+        labelObserver,
+    })}
 </div>
 
 {#if scrollTopButtonEnabled}
@@ -714,7 +769,7 @@
     class:rtl={$rtlStore}>
     <Fab on:click={scrollToLast}>
         {#if loadingFromUserScroll}
-            <div class="spinner" />
+            <div class="spinner"></div>
         {:else if unreadMessages > 0}
             <div in:pop={{ duration: 1500 }} class="unread">
                 <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>

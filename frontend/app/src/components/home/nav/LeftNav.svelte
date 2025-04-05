@@ -49,8 +49,8 @@
         anonUser,
         globalStateStore as globalState,
         favouritesStore,
+        publish,
     } from "openchat-client";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
     const flipDurationMs = 300;

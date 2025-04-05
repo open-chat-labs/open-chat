@@ -3,7 +3,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    export let para = i18nKey("upgrade.congratulations");
+    let { para = i18nKey("upgrade.congratulations") } = $props();
 </script>
 
 <div class="confirmed">

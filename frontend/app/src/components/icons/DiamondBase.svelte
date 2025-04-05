@@ -1,9 +1,13 @@
 <script lang="ts">
-    export let dark: string;
-    export let medium: string;
-    export let light: string;
-    export let size: string;
-    export let y = -40;
+    interface Props {
+        dark: string;
+        medium: string;
+        light: string;
+        size: string;
+        y?: any;
+    }
+
+    let { dark, medium, light, size, y = -40 }: Props = $props();
 
     let width = size;
     let height = size;
@@ -41,6 +45,3 @@
         </g>
     </g>
 </svg>
-
-<style lang="scss">
-</style>

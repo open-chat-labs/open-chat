@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
@@ -7,9 +5,13 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let text: string;
-    export let timestamp: bigint;
-    $: date = new Date(Number(timestamp));
+    interface Props {
+        text: string;
+        timestamp: bigint;
+    }
+
+    let { text, timestamp }: Props = $props();
+    let date = $derived(new Date(Number(timestamp)));
 </script>
 
 <div class="timeline-event">

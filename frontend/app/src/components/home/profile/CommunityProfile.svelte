@@ -11,23 +11,28 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let community: CommunitySummary;
-
-    let displayName: string | undefined = undefined;
-    let displayNameValid = false;
-    let displayNameError: string | undefined = undefined;
-    let saving = false;
-
-    $: originalDisplayName = community.membership.displayName;
-    $: displayNameDirty = displayName !== originalDisplayName;
-    $: buttonEnabled = displayNameValid && displayNameDirty && !saving;
-
-    $: {
-        displayName = originalDisplayName;
-        displayNameError = undefined;
+    interface Props {
+        community: CommunitySummary;
     }
 
-    function saveUser() {
+    let { community }: Props = $props();
+
+    let displayName: string | undefined = $state(undefined);
+    let displayNameValid = $state(false);
+    let displayNameError: string | undefined = $state(undefined);
+    let saving = $state(false);
+
+    let originalDisplayName = $derived(community.membership.displayName);
+    let displayNameDirty = $derived(displayName !== originalDisplayName);
+    let buttonEnabled = $derived(displayNameValid && displayNameDirty && !saving);
+
+    $effect(() => {
+        displayName = originalDisplayName;
+        displayNameError = undefined;
+    });
+
+    function saveUser(e: Event) {
+        e.preventDefault();
         saving = true;
 
         client
@@ -55,7 +60,7 @@
     }
 </script>
 
-<form class="form" on:submit|preventDefault={saveUser}>
+<form class="form" onsubmit={saveUser}>
     <div class="form-fields">
         <Legend label={i18nKey("displayName")} rules={i18nKey("communityDisplayNameRules")} />
         <DisplayNameInput

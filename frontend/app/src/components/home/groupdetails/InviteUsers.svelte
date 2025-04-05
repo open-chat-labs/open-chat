@@ -4,21 +4,37 @@
     import InviteUsersHeader from "./InviteUsersHeader.svelte";
     import InviteUsersBody from "./InviteUsersBody.svelte";
 
-    export let closeIcon: "close" | "back";
-    export let busy = false;
-    export let userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
-    export let memberLookup:
-        | ((searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>)
-        | undefined = undefined;
-    export let level: Level;
-    export let container: MultiUserChat | CommunitySummary;
-    export let isCommunityPublic: boolean;
+    interface Props {
+        closeIcon: "close" | "back";
+        busy?: boolean;
+        userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
+        memberLookup?:
+            | ((searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>)
+            | undefined;
+        level: Level;
+        container: MultiUserChat | CommunitySummary;
+        isCommunityPublic: boolean;
+        onCancelInviteUsers: () => void;
+        onInviteUsers: (users: UserSummary[]) => void;
+    }
+
+    let {
+        closeIcon,
+        busy = false,
+        userLookup,
+        memberLookup = undefined,
+        level,
+        container,
+        isCommunityPublic,
+        onCancelInviteUsers,
+        onInviteUsers,
+    }: Props = $props();
 </script>
 
-<InviteUsersHeader on:cancelInviteUsers {closeIcon} {level} {container} {isCommunityPublic} />
+<InviteUsersHeader {onCancelInviteUsers} {closeIcon} {level} {container} {isCommunityPublic} />
 
 <InviteUsersBody
-    on:inviteUsers
+    {onInviteUsers}
     {busy}
     {userLookup}
     {memberLookup}

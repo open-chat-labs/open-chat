@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
@@ -10,11 +8,21 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let content: FileContent;
-    export let me: boolean = false;
-    export let draft: boolean = false;
-    export let edited: boolean;
-    export let blockLevelMarkdown: boolean = false;
+    interface Props {
+        content: FileContent;
+        me?: boolean;
+        draft?: boolean;
+        edited: boolean;
+        blockLevelMarkdown?: boolean;
+    }
+
+    let {
+        content,
+        me = false,
+        draft = false,
+        edited,
+        blockLevelMarkdown = false,
+    }: Props = $props();
 
     let color = me ? "#ffffff" : "var(--txt)";
 </script>

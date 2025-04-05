@@ -13,16 +13,17 @@
         countdown?: boolean;
         pattern?: string | undefined;
         children?: Snippet;
-        onblur?: () => void;
-        onfocus?: () => void;
-        oninput?: () => void;
-        onenter?: () => void;
+        onBlur?: () => void;
+        onFocus?: () => void;
+        onInput?: () => void;
+        onEnter?: () => void;
+        onChange?: (value: string | number | bigint) => void;
     }
 </script>
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, onMount, tick, type Snippet } from "svelte";
+    import { onMount, tick, type Snippet } from "svelte";
     import { translatable } from "../actions/translatable";
     import { interpolate } from "../i18n/i18n";
     import { type ResourceKey, parseBigInt } from "openchat-client";
@@ -40,14 +41,13 @@
         align = "left",
         countdown = false,
         pattern = undefined,
-        onblur = undefined,
-        onfocus = undefined,
-        oninput = undefined,
-        onenter = undefined,
+        onBlur,
+        onFocus,
+        onInput,
+        onEnter,
+        onChange,
         children,
     }: InputProps = $props();
-
-    const dispatch = createEventDispatcher();
 
     let inp: HTMLInputElement | undefined = $state();
 
@@ -67,8 +67,8 @@
         if (type === "bigint") {
             value = parseBigInt(e.currentTarget.value) ?? BigInt(0);
         }
-        dispatch("change", value);
-        oninput?.();
+        onInput?.();
+        onChange?.(value);
     };
 
     export function setValue(text: string) {
@@ -77,8 +77,7 @@
 
     function keyDown(e: KeyboardEvent) {
         if (e.key === "Enter") {
-            dispatch("enter");
-            onenter?.();
+            onEnter?.();
         }
     }
 
@@ -103,8 +102,8 @@
         use:translatable={{ key: placeholder, position: "absolute", right: 30, top: 12 }}
         oninput={handleInput}
         onkeydown={keyDown}
-        {onblur}
-        {onfocus}
+        onblur={onBlur}
+        onfocus={onFocus}
         bind:this={inp}
         {pattern}
         {value}

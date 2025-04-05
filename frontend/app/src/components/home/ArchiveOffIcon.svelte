@@ -1,9 +1,19 @@
-<script>
-    export let size = "1em";
-    export let width = size;
-    export let height = size;
-    export let color = "currentColor";
-    export let viewBox = "0 0 24 24";
+<script lang="ts">
+    interface Props {
+        size?: string;
+        width?: any;
+        height?: any;
+        color?: string;
+        viewBox?: string;
+    }
+
+    let {
+        size = "1em",
+        width = size,
+        height = size,
+        color = "currentColor",
+        viewBox = "0 0 24 24",
+    }: Props = $props();
 </script>
 
 <svg {width} {height} {viewBox}>

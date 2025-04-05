@@ -4,7 +4,11 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let partition: PermissionsByRole;
+    interface Props {
+        partition: PermissionsByRole;
+    }
+
+    let { partition }: Props = $props();
 
     const roleLabels: Record<ChatPermissionRole, string> = {
         none: "permissions.nobody",

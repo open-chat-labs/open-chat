@@ -13,12 +13,12 @@
 
     const client = getContext<OpenChat>("client");
 
-    let threads: ThreadPreview[] = [];
+    let threads: ThreadPreview[] = $state([]);
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
-    let loading = false;
-    let initialised = false;
+    let loading = $state(false);
+    let initialised = $state(false);
 
-    $: {
+    $effect(() => {
         loading = true;
         client
             .threadPreviews($selectedChatId, $threadsByChat, $serverChatSummariesStore)
@@ -31,7 +31,7 @@
                 client.logError("Unable to load thread previews: ", err);
             })
             .finally(() => (loading = false));
-    }
+    });
 </script>
 
 <div class="threads">

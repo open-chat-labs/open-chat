@@ -13,6 +13,7 @@
         cryptoLookup,
         isDiamond,
         exchangeRatesLookupStore as exchangeRatesLookup,
+        publish,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
@@ -31,52 +32,68 @@
     import { calculateDollarAmount } from "../../utils/exchange";
     import P2PSwapProgress from "./P2PSwapProgress.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
-    export let senderId: string;
-    export let content: P2PSwapContent;
-    export let messageContext: MessageContext;
-    export let messageId: bigint;
-    export let me: boolean;
-    export let reply: boolean;
-    export let pinned: boolean;
+    interface Props {
+        senderId: string;
+        content: P2PSwapContent;
+        messageContext: MessageContext;
+        messageId: bigint;
+        me: boolean;
+        reply: boolean;
+        pinned: boolean;
+    }
 
-    let buttonText: ResourceKey;
-    let instructionText: string | undefined = undefined;
-    let summaryText: ResourceKey | undefined = undefined;
-    let confirming = false;
-    let showDetails = false;
+    let { senderId, content, messageContext, messageId, me, reply, pinned }: Props = $props();
 
-    $: fromDetails = $cryptoLookup[content.token0.ledger];
-    $: toDetails = $cryptoLookup[content.token1.ledger];
-    $: finished = $now500 >= Number(content.expiresAt);
-    $: timeRemaining = finished
-        ? $_("p2pSwap.expired")
-        : client.formatTimeRemaining($now500, Number(content.expiresAt));
-    $: acceptedByYou =
+    let confirming = $state(false);
+    let showDetails = $state(false);
+
+    let fromDetails = $derived($cryptoLookup[content.token0.ledger]);
+    let toDetails = $derived($cryptoLookup[content.token1.ledger]);
+    let finished = $derived($now500 >= Number(content.expiresAt));
+    let timeRemaining = $derived(
+        finished
+            ? $_("p2pSwap.expired")
+            : client.formatTimeRemaining($now500, Number(content.expiresAt)),
+    );
+    let acceptedByYou = $derived(
         (content.status.kind === "p2p_swap_reserved" &&
             content.status.reservedBy === $user.userId) ||
-        ((content.status.kind === "p2p_swap_accepted" ||
-            content.status.kind === "p2p_swap_completed") &&
-            content.status.acceptedBy === $user.userId);
-
-    $: fromAmount = client.formatTokens(content.token0Amount, content.token0.decimals);
-    $: toAmount = client.formatTokens(content.token1Amount, content.token1.decimals);
-    $: buttonDisabled = content.status.kind !== "p2p_swap_open" || reply || pinned;
-    $: fromAmountInUsd = calculateDollarAmount(
-        content.token0Amount,
-        $exchangeRatesLookup[fromDetails.symbol.toLowerCase()]?.toUSD,
-        fromDetails.decimals,
-    );
-    $: toAmountInUsd = calculateDollarAmount(
-        content.token1Amount,
-        $exchangeRatesLookup[toDetails.symbol.toLowerCase()]?.toUSD,
-        toDetails.decimals,
+            ((content.status.kind === "p2p_swap_accepted" ||
+                content.status.kind === "p2p_swap_completed") &&
+                content.status.acceptedBy === $user.userId),
     );
 
-    $: {
+    let fromAmount = $derived(client.formatTokens(content.token0Amount, content.token0.decimals));
+    let toAmount = $derived(client.formatTokens(content.token1Amount, content.token1.decimals));
+    let buttonDisabled = $derived(content.status.kind !== "p2p_swap_open" || reply || pinned);
+    let fromAmountInUsd = $derived(
+        calculateDollarAmount(
+            content.token0Amount,
+            $exchangeRatesLookup[fromDetails.symbol.toLowerCase()]?.toUSD,
+            fromDetails.decimals,
+        ),
+    );
+    let toAmountInUsd = $derived(
+        calculateDollarAmount(
+            content.token1Amount,
+            $exchangeRatesLookup[toDetails.symbol.toLowerCase()]?.toUSD,
+            toDetails.decimals,
+        ),
+    );
+
+    type Labels = {
+        instructionText?: string;
+        buttonText: ResourceKey;
+        summaryText: ResourceKey;
+    };
+
+    let labels = $derived.by<Labels>(() => {
+        let instructionText: string | undefined = undefined;
+        let buttonText: ResourceKey = i18nKey("");
+
         if (content.status.kind === "p2p_swap_open") {
             if (me) {
                 instructionText = undefined;
@@ -120,13 +137,17 @@
             buttonText = i18nKey("p2pSwap.accepted");
         }
 
-        summaryText = i18nKey("p2pSwap.summary", {
-            fromAmount,
-            toAmount,
-            fromToken: content.token0.symbol,
-            toToken: content.token1.symbol,
-        });
-    }
+        return {
+            instructionText,
+            buttonText,
+            summaryText: i18nKey("p2pSwap.summary", {
+                fromAmount,
+                toAmount,
+                fromToken: content.token0.symbol,
+                toToken: content.token1.symbol,
+            }),
+        };
+    });
 
     function onAcceptOrCancel(e: MouseEvent) {
         if (e.isTrusted && !buttonDisabled) {
@@ -244,7 +265,7 @@
                 <span>{timeRemaining}</span>
             </div>
         {/if}
-        <div class="coins" on:click={onSwapClick}>
+        <div class="coins" onclick={onSwapClick}>
             <div class="coin">
                 <SpinningToken logo={fromDetails.logo} spin={false} size="medium" />
                 <div class="amount">
@@ -272,12 +293,10 @@
                 {content.caption}
             </div>
         {/if}
-        {#if summaryText !== undefined}
-            <div class="summary"><Translatable resourceKey={summaryText} /></div>
-        {/if}
-        {#if instructionText !== undefined}
+        <div class="summary"><Translatable resourceKey={labels.summaryText} /></div>
+        {#if labels.instructionText !== undefined}
             <div class="instructions">
-                <Markdown text={instructionText} />
+                <Markdown text={labels.instructionText} />
             </div>
         {/if}
         <div class="accept">
@@ -288,7 +307,7 @@
                     disabled={buttonDisabled}
                     hollow
                     onClick={onAcceptOrCancel}>
-                    <Translatable resourceKey={buttonText} />
+                    <Translatable resourceKey={labels.buttonText} />
                 </Button>
             </ButtonGroup>
         </div>

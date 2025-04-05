@@ -1,25 +1,41 @@
 <script lang="ts">
     import type { ResourceKey } from "openchat-client";
     import Translatable from "./Translatable.svelte";
+    import type { Snippet } from "svelte";
 
-    export let group: string = "radio-group";
-    export let value: string = "radio-value";
-    export let checked: boolean = false;
-    export let id: string;
-    export let label: ResourceKey | undefined = undefined;
-    export let align: "center" | "start" = "center";
-    export let disabled: boolean = false;
-    export let compact: boolean = false;
+    interface Props {
+        group?: string;
+        value?: string;
+        checked?: boolean;
+        id: string;
+        label?: ResourceKey | undefined;
+        align?: "center" | "start";
+        disabled?: boolean;
+        compact?: boolean;
+        children?: Snippet;
+        onChange?: () => void;
+    }
+
+    let {
+        group = "radio-group",
+        value = "radio-value",
+        checked = false,
+        id,
+        label = undefined,
+        align = "center",
+        disabled = false,
+        compact = false,
+        children,
+        onChange,
+    }: Props = $props();
 </script>
 
 <div class="radio" class:compact class:align-start={align === "start"}>
-    <input {disabled} {id} type="radio" name={group} {checked} {value} on:change />
+    <input {disabled} {id} type="radio" name={group} {checked} {value} onchange={onChange} />
     <label class:disabled for={id}>
-        <slot>
-            {#if label}
-                <Translatable resourceKey={label} />
-            {/if}
-        </slot>
+        {#if children}{@render children()}{:else if label}
+            <Translatable resourceKey={label} />
+        {/if}
     </label>
 </div>
 

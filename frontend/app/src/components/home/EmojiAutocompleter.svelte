@@ -1,8 +1,8 @@
 <script lang="ts">
-    import MenuItem from "../MenuItemLegacy.svelte";
+    import MenuItem from "../MenuItem.svelte";
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
-    import { createEventDispatcher } from "svelte";
+    import { untrack } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -12,16 +12,28 @@
         code: string;
     };
 
-    export let query: string | undefined;
-    export let offset: number;
+    interface Props {
+        query: string | undefined;
+        offset: number;
+        onSelect: (emoji: string) => void;
+        onClose: () => void;
+    }
 
-    let index = 0;
-    let matches: EmojiSummary[] = [];
+    let { query, offset, onSelect, onClose }: Props = $props();
+
+    let index = $state(0);
+    let matches: EmojiSummary[] = $state([]);
 
     // this is definitely a bit horrible. It seems to be necessary when we use the virtual list.
-    $: ITEM_HEIGHT = $mobileWidth ? 43.2 : 49.59;
-    $: {
+    let ITEM_HEIGHT = $derived($mobileWidth ? 43.2 : 49.59);
+    $effect(() => {
         if (query !== undefined) {
+            search(query);
+        }
+    });
+
+    function search(query: string) {
+        untrack(() => {
             emojiDatabase.getPreferredSkinTone().then((tone) => {
                 emojiDatabase.getEmojiBySearchQuery(query!).then((m) => {
                     matches = (m as NativeEmoji[])
@@ -38,13 +50,11 @@
                         });
                 });
             });
-        }
+        });
     }
 
-    const dispatch = createEventDispatcher();
-
     function select(emoji: string) {
-        dispatch("select", emoji);
+        onSelect(emoji);
     }
 
     function onKeyDown(ev: KeyboardEvent): void {
@@ -60,7 +70,7 @@
                 ev.stopPropagation();
                 break;
             case "Escape":
-                dispatch("close");
+                onClose();
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
@@ -78,20 +88,26 @@
 
 <div class="picker" style={`bottom: ${offset}px; height: ${matches.length * ITEM_HEIGHT}px`}>
     <Menu>
-        <VirtualList keyFn={(e) => e.unicode} items={matches} let:item let:itemIndex>
-            <MenuItem selected={itemIndex === index} onclick={() => select(item.unicode)}>
-                <div class="emoji" slot="icon">
-                    {item.unicode}
-                </div>
-                <div slot="text">
-                    :{item.code}:
-                </div>
-            </MenuItem>
+        <VirtualList keyFn={(e) => e.unicode} items={matches}>
+            {#snippet children(match, itemIndex)}
+                <MenuItem selected={itemIndex === index} onclick={() => select(match.unicode)}>
+                    {#snippet icon()}
+                        <div class="emoji">
+                            {match.unicode}
+                        </div>
+                    {/snippet}
+                    {#snippet text()}
+                        <div>
+                            :{match.code}:
+                        </div>
+                    {/snippet}
+                </MenuItem>
+            {/snippet}
         </VirtualList>
     </Menu>
 </div>
 
-<svelte:body on:keydown={onKeyDown} />
+<svelte:body onkeydown={onKeyDown} />
 
 <style lang="scss">
     :global(.picker .menu) {

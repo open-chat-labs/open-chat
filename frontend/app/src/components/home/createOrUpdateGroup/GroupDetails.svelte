@@ -13,12 +13,21 @@
     const MAX_URL_LENGTH = 500;
     const MAX_DESC_LENGTH = 1024;
 
-    export let busy: boolean;
-    export let candidateGroup: CandidateGroupChat;
-    export let valid: boolean;
-    export let embeddedContent: boolean;
+    interface Props {
+        busy: boolean;
+        candidateGroup: CandidateGroupChat;
+        valid: boolean;
+        embeddedContent: boolean;
+    }
 
-    $: {
+    let {
+        busy,
+        candidateGroup = $bindable(),
+        valid = $bindable(),
+        embeddedContent,
+    }: Props = $props();
+
+    $effect(() => {
         let urlValid = true;
         if (embeddedContent) {
             if (candidateGroup.externalUrl === undefined) {
@@ -31,16 +40,20 @@
                 }
             }
         }
-        valid =
+        const isValid =
             candidateGroup.name.length >= MIN_LENGTH &&
             candidateGroup.name.length <= MAX_LENGTH &&
             urlValid;
-    }
 
-    function groupAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
+        if (isValid !== valid) {
+            valid = isValid;
+        }
+    });
+
+    function groupAvatarSelected(detail: { url: string; data: Uint8Array }) {
         candidateGroup.avatar = {
-            blobUrl: ev.detail.url,
-            blobData: ev.detail.data,
+            blobUrl: detail.url,
+            blobData: detail.data,
         };
     }
 </script>
@@ -51,7 +64,7 @@
         <EditableAvatar
             overlayIcon
             image={candidateGroup.avatar?.blobUrl}
-            on:imageSelected={groupAvatarSelected} />
+            onImageSelected={groupAvatarSelected} />
     </div>
 </section>
 

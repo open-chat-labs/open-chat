@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat } from "openchat-client";
     import { userStore } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { now } from "../../stores/time";
     import VisibilityLabel from "./VisibilityLabel.svelte";
@@ -10,18 +10,22 @@
     import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let chat: ChatSummary;
-    export let clickableMembers = false;
+    interface Props {
+        chat: ChatSummary;
+        clickableMembers?: boolean;
+        onMembersClick?: () => void;
+    }
 
-    $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
-    $: isBot = $userStore.get(userId)?.kind === "bot";
-    $: isSuspended = $userStore.get(userId)?.suspended ?? false;
-    $: subtext = isSuspended ? $_("accountSuspended") : "";
-    $: checkLastOnline = !isSuspended && !isBot && chat.kind === "direct_chat";
+    let { chat, clickableMembers = false, onMembersClick }: Props = $props();
 
-    $: {
+    let userId = $derived(chat.kind === "direct_chat" ? chat.them.userId : "");
+    let isBot = $derived($userStore.get(userId)?.kind === "bot");
+    let isSuspended = $derived($userStore.get(userId)?.suspended ?? false);
+    let subtext = $derived(isSuspended ? $_("accountSuspended") : "");
+    let checkLastOnline = $derived(!isSuspended && !isBot && chat.kind === "direct_chat");
+
+    $effect(() => {
         if (checkLastOnline && chat.kind === "direct_chat") {
             client.getLastOnlineDate(chat.them.userId, $now).then((lastOnline) => {
                 if (lastOnline !== undefined && lastOnline !== 0) {
@@ -31,11 +35,11 @@
                 }
             });
         }
-    }
+    });
 
-    function onMembersClick() {
+    function click() {
         if (clickableMembers) {
-            dispatch("membersClick");
+            onMembersClick?.();
         }
     }
 </script>
@@ -48,7 +52,7 @@
             <DisappearLabel ttl={chat.eventsTTL} />
         {/if}
         <VisibilityLabel isPublic={chat.public} />
-        <div class="members" class:clickable={clickableMembers} on:click={onMembersClick}>
+        <div class="members" class:clickable={clickableMembers} onclick={click}>
             <span class="num">{chat.memberCount.toLocaleString()}</span>
             <Translatable resourceKey={i18nKey("members")} />
         </div>

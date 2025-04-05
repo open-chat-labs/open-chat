@@ -7,31 +7,42 @@
         type CandidateGroupChat,
         type CommunitySummary,
         isDiamond,
+        publish,
     } from "openchat-client";
     import Radio from "../Radio.svelte";
     import { getContext } from "svelte";
     import Button from "../Button.svelte";
     import DurationPicker from "./DurationPicker.svelte";
     import AccessGateControl from "./access/AccessGateControl.svelte";
-    import { publish } from "@src/utils/pubsub";
-
-    type T = $$Generic;
 
     const client = getContext<OpenChat>("client");
 
-    export let candidate: CandidateGroupChat | CommunitySummary;
-    export let editing: boolean;
-    export let history: boolean;
-    export let canEditDisappearingMessages: boolean;
-    export let valid: boolean;
-    export let gateDirty: boolean;
-    export let embeddedContent: boolean = false;
+    interface Props {
+        candidate: CandidateGroupChat | CommunitySummary;
+        editing: boolean;
+        history: boolean;
+        canEditDisappearingMessages: boolean;
+        valid: boolean;
+        gateDirty: boolean;
+        embeddedContent?: boolean;
+    }
 
-    let disappearingMessages =
-        candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
+    let {
+        candidate = $bindable(),
+        editing,
+        history,
+        canEditDisappearingMessages,
+        valid = $bindable(),
+        gateDirty,
+        embeddedContent = false,
+    }: Props = $props();
 
-    $: requiresUpgrade = !editing && !$isDiamond && candidate.level !== "channel";
-    $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
+    let disappearingMessages = $state(
+        candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined,
+    );
+
+    let requiresUpgrade = $derived(!editing && !$isDiamond && candidate.level !== "channel");
+    let canChangeVisibility = $derived(!editing ? client.canChangeVisibility(candidate) : true);
 
     function gateUpdated() {
         if (
@@ -69,14 +80,14 @@
 
 <div class="section">
     <Radio
-        on:change={toggleScope}
+        onChange={toggleScope}
         checked={!candidate.public}
         id={"private"}
         disabled={!canChangeVisibility}
         align={"start"}
         group={"visibility"}>
         <div class="section-title">
-            <div class={"img private"} />
+            <div class={"img private"}></div>
             <p>
                 <Translatable
                     resourceKey={i18nKey("group.privateGroup", undefined, candidate.level, true)} />
@@ -93,14 +104,14 @@
 
 <div class="section">
     <Radio
-        on:change={toggleScope}
+        onChange={toggleScope}
         checked={candidate.public}
         id={"public"}
         disabled={!canChangeVisibility || requiresUpgrade}
         align={"start"}
         group={"visibility"}>
         <div class="section-title">
-            <div class={"img public"} />
+            <div class={"img public"}></div>
             <p>
                 <Translatable
                     resourceKey={i18nKey("group.publicGroup", undefined, candidate.level, true)} />
@@ -126,7 +137,7 @@
         <Checkbox
             id="history-visible"
             disabled={candidate.public || editing}
-            on:change={() => (candidate.historyVisible = !candidate.historyVisible)}
+            onChange={() => (candidate.historyVisible = !candidate.historyVisible)}
             label={i18nKey("historyVisible")}
             align={"start"}
             checked={candidate.historyVisible}>
@@ -149,7 +160,7 @@
         <Checkbox
             id="disappearing-messages"
             disabled={!canEditDisappearingMessages}
-            on:change={toggleDisappearingMessages}
+            onChange={toggleDisappearingMessages}
             label={i18nKey("disappearingMessages.label")}
             align={"start"}
             checked={disappearingMessages}>
@@ -171,7 +182,7 @@
     <div class="section">
         <Checkbox
             id="visible_to_non_members"
-            on:change={toggleVisibleToNonMembers}
+            onChange={toggleVisibleToNonMembers}
             label={i18nKey("access.messagesVisibleToNonMembers")}
             align={"start"}
             checked={candidate.messagesVisibleToNonMembers}>
@@ -184,7 +195,7 @@
 
 {#if !requiresUpgrade}
     <AccessGateControl
-        on:updated={gateUpdated}
+        onUpdated={gateUpdated}
         bind:gateConfig={candidate.gateConfig}
         level={candidate.level}
         bind:valid />

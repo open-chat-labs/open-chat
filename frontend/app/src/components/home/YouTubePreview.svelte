@@ -1,13 +1,18 @@
 <script lang="ts">
-    export let pinned: boolean;
-    export let fill: boolean;
-    export let youtubeMatch: RegExpMatchArray;
+    interface Props {
+        pinned: boolean;
+        fill: boolean;
+        youtubeMatch: RegExpMatchArray;
+    }
 
-    $: youtubeCode =
-        youtubeMatch && (youtubeMatch[1] ?? youtubeMatch[2] ?? youtubeMatch[3])?.split("?")[0];
-    $: youtubeStartTime = youtubeMatch
-        ? new URL(youtubeMatch[0]).searchParams.get("t") || "0"
-        : "0";
+    let { pinned, fill, youtubeMatch }: Props = $props();
+
+    let youtubeCode = $derived(
+        youtubeMatch && (youtubeMatch[1] ?? youtubeMatch[2] ?? youtubeMatch[3])?.split("?")[0],
+    );
+    let youtubeStartTime = $derived(
+        youtubeMatch ? new URL(youtubeMatch[0]).searchParams.get("t") || "0" : "0",
+    );
 </script>
 
 <div>
@@ -25,7 +30,7 @@
                             encrypted-media;
                             gyroscope;
                             picture-in-picture"
-        allowfullscreen />
+        allowfullscreen></iframe>
 </div>
 
 <style lang="scss">

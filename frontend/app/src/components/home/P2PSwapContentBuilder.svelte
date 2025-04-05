@@ -18,8 +18,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import { enhancedCryptoLookup as cryptoLookup, isDiamond } from "openchat-client";
-    import { publish } from "@src/utils/pubsub";
+    import { enhancedCryptoLookup as cryptoLookup, isDiamond, publish } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
 
@@ -132,9 +131,9 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
+    function onBalanceRefreshError(err: string) {
         onBalanceRefreshFinished();
-        error = ev.detail;
+        error = err;
     }
 
     function onBalanceRefreshFinished() {
@@ -175,8 +174,8 @@
                     value={remainingBalance}
                     label={i18nKey("cryptoAccount.shortBalanceLabel")}
                     bold
-                    on:refreshed={onBalanceRefreshed}
-                    on:error={onBalanceRefreshError} />
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             </span>
         {/snippet}
         {#snippet body()}
@@ -197,7 +196,7 @@
                             {minAmount}
                             maxAmount={fromDetails.balance - totalFees}
                             showDollarAmount
-                            bind:state={tokenInputState}
+                            bind:status={tokenInputState}
                             bind:valid={fromAmountValid}
                             bind:amount={fromAmount} />
                     </div>

@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
     export type PincodeType = "alphanumeric" | "numeric";
     export type PincodeChar = {
         idx: number;
@@ -7,25 +7,48 @@
 </script>
 
 <script lang="ts">
-    import { createEventDispatcher, afterUpdate } from "svelte";
     import PincodeInput from "./PincodeInput.svelte";
 
-    export let length: number;
-    export let code: string[] = [];
-    export let value: string = "";
-    export let type: PincodeType = "alphanumeric";
-    export let complete: boolean = false;
-    export let selectTextOnFocus: boolean = false;
+    interface Props {
+        length?: number;
+        code?: string[];
+        type?: PincodeType;
+        onClear?: () => void;
+        onComplete?: (code: string[], value: string) => void;
+    }
+
+    let {
+        length = 6,
+        code = $bindable([]),
+        type = "numeric",
+        onClear,
+        onComplete,
+    }: Props = $props();
 
     function initialise(length: number): PincodeChar[] {
         return [...Array(length).keys()].map((idx) => ({ idx, value: "" }));
     }
 
-    const dispatch = createEventDispatcher();
-    $: characters = initialise(length);
+    let characters = $state(initialise(length));
+    let ref: HTMLDivElement | undefined = $state();
+    let prevValue = $state("");
+    let value = $derived(code.join(""));
+    let complete = $derived(code.length > 0 && code.filter(Boolean).length === characters.length);
 
-    let ref: HTMLDivElement | undefined = undefined;
-    let prevValue = value;
+    $effect(() => {
+        if (prevValue !== value && value.length === 0) {
+            onClear?.();
+        }
+        prevValue = value;
+    });
+
+    $effect(() => {
+        if (complete) onComplete?.(code, value);
+    });
+
+    function charactersFromCode() {
+        characters = code.map((char, idx) => ({ idx, value: char }));
+    }
 
     function setCode() {
         code = characters.map((char) => char.value || "");
@@ -41,61 +64,44 @@
         nextInput?.focus();
     }
 
-    function clear(ev: CustomEvent<PincodeChar>) {
-        if (!characters[ev.detail.idx].value) {
+    function onClearCharacter(character: PincodeChar) {
+        if (!characters[character.idx].value) {
             const inputs = getInputs();
-            const prevInput = inputs[ev.detail.idx - 1];
+            const prevInput = inputs[character.idx - 1];
             prevInput?.focus();
             prevInput?.select();
         }
         characters = characters.map((char, i) => {
-            if (i === ev.detail.idx) return { ...char, value: "" };
+            if (i === character.idx) return { ...char, value: "" };
             return char;
         });
         setCode();
     }
 
-    function update(ev: CustomEvent<PincodeChar>) {
+    function onUpdateCharacter(character: PincodeChar) {
         characters = characters.map((char, idx) => {
-            if (idx === ev.detail.idx) return ev.detail;
+            if (idx === character.idx) return character;
             return char;
         });
         setCode();
-        focusNextInput(ev.detail.idx);
+        focusNextInput(character.idx);
     }
-
-    afterUpdate(() => {
-        if (complete) dispatch("complete", { code, value });
-    });
 
     function handlePaste(e: ClipboardEvent) {
         e.preventDefault();
-        code =
+        code = (
             e.clipboardData
                 ?.getData("text")
                 .split("")
-                .filter((it) => it !== " ") ?? [];
-    }
-
-    $: value = code.join("");
-    $: complete = code.length > 0 && code.filter(Boolean).length === characters.length;
-    $: if (code) {
-        characters = characters.map((char, i) => ({ ...char, value: code[i] }));
-    }
-    $: if (code.length === 0) {
-        characters = characters.map((char) => ({ ...char, value: "" }));
-    }
-    $: {
-        if (prevValue !== value && value.length === 0) {
-            dispatch("clear");
-        }
-        prevValue = value;
+                .filter((it) => it !== " ") ?? []
+        ).slice(0, length);
+        charactersFromCode();
     }
 </script>
 
-<div class="pincode" bind:this={ref} on:paste={handlePaste}>
+<div class="pincode" bind:this={ref} onpaste={handlePaste}>
     {#each characters as char}
-        <PincodeInput on:update={update} on:clear={clear} {type} {selectTextOnFocus} bind:char />
+        <PincodeInput onUpdate={onUpdateCharacter} onClear={onClearCharacter} {type} {char} />
     {/each}
 </div>
 

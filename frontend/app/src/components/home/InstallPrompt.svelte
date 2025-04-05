@@ -40,7 +40,7 @@
                             id="dont_show"
                             label={i18nKey("install.dontShow")}
                             checked={!$showHomeScreenPrompt}
-                            on:change={showHomeScreenPrompt.toggle}>
+                            onChange={showHomeScreenPrompt.toggle}>
                         </Checkbox>
                     </div>
                 </div>

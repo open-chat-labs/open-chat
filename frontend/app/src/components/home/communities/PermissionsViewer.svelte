@@ -9,8 +9,12 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    export let permissions: CommunityPermissions;
-    export let isPublic: boolean;
+    interface Props {
+        permissions: CommunityPermissions;
+        isPublic: boolean;
+    }
+
+    let { permissions, isPublic }: Props = $props();
 
     type PermissionsByRole = Record<CommunityPermissionRole, Set<string>>;
     type PermissionsEntry = [keyof CommunityPermissions, CommunityPermissionRole];
@@ -20,8 +24,6 @@
         admin: i18nKey("permissions.ownerAndAdmins"),
         member: i18nKey("permissions.allMembers"),
     };
-
-    $: partitioned = partitionPermissions(permissions);
 
     function partitionPermissions(permissions: CommunityPermissions): PermissionsByRole {
         return (Object.entries(permissions) as PermissionsEntry[]).reduce(
@@ -38,6 +40,7 @@
             } as PermissionsByRole,
         );
     }
+    let partitioned = $derived(partitionPermissions(permissions));
 </script>
 
 <ul>

@@ -25,21 +25,13 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let event: MessageActivityEvent;
-    export let selected: boolean;
+    interface Props {
+        event: MessageActivityEvent;
+        selected: boolean;
+        onClick: () => void;
+    }
 
-    $: userId = $user.userId;
-    $: sender = event.userId ? $userStore.get(event.userId) : undefined;
-    $: eventUsername = event.userId
-        ? buildDisplayName($userStore, event.userId, event.userId === userId)
-        : $_("activity.anon");
-    $: messageUsername = event.message
-        ? buildDisplayName($userStore, event.message.sender, event.message.sender === userId)
-        : $_("activity.anon");
-    $: lastMessage = formatLatestMessage(event, messageUsername);
-    $: eventSummary = buildEventSummary(event, eventUsername);
-    $: chatName = getChatName(event.messageContext);
-    $: tips = event?.message?.tips ? Object.entries(event.message.tips) : [];
+    let { event, selected, onClick }: Props = $props();
 
     function getChatName(ctx: MessageContext): string | undefined {
         const chat = client.lookupChatSummary(ctx.chatId);
@@ -158,10 +150,26 @@
         activityFeedShowing.set(false);
         page(routeForMessageContext("none", event.messageContext, true));
     }
+    let userId = $derived($user.userId);
+    let sender = $derived(event.userId ? $userStore.get(event.userId) : undefined);
+    let eventUsername = $derived(
+        event.userId
+            ? buildDisplayName($userStore, event.userId, event.userId === userId)
+            : $_("activity.anon"),
+    );
+    let messageUsername = $derived(
+        event.message
+            ? buildDisplayName($userStore, event.message.sender, event.message.sender === userId)
+            : $_("activity.anon"),
+    );
+    let lastMessage = $derived(formatLatestMessage(event, messageUsername));
+    let eventSummary = $derived(buildEventSummary(event, eventUsername));
+    let chatName = $derived(getChatName(event.messageContext));
+    let tips = $derived(event?.message?.tips ? Object.entries(event.message.tips) : []);
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<div role="button" class="activity-event" class:selected tabindex="0" on:click>
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div role="button" class="activity-event" class:selected tabindex="0" onclick={onClick}>
     <div class="header">
         <div class="name">
             <Link onClick={goToEventContext}>{chatName}</Link>
@@ -195,7 +203,7 @@
             {#if event.activity === "reaction" && event.message !== undefined && event.message.reactions.length > 0}
                 <div class="message-reactions">
                     {#each event.message.reactions as { reaction, userIds } (reaction)}
-                        <MessageReaction {reaction} {userIds} myUserId={userId} />
+                        <MessageReaction {reaction} {userIds} />
                     {/each}
                 </div>
             {/if}

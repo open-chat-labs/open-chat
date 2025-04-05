@@ -11,35 +11,38 @@
     import CryptoSelector from "../CryptoSelector.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import Payment from "../upgrade/Payment.svelte";
-    import { createEventDispatcher } from "svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        lifetime: boolean;
+        level: Level;
+        onCancel: () => void;
+        onCredentialReceived: (cred: string) => void;
+    }
 
-    export let lifetime: boolean;
-    export let level: Level;
+    let { lifetime, level, onCancel, onCredentialReceived }: Props = $props();
 
-    let refreshingBalance = false;
-    let error: string | undefined;
-    let confirming = false;
-    let confirmed = false;
+    let refreshingBalance = $state(false);
+    let error: string | undefined = $state();
+    let confirming = $state(false);
+    let confirmed = $state(false);
 
-    $: tokenDetails = {
-        symbol: $cryptoLookup[ledger],
-        balance: $cryptoBalance[ledger] ?? BigInt(0),
-    };
-
-    let ledger: string =
-        import.meta.env.OC_NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP;
+    let ledger: string = $state(
+        import.meta.env.OC_NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP,
+    );
 
     function onBalanceRefreshed() {
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        error = ev.detail;
+    function onBalanceRefreshError(err: string) {
+        error = err;
     }
+    let tokenDetails = $derived({
+        symbol: $cryptoLookup[ledger],
+        balance: $cryptoBalance[ledger] ?? BigInt(0),
+    });
 </script>
 
 <div class="header">
@@ -56,8 +59,8 @@
             {ledger}
             value={tokenDetails.balance}
             bind:refreshing={refreshingBalance}
-            on:refreshed={onBalanceRefreshed}
-            on:error={onBalanceRefreshError} />
+            onRefreshed={onBalanceRefreshed}
+            onError={onBalanceRefreshError} />
     </div>
 </div>
 <div>
@@ -89,8 +92,8 @@
         showExpiry={false}
         padded={false}
         accountBalance={Number(tokenDetails.balance)}
-        on:success={(ev) => dispatch("credentialReceived", ev.detail)}
-        on:cancel />
+        onSuccess={onCredentialReceived}
+        {onCancel} />
 </div>
 
 <style lang="scss">

@@ -11,6 +11,7 @@
         isDiamond,
         isLifetimeDiamond,
         cryptoLookup,
+        publish,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
@@ -30,7 +31,6 @@
     import Streak from "./profile/Streak.svelte";
     import SecureButton from "../SecureButton.svelte";
     import RotationChallenge from "../RotationChallenge.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

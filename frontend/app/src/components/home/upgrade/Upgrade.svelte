@@ -18,6 +18,12 @@
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
+    interface Props {
+        onCancel: () => void;
+    }
+
+    let { onCancel }: Props = $props();
+
     let ledger: string = $state(
         import.meta.env.OC_NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP,
     );
@@ -37,8 +43,8 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        error = ev.detail;
+    function onBalanceRefreshError(err: string) {
+        error = err;
     }
 
     onMount(() => {
@@ -78,8 +84,8 @@
                                 {ledger}
                                 value={tokenDetails.balance}
                                 bind:refreshing={refreshingBalance}
-                                on:refreshed={onBalanceRefreshed}
-                                on:error={onBalanceRefreshError} />
+                                onRefreshed={onBalanceRefreshed}
+                                onError={onBalanceRefreshError} />
                         </div>
                     {/if}
                 {/if}
@@ -91,7 +97,7 @@
                     <Features
                         canExtend={$canExtendDiamond}
                         isDiamond={$isDiamond}
-                        on:cancel
+                        {onCancel}
                         onUpgrade={() => (step = "payment")} />
                 {/if}
                 {#if step === "payment"}
@@ -102,8 +108,8 @@
                         {ledger}
                         {error}
                         accountBalance={Number(tokenDetails.balance)}
-                        on:cancel
-                        on:features={() => (step = "features")} />
+                        {onCancel}
+                        onFeatures={() => (step = "features")} />
                 {/if}
             </div>
         {/snippet}

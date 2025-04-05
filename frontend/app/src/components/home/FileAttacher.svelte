@@ -2,30 +2,35 @@
     import HoverIcon from "../HoverIcon.svelte";
     import { _ } from "svelte-i18n";
     import { toastStore } from "../../stores/toast";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import Paperclip from "./Paperclip.svelte";
-    import type { OpenChat } from "openchat-client";
+    import type { AttachmentContent, OpenChat } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
-    const dispatch = createEventDispatcher();
-
-    let fileinput: HTMLInputElement;
-
-    function click() {
-        dispatch("open");
-        fileinput.click();
+    interface Props {
+        onOpen: () => void;
+        onFileSelected: (content: AttachmentContent) => void;
     }
 
-    function onFileSelected(e: { currentTarget: HTMLInputElement }) {
+    let { onOpen, onFileSelected }: Props = $props();
+
+    let fileinput: HTMLInputElement | undefined = $state();
+
+    function click() {
+        onOpen();
+        fileinput?.click();
+    }
+
+    function fileSelected(e: { currentTarget: HTMLInputElement }) {
         if (e.currentTarget) {
             const target = e.currentTarget;
             if (target.files && target.files[0]) {
                 client
                     .messageContentFromFile(target.files[0])
                     .then((content) => {
-                        dispatch("fileSelected", content);
+                        onFileSelected(content);
                     })
                     .catch((err) => {
                         toastStore.showFailureToast(i18nKey(err));
@@ -37,9 +42,9 @@
     }
 </script>
 
-<div on:click={click}>
+<div onclick={click}>
     <HoverIcon title={$_("attachFile")}>
         <Paperclip />
     </HoverIcon>
-    <input bind:this={fileinput} hidden type="file" on:change={onFileSelected} />
+    <input bind:this={fileinput} hidden type="file" onchange={fileSelected} />
 </div>

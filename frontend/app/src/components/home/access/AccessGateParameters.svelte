@@ -13,8 +13,12 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let gate: NeuronGate | CredentialGate | PaymentGate | TokenBalanceGate;
-    $: tokenDetails = client.getTokenDetailsForAccessGate(gate);
+    interface Props {
+        gate: NeuronGate | CredentialGate | PaymentGate | TokenBalanceGate;
+    }
+
+    let { gate }: Props = $props();
+    let tokenDetails = $derived(client.getTokenDetailsForAccessGate(gate));
 </script>
 
 {#if gate.kind === "credential_gate"}

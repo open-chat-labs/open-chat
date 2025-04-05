@@ -1,14 +1,27 @@
 <script lang="ts">
-    export let backgroundColor: string;
-    export let color: string = "var(--landing-txt)";
+    import type { Snippet } from "svelte";
 
-    export let title: string;
-    export let height: number;
+    interface Props {
+        backgroundColor: string;
+        color?: string;
+        title: string;
+        height: number;
+        children?: Snippet;
+    }
 
-    $: bgStyle =
+    let {
+        backgroundColor,
+        color = "var(--landing-txt)",
+        title,
+        height,
+        children,
+    }: Props = $props();
+
+    let bgStyle = $derived(
         backgroundColor === "transparent"
             ? ""
-            : `background: linear-gradient(78.53deg, rgba(0, 0, 0, 0.1) 5.34%, rgba(0, 0, 0, 0) 70.2%), ${backgroundColor};`;
+            : `background: linear-gradient(78.53deg, rgba(0, 0, 0, 0.1) 5.34%, rgba(0, 0, 0, 0) 70.2%), ${backgroundColor};`,
+    );
 </script>
 
 <div style={`height: ${height}px; color: ${color}; ${bgStyle}`} class="feature">
@@ -18,10 +31,10 @@
                 {title}
             </div>
             <div class="blurb" class:light={backgroundColor === "transparent"}>
-                <slot />
+                {@render children?.()}
             </div>
         </div>
-        <div class="phone" />
+        <div class="phone"></div>
     </div>
 </div>
 

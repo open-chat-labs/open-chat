@@ -4,14 +4,14 @@
     import { querystring } from "../../routes";
     import GuidelinesContent from "./GuidelinesContent.svelte";
 
-    let linked: number | undefined = undefined;
+    let linked: number | undefined = $state(undefined);
 
-    $: {
+    $effect(() => {
         const section = $querystring.get("section");
         if (section) {
             linked = scrollToSection(section);
         }
-    }
+    });
 </script>
 
 <div class="guidelines">

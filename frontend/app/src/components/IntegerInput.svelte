@@ -11,7 +11,6 @@
         value: bigint | null;
         align?: "left" | "right" | "center";
         shouldClamp?: boolean;
-        change?: (e: CustomEvent<string>) => void;
     }
 
     let {
@@ -23,7 +22,6 @@
         value = $bindable(min),
         align = "left",
         shouldClamp = true,
-        change = (_: CustomEvent<string>) => {},
     }: Props = $props();
 
     let valueNum = $state(value != null ? Number(value) : null);
@@ -45,5 +43,4 @@
     max={Number(max)}
     bind:value={valueNum}
     {align}
-    {shouldClamp}
-    on:change={change} />
+    {shouldClamp} />

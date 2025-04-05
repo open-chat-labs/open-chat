@@ -111,7 +111,7 @@
     <Legend required={editable} label={i18nKey("access.credential.credentialName")} />
     <Input
         bind:value={selectedCredentialIssuer.credentialName}
-        on:change={sync}
+        onChange={sync}
         disabled={!editable}
         invalid={!nameValid}
         minlength={MIN_LENGTH}
@@ -122,7 +122,7 @@
     <Input
         bind:value={selectedCredentialIssuer.issuerCanisterId}
         invalid={!canisterValid}
-        on:change={sync}
+        onChange={sync}
         disabled={!editable}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
@@ -132,7 +132,7 @@
     <Input
         bind:value={selectedCredentialIssuer.issuerOrigin}
         invalid={!originValid}
-        on:change={sync}
+        onChange={sync}
         disabled={!editable}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
@@ -142,7 +142,7 @@
     <Input
         bind:value={selectedCredentialIssuer.credentialType}
         invalid={!typeValid}
-        on:change={sync}
+        onChange={sync}
         disabled={!editable}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
@@ -155,7 +155,7 @@
                 <Input
                     bind:value={arg[0]}
                     invalid={!stringValid(arg[0])}
-                    on:change={sync}
+                    onChange={sync}
                     disabled={!editable}
                     minlength={MIN_LENGTH}
                     maxlength={MAX_LENGTH}
@@ -166,7 +166,7 @@
                 <Input
                     bind:value={arg[1]}
                     invalid={!stringValid(arg[1])}
-                    on:change={sync}
+                    onChange={sync}
                     disabled={!editable}
                     minlength={MIN_LENGTH}
                     maxlength={MAX_LENGTH}

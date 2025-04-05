@@ -1,16 +1,19 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from "svelte";
+    import { onMount } from "svelte";
     import jsQR from "jsqr-es6";
     import type { Point } from "jsqr-es6/dist/locator";
 
-    export let autoscan = false;
+    interface Props {
+        autoscan?: boolean;
+        onData: (data: string) => void;
+    }
 
-    const dispatch = createEventDispatcher();
+    let { autoscan = false, onData }: Props = $props();
 
-    let canvasElement: HTMLCanvasElement;
+    let canvasElement: HTMLCanvasElement | undefined = $state();
     let destroyed = false;
     let stream: MediaStream | undefined;
-    $: canvas = canvasElement?.getContext("2d");
+    let canvas = $derived(canvasElement?.getContext("2d"));
 
     onMount(() => {
         if (autoscan) {
@@ -79,7 +82,7 @@
                     0,
                     0,
                     canvasElement.width,
-                    canvasElement.height
+                    canvasElement.height,
                 );
                 const code = jsQR(imageData.data, imageData.width, imageData.height, {
                     inversionAttempts: "dontInvert",
@@ -90,10 +93,10 @@
                     drawLine(
                         canvas,
                         code.location.bottomRightCorner,
-                        code.location.bottomLeftCorner
+                        code.location.bottomLeftCorner,
                     );
                     drawLine(canvas, code.location.bottomLeftCorner, code.location.topLeftCorner);
-                    dispatch("data", code.data);
+                    onData(code.data);
                 } else {
                     requestAnimationFrame(() => checkResult(video));
                 }
@@ -106,7 +109,7 @@
     }
 </script>
 
-<canvas class="scanner" bind:this={canvasElement} hidden />
+<canvas class="scanner" bind:this={canvasElement} hidden></canvas>
 
 <style lang="scss">
     .scanner {

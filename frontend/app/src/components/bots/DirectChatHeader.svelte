@@ -16,6 +16,7 @@
         directApiKeys,
         installedDirectBots,
         favouritesStore,
+        publish,
     } from "openchat-client";
     import { mobileWidth } from "../../stores/screenDimensions";
     import SectionHeader from "../SectionHeader.svelte";
@@ -36,7 +37,6 @@
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

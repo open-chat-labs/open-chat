@@ -1,11 +1,15 @@
 <script lang="ts">
-    export let avatar: string;
-    export let username: string;
-    export let date: number;
-    export let title: string;
-    export let visible: boolean;
+    interface Props {
+        avatar: string;
+        username: string;
+        date: number;
+        title: string;
+        visible: boolean;
+    }
 
-    $: dateStr = new Date(date).toLocaleDateString();
+    let { avatar, username, date, title, visible }: Props = $props();
+
+    let dateStr = $derived(new Date(date).toLocaleDateString());
 </script>
 
 <div class="brag" class:visible>

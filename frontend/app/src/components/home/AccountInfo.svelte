@@ -1,22 +1,32 @@
 <script lang="ts">
     import QRCode from "../QRCode.svelte";
-    import type { CreatedUser } from "openchat-client";
-    import { ICP_SYMBOL } from "openchat-client";
+    import { currentUser, ICP_SYMBOL } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import TruncatedAccount from "./TruncatedAccount.svelte";
     import { cryptoLookup } from "openchat-client";
 
-    export let user: CreatedUser;
-    export let qrSize: "default" | "smaller" | "larger" = "default";
-    export let ledger: string;
-    export let centered = false;
-    export let border = true;
-    export let fullWidthOnMobile: boolean = false;
+    interface Props {
+        qrSize?: "default" | "smaller" | "larger";
+        ledger: string;
+        centered?: boolean;
+        border?: boolean;
+        fullWidthOnMobile?: boolean;
+    }
 
-    $: tokenDetails = $cryptoLookup[ledger];
-    $: account = tokenDetails.symbol === ICP_SYMBOL ? user.cryptoAccount : user.userId;
-    $: symbol = tokenDetails.symbol;
+    let {
+        qrSize = "default",
+        ledger,
+        centered = false,
+        border = true,
+        fullWidthOnMobile = false,
+    }: Props = $props();
+
+    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let account = $derived(
+        tokenDetails.symbol === ICP_SYMBOL ? $currentUser.cryptoAccount : $currentUser.userId,
+    );
+    let symbol = $derived(tokenDetails.symbol);
 </script>
 
 <div class="account-info">

@@ -1,32 +1,30 @@
 <script lang="ts">
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import type { OpenChat, MultiUserChat } from "openchat-client";
     import GroupDetailsBody from "./GroupDetailsBody.svelte";
-    import { currentChatRules, defaultChatRules } from "openchat-client";
-    import { publish } from "@src/utils/pubsub";
-
-    const dispatch = createEventDispatcher();
+    import { currentChatRules, defaultChatRules, publish } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
 
-    export let chat: MultiUserChat;
-    export let memberCount: number;
+    interface Props {
+        chat: MultiUserChat;
+        memberCount: number;
+        onClose: () => void;
+    }
 
-    $: canEdit = client.canEditGroupDetails(chat.id);
-    $: rules = $currentChatRules ?? defaultChatRules(chat.level);
+    let { chat, memberCount, onClose }: Props = $props();
+
+    let canEdit = $derived(client.canEditGroupDetails(chat.id));
+    let rules = $derived($currentChatRules ?? defaultChatRules(chat.level));
 
     function editGroup() {
         if (canEdit) {
             publish("editGroup", { chat, rules: { ...rules, newVersion: false } });
         }
     }
-
-    function clickClose() {
-        dispatch("close");
-    }
 </script>
 
-<GroupDetailsHeader level={chat.level} {canEdit} onClose={clickClose} onEditGroup={editGroup} />
+<GroupDetailsHeader level={chat.level} {canEdit} {onClose} onEditGroup={editGroup} />
 
 <GroupDetailsBody {chat} {memberCount} />

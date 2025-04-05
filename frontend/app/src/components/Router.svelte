@@ -5,8 +5,8 @@
     import { type HomeType } from "./home/HomeRoute.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";
     import { type LandingPageType } from "./landingpages/LandingPage.svelte";
-    import NotFound from "./NotFoundWrapper.svelte";
-    import { type NotFoundType } from "./NotFoundWrapper.svelte";
+    import NotFound from "./NotFound.svelte";
+    import { type NotFoundType } from "./NotFound.svelte";
     import {
         pathContextStore,
         notFound,

@@ -242,7 +242,7 @@
                         voted={voteStatus === "adopted"}
                         disabled={votingDisabled}
                         mode={"yes"}
-                        on:click={() => onVote(true)}
+                        onClick={() => onVote(true)}
                         percentage={adoptPercent} />
                 </div>
             {/snippet}
@@ -266,7 +266,7 @@
                         voted={voteStatus === "rejected"}
                         disabled={votingDisabled}
                         mode={"no"}
-                        on:click={() => onVote(false)}
+                        onClick={() => onVote(false)}
                         percentage={rejectPercent} />
                 </div>
             {/snippet}

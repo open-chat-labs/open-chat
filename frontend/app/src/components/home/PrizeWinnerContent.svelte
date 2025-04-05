@@ -9,15 +9,11 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let content: PrizeWinnerContent;
+    interface Props {
+        content: PrizeWinnerContent;
+    }
 
-    $: logo = $cryptoLookup[content.transaction.ledger]?.logo ?? "";
-    $: tokenDetails = $cryptoLookup[content.transaction.ledger];
-    $: symbol = tokenDetails.symbol;
-    $: amount = client.formatTokens(content.transaction.amountE8s, tokenDetails.decimals);
-    $: winner = `${username(content.transaction.recipient)}`;
-    $: me = $user.userId === content.transaction.recipient;
-    $: transactionLinkText = client.buildTransactionLink($_, content.transaction);
+    let { content }: Props = $props();
 
     function username(userId: string): string {
         return userId === $user.userId
@@ -38,6 +34,15 @@
         );
         ev.stopPropagation();
     }
+    let logo = $derived($cryptoLookup[content.transaction.ledger]?.logo ?? "");
+    let tokenDetails = $derived($cryptoLookup[content.transaction.ledger]);
+    let symbol = $derived(tokenDetails.symbol);
+    let amount = $derived(
+        client.formatTokens(content.transaction.amountE8s, tokenDetails.decimals),
+    );
+    let winner = $derived(`${username(content.transaction.recipient)}`);
+    let me = $derived($user.userId === content.transaction.recipient);
+    let transactionLinkText = $derived(client.buildTransactionLink($_, content.transaction));
 </script>
 
 <div class="msg">
@@ -54,7 +59,7 @@
             {/if}
         </div>
         <div class="txt" class:other={!me}>
-            <div class="label" on:click={openUserProfile}>
+            <div class="label" onclick={openUserProfile}>
                 <Markdown
                     text={$_("prizes.winner", {
                         values: { recipient: winner, amount, token: symbol },

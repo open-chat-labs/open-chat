@@ -49,7 +49,7 @@
                             userId={referral}
                             size={AvatarSize.Small} />
                     </div>
-                    <LinkButton on:click={(ev) => showUserProfile(ev, referral)}>
+                    <LinkButton onClick={(ev) => showUserProfile(ev, referral)}>
                         {client.displayName(u)}
                         <Badges uniquePerson={u?.isUniquePerson} diamondStatus={u?.diamondStatus} />
                     </LinkButton>

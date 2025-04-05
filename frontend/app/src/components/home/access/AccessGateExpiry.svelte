@@ -15,11 +15,11 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let expiry: bigint | undefined;
+    interface Props {
+        expiry: bigint | undefined;
+    }
 
-    $: duration = expiry ? client.durationFromMilliseconds(Number(expiry)) : undefined;
-
-    $: durationString = formatDuration(duration);
+    let { expiry }: Props = $props();
 
     function formatDuration(duration: DurationData | undefined): string | undefined {
         if (duration === undefined) return undefined;
@@ -38,6 +38,8 @@
             return `${msToMinutes(duration.total)} minutes`;
         }
     }
+    let duration = $derived(expiry ? client.durationFromMilliseconds(Number(expiry)) : undefined);
+    let durationString = $derived(formatDuration(duration));
 </script>
 
 {#if durationString !== undefined}

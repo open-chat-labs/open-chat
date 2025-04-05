@@ -8,18 +8,25 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let account: string;
-    export let accounts: NamedAccount[];
-    export let valid = false;
+    interface Props {
+        account: string;
+        accounts: NamedAccount[];
+        valid?: boolean;
+    }
 
-    let name = "";
-    $: trimmedName = name.trim();
+    let { account, accounts, valid = $bindable(false) }: Props = $props();
 
-    $: {
-        valid =
+    let name = $state("");
+    let trimmedName = $derived(name.trim());
+
+    $effect(() => {
+        const isValid =
             trimmedName.length > 0 &&
             accounts.find((a) => a.name.toLowerCase() === trimmedName.toLowerCase()) === undefined;
-    }
+        if (isValid !== valid) {
+            valid = isValid;
+        }
+    });
 
     export function saveAccount() {
         return client.saveCryptoAccount({

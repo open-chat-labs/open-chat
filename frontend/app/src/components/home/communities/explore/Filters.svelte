@@ -33,7 +33,7 @@
             <div class="toggle">
                 <Checkbox
                     id={`language_${lang.code}`}
-                    on:change={() => communityFiltersStore.toggleLanguage(lang.code)}
+                    onChange={() => communityFiltersStore.toggleLanguage(lang.code)}
                     label={i18nKey(lang.name)}
                     checked={$communityFiltersStore.languages.has(lang.code)} />
             </div>

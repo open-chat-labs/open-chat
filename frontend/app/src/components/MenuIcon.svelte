@@ -8,8 +8,8 @@
         position?: Position;
         align?: Alignment;
         gutter?: number;
-        menuIcon: Snippet;
-        menuItems: Snippet;
+        menuIcon?: Snippet;
+        menuItems?: Snippet;
     }
 
     let {
@@ -27,7 +27,7 @@
 
     onDestroy(() => menuStore.hideMenu());
 
-    export async function showMenu() {
+    export function showMenu() {
         if (menu === undefined || contextMenu === undefined) return;
 
         if ($menuStore === contextMenu) {
@@ -38,10 +38,10 @@
         }
     }
 
-    async function onShowMenu(e: MouseEvent): Promise<void> {
+    function onShowMenu(e: MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
-        await showMenu();
+        showMenu();
     }
 
     function closeMenu(e: Event) {
@@ -53,14 +53,14 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class:open class="menu-icon" bind:this={menu} onclick={onShowMenu}>
-    {@render menuIcon()}
+    {@render menuIcon?.()}
 </div>
 
 <div class="menu-blueprint">
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <span class="menu" bind:this={contextMenu} onclick={closeMenu}>
-        {@render menuItems()}
+        {@render menuItems?.()}
     </span>
 </div>
 

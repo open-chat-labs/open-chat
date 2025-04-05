@@ -137,7 +137,7 @@
         {community}
         {communityUsers}
         {communityUsersList}
-        on:cancel={reset}
+        onCancel={reset}
         original={selectedGroup} />
 {:else}
     <div class="user-groups">

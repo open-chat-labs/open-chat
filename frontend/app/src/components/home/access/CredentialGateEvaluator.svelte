@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { CredentialGate, Level, OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -12,16 +12,21 @@
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let gate: CredentialGate & { expiry: bigint | undefined };
-    export let level: Level;
+    interface Props {
+        gate: CredentialGate & { expiry: bigint | undefined };
+        level: Level;
+        onCredentialReceived: (cred: string) => void;
+        onClose: () => void;
+    }
 
-    let failed = false;
-    let verifying = false;
-    let step: "linking" | "verification" = "linking";
-    let iiPrincipal: string | undefined = undefined;
-    let checkingPrincipal = true;
+    let { gate, level, onCredentialReceived, onClose }: Props = $props();
+
+    let failed = $state(false);
+    let verifying = $state(false);
+    let step: "linking" | "verification" = $state("linking");
+    let iiPrincipal: string | undefined = $state(undefined);
+    let checkingPrincipal = $state(true);
 
     onMount(() => {
         client
@@ -46,7 +51,7 @@
                 if (credential === undefined) {
                     failed = true;
                 } else {
-                    dispatch("credentialReceived", credential);
+                    onCredentialReceived(credential);
                 }
             })
             .catch(() => (failed = true))
@@ -61,8 +66,8 @@
 {:else if step === "linking"}
     <LinkAccounts
         bind:iiPrincipal
-        on:close
-        on:proceed={() => (step = "verification")}
+        {onClose}
+        onProceed={() => (step = "verification")}
         explanations={[
             i18nKey("identity.credentialWarning", { name: gate.credential.credentialName }),
         ]} />
@@ -105,7 +110,7 @@
     </div>
     <div>
         <ButtonGroup>
-            <Button secondary onClick={() => dispatch("close")}
+            <Button secondary onClick={onClose}
                 ><Translatable resourceKey={i18nKey("cancel")} /></Button>
             <Button
                 loading={verifying}

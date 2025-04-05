@@ -1,14 +1,27 @@
 <script lang="ts">
-    export let underline: "never" | "always" | "hover" = "never";
-    export let light = false;
+    import type { Snippet } from "svelte";
+
+    interface Props {
+        underline?: "never" | "always" | "hover";
+        light?: boolean;
+        children?: Snippet;
+        onClick?: (e: MouseEvent) => void;
+    }
+
+    let { underline = "never", light = false, children, onClick }: Props = $props();
+
+    function click(e: MouseEvent) {
+        e.stopPropagation();
+        onClick?.(e);
+    }
 </script>
 
 <span
     class={`link-button ${underline}`}
     class:hover={underline === "hover"}
     class:light
-    on:click|stopPropagation>
-    <slot />
+    onclick={click}>
+    {@render children?.()}
 </span>
 
 <style lang="scss">

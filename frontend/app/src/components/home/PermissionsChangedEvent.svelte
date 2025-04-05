@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import NonMessageEvent from "./NonMessageEvent.svelte";
     import type { UserSummary, PermissionsChanged, Level } from "openchat-client";
@@ -8,23 +6,29 @@
     import { buildDisplayName } from "../../utils/user";
     import { i18nKey, interpolate } from "../../i18n/i18n";
 
-    export let event: PermissionsChanged;
-    export let user: UserSummary | undefined;
-    export let timestamp: bigint;
-    export let level: Level;
+    interface Props {
+        event: PermissionsChanged;
+        user: UserSummary | undefined;
+        timestamp: bigint;
+        level: Level;
+    }
 
-    $: me = event.changedBy === user?.userId;
-    $: changedByStr = buildDisplayName($userStore, event.changedBy, me);
+    let { event, user, timestamp, level }: Props = $props();
 
-    $: text = interpolate(
-        $_,
-        i18nKey(
-            "permissionsChangedBy",
-            {
-                changedBy: changedByStr,
-            },
-            level,
-            true,
+    let me = $derived(event.changedBy === user?.userId);
+    let changedByStr = $derived(buildDisplayName($userStore, event.changedBy, me));
+
+    let text = $derived(
+        interpolate(
+            $_,
+            i18nKey(
+                "permissionsChangedBy",
+                {
+                    changedBy: changedByStr,
+                },
+                level,
+                true,
+            ),
         ),
     );
 </script>

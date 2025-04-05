@@ -24,9 +24,8 @@
     import { i18nKey } from "../../../../i18n/i18n";
     import { communitySearchState } from "../../../../stores/search.svelte";
     import Fab from "../../../Fab.svelte";
-    import { anonUser, offlineStore, identityState, isDiamond } from "openchat-client";
+    import { anonUser, offlineStore, identityState, isDiamond, publish } from "openchat-client";
     import { exploreCommunitiesFilters } from "../../../../stores/communityFilters";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

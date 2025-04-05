@@ -7,7 +7,11 @@
     import Poll from "svelte-material-icons/Poll.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
 
-    export let activity: MessageActivity;
+    interface Props {
+        activity: MessageActivity;
+    }
+
+    let { activity }: Props = $props();
 
     let color = "var(--button-txt)";
 </script>

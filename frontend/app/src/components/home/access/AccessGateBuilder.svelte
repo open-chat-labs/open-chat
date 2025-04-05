@@ -197,7 +197,7 @@
                         <div class="section expiry">
                             <Checkbox
                                 id="evaluation-interval"
-                                on:change={toggleEvaluationInterval}
+                                onChange={toggleEvaluationInterval}
                                 label={i18nKey("access.evaluationInterval")}
                                 align={"start"}
                                 checked={gateConfig.expiry !== undefined}>

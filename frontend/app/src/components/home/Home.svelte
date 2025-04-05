@@ -30,21 +30,14 @@
         NervousSystemDetails,
         EnhancedAccessGate,
         GateCheckSucceeded,
+        PubSubEvents,
     } from "openchat-client";
     import {
-        ChatsUpdated,
-        SelectedChatInvalid,
-        SendMessageFailed,
-        ThreadClosed,
-        RemoteVideoCallStartedEvent,
-        ThreadSelected,
         defaultChatRules,
         chatIdentifiersEqual,
         nullMembership,
         routeForChatIdentifier,
         routeForMessage,
-        UserSuspensionChanged,
-        RemoteVideoCallEndedEvent,
         currentUser as user,
         suspendedUser,
         anonUser,
@@ -61,11 +54,8 @@
         offlineStore,
         capturePinNumberStore as pinNumberStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
-        SummonWitch,
-        RegisterBot,
-        UpdateBot,
         userStore,
-        RemoveBot,
+        subscribe,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick, untrack } from "svelte";
@@ -77,7 +67,7 @@
     import {
         closeNotificationsForChat,
         closeNotifications,
-        subscribeToNotifications,
+        initialiseNotifications,
     } from "../../utils/notifications";
     import {
         filterByChatType,
@@ -130,7 +120,6 @@
     import { scream } from "../../utils/scream";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
-    import { subscribe } from "@src/utils/pubsub";
 
     type ViewProfileConfig = {
         userId: string;
@@ -242,9 +231,22 @@
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
             subscribe("clearSelection", () => page(routeForScope($chatListScope))),
             subscribe("editGroup", editGroup),
+            subscribe("chatsUpdated", chatsUpdated),
+            subscribe("userSuspensionChanged", () => window.location.reload()),
+            subscribe("selectedChatInvalid", selectedChatInvalid),
+            subscribe("sendMessageFailed", sendMessageFailed),
+            subscribe("summonWitch", summonWitch),
+            subscribe("registerBot", registerBot),
+            subscribe("updateBot", updateBot),
+            subscribe("removeBot", removeBot),
+            subscribe("threadSelected", openThread),
+            subscribe("threadClosed", closeThread),
+            subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
+            subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
+            subscribe("notification", (n) => client.notificationReceived(n)),
         ];
-        subscribeToNotifications(client, (n) => client.notificationReceived(n));
-        client.addEventListener("openchat_event", clientEvent);
+        //TODO push all of this inside the OC client itself
+        initialiseNotifications(client);
         document.body.addEventListener("profile-clicked", (event) => {
             profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
         });
@@ -254,57 +256,50 @@
         }
 
         return () => {
-            client.removeEventListener("openchat_event", clientEvent);
             unsubEvents.forEach((u) => u());
         };
     });
 
-    function clientEvent(ev: Event): void {
-        if (ev instanceof ThreadSelected) {
-            openThread(ev.detail);
-        } else if (ev instanceof RegisterBot) {
-            modal = { kind: "register_bot" };
-        } else if (ev instanceof UpdateBot) {
-            modal = { kind: "update_bot" };
-        } else if (ev instanceof RemoveBot) {
-            modal = { kind: "remove_bot" };
-        } else if (ev instanceof SummonWitch) {
-            summonWitch();
-        } else if (ev instanceof RemoteVideoCallStartedEvent) {
-            remoteVideoCallStarted(ev);
-        } else if (ev instanceof RemoteVideoCallEndedEvent) {
-            remoteVideoCallEnded(ev);
-        } else if (ev instanceof ThreadClosed) {
-            closeThread();
-        } else if (ev instanceof SendMessageFailed) {
-            // This can occur either for chat messages or thread messages so we'll just handle it here
-            if (ev.detail.alert) {
-                toastStore.showFailureToast(i18nKey("errorSendingMessage"));
+    function chatsUpdated() {
+        closeNotifications((notification: Notification) => {
+            if (
+                notification.kind === "channel_notification" ||
+                notification.kind === "direct_notification" ||
+                notification.kind === "group_notification"
+            ) {
+                return client.isMessageRead(
+                    {
+                        chatId: notification.chatId,
+                    },
+                    notification.messageIndex,
+                    undefined,
+                );
             }
-        } else if (ev instanceof ChatsUpdated) {
-            closeNotifications((notification: Notification) => {
-                if (
-                    notification.kind === "channel_notification" ||
-                    notification.kind === "direct_notification" ||
-                    notification.kind === "group_notification"
-                ) {
-                    return client.isMessageRead(
-                        {
-                            chatId: notification.chatId,
-                        },
-                        notification.messageIndex,
-                        undefined,
-                    );
-                }
 
-                return false;
-            });
-        } else if (ev instanceof SelectedChatInvalid) {
-            pageReplace(routeForScope(client.getDefaultScope()));
-        } else if (ev instanceof UserSuspensionChanged) {
-            // The latest suspension details will be picked up on reload when user_index::current_user is called
-            window.location.reload();
+            return false;
+        });
+    }
+
+    function selectedChatInvalid() {
+        pageReplace(routeForScope(client.getDefaultScope()));
+    }
+
+    function sendMessageFailed(alert: boolean) {
+        if (alert) {
+            toastStore.showFailureToast(i18nKey("errorSendingMessage"));
         }
+    }
+
+    function registerBot() {
+        modal = { kind: "register_bot" };
+    }
+
+    function updateBot() {
+        modal = { kind: "update_bot" };
+    }
+
+    function removeBot() {
+        modal = { kind: "remove_bot" };
     }
 
     function summonWitch() {
@@ -321,23 +316,23 @@
         }, 2000);
     }
 
-    function remoteVideoCallEnded(ev: RemoteVideoCallEndedEvent) {
-        if ($incomingVideoCall?.messageId === ev.detail.messageId) {
+    function remoteVideoCallEnded(messageId: bigint) {
+        if ($incomingVideoCall?.messageId === messageId) {
             incomingVideoCall.set(undefined);
         }
     }
 
-    function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
+    function remoteVideoCallStarted(ev: PubSubEvents["remoteVideoCallStarted"]) {
         // If current user is already in the call, or has previously been in the call, or the call started more than an hour ago, exit
         if (
-            chatIdentifiersEqual($activeVideoCall?.chatId, ev.detail.chatId) ||
-            ev.detail.currentUserIsParticipant ||
-            Number(ev.detail.timestamp) < Date.now() - 60 * 60 * 1000
+            chatIdentifiersEqual($activeVideoCall?.chatId, ev.chatId) ||
+            ev.currentUserIsParticipant ||
+            Number(ev.timestamp) < Date.now() - 60 * 60 * 1000
         ) {
             return;
         }
 
-        incomingVideoCall.set(ev.detail);
+        incomingVideoCall.set(ev);
     }
 
     async function newChatSelected(
@@ -1251,7 +1246,7 @@
 <Toast />
 
 {#if showUpgrade && $user}
-    <Upgrade on:cancel={() => (showUpgrade = false)} />
+    <Upgrade onCancel={() => (showUpgrade = false)} />
 {/if}
 
 {#if modal.kind !== "none"}
@@ -1305,7 +1300,7 @@
             <MakeProposalModal
                 selectedMultiUserChat={modal.chat}
                 nervousSystem={modal.nervousSystem}
-                on:close={closeModal} />
+                onClose={closeModal} />
         {:else if modal.kind === "logging_in"}
             <LoggingInModal onClose={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}

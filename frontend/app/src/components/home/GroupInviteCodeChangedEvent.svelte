@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import NonMessageEvent from "./NonMessageEvent.svelte";
     import type { UserSummary, GroupInviteCodeChange } from "openchat-client";
@@ -7,20 +5,26 @@
     import { _ } from "svelte-i18n";
     import { buildDisplayName } from "../../utils/user";
 
-    export let user: UserSummary | undefined;
-    export let change: GroupInviteCodeChange;
-    export let changedBy: string;
-    export let timestamp: bigint;
+    interface Props {
+        user: UserSummary | undefined;
+        change: GroupInviteCodeChange;
+        changedBy: string;
+        timestamp: bigint;
+    }
 
-    $: me = changedBy === user?.userId;
-    $: changedByStr = buildDisplayName($userStore, changedBy, me);
-    $: changedStr = $_(`invite.${change}`);
-    $: text = $_("groupInviteChangedBy", {
-        values: {
-            changedBy: changedByStr,
-            changed: changedStr,
-        },
-    });
+    let { user, change, changedBy, timestamp }: Props = $props();
+
+    let me = $derived(changedBy === user?.userId);
+    let changedByStr = $derived(buildDisplayName($userStore, changedBy, me));
+    let changedStr = $derived($_(`invite.${change}`));
+    let text = $derived(
+        $_("groupInviteChangedBy", {
+            values: {
+                changedBy: changedByStr,
+                changed: changedStr,
+            },
+        }),
+    );
 </script>
 
 <NonMessageEvent {text} {timestamp} />

@@ -13,9 +13,9 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { getContext } from "svelte";
     import type { VideoCallChat } from "./callChat";
-    import MenuIcon from "../../MenuIconLegacy.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItemLegacy.svelte";
+    import MenuItem from "../../MenuItem.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import type { OpenChat } from "openchat-client";
@@ -78,57 +78,74 @@
 {#if $mobileWidth}
     {#if $activeVideoCall?.status === "joined"}
         <MenuIcon position={"bottom"} align={"end"}>
-            <div slot="icon">
+            {#snippet menuIcon()}
                 <HoverIcon title={$_("chatMenu")}>
                     <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
-            </div>
-            <div slot="menu">
+            {/snippet}
+            {#snippet menuItems()}
                 <Menu>
                     {#if !$hasPresence}
                         <MenuItem onclick={onAskToSpeak}>
-                            <HandFrontLeft
-                                slot="icon"
-                                title={$_("videoCall.askToSpeak")}
-                                size={$iconSize}
-                                color={askedToSpeak ? "var(--icon-selected)" : "var(--icon-txt)"} />
-                            <Translatable
-                                slot="text"
-                                resourceKey={i18nKey("videoCall.askToSpeak")} />
+                            {#snippet icon()}
+                                <HandFrontLeft
+                                    title={$_("videoCall.askToSpeak")}
+                                    size={$iconSize}
+                                    color={askedToSpeak
+                                        ? "var(--icon-selected)"
+                                        : "var(--icon-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <Translatable resourceKey={i18nKey("videoCall.askToSpeak")} />
+                            {/snippet}
                         </MenuItem>
                     {/if}
                     {#if $activeVideoCall?.messageId !== undefined && $activeVideoCall.chatId.kind !== "direct_chat"}
                         <MenuItem onclick={toggleParticipants}>
-                            <AccountMultiple
-                                slot="icon"
-                                size={$iconSize}
-                                color={participantsOpen
-                                    ? "var(--icon-selected)"
-                                    : "var(--icon-txt)"} />
-                            <Translatable
-                                slot="text"
-                                resourceKey={i18nKey("videoCall.showParticipants")} />
+                            {#snippet icon()}
+                                <AccountMultiple
+                                    size={$iconSize}
+                                    color={participantsOpen
+                                        ? "var(--icon-selected)"
+                                        : "var(--icon-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <Translatable resourceKey={i18nKey("videoCall.showParticipants")} />
+                            {/snippet}
                         </MenuItem>
                     {/if}
                     {#if chat.chatId && chat.messageIndex !== undefined}
                         <MenuItem onclick={toggleThread}>
-                            <MessageOutline
-                                slot="icon"
-                                size={$iconSize}
-                                color={threadOpen ? "var(--icon-selected)" : "var(--icon-txt)"} />
-                            <Translatable slot="text" resourceKey={i18nKey("videoCall.chat")} />
+                            {#snippet icon()}
+                                <MessageOutline
+                                    size={$iconSize}
+                                    color={threadOpen
+                                        ? "var(--icon-selected)"
+                                        : "var(--icon-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <Translatable resourceKey={i18nKey("videoCall.chat")} />
+                            {/snippet}
                         </MenuItem>
                     {/if}
                     <MenuItem onclick={onMinimise}>
-                        <WindowMinimize slot="icon" size={$iconSize} color={"var(--icon-txt)"} />
-                        <Translatable slot="text" resourceKey={i18nKey("videoCall.minimise")} />
+                        {#snippet icon()}
+                            <WindowMinimize size={$iconSize} color={"var(--icon-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <Translatable resourceKey={i18nKey("videoCall.minimise")} />
+                        {/snippet}
                     </MenuItem>
                     <MenuItem onclick={onHangup}>
-                        <PhoneHangup slot="icon" size={$iconSize} color={"var(--vote-no-color)"} />
-                        <Translatable slot="text" resourceKey={i18nKey("videoCall.leave")} />
+                        {#snippet icon()}
+                            <PhoneHangup size={$iconSize} color={"var(--vote-no-color)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <Translatable resourceKey={i18nKey("videoCall.leave")} />
+                        {/snippet}
                     </MenuItem>
                 </Menu>
-            </div>
+            {/snippet}
         </MenuIcon>
     {/if}
 {:else}

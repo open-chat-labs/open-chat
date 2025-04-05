@@ -13,18 +13,21 @@
 
     const client = getContext<OpenChat>("client");
 
-    $: frozen = client.isCommunityFrozen($selectedCommunity?.id);
-    $: rules = $currentCommunityRules ?? defaultChatRules("community");
-    $: canDelete =
+    let frozen = $derived(client.isCommunityFrozen($selectedCommunity?.id));
+    let rules = $derived($currentCommunityRules ?? defaultChatRules("community"));
+    let canDelete = $derived(
         $selectedCommunity !== undefined &&
-        !frozen &&
-        client.canDeleteCommunity($selectedCommunity.id);
-    $: canEdit =
+            !frozen &&
+            client.canDeleteCommunity($selectedCommunity.id),
+    );
+    let canEdit = $derived(
         $selectedCommunity !== undefined &&
-        !frozen &&
-        client.canEditCommunity($selectedCommunity.id);
-    $: canInvite =
-        $selectedCommunity !== undefined && !frozen && client.canInviteUsers($selectedCommunity.id);
+            !frozen &&
+            client.canEditCommunity($selectedCommunity.id),
+    );
+    let canInvite = $derived(
+        $selectedCommunity !== undefined && !frozen && client.canInviteUsers($selectedCommunity.id),
+    );
 </script>
 
 {#if $selectedCommunity}

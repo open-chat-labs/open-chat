@@ -2,8 +2,12 @@
     import { deriveColours, goldDiamondHue } from "./diamond";
     import DiamondBase from "./DiamondBase.svelte";
 
-    export let size = "0.9em";
-    export let y = -40;
+    interface Props {
+        size?: string;
+        y?: number;
+    }
+
+    let { size = "0.9em", y = -40 }: Props = $props();
 
     const colours = deriveColours(goldDiamondHue);
 </script>

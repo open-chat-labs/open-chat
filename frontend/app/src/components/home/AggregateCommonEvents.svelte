@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import type {
         ChatIdentifier,
@@ -16,27 +14,23 @@
     import Markdown from "./Markdown.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
 
-    export let chatId: ChatIdentifier;
-    export let user: UserSummary | undefined;
-    export let joined: Set<string>;
-    export let messagesDeleted: number[];
-    export let rolesChanged: Map<string, Map<MemberRole, Set<string>>>;
-    export let observer: IntersectionObserver;
-    export let readByMe: boolean;
-    export let level: Level;
+    interface Props {
+        chatId: ChatIdentifier;
+        user: UserSummary | undefined;
+        joined: Set<string>;
+        messagesDeleted: number[];
+        rolesChanged: Map<string, Map<MemberRole, Set<string>>>;
+        observer?: IntersectionObserver;
+        readByMe: boolean;
+        level: Level;
+    }
 
-    let deletedMessagesElement: HTMLElement;
+    let { chatId, user, joined, messagesDeleted, rolesChanged, observer, readByMe, level }: Props =
+        $props();
+
+    let deletedMessagesElement: HTMLElement | undefined = $state();
 
     const client = getContext<OpenChat>("client");
-
-    $: joinedText = buildJoinedText($userStore, joined);
-    $: deletedText =
-        messagesDeleted.length > 0
-            ? messagesDeleted.length === 1
-                ? $_("oneMessageDeleted")
-                : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } })
-            : undefined;
-    $: roleChangedTextList = buildRoleChangedTextList($userStore, rolesChanged);
 
     onMount(() => {
         if (!readByMe && deletedMessagesElement) {
@@ -125,6 +119,15 @@
     function expandDeletedMessages() {
         client.expandDeletedMessages(chatId, new Set(messagesDeleted));
     }
+    let joinedText = $derived(buildJoinedText($userStore, joined));
+    let deletedText = $derived(
+        messagesDeleted.length > 0
+            ? messagesDeleted.length === 1
+                ? $_("oneMessageDeleted")
+                : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } })
+            : undefined,
+    );
+    let roleChangedTextList = $derived(buildRoleChangedTextList($userStore, rolesChanged));
 </script>
 
 {#if joinedText !== undefined || deletedText !== undefined || roleChangedTextList?.length > 0}
@@ -140,7 +143,7 @@
                 title={$_("expandDeletedMessages")}
                 bind:this={deletedMessagesElement}
                 data-index={messagesDeleted.join(" ")}
-                on:click={expandDeletedMessages}>
+                onclick={expandDeletedMessages}>
                 {deletedText}
             </p>
         {/if}

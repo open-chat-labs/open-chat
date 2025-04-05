@@ -8,19 +8,36 @@
     const MIN_EXTANT_USERNAME_LENGTH = 3;
     const MAX_USERNAME_LENGTH = 15;
 
-    export let client: OpenChat;
-    export let originalUsername: string;
-    export let username: string;
-    export let usernameValid: boolean;
-    export let error: string | undefined = undefined;
-    export let checking = false;
-    export let disabled = false;
-    export let autofocus = false;
+    interface Props {
+        client: OpenChat;
+        originalUsername: string;
+        username: string;
+        usernameValid: boolean;
+        error?: string | undefined;
+        checking?: boolean;
+        disabled?: boolean;
+        autofocus?: boolean;
+        children?: import("svelte").Snippet;
+    }
+
+    let {
+        client,
+        originalUsername,
+        username = $bindable(),
+        usernameValid = $bindable(),
+        error = $bindable(undefined),
+        checking = $bindable(false),
+        disabled = false,
+        autofocus = false,
+        children,
+    }: Props = $props();
+
+    error;
 
     let timer: number | undefined = undefined;
     let currentPromise: Promise<unknown> | undefined;
 
-    $: invalid = originalUsername !== username && !usernameValid && !checking;
+    let invalid = $derived(originalUsername !== username && !usernameValid && !checking);
 
     onMount(() => {
         username = originalUsername;
@@ -56,8 +73,10 @@
         currentPromise = promise;
     }
 
-    function onChange(ev: CustomEvent<string>) {
-        username = ev.detail;
+    function onChange(val: string | number | bigint) {
+        if (typeof val !== "string") return;
+
+        username = val;
         usernameValid = false;
         error = undefined;
 
@@ -75,7 +94,7 @@
 </script>
 
 <Input
-    on:change={onChange}
+    {onChange}
     value={originalUsername}
     {disabled}
     {invalid}
@@ -84,5 +103,5 @@
     maxlength={MAX_USERNAME_LENGTH}
     countdown
     placeholder={i18nKey("register.enterUsername")}>
-    <slot />
+    {@render children?.()}
 </Input>

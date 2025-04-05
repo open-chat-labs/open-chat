@@ -3,7 +3,11 @@
     import { type CommunityPermissions, communityRoles } from "openchat-client";
     import { i18nKey } from "../../../../i18n/i18n";
 
-    export let permissions: CommunityPermissions;
+    interface Props {
+        permissions: CommunityPermissions;
+    }
+
+    let { permissions = $bindable() }: Props = $props();
 
     const selectors = Object.keys(permissions).map<[keyof CommunityPermissions, string]>((p) => [
         p as keyof CommunityPermissions,

@@ -89,8 +89,7 @@
         onClose();
     }
 
-    function login(ev: CustomEvent<AuthProvider>) {
-        const provider = ev.detail;
+    function login(provider: AuthProvider) {
         if (emailInvalid && provider === AuthProvider.EMAIL) {
             return;
         }
@@ -174,7 +173,7 @@
         <div class="login">
             {#if loginState === "options"}
                 <ChooseSignInOption
-                    on:login={login}
+                    onLogin={login}
                     {mode}
                     {restrictTo}
                     bind:emailInvalid
@@ -198,7 +197,7 @@
                 <EmailSigninFeedback
                     code={verificationCode}
                     polling={$emailSigninHandler}
-                    on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
+                    onCopy={(code) => emailSigninHandler.copyCode(code)} />
                 {#if error !== undefined}
                     <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
                 {/if}

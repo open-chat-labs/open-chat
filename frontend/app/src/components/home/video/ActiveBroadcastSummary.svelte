@@ -6,6 +6,7 @@
         chatListScopeStore as chatListScope,
         selectedChatStore as selectedChat,
         selectedMessageContext,
+        publish,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -13,17 +14,8 @@
     import Button from "../../Button.svelte";
     import { activeVideoCall } from "../../../stores/video";
     import page from "page";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-
-    $: hasCall = $selectedChat !== undefined && $selectedChat.videoCallInProgress !== undefined;
-    $: isPublic = $selectedChat !== undefined && !client.isChatPrivate($selectedChat);
-    $: show = hasCall && isPublic && !incall;
-    $: incall =
-        $activeVideoCall !== undefined &&
-        $selectedChat !== undefined &&
-        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id);
 
     function join() {
         if (!incall && $selectedChat) {
@@ -45,11 +37,21 @@
             );
         }
     }
+    let hasCall = $derived(
+        $selectedChat !== undefined && $selectedChat.videoCallInProgress !== undefined,
+    );
+    let isPublic = $derived($selectedChat !== undefined && !client.isChatPrivate($selectedChat));
+    let incall = $derived(
+        $activeVideoCall !== undefined &&
+            $selectedChat !== undefined &&
+            chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id),
+    );
+    let show = $derived(hasCall && isPublic && !incall);
 </script>
 
 {#if show}
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <div role="button" tabindex="0" on:click={goto} class="active-broadcast">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div role="button" tabindex="0" onclick={goto} class="active-broadcast">
         <Translatable resourceKey={i18nKey("videoCall.broadcastCallInProgress")} />
         <Button onClick={join} tiny hollow>
             <Translatable resourceKey={i18nKey("videoCall.join")} />

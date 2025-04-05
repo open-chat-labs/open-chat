@@ -1,11 +1,23 @@
 <script lang="ts">
-    export let size = "1em";
-    export let width = size;
-    export let height = size;
-    export let strokeWidth = "3px";
-    export let foregroundColour = "currentColor";
-    export let backgroundColour = "currentColor";
-    export let viewBox = "0 0 24 24";
+    interface Props {
+        size?: string;
+        width?: string;
+        height?: string;
+        strokeWidth?: string;
+        foregroundColour?: string;
+        backgroundColour?: string;
+        viewBox?: string;
+    }
+
+    let {
+        size = "1em",
+        width = size,
+        height = size,
+        strokeWidth = "3px",
+        foregroundColour = "currentColor",
+        backgroundColour = "currentColor",
+        viewBox = "0 0 24 24",
+    }: Props = $props();
 </script>
 
 <svg {width} {height} {viewBox}>

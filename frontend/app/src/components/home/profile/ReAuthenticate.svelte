@@ -9,7 +9,7 @@
         type ResourceKey,
         selectedAuthProviderStore,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
     import { configKeys } from "../../../utils/config";
     import { AuthClient } from "@dfinity/auth-client";
@@ -22,20 +22,28 @@
     import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let message: ResourceKey;
+    interface Props {
+        message: ResourceKey;
+        onSuccess: (args: {
+            key: ECDSAKeyIdentity;
+            delegation: DelegationChain;
+            provider: AuthProvider;
+        }) => void;
+    }
 
-    let error: string | undefined;
+    let { message, onSuccess }: Props = $props();
+
+    let error: string | undefined = $state();
     let emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
-    let emailInvalid = false;
-    let email = "";
+    let emailInvalid = $state(false);
+    let email = $state("");
     let authStep:
         | "choose_provider"
         | "choose_eth_wallet"
         | "choose_sol_wallet"
-        | "signing_in_with_email" = "choose_provider";
-    let verificationCode: string | undefined = undefined;
+        | "signing_in_with_email" = $state("choose_provider");
+    let verificationCode: string | undefined = $state(undefined);
 
     onMount(() => {
         emailSigninHandler.addEventListener("email_signin_event", emailEvent);
@@ -51,13 +59,12 @@
         }
 
         if (ev instanceof EmailPollerSuccess) {
-            authComplete(AuthProvider.EMAIL, ev);
+            authComplete(AuthProvider.EMAIL, ev.detail);
         }
     }
 
     // This is where we login in with the provider that we are currently signed in with (which can be any provider type)
-    async function login(ev: CustomEvent<AuthProvider>) {
-        const provider = ev.detail;
+    async function login(provider: AuthProvider) {
         if (emailInvalid && provider === AuthProvider.EMAIL) {
             return;
         }
@@ -103,7 +110,7 @@
                                 if (principal !== client.AuthPrincipal) {
                                     error = "identity.failure.principalMismatch";
                                 } else {
-                                    dispatch("success", {
+                                    onSuccess({
                                         key: identity,
                                         delegation: DelegationChain.fromJSON(delegation),
                                         provider,
@@ -126,17 +133,17 @@
 
     function authComplete(
         provider: AuthProvider.ETH | AuthProvider.SOL | AuthProvider.EMAIL,
-        ev: CustomEvent<{ kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }>,
+        detail: { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain },
     ) {
-        const identity = DelegationIdentity.fromDelegation(ev.detail.key, ev.detail.delegation);
+        const identity = DelegationIdentity.fromDelegation(detail.key, detail.delegation);
         const principal = identity.getPrincipal().toString();
         if (principal !== client.AuthPrincipal) {
             authStep = "choose_provider";
             error = "identity.failure.principalMismatch";
         } else {
-            dispatch("success", {
-                key: ev.detail.key,
-                delegation: ev.detail.delegation,
+            onSuccess({
+                key: detail.key,
+                delegation: detail.delegation,
                 provider,
             });
         }
@@ -148,7 +155,7 @@
         <div class="info center">
             <Translatable resourceKey={message} />
         </div>
-        <ChooseSignInOption mode={"signin"} bind:emailInvalid bind:email on:login={login} />
+        <ChooseSignInOption mode={"signin"} bind:emailInvalid bind:email onLogin={login} />
     {:else if authStep === "choose_eth_wallet"}
         <div class="eth-options">
             {#await import("../SigninWithEth.svelte")}
@@ -156,7 +163,7 @@
             {:then { default: SigninWithEth }}
                 <SigninWithEth
                     assumeIdentity={false}
-                    on:connected={(ev) => authComplete(AuthProvider.ETH, ev)} />
+                    onConnected={(ev) => authComplete(AuthProvider.ETH, ev)} />
             {/await}
         </div>
     {:else if authStep === "choose_sol_wallet"}
@@ -166,14 +173,14 @@
             {:then { default: SigninWithSol }}
                 <SigninWithSol
                     assumeIdentity={false}
-                    on:connected={(ev) => authComplete(AuthProvider.SOL, ev)} />
+                    onConnected={(ev) => authComplete(AuthProvider.SOL, ev)} />
             {/await}
         </div>
     {:else if authStep === "signing_in_with_email"}
         <EmailSigninFeedback
             code={verificationCode}
             polling={$emailSigninHandler}
-            on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
+            onCopy={(code) => emailSigninHandler.copyCode(code)} />
     {/if}
     {#if error !== undefined}
         <p class="info">

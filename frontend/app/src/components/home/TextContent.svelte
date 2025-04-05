@@ -1,5 +1,3 @@
-<svelte:options immutable={false} />
-
 <script lang="ts">
     import Markdown from "./Markdown.svelte";
     import IntersectionObserver from "./IntersectionObserver.svelte";
@@ -8,24 +6,32 @@
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import { lowBandwidth, renderPreviews } from "../../stores/settings";
     import LinkPreviews from "./LinkPreviews.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
 
     const SIZE_LIMIT = 1000;
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let content: TextContent;
-    export let truncate: boolean = false;
-    export let pinned: boolean = false;
-    export let edited: boolean;
-    export let fill: boolean;
-    export let me: boolean;
-    export let blockLevelMarkdown: boolean;
+    interface Props {
+        content: TextContent;
+        truncate?: boolean;
+        pinned?: boolean;
+        edited: boolean;
+        fill: boolean;
+        me: boolean;
+        blockLevelMarkdown: boolean;
+        onRemovePreview?: (url: string) => void;
+    }
 
-    $: expanded = !$lowBandwidth && $renderPreviews;
-    $: text = truncateText(content.text);
-    $: previewUrls = extractPreviewUrls(content.text);
-    $: iconColour = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
+    let {
+        content,
+        truncate = false,
+        pinned = false,
+        edited,
+        fill,
+        me,
+        blockLevelMarkdown,
+        onRemovePreview,
+    }: Props = $props();
 
     function extractPreviewUrls(text: string): string[] {
         const urls = client.extractEnabledLinks(text);
@@ -45,9 +51,10 @@
         expanded = true;
     }
 
-    function removePreview(ev: CustomEvent<HTMLElement>) {
-        dispatch("removePreview", ev.detail);
-    }
+    let expanded = $derived(!$lowBandwidth && $renderPreviews);
+    let text = $derived(truncateText(content.text));
+    let previewUrls = $derived(extractPreviewUrls(content.text));
+    let iconColour = $derived(me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)");
 </script>
 
 <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
@@ -57,18 +64,20 @@
 
 {#if previewUrls.length > 0}
     {#if !expanded}
-        <span on:click={expand} class="expand" title={$_("showPreview")}>
+        <span onclick={expand} class="expand" title={$_("showPreview")}>
             <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={iconColour} />
         </span>
     {:else}
-        <IntersectionObserver unobserveOnIntersect={false} let:intersecting>
-            <LinkPreviews
-                {me}
-                {pinned}
-                {fill}
-                links={previewUrls}
-                {intersecting}
-                on:remove={removePreview} />
+        <IntersectionObserver unobserveOnIntersect={false}>
+            {#snippet children(intersecting)}
+                <LinkPreviews
+                    {me}
+                    {pinned}
+                    {fill}
+                    links={previewUrls}
+                    {intersecting}
+                    onRemove={onRemovePreview} />
+            {/snippet}
         </IntersectionObserver>
     {/if}
 {/if}

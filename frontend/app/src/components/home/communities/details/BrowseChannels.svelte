@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ChatMap, type ChannelMatch, type OpenChat } from "openchat-client";
+    import { ChatMap, publish, type ChannelMatch, type OpenChat } from "openchat-client";
     import Button from "../../../Button.svelte";
     import { getContext } from "svelte";
     import ChannelCard from "./ChannelCard.svelte";
@@ -8,7 +8,6 @@
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
     import { selectedCommunity, chatSummariesListStore } from "openchat-client";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

@@ -1,25 +1,37 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import { rtlStore } from "../../stores/rtl";
     import type { VideoContent } from "openchat-client";
     import ContentCaption from "./ContentCaption.svelte";
     import { setPlayingMedia } from "../../utils/media";
 
-    export let content: VideoContent;
-    export let fill: boolean;
-    export let draft: boolean = false;
-    export let reply: boolean = false;
-    export let height: number | undefined = undefined;
-    export let edited: boolean;
-    export let blockLevelMarkdown: boolean = false;
+    interface Props {
+        content: VideoContent;
+        fill: boolean;
+        draft?: boolean;
+        reply?: boolean;
+        height?: number | undefined;
+        edited: boolean;
+        blockLevelMarkdown?: boolean;
+    }
 
-    let videoPlayer: HTMLVideoElement;
+    let {
+        content,
+        fill,
+        draft = false,
+        reply = false,
+        height = undefined,
+        edited,
+        blockLevelMarkdown = false,
+    }: Props = $props();
+
+    let videoPlayer: HTMLVideoElement | undefined = $state();
     let withCaption = content.caption !== undefined && content.caption !== "";
     let landscape = content.height < content.width;
 
     function onPlay() {
-        setPlayingMedia(videoPlayer);
+        if (videoPlayer) {
+            setPlayingMedia(videoPlayer);
+        }
     }
 </script>
 
@@ -34,7 +46,7 @@
         class:reply
         style={height === undefined ? undefined : `height: ${height}px`}
         controls
-        on:play={onPlay}
+        onplay={onPlay}
         bind:this={videoPlayer}>
         <track kind="captions" />
         {#if content.videoData.blobUrl}

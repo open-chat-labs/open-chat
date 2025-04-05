@@ -5,40 +5,46 @@
     import RoleIcon from "./RoleIcon.svelte";
     import WithRole from "./WithRole.svelte";
 
-    export let userId: string;
-    export let community: CommunitySummary | undefined;
-    export let chat: MultiUserChat | undefined;
-    export let communityMembers: Map<string, Member>;
-    export let chatMembers: Map<string, Member>;
+    interface Props {
+        userId: string;
+        community: CommunitySummary | undefined;
+        chat: MultiUserChat | undefined;
+        communityMembers: Map<string, Member>;
+        chatMembers: Map<string, Member>;
+    }
+
+    let { userId, community, chat, communityMembers, chatMembers }: Props = $props();
 </script>
 
-<WithRole {userId} {chatMembers} {communityMembers} let:communityRole let:chatRole>
-    <div class="wrapper">
-        {#if community !== undefined && communityRole !== "none"}
-            <div class="role-col">
-                <Translatable
-                    resourceKey={i18nKey(
-                        "permissions.currentRole",
-                        { role: communityRole },
-                        "community",
-                        false,
-                    )} />
-                <RoleIcon level="community" role={communityRole} />
-            </div>
-        {/if}
-        {#if chat !== undefined && chatRole !== "none"}
-            <div class="role-col">
-                <Translatable
-                    resourceKey={i18nKey(
-                        "permissions.currentRole",
-                        { role: chatRole },
-                        chat.level,
-                        false,
-                    )} />
-                <RoleIcon level={chat.level} role={chatRole} />
-            </div>
-        {/if}
-    </div>
+<WithRole {userId} {chatMembers} {communityMembers}>
+    {#snippet children(communityRole, chatRole)}
+        <div class="wrapper">
+            {#if community !== undefined && communityRole !== "none"}
+                <div class="role-col">
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "permissions.currentRole",
+                            { role: communityRole },
+                            "community",
+                            false,
+                        )} />
+                    <RoleIcon level="community" role={communityRole} />
+                </div>
+            {/if}
+            {#if chat !== undefined && chatRole !== "none"}
+                <div class="role-col">
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "permissions.currentRole",
+                            { role: chatRole },
+                            chat.level,
+                            false,
+                        )} />
+                    <RoleIcon level={chat.level} role={chatRole} />
+                </div>
+            {/if}
+        </div>
+    {/snippet}
 </WithRole>
 
 <style lang="scss">

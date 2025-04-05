@@ -2,17 +2,24 @@
     import type { DataContent, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
 
-    export let banner: DataContent;
-    export let square: boolean = false;
-    export let intersecting = false;
+    interface Props {
+        banner: DataContent;
+        square?: boolean;
+        intersecting?: boolean;
+        children?: import("svelte").Snippet;
+    }
+
+    let { banner, square = false, intersecting = false, children }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
-    $: style = intersecting ? `background-image: url(${client.communityBannerUrl(banner)})` : "";
+    let style = $derived(
+        intersecting ? `background-image: url(${client.communityBannerUrl(banner)})` : "",
+    );
 </script>
 
 <div class:square class="banner" {style}>
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">

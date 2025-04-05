@@ -6,7 +6,6 @@
     import TokenInput from "./TokenInput.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import type {
-        CreatedUser,
         Message,
         MessageContext,
         OpenChat,
@@ -14,6 +13,7 @@
     } from "openchat-client";
     import {
         lastCryptoSent,
+        currentUser,
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
@@ -40,12 +40,11 @@
     interface Props {
         ledger: string;
         msg: Message;
-        user: CreatedUser;
         messageContext: MessageContext;
         onClose: () => void;
     }
 
-    let { ledger = $bindable(), msg, user, messageContext, onClose }: Props = $props();
+    let { ledger = $bindable(), msg, messageContext, onClose }: Props = $props();
 
     let refreshing = $state(false);
     let error: string | undefined = $state(undefined);
@@ -108,9 +107,9 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
+    function onBalanceRefreshError(err: string) {
         onBalanceRefreshFinished();
-        error = ev.detail;
+        error = err;
     }
 
     function onBalanceRefreshFinished() {
@@ -174,7 +173,7 @@
         };
         lastCryptoSent.set(ledger);
 
-        const currentTip = (msg.tips[transfer.ledger] ?? {})[user.userId] ?? 0n;
+        const currentTip = (msg.tips[transfer.ledger] ?? {})[$currentUser.userId] ?? 0n;
 
         client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
             if (resp.kind === "failure") {
@@ -249,15 +248,15 @@
                     bold
                     showTopUp
                     bind:refreshing
-                    on:refreshed={onBalanceRefreshed}
-                    on:error={onBalanceRefreshError} />
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             </span>
         {/snippet}
         {#snippet body()}
             <form onsubmit={send}>
                 <div class="body" class:zero={zero || toppingUp}>
                     {#if zero || toppingUp}
-                        <AccountInfo {ledger} {user} />
+                        <AccountInfo {ledger} />
                         {#if zero}
                             <p>
                                 <Translatable

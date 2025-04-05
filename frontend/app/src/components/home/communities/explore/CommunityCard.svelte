@@ -66,24 +66,26 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class:header class="card">
-    <IntersectionObserver let:intersecting>
-        <CommunityBanner {intersecting} square={header} {banner}>
-            <div class="gate">
-                <AccessGateIcon
-                    clickable
-                    button
-                    level={"community"}
-                    position={"bottom"}
-                    align={"end"}
-                    {gateConfig} />
-            </div>
-            <div class="avatar">
-                <Avatar
-                    url={client.communityAvatarUrl(id, avatar)}
-                    userId={undefined}
-                    size={AvatarSize.Default} />
-            </div>
-        </CommunityBanner>
+    <IntersectionObserver>
+        {#snippet children(intersecting)}
+            <CommunityBanner {intersecting} square={header} {banner}>
+                <div class="gate">
+                    <AccessGateIcon
+                        clickable
+                        button
+                        level={"community"}
+                        position={"bottom"}
+                        align={"end"}
+                        {gateConfig} />
+                </div>
+                <div class="avatar">
+                    <Avatar
+                        url={client.communityAvatarUrl(id, avatar)}
+                        userId={undefined}
+                        size={AvatarSize.Default} />
+                </div>
+            </CommunityBanner>
+        {/snippet}
     </IntersectionObserver>
     <div class="content">
         <WithVerifiedBadge

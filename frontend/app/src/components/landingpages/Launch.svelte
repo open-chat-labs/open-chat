@@ -7,12 +7,22 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let rootPath = routeForScope(client.getDefaultScope());
-    export let text = "Launch app";
-    export let login = false;
+    interface Props {
+        rootPath?: any;
+        text?: string;
+        login?: boolean;
+    }
 
-    $: url = $identityState.kind === "logged_in" ? rootPath : "/communities";
-    $: busy = $identityState.kind === "logging_in" || $identityState.kind === "loading_user";
+    let {
+        rootPath = routeForScope(client.getDefaultScope()),
+        text = "Launch app",
+        login = false,
+    }: Props = $props();
+
+    let url = $derived($identityState.kind === "logged_in" ? rootPath : "/communities");
+    let busy = $derived(
+        $identityState.kind === "logging_in" || $identityState.kind === "loading_user",
+    );
 </script>
 
 {#if login}
@@ -20,7 +30,7 @@
         class:loading={busy}
         role="button"
         tabindex="0"
-        on:click={() => client.login()}
+        onclick={() => client.login()}
         class="launch">
         {#if !busy}
             {text}

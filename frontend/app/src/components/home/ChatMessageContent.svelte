@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import ReportedMessageContent from "./ReportedMessageContent.svelte";
     import VideoContent from "./VideoContent.svelte";
@@ -27,27 +25,55 @@
     import { i18nKey } from "../../i18n/i18n";
     import BotPlaceholderContent from "./BotPlaceholderContent.svelte";
 
-    export let content: MessageContent;
-    export let me: boolean = false;
-    export let truncate: boolean = false;
-    export let fill: boolean;
-    export let reply: boolean = false;
-    export let pinned: boolean = false;
-    export let height: number | undefined = undefined;
-    export let readonly: boolean;
-    export let senderId: string;
-    export let myUserId: string | undefined;
-    export let messageId: bigint;
-    export let edited: boolean;
-    export let messageContext: MessageContext;
-    export let messageIndex: number;
-    export let collapsed = false;
-    export let undeleting: boolean = false;
-    export let intersecting: boolean;
-    export let failed: boolean;
-    export let timestamp: bigint | undefined = undefined;
-    export let blockLevelMarkdown: boolean;
-    export let onExpandMessage: (() => void) | undefined = undefined;
+    interface Props {
+        content: MessageContent;
+        me?: boolean;
+        truncate?: boolean;
+        fill: boolean;
+        reply?: boolean;
+        pinned?: boolean;
+        height?: number | undefined;
+        readonly: boolean;
+        senderId: string;
+        messageId: bigint;
+        edited: boolean;
+        messageContext: MessageContext;
+        messageIndex: number;
+        collapsed?: boolean;
+        undeleting?: boolean;
+        intersecting: boolean;
+        failed: boolean;
+        timestamp?: bigint | undefined;
+        blockLevelMarkdown: boolean;
+        onExpandMessage?: (() => void) | undefined;
+        onRemovePreview?: (url: string) => void;
+        onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
+    }
+
+    let {
+        content,
+        me = false,
+        truncate = false,
+        fill,
+        reply = false,
+        pinned = false,
+        height = undefined,
+        readonly,
+        senderId,
+        messageId,
+        edited,
+        messageContext,
+        messageIndex,
+        collapsed = false,
+        undeleting = false,
+        intersecting,
+        failed,
+        timestamp = undefined,
+        blockLevelMarkdown,
+        onExpandMessage = undefined,
+        onRemovePreview,
+        onRegisterVote,
+    }: Props = $props();
 </script>
 
 {#if content.kind === "text_content"}
@@ -59,7 +85,7 @@
         {content}
         {edited}
         {blockLevelMarkdown}
-        on:removePreview />
+        {onRemovePreview} />
 {:else if content.kind === "image_content"}
     <ImageContent
         {edited}
@@ -101,7 +127,7 @@
 {:else if content.kind === "prize_winner_content"}
     <PrizeWinnerContent {content} />
 {:else if content.kind === "poll_content"}
-    <PollContent {readonly} {me} {content} {myUserId} {senderId} on:registerVote />
+    <PollContent {readonly} {me} {content} {senderId} {onRegisterVote} />
 {:else if content.kind === "giphy_content"}
     <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "proposal_content"}
