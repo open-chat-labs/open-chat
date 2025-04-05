@@ -19,7 +19,7 @@ import { boolFromLS } from "../stores/localStorageSetting";
 import { messagesRead } from "../stores/markRead";
 import { userStore } from "../stores/user";
 import { get } from "svelte/store";
-import type { OpenChat } from "../openchat.svelte";
+import type { OpenChat } from "../openchat";
 import { runOnceIdle } from "./backgroundTasks";
 import { isProposalsChat } from "./chat";
 import { RemoteVideoCallEndedEvent, RemoteVideoCallStartedEvent } from "../events";

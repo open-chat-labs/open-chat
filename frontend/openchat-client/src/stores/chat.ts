@@ -44,7 +44,7 @@ import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
-import type { OpenChat } from "../openchat.svelte";
+import type { OpenChat } from "../openchat";
 import { allServerChats, chatListScopeStore, getAllServerChats, globalStateStore } from "./global";
 import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";

@@ -14,7 +14,7 @@ import {
     type ThreadSyncDetails,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
-import type { OpenChat } from "../openchat.svelte";
+import type { OpenChat } from "../openchat";
 import { offlineStore } from "./network";
 import { ephemeralMessages } from "./ephemeralMessages";
 

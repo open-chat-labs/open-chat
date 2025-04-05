@@ -48,7 +48,7 @@
     let actualWidth = $state(0);
     let detailsValid = $state(true);
     let visibilityValid = $state(true);
-    let originalGroup = $state($state.snapshot(candidateGroup));
+    let originalGroup = $state<CandidateGroupChat>($state.snapshot(candidateGroup));
     let rulesValid = $state(true);
 
     function getSteps(
@@ -182,7 +182,7 @@
 
         confirming = false;
 
-        const updatedGroup = $state.snapshot(candidateGroup);
+        const updatedGroup = { ...candidateGroup };
 
         return client
             .updateGroup(
@@ -235,7 +235,7 @@
         const level = candidateGroup.level;
 
         client
-            .createGroupChat($state.snapshot(candidateGroup))
+            .createGroupChat(candidateGroup)
             .then((resp) => {
                 if (resp.kind !== "success") {
                     const resourceKey = groupCreationErrorMessage(resp, level);

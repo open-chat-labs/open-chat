@@ -506,6 +506,7 @@ import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn"
 import { ephemeralMessages } from "./stores/ephemeralMessages";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import { Semaphore } from "./utils/semaphore";
+import { snapshot } from "./snapshot.svelte";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -8852,7 +8853,7 @@ export class OpenChat extends EventTarget {
         const correlationId = random128().toString();
         try {
             this.#worker.postMessage({
-                ...$state.snapshot(req),
+                ...snapshot(req),
                 correlationId,
             });
         } catch (err) {
