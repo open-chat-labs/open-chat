@@ -16,6 +16,7 @@ import type {
     MultiUserChatIdentifier,
     ResourceKey,
     UpdatedRules,
+    Notification,
 } from "..";
 
 export type PubSubEvents = {
@@ -115,4 +116,13 @@ export type PubSubEvents = {
     };
     createTestMessages: [MessageContext, number];
     searchChat: string;
+    remoteVideoCallStarted: {
+        chatId: ChatIdentifier;
+        userId: string;
+        messageId: bigint;
+        currentUserIsParticipant: boolean;
+        timestamp: bigint;
+    };
+    remoteVideoCallEnded: bigint;
+    notification: Notification;
 };

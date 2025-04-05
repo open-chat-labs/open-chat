@@ -180,7 +180,6 @@ import {
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import {
-    createRemoteVideoEndedEvent,
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
     parseWebRtcMessage,
@@ -195,7 +194,6 @@ import {
 import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
-import { RemoteVideoCallStartedEvent } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
 import { indexIsInRanges } from "./utils/range";
@@ -507,6 +505,7 @@ import { ephemeralMessages } from "./stores/ephemeralMessages";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import { Semaphore } from "./utils/semaphore";
 import { snapshot } from "./snapshot.svelte";
+import { remoteVideoCallStartedEvent } from "./events";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -534,7 +533,7 @@ type PromiseResolver<T> = {
     timeout: number;
 };
 
-export class OpenChat extends EventTarget {
+export class OpenChat {
     #worker!: Worker;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     #pending: Map<string, PromiseResolver<any>> = new Map(); // in-flight requests
@@ -4321,8 +4320,9 @@ export class OpenChat extends EventTarget {
                         ev.event.kind === "message" &&
                         ev.event.content.kind === "video_call_content"
                     ) {
-                        this.dispatchEvent(
-                            RemoteVideoCallStartedEvent.create(
+                        publish(
+                            "remoteVideoCallStarted",
+                            remoteVideoCallStartedEvent(
                                 chatId,
                                 this.#liveState.user.userId,
                                 ev.event as Message<VideoCallContent>,
@@ -4493,15 +4493,12 @@ export class OpenChat extends EventTarget {
         if (msg.kind === "remote_video_call_started") {
             const ev = createRemoteVideoStartedEvent(msg);
             if (ev) {
-                this.dispatchEvent(ev);
+                publish("remoteVideoCallStarted", ev);
             }
             return;
         }
         if (msg.kind === "remote_video_call_ended") {
-            const ev = createRemoteVideoEndedEvent(msg);
-            if (ev) {
-                this.dispatchEvent(ev);
-            }
+            publish("remoteVideoCallEnded", msg.messageId);
             return;
         }
         const fromChatId = filterWebRtcMessage(msg);
@@ -5904,8 +5901,6 @@ export class OpenChat extends EventTarget {
                     this,
                     this.#liveState.user.userId,
                     chatsResponse.state.userCanisterLocalUserIndex,
-                    (ev) => this.dispatchEvent(ev),
-                    (ev) => this.dispatchEvent(ev),
                 );
             }
             if (this.#cachePrimer !== undefined) {

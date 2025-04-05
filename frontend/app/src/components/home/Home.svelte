@@ -30,15 +30,14 @@
         NervousSystemDetails,
         EnhancedAccessGate,
         GateCheckSucceeded,
+        PubSubEvents,
     } from "openchat-client";
     import {
-        RemoteVideoCallStartedEvent,
         defaultChatRules,
         chatIdentifiersEqual,
         nullMembership,
         routeForChatIdentifier,
         routeForMessage,
-        RemoteVideoCallEndedEvent,
         currentUser as user,
         suspendedUser,
         anonUser,
@@ -68,7 +67,7 @@
     import {
         closeNotificationsForChat,
         closeNotifications,
-        subscribeToNotifications,
+        initialiseNotifications,
     } from "../../utils/notifications";
     import {
         filterByChatType,
@@ -242,9 +241,12 @@
             subscribe("removeBot", removeBot),
             subscribe("threadSelected", openThread),
             subscribe("threadClosed", closeThread),
+            subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
+            subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
+            subscribe("notification", (n) => client.notificationReceived(n)),
         ];
-        subscribeToNotifications(client, (n) => client.notificationReceived(n));
-        client.addEventListener("openchat_event", clientEvent);
+        //TODO push all of this inside the OC client itself
+        initialiseNotifications(client);
         document.body.addEventListener("profile-clicked", (event) => {
             profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
         });
@@ -254,7 +256,6 @@
         }
 
         return () => {
-            client.removeEventListener("openchat_event", clientEvent);
             unsubEvents.forEach((u) => u());
         };
     });
@@ -301,14 +302,6 @@
         modal = { kind: "remove_bot" };
     }
 
-    function clientEvent(ev: Event): void {
-        if (ev instanceof RemoteVideoCallStartedEvent) {
-            remoteVideoCallStarted(ev);
-        } else if (ev instanceof RemoteVideoCallEndedEvent) {
-            remoteVideoCallEnded(ev);
-        }
-    }
-
     function summonWitch() {
         const isHalloweenTheme = $currentThemeName === "halloween";
         if (!isHalloweenTheme) {
@@ -323,23 +316,23 @@
         }, 2000);
     }
 
-    function remoteVideoCallEnded(ev: RemoteVideoCallEndedEvent) {
-        if ($incomingVideoCall?.messageId === ev.detail.messageId) {
+    function remoteVideoCallEnded(messageId: bigint) {
+        if ($incomingVideoCall?.messageId === messageId) {
             incomingVideoCall.set(undefined);
         }
     }
 
-    function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
+    function remoteVideoCallStarted(ev: PubSubEvents["remoteVideoCallStarted"]) {
         // If current user is already in the call, or has previously been in the call, or the call started more than an hour ago, exit
         if (
-            chatIdentifiersEqual($activeVideoCall?.chatId, ev.detail.chatId) ||
-            ev.detail.currentUserIsParticipant ||
-            Number(ev.detail.timestamp) < Date.now() - 60 * 60 * 1000
+            chatIdentifiersEqual($activeVideoCall?.chatId, ev.chatId) ||
+            ev.currentUserIsParticipant ||
+            Number(ev.timestamp) < Date.now() - 60 * 60 * 1000
         ) {
             return;
         }
 
-        incomingVideoCall.set(ev.detail);
+        incomingVideoCall.set(ev);
     }
 
     async function newChatSelected(
