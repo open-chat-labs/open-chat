@@ -109,7 +109,7 @@
         if (bot.definition.autonomousConfig !== undefined) {
             busy = true;
             client
-                .generateBotApiKey(location, bot.id, $state.snapshot(grantedAutonomousPermission))
+                .generateBotApiKey(location, bot.id, grantedAutonomousPermission)
                 .then((resp) => {
                     if (resp.kind === "success") {
                         then?.(resp.apiKey);
@@ -129,19 +129,17 @@
                 onClose(true);
             }
         } else {
-            client
-                .installBot(location, bot.id, $state.snapshot(grantedCommandPermissions))
-                .then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast(i18nKey("bots.add.failure"));
+            client.installBot(location, bot.id, grantedCommandPermissions).then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("bots.add.failure"));
+                } else {
+                    if (then) {
+                        then();
                     } else {
-                        if (then) {
-                            then();
-                        } else {
-                            onClose(true);
-                        }
+                        onClose(true);
                     }
-                });
+                }
+            });
         }
     }
 </script>

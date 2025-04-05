@@ -41,7 +41,7 @@
 
         return () => {
             if (client.walletConfigChanged($walletConfig, config)) {
-                client.setWalletConfig($state.snapshot(config)).then((success) => {
+                client.setWalletConfig(config).then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(
                             i18nKey("cryptoAccount.configureWalletFailure"),

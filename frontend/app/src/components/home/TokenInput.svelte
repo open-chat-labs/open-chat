@@ -26,7 +26,7 @@
 
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails?.symbol;
-    $: tokenDecimals = tokenDetails?.decimals;
+    $: tokenDecimals = tokenDetails?.decimals ?? 0;
     $: amountInUsd =
         tokenDetails !== undefined && showDollarAmount
             ? calculateDollarAmount(
@@ -120,7 +120,10 @@
     {#if showDollarAmount && amount > 0}
         <div class="usd">({amountInUsd} USD)</div>
     {:else if minAmount > BigInt(0)}
-        <div class="min"><Translatable resourceKey={i18nKey("tokenTransfer.min", { amount: minAmountFormatted })} /></div>
+        <div class="min">
+            <Translatable
+                resourceKey={i18nKey("tokenTransfer.min", { amount: minAmountFormatted })} />
+        </div>
     {/if}
 </div>
 <div class="wrapper">
@@ -175,7 +178,8 @@
             }
         }
 
-        .usd, .min {
+        .usd,
+        .min {
             @include font(light, normal, fs-60);
             color: var(--txt-light);
             flex: 1;
