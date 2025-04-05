@@ -569,8 +569,6 @@ export class OpenChat {
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
     constructor(private config: OpenChatConfig) {
-        super();
-
         this.#logger = config.logger;
         this.#liveState = new LiveState();
 
