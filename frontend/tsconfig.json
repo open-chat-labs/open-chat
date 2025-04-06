@@ -7,7 +7,7 @@
         "checkJs": false,
         "declaration": true,
         "experimentalDecorators": true,
-        "lib": ["DOM", "DOM.Iterable", "es2020", "WebWorker"],
+        "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"],
         "moduleResolution": "node",
         "noUnusedLocals": true,
         "noUnusedParameters": true,
