@@ -46,7 +46,7 @@
     let progressWidth = $state(0);
 
     function claim(e: MouseEvent, passedChallenge: boolean) {
-        if (!passedChallenge) {
+        if (content.requiresCaptcha && !passedChallenge) {
             showChallenge = true;
             return;
         }
@@ -109,7 +109,8 @@
         content.diamondOnly ||
             content.lifetimeDiamondOnly ||
             content.uniquePersonOnly ||
-            content.streakOnly > 0,
+            content.streakOnly > 0 ||
+            content.requiresCaptcha,
     );
     let showChallenge = $state(false);
 
@@ -139,10 +140,12 @@
                 {/if}
             </span>
             {#if restrictedPrize}
-                <Badges
-                    {diamondStatus}
-                    uniquePerson={content.uniquePersonOnly}
-                    streak={content.streakOnly} />
+                <div class="badges">
+                    <Badges
+                        {diamondStatus}
+                        uniquePerson={content.uniquePersonOnly}
+                        streak={content.streakOnly} />
+                </div>
             {/if}
         </div>
         <div class="prize-coin">
@@ -159,10 +162,20 @@
             {#if restrictedPrize}
                 <div class="restricted">
                     <Translatable resourceKey={i18nKey("prizes.restrictedMessage")} />
+                    {#if content.requiresCaptcha}
+                        <div class="captcha">
+                            <span class="captcha-icon">🤪</span>
+                            <Translatable
+                                resourceKey={i18nKey("prizes.requiresCaptcha", {
+                                    n: content.streakOnly,
+                                })} />
+                        </div>
+                    {/if}
                     {#if content.diamondOnly || content.lifetimeDiamondOnly}
                         <div onclick={onDiamondClick}>
                             <div>
                                 <Diamond
+                                    size={"1.1em"}
                                     status={content.lifetimeDiamondOnly ? "lifetime" : "active"} />
                             </div>
                             <Translatable
@@ -196,6 +209,7 @@
                     {/if}
                 </div>
             {/if}
+
             {#if userEligible}
                 <div class="click"><Translatable resourceKey={i18nKey("prizes.click")} /></div>
             {/if}
@@ -306,6 +320,13 @@
             left: unset;
             right: 10px;
         }
+
+        .badges {
+            gap: $sp2;
+            display: flex;
+            align-items: center;
+            @include font-size(fs-100);
+        }
     }
 
     .tada {
@@ -385,5 +406,10 @@
                 width: $sp5;
             }
         }
+    }
+
+    .captcha-icon {
+        @include font-size(fs-110);
+        text-align: center;
     }
 </style>

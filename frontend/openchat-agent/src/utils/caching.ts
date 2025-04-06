@@ -54,7 +54,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 130;
+const CACHE_VERSION = 131;
 const EARLIEST_SUPPORTED_MIGRATION = 125;
 const MAX_INDEX = 9999999999;
 
@@ -183,6 +183,13 @@ async function clearChatsStore(
 ) {
     await tx.objectStore("chats").clear();
 }
+async function clearChatEventsStore(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("chat_events").clear();
+}
 //
 // async function clearGroupDetailsStore(
 //     _db: IDBPDatabase<ChatSchema>,
@@ -239,6 +246,7 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     128: clearCommunityDetailsStore,
     129: clearChatsStore,
     130: clearChatsStore,
+    131: clearChatEventsStore,
 };
 
 async function migrate(
@@ -986,6 +994,7 @@ function messageToEvent(
                     lifetimeDiamondOnly: message.content.lifetimeDiamondOnly,
                     uniquePersonOnly: message.content.uniquePersonOnly,
                     streakOnly: message.content.streakOnly,
+                    requiresCaptcha: message.content.requiresCaptcha,
                 } as PrizeContent;
                 break;
             case "p2p_swap_content_initial":
