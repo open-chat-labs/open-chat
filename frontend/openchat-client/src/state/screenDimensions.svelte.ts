@@ -1,13 +1,31 @@
-import { ScreenWidth } from "./screenDimensions";
+export const enum ScreenWidth {
+    ExtraExtraSmall = "ExtraExtraSmall",
+    ExtraSmall = "ExtraSmall",
+    Small = "Small",
+    Medium = "Medium",
+    Large = "Large",
+    ExtraLarge = "ExtraLarge",
+    ExtraExtraLarge = "ExtraExtraLarge",
+}
 
-class ScreenDimensionState {
+export const enum ScreenHeight {
+    Small = "Small",
+    Large = "Large",
+}
+
+type Dimensions = {
+    width: number;
+    height: number;
+};
+
+export class ScreenDimensionState {
     #getDimensions = () => {
         return { width: window.innerWidth, height: window.innerHeight };
     };
     #resize = () => {
         this.#dimensions = this.#getDimensions();
     };
-    #dimensions = $state<{ width: number; height: number }>(this.#getDimensions());
+    #dimensions = $state<Dimensions>(this.#getDimensions());
     #breakpoint = $derived.by(() => {
         if (this.#dimensions.width < 354) {
             return ScreenWidth.ExtraExtraSmall;
@@ -26,13 +44,30 @@ class ScreenDimensionState {
         }
     });
 
+    #pixelsFromRems(rem: number, width: number): number {
+        if (width < 768) {
+            return rem * 14;
+        } else {
+            return rem * 16;
+        }
+    }
+
+    // this probably does not belong here
+    toPixel(rem: number): number {
+        return this.#pixelsFromRems(rem, this.#dimensions.width);
+    }
+
     #mobileWidth = $derived(this.#dimensions.width < 768);
+    #ipadWidth = $derived(this.#dimensions.width < 992);
+    #availableHeight = $derived(
+        this.#dimensions.height - this.#pixelsFromRems(5, this.#dimensions.width),
+    );
 
     constructor() {
         window.addEventListener("resize", this.#resize);
     }
 
-    public get dimensions() {
+    public get dimensions(): Readonly<Dimensions> {
         return this.#dimensions;
     }
 
@@ -43,10 +78,12 @@ class ScreenDimensionState {
     public get mobileWidth() {
         return this.#mobileWidth;
     }
-}
 
-class AllState {
-    screenDimensions = new ScreenDimensionState();
-}
+    public get ipadWidth() {
+        return this.#ipadWidth;
+    }
 
-export const allState = new AllState();
+    public get availableHeight() {
+        return this.#availableHeight;
+    }
+}
