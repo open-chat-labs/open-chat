@@ -14,6 +14,18 @@ export class PathState {
     public set routerReady(val: boolean) {
         this.#routerReady = val;
     }
+    public get querystring(): URLSearchParams {
+        return this.#querystring;
+    }
+    public get location(): string {
+        return this.#location;
+    }
+    public get notFound(): boolean {
+        return this.#notFound;
+    }
+    public get routerReady(): boolean {
+        return this.#routerReady;
+    }
     public set notFound(val: boolean) {
         this.#notFound = val;
     }
