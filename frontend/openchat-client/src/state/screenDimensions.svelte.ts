@@ -57,6 +57,7 @@ export class ScreenDimensionState {
         return this.#pixelsFromRems(rem, this.#dimensions.width);
     }
 
+    #fullWidth = $derived(this.#breakpoint === ScreenWidth.ExtraExtraLarge);
     #mobileWidth = $derived(this.#dimensions.width < 768);
     #ipadWidth = $derived(this.#dimensions.width < 992);
     #availableHeight = $derived(
@@ -77,6 +78,10 @@ export class ScreenDimensionState {
 
     public get mobileWidth() {
         return this.#mobileWidth;
+    }
+
+    public get fullWidth() {
+        return this.#fullWidth;
     }
 
     public get ipadWidth() {
