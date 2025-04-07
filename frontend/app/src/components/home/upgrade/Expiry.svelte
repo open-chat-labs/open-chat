@@ -5,7 +5,7 @@
         OpenChat,
     } from "openchat-client";
     import { getContext, untrack } from "svelte";
-    import { now } from "../../../stores/time";
+    import { now500 } from "../../../stores/time";
     import { _, locale } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -31,7 +31,7 @@
     }
     let extendByMs = $derived(durationToMs(extendBy));
     $effect(() => {
-        refresh($diamondStatus, $now, $locale);
+        refresh($diamondStatus, $now500, $locale);
     });
 
     function refresh(

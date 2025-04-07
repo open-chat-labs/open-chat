@@ -39,7 +39,7 @@
     }: Props = $props();
 
     let target: Hoverable;
-    let tooltipContainer: HTMLElement | undefined;
+    let tooltipContainer: HTMLElement | undefined = $state();
     let hovering: boolean = $state(false);
 
     let show = $derived(enable && (hovering || longPressed));

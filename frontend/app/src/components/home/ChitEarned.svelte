@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { spring, tweened } from "svelte/motion";
+    import { Spring, Tween } from "svelte/motion";
     import { subscribe, type ChitEarned, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import SpinningToken from "../icons/SpinningToken.svelte";
@@ -12,15 +12,15 @@
     const TWEEN_DURATION = 300;
 
     const client = getContext<OpenChat>("client");
-    let confetti = false;
+    let confetti = $state(false);
     let dimensions = getDimension();
-    let ypos = spring(dimensions.height + 100, { damping: 0.4, stiffness: 0.2 });
-    let opacity = tweened(OFF_SCREEN_OPACITY, { duration: TWEEN_DURATION });
-    let msg = tweened({ scale: 0, opacity: 1 }, { duration: TWEEN_DURATION });
-    let left = dimensions.width / 2;
-    let amount = 0;
-    let labels: string[] = [];
-    let active = false;
+    let ypos = new Spring(dimensions.height + 100, { damping: 0.4, stiffness: 0.2 });
+    let opacity = new Tween(OFF_SCREEN_OPACITY, { duration: TWEEN_DURATION });
+    let msg = new Tween({ scale: 0, opacity: 1 }, { duration: TWEEN_DURATION });
+    let left = $state(dimensions.width / 2);
+    let amount = $state(0);
+    let labels: string[] = $state([]);
+    let active = $state(false);
 
     function trigger(events: ChitEarned[]) {
         amount = events.reduce((total, chit) => total + chit.amount, 0);
@@ -33,16 +33,16 @@
             }
             return labels;
         }, [] as string[]);
-        ypos.set(dimensions.height / 2);
-        opacity.set(1);
+        ypos.target = dimensions.height / 2;
+        opacity.target = 1;
         active = true;
         window.setTimeout(() => {
             confetti = true;
-            msg.set({ scale: 1, opacity: 1 });
+            msg.target = { scale: 1, opacity: 1 };
             window.setTimeout(() => {
                 confetti = false;
-                opacity.set(OFF_SCREEN_OPACITY);
-                msg.set({ scale: 0, opacity: 1 });
+                opacity.target = OFF_SCREEN_OPACITY;
+                msg.target = { scale: 0, opacity: 1 };
                 window.setTimeout(reset, TWEEN_DURATION);
             }, SHOW_DURATION);
         }, SLIDE_IN_DURATION);
@@ -54,9 +54,9 @@
     function reset() {
         dimensions = getDimension();
         left = dimensions.width / 2;
-        ypos = spring(dimensions.height + 100, { damping: 0.4, stiffness: 0.2 });
-        opacity = tweened(OFF_SCREEN_OPACITY, { duration: TWEEN_DURATION });
-        msg = tweened({ scale: 0, opacity: 1 }, { duration: TWEEN_DURATION });
+        ypos.set(dimensions.height + 100);
+        opacity.set(OFF_SCREEN_OPACITY, { duration: 0 });
+        msg.set({ scale: 0, opacity: 1 }, { duration: 0 });
         confetti = false;
         active = false;
     }
@@ -76,7 +76,9 @@
 <svelte:window on:resize={reset} />
 
 <div class="overlay" class:active>
-    <div class="wrapper" style={`top: ${$ypos}px; left: ${left}px; opacity: ${$opacity}`}>
+    <div
+        class="wrapper"
+        style={`top: ${ypos.current}px; left: ${left}px; opacity: ${opacity.current}`}>
         {#if confetti}
             <div class="confetti">
                 <Confetti
@@ -90,7 +92,9 @@
         <div class="coin">
             <SpinningToken spin mirror={false} size={"large"} logo={"/assets/chit.svg"} />
         </div>
-        <div class="details" style={`transform: scale(${$msg.scale}); opacity: ${$msg.opacity}`}>
+        <div
+            class="details"
+            style={`transform: scale(${msg.current.scale}); opacity: ${msg.current.opacity}`}>
             <div class="chit">
                 {`+${amount} CHIT`}
             </div>

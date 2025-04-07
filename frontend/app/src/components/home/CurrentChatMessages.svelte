@@ -17,7 +17,6 @@
         currentChatEditingEvent,
         currentChatPinnedMessages,
         messagesRead,
-        unconfirmedReadByThem,
         unconfirmed,
         failedMessagesStore,
         userGroupKeys,
@@ -158,21 +157,6 @@
             return evt.event.created_by === $user.userId;
         }
         return false;
-    }
-
-    function isReadByThem(
-        chat: ChatSummary,
-        readByThem: Set<bigint>,
-        evt: EventWrapper<ChatEventType>,
-    ): boolean {
-        if (evt.event.kind === "message") {
-            const confirmedRead = client.messageIsReadByThem(chat.id, evt.event.messageIndex);
-            if (confirmedRead && readByThem.has(evt.event.messageId)) {
-                unconfirmedReadByThem.delete(evt.event.messageId);
-            }
-            return confirmedRead || readByThem.has(evt.event.messageId);
-        }
-        return true;
     }
 
     function isPinned(store: Set<number>, evt: EventWrapper<ChatEventType>): boolean {
@@ -322,7 +306,6 @@
                                 accepted={isAccepted($unconfirmed, evt)}
                                 confirmed={isConfirmed($unconfirmed, evt)}
                                 failed={isFailed($failedMessagesStore, evt)}
-                                readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
                                 readByMe={isReadByMe($messagesRead, evt)}
                                 chatId={chat.id}
                                 chatType={chat.kind}

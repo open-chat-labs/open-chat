@@ -81,7 +81,7 @@
 
 {#each uniqueConnectors as connector}
     <div class="auth-option">
-        <div class={`icon center ${connecting === connector ? "connecting" : ""}`}>
+        <div class={`icon center ${connecting?.id === connector.id ? "connecting" : ""}`}>
             {#if icons[connector.id] ?? connector.icon}
                 <img alt={connector.name} src={icons[connector.id] ?? connector.icon} />
             {/if}

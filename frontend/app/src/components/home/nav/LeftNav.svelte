@@ -63,12 +63,11 @@
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
-    let navWrapper: HTMLElement;
 
     // we don't want drag n drop to monkey around with the key
     type CommunityItem = CommunitySummary & { _id: string };
     let communityItems: CommunityItem[] = $state([]);
-    let dragging = false;
+    let dragging = $state<boolean>(false);
 
     onMount(() => {
         const unsub = communities.subscribe(initCommunitiesList);
@@ -95,17 +94,9 @@
         communityItems = e.detail.items;
     }
 
-    function resetScroll(el: HTMLElement | undefined) {
-        if (el) {
-            el.scrollLeft = 0;
-        }
-    }
-
     function handleDndFinalize(e: CustomEvent<DndEvent<CommunityItem>>) {
         dragging = false;
         communityItems = e.detail.items;
-        resetScroll(navWrapper);
-        resetScroll(scrollingSection);
         client.updateCommunityIndexes(e.detail.items);
     }
 
@@ -166,7 +157,6 @@
 
 <section
     class:visible={$layoutStore.showNav}
-    bind:this={navWrapper}
     class="nav"
     class:open={$navOpen}
     class:rtl={$rtlStore}>

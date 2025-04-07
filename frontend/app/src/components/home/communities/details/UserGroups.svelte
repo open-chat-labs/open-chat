@@ -26,6 +26,7 @@
     import User from "../../groupdetails/User.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
+    import { SvelteSet } from "svelte/reactivity";
 
     const client = getContext<OpenChat>("client");
 
@@ -78,7 +79,7 @@
             kind: "user_group",
             id: -1,
             name: "",
-            members: new Set<string>(),
+            members: new SvelteSet<string>(),
         };
     }
 

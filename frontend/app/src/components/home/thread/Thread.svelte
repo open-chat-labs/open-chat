@@ -386,7 +386,6 @@
                                 readByMe={evt.event.messageId === rootEvent.event.messageId ||
                                     !isFollowedByMe ||
                                     isReadByMe($messagesRead, evt)}
-                                readByThem
                                 observer={messageObserver}
                                 focused={evt.event.kind === "message" &&
                                     $focusMessageIndex === evt.event.messageIndex}

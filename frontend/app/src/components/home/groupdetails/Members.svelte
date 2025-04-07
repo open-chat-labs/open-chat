@@ -135,7 +135,6 @@
         previous: CommunityIdentifier | MultiUserChatIdentifier,
         next: CommunityIdentifier | MultiUserChatIdentifier,
     ): boolean {
-        if (previous === next) return true;
         if (previous.kind === "community" && next.kind === "community")
             return previous.communityId === next.communityId;
         if (previous.kind !== "community" && next.kind !== "community")

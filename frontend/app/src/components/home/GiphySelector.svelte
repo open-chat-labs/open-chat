@@ -274,10 +274,10 @@
                         </span>
                     {/if}
                     <ButtonGroup align={$mobileWidth ? "center" : "end"}>
-                        <Button tiny disabled={selectedGif === undefined} onClick={send}
-                            ><Translatable resourceKey={i18nKey("send")} /></Button>
-                        <Button tiny secondary onClick={() => (open = false)}
+                        <Button small secondary onClick={() => (open = false)}
                             ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                        <Button small disabled={selectedGif === undefined} onClick={send}
+                            ><Translatable resourceKey={i18nKey("send")} /></Button>
                     </ButtonGroup>
                 </span>
             {/snippet}
