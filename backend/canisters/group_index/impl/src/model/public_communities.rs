@@ -108,6 +108,7 @@ impl PublicCommunities {
         avatar_id: Option<u128>,
         banner_id: Option<u128>,
         gate_config: Option<AccessGateConfig>,
+        primary_language: String,
     ) -> UpdateCommunityResult {
         match self.communities.get_mut(community_id) {
             None => UpdateCommunityResult::CommunityNotFound,
@@ -120,6 +121,7 @@ impl PublicCommunities {
                 community.avatar_id = avatar_id;
                 community.banner_id = banner_id;
                 community.gate_config = gate_config.map(|gc| gc.into());
+                community.primary_language = primary_language;
                 UpdateCommunityResult::Success
             }
         }
