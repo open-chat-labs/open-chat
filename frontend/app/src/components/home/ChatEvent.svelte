@@ -6,8 +6,6 @@
     import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
     import AggregateCommonEvents from "./AggregateCommonEvents.svelte";
     import {
-        type CreatedUser,
-        type UserSummary,
         type ChatEvent,
         type EventWrapper,
         type Message,
@@ -20,11 +18,13 @@
         typing,
         routeForMessage,
         type EnhancedReplyContext,
+        currentUser,
+        type UserSummary,
     } from "openchat-client";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
     import DisappearingMessageTimeUpdated from "./DisappearingMessageTimeUpdated.svelte";
@@ -35,67 +35,109 @@
     import BotChangedEvent from "./BotChangedEvent.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let chatId: ChatIdentifier;
-    export let chatType: ChatType;
-    export let user: CreatedUser;
-    export let event: EventWrapper<ChatEvent>;
-    export let first: boolean;
-    export let last: boolean;
-    export let me: boolean;
-    export let accepted: boolean;
-    export let confirmed: boolean;
-    export let failed: boolean;
-    export let readByThem: boolean;
-    export let readByMe: boolean;
-    export let observer: IntersectionObserver;
-    export let focused: boolean;
-    export let readonly: boolean;
-    export let pinned: boolean;
-    export let canPin: boolean;
-    export let canBlockUsers: boolean;
-    export let canDelete: boolean;
-    export let canSendAny: boolean;
-    export let canReact: boolean;
-    export let canInvite: boolean;
-    export let canReplyInThread: boolean;
-    export let publicGroup: boolean;
-    export let editing: boolean;
-    export let supportsEdit: boolean;
-    export let supportsReply: boolean;
-    export let collapsed: boolean;
-    export let threadRootMessage: Message | undefined;
-    export let onExpandMessage: (() => void) | undefined = undefined;
-    export let onReplyTo: (replyContext: EnhancedReplyContext) => void;
-
-    let userSummary: UserSummary | undefined = undefined;
-
-    $: levelType = (chatType === "channel" ? "channel" : "group") as Level;
-    $: level = $_(`level.${levelType}`).toLowerCase();
-    $: messageContext = { chatId, threadRootMessageIndex: threadRootMessage?.messageIndex };
-    $: hidden =
-        event.event.kind === "message" &&
-        event.event.content.kind === "message_reminder_created_content" &&
-        event.event.content.hidden;
-    $: {
-        userSummary = {
-            kind: "user",
-            userId: user.userId,
-            username: user.username,
-            displayName: user.displayName,
-            updated: BigInt(0),
-            suspended: false,
-            diamondStatus: "inactive",
-            chitBalance: 0,
-            streak: 0,
-            isUniquePerson: user.isUniquePerson,
-            totalChitEarned: 0,
-        };
+    interface Props {
+        chatId: ChatIdentifier;
+        chatType: ChatType;
+        event: EventWrapper<ChatEvent>;
+        first: boolean;
+        last: boolean;
+        me: boolean;
+        accepted: boolean;
+        confirmed: boolean;
+        failed: boolean;
+        readByThem: boolean;
+        readByMe: boolean;
+        observer?: IntersectionObserver;
+        focused: boolean;
+        readonly: boolean;
+        pinned: boolean;
+        canPin: boolean;
+        canBlockUsers: boolean;
+        canDelete: boolean;
+        canSendAny: boolean;
+        canReact: boolean;
+        canInvite: boolean;
+        canReplyInThread: boolean;
+        publicGroup: boolean;
+        editing: boolean;
+        supportsEdit: boolean;
+        supportsReply: boolean;
+        collapsed: boolean;
+        threadRootMessage: Message | undefined;
+        onExpandMessage?: (() => void) | undefined;
+        onReplyTo: (replyContext: EnhancedReplyContext) => void;
+        onCollapseMessage: () => void;
+        onGoToMessageIndex: (args: { index: number }) => void;
+        onEditEvent: (ev: EventWrapper<Message>) => void;
+        onRemovePreview: (event: EventWrapper<Message>, url: string) => void;
     }
 
+    let {
+        chatId,
+        chatType,
+        event,
+        first,
+        last,
+        me,
+        accepted,
+        confirmed,
+        failed,
+        readByThem,
+        readByMe,
+        observer,
+        focused,
+        readonly,
+        pinned,
+        canPin,
+        canBlockUsers,
+        canDelete,
+        canSendAny,
+        canReact,
+        canInvite,
+        canReplyInThread,
+        publicGroup,
+        editing,
+        supportsEdit,
+        supportsReply,
+        collapsed,
+        threadRootMessage,
+        onExpandMessage = undefined,
+        onReplyTo,
+        onCollapseMessage,
+        onGoToMessageIndex,
+        onEditEvent,
+        onRemovePreview,
+    }: Props = $props();
+
+    let userSummary = $derived<UserSummary>({
+        kind: "user",
+        userId: $currentUser.userId,
+        username: $currentUser.username,
+        displayName: $currentUser.displayName,
+        updated: BigInt(0),
+        suspended: false,
+        diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
+        isUniquePerson: $currentUser.isUniquePerson,
+        totalChitEarned: 0,
+    });
+
+    let levelType = $derived((chatType === "channel" ? "channel" : "group") as Level);
+    let level = $derived($_(`level.${levelType}`).toLowerCase());
+    let messageContext = $derived({
+        chatId,
+        threadRootMessageIndex: threadRootMessage?.messageIndex,
+    });
+    let hidden = $derived(
+        event.event.kind === "message" &&
+            event.event.content.kind === "message_reminder_created_content" &&
+            event.event.content.hidden,
+    );
+
     function editEvent() {
-        dispatch("editEvent", event as EventWrapper<Message>);
+        onEditEvent(event as EventWrapper<Message>);
     }
 
     function deleteFailedMessage() {
@@ -125,10 +167,6 @@
             }
         }
     }
-
-    function removePreview(ev: CustomEvent<string>) {
-        dispatch("removePreview", { event, url: ev.detail });
-    }
 </script>
 
 {#if event.event.kind === "message"}
@@ -146,7 +184,6 @@
             {readByThem}
             {chatId}
             {chatType}
-            {user}
             {me}
             {first}
             {last}
@@ -165,15 +202,15 @@
             {supportsReply}
             {collapsed}
             botContext={event.event.botContext}
-            on:goToMessageIndex
+            {onGoToMessageIndex}
             {onReplyTo}
-            on:retrySend={retrySend}
+            onRetrySend={retrySend}
             onEditMessage={editEvent}
             {onExpandMessage}
-            on:collapseMessage
-            on:removePreview={removePreview}
-            on:initiateThread={initiateThread}
-            on:deleteFailedMessage={deleteFailedMessage}
+            {onCollapseMessage}
+            onRemovePreview={(url) => onRemovePreview(event as EventWrapper<Message>, url)}
+            onInitiateThread={initiateThread}
+            onDeleteFailedMessage={deleteFailedMessage}
             eventIndex={event.index}
             timestamp={event.timestamp}
             expiresAt={event.expiresAt}
@@ -307,21 +344,21 @@
         changedBy={event.event.addedBy}
         resourceKey={"bots.events.add"}
         event={event.event}
-        userId={user.userId}
+        userId={$currentUser.userId}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "bot_removed"}
     <BotChangedEvent
         changedBy={event.event.removedBy}
         resourceKey={"bots.events.remove"}
         event={event.event}
-        userId={user.userId}
+        userId={$currentUser.userId}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "bot_updated"}
     <BotChangedEvent
         changedBy={event.event.updatedBy}
         resourceKey={"bots.events.update"}
         event={event.event}
-        userId={user.userId}
+        userId={$currentUser.userId}
         timestamp={event.timestamp} />
 {:else if !client.isEventKindHidden(event.event.kind)}
     <div>Unexpected event type: {event.event.kind}</div>

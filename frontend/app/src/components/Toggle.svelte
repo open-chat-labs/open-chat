@@ -3,19 +3,34 @@
     import Checkbox from "./Checkbox.svelte";
     import Translatable from "./Translatable.svelte";
 
-    export let checked: boolean = false;
-    export let disabled: boolean = false;
-    export let waiting: boolean = false;
-    export let label: ResourceKey | undefined = undefined;
-    export let id: string;
-    export let small: boolean = false;
-    export let bigGap: boolean = false;
-    export let bottomMargin: boolean = true;
+    interface Props {
+        checked?: boolean;
+        disabled?: boolean;
+        waiting?: boolean;
+        label?: ResourceKey | undefined;
+        id: string;
+        small?: boolean;
+        bigGap?: boolean;
+        bottomMargin?: boolean;
+        onChange?: () => void;
+    }
+
+    let {
+        checked = $bindable(false),
+        disabled = false,
+        waiting = false,
+        label = undefined,
+        id,
+        small = false,
+        bigGap = false,
+        bottomMargin = true,
+        onChange,
+    }: Props = $props();
 </script>
 
 <div class="toggle-wrapper" class:big-gap={bigGap} class:bottomMargin>
     <div class="toggle">
-        <Checkbox {small} {disabled} {waiting} {id} toggle on:change {label} bind:checked />
+        <Checkbox {small} {disabled} {waiting} {id} toggle {onChange} {label} bind:checked />
     </div>
     {#if label !== undefined}
         <div class="label" class:disabled>

@@ -12,7 +12,6 @@
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import {
-        currentUser as user,
         cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
     } from "openchat-client";
@@ -80,7 +79,7 @@
                                     token: symbol1,
                                 })} />
                         </p>
-                        <AccountInfo ledger={ledger1} user={$user} />
+                        <AccountInfo ledger={ledger1} />
                         <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                     {:else}
                         <Translatable

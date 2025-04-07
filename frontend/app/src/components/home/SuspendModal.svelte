@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getContext, createEventDispatcher } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { OpenChat } from "openchat-client";
     import Button from "../Button.svelte";
@@ -19,7 +19,6 @@
     let { userId, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     let reason: string = $state("");
     let suspending = $state(false);
@@ -30,7 +29,7 @@
         showError = false;
         client.suspendUser(userId, reason).then((success) => {
             if (success) {
-                dispatch("close");
+                onClose();
             } else {
                 showError = true;
             }
@@ -66,7 +65,7 @@
                     <Button onClick={onSuspend} loading={suspending} small>
                         <Translatable resourceKey={i18nKey("suspend")} />
                     </Button>
-                    <Button onClick={() => dispatch("close")} disabled={suspending} small secondary>
+                    <Button onClick={onClose} disabled={suspending} small secondary>
                         <Translatable resourceKey={i18nKey("cancel")} />
                     </Button>
                 </ButtonGroup>

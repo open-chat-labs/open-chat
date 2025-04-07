@@ -86,12 +86,14 @@
         return cache;
     }
 
-    function onChange(ev: CustomEvent<string>) {
-        if (ev.detail === searchTerm) {
+    function onChange(val: string | number | bigint) {
+        if (typeof val !== "string") return;
+
+        if (val === searchTerm) {
             return;
         }
 
-        searchTerm = ev.detail;
+        searchTerm = val;
         if (timer !== undefined) {
             window.clearTimeout(timer);
         }
@@ -217,7 +219,7 @@
                             autofocus
                             countdown
                             placeholder={i18nKey("search")}
-                            on:change={onChange}
+                            {onChange}
                             value={searchTerm} />
                     </div>
                 </div>

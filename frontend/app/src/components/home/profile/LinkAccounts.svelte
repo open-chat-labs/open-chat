@@ -17,7 +17,7 @@
         selectedAuthProviderStore,
         type WebAuthnKey,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
     import { configKeys } from "../../../utils/config";
     import { AuthClient } from "@dfinity/auth-client";
@@ -33,12 +33,24 @@
     import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let explanations: ResourceKey[];
-    export let iiPrincipal: string | undefined;
-    export let linkInternetIdentity = true;
-    export let onProceed: () => void = () => dispatch("proceed");
+    interface Props {
+        explanations: ResourceKey[];
+        iiPrincipal: string | undefined;
+        linkInternetIdentity?: boolean;
+        onProceed?: () => void;
+        onClose?: () => void;
+    }
+
+    let {
+        explanations,
+        iiPrincipal = $bindable(),
+        linkInternetIdentity = true,
+        onProceed,
+        onClose,
+    }: Props = $props();
+
+    iiPrincipal;
 
     type IdentityDetail = {
         key: ECDSAKeyIdentity;
@@ -62,24 +74,25 @@
         | "choose_sol_wallet"
         | "signing_in_with_email";
 
-    let error: string | undefined;
+    let error: string | undefined = $state();
     let emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
-    let step: "explain" | "linking" = "explain";
-    let substep: LinkStage = { kind: "initiator" };
-    let emailInvalid = false;
-    let email = "";
-    let providerStep: ProviderStep = "choose_provider";
-    let linking = false;
+    let step: "explain" | "linking" = $state("explain");
+    let substep = $state<LinkStage>({ kind: "initiator" });
+    let emailInvalid = $state(false);
+    let email = $state("");
+    let providerStep: ProviderStep = $state("choose_provider");
+    let linking = $state(false);
     let loggingInInitiator = false;
-    let verificationCode: string | undefined = undefined;
-    let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = [];
+    let verificationCode: string | undefined = $state(undefined);
+    let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = $state([]);
 
-    $: currentIdentity = accounts.find((a) => a.isCurrentIdentity);
-    $: currentProvider = currentIdentity?.provider ?? $selectedAuthProviderStore;
-    $: restrictTo =
+    let currentIdentity = $derived(accounts.find((a) => a.isCurrentIdentity));
+    let currentProvider = $derived(currentIdentity?.provider ?? $selectedAuthProviderStore);
+    let restrictTo = $derived(
         substep.kind === "approver" && currentProvider !== undefined
             ? new Set<string>([currentProvider])
-            : new Set<string>();
+            : new Set<string>(),
+    );
 
     onMount(() => {
         client.getAuthenticationPrincipals().then((a) => (accounts = a));
@@ -96,7 +109,7 @@
         }
 
         if (ev instanceof EmailPollerSuccess) {
-            authComplete(AuthProvider.EMAIL, ev);
+            authComplete(AuthProvider.EMAIL, ev.detail);
         }
     }
 
@@ -105,12 +118,11 @@
     }
 
     // This is called both for the initiator and the approver
-    async function loginProvider(ev: CustomEvent<AuthProvider>) {
+    async function loginProvider(provider: AuthProvider) {
         if (substep.kind === "ready_to_link") return;
 
         const generalError = `identity.failure.login_${substep.kind}`;
 
-        const provider = ev.detail;
         if (emailInvalid && provider === AuthProvider.EMAIL) {
             return;
         }
@@ -224,16 +236,12 @@
 
     // This is where we login in with the Internet Identity that we want to link to our existing OC account aka the Initiator
     async function loginInternetIdentity() {
-        return loginProvider(
-            new CustomEvent("loginProvider", {
-                detail: AuthProvider.II,
-            }),
-        );
+        return loginProvider(AuthProvider.II);
     }
 
     function authComplete(
         provider: AuthProvider.ETH | AuthProvider.SOL | AuthProvider.EMAIL,
-        ev: CustomEvent<{ kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }>,
+        detail: { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain },
     ) {
         providerStep = "choose_provider";
         if (substep.kind === "approver") {
@@ -241,8 +249,8 @@
                 kind: "ready_to_link",
                 initiator: substep.initiator,
                 approver: {
-                    key: ev.detail.key,
-                    delegation: ev.detail.delegation,
+                    key: detail.key,
+                    delegation: detail.delegation,
                     provider,
                 },
             };
@@ -250,8 +258,8 @@
             substep = {
                 kind: "approver",
                 initiator: {
-                    key: ev.detail.key,
-                    delegation: ev.detail.delegation,
+                    key: detail.key,
+                    delegation: detail.delegation,
                     provider,
                 },
             };
@@ -288,7 +296,7 @@
             )
             .then((resp) => {
                 if (resp === "success") {
-                    onProceed();
+                    onProceed?.();
                 } else if (resp === "already_linked_to_principal") {
                     console.log("Identity already linked by you: ", resp);
                     error = "identity.failure.alreadyLinked";
@@ -379,7 +387,7 @@
                 showMore={substep.kind === "initiator"}
                 bind:emailInvalid
                 bind:email
-                on:login={loginProvider} />
+                onLogin={loginProvider} />
         {:else if providerStep === "choose_eth_wallet"}
             <div class="eth-options">
                 {#await import("../SigninWithEth.svelte")}
@@ -387,7 +395,7 @@
                 {:then { default: SigninWithEth }}
                     <SigninWithEth
                         assumeIdentity={false}
-                        on:connected={(ev) => authComplete(AuthProvider.ETH, ev)} />
+                        onConnected={(ev) => authComplete(AuthProvider.ETH, ev)} />
                 {/await}
             </div>
         {:else if providerStep === "choose_sol_wallet"}
@@ -397,14 +405,14 @@
                 {:then { default: SigninWithSol }}
                     <SigninWithSol
                         assumeIdentity={false}
-                        on:connected={(ev) => authComplete(AuthProvider.SOL, ev)} />
+                        onConnected={(ev) => authComplete(AuthProvider.SOL, ev)} />
                 {/await}
             </div>
         {:else if providerStep === "signing_in_with_email"}
             <EmailSigninFeedback
                 code={verificationCode}
                 polling={$emailSigninHandler}
-                on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
+                onCopy={(code) => emailSigninHandler.copyCode(code)} />
             {#if error !== undefined}
                 <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
             {/if}
@@ -414,7 +422,7 @@
 
 <div class="footer">
     <ButtonGroup>
-        <Button secondary onClick={() => dispatch("close")}
+        <Button secondary onClick={onClose}
             ><Translatable resourceKey={i18nKey("cancel")} /></Button>
         {#if error !== undefined}
             <Button secondary onClick={reset}

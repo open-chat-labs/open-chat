@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getContext, onMount } from "svelte";
+    import { getContext, onMount, untrack } from "svelte";
     import { type OpenChat } from "openchat-client";
     import { cryptoLookup, exchangeRatesLookupStore as exchangeRatesLookup } from "openchat-client";
     import Alert from "svelte-material-icons/Alert.svelte";
@@ -11,60 +11,45 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let amount: bigint = BigInt(0);
-    export let autofocus: boolean = false;
-    export let minAmount: bigint = BigInt(0);
-    export let maxAmount: bigint | undefined = undefined;
-    export let ledger: string;
-    export let valid: boolean = false;
-    export let state: "ok" | "zero" | "too_low" | "too_high" = "zero";
-    export let label: string = "tokenTransfer.amount";
-    export let transferFees: bigint | undefined = undefined;
-    export let showDollarAmount = false;
+    interface Props {
+        amount?: bigint;
+        autofocus?: boolean;
+        minAmount?: bigint;
+        maxAmount?: bigint | undefined;
+        ledger: string;
+        valid?: boolean;
+        status?: "ok" | "zero" | "too_low" | "too_high";
+        label?: string;
+        transferFees?: bigint | undefined;
+        showDollarAmount?: boolean;
+    }
 
-    let inputElement: HTMLInputElement;
+    let {
+        amount = $bindable(BigInt(0)),
+        autofocus = false,
+        minAmount = BigInt(0),
+        maxAmount = undefined,
+        ledger,
+        valid = $bindable(false),
+        status = $bindable("zero"),
+        label = "tokenTransfer.amount",
+        transferFees = undefined,
+        showDollarAmount = false,
+    }: Props = $props();
 
-    $: tokenDetails = $cryptoLookup[ledger];
-    $: symbol = tokenDetails?.symbol;
-    $: tokenDecimals = tokenDetails?.decimals ?? 0;
-    $: amountInUsd =
-        tokenDetails !== undefined && showDollarAmount
-            ? calculateDollarAmount(
-                  amount,
-                  $exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD,
-                  tokenDetails.decimals,
-              )
-            : "???";
+    valid;
 
-    $: minAmountFormatted = `${client.formatTokens(minAmount, tokenDecimals)} ${symbol}`;
+    let inputElement: HTMLInputElement | undefined = $state();
 
     onMount(() => {
-        if (amount > BigInt(0)) {
+        if (amount > BigInt(0) && inputElement) {
             inputElement.value = client.formatTokens(amount, tokenDecimals, ".", true);
         }
     });
 
-    $: {
-        if (inputElement !== undefined) {
-            trimDecimals();
-            const validateResult = client.validateTokenInput(inputElement.value, tokenDecimals);
-            if (validateResult.amount !== amount) {
-                inputElement.value = client.formatTokens(amount, tokenDecimals, ".", true);
-            }
-            validate();
-        }
-    }
-
-    $: {
-        // Re-validate whenever minAmount or maxAmount changes
-        if (minAmount || maxAmount) {
-        }
-        validate();
-    }
-
     function onKeyup() {
         trimDecimals();
-        const value = inputElement.value;
+        const value = inputElement?.value ?? "";
         const inputAmount = Math.round(Number(value) * Math.pow(10, tokenDecimals));
         if (!isNaN(inputAmount)) {
             const [integral, fractional] = value.split(".");
@@ -86,34 +71,66 @@
     }
 
     function validate() {
-        if (amount === BigInt(0)) {
-            state = "zero";
-        } else if (amount < minAmount) {
-            state = "too_low";
-        } else if (maxAmount !== undefined && amount > maxAmount) {
-            state = "too_high";
-        } else {
-            state = "ok";
-        }
-        valid = state === "ok";
+        untrack(() => {
+            if (amount === BigInt(0)) {
+                status = "zero";
+            } else if (amount < minAmount) {
+                status = "too_low";
+            } else if (maxAmount !== undefined && amount > maxAmount) {
+                status = "too_high";
+            } else {
+                status = "ok";
+            }
+            valid = status === "ok";
+        });
     }
 
     function trimDecimals() {
-        const value = inputElement.value;
+        const value = inputElement?.value ?? "";
         const fractional = value.split(".")[1];
         if (fractional !== undefined) {
             const toTrim = fractional.length - tokenDecimals;
-            if (toTrim > 0) {
+            if (toTrim > 0 && inputElement) {
                 inputElement.value = value.substring(0, value.length - toTrim);
             }
         }
     }
+    let tokenDetails = $derived($cryptoLookup[ledger]);
+    let symbol = $derived(tokenDetails?.symbol);
+    let tokenDecimals = $derived(tokenDetails?.decimals ?? 0);
+    let amountInUsd = $derived(
+        tokenDetails !== undefined && showDollarAmount
+            ? calculateDollarAmount(
+                  amount,
+                  $exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD,
+                  tokenDetails.decimals,
+              )
+            : "???",
+    );
+    let minAmountFormatted = $derived(`${client.formatTokens(minAmount, tokenDecimals)} ${symbol}`);
+    $effect(() => {
+        // TODO - worry about this
+        if (inputElement !== undefined) {
+            trimDecimals();
+            const validateResult = client.validateTokenInput(inputElement.value, tokenDecimals);
+            if (validateResult.amount !== amount) {
+                inputElement.value = client.formatTokens(amount, tokenDecimals, ".", true);
+            }
+            validate();
+        }
+    });
+    $effect(() => {
+        // Re-validate whenever minAmount or maxAmount changes
+        if (minAmount || maxAmount) {
+            validate();
+        }
+    });
 </script>
 
 <div class="label">
     <Legend label={i18nKey(label)} rules={i18nKey(symbol)} />
     {#if maxAmount !== undefined}
-        <div on:click={max} class="max">
+        <div onclick={max} class="max">
             <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
         </div>
     {/if}
@@ -147,7 +164,7 @@
         type="number"
         step="0.00000001"
         bind:this={inputElement}
-        on:keyup={onKeyup}
+        onkeyup={onKeyup}
         placeholder="0" />
 </div>
 

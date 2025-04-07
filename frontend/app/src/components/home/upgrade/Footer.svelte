@@ -1,12 +1,17 @@
 <script lang="ts">
     import ButtonGroup from "../../ButtonGroup.svelte";
 
-    export let align: "end" | "fill" | "center" = "end";
+    interface Props {
+        align?: "end" | "fill" | "center";
+        children?: import("svelte").Snippet;
+    }
+
+    let { align = "end", children }: Props = $props();
 </script>
 
 <div class="footer">
     <ButtonGroup {align}>
-        <slot />
+        {@render children?.()}
     </ButtonGroup>
 </div>
 

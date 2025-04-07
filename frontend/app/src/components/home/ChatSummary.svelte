@@ -19,6 +19,7 @@
         byContext as typersByContext,
         favouritesStore,
         communities,
+        publish,
     } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -57,7 +58,6 @@
     import VideoCallIcon from "./video/VideoCallIcon.svelte";
     import Badges from "./profile/Badges.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

@@ -86,16 +86,14 @@
             });
     }
 
-    function reauthenticated(
-        ev: CustomEvent<{
-            key: ECDSAKeyIdentity;
-            delegation: DelegationChain;
-            provider: AuthProvider;
-        }>,
-    ) {
+    function reauthenticated(detail: {
+        key: ECDSAKeyIdentity;
+        delegation: DelegationChain;
+        provider: AuthProvider;
+    }) {
         if (type.kind !== "forgot") return;
 
-        delegation = ev.detail.delegation;
+        delegation = detail.delegation;
         switch (type.while.kind) {
             case "clear":
                 type = { kind: "clear" };
@@ -141,7 +139,7 @@
         <div class="body">
             {#if type.kind === "forgot"}
                 {#if message !== undefined}
-                    <ReAuthenticate on:success={reauthenticated} {message} />
+                    <ReAuthenticate onSuccess={reauthenticated} {message} />
                 {/if}
             {:else}
                 {#if message !== undefined}
@@ -157,7 +155,7 @@
                             </div>
                         {/if}
                         <Pincode type="numeric" length={6} bind:code={currPinArray} />
-                        <ForgotPinLabel on:forgot={onForgot} />
+                        <ForgotPinLabel {onForgot} />
                     </div>
                 {/if}
                 {#if type.kind !== "clear"}
@@ -180,12 +178,12 @@
         <div class="footer">
             {#if type.kind === "forgot"}
                 <ButtonGroup align="center">
-                    <Button disabled={busy} secondary onClick={close}
+                    <Button disabled={busy} secondary onClick={onClose}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 </ButtonGroup>
             {:else}
                 <ButtonGroup align="center">
-                    <Button disabled={busy} secondary onClick={close}
+                    <Button disabled={busy} secondary onClick={onClose}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <Button loading={busy} disabled={busy || !isValid} onClick={changePin}
                         ><Translatable resourceKey={action} /></Button>

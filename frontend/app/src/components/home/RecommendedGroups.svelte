@@ -41,11 +41,11 @@
         page(routeForScope($chatListScope));
     }
 
-    function dismissRecommendation(ev: CustomEvent<GroupChatIdentifier>) {
+    function onDismissRecommendation(id: GroupChatIdentifier) {
         hotGroups = mapRemoteData(hotGroups, (data) =>
-            data.filter((g) => !chatIdentifiersEqual(g.id, ev.detail)),
+            data.filter((g) => !chatIdentifiersEqual(g.id, id)),
         );
-        client.dismissRecommendation(ev.detail);
+        client.dismissRecommendation(id);
     }
 
     function loadData() {
@@ -85,10 +85,7 @@
 
         <div class="groups">
             {#each hotGroups.data as group (group.id.groupId)}
-                <RecommendedGroup
-                    on:dismissRecommendation={dismissRecommendation}
-                    {group}
-                    {joining} />
+                <RecommendedGroup {onDismissRecommendation} {group} {joining} />
             {/each}
         </div>
     </div>

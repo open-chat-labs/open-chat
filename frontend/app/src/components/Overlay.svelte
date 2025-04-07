@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { menuStore } from "@src/stores/menu";
     import { tick, type Snippet } from "svelte";
     import { onMount } from "svelte";
 
@@ -33,6 +34,8 @@
         portal.className = "portal";
         document.body.appendChild(portal);
         portal.appendChild(ref);
+
+        menuStore.hideMenu();
 
         if (fade) {
             tick().then(() => ref?.classList.add("faded"));

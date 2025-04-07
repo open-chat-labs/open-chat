@@ -28,11 +28,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import {
-        currentUser as user,
-        cryptoBalance as cryptoBalanceStore,
-        cryptoLookup,
-    } from "openchat-client";
+    import { cryptoBalance as cryptoBalanceStore, cryptoLookup } from "openchat-client";
     import Checkbox from "../Checkbox.svelte";
     import Select from "../Select.svelte";
 
@@ -193,9 +189,9 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
+    function onBalanceRefreshError(err: string) {
         onBalanceRefreshFinished();
-        error = ev.detail;
+        error = err;
     }
 
     function onBalanceRefreshFinished() {
@@ -308,15 +304,15 @@
                     label={i18nKey("cryptoAccount.shortBalanceLabel")}
                     bold
                     showTopUp
-                    on:refreshed={onBalanceRefreshed}
-                    on:error={onBalanceRefreshError} />
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             </span>
         {/snippet}
         {#snippet body()}
             <form>
                 <div class="body" class:zero={zero || toppingUp}>
                     {#if zero || toppingUp}
-                        <AccountInfo {ledger} user={$user} />
+                        <AccountInfo {ledger} />
                         {#if zero}
                             <p>
                                 <Translatable
@@ -332,7 +328,7 @@
                                 {ledger}
                                 label={"prizes.totalAmount"}
                                 autofocus={!multiUserChat}
-                                bind:state={tokenInputState}
+                                bind:status={tokenInputState}
                                 transferFees={totalFees}
                                 {minAmount}
                                 {maxAmount}
@@ -397,7 +393,7 @@
                                 <Legend label={i18nKey("prizes.duration")} />
                                 {#each durations as d}
                                     <Radio
-                                        on:change={() => (selectedDuration = d)}
+                                        onChange={() => (selectedDuration = d)}
                                         value={d}
                                         checked={selectedDuration === d}
                                         id={`duration_${d}`}
@@ -415,7 +411,7 @@
                                     id="any_user"
                                     label={i18nKey(`prizes.anyone`)}
                                     bind:checked={anyUser}
-                                    on:change={onAnyUserChecked} />
+                                    onChange={onAnyUserChecked} />
                                 <Checkbox
                                     id="diamond_only"
                                     label={i18nKey(`prizes.onlyDiamond`)}
@@ -424,13 +420,13 @@
                                     <div class="diamond-choice">
                                         <Radio
                                             id={"standard-diamond"}
-                                            on:change={() => (diamondType = "standard")}
+                                            onChange={() => (diamondType = "standard")}
                                             checked={diamondType === "standard"}
                                             label={i18nKey(`prizes.standardDiamond`)}
                                             group={"diamond"} />
                                         <Radio
                                             id={"lifetime-diamond"}
-                                            on:change={() => (diamondType = "lifetime")}
+                                            onChange={() => (diamondType = "lifetime")}
                                             checked={diamondType === "lifetime"}
                                             label={i18nKey(`prizes.lifetimeDiamond`)}
                                             group={"diamond"} />

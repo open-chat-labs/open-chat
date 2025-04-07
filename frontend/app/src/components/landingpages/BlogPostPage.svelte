@@ -2,9 +2,13 @@
     import BlogPost from "./blog/BlogPost.svelte";
     import { postsBySlug } from "./blog/posts";
 
-    export let slug: string;
+    interface Props {
+        slug: string;
+    }
 
-    $: post = postsBySlug[slug];
+    let { slug }: Props = $props();
+
+    let post = $derived(postsBySlug[slug]);
 </script>
 
 <div class="post">
@@ -12,7 +16,7 @@
         <BlogPost>
             <h1>{post.title}</h1>
             <div class="who_when">by {post.author}, on {post.date.toLocaleDateString()}</div>
-            <svelte:component this={post.component} />
+            <post.component />
         </BlogPost>
     {:else}
         <div class="not-found">

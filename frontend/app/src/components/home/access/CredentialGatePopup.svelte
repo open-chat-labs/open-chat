@@ -4,7 +4,11 @@
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
-    export let gate: CredentialGate;
+    interface Props {
+        gate: CredentialGate;
+    }
+
+    let { gate }: Props = $props();
 </script>
 
 <Translatable

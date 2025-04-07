@@ -11,6 +11,8 @@
         chatListScopeStore as chatListScope,
         chatSummariesStore,
         selectedCommunity,
+        publish,
+        type GroupChatIdentifier,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
@@ -19,26 +21,29 @@
     import Footer from "./upgrade/Footer.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import { iconSize } from "../../stores/iconSize";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import Button from "../Button.svelte";
     import AccessGateIcon from "./access/AccessGateIcon.svelte";
     import page from "page";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let group: GroupChatSummary;
-    export let joining: MultiUserChat | undefined;
+    interface Props {
+        group: GroupChatSummary;
+        joining: MultiUserChat | undefined;
+        onDismissRecommendation: (id: GroupChatIdentifier) => void;
+    }
 
-    $: member = $chatSummariesStore.has(group.id);
-    $: locked = isLocked(group.gateConfig.gate);
+    let { group, joining, onDismissRecommendation }: Props = $props();
+
+    let member = $derived($chatSummariesStore.has(group.id));
+    let locked = $derived(isLocked(group.gateConfig.gate));
 
     function dismiss({ id }: GroupChatSummary) {
-        dispatch("dismissRecommendation", id);
+        onDismissRecommendation(id);
     }
 
     function gotoGroup({ id }: GroupChatSummary) {
@@ -77,7 +82,7 @@
                         })} />
                 </p>
             </div>
-            <div title={$_("notInterested")} class="close" on:click={() => dismiss(group)}>
+            <div title={$_("notInterested")} class="close" onclick={() => dismiss(group)}>
                 <HoverIcon>
                     <Close size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>

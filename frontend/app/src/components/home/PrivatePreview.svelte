@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import LockOutline from "svelte-material-icons/LockOutline.svelte";
 
     let number = $mobileWidth ? 5 : 7;
     let messages: [number, unknown[]][] = [];
@@ -30,25 +29,10 @@
     </div>
 {/each}
 
-<div class="lock">
-    <LockOutline size={"6em"} color="var(--txt-light)" />
-</div>
-
 <style lang="scss">
     .bubble {
         display: flex;
         gap: $sp4;
-    }
-
-    .lock {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-
-        @include mobile() {
-            position: fixed;
-        }
     }
 
     .avatar {

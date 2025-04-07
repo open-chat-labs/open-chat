@@ -14,135 +14,134 @@
         currentCommunityBots,
         currentCommunityApiKeys,
         currentChatApiKeys,
+        type UserSummary,
+        type MemberRole,
+        publish,
     } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Members from "./groupdetails/Members.svelte";
     import MembersHeader from "./groupdetails/MembersHeader.svelte";
     import ScopeToggle from "./communities/ScopeToggle.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    // Whenever we look at the community members we will show the members list for both the community _and_ the channel
-    export let closeIcon: "close" | "back";
-    export let channel: ChannelSummary;
-    export let community: CommunitySummary;
-    export let selectedTab: "community" | "channel" = "channel";
+    interface Props {
+        // Whenever we look at the community members we will show the members list for both the community _and_ the channel
+        closeIcon: "close" | "back";
+        channel: ChannelSummary;
+        community: CommunitySummary;
+        selectedTab?: "community" | "channel";
+        onClose: () => void;
+        onBlockCommunityUser?: (args: { userId: string }) => void;
+        onUnblockCommunityUser: (user: UserSummary) => void;
+        onRemoveCommunityMember?: (userId: string) => void;
+        onChangeCommunityRole?: (args: {
+            userId: string;
+            newRole: MemberRole;
+            oldRole: MemberRole;
+        }) => void;
+        onCancelCommunityInvite: (userId: string) => void;
+        onShowInviteCommunityUsers: () => void;
+        onBlockGroupUser: (args: { userId: string }) => void;
+        onUnblockGroupUser: (user: UserSummary) => void;
+        onRemoveGroupMember: (userId: string) => void;
+        onChangeGroupRole: (args: {
+            userId: string;
+            newRole: MemberRole;
+            oldRole: MemberRole;
+        }) => void;
+        onCancelGroupInvite: (userId: string) => void;
+    }
 
-    $: canInvite =
+    let {
+        closeIcon,
+        channel,
+        community,
+        selectedTab = $bindable("channel"),
+        onClose,
+        onBlockCommunityUser,
+        onUnblockCommunityUser,
+        onRemoveCommunityMember,
+        onChangeCommunityRole,
+        onCancelCommunityInvite,
+        onShowInviteCommunityUsers,
+        onBlockGroupUser,
+        onUnblockGroupUser,
+        onRemoveGroupMember,
+        onChangeGroupRole,
+        onCancelGroupInvite,
+    }: Props = $props();
+
+    let canInvite = $derived(
         selectedTab === "community"
             ? client.canInviteUsers(community.id)
-            : client.canInviteUsers(channel.id);
-
-    function showInviteCommunityUsers(ev: CustomEvent<unknown>) {
-        dispatch("showInviteCommunityUsers", ev.detail);
-    }
-
-    function onRemoveCommunityMember(ev: CustomEvent<unknown>): void {
-        dispatch("removeCommunityMember", ev.detail);
-    }
-
-    function onChangeCommunityRole(ev: CustomEvent<unknown>): void {
-        dispatch("changeCommunityRole", ev.detail);
-    }
-
-    function onBlockCommunityUser(ev: CustomEvent<unknown>): void {
-        dispatch("blockCommunityUser", ev.detail);
-    }
-
-    function onUnblockCommunityUser(ev: CustomEvent<unknown>): void {
-        dispatch("unblockCommunityUser", ev.detail);
-    }
-
-    function onBlockGroupUser(ev: CustomEvent<unknown>): void {
-        dispatch("blockGroupUser", ev.detail);
-    }
-
-    function onUnblockGroupUser(ev: CustomEvent<unknown>): void {
-        dispatch("unblockGroupUser", ev.detail);
-    }
-
-    function onRemoveGroupMember(ev: CustomEvent<unknown>): void {
-        dispatch("removeGroupMember", ev.detail);
-    }
+            : client.canInviteUsers(channel.id),
+    );
 
     function showInviteGroupUsers(): void {
         publish("showInviteGroupUsers", true);
     }
 
-    function onChangeGroupRole(ev: CustomEvent<unknown>): void {
-        dispatch("changeGroupRole", ev.detail);
-    }
-
     function showInviteUsers() {
         switch (selectedTab) {
             case "community":
-                dispatch("showInviteCommunityUsers");
+                onShowInviteCommunityUsers();
                 break;
             case "channel":
-                publish("showInviteGroupUsers", true);
+                showInviteGroupUsers();
                 break;
         }
-    }
-
-    function onCancelCommunityInvite(ev: CustomEvent<string>): void {
-        dispatch("cancelCommunityInvite", ev.detail);
-    }
-
-    function onCancelGroupInvite(ev: CustomEvent<string>): void {
-        dispatch("cancelGroupInvite", ev.detail);
     }
 </script>
 
 <ScopeToggle bind:selectedTab>
-    <MembersHeader
-        slot="header"
-        level={selectedTab}
-        title={i18nKey("Members")}
-        {closeIcon}
-        {canInvite}
-        on:close
-        on:showInviteUsers={showInviteUsers} />
-    <Members
-        slot="community"
-        showHeader={false}
-        {closeIcon}
-        collection={community}
-        invited={$currentCommunityInvited}
-        members={[...$currentCommunityMembers.values()]}
-        blocked={$currentCommunityBlocked}
-        lapsed={$currentCommunityLapsed}
-        installedBots={$currentCommunityBots}
-        apiKeys={$currentCommunityApiKeys}
-        on:close
-        on:blockUser={onBlockCommunityUser}
-        on:unblockUser={onUnblockCommunityUser}
-        on:showInviteUsers={showInviteCommunityUsers}
-        on:removeMember={onRemoveCommunityMember}
-        on:changeRole={onChangeCommunityRole}
-        on:cancelInvite={onCancelCommunityInvite} />
+    {#snippet header()}
+        <MembersHeader
+            level={selectedTab}
+            title={i18nKey("Members")}
+            {closeIcon}
+            {canInvite}
+            {onClose}
+            onShowInviteUsers={showInviteUsers} />
+    {/snippet}
+    {#snippet communityTab()}
+        <Members
+            showHeader={false}
+            {closeIcon}
+            collection={community}
+            invited={$currentCommunityInvited}
+            members={[...$currentCommunityMembers.values()]}
+            blocked={$currentCommunityBlocked}
+            lapsed={$currentCommunityLapsed}
+            installedBots={$currentCommunityBots}
+            apiKeys={$currentCommunityApiKeys}
+            {onClose}
+            onBlockUser={onBlockCommunityUser}
+            onUnblockUser={onUnblockCommunityUser}
+            onShowInviteUsers={onShowInviteCommunityUsers}
+            onRemoveMember={onRemoveCommunityMember}
+            onChangeRole={onChangeCommunityRole}
+            onCancelInvite={onCancelCommunityInvite} />
+    {/snippet}
 
-    <Members
-        slot="channel"
-        showHeader={false}
-        {closeIcon}
-        collection={channel}
-        invited={$currentChatInvited}
-        members={$currentChatMembers}
-        blocked={$currentChatBlocked}
-        lapsed={$currentChatLapsed}
-        installedBots={$currentCommunityBots}
-        apiKeys={$currentChatApiKeys}
-        on:close
-        on:blockUser={onBlockGroupUser}
-        on:unblockUser={onUnblockGroupUser}
-        on:showInviteUsers={showInviteGroupUsers}
-        on:removeMember={onRemoveGroupMember}
-        on:changeRole={onChangeGroupRole}
-        on:cancelInvite={onCancelGroupInvite} />
+    {#snippet channelTab()}
+        <Members
+            showHeader={false}
+            {closeIcon}
+            collection={channel}
+            invited={$currentChatInvited}
+            members={$currentChatMembers}
+            blocked={$currentChatBlocked}
+            lapsed={$currentChatLapsed}
+            installedBots={$currentCommunityBots}
+            apiKeys={$currentChatApiKeys}
+            {onClose}
+            onBlockUser={onBlockGroupUser}
+            onUnblockUser={onUnblockGroupUser}
+            onShowInviteUsers={showInviteGroupUsers}
+            onRemoveMember={onRemoveGroupMember}
+            onChangeRole={onChangeGroupRole}
+            onCancelInvite={onCancelGroupInvite} />
+    {/snippet}
 </ScopeToggle>
-
-<style lang="scss">
-</style>

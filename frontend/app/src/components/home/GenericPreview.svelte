@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import { eventListScrolling } from "../../stores/scrollPos";
     import { offlineStore } from "openchat-client";
 
@@ -11,27 +10,24 @@
         imageAlt: string | null | undefined;
     };
 
-    const dispatch = createEventDispatcher();
-
-    export let url: string;
-    export let intersecting: boolean;
-    export let rendered = false;
-
-    let previewWrapper: HTMLElement;
-    let previewPromise: Promise<LinkInfo | undefined> | undefined = undefined;
-
-    $: {
-        if (intersecting && !$eventListScrolling && !rendered && !$offlineStore) {
-            // make sure we only actually *load* the preview once
-            previewPromise = previewPromise ?? loadPreview(url);
-            previewPromise.then((preview) => {
-                if (preview && intersecting && !$eventListScrolling) {
-                    rendered = true;
-                    dispatch("rendered", url);
-                }
-            });
-        }
+    interface Props {
+        url: string;
+        intersecting: boolean;
+        rendered?: boolean;
+        onImageLoaded: (el: HTMLElement) => void;
+        onRendered: (url: string) => void;
     }
+
+    let {
+        url,
+        intersecting,
+        rendered = $bindable(false),
+        onImageLoaded,
+        onRendered,
+    }: Props = $props();
+
+    let previewWrapper: HTMLElement | undefined = $state();
+    let previewPromise: Promise<LinkInfo | undefined> | undefined = $state();
 
     async function loadPreview(url: string): Promise<LinkInfo | undefined> {
         const response = await fetch(
@@ -58,8 +54,22 @@
     }
 
     function imageLoaded() {
-        dispatch("imageLoaded", previewWrapper);
+        if (previewWrapper) {
+            onImageLoaded(previewWrapper);
+        }
     }
+    $effect(() => {
+        if (intersecting && !$eventListScrolling && !rendered && !$offlineStore) {
+            // make sure we only actually *load* the preview once
+            previewPromise = previewPromise ?? loadPreview(url);
+            previewPromise.then((preview) => {
+                if (preview && intersecting && !$eventListScrolling) {
+                    rendered = true;
+                    onRendered(url);
+                }
+            });
+        }
+    });
 </script>
 
 {#if rendered}
@@ -75,8 +85,8 @@
                 {#if preview.image}
                     <a href={preview.url} target="_blank">
                         <img
-                            on:load={imageLoaded}
-                            on:error={imageLoaded}
+                            onload={imageLoaded}
+                            onerror={imageLoaded}
                             class="image"
                             src={preview.image}
                             alt={preview.imageAlt ?? "link preview image"} />

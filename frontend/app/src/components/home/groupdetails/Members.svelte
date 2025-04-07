@@ -29,8 +29,9 @@
         type BotMatch as BotMatchType,
         type PublicApiKeyDetails,
         type EnhancedExternalBot,
+        type MemberRole,
     } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import InvitedUser from "./InvitedUser.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import UserGroups from "../communities/details/UserGroups.svelte";
@@ -45,48 +46,53 @@
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
 
-    export let closeIcon: "close" | "back";
-    export let collection: CommunitySummary | MultiUserChat;
-    export let invited: Set<string>;
-    export let members: MemberType[];
-    export let blocked: Set<string>;
-    export let lapsed: Set<string>;
-    export let installedBots: Map<string, ExternalBotPermissions>;
-    export let initialUsergroup: number | undefined = undefined;
-    export let showHeader = true;
-    export let apiKeys: Map<string, PublicApiKeyDetails>;
+    interface Props {
+        closeIcon: "close" | "back";
+        collection: CommunitySummary | MultiUserChat;
+        invited: Set<string>;
+        members: MemberType[];
+        blocked: Set<string>;
+        lapsed: Set<string>;
+        installedBots: Map<string, ExternalBotPermissions>;
+        initialUsergroup?: number | undefined;
+        showHeader?: boolean;
+        apiKeys: Map<string, PublicApiKeyDetails>;
+        onClose: () => void;
+        onShowInviteUsers: () => void;
+        onChangeRole?: (args: { userId: string; newRole: MemberRole; oldRole: MemberRole }) => void;
+        onBlockUser?: (args: { userId: string }) => void;
+        onRemoveMember?: (userId: string) => void;
+        onUnblockUser: (user: UserSummary) => void;
+        onCancelInvite: (userId: string) => void;
+    }
+
+    let {
+        closeIcon,
+        collection,
+        invited,
+        members,
+        blocked,
+        lapsed,
+        installedBots,
+        initialUsergroup = $bindable(undefined),
+        showHeader = true,
+        apiKeys,
+        onClose,
+        onShowInviteUsers,
+        onChangeRole,
+        onBlockUser,
+        onRemoveMember,
+        onUnblockUser,
+        onCancelInvite,
+    }: Props = $props();
 
     type SelectedBot = {
         bot: BotMatchType | ExternalBot;
     };
 
-    let userGroups: UserGroups | undefined;
-    let showingBotInstaller: SelectedBot | undefined = undefined;
+    let userGroups: UserGroups | undefined = $state();
+    let showingBotInstaller: SelectedBot | undefined = $state(undefined);
     let installingBot: BotMatchType | undefined = undefined;
-
-    $: userId = $user.userId;
-    $: knownUsers = getKnownUsers($userStore, members);
-    $: largeGroup = members.length > LARGE_GROUP_THRESHOLD;
-    $: me = knownUsers.find((u) => u.userId === userId);
-    $: fullMembers = knownUsers
-        .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId)
-        .sort(compareMembers);
-    $: blockedUsers = matchingUsers(searchTermLower, $userStore, blocked, true);
-    $: lapsedMembers = matchingUsers(searchTermLower, $userStore, lapsed, true);
-    $: invitedUsers = matchingUsers(searchTermLower, $userStore, invited, true);
-    $: showBlocked = blockedUsers.length > 0;
-    $: showInvited = invitedUsers.length > 0;
-    $: showLapsed = lapsedMembers.length > 0;
-    $: canInvite = client.canInviteUsers(collection.id);
-    $: canPromoteMyselfToOwner = false;
-    $: bots = hydrateBots(installedBots, $externalBots).filter((b) =>
-        matchesSearch(searchTermLower, b),
-    );
-    $: canManageBots = client.canManageBots(collection.id);
-    $: botContainer =
-        collection.kind === "channel"
-            ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
-            : collection.id;
 
     function hydrateBots(
         bots: Map<string, ExternalBotPermissions>,
@@ -119,34 +125,11 @@
         }, [] as UserSummary[]);
     }
 
-    let searchTermEntered = "";
-    let id = collection.id;
-    let membersList: VirtualList;
-    let memberView: "members" | "blocked" | "invited" | "lapsed" = "members";
-    let selectedTab: "users" | "groups" | "add-bots" = "users";
-
-    $: searchTerm = trimLeadingAtSymbol(searchTermEntered);
-    $: searchTermLower = searchTerm.toLowerCase();
-
-    $: {
-        if (!idsMatch(collection.id, id)) {
-            id = collection.id;
-            memberView = "members";
-        }
-
-        if (
-            (memberView === "blocked" && blocked.size === 0) ||
-            (memberView === "invited" && invited.size === 0)
-        ) {
-            memberView = "members";
-        }
-
-        if (initialUsergroup !== undefined) {
-            selectedTab = "groups";
-        }
-    }
-
-    const dispatch = createEventDispatcher();
+    let searchTermEntered = $state("");
+    let id = $state(collection.id);
+    let membersList = $state<VirtualList<FullMember> | undefined>();
+    let memberView: "members" | "blocked" | "invited" | "lapsed" = $state("members");
+    let selectedTab: "users" | "groups" | "add-bots" = $state("users");
 
     function idsMatch(
         previous: CommunityIdentifier | MultiUserChatIdentifier,
@@ -158,14 +141,6 @@
         if (previous.kind !== "community" && next.kind !== "community")
             return chatIdentifiersEqual(previous, next);
         return false;
-    }
-
-    function close() {
-        dispatch("close");
-    }
-
-    function showInviteUsers() {
-        dispatch("showInviteUsers");
     }
 
     function matchesSearch(searchTermLower: string, user: UserSummary | ExternalBot): boolean {
@@ -229,7 +204,7 @@
             // will cause the search results to be reactively recalculated
             client.searchUsers(searchTerm, MAX_SEARCH_RESULTS);
         }
-        membersList.reset();
+        membersList?.reset();
     }
 
     function onBotSelected(bot: BotMatchType | ExternalBot | undefined) {
@@ -255,6 +230,51 @@
             selectTab("users");
         }
     }
+    let userId = $derived($user.userId);
+    let knownUsers = $derived(getKnownUsers($userStore, members));
+    let largeGroup = $derived(members.length > LARGE_GROUP_THRESHOLD);
+    let me = $derived(knownUsers.find((u) => u.userId === userId));
+    let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered));
+    let searchTermLower = $derived(searchTerm.toLowerCase());
+    let fullMembers = $derived(
+        knownUsers
+            .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId)
+            .sort(compareMembers),
+    );
+    let blockedUsers = $derived(matchingUsers(searchTermLower, $userStore, blocked, true));
+    let lapsedMembers = $derived(matchingUsers(searchTermLower, $userStore, lapsed, true));
+    let invitedUsers = $derived(matchingUsers(searchTermLower, $userStore, invited, true));
+    let showBlocked = $derived(blockedUsers.length > 0);
+    let showInvited = $derived(invitedUsers.length > 0);
+    let showLapsed = $derived(lapsedMembers.length > 0);
+    let canInvite = $derived(client.canInviteUsers(collection.id));
+
+    let bots = $derived(
+        hydrateBots(installedBots, $externalBots).filter((b) => matchesSearch(searchTermLower, b)),
+    );
+    let canManageBots = $derived(client.canManageBots(collection.id));
+    let botContainer = $derived(
+        collection.kind === "channel"
+            ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
+            : collection.id,
+    );
+    $effect(() => {
+        if (!idsMatch(collection.id, id)) {
+            id = collection.id;
+            memberView = "members";
+        }
+
+        if (
+            (memberView === "blocked" && blocked.size === 0) ||
+            (memberView === "invited" && invited.size === 0)
+        ) {
+            memberView = "members";
+        }
+
+        if (initialUsergroup !== undefined) {
+            selectedTab = "groups";
+        }
+    });
 </script>
 
 {#if showingBotInstaller}
@@ -267,25 +287,20 @@
 {/if}
 
 {#if showHeader}
-    <MembersHeader
-        level={collection.level}
-        {closeIcon}
-        {canInvite}
-        on:close={close}
-        on:showInviteUsers={showInviteUsers} />
+    <MembersHeader level={collection.level} {closeIcon} {canInvite} {onClose} {onShowInviteUsers} />
 {/if}
 
 {#if collection.kind !== "channel"}
     <div class="tabs">
         <button
-            on:click={() => selectTab("users")}
+            onclick={() => selectTab("users")}
             class:selected={selectedTab === "users"}
             class="tab">
             <Translatable resourceKey={i18nKey("communities.members")} />
         </button>
         {#if collection.kind === "community"}
             <button
-                on:click={() => selectTab("groups")}
+                onclick={() => selectTab("groups")}
                 class:selected={selectedTab === "groups"}
                 class="tab">
                 <Translatable resourceKey={i18nKey("communities.userGroups")} />
@@ -293,7 +308,7 @@
         {/if}
         {#if canManageBots}
             <button
-                on:click={() => selectTab("add-bots")}
+                onclick={() => selectTab("add-bots")}
                 class:selected={selectedTab === "add-bots"}
                 class="tab">
                 <Translatable resourceKey={i18nKey("bots.explorer.addBots")} />
@@ -313,9 +328,9 @@
 
     {#if showBlocked || showInvited || showLapsed}
         <div class="tabs">
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
             <button
-                on:click={() => setView("members")}
+                onclick={() => setView("members")}
                 class:selected={memberView === "members"}
                 class="tab sub">
                 <AccountMultiple
@@ -326,7 +341,7 @@
             </button>
             {#if showInvited}
                 <button
-                    on:click={() => setView("invited")}
+                    onclick={() => setView("invited")}
                     class:selected={memberView === "invited"}
                     class="tab sub">
                     <AccountPlusOutline
@@ -339,7 +354,7 @@
 
             {#if showBlocked}
                 <button
-                    on:click={() => setView("blocked")}
+                    onclick={() => setView("blocked")}
                     class:selected={memberView === "blocked"}
                     class="tab sub">
                     <Cancel
@@ -352,7 +367,7 @@
 
             {#if showLapsed}
                 <button
-                    on:click={() => setView("lapsed")}
+                    onclick={() => setView("lapsed")}
                     class:selected={memberView === "lapsed"}
                     class="tab sub">
                     <Alarm
@@ -370,11 +385,11 @@
             <Member
                 me
                 member={me}
-                canPromoteToOwner={canPromoteMyselfToOwner}
+                canPromoteToOwner={false}
                 canDemoteToAdmin={client.canDemote(collection.id, me.role, "admin")}
                 canDemoteToModerator={client.canDemote(collection.id, me.role, "moderator")}
                 canDemoteToMember={client.canDemote(collection.id, me.role, "member")}
-                on:changeRole />
+                {onChangeRole} />
         {/if}
 
         {#if bots.length > 0}
@@ -398,26 +413,24 @@
             {/if}
         {/if}
 
-        <VirtualList
-            bind:this={membersList}
-            keyFn={(user) => user.userId}
-            items={fullMembers}
-            let:item>
-            <Member
-                me={false}
-                member={item}
-                canPromoteToOwner={client.canPromote(collection.id, item.role, "owner")}
-                canPromoteToAdmin={client.canPromote(collection.id, item.role, "admin")}
-                canDemoteToAdmin={client.canDemote(collection.id, item.role, "admin")}
-                canPromoteToModerator={client.canPromote(collection.id, item.role, "moderator")}
-                canDemoteToModerator={client.canDemote(collection.id, item.role, "moderator")}
-                canDemoteToMember={client.canDemote(collection.id, item.role, "member")}
-                canBlockUser={client.canBlockUsers(collection.id)}
-                canRemoveMember={client.canRemoveMembers(collection.id)}
-                {searchTerm}
-                on:blockUser
-                on:changeRole
-                on:removeMember />
+        <VirtualList bind:this={membersList} keyFn={(user) => user.userId} items={fullMembers}>
+            {#snippet children(item)}
+                <Member
+                    me={false}
+                    member={item}
+                    canPromoteToOwner={client.canPromote(collection.id, item.role, "owner")}
+                    canPromoteToAdmin={client.canPromote(collection.id, item.role, "admin")}
+                    canDemoteToAdmin={client.canDemote(collection.id, item.role, "admin")}
+                    canPromoteToModerator={client.canPromote(collection.id, item.role, "moderator")}
+                    canDemoteToModerator={client.canDemote(collection.id, item.role, "moderator")}
+                    canDemoteToMember={client.canDemote(collection.id, item.role, "member")}
+                    canBlockUser={client.canBlockUsers(collection.id)}
+                    canRemoveMember={client.canRemoveMembers(collection.id)}
+                    {searchTerm}
+                    {onBlockUser}
+                    {onChangeRole}
+                    {onRemoveMember} />
+            {/snippet}
         </VirtualList>
     {:else if memberView === "blocked"}
         <div use:menuCloser class="user-list">
@@ -427,7 +440,7 @@
                     {user}
                     {searchTerm}
                     canUnblockUser={client.canUnblockUsers(collection.id)}
-                    on:unblockUser />
+                    {onUnblockUser} />
             {/each}
         </div>
     {:else if memberView === "invited"}
@@ -438,7 +451,7 @@
                     {user}
                     {searchTerm}
                     canUninviteUser={client.canInviteUsers(collection.id)}
-                    on:cancelInvite />
+                    {onCancelInvite} />
             {/each}
         </div>
     {:else if memberView === "lapsed"}

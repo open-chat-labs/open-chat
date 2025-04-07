@@ -17,7 +17,6 @@
     import Profiler from "./Profiler.svelte";
     import {
         OpenChat,
-        UserLoggedIn,
         type DiamondMembershipFees,
         type ChatSummary,
         type ChatIdentifier,
@@ -30,6 +29,7 @@
         anonUser,
         identityState,
         chatListScopeStore as chatListScope,
+        subscribe,
     } from "openchat-client";
     import {
         isCanisterUrl,
@@ -54,7 +54,6 @@
     import InstallPrompt from "./home/InstallPrompt.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import { reviewingTranslations } from "@i18n/i18n";
-    import { subscribe } from "@src/utils/pubsub";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -142,13 +141,13 @@
             subscribe("startVideoCall", startVideoCall),
             subscribe("hangup", hangup),
             subscribe("askToSpeak", askToSpeak),
+            subscribe("userLoggedIn", onUserLoggedIn),
         ];
         window.addEventListener("scroll", trackVirtualKeyboard);
         window.addEventListener("resize", trackVirtualKeyboard);
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
         framed.set(window.self !== window.top);
-        client.addEventListener("openchat_event", onUserLoggedIn);
 
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {
@@ -193,7 +192,6 @@
             window.removeEventListener("resize", trackVirtualKeyboard);
             window.removeEventListener("orientationchange", calculateHeight);
             window.removeEventListener("unhandledrejection", unhandledError);
-            client.removeEventListener("openchat_event", onUserLoggedIn);
             unsubs.forEach((u) => u());
         };
     });
@@ -211,10 +209,8 @@
         }
     }
 
-    function onUserLoggedIn(ev: Event) {
-        if (ev instanceof UserLoggedIn) {
-            broadcastLoggedInUser(ev.detail);
-        }
+    function onUserLoggedIn(userId: string) {
+        broadcastLoggedInUser(userId);
     }
 
     function addHotGroupExclusion(chatId: string): void {

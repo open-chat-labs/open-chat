@@ -6,7 +6,11 @@
     import Checkbox from "../Checkbox.svelte";
     import AlertBox from "../AlertBox.svelte";
 
-    export let confirmed: boolean;
+    interface Props {
+        confirmed: boolean;
+    }
+
+    let { confirmed = $bindable() }: Props = $props();
 </script>
 
 <AlertBox icon={false}>

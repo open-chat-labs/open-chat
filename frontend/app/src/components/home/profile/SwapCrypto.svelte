@@ -14,7 +14,7 @@
     import { Record } from "@dfinity/candid/lib/cjs/idl";
     import CryptoSelector from "../CryptoSelector.svelte";
     import Legend from "../../Legend.svelte";
-    import SwapProgress from "./SwapProgress.svelte";
+    import SwapProgress, { type SwapOutcome } from "./SwapProgress.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
@@ -207,19 +207,13 @@
         loadSwaps(ledger);
     }
 
-    function onSwapFinished(
-        ev: CustomEvent<{
-            outcome: "success" | "rateChanged" | "insufficientFunds" | "error";
-            ledgerIn: string;
-            ledgerOut: string;
-        }>,
-    ) {
+    function onSwapFinished(outcome: SwapOutcome, ledgerIn: string, ledgerOut: string) {
         busy = false;
         swapState = "finished";
-        result = ev.detail.outcome;
+        result = outcome;
 
-        client.refreshAccountBalance(ev.detail.ledgerIn);
-        client.refreshAccountBalance(ev.detail.ledgerOut);
+        client.refreshAccountBalance(ledgerIn);
+        client.refreshAccountBalance(ledgerOut);
     }
 
     function onPrimaryClick() {
@@ -237,8 +231,8 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        error = $_(ev.detail);
+    function onBalanceRefreshError(err: string) {
+        error = $_(err);
     }
     let initialized = $state(false);
 
@@ -282,8 +276,8 @@
                     value={remainingBalance}
                     label={i18nKey("cryptoAccount.shortBalanceLabel")}
                     bold
-                    on:refreshed={onBalanceRefreshed}
-                    on:error={onBalanceRefreshError} />
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             {/if}
         </span>
     {/snippet}
@@ -332,7 +326,7 @@
                             amountIn={amountInText}
                             decimalsOut={detailsOut.decimals}
                             dex={dexName(bestQuote[0])}
-                            on:finished={onSwapFinished} />
+                            onFinished={onSwapFinished} />
                     </div>
                 {/if}
 

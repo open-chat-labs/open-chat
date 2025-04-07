@@ -4,12 +4,12 @@
     import Headline from "./Headline.svelte";
     import TermsContent from "./TermsContent.svelte";
 
-    $: {
+    $effect(() => {
         const section = $querystring.get("section");
         if (section) {
             scrollToSection(section);
         }
-    }
+    });
 </script>
 
 <div class="terms">

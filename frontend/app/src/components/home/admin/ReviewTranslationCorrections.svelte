@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _, locale } from "svelte-i18n";
-    import MenuIcon from "../../MenuIconLegacy.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
@@ -9,7 +9,7 @@
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItemLegacy.svelte";
+    import MenuItem from "../../MenuItem.svelte";
     import type {
         CandidateTranslations,
         OpenChat,
@@ -25,14 +25,14 @@
 
     const client = getContext<OpenChat>("client");
 
-    let corrections: TranslationCorrection[] = [];
-    let verifying: TranslationCorrection | undefined = undefined;
+    let corrections: TranslationCorrection[] = $state([]);
+    let verifying: TranslationCorrection | undefined = $state(undefined);
     let verifications: Record<number, string> = {};
-    let chatBalance = 0n;
-    let refreshing = false;
-    let processing = new Set<bigint>();
+    let chatBalance = $state(0n);
+    let refreshing = $state(false);
+    let processing = $state(new Set<bigint>());
 
-    $: formattedBalance = client.formatTokens(chatBalance, 8);
+    let formattedBalance = $derived(client.formatTokens(chatBalance, 8));
 
     onMount(async () => {
         reviewingTranslations.set(true);
@@ -170,7 +170,7 @@
 <div class="balance">
     <div>CHAT balance</div>
     <div class="amount">{formattedBalance}</div>
-    <div class="refresh" class:refreshing on:click={refreshBalance}>
+    <div class="refresh" class:refreshing onclick={refreshBalance}>
         <Refresh size={"1em"} color={"var(--icon-txt)"} />
     </div>
 </div>
@@ -209,7 +209,7 @@
                         >{client.toDatetimeString(new Date(Number(correction.proposedAt)))}</td>
                     <td class="action">
                         <MenuIcon position="bottom" align="end">
-                            <span slot="icon">
+                            {#snippet menuIcon()}
                                 {#if processing.has(correction.id)}
                                     <div class="busy"></div>
                                 {:else}
@@ -217,59 +217,77 @@
                                         <Hamburger size={$iconSize} color={"var(--txt)"} />
                                     </HoverIcon>
                                 {/if}
-                            </span>
-                            <span slot="menu">
+                            {/snippet}
+                            {#snippet menuItems()}
                                 <Menu>
                                     <MenuItem onclick={() => previewCorrection(correction)}>
-                                        <EyeOutline
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <span slot="text">Preview</span>
+                                        {#snippet icon()}
+                                            <EyeOutline
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"} />
+                                        {/snippet}
+                                        {#snippet text()}
+                                            <span>Preview</span>
+                                        {/snippet}
                                     </MenuItem>
                                     {#if verifying !== undefined && verifying.id === correction.id}
                                         <MenuItem onclick={() => (verifying = undefined)}>
-                                            <Translate
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <span slot="text">Show proposed</span>
+                                            {#snippet icon()}
+                                                <Translate
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
+                                                <span>Show proposed</span>
+                                            {/snippet}
                                         </MenuItem>
                                     {:else}
                                         <MenuItem onclick={() => verifyCorrection(correction)}>
-                                            <Translate
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <span slot="text">Show suggestion in English</span>
+                                            {#snippet icon()}
+                                                <Translate
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
+                                                <span>Show suggestion in English</span>
+                                            {/snippet}
                                         </MenuItem>
                                     {/if}
                                     <MenuItem onclick={() => approveCorrection(correction)}>
-                                        <Check
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <span slot="text">Approve</span>
+                                        {#snippet icon()}
+                                            <Check
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"} />
+                                        {/snippet}
+                                        {#snippet text()}
+                                            <span>Approve</span>
+                                        {/snippet}
                                     </MenuItem>
                                     <MenuItem
                                         onclick={() =>
                                             rejectCorrection(correction, "incorrect_meaning")}>
-                                        <Close
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <span slot="text">Reject (meaning)</span>
+                                        {#snippet icon()}
+                                            <Close
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"} />
+                                        {/snippet}
+                                        {#snippet text()}
+                                            <span>Reject (meaning)</span>
+                                        {/snippet}
                                     </MenuItem>
                                     <MenuItem
                                         onclick={() => rejectCorrection(correction, "too_long")}>
-                                        <Close
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <span slot="text">Reject (layout)</span>
+                                        {#snippet icon()}
+                                            <Close
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"} />
+                                        {/snippet}
+                                        {#snippet text()}
+                                            <span>Reject (layout)</span>
+                                        {/snippet}
                                     </MenuItem>
                                 </Menu>
-                            </span>
+                            {/snippet}
                         </MenuIcon>
                     </td>
                 </tr>

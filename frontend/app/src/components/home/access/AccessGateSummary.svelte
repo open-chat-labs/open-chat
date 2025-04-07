@@ -6,19 +6,26 @@
     import Translatable from "../../Translatable.svelte";
     import AccessGateBuilder from "./AccessGateBuilder.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        gateConfig: AccessGateConfig;
+        editable: boolean;
+        level: Level;
+        valid?: boolean;
+        showNoGate?: boolean;
+        onUpdated?: () => void;
+    }
 
-    export let gateConfig: AccessGateConfig;
-    export let editable: boolean;
-    export let level: Level;
-    export let valid: boolean = true;
-    export let showNoGate: boolean = false;
+    let {
+        gateConfig = $bindable(),
+        editable,
+        level,
+        valid = $bindable(true),
+        showNoGate = false,
+        onUpdated,
+    }: Props = $props();
 
-    let showDetail = false;
-
-    $: gateText = getGateText(gateConfig.gate);
+    let showDetail = $state(false);
 
     function open(e: Event) {
         e.preventDefault();
@@ -41,8 +48,9 @@
 
     function close() {
         showDetail = false;
-        dispatch("updated");
+        onUpdated?.();
     }
+    let gateText = $derived(getGateText(gateConfig.gate));
 </script>
 
 {#if showDetail}
@@ -50,9 +58,9 @@
 {/if}
 
 {#if gateConfig.gate.kind !== "no_gate" || showNoGate}
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class:invalid={!valid} on:click={open} class:editable class="summary">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class:invalid={!valid} onclick={open} class:editable class="summary">
         <div class="icon">
             <AccessGateIcon button {level} showNoGate {gateConfig} />
         </div>

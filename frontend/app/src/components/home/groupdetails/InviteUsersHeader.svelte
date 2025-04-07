@@ -5,25 +5,26 @@
     import { _ } from "svelte-i18n";
     import type { CommunitySummary, Level, MultiUserChat, OpenChat } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let closeIcon: "close" | "back";
-    export let level: Level;
-    export let container: MultiUserChat | CommunitySummary;
-    export let isCommunityPublic: boolean;
-
-    $: canAdd =
-        !isCommunityPublic && container.kind === "channel" && client.canAddMembers(container.id);
-
-    function cancelInviteUsers() {
-        dispatch("cancelInviteUsers");
+    interface Props {
+        closeIcon: "close" | "back";
+        level: Level;
+        container: MultiUserChat | CommunitySummary;
+        isCommunityPublic: boolean;
+        onCancelInviteUsers: () => void;
     }
+
+    let { closeIcon, level, container, isCommunityPublic, onCancelInviteUsers }: Props = $props();
+
+    let canAdd = $derived(
+        !isCommunityPublic && container.kind === "channel" && client.canAddMembers(container.id),
+    );
 </script>
 
 <SectionHeader border={false} flush>
@@ -33,9 +34,9 @@
                 ? i18nKey("group.addOrInviteUsers")
                 : i18nKey("group.inviteUsers", undefined, level, true)} />
     </h4>
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <span title={$_("close")} class="close" on:click={cancelInviteUsers}>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <span title={$_("close")} class="close" onclick={onCancelInviteUsers}>
         <HoverIcon>
             {#if closeIcon === "close"}
                 <Close size={$iconSize} color={"var(--icon-txt)"} />

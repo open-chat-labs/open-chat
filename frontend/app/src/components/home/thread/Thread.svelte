@@ -12,18 +12,12 @@
         User,
         TimelineItem,
         MessageContent,
+        MessageContext,
+        ChatIdentifier,
     } from "openchat-client";
-    import {
-        AttachGif,
-        chatIdentifiersEqual,
-        CreatePoll,
-        CreateTestMessages,
-        LEDGER_CANISTER_ICP,
-        TokenTransfer,
-    } from "openchat-client";
+    import { LEDGER_CANISTER_ICP, messageContextsEqual, subscribe } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Loading from "../../Loading.svelte";
-    import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
     import MemeBuilder from "../MemeBuilder.svelte";
@@ -52,95 +46,94 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let rootEvent: EventWrapper<Message>;
-    export let chat: ChatSummary;
+    interface Props {
+        rootEvent: EventWrapper<Message>;
+        chat: ChatSummary;
+        onCloseThread: (id: ChatIdentifier) => void;
+    }
 
-    let chatEventList: ChatEventList | undefined;
+    let { rootEvent, chat, onCloseThread }: Props = $props();
+
+    let chatEventList: ChatEventList | undefined = $state();
     //@ts-ignore
-    let pollBuilder: PollBuilder;
+    let pollBuilder: PollBuilder = $state();
     //@ts-ignore
-    let giphySelector: GiphySelector;
+    let giphySelector: GiphySelector = $state();
     //@ts-ignore
-    let memeBuilder: MemeBuilder;
-    let creatingPoll = false;
-    let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
-    let selectingGif = false;
-    let buildingMeme = false;
-    let initialised = false;
-    let messagesDiv: HTMLDivElement | undefined;
-    let messagesDivHeight: number;
-    let creatingP2PSwapMessage = false;
+    let memeBuilder: MemeBuilder = $state();
+    let creatingPoll = $state(false);
+    let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
+    let selectingGif = $state(false);
+    let buildingMeme = $state(false);
+    let initialised = $state(false);
+    let messagesDiv: HTMLDivElement | undefined = $state();
+    let messagesDivHeight: number = $state(0);
+    let creatingP2PSwapMessage = $state(false);
     let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
-        undefined;
+        $state(undefined);
 
-    $: threadRootMessageIndex = rootEvent.event.messageIndex;
-    $: messageContext = { chatId: chat.id, threadRootMessageIndex };
-    $: threadRootMessage = rootEvent.event;
-    $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId);
-    $: draftMessage = readable(draftMessagesStore.get(messageContext), (set) =>
-        draftMessagesStore.subscribe((d) => set(d.get(messageContext) ?? {})),
+    let threadRootMessageIndex = $derived(rootEvent.event.messageIndex);
+    let messageContext = $derived({ chatId: chat.id, threadRootMessageIndex });
+    let threadRootMessage = $derived(rootEvent.event);
+    let blocked = $derived(
+        chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId),
     );
-    $: textContent = derived(draftMessage, (d) => d.textContent);
-    $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
-    $: attachment = derived(draftMessage, (d) => d.attachment);
-    $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
-    $: canSendAny = client.canSendMessage(chat.id, "thread");
-    $: canReact = client.canReactToMessages(chat.id);
-    $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
-    $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
-    $: timeline = client.groupEvents(
-        [...events].reverse(),
-        $user.userId,
-        $expandedDeletedMessages,
-    ) as TimelineItem<Message>[];
-    $: readonly = client.isChatReadOnly(chat.id);
-    $: thread = rootEvent.event.thread;
-    $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
-    $: isFollowedByMe =
-        $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false;
+    let draftMessage = $derived($draftMessagesStore.get(messageContext));
+    let textContent = $derived(draftMessage?.textContent);
+    let replyingTo = $derived(draftMessage?.replyingTo);
+    let attachment = $derived(draftMessage?.attachment);
+    let editingEvent = $derived(draftMessage?.editingEvent);
+    let canSendAny = $derived(client.canSendMessage(chat.id, "thread"));
+    let canReact = $derived(client.canReactToMessages(chat.id));
+    let atRoot = $derived($threadEvents.length === 0 || $threadEvents[0]?.index === 0);
+    let events = $derived(atRoot ? [rootEvent, ...$threadEvents] : $threadEvents);
+    let timeline = $derived(
+        client.groupEvents(
+            [...events].reverse(),
+            $user.userId,
+            $expandedDeletedMessages,
+        ) as TimelineItem<Message>[],
+    );
+    let readonly = $derived(client.isChatReadOnly(chat.id));
+    let thread = $derived(rootEvent.event.thread);
+    let loading = $derived(!initialised && $threadEvents.length === 0 && thread !== undefined);
+    let isFollowedByMe = $derived(
+        $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false,
+    );
 
     onMount(() => {
-        client.addEventListener("openchat_event", clientEvent);
+        const unsubs = [
+            subscribe("createPoll", onCreatePoll),
+            subscribe("attachGif", onAttachGif),
+            subscribe("tokenTransfer", onTokenTransfer),
+            subscribe("createTestMessages", onCreateTestMessages),
+        ];
         return () => {
-            client.removeEventListener("openchat_event", clientEvent);
+            unsubs.forEach((u) => u());
         };
     });
 
-    function clientEvent(ev: Event): void {
-        if (ev instanceof CreatePoll) {
-            if (
-                ev.detail.chatId === messageContext.chatId &&
-                ev.detail.threadRootMessageIndex === messageContext.threadRootMessageIndex
-            ) {
-                createPoll();
-            }
+    function onCreatePoll(ctx: MessageContext) {
+        if (messageContextsEqual(ctx, messageContext)) {
+            createPoll();
         }
-        if (ev instanceof TokenTransfer) {
-            const { context } = ev.detail;
-            if (
-                context.chatId === messageContext.chatId &&
-                context.threadRootMessageIndex === messageContext.threadRootMessageIndex
-            ) {
-                tokenTransfer(ev);
-            }
+    }
+
+    function onAttachGif([evContext, search]: [MessageContext, string]) {
+        if (messageContextsEqual(messageContext, evContext)) {
+            attachGif(search);
         }
-        if (ev instanceof AttachGif) {
-            const [evContext, search] = ev.detail;
-            if (
-                evContext.chatId === messageContext.chatId &&
-                evContext.threadRootMessageIndex === messageContext.threadRootMessageIndex
-            ) {
-                attachGif(new CustomEvent("openchat_client", { detail: search }));
-            }
+    }
+
+    function onTokenTransfer(args: { context: MessageContext; ledger?: string; amount?: bigint }) {
+        if (messageContextsEqual(messageContext, args.context)) {
+            tokenTransfer(args);
         }
-        if (ev instanceof CreateTestMessages) {
-            const [{ chatId, threadRootMessageIndex }, num] = ev.detail;
-            if (
-                chatIdentifiersEqual(chatId, messageContext.chatId) &&
-                threadRootMessageIndex === messageContext.threadRootMessageIndex
-            ) {
-                createTestMessages(num);
-            }
+    }
+
+    function onCreateTestMessages([ctx, num]: [MessageContext, number]) {
+        if (messageContextsEqual(ctx, messageContext)) {
+            createTestMessages(num);
         }
     }
 
@@ -156,17 +149,17 @@
         send(0);
     }
 
-    function sendMessage(ev: CustomEvent<[string | undefined, User[], boolean]>) {
+    function onSendMessage(detail: [string | undefined, User[], boolean]) {
         if (!canSendAny) return;
-        let [text, mentioned, blockLevelMarkdown] = ev.detail;
-        if ($editingEvent !== undefined) {
+        let [text, mentioned, blockLevelMarkdown] = detail;
+        if (editingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
                     messageContext,
                     text,
                     blockLevelMarkdown,
-                    $attachment,
-                    $editingEvent,
+                    attachment,
+                    editingEvent,
                 )
                 .then((success) => {
                     if (!success) {
@@ -174,7 +167,7 @@
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, blockLevelMarkdown, $attachment, mentioned);
+            sendMessageWithAttachment(text, blockLevelMarkdown, attachment, mentioned);
         }
     }
 
@@ -197,7 +190,7 @@
         );
     }
 
-    function cancelReply() {
+    function onCancelReply() {
         draftMessagesStore.setReplyingTo(messageContext, undefined);
     }
 
@@ -209,8 +202,8 @@
         draftMessagesStore.delete(messageContext);
     }
 
-    function setTextContent(ev: CustomEvent<string | undefined>) {
-        draftMessagesStore.setTextContent(messageContext, ev.detail);
+    function onSetTextContent(txt?: string) {
+        draftMessagesStore.setTextContent(messageContext, txt);
     }
 
     function onStartTyping() {
@@ -221,18 +214,14 @@
         client.stopTyping(chat, $user.userId, threadRootMessageIndex);
     }
 
-    function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        onFileSelected(ev.detail);
-    }
-
     function onFileSelected(content: AttachmentContent) {
         draftMessagesStore.setAttachment(messageContext, content);
     }
 
-    function tokenTransfer(ev: CustomEvent<{ ledger?: string; amount?: bigint }>) {
+    function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {
         creatingCryptoTransfer = {
-            ledger: ev.detail.ledger ?? $lastCryptoSent ?? LEDGER_CANISTER_ICP,
-            amount: ev.detail.amount ?? BigInt(0),
+            ledger: detail.ledger ?? $lastCryptoSent ?? LEDGER_CANISTER_ICP,
+            amount: detail.amount ?? BigInt(0),
         };
     }
 
@@ -245,10 +234,10 @@
         creatingPoll = true;
     }
 
-    function attachGif(ev: CustomEvent<string>) {
+    function attachGif(search: string) {
         selectingGif = true;
         if (giphySelector !== undefined) {
-            giphySelector.reset(ev.detail);
+            giphySelector.reset(search);
         }
     }
 
@@ -264,7 +253,7 @@
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {
-        return $replyingTo?.sender?.userId;
+        return replyingTo?.sender?.userId;
     }
 
     function eventKey(e: EventWrapper<ChatEventType>): string {
@@ -279,18 +268,19 @@
         chatEventList?.scrollToMessageIndex(messageContext, index, false);
     }
 
-    function onGoToMessageIndex(
-        ev: CustomEvent<{ index: number; preserveFocus: boolean; messageId: bigint }>,
-    ) {
-        goToMessageIndex(ev.detail.index);
+    function onGoToMessageIndex(detail: { index: number }) {
+        goToMessageIndex(detail.index);
     }
 
     function createP2PSwapMessage() {
         creatingP2PSwapMessage = true;
     }
 
-    function onRemovePreview(ev: CustomEvent<{ event: EventWrapper<Message>; url: string }>): void {
-        removeLinkPreviewDetails = ev.detail;
+    function onRemovePreview(event: EventWrapper<Message>, url: string): void {
+        removeLinkPreviewDetails = {
+            event,
+            url,
+        };
     }
 
     function removePreview(yes: boolean): Promise<void> {
@@ -306,6 +296,12 @@
 
         removeLinkPreviewDetails = undefined;
         return Promise.resolve();
+    }
+
+    function toggleMessageExpansion(ew: EventWrapper<ChatEventType>, expand: boolean) {
+        if (ew.event.kind === "message" && ew.event.content.kind === "proposal_content") {
+            client.toggleProposalFilterMessageExpansion(ew.event.messageId, expand);
+        }
     }
 
     function onSendMessageWithContent(content: MessageContent) {
@@ -343,12 +339,7 @@
         onClose={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
-<ThreadHeader
-    {threadRootMessageIndex}
-    on:createPoll={createPoll}
-    on:closeThread
-    {rootEvent}
-    chatSummary={chat} />
+<ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
 
 <ChatEventList
     threadRootEvent={rootEvent}
@@ -364,74 +355,79 @@
     {chat}
     bind:initialised
     bind:messagesDiv
-    bind:messagesDivHeight
-    let:isAccepted
-    let:isConfirmed
-    let:isFailed
-    let:isReadByMe
-    let:messageObserver
-    let:labelObserver>
-    {#if loading}
-        <Loading />
-    {:else}
-        {#each timeline as timelineItem}
-            {#if timelineItem.kind === "timeline_date"}
-                <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
-            {:else}
-                {#each timelineItem.group as userGroup}
-                    {#each userGroup as evt, i (eventKey(evt))}
-                        <ChatEvent
-                            chatId={chat.id}
-                            chatType={chat.kind}
-                            user={$user}
-                            event={evt}
-                            first={i + 1 === userGroup.length}
-                            last={i === 0}
-                            me={evt.event.sender === $user.userId}
-                            accepted={isAccepted($unconfirmed, evt)}
-                            confirmed={isConfirmed($unconfirmed, evt)}
-                            failed={isFailed($failedMessagesStore, evt)}
-                            readByMe={evt.event.messageId === rootEvent.event.messageId ||
-                                !isFollowedByMe ||
-                                isReadByMe($messagesRead, evt)}
-                            readByThem
-                            observer={messageObserver}
-                            focused={evt.event.kind === "message" &&
-                                $focusMessageIndex === evt.event.messageIndex}
-                            {readonly}
-                            {threadRootMessage}
-                            pinned={false}
-                            supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
-                            supportsReply={evt.event.messageId !== rootEvent.event.messageId}
-                            canPin={client.canPinMessages(chat.id)}
-                            canBlockUsers={client.canBlockUsers(chat.id)}
-                            canDelete={client.canDeleteOtherUsersMessages(chat.id)}
-                            publicGroup={(chat.kind === "group_chat" || chat.kind === "channel") &&
-                                chat.public}
-                            editing={$editingEvent === evt}
-                            canSendAny
-                            {canReact}
-                            canInvite={false}
-                            canReplyInThread={false}
-                            collapsed={false}
-                            on:removePreview={onRemovePreview}
-                            on:goToMessageIndex={onGoToMessageIndex}
-                            onReplyTo={replyTo}
-                            on:editEvent={() => editEvent(evt)} />
+    bind:messagesDivHeight>
+    {#snippet children({
+        isAccepted,
+        isConfirmed,
+        isFailed,
+        isReadByMe,
+        messageObserver,
+        labelObserver,
+    })}
+        {#if loading}
+            <Loading />
+        {:else}
+            {#each timeline as timelineItem}
+                {#if timelineItem.kind === "timeline_date"}
+                    <TimelineDate observer={labelObserver} timestamp={timelineItem.timestamp} />
+                {:else}
+                    {#each timelineItem.group as userGroup}
+                        {#each userGroup as evt, i (eventKey(evt))}
+                            <ChatEvent
+                                chatId={chat.id}
+                                chatType={chat.kind}
+                                event={evt}
+                                first={i + 1 === userGroup.length}
+                                last={i === 0}
+                                me={evt.event.sender === $user.userId}
+                                accepted={isAccepted($unconfirmed, evt)}
+                                confirmed={isConfirmed($unconfirmed, evt)}
+                                failed={isFailed($failedMessagesStore, evt)}
+                                readByMe={evt.event.messageId === rootEvent.event.messageId ||
+                                    !isFollowedByMe ||
+                                    isReadByMe($messagesRead, evt)}
+                                readByThem
+                                observer={messageObserver}
+                                focused={evt.event.kind === "message" &&
+                                    $focusMessageIndex === evt.event.messageIndex}
+                                {readonly}
+                                {threadRootMessage}
+                                pinned={false}
+                                supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
+                                supportsReply={evt.event.messageId !== rootEvent.event.messageId}
+                                canPin={client.canPinMessages(chat.id)}
+                                canBlockUsers={client.canBlockUsers(chat.id)}
+                                canDelete={client.canDeleteOtherUsersMessages(chat.id)}
+                                publicGroup={(chat.kind === "group_chat" ||
+                                    chat.kind === "channel") &&
+                                    chat.public}
+                                editing={editingEvent === evt}
+                                canSendAny
+                                {canReact}
+                                canInvite={false}
+                                canReplyInThread={false}
+                                collapsed={false}
+                                {onRemovePreview}
+                                {onGoToMessageIndex}
+                                onReplyTo={replyTo}
+                                onEditEvent={() => editEvent(evt)}
+                                onExpandMessage={() => toggleMessageExpansion(evt, true)}
+                                onCollapseMessage={() => toggleMessageExpansion(evt, false)} />
+                        {/each}
                     {/each}
-                {/each}
-            {/if}
-        {/each}
-    {/if}
+                {/if}
+            {/each}
+        {/if}
+    {/snippet}
 </ChatEventList>
 
 {#if !readonly}
     <Footer
         {chat}
-        attachment={$attachment}
-        editingEvent={$editingEvent}
-        replyingTo={$replyingTo}
-        textContent={$textContent}
+        {attachment}
+        {editingEvent}
+        {replyingTo}
+        {textContent}
         user={$user}
         joining={undefined}
         preview={false}
@@ -439,19 +435,17 @@
         mode={"thread"}
         {blocked}
         {messageContext}
-        on:cancelPreview
-        on:cancelReply={cancelReply}
-        on:clearAttachment={clearAttachment}
-        on:cancelEditEvent={cancelEditEvent}
-        on:setTextContent={setTextContent}
-        on:startTyping={onStartTyping}
-        on:stopTyping={onStopTyping}
+        {onCancelReply}
+        onClearAttachment={clearAttachment}
+        onCancelEdit={cancelEditEvent}
+        {onSetTextContent}
+        {onStartTyping}
+        {onStopTyping}
         {onFileSelected}
-        on:audioCaptured={fileSelected}
-        on:sendMessage={sendMessage}
-        on:attachGif={attachGif}
-        on:makeMeme={makeMeme}
-        on:tokenTransfer={tokenTransfer}
-        on:createP2PSwapMessage={createP2PSwapMessage}
-        on:createPoll={createPoll} />
+        {onSendMessage}
+        onAttachGif={attachGif}
+        onMakeMeme={makeMeme}
+        onTokenTransfer={tokenTransfer}
+        onCreateP2PSwapMessage={createP2PSwapMessage}
+        onCreatePoll={createPoll} />
 {/if}

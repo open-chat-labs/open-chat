@@ -1,14 +1,15 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import { type PincodeChar, type PincodeType } from "./Pincode.svelte";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        char: PincodeChar;
+        type: PincodeType;
+        onUpdate: (char: PincodeChar) => void;
+        onBlur?: () => void;
+        onClear: (char: PincodeChar) => void;
+    }
 
-    export let char: PincodeChar;
-    export let type: PincodeType;
-    export let selectTextOnFocus: boolean = false;
-
-    let ref: HTMLInputElement | undefined;
+    let { char, type, onUpdate, onBlur, onClear }: Props = $props();
 
     const android = (navigator.userAgent?.match(/android/i) ?? undefined) !== undefined;
     const androidHack = type === "alphanumeric" && android;
@@ -21,14 +22,14 @@
         BACKSPACE: "Backspace",
     };
 
-    let modifierKeyDown = false;
+    let modifierKeyDown = $state(false);
 
     function dispatchUpdate(value: string) {
         if (type === "numeric" && /^[0-9]$/.test(value)) {
-            dispatch("update", { ...char, value });
+            onUpdate({ ...char, value });
         }
         if (type === "alphanumeric" && /^[a-zA-Z0-9]$/.test(value)) {
-            dispatch("update", { ...char, value });
+            onUpdate({ ...char, value });
         }
     }
 
@@ -43,21 +44,17 @@
 </script>
 
 <input
-    bind:this={ref}
     type="text"
     inputmode={type === "numeric" ? "numeric" : "text"}
     pattern={type === "numeric" ? "[0-9]{1}" : "^[a-zA-Z0-9]$"}
     maxlength="1"
     value={char.value}
-    on:focus={() => {
-        if (selectTextOnFocus) ref?.select();
-    }}
-    on:blur
-    on:input={onInput}
-    on:keydown={(e) => {
+    onblur={onBlur}
+    oninput={onInput}
+    onkeydown={(e) => {
         if (e.key === KEYBOARD.BACKSPACE) {
             e.preventDefault();
-            dispatch("clear", char);
+            onClear(char);
             return;
         }
 
@@ -78,7 +75,7 @@
             dispatchUpdate(e.key);
         }
     }}
-    on:keyup={(e) => {
+    onkeyup={(e) => {
         if (e.key == KEYBOARD.CONTROL || e.key == KEYBOARD.COMMAND) {
             modifierKeyDown = false;
         }

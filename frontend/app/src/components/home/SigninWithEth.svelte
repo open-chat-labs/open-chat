@@ -3,15 +3,24 @@
     import { coinbaseWallet, walletConnect, metaMask } from "@wagmi/connectors";
     import { mainnet } from "@wagmi/chains";
     import { OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import Button from "../Button.svelte";
+    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let assumeIdentity = true;
+    interface Props {
+        assumeIdentity?: boolean;
+        onConnected?: (args: {
+            kind: "success";
+            key: ECDSAKeyIdentity;
+            delegation: DelegationChain;
+        }) => void;
+    }
 
-    let connecting: Connector | undefined;
+    let { assumeIdentity = true, onConnected }: Props = $props();
+
+    let connecting: Connector | undefined = $state();
 
     const wagmiConfig = createConfig({
         chains: [mainnet],
@@ -49,7 +58,7 @@
                         .signInWithWallet("eth", account, signResponse, assumeIdentity)
                         .then((resp) => {
                             if (resp.kind === "success") {
-                                dispatch("connected", resp);
+                                onConnected?.(resp);
                             }
                         });
                 }

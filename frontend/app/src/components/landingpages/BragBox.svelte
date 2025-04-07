@@ -5,8 +5,10 @@
     import { currentTheme } from "../../theme/themes";
 
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
-    $: bgPath = $currentTheme.mode === "light" ? "/assets/brag_light" : "/assets/brag_dark";
-    $: bgUrl = isFirefox ? `${bgPath}.png` : `${bgPath}.svg`;
+    let bgPath = $derived(
+        $currentTheme.mode === "light" ? "/assets/brag_light" : "/assets/brag_dark",
+    );
+    let bgUrl = $derived(isFirefox ? `${bgPath}.png` : `${bgPath}.svg`);
 
     const brags = [
         {
@@ -41,8 +43,8 @@
         },
     ];
 
-    let counter = 0;
-    $: index = counter % brags.length;
+    let counter = $state(0);
+    let index = $derived(counter % brags.length);
 
     onMount(() => {
         setInterval(() => {

@@ -9,42 +9,23 @@
     import PrivatePreview from "./PrivatePreview.svelte";
     import { currentUser as user } from "openchat-client";
 
-    export let externalUrl: string;
-    export let frozen: boolean;
-    export let privateChatPreview: boolean;
-
-    let iframe: HTMLIFrameElement;
-    let connected = false;
-    let error = false;
-
-    $: origin = new URL(externalUrl).origin;
-
-    $: {
-        updateTheme($currentTheme);
+    interface Props {
+        externalUrl: string;
+        frozen: boolean;
+        privateChatPreview: boolean;
     }
 
-    $: {
-        // This is just a bit of a hack to make sure we pick up when the external url changes
-        if (externalUrl !== undefined) {
-            error = false;
-            connected = false;
-        }
-    }
+    let { externalUrl, frozen, privateChatPreview }: Props = $props();
 
-    $: {
-        if (iframe && !frozen && !privateChatPreview) {
-            iframe.removeEventListener("error", onError);
-            iframe.addEventListener("error", onError);
-        }
-    }
+    let iframe: HTMLIFrameElement | undefined = $state();
+    let connected = $state(false);
+    let error = $state(false);
 
     onMount(() => {
         window.addEventListener("message", onMessage);
         return () => {
             window.removeEventListener("message", onMessage);
-            if (iframe) {
-                iframe.removeEventListener("error", onError);
-            }
+            iframe?.removeEventListener("error", onError);
         };
     });
 
@@ -53,7 +34,7 @@
     }
 
     function updateTheme(theme: Theme) {
-        if (connected) {
+        if (connected && iframe) {
             sendMessage(iframe, origin, {
                 kind: "set_theme",
                 theme,
@@ -68,11 +49,13 @@
     function onMessage(ev: MessageEvent<{ kind: "external_content_ready" }>) {
         if (ev.origin === origin && ev.data.kind === "external_content_ready") {
             debug("External content signals its readiness");
-            sendMessage(iframe, origin, {
-                kind: "initialise_external_content",
-                theme: $currentTheme,
-                username: $user.username,
-            });
+            if (iframe) {
+                sendMessage(iframe, origin, {
+                    kind: "initialise_external_content",
+                    theme: $currentTheme,
+                    username: $user.username,
+                });
+            }
             connected = true;
         }
     }
@@ -86,6 +69,23 @@
             }
         }
     }
+    let origin = $derived(new URL(externalUrl).origin);
+    $effect(() => {
+        updateTheme($currentTheme);
+    });
+    $effect(() => {
+        // This is just a bit of a hack to make sure we pick up when the external url changes
+        if (externalUrl !== undefined) {
+            error = false;
+            connected = false;
+        }
+    });
+    $effect(() => {
+        if (iframe && !frozen && !privateChatPreview) {
+            iframe.removeEventListener("error", onError);
+            iframe.addEventListener("error", onError);
+        }
+    });
 </script>
 
 {#if frozen}
@@ -105,7 +105,7 @@
 {/if}
 
 {#if !frozen && !privateChatPreview}
-    <iframe title="External Content" bind:this={iframe} src={externalUrl} />
+    <iframe title="External Content" bind:this={iframe} src={externalUrl}></iframe>
 {/if}
 
 <style lang="scss">

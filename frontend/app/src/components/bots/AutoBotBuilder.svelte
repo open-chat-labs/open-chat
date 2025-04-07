@@ -122,8 +122,8 @@
         }
     });
 
-    function botAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
-        candidate.avatarUrl = ev.detail.url;
+    function botAvatarSelected(detail: { url: string; data: Uint8Array }) {
+        candidate.avatarUrl = detail.url;
     }
 
     function onSubmit(e: Event) {
@@ -233,7 +233,7 @@
             overlayIcon
             size={"medium"}
             image={candidate.avatarUrl}
-            on:imageSelected={botAvatarSelected} />
+            onImageSelected={botAvatarSelected} />
     </div>
 
     {#if candidate.registrationStatus.kind === "private" && mode === "register"}
@@ -267,8 +267,8 @@
             border={false}
             direction={"up"}
             mentionSelf
-            on:userSelected={(ev) => (candidate.ownerId = ev.detail.userId)}
-            on:userRemoved={(_) => (candidate.ownerId = "")}
+            onUserSelected={(user) => (candidate.ownerId = user.userId)}
+            onUserRemoved={() => (candidate.ownerId = "")}
             selectedReceiver={$userStore.get(candidate.ownerId)}
             placeholder={"bots.builder.ownerLabel"}
             autofocus={false} />
@@ -300,8 +300,8 @@
                 maxlength={200}
                 invalid={errors.has("bot_endpoint")}
                 error={errors.get("bot_endpoint")}
-                oninput={endpointChanged}
-                onenter={loadDefinition}
+                onInput={endpointChanged}
+                onEnter={loadDefinition}
                 placeholder={i18nKey("https://my_openchat_bot")}
                 bind:value={candidate.endpoint} />
         </div>

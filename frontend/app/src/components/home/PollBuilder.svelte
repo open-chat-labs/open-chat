@@ -214,7 +214,7 @@
                                             minlength={1}
                                             maxlength={MAX_ANSWER_LENGTH}
                                             countdown
-                                            on:enter={addAnswer}
+                                            onEnter={addAnswer}
                                             placeholder={i18nKey(
                                                 poll.pollAnswers.size === MAX_ANSWERS
                                                     ? "poll.maxReached"
@@ -240,7 +240,7 @@
                     <Toggle
                         small
                         id={"anonymous"}
-                        on:change={() => (poll.anonymous = !poll.anonymous)}
+                        onChange={() => (poll.anonymous = !poll.anonymous)}
                         label={i18nKey("poll.anonymous")}
                         checked={poll.anonymous} />
 
@@ -248,7 +248,7 @@
                         small
                         id={"allow-multiple"}
                         label={i18nKey("poll.allowMultipleVotes")}
-                        on:change={() =>
+                        onChange={() =>
                             (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
                         checked={poll.allowMultipleVotesPerUser} />
 
@@ -257,14 +257,14 @@
                         id={"allow-change"}
                         disabled={poll.allowMultipleVotesPerUser}
                         label={i18nKey("poll.allowChangeVotes")}
-                        on:change={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
+                        onChange={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
                         checked={!poll.allowMultipleVotesPerUser && poll.allowUserToChangeVote} />
 
                     <Toggle
                         small
                         id={"limited-duration"}
                         label={i18nKey("poll.limitedDuration")}
-                        on:change={() => (poll.limitedDuration = !poll.limitedDuration)}
+                        onChange={() => (poll.limitedDuration = !poll.limitedDuration)}
                         checked={poll.limitedDuration} />
 
                     {#if poll.limitedDuration}
@@ -272,14 +272,14 @@
                             small
                             id={"show-before-end"}
                             label={i18nKey("poll.showBeforeEnd")}
-                            on:change={() =>
+                            onChange={() =>
                                 (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
                             checked={poll.showVotesBeforeEndDate} />
 
                         <Legend label={i18nKey("poll.pollDuration")} />
                         {#each durations as d}
                             <Radio
-                                on:change={() => (selectedDuration = d)}
+                                onChange={() => (selectedDuration = d)}
                                 value={d}
                                 checked={selectedDuration === d}
                                 id={`duration_${d}`}

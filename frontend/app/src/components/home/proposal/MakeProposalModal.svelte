@@ -3,7 +3,7 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import ModalContent from "../../ModalContent.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import {
         routeForChatIdentifier,
         type CandidateProposalAction,
@@ -60,14 +60,14 @@
     const USER_INDEX_CANISTER = import.meta.env.OC_USER_INDEX_CANISTER!;
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     interface Props {
         selectedMultiUserChat: MultiUserChat;
         nervousSystem: NervousSystemDetails;
+        onClose: () => void;
     }
 
-    let { selectedMultiUserChat, nervousSystem }: Props = $props();
+    let { selectedMultiUserChat, nervousSystem, onClose }: Props = $props();
 
     let title = $state("");
     let url = $state("");
@@ -135,10 +135,6 @@
         return i18nKey("proposal.maker.message", { cost, token: symbol });
     }
 
-    function onClose() {
-        dispatch("close");
-    }
-
     async function onClickPrimary(): Promise<void> {
         if (step === 0) {
             balanceWithRefresh.refresh();
@@ -192,7 +188,7 @@
             .then((success) => {
                 busy = false;
                 if (success) {
-                    dispatch("close");
+                    onClose();
                 } else {
                     error = "unexpectedError";
                 }
@@ -434,16 +430,16 @@
                 value={cryptoBalance}
                 label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
-                on:click={onStartRefreshingBalance}
-                on:refreshed={onRefreshingBalanceSuccess}
-                on:error={onRefreshingBalanceFailed} />
+                onClick={onStartRefreshingBalance}
+                onRefreshed={onRefreshingBalanceSuccess}
+                onError={onRefreshingBalanceFailed} />
         </div>
     {/snippet}
     {#snippet body()}
         <div class="body">
             <div class="sections">
                 <div class="topup hidden" class:visible={step === 0}>
-                    <AccountInfo {ledger} user={$user} />
+                    <AccountInfo {ledger} />
                     <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                 </div>
                 <div class="common hidden" class:visible={step === 1}>

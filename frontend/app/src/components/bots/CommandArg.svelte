@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { CommandParam, CommandArg, UserSummary } from "openchat-client";
+    import type { CommandParam, CommandArg } from "openchat-client";
     import Legend from "../Legend.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Input from "../Input.svelte";
@@ -25,11 +25,11 @@
     {#if arg.kind === "user" && param.kind === "user"}
         <Legend label={i18nKey(param.name)} required={param.required} />
         <SingleUserSelector
-            on:userSelected={(ev: CustomEvent<UserSummary>) => {
-                arg.userId = ev.detail.userId;
+            onUserSelected={(user) => {
+                arg.userId = user.userId;
                 onChange();
             }}
-            on:userRemoved={() => {
+            onUserRemoved={() => {
                 arg.userId = undefined;
                 onChange();
             }}
@@ -65,7 +65,7 @@
                 minlength={param.minLength}
                 maxlength={param.maxLength}
                 placeholder={i18nKey(param.placeholder ?? "")}
-                on:change={onChange}
+                {onChange}
                 countdown
                 bind:value={arg.value} />
         {/if}
@@ -100,7 +100,7 @@
                 min={param.minValue}
                 max={param.maxValue}
                 shouldClamp={false}
-                on:change={onChange}
+                {onChange}
                 placeholder={i18nKey(param.placeholder ?? "")}
                 bind:value={arg.value} />
         {/if}

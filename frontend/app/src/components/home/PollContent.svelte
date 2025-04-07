@@ -1,42 +1,28 @@
-<!-- <svelte:options immutable /> -->
 <script lang="ts">
     import Poll from "svelte-material-icons/Poll.svelte";
-    import type { OpenChat, PollContent } from "openchat-client";
+    import { currentUser, type OpenChat, type PollContent } from "openchat-client";
     import { iconSize } from "../../stores/iconSize";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import PollAnswer from "./PollAnswer.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let content: PollContent;
-    export let me: boolean;
-    export let myUserId: string | undefined;
-    export let readonly: boolean;
-    export let senderId: string;
+    interface Props {
+        content: PollContent;
+        me: boolean;
+        readonly: boolean;
+        senderId: string;
+        onRegisterVote?: (vote: { type: "delete" | "register"; answerIndex: number }) => void;
+    }
 
-    $: txtColor = me ? "#ffffff" : "var(--txt)";
-
-    $: date = content.config.endDate ? new Date(Number(content.config.endDate)) : undefined;
-
-    $: haveIVoted = content.votes.user.length > 0;
-
-    $: numberOfVotes = totalVotes(content);
-
-    $: cannotVote =
-        content.ended || readonly || (haveIVoted && !content.config.allowUserToChangeVote);
-
-    $: showVotes =
-        content.ended ||
-        ((haveIVoted || senderId === myUserId) &&
-            (content.config.showVotesBeforeEndDate || content.config.endDate === undefined));
+    let { content, me, readonly, senderId, onRegisterVote }: Props = $props();
 
     function vote(idx: number) {
         if (cannotVote) return;
 
-        dispatch("registerVote", {
+        onRegisterVote?.({
             type: votedFor(idx) ? "delete" : "register",
             answerIndex: idx,
         });
@@ -98,6 +84,20 @@
     function percentageOfVote(idx: number) {
         return showVotes ? (votesForAnswer(idx) / numberOfVotes) * 100 : 0;
     }
+    let txtColor = $derived(me ? "#ffffff" : "var(--txt)");
+    let date = $derived(
+        content.config.endDate ? new Date(Number(content.config.endDate)) : undefined,
+    );
+    let haveIVoted = $derived(content.votes.user.length > 0);
+    let numberOfVotes = $derived(totalVotes(content));
+    let cannotVote = $derived(
+        content.ended || readonly || (haveIVoted && !content.config.allowUserToChangeVote),
+    );
+    let showVotes = $derived(
+        content.ended ||
+            ((haveIVoted || senderId === $currentUser.userId) &&
+                (content.config.showVotesBeforeEndDate || content.config.endDate === undefined)),
+    );
 </script>
 
 <div class="poll">
@@ -119,7 +119,6 @@
                 {answer}
                 voted={votedFor(i)}
                 {txtColor}
-                {myUserId}
                 {me}
                 voters={voters(i)}
                 numVotes={voteCount(i)}

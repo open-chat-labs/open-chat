@@ -96,10 +96,10 @@
 
 <div class="proposal-filters">
     <div class="controls">
-        <LinkButton on:click={client.enableAllProposalFilters} underline={"hover"}
+        <LinkButton onClick={client.enableAllProposalFilters} underline={"hover"}
             ><Translatable resourceKey={i18nKey("proposal.enableAll")} /></LinkButton>
         <LinkButton
-            on:click={() => client.disableAllProposalFilters(topics.map(([id]) => id))}
+            onClick={() => client.disableAllProposalFilters(topics.map(([id]) => id))}
             underline={"hover"}
             ><Translatable resourceKey={i18nKey("proposal.disableAll")} /></LinkButton>
     </div>
@@ -113,7 +113,7 @@
                     <div class="toggle">
                         <Checkbox
                             id={kebab(label)}
-                            on:change={() => client.toggleProposalFilter(id)}
+                            onChange={() => client.toggleProposalFilter(id)}
                             label={i18nKey(label)}
                             checked={!$filteredProposalsStore?.hasFilter(id)} />
                     </div>
@@ -124,7 +124,7 @@
                 <div class="toggle">
                     <Checkbox
                         id={kebab(label)}
-                        on:change={() => client.toggleProposalFilter(id)}
+                        onChange={() => client.toggleProposalFilter(id)}
                         label={i18nKey(label)}
                         checked={!$filteredProposalsStore?.hasFilter(id)} />
                 </div>

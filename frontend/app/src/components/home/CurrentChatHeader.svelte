@@ -10,6 +10,7 @@
         selectedCommunity,
         chatListScopeStore as chatListScope,
         anonUser,
+        publish,
     } from "openchat-client";
     import page from "page";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -23,7 +24,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary, DiamondMembershipStatus } from "openchat-client";
+    import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "openchat-client";
     import Typing from "../Typing.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
@@ -36,7 +37,6 @@
     import Badges from "./profile/Badges.svelte";
     import ActiveVideoCallResume from "./video/ActiveVideoCallResume.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -45,9 +45,18 @@
         blocked: boolean;
         readonly: boolean;
         hasPinned: boolean;
+        onSearchChat: (search: string) => void;
+        onImportToCommunity: (group: GroupChatSummary) => void;
     }
 
-    let { selectedChatSummary, blocked, readonly, hasPinned }: Props = $props();
+    let {
+        selectedChatSummary,
+        blocked,
+        readonly,
+        hasPinned,
+        onSearchChat,
+        onImportToCommunity,
+    }: Props = $props();
 
     let showSuspendUserModal = $state(false);
 
@@ -219,7 +228,7 @@
                 <ChatSubtext
                     chat={selectedChatSummary}
                     clickableMembers
-                    on:membersClick={showGroupMembers} />
+                    onMembersClick={showGroupMembers} />
             {:else}
                 <ChatSubtext chat={selectedChatSummary} />
             {/if}
@@ -232,10 +241,9 @@
             {hasPinned}
             {selectedChatSummary}
             {blocked}
-            on:importToCommunity
-            on:showGroupDetails={showGroupDetails}
-            on:searchChat
-            on:createPoll />
+            {onImportToCommunity}
+            onShowGroupDetails={showGroupDetails}
+            {onSearchChat} />
     {/if}
 
     <ActiveBroadcastSummary />

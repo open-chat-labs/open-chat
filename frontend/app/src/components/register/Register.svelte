@@ -144,9 +144,9 @@
         client.clearReferralCode();
     }
 
-    function selectUser(ev: CustomEvent<UserSummary>) {
-        referringUser = ev.detail;
-        client.setReferralCode(ev.detail.userId);
+    function selectUser(user: UserSummary) {
+        referringUser = user;
+        client.setReferralCode(user.userId);
     }
 
     function userLookup(searchTerm: string): Promise<[UserSummary[], UserSummary[]]> {
@@ -249,7 +249,7 @@
                                 compact
                                 mode={"add"}
                                 autofocus={false}
-                                on:selectUser={selectUser} />
+                                onSelectUser={selectUser} />
                         {/if}
                     </div>
                 </form>
