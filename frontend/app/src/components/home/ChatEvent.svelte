@@ -46,7 +46,6 @@
         accepted: boolean;
         confirmed: boolean;
         failed: boolean;
-        readByThem: boolean;
         readByMe: boolean;
         observer?: IntersectionObserver;
         focused: boolean;
@@ -83,7 +82,6 @@
         accepted,
         confirmed,
         failed,
-        readByThem,
         readByMe,
         observer,
         focused,
@@ -181,7 +179,6 @@
             {confirmed}
             {failed}
             {readByMe}
-            {readByThem}
             {chatId}
             {chatType}
             {me}
