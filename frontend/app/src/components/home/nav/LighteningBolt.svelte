@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { tweened } from "svelte/motion";
+    import { Tween } from "svelte/motion";
 
     interface Props {
         enabled: boolean;
@@ -8,8 +8,10 @@
 
     let { enabled }: Props = $props();
 
-    let y1 = tweened(-45, { duration: 1000 });
-    let y2 = tweened(55, { duration: 1000 });
+    const options = { duration: 1000 };
+
+    let y1 = new Tween(-45, options);
+    let y2 = new Tween(55, options);
 
     let destroyed = false;
 
@@ -18,14 +20,14 @@
     });
 
     function animate(v1: number, v2: number) {
-        y1.set(v1);
-        y2.set(v2);
+        y1.target = v1;
+        y2.target = v2;
         if (destroyed || !enabled) return;
 
         setTimeout(() => {
-            y1 = tweened(-45, { duration: 1000 });
-            y2 = tweened(55, { duration: 1000 });
-            animate(55, 155);
+            Promise.all([y1.set(-45, { duration: 0 }), y2.set(55, { duration: 0 })]).then(() => {
+                animate(55, 155);
+            });
         }, 3000);
     }
     let fill = $derived(enabled ? "url(#grad1)" : "transparent");
@@ -43,8 +45,8 @@
             id="grad1"
             x1="0%"
             x2="0%"
-            y1={`${$y1}%`}
-            y2={`${$y2}%`}
+            y1={`${y1.current}%`}
+            y2={`${y2.current}%`}
             gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="rgb(255,213,0)" />
             <stop offset="30%" stop-color="rgb(255,213,0)" />
