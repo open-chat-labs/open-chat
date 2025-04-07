@@ -436,14 +436,16 @@
                 </CollapsibleCard>
             </div>
         {/if}
-        <div class="linked-accounts">
-            <CollapsibleCard
-                onToggle={accountsSectionOpen.toggle}
-                open={$accountsSectionOpen}
-                headerText={i18nKey("identity.linkedAccounts.section")}>
-                <LinkedAuthAccounts />
-            </CollapsibleCard>
-        </div>
+        {#if !$anonUser}
+            <div class="linked-accounts">
+                <CollapsibleCard
+                    onToggle={accountsSectionOpen.toggle}
+                    open={$accountsSectionOpen}
+                    headerText={i18nKey("identity.linkedAccounts.section")}>
+                    <LinkedAuthAccounts />
+                </CollapsibleCard>
+            </div>
+        {/if}
         <div class="appearance">
             <CollapsibleCard
                 onToggle={appearanceSectionOpen.toggle}
