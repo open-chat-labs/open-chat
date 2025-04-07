@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Check PIN when paying for streak insurance ([#7746](https://github.com/open-chat-labs/open-chat/pull/7746))
 - Fix streak insurance to cover multiple days missed in a row ([#7747](https://github.com/open-chat-labs/open-chat/pull/7747))
+- Reset streak insurance in summary updates after streak ends ([#7751](https://github.com/open-chat-labs/open-chat/pull/7751))
 
 ## [[2.0.1686-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1686-user)] - 2025-04-02
 

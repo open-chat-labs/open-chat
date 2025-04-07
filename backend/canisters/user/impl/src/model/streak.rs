@@ -61,9 +61,7 @@ impl Streak {
                         return Ok(Some(insurance_claim));
                     }
                     self.start_day = today;
-                    self.insurance_last_updated = now;
-                    self.days_insured = 0;
-                    self.days_missed = 0;
+                    self.reset_streak_insurance(now);
                 }
 
                 self.set_end_day(today);
@@ -96,6 +94,12 @@ impl Streak {
             }
         }
         None
+    }
+
+    pub fn reset_streak_insurance(&mut self, now: TimestampMillis) {
+        self.days_insured = 0;
+        self.days_missed = 0;
+        self.insurance_last_updated = now;
     }
 
     pub fn can_claim(&self, now: TimestampMillis) -> bool {
@@ -139,6 +143,10 @@ impl Streak {
 
     pub fn release_payment_lock(&mut self) {
         self.payment_lock = false
+    }
+
+    pub fn days_insured(&self) -> u8 {
+        self.days_insured
     }
 
     pub fn has_insurance(&self) -> bool {
