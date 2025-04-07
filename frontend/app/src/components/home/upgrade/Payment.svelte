@@ -226,7 +226,7 @@
         {/if}
 
         <div class="autorenew">
-            {#if insufficientFunds && !refreshingBalance}
+            {#if insufficientFunds}
                 <ErrorMessage
                     ><Translatable
                         resourceKey={i18nKey("upgrade.insufficientFunds", {
