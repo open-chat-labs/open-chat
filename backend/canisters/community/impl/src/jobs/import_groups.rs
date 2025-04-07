@@ -95,7 +95,7 @@ async fn import_group(group: GroupToImport) {
                 }
                 Err(error) => {
                     mutate_state(|state| {
-                        if error.1.contains("violated contract") {
+                        if error.message().contains("violated contract") {
                             state.data.groups_being_imported.take(&group_id);
                         } else {
                             state

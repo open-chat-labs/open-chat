@@ -18,11 +18,11 @@ impl TimerJobItem for CommunityEventBatch {
 
         match response {
             Ok(community_canister::c2c_local_group_index::Response::Success) => Ok(()),
-            Err((code, msg)) => {
-                if is_out_of_cycles_error(code, &msg) {
+            Err(error) => {
+                if is_out_of_cycles_error(error.reject_code(), error.message()) {
                     top_up_canister(Some(self.key)).await;
                 }
-                let retry = should_retry_failed_c2c_call(code, &msg);
+                let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
                 Err(retry)
             }
         }

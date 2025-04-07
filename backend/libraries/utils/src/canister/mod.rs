@@ -1,6 +1,6 @@
 use ic_cdk::call::{Error, RejectCode};
 use std::cmp::Ordering;
-use types::{BuildVersion, CanisterId, UpgradesFilter};
+use types::{BuildVersion, C2CError, CanisterId, UpgradesFilter};
 
 mod canisters_requiring_upgrade;
 mod chunk_store;
@@ -66,11 +66,13 @@ pub fn should_perform_upgrade(
     }
 }
 
-pub fn convert_cdk_error(error: Error) -> (RejectCode, String) {
-    match error {
+pub fn convert_cdk_error(canister_id: CanisterId, method_name: &'static str, error: Error) -> C2CError {
+    let (code, msg) = match error {
         Error::InsufficientLiquidCycleBalance(cb) => (RejectCode::SysTransient, cb.to_string()),
         Error::CallPerformFailed(f) => (RejectCode::SysTransient, f.to_string()),
         Error::CallRejected(r) => (r.reject_code().unwrap_or(RejectCode::SysUnknown), r.to_string()),
         Error::CandidDecodeFailed(f) => (RejectCode::CanisterReject, f.to_string()),
-    }
+    };
+
+    C2CError::new(canister_id, method_name, code, msg)
 }

@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Push CHIT event for each streak insurance claim ([#7728](https://github.com/open-chat-labs/open-chat/pull/7728))
 - Back-fill events for any existing streak insurance claims ([#7729](https://github.com/open-chat-labs/open-chat/pull/7729))
 - Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
+- Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
 
 ### Fixed
 

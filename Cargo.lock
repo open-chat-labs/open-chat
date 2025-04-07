@@ -1178,6 +1178,7 @@ dependencies = [
  "canister_client_macros",
  "ic-cdk 0.18.0-alpha.2",
  "tracing",
+ "types",
 ]
 
 [[package]]
@@ -8753,6 +8754,7 @@ dependencies = [
  "candid",
  "getrandom 0.2.15",
  "hex",
+ "ic-cdk 0.18.0-alpha.2",
  "ic-ledger-types",
  "icrc-ledger-types",
  "oc_error_codes",

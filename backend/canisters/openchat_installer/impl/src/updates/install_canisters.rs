@@ -2,12 +2,11 @@ use crate::guards::caller_is_governance_principal;
 use crate::{read_state, State};
 use candid::CandidType;
 use canister_tracing_macros::trace;
-use ic_cdk::call::RejectCode;
 use ic_cdk::management_canister::CanisterInstallMode;
 use ic_cdk::update;
 use openchat_installer_canister::install_canisters::{Response::*, *};
 use openchat_installer_canister::CanisterType;
-use types::{BuildVersion, CanisterId, CanisterWasmBytes, Hash};
+use types::{BuildVersion, C2CError, CanisterId, CanisterWasmBytes, Hash};
 use utils::canister::{
     clear_chunk_store, install, upload_wasm_in_chunks, CanisterToInstall, ChunkedWasmToInstall, WasmToInstall,
 };
@@ -136,10 +135,7 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
     }
 }
 
-async fn install_canister<A: CandidType>(
-    args: InstallCanisterArgs<A>,
-    wasm_version: BuildVersion,
-) -> Result<(), (RejectCode, String)> {
+async fn install_canister<A: CandidType>(args: InstallCanisterArgs<A>, wasm_version: BuildVersion) -> Result<(), C2CError> {
     let chunks = upload_wasm_in_chunks(&args.wasm, args.canister_id).await?;
 
     install(CanisterToInstall {
