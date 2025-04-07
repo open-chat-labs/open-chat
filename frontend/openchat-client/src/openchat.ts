@@ -5245,14 +5245,14 @@ export class OpenChat {
         }
     }
 
-    refreshAccountBalance(ledger: string, force: boolean = true): Promise<bigint> {
+    refreshAccountBalance(ledger: string, allowCached: boolean = false): Promise<bigint> {
         const user = this.#liveState.user;
         if (user === undefined) {
             return Promise.resolve(0n);
         }
 
         return this.#refreshBalanceSemaphore.execute(() => {
-            if (!force) {
+            if (allowCached) {
                 const valueIfUpdatedRecently = cryptoBalance.valueIfUpdatedRecently(ledger);
                 if (valueIfUpdatedRecently !== undefined) {
                     return Promise.resolve(valueIfUpdatedRecently);

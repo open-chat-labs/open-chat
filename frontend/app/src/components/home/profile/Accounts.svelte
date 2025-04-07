@@ -177,6 +177,7 @@
                     value={token.balance}
                     conversion={selectedConversion}
                     hideBalance={hideTokenBalances}
+                    allowCached={true}
                     onRefreshed={onBalanceRefreshed}
                     onError={onBalanceRefreshError} />
             </td>
