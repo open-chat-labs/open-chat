@@ -20,6 +20,7 @@
         refreshing?: boolean;
         conversion?: "none" | "usd" | "icp" | "btc" | "eth";
         hideBalance?: boolean;
+        allowCached?: boolean;
         onClick?: () => void;
         onRefreshed?: (val: bigint) => void;
         onError?: (error: string) => void;
@@ -36,17 +37,18 @@
         refreshing = $bindable(false),
         conversion = "none",
         hideBalance = false,
+        allowCached = false,
         onClick,
         onRefreshed,
         onError,
     }: Props = $props();
 
-    export function refresh(force: boolean = true) {
+    export function refresh(allowCached: boolean = false) {
         onClick?.();
         refreshing = true;
 
         return client
-            .refreshAccountBalance(ledger, force)
+            .refreshAccountBalance(ledger, allowCached)
             .then((val) => {
                 onRefreshed?.(val);
             })
@@ -87,7 +89,7 @@
     );
     $effect(() => {
         if (ledger) {
-            refresh(false);
+            refresh(allowCached);
         }
     });
 </script>
@@ -100,7 +102,7 @@
         {formattedValue}
     </div>
     {#if showRefresh && !hideBalance}
-        <div class="refresh" class:refreshing onclick={() => refresh(true)}>
+        <div class="refresh" class:refreshing onclick={() => refresh()}>
             <Refresh size={"1em"} color={"var(--icon-txt)"} />
         </div>
     {/if}
