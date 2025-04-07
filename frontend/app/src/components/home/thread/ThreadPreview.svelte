@@ -157,7 +157,6 @@
                             failed={false}
                             senderTyping={false}
                             readByMe
-                            readByThem
                             chatId={thread.chatId}
                             chatType={chat.kind}
                             me={thread.rootMessage.event.sender === $user.userId}
@@ -202,7 +201,6 @@
                                 failed={false}
                                 senderTyping={false}
                                 readByMe
-                                readByThem
                                 chatId={thread.chatId}
                                 chatType={chat.kind}
                                 me={evt.event.sender === $user.userId}

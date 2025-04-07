@@ -58,6 +58,16 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                     e.event.content.reports.forEach((r) => userIds.add(r.reportedBy));
                 } else if (e.event.content.kind === "prize_winner_content") {
                     userIds.add(e.event.content.transaction.recipient);
+                } else if (
+                    e.event.content.kind === "p2p_swap_content" &&
+                    e.event.content.status.kind === "p2p_swap_accepted"
+                ) {
+                    userIds.add(e.event.content.status.acceptedBy);
+                } else if (
+                    e.event.content.kind === "p2p_swap_content" &&
+                    e.event.content.status.kind === "p2p_swap_reserved"
+                ) {
+                    userIds.add(e.event.content.status.reservedBy);
                 }
                 e.event.reactions.forEach((r) => r.userIds.forEach((u) => userIds.add(u)));
                 extractUserIdsFromMentions(

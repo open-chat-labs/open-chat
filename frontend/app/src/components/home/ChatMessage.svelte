@@ -23,6 +23,7 @@
         ephemeralMessages,
         currentUser,
         publish,
+        unconfirmedReadByThem,
     } from "openchat-client";
     import { isTouchOnlyDevice } from "../../utils/devices";
     import EmojiPicker from "./EmojiPicker.svelte";
@@ -86,7 +87,6 @@
         accepted: boolean;
         confirmed: boolean;
         failed: boolean;
-        readByThem: boolean;
         readByMe: boolean;
         observer?: IntersectionObserver;
         focused: boolean;
@@ -133,7 +133,6 @@
         accepted,
         confirmed,
         failed,
-        readByThem,
         readByMe,
         observer,
         focused,
@@ -165,10 +164,10 @@
         onGoToMessageIndex,
     }: Props = $props();
 
-    let msgElement: HTMLElement | undefined;
-    let msgBubbleWrapperElement: HTMLElement | undefined;
-    let msgBubbleElement: HTMLElement | undefined;
-    let messageMenu: ChatMessageMenu | undefined;
+    let msgElement: HTMLElement | undefined = $state();
+    let msgBubbleWrapperElement: HTMLElement | undefined = $state();
+    let msgBubbleElement: HTMLElement | undefined = $state();
+    let messageMenu: ChatMessageMenu | undefined = $state();
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = $state(false);
     let debug = false;
@@ -183,6 +182,14 @@
     let mediaCalculatedHeight = $state(undefined as number | undefined);
     let msgBubbleCalculatedWidth = $state(undefined as number | undefined);
     let botProfile: BotProfileProps | undefined = $state(undefined);
+    let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
+    let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
+
+    $effect(() => {
+        if (confirmedReadByThem && $unconfirmedReadByThem.has(msg.messageId)) {
+            unconfirmedReadByThem.delete(msg.messageId);
+        }
+    });
 
     onMount(() => {
         if (!readByMe) {

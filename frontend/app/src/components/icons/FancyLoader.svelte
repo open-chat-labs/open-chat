@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { cubicInOut } from "svelte/easing";
-    import { tweened } from "svelte/motion";
+    import { Tween } from "svelte/motion";
 
     interface Props {
         loop?: boolean;
@@ -19,21 +19,20 @@
 
     const options = { duration: speed, easing: cubicInOut };
 
-    const purpleEnd = tweened(-90, {
-        duration: speed,
-        easing: cubicInOut,
-    });
-
-    let orangeStart = $state(tweened(-90, options));
-    let orangeEnd = $state(tweened(-90, options));
+    const purpleEnd = new Tween(-90, options);
+    const orangeStart = new Tween(-90, options);
+    const orangeEnd = new Tween(-90, options);
 
     function resetOrange() {
         phase = 2;
         orangeTarget = 45;
-        orangeStart = tweened(-90, options);
-        orangeEnd = tweened(-90, options);
-        orangeStart.set(45);
-        orangeEnd.set(315);
+        Promise.all([
+            orangeStart.set(-90, { duration: 0 }),
+            orangeEnd.set(-90, { duration: 0 }),
+        ]).then(() => {
+            orangeStart.target = 45;
+            orangeEnd.target = 315;
+        });
     }
 
     function plotPurple(end: number) {
@@ -101,40 +100,40 @@
     });
     $effect(() => {
         if (phase === 1) {
-            if ($purpleEnd >= purpleTarget) {
+            if (purpleEnd.current >= purpleTarget) {
                 phase = 2;
-                orangeStart.set(45);
-                orangeEnd.set(315);
+                orangeStart.target = 45;
+                orangeEnd.target = 315;
             }
-            plotPurple($purpleEnd);
+            plotPurple(purpleEnd.current);
         }
     });
     $effect(() => {
-        plotOrange($orangeStart, $orangeEnd);
+        plotOrange(orangeStart.current, orangeEnd.current);
         if (loop || phase > 2) {
             if (phase === 2) {
-                if ($orangeStart >= orangeTarget) {
+                if (orangeStart.current >= orangeTarget) {
                     phase = 3;
                     orangeTarget = 270;
-                    orangeStart.set(270);
-                    orangeEnd.set(630);
+                    orangeStart.target = 270;
+                    orangeEnd.target = 630;
                 }
             }
             if (phase === 3) {
-                if ($orangeStart >= orangeTarget) {
+                if (orangeStart.current >= orangeTarget) {
                     phase = 4;
                     orangeTarget = 630;
-                    orangeStart.set(630);
+                    orangeStart.target = 630;
                 }
             }
             if (phase === 4) {
-                if ($orangeStart >= orangeTarget) {
+                if (orangeStart.current >= orangeTarget) {
                     phase = 5;
-                    orangeEnd.set(630);
+                    orangeEnd.target = 630;
                 }
             }
             if (phase === 5) {
-                if ($orangeEnd >= orangeTarget) {
+                if (orangeEnd.current >= orangeTarget) {
                     resetOrange();
                 }
             }

@@ -6,6 +6,7 @@
     import Translatable from "../../Translatable.svelte";
     import VideoCallIcon from "../video/VideoCallIcon.svelte";
     import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
+    import { navOpen } from "@src/stores/layout";
 
     interface Props {
         label: ResourceKey;
@@ -43,9 +44,11 @@
         <UnreadCount {unread} />
         <VideoCallIcon {video} />
     </div>
-    <WithVerifiedBadge {verified} size={"small"}>
-        <div class="label"><Translatable resourceKey={label} /></div>
-    </WithVerifiedBadge>
+    {#if $navOpen}
+        <WithVerifiedBadge {verified} size={"small"}>
+            <div class="label"><Translatable resourceKey={label} /></div>
+        </WithVerifiedBadge>
+    {/if}
 </div>
 
 <style lang="scss">

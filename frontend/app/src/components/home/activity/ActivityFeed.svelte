@@ -23,7 +23,7 @@
     import VirtualList from "../../VirtualList.svelte";
 
     const client = getContext<OpenChat>("client");
-    let selectedEvent: MessageActivityEvent | undefined = $state(undefined);
+    let selectedEventIndex = $state<number | undefined>();
 
     function uptodate({ messageActivitySummary }: GlobalState, events: MessageActivityEvent[]) {
         const latest = events[0]?.timestamp;
@@ -39,8 +39,8 @@
         });
     }
 
-    function selectEvent(ev: MessageActivityEvent) {
-        selectedEvent = ev;
+    function selectEvent(ev: MessageActivityEvent, idx: number) {
+        selectedEventIndex = idx;
         page(routeForMessage("none", ev.messageContext, ev.messageIndex));
     }
 
@@ -74,11 +74,11 @@
 
 <div use:menuCloser class="body">
     <VirtualList keyFn={eventKey} items={$activityEvents}>
-        {#snippet children(item)}
+        {#snippet children(item, idx)}
             <ActivityEvent
                 event={item}
-                selected={selectedEvent === item}
-                onClick={() => selectEvent(item)} />
+                selected={selectedEventIndex === idx}
+                onClick={() => selectEvent(item, idx)} />
         {/snippet}
     </VirtualList>
 </div>

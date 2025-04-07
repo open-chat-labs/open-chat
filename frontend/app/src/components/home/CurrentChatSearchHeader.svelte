@@ -126,6 +126,7 @@
     }
 
     function filterAndSortMatches(matches: MessageMatch[]): MessageMatch[] {
+        if (matches.length === 0) return matches;
         const topScore = matches[0].score;
         const keepThreshold = topScore * 0.2;
         console.log(

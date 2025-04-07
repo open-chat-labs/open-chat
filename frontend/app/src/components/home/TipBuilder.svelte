@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import { tweened } from "svelte/motion";
+    import { Tween } from "svelte/motion";
     import { quadOut } from "svelte/easing";
     import Button from "../Button.svelte";
     import TokenInput from "./TokenInput.svelte";
@@ -46,15 +46,20 @@
 
     let { ledger = $bindable(), msg, messageContext, onClose }: Props = $props();
 
+    const tweenOptions = {
+        duration: 800,
+        easing: quadOut,
+    };
+
     let refreshing = $state(false);
     let error: string | undefined = $state(undefined);
     let toppingUp = $state(false);
     let tokenChanging = $state(true);
     let balanceWithRefresh: BalanceWithRefresh;
-    let dollar: HTMLElement;
-    let dollarTop = tweened(-1000);
-    let dollarOpacity = tweened(0);
-    let dollarScale = tweened(0);
+    let dollar = $state<HTMLElement | undefined>();
+    let dollarTop = new Tween(-1000, tweenOptions);
+    let dollarOpacity = new Tween(0, tweenOptions);
+    let dollarScale = new Tween(0, tweenOptions);
     let centAmount = $state(0);
     let showCustomTip = $state(false);
     let validAmount: boolean = $state(false);
@@ -125,27 +130,23 @@
     }
 
     function bounceMoneyMouthFrom(target: HTMLElement) {
+        if (!dollar) return;
         const buttonRect = target.getBoundingClientRect();
         const hDiff = buttonRect.height - dollar.clientHeight;
         const wDiff = buttonRect.width - dollar.clientWidth;
         const top = buttonRect.top + hDiff / 2;
         const left = buttonRect.left + wDiff / 2;
 
-        dollarTop = tweened(top, {
-            duration: 800,
-            easing: quadOut,
+        Promise.all([
+            dollarTop.set(top, { duration: 0 }),
+            dollarOpacity.set(1, { duration: 0 }),
+            dollarScale.set(0, { duration: 0 }),
+        ]).then(() => {
+            dollarTop.target = top - 300;
+            dollarOpacity.target = 0;
+            dollarScale.target = 2;
+            dollarOpacity.set(0);
         });
-        dollarOpacity = tweened(1, {
-            duration: 800,
-            easing: quadOut,
-        });
-        dollarScale = tweened(0, {
-            duration: 800,
-            easing: quadOut,
-        });
-        dollarTop.set(top - 300);
-        dollarOpacity.set(0);
-        dollarScale.set(2);
         dollar.style.left = `${left}px`;
     }
 
@@ -217,11 +218,11 @@
     });
     $effect(() => {
         if (dollar) {
-            dollar.style.setProperty("top", `${$dollarTop}px`);
-            dollar.style.setProperty("opacity", `${$dollarOpacity}`);
+            dollar.style.setProperty("top", `${dollarTop.current}px`);
+            dollar.style.setProperty("opacity", `${dollarOpacity.current}`);
             dollar.style.setProperty(
                 "transform",
-                `scale(${$dollarScale}) rotate(${$dollarScale}turn)`,
+                `scale(${dollarScale.current}) rotate(${dollarScale.current}turn)`,
             );
         }
     });
