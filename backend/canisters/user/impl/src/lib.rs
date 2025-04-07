@@ -9,7 +9,7 @@ use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
-use crate::timer_job_types::{ClaimChitInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
@@ -207,13 +207,13 @@ impl RuntimeState {
     }
 
     pub fn set_up_streak_insurance_timer_job(&mut self) {
-        if self.data.streak.has_insurance() {
+        if self.data.streak.days_insured() > 0 {
             self.data
                 .timer_jobs
-                .cancel_jobs(|j| matches!(j, TimerJob::ClaimChitInsurance(_)));
+                .cancel_jobs(|j| matches!(j, TimerJob::ClaimOrResetStreakInsurance(_)));
 
             self.data.timer_jobs.enqueue_job(
-                TimerJob::ClaimChitInsurance(ClaimChitInsuranceJob),
+                TimerJob::ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
                 self.data.streak.ends(),
                 self.env.now(),
             );
