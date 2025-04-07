@@ -8,14 +8,17 @@ const SCROLL_PROXIMITY = 750;
 function suppressNextClick() {
     if (mobileOperatingSystem !== "iOS") return;
 
-    const handler = (e: MouseEvent) => {
-        e.stopPropagation();
-        e.preventDefault();
-    };
-    window.addEventListener("click", handler, {
-        capture: true,
-        once: true, // <— this is the key
-    });
+    window.addEventListener(
+        "click",
+        (e: MouseEvent) => {
+            e.stopPropagation();
+            e.preventDefault();
+        },
+        {
+            capture: true,
+            once: true,
+        },
+    );
 }
 
 export function longpress(node: HTMLElement, onlongpress: (e: TouchEvent) => void) {
