@@ -17,8 +17,8 @@ impl TimerJobItem for AirdropBotEventBatch {
 
         match response {
             Ok(airdrop_bot_canister::c2c_online_users::Response::Success) => Ok(()),
-            Err((code, msg)) => {
-                let retry = should_retry_failed_c2c_call(code, &msg);
+            Err(error) => {
+                let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
                 Err(retry)
             }
         }

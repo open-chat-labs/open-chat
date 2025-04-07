@@ -1,10 +1,9 @@
 use crate::exchanges::Exchange;
 use crate::{mutate_state, read_state, CanisterBalances, RuntimeState};
 use constants::HOUR_IN_MS;
-use ic_cdk::call::RejectCode;
 use std::collections::BTreeMap;
 use std::time::Duration;
-use types::{CanisterId, Milliseconds, TimestampMillis};
+use types::{C2CError, CanisterId, Milliseconds, TimestampMillis};
 use utils::canister_timers::run_now_then_interval;
 
 const CALCULATE_BALANCES_INTERVAL: Milliseconds = HOUR_IN_MS;
@@ -62,6 +61,6 @@ async fn run_async(exchange_clients: Vec<Box<dyn Exchange>>, now: TimestampMilli
     }
 }
 
-async fn get_exchange_balances(exchange_client: Box<dyn Exchange>) -> Result<Vec<(CanisterId, u128)>, (RejectCode, String)> {
+async fn get_exchange_balances(exchange_client: Box<dyn Exchange>) -> Result<Vec<(CanisterId, u128)>, C2CError> {
     exchange_client.account_balances().await
 }

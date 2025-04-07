@@ -8,13 +8,12 @@ use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT, SECOND_IN_MS};
 use escrow_canister::deposit_subaccount;
-use ic_cdk::call::RejectCode;
 use oc_error_codes::OCError;
 use tracing::error;
 use types::icrc1::Account;
 use types::{
-    icrc1, Achievement, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, MessageId,
-    MessageIndex, Milliseconds, P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH,
+    icrc1, Achievement, C2CError, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial,
+    MessageId, MessageIndex, Milliseconds, P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH,
     MAX_TEXT_LENGTH_USIZE,
 };
 use user_canister::send_message_with_transfer_to_group;
@@ -382,7 +381,7 @@ async fn process_transaction(
     pending_transaction: PendingCryptoTransaction,
     p2p_swap_id: Option<u32>,
     now: TimestampMillis,
-) -> Result<Result<(MessageContentInternal, CompletedCryptoTransaction), String>, (RejectCode, String)> {
+) -> Result<Result<(MessageContentInternal, CompletedCryptoTransaction), String>, C2CError> {
     match crate::crypto::process_transaction(pending_transaction).await {
         Ok(Ok(completed)) => {
             if let Some(id) = p2p_swap_id {

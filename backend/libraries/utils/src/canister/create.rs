@@ -1,14 +1,13 @@
 use crate::canister::{convert_cdk_error, install_basic};
 use candid::{CandidType, Principal};
-use ic_cdk::call::RejectCode;
 use ic_cdk::management_canister::{self, CanisterSettings, CreateCanisterArgs};
 use tracing::error;
-use types::{CanisterId, CanisterWasm, Cycles};
+use types::{C2CError, CanisterId, CanisterWasm, Cycles};
 
 #[derive(Debug)]
 pub enum CreateAndInstallError {
-    CreateFailed(RejectCode, String),
-    InstallFailed(CanisterId, RejectCode, String),
+    CreateFailed(C2CError),
+    InstallFailed(CanisterId, C2CError),
 }
 
 pub async fn create_and_install<A: CandidType>(
@@ -21,8 +20,8 @@ pub async fn create_and_install<A: CandidType>(
     let canister_id = match existing_canister_id {
         Some(id) => id,
         None => match create(cycles_to_use).await {
-            Err((code, msg)) => {
-                return Err(CreateAndInstallError::CreateFailed(code, msg));
+            Err(error) => {
+                return Err(CreateAndInstallError::CreateFailed(error));
             }
             Ok(id) => {
                 on_canister_created(cycles_to_use);
@@ -33,11 +32,11 @@ pub async fn create_and_install<A: CandidType>(
 
     match install_basic(canister_id, wasm, init_args).await {
         Ok(_) => Ok(canister_id),
-        Err((code, msg)) => Err(CreateAndInstallError::InstallFailed(canister_id, code, msg)),
+        Err(error) => Err(CreateAndInstallError::InstallFailed(canister_id, error)),
     }
 }
 
-pub async fn create(cycles_to_use: Cycles) -> Result<Principal, (RejectCode, String)> {
+pub async fn create(cycles_to_use: Cycles) -> Result<Principal, C2CError> {
     match management_canister::create_canister_with_extra_cycles(
         &CreateCanisterArgs {
             settings: Some(CanisterSettings {
@@ -50,15 +49,10 @@ pub async fn create(cycles_to_use: Cycles) -> Result<Principal, (RejectCode, Str
     .await
     {
         Ok(x) => Ok(x.canister_id),
-        Err(error) => {
-            let (code, msg) = convert_cdk_error(error);
-            error!(
-                error_code = %code,
-                error_message = msg.as_str(),
-                "Error calling create_canister"
-            );
-
-            Err((code, msg))
+        Err(e) => {
+            let error = convert_cdk_error(CanisterId::management_canister(), "create_canister", e);
+            error!(?error, "Error calling create_canister");
+            Err(error)
         }
     }
 }

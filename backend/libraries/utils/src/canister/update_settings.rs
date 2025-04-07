@@ -1,11 +1,10 @@
 use crate::canister::convert_cdk_error;
 use candid::Principal;
-use ic_cdk::call::RejectCode;
 use ic_cdk::management_canister::{self, CanisterSettings, UpdateSettingsArgs};
 use tracing::error;
-use types::CanisterId;
+use types::{C2CError, CanisterId};
 
-pub async fn set_controllers(canister_id: CanisterId, controllers: Vec<Principal>) -> Result<(), (RejectCode, String)> {
+pub async fn set_controllers(canister_id: CanisterId, controllers: Vec<Principal>) -> Result<(), C2CError> {
     management_canister::update_settings(&UpdateSettingsArgs {
         canister_id,
         settings: CanisterSettings {
@@ -14,14 +13,9 @@ pub async fn set_controllers(canister_id: CanisterId, controllers: Vec<Principal
         },
     })
     .await
-    .map_err(|error| {
-        let (code, msg) = convert_cdk_error(error);
-        error!(
-            %canister_id,
-            error_code = %code,
-            error_message = msg.as_str(),
-            "Error calling update_settings"
-        );
-        (code, msg)
+    .map_err(|e| {
+        let error = convert_cdk_error(canister_id, "update_settings", e);
+        error!(?error, "Error calling update_settings");
+        error
     })
 }
