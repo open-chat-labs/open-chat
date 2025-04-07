@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Back-fill events for any existing streak insurance claims ([#7729](https://github.com/open-chat-labs/open-chat/pull/7729))
 - Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
 
+### Fixed
+
+- Check PIN when paying for streak insurance ([#7746](https://github.com/open-chat-labs/open-chat/pull/7746))
+- Fix streak insurance to cover multiple days missed in a row ([#7747](https://github.com/open-chat-labs/open-chat/pull/7747))
+
 ## [[2.0.1686-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1686-user)] - 2025-04-02
 
 ### Changed

@@ -195,6 +195,7 @@
                                     <BalanceWithRefresh
                                         ledger={token.ledger}
                                         value={token.balance}
+                                        allowCached={true}
                                         conversion={selectedConversion} />
                                     <Toggle
                                         checked={config.tokens.has(token.ledger)}

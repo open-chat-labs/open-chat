@@ -1,4 +1,5 @@
 use crate::guards::caller_is_owner;
+use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -82,6 +83,12 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         Err(IncorrectPrice(price))
     } else if !state.data.streak.acquire_payment_lock() {
         Err(PaymentAlreadyInProgress)
+    } else if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
+        Err(match error {
+            VerifyPinError::PinRequired => PinRequired,
+            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
+            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
+        })
     } else {
         Ok(PrepareOk { days_currently_insured })
     }
