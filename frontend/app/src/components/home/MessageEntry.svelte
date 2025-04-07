@@ -660,8 +660,7 @@
             <div class="recording">
                 <Progress percent={percentRecorded} />
             </div>
-        {/if}
-        {#if canEnterText}
+        {:else if canEnterText}
             {#key textboxId}
                 <div class="container">
                     {#if excessiveLinks}

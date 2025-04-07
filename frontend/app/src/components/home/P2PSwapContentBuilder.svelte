@@ -30,6 +30,7 @@
 
     let { fromLedger = $bindable(), messageContext, onClose }: Props = $props();
 
+    let durationValid = $state(false);
     let fromAmount: bigint = $state(0n);
     let fromAmountValid: boolean = $state(false);
     let toLedger: string = $state("");
@@ -51,7 +52,7 @@
             fromAmount > 0n ? fromDetails.balance - fromAmount - totalFees : fromDetails.balance;
     });
     let minAmount = $derived(fromDetails.transferFee * BigInt(10));
-    let valid = $derived(error === undefined && fromAmountValid && toAmountValid);
+    let valid = $derived(error === undefined && fromAmountValid && toAmountValid && durationValid);
     let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
 
     $effect(() => {
@@ -220,7 +221,7 @@
                 </div>
                 <div class="duration">
                     <Legend label={i18nKey("p2pSwap.expiryTime")} />
-                    <DurationPicker bind:milliseconds={expiresIn} />
+                    <DurationPicker bind:valid={durationValid} bind:milliseconds={expiresIn} />
                 </div>
                 <div class="message">
                     <Legend label={i18nKey("tokenTransfer.message")} />
