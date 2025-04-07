@@ -9,7 +9,7 @@ use proposals_bot_canister::top_up_neuron::{Response::*, *};
 use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron};
-use types::{CanisterId, SnsNeuronId};
+use types::{C2CError, CanisterId, SnsNeuronId};
 use user_index_canister_c2c_client::LookupUserError;
 
 #[update(msgpack = true)]
@@ -61,7 +61,7 @@ async fn top_up_neuron_impl(
     args: &Args,
     ledger_canister_id: CanisterId,
     sns_neuron_id: SnsNeuronId,
-) -> Result<Response, (RejectCode, String)> {
+) -> Result<Response, C2CError> {
     if let Err(transfer_error) = icrc_ledger_canister_c2c_client::icrc1_transfer(
         ledger_canister_id,
         &TransferArg {
@@ -86,7 +86,7 @@ async fn top_up_neuron_impl(
     Ok(Success)
 }
 
-async fn refresh_neuron(governance_canister_id: CanisterId, sns_neuron_id: SnsNeuronId) -> Result<(), (RejectCode, String)> {
+async fn refresh_neuron(governance_canister_id: CanisterId, sns_neuron_id: SnsNeuronId) -> Result<(), C2CError> {
     let args = ManageNeuron {
         subaccount: sns_neuron_id.to_vec(),
         command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
@@ -98,7 +98,12 @@ async fn refresh_neuron(governance_canister_id: CanisterId, sns_neuron_id: SnsNe
 
     match response.command.unwrap() {
         manage_neuron_response::Command::ClaimOrRefresh(_) => Ok(()),
-        manage_neuron_response::Command::Error(e) => Err((RejectCode::CanisterError, format!("{e:?}"))),
+        manage_neuron_response::Command::Error(e) => Err(C2CError::new(
+            governance_canister_id,
+            "manage_neuron",
+            RejectCode::CanisterError,
+            format!("{e:?}"),
+        )),
         _ => unreachable!(),
     }
 }

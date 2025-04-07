@@ -1,8 +1,7 @@
 use canister_client::generate_c2c_call;
 use constants::CHUNK_STORE_CHUNK_SIZE;
-use ic_cdk::call::RejectCode;
 use local_group_index_canister::*;
-use types::CanisterId;
+use types::{C2CError, CanisterId};
 
 // Queries
 generate_c2c_call!(c2c_can_push_notifications);
@@ -27,7 +26,7 @@ pub async fn push_wasm_in_chunks(
     canister_id: CanisterId,
     canister_type: ChildCanisterType,
     wasm: &[u8],
-) -> Result<c2c_push_wasm_chunk::Response, (RejectCode, String)> {
+) -> Result<c2c_push_wasm_chunk::Response, C2CError> {
     for (index, chunk) in wasm.chunks(CHUNK_STORE_CHUNK_SIZE).enumerate() {
         let response = c2c_push_wasm_chunk(
             canister_id,

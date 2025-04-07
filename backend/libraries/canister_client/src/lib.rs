@@ -4,6 +4,7 @@ use std::fmt::Debug;
 use tracing::Level;
 
 pub use canister_client_macros::*;
+use types::C2CError;
 
 pub async fn make_c2c_call<A, R, S, D, SError: Debug, DError: Debug>(
     canister_id: Principal,
@@ -12,16 +13,30 @@ pub async fn make_c2c_call<A, R, S, D, SError: Debug, DError: Debug>(
     serializer: S,
     deserializer: D,
     timeout_seconds: Option<u32>,
-) -> Result<R, (RejectCode, String)>
+) -> Result<R, C2CError>
 where
     S: Fn(A) -> Result<Vec<u8>, SError>,
     D: Fn(&[u8]) -> Result<R, DError>,
 {
-    let payload_bytes = serializer(args).map_err(|e| (RejectCode::CanisterError, format!("Serialization error: {:?}", e)))?;
+    let payload_bytes = serializer(args).map_err(|e| {
+        C2CError::new(
+            canister_id,
+            method_name,
+            RejectCode::CanisterError,
+            format!("Serialization error: {:?}", e),
+        )
+    })?;
 
     let response_bytes = make_c2c_call_raw(canister_id, method_name, &payload_bytes, 0, timeout_seconds).await?;
 
-    deserializer(&response_bytes).map_err(|e| (RejectCode::CanisterError, format!("Deserialization error: {:?}", e)))
+    deserializer(&response_bytes).map_err(|e| {
+        C2CError::new(
+            canister_id,
+            method_name,
+            RejectCode::CanisterError,
+            format!("Deserialization error: {:?}", e),
+        )
+    })
 }
 
 pub async fn make_c2c_call_with_payment<A, R, S, D, SError: Debug, DError: Debug>(
@@ -31,16 +46,30 @@ pub async fn make_c2c_call_with_payment<A, R, S, D, SError: Debug, DError: Debug
     serializer: S,
     deserializer: D,
     cycles: u128,
-) -> Result<R, (RejectCode, String)>
+) -> Result<R, C2CError>
 where
     S: Fn(A) -> Result<Vec<u8>, SError>,
     D: Fn(&[u8]) -> Result<R, DError>,
 {
-    let payload_bytes = serializer(args).map_err(|e| (RejectCode::CanisterError, format!("Serialization error: {:?}", e)))?;
+    let payload_bytes = serializer(args).map_err(|e| {
+        C2CError::new(
+            canister_id,
+            method_name,
+            RejectCode::CanisterError,
+            format!("Serialization error: {:?}", e),
+        )
+    })?;
 
     let response_bytes = make_c2c_call_raw(canister_id, method_name, &payload_bytes, cycles, None).await?;
 
-    deserializer(&response_bytes).map_err(|e| (RejectCode::CanisterError, format!("Deserialization error: {:?}", e)))
+    deserializer(&response_bytes).map_err(|e| {
+        C2CError::new(
+            canister_id,
+            method_name,
+            RejectCode::CanisterError,
+            format!("Deserialization error: {:?}", e),
+        )
+    })
 }
 
 pub async fn make_c2c_call_raw(
@@ -49,7 +78,7 @@ pub async fn make_c2c_call_raw(
     payload_bytes: &[u8],
     cycles: u128,
     timeout_seconds: Option<u32>,
-) -> Result<Vec<u8>, (RejectCode, String)> {
+) -> Result<Vec<u8>, C2CError> {
     let tracing_enabled = tracing::enabled!(Level::TRACE);
     if tracing_enabled {
         tracing::trace!(method_name, %canister_id, "Starting c2c call");
@@ -79,7 +108,7 @@ pub async fn make_c2c_call_raw(
                 ),
             };
             tracing::error!(method_name, %canister_id, ?error_code, error_message, "Error calling c2c");
-            Err((error_code, error_message))
+            Err(C2CError::new(canister_id, method_name, error_code, error_message))
         }
     }
 }

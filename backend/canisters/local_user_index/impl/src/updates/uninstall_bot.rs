@@ -25,7 +25,7 @@ async fn uninstall_bot(args: Args) -> Response {
     {
         Ok(c2c_uninstall_bot::Response::Success) => (),
         Ok(other) => return other.into(),
-        Err((_, message)) => return InternalError(message),
+        Err(error) => return InternalError(format!("{error:?}")),
     }
 
     mutate_state(|state| {

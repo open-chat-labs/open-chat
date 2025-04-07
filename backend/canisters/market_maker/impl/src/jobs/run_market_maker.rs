@@ -1,7 +1,6 @@
 use crate::exchanges::Exchange;
 use crate::{mutate_state, read_state, Config, RuntimeState};
 use constants::MINUTE_IN_MS;
-use ic_cdk::call::RejectCode;
 use itertools::Itertools;
 use market_maker_canister::ExchangeId;
 use std::cmp::{max, min, Reverse};
@@ -9,7 +8,7 @@ use std::collections::btree_map::Entry::Occupied;
 use std::collections::BTreeMap;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::{AggregatedOrders, CancelOrderRequest, MakeOrderRequest, Milliseconds, Order, OrderType};
+use types::{AggregatedOrders, C2CError, CancelOrderRequest, MakeOrderRequest, Milliseconds, Order, OrderType};
 
 const RUN_MARKET_MAKER_INTERVAL: Milliseconds = MINUTE_IN_MS;
 
@@ -55,11 +54,7 @@ async fn run_async(exchanges: Vec<(ExchangeId, Box<dyn Exchange>, Config)>) {
     .await;
 }
 
-async fn run_single(
-    exchange_id: ExchangeId,
-    exchange_client: Box<dyn Exchange>,
-    config: Config,
-) -> Result<(), (RejectCode, String)> {
+async fn run_single(exchange_id: ExchangeId, exchange_client: Box<dyn Exchange>, config: Config) -> Result<(), C2CError> {
     trace!(%exchange_id, "Running market maker");
 
     let (my_previous_open_orders, previous_latest_bid_taken, previous_latest_ask_taken) = mutate_state(|state| {

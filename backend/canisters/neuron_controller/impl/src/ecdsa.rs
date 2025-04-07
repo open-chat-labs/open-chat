@@ -7,7 +7,7 @@ use ic_transport_types::{to_request_id, EnvelopeContent};
 use serde::Serialize;
 use sha256::sha256;
 use tracing::{error, info};
-use types::CanisterId;
+use types::{C2CError, CanisterId};
 use utils::canister::convert_cdk_error;
 
 pub fn get_key_id(is_local_dev_mode: bool) -> EcdsaKeyId {
@@ -19,7 +19,7 @@ pub fn get_key_id(is_local_dev_mode: bool) -> EcdsaKeyId {
     }
 }
 
-pub async fn get_public_key(key_id: EcdsaKeyId) -> Result<Vec<u8>, (RejectCode, String)> {
+pub async fn get_public_key(key_id: EcdsaKeyId) -> Result<Vec<u8>, C2CError> {
     match management_canister::ecdsa_public_key(&EcdsaPublicKeyArgs {
         canister_id: None,
         derivation_path: Vec::new(),
@@ -28,9 +28,10 @@ pub async fn get_public_key(key_id: EcdsaKeyId) -> Result<Vec<u8>, (RejectCode, 
     .await
     {
         Ok(res) => Ok(res.public_key),
-        Err(error) => {
+        Err(e) => {
+            let error = convert_cdk_error(CanisterId::management_canister(), "ecdsa_public_key", e);
             error!(?error, "Error calling 'ecdsa_public_key'");
-            Err(convert_cdk_error(error))
+            Err(error)
         }
     }
 }

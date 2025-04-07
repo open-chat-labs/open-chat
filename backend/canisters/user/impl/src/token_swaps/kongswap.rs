@@ -2,9 +2,8 @@ use super::swap_client::{SwapClient, SwapSuccess};
 use crate::token_swaps::nat_to_u128;
 use async_trait::async_trait;
 use constants::SNS_GOVERNANCE_CANISTER_ID;
-use ic_cdk::call::RejectCode;
 use types::icrc1::Account;
-use types::{CanisterId, TokenInfo};
+use types::{C2CError, CanisterId, TokenInfo};
 
 pub struct KongSwapClient {
     canister_id: CanisterId,
@@ -36,15 +35,15 @@ impl SwapClient for KongSwapClient {
         true
     }
 
-    async fn deposit_account(&self) -> Result<Account, (RejectCode, String)> {
+    async fn deposit_account(&self) -> Result<Account, C2CError> {
         panic!("`deposit_account` should not be called when using ICRC2")
     }
 
-    async fn deposit(&self, _amount: u128) -> Result<u128, (RejectCode, String)> {
+    async fn deposit(&self, _amount: u128) -> Result<u128, C2CError> {
         panic!("`deposit` should not be called when using ICRC2")
     }
 
-    async fn swap(&self, amount: u128, min_amount_out: u128) -> Result<Result<SwapSuccess, String>, (RejectCode, String)> {
+    async fn swap(&self, amount: u128, min_amount_out: u128) -> Result<Result<SwapSuccess, String>, C2CError> {
         match kongswap_canister_c2c_client::swap(
             self.canister_id,
             &kongswap_canister::swap::Args {
@@ -68,7 +67,7 @@ impl SwapClient for KongSwapClient {
         }
     }
 
-    async fn withdraw(&self, _successful_swap: bool, _amount: u128) -> Result<u128, (RejectCode, String)> {
+    async fn withdraw(&self, _successful_swap: bool, _amount: u128) -> Result<u128, C2CError> {
         panic!("`withdraw` should not be called when `AUTO_WITHDRAWALS` is true")
     }
 }
