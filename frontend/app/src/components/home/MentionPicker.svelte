@@ -56,7 +56,7 @@
     });
 
     function mention(userOrGroup: UserOrUserGroup) {
-        onMention(userOrGroup);
+        onMention($state.snapshot(userOrGroup));
     }
 
     function onKeyDown(ev: KeyboardEvent): void {
