@@ -18,18 +18,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    RegistrationInProgress,
-    AlreadyRegistered,
-    UserLimitReached,
-    UsernameInvalid,
-    UsernameTooShort(u16),
-    UsernameTooLong(u16),
-    CyclesBalanceTooLow,
-    InternalError(String),
-    PublicKeyInvalid(String),
-    ReferralCodeInvalid,
-    ReferralCodeAlreadyClaimed,
-    ReferralCodeExpired,
     Error(OCError),
 }
 

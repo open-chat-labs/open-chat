@@ -37,14 +37,9 @@ async fn join_community(args: Args) -> Response {
                 }
                 AlreadyInCommunity(s)
             }
-            community_canister::c2c_join_community::Response::Error(error) => Error(error),
             community_canister::c2c_join_community::Response::GateCheckFailed(msg) => GateCheckFailed(msg),
-            community_canister::c2c_join_community::Response::NotInvited => NotInvited,
-            community_canister::c2c_join_community::Response::UserBlocked => UserBlocked,
-            community_canister::c2c_join_community::Response::MemberLimitReached(l) => MemberLimitReached(l),
-            community_canister::c2c_join_community::Response::CommunityFrozen => CommunityFrozen,
-            community_canister::c2c_join_community::Response::InternalError(error) => InternalError(error),
+            community_canister::c2c_join_community::Response::Error(error) => Error(error),
         },
-        Err(error) => InternalError(format!("Failed to call 'community::c2c_join_community': {error:?}")),
+        Err(error) => Error(error.into()),
     }
 }

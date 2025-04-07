@@ -25,7 +25,6 @@ pub struct Args {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    InternalError(String),
     Error(OCError),
 }
 

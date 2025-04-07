@@ -23,8 +23,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    CyclesBalanceTooLow,
-    InternalError(String),
     Error(OCError),
 }
 

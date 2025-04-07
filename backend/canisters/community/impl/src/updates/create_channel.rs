@@ -64,7 +64,7 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
         .err()
         {
             match response {
-                c2c_join_community::Response::UserBlocked => return NotAuthorized,
+                c2c_join_community::Response::Error(error) => return Error(error),
                 c2c_join_community::Response::AlreadyInCommunity(_) => {}
                 _ => panic!("Unexpected response from c2c_join_community"),
             }

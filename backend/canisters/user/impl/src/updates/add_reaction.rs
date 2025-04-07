@@ -3,6 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{AddRemoveReactionArgs, AddRemoveReactionResult};
+use oc_error_codes::OCErrorCode;
 use types::{Achievement, EventIndex};
 use user_canister::add_reaction::{Response::*, *};
 use user_canister::{ToggleReactionArgs, UserCanisterEvent};
@@ -15,13 +16,13 @@ fn add_reaction(args: Args) -> Response {
     if args.reaction.is_valid() {
         mutate_state(|state| add_reaction_impl(args, state))
     } else {
-        InvalidReaction
+        Error(OCErrorCode::InvalidReaction.into())
     }
 }
 
 fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.suspended.value {
-        return UserSuspended;
+        return Error(OCErrorCode::InitiatorSuspended.into());
     }
 
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
@@ -59,10 +60,10 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
 
                 Success
             }
-            AddRemoveReactionResult::NoChange => NoChange,
-            AddRemoveReactionResult::MessageNotFound => MessageNotFound,
+            AddRemoveReactionResult::NoChange => Error(OCErrorCode::NoChange.into()),
+            AddRemoveReactionResult::MessageNotFound => Error(OCErrorCode::MessageNotFound.into()),
         }
     } else {
-        ChatNotFound
+        Error(OCErrorCode::ChatNotFound.into())
     }
 }

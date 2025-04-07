@@ -19,9 +19,5 @@ pub struct Args {
 pub enum Response {
     Success,
     ApproveError(ApproveError),
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
-    InternalError(String),
     Error(OCError),
 }

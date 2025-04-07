@@ -31,6 +31,7 @@ ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 local_group_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

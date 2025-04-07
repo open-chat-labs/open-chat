@@ -28,6 +28,7 @@ msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 notifications_index_canister = { path = "../api" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 principal_to_user_id_map = { path = "../../../libraries/principal_to_user_id_map" }
 rand = { workspace = true }
 serde = { workspace = true }

@@ -7,15 +7,15 @@ use event_store_producer::EventBuilder;
 use group_canister::init::Args as InitGroupCanisterArgs;
 use local_group_index_canister::c2c_create_group::{Response::*, *};
 use local_group_index_canister::ChildCanisterType;
+use oc_error_codes::{OCError, OCErrorCode};
 use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, UserId, UserType};
 use utils::canister;
-use utils::canister::CreateAndInstallError;
 
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
 #[trace]
 async fn c2c_create_group(args: Args) -> Response {
     let prepare_ok = match mutate_state(|state| prepare(args, state)) {
-        Err(response) => return response,
+        Err(response) => return Error(response),
         Ok(ok) => ok,
     };
 
@@ -58,13 +58,9 @@ async fn c2c_create_group(args: Args) -> Response {
                 local_user_index_canister_id: prepare_ok.local_user_index_canister_id,
             })
         }
-        Err(error) => {
-            let mut canister_id = None;
-            if let CreateAndInstallError::InstallFailed(id, ..) = error {
-                canister_id = Some(id);
-            }
+        Err((canister_id, error)) => {
             mutate_state(|state| rollback(canister_id, state));
-            InternalError(format!("{error:?}"))
+            Error(error.into())
         }
     }
 }
@@ -77,11 +73,11 @@ struct PrepareOk {
     init_canister_args: InitGroupCanisterArgs,
 }
 
-fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
+fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, OCError> {
     let cycles_to_use = if state.data.canister_pool.is_empty() {
         let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
         if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
-            return Err(CyclesBalanceTooLow);
+            return Err(OCErrorCode::CyclesBalanceTooLow.into());
         }
         cycles_required
     } else {

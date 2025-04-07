@@ -38,11 +38,7 @@ async fn create_group(mut args: Args) -> Response {
                 mutate_state(|state| commit(r.chat_id, r.local_user_index_canister_id, state));
                 Success(SuccessResult { chat_id: r.chat_id })
             }
-            c2c_create_group::Response::NameTaken => NameTaken,
             c2c_create_group::Response::Error(error) => Error(error),
-            c2c_create_group::Response::CyclesBalanceTooLow
-            | c2c_create_group::Response::UserNotFound
-            | c2c_create_group::Response::InternalError => InternalError,
         },
         Err(error) => {
             error!(?error, "Error calling create group");

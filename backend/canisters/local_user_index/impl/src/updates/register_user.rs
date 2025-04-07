@@ -7,13 +7,13 @@ use constants::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE, USER_LIMIT};
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
 use local_user_index_canister::ChildCanisterType;
+use oc_error_codes::{OCError, OCErrorCode};
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId, UserType};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::ReferredUserRegistered;
 use user_index_canister::UserRegistered;
 use utils::canister;
-use utils::canister::CreateAndInstallError;
-use utils::text_validation::{validate_username, UsernameValidationError};
+use utils::text_validation::validate_username;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
 #[update(candid = true, msgpack = true)]
@@ -30,7 +30,7 @@ async fn register_user(args: Args) -> Response {
         init_canister_args,
     } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(response) => return Error(response),
     };
 
     let wasm_version = canister_wasm.version;
@@ -62,9 +62,14 @@ async fn register_user(args: Args) -> Response {
                 icp_account: default_ledger_account(user_id.into()),
             })
         }
-        Err(error) => {
-            mutate_state(|state| rollback(&caller, &error, state));
-            InternalError(format!("{error:?}"))
+        Err((canister_id, error)) => {
+            mutate_state(|state| {
+                state.data.local_users.mark_registration_failed(&caller);
+                if let Some(id) = canister_id {
+                    state.data.canister_pool.push(id);
+                }
+            });
+            Error(error.into())
         }
     }
 }
@@ -79,23 +84,23 @@ struct PrepareOk {
     init_canister_args: InitUserCanisterArgs,
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, OCError> {
     let caller = state.env.caller();
 
     if state.data.global_users.get_by_principal(&caller).is_some() {
-        return Err(AlreadyRegistered);
+        return Err(OCErrorCode::AlreadyRegistered.into());
     }
 
     let now = state.env.now();
     if !state.data.local_users.mark_registration_in_progress(caller, now) {
-        return Err(RegistrationInProgress);
+        return Err(OCErrorCode::AlreadyInProgress.into());
     }
 
-    let is_from_identity_canister =
-        validate_public_key(caller, &args.public_key, state.data.identity_canister_id).map_err(PublicKeyInvalid)?;
+    let is_from_identity_canister = validate_public_key(caller, &args.public_key, state.data.identity_canister_id)
+        .map_err(|e| OCErrorCode::InvalidPublicKey.with_message(e))?;
 
     if state.data.global_users.len() >= USER_LIMIT {
-        return Err(UserLimitReached);
+        return Err(OCErrorCode::UserLimitReached.into());
     }
 
     let mut referral_code = None;
@@ -104,19 +109,17 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
             Ok(r) => Some(r),
             Err(e) => {
                 return Err(match e {
-                    ReferralCodeError::NotFound => ReferralCodeInvalid,
-                    ReferralCodeError::AlreadyClaimed => ReferralCodeAlreadyClaimed,
-                    ReferralCodeError::Expired => ReferralCodeExpired,
-                })
+                    ReferralCodeError::NotFound => OCErrorCode::InvalidReferralCode,
+                    ReferralCodeError::AlreadyClaimed => OCErrorCode::ReferralCodeAlreadyClaimed,
+                    ReferralCodeError::Expired => OCErrorCode::InvalidReferralCode,
+                }
+                .into())
             }
         }
     }
 
-    match validate_username(&args.username) {
-        Ok(_) => {}
-        Err(UsernameValidationError::TooShort(s)) => return Err(UsernameTooShort(s.min_length as u16)),
-        Err(UsernameValidationError::TooLong(l)) => return Err(UsernameTooLong(l.max_length as u16)),
-        Err(UsernameValidationError::Invalid) => return Err(UsernameInvalid),
+    if let Err(error) = validate_username(&args.username) {
+        return Err(error.into());
     };
 
     let openchat_bot_messages = if referral_code
@@ -142,7 +145,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     let cycles_to_use = if state.data.canister_pool.is_empty() {
         let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
         if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
-            return Err(CyclesBalanceTooLow);
+            return Err(OCErrorCode::CyclesBalanceTooLow.into());
         }
         cycles_required
     } else {
@@ -220,14 +223,6 @@ fn commit(
                 now,
             );
         }
-    }
-}
-
-fn rollback(principal: &Principal, error: &CreateAndInstallError, state: &mut RuntimeState) {
-    state.data.local_users.mark_registration_failed(principal);
-
-    if let CreateAndInstallError::InstallFailed(id, ..) = error {
-        state.data.canister_pool.push(*id);
     }
 }
 

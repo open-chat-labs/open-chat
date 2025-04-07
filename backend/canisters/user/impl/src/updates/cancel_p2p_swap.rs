@@ -3,6 +3,7 @@ use crate::timer_job_types::CancelP2PSwapInEscrowCanisterJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use oc_error_codes::{OCError, OCErrorCode};
 use types::CancelP2PSwapResult;
 use user_canister::cancel_p2p_swap::{Response::*, *};
 
@@ -16,20 +17,20 @@ fn cancel_p2p_swap(args: Args) -> Response {
             CancelP2PSwapInEscrowCanisterJob::run(swap_id);
             Success
         }
-        Err(response) => *response,
+        Err(response) => Error(response),
     }
 }
 
-fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> Result<u32, Box<Response>> {
+fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> Result<u32, OCError> {
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
         match chat.events.cancel_p2p_swap(my_user_id, None, args.message_id, now) {
             CancelP2PSwapResult::Success(swap_id) => Ok(swap_id),
-            CancelP2PSwapResult::Failure(status) => Err(Box::new(StatusError(status.into()))),
-            CancelP2PSwapResult::SwapNotFound => Err(Box::new(SwapNotFound)),
+            CancelP2PSwapResult::Failure(status) => Err(OCErrorCode::SwapStatusError.with_json(&status)),
+            CancelP2PSwapResult::SwapNotFound => Err(OCErrorCode::SwapNotFound.into()),
         }
     } else {
-        Err(Box::new(ChatNotFound))
+        Err(OCErrorCode::ChatNotFound.into())
     }
 }

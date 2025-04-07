@@ -4,6 +4,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
+use oc_error_codes::{OCError, OCErrorCode};
 use types::{AccessGateConfig, CanisterId, ChatId, Document, GroupSubtype, UserId};
 
 #[update(msgpack = true)]
@@ -13,14 +14,14 @@ async fn c2c_create_group(args: Args) -> Response {
 
     let (user_id, principal) = match validate_caller().await {
         Ok((u, p)) => (u, p),
-        Err(response) => return response,
+        Err(response) => return Error(response),
     };
 
     let PrepareResult {
         local_group_index_canister,
     } = match mutate_state(|state| prepare(&args.name, args.is_public, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(response) => return Error(response),
     };
 
     let c2c_create_group_args = local_group_index_canister::c2c_create_group::Args {
@@ -61,19 +62,22 @@ async fn c2c_create_group(args: Args) -> Response {
                 local_user_index_canister_id: result.local_user_index_canister_id,
             })
         }
-        Ok(local_group_index_canister::c2c_create_group::Response::Error(error)) => Error(error),
-        Ok(local_group_index_canister::c2c_create_group::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
-        Ok(local_group_index_canister::c2c_create_group::Response::InternalError(_)) => InternalError,
-        Err(_) => {
+        Ok(local_group_index_canister::c2c_create_group::Response::Error(error)) => {
             if args.is_public {
                 mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
             }
-            InternalError
+            Error(error)
+        }
+        Err(error) => {
+            if args.is_public {
+                mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
+            }
+            Error(error.into())
         }
     }
 }
 
-async fn validate_caller() -> Result<(UserId, Principal), Response> {
+async fn validate_caller() -> Result<(UserId, Principal), OCError> {
     let (caller, user_index_canister_id): (UserId, CanisterId) =
         read_state(|state| (state.env.caller().into(), state.data.user_index_canister_id));
 
@@ -86,9 +90,8 @@ async fn validate_caller() -> Result<(UserId, Principal), Response> {
     .await
     {
         Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => Ok((caller, r.principal)),
-        Ok(user_index_canister::c2c_lookup_user::Response::UserNotFound) => Err(UserNotFound),
-        Ok(user_index_canister::c2c_lookup_user::Response::Error(error)) => Err(Error(error)),
-        Err(_) => Err(InternalError),
+        Ok(user_index_canister::c2c_lookup_user::Response::Error(error)) => Err(error),
+        Err(error) => Err(error.into()),
     }
 }
 
@@ -96,11 +99,11 @@ struct PrepareResult {
     pub local_group_index_canister: CanisterId,
 }
 
-fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<PrepareResult, OCError> {
     let now = state.env.now();
 
     if is_public && !state.data.public_group_and_community_names.reserve_name(name, now) {
-        return Err(NameTaken);
+        return Err(OCErrorCode::NameTaken.into());
     }
 
     if let Some(local_group_index_canister) = state.data.local_index_map.index_for_new_group() {
@@ -108,7 +111,7 @@ fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<Prep
             local_group_index_canister,
         })
     } else {
-        Err(InternalError)
+        Err(OCErrorCode::CanisterNotFound.into())
     }
 }
 

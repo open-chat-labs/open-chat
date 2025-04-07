@@ -5,6 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::NANOS_PER_MILLISECOND;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
+use oc_error_codes::{OCError, OCErrorCode};
 use types::TimestampNanos;
 use user_canister::approve_transfer::{Response::*, *};
 
@@ -15,7 +16,7 @@ async fn approve_transfer(args: Args) -> Response {
 
     let now_nanos = match mutate_state(|state| prepare(&args, state)) {
         Ok(ts) => ts,
-        Err(response) => return response,
+        Err(response) => return Error(response),
     };
 
     match icrc_ledger_canister_c2c_client::icrc2_approve(
@@ -37,18 +38,18 @@ async fn approve_transfer(args: Args) -> Response {
     {
         Ok(Ok(_)) => Success,
         Ok(Err(err)) => ApproveError(err),
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => Error(OCErrorCode::C2CError.with_message(format!("{error:?}"))),
     }
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<TimestampNanos, Response> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> Result<TimestampNanos, OCError> {
     let now = state.env.now();
 
     if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
         return Err(match error {
-            VerifyPinError::PinRequired => PinRequired,
-            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
+            VerifyPinError::PinRequired => OCErrorCode::PinRequired.into(),
+            VerifyPinError::PinIncorrect(delay) => OCErrorCode::PinIncorrect.with_message(delay),
+            VerifyPinError::TooManyFailedAttempted(delay) => OCErrorCode::TooManyFailedPinAttempts.with_message(delay),
         });
     }
 
