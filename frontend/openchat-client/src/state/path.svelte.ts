@@ -46,7 +46,7 @@ import type {
     GroupChatIdentifier,
     CommunityIdentifier,
     ChatListScope,
-} from "openchat-client";
+} from "openchat-shared";
 
 export type LandingPageRoute =
     | HomeLandingRoute
