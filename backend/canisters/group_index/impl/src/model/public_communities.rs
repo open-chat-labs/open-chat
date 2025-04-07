@@ -100,6 +100,7 @@ impl PublicCommunities {
         (matches, total)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn update_community(
         &mut self,
         community_id: &CommunityId,
