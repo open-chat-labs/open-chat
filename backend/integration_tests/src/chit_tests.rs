@@ -160,6 +160,7 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
             &user_canister::pay_for_streak_insurance::Args {
                 additional_days: days_insured,
                 expected_price,
+                pin: None,
             },
         );
         assert!(
