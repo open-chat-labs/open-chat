@@ -258,11 +258,11 @@ fn streak_insurance_can_cover_multiple_days_missed_in_a_row(days_insured: u8) {
     let expected_price = (2u128.pow(days_insured as u32) - 1) * ONE_CHAT;
     client::user::happy_path::pay_for_streak_insurance(env, &user, days_insured, expected_price);
 
-    env.advance_time(Duration::from_millis(1 * DAY_IN_MS));
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
     env.tick();
 
     for _ in 0..days_insured {
-        env.advance_time(Duration::from_millis(1 * DAY_IN_MS));
+        env.advance_time(Duration::from_millis(DAY_IN_MS));
         env.tick();
     }
 
@@ -270,7 +270,7 @@ fn streak_insurance_can_cover_multiple_days_missed_in_a_row(days_insured: u8) {
     assert_eq!(summary.streak, days_insured as u16 + 1);
     assert!(summary.streak_insurance.is_some());
 
-    env.advance_time(Duration::from_millis(1 * DAY_IN_MS));
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
     env.tick();
 
     let summary = client::user::happy_path::initial_state(env, &user);
