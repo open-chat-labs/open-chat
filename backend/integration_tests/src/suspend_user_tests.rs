@@ -3,6 +3,7 @@ use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use itertools::Itertools;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
@@ -88,7 +89,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         group_message_response1,
-        group_canister::send_message_v2::Response::UserSuspended
+        group_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorSuspended)
     ));
 
     let community_message_response1 = client::community::send_message(
@@ -114,7 +115,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         community_message_response1,
-        community_canister::send_message::Response::UserSuspended
+        community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorSuspended)
     ));
 
     client::user_index::unsuspend_user(

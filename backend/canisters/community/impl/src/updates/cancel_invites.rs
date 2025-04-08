@@ -2,46 +2,37 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::cancel_invites::{Response::*, *};
-use group_chat_core::CancelInvitesResult;
+use oc_error_codes::OCErrorCode;
+use types::OCResult;
 
 #[update(msgpack = true)]
 #[trace]
 fn cancel_invites(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| cancel_invites_impl(args, state))
+    if let Err(error) = mutate_state(|state| cancel_invites_impl(args, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
-fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
+
     let caller = state.env.caller();
-
-    let Some(member) = state.data.members.get(caller) else {
-        return NotAuthorized;
-    };
-
-    if member.suspended().value {
-        return UserSuspended;
-    } else if member.lapsed().value {
-        return UserLapsed;
-    }
-
+    let member = state.data.members.get_verified_member(caller)?;
     let now = state.env.now();
 
     if let Some(channel_id) = args.channel_id {
         let Some(channel) = state.data.channels.get_mut(&channel_id) else {
-            return ChannelNotFound;
+            return Err(OCErrorCode::ChatNotFound.into());
         };
 
-        match channel.chat.cancel_invites(member.user_id, args.user_ids, now) {
-            CancelInvitesResult::Success => (),
-            CancelInvitesResult::UserNotInGroup => return NotAuthorized,
-            CancelInvitesResult::UserSuspended => return UserSuspended,
-            CancelInvitesResult::NotAuthorized => return NotAuthorized,
-            CancelInvitesResult::UserLapsed => return UserLapsed,
-        }
+        channel.chat.cancel_invites(member.user_id, args.user_ids, now)?;
     } else {
         if !member.role().can_invite_users(&state.data.permissions) {
-            return NotAuthorized;
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
         for user_id in args.user_ids {
@@ -54,5 +45,5 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     handle_activity_notification(state);
-    Success
+    Ok(())
 }

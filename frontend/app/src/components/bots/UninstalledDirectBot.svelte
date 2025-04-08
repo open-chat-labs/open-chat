@@ -2,12 +2,12 @@
     import page from "page";
     import {
         chatIdentifiersEqual,
-        externalBots,
         OpenChat,
         chatListScopeStore as chatListScope,
         type DirectChatIdentifier,
         currentUser,
         installedDirectBots,
+        botState,
     } from "openchat-client";
     import { getContext, tick } from "svelte";
     import { pathParams, routeForScope } from "../../routes";
@@ -23,7 +23,7 @@
 
     let { botId, chatId, onClose }: Props = $props();
 
-    let bot = $derived($externalBots.get(botId));
+    let bot = $derived(botState.externalBots.get(botId));
 
     function closeInstaller(installed: boolean) {
         if (!installed) {

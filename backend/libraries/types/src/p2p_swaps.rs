@@ -20,11 +20,6 @@ pub enum UpdateP2PSwapResult<T> {
     SwapNotFound,
 }
 
-pub type ReserveP2PSwapResult = UpdateP2PSwapResult<ReserveP2PSwapSuccess>;
-pub type AcceptP2PSwapResult = UpdateP2PSwapResult<P2PSwapAccepted>;
-pub type CompleteP2PSwapResult = UpdateP2PSwapResult<P2PSwapCompleted>;
-pub type CancelP2PSwapResult = UpdateP2PSwapResult<u32>;
-
 pub struct ReserveP2PSwapSuccess {
     pub content: P2PSwapContent,
     pub created: TimestampMillis,

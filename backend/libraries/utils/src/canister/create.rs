@@ -4,24 +4,18 @@ use ic_cdk::management_canister::{self, CanisterSettings, CreateCanisterArgs};
 use tracing::error;
 use types::{C2CError, CanisterId, CanisterWasm, Cycles};
 
-#[derive(Debug)]
-pub enum CreateAndInstallError {
-    CreateFailed(C2CError),
-    InstallFailed(CanisterId, C2CError),
-}
-
 pub async fn create_and_install<A: CandidType>(
     existing_canister_id: Option<CanisterId>,
     wasm: CanisterWasm,
     init_args: A,
     cycles_to_use: Cycles,
     on_canister_created: fn(Cycles) -> (),
-) -> Result<CanisterId, CreateAndInstallError> {
+) -> Result<CanisterId, (Option<CanisterId>, C2CError)> {
     let canister_id = match existing_canister_id {
         Some(id) => id,
         None => match create(cycles_to_use).await {
             Err(error) => {
-                return Err(CreateAndInstallError::CreateFailed(error));
+                return Err((None, error));
             }
             Ok(id) => {
                 on_canister_created(cycles_to_use);
@@ -32,7 +26,7 @@ pub async fn create_and_install<A: CandidType>(
 
     match install_basic(canister_id, wasm, init_args).await {
         Ok(_) => Ok(canister_id),
-        Err(error) => Err(CreateAndInstallError::InstallFailed(canister_id, error)),
+        Err(error) => Err((Some(canister_id), error)),
     }
 }
 

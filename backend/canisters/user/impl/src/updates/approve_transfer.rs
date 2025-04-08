@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
-use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::NANOS_PER_MILLISECOND;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
-use types::TimestampNanos;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, TimestampNanos};
 use user_canister::approve_transfer::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -15,7 +15,7 @@ async fn approve_transfer(args: Args) -> Response {
 
     let now_nanos = match mutate_state(|state| prepare(&args, state)) {
         Ok(ts) => ts,
-        Err(response) => return response,
+        Err(response) => return Error(response),
     };
 
     match icrc_ledger_canister_c2c_client::icrc2_approve(
@@ -37,20 +37,14 @@ async fn approve_transfer(args: Args) -> Response {
     {
         Ok(Ok(_)) => Success,
         Ok(Err(err)) => ApproveError(err),
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => Error(OCErrorCode::C2CError.with_message(format!("{error:?}"))),
     }
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<TimestampNanos, Response> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<TimestampNanos> {
+    state.data.verify_not_suspended()?;
     let now = state.env.now();
-
-    if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
-        return Err(match error {
-            VerifyPinError::PinRequired => PinRequired,
-            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-        });
-    }
+    state.data.pin_number.verify(args.pin.as_deref(), now)?;
 
     Ok(now * NANOS_PER_MILLISECOND)
 }

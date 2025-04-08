@@ -22,6 +22,7 @@
         type ChatIdentifier,
         type DexId,
         routeForChatIdentifier,
+        botState,
     } from "openchat-client";
     import {
         type UpdateMarketMakerConfigArgs,
@@ -188,12 +189,17 @@
             resumeEventLoop: () => client.resumeEventLoop(),
         };
 
+        const unsub = _.subscribe((formatter) => {
+            botState.messageFormatter = formatter;
+        });
+
         return () => {
             window.removeEventListener("scroll", trackVirtualKeyboard);
             window.removeEventListener("resize", trackVirtualKeyboard);
             window.removeEventListener("orientationchange", calculateHeight);
             window.removeEventListener("unhandledrejection", unhandledError);
             unsubs.forEach((u) => u());
+            unsub();
         };
     });
 
