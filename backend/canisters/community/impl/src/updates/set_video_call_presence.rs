@@ -23,7 +23,7 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
     }
 
     let caller = state.env.caller();
-    let member = state.data.members.get_then_verify(caller)?;
+    let member = state.data.members.get_verified_member(caller)?;
     let user_id = member.user_id;
     let is_bot = member.user_type.is_bot();
     let now = state.env.now();

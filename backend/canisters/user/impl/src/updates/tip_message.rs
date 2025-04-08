@@ -1,13 +1,12 @@
 use crate::crypto::process_transaction;
 use crate::guards::caller_is_owner;
-use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
-use oc_error_codes::OCErrorCode;
+use oc_error_codes::{OCError, OCErrorCode};
 use serde::Serialize;
 use types::{
     icrc1, Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId,
@@ -22,7 +21,7 @@ async fn tip_message(args: Args) -> Response {
 
     let (prepare_result, now_nanos) = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return *response,
+        Err(response) => return Error(response),
     };
 
     let pending_transfer = PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
@@ -94,25 +93,18 @@ enum PrepareResult {
     Channel(CommunityId, community_canister::c2c_tip_message::Args),
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<(PrepareResult, TimestampNanos), Box<Response>> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> Result<(PrepareResult, TimestampNanos), OCError> {
     let my_user_id: UserId = state.env.canister_id().into();
-    if state.data.suspended.value {
-        Err(Box::new(UserSuspended))
-    } else if args.amount == 0 {
-        Err(Box::new(TransferCannotBeZero))
+    state.data.verify_not_suspended()?;
+
+    if args.amount == 0 {
+        Err(OCErrorCode::TransferCannotBeZero.into())
     } else if my_user_id == args.recipient {
-        Err(Box::new(CannotTipSelf))
+        Err(OCErrorCode::CannotTipSelf.into())
     } else {
         let now = state.env.now();
         let now_nanos = now * NANOS_PER_MILLISECOND;
-
-        if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
-            return Err(Box::new(match error {
-                VerifyPinError::PinRequired => PinRequired,
-                VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-                VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-            }));
-        }
+        state.data.pin_number.verify(args.pin.as_deref(), now)?;
 
         match args.chat {
             Chat::Direct(chat_id) if state.data.direct_chats.exists(&chat_id) => Ok((
@@ -163,7 +155,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<(PrepareResult, Time
                 ),
                 now_nanos,
             )),
-            _ => Err(Box::new(ChatNotFound)),
+            _ => Err(OCErrorCode::ChatNotFound.into()),
         }
     }
 }

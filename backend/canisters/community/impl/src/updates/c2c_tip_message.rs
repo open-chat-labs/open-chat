@@ -25,7 +25,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCEr
     state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();
-    let user_id = state.data.members.get_then_verify(caller)?.user_id;
+    let user_id = state.data.members.get_verified_member(caller)?.user_id;
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         let now = state.env.now();

@@ -51,7 +51,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, OCError> {
     let user_id = if caller == state.data.user_index_canister_id {
         OPENCHAT_BOT_USER_ID
     } else {
-        state.data.members.get_then_verify(caller)?.user_id
+        state.data.members.get_verified_member(caller)?.user_id
     };
 
     Ok(PrepareResult {

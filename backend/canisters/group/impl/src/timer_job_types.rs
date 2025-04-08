@@ -299,7 +299,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
             {
                 Ok(escrow_canister::notify_deposit::Response::Success(_)) => {
                     mutate_state(|state| {
-                        state.data.chat.events.accept_p2p_swap(
+                        let _ = state.data.chat.events.accept_p2p_swap(
                             self.user_id,
                             self.thread_root_message_index,
                             self.message_id,

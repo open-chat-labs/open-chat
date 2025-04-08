@@ -431,7 +431,7 @@ impl CommunityMembers {
         self.members_map.get(&user_id)
     }
 
-    pub fn get_then_verify(&self, user_id_or_principal: Principal) -> Result<CommunityMemberInternal, OCErrorCode> {
+    pub fn get_verified_member(&self, user_id_or_principal: Principal) -> Result<CommunityMemberInternal, OCErrorCode> {
         let Some(member) = self.get(user_id_or_principal) else {
             return Err(OCErrorCode::InitiatorNotInCommunity);
         };

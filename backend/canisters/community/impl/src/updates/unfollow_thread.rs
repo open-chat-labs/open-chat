@@ -23,7 +23,7 @@ fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCEr
 
     let caller = state.env.caller();
     let now = state.env.now();
-    let user_id = state.data.members.get_then_verify(caller)?.user_id;
+    let user_id = state.data.members.get_verified_member(caller)?.user_id;
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         channel.chat.unfollow_thread(user_id, args.thread_root_message_index, now)?;

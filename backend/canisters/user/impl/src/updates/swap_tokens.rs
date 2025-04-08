@@ -1,5 +1,4 @@
 use crate::guards::caller_is_owner;
-use crate::model::pin_number::VerifyPinError;
 use crate::model::token_swaps::TokenSwap;
 use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
 use crate::token_swaps::icpswap::ICPSwapClient;
@@ -12,6 +11,7 @@ use canister_tracing_macros::trace;
 use constants::{MEMO_SWAP, MEMO_SWAP_APPROVAL, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
+use oc_error_codes::OCError;
 use tracing::{error, info};
 use types::{Achievement, TimestampMillis, Timestamped};
 use user_canister::swap_tokens::{Response::*, *};
@@ -23,22 +23,16 @@ async fn swap_tokens(args: Args) -> Response {
 
     let (token_swap, swap_client) = match mutate_state(|state| prepare(args, state)) {
         Ok(ts) => ts,
-        Err(response) => return response,
+        Err(response) => return Error(response),
     };
 
     process_token_swap(token_swap, Some(swap_client), 0, false).await
 }
 
-fn prepare(args: Args, state: &mut RuntimeState) -> Result<(TokenSwap, Box<dyn SwapClient>), Response> {
+fn prepare(args: Args, state: &mut RuntimeState) -> Result<(TokenSwap, Box<dyn SwapClient>), OCError> {
+    state.data.verify_not_suspended()?;
     let now = state.env.now();
-
-    if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
-        return Err(match error {
-            VerifyPinError::PinRequired => PinRequired,
-            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-        });
-    }
+    state.data.pin_number.verify(args.pin.as_deref(), now)?;
 
     let swap_client = build_swap_client(&args, state);
     let token_swap = state

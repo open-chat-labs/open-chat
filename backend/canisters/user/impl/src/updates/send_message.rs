@@ -1,7 +1,6 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_local_user_index;
 use crate::guards::caller_is_owner;
-use crate::model::pin_number::VerifyPinError;
 use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
 use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, TimerJob};
@@ -76,11 +75,7 @@ async fn send_message_v2(args: Args) -> Response {
                 }
 
                 if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_deref(), now)) {
-                    return match error {
-                        VerifyPinError::PinRequired => PinRequired,
-                        VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-                        VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-                    };
+                    return Error(error.into());
                 }
 
                 // When transferring to bot users, each user transfers to their own subaccount, this way it

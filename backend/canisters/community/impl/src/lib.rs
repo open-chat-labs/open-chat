@@ -339,7 +339,7 @@ impl RuntimeState {
             return Ok(Caller::OCBot(OPENCHAT_BOT_USER_ID));
         }
 
-        let member = self.data.members.get_then_verify(caller)?;
+        let member = self.data.members.get_verified_member(caller)?;
 
         match member.user_type {
             UserType::User => Ok(Caller::User(member.user_id)),

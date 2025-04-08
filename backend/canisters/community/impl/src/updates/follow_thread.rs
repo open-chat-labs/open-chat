@@ -21,7 +21,7 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCErro
     state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();
-    let member = state.data.members.get_then_verify(caller)?;
+    let member = state.data.members.get_verified_member(caller)?;
     let now = state.env.now();
     let user_id = member.user_id;
 

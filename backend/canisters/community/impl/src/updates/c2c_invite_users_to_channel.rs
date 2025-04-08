@@ -18,7 +18,7 @@ fn c2c_invite_users_to_channel(args: Args) -> Response {
 fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Result<Response, OCError> {
     state.data.verify_not_frozen()?;
 
-    let member = state.data.members.get_then_verify(args.caller.into())?;
+    let member = state.data.members.get_verified_member(args.caller.into())?;
 
     let mut users_to_invite_to_channel = Vec::new();
     let mut users_to_invite_to_community = Vec::new();

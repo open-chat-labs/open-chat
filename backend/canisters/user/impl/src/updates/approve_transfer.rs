@@ -1,5 +1,4 @@
 use crate::guards::caller_is_owner;
-use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -43,15 +42,9 @@ async fn approve_transfer(args: Args) -> Response {
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<TimestampNanos, OCError> {
+    state.data.verify_not_suspended()?;
     let now = state.env.now();
-
-    if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
-        return Err(match error {
-            VerifyPinError::PinRequired => OCErrorCode::PinRequired.into(),
-            VerifyPinError::PinIncorrect(delay) => OCErrorCode::PinIncorrect.with_message(delay),
-            VerifyPinError::TooManyFailedAttempted(delay) => OCErrorCode::TooManyFailedPinAttempts.with_message(delay),
-        });
-    }
+    state.data.pin_number.verify(args.pin.as_deref(), now)?;
 
     Ok(now * NANOS_PER_MILLISECOND)
 }

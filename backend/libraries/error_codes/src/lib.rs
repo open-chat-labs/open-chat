@@ -131,6 +131,9 @@ pub enum OCErrorCode {
     MessageIdAlreadyExists = 287,
     ReplicaNotUpToDate = 288,
     InvalidMessageContent = 289,
+    TransferCannotBeZero = 290,
+    NoActiveStreak = 291,
+    TextTooLong = 292,
 
     // InternalError
     C2CError = 500,

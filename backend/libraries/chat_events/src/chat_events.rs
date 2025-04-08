@@ -20,15 +20,14 @@ use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
 use types::{
-    AcceptP2PSwapResult, BlobReference, BotMessageContext, CallParticipant, CancelP2PSwapResult, CanisterId, Chat,
-    ChatEventType, ChatType, CompleteP2PSwapResult, CompletedCryptoTransaction, DirectChatCreated, EventContext, EventIndex,
-    EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated,
-    GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload,
-    MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat,
-    P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
-    PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult,
-    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
-    VideoCallParticipants, VideoCallPresence, VoteOperation,
+    BlobReference, BotMessageContext, CallParticipant, CanisterId, Chat, ChatEventType, ChatType, CompletedCryptoTransaction,
+    DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
+    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
+    MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
+    MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload,
+    P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction,
+    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
+    UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -1148,7 +1147,7 @@ impl ChatEvents {
         message_id: MessageId,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> ReserveP2PSwapResult {
+    ) -> Result<ReserveP2PSwapSuccess, OCError> {
         match self.update_message(
             thread_root_message_index,
             message_id.into(),
@@ -1156,9 +1155,9 @@ impl ChatEvents {
             Some(now),
             |message, event| Self::reserve_p2p_swap_inner(message, event.timestamp, user_id, now),
         ) {
-            Ok(success) => ReserveP2PSwapResult::Success(success),
-            Err(UpdateEventError::NoChange(status)) => ReserveP2PSwapResult::Failure(status),
-            Err(UpdateEventError::NotFound) => ReserveP2PSwapResult::SwapNotFound,
+            Ok(success) => Ok(success),
+            Err(UpdateEventError::NoChange(status)) => Err(OCErrorCode::SwapStatusError.with_json(&status)),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::SwapNotFound.into()),
         }
     }
 
@@ -1190,7 +1189,7 @@ impl ChatEvents {
         message_id: MessageId,
         token1_txn_in: u64,
         now: TimestampMillis,
-    ) -> AcceptP2PSwapResult {
+    ) -> Result<P2PSwapAccepted, OCError> {
         match self.update_message(
             thread_root_message_index,
             message_id.into(),
@@ -1198,9 +1197,9 @@ impl ChatEvents {
             Some(now),
             |message, _| Self::accept_p2p_swap_inner(message, user_id, token1_txn_in),
         ) {
-            Ok(success) => AcceptP2PSwapResult::Success(success),
-            Err(UpdateEventError::NoChange(status)) => AcceptP2PSwapResult::Failure(status),
-            Err(UpdateEventError::NotFound) => AcceptP2PSwapResult::SwapNotFound,
+            Ok(success) => Ok(success),
+            Err(UpdateEventError::NoChange(status)) => Err(OCErrorCode::SwapStatusError.with_json(&status)),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::SwapNotFound.into()),
         }
     }
 
@@ -1233,7 +1232,7 @@ impl ChatEvents {
         token1_txn_out: u64,
         now: TimestampMillis,
         event_store_client: &mut EventStoreClient<R>,
-    ) -> CompleteP2PSwapResult {
+    ) -> Result<P2PSwapCompleted, OCError> {
         let chat = self.chat;
         let anonymized_id = self.anonymized_id.clone();
 
@@ -1255,9 +1254,9 @@ impl ChatEvents {
                 )
             },
         ) {
-            Ok(status) => CompleteP2PSwapResult::Success(status),
-            Err(UpdateEventError::NoChange(status)) => CompleteP2PSwapResult::Failure(status),
-            Err(UpdateEventError::NotFound) => CompleteP2PSwapResult::SwapNotFound,
+            Ok(status) => Ok(status),
+            Err(UpdateEventError::NoChange(status)) => Err(OCErrorCode::SwapStatusError.with_json(&status)),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::SwapNotFound.into()),
         }
     }
 
@@ -1334,7 +1333,7 @@ impl ChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         now: TimestampMillis,
-    ) -> CancelP2PSwapResult {
+    ) -> Result<u32, OCError> {
         match self.update_message(
             thread_root_message_index,
             message_id.into(),
@@ -1342,9 +1341,9 @@ impl ChatEvents {
             Some(now),
             |message, _| Self::cancel_p2p_swap_inner(message, user_id),
         ) {
-            Ok(swap_id) => CancelP2PSwapResult::Success(swap_id),
-            Err(UpdateEventError::NoChange(status)) => CancelP2PSwapResult::Failure(status),
-            Err(UpdateEventError::NotFound) => CancelP2PSwapResult::SwapNotFound,
+            Ok(swap_id) => Ok(swap_id),
+            Err(UpdateEventError::NoChange(status)) => Err(OCErrorCode::SwapStatusError.with_json(&status)),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::SwapNotFound.into()),
         }
     }
 
