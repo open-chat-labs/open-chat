@@ -81,6 +81,8 @@ export class BotState {
     #maybeArgs = $derived(this.#prefixParts.slice(1) ?? []);
     #parsedPrefix = $derived(this.#prefixParts[0]?.slice(1)?.toLocaleLowerCase() ?? "");
     #commands = $derived.by(() => {
+        const prefixParts = this.#prefixParts;
+        const parsedPrefix = this.#parsedPrefix;
         const bots = [builtinBot, ...this.#externalBots.values()];
         return bots
             .flatMap((b) => {
@@ -103,8 +105,8 @@ export class BotState {
                                     this.#messageFormatter,
                                     c,
                                     this.#selectedCommand,
-                                    this.#parsedPrefix,
-                                    this.#prefixParts,
+                                    parsedPrefix,
+                                    prefixParts,
                                 ),
                             ) as FlattenedCommand[];
                     case "internal_bot":
@@ -122,8 +124,8 @@ export class BotState {
                                     this.#messageFormatter,
                                     c,
                                     this.#selectedCommand,
-                                    this.#parsedPrefix,
-                                    this.#prefixParts,
+                                    parsedPrefix,
+                                    prefixParts,
                                 ),
                             ) as FlattenedCommand[];
                 }
