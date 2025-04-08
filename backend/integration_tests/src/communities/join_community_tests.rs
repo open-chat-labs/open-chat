@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -68,7 +69,7 @@ fn join_private_community_fails() {
 
     assert!(matches!(
         response,
-        local_user_index_canister::join_community::Response::NotInvited
+        local_user_index_canister::join_community::Response::Error(e) if e.matches_code(OCErrorCode::NotInvited)
     ));
 }
 

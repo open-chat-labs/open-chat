@@ -1,9 +1,12 @@
 use crate::CanisterId;
 use ic_cdk::call::RejectCode;
+use oc_error_codes::{OCError, OCErrorCode};
+use serde::Serialize;
 use std::fmt::{Debug, Formatter};
 
 pub type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 
+#[derive(Serialize)]
 pub struct C2CError {
     canister_id: CanisterId,
     method_name: String,
@@ -46,5 +49,11 @@ impl Debug for C2CError {
             .field("reject_code", &self.reject_code)
             .field("message", &self.message)
             .finish()
+    }
+}
+
+impl From<C2CError> for OCError {
+    fn from(value: C2CError) -> Self {
+        OCErrorCode::C2CError.with_json(&value)
     }
 }

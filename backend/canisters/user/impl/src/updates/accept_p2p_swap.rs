@@ -1,6 +1,5 @@
 use crate::guards::caller_is_owner;
 use crate::model::p2p_swaps::P2PSwap;
-use crate::model::pin_number::VerifyPinError;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
@@ -9,9 +8,10 @@ use constants::{MEMO_P2P_SWAP_ACCEPT, NANOS_PER_MILLISECOND};
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
+use oc_error_codes::OCErrorCode;
 use types::{
-    AcceptP2PSwapResult, AcceptSwapSuccess, Achievement, CanisterId, Chat, EventIndex, P2PSwapLocation, P2PSwapStatus,
-    ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, UserId,
+    AcceptSwapSuccess, Achievement, CanisterId, Chat, EventIndex, OCResult, P2PSwapLocation, P2PSwapStatus,
+    ReserveP2PSwapSuccess, TimestampMillis, UserId,
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
@@ -28,7 +28,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
         now,
     } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return *response,
+        Err(response) => return Error(response),
     };
 
     let content = reserve_success.content;
@@ -78,9 +78,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                 });
                 if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
                     let now = state.env.now();
-                    if let AcceptP2PSwapResult::Success(status) =
-                        chat.events.accept_p2p_swap(my_user_id, None, args.message_id, index, now)
-                    {
+                    if let Ok(status) = chat.events.accept_p2p_swap(my_user_id, None, args.message_id, index, now) {
                         let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
                         state.push_user_canister_event(
                             args.user_id.into(),
@@ -117,32 +115,24 @@ struct PrepareResult {
     now: TimestampMillis,
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<Response>> {
-    if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), state.env.now()) {
-        return Err(Box::new(match error {
-            VerifyPinError::PinRequired => PinRequired,
-            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-        }));
-    }
+fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_suspended()?;
+    state.data.pin_number.verify(args.pin.as_deref(), state.env.now())?;
 
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
-        match chat
+        let reserve_success = chat
             .events
-            .reserve_p2p_swap(my_user_id, None, args.message_id, EventIndex::default(), now)
-        {
-            ReserveP2PSwapResult::Success(reserve_success) => Ok(PrepareResult {
-                my_user_id,
-                escrow_canister_id: state.data.escrow_canister_id,
-                reserve_success,
-                now,
-            }),
-            ReserveP2PSwapResult::Failure(status) => Err(Box::new(StatusError(status.into()))),
-            ReserveP2PSwapResult::SwapNotFound => Err(Box::new(SwapNotFound)),
-        }
+            .reserve_p2p_swap(my_user_id, None, args.message_id, EventIndex::default(), now)?;
+
+        Ok(PrepareResult {
+            my_user_id,
+            escrow_canister_id: state.data.escrow_canister_id,
+            reserve_success,
+            now,
+        })
     } else {
-        Err(Box::new(ChatNotFound))
+        Err(OCErrorCode::ChatNotFound.into())
     }
 }

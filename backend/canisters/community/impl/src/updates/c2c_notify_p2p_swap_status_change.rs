@@ -62,7 +62,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                     }
                 }
                 SwapStatus::Completed(c) => {
-                    channel.chat.events.complete_p2p_swap(
+                    let _ = channel.chat.events.complete_p2p_swap(
                         c.accepted_by,
                         m.thread_root_message_index,
                         m.message_id,

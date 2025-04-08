@@ -1,5 +1,4 @@
 use crate::guards::caller_is_owner;
-use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -27,11 +26,7 @@ fn set_pin_number_impl(args: Args, state: &mut RuntimeState) -> Response {
             PinNumberVerification::None => return PinRequired,
             PinNumberVerification::PIN(attempt) => {
                 if let Err(error) = state.data.pin_number.verify(Some(&attempt), now) {
-                    return match error {
-                        VerifyPinError::PinRequired => PinRequired,
-                        VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-                        VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-                    };
+                    return Error(error.into());
                 }
             }
             PinNumberVerification::Delegation(delegation) => {

@@ -317,7 +317,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                         AddResult::AlreadyInCommunity => {}
                         AddResult::Blocked => {
                             let channel = state.data.channels.get_mut(&channel_id).unwrap();
-                            channel.chat.remove_member(OPENCHAT_BOT_USER_ID, user_id, false, now);
+                            let _ = channel.chat.remove_member(OPENCHAT_BOT_USER_ID, user_id, false, now);
                         }
                     }
                 }

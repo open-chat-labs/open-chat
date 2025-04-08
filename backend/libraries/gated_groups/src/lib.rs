@@ -7,6 +7,7 @@ use constants::{CHAT_LEDGER_CANISTER_ID, DAY_IN_MS, ICP_LEDGER_CANISTER_ID, MEMO
 use group_community_common::{PaymentRecipient, PendingPayment, PendingPaymentReason};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
+use oc_error_codes::{OCError, OCErrorCode};
 use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
 use types::{
@@ -19,7 +20,7 @@ const SNS_FEE_SHARE_PERCENT: u128 = 2;
 pub enum CheckIfPassesGateResult {
     Success(Vec<GatePayment>),
     Failed(GateCheckFailedReason),
-    InternalError(String),
+    Error(OCError),
 }
 
 pub struct GatePayment {
@@ -226,7 +227,7 @@ async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> Check
         }
     }
 
-    CheckIfPassesGateResult::InternalError("This shouldn't be possible".to_string())
+    CheckIfPassesGateResult::Error(OCErrorCode::Impossible.into())
 }
 
 fn check_composite_gate_synchronously(gate: CompositeGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
@@ -249,9 +250,7 @@ fn check_composite_gate_synchronously(gate: CompositeGate, args: CheckGateArgs) 
         }
     }
 
-    Some(CheckIfPassesGateResult::InternalError(
-        "This shouldn't be possible".to_string(),
-    ))
+    Some(CheckIfPassesGateResult::Error(OCErrorCode::Impossible.into()))
 }
 
 async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {
@@ -289,7 +288,7 @@ async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIf
 
             CheckIfPassesGateResult::Success(Vec::new())
         }
-        Err(error) => CheckIfPassesGateResult::InternalError(format!("Error calling 'list_neurons': {error:?}")),
+        Err(error) => CheckIfPassesGateResult::Error(error.into()),
     }
 }
 
@@ -318,7 +317,7 @@ async fn try_transfer_from(
             fee: gate.fee,
         }]),
         Ok(Err(err)) => CheckIfPassesGateResult::Failed(GateCheckFailedReason::PaymentFailed(err)),
-        Err(error) => CheckIfPassesGateResult::InternalError(format!("Error calling 'try_transfer_from': {error:?}")),
+        Err(error) => CheckIfPassesGateResult::Error(error.into()),
     }
 }
 
@@ -328,7 +327,7 @@ async fn check_token_balance_gate(gate: &TokenBalanceGate, user_id: UserId) -> C
         Ok(balance) => {
             CheckIfPassesGateResult::Failed(GateCheckFailedReason::InsufficientBalance(balance.0.try_into().unwrap()))
         }
-        Err(error) => CheckIfPassesGateResult::InternalError(format!("Error calling 'icrc1_balance_of': {error:?}")),
+        Err(error) => CheckIfPassesGateResult::Error(error.into()),
     }
 }
 
