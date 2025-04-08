@@ -82,14 +82,6 @@
             element.offsetParent !== null
         );
     }
-
-    function onParamChange() {
-        // this is a nasty little hack to get the reactivity we need
-        // TODO remove if all goes well
-        // setTimeout(() => {
-        //     $selectedCommandArgs = $selectedCommandArgs;
-        // }, 0);
-    }
 </script>
 
 <Overlay dismissible onClose={onCancel}>
@@ -104,10 +96,7 @@
                 {/if}
                 {#if botState.selectedCommandArgs.length === command?.params?.length}
                     {#each command?.params ?? [] as param, i}
-                        <CommandArg
-                            onChange={onParamChange}
-                            arg={botState.selectedCommandArgs[i]}
-                            {param} />
+                        <CommandArg arg={botState.selectedCommandArgs[i]} {param} />
                     {/each}
                 {/if}
             </form>
