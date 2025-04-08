@@ -1,17 +1,18 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaymentsJob, MarkP2PSwapExpiredJob};
-use crate::{mutate_state, read_state, run_regular_jobs, CallerResult, Data, RuntimeState, TimerJob};
+use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, TimerJob};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, ValidateNewMessageContentResult};
 use group_canister::c2c_bot_send_message;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
-use group_chat_core::SendMessageResult;
+use group_chat_core::SendMessageSuccess;
+use oc_error_codes::{OCError, OCErrorCode};
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, Chat, ContentValidationError, EventIndex, EventWrapper,
-    GroupMessageNotification, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User,
+    Achievement, BotCaller, BotPermissions, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message,
+    MessageContent, MessageIndex, Notification, TimestampMillis, User,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -20,7 +21,10 @@ use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 fn send_message_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| send_message_impl(args, None, true, state))
+    match mutate_state(|state| send_message_impl(args, None, true, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
 #[update(msgpack = true)]
@@ -28,7 +32,10 @@ fn send_message_v2(args: Args) -> Response {
 fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     run_regular_jobs();
 
-    mutate_state(|state| c2c_send_message_impl(args, state))
+    match mutate_state(|state| c2c_send_message_impl(args, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -53,23 +60,26 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
         return c2c_bot_send_message::Response::NotAuthorized;
     }
 
-    mutate_state(|state| send_message_impl(args, Some(bot_caller), finalised, state)).into()
+    match mutate_state(|state| send_message_impl(args, Some(bot_caller), finalised, state)) {
+        Ok(result) => c2c_bot_send_message::Response::Success(result),
+        Err(error) => c2c_bot_send_message::Response::Error(error),
+    }
 }
 
-pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, finalised: bool, state: &mut RuntimeState) -> Response {
+pub(crate) fn send_message_impl(
+    args: Args,
+    bot: Option<BotCaller>,
+    finalised: bool,
+    state: &mut RuntimeState,
+) -> Result<SuccessResult, OCError> {
     if state.data.is_frozen() {
-        return ChatFrozen;
+        return Err(OCErrorCode::ChatFrozen.into());
     }
     if state.data.chat.external_url.is_some() {
-        return NotAuthorized;
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    let caller = match state.verified_caller(bot) {
-        CallerResult::Success(caller) => caller,
-        CallerResult::NotFound => return CallerNotInGroup,
-        CallerResult::Suspended => return UserSuspended,
-        CallerResult::Lapsed => return UserLapsed,
-    };
+    let caller = state.verified_caller(bot)?;
 
     let now = state.env.now();
     let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
@@ -77,15 +87,8 @@ pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, finalised: b
     let content =
         match MessageContentInternal::validate_new_message(args.content, false, (&caller).into(), args.forwarding, now) {
             ValidateNewMessageContentResult::Success(content) => content,
-            ValidateNewMessageContentResult::Error(error) => {
-                return match error {
-                    ContentValidationError::Empty => MessageEmpty,
-                    ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
-                    ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
-                    other => InvalidRequest(format!("{other:?}")),
-                }
-            }
-            _ => return InvalidRequest("Message type not supported".to_string()),
+            ValidateNewMessageContentResult::Error(error) => return Err(error.into()),
+            _ => return Err(OCErrorCode::InvalidRequest.with_message("Message type not supported")),
         };
 
     let result = state.data.chat.send_message(
@@ -102,9 +105,9 @@ pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, finalised: b
         &mut state.data.event_store_client,
         finalised,
         now,
-    );
+    )?;
 
-    process_send_message_result(
+    Ok(process_send_message_result(
         result,
         &caller,
         args.sender_name,
@@ -114,24 +117,19 @@ pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, finalised: b
         now,
         args.new_achievement,
         state,
-    )
+    ))
 }
 
-fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse {
+fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> Result<SuccessResult, OCError> {
     if state.data.is_frozen() {
-        return ChatFrozen;
+        return Err(OCErrorCode::ChatFrozen.into());
     }
 
-    let caller = match state.verified_caller(None) {
-        CallerResult::Success(caller) => caller,
-        CallerResult::NotFound => return CallerNotInGroup,
-        CallerResult::Suspended => return UserSuspended,
-        CallerResult::Lapsed => return UserLapsed,
-    };
+    let caller = state.verified_caller(None)?;
 
     // Bots can't call this c2c endpoint since it skips the validation
     if matches!(caller, Caller::Bot(_) | Caller::BotV2(_)) {
-        return NotAuthorized;
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     let now = state.env.now();
@@ -150,8 +148,9 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
         &mut state.data.event_store_client,
         true,
         now,
-    );
-    process_send_message_result(
+    )?;
+
+    Ok(process_send_message_result(
         result,
         &caller,
         args.sender_name,
@@ -161,12 +160,12 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
         now,
         false,
         state,
-    )
+    ))
 }
 
 #[allow(clippy::too_many_arguments)]
 fn process_send_message_result(
-    result: SendMessageResult,
+    result: SendMessageSuccess,
     caller: &Caller,
     sender_username: String,
     sender_display_name: Option<String>,
@@ -175,133 +174,121 @@ fn process_send_message_result(
     now: TimestampMillis,
     new_achievement: bool,
     state: &mut RuntimeState,
-) -> Response {
-    match result {
-        SendMessageResult::Success(result) => {
-            let message_event = &result.message_event;
-            let event_index = message_event.index;
-            let message_index = message_event.event.message_index;
-            let message_id = message_event.event.message_id;
-            let expires_at = message_event.expires_at;
+) -> SuccessResult {
+    let message_event = &result.message_event;
+    let event_index = message_event.index;
+    let message_index = message_event.event.message_index;
+    let message_id = message_event.event.message_id;
+    let expires_at = message_event.expires_at;
 
-            register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
+    register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
 
-            if !result.unfinalised_bot_message {
-                let sender = caller.agent();
-                let content = &message_event.event.content;
-                let chat_id = state.env.canister_id().into();
+    if !result.unfinalised_bot_message {
+        let sender = caller.agent();
+        let content = &message_event.event.content;
+        let chat_id = state.env.canister_id().into();
 
-                let notification = Notification::GroupMessage(GroupMessageNotification {
-                    chat_id,
-                    thread_root_message_index,
-                    message_index,
-                    event_index,
-                    group_name: state.data.chat.name.value.clone(),
-                    sender,
-                    sender_name: sender_username,
-                    sender_display_name,
-                    message_type: content.message_type(),
-                    message_text: content.notification_text(&mentioned, &[]),
-                    image_url: content.notification_image_url(),
-                    group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
-                    crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
-                });
-                state.push_notification(Some(sender), result.users_to_notify, notification);
+        let notification = Notification::GroupMessage(GroupMessageNotification {
+            chat_id,
+            thread_root_message_index,
+            message_index,
+            event_index,
+            group_name: state.data.chat.name.value.clone(),
+            sender,
+            sender_name: sender_username,
+            sender_display_name,
+            message_type: content.message_type(),
+            message_text: content.notification_text(&mentioned, &[]),
+            image_url: content.notification_image_url(),
+            group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
+            crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
+        });
+        state.push_notification(Some(sender), result.users_to_notify, notification);
 
-                if new_achievement && !caller.is_bot() {
-                    for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
-                        state.notify_user_of_achievement(sender, a, now);
-                    }
-                }
+        if new_achievement && !caller.is_bot() {
+            for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
+                state.notify_user_of_achievement(sender, a, now);
+            }
+        }
 
-                let mut activity_events = Vec::new();
+        let mut activity_events = Vec::new();
 
-                if let MessageContent::Crypto(c) = content {
-                    if state
+        if let MessageContent::Crypto(c) = content {
+            if state
+                .data
+                .chat
+                .members
+                .get(&c.recipient)
+                .is_some_and(|m| !m.user_type().is_bot())
+            {
+                state.notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto, now);
+                activity_events.push((c.recipient, MessageActivity::Crypto));
+            }
+        }
+
+        for user in mentioned {
+            if caller.initiator().map(|i| i != user.user_id).unwrap_or_default()
+                && state
+                    .data
+                    .chat
+                    .members
+                    .get(&user.user_id)
+                    .is_some_and(|m| !m.user_type().is_bot())
+            {
+                activity_events.push((user.user_id, MessageActivity::Mention));
+            }
+        }
+
+        if let Some(replying_to_event_index) = message_event
+            .event
+            .replies_to
+            .as_ref()
+            .filter(|r| r.chat_if_other.is_none())
+            .map(|r| r.event_index)
+        {
+            if let Some((message, _)) = state.data.chat.events.message_internal(
+                EventIndex::default(),
+                thread_root_message_index,
+                replying_to_event_index.into(),
+            ) {
+                if caller.initiator().map(|i| i != message.sender).unwrap_or_default()
+                    && state
                         .data
                         .chat
                         .members
-                        .get(&c.recipient)
+                        .get(&message.sender)
                         .is_some_and(|m| !m.user_type().is_bot())
-                    {
-                        state.notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto, now);
-                        activity_events.push((c.recipient, MessageActivity::Crypto));
-                    }
-                }
-
-                for user in mentioned {
-                    if caller.initiator().map(|i| i != user.user_id).unwrap_or_default()
-                        && state
-                            .data
-                            .chat
-                            .members
-                            .get(&user.user_id)
-                            .is_some_and(|m| !m.user_type().is_bot())
-                    {
-                        activity_events.push((user.user_id, MessageActivity::Mention));
-                    }
-                }
-
-                if let Some(replying_to_event_index) = message_event
-                    .event
-                    .replies_to
-                    .as_ref()
-                    .filter(|r| r.chat_if_other.is_none())
-                    .map(|r| r.event_index)
                 {
-                    if let Some((message, _)) = state.data.chat.events.message_internal(
-                        EventIndex::default(),
-                        thread_root_message_index,
-                        replying_to_event_index.into(),
-                    ) {
-                        if caller.initiator().map(|i| i != message.sender).unwrap_or_default()
-                            && state
-                                .data
-                                .chat
-                                .members
-                                .get(&message.sender)
-                                .is_some_and(|m| !m.user_type().is_bot())
-                        {
-                            activity_events.push((message.sender, MessageActivity::QuoteReply));
-                        }
-                    }
-                }
-
-                for (user_id, activity) in activity_events {
-                    state.push_event_to_user(
-                        user_id,
-                        GroupCanisterEvent::MessageActivity(MessageActivityEvent {
-                            chat: Chat::Group(chat_id),
-                            thread_root_message_index,
-                            message_index,
-                            message_id,
-                            event_index,
-                            activity,
-                            timestamp: now,
-                            user_id: Some(sender),
-                        }),
-                        now,
-                    );
+                    activity_events.push((message.sender, MessageActivity::QuoteReply));
                 }
             }
-
-            handle_activity_notification(state);
-
-            Success(SuccessResult {
-                event_index,
-                message_index,
-                timestamp: now,
-                expires_at,
-            })
         }
-        SendMessageResult::ThreadMessageNotFound => ThreadMessageNotFound,
-        SendMessageResult::NotAuthorized => NotAuthorized,
-        SendMessageResult::UserNotInGroup => CallerNotInGroup,
-        SendMessageResult::UserSuspended => UserSuspended,
-        SendMessageResult::UserLapsed => NotAuthorized,
-        SendMessageResult::RulesNotAccepted => RulesNotAccepted,
-        SendMessageResult::MessageAlreadyExists => MessageAlreadyExists,
-        SendMessageResult::InvalidRequest(error) => InvalidRequest(error),
+
+        for (user_id, activity) in activity_events {
+            state.push_event_to_user(
+                user_id,
+                GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                    chat: Chat::Group(chat_id),
+                    thread_root_message_index,
+                    message_index,
+                    message_id,
+                    event_index,
+                    activity,
+                    timestamp: now,
+                    user_id: Some(sender),
+                }),
+                now,
+            );
+        }
+    }
+
+    handle_activity_notification(state);
+
+    SuccessResult {
+        event_index,
+        message_index,
+        timestamp: now,
+        expires_at,
     }
 }
 

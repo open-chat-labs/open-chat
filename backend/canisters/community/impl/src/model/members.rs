@@ -3,6 +3,7 @@ use crate::model::user_groups::{UserGroup, UserGroups};
 use candid::Principal;
 use constants::calculate_summary_updates_data_removal_cutoff;
 use group_community_common::{Member, MemberUpdate, Members};
+use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
@@ -428,6 +429,20 @@ impl CommunityMembers {
         let user_id = self.principal_to_user_id_map.get(&user_id_or_principal).unwrap_or(user_id);
 
         self.members_map.get(&user_id)
+    }
+
+    pub fn get_then_verify(&self, user_id_or_principal: Principal) -> Result<CommunityMemberInternal, OCErrorCode> {
+        let Some(member) = self.get(user_id_or_principal) else {
+            return Err(OCErrorCode::InitiatorNotInCommunity);
+        };
+
+        if member.suspended.value {
+            Err(OCErrorCode::InitiatorSuspended)
+        } else if member.lapsed.value {
+            Err(OCErrorCode::InitiatorLapsed)
+        } else {
+            Ok(member)
+        }
     }
 
     pub fn get_by_user_id(&self, user_id: &UserId) -> Option<CommunityMemberInternal> {

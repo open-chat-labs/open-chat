@@ -4,37 +4,31 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_invite_users::{Response::*, *};
-use group_chat_core::InvitedUsersResult;
+use oc_error_codes::OCError;
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_invite_users(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| c2c_invite_users_impl(args, state))
+    match mutate_state(|state| c2c_invite_users_impl(args, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return ChatFrozen;
-    }
+fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Result<SuccessResult, OCError> {
+    state.data.verify_not_frozen()?;
 
     let now = state.env.now();
+    let result = state.data.invite_users(args.caller, args.users, now)?;
 
-    match state.data.invite_users(args.caller, args.users, now) {
-        InvitedUsersResult::Success(r) => {
-            if !state.data.chat.is_public.value {
-                handle_activity_notification(state);
-            }
-            Success(SuccessResult {
-                invited_users: r.invited_users,
-                group_name: r.group_name,
-            })
-        }
-        InvitedUsersResult::UserNotInGroup => CallerNotInGroup,
-        InvitedUsersResult::NotAuthorized => NotAuthorized,
-        InvitedUsersResult::UserSuspended => NotAuthorized,
-        InvitedUsersResult::UserLapsed => NotAuthorized,
-        InvitedUsersResult::TooManyInvites(v) => TooManyInvites(v),
+    if !state.data.chat.is_public.value {
+        handle_activity_notification(state);
     }
+
+    Ok(SuccessResult {
+        invited_users: result.invited_users,
+        group_name: result.group_name,
+    })
 }

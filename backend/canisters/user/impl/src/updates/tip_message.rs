@@ -5,8 +5,9 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{TipMessageArgs, TipMessageResult};
+use chat_events::TipMessageArgs;
 use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
+use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use types::{
     icrc1, Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId,
@@ -169,35 +170,32 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<(PrepareResult, Time
 
 fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut RuntimeState) -> Response {
     if let Some(chat) = state.data.direct_chats.get_mut(&args.recipient.into()) {
-        match chat
-            .events
-            .tip_message(args.clone(), EventIndex::default(), Some(&mut state.data.event_store_client))
+        if let Err(error) =
+            chat.events
+                .tip_message(args.clone(), EventIndex::default(), Some(&mut state.data.event_store_client))
         {
-            TipMessageResult::Success => {
-                let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+            Error(error)
+        } else {
+            let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
 
-                state.push_user_canister_event(
-                    args.recipient.into(),
-                    UserCanisterEvent::TipMessage(Box::new(user_canister::TipMessageArgs {
-                        thread_root_message_id,
-                        message_id: args.message_id,
-                        ledger: args.ledger,
-                        token_symbol: args.token_symbol,
-                        amount: args.amount,
-                        decimals,
-                        username: state.data.username.value.clone(),
-                        display_name: state.data.display_name.value.clone(),
-                        user_avatar_id: state.data.avatar.value.as_ref().map(|a| a.id),
-                    })),
-                );
-                Success
-            }
-            TipMessageResult::MessageNotFound => MessageNotFound,
-            TipMessageResult::CannotTipSelf => CannotTipSelf,
-            TipMessageResult::RecipientMismatch => TransferNotToMessageSender,
+            state.push_user_canister_event(
+                args.recipient.into(),
+                UserCanisterEvent::TipMessage(Box::new(user_canister::TipMessageArgs {
+                    thread_root_message_id,
+                    message_id: args.message_id,
+                    ledger: args.ledger,
+                    token_symbol: args.token_symbol,
+                    amount: args.amount,
+                    decimals,
+                    username: state.data.username.value.clone(),
+                    display_name: state.data.display_name.value.clone(),
+                    user_avatar_id: state.data.avatar.value.as_ref().map(|a| a.id),
+                })),
+            );
+            Success
         }
     } else {
-        ChatNotFound
+        Error(OCErrorCode::ChatNotFound.into())
     }
 }
 

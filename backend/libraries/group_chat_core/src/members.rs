@@ -5,6 +5,7 @@ use crate::AccessRulesInternal;
 use candid::Principal;
 use constants::{calculate_summary_updates_data_removal_cutoff, ONE_MB};
 use group_community_common::{Member, MemberUpdate, Members};
+use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::StableMemoryMap;
@@ -186,13 +187,13 @@ impl GroupMembers {
         self.blocked.iter().copied().collect()
     }
 
-    pub fn get_verified_member(&self, user_id: UserId) -> Result<VerifiedGroupMember, VerifyMemberError> {
+    pub fn get_verified_member(&self, user_id: UserId) -> Result<VerifiedGroupMember, OCErrorCode> {
         if !self.member_ids.contains(&user_id) {
-            Err(VerifyMemberError::NotFound)
+            Err(OCErrorCode::InitiatorNotFound)
         } else if self.suspended.contains(&user_id) {
-            Err(VerifyMemberError::Suspended)
+            Err(OCErrorCode::InitiatorSuspended)
         } else if self.lapsed.contains(&user_id) {
-            Err(VerifyMemberError::Lapsed)
+            Err(OCErrorCode::InitiatorLapsed)
         } else {
             Ok(VerifiedGroupMember {
                 user_id,
@@ -261,51 +262,38 @@ impl GroupMembers {
         is_caller_platform_moderator: bool,
         is_user_platform_moderator: bool,
         now: TimestampMillis,
-    ) -> ChangeRoleResult {
-        use ChangeRoleResult::*;
-
+    ) -> Result<ChangeRoleSuccess, OCError> {
         // Is the caller authorized to change the user to this role
-        match self.get_verified_member(caller_id) {
-            Ok(member) => {
-                // Platform moderators can always promote themselves to owner
-                if !(member.role.can_change_roles(new_role, permissions)
-                    || (is_caller_platform_moderator && new_role.is_owner()))
-                {
-                    return NotAuthorized;
-                }
-            }
-            Err(error) => {
-                return match error {
-                    VerifyMemberError::NotFound => UserNotInGroup,
-                    VerifyMemberError::Lapsed => UserLapsed,
-                    VerifyMemberError::Suspended => UserSuspended,
-                }
-            }
+        let member = self.get_verified_member(caller_id)?;
+
+        // Platform moderators can always promote themselves to owner
+        if !(member.role.can_change_roles(new_role, permissions) || (is_caller_platform_moderator && new_role.is_owner())) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
         let member = match self.members_map.get(&user_id) {
             Some(p) => p,
-            None => return TargetUserNotInGroup,
+            None => return Err(OCErrorCode::TargetUserNotFound.into()),
         };
 
         // Platform moderators cannot be demoted from owner except by themselves
         if is_user_platform_moderator && member.role.is_owner() && user_id != caller_id {
-            return NotAuthorized;
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
         // It is not possible to change the role of the last owner
         if member.role.is_owner() && self.owners.len() <= 1 {
-            return Invalid;
+            return Err(OCErrorCode::InvalidRoleChange.into());
         }
         // It is not currently possible to make a bot an owner
         if member.user_type.is_3rd_party_bot() && new_role.is_owner() {
-            return Invalid;
+            return Err(OCErrorCode::InvalidRoleChange.into());
         }
 
         let prev_role = member.role.value;
 
         if prev_role == new_role {
-            return Unchanged;
+            return Err(OCErrorCode::NoChange.into());
         }
 
         match prev_role {
@@ -334,7 +322,7 @@ impl GroupMembers {
 
         self.prune_then_insert_member_update(user_id, MemberUpdate::RoleChanged, now);
 
-        Success(ChangeRoleSuccess { prev_role })
+        Ok(ChangeRoleSuccess { prev_role })
     }
 
     pub fn toggle_notifications_muted(
@@ -561,17 +549,6 @@ pub enum AddResult {
 pub struct AddMemberSuccess {
     pub member: GroupMemberInternal,
     pub unlapse: bool,
-}
-
-pub enum ChangeRoleResult {
-    Success(ChangeRoleSuccess),
-    UserNotInGroup,
-    NotAuthorized,
-    TargetUserNotInGroup,
-    Unchanged,
-    Invalid,
-    UserSuspended,
-    UserLapsed,
 }
 
 pub struct ChangeRoleSuccess {

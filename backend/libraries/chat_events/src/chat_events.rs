@@ -6,6 +6,7 @@ use crate::search_index::SearchIndex;
 use crate::*;
 use constants::{ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
+use oc_error_codes::{OCError, OCErrorCode};
 use rand::rngs::StdRng;
 use rand::Rng;
 use search::simple::{Document, Query};
@@ -735,12 +736,9 @@ impl ChatEvents {
         &mut self,
         args: AddRemoveReactionArgs,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> AddRemoveReactionResult {
-        use AddRemoveReactionResult::*;
-
+    ) -> Result<(), OCError> {
         if !args.reaction.is_valid() {
-            // This should never happen because we validate earlier
-            panic!("Invalid reaction: {:?}", args.reaction);
+            return Err(OCErrorCode::InvalidReaction.with_message(format!("{:?}", args.reaction)));
         }
 
         let user_id = args.user_id;
@@ -755,7 +753,7 @@ impl ChatEvents {
             Some(now),
             |message, _| Self::add_reaction_inner(message, args, chat, anonymized_id, event_store_client),
         ) {
-            Ok(sender) => {
+            Ok(_) => {
                 add_to_metrics(
                     &mut self.metrics,
                     &mut self.per_user_metrics,
@@ -763,10 +761,10 @@ impl ChatEvents {
                     |m| m.incr(MetricKey::Reactions, 1),
                     now,
                 );
-                Success(sender)
+                Ok(())
             }
-            Err(UpdateEventError::NoChange(_)) => NoChange,
-            Err(UpdateEventError::NotFound) => MessageNotFound,
+            Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
     }
 
@@ -776,7 +774,7 @@ impl ChatEvents {
         chat: Chat,
         anonymized_id: String,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> Result<UserId, UpdateEventError> {
+    ) -> Result<(), UpdateEventError> {
         let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == args.reaction) {
             users.insert(args.user_id)
         } else {
@@ -789,8 +787,6 @@ impl ChatEvents {
         if !added {
             return Err(UpdateEventError::NoChange(()));
         }
-
-        let sender = message.sender;
 
         if let Some(client) = event_store_client {
             let payload = ReactionAddedEventPayload {
@@ -809,12 +805,10 @@ impl ChatEvents {
             )
         }
 
-        Ok(sender)
+        Ok(())
     }
 
-    pub fn remove_reaction(&mut self, args: AddRemoveReactionArgs) -> AddRemoveReactionResult {
-        use AddRemoveReactionResult::*;
-
+    pub fn remove_reaction(&mut self, args: AddRemoveReactionArgs) -> Result<(), OCError> {
         match self.update_message(
             args.thread_root_message_index,
             args.message_id.into(),
@@ -822,7 +816,7 @@ impl ChatEvents {
             Some(args.now),
             |message, _| Self::remove_reaction_inner(message, &args),
         ) {
-            Ok(sender) => {
+            Ok(_) => {
                 add_to_metrics(
                     &mut self.metrics,
                     &mut self.per_user_metrics,
@@ -830,14 +824,14 @@ impl ChatEvents {
                     |m| m.decr(MetricKey::Reactions, 1),
                     args.now,
                 );
-                Success(sender)
+                Ok(())
             }
-            Err(UpdateEventError::NoChange(_)) => NoChange,
-            Err(UpdateEventError::NotFound) => MessageNotFound,
+            Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
     }
 
-    fn remove_reaction_inner(message: &mut MessageInternal, args: &AddRemoveReactionArgs) -> Result<UserId, UpdateEventError> {
+    fn remove_reaction_inner(message: &mut MessageInternal, args: &AddRemoveReactionArgs) -> Result<(), UpdateEventError> {
         let (removed, is_empty) = message
             .reactions
             .iter_mut()
@@ -853,7 +847,7 @@ impl ChatEvents {
             message.reactions.retain(|(_, u)| !u.is_empty());
         }
 
-        Ok(message.sender)
+        Ok(())
     }
 
     pub fn tip_message<R: Runtime + Send + 'static>(
@@ -861,9 +855,7 @@ impl ChatEvents {
         args: TipMessageArgs,
         min_visible_event_index: EventIndex,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> TipMessageResult {
-        use TipMessageResult::*;
-
+    ) -> Result<(), OCError> {
         let chat = self.chat;
         let anonymized_id = self.anonymized_id.clone();
 
@@ -882,10 +874,10 @@ impl ChatEvents {
                     |m| m.incr(MetricKey::Tips, 1),
                     args.now,
                 );
-                Success
+                Ok(())
             }
-            Err(UpdateEventError::NoChange(result)) => result,
-            Err(UpdateEventError::NotFound) => MessageNotFound,
+            Err(UpdateEventError::NoChange(result)) => Err(result),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
     }
 
@@ -895,11 +887,9 @@ impl ChatEvents {
         chat: Chat,
         anonymized_id: String,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> Result<(), UpdateEventError<TipMessageResult>> {
-        use TipMessageResult::*;
-
+    ) -> Result<(), UpdateEventError<OCError>> {
         if message.sender == args.user_id {
-            return Err(UpdateEventError::NoChange(CannotTipSelf));
+            return Err(UpdateEventError::NoChange(OCErrorCode::CannotTipSelf.into()));
         }
         if message.sender != args.recipient {
             error!(
@@ -910,7 +900,7 @@ impl ChatEvents {
                 message_id = ?message.message_id,
                 "Tip failed due to recipient mismatch"
             );
-            return Err(UpdateEventError::NoChange(RecipientMismatch));
+            return Err(UpdateEventError::NoChange(OCErrorCode::RecipientMismatch.into()));
         }
 
         message.tips.push(args.ledger, args.user_id, args.amount);
@@ -2001,13 +1991,13 @@ impl ChatEvents {
         presence: VideoCallPresence,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> SetVideoCallPresenceResult {
+    ) -> Result<(), OCError> {
         match self.update_message(None, message_id.into(), min_visible_event_index, Some(now), |message, _| {
             Self::set_video_presence_inner(message, user_id, presence, now)
         }) {
-            Ok(_) => SetVideoCallPresenceResult::Success,
-            Err(UpdateEventError::NoChange(_)) => SetVideoCallPresenceResult::AlreadyEnded,
-            Err(UpdateEventError::NotFound) => SetVideoCallPresenceResult::MessageNotFound,
+            Ok(_) => Ok(()),
+            Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::VideoCallAlreadyEnded.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
     }
 
@@ -2364,12 +2354,6 @@ pub struct AddRemoveReactionArgs {
     pub now: TimestampMillis,
 }
 
-pub enum AddRemoveReactionResult {
-    Success(UserId),
-    NoChange,
-    MessageNotFound,
-}
-
 #[derive(Clone)]
 pub struct TipMessageArgs {
     pub user_id: UserId,
@@ -2380,13 +2364,6 @@ pub struct TipMessageArgs {
     pub token_symbol: String,
     pub amount: u128,
     pub now: TimestampMillis,
-}
-
-pub enum TipMessageResult {
-    Success,
-    MessageNotFound,
-    CannotTipSelf,
-    RecipientMismatch,
 }
 
 pub enum ReservePrizeResult {
@@ -2467,12 +2444,6 @@ impl From<MessageId> for EventKey {
     fn from(value: MessageId) -> Self {
         EventKey::MessageId(value)
     }
-}
-
-pub enum SetVideoCallPresenceResult {
-    Success,
-    MessageNotFound,
-    AlreadyEnded,
 }
 
 pub enum EndVideoCallResult {

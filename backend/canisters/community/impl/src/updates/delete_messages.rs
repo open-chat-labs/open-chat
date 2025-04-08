@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use chat_events::DeleteMessageResult;
 use community_canister::delete_messages::{Response::*, *};
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use group_chat_core::DeleteMessagesResult;
+use oc_error_codes::{OCError, OCErrorCode};
 use types::{Achievement, CanisterId, UserId};
 use user_index_canister_c2c_client::lookup_user;
 
@@ -22,7 +22,7 @@ async fn delete_messages(args: Args) -> Response {
         user_index_canister_id,
     } = match read_state(prepare) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(response) => return Error(response),
     };
 
     if args.as_platform_moderator.unwrap_or_default() && caller != user_index_canister_id {
@@ -33,7 +33,11 @@ async fn delete_messages(args: Args) -> Response {
         }
     }
 
-    mutate_state(|state| delete_messages_impl(user_id, args, state))
+    if let Err(error) = mutate_state(|state| delete_messages_impl(user_id, args, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
 struct PrepareResult {
@@ -42,20 +46,12 @@ struct PrepareResult {
     user_index_canister_id: CanisterId,
 }
 
-fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(state: &RuntimeState) -> Result<PrepareResult, OCError> {
     let caller = state.env.caller();
-    let user_id = if let Some(member) = state.data.members.get(caller) {
-        if member.suspended().value {
-            return Err(UserSuspended);
-        } else if member.lapsed().value {
-            return Err(UserLapsed);
-        } else {
-            member.user_id
-        }
-    } else if caller == state.data.user_index_canister_id {
+    let user_id = if caller == state.data.user_index_canister_id {
         OPENCHAT_BOT_USER_ID
     } else {
-        return Err(UserNotInCommunity);
+        state.data.members.get_then_verify(caller)?.user_id
     };
 
     Ok(PrepareResult {
@@ -65,61 +61,52 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     })
 }
 
-fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
-    }
+fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+    state.data.verify_not_frozen()?;
 
     let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
-        return ChannelNotFound;
+        return Err(OCErrorCode::ChatNotFound.into());
     };
 
     let now = state.env.now();
-
-    match channel.chat.delete_messages(
+    let results = channel.chat.delete_messages(
         user_id,
         args.thread_root_message_index,
         args.message_ids,
         args.as_platform_moderator.unwrap_or_default(),
         now,
-    ) {
-        DeleteMessagesResult::Success(results) => {
-            let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
-            for message_id in results.into_iter().filter_map(|(message_id, result)| {
-                if let DeleteMessageResult::Success(sender) = result {
-                    (sender == user_id).then_some(message_id)
-                } else {
-                    None
-                }
-            }) {
-                // After 5 minutes hard delete those messages where the deleter was the message sender
-                state.data.timer_jobs.enqueue_job(
-                    TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
-                        channel_id: args.channel_id,
-                        thread_root_message_index: args.thread_root_message_index,
-                        message_id,
-                    }),
-                    remove_deleted_message_content_at,
-                    now,
-                );
-            }
+    )?;
 
-            if args.new_achievement
-                && state
-                    .data
-                    .members
-                    .get_by_user_id(&user_id)
-                    .is_some_and(|m| !m.user_type.is_bot())
-            {
-                state.notify_user_of_achievement(user_id, Achievement::DeletedMessage, now);
-            }
-
-            handle_activity_notification(state);
-            Success
+    let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
+    for message_id in results.into_iter().filter_map(|(message_id, result)| {
+        if let DeleteMessageResult::Success(sender) = result {
+            (sender == user_id).then_some(message_id)
+        } else {
+            None
         }
-        DeleteMessagesResult::MessageNotFound => MessageNotFound,
-        DeleteMessagesResult::UserNotInGroup => UserNotInChannel,
-        DeleteMessagesResult::UserSuspended => UserSuspended,
-        DeleteMessagesResult::UserLapsed => UserLapsed,
+    }) {
+        // After 5 minutes hard delete those messages where the deleter was the message sender
+        state.data.timer_jobs.enqueue_job(
+            TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
+                channel_id: args.channel_id,
+                thread_root_message_index: args.thread_root_message_index,
+                message_id,
+            }),
+            remove_deleted_message_content_at,
+            now,
+        );
     }
+
+    if args.new_achievement
+        && state
+            .data
+            .members
+            .get_by_user_id(&user_id)
+            .is_some_and(|m| !m.user_type.is_bot())
+    {
+        state.notify_user_of_achievement(user_id, Achievement::DeletedMessage, now);
+    }
+
+    handle_activity_notification(state);
+    Ok(())
 }

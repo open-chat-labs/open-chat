@@ -5,91 +5,76 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users_to_channel::{Response::*, *};
-use group_chat_core::InvitedUsersResult;
+use oc_error_codes::{OCError, OCErrorCode};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_invite_users_to_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| c2c_invite_users_to_channel_impl(args, state))
+    mutate_state(|state| c2c_invite_users_to_channel_impl(args, state)).unwrap_or_else(|error| Error(error))
 }
 
-fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
+fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Result<Response, OCError> {
+    state.data.verify_not_frozen()?;
+
+    let member = state.data.members.get_then_verify(args.caller.into())?;
+
+    let mut users_to_invite_to_channel = Vec::new();
+    let mut users_to_invite_to_community = Vec::new();
+    for (user_id, principal) in args.users {
+        if state.data.members.get_by_user_id(&user_id).is_some() || state.data.invited_users.contains(&user_id) {
+            users_to_invite_to_channel.push(user_id);
+        } else {
+            users_to_invite_to_community.push((user_id, principal));
+        }
     }
 
-    if let Some(member) = state.data.members.get_by_user_id(&args.caller) {
-        if member.suspended().value {
-            return UserSuspended;
-        }
+    let mut failed_users = Vec::new();
 
-        let mut users_to_invite_to_channel = Vec::new();
-        let mut users_to_invite_to_community = Vec::new();
-        for (user_id, principal) in args.users {
-            if state.data.members.get_by_user_id(&user_id).is_some() || state.data.invited_users.contains(&user_id) {
-                users_to_invite_to_channel.push(user_id);
-            } else {
-                users_to_invite_to_community.push((user_id, principal));
-            }
-        }
-
-        let mut failed_users = Vec::new();
-
-        if !users_to_invite_to_community.is_empty() {
-            if let community_canister::c2c_invite_users::Response::Success(r) = invite_users_to_community_impl(
-                community_canister::c2c_invite_users::Args {
-                    users: users_to_invite_to_community.clone(),
-                    caller: args.caller,
-                },
-                state,
-            ) {
-                users_to_invite_to_channel.extend(r.invited_users);
-            } else {
-                failed_users.extend(users_to_invite_to_community.into_iter().map(|(u, _)| u))
-            }
-        }
-
-        if users_to_invite_to_channel.is_empty() {
-            return Failed(FailedResult { failed_users });
-        }
-
-        if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            let now = state.env.now();
-
-            match channel.chat.invite_users(member.user_id, users_to_invite_to_channel, now) {
-                InvitedUsersResult::Success(result) => {
-                    let community_name = state.data.name.value.clone();
-                    let channel_name = channel.chat.name.value.clone();
-
-                    handle_activity_notification(state);
-
-                    if failed_users.is_empty() {
-                        Success(SuccessResult {
-                            invited_users: result.invited_users,
-                            community_name,
-                            channel_name,
-                        })
-                    } else {
-                        PartialSuccess(PartialSuccessResult {
-                            invited_users: result.invited_users,
-                            community_name,
-                            channel_name,
-                            failed_users,
-                        })
-                    }
-                }
-                InvitedUsersResult::UserNotInGroup => UserNotInChannel,
-                InvitedUsersResult::NotAuthorized => NotAuthorized,
-                InvitedUsersResult::UserSuspended => UserSuspended,
-                InvitedUsersResult::UserLapsed => UserLapsed,
-                InvitedUsersResult::TooManyInvites(v) => TooManyInvites(v),
-            }
+    if !users_to_invite_to_community.is_empty() {
+        if let community_canister::c2c_invite_users::Response::Success(r) = invite_users_to_community_impl(
+            community_canister::c2c_invite_users::Args {
+                users: users_to_invite_to_community.clone(),
+                caller: args.caller,
+            },
+            state,
+        ) {
+            users_to_invite_to_channel.extend(r.invited_users);
         } else {
-            ChannelNotFound
+            failed_users.extend(users_to_invite_to_community.into_iter().map(|(u, _)| u))
         }
+    }
+
+    if users_to_invite_to_channel.is_empty() {
+        return Ok(Failed(FailedResult { failed_users }));
+    }
+
+    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
+        let now = state.env.now();
+
+        let result = channel.chat.invite_users(member.user_id, users_to_invite_to_channel, now)?;
+
+        let community_name = state.data.name.value.clone();
+        let channel_name = channel.chat.name.value.clone();
+
+        handle_activity_notification(state);
+
+        Ok(if failed_users.is_empty() {
+            Success(SuccessResult {
+                invited_users: result.invited_users,
+                community_name,
+                channel_name,
+            })
+        } else {
+            PartialSuccess(PartialSuccessResult {
+                invited_users: result.invited_users,
+                community_name,
+                channel_name,
+                failed_users,
+            })
+        })
     } else {
-        UserNotInCommunity
+        Err(OCErrorCode::ChatNotFound.into())
     }
 }

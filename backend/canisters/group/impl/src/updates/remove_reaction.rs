@@ -2,42 +2,37 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::remove_reaction::{Response::*, *};
-use group_chat_core::AddRemoveReactionResult;
+use oc_error_codes::{OCError, OCErrorCode};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
 fn remove_reaction(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| remove_reaction_impl(args, state))
+    if let Err(error) = mutate_state(|state| remove_reaction_impl(args, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
-fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
     if state.data.is_frozen() {
-        return ChatFrozen;
+        return Err(OCErrorCode::ChatFrozen.into());
     }
 
     let caller = state.env.caller();
     if let Some(user_id) = state.data.lookup_user_id(caller) {
         let now = state.env.now();
 
-        match state
+        state
             .data
             .chat
-            .remove_reaction(user_id, args.thread_root_message_index, args.message_id, args.reaction, now)
-        {
-            AddRemoveReactionResult::Success(_) => {
-                handle_activity_notification(state);
-                Success
-            }
-            AddRemoveReactionResult::NoChange | AddRemoveReactionResult::InvalidReaction => NoChange,
-            AddRemoveReactionResult::MessageNotFound => MessageNotFound,
-            AddRemoveReactionResult::UserNotInGroup => CallerNotInGroup,
-            AddRemoveReactionResult::NotAuthorized => NotAuthorized,
-            AddRemoveReactionResult::UserSuspended => UserSuspended,
-            AddRemoveReactionResult::UserLapsed => UserLapsed,
-        }
+            .remove_reaction(user_id, args.thread_root_message_index, args.message_id, args.reaction, now)?;
+
+        handle_activity_notification(state);
+        Ok(())
     } else {
-        CallerNotInGroup
+        Err(OCErrorCode::InitiatorNotInChat.into())
     }
 }

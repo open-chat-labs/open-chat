@@ -2,7 +2,7 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::undelete_messages::{Response::*, *};
-use group_chat_core::UndeleteMessagesResult;
+use oc_error_codes::{OCError, OCErrorCode};
 use std::collections::HashSet;
 
 #[update(msgpack = true)]
@@ -10,55 +10,43 @@ use std::collections::HashSet;
 fn undelete_messages(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| undelete_messages_impl(args, state))
+    match mutate_state(|state| undelete_messages_impl(args, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Result<SuccessResult, OCError> {
     if state.data.is_frozen() {
-        return CommunityFrozen;
+        return Err(OCErrorCode::CommunityFrozen.into());
     }
 
     let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended().value {
-            return UserSuspended;
-        } else if member.lapsed().value {
-            return UserLapsed;
-        }
+    let member = state.data.members.get_then_verify(caller)?;
 
-        let now = state.env.now();
-        if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            match channel
-                .chat
-                .undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now)
-            {
-                UndeleteMessagesResult::Success(messages) => {
-                    if !messages.is_empty() {
-                        let message_ids: HashSet<_> = messages.iter().map(|m| m.message_id).collect();
-                        state.data.timer_jobs.cancel_jobs(|job| {
-                            if let TimerJob::HardDeleteMessageContent(j) = job {
-                                j.channel_id == args.channel_id
-                                    && j.thread_root_message_index == args.thread_root_message_index
-                                    && message_ids.contains(&j.message_id)
-                            } else {
-                                false
-                            }
-                        });
+    let now = state.env.now();
+    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
+        let messages = channel
+            .chat
+            .undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now)?;
 
-                        handle_activity_notification(state);
-                    }
-
-                    Success(SuccessResult { messages })
+        if !messages.is_empty() {
+            let message_ids: HashSet<_> = messages.iter().map(|m| m.message_id).collect();
+            state.data.timer_jobs.cancel_jobs(|job| {
+                if let TimerJob::HardDeleteMessageContent(j) = job {
+                    j.channel_id == args.channel_id
+                        && j.thread_root_message_index == args.thread_root_message_index
+                        && message_ids.contains(&j.message_id)
+                } else {
+                    false
                 }
-                UndeleteMessagesResult::MessageNotFound => MessageNotFound,
-                UndeleteMessagesResult::UserNotInGroup => UserNotInChannel,
-                UndeleteMessagesResult::UserSuspended => UserSuspended,
-                UndeleteMessagesResult::UserLapsed => UserLapsed,
-            }
-        } else {
-            UserNotInChannel
+            });
+
+            handle_activity_notification(state);
         }
+
+        Ok(SuccessResult { messages })
     } else {
-        UserNotInCommunity
+        Err(OCErrorCode::InitiatorNotInChat.into())
     }
 }

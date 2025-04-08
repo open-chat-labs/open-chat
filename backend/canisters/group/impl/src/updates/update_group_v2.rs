@@ -4,9 +4,9 @@ use crate::{jobs, mutate_state, read_state, run_regular_jobs, Data, RuntimeState
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;
-use group_chat_core::UpdateResult;
 use group_community_common::{ExpiringMember, Members};
 use group_index_canister::{c2c_make_private, c2c_update_group};
+use oc_error_codes::{OCError, OCErrorCode};
 use tracing::error;
 use types::{AccessGateConfigInternal, CanisterId, ChatId, Document, OptionUpdate, TimestampMillis, Timestamped, UserId};
 
@@ -19,7 +19,7 @@ async fn update_group_v2(mut args: Args) -> Response {
 
     let prepare_result = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(response) => return Error(response),
     };
 
     let group_index_canister_id = prepare_result.group_index_canister_id;
@@ -91,13 +91,12 @@ struct PrepareResult {
     gate_config: Option<AccessGateConfigInternal>,
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if state.data.is_frozen() {
-        return Err(ChatFrozen);
-    }
+fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, OCError> {
+    state.data.verify_not_frozen()?;
+
     if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {
         if !gate_config.validate(state.data.test_mode) {
-            return Err(AccessGateInvalid);
+            return Err(OCErrorCode::InvalidAccessGate.into());
         }
     }
 
@@ -111,7 +110,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     if let Some(member) = state.data.get_member(caller) {
         let permissions = args.permissions_v2.as_ref();
 
-        match state.data.chat.can_update(
+        state.data.chat.can_update(
             member.user_id(),
             &args.name,
             &args.description,
@@ -119,38 +118,22 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             &args.avatar,
             permissions,
             &args.public,
-        ) {
-            Ok(_) => {
-                let avatar_update = args.avatar.as_ref().expand();
+        )?;
 
-                Ok(PrepareResult {
-                    my_user_id: member.user_id(),
-                    group_index_canister_id: state.data.group_index_canister_id,
-                    is_public: args.public.unwrap_or(state.data.chat.is_public.value),
-                    chat_id: state.env.canister_id().into(),
-                    name: args.name.as_ref().unwrap_or(&state.data.chat.name).clone(),
-                    description: args.description.as_ref().unwrap_or(&state.data.chat.description).clone(),
-                    avatar_id: avatar_update.map_or(Document::id(&state.data.chat.avatar), |avatar| avatar.map(|a| a.id)),
-                    gate_config,
-                })
-            }
-            Err(result) => match result {
-                UpdateResult::UserSuspended => Err(UserSuspended),
-                UpdateResult::UserLapsed => Err(NotAuthorized),
-                UpdateResult::UserNotInGroup => Err(CallerNotInGroup),
-                UpdateResult::NotAuthorized => Err(NotAuthorized),
-                UpdateResult::NameTooShort(v) => Err(NameTooShort(v)),
-                UpdateResult::NameTooLong(v) => Err(NameTooLong(v)),
-                UpdateResult::NameReserved => Err(NameReserved),
-                UpdateResult::DescriptionTooLong(v) => Err(DescriptionTooLong(v)),
-                UpdateResult::RulesTooShort(v) => Err(RulesTooShort(v)),
-                UpdateResult::RulesTooLong(v) => Err(RulesTooLong(v)),
-                UpdateResult::AvatarTooBig(v) => Err(AvatarTooBig(v)),
-                UpdateResult::Success(_) => unreachable!(),
-            },
-        }
+        let avatar_update = args.avatar.as_ref().expand();
+
+        Ok(PrepareResult {
+            my_user_id: member.user_id(),
+            group_index_canister_id: state.data.group_index_canister_id,
+            is_public: args.public.unwrap_or(state.data.chat.is_public.value),
+            chat_id: state.env.canister_id().into(),
+            name: args.name.as_ref().unwrap_or(&state.data.chat.name).clone(),
+            description: args.description.as_ref().unwrap_or(&state.data.chat.description).clone(),
+            avatar_id: avatar_update.map_or(Document::id(&state.data.chat.avatar), |avatar| avatar.map(|a| a.id)),
+            gate_config,
+        })
     } else {
-        Err(CallerNotInGroup)
+        Err(OCErrorCode::InitiatorNotInChat.into())
     }
 }
 

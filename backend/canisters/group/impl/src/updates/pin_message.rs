@@ -3,37 +3,28 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::pin_message_v2::{Response::*, *};
-use group_chat_core::PinUnpinMessageResult;
+use oc_error_codes::OCError;
+use types::PushEventResult;
 
 #[update(msgpack = true)]
 #[trace]
 fn pin_message_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| pin_message_impl(args, state))
+    match mutate_state(|state| pin_message_impl(args, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn pin_message_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return ChatFrozen;
-    }
+fn pin_message_impl(args: Args, state: &mut RuntimeState) -> Result<PushEventResult, OCError> {
+    state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();
-    if let Some(user_id) = state.data.lookup_user_id(caller) {
-        let now = state.env.now();
-        match state.data.chat.pin_message(user_id, args.message_index, now) {
-            PinUnpinMessageResult::Success(r) => {
-                handle_activity_notification(state);
-                Success(r)
-            }
-            PinUnpinMessageResult::NoChange => NoChange,
-            PinUnpinMessageResult::NotAuthorized => NotAuthorized,
-            PinUnpinMessageResult::MessageNotFound => MessageNotFound,
-            PinUnpinMessageResult::UserSuspended => UserSuspended,
-            PinUnpinMessageResult::UserLapsed => UserLapsed,
-            PinUnpinMessageResult::UserNotInGroup => CallerNotInGroup,
-        }
-    } else {
-        CallerNotInGroup
-    }
+    let user_id = state.data.get_verified_member(caller)?.user_id();
+    let now = state.env.now();
+    let result = state.data.chat.pin_message(user_id, args.message_index, now)?;
+
+    handle_activity_notification(state);
+    Ok(result)
 }

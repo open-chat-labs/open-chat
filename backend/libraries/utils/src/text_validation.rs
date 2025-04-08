@@ -177,9 +177,28 @@ pub enum NameValidationError {
     Reserved,
 }
 
+impl From<NameValidationError> for OCError {
+    fn from(value: NameValidationError) -> Self {
+        match value {
+            NameValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
+            NameValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
+            NameValidationError::Reserved => OCErrorCode::NameReserved.into(),
+        }
+    }
+}
+
 pub enum RulesValidationError {
     TooShort(FieldTooShortResult),
     TooLong(FieldTooLongResult),
+}
+
+impl From<RulesValidationError> for OCError {
+    fn from(value: RulesValidationError) -> Self {
+        match value {
+            RulesValidationError::TooShort(s) => OCErrorCode::RulesTooShort.with_json(&s),
+            RulesValidationError::TooLong(l) => OCErrorCode::RulesTooLong.with_json(&l),
+        }
+    }
 }
 
 pub enum StringLengthValidationError {

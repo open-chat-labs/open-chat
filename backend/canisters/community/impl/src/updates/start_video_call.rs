@@ -6,8 +6,8 @@ use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
 use community_canister::start_video_call_v2::{Response::*, *};
 use constants::HOUR_IN_MS;
-use group_chat_core::SendMessageResult;
 use ic_cdk::update;
+use oc_error_codes::{OCError, OCErrorCode};
 use types::{Caller, ChannelMessageNotification, Notification, UserId, VideoCallPresence, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator")]
@@ -15,29 +15,33 @@ use types::{Caller, ChannelMessageNotification, Notification, UserId, VideoCallP
 fn start_video_call_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| start_video_call_impl(args, state))
+    if let Err(error) = mutate_state(|state| start_video_call_impl(args, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
-fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
     if state.data.is_frozen() {
-        return NotAuthorized;
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
-        return NotAuthorized;
+        return Err(OCErrorCode::ChatNotFound.into());
     };
 
     if matches!(
         (args.call_type, channel.chat.is_public.value, state.data.is_public.value),
         (VideoCallType::Default, true, true)
     ) {
-        return NotAuthorized;
+        return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Video call type not allowed"));
     }
 
     let sender = args.initiator;
     let now = state.env.now();
 
-    let result = match channel.chat.send_message(
+    let result = channel.chat.send_message(
         &Caller::User(sender),
         None,
         args.message_id,
@@ -64,10 +68,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         &mut state.data.event_store_client,
         true,
         now,
-    ) {
-        SendMessageResult::Success(r) => r,
-        _ => return NotAuthorized,
-    };
+    )?;
 
     let event_index = result.message_event.index;
     let message_index = result.message_event.event.message_index;
@@ -116,5 +117,5 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         now,
     );
 
-    Success
+    Ok(())
 }

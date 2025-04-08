@@ -2,45 +2,37 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::leave_channel::{Response::*, *};
-use group_chat_core::LeaveResult;
+use oc_error_codes::{OCError, OCErrorCode};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
 fn leave_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| leave_channel_impl(args, state))
+    if let Err(error) = mutate_state(|state| leave_channel_impl(args, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
-fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
-    }
+fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+    state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();
     let Some(member) = state.data.members.get(caller) else {
-        return UserNotInCommunity;
+        return Err(OCErrorCode::InitiatorNotInCommunity.into());
     };
 
-    if member.suspended().value {
-        return UserSuspended;
-    }
-
     let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
-        return ChannelNotFound;
+        return Err(OCErrorCode::ChatNotFound.into());
     };
 
     let now = state.env.now();
     let user_id = member.user_id;
 
-    match channel.chat.leave(user_id, now) {
-        LeaveResult::Success(_) => {
-            state.data.remove_user_from_channel(user_id, args.channel_id, now);
-            handle_activity_notification(state);
-            Success
-        }
-        LeaveResult::UserSuspended => UserSuspended,
-        LeaveResult::LastOwnerCannotLeave => LastOwnerCannotLeave,
-        LeaveResult::UserNotInGroup => UserNotInChannel,
-    }
+    channel.chat.leave(user_id, now)?;
+    state.data.remove_user_from_channel(user_id, args.channel_id, now);
+    handle_activity_notification(state);
+    Ok(())
 }

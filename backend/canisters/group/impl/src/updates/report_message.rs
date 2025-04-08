@@ -84,7 +84,7 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
 }
 
 fn delete_message(args: &Args, reporter: UserId, state: &mut RuntimeState) {
-    if let group_chat_core::DeleteMessagesResult::Success(results) = state.data.chat.delete_messages(
+    if let Ok(results) = state.data.chat.delete_messages(
         reporter,
         args.thread_root_message_index,
         vec![args.message_id],

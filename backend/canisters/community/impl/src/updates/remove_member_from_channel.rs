@@ -2,50 +2,37 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::remove_member_from_channel::{Response::*, *};
-use group_chat_core::RemoveMemberResult;
+use oc_error_codes::{OCError, OCErrorCode};
 
 #[update(msgpack = true)]
 #[trace]
 fn remove_member_from_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| remove_member_from_channel_impl(args, state))
+    if let Err(error) = mutate_state(|state| remove_member_from_channel_impl(args, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
-fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
-    }
+fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+    state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();
-
-    let user_id = match state.data.members.get(caller) {
-        Some(m) if m.suspended().value => return UserSuspended,
-        Some(m) if m.lapsed().value => return UserLapsed,
-        Some(m) => m.user_id,
-        _ => return UserNotInCommunity,
-    };
+    let user_id = state.data.members.get_then_verify(caller)?.user_id;
 
     if state.data.members.get_by_user_id(&args.user_id).is_none() {
-        return TargetUserNotInCommunity;
+        return Err(OCErrorCode::TargetUserNotInCommunity.into());
     }
 
     let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
-        return ChannelNotFound;
+        return Err(OCErrorCode::ChatNotFound.into());
     };
 
     let now = state.env.now();
-    match channel.chat.remove_member(user_id, args.user_id, false, now) {
-        RemoveMemberResult::Success => {
-            state.data.remove_user_from_channel(args.user_id, args.channel_id, now);
-            handle_activity_notification(state);
-            Success
-        }
-        RemoveMemberResult::UserSuspended => UserSuspended,
-        RemoveMemberResult::UserLapsed => UserLapsed,
-        RemoveMemberResult::UserNotInGroup => UserNotInChannel,
-        RemoveMemberResult::TargetUserNotInGroup => TargetUserNotInChannel,
-        RemoveMemberResult::NotAuthorized => NotAuthorized,
-        RemoveMemberResult::CannotRemoveSelf => CannotRemoveSelf,
-    }
+    channel.chat.remove_member(user_id, args.user_id, false, now)?;
+    state.data.remove_user_from_channel(args.user_id, args.channel_id, now);
+    handle_activity_notification(state);
+    Ok(())
 }
