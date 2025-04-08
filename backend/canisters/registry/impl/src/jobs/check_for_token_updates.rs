@@ -4,7 +4,7 @@ use constants::HOUR_IN_MS;
 use ic_cdk::call::RejectCode;
 use std::time::Duration;
 use tracing::{error, info};
-use types::CanisterId;
+use types::{C2CError, CanisterId};
 use utils::canister_timers::run_now_then_interval;
 
 pub fn start_job() {
@@ -21,14 +21,19 @@ async fn run_async() {
     futures::future::join_all(ledger_canister_ids.into_iter().map(check_for_token_updates)).await;
 }
 
-async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), (RejectCode, String)> {
+async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), C2CError> {
     let metadata = icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await?;
     let metadata_helper = match MetadataHelper::try_parse(metadata) {
         Ok(h) => h,
         Err(reason) => {
             let error = format!("Token metadata is incomplete: {reason}");
             error!(%ledger_canister_id, error);
-            return Err((RejectCode::CanisterError, error));
+            return Err(C2CError::new(
+                ledger_canister_id,
+                "icrc1_metadata",
+                RejectCode::CanisterError,
+                error,
+            ));
         }
     };
 

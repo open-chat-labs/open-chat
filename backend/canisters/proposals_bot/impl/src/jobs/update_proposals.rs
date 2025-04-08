@@ -56,7 +56,7 @@ async fn update_group_proposals(governance_canister_id: CanisterId, group_id: Ch
 
     let response = group_canister_c2c_client::c2c_update_proposals(group_id.into(), &update_proposals_args).await;
 
-    mark_proposals_updated(governance_canister_id, proposals, response.err().map(|(c, _)| c));
+    mark_proposals_updated(governance_canister_id, proposals, response.err().map(|e| e.reject_code()));
 }
 
 async fn update_channel_proposals(
@@ -72,7 +72,7 @@ async fn update_channel_proposals(
 
     let response = community_canister_c2c_client::c2c_update_proposals(community_id.into(), &update_proposals_args).await;
 
-    mark_proposals_updated(governance_canister_id, proposals, response.err().map(|(c, _)| c));
+    mark_proposals_updated(governance_canister_id, proposals, response.err().map(|e| e.reject_code()));
 }
 
 fn mark_proposals_updated(governance_canister_id: CanisterId, proposals: Vec<ProposalUpdate>, error_code: Option<RejectCode>) {

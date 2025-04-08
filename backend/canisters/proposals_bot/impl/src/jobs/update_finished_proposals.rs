@@ -1,13 +1,12 @@
 use crate::jobs::update_proposals;
 use crate::{mutate_state, RuntimeState};
-use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
 use nns_governance_canister::types::ListProposalInfo;
 use sns_governance_canister::types::ListProposals;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{CanisterId, Proposal, ProposalId};
+use types::{C2CError, CanisterId, Proposal, ProposalId};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -73,10 +72,7 @@ async fn process_proposal(governance_canister_id: CanisterId, proposal_id: Propo
     }
 }
 
-async fn get_nns_proposal(
-    governance_canister_id: CanisterId,
-    proposal_id: ProposalId,
-) -> Result<Option<Proposal>, (RejectCode, String)> {
+async fn get_nns_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId) -> Result<Option<Proposal>, C2CError> {
     let response = nns_governance_canister_c2c_client::list_proposals(
         governance_canister_id,
         &ListProposalInfo {
@@ -91,10 +87,7 @@ async fn get_nns_proposal(
     Ok(response.into_iter().next().and_then(|p| p.try_into().ok()))
 }
 
-async fn get_sns_proposal(
-    governance_canister_id: CanisterId,
-    proposal_id: ProposalId,
-) -> Result<Option<Proposal>, (RejectCode, String)> {
+async fn get_sns_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId) -> Result<Option<Proposal>, C2CError> {
     let response = sns_governance_canister_c2c_client::list_proposals(
         governance_canister_id,
         &ListProposals {

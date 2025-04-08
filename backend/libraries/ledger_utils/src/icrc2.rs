@@ -1,15 +1,14 @@
-use ic_cdk::call::RejectCode;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use tracing::error;
 use types::{
     icrc2::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction},
-    CanisterId,
+    C2CError, CanisterId,
 };
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
     sender: CanisterId,
-) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, (RejectCode, String)> {
+) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
     let args = TransferFromArgs {
         spender_subaccount: None,
         from: transaction.from.into(),
