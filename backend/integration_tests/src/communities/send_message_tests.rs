@@ -6,6 +6,7 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use constants::{ICP_SYMBOL, PRIZE_FEE_PERCENT};
 use ledger_utils::create_pending_transaction;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
@@ -248,12 +249,13 @@ fn send_message_with_community_rules_not_accepted_fails() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
-    if !matches!(
-        response,
-        community_canister::send_message::Response::CommunityRulesNotAccepted
-    ) {
-        panic!("{response:?}");
-    }
+    assert!(
+        matches!(
+            response,
+            community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::CommunityRulesNotAccepted)
+        ),
+        "{response:?}"
+    );
 }
 
 #[test]
@@ -278,9 +280,10 @@ fn send_message_with_channel_rules_not_accepted_fails() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
-    if !matches!(response, community_canister::send_message::Response::RulesNotAccepted) {
-        panic!("{response:?}");
-    }
+    assert!(
+        matches!(response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatRulesNotAccepted)),
+        "{response:?}"
+    );
 }
 
 #[test]
@@ -305,9 +308,10 @@ fn send_message_with_community_rules_accepted_succeeds() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, Some(Version::from(1)), None);
 
-    if !matches!(response, community_canister::send_message::Response::Success(_)) {
-        panic!("'send_message' error {response:?}");
-    }
+    assert!(
+        matches!(response, community_canister::send_message::Response::Success(_)),
+        "'send_message' error {response:?}"
+    );
 }
 
 #[test]
@@ -332,9 +336,10 @@ fn send_message_with_channel_rules_accepted_succeeds() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
-    if !matches!(response, community_canister::send_message::Response::Success(_)) {
-        panic!("'send_message' error {response:?}");
-    }
+    assert!(
+        matches!(response, community_canister::send_message::Response::Success(_)),
+        "'send_message' error {response:?}"
+    );
 }
 
 #[test]
@@ -360,9 +365,10 @@ fn send_message_with_community_rules_but_not_channel_rules_accepted_fails() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, Some(Version::from(1)), None);
 
-    if !matches!(response, community_canister::send_message::Response::RulesNotAccepted) {
-        panic!("{response:?}");
-    }
+    assert!(
+        matches!(response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatRulesNotAccepted)),
+        "{response:?}"
+    );
 }
 
 #[test]
@@ -388,12 +394,13 @@ fn send_message_with_channel_rules_but_not_community_rules_accepted_fails() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
-    if !matches!(
-        response,
-        community_canister::send_message::Response::CommunityRulesNotAccepted
-    ) {
-        panic!("{response:?}");
-    }
+    assert!(
+        matches!(
+            response,
+            community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::CommunityRulesNotAccepted)
+        ),
+        "{response:?}"
+    );
 }
 
 #[test]
@@ -426,9 +433,10 @@ fn send_message_with_community_rules_and_channel_rules_accepted_succeeds() {
         Some(Version::from(1)),
     );
 
-    if !matches!(response, community_canister::send_message::Response::Success(_)) {
-        panic!("'send_message' error {response:?}");
-    }
+    assert!(
+        matches!(response, community_canister::send_message::Response::Success(_)),
+        "'send_message' error {response:?}"
+    );
 }
 
 #[test]
@@ -463,9 +471,10 @@ fn send_message_with_previously_accepted_rules_succeeds() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
-    if !matches!(response, community_canister::send_message::Response::Success(_)) {
-        panic!("'send_message' error {response:?}");
-    }
+    assert!(
+        matches!(response, community_canister::send_message::Response::Success(_)),
+        "'send_message' error {response:?}"
+    );
 }
 
 #[test]
@@ -498,12 +507,13 @@ fn send_message_with_old_community_rules_accepted_fails() {
         Some(Version::from(1)),
     );
 
-    if !matches!(
-        response,
-        community_canister::send_message::Response::CommunityRulesNotAccepted
-    ) {
-        panic!("{response:?}");
-    }
+    assert!(
+        matches!(
+            response,
+            community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::CommunityRulesNotAccepted)
+        ),
+        "{response:?}"
+    );
 }
 
 #[test]
@@ -535,9 +545,10 @@ fn send_message_with_old_channel_rules_accepted_fails() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
-    if !matches!(response, community_canister::send_message::Response::RulesNotAccepted) {
-        panic!("{response:?}");
-    }
+    assert!(
+        matches!(response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatRulesNotAccepted)),
+        "{response:?}"
+    );
 }
 
 #[test]
