@@ -64,6 +64,15 @@ async fn c2c_join_channel(args: Args) -> Response {
                 check_gate_then_join_channel(&args).await
             }
             community_canister::c2c_join_community::Response::GateCheckFailed(r) => GateCheckFailed(r),
+            community_canister::c2c_join_community::Response::NotInvited => Error(OCErrorCode::NotInvited.into()),
+            community_canister::c2c_join_community::Response::UserBlocked => Error(OCErrorCode::InitiatorBlocked.into()),
+            community_canister::c2c_join_community::Response::MemberLimitReached(l) => {
+                Error(OCErrorCode::UserLimitReached.with_message(l))
+            }
+            community_canister::c2c_join_community::Response::CommunityFrozen => Error(OCErrorCode::CommunityFrozen.into()),
+            community_canister::c2c_join_community::Response::InternalError(error) => {
+                Error(OCErrorCode::Unknown.with_message(error))
+            }
             community_canister::c2c_join_community::Response::Error(error) => Error(error),
         }
     }

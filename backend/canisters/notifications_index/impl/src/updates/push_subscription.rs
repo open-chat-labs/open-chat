@@ -3,7 +3,6 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use notifications_index_canister::push_subscription::{Response::*, *};
-use oc_error_codes::OCErrorCode;
 use stable_memory_map::StableMemoryMap;
 use types::{CanisterId, UserId};
 use user_index_canister::c2c_lookup_user;
@@ -22,12 +21,9 @@ async fn push_subscription(args: Args) -> Response {
                     mutate_state(|state| add_user_locally(user_principal, user.user_id, state));
                     user.user_id
                 }
-                Ok(c2c_lookup_user::Response::Error(error)) => return Error(error),
-                Err(error) => {
-                    return Error(
-                        OCErrorCode::C2CError.with_message(format!("Failed to call 'user_index::c2c_lookup_user': {error:?}")),
-                    )
-                }
+                Ok(c2c_lookup_user::Response::UserNotFound) => panic!("User not found"),
+                Ok(c2c_lookup_user::Response::Error(..)) => panic!("User not found"),
+                Err(error) => return InternalError(format!("Failed to call 'user_index::c2c_lookup_user': {error:?}")),
             }
         }
     };

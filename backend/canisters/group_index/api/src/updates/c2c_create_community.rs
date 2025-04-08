@@ -22,6 +22,9 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
+    NameTaken,
+    UserNotFound,
+    InternalError(String),
     Error(OCError),
 }
 

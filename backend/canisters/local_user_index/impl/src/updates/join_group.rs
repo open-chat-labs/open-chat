@@ -39,11 +39,17 @@ async fn join_group(args: Args) -> Response {
                 }
                 Success(s)
             }
+            group_canister::c2c_join_group::Response::Error(error) => Error(error),
             group_canister::c2c_join_group::Response::AlreadyInGroup => AlreadyInGroup,
             group_canister::c2c_join_group::Response::GateCheckFailed(msg) => GateCheckFailed(msg),
-            group_canister::c2c_join_group::Response::Error(error) => Error(error),
+            group_canister::c2c_join_group::Response::NotInvited => NotInvited,
+            group_canister::c2c_join_group::Response::GroupNotPublic => NotInvited,
+            group_canister::c2c_join_group::Response::Blocked => Blocked,
+            group_canister::c2c_join_group::Response::ParticipantLimitReached(l) => ParticipantLimitReached(l),
+            group_canister::c2c_join_group::Response::ChatFrozen => ChatFrozen,
+            group_canister::c2c_join_group::Response::InternalError(error) => InternalError(error),
         },
-        Err(error) => Error(error.into()),
+        Err(error) => InternalError(format!("Failed to call 'group::c2c_join_group': {error:?}")),
     }
 }
 

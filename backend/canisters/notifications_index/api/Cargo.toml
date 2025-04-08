@@ -8,7 +8,6 @@ edition.workspace = true
 [dependencies]
 candid = { workspace = true }
 human_readable = { path = "../../../libraries/human_readable" }
-oc_error_codes = { path = "../../../libraries/error_codes" }
 serde = { workspace = true }
 ts_export = { path = "../../../libraries/ts_export" }
 ts-rs = { workspace = true }

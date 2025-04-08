@@ -7,13 +7,12 @@ use constants::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE, USER_LIMIT};
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
 use local_user_index_canister::ChildCanisterType;
-use oc_error_codes::{OCError, OCErrorCode};
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId, UserType};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::ReferredUserRegistered;
 use user_index_canister::UserRegistered;
 use utils::canister;
-use utils::text_validation::validate_username;
+use utils::text_validation::{validate_username, UsernameValidationError};
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
 #[update(candid = true, msgpack = true)]
@@ -30,7 +29,7 @@ async fn register_user(args: Args) -> Response {
         init_canister_args,
     } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return Error(response),
+        Err(response) => return response,
     };
 
     let wasm_version = canister_wasm.version;
@@ -84,23 +83,23 @@ struct PrepareOk {
     init_canister_args: InitUserCanisterArgs,
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, OCError> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let caller = state.env.caller();
 
     if state.data.global_users.get_by_principal(&caller).is_some() {
-        return Err(OCErrorCode::AlreadyRegistered.into());
+        return Err(AlreadyRegistered);
     }
 
     let now = state.env.now();
     if !state.data.local_users.mark_registration_in_progress(caller, now) {
-        return Err(OCErrorCode::AlreadyInProgress.into());
+        return Err(RegistrationInProgress);
     }
 
-    let is_from_identity_canister = validate_public_key(caller, &args.public_key, state.data.identity_canister_id)
-        .map_err(|e| OCErrorCode::InvalidPublicKey.with_message(e))?;
+    let is_from_identity_canister =
+        validate_public_key(caller, &args.public_key, state.data.identity_canister_id).map_err(PublicKeyInvalid)?;
 
     if state.data.global_users.len() >= USER_LIMIT {
-        return Err(OCErrorCode::UserLimitReached.into());
+        return Err(UserLimitReached);
     }
 
     let mut referral_code = None;
@@ -109,17 +108,19 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, OCError> 
             Ok(r) => Some(r),
             Err(e) => {
                 return Err(match e {
-                    ReferralCodeError::NotFound => OCErrorCode::InvalidReferralCode,
-                    ReferralCodeError::AlreadyClaimed => OCErrorCode::ReferralCodeAlreadyClaimed,
-                    ReferralCodeError::Expired => OCErrorCode::InvalidReferralCode,
-                }
-                .into())
+                    ReferralCodeError::NotFound => ReferralCodeInvalid,
+                    ReferralCodeError::AlreadyClaimed => ReferralCodeAlreadyClaimed,
+                    ReferralCodeError::Expired => ReferralCodeExpired,
+                })
             }
         }
     }
 
-    if let Err(error) = validate_username(&args.username) {
-        return Err(error.into());
+    match validate_username(&args.username) {
+        Ok(_) => {}
+        Err(UsernameValidationError::TooShort(s)) => return Err(UsernameTooShort(s.min_length as u16)),
+        Err(UsernameValidationError::TooLong(l)) => return Err(UsernameTooLong(l.max_length as u16)),
+        Err(UsernameValidationError::Invalid) => return Err(UsernameInvalid),
     };
 
     let openchat_bot_messages = if referral_code
@@ -145,7 +146,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, OCError> 
     let cycles_to_use = if state.data.canister_pool.is_empty() {
         let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
         if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
-            return Err(OCErrorCode::CyclesBalanceTooLow.into());
+            return Err(CyclesBalanceTooLow);
         }
         cycles_required
     } else {

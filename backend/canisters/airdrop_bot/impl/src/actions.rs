@@ -97,16 +97,16 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Resul
         Ok(local_user_index_canister::join_channel::Response::Success(_))
         | Ok(local_user_index_canister::join_channel::Response::AlreadyInChannel(_))
         | Ok(local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_)) => (),
-        Ok(local_user_index_canister::join_channel::Response::Error(error)) => {
-            error!("Failed to join_channel {error:?}");
+        Ok(local_user_index_canister::join_channel::Response::InternalError(err)) => {
+            error!("Failed to join_channel {err:?}");
             return Err(true);
         }
         Ok(resp) => {
             error!("Failed to join_channel {resp:?}");
             return Err(false);
         }
-        Err(error) => {
-            error!("Failed to join_channel {error:?}");
+        Err(err) => {
+            error!("Failed to join_channel {err:?}");
             return Err(true);
         }
     }

@@ -4,7 +4,6 @@ use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_convert_group_into_community::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
 use types::{CanisterId, SourceGroup};
 
 #[update(guard = "caller_is_group_canister", msgpack = true)]
@@ -15,7 +14,7 @@ async fn c2c_convert_group_into_community(args: Args) -> Response {
         create_community_args,
     } = match mutate_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
-        Err(response) => return Error(response),
+        Err(response) => return response,
     };
 
     let public = create_community_args.is_public;
@@ -34,7 +33,7 @@ async fn c2c_convert_group_into_community(args: Args) -> Response {
             }
             Success(result.community_id)
         }
-        Err(error) => Error(error),
+        Err(error) => InternalError(error),
     }
 }
 
@@ -43,12 +42,12 @@ struct PrepareResult {
     pub create_community_args: local_group_index_canister::c2c_create_community::Args,
 }
 
-fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, OCError> {
+fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller().into();
 
     let local_group_index_canister = match state.data.local_index_map.index_for_new_community() {
         Some(canister) => canister,
-        None => return Err(OCErrorCode::CanisterNotFound.with_message("No available LocalGroupIndex found")),
+        None => return Err(InternalError("No available LocalGroupIndex found".to_string())),
     };
 
     let is_public = state.data.public_groups.get(&caller).is_some();

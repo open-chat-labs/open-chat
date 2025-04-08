@@ -3134,7 +3134,6 @@ dependencies = [
  "local_group_index_canister",
  "local_group_index_canister_c2c_client",
  "msgpack",
- "oc_error_codes",
  "rand 0.8.5",
  "search",
  "serde",
@@ -4885,7 +4884,6 @@ dependencies = [
  "ic-stable-structures",
  "local_group_index_canister",
  "msgpack",
- "oc_error_codes",
  "rand 0.8.5",
  "serde",
  "serde_bytes",
@@ -4963,7 +4961,6 @@ dependencies = [
  "ledger_utils",
  "local_user_index_canister",
  "msgpack",
- "oc_error_codes",
  "online_users_canister",
  "online_users_canister_c2c_client",
  "p256_key_pair",
@@ -5472,7 +5469,6 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "human_readable",
- "oc_error_codes",
  "serde",
  "ts-rs",
  "ts_export",
@@ -5524,7 +5520,6 @@ dependencies = [
  "notifications_canister",
  "notifications_canister_c2c_client",
  "notifications_index_canister",
- "oc_error_codes",
  "principal_to_user_id_map",
  "rand 0.8.5",
  "serde",
@@ -8413,9 +8408,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.43.0"
+version = "1.44.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d61fa4ffa3de412bfea335c6ecff681de2b609ba3c77ef3e00e521813a9ed9e"
+checksum = "e6b88822cbe49de4185e3a4cbf8321dd487cf5fe0c5c65695fef6346371e9c48"
 dependencies = [
  "backtrace",
  "bytes",
@@ -9084,7 +9079,6 @@ dependencies = [
  "msgpack",
  "notifications_index_canister",
  "notifications_index_canister_c2c_client",
- "oc_error_codes",
  "online_users_canister",
  "online_users_canister_c2c_client",
  "p256_key_pair",

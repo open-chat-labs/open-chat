@@ -1,6 +1,5 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
-use oc_error_codes::OCErrorCode;
 use types::UserDetails;
 use user_index_canister::c2c_lookup_user::{Response::*, *};
 
@@ -26,6 +25,6 @@ fn c2c_lookup_user_impl(args: Args, state: &RuntimeState) -> Response {
             is_diamond_member,
         })
     } else {
-        Error(OCErrorCode::TargetUserNotFound.into())
+        UserNotFound
     }
 }

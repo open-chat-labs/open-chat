@@ -53,6 +53,10 @@ async fn convert_into_community(args: Args) -> Response {
             mutate_state(rollback);
             Error(error)
         }
+        Ok(group_index_canister::c2c_convert_group_into_community::Response::InternalError(error)) => {
+            mutate_state(rollback);
+            Error(OCErrorCode::Unknown.with_message(error))
+        }
         Err(error) => {
             mutate_state(rollback);
             Error(OCErrorCode::C2CError.with_message(format!("{error:?}")))

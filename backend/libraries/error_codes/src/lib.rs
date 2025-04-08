@@ -29,6 +29,8 @@ impl From<OCErrorCode> for OCError {
 
 #[EnumRepr(type = "u16", implicit = true)]
 pub enum OCErrorCode {
+    Unknown = 0,
+
     // NotAuthorized
     InitiatorNotFound = 100,
     InitiatorNotAuthorized = 101,

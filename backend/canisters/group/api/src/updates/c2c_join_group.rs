@@ -25,5 +25,11 @@ pub enum Response {
     AlreadyInGroup,
     AlreadyInGroupV2(Box<GroupCanisterGroupChatSummary>),
     GateCheckFailed(GateCheckFailedReason),
+    GroupNotPublic,
+    NotInvited,
+    Blocked,
+    ParticipantLimitReached(u32),
+    ChatFrozen,
+    InternalError(String),
     Error(OCError),
 }

@@ -34,7 +34,6 @@ ic-stable-structures = { workspace = true }
 local_group_index_canister = { path = "../../local_group_index/api" }
 local_group_index_canister_c2c_client = { path = "../../local_group_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
-oc_error_codes = { path = "../../../libraries/error_codes" }
 rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }

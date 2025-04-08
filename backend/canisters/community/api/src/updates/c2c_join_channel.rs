@@ -26,5 +26,13 @@ pub enum Response {
     SuccessJoinedCommunity(Box<CommunityCanisterCommunitySummary>),
     AlreadyInChannel(Box<CommunityCanisterChannelSummary>),
     GateCheckFailed(GateCheckFailedReason),
+    UserNotInCommunity,
+    ChannelNotFound,
+    UserSuspended,
+    UserBlocked,
+    MemberLimitReached(u32),
+    CommunityFrozen,
+    NotInvited,
+    InternalError(String),
     Error(OCError),
 }
