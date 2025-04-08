@@ -6,8 +6,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::delete_messages::{Response::*, *};
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use oc_error_codes::{OCError, OCErrorCode};
-use types::{Achievement, CanisterId, UserId};
+use oc_error_codes::OCErrorCode;
+use types::{Achievement, CanisterId, OCResult, UserId};
 use user_index_canister_c2c_client::lookup_user;
 
 #[update(candid = true, msgpack = true)]
@@ -45,7 +45,7 @@ struct PrepareResult {
     user_index_canister_id: CanisterId,
 }
 
-fn prepare(state: &RuntimeState) -> Result<PrepareResult, OCError> {
+fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
     let caller = state.env.caller();
     let user_id = if caller == state.data.user_index_canister_id {
         OPENCHAT_BOT_USER_ID
@@ -60,7 +60,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, OCError> {
     })
 }
 
-fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {

@@ -4,8 +4,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::NANOS_PER_MILLISECOND;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
-use oc_error_codes::{OCError, OCErrorCode};
-use types::TimestampNanos;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, TimestampNanos};
 use user_canister::approve_transfer::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -41,7 +41,7 @@ async fn approve_transfer(args: Args) -> Response {
     }
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<TimestampNanos, OCError> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<TimestampNanos> {
     state.data.verify_not_suspended()?;
     let now = state.env.now();
     state.data.pin_number.verify(args.pin.as_deref(), now)?;

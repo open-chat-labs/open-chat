@@ -3,8 +3,8 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::unpin_message::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
-use types::PushEventResult;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, PushEventResult};
 
 #[update(msgpack = true)]
 #[trace]
@@ -17,7 +17,7 @@ async fn unpin_message(args: Args) -> Response {
     }
 }
 
-fn unpin_message_impl(args: Args, state: &mut RuntimeState) -> Result<PushEventResult, OCError> {
+fn unpin_message_impl(args: Args, state: &mut RuntimeState) -> OCResult<PushEventResult> {
     state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();

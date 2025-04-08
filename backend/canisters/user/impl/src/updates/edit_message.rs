@@ -4,8 +4,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
 use constants::OPENCHAT_BOT_USER_ID;
-use oc_error_codes::{OCError, OCErrorCode};
-use types::{Achievement, EventIndex};
+use oc_error_codes::OCErrorCode;
+use types::{Achievement, EventIndex, OCResult};
 use user_canister::edit_message_v2::{Response::*, *};
 use user_canister::UserCanisterEvent;
 
@@ -21,7 +21,7 @@ fn edit_message_v2(args: Args) -> Response {
     }
 }
 
-fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_suspended()?;
 
     if state.data.blocked_users.contains(&args.user_id) {

@@ -8,9 +8,9 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_bot_delete_channel;
 use community_canister::delete_channel::{Response::*, *};
 use group_community_common::Member;
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, UserIdKeyPrefix};
-use types::{BotCaller, Caller, ChannelDeleted, ChannelId};
+use types::{BotCaller, Caller, ChannelDeleted, ChannelId, OCResult};
 
 #[update(msgpack = true)]
 #[trace]
@@ -41,7 +41,7 @@ fn c2c_bot_delete_channel(args: c2c_bot_delete_channel::Args) -> c2c_bot_delete_
     }
 }
 
-fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, state: &mut RuntimeState) -> Result<(), OCError> {
+fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, state: &mut RuntimeState) -> OCResult {
     if state.data.is_frozen() {
         return Err(OCErrorCode::CommunityFrozen.into());
     }

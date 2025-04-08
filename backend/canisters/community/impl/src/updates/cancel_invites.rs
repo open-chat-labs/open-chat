@@ -2,7 +2,8 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::cancel_invites::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
+use types::OCResult;
 
 #[update(msgpack = true)]
 #[trace]
@@ -16,7 +17,7 @@ fn cancel_invites(args: Args) -> Response {
     }
 }
 
-fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();

@@ -11,9 +11,8 @@ use canister_tracing_macros::trace;
 use constants::{MEMO_SWAP, MEMO_SWAP_APPROVAL, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
-use oc_error_codes::OCError;
 use tracing::{error, info};
-use types::{Achievement, TimestampMillis, Timestamped};
+use types::{Achievement, OCResult, TimestampMillis, Timestamped};
 use user_canister::swap_tokens::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -29,7 +28,7 @@ async fn swap_tokens(args: Args) -> Response {
     process_token_swap(token_swap, Some(swap_client), 0, false).await
 }
 
-fn prepare(args: Args, state: &mut RuntimeState) -> Result<(TokenSwap, Box<dyn SwapClient>), OCError> {
+fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<(TokenSwap, Box<dyn SwapClient>)> {
     state.data.verify_not_suspended()?;
     let now = state.env.now();
     state.data.pin_number.verify(args.pin.as_deref(), now)?;

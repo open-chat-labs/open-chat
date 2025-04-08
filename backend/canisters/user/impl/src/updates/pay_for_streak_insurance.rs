@@ -6,8 +6,8 @@ use constants::{CHAT_LEDGER_CANISTER_ID, MEMO_STREAK_INSURANCE, SNS_GOVERNANCE_C
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::icrc1::make_transfer;
-use oc_error_codes::{OCError, OCErrorCode};
-use types::UserCanisterStreakInsurancePayment;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, UserCanisterStreakInsurancePayment};
 use user_canister::pay_for_streak_insurance::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -62,7 +62,7 @@ struct PrepareOk {
     days_currently_insured: u8,
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, OCError> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     let now = state.env.now();
     if state.data.streak.days(now) == 0 {
         return Err(OCErrorCode::NoActiveStreak.into());

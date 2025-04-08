@@ -2,8 +2,8 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::pin_message::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
-use types::PushEventResult;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, PushEventResult};
 
 #[update(msgpack = true)]
 #[trace]
@@ -27,7 +27,7 @@ fn unpin_message(args: Args) -> Response {
     }
 }
 
-fn pin_message_impl(args: Args, pin: bool, state: &mut RuntimeState) -> Result<PushEventResult, OCError> {
+fn pin_message_impl(args: Args, pin: bool, state: &mut RuntimeState) -> OCResult<PushEventResult> {
     state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();

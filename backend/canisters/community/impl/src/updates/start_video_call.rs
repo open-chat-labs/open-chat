@@ -7,8 +7,8 @@ use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallCont
 use community_canister::start_video_call_v2::{Response::*, *};
 use constants::HOUR_IN_MS;
 use ic_cdk::update;
-use oc_error_codes::{OCError, OCErrorCode};
-use types::{Caller, ChannelMessageNotification, Notification, UserId, VideoCallPresence, VideoCallType};
+use oc_error_codes::OCErrorCode;
+use types::{Caller, ChannelMessageNotification, Notification, OCResult, UserId, VideoCallPresence, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -22,7 +22,7 @@ fn start_video_call_v2(args: Args) -> Response {
     }
 }
 
-fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if state.data.is_frozen() {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }

@@ -5,7 +5,8 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users_to_channel::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
+use types::OCResult;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -15,7 +16,7 @@ fn c2c_invite_users_to_channel(args: Args) -> Response {
     mutate_state(|state| c2c_invite_users_to_channel_impl(args, state)).unwrap_or_else(Error)
 }
 
-fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Result<Response, OCError> {
+fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> OCResult<Response> {
     state.data.verify_not_frozen()?;
 
     let member = state.data.members.get_verified_member(args.caller.into())?;

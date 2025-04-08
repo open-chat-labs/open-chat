@@ -7,8 +7,7 @@ use constants::{MEMO_P2P_SWAP_ACCEPT, NANOS_PER_MILLISECOND};
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
-use oc_error_codes::OCError;
-use types::{CanisterId, TimestampMillis, UserId};
+use types::{CanisterId, OCResult, TimestampMillis, UserId};
 use user_canister::c2c_accept_p2p_swap::{Response::*, *};
 
 #[update(guard = "caller_is_known_group_or_community_canister", msgpack = true)]
@@ -68,7 +67,7 @@ struct PrepareResult {
     now: TimestampMillis,
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, OCError> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     let now = state.env.now();
     state.data.pin_number.verify(args.pin.as_deref(), now)?;
 

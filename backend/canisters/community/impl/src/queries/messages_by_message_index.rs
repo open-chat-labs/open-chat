@@ -2,8 +2,8 @@ use crate::queries::check_replica_up_to_date;
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use community_canister::messages_by_message_index::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
-use types::{EventsCaller, MessagesResponse};
+use oc_error_codes::OCErrorCode;
+use types::{EventsCaller, MessagesResponse, OCResult};
 
 #[query(candid = true, msgpack = true)]
 fn messages_by_message_index(args: Args) -> Response {
@@ -13,7 +13,7 @@ fn messages_by_message_index(args: Args) -> Response {
     }
 }
 
-fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Result<MessagesResponse, OCError> {
+fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> OCResult<MessagesResponse> {
     if let Err(now) = check_replica_up_to_date(args.latest_known_update, state) {
         return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
     }

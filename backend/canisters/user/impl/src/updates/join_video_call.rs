@@ -2,8 +2,8 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use oc_error_codes::{OCError, OCErrorCode};
-use types::{Achievement, EventIndex, UserId, VideoCallPresence};
+use oc_error_codes::OCErrorCode;
+use types::{Achievement, EventIndex, OCResult, UserId, VideoCallPresence};
 use user_canister::{
     join_video_call::{Response::*, *},
     JoinVideoCall, UserCanisterEvent,
@@ -21,7 +21,7 @@ fn join_video_call(args: Args) -> Response {
     }
 }
 
-fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if state.data.suspended.value {
         return Err(OCErrorCode::InitiatorSuspended.into());
     }

@@ -5,8 +5,8 @@ use crate::{
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::add_members_to_channel::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
-use types::{AddedToChannelNotification, ChannelId, Notification, UserId, UserType};
+use oc_error_codes::OCErrorCode;
+use types::{AddedToChannelNotification, ChannelId, Notification, OCResult, UserId, UserType};
 
 #[update(msgpack = true)]
 #[trace]
@@ -37,7 +37,7 @@ struct PrepareResult {
 }
 
 #[allow(clippy::result_large_err)]
-fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, OCError> {
+fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     if state.data.is_frozen() {
         return Err(OCErrorCode::CommunityFrozen.into());
     }

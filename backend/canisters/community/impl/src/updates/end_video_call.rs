@@ -5,7 +5,8 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::end_video_call_v2::{Response::*, *};
 use ic_cdk::update;
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
+use types::OCResult;
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -19,7 +20,7 @@ fn end_video_call_v2(args: Args) -> Response {
     }
 }
 
-pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.timer_jobs.cancel_job(
         |job| {
             if let TimerJob::MarkVideoCallEnded(vc) = job {

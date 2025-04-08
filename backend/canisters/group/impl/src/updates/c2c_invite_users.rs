@@ -4,7 +4,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_invite_users::{Response::*, *};
-use oc_error_codes::OCError;
+use types::OCResult;
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -17,7 +17,7 @@ fn c2c_invite_users(args: Args) -> Response {
     }
 }
 
-fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Result<SuccessResult, OCError> {
+fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     state.data.verify_not_frozen()?;
 
     let now = state.env.now();

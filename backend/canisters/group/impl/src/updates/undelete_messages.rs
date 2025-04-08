@@ -3,8 +3,8 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::undelete_messages::{Response::*, *};
-use oc_error_codes::OCError;
 use std::collections::HashSet;
+use types::OCResult;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -17,7 +17,7 @@ fn undelete_messages(args: Args) -> Response {
     }
 }
 
-fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Result<SuccessResult, OCError> {
+fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();

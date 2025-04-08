@@ -2,7 +2,8 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::remove_reaction::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
+use types::OCResult;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -16,7 +17,7 @@ fn remove_reaction(args: Args) -> Response {
     }
 }
 
-fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if state.data.is_frozen() {
         return Err(OCErrorCode::ChatFrozen.into());
     }

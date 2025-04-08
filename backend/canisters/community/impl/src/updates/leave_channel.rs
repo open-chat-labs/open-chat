@@ -2,7 +2,8 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::leave_channel::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
+use types::OCResult;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -16,7 +17,7 @@ fn leave_channel(args: Args) -> Response {
     }
 }
 
-fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();

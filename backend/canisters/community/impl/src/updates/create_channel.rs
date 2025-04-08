@@ -9,9 +9,9 @@ use canister_tracing_macros::trace;
 use community_canister::create_channel::{Response::*, *};
 use community_canister::{c2c_bot_create_channel, c2c_join_community};
 use group_chat_core::GroupChatCore;
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
 use rand::Rng;
-use types::{BotCaller, BotPermissions, Caller, CommunityPermission, MultiUserChat, UserType};
+use types::{BotCaller, BotPermissions, Caller, CommunityPermission, MultiUserChat, OCResult, UserType};
 use url::Url;
 use utils::document::validate_avatar;
 use utils::text_validation::{validate_channel_name, validate_description, validate_rules, StringLengthValidationError};
@@ -87,7 +87,7 @@ fn create_channel_impl(
     is_proposals_channel: bool,
     bot_caller: Option<BotCaller>,
     state: &mut RuntimeState,
-) -> Result<SuccessResult, OCError> {
+) -> OCResult<SuccessResult> {
     state.data.verify_not_frozen()?;
 
     if let Some(external_url) = &args.external_url {

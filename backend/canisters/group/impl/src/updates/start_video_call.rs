@@ -7,8 +7,8 @@ use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallCont
 use constants::HOUR_IN_MS;
 use group_canister::start_video_call_v2::{Response::*, *};
 use ic_cdk::update;
-use oc_error_codes::{OCError, OCErrorCode};
-use types::{Caller, GroupMessageNotification, Notification, VideoCallPresence, VideoCallType};
+use oc_error_codes::OCErrorCode;
+use types::{Caller, GroupMessageNotification, Notification, OCResult, VideoCallPresence, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -22,7 +22,7 @@ fn start_video_call_v2(args: Args) -> Response {
     }
 }
 
-fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     if matches!(

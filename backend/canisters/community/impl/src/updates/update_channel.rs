@@ -4,8 +4,8 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::update_channel::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
-use types::OptionUpdate;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, OptionUpdate};
 use url::Url;
 
 #[update(msgpack = true)]
@@ -19,7 +19,7 @@ fn update_channel(args: Args) -> Response {
     }
 }
 
-fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Result<SuccessResult, OCError> {
+fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     clean_args(&mut args);
 
     if state.data.is_frozen() {

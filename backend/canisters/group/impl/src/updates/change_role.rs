@@ -6,8 +6,7 @@ use canister_tracing_macros::trace;
 use group_canister::change_role::*;
 use group_chat_core::GroupRoleInternal;
 use group_community_common::ExpiringMember;
-use oc_error_codes::OCError;
-use types::{CanisterId, GroupRole, UserId};
+use types::{CanisterId, GroupRole, OCResult, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
 #[update(msgpack = true)]
@@ -71,7 +70,7 @@ struct PrepareResult {
     is_user_owner: bool,
 }
 
-fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, OCError> {
+fn prepare(user_id: UserId, state: &RuntimeState) -> OCResult<PrepareResult> {
     let caller = state.env.caller();
     let member = state.data.get_verified_member(caller)?;
     Ok(PrepareResult {
@@ -88,7 +87,7 @@ fn change_role_impl(
     is_caller_platform_moderator: bool,
     is_user_platform_moderator: bool,
     state: &mut RuntimeState,
-) -> Result<(), OCError> {
+) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let now = state.env.now();

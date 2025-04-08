@@ -5,8 +5,10 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::accept_p2p_swap::{Response::*, *};
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use oc_error_codes::{OCError, OCErrorCode};
-use types::{AcceptSwapSuccess, Achievement, ChannelId, Chat, EventIndex, MessageId, MessageIndex, P2PSwapLocation, UserId};
+use oc_error_codes::OCErrorCode;
+use types::{
+    AcceptSwapSuccess, Achievement, ChannelId, Chat, EventIndex, MessageId, MessageIndex, OCResult, P2PSwapLocation, UserId,
+};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
@@ -106,7 +108,7 @@ struct ReserveP2PSwapResult {
     c2c_args: user_canister::c2c_accept_p2p_swap::Args,
 }
 
-fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSwapResult, OCError> {
+fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> OCResult<ReserveP2PSwapResult> {
     state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();

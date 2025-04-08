@@ -21,7 +21,7 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
@@ -37,8 +37,8 @@ use types::{
     AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator, BotPermissions,
     BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cycles, Document, Empty,
     EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
-    IdempotentEnvelope, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId,
-    UserType, MAX_THREADS_IN_SUMMARY,
+    IdempotentEnvelope, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules, TimestampMillis, Timestamped,
+    UserId, UserType, MAX_THREADS_IN_SUMMARY,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -419,7 +419,7 @@ impl RuntimeState {
         }
     }
 
-    pub fn verified_caller(&self, bot_caller: Option<BotCaller>) -> Result<Caller, OCError> {
+    pub fn verified_caller(&self, bot_caller: Option<BotCaller>) -> OCResult<Caller> {
         if let Some(bot_caller) = bot_caller {
             return Ok(Caller::BotV2(bot_caller));
         }
@@ -653,7 +653,7 @@ impl Data {
         invited_by: UserId,
         users: Vec<(UserId, Principal)>,
         now: TimestampMillis,
-    ) -> Result<InvitedUsersSuccess, OCError> {
+    ) -> OCResult<InvitedUsersSuccess> {
         let user_ids: Vec<UserId> = users.iter().map(|(user_id, _)| *user_id).collect();
         let result = self.chat.invite_users(invited_by, user_ids, now)?;
 

@@ -8,10 +8,10 @@ use constants::{MEMO_P2P_SWAP_ACCEPT, NANOS_PER_MILLISECOND};
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
 use types::{
-    AcceptSwapSuccess, Achievement, CanisterId, Chat, EventIndex, P2PSwapLocation, P2PSwapStatus, ReserveP2PSwapSuccess,
-    TimestampMillis, UserId,
+    AcceptSwapSuccess, Achievement, CanisterId, Chat, EventIndex, OCResult, P2PSwapLocation, P2PSwapStatus,
+    ReserveP2PSwapSuccess, TimestampMillis, UserId,
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
@@ -115,7 +115,7 @@ struct PrepareResult {
     now: TimestampMillis,
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, OCError> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_suspended()?;
     state.data.pin_number.verify(args.pin.as_deref(), state.env.now())?;
 

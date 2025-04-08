@@ -3,8 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group::{Response::*, *};
-use oc_error_codes::OCError;
-use types::Empty;
+use types::{Empty, OCResult};
 
 // Called via the user's user canister
 #[update(msgpack = true)]
@@ -19,7 +18,7 @@ fn c2c_leave_group(args: Args) -> Response {
     }
 }
 
-fn c2c_leave_group_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+fn c2c_leave_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let caller = state.env.caller().into();

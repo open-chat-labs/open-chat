@@ -7,8 +7,7 @@ use group_canister::remove_participant::{Response::*, *};
 use group_chat_core::GroupRoleInternal;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use msgpack::serialize_then_unwrap;
-use oc_error_codes::OCError;
-use types::{CanisterId, UserId};
+use types::{CanisterId, OCResult, UserId};
 use user_canister::c2c_remove_from_group;
 
 #[update(msgpack = true)]
@@ -104,7 +103,7 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> Result<
     }
 }
 
-fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) -> Result<(), OCError> {
+fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) -> OCResult {
     state
         .data
         .chat

@@ -5,8 +5,8 @@ use candid::Principal;
 use canister_api_macros::query;
 use community_canister::c2c_events_by_index::Args as C2CArgs;
 use community_canister::events_by_index::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
-use types::{BotInitiator, EventsResponse};
+use oc_error_codes::OCErrorCode;
+use types::{BotInitiator, EventsResponse, OCResult};
 
 #[query(candid = true, msgpack = true)]
 fn events_by_index(args: Args) -> Response {
@@ -29,7 +29,7 @@ fn events_by_index_impl(
     on_behalf_of: Option<Principal>,
     bot_initiator: Option<BotInitiator>,
     state: &RuntimeState,
-) -> Result<EventsResponse, OCError> {
+) -> OCResult<EventsResponse> {
     if let Err(now) = check_replica_up_to_date(args.latest_known_update, state) {
         return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
     }

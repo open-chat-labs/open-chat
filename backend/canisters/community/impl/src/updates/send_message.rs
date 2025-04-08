@@ -13,13 +13,13 @@ use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageSuccess;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, EventIndex, EventWrapper,
-    IdempotentEnvelope, Message, MessageContent, MessageIndex, Notification, TimestampMillis, User, UserId, Version,
+    IdempotentEnvelope, Message, MessageContent, MessageIndex, Notification, OCResult, TimestampMillis, User, UserId, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -79,7 +79,7 @@ pub(crate) fn send_message_impl(
     bot: Option<BotCaller>,
     finalised: bool,
     state: &mut RuntimeState,
-) -> Result<SuccessResult, OCError> {
+) -> OCResult<SuccessResult> {
     let caller = state.verified_caller(bot)?;
 
     let display_name = prepare(&caller, args.community_rules_accepted, state)?;
@@ -134,7 +134,7 @@ pub(crate) fn send_message_impl(
     }
 }
 
-fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> Result<SuccessResult, OCError> {
+fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     let caller = state.verified_caller(None)?;
 
     let display_name = prepare(&caller, args.community_rules_accepted, state)?;
@@ -183,11 +183,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> Result<Succ
     }
 }
 
-fn prepare(
-    caller: &Caller,
-    community_rules_accepted: Option<Version>,
-    state: &mut RuntimeState,
-) -> Result<Option<String>, OCError> {
+fn prepare(caller: &Caller, community_rules_accepted: Option<Version>, state: &mut RuntimeState) -> OCResult<Option<String>> {
     if state.data.is_frozen() {
         return Err(OCErrorCode::CommunityFrozen.into());
     }

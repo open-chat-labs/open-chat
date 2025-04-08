@@ -7,6 +7,7 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use group_community_common::MemberUpdate;
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use oc_error_codes::OCErrorCode;
 use regex_lite::Regex;
 use search::simple::Query;
 use serde::{Deserialize, Serialize};
@@ -18,9 +19,10 @@ use types::{
     GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
     GroupSubtype, GroupVisibilityChanged, HydratedMention, MemberLeft, MembersRemoved, Message, MessageContent, MessageId,
     MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds,
-    MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, PushEventResult,
-    Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId,
-    UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall, MAX_RETURNED_MENTIONS,
+    MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
+    PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped,
+    UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
+    MAX_RETURNED_MENTIONS,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -35,7 +37,6 @@ mod roles;
 pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
-use oc_error_codes::{OCError, OCErrorCode};
 pub use roles::*;
 
 #[derive(Serialize, Deserialize)]
@@ -130,7 +131,7 @@ impl GroupChatCore {
         }
     }
 
-    pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Result<EventIndex, OCError> {
+    pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> OCResult<EventIndex> {
         let hidden_for_non_members = !self.is_public.value || !self.messages_visible_to_non_members.value;
         let event_index_for_new_members = self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default();
 
@@ -351,7 +352,7 @@ impl GroupChatCore {
         ascending: bool,
         max_messages: u32,
         max_events: u32,
-    ) -> Result<EventsResponse, OCError> {
+    ) -> OCResult<EventsResponse> {
         let reader = self.events_reader(&caller, thread_root_message_index)?;
 
         let user_id = caller.user_id();
@@ -381,7 +382,7 @@ impl GroupChatCore {
         caller: EventsCaller,
         thread_root_message_index: Option<MessageIndex>,
         events: Vec<EventIndex>,
-    ) -> Result<EventsResponse, OCError> {
+    ) -> OCResult<EventsResponse> {
         let reader = self.events_reader(&caller, thread_root_message_index)?;
 
         let user_id = caller.user_id();
@@ -407,7 +408,7 @@ impl GroupChatCore {
         mid_point: MessageIndex,
         max_messages: u32,
         max_events: u32,
-    ) -> Result<EventsResponse, OCError> {
+    ) -> OCResult<EventsResponse> {
         let reader = self.events_reader(&caller, thread_root_message_index)?;
 
         let user_id = caller.user_id();
@@ -432,7 +433,7 @@ impl GroupChatCore {
         caller: EventsCaller,
         thread_root_message_index: Option<MessageIndex>,
         messages: Vec<MessageIndex>,
-    ) -> Result<MessagesResponse, OCError> {
+    ) -> OCResult<MessagesResponse> {
         let reader = self.events_reader(&caller, thread_root_message_index)?;
 
         let user_id = caller.user_id();
@@ -562,7 +563,7 @@ impl GroupChatCore {
         event_store_client: &mut EventStoreClient<R>,
         finalised: bool,
         now: TimestampMillis,
-    ) -> Result<SendMessageSuccess, OCError> {
+    ) -> OCResult<SendMessageSuccess> {
         // If there is an existing message with the same message id then this is invalid unless
         // a bot is updating an unfinalised message
         if let Some((message, _)) =
@@ -666,7 +667,7 @@ impl GroupChatCore {
         suppressed: bool,
         block_level_markdown: bool,
         now: TimestampMillis,
-    ) -> Result<SendMessageSuccess, OCError> {
+    ) -> OCResult<SendMessageSuccess> {
         let PrepareSendMessageSuccess {
             min_visible_event_index,
             everyone_mentioned,
@@ -813,7 +814,7 @@ impl GroupChatCore {
         content: &MessageContentInternal,
         rules_accepted: Option<Version>,
         now: TimestampMillis,
-    ) -> Result<PrepareSendMessageSuccess, OCError> {
+    ) -> OCResult<PrepareSendMessageSuccess> {
         if matches!(caller, Caller::OCBot(_)) {
             return Ok(PrepareSendMessageSuccess {
                 min_visible_event_index: EventIndex::default(),
@@ -866,7 +867,7 @@ impl GroupChatCore {
         reaction: Reaction,
         now: TimestampMillis,
         event_store_client: &mut EventStoreClient<R>,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_react_to_messages(&self.permissions) {
@@ -895,7 +896,7 @@ impl GroupChatCore {
         message_id: MessageId,
         reaction: Reaction,
         now: TimestampMillis,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_react_to_messages(&self.permissions) {
@@ -918,7 +919,7 @@ impl GroupChatCore {
         &mut self,
         args: TipMessageArgs,
         event_store_client: &mut EventStoreClient<R>,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         let member = self.members.get_verified_member(args.user_id)?;
 
         if !member.role().can_react_to_messages(&self.permissions) {
@@ -938,7 +939,7 @@ impl GroupChatCore {
         message_ids: Vec<MessageId>,
         as_platform_moderator: bool,
         now: TimestampMillis,
-    ) -> Result<Vec<(MessageId, Result<UserId, OCError>)>, OCError> {
+    ) -> OCResult<Vec<(MessageId, OCResult<UserId>)>> {
         let (is_admin, min_visible_event_index) = if as_platform_moderator {
             (true, EventIndex::default())
         } else {
@@ -998,7 +999,7 @@ impl GroupChatCore {
         thread_root_message_index: Option<MessageIndex>,
         message_ids: Vec<MessageId>,
         now: TimestampMillis,
-    ) -> Result<Vec<Message>, OCError> {
+    ) -> OCResult<Vec<Message>> {
         let member = self.members.get_verified_member(user_id)?;
 
         let min_visible_event_index = member.min_visible_event_index();
@@ -1039,7 +1040,7 @@ impl GroupChatCore {
         is_caller_platform_moderator: bool,
         is_user_platform_moderator: bool,
         now: TimestampMillis,
-    ) -> Result<ChangeRoleSuccess, OCError> {
+    ) -> OCResult<ChangeRoleSuccess> {
         let result = self.members.change_role(
             caller,
             target_user,
@@ -1068,7 +1069,7 @@ impl GroupChatCore {
         user_id: UserId,
         message_index: MessageIndex,
         now: TimestampMillis,
-    ) -> Result<PushEventResult, OCError> {
+    ) -> OCResult<PushEventResult> {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_pin_messages(&self.permissions) {
@@ -1104,7 +1105,7 @@ impl GroupChatCore {
         user_id: UserId,
         message_index: MessageIndex,
         now: TimestampMillis,
-    ) -> Result<PushEventResult, OCError> {
+    ) -> OCResult<PushEventResult> {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_pin_messages(&self.permissions) {
@@ -1189,7 +1190,7 @@ impl GroupChatCore {
         invited_by: UserId,
         user_ids: Vec<UserId>,
         now: TimestampMillis,
-    ) -> Result<InvitedUsersSuccess, OCError> {
+    ) -> OCResult<InvitedUsersSuccess> {
         const MAX_INVITES: usize = 100;
 
         let member = self.members.get_verified_member(invited_by)?;
@@ -1244,7 +1245,7 @@ impl GroupChatCore {
         })
     }
 
-    pub fn cancel_invites(&mut self, cancelled_by: UserId, user_ids: Vec<UserId>, now: TimestampMillis) -> Result<(), OCError> {
+    pub fn cancel_invites(&mut self, cancelled_by: UserId, user_ids: Vec<UserId>, now: TimestampMillis) -> OCResult {
         let member = self.members.get_verified_member(cancelled_by)?;
 
         if !member.role().can_invite_users(&self.permissions) {
@@ -1262,7 +1263,7 @@ impl GroupChatCore {
         self.invited_users.remove(user_id, now);
     }
 
-    pub fn can_leave(&self, user_id: UserId) -> Result<(), OCError> {
+    pub fn can_leave(&self, user_id: UserId) -> OCResult {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended().value {
                 Err(OCErrorCode::InitiatorSuspended.into())
@@ -1276,7 +1277,7 @@ impl GroupChatCore {
         }
     }
 
-    pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> Result<GroupMemberInternal, OCError> {
+    pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> OCResult<GroupMemberInternal> {
         self.can_leave(user_id)?;
 
         let removed = self.members.remove(user_id, now).unwrap();
@@ -1287,13 +1288,7 @@ impl GroupChatCore {
         Ok(removed)
     }
 
-    pub fn remove_member(
-        &mut self,
-        user_id: UserId,
-        target_user_id: UserId,
-        block: bool,
-        now: TimestampMillis,
-    ) -> Result<(), OCError> {
+    pub fn remove_member(&mut self, user_id: UserId, target_user_id: UserId, block: bool, now: TimestampMillis) -> OCResult {
         if user_id == target_user_id {
             return Err(OCErrorCode::CannotRemoveSelf.into());
         }
@@ -1359,7 +1354,7 @@ impl GroupChatCore {
         events_ttl: OptionUpdate<Milliseconds>,
         external_url: OptionUpdate<String>,
         now: TimestampMillis,
-    ) -> Result<UpdateSuccessResult, OCError> {
+    ) -> OCResult<UpdateSuccessResult> {
         self.can_update(user_id, &name, &description, &rules, &avatar, permissions.as_ref(), &public)?;
 
         Ok(self.do_update(
@@ -1387,7 +1382,7 @@ impl GroupChatCore {
         avatar: &OptionUpdate<Document>,
         permissions: Option<&OptionalGroupPermissions>,
         public: &Option<bool>,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         let avatar_update = avatar.as_ref().expand();
 
         if let Some(name) = name {
@@ -1631,7 +1626,7 @@ impl GroupChatCore {
         user_id: UserId,
         thread_root_message_index: MessageIndex,
         now: TimestampMillis,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         let member = self.members.get_verified_member(user_id)?;
 
         self.events
@@ -1650,7 +1645,7 @@ impl GroupChatCore {
         user_id: UserId,
         thread_root_message_index: MessageIndex,
         now: TimestampMillis,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         let member = self.members.get_verified_member(user_id)?;
 
         self.events
@@ -1723,7 +1718,7 @@ impl GroupChatCore {
         &self,
         caller: &EventsCaller,
         thread_root_message_index: Option<MessageIndex>,
-    ) -> Result<ChatEventsListReader, OCError> {
+    ) -> OCResult<ChatEventsListReader> {
         let min_visible_event_index = match caller {
             EventsCaller::Unknown => self.min_visible_event_index(None),
             EventsCaller::User(user_id) => self.min_visible_event_index(Some(*user_id)),

@@ -24,10 +24,11 @@ use types::{
     DirectChatCreated, EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
     GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message,
     MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport,
-    MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload,
-    P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction,
-    ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
-    UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation,
+    MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, P2PSwapAccepted, P2PSwapCompleted,
+    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
+    PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess, TimestampMillis,
+    TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence,
+    VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -272,7 +273,7 @@ impl ChatEvents {
         &mut self,
         args: EditMessageArgs,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> Result<EditMessageSuccess, OCError> {
+    ) -> OCResult<EditMessageSuccess> {
         let sender = args.sender;
         let thread_root_message_index = args.thread_root_message_index;
         let now = args.now;
@@ -313,7 +314,7 @@ impl ChatEvents {
         chat: Chat,
         anonymized_id: String,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> Result<(EditMessageSuccess, Document), UpdateEventError<Result<EditMessageSuccess, OCError>>> {
+    ) -> Result<(EditMessageSuccess, Document), UpdateEventError<OCResult<EditMessageSuccess>>> {
         if message.sender != args.sender || matches!(message.content, MessageContentInternal::Deleted(_)) {
             return Err(UpdateEventError::NoChange(Err(OCErrorCode::InitiatorNotAuthorized.into())));
         }
@@ -384,19 +385,19 @@ impl ChatEvents {
         )
     }
 
-    pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, Result<UserId, OCError>)> {
+    pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult<UserId>)> {
         args.iter()
             .map(|delete_message_args| (delete_message_args.message_id, self.delete_message(delete_message_args)))
             .collect()
     }
 
-    pub fn undelete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, Result<(), OCError>)> {
+    pub fn undelete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult)> {
         args.iter()
             .map(|undelete_message_args| (undelete_message_args.message_id, self.undelete_message(undelete_message_args)))
             .collect()
     }
 
-    fn delete_message(&mut self, args: DeleteUndeleteMessageArgs) -> Result<UserId, OCError> {
+    fn delete_message(&mut self, args: DeleteUndeleteMessageArgs) -> OCResult<UserId> {
         match self.update_message(
             args.thread_root_message_index,
             args.message_id.into(),
@@ -453,7 +454,7 @@ impl ChatEvents {
         }
     }
 
-    fn undelete_message(&mut self, args: DeleteUndeleteMessageArgs) -> Result<(), OCError> {
+    fn undelete_message(&mut self, args: DeleteUndeleteMessageArgs) -> OCResult {
         match self.update_message(
             args.thread_root_message_index,
             args.message_id.into(),
@@ -732,7 +733,7 @@ impl ChatEvents {
         &mut self,
         args: AddRemoveReactionArgs,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         if !args.reaction.is_valid() {
             return Err(OCErrorCode::InvalidReaction.with_message(format!("{:?}", args.reaction)));
         }
@@ -804,7 +805,7 @@ impl ChatEvents {
         Ok(())
     }
 
-    pub fn remove_reaction(&mut self, args: AddRemoveReactionArgs) -> Result<(), OCError> {
+    pub fn remove_reaction(&mut self, args: AddRemoveReactionArgs) -> OCResult {
         match self.update_message(
             args.thread_root_message_index,
             args.message_id.into(),
@@ -851,7 +852,7 @@ impl ChatEvents {
         args: TipMessageArgs,
         min_visible_event_index: EventIndex,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         let chat = self.chat;
         let anonymized_id = self.anonymized_id.clone();
 
@@ -987,7 +988,7 @@ impl ChatEvents {
         rng: &mut StdRng,
         event_store_client: &mut EventStoreClient<R>,
         now: TimestampMillis,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         let amount = transaction.units();
 
         match self.update_message(None, message_id.into(), EventIndex::default(), Some(now), |message, _| {
@@ -1054,7 +1055,7 @@ impl ChatEvents {
         amount: u128,
         ledger_error: bool,
         now: TimestampMillis,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         match self.update_message(None, message_id.into(), EventIndex::default(), Some(now), |message, _| {
             Self::unreserve_prize_inner(message, user_id, amount, ledger_error)
         }) {
@@ -1142,7 +1143,7 @@ impl ChatEvents {
         message_id: MessageId,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> Result<ReserveP2PSwapSuccess, OCError> {
+    ) -> OCResult<ReserveP2PSwapSuccess> {
         match self.update_message(
             thread_root_message_index,
             message_id.into(),
@@ -1184,7 +1185,7 @@ impl ChatEvents {
         message_id: MessageId,
         token1_txn_in: u64,
         now: TimestampMillis,
-    ) -> Result<P2PSwapAccepted, OCError> {
+    ) -> OCResult<P2PSwapAccepted> {
         match self.update_message(
             thread_root_message_index,
             message_id.into(),
@@ -1227,7 +1228,7 @@ impl ChatEvents {
         token1_txn_out: u64,
         now: TimestampMillis,
         event_store_client: &mut EventStoreClient<R>,
-    ) -> Result<P2PSwapCompleted, OCError> {
+    ) -> OCResult<P2PSwapCompleted> {
         let chat = self.chat;
         let anonymized_id = self.anonymized_id.clone();
 
@@ -1328,7 +1329,7 @@ impl ChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         now: TimestampMillis,
-    ) -> Result<u32, OCError> {
+    ) -> OCResult<u32> {
         match self.update_message(
             thread_root_message_index,
             message_id.into(),
@@ -1528,7 +1529,7 @@ impl ChatEvents {
         user_id: UserId,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         match self.update_thread_summary(
             thread_root_message_index,
             |t, _| t.followers.insert(user_id),
@@ -1548,7 +1549,7 @@ impl ChatEvents {
         user_id: UserId,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         match self.update_thread_summary(
             thread_root_message_index,
             |t, _| t.followers.remove(&user_id),
@@ -1915,7 +1916,7 @@ impl ChatEvents {
         event_key: EventKey,
         now: TimestampMillis,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         let chat = self.chat;
         let anonymized_id = self.anonymized_id.clone();
 
@@ -1981,7 +1982,7 @@ impl ChatEvents {
         presence: VideoCallPresence,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> Result<(), OCError> {
+    ) -> OCResult {
         match self.update_message(None, message_id.into(), min_visible_event_index, Some(now), |message, _| {
             Self::set_video_presence_inner(message, user_id, presence, now)
         }) {

@@ -5,7 +5,7 @@ use crate::AccessRulesInternal;
 use candid::Principal;
 use constants::{calculate_summary_updates_data_removal_cutoff, ONE_MB};
 use group_community_common::{Member, MemberUpdate, Members};
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::StableMemoryMap;
@@ -14,8 +14,8 @@ use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Deref;
 use types::{
-    is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, MultiUserChat, TimestampMillis, Timestamped, UserId,
-    UserType, Version,
+    is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, MultiUserChat, OCResult, TimestampMillis, Timestamped,
+    UserId, UserType, Version,
 };
 use utils::timestamped_set::TimestampedSet;
 
@@ -262,7 +262,7 @@ impl GroupMembers {
         is_caller_platform_moderator: bool,
         is_user_platform_moderator: bool,
         now: TimestampMillis,
-    ) -> Result<ChangeRoleSuccess, OCError> {
+    ) -> OCResult<ChangeRoleSuccess> {
         // Is the caller authorized to change the user to this role
         let member = self.get_verified_member(caller_id)?;
 

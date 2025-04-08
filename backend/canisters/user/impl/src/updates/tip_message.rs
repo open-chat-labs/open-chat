@@ -6,10 +6,11 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use types::{
-    icrc1, Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId,
+    icrc1, Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, OCResult, PendingCryptoTransaction, TimestampNanos,
+    UserId,
 };
 use user_canister::tip_message::{Response::*, *};
 use user_canister::UserCanisterEvent;
@@ -93,7 +94,7 @@ enum PrepareResult {
     Channel(CommunityId, community_canister::c2c_tip_message::Args),
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<(PrepareResult, TimestampNanos), OCError> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<(PrepareResult, TimestampNanos)> {
     let my_user_id: UserId = state.env.canister_id().into();
     state.data.verify_not_suspended()?;
 

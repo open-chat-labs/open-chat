@@ -4,8 +4,8 @@ use canister_tracing_macros::trace;
 use community_canister::change_channel_role::{Response::*, *};
 use group_chat_core::GroupRoleInternal;
 use group_community_common::ExpiringMember;
-use oc_error_codes::{OCError, OCErrorCode};
-use types::GroupRole;
+use oc_error_codes::OCErrorCode;
+use types::{GroupRole, OCResult};
 
 #[update(msgpack = true)]
 #[trace]
@@ -19,7 +19,7 @@ fn change_channel_role(args: Args) -> Response {
     }
 }
 
-fn change_channel_role_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+fn change_channel_role_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();

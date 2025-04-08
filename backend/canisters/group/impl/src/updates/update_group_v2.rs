@@ -6,9 +6,11 @@ use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;
 use group_community_common::{ExpiringMember, Members};
 use group_index_canister::{c2c_make_private, c2c_update_group};
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
 use tracing::error;
-use types::{AccessGateConfigInternal, CanisterId, ChatId, Document, OptionUpdate, TimestampMillis, Timestamped, UserId};
+use types::{
+    AccessGateConfigInternal, CanisterId, ChatId, Document, OCResult, OptionUpdate, TimestampMillis, Timestamped, UserId,
+};
 
 #[update(msgpack = true)]
 #[trace]
@@ -91,7 +93,7 @@ struct PrepareResult {
     gate_config: Option<AccessGateConfigInternal>,
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, OCError> {
+fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
     if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {

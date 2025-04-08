@@ -2,8 +2,9 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::undelete_messages::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
 use std::collections::HashSet;
+use types::OCResult;
 
 #[update(msgpack = true)]
 #[trace]
@@ -16,7 +17,7 @@ fn undelete_messages(args: Args) -> Response {
     }
 }
 
-fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Result<SuccessResult, OCError> {
+fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     if state.data.is_frozen() {
         return Err(OCErrorCode::CommunityFrozen.into());
     }

@@ -5,8 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use group_canister::c2c_tip_message::{Response::*, *};
 use ledger_utils::format_crypto_amount_with_symbol;
-use oc_error_codes::OCError;
-use types::{Achievement, Chat, EventIndex, GroupMessageTipped, Notification};
+use types::{Achievement, Chat, EventIndex, GroupMessageTipped, Notification, OCResult};
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
@@ -21,7 +20,7 @@ fn c2c_tip_message(args: Args) -> Response {
     }
 }
 
-fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let user_id = state.env.caller().into();

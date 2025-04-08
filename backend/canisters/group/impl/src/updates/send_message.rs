@@ -9,10 +9,10 @@ use group_canister::c2c_bot_send_message;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageSuccess;
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message,
-    MessageContent, MessageIndex, Notification, TimestampMillis, User,
+    MessageContent, MessageIndex, Notification, OCResult, TimestampMillis, User,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -71,7 +71,7 @@ pub(crate) fn send_message_impl(
     bot: Option<BotCaller>,
     finalised: bool,
     state: &mut RuntimeState,
-) -> Result<SuccessResult, OCError> {
+) -> OCResult<SuccessResult> {
     if state.data.is_frozen() {
         return Err(OCErrorCode::ChatFrozen.into());
     }
@@ -120,7 +120,7 @@ pub(crate) fn send_message_impl(
     ))
 }
 
-fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> Result<SuccessResult, OCError> {
+fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     if state.data.is_frozen() {
         return Err(OCErrorCode::ChatFrozen.into());
     }

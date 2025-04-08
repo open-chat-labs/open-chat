@@ -3,8 +3,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
 use community_canister::edit_message::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
-use types::Achievement;
+use oc_error_codes::OCErrorCode;
+use types::{Achievement, OCResult};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -18,7 +18,7 @@ fn edit_message(args: Args) -> Response {
     }
 }
 
-fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let caller = state.env.caller();

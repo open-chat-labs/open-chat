@@ -2,8 +2,8 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::set_video_call_presence::{Response::*, *};
-use oc_error_codes::{OCError, OCErrorCode};
-use types::Achievement;
+use oc_error_codes::OCErrorCode;
+use types::{Achievement, OCResult};
 
 #[update(msgpack = true)]
 #[trace]
@@ -17,7 +17,7 @@ fn set_video_call_presence(args: Args) -> Response {
     }
 }
 
-pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState) -> Result<(), OCError> {
+pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if state.data.is_frozen() {
         return Err(OCErrorCode::CommunityFrozen.into());
     }
