@@ -193,8 +193,12 @@ fn transfer_requires_correct_pin(test_case: u32) {
             response,
             user_canister::send_message_v2::Response::TransferSuccessV2(_)
         )),
-        2 => assert!(matches!(response, user_canister::send_message_v2::Response::PinIncorrect(_))),
-        3 => assert!(matches!(response, user_canister::send_message_v2::Response::PinRequired)),
+        2 => assert!(
+            matches!(response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect))
+        ),
+        3 => assert!(
+            matches!(response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::PinRequired))
+        ),
         _ => unreachable!(),
     }
 }
