@@ -1635,21 +1635,15 @@ impl GroupChatCore {
     ) -> Result<(), OCError> {
         let member = self.members.get_verified_member(user_id)?;
 
-        match self
-            .events
-            .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
-        {
-            chat_events::FollowThreadResult::Success => {
-                self.members.update_member(&user_id, |m| {
-                    m.followed_threads.insert(thread_root_message_index, now);
-                    m.unfollowed_threads.remove(thread_root_message_index);
-                    true
-                });
-                Ok(())
-            }
-            chat_events::FollowThreadResult::AlreadyFollowing => Err(OCErrorCode::NoChange.into()),
-            chat_events::FollowThreadResult::ThreadNotFound => Err(OCErrorCode::ThreadNotFound.into()),
-        }
+        self.events
+            .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)?;
+
+        self.members.update_member(&user_id, |m| {
+            m.followed_threads.insert(thread_root_message_index, now);
+            m.unfollowed_threads.remove(thread_root_message_index);
+            true
+        });
+        Ok(())
     }
 
     pub fn unfollow_thread(
@@ -1660,21 +1654,15 @@ impl GroupChatCore {
     ) -> Result<(), OCError> {
         let member = self.members.get_verified_member(user_id)?;
 
-        match self
-            .events
-            .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
-        {
-            chat_events::UnfollowThreadResult::Success => {
-                self.members.update_member(&user_id, |m| {
-                    m.followed_threads.remove(thread_root_message_index);
-                    m.unfollowed_threads.insert(thread_root_message_index, now);
-                    true
-                });
-                Ok(())
-            }
-            chat_events::UnfollowThreadResult::NotFollowing => Err(OCErrorCode::NoChange.into()),
-            chat_events::UnfollowThreadResult::ThreadNotFound => Err(OCErrorCode::ThreadNotFound.into()),
-        }
+        self.events
+            .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)?;
+
+        self.members.update_member(&user_id, |m| {
+            m.followed_threads.remove(thread_root_message_index);
+            m.unfollowed_threads.insert(thread_root_message_index, now);
+            true
+        });
+        Ok(())
     }
 
     pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveExpiredEventsResult {

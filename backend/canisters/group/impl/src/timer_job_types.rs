@@ -386,9 +386,8 @@ impl Job for MarkP2PSwapExpiredJob {
 
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
-        let response = mutate_state(|state| end_video_call_impl(self.0.clone(), state));
-        if !matches!(response, group_canister::end_video_call_v2::Response::Success) {
-            error!(?response, args = ?self.0, "Failed to mark video call ended");
+        if let Err(error) = mutate_state(|state| end_video_call_impl(self.0.clone(), state)) {
+            error!(?error, args = ?self.0, "Failed to mark video call ended");
         }
     }
 }

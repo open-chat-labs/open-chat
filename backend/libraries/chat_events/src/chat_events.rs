@@ -247,7 +247,7 @@ impl ChatEvents {
 
         if let Some(call_type) = video_call_type {
             if let Some(vc) = &self.video_call_in_progress.value {
-                self.end_video_call(vc.message_index.into(), args.now, event_store_client);
+                let _ = self.end_video_call(vc.message_index.into(), args.now, event_store_client);
             }
 
             self.video_call_in_progress = Timestamped::new(
@@ -990,9 +990,7 @@ impl ChatEvents {
         rng: &mut StdRng,
         event_store_client: &mut EventStoreClient<R>,
         now: TimestampMillis,
-    ) -> ClaimPrizeResult {
-        use ClaimPrizeResult::*;
-
+    ) -> Result<(), OCError> {
         let amount = transaction.units();
 
         match self.update_message(None, message_id.into(), EventIndex::default(), Some(now), |message, _| {
@@ -1025,10 +1023,10 @@ impl ChatEvents {
                     },
                     Some(event_store_client),
                 );
-                Success
+                Ok(())
             }
-            Err(UpdateEventError::NoChange(_)) => ReservationNotFound,
-            Err(UpdateEventError::NotFound) => MessageNotFound,
+            Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
     }
 
@@ -1059,13 +1057,13 @@ impl ChatEvents {
         amount: u128,
         ledger_error: bool,
         now: TimestampMillis,
-    ) -> UnreservePrizeResult {
+    ) -> Result<(), OCError> {
         match self.update_message(None, message_id.into(), EventIndex::default(), Some(now), |message, _| {
             Self::unreserve_prize_inner(message, user_id, amount, ledger_error)
         }) {
-            Ok(_) => UnreservePrizeResult::Success,
-            Err(UpdateEventError::NoChange(_)) => UnreservePrizeResult::ReservationNotFound,
-            Err(UpdateEventError::NotFound) => UnreservePrizeResult::MessageNotFound,
+            Ok(_) => Ok(()),
+            Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
     }
 
@@ -1533,9 +1531,7 @@ impl ChatEvents {
         user_id: UserId,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> FollowThreadResult {
-        use FollowThreadResult::*;
-
+    ) -> Result<(), OCError> {
         match self.update_thread_summary(
             thread_root_message_index,
             |t, _| t.followers.insert(user_id),
@@ -1543,9 +1539,9 @@ impl ChatEvents {
             false,
             now,
         ) {
-            Ok(_) => Success,
-            Err(UpdateEventError::NoChange(_)) => AlreadyFollowing,
-            Err(UpdateEventError::NotFound) => ThreadNotFound,
+            Ok(_) => Ok(()),
+            Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::ThreadNotFound.into()),
         }
     }
 
@@ -1555,9 +1551,7 @@ impl ChatEvents {
         user_id: UserId,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> UnfollowThreadResult {
-        use UnfollowThreadResult::*;
-
+    ) -> Result<(), OCError> {
         match self.update_thread_summary(
             thread_root_message_index,
             |t, _| t.followers.remove(&user_id),
@@ -1565,9 +1559,9 @@ impl ChatEvents {
             false,
             now,
         ) {
-            Ok(_) => Success,
-            Err(UpdateEventError::NoChange(_)) => NotFollowing,
-            Err(UpdateEventError::NotFound) => ThreadNotFound,
+            Ok(_) => Ok(()),
+            Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::ThreadNotFound.into()),
         }
     }
 
@@ -1924,7 +1918,7 @@ impl ChatEvents {
         event_key: EventKey,
         now: TimestampMillis,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> EndVideoCallResult {
+    ) -> Result<(), OCError> {
         let chat = self.chat;
         let anonymized_id = self.anonymized_id.clone();
 
@@ -1933,10 +1927,10 @@ impl ChatEvents {
         }) {
             Ok(..) => {
                 self.video_call_in_progress = Timestamped::new(None, now);
-                EndVideoCallResult::Success
+                Ok(())
             }
-            Err(UpdateEventError::NoChange(_)) => EndVideoCallResult::AlreadyEnded,
-            Err(UpdateEventError::NotFound) => EndVideoCallResult::MessageNotFound,
+            Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::VideoCallAlreadyEnded.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
     }
 
@@ -2382,31 +2376,6 @@ pub struct ReservePriceSuccess {
     pub message_index: MessageIndex,
 }
 
-#[allow(clippy::large_enum_variant)]
-pub enum ClaimPrizeResult {
-    Success,
-    MessageNotFound,
-    ReservationNotFound,
-}
-
-pub enum UnreservePrizeResult {
-    Success,
-    MessageNotFound,
-    ReservationNotFound,
-}
-
-pub enum FollowThreadResult {
-    Success,
-    AlreadyFollowing,
-    ThreadNotFound,
-}
-
-pub enum UnfollowThreadResult {
-    Success,
-    NotFollowing,
-    ThreadNotFound,
-}
-
 #[derive(Default)]
 pub struct RemoveExpiredEventsResult {
     pub events: Vec<EventIndex>,
@@ -2443,10 +2412,4 @@ impl From<MessageId> for EventKey {
     fn from(value: MessageId) -> Self {
         EventKey::MessageId(value)
     }
-}
-
-pub enum EndVideoCallResult {
-    Success,
-    MessageNotFound,
-    AlreadyEnded,
 }
