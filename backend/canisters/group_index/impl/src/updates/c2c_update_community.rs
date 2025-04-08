@@ -33,6 +33,7 @@ fn c2c_update_community_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.avatar_id,
             args.banner_id,
             args.gate_config,
+            args.primary_language,
         );
         Success
     } else if let Some(community) = state.data.private_communities.get(&community_id) {
