@@ -5269,13 +5269,6 @@ export class OpenChat {
         const promise: Promise<bigint> = new Promise((resolve) => {
             this.#refreshBalanceSemaphore
                 .execute(() => {
-                    if (allowCached) {
-                        const cached = cryptoBalance.valueIfUpdatedRecently(ledger);
-                        if (cached !== undefined) {
-                            return Promise.resolve(cached);
-                        }
-                    }
-
                     return this.#sendRequest({
                         kind: "refreshAccountBalance",
                         ledger,
