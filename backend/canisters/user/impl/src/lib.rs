@@ -27,6 +27,7 @@ use model::referrals::Referrals;
 use model::streak::Streak;
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
+use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -497,6 +498,14 @@ impl Data {
 
     pub fn is_diamond_member(&self, now: TimestampMillis) -> bool {
         self.diamond_membership_expires_at.is_some_and(|ts| now < ts)
+    }
+
+    pub fn verify_not_suspended(&self) -> Result<(), OCErrorCode> {
+        if self.suspended.value {
+            Err(OCErrorCode::InitiatorSuspended)
+        } else {
+            Ok(())
+        }
     }
 
     pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {

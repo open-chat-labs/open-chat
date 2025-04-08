@@ -3,7 +3,9 @@ use crate::utils::now_nanos;
 use crate::{client, TestEnv};
 use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS};
 use ledger_utils::create_pending_transaction;
+use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
+use std::str::FromStr;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_from_u128;
@@ -99,18 +101,20 @@ fn attempts_blocked_after_incorrect_attempts() {
 
         match i {
             1 | 2 => {
-                assert!(matches!(response, user_canister::set_pin_number::Response::PinIncorrect(0)))
+                assert!(
+                    matches!(response, user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect) && e.message().unwrap() == "0")
+                )
             }
             3 => {
                 assert!(matches!(
                     response,
-                    user_canister::set_pin_number::Response::PinIncorrect(delay) if delay > 0
+                    user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect) && u32::from_str(e.message().unwrap()).unwrap() > 0
                 ));
             }
             _ => {
                 assert!(matches!(
                     response,
-                    user_canister::set_pin_number::Response::TooManyFailedPinAttempts(delay) if delay > 0
+                    user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::TooManyFailedPinAttempts) && u32::from_str(e.message().unwrap()).unwrap() > 0
                 ));
             }
         }
@@ -189,8 +193,12 @@ fn transfer_requires_correct_pin(test_case: u32) {
             response,
             user_canister::send_message_v2::Response::TransferSuccessV2(_)
         )),
-        2 => assert!(matches!(response, user_canister::send_message_v2::Response::PinIncorrect(_))),
-        3 => assert!(matches!(response, user_canister::send_message_v2::Response::PinRequired)),
+        2 => assert!(
+            matches!(response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect))
+        ),
+        3 => assert!(
+            matches!(response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::PinRequired))
+        ),
         _ => unreachable!(),
     }
 }

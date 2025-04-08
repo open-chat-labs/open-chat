@@ -11,6 +11,7 @@ use gated_groups::{
     check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs, GatePayment,
 };
 use group_community_common::ExpiringMember;
+use oc_error_codes::OCErrorCode;
 use types::{AccessGate, ChannelId, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
@@ -26,7 +27,7 @@ pub(crate) async fn join_community(args: Args) -> Response {
         Ok(Some((gate, check_gate_args))) => match check_if_passes_gate(gate, check_gate_args).await {
             CheckIfPassesGateResult::Success(payments) => payments,
             CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
-            CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
+            CheckIfPassesGateResult::Error(error) => return Error(error),
         },
         Ok(None) => Vec::new(),
         Err(response) => return response,
@@ -46,7 +47,7 @@ pub(crate) async fn join_community(args: Args) -> Response {
                 if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
                     Success(Box::new(state.summary(Some(&member), None)))
                 } else {
-                    InternalError("User not found in community".to_string())
+                    Error(OCErrorCode::InitiatorNotInCommunity.into())
                 }
             })
         }
@@ -58,7 +59,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
     let caller = state.env.caller();
 
     if state.data.is_frozen() {
-        return Err(CommunityFrozen);
+        return Err(Error(OCErrorCode::CommunityFrozen.into()));
     }
 
     if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
@@ -66,13 +67,13 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
             return Err(AlreadyInCommunity(Box::new(state.summary(Some(&member), None))));
         }
     } else if state.data.members.is_blocked(&args.user_id) {
-        return Err(UserBlocked);
+        return Err(Error(OCErrorCode::InitiatorBlocked.into()));
     } else if let Some(limit) = state.data.members.user_limit_reached() {
-        return Err(MemberLimitReached(limit));
+        return Err(Error(OCErrorCode::UserLimitReached.with_message(limit)));
     } else if caller == state.data.user_index_canister_id || state.data.is_invited(args.principal) {
         return Ok(None);
     } else if !state.data.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
-        return Err(NotInvited);
+        return Err(Error(OCErrorCode::NotInvited.into()));
     }
 
     Ok(state.data.gate_config.as_ref().map(|g| {
@@ -145,7 +146,7 @@ pub(crate) fn join_community_impl(
                 return Err(AlreadyInCommunity(Box::new(summary)));
             }
         }
-        AddResult::Blocked => return Err(UserBlocked),
+        AddResult::Blocked => return Err(Error(OCErrorCode::InitiatorBlocked.into())),
     }
 
     state.data.invited_users.remove(&args.user_id, now);

@@ -6,34 +6,36 @@ use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
 use constants::HOUR_IN_MS;
 use group_canister::start_video_call_v2::{Response::*, *};
-use group_chat_core::SendMessageResult;
 use ic_cdk::update;
-use types::{Caller, GroupMessageNotification, Notification, VideoCallPresence, VideoCallType};
+use oc_error_codes::OCErrorCode;
+use types::{Caller, GroupMessageNotification, Notification, OCResult, VideoCallPresence, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
 fn start_video_call_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| start_video_call_impl(args, state))
+    if let Err(error) = mutate_state(|state| start_video_call_impl(args, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
-fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return NotAuthorized;
-    }
+fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
     if matches!(
         (args.call_type, state.data.chat.is_public.value),
         (VideoCallType::Default, true)
     ) {
-        return NotAuthorized;
+        return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Video call type not allowed"));
     }
 
     let sender = args.initiator;
     let now = state.env.now();
 
-    let result = match state.data.chat.send_message(
+    let result = state.data.chat.send_message(
         &Caller::User(sender),
         None,
         args.message_id,
@@ -60,10 +62,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         &mut state.data.event_store_client,
         true,
         now,
-    ) {
-        SendMessageResult::Success(r) => r,
-        _ => return NotAuthorized,
-    };
+    )?;
 
     let event_index = result.message_event.index;
     let message_index = result.message_event.event.message_index;
@@ -103,6 +102,5 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         now + max_duration,
         now,
     );
-
-    Success
+    Ok(())
 }

@@ -1,5 +1,4 @@
 use crate::guards::caller_is_local_user_index;
-use crate::CallerResult;
 use crate::{
     activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
     run_regular_jobs, RuntimeState,
@@ -9,15 +8,20 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_bot_delete_channel;
 use community_canister::delete_channel::{Response::*, *};
 use group_community_common::Member;
+use oc_error_codes::OCErrorCode;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, UserIdKeyPrefix};
-use types::{BotCaller, Caller, ChannelDeleted, ChannelId};
+use types::{BotCaller, Caller, ChannelDeleted, ChannelId, OCResult};
 
 #[update(msgpack = true)]
 #[trace]
 fn delete_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| delete_channel_impl(args.channel_id, None, state))
+    if let Err(error) = mutate_state(|state| delete_channel_impl(args.channel_id, None, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -30,23 +34,22 @@ fn c2c_bot_delete_channel(args: c2c_bot_delete_channel::Args) -> c2c_bot_delete_
         initiator: args.initiator.clone(),
     };
 
-    mutate_state(|state| delete_channel_impl(args.channel_id, Some(bot_caller), state)).into()
+    if let Err(error) = mutate_state(|state| delete_channel_impl(args.channel_id, Some(bot_caller), state)) {
+        c2c_bot_delete_channel::Response::Error(error)
+    } else {
+        c2c_bot_delete_channel::Response::Success
+    }
 }
 
-fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, state: &mut RuntimeState) -> Response {
+fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, state: &mut RuntimeState) -> OCResult {
     if state.data.is_frozen() {
-        return CommunityFrozen;
+        return Err(OCErrorCode::CommunityFrozen.into());
     }
 
-    let caller = match state.verified_caller(bot_caller) {
-        CallerResult::Success(caller) => caller,
-        CallerResult::NotFound => return NotAuthorized,
-        CallerResult::Suspended => return UserSuspended,
-        CallerResult::Lapsed => return UserLapsed,
-    };
+    let caller = state.verified_caller(bot_caller)?;
 
     let Some(channel) = state.data.channels.get(&channel_id) else {
-        return ChannelNotFound;
+        return Err(OCErrorCode::ChatNotFound.into());
     };
 
     // A community owner can delete a channel whether or not they are a member of the channel
@@ -57,16 +60,9 @@ fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, sta
         .is_some_and(|m| m.is_owner());
 
     if !caller_is_community_owner {
-        let Some(channel_member) = channel.chat.members.get(&caller.agent()) else {
-            return UserNotInChannel;
-        };
-
-        if channel_member.lapsed().value {
-            return UserLapsed;
-        }
-
+        let channel_member = channel.chat.members.get_verified_member(caller.agent())?;
         if !channel_member.role().can_delete_group() {
-            return NotAuthorized;
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
     }
 
@@ -79,7 +75,7 @@ fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, sta
                 .get(&initiator)
                 .is_some_and(|member| member.role().can_delete_group())
             {
-                return NotAuthorized;
+                return Err(OCErrorCode::InitiatorNotAuthorized.into());
             }
         }
     }
@@ -129,5 +125,5 @@ fn delete_channel_impl(channel_id: ChannelId, bot_caller: Option<BotCaller>, sta
 
     handle_activity_notification(state);
 
-    Success
+    Ok(())
 }

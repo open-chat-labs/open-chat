@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::random_string;
@@ -76,7 +77,7 @@ fn join_private_channel_fails() {
 
     assert!(matches!(
         response,
-        local_user_index_canister::join_channel::Response::NotInvited
+        local_user_index_canister::join_channel::Response::Error(e) if e.matches_code(OCErrorCode::NotInvited)
     ));
 }
 

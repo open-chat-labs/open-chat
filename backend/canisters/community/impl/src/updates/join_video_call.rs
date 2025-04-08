@@ -9,5 +9,9 @@ use community_canister::join_video_call::{Args, Response};
 fn join_video_call(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| set_video_call_presence_impl(args.into(), state))
+    if let Err(error) = mutate_state(|state| set_video_call_presence_impl(args.into(), state)) {
+        Response::Error(error)
+    } else {
+        Response::Success
+    }
 }

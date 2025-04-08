@@ -3,26 +3,28 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::{caller_is_local_user_index, caller_is_proposals_bot};
 use crate::model::channels::Channel;
 use crate::timer_job_types::JoinMembersToPublicChannelJob;
-use crate::{mutate_state, run_regular_jobs, CallerResult, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::create_channel::{Response::*, *};
 use community_canister::{c2c_bot_create_channel, c2c_join_community};
 use group_chat_core::GroupChatCore;
+use oc_error_codes::OCErrorCode;
 use rand::Rng;
-use types::{BotCaller, BotPermissions, Caller, CommunityPermission, MultiUserChat, UserType};
+use types::{BotCaller, BotPermissions, Caller, CommunityPermission, MultiUserChat, OCResult, UserType};
 use url::Url;
 use utils::document::validate_avatar;
-use utils::text_validation::{
-    validate_channel_name, validate_description, validate_rules, RulesValidationError, StringLengthValidationError,
-};
+use utils::text_validation::{validate_channel_name, validate_description, validate_rules, StringLengthValidationError};
 
 #[update(msgpack = true)]
 #[trace]
 fn create_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| create_channel_impl(args, false, None, state))
+    match mutate_state(|state| create_channel_impl(args, false, None, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -35,7 +37,10 @@ fn c2c_bot_create_channel(args: c2c_bot_create_channel::Args) -> c2c_bot_create_
         initiator: args.initiator.clone(),
     };
 
-    mutate_state(|state| create_channel_impl(args.into(), false, Some(bot_caller), state)).into()
+    match mutate_state(|state| create_channel_impl(args.into(), false, Some(bot_caller), state)) {
+        Ok(result) => c2c_bot_create_channel::Response::Success(result),
+        Err(error) => c2c_bot_create_channel::Response::Error(error),
+    }
 }
 
 #[update(guard = "caller_is_proposals_bot", msgpack = true)]
@@ -64,13 +69,16 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
         .err()
         {
             match response {
-                c2c_join_community::Response::UserBlocked => return NotAuthorized,
+                c2c_join_community::Response::Error(error) => return Error(error),
                 c2c_join_community::Response::AlreadyInCommunity(_) => {}
                 _ => panic!("Unexpected response from c2c_join_community"),
             }
         }
 
-        create_channel_impl(args, true, None, state)
+        match create_channel_impl(args, true, None, state) {
+            Ok(result) => Success(result),
+            Err(error) => Error(error),
+        }
     })
 }
 
@@ -79,23 +87,16 @@ fn create_channel_impl(
     is_proposals_channel: bool,
     bot_caller: Option<BotCaller>,
     state: &mut RuntimeState,
-) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
-    }
+) -> OCResult<SuccessResult> {
+    state.data.verify_not_frozen()?;
 
     if let Some(external_url) = &args.external_url {
         if Url::parse(external_url).is_err() {
-            return ExternalUrlInvalid;
+            return Err(OCErrorCode::InvalidExternalUrl.into());
         }
     }
 
-    let caller = match state.verified_caller(bot_caller) {
-        CallerResult::Success(caller) => caller,
-        CallerResult::NotFound => return NotAuthorized,
-        CallerResult::Suspended => return UserSuspended,
-        CallerResult::Lapsed => return UserLapsed,
-    };
+    let caller = state.verified_caller(bot_caller)?;
 
     let messages_visible_to_non_members =
         args.is_public && args.messages_visible_to_non_members.unwrap_or(args.gate_config.is_none());
@@ -128,29 +129,26 @@ fn create_channel_impl(
             }
         }
     {
-        return NotAuthorized;
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     if let Err(error) = validate_channel_name(&args.name) {
-        return match error {
-            StringLengthValidationError::TooShort(s) => NameTooShort(s),
-            StringLengthValidationError::TooLong(l) => NameTooLong(l),
-        };
+        return Err(match error {
+            StringLengthValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
+            StringLengthValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
+        });
     }
 
     if let Err(error) = validate_description(&args.description) {
-        return DescriptionTooLong(error);
+        return Err(OCErrorCode::DescriptionTooLong.with_json(&error));
     }
 
     if let Err(error) = validate_rules(args.rules.enabled, &args.rules.text) {
-        return match error {
-            RulesValidationError::TooShort(s) => RulesTooShort(s),
-            RulesValidationError::TooLong(l) => RulesTooLong(l),
-        };
+        return Err(error.into());
     }
 
     if let Err(error) = validate_avatar(args.avatar.as_ref()) {
-        return AvatarTooBig(error);
+        return Err(OCErrorCode::AvatarTooBig.with_json(&error));
     }
 
     if args
@@ -159,11 +157,11 @@ fn create_channel_impl(
         .map(|g| !g.validate(state.data.test_mode))
         .unwrap_or_default()
     {
-        return AccessGateInvalid;
+        return Err(OCErrorCode::InvalidAccessGate.into());
     }
 
     if state.data.channels.is_name_taken(&args.name, None) {
-        return NameTaken;
+        return Err(OCErrorCode::NameTaken.into());
     }
 
     let now = state.env.now();
@@ -207,5 +205,5 @@ fn create_channel_impl(
     }
 
     handle_activity_notification(state);
-    Success(SuccessResult { channel_id })
+    Ok(SuccessResult { channel_id })
 }

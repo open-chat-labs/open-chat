@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
 - Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+- Simplify responses and reduce mapping by using standardised error codes ([#7754](https://github.com/open-chat-labs/open-chat/pull/7754))
 
 ## [[2.0.1684](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1684-group)] - 2025-04-02
 

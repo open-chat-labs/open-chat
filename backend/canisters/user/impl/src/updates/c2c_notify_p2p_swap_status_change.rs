@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::{SwapStatus, SwapStatusChange as Args};
-use types::{Chat, CompleteP2PSwapResult, EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus};
+use types::{Chat, EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 
 #[update(guard = "caller_is_escrow_canister", msgpack = true)]
@@ -72,7 +72,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                     }
                 }
                 SwapStatus::Completed(c) => {
-                    if let CompleteP2PSwapResult::Success(status) = chat.events.complete_p2p_swap(
+                    if let Ok(status) = chat.events.complete_p2p_swap(
                         c.accepted_by,
                         m.thread_root_message_index,
                         m.message_id,

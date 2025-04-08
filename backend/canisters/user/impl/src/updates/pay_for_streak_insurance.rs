@@ -1,5 +1,4 @@
 use crate::guards::caller_is_owner;
-use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -7,7 +6,8 @@ use constants::{CHAT_LEDGER_CANISTER_ID, MEMO_STREAK_INSURANCE, SNS_GOVERNANCE_C
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::icrc1::make_transfer;
-use types::UserCanisterStreakInsurancePayment;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, UserCanisterStreakInsurancePayment};
 use user_canister::pay_for_streak_insurance::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -17,7 +17,7 @@ async fn pay_for_streak_insurance(args: Args) -> Response {
 
     let PrepareOk { days_currently_insured } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(response) => return Error(response),
     };
 
     let transfer_result = make_transfer(
@@ -62,10 +62,10 @@ struct PrepareOk {
     days_currently_insured: u8,
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     let now = state.env.now();
     if state.data.streak.days(now) == 0 {
-        return Err(NoActiveStreak);
+        return Err(OCErrorCode::NoActiveStreak.into());
     }
 
     let days_currently_insured = state
@@ -74,21 +74,18 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         .streak_insurance(now)
         .map(|s| s.days_insured)
         .unwrap_or_default();
+
     let price = state
         .data
         .streak
         .insurance_price(days_currently_insured, args.additional_days);
 
     if price != args.expected_price {
-        Err(IncorrectPrice(price))
+        Err(OCErrorCode::PriceMismatch.with_message(price))
     } else if !state.data.streak.acquire_payment_lock() {
-        Err(PaymentAlreadyInProgress)
+        Err(OCErrorCode::AlreadyInProgress.into())
     } else if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
-        Err(match error {
-            VerifyPinError::PinRequired => PinRequired,
-            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-        })
+        Err(error.into())
     } else {
         Ok(PrepareOk { days_currently_insured })
     }

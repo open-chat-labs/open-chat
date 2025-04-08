@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{DeleteUndeleteMessagesArgs, Reader, UndeleteMessageResult};
+use chat_events::{DeleteUndeleteMessagesArgs, Reader};
 use constants::OPENCHAT_BOT_USER_ID;
 use types::EventIndex;
 use user_canister::undelete_messages::{Response::*, *};
@@ -36,7 +36,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         let deleted: Vec<_> = delete_message_results
             .into_iter()
-            .filter_map(|(message_id, result)| matches!(result, UndeleteMessageResult::Success).then_some(message_id))
+            .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))
             .collect();
 
         let Some(events_reader) = chat
