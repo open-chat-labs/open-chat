@@ -55,6 +55,7 @@ function clean() {
                 );
             }
             copyFile(".", "build", ".ic-assets.json5");
+            copyFile(".", "build/.well-known", "assetlink.json");
         },
     };
 }
