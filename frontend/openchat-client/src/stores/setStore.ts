@@ -1,4 +1,5 @@
 import type { Writable } from "svelte/store";
+import { setsAreEqual } from "../utils/set";
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function createSetStore<T>(store: Writable<Set<T>>) {
@@ -7,7 +8,11 @@ export function createSetStore<T>(store: Writable<Set<T>>) {
 
     return {
         subscribe: store.subscribe,
-        set: store.set,
+        set: (s: Set<T>) => {
+            if (!setsAreEqual(s, storeValue)) {
+                store.set(s);
+            }
+        },
         add: (id: T): boolean => {
             if (!storeValue.has(id)) {
                 store.update((ids) => {

@@ -22,11 +22,11 @@
         userGroupKeys,
         draftMessagesStore,
         focusMessageIndex,
-        chatStateStore,
         chatListScopeStore as chatListScope,
         selectedCommunity,
         expandedDeletedMessages,
         eventsStore,
+        chatStateStore,
     } from "openchat-client";
     import InitialChatMessage from "./InitialChatMessage.svelte";
     import page from "page";
