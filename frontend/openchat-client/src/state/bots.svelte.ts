@@ -247,6 +247,10 @@ export class BotState {
         return pairs.every(([p, i]) => argIsValid(p, i));
     }
 
+    public get externalBots() {
+        return this.#externalBots;
+    }
+
     setExternalBots(bots: ExternalBot[]) {
         const map = new Map<string, ExternalBot>();
         bots.forEach((b) => map.set(b.id, b));

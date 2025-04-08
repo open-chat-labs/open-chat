@@ -2691,7 +2691,7 @@ export class OpenChat {
     #uninstalledBotChat(chat: ChatSummary): boolean {
         if (chat.kind !== "direct_chat") return false;
         const botId = chat.them.userId;
-        const bot = this.#liveState.externalBots.get(botId);
+        const bot = botState.externalBots.get(botId);
         return bot !== undefined && this.#liveState.installedDirectBots.get(botId) === undefined;
     }
 

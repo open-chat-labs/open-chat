@@ -34,7 +34,6 @@
         currentCommunityUserGroups as userGroups,
         anonUser,
         selectedCommunity,
-        externalBots,
         random64,
         directMessageCommandInstance,
         currentUser,
@@ -499,7 +498,9 @@
         return result;
     }
     let directChatBotId = $derived(client.directChatWithBot(chat));
-    let directBot = $derived(directChatBotId ? $externalBots.get(directChatBotId) : undefined);
+    let directBot = $derived(
+        directChatBotId ? botState.externalBots.get(directChatBotId) : undefined,
+    );
     let messageIsEmpty = $derived(
         (textContent?.trim() ?? "").length === 0 && attachment === undefined,
     );

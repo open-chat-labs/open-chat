@@ -24,12 +24,12 @@
         userStore,
         currentUser as user,
         type ExternalBot,
-        externalBots,
         type ExternalBotPermissions,
         type BotMatch as BotMatchType,
         type PublicApiKeyDetails,
         type EnhancedExternalBot,
         type MemberRole,
+        botState,
     } from "openchat-client";
     import { getContext } from "svelte";
     import InvitedUser from "./InvitedUser.svelte";
@@ -249,7 +249,9 @@
     let canInvite = $derived(client.canInviteUsers(collection.id));
 
     let bots = $derived(
-        hydrateBots(installedBots, $externalBots).filter((b) => matchesSearch(searchTermLower, b)),
+        hydrateBots(installedBots, botState.externalBots).filter((b) =>
+            matchesSearch(searchTermLower, b),
+        ),
     );
     let canManageBots = $derived(client.canManageBots(collection.id));
     let botContainer = $derived(
