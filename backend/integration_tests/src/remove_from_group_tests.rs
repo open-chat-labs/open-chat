@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::random_string;
@@ -83,7 +84,7 @@ fn block_user_who_is_no_longer_group_member_succeeds() {
 
     assert!(matches!(
         join_group_response,
-        local_user_index_canister::join_group::Response::Blocked
+        local_user_index_canister::join_group::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorBlocked)
     ));
 }
 

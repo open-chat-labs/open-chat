@@ -4457,6 +4457,7 @@ dependencies = [
  "msgpack",
  "notifications_canister",
  "notifications_index_canister",
+ "oc_error_codes",
  "online_users_canister",
  "openchat_installer_canister",
  "pocket-ic",

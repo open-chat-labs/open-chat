@@ -7,6 +7,20 @@ use ts_export::ts_export;
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct OCError(u16, Option<String>);
 
+impl OCError {
+    pub fn code(&self) -> u16 {
+        self.0
+    }
+
+    pub fn message(&self) -> Option<&str> {
+        self.1.as_deref()
+    }
+
+    pub fn matches_code(&self, code: OCErrorCode) -> bool {
+        self.0 == code as u16
+    }
+}
+
 impl From<OCErrorCode> for OCError {
     fn from(value: OCErrorCode) -> Self {
         OCError(value as u16, None)
