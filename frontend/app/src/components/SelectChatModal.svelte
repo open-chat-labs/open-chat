@@ -32,6 +32,7 @@
     import { i18nKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
     import Badges from "./home/profile/Badges.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -79,7 +80,7 @@
         communities: [],
     });
 
-    $effect(() => {
+    trackedEffect("select-chat-modal", () => {
         if (initialGlobalState === undefined && $globalState !== undefined) {
             initialGlobalState = $globalState;
         }

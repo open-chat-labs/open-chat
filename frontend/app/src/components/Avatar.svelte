@@ -5,6 +5,7 @@
     import { getContext } from "svelte";
     import { now } from "../stores/time";
     import Verified from "./icons/Verified.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -38,7 +39,7 @@
     let userStatus = $state(UserStatus.None);
     let userStatusUserId: string | undefined = $state(undefined);
 
-    $effect(() => {
+    trackedEffect("user-status", () => {
         if (!showStatus || userId !== userStatusUserId) {
             userStatus = UserStatus.None;
             userStatusUserId = userId;

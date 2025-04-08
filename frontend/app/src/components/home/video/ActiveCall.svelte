@@ -31,7 +31,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
-    import { filterRightPanelHistory, popRightPanelHistory } from "../../../stores/rightPanel";
+    import { rightPanelHistory } from "../../../stores/rightPanel";
     import { removeQueryStringParam } from "../../../utils/urls";
     import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
     import Overlay from "../../Overlay.svelte";
@@ -116,7 +116,7 @@
             }
 
             // close and threads we have open in the right panel
-            filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+            rightPanelHistory.filter((panel) => panel.kind !== "message_thread_panel");
             removeQueryStringParam("open");
 
             const callType = isPublic ? "broadcast" : "default";
@@ -297,7 +297,7 @@
 
             // this will trigger the left-meeting event which will in turn end the call
             $activeVideoCall.call.leave();
-            popRightPanelHistory();
+            rightPanelHistory.pop();
         }
     }
 

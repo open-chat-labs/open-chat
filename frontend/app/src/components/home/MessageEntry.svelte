@@ -59,6 +59,7 @@
     } from "../bots/botState";
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
     import AlertBoxModal from "../AlertBoxModal.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -516,7 +517,7 @@
     );
     let excessiveLinks = $derived(client.extractEnabledLinks(textContent ?? "").length > 5);
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunity));
-    $effect(() => {
+    trackedEffect("message-entry-inp", () => {
         if (inp) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
@@ -551,19 +552,19 @@
             previousEditingEvent = undefined;
         }
     });
-    $effect(() => {
+    trackedEffect("clear-message-actions", () => {
         // If the chat has changed, close the emoji picker or file selector
         if (!chatIdentifiersEqual(chat.id, previousChatId)) {
             messageAction = undefined;
             previousChatId = chat.id;
         }
     });
-    $effect(() => {
+    trackedEffect("attachment-focus", () => {
         if (attachment !== undefined || replyingTo !== undefined) {
             inp?.focus();
         }
     });
-    $effect(() => {
+    trackedEffect("screen-width-focus", () => {
         if ($screenWidth === ScreenWidth.Large) {
             inp?.focus();
         }
