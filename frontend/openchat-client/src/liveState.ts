@@ -21,7 +21,6 @@ import type {
     ChitState,
     WalletConfig,
     ObjectSet,
-    ExternalBot,
     ExternalBotPermissions,
     StreakInsurance,
 } from "openchat-shared";
