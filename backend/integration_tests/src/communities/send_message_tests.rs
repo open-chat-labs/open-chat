@@ -251,7 +251,7 @@ fn send_message_with_community_rules_not_accepted_fails() {
 
     assert!(
         matches!(
-            response,
+            &response,
             community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::CommunityRulesNotAccepted)
         ),
         "{response:?}"
@@ -281,7 +281,7 @@ fn send_message_with_channel_rules_not_accepted_fails() {
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
     assert!(
-        matches!(response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatRulesNotAccepted)),
+        matches!(&response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatRulesNotAccepted)),
         "{response:?}"
     );
 }
@@ -366,7 +366,7 @@ fn send_message_with_community_rules_but_not_channel_rules_accepted_fails() {
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, Some(Version::from(1)), None);
 
     assert!(
-        matches!(response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatRulesNotAccepted)),
+        matches!(&response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatRulesNotAccepted)),
         "{response:?}"
     );
 }
@@ -396,7 +396,7 @@ fn send_message_with_channel_rules_but_not_community_rules_accepted_fails() {
 
     assert!(
         matches!(
-            response,
+            &response,
             community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::CommunityRulesNotAccepted)
         ),
         "{response:?}"
@@ -509,7 +509,7 @@ fn send_message_with_old_community_rules_accepted_fails() {
 
     assert!(
         matches!(
-            response,
+            &response,
             community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::CommunityRulesNotAccepted)
         ),
         "{response:?}"
@@ -546,7 +546,7 @@ fn send_message_with_old_channel_rules_accepted_fails() {
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
     assert!(
-        matches!(response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatRulesNotAccepted)),
+        matches!(&response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatRulesNotAccepted)),
         "{response:?}"
     );
 }
