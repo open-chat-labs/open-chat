@@ -1,7 +1,6 @@
 use chat_events::{
-    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
-    DeleteUndeleteMessagesArgs, EditMessageArgs, GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader,
-    RemoveExpiredEventsResult, TipMessageArgs, UndeleteMessageResult,
+    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteUndeleteMessagesArgs, EditMessageArgs,
+    GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader, RemoveExpiredEventsResult, TipMessageArgs,
 };
 use event_store_producer::{EventStoreClient, Runtime};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -684,7 +683,7 @@ impl GroupChatCore {
             now,
         };
 
-        self.events.edit_message::<CdkRuntime>(edit_message_args, None);
+        let _ = self.events.edit_message::<CdkRuntime>(edit_message_args, None);
 
         let reader = self
             .events
@@ -939,7 +938,7 @@ impl GroupChatCore {
         message_ids: Vec<MessageId>,
         as_platform_moderator: bool,
         now: TimestampMillis,
-    ) -> Result<Vec<(MessageId, DeleteMessageResult)>, OCError> {
+    ) -> Result<Vec<(MessageId, Result<UserId, OCError>)>, OCError> {
         let (is_admin, min_visible_event_index) = if as_platform_moderator {
             (true, EventIndex::default())
         } else {
@@ -963,7 +962,7 @@ impl GroupChatCore {
         if thread_root_message_index.is_none() {
             for message_id in results
                 .iter()
-                .filter(|(_, result)| matches!(result, DeleteMessageResult::Success(_)))
+                .filter(|(_, result)| result.is_ok())
                 .map(|(message_id, _)| *message_id)
             {
                 if let Some(message_index) = self
@@ -1020,7 +1019,7 @@ impl GroupChatCore {
 
         let messages = results
             .into_iter()
-            .filter(|(_, result)| matches!(result, UndeleteMessageResult::Success))
+            .filter(|(_, result)| result.is_ok())
             .map(|(message_id, _)| message_id)
             .filter_map(|message_id| {
                 events_reader

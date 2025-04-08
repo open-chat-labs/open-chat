@@ -91,7 +91,7 @@ fn delete_message(args: &Args, reporter: UserId, state: &mut RuntimeState) {
         false,
         state.env.now(),
     ) {
-        if matches!(results[0].1, chat_events::DeleteMessageResult::Success(_)) {
+        if results.iter().any(|(_, r)| r.is_ok()) {
             handle_activity_notification(state);
         }
     }

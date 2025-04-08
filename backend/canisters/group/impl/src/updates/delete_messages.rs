@@ -4,7 +4,6 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::DeleteMessageResult;
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use group_canister::delete_messages::{Response::*, *};
 use oc_error_codes::{OCError, OCErrorCode};
@@ -80,13 +79,17 @@ fn delete_messages_impl(user_id: UserId, is_bot: bool, args: Args, state: &mut R
     )?;
 
     let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
-    for message_id in results.into_iter().filter_map(|(message_id, result)| {
-        if let DeleteMessageResult::Success(sender) = result {
-            (sender == user_id).then_some(message_id)
-        } else {
-            None
-        }
-    }) {
+    for message_id in
+        results.into_iter().filter_map(
+            |(message_id, result)| {
+                if let Ok(sender) = result {
+                    (sender == user_id).then_some(message_id)
+                } else {
+                    None
+                }
+            },
+        )
+    {
         // After 5 minutes hard delete those messages where the deleter was the message sender
         state.data.timer_jobs.enqueue_job(
             TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {

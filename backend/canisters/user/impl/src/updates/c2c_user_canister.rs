@@ -5,8 +5,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{
-    AddRemoveReactionArgs, DeleteMessageResult, DeleteUndeleteMessagesArgs, EditMessageArgs, MessageContentInternal, Reader,
-    TipMessageArgs,
+    AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, MessageContentInternal, Reader, TipMessageArgs,
 };
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -198,7 +197,7 @@ fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, st
         let now = state.env.now();
         let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
-        chat.events.edit_message::<CdkRuntime>(
+        let _ = chat.events.edit_message::<CdkRuntime>(
             EditMessageArgs {
                 sender: caller_user_id,
                 min_visible_event_index: EventIndex::default(),
@@ -231,7 +230,7 @@ fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_
 
         let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
         for (message_id, result) in delete_message_results {
-            if matches!(result, DeleteMessageResult::Success(_)) {
+            if result.is_ok() {
                 state.data.timer_jobs.enqueue_job(
                     TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                         chat_id,

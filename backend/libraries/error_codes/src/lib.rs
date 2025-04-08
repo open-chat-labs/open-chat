@@ -134,6 +134,8 @@ pub enum OCErrorCode {
     TransferCannotBeZero = 290,
     NoActiveStreak = 291,
     TextTooLong = 292,
+    HardDeleted = 293,
+    InvalidMessageType = 294,
 
     // InternalError
     C2CError = 500,

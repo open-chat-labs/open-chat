@@ -272,7 +272,7 @@ impl ChatEvents {
         &mut self,
         args: EditMessageArgs,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> EditMessageResult {
+    ) -> Result<(MessageIndex, EventMetaData), OCError> {
         let sender = args.sender;
         let thread_root_message_index = args.thread_root_message_index;
         let now = args.now;
@@ -298,10 +298,11 @@ impl ChatEvents {
                     |m| m.incr(MetricKey::Edits, 1),
                     now,
                 );
-                EditMessageResult::Success(message_index, event)
+                Ok((message_index, event))
             }
-            Err(UpdateEventError::NoChange(result)) => result,
-            Err(UpdateEventError::NotFound) => EditMessageResult::NotFound,
+            Err(UpdateEventError::NoChange(Ok((m, e)))) => Ok((m, e)),
+            Err(UpdateEventError::NoChange(Err(e))) => Err(e),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
     }
 
@@ -312,9 +313,9 @@ impl ChatEvents {
         chat: Chat,
         anonymized_id: String,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> Result<(MessageIndex, EventMetaData, Document), UpdateEventError<EditMessageResult>> {
+    ) -> Result<(MessageIndex, EventMetaData, Document), UpdateEventError<Result<(MessageIndex, EventMetaData), OCError>>> {
         if message.sender != args.sender || matches!(message.content, MessageContentInternal::Deleted(_)) {
-            return Err(UpdateEventError::NoChange(EditMessageResult::NotAuthorized));
+            return Err(UpdateEventError::NoChange(Err(OCErrorCode::InitiatorNotAuthorized.into())));
         }
 
         let existing_text = message.content.text();
@@ -370,10 +371,7 @@ impl ChatEvents {
             return Ok((message_index, event, document));
         }
 
-        Err(UpdateEventError::NoChange(EditMessageResult::Success(
-            message.message_index,
-            event,
-        )))
+        Err(UpdateEventError::NoChange(Ok((message.message_index, event))))
     }
 
     pub fn last_updated(&self) -> Option<TimestampMillis> {
@@ -383,19 +381,19 @@ impl ChatEvents {
         )
     }
 
-    pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, DeleteMessageResult)> {
+    pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, Result<UserId, OCError>)> {
         args.iter()
             .map(|delete_message_args| (delete_message_args.message_id, self.delete_message(delete_message_args)))
             .collect()
     }
 
-    pub fn undelete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, UndeleteMessageResult)> {
+    pub fn undelete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, Result<(), OCError>)> {
         args.iter()
             .map(|undelete_message_args| (undelete_message_args.message_id, self.undelete_message(undelete_message_args)))
             .collect()
     }
 
-    fn delete_message(&mut self, args: DeleteUndeleteMessageArgs) -> DeleteMessageResult {
+    fn delete_message(&mut self, args: DeleteUndeleteMessageArgs) -> Result<UserId, OCError> {
         match self.update_message(
             args.thread_root_message_index,
             args.message_id.into(),
@@ -423,24 +421,22 @@ impl ChatEvents {
                 if args.thread_root_message_index.is_none() {
                     self.search_index.remove(message_index);
                 }
-                DeleteMessageResult::Success(sender)
+                Ok(sender)
             }
-            Err(UpdateEventError::NoChange(result)) => result,
-            Err(UpdateEventError::NotFound) => DeleteMessageResult::NotFound,
+            Err(UpdateEventError::NoChange(error)) => Err(error.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
     }
 
     fn delete_message_inner(
         message: &mut MessageInternal,
         args: &DeleteUndeleteMessageArgs,
-    ) -> Result<(UserId, MessageIndex), UpdateEventError<DeleteMessageResult>> {
-        use DeleteMessageResult::*;
-
+    ) -> Result<(UserId, MessageIndex), UpdateEventError<OCErrorCode>> {
         if message.sender == args.caller || args.is_admin {
             if message.deleted_by.is_some() || matches!(message.content, MessageContentInternal::Deleted(_)) {
-                Err(UpdateEventError::NoChange(AlreadyDeleted))
+                Err(UpdateEventError::NoChange(OCErrorCode::NoChange))
             } else if matches!(message.content, MessageContentInternal::VideoCall(ref c) if c.ended.is_none()) {
-                Err(UpdateEventError::NoChange(NotAuthorized))
+                Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized))
             } else {
                 let sender = message.sender;
                 message.deleted_by = Some(DeletedByInternal {
@@ -450,11 +446,11 @@ impl ChatEvents {
                 Ok((sender, message.message_index))
             }
         } else {
-            Err(UpdateEventError::NoChange(NotAuthorized))
+            Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized))
         }
     }
 
-    fn undelete_message(&mut self, args: DeleteUndeleteMessageArgs) -> UndeleteMessageResult {
+    fn undelete_message(&mut self, args: DeleteUndeleteMessageArgs) -> Result<(), OCError> {
         match self.update_message(
             args.thread_root_message_index,
             args.message_id.into(),
@@ -482,27 +478,25 @@ impl ChatEvents {
                 if args.thread_root_message_index.is_none() {
                     self.search_index.push(message_index, sender, document);
                 }
-                UndeleteMessageResult::Success
+                Ok(())
             }
-            Err(UpdateEventError::NoChange(result)) => result,
-            Err(UpdateEventError::NotFound) => UndeleteMessageResult::NotFound,
+            Err(UpdateEventError::NoChange(error)) => Err(error.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
     }
 
     fn undelete_message_inner(
         message: &mut MessageInternal,
         args: &DeleteUndeleteMessageArgs,
-    ) -> Result<(UserId, MessageIndex, Document), UpdateEventError<UndeleteMessageResult>> {
-        use UndeleteMessageResult::*;
-
+    ) -> Result<(UserId, MessageIndex, Document), UpdateEventError<OCErrorCode>> {
         let Some(deleted_by) = message.deleted_by.as_ref().map(|db| db.deleted_by) else {
-            return Err(UpdateEventError::NoChange(NotDeleted));
+            return Err(UpdateEventError::NoChange(OCErrorCode::NoChange));
         };
 
         if deleted_by == args.caller || (args.is_admin && message.sender != deleted_by) {
             match message.content {
-                MessageContentInternal::Deleted(_) => Err(UpdateEventError::NoChange(HardDeleted)),
-                MessageContentInternal::Crypto(_) => Err(UpdateEventError::NoChange(InvalidMessageType)),
+                MessageContentInternal::Deleted(_) => Err(UpdateEventError::NoChange(OCErrorCode::HardDeleted)),
+                MessageContentInternal::Crypto(_) => Err(UpdateEventError::NoChange(OCErrorCode::InvalidMessageType)),
                 _ => {
                     let sender = message.sender;
                     message.deleted_by = None;
@@ -510,7 +504,7 @@ impl ChatEvents {
                 }
             }
         } else {
-            Err(UpdateEventError::NoChange(NotAuthorized))
+            Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized))
         }
     }
 
@@ -2253,19 +2247,6 @@ pub struct EditMessageArgs {
     pub now: TimestampMillis,
 }
 
-pub enum EditMessageResult {
-    Success(MessageIndex, EventMetaData),
-    NotAuthorized,
-    NotFound,
-}
-
-pub enum DeleteMessageResult {
-    Success(UserId), // UserId is the message sender
-    AlreadyDeleted,
-    NotAuthorized,
-    NotFound,
-}
-
 pub struct DeleteUndeleteMessagesArgs {
     pub caller: UserId,
     pub is_admin: bool,
@@ -2295,15 +2276,6 @@ impl DeleteUndeleteMessagesArgs {
             now: self.now,
         })
     }
-}
-
-pub enum UndeleteMessageResult {
-    Success,
-    NotDeleted,
-    HardDeleted,
-    InvalidMessageType,
-    NotAuthorized,
-    NotFound,
 }
 
 pub struct RegisterPollVoteArgs {
