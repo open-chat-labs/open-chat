@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
 - Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
 
+### Fixed
+
+- Fix primary language not updating in GroupIndex ([#7752](https://github.com/open-chat-labs/open-chat/pull/7752))
+
 ## [[2.0.1677](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1677-group_index)] - 2025-04-02
 
 ### Added
