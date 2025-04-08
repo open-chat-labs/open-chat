@@ -22,11 +22,11 @@
         userGroupKeys,
         draftMessagesStore,
         focusMessageIndex,
-        chatStateStore,
         chatListScopeStore as chatListScope,
         selectedCommunity,
         expandedDeletedMessages,
         eventsStore,
+        chatStateStore,
     } from "openchat-client";
     import InitialChatMessage from "./InitialChatMessage.svelte";
     import page from "page";
@@ -34,6 +34,7 @@
     import PrivatePreview from "./PrivatePreview.svelte";
     import TimelineDate from "./TimelineDate.svelte";
     import Witch from "../Witch.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -244,7 +245,7 @@
     let privatePreview = $derived(privateCommunityPreview || privateChatPreview);
     let isEmptyChat = $derived(chat.latestEventIndex <= 0 || privatePreview);
 
-    $effect(() => {
+    trackedEffect("current-chat-messages", () => {
         if (currentChatId === undefined || !chatIdentifiersEqual(chat.id, currentChatId)) {
             currentChatId = chat.id;
             initialised = false;

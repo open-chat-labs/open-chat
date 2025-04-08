@@ -19,7 +19,7 @@
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import type { OpenChat } from "openchat-client";
-    import { popRightPanelHistory, rightPanelHistory } from "../../../stores/rightPanel";
+    import { rightPanelHistory } from "../../../stores/rightPanel";
     import { pageReplace } from "../../../routes";
     import { removeQueryStringParam } from "../../../utils/urls";
 
@@ -44,7 +44,7 @@
     function toggleThread() {
         if (chat.chatId !== undefined && chat.messageIndex !== undefined) {
             if (threadOpen) {
-                popRightPanelHistory();
+                rightPanelHistory.pop();
                 pageReplace(removeQueryStringParam("open"));
             } else {
                 client.openThreadFromMessageIndex(chat.chatId, chat.messageIndex);
@@ -55,7 +55,7 @@
 
     function toggleParticipants() {
         if (participantsOpen) {
-            popRightPanelHistory();
+            rightPanelHistory.pop();
         } else {
             if (
                 $activeVideoCall?.messageId !== undefined &&

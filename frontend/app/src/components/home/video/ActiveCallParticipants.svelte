@@ -12,7 +12,7 @@
     import ActiveCallParticipantsHeader from "./ActiveCallParticipantsHeader.svelte";
     import ActiveCallParticipant from "./ActiveCallParticipant.svelte";
     import { getContext, onMount } from "svelte";
-    import { popRightPanelHistory } from "../../../stores/rightPanel";
+    import { rightPanelHistory } from "../../../stores/rightPanel";
     import { activeVideoCall } from "../../../stores/video";
     import VirtualList from "../../VirtualList.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -81,7 +81,7 @@
     function close() {
         onClose();
         activeVideoCall.participantsOpen(false);
-        popRightPanelHistory();
+        rightPanelHistory.pop();
     }
 
     function selectTab(tab: "presenters" | "viewers") {

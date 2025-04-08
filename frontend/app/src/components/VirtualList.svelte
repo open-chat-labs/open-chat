@@ -1,4 +1,5 @@
 <script lang="ts" generics="T">
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import { onMount, tick, untrack, type Snippet } from "svelte";
 
     type KeyFn = (item: T) => string;
@@ -151,7 +152,7 @@
     });
 
     // whenever `items` changes, invalidate the current heightmap
-    $effect(() => {
+    trackedEffect("virtual-list", () => {
         if (mounted) refresh(items, viewport_height, itemHeight);
     });
 </script>

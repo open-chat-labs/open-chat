@@ -17,7 +17,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { toastStore } from "../../../stores/toast";
-    import { popRightPanelHistory } from "../../../stores/rightPanel";
+    import { rightPanelHistory } from "../../../stores/rightPanel";
 
     const client = getContext<OpenChat>("client");
 
@@ -71,11 +71,11 @@
             .then((resp) => {
                 switch (resp.kind) {
                     case "success": {
-                        popRightPanelHistory();
+                        rightPanelHistory.pop();
                         break;
                     }
                     case "add_to_channel_partial_success": {
-                        popRightPanelHistory();
+                        rightPanelHistory.pop();
                         toastStore.showSuccessToast(i18nKey("group.addMembersPartialSuccess"));
                         break;
                     }

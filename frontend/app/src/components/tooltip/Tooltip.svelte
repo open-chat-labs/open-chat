@@ -7,6 +7,7 @@
     import { tick } from "svelte";
     import Hoverable from "../Hoverable.svelte";
     import type { Alignment, Position } from "../../utils/alignment";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     interface Props {
         enable?: boolean;
@@ -47,7 +48,7 @@
         autoWidth ? "unset" : calculateMaxWidth(textLength, longestWord, $mobileWidth),
     );
 
-    $effect(() => {
+    trackedEffect("tooltip", () => {
         if (show) {
             showTooltip();
         } else {

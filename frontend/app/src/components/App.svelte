@@ -54,6 +54,7 @@
     import InstallPrompt from "./home/InstallPrompt.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import { reviewingTranslations } from "@i18n/i18n";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -121,12 +122,12 @@
 
     let lastScrollY = $state(window.scrollY);
 
-    $effect(() => {
+    trackedEffect("rtl", () => {
         // subscribe to the rtl store so that we can set the overall page direction at the right time
         document.dir = $rtlStore ? "rtl" : "ltr";
     });
 
-    $effect(() => {
+    trackedEffect("landing-page", () => {
         if (!$notFound && showLandingPage) {
             document.body.classList.add("landing-page");
         } else {
@@ -134,7 +135,7 @@
         }
     });
 
-    $effect(calculateHeight);
+    trackedEffect("calculate-height", calculateHeight);
 
     onMount(() => {
         const unsubs = [

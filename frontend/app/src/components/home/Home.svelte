@@ -69,11 +69,7 @@
         closeNotifications,
         initialiseNotifications,
     } from "../../utils/notifications";
-    import {
-        filterByChatType,
-        filterRightPanelHistory,
-        rightPanelHistory,
-    } from "../../stores/rightPanel";
+    import { rightPanelHistory } from "../../stores/rightPanel";
     import Upgrade from "./upgrade/Upgrade.svelte";
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
@@ -120,6 +116,7 @@
     import { scream } from "../../utils/scream";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -456,7 +453,7 @@
         untrack(async () => {
             // wait until we have loaded the chats
             if (initialised) {
-                filterRightPanelHistory((state) => state.kind !== "community_filters");
+                rightPanelHistory.filter((state) => state.kind !== "community_filters");
                 if (
                     $anonUser &&
                     pathParams.kind === "chat_list_route" &&
@@ -587,7 +584,7 @@
     // Note: very important (and hacky) that this is hidden in a function rather than inline in the top level reactive
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
-        filterRightPanelHistory((panel) => panel.kind === "user_profile");
+        rightPanelHistory.filter((panel) => panel.kind === "user_profile");
     }
 
     function closeThread() {
@@ -597,12 +594,12 @@
         }
         tick().then(() => {
             activeVideoCall?.threadOpen(false);
-            filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+            rightPanelHistory.filter((panel) => panel.kind !== "message_thread_panel");
         });
     }
 
     function resetRightPanel() {
-        filterByChatType($selectedChatStore);
+        rightPanelHistory.filterByChatType($selectedChatStore);
     }
 
     function goToMessageIndex(detail: { index: number; preserveFocus: boolean }) {
@@ -1177,7 +1174,7 @@
     );
     let nervousSystem = $derived(client.tryGetNervousSystem(governanceCanisterId));
     // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
-    $effect(() => {
+    trackedEffect("identity-state", () => {
         if ($identityState.kind === "registering") {
             modal = { kind: "registering" };
         } else if ($identityState.kind === "logging_in") {
@@ -1198,7 +1195,7 @@
             tick().then(() => joinGroup(join));
         }
     });
-    $effect(() => {
+    trackedEffect("route-change", () => {
         routeChange($chatsInitialised, $pathParams);
     });
     let bgHeight = $derived($dimensions.height * 0.9);

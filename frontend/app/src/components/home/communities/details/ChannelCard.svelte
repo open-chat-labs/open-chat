@@ -15,7 +15,7 @@
     import { getContext } from "svelte";
     import page from "page";
     import AccessGateIcon from "../../access/AccessGateIcon.svelte";
-    import { popRightPanelHistory } from "../../../../stores/rightPanel";
+    import { rightPanelHistory } from "../../../../stores/rightPanel";
     import Markdown from "../../Markdown.svelte";
     import { iconSize } from "@src/stores/iconSize";
     import MenuIcon from "@src/components/MenuIcon.svelte";
@@ -40,7 +40,7 @@
         if ($selectedCommunity === undefined) return;
         if (!match.public) return;
         if ($mobileWidth) {
-            popRightPanelHistory();
+            rightPanelHistory.pop();
         }
         page(routeForChatIdentifier($chatListScope.kind, match.id));
     }

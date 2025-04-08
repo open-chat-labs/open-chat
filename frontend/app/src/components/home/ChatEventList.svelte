@@ -343,7 +343,10 @@
 
     function chatsUpdated(ctx: MessageContext) {
         if (messageContextsEqual(ctx, messageContext)) {
-            loadMoreIfRequired();
+            // I *think* chatsUpdated is only going to be because there are new messages to load
+            // so there is no need to load more previous messages. It's better that we don't even check
+            // here because in certain race conditions we might ending up loading the previous messages twice.
+            loadNewMessagesIfRequired();
         }
     }
 
@@ -425,6 +428,20 @@
     function shouldLoadNewMessages() {
         moreNewAvailable = client.moreNewMessagesAvailable(chat.id, threadRootEvent);
         return insideBottomThreshold() && moreNewAvailable;
+    }
+
+    async function loadNewMessagesIfRequired(fromScroll = false): Promise<boolean> {
+        loadingNewMessages = shouldLoadNewMessages();
+        loadingFromUserScroll = loadingNewMessages && fromScroll;
+        const loadPromises = [];
+        if (loadingNewMessages) {
+            console.debug("SCROLL: about to load new message");
+            loadPromises.push(client.loadNewMessages(chat.id, threadRootEvent));
+        }
+        if (loadPromises.length > 0) {
+            await Promise.all(loadPromises);
+        }
+        return loadingNewMessages;
     }
 
     async function loadMoreIfRequired(fromScroll = false, initialLoad = false): Promise<boolean> {
@@ -630,6 +647,10 @@
         await interruptScroll(() => {
             console.debug("SCROLL: onLoadedPrevious interrupt");
         });
+
+        // It is possible the when we load previous messages, because of the filtering applied, we might not
+        // have enough events. To cover that case we will check if we need to load some more.
+        loadMoreIfRequired();
     }
 
     async function onLoadedNewMessages(context: MessageContext) {

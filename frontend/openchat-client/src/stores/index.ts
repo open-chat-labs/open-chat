@@ -29,3 +29,7 @@ export * from "./bots";
 export * from "./ephemeralMessages";
 export * from "./minutesOnline";
 export * from "./streakInsurance";
+export * from "./recentlySentMessages";
+export * from "./messageFilters";
+export * from "./proposalTallies";
+export * from "./localMessageUpdates";

@@ -59,7 +59,7 @@
     import TipBuilder from "./TipBuilder.svelte";
     import TipThumbnail from "./TipThumbnail.svelte";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
-    import { filterRightPanelHistory } from "../../stores/rightPanel";
+    import { rightPanelHistory } from "../../stores/rightPanel";
     import { removeQueryStringParam } from "../../utils/urls";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -70,6 +70,7 @@
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
     import { quickReactions } from "../../stores/quickReactions";
     import EphemeralNote from "./EphemeralNote.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -185,7 +186,7 @@
     let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
     let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
 
-    $effect(() => {
+    trackedEffect("read-by-them", () => {
         if (confirmedReadByThem && $unconfirmedReadByThem.has(msg.messageId)) {
             unconfirmedReadByThem.delete(msg.messageId);
         }
@@ -210,7 +211,7 @@
                 percentageExpired = expired ? 100 : (age / ttl) * 100;
                 // if this message is the root of a thread, make sure that we close that thread when the message expires
                 if (percentageExpired >= 100 && msg.thread) {
-                    filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+                    rightPanelHistory.filter((panel) => panel.kind !== "message_thread_panel");
                     pageReplace(removeQueryStringParam("open"));
                 }
             });

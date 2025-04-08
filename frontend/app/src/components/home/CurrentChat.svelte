@@ -57,6 +57,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import ExternalContent from "./ExternalContent.svelte";
     import DirectChatHeader from "../bots/DirectChatHeader.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     interface Props {
         joining: MultiUserChat | undefined;
@@ -308,7 +309,7 @@
     }
     let showChatHeader = $derived(!$mobileWidth || !$framed);
     let messageContext = $derived({ chatId: chat.id });
-    $effect(() => {
+    trackedEffect("current-chat", () => {
         if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
             previousChatId = chat.id;
             showSearchHeader = false;

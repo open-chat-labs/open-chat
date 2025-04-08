@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import { eventListScrolling } from "../../stores/scrollPos";
     import { offlineStore } from "openchat-client";
 
@@ -58,7 +59,7 @@
             onImageLoaded(previewWrapper);
         }
     }
-    $effect(() => {
+    trackedEffect("generic-preview", () => {
         if (intersecting && !$eventListScrolling && !rendered && !$offlineStore) {
             // make sure we only actually *load* the preview once
             previewPromise = previewPromise ?? loadPreview(url);

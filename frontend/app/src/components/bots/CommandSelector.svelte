@@ -44,6 +44,7 @@
     import { toastStore } from "../../stores/toast";
     import Tooltip from "../tooltip/Tooltip.svelte";
     import BotAvatar from "./BotAvatar.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     interface Props {
         selectedBotId?: string; // this will be the botId if we are in a direct chat with a bot
@@ -205,7 +206,7 @@
         };
     });
 
-    $effect(() => {
+    trackedEffect("command-selector", () => {
         if (commands.length === 0) {
             onNoMatches();
         }
