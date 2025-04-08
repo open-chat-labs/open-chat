@@ -12,7 +12,7 @@ use oc_error_codes::{OCError, OCErrorCode};
 fn c2c_invite_users_to_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| c2c_invite_users_to_channel_impl(args, state)).unwrap_or_else(|error| Error(error))
+    mutate_state(|state| c2c_invite_users_to_channel_impl(args, state)).unwrap_or_else(Error)
 }
 
 fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Result<Response, OCError> {
