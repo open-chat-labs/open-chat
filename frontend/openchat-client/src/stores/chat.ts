@@ -96,7 +96,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
     }),
 );
 
-const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvents">(
+export const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvents">(
     chatStateStore,
     "serverEvents",
     () => [],
@@ -205,7 +205,7 @@ export const expiredEventRangesStore = createDerivedPropStore<
 
 export const hideMessagesFromDirectBlocked = createLsBoolStore(configKeys.hideBlocked, false);
 
-const currentChatBlockedOrSuspendedUsers = derived(
+export const currentChatBlockedOrSuspendedUsers = derived(
     [
         currentChatBlockedUsers,
         currentCommunityBlockedUsers,
