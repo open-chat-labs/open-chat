@@ -86,35 +86,47 @@ export type UpdatedGroup = {
     permissions: ChatPermissions;
 };
 
-export function filterRightPanelHistory(fn: (state: RightPanelState) => boolean): void {
-    return rightPanelHistory.update((history) => history.filter(fn));
-}
+function createRightPanelHistoryStore() {
+    const store = writable<RightPanelState[]>([]);
+    let storeValue: RightPanelState[] = [];
+    store.subscribe((v) => (storeValue = v));
 
-export function filterByChatType(chat: ChatSummary | undefined): void {
-    if (chat === undefined) return;
-    filterRightPanelHistory((panel) => {
-        if (chat.kind === "direct_chat") {
-            return ["new_group_panel", "user_profile"].includes(panel.kind);
+    function set(states: RightPanelState[]) {
+        // optimise the empty case
+        if (states.length === 0 && storeValue.length === 0) {
+            return;
         }
+        return store.set(states);
+    }
 
-        if (
-            chat.kind === "group_chat" &&
-            (chat.previewed ||
-                (!(chat.subtype?.isNns ?? false) && panel.kind === "proposal_filters"))
-        ) {
-            return false;
-        }
+    function filter(fn: (state: RightPanelState) => boolean) {
+        return set(storeValue.filter(fn));
+    }
 
-        return true;
-    });
+    return {
+        subscribe: store.subscribe,
+        update: store.update,
+        set,
+        filter,
+        filterByChatType: (chat: ChatSummary | undefined) => {
+            if (chat === undefined) return;
+
+            return filter((p) => {
+                if (chat.kind === "direct_chat") {
+                    return ["new_group_panel", "user_profile"].includes(p.kind);
+                }
+                if (
+                    chat.kind === "group_chat" &&
+                    (chat.previewed ||
+                        (!(chat.subtype?.isNns ?? false) && p.kind === "proposal_filters"))
+                ) {
+                    return false;
+                }
+                return true;
+            });
+        },
+        pop: () => store.update((history) => history.slice(0, history.length - 1)),
+        push: (state: RightPanelState) => store.update((history) => [...history, state]),
+    };
 }
-
-export const rightPanelHistory = writable<RightPanelState[]>([]);
-
-export function popRightPanelHistory(): void {
-    rightPanelHistory.update((history) => history.slice(0, history.length - 1));
-}
-
-export function pushRightPanelHistory(state: RightPanelState): void {
-    rightPanelHistory.update((history) => [...history, state]);
-}
+export const rightPanelHistory = createRightPanelHistoryStore();

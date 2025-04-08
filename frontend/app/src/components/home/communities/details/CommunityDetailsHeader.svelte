@@ -12,7 +12,7 @@
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../../stores/iconSize";
     import { publish, type CommunitySummary, type Level } from "openchat-client";
-    import { popRightPanelHistory, pushRightPanelHistory } from "../../../../stores/rightPanel";
+    import { rightPanelHistory } from "../../../../stores/rightPanel";
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
 
@@ -25,13 +25,13 @@
     let { community, canEdit, level }: Props = $props();
 
     function close() {
-        popRightPanelHistory();
+        rightPanelHistory.pop();
     }
     function showMembers() {
-        pushRightPanelHistory({ kind: "show_community_members" });
+        rightPanelHistory.push({ kind: "show_community_members" });
     }
     function invite() {
-        pushRightPanelHistory({ kind: "invite_community_users" });
+        rightPanelHistory.push({ kind: "invite_community_users" });
     }
     function editCommunity() {
         if (canEdit) {

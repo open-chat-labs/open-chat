@@ -22,6 +22,7 @@
     import Loading from "../Loading.svelte";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
     import UninstalledDirectBot from "../bots/UninstalledDirectBot.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     interface Props {
         joining: MultiUserChat | undefined;
@@ -46,7 +47,7 @@
     });
 
     let installingBot = $state(false);
-    $effect(() => {
+    trackedEffect("installing-bot", () => {
         if (uninstalledBotId !== undefined) {
             installingBot = true;
         }
@@ -96,7 +97,7 @@
         alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
     }
     let noChat = $derived($pathParams.kind !== "global_chat_selected_route");
-    $effect(() => {
+    trackedEffect("align-video-call", () => {
         if (middlePanel) {
             alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
         }

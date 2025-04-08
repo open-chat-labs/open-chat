@@ -17,7 +17,7 @@
     import type { OpenChat } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
-    import { pushRightPanelHistory } from "../../../../stores/rightPanel";
+    import { rightPanelHistory } from "../../../../stores/rightPanel";
     import Plus from "svelte-material-icons/Plus.svelte";
     import CommunityCardLink from "./CommunityCardLink.svelte";
     import Translatable from "../../../Translatable.svelte";
@@ -90,7 +90,7 @@
     }
 
     function showFilters() {
-        pushRightPanelHistory({ kind: "community_filters" });
+        rightPanelHistory.push({ kind: "community_filters" });
     }
 
     onMount(() => {

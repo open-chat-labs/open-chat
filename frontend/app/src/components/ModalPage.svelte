@@ -3,6 +3,7 @@
     import { setLocale, supportedLanguages } from "../i18n/i18n";
     import { locale } from "svelte-i18n";
     import { onMount } from "svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     interface Props {
         minHeight?: string | undefined;
         bgClass?:
@@ -27,7 +28,7 @@
     });
 
     let selectedLocale = $state(($locale as string).substring(0, 2));
-    $effect(() => {
+    trackedEffect("set-locale", () => {
         setLocale(selectedLocale);
     });
 </script>

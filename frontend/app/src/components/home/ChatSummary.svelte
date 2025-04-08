@@ -58,6 +58,7 @@
     import VideoCallIcon from "./video/VideoCallIcon.svelte";
     import Badges from "./profile/Badges.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -97,7 +98,7 @@
     let delOffset = $state(maxDelOffset);
     let swiped = $state(false);
 
-    $effect(() => updateUnreadCounts(chatSummary));
+    trackedEffect("unread-counts", () => updateUnreadCounts(chatSummary));
 
     onMount(() => {
         return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
