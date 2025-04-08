@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, currentUser, externalBots, type ExternalBot } from "openchat-client";
+    import { AvatarSize, botState, currentUser, type ExternalBot } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import AlertBox from "../AlertBox.svelte";
@@ -14,8 +14,8 @@
 
     let bots = $derived(
         ownedOnly
-            ? [...$externalBots.values()].filter((b) => b.ownerId === $currentUser.userId)
-            : [...$externalBots.values()],
+            ? [...botState.externalBots.values()].filter((b) => b.ownerId === $currentUser.userId)
+            : [...botState.externalBots.values()],
     );
 </script>
 

@@ -34,11 +34,11 @@
         currentCommunityUserGroups as userGroups,
         anonUser,
         selectedCommunity,
-        externalBots,
         random64,
         directMessageCommandInstance,
         currentUser,
         draftMessagesStore,
+        botState,
     } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
@@ -51,12 +51,6 @@
     import { useBlockLevelMarkdown } from "../../stores/settings";
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
     import CommandSelector from "../bots/CommandSelector.svelte";
-    import {
-        prefix as commandPrefix,
-        cancel as cancelCommand,
-        selectedCommand,
-        showingBuilder,
-    } from "../bots/botState";
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
     import AlertBoxModal from "../AlertBoxModal.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
@@ -231,17 +225,17 @@
         const commandMatch = inputContent?.match(/^\/.*/);
         if (commandMatch) {
             showCommandSelector = true;
-            commandPrefix.set(commandMatch[0]);
+            botState.prefix = commandMatch[0];
         } else {
             showCommandSelector = false;
-            cancelCommand();
+            botState.cancel();
         }
     }
 
     function cancelCommandSelector(sent: boolean) {
         commandSent = sent;
         showCommandSelector = false;
-        cancelCommand();
+        botState.cancel();
         if (sent) {
             onSetTextContent();
         }
@@ -298,7 +292,7 @@
             if (directBot) {
                 if (!showCommandSelector && !messageIsEmpty) {
                     sendADirectBotMessage(directBot);
-                } else if (!commandSent && $selectedCommand === undefined) {
+                } else if (!commandSent && botState.selectedCommand === undefined) {
                     showDirectBotChatWarning = true;
                 }
                 e.preventDefault();
@@ -504,7 +498,9 @@
         return result;
     }
     let directChatBotId = $derived(client.directChatWithBot(chat));
-    let directBot = $derived(directChatBotId ? $externalBots.get(directChatBotId) : undefined);
+    let directBot = $derived(
+        directChatBotId ? botState.externalBots.get(directChatBotId) : undefined,
+    );
     let messageIsEmpty = $derived(
         (textContent?.trim() ?? "").length === 0 && attachment === undefined,
     );
@@ -589,12 +585,12 @@
         warning={i18nKey("bots.direct.warning")} />
 {/if}
 
-{#if $selectedCommand && $showingBuilder}
+{#if botState.selectedCommand && botState.showingBuilder}
     <CommandBuilder
         {messageContext}
         onCommandSent={() => cancelCommandSelector(true)}
         onCancel={() => cancelCommandSelector(false)}
-        command={$selectedCommand} />
+        command={botState.selectedCommand} />
 {/if}
 
 {#if showMentionPicker}
@@ -858,5 +854,13 @@
         align-items: center;
         height: 100%;
         gap: $sp4;
+    }
+
+    .prefix {
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 1000;
+        @include font(bold, normal, fs-200);
     }
 </style>

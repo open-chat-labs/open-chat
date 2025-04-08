@@ -34,10 +34,10 @@
         blockedUsers as directlyBlockedUsers,
         communities,
         selectedCommunity,
-        externalBots,
         type MessageContext,
         subscribe,
         messageContextsEqual,
+        botState,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -340,7 +340,7 @@
     let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);
     let privateChatPreview = $derived(client.maskChatMessages(chat));
     let bot = $derived(
-        chat.kind === "direct_chat" ? $externalBots.get(chat.them.userId) : undefined,
+        chat.kind === "direct_chat" ? botState.externalBots.get(chat.them.userId) : undefined,
     );
 </script>
 
