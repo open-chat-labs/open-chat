@@ -7,8 +7,8 @@ use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, Time
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::EditMessageArgs;
 use chat_events::TextContentInternal;
+use chat_events::{EditMessageArgs, EditMessageSuccess};
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult};
 use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 use event_store_producer::NullRuntime;
@@ -257,7 +257,9 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                             now,
                         };
 
-                        let Ok((message_index, event)) = chat.events.edit_message::<CdkRuntime>(edit_message_args, None) else {
+                        let Ok(EditMessageSuccess { message_index, event }) =
+                            chat.events.edit_message::<CdkRuntime>(edit_message_args, None)
+                        else {
                             // Shouldn't happen
                             return c2c_bot_send_message::Response::NotAuthorized;
                         };

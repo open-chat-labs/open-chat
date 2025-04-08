@@ -272,7 +272,7 @@ impl ChatEvents {
         &mut self,
         args: EditMessageArgs,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> Result<(MessageIndex, EventMetaData), OCError> {
+    ) -> Result<EditMessageSuccess, OCError> {
         let sender = args.sender;
         let thread_root_message_index = args.thread_root_message_index;
         let now = args.now;
@@ -286,9 +286,9 @@ impl ChatEvents {
             Some(now),
             |message, event| Self::edit_message_inner(message, event, args, chat, anonymized_id, event_store_client),
         ) {
-            Ok((message_index, event, document)) => {
+            Ok((result, document)) => {
                 if thread_root_message_index.is_none() {
-                    self.search_index.push(message_index, sender, document);
+                    self.search_index.push(result.message_index, sender, document);
                 }
 
                 add_to_metrics(
@@ -298,9 +298,9 @@ impl ChatEvents {
                     |m| m.incr(MetricKey::Edits, 1),
                     now,
                 );
-                Ok((message_index, event))
+                Ok(result)
             }
-            Err(UpdateEventError::NoChange(Ok((m, e)))) => Ok((m, e)),
+            Err(UpdateEventError::NoChange(Ok(result))) => Ok(result),
             Err(UpdateEventError::NoChange(Err(e))) => Err(e),
             Err(UpdateEventError::NotFound) => Err(OCErrorCode::MessageNotFound.into()),
         }
@@ -313,7 +313,7 @@ impl ChatEvents {
         chat: Chat,
         anonymized_id: String,
         event_store_client: Option<&mut EventStoreClient<R>>,
-    ) -> Result<(MessageIndex, EventMetaData, Document), UpdateEventError<Result<(MessageIndex, EventMetaData), OCError>>> {
+    ) -> Result<(EditMessageSuccess, Document), UpdateEventError<Result<EditMessageSuccess, OCError>>> {
         if message.sender != args.sender || matches!(message.content, MessageContentInternal::Deleted(_)) {
             return Err(UpdateEventError::NoChange(Err(OCErrorCode::InitiatorNotAuthorized.into())));
         }
@@ -321,6 +321,10 @@ impl ChatEvents {
         let existing_text = message.content.text();
         let new_text = args.content.text();
         let block_level_markdown_update = args.block_level_markdown.filter(|md| *md != message.block_level_markdown);
+        let result = EditMessageSuccess {
+            message_index: message.message_index,
+            event,
+        };
 
         if new_text != existing_text || block_level_markdown_update.is_some() {
             let edited = new_text.map(|t| t.replace("#LINK_REMOVED", ""))
@@ -330,7 +334,6 @@ impl ChatEvents {
             let old_length = message.content.text_length();
             message.content = args.content;
 
-            let message_index = message.message_index;
             let document = Document::from(&message.content);
 
             if edited {
@@ -368,10 +371,10 @@ impl ChatEvents {
                     )
                 }
             }
-            return Ok((message_index, event, document));
+            return Ok((result, document));
         }
 
-        Err(UpdateEventError::NoChange(Ok((message.message_index, event))))
+        Err(UpdateEventError::NoChange(Ok(result)))
     }
 
     pub fn last_updated(&self) -> Option<TimestampMillis> {
@@ -2359,6 +2362,11 @@ pub struct RemoveExpiredEventsResult {
 pub struct ExpiredThread {
     pub root_message_index: MessageIndex,
     pub followers: BTreeSet<UserId>,
+}
+
+pub struct EditMessageSuccess {
+    pub message_index: MessageIndex,
+    pub event: EventMetaData,
 }
 
 #[derive(Copy, Clone)]
