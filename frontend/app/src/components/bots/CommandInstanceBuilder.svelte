@@ -1,7 +1,6 @@
 <script lang="ts">
     import { random64, type FlattenedCommand, type MessageContext } from "openchat-shared";
     import CommandArg from "./CommandArg.svelte";
-    import { createBotInstance, instanceValid, selectedCommandArgs } from "./botState";
     import { getContext, onMount } from "svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -9,7 +8,7 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import { OpenChat } from "openchat-client";
+    import { botState, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
 
     interface Props {
@@ -32,7 +31,7 @@
     function onSubmit(e: Event) {
         e.preventDefault();
 
-        if (!$instanceValid) return;
+        if (!botState.instanceValid) return;
         busy = true;
         client
             .executeBotCommand(
@@ -42,7 +41,7 @@
                     threadRootMessageIndex: messageContext.threadRootMessageIndex,
                     messageId: random64(),
                 },
-                createBotInstance(command),
+                botState.createBotInstance(command),
             )
             .then((result) => {
                 if (result === "failure") {
@@ -86,9 +85,10 @@
 
     function onParamChange() {
         // this is a nasty little hack to get the reactivity we need
-        setTimeout(() => {
-            $selectedCommandArgs = $selectedCommandArgs;
-        }, 0);
+        // TODO remove if all goes well
+        // setTimeout(() => {
+        //     $selectedCommandArgs = $selectedCommandArgs;
+        // }, 0);
     }
 </script>
 
@@ -102,11 +102,11 @@
                 {#if command.description}
                     <p><Translatable resourceKey={i18nKey(command.description)} /></p>
                 {/if}
-                {#if $selectedCommandArgs.length === command?.params?.length}
+                {#if botState.selectedCommandArgs.length === command?.params?.length}
                     {#each command?.params ?? [] as param, i}
                         <CommandArg
                             onChange={onParamChange}
-                            arg={$selectedCommandArgs[i]}
+                            arg={botState.selectedCommandArgs[i]}
                             {param} />
                     {/each}
                 {/if}
@@ -114,7 +114,7 @@
         {/snippet}
         {#snippet footer()}
             <Button
-                disabled={!$instanceValid || busy}
+                disabled={!botState.instanceValid || busy}
                 loading={busy}
                 onClick={onSubmit}
                 small={!$mobileWidth}

@@ -94,7 +94,6 @@
                 shouldClamp={false}
                 placeholder={i18nKey(param.placeholder ?? "")}
                 bind:value={arg.value} />
-            <pre>{arg.value}</pre>
         {:else if arg.kind === "decimal" && param.kind === "decimal"}
             <NumberInput
                 min={param.minValue}

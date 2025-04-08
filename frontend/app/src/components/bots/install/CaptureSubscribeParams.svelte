@@ -1,9 +1,8 @@
 <script lang="ts">
-    import { createArgsFromSchema, type FlattenedCommand } from "openchat-client";
+    import { botState, createArgsFromSchema, type FlattenedCommand } from "openchat-client";
     import CommandParam from "../CommandArg.svelte";
     import Legend from "@src/components/Legend.svelte";
     import { i18nKey } from "@src/i18n/i18n";
-    import { instanceIsValid } from "../botState";
 
     interface Props {
         command: FlattenedCommand;
@@ -15,7 +14,7 @@
     let args = $state(createArgsFromSchema(command.params, []));
 
     $effect(() => {
-        const isValid = instanceIsValid(command, args);
+        const isValid = botState.instanceIsValid(command, args);
         if (isValid !== valid) {
             valid = isValid;
         }

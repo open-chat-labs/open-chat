@@ -499,13 +499,13 @@ import { removeEmailSignInSession } from "openchat-shared";
 import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
-import { setExternalBots } from "./stores";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
 import { ephemeralMessages } from "./stores/ephemeralMessages";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import { Semaphore } from "./utils/semaphore";
 import { snapshot } from "./snapshot.svelte";
 import { remoteVideoCallStartedEvent } from "./events";
+import { botState } from "./state/bots.svelte";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -6063,7 +6063,7 @@ export class OpenChat {
                 initialLoad: !this.#botsLoaded,
             }).subscribe({
                 onResult: async ({ bots }) => {
-                    setExternalBots(bots);
+                    botState.setExternalBots(bots);
                     this.#botsLoaded = true;
                 },
                 onError: (err) => {

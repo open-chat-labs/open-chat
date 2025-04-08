@@ -23,3 +23,4 @@ export type { TrackingCategory } from "./utils/ga";
 export { builtinBot } from "./utils/builtinBotCommands";
 export { isPermitted } from "./utils/permissions";
 export { globalState } from "./state/global.svelte";
+export { botState } from "./state/bots.svelte";
