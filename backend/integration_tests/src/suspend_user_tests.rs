@@ -115,7 +115,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         community_message_response1,
-        community_canister::send_message::Response::UserSuspended
+        community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorSuspended)
     ));
 
     client::user_index::unsuspend_user(
