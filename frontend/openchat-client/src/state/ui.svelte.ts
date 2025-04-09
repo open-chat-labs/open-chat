@@ -234,7 +234,7 @@ export class UIState {
         );
     }
 
-    public setFontScale(scale: FontScale) {
+    public set fontScale(scale: FontScale) {
         this.#fontScale = scale;
         localStorage.setItem("openchat_font_size", scale.toString());
     }
