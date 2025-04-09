@@ -22,10 +22,7 @@ async fn c2c_delete_group(_args: Args) -> Response {
         members: prepare_result.members,
     };
 
-    match group_index_canister_c2c_client::c2c_delete_group(group_index_canister_id, &c2c_delete_group_args).await {
-        Ok(_) => Success,
-        Err(error) => InternalError(format!("{error:?}")),
-    }
+    delete_group(group_index_canister_id, &c2c_delete_group_args).await
 }
 
 struct PrepareResult {
@@ -54,5 +51,17 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
         }
     } else {
         Err(NotAuthorized)
+    }
+}
+
+async fn delete_group(group_index_canister_id: CanisterId, args: &c2c_delete_group::Args) -> Response {
+    let payload_size = msgpack::serialize_then_unwrap(args).len();
+    let c2c_cost = ic_cdk::api::cost_call("c2c_delete_group_msgpack".len() as u64, payload_size as u64);
+    let buffer = 1_000_000_000; // 1B
+    let cycles = ic_cdk::api::canister_liquid_cycle_balance().saturating_sub(c2c_cost + buffer);
+
+    match group_index_canister_c2c_client::c2c_delete_group(group_index_canister_id, args, cycles).await {
+        Ok(_) => Success,
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }
