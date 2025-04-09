@@ -1,21 +1,21 @@
-import { derived, get, writable } from "svelte/store";
 import page from "page";
-import type {
-    ChannelIdentifier,
-    ChatIdentifier,
-    ChatType,
-    DirectChatIdentifier,
-    GroupChatIdentifier,
-    CommunityIdentifier,
-    ChatListScope,
+import {
+    type ChannelIdentifier,
+    type ChatIdentifier,
+    type ChatType,
+    type DirectChatIdentifier,
+    type GroupChatIdentifier,
+    type CommunityIdentifier,
+    type ChatListScope,
+    pathState,
 } from "openchat-client";
 import { toBigInt32 } from "openchat-shared";
 
-export const notFound = writable(false);
+// export const notFound = writable(false);
 
-export const pathContextStore = writable<PageJS.Context | undefined>(undefined);
+// export const pathContextStore = writable<PageJS.Context | undefined>(undefined);
 
-export const routerReady = writable(false);
+// export const routerReady = writable(false);
 
 // if we attempt to use the router before it is set up it will blow up
 function getRouter(): Promise<typeof page> {
@@ -24,7 +24,7 @@ function getRouter(): Promise<typeof page> {
             if (iterations > 10)
                 throw new Error("Router readiness check has failed - router cannot be used");
 
-            if (get(routerReady)) {
+            if (pathState.routerReady) {
                 resolve(page);
             } else {
                 console.debug("ROUTER: router not ready, trying again in 100ms");
@@ -43,13 +43,13 @@ export function pageRedirect(url: string) {
     return getRouter().then((r) => r.redirect(url));
 }
 
-export const location = derived(pathContextStore, ($store) => {
-    return $store ? $store.routePath : "";
-});
+// export const location = derived(pathContextStore, ($store) => {
+//     return $store ? $store.routePath : "";
+// });
 
-export const querystring = derived(pathContextStore, ($store) => {
-    return $store ? new URLSearchParams($store.querystring) : new URLSearchParams();
-});
+// export const querystring = derived(pathContextStore, ($store) => {
+//     return $store ? new URLSearchParams($store.querystring) : new URLSearchParams();
+// });
 
 function qs(ctx: PageJS.Context): URLSearchParams {
     return new URLSearchParams(ctx.querystring);
@@ -244,7 +244,7 @@ export function chatTypeToPath(chatType: ChatType): string {
     return chatType === "direct_chat" ? "user" : "group";
 }
 
-export const pathParams = writable<RouteParams>({ kind: "not_found_route" });
+// export const pathParams = writable<RouteParams>({ kind: "not_found_route" });
 
 export type LandingPageRoute =
     | HomeLandingRoute

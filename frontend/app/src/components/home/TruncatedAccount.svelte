@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import { toastStore } from "../../stores/toast";
-    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { copyToClipboard } from "../../utils/urls";
-    import { i18nKey } from "../../i18n/i18n";
+    import { ui } from "openchat-client";
     import type { Snippet } from "svelte";
+    import { _ } from "svelte-i18n";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
+    import { copyToClipboard } from "../../utils/urls";
 
     interface Props {
         account: string;
@@ -45,7 +45,7 @@
     </div>
     {#if !disableCopy}
         <div class="copy" title={$_("copyToClipboard")} onclick={copy}>
-            <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
+            <ContentCopy size={ui.iconSize} color={"var(--icon-txt)"} />
         </div>
     {/if}
 </div>

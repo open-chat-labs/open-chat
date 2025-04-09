@@ -1,11 +1,10 @@
 <script lang="ts">
+    import Avatar from "@src/components/Avatar.svelte";
     import type { ExternalBotLike, ExternalBotPermissions, OpenChat } from "openchat-client";
-    import { AvatarSize, userStore } from "openchat-client";
+    import { AvatarSize, ui, userStore } from "openchat-client";
+    import { getContext, type Snippet } from "svelte";
     import BotAvatar from "../BotAvatar.svelte";
     import BotCommands from "../BotCommands.svelte";
-    import { getContext, type Snippet } from "svelte";
-    import { mobileWidth } from "@src/stores/screenDimensions";
-    import Avatar from "@src/components/Avatar.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -27,7 +26,7 @@
         padded = false,
         onClick,
         children,
-        showAvatar = !$mobileWidth,
+        showAvatar = !ui.mobileWidth,
         showCommands = true,
     }: Props = $props();
     let collapsed = $state(true);

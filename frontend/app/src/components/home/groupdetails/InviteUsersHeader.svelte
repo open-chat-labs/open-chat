@@ -1,13 +1,18 @@
 <script lang="ts">
-    import SectionHeader from "../../SectionHeader.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import { _ } from "svelte-i18n";
-    import type { CommunitySummary, Level, MultiUserChat, OpenChat } from "openchat-client";
-    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import {
+        ui,
+        type CommunitySummary,
+        type Level,
+        type MultiUserChat,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext } from "svelte";
-    import { iconSize } from "../../../stores/iconSize";
+    import { _ } from "svelte-i18n";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
     import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -39,9 +44,9 @@
     <span title={$_("close")} class="close" onclick={onCancelInviteUsers}>
         <HoverIcon>
             {#if closeIcon === "close"}
-                <Close size={$iconSize} color={"var(--icon-txt)"} />
+                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
             {:else}
-                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </span>

@@ -1,24 +1,23 @@
 <script lang="ts">
-    import FileAttacher from "./FileAttacher.svelte";
-    import Poll from "svelte-material-icons/Poll.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import { _ } from "svelte-i18n";
-    import Smiley from "./Smiley.svelte";
-    import Gift from "svelte-material-icons/GiftOutline.svelte";
-    import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
-    import Bitcoin from "../icons/Bitcoin.svelte";
-    import MemeFighter from "../icons/MemeFighter.svelte";
-    import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
-    import TrayPlus from "svelte-material-icons/DotsVertical.svelte";
-    import TrayRemove from "svelte-material-icons/Close.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { rtlStore } from "../../stores/rtl";
-    import { mobileWidth } from "../../stores/screenDimensions";
     import {
+        ui,
         type AttachmentContent,
         type MessageAction,
         type MessagePermission,
     } from "openchat-client";
+    import { _ } from "svelte-i18n";
+    import TrayRemove from "svelte-material-icons/Close.svelte";
+    import TrayPlus from "svelte-material-icons/DotsVertical.svelte";
+    import Gift from "svelte-material-icons/GiftOutline.svelte";
+    import Poll from "svelte-material-icons/Poll.svelte";
+    import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
+    import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
+    import { rtlStore } from "../../stores/rtl";
+    import HoverIcon from "../HoverIcon.svelte";
+    import Bitcoin from "../icons/Bitcoin.svelte";
+    import MemeFighter from "../icons/MemeFighter.svelte";
+    import FileAttacher from "./FileAttacher.svelte";
+    import Smiley from "./Smiley.svelte";
 
     interface Props {
         permittedMessages: Map<MessagePermission, boolean>;
@@ -168,7 +167,7 @@
         return total - (i + 1) * increment;
     }
     let useDrawer = $derived(!editing);
-    let narrow = $derived(mode == "thread" || $mobileWidth);
+    let narrow = $derived(mode == "thread" || ui.mobileWidth);
     let showActions = $derived(!useDrawer || drawOpen);
     let iconColour = $derived(
         editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)",
@@ -204,11 +203,11 @@
     <div class="open-draw" onclick={toggleDraw}>
         {#if showClose}
             <HoverIcon>
-                <TrayRemove size={$iconSize} color={"var(--icon-txt)"} />
+                <TrayRemove size={ui.iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         {:else}
             <HoverIcon>
-                <TrayPlus size={$iconSize} color={"var(--icon-txt)"} />
+                <TrayPlus size={ui.iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         {/if}
     </div>
@@ -234,28 +233,28 @@
                 class="send-icp"
                 onclick={createTokenTransfer}>
                 <HoverIcon title={"Send Crypto"}>
-                    <Bitcoin size={$iconSize} color={"var(--button-txt)"} />
+                    <Bitcoin size={ui.iconSize} color={"var(--button-txt)"} />
                 </HoverIcon>
             </div>
         {/if}
         {#if supportedActions.has("giphy")}
             <div style={`${supportedActions.get("giphy")}`} class="gif" onclick={sendGif}>
                 <HoverIcon title={"Attach gif"}>
-                    <StickerEmoji size={$iconSize} color={iconColour} />
+                    <StickerEmoji size={ui.iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}
         {#if supportedActions.has("meme")}
             <div style={`${supportedActions.get("meme")}`} class="meme" onclick={makeMeme}>
                 <HoverIcon title={"Meme Fighter"}>
-                    <MemeFighter size={$iconSize} color={iconColour} />
+                    <MemeFighter size={ui.iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}
         {#if supportedActions.has("poll")}
             <div style={`${supportedActions.get("poll")}`} class="poll" onclick={createPoll}>
                 <HoverIcon title={$_("poll.create")}>
-                    <Poll size={$iconSize} color={"var(--icon-txt)"} />
+                    <Poll size={ui.iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
         {/if}
@@ -265,7 +264,7 @@
                 class="prize"
                 onclick={createPrizeMessage}>
                 <HoverIcon title={"Create prize"}>
-                    <Gift size={$iconSize} color={iconColour} />
+                    <Gift size={ui.iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}
@@ -275,7 +274,7 @@
                 class="swap"
                 onclick={createP2PSwapMessage}>
                 <HoverIcon title={$_("p2pSwap.builderTitle")}>
-                    <SwapIcon size={$iconSize} color={iconColour} />
+                    <SwapIcon size={ui.iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}

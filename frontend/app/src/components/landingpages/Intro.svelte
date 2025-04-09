@@ -1,10 +1,10 @@
 <script lang="ts">
-    import Launch from "./Launch.svelte";
+    import { ui } from "openchat-client";
     import { currentTheme } from "../../theme/themes";
-    import OnChain from "./OnChain.svelte";
-    import { availableHeight, mobileWidth } from "../../stores/screenDimensions";
-    import OnChainAlt from "./OnChainAlt.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
+    import Launch from "./Launch.svelte";
+    import OnChain from "./OnChain.svelte";
+    import OnChainAlt from "./OnChainAlt.svelte";
 
     let imgUrl = $derived(
         $currentTheme.mode === "light"
@@ -12,7 +12,7 @@
             : "/assets/screenshots/intro_dark.png",
     );
 
-    let introStyle = $derived($mobileWidth ? "" : `height: ${$availableHeight}px`);
+    let introStyle = $derived(ui.mobileWidth ? "" : `height: ${ui.availableHeight}px`);
 </script>
 
 <div class="wrapper" style={introStyle}>
@@ -37,7 +37,7 @@
                     <Launch />
                 </div>
             </div>
-            {#if !$mobileWidth}
+            {#if !ui.mobileWidth}
                 <div>
                     <OnChain />
                 </div>
@@ -46,7 +46,7 @@
         <div class="image-wrapper-wrapper">
             <div class="image-wrapper">
                 <img class="img" alt="Open chat list" src={imgUrl} />
-                {#if $mobileWidth}
+                {#if ui.mobileWidth}
                     <div
                         class:light={$currentTheme.mode === "light"}
                         class:dark={$currentTheme.mode === "dark"}
@@ -56,7 +56,7 @@
             </div>
         </div>
     </div>
-    {#if $mobileWidth}
+    {#if ui.mobileWidth}
         <div class="powered-by">
             <OnChainAlt />
         </div>

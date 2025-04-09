@@ -1,13 +1,16 @@
 <script lang="ts">
+    import {
+        cryptoLookup,
+        exchangeRatesLookupStore as exchangeRatesLookup,
+        ui,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext, onMount, untrack } from "svelte";
-    import { type OpenChat } from "openchat-client";
-    import { cryptoLookup, exchangeRatesLookupStore as exchangeRatesLookup } from "openchat-client";
     import Alert from "svelte-material-icons/Alert.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import Legend from "../Legend.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
     import { calculateDollarAmount } from "../../utils/exchange";
+    import Legend from "../Legend.svelte";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -146,7 +149,7 @@
 <div class="wrapper">
     {#if transferFees !== undefined && transferFees > 0n}
         <div class="fee">
-            <Alert size={$iconSize} color={"var(--warn)"} />
+            <Alert size={ui.iconSize} color={"var(--warn)"} />
             <span>
                 <Translatable
                     resourceKey={i18nKey("tokenTransfer.fee", {

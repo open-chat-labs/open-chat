@@ -1,9 +1,8 @@
 import { AuthClient } from "@dfinity/auth-client";
-import { writable } from "svelte/store";
-import type { Theme } from "../theme/types";
+import { pathState, ui } from "openchat-client";
 import page from "page";
 import { setModifiedTheme } from "../theme/themes";
-import { routerReady } from "../routes";
+import type { Theme } from "../theme/types";
 
 const FRAME_ANCESTORS = [
     "http://localhost:5173",
@@ -74,9 +73,6 @@ type ChangeRoute = {
     path: string;
 };
 
-export const framed = writable(false);
-export const disableLeftNav = writable(false);
-
 export function init() {
     if (window.self !== window.top) {
         console.debug("XFRAME_TARGET: setting listeners", window.top);
@@ -101,17 +97,24 @@ function broadcastMessage(msg: OutboundXFrameMessage) {
 
 init();
 
-let queuedRoute: string | undefined = undefined;
-let isRouterReady = false;
-
-routerReady.subscribe((ready) => {
-    console.debug("XFRAME_TARGET: routerReady changed to ", ready, queuedRoute);
-    if (ready && queuedRoute !== undefined) {
-        page(queuedRoute);
-        queuedRoute = undefined;
+function pageWhenReady(path: string, timeout = 50, attempts = 0) {
+    if (pathState.routerReady) {
+        console.debug("XFRAME_TARGET: changing path to ", path);
+        page(path);
+    } else {
+        if (attempts < 10) {
+            console.debug("XFRAME_TARGET: queueing route change ", path);
+            setTimeout(() => {
+                pageWhenReady(path, timeout * 2, attempts + 1);
+            }, timeout);
+        } else {
+            console.debug(
+                "XFRAME_TARGET: unable to change route because the router is not ready ",
+                path,
+            );
+        }
     }
-    isRouterReady = ready;
-});
+}
 
 function externalMessage(ev: MessageEvent) {
     if (!FRAME_ANCESTORS.includes(ev.origin)) {
@@ -128,16 +131,10 @@ function externalMessage(ev: MessageEvent) {
                         "XFRAME_TARGET: overriding settings",
                         payload.settings.disableLeftNav,
                     );
-                    disableLeftNav.set(Boolean(payload.settings.disableLeftNav));
+                    ui.disableLeftNav = Boolean(payload.settings.disableLeftNav);
                     break;
                 case "change_route":
-                    if (isRouterReady) {
-                        console.debug("XFRAME_TARGET: changing path to ", payload.path);
-                        page(payload.path);
-                    } else {
-                        console.debug("XFRAME_TARGET: queueing route change ", payload.path);
-                        queuedRoute = payload.path;
-                    }
+                    pageWhenReady(payload.path);
                     break;
                 case "update_theme":
                     setModifiedTheme(payload.base, payload.name, payload.overrides);

@@ -1,20 +1,19 @@
 <script lang="ts">
-    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import Send from "svelte-material-icons/Send.svelte";
-    import { _ } from "svelte-i18n";
+    import { toastStore } from "@src/stores/toast";
     import {
         botActionScopeFromExecutionContext,
         i18nKey,
         OpenChat,
+        ui,
         type ChatIdentifier,
         type CommunityIdentifier,
         type ExternalBotLike,
     } from "openchat-client";
-    import Tooltip from "../tooltip/Tooltip.svelte";
-    import { iconSize } from "@src/stores/iconSize";
-    import Translatable from "../Translatable.svelte";
     import { getContext } from "svelte";
-    import { toastStore } from "@src/stores/toast";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
+    import Send from "svelte-material-icons/Send.svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -61,7 +60,7 @@
         <Tooltip position={"top"} align={"middle"}>
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div role="button" tabindex="0" class="icon" onclick={sendApiKeyToBot}>
-                <Send size={$iconSize} color={"var(--icon-txt)"} />
+                <Send size={ui.iconSize} color={"var(--icon-txt)"} />
             </div>
             {#snippet popupTemplate()}
                 <Translatable resourceKey={i18nKey("bots.add.sendToBot")} />
@@ -71,7 +70,7 @@
     <Tooltip position={"top"} align={"middle"}>
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div role="button" tabindex="0" class="icon" onclick={onCopy}>
-            <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+            <CopyIcon size={ui.iconSize} color={"var(--icon-txt)"} />
         </div>
         {#snippet popupTemplate()}
             <Translatable resourceKey={i18nKey("copy")} />

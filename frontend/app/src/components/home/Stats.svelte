@@ -1,14 +1,13 @@
 <script lang="ts">
-    import { cubicOut } from "svelte/easing";
-    import Flag from "svelte-material-icons/Flag.svelte";
-    import { Tween } from "svelte/motion";
     import type { Metrics, OpenChat } from "openchat-client";
-    import { minutesOnlineStore } from "openchat-client";
+    import { minutesOnlineStore, ui } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import { iconSize } from "../../stores/iconSize";
+    import Flag from "svelte-material-icons/Flag.svelte";
+    import { cubicOut } from "svelte/easing";
+    import { Tween } from "svelte/motion";
+    import { i18nKey } from "../../i18n/i18n";
     import Tooltip from "../tooltip/Tooltip.svelte";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     interface Props {
@@ -249,7 +248,7 @@
                     <Translatable resourceKey={i18nKey("stats.reportedMessages")} />
                 </span>
                 <span class="icon">
-                    <Flag size={$iconSize} color={"var(--accent)"} />
+                    <Flag size={ui.iconSize} color={"var(--accent)"} />
                 </span>
             </div>
             {#snippet popupTemplate()}

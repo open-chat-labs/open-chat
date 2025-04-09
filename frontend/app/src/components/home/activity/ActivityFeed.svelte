@@ -1,26 +1,25 @@
 <script lang="ts">
-    import Close from "svelte-material-icons/Close.svelte";
-    import BellRingOutline from "svelte-material-icons/BellRingOutline.svelte";
-    import { _ } from "svelte-i18n";
     import {
+        globalStateStore as global,
         messageContextToString,
         OpenChat,
         routeForMessage,
+        ui,
         type GlobalState,
         type MessageActivityEvent,
-        globalStateStore as global,
     } from "openchat-client";
-    import { getContext } from "svelte";
-    import SectionHeader from "../../SectionHeader.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import Translatable from "../../Translatable.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import { activityEvents, activityFeedShowing } from "../../../stores/activity";
-    import { menuCloser } from "../../../actions/closeMenu";
     import page from "page";
-    import ActivityEvent from "./ActivityEvent.svelte";
+    import { getContext } from "svelte";
+    import BellRingOutline from "svelte-material-icons/BellRingOutline.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { menuCloser } from "../../../actions/closeMenu";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { activityEvents, activityFeedShowing } from "../../../stores/activity";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Translatable from "../../Translatable.svelte";
     import VirtualList from "../../VirtualList.svelte";
+    import ActivityEvent from "./ActivityEvent.svelte";
 
     const client = getContext<OpenChat>("client");
     let selectedEventIndex = $state<number | undefined>();
@@ -59,14 +58,14 @@
 <SectionHeader slim border={false}>
     <div class="header">
         <div class="icon">
-            <BellRingOutline size={$iconSize} color={"var(--icon-txt)"} />
+            <BellRingOutline size={ui.iconSize} color={"var(--icon-txt)"} />
         </div>
         <div class="details">
             <h4 class="name"><Translatable resourceKey={i18nKey("activity.title")} /></h4>
         </div>
         <span class="menu">
             <HoverIcon onclick={() => activityFeedShowing.set(false)}>
-                <Close size={$iconSize} color={"var(--icon-txt)"} />
+                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     </div>

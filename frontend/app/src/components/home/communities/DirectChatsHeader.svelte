@@ -1,17 +1,16 @@
 <script lang="ts">
-    import Kebab from "svelte-material-icons/DotsVertical.svelte";
+    import { ui, type OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
+    import Kebab from "svelte-material-icons/DotsVertical.svelte";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
-    import SectionHeader from "../../SectionHeader.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
     import MenuItem from "../../MenuItem.svelte";
-    import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -25,7 +24,7 @@
 <SectionHeader slim border={false}>
     <div class="direct-chats">
         <div class="icon">
-            <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
+            <MessageOutline size={ui.iconSize} color={"var(--icon-txt)"} />
         </div>
         <div class="details">
             <h4 class="name"><Translatable resourceKey={i18nKey("communities.directChats")} /></h4>
@@ -34,7 +33,7 @@
             <MenuIcon position="bottom" align="end">
                 {#snippet menuIcon()}
                     <HoverIcon>
-                        <Kebab size={$iconSize} color={"var(--icon-txt)"} />
+                        <Kebab size={ui.iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 {/snippet}
                 {#snippet menuItems()}
@@ -44,7 +43,7 @@
                             onclick={() => client.markAllReadForCurrentScope()}>
                             {#snippet icon()}
                                 <CheckboxMultipleMarked
-                                    size={$iconSize}
+                                    size={ui.iconSize}
                                     color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}

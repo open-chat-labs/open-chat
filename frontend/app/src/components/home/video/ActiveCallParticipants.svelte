@@ -1,23 +1,22 @@
 <script lang="ts">
     import {
+        type ChatIdentifier,
         type MultiUserChatIdentifier,
         type OpenChat,
         type UserSummary,
         chatIdentifiersEqual,
-        currentUser as user,
-        type ChatIdentifier,
         subscribe,
+        ui,
+        currentUser as user,
     } from "openchat-client";
-    import { _ } from "svelte-i18n";
-    import ActiveCallParticipantsHeader from "./ActiveCallParticipantsHeader.svelte";
-    import ActiveCallParticipant from "./ActiveCallParticipant.svelte";
     import { getContext, onMount } from "svelte";
-    import { rightPanelHistory } from "../../../stores/rightPanel";
-    import { activeVideoCall } from "../../../stores/video";
-    import VirtualList from "../../VirtualList.svelte";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { activeVideoCall } from "../../../stores/video";
     import FancyLoader from "../../icons/FancyLoader.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import VirtualList from "../../VirtualList.svelte";
+    import ActiveCallParticipant from "./ActiveCallParticipant.svelte";
+    import ActiveCallParticipantsHeader from "./ActiveCallParticipantsHeader.svelte";
 
     type MappedParticipants = {
         participants: Record<string, UserSummary>;
@@ -81,7 +80,7 @@
     function close() {
         onClose();
         activeVideoCall.participantsOpen(false);
-        rightPanelHistory.pop();
+        ui.popRightPanelHistory();
     }
 
     function selectTab(tab: "presenters" | "viewers") {

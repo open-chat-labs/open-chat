@@ -1,42 +1,40 @@
 <script lang="ts">
+    import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "openchat-client";
     import {
+        anonUser,
         AvatarSize,
+        chatListScopeStore as chatListScope,
+        publish,
         routeForChatIdentifier,
-        type OpenChat,
-        type TypersByKey,
-        userStore,
-        byContext as typersByContext,
         selectedChatId,
         selectedCommunity,
-        chatListScopeStore as chatListScope,
-        anonUser,
-        publish,
+        byContext as typersByContext,
+        ui,
+        userStore,
+        type OpenChat,
+        type TypersByKey,
     } from "openchat-client";
     import page from "page";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import CurrentChatMenu from "./CurrentChatMenu.svelte";
-    import SectionHeader from "../SectionHeader.svelte";
-    import ChatSubtext from "./ChatSubtext.svelte";
-    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import Avatar from "../Avatar.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "openchat-client";
-    import Typing from "../Typing.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { now } from "../../stores/time";
-    import SuspendModal from "./SuspendModal.svelte";
-    import { rightPanelHistory } from "../../stores/rightPanel";
-    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
-    import Translatable from "../Translatable.svelte";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import ActiveBroadcastSummary from "./video/ActiveBroadcastSummary.svelte";
-    import Badges from "./profile/Badges.svelte";
-    import ActiveVideoCallResume from "./video/ActiveVideoCallResume.svelte";
+    import { rtlStore } from "../../stores/rtl";
+    import { now } from "../../stores/time";
+    import Avatar from "../Avatar.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
+    import SectionHeader from "../SectionHeader.svelte";
+    import Translatable from "../Translatable.svelte";
+    import Typing from "../Typing.svelte";
+    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
+    import ChatSubtext from "./ChatSubtext.svelte";
+    import CurrentChatMenu from "./CurrentChatMenu.svelte";
+    import Badges from "./profile/Badges.svelte";
+    import SuspendModal from "./SuspendModal.svelte";
+    import ActiveBroadcastSummary from "./video/ActiveBroadcastSummary.svelte";
+    import ActiveVideoCallResume from "./video/ActiveVideoCallResume.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -78,11 +76,11 @@
 
     function showGroupDetails() {
         if ($selectedChatId !== undefined) {
-            rightPanelHistory.set([
+            ui.rightPanelHistory = [
                 {
                     kind: "group_details",
                 },
-            ]);
+            ];
         }
     }
 
@@ -165,13 +163,13 @@
 {/if}
 
 <SectionHeader shadow flush>
-    {#if $mobileWidth}
+    {#if ui.mobileWidth}
         <div class="back" class:rtl={$rtlStore} onclick={clearSelection}>
             <HoverIcon>
                 {#if $rtlStore}
-                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                    <ArrowRight size={ui.iconSize} color={"var(--icon-txt)"} />
                 {:else}
-                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                    <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
                 {/if}
             </HoverIcon>
         </div>

@@ -1,31 +1,29 @@
 <script lang="ts">
-    import Hamburger from "svelte-material-icons/Menu.svelte";
-    import TuneVertical from "svelte-material-icons/TuneVertical.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import ModalContent from "../../ModalContent.svelte";
-    import ShieldPlusIcon from "svelte-material-icons/ShieldPlus.svelte";
-    import ShieldRemoveIcon from "svelte-material-icons/ShieldRemove.svelte";
-    import ShieldRefreshIcon from "svelte-material-icons/ShieldRefresh.svelte";
-    import WalletIcon from "svelte-material-icons/WalletOutline.svelte";
-    import Accounts from "./Accounts.svelte";
-    import Button from "../../Button.svelte";
-    import Eye from "svelte-material-icons/EyeOutline.svelte";
+    import { pinNumberRequiredStore, ui } from "openchat-client";
+    import { _ } from "svelte-i18n";
     import EyeOff from "svelte-material-icons/EyeOffOutline.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Eye from "svelte-material-icons/EyeOutline.svelte";
+    import Hamburger from "svelte-material-icons/Menu.svelte";
+    import ShieldPlusIcon from "svelte-material-icons/ShieldPlus.svelte";
+    import ShieldRefreshIcon from "svelte-material-icons/ShieldRefresh.svelte";
+    import ShieldRemoveIcon from "svelte-material-icons/ShieldRemove.svelte";
+    import TuneVertical from "svelte-material-icons/TuneVertical.svelte";
+    import WalletIcon from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import MenuIcon from "../../MenuIcon.svelte";
+    import type { PinOperation } from "../../../stores/pinNumber";
+    import { hideTokenBalances } from "../../../stores/settings";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
     import MenuItem from "../../MenuItem.svelte";
-    import { _ } from "svelte-i18n";
-    import { iconSize } from "../../../stores/iconSize";
-    import { hideTokenBalances } from "../../../stores/settings";
+    import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
-    import SetPinNumberModal from "./SetPinNumberModal.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import Accounts from "./Accounts.svelte";
     import ManageAccounts from "./ManageAccounts.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import type { PinOperation } from "../../../stores/pinNumber";
-    import { pinNumberRequiredStore } from "openchat-client";
+    import SetPinNumberModal from "./SetPinNumberModal.svelte";
 
     interface Props {
         onClose: () => void;
@@ -73,7 +71,7 @@
                                     <MenuItem onclick={() => (pinAction = { kind: "set" })}>
                                         {#snippet icon()}
                                             <ShieldPlusIcon
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -87,7 +85,7 @@
                                     <MenuItem onclick={() => (pinAction = { kind: "change" })}>
                                         {#snippet icon()}
                                             <ShieldRefreshIcon
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -100,7 +98,7 @@
                                     <MenuItem onclick={() => (pinAction = { kind: "clear" })}>
                                         {#snippet icon()}
                                             <ShieldRemoveIcon
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -114,7 +112,7 @@
                                 <MenuItem onclick={() => (managing = true)}>
                                     {#snippet icon()}
                                         <TuneVertical
-                                            size={$iconSize}
+                                            size={ui.iconSize}
                                             color={"var(--icon-inverted-txt)"} />
                                     {/snippet}
                                     {#snippet text()}
@@ -142,12 +140,12 @@
             <Button
                 secondary
                 onClick={() => (managing = true)}
-                small={!$mobileWidth}
-                tiny={$mobileWidth}>
+                small={!ui.mobileWidth}
+                tiny={ui.mobileWidth}>
                 <Translatable resourceKey={i18nKey("cryptoAccount.manage")} />
             </Button>
 
-            <Button onClick={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+            <Button onClick={onClose} small={!ui.mobileWidth} tiny={ui.mobileWidth}>
                 <Translatable resourceKey={i18nKey("close")} />
             </Button>
         </ButtonGroup>

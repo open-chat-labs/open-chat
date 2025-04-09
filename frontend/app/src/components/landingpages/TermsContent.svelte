@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { location } from "../../routes";
+    import { pathState } from "openchat-client";
     import { copyToClipboard } from "../../utils/urls";
     import HashLinkTarget from "./HashLinkTarget.svelte";
 
     function onCopyUrl(e: Event, section: string): void {
         e.stopPropagation();
-        copyToClipboard(`${window.location.origin}${$location}?section=${section}`);
+        copyToClipboard(`${window.location.origin}${pathState.location}?section=${section}`);
     }
 </script>
 

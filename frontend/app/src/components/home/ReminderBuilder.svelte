@@ -1,18 +1,16 @@
 <script lang="ts">
-    import Overlay from "../Overlay.svelte";
-    import TextArea from "../TextArea.svelte";
-    import Select from "../Select.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
+    import { ui, type ChatIdentifier, type OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { now } from "../../stores/time";
+    import { toastStore } from "../../stores/toast";
     import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
     import Legend from "../Legend.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { _ } from "svelte-i18n";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { getContext } from "svelte";
-    import { now } from "../../stores/time";
-    import type { ChatIdentifier, OpenChat } from "openchat-client";
-    import { toastStore } from "../../stores/toast";
-    import { i18nKey } from "../../i18n/i18n";
+    import Overlay from "../Overlay.svelte";
+    import Select from "../Select.svelte";
+    import TextArea from "../TextArea.svelte";
     import Translatable from "../Translatable.svelte";
 
     interface Props {
@@ -142,13 +140,13 @@
         {/snippet}
         {#snippet footer()}
             <ButtonGroup>
-                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}
+                <Button secondary small={!ui.mobileWidth} tiny={ui.mobileWidth} onClick={onClose}
                     ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 <Button
                     disabled={busy}
                     loading={busy}
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}
+                    small={!ui.mobileWidth}
+                    tiny={ui.mobileWidth}
                     onClick={createReminder}
                     ><Translatable resourceKey={i18nKey("reminders.create")} /></Button>
             </ButtonGroup>

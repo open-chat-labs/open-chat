@@ -1,35 +1,35 @@
 <script lang="ts">
-    import Reload from "svelte-material-icons/Reload.svelte";
     import {
-        validEndpoint,
         OpenChat,
+        ui,
+        userStore,
         validateBot,
         ValidationErrors,
-        type ExternalBot,
-        type CommandDefinition,
-        type ValidationErrorMessages,
-        userStore,
+        validEndpoint,
         type BotDefinition,
+        type CommandDefinition,
+        type ExternalBot,
+        type ValidationErrorMessages,
     } from "openchat-client";
+    import { getContext } from "svelte";
+    import Reload from "svelte-material-icons/Reload.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
+    import { debouncedDerived } from "../../utils/reactivity.svelte";
+    import Checkbox from "../Checkbox.svelte";
+    import EditableAvatar from "../EditableAvatar.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
+    import SingleUserSelector from "../home/SingleUserSelector.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
     import Input from "../Input.svelte";
     import Legend from "../Legend.svelte";
-    import EditableAvatar from "../EditableAvatar.svelte";
-    import Translatable from "../Translatable.svelte";
-    import ValidatingInput from "./ValidatingInput.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import { debouncedDerived } from "../../utils/reactivity.svelte";
-    import { getContext } from "svelte";
-    import { toastStore } from "../../stores/toast";
-    import HoverIcon from "../HoverIcon.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import CommandViewer from "./CommandViewer.svelte";
-    import SingleUserSelector from "../home/SingleUserSelector.svelte";
-    import BotPermissionViewer from "./BotPermissionViewer.svelte";
     import Tabs, { type Tab } from "../Tabs.svelte";
+    import Translatable from "../Translatable.svelte";
     import BotCommands from "./BotCommands.svelte";
-    import Checkbox from "../Checkbox.svelte";
+    import BotPermissionViewer from "./BotPermissionViewer.svelte";
+    import CommandViewer from "./CommandViewer.svelte";
     import InstallationLocationSelector from "./InstallationLocationSelector.svelte";
+    import ValidatingInput from "./ValidatingInput.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -309,7 +309,7 @@
             {#if !errors.has("bot_endpoint")}
                 <HoverIcon title={"load definition"} onclick={loadDefinition}>
                     <Reload
-                        size={$iconSize}
+                        size={ui.iconSize}
                         color={schemaLoaded ? "var(--icon-txt)" : "var(--accent)"}></Reload>
                 </HoverIcon>
             {/if}

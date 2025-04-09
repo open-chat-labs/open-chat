@@ -11,38 +11,36 @@
 
 <script lang="ts">
     import {
+        MessageContextMap,
+        failedMessagesStore,
+        messageContextsEqual,
+        pathState,
+        subscribe,
+        ui,
+        unconfirmed,
+        currentUser as user,
+        type ChatEvent as ChatEventType,
         type ChatSummary,
         type EventWrapper,
-        type Message,
-        type ChatEvent as ChatEventType,
-        type OpenChat,
         type Mention,
+        type Message,
         type MessageContext,
-        MessageContextMap,
-        subscribe,
+        type OpenChat,
     } from "openchat-client";
-    import {
-        messageContextsEqual,
-        currentUser as user,
-        unconfirmed,
-        failedMessagesStore,
-    } from "openchat-client";
-    import { menuStore } from "../../stores/menu";
-    import { tooltipStore } from "../../stores/tooltip";
-    import { rtlStore } from "../../stores/rtl";
     import { getContext, onMount, tick, type Snippet } from "svelte";
-    import { pathParams } from "../../routes";
+    import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
-    import Fab from "../Fab.svelte";
-    import { _ } from "svelte-i18n";
-    import { pop } from "../../utils/transition";
-    import { iconSize } from "../../stores/iconSize";
+    import { menuStore } from "../../stores/menu";
+    import { rtlStore } from "../../stores/rtl";
     import {
         eventListLastScrolled,
         eventListScrollTop,
         eventListScrolling,
     } from "../../stores/scrollPos";
+    import { tooltipStore } from "../../stores/tooltip";
+    import { pop } from "../../utils/transition";
+    import Fab from "../Fab.svelte";
     import TimelineDate from "./TimelineDate.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -541,11 +539,11 @@
         if (msgEvent && threadRootEvent === undefined) {
             if (
                 msgEvent.event.thread !== undefined &&
-                ($pathParams.kind === "global_chat_selected_route" ||
-                    $pathParams.kind === "selected_channel_route") &&
-                ($pathParams.open || $pathParams.threadMessageIndex !== undefined)
+                (pathState.route.kind === "global_chat_selected_route" ||
+                    pathState.route.kind === "selected_channel_route") &&
+                (pathState.route.open || pathState.route.threadMessageIndex !== undefined)
             ) {
-                client.setFocusThreadMessageIndex(chat.id, $pathParams.threadMessageIndex);
+                client.setFocusThreadMessageIndex(chat.id, pathState.route.threadMessageIndex);
                 client.openThread(msgEvent, false);
             } else {
                 client.closeThread();
@@ -764,7 +762,7 @@
         class="fab to-top"
         class:rtl={$rtlStore}>
         <Fab on:click={scrollToTop}>
-            <ArrowUp size={$iconSize} color={"#fff"} />
+            <ArrowUp size={ui.iconSize} color={"#fff"} />
         </Fab>
     </div>
 {/if}
@@ -796,7 +794,7 @@
                 <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>
             </div>
         {:else}
-            <ArrowDown size={$iconSize} color={"#fff"} />
+            <ArrowDown size={ui.iconSize} color={"#fff"} />
         {/if}
     </Fab>
 </div>

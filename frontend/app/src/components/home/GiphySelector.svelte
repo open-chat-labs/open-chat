@@ -1,15 +1,18 @@
 <script lang="ts">
+    import {
+        type GiphyContent,
+        type TenorObject,
+        type TenorSearchResponse,
+        ui,
+    } from "openchat-client";
+    import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Input from "../Input.svelte";
     import Link from "../Link.svelte";
-    import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { _ } from "svelte-i18n";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import type { GiphyContent, TenorSearchResponse, TenorObject } from "openchat-client";
+    import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
 
     type KeyedTenorObject = TenorObject & { key: string };
 
@@ -191,13 +194,13 @@
     let selectedImage = $derived(
         selectedGif === undefined
             ? undefined
-            : $mobileWidth
+            : ui.mobileWidth
               ? { ...selectedGif.media_formats.tinygif }
               : { ...selectedGif.media_formats.mediumgif },
     );
     $effect(() => {
         let containerWidth = containerElement?.clientWidth ?? 0;
-        let numCols = $mobileWidth ? 2 : 4;
+        let numCols = ui.mobileWidth ? 2 : 4;
         let availWidth = containerWidth - (numCols - 1) * gutter;
         imgWidth = availWidth / numCols;
         gifCache = gifs.reduce((cache, gif, i) => reduceGifs(numCols, cache, gif, i), {});
@@ -273,7 +276,7 @@
                             </Link>
                         </span>
                     {/if}
-                    <ButtonGroup align={$mobileWidth ? "center" : "end"}>
+                    <ButtonGroup align={ui.mobileWidth ? "center" : "end"}>
                         <Button small secondary onClick={() => (open = false)}
                             ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                         <Button small disabled={selectedGif === undefined} onClick={send}

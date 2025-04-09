@@ -1,22 +1,21 @@
 <script lang="ts">
-    import Headline from "./Headline.svelte";
+    import { pathState, ui } from "openchat-client";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import CollapsibleCard from "../CollapsibleCard.svelte";
-    import HashLinkTarget from "./HashLinkTarget.svelte";
     import { copyToClipboard, scrollToSection } from "../../utils/urls";
-    import ZoomableImage from "./ZoomableImage.svelte";
+    import ArrowLink from "../ArrowLink.svelte";
+    import CollapsibleCard from "../CollapsibleCard.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
     import ExternalLink from "./ExternalLink.svelte";
     import HashLink from "./HashLink.svelte";
-    import ArrowLink from "../ArrowLink.svelte";
-    import Overlay from "../Overlay.svelte";
-    import { location, querystring } from "../../routes";
-    import ModalContent from "../ModalContent.svelte";
+    import HashLinkTarget from "./HashLinkTarget.svelte";
+    import Headline from "./Headline.svelte";
+    import ZoomableImage from "./ZoomableImage.svelte";
 
     let linked: number | undefined = $state(undefined);
     let zooming: { url: string; alt: string } | undefined = $state(undefined);
 
-    let copySize = $derived($mobileWidth ? "14px" : "16px");
+    let copySize = $derived(ui.mobileWidth ? "14px" : "16px");
 
     function zoomImage(url: string, alt: string) {
         zooming = { url, alt };
@@ -24,11 +23,11 @@
 
     function onCopyUrl(e: Event, section: string): void {
         e.stopPropagation();
-        copyToClipboard(`${window.location.origin}${$location}?section=${section}`);
+        copyToClipboard(`${window.location.origin}${pathState.location}?section=${section}`);
     }
 
     $effect(() => {
-        const section = $querystring.get("section");
+        const section = pathState.querystring.get("section");
         if (section) {
             linked = scrollToSection(section);
         }
