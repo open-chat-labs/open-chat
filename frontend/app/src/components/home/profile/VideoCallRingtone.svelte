@@ -1,12 +1,12 @@
 <script lang="ts">
-    import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
-    import PauseCircleOutline from "svelte-material-icons/PauseCircleOutline.svelte";
-    import Radio from "../../Radio.svelte";
-    import { iconSize } from "../../../stores/iconSize";
+    import { ui } from "openchat-client";
     import { onMount } from "svelte";
-    import { Ringtone, selectedRingtone } from "../../../stores/video";
+    import PauseCircleOutline from "svelte-material-icons/PauseCircleOutline.svelte";
+    import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
     import WaveSurfer from "wavesurfer.js";
+    import { Ringtone, selectedRingtone } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
+    import Radio from "../../Radio.svelte";
 
     interface Props {
         ringtone: Ringtone;
@@ -57,9 +57,9 @@
             <div class="name">{ringtone.name}</div>
             <div onclick={togglePlay} class="play">
                 {#if ringtone.playing}
-                    <PauseCircleOutline size={$iconSize} color={"var(--icon-selected)"} />
+                    <PauseCircleOutline size={ui.iconSize} color={"var(--icon-selected)"} />
                 {:else}
-                    <PlayCircleOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    <PlayCircleOutline size={ui.iconSize} color={"var(--icon-txt)"} />
                 {/if}
             </div>
         </div>

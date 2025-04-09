@@ -1,28 +1,28 @@
 <script lang="ts">
-    import { fade } from "svelte/transition";
-    import NoChatSelected from "./NoChatSelected.svelte";
-    import RecommendedGroups from "./RecommendedGroups.svelte";
-    import ExploreCommunities from "./communities/explore/Explore.svelte";
-    import type CurrentChatMessages from "./CurrentChatMessages.svelte";
-    import CurrentChat from "./CurrentChat.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import {
+        botState,
         chatIdentifiersEqual,
-        type ChatIdentifier,
-        type MultiUserChat,
-        selectedChatStore,
-        selectedChatId,
         filteredProposalsStore,
         installedDirectBots,
-        botState,
+        pathState,
+        selectedChatId,
+        selectedChatStore,
+        ui,
+        type ChatIdentifier,
+        type MultiUserChat,
     } from "openchat-client";
-    import { pathParams } from "../../routes";
     import { tick } from "svelte";
-    import { currentTheme } from "../../theme/themes";
-    import { layoutStore, type Layout, rightPanelWidth } from "../../stores/layout";
-    import Loading from "../Loading.svelte";
+    import { fade } from "svelte/transition";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
+    import { currentTheme } from "../../theme/themes";
     import UninstalledDirectBot from "../bots/UninstalledDirectBot.svelte";
-    import { trackedEffect } from "@src/utils/effects.svelte";
+    import Loading from "../Loading.svelte";
+    import ExploreCommunities from "./communities/explore/Explore.svelte";
+    import CurrentChat from "./CurrentChat.svelte";
+    import type CurrentChatMessages from "./CurrentChatMessages.svelte";
+    import NoChatSelected from "./NoChatSelected.svelte";
+    import RecommendedGroups from "./RecommendedGroups.svelte";
 
     interface Props {
         joining: MultiUserChat | undefined;
@@ -56,8 +56,6 @@
     function alignVideoCall(
         call: ActiveVideoCall | undefined,
         chatId: ChatIdentifier | undefined,
-        layout: Layout,
-        rightPanelWidth: number | undefined,
         attempts: number = 0,
     ) {
         if (call && chatIdentifiersEqual(call.chatId, chatId) && middlePanel) {
@@ -67,10 +65,10 @@
                 if (call.view === "fullscreen") {
                     let width = window.innerWidth;
                     if (
-                        layout.rightPanel !== "floating" &&
+                        ui.rightPanelMode !== "floating" &&
                         (call.threadOpen || call.participantsOpen)
                     ) {
-                        width = width - (rightPanelWidth ?? 500);
+                        width = width - (ui.rightPanelWidth ?? 500);
                     }
                     callContainer.style.setProperty("left", `0px`);
                     callContainer.style.setProperty("width", `${width}px`);
@@ -85,21 +83,19 @@
             } else {
                 // hack: there is a race condition here and it's possible we don't find the container on the first try
                 if (attempts === 0) {
-                    tick().then(() =>
-                        alignVideoCall(call, chatId, layout, rightPanelWidth, attempts + 1),
-                    );
+                    tick().then(() => alignVideoCall(call, chatId, attempts + 1));
                 }
             }
         }
     }
 
     function resize() {
-        alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
+        alignVideoCall($activeVideoCall, $selectedChatId);
     }
-    let noChat = $derived($pathParams.kind !== "global_chat_selected_route");
+    let noChat = $derived(pathState.route.kind !== "global_chat_selected_route");
     trackedEffect("align-video-call", () => {
         if (middlePanel) {
-            alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
+            alignVideoCall($activeVideoCall, $selectedChatId);
         }
     });
 </script>
@@ -108,14 +104,14 @@
 
 <section
     bind:this={middlePanel}
-    class:visible={$layoutStore.showMiddle}
-    class:offset={$layoutStore.showNav && !$layoutStore.showLeft}
+    class:visible={ui.showMiddle}
+    class:offset={ui.showNav && !ui.showLeft}
     class:halloween={$currentTheme.name === "halloween"}>
-    {#if $pathParams.kind === "explore_groups_route"}
+    {#if pathState.route.kind === "explore_groups_route"}
         <RecommendedGroups {joining} />
-    {:else if $pathParams.kind === "communities_route"}
+    {:else if pathState.route.kind === "communities_route"}
         <ExploreCommunities />
-    {:else if $pathParams.kind === "admin_route"}
+    {:else if pathState.route.kind === "admin_route"}
         {#await import("./admin/Admin.svelte")}
             <div class="loading">
                 <Loading />

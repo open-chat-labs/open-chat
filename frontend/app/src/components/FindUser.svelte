@@ -1,18 +1,17 @@
 <script lang="ts">
-    import Magnify from "svelte-material-icons/Magnify.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import type { UserSummary } from "openchat-client";
-    import Loading from "./Loading.svelte";
-    import { _ } from "svelte-i18n";
+    import { ui, type UserSummary } from "openchat-client";
     import { onMount } from "svelte";
-    import { toastStore } from "../stores/toast";
-    import { iconSize } from "../stores/iconSize";
-    import { i18nKey } from "../i18n/i18n";
+    import { _ } from "svelte-i18n";
+    import Close from "svelte-material-icons/Close.svelte";
+    import Magnify from "svelte-material-icons/Magnify.svelte";
     import { translatable } from "../actions/translatable";
+    import { i18nKey } from "../i18n/i18n";
+    import { toastStore } from "../stores/toast";
+    import { Debouncer } from "../utils/debouncer";
+    import { trimLeadingAtSymbol } from "../utils/user";
+    import Loading from "./Loading.svelte";
     import MatchingUser from "./MatchingUser.svelte";
     import Translatable from "./Translatable.svelte";
-    import { trimLeadingAtSymbol } from "../utils/user";
-    import { Debouncer } from "../utils/debouncer";
 
     interface Props {
         mode: "add" | "edit";
@@ -89,7 +88,7 @@
 </script>
 
 <div class="search-form" class:add={mode === "add"} class:edit={mode === "edit"}>
-    <span class="icon"><Magnify size={$iconSize} color={"#ccc"} viewBox="-5 -3 24 24" /></span>
+    <span class="icon"><Magnify size={ui.iconSize} color={"#ccc"} viewBox="-5 -3 24 24" /></span>
     <input
         bind:this={inp}
         bind:value={searchTerm}

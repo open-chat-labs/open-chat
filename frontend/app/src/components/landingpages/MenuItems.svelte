@@ -2,8 +2,7 @@
     import Link from "./Link.svelte";
     import Launch from "./Launch.svelte";
     import { getContext } from "svelte";
-    import { identityState, OpenChat } from "openchat-client";
-    import { location } from "../../routes";
+    import { identityState, OpenChat, pathState } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
 
@@ -12,8 +11,6 @@
     }
 
     let { showBlog }: Props = $props();
-
-    let path = $derived($location);
 </script>
 
 <div class="menu-items">
@@ -24,26 +21,32 @@
             </a>
         </div>
         <div class="menu-item">
-            <Link selected={path === "/features"} mode={"menu"} path="features">Features</Link>
+            <Link selected={pathState.location === "/features"} mode={"menu"} path="features"
+                >Features</Link>
         </div>
         <div class="menu-item">
-            <Link selected={path === "/roadmap"} mode={"menu"} path="roadmap">Roadmap</Link>
+            <Link selected={pathState.location === "/roadmap"} mode={"menu"} path="roadmap"
+                >Roadmap</Link>
         </div>
         <div class="menu-item">
-            <Link selected={path === "/whitepaper"} mode={"menu"} path="whitepaper"
+            <Link selected={pathState.location === "/whitepaper"} mode={"menu"} path="whitepaper"
                 >Whitepaper</Link>
         </div>
         <div class="menu-item">
-            <Link selected={path === "/architecture"} mode={"menu"} path="architecture"
-                >Architecture</Link>
+            <Link
+                selected={pathState.location === "/architecture"}
+                mode={"menu"}
+                path="architecture">Architecture</Link>
         </div>
         {#if showBlog}
             <div class="menu-item">
-                <Link selected={path.startsWith("/blog")} mode={"menu"} path="blog">Blog</Link>
+                <Link selected={pathState.location.startsWith("/blog")} mode={"menu"} path="blog"
+                    >Blog</Link>
             </div>
         {/if}
         <div class="menu-item">
-            <Link selected={path.startsWith("/faq")} mode={"menu"} path="faq">FAQs</Link>
+            <Link selected={pathState.location.startsWith("/faq")} mode={"menu"} path="faq"
+                >FAQs</Link>
         </div>
         {#if $identityState.kind === "logged_in"}
             <Link onLinkClicked={() => client.logout()} mode={"menu"}>Logout</Link>

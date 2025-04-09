@@ -1,13 +1,12 @@
 <script lang="ts">
-    import Delete from "svelte-material-icons/Delete.svelte";
-    import Legend from "../../Legend.svelte";
-    import Input from "../../Input.svelte";
-    import type { CredentialGate, Credential } from "openchat-client";
+    import { Principal } from "@dfinity/principal";
+    import { type Credential, type CredentialGate, ui } from "openchat-client";
     import { onMount } from "svelte";
+    import Delete from "svelte-material-icons/Delete.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import { Principal } from "@dfinity/principal";
+    import Input from "../../Input.svelte";
+    import Legend from "../../Legend.svelte";
     import Translatable from "../../Translatable.svelte";
 
     const MIN_LENGTH = 1;
@@ -174,7 +173,7 @@
             </div>
             {#if editable}
                 <div onclick={() => deleteArgument(arg[0])} class="delete-icon">
-                    <Delete size={$iconSize} color={"var(--icon-txt)"} />
+                    <Delete size={ui.iconSize} color={"var(--icon-txt)"} />
                 </div>
             {/if}
         </div>

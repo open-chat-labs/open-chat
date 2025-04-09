@@ -1,15 +1,14 @@
 <script lang="ts">
+    import { botState, OpenChat, ui } from "openchat-client";
     import { random64, type FlattenedCommand, type MessageContext } from "openchat-shared";
-    import CommandArg from "./CommandArg.svelte";
     import { getContext, onMount } from "svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
+    import Button from "../Button.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
-    import Button from "../Button.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import { botState, OpenChat } from "openchat-client";
-    import { toastStore } from "../../stores/toast";
+    import CommandArg from "./CommandArg.svelte";
 
     interface Props {
         command: FlattenedCommand;
@@ -106,8 +105,8 @@
                 disabled={!botState.instanceValid || busy}
                 loading={busy}
                 onClick={onSubmit}
-                small={!$mobileWidth}
-                tiny={$mobileWidth}>
+                small={!ui.mobileWidth}
+                tiny={ui.mobileWidth}>
                 <Translatable resourceKey={i18nKey("Submit")} />
             </Button>
         {/snippet}

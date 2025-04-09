@@ -1,31 +1,31 @@
 <script lang="ts">
-    import Alarm from "svelte-material-icons/Alarm.svelte";
-    import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
-    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
-    import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
-    import ShieldLockOpenOutline from "svelte-material-icons/ShieldLockOpenOutline.svelte";
-    import { _ } from "svelte-i18n";
-    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import {
         type AccessGate,
-        isNeuronGate,
-        OpenChat,
-        isPaymentGate,
+        type AccessGateConfig,
         type CryptocurrencyDetails,
         isBalanceGate,
+        isNeuronGate,
+        isPaymentGate,
         type Level,
-        type AccessGateConfig,
+        OpenChat,
+        ui,
     } from "openchat-client";
     import { getContext } from "svelte";
-    import type { Alignment, Position } from "../../../utils/alignment";
-    import Translatable from "../../Translatable.svelte";
+    import { _ } from "svelte-i18n";
+    import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
+    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
+    import Alarm from "svelte-material-icons/Alarm.svelte";
+    import ShieldLockOpenOutline from "svelte-material-icons/ShieldLockOpenOutline.svelte";
+    import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import CredentialGatePopup from "./CredentialGatePopup.svelte";
-    import GoldDiamond from "../../icons/GoldDiamond.svelte";
+    import type { Alignment, Position } from "../../../utils/alignment";
     import BlueDiamond from "../../icons/BlueDiamond.svelte";
-    import { iconSize } from "../../../stores/iconSize";
+    import GoldDiamond from "../../icons/GoldDiamond.svelte";
+    import Translatable from "../../Translatable.svelte";
     import AccessGateBuilder from "./AccessGateBuilder.svelte";
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
+    import CredentialGatePopup from "./CredentialGatePopup.svelte";
 
     interface Props {
         gateConfig: AccessGateConfig;
@@ -115,7 +115,7 @@
     {#if gateConfig.gate.kind === "no_gate" && showNoGate}
         <Tooltip {position} {align}>
             <div class="open">
-                <ShieldLockOpenOutline size={$iconSize} color={defaultColor} />
+                <ShieldLockOpenOutline size={ui.iconSize} color={defaultColor} />
             </div>
             {#snippet popupTemplate()}
                 <Translatable resourceKey={i18nKey("access.openAccessInfo")} />
@@ -132,7 +132,7 @@
     {:else if gateConfig.gate.kind === "composite_gate"}
         <Tooltip {position} {align}>
             <div class="composite">
-                <VectorCombine size={$iconSize} color={defaultColor} />
+                <VectorCombine size={ui.iconSize} color={defaultColor} />
             </div>
             {#snippet popupTemplate()}
                 <Translatable resourceKey={i18nKey("access.compositeGate")} />
@@ -159,7 +159,7 @@
     {:else if gateConfig.gate.kind === "unique_person_gate"}
         <Tooltip {position} {align}>
             <div class="unique">
-                <AccountCheck size={$iconSize} color={defaultColor} />
+                <AccountCheck size={ui.iconSize} color={defaultColor} />
             </div>
             {#snippet popupTemplate()}
                 <Translatable resourceKey={i18nKey("access.uniquePersonInfo")} />
@@ -176,7 +176,7 @@
     {:else if gateConfig.gate.kind === "referred_by_member_gate"}
         <Tooltip {position} {align}>
             <div class="referred_by_member">
-                <AccountPlusOutline size={$iconSize} color={defaultColor} />
+                <AccountPlusOutline size={ui.iconSize} color={defaultColor} />
             </div>
             {#snippet popupTemplate()}
                 <Translatable resourceKey={i18nKey("access.referredByMemberInfo")} />

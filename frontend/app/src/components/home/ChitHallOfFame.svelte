@@ -1,15 +1,14 @@
 <script lang="ts">
+    import { type ChitUserBalance, type OpenChat, ui } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import Button from "../Button.svelte";
     import { _ } from "svelte-i18n";
-    import type { OpenChat, ChitUserBalance } from "openchat-client";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import Invaders from "./Invaders.svelte";
     import { isTouchDevice } from "../../utils/devices";
-    import LighteningBolt from "./nav/LighteningBolt.svelte";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
     import HoverIcon from "../HoverIcon.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Invaders from "./Invaders.svelte";
+    import LighteningBolt from "./nav/LighteningBolt.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -143,7 +142,7 @@
                     <table cellpadding="3px" class="scoreboard">
                         <thead class="table-header">
                             <tr>
-                                {#if !$mobileWidth}
+                                {#if !ui.mobileWidth}
                                     <th class="rank">#</th>
                                 {/if}
                                 <th class="username">{$_("halloffame.username")}</th>
@@ -153,7 +152,7 @@
                         <tbody>
                             {#each leaders as leader, i}
                                 <tr class="table-row">
-                                    {#if !$mobileWidth}
+                                    {#if !ui.mobileWidth}
                                         <td class="rank">{i + 1}</td>
                                     {/if}
                                     <td class="username" title={leader.username}
@@ -173,14 +172,14 @@
                 {#if showGame}
                     <div onclick={() => (showGame = false)} class="joystick">🏆️</div>
                     <Button
-                        tiny={$mobileWidth}
-                        small={!$mobileWidth}
+                        tiny={ui.mobileWidth}
+                        small={!ui.mobileWidth}
                         onClick={() => (showGame = false)}>{$_("backToResults")}</Button>
                 {:else}
                     {#if supportsGame}
                         <div onclick={() => (showGame = true)} class="joystick">🕹️</div>
                     {/if}
-                    <Button tiny={$mobileWidth} small={!$mobileWidth} onClick={onClose}
+                    <Button tiny={ui.mobileWidth} small={!ui.mobileWidth} onClick={onClose}
                         >{$_("close")}</Button>
                 {/if}
             </ButtonGroup>

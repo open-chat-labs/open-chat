@@ -1,30 +1,30 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import ReplyingTo from "./ReplyingTo.svelte";
-    import MessageEntry from "./MessageEntry.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import DraftMediaMessage from "./DraftMediaMessage.svelte";
-    import { toastStore } from "../../stores/toast";
-    import EmojiPicker from "./EmojiPicker.svelte";
-    import type {
-        ChatSummary,
-        EnhancedReplyContext,
-        EventWrapper,
-        Message,
-        MessageAction,
-        CreatedUser,
-        OpenChat,
-        MultiUserChat,
-        AttachmentContent,
-        MessageContext,
-        User,
+    import {
+        type AttachmentContent,
+        type ChatSummary,
+        type CreatedUser,
+        type EnhancedReplyContext,
+        type EventWrapper,
+        type Message,
+        type MessageAction,
+        type MessageContext,
+        type MultiUserChat,
+        type OpenChat,
+        type User,
+        ui,
     } from "openchat-client";
     import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
     import HoverIcon from "../HoverIcon.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import DraftMediaMessage from "./DraftMediaMessage.svelte";
+    import EmojiPicker from "./EmojiPicker.svelte";
+    import MessageEntry from "./MessageEntry.svelte";
+    import ReplyingTo from "./ReplyingTo.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -160,7 +160,7 @@
                         <h4><Translatable resourceKey={i18nKey("pickEmoji")} /></h4>
                         <span title={$_("close")} class="close-emoji">
                             <HoverIcon onclick={() => (messageAction = undefined)}>
-                                <Close size={$iconSize} color={"var(--icon-txt)"} />
+                                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
                             </HoverIcon>
                         </span>
                     </div>

@@ -1,33 +1,32 @@
 <script lang="ts">
-    import Avatar from "../Avatar.svelte";
     import {
         AvatarSize,
+        chatListScopeStore as chatListScope,
+        chatSummariesStore,
+        type GroupChatIdentifier,
         type GroupChatSummary,
         isLocked,
         type MultiUserChat,
         type OpenChat,
-        routeForChatIdentifier,
-        suspendedUser,
-        chatListScopeStore as chatListScope,
-        chatSummariesStore,
-        selectedCommunity,
         publish,
-        type GroupChatIdentifier,
+        routeForChatIdentifier,
+        selectedCommunity,
+        suspendedUser,
+        ui,
     } from "openchat-client";
-    import { _ } from "svelte-i18n";
-    import Markdown from "./Markdown.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import Footer from "./upgrade/Footer.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { iconSize } from "../../stores/iconSize";
-    import { getContext } from "svelte";
-    import Button from "../Button.svelte";
-    import AccessGateIcon from "./access/AccessGateIcon.svelte";
     import page from "page";
-    import Translatable from "../Translatable.svelte";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Avatar from "../Avatar.svelte";
+    import Button from "../Button.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AccessGateIcon from "./access/AccessGateIcon.svelte";
+    import Markdown from "./Markdown.svelte";
+    import Footer from "./upgrade/Footer.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -67,7 +66,7 @@
             <div class="avatar">
                 <Avatar
                     url={client.groupAvatarUrl(group, $selectedCommunity)}
-                    size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
+                    size={ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
             </div>
             <div class="group-title-line">
                 <WithVerifiedBadge verified={group.verified} size={"small"}>
@@ -84,7 +83,7 @@
             </div>
             <div title={$_("notInterested")} class="close" onclick={() => dismiss(group)}>
                 <HoverIcon>
-                    <Close size={$iconSize} color={"var(--icon-txt)"} />
+                    <Close size={ui.iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
         </div>

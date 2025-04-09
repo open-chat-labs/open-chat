@@ -1,11 +1,9 @@
 <script lang="ts">
+    import { ui, type DefaultChannel } from "openchat-client";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import Pound from "svelte-material-icons/Pound.svelte";
-    import Input from "../../../Input.svelte";
-    import type { DefaultChannel } from "openchat-client";
-    import { iconSize } from "../../../../stores/iconSize";
-    import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../../i18n/i18n";
+    import Input from "../../../Input.svelte";
 
     interface Props {
         min: number;
@@ -35,12 +33,12 @@
             onEnter={stopEditing}
             placeholder={i18nKey("communities.updateChannelPlaceholder")}>
             <div class="hash">
-                <Pound size={$iconSize} color={"var(--icon-txt)"} />
+                <Pound size={ui.iconSize} color={"var(--icon-txt)"} />
             </div>
         </Input>
     </div>
     <div class="delete" onclick={onDeleteChannel}>
-        <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
+        <DeleteOutline size={ui.iconSize} color={"var(--icon-txt)"} />
     </div>
 </div>
 

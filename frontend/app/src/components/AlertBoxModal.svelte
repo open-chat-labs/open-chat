@@ -1,15 +1,14 @@
 <script lang="ts">
+    import { i18nKey, ui, type ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import AlertBox from "./AlertBox.svelte";
-    import Overlay from "./Overlay.svelte";
-    import ModalContent from "./ModalContent.svelte";
-    import Translatable from "./Translatable.svelte";
-    import { i18nKey, type ResourceKey } from "openchat-client";
-    import ButtonGroup from "./ButtonGroup.svelte";
-    import Button from "./Button.svelte";
-    import { mobileWidth } from "../stores/screenDimensions";
     import { interpolate } from "../i18n/i18n";
+    import AlertBox from "./AlertBox.svelte";
+    import Button from "./Button.svelte";
+    import ButtonGroup from "./ButtonGroup.svelte";
     import Markdown from "./home/Markdown.svelte";
+    import ModalContent from "./ModalContent.svelte";
+    import Overlay from "./Overlay.svelte";
+    import Translatable from "./Translatable.svelte";
 
     interface Props {
         title: ResourceKey;
@@ -37,7 +36,7 @@
         {#snippet footer()}
             <div class="footer">
                 <ButtonGroup>
-                    <Button onClick={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Button onClick={onClose} small={!ui.mobileWidth} tiny={ui.mobileWidth}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>

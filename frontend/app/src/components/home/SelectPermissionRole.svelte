@@ -1,14 +1,13 @@
 <script lang="ts">
+    import { ui, type ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Check from "svelte-material-icons/Check.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
-    import { iconSize } from "../../stores/iconSize";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Menu from "../Menu.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
+    import MenuItem from "../MenuItem.svelte";
     import Translatable from "../Translatable.svelte";
-    import type { ResourceKey } from "openchat-client";
 
     interface Props {
         label: ResourceKey;
@@ -55,7 +54,7 @@
     <MenuIcon bind:this={menu} position="bottom" align="end">
         {#snippet menuIcon()}
             <span class="icon">
-                <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
+                <ChevronDown viewBox={"0 -3 24 24"} size={ui.iconSize} color={"var(--icon-txt)"} />
             </span>
         {/snippet}
         {#snippet menuItems()}
@@ -65,7 +64,7 @@
                         {#snippet icon()}
                             <Check
                                 viewBox={"0 -3 24 24"}
-                                size={$iconSize}
+                                size={ui.iconSize}
                                 color={rolePermission === undefined
                                     ? "var(--icon-inverted-txt)"
                                     : "transparent"} />
@@ -82,7 +81,7 @@
                         {#snippet icon()}
                             <Check
                                 viewBox={"0 -3 24 24"}
-                                size={$iconSize}
+                                size={ui.iconSize}
                                 color={rolePermission !== undefined &&
                                 roles.indexOf(rolePermission) >= roles.indexOf(r) &&
                                 (r !== "none" || rolePermission === "none")

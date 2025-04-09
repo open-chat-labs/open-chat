@@ -1,6 +1,5 @@
-import { writable, get } from "svelte/store";
-import { navOpen } from "./layout";
-import { mobileWidth } from "./screenDimensions";
+import { ui } from "openchat-client";
+import { writable } from "svelte/store";
 import { type Alignment, type Position, centerOfScreen } from "../utils/alignment";
 import { reposition } from "../utils/position";
 
@@ -45,7 +44,7 @@ export const menuStore = {
         update((menu) => {
             if (menu === undefined) return menu;
 
-            if (centered && get(mobileWidth)) {
+            if (centered && ui.mobileWidth) {
                 positionInCenter(menu);
             } else {
                 reposition(triggerEl, menu, {
@@ -64,7 +63,7 @@ export const menuStore = {
     hideMenu: (): void =>
         update((menu) => {
             if (menu) {
-                navOpen.set(false);
+                ui.closeNavIfOpen();
             }
             return close(menu);
         }),

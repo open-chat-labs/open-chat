@@ -1,32 +1,30 @@
 <script lang="ts">
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
     import {
-        userStore,
-        currentUser as user,
         cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
+        ui,
+        currentUser as user,
+        userStore,
     } from "openchat-client";
     import { type CryptocurrencyContent, type MessageContext, nowNanos } from "openchat-shared";
-    import TokenInput from "./TokenInput.svelte";
-    import Overlay from "../Overlay.svelte";
-    import AccountInfo from "./AccountInfo.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Alert from "svelte-material-icons/Alert.svelte";
-    import Legend from "../Legend.svelte";
-    import { _ } from "svelte-i18n";
     import { getContext, onMount } from "svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { iconSize } from "../../stores/iconSize";
-    import SingleUserSelector from "./SingleUserSelector.svelte";
-    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
-    import TextArea from "../TextArea.svelte";
-    import CryptoSelector from "./CryptoSelector.svelte";
+    import Alert from "svelte-material-icons/Alert.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
+    import Legend from "../Legend.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import TextArea from "../TextArea.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AccountInfo from "./AccountInfo.svelte";
+    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
+    import CryptoSelector from "./CryptoSelector.svelte";
+    import SingleUserSelector from "./SingleUserSelector.svelte";
+    import TokenInput from "./TokenInput.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -227,7 +225,7 @@
                         {#if confirming}
                             <div class="confirming">
                                 <div class="alert">
-                                    <Alert size={$iconSize} color={"var(--warn"} />
+                                    <Alert size={ui.iconSize} color={"var(--warn"} />
                                 </div>
                                 <div class="alert-txt">
                                     <Translatable
@@ -250,22 +248,22 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
+                    <Button small={!ui.mobileWidth} tiny={ui.mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if toppingUp || zero}
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             disabled={refreshing}
                             loading={refreshing}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             disabled={!valid || sending}
                             loading={sending}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={send}
                             ><Translatable
                                 resourceKey={i18nKey(

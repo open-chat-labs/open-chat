@@ -1,19 +1,18 @@
 <script lang="ts">
-    import type { Challenge, OpenChat, ResourceKey } from "openchat-client";
-    import ModalContent from "../ModalContent.svelte";
+    import { ui, type Challenge, type OpenChat, type ResourceKey } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import Button from "../Button.svelte";
-    import Input from "../Input.svelte";
-    import FancyLoader from "../icons/FancyLoader.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
-    import Legend from "../Legend.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
+    import { i18nKey } from "../../i18n/i18n";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import Input from "../Input.svelte";
+    import Legend from "../Legend.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Translatable from "../Translatable.svelte";
+    import FancyLoader from "../icons/FancyLoader.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -74,7 +73,7 @@
 </script>
 
 <div class="challenge">
-    <ModalContent fitToContent={!$mobileWidth} fixedWidth={$mobileWidth}>
+    <ModalContent fitToContent={!ui.mobileWidth} fixedWidth={ui.mobileWidth}>
         {#snippet header()}
             <div class="header login">
                 <div class="title">
