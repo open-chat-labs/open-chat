@@ -1,36 +1,39 @@
 <script lang="ts">
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import type {
         ChatSummary,
+        MessageContext,
         OpenChat,
         PrizeContentInitial,
-        MessageContext,
     } from "openchat-client";
-    import { bigIntMax } from "openchat-client";
-    import TokenInput from "./TokenInput.svelte";
-    import Overlay from "../Overlay.svelte";
-    import AccountInfo from "./AccountInfo.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Legend from "../Legend.svelte";
-    import { _ } from "svelte-i18n";
+    import {
+        bigIntMax,
+        cryptoBalance as cryptoBalanceStore,
+        cryptoLookup,
+        ui,
+    } from "openchat-client";
     import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { i18nKey } from "../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import Checkbox from "../Checkbox.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
-    import Range from "../Range.svelte";
-    import Radio from "../Radio.svelte";
-    import CryptoSelector from "./CryptoSelector.svelte";
     import EqualDistribution from "../icons/EqualDistribution.svelte";
     import RandomDistribution from "../icons/RandomDistribution.svelte";
-    import TextArea from "../TextArea.svelte";
+    import Legend from "../Legend.svelte";
+    import ModalContent from "../ModalContent.svelte";
     import NumberInput from "../NumberInput.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
-    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import { cryptoBalance as cryptoBalanceStore, cryptoLookup } from "openchat-client";
-    import Checkbox from "../Checkbox.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Radio from "../Radio.svelte";
+    import Range from "../Range.svelte";
     import Select from "../Select.svelte";
+    import TextArea from "../TextArea.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AccountInfo from "./AccountInfo.svelte";
+    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
+    import CryptoSelector from "./CryptoSelector.svelte";
+    import TokenInput from "./TokenInput.svelte";
 
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
@@ -465,22 +468,22 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
+                    <Button small={!ui.mobileWidth} tiny={ui.mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if toppingUp || zero}
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             disabled={refreshing}
                             loading={refreshing}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             disabled={!valid || sending}
                             loading={sending}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={send}
                             ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                     {/if}

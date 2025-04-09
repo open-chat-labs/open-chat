@@ -12,10 +12,10 @@
         globalUnreadCount,
         selectedChatStore,
         selectedCommunity,
+        pathState,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { mobileOperatingSystem } from "../utils/devices";
-    import { location } from "../routes";
 
     const client = getContext<OpenChat>("client");
 
@@ -88,7 +88,7 @@
     let details = $derived(
         getDetails(
             $chatListScopeStore,
-            $location,
+            pathState.location,
             $userStore,
             $globalUnreadCount,
             $selectedChatStore,

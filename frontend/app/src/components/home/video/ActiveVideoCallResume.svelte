@@ -1,10 +1,9 @@
 <script lang="ts">
-    import { chatIdentifiersEqual, selectedChatId } from "openchat-client";
+    import { chatIdentifiersEqual, selectedChatId, ui } from "openchat-client";
     import { activeVideoCall } from "../../../stores/video";
-    import { mobileWidth } from "../../../stores/screenDimensions";
 
     let show = $derived(
-        $mobileWidth &&
+        ui.mobileWidth &&
             $activeVideoCall?.chatId !== undefined &&
             chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId) &&
             $activeVideoCall.view === "minimised",

@@ -1,37 +1,36 @@
 <script lang="ts">
     import {
+        walletTokensSorted as accountsSorted,
         type EnhancedTokenDetails,
         ICP_SYMBOL,
+        nervousSystemLookup,
         type OpenChat,
         swappableTokensStore,
-        walletTokensSorted as accountsSorted,
+        ui,
         walletConfigStore as walletConfig,
-        nervousSystemLookup,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
+    import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import HeartRemoveOutline from "svelte-material-icons/HeartRemoveOutline.svelte";
-    import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
-    import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
     import ViewList from "svelte-material-icons/ViewList.svelte";
-    import { _ } from "svelte-i18n";
-    import ErrorMessage from "../../ErrorMessage.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
-    import AccountTransactions from "./AccountTransactions.svelte";
-    import Overlay from "../../Overlay.svelte";
-    import SwapCrypto from "./SwapCrypto.svelte";
-    import SendCrypto from "./SendCrypto.svelte";
-    import ReceiveCrypto from "./ReceiveCrypto.svelte";
-    import MultiToggle, { type Option } from "../../MultiToggle.svelte";
-    import { sum } from "../../../utils/math";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { sum } from "../../../utils/math";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import Menu from "../../Menu.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuItem from "../../MenuItem.svelte";
+    import MultiToggle, { type Option } from "../../MultiToggle.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import AccountTransactions from "./AccountTransactions.svelte";
+    import ReceiveCrypto from "./ReceiveCrypto.svelte";
     import RestrictedFeature from "./RestrictedFeature.svelte";
+    import SendCrypto from "./SendCrypto.svelte";
+    import SwapCrypto from "./SwapCrypto.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -188,7 +187,7 @@
                             <span class="wallet-menu">
                                 <ChevronDown
                                     viewBox={"0 -3 24 24"}
-                                    size={$iconSize}
+                                    size={ui.iconSize}
                                     color={"var(--txt)"} />
                             </span>
                         {/snippet}
@@ -197,7 +196,7 @@
                                 <MenuItem onclick={() => showSend(token.ledger)}>
                                     {#snippet icon()}
                                         <ArrowRightBoldCircle
-                                            size={$iconSize}
+                                            size={ui.iconSize}
                                             color={"var(--icon-inverted-txt)"} />
                                     {/snippet}
                                     {#snippet text()}
@@ -211,7 +210,7 @@
                                     <MenuItem onclick={() => showReceive(token.ledger)}>
                                         {#snippet icon()}
                                             <ArrowLeftBoldCircle
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -227,7 +226,7 @@
                                         <MenuItem onclick={() => showSwap(token.ledger)}>
                                             {#snippet icon()}
                                                 <SwapIcon
-                                                    size={$iconSize}
+                                                    size={ui.iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -245,7 +244,7 @@
                                     <MenuItem onclick={() => showTransactions(token)}>
                                         {#snippet icon()}
                                             <ViewList
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -262,7 +261,7 @@
                                     <MenuItem onclick={() => removeFromWallet(token.ledger)}>
                                         {#snippet icon()}
                                             <HeartRemoveOutline
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}

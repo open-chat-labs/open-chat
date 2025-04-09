@@ -1,12 +1,11 @@
 <script lang="ts">
-    import MarkdownOutline from "svelte-material-icons/LanguageMarkdownOutline.svelte";
+    import { ui, type EventWrapper, type Message } from "openchat-client";
     import Markdown from "svelte-material-icons/LanguageMarkdown.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import Tooltip from "../tooltip/Tooltip.svelte";
-    import Translatable from "../Translatable.svelte";
+    import MarkdownOutline from "svelte-material-icons/LanguageMarkdownOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { useBlockLevelMarkdown } from "../../stores/settings";
-    import type { EventWrapper, Message } from "openchat-client";
+    import Tooltip from "../tooltip/Tooltip.svelte";
+    import Translatable from "../Translatable.svelte";
 
     interface Props {
         editingEvent: EventWrapper<Message> | undefined;
@@ -30,9 +29,9 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div onclick={toggle}>
             {#if enabled}
-                <Markdown size={$iconSize} color={"var(--icon-txt)"} />
+                <Markdown size={ui.iconSize} color={"var(--icon-txt)"} />
             {:else}
-                <MarkdownOutline size={$iconSize} color={"var(--icon-txt)"} />
+                <MarkdownOutline size={ui.iconSize} color={"var(--icon-txt)"} />
             {/if}
         </div>
         {#snippet popupTemplate()}

@@ -1,23 +1,21 @@
 <script lang="ts">
+    import type { ChatSummary, OpenChat } from "openchat-client";
+    import { filteredProposalsStore, proposalTopicsStore, ui } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
-    import SectionHeader from "../SectionHeader.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import type { ChatSummary, OpenChat } from "openchat-client";
-    import Checkbox from "../Checkbox.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import LinkButton from "../LinkButton.svelte";
-    import CollapsibleCard from "../CollapsibleCard.svelte";
-    import { OC_GOVERNANCE_CANISTER_ID } from "../../utils/sns";
+    import { i18nKey } from "../../i18n/i18n";
     import {
         proposalActionCategories,
         type ProposalActionCategory,
     } from "../../stores/proposalSections";
-    import { i18nKey } from "../../i18n/i18n";
+    import { OC_GOVERNANCE_CANISTER_ID } from "../../utils/sns";
+    import Checkbox from "../Checkbox.svelte";
+    import CollapsibleCard from "../CollapsibleCard.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import LinkButton from "../LinkButton.svelte";
+    import SectionHeader from "../SectionHeader.svelte";
     import Translatable from "../Translatable.svelte";
-    import { proposalTopicsStore, filteredProposalsStore } from "openchat-client";
 
     interface Props {
         selectedChat: ChatSummary;
@@ -85,11 +83,11 @@
     }
 </script>
 
-<SectionHeader shadow flush={$mobileWidth}>
+<SectionHeader shadow flush={ui.mobileWidth}>
     <h4><Translatable resourceKey={i18nKey("proposal.filter")} /></h4>
     <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
+            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>

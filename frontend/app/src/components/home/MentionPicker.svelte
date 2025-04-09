@@ -1,19 +1,18 @@
 <script lang="ts">
-    import MenuItem from "../MenuItem.svelte";
-    import Menu from "../Menu.svelte";
-    import VirtualList from "../VirtualList.svelte";
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
     import {
-        userStore,
-        currentUser,
+        AvatarSize,
         currentCommunityMembers as communityMembers,
+        currentUser,
+        ui,
+        userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import Avatar from "../Avatar.svelte";
-    import { AvatarSize } from "openchat-client";
-    import { mobileWidth } from "../../stores/screenDimensions";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import { iconSize } from "../../stores/iconSize";
+    import Avatar from "../Avatar.svelte";
+    import Menu from "../Menu.svelte";
+    import MenuItem from "../MenuItem.svelte";
+    import VirtualList from "../VirtualList.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -95,7 +94,7 @@
         }
         return a.length < b.length ? -1 : 1;
     }
-    let itemHeight = $derived($mobileWidth ? 53 : 55);
+    let itemHeight = $derived(ui.mobileWidth ? 53 : 55);
     let borderWidth = $derived(direction === "up" ? 2 : 3);
     let maxHeight = $derived(
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)",
@@ -181,7 +180,7 @@
                                     <div class="group-icon">
                                         <AccountMultiple
                                             color={"var(--menu-disabled-txt)"}
-                                            size={$iconSize} />
+                                            size={ui.iconSize} />
                                     </div>
                                 {:else}
                                     <Avatar

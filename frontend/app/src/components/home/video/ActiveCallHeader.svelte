@@ -1,17 +1,14 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
+    import { AvatarSize, ui } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import { rtlStore } from "../../../stores/rtl";
-    import { iconSize } from "../../../stores/iconSize";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import SectionHeader from "../../SectionHeader.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import Typing from "../../Typing.svelte";
-    import { AvatarSize } from "openchat-client";
     import { activeVideoCall } from "../../../stores/video";
-    import FancyLoader from "../../icons/FancyLoader.svelte";
     import Avatar from "../../Avatar.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import FancyLoader from "../../icons/FancyLoader.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Typing from "../../Typing.svelte";
     import ActiveCallActions from "./ActiveCallActions.svelte";
     import type { VideoCallChat } from "./callChat";
 
@@ -40,7 +37,7 @@
 
 <SectionHeader shadow flush>
     <div class="header">
-        {#if $mobileWidth}
+        {#if ui.mobileWidth}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div
                 tabindex="0"
@@ -50,9 +47,9 @@
                 onclick={onClearSelection}>
                 <HoverIcon>
                     {#if $rtlStore}
-                        <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                        <ArrowRight size={ui.iconSize} color={"var(--icon-txt)"} />
                     {:else}
-                        <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                        <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
                     {/if}
                 </HoverIcon>
             </div>

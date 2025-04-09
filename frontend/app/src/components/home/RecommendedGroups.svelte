@@ -6,24 +6,23 @@
         type OpenChat,
         chatIdentifiersEqual,
         chatListScopeStore as chatListScope,
+        ui,
     } from "openchat-client";
+    import page from "page";
+    import { getContext, onMount } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import SectionHeader from "../SectionHeader.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import Loading from "../Loading.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { routeForScope } from "../../routes";
+    import { rtlStore } from "../../stores/rtl";
+    import { type RemoteData, mapRemoteData } from "../../utils/remoteData";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { rtlStore } from "../../stores/rtl";
     import HoverIcon from "../HoverIcon.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { getContext, onMount } from "svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import RecommendedGroup from "./RecommendedGroup.svelte";
-    import { type RemoteData, mapRemoteData } from "../../utils/remoteData";
-    import page from "page";
-    import { routeForScope } from "../../routes";
+    import Loading from "../Loading.svelte";
+    import SectionHeader from "../SectionHeader.svelte";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import RecommendedGroup from "./RecommendedGroup.svelte";
 
     interface Props {
         joining: MultiUserChat | undefined;
@@ -66,13 +65,13 @@
 {:else if hotGroups.kind === "success" && hotGroups.data.length > 0}
     <div class="wrapper">
         <SectionHeader>
-            {#if $mobileWidth}
+            {#if ui.mobileWidth}
                 <div class="back" class:rtl={$rtlStore} onclick={cancelRecommendations}>
                     <HoverIcon>
                         {#if $rtlStore}
-                            <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                            <ArrowRight size={ui.iconSize} color={"var(--icon-txt)"} />
                         {:else}
-                            <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                            <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
                         {/if}
                     </HoverIcon>
                 </div>

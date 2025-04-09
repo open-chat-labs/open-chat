@@ -8,12 +8,12 @@
     import SignInWithMagicLink from "../SignInWithMagicLink.svelte";
     import { onMount } from "svelte";
     import Overlay from "../Overlay.svelte";
-    import { querystring } from "../../routes";
+    import { pathState } from "openchat-client";
 
     let showSignInWithMagicLinkModal = false;
 
     onMount(() => {
-        if ($querystring.has("auth")) {
+        if (pathState.querystring.has("auth")) {
             showSignInWithMagicLinkModal = true;
         }
     });

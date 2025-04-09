@@ -1,37 +1,20 @@
 <script lang="ts">
     import "@styles/global.scss";
 
-    import { onMount, setContext } from "svelte";
+    import Router from "@components/Router.svelte";
+    import "@components/web-components/profileLink";
     import "@i18n/i18n";
+    import { reviewingTranslations } from "@i18n/i18n";
+    import { pageReplace, routeForScope } from "@src/routes";
+    import { trackedEffect } from "@src/utils/effects.svelte";
+    import { menuStore } from "@stores/menu";
+    import { rtlStore } from "@stores/rtl";
+    import { snowing } from "@stores/snow";
+    import { incomingVideoCall } from "@stores/video";
+    import { broadcastLoggedInUser } from "@stores/xframe";
+    import { currentTheme } from "@theme/themes";
     import "@utils/markdown";
     import "@utils/scream";
-    import { rtlStore } from "@stores/rtl";
-    import { _, isLoading } from "svelte-i18n";
-    import Router from "@components/Router.svelte";
-    import { notFound, pageReplace, pathParams, routeForScope } from "@src/routes";
-    import SwitchDomain from "./SwitchDomain.svelte";
-    import Upgrading from "./upgrading/Upgrading.svelte";
-    import UpgradeBanner from "./UpgradeBanner.svelte";
-    import { currentTheme } from "@theme/themes";
-    import "@stores/fontSize";
-    import Profiler from "./Profiler.svelte";
-    import {
-        OpenChat,
-        type DiamondMembershipFees,
-        type ChatSummary,
-        type ChatIdentifier,
-        type DexId,
-        routeForChatIdentifier,
-        botState,
-    } from "openchat-client";
-    import {
-        type UpdateMarketMakerConfigArgs,
-        inititaliseLogger,
-        anonUser,
-        identityState,
-        chatListScopeStore as chatListScope,
-        subscribe,
-    } from "openchat-client";
     import {
         isCanisterUrl,
         isLandingPageRoute,
@@ -39,23 +22,39 @@
         redirectLandingPageLinksIfNecessary,
         removeQueryStringParam,
     } from "@utils/urls";
-    import "@components/web-components/profileLink";
+    import {
+        type ChatIdentifier,
+        type ChatSummary,
+        type DexId,
+        type DiamondMembershipFees,
+        OpenChat,
+        type UpdateMarketMakerConfigArgs,
+        anonUser,
+        botState,
+        chatListScopeStore as chatListScope,
+        identityState,
+        inititaliseLogger,
+        pathState,
+        routeForChatIdentifier,
+        subscribe,
+        ui,
+    } from "openchat-client";
     import page from "page";
-    import { menuStore } from "@stores/menu";
-    import { framed, broadcastLoggedInUser } from "@stores/xframe";
+    import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
-    import Witch from "./Witch.svelte";
+    import { _, isLoading } from "svelte-i18n";
     import Head from "./Head.svelte";
-    import { snowing } from "@stores/snow";
+    import Profiler from "./Profiler.svelte";
     import Snow from "./Snow.svelte";
-    import ActiveCall from "./home/video/ActiveCall.svelte";
-    import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
-    import { incomingVideoCall } from "@stores/video";
-    import IncomingCall from "./home/video/IncomingCall.svelte";
+    import SwitchDomain from "./SwitchDomain.svelte";
+    import UpgradeBanner from "./UpgradeBanner.svelte";
+    import Witch from "./Witch.svelte";
     import InstallPrompt from "./home/InstallPrompt.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
-    import { reviewingTranslations } from "@i18n/i18n";
-    import { trackedEffect } from "@src/utils/effects.svelte";
+    import ActiveCall from "./home/video/ActiveCall.svelte";
+    import IncomingCall from "./home/video/IncomingCall.svelte";
+    import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
+    import Upgrading from "./upgrading/Upgrading.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -105,8 +104,8 @@
     let profileTrace = client.showTrace();
     // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being
     let videoCallElement: any;
-    let landingPageRoute = $derived(isLandingPageRoute($pathParams));
-    let homeRoute = $derived($pathParams.kind === "home_route");
+    let landingPageRoute = $derived(isLandingPageRoute(pathState.route));
+    let homeRoute = $derived(pathState.route.kind === "home_route");
     let showLandingPage = $derived(
         landingPageRoute || (homeRoute && $identityState.kind === "anon" && $anonUser),
     );
@@ -115,7 +114,7 @@
         $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light",
     );
     let burstUrl = $derived(isFirefox ? `${burstPath}.png` : `${burstPath}.svg`);
-    let burstFixed = $derived(isScrollingRoute($pathParams));
+    let burstFixed = $derived(isScrollingRoute(pathState.route));
 
     let upgrading = $derived(
         $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user",
@@ -129,11 +128,16 @@
     });
 
     trackedEffect("landing-page", () => {
-        if (!$notFound && showLandingPage) {
+        if (!pathState.notFound && showLandingPage) {
             document.body.classList.add("landing-page");
         } else {
             document.body.classList.remove("landing-page");
         }
+    });
+
+    trackedEffect("font-size", () => {
+        console.log("Setting font size to: ", ui.fontSize);
+        document.documentElement.style.setProperty("--font-size", `${ui.fontSize}px`);
     });
 
     trackedEffect("calculate-height", calculateHeight);
@@ -149,7 +153,6 @@
         window.addEventListener("resize", trackVirtualKeyboard);
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
-        framed.set(window.self !== window.top);
 
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {

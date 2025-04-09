@@ -1,14 +1,13 @@
 <script lang="ts">
+    import { lowBandwidth } from "@src/stores/settings";
+    import { ui, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
+    import CloseIcon from "svelte-material-icons/Close.svelte";
+    import { rtlStore } from "../../stores/rtl";
+    import GenericPreviewComponent from "./GenericPreview.svelte";
+    import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import Tweet from "./Tweet.svelte";
     import YouTubePreview from "./YouTubePreview.svelte";
-    import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
-    import type { OpenChat } from "openchat-client";
-    import GenericPreviewComponent from "./GenericPreview.svelte";
-    import CloseIcon from "svelte-material-icons/Close.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { rtlStore } from "../../stores/rtl";
-    import { lowBandwidth } from "@src/stores/settings";
 
     type Preview = SpotifyPreview | YoutubePreview | TwitterPreview | GenericPreview;
 
@@ -154,7 +153,7 @@
         {#if me}
             <div class="remove-wrapper" class:rtl={$rtlStore}>
                 <div class="remove" onclick={() => removePreview(preview)}>
-                    <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
+                    <CloseIcon viewBox="0 0 24 24" size={ui.iconSize} color={"var(--button-txt)"} />
                 </div>
             </div>
         {/if}

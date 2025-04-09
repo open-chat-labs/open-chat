@@ -1,21 +1,19 @@
 <script lang="ts">
-    import Overlay from "../Overlay.svelte";
-    import Select from "../Select.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
+    import { ui, type ChatIdentifier, type OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Flag from "svelte-material-icons/Flag.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
     import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
     import Checkbox from "../Checkbox.svelte";
-    import Markdown from "./Markdown.svelte";
     import Legend from "../Legend.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { _ } from "svelte-i18n";
-    import { iconSize } from "../../stores/iconSize";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import Flag from "svelte-material-icons/Flag.svelte";
-    import { getContext } from "svelte";
-    import type { ChatIdentifier, OpenChat } from "openchat-client";
-    import { toastStore } from "../../stores/toast";
-    import { i18nKey } from "../../i18n/i18n";
+    import Overlay from "../Overlay.svelte";
+    import Select from "../Select.svelte";
     import Translatable from "../Translatable.svelte";
+    import Markdown from "./Markdown.svelte";
 
     interface Props {
         chatId: ChatIdentifier;
@@ -66,7 +64,7 @@
     <ModalContent {onClose} closeIcon>
         {#snippet header()}
             <span class="header">
-                <Flag size={$iconSize} color={"var(--error)"} />
+                <Flag size={ui.iconSize} color={"var(--error)"} />
                 <h1><Translatable resourceKey={i18nKey("report.title")} /></h1>
             </span>
         {/snippet}
@@ -100,13 +98,16 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    <Button
+                        secondary
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}
+                        onClick={onClose}><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <Button
                         disabled={busy || !valid}
                         loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}
                         onClick={createReport}
                         ><Translatable resourceKey={i18nKey("report.menu")} /></Button>
                 </ButtonGroup>

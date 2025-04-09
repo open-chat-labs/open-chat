@@ -1,27 +1,27 @@
 <script lang="ts">
-    import Button from "../../Button.svelte";
-    import ErrorMessage from "../../ErrorMessage.svelte";
-    import { getContext, onMount } from "svelte";
-    import Footer from "./Footer.svelte";
-    import Loading from "../../Loading.svelte";
-    import Congratulations from "./Congratulations.svelte";
     import {
         type DiamondMembershipDuration,
-        type OpenChat,
-        E8S_PER_TOKEN,
         type DiamondMembershipFees,
+        type OpenChat,
         type ResourceKey,
         cryptoLookup,
+        E8S_PER_TOKEN,
+        ui,
     } from "openchat-client";
-    import AccountInfo from "../AccountInfo.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import Checkbox from "../../Checkbox.svelte";
-    import { toastStore } from "../../../stores/toast";
-    import Expiry from "./Expiry.svelte";
-    import Diamond from "../../icons/Diamond.svelte";
-    import type { RemoteData } from "../../../utils/remoteData";
+    import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { toastStore } from "../../../stores/toast";
+    import type { RemoteData } from "../../../utils/remoteData";
+    import Button from "../../Button.svelte";
+    import Checkbox from "../../Checkbox.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import Diamond from "../../icons/Diamond.svelte";
+    import Loading from "../../Loading.svelte";
     import Translatable from "../../Translatable.svelte";
+    import AccountInfo from "../AccountInfo.svelte";
+    import Congratulations from "./Congratulations.svelte";
+    import Expiry from "./Expiry.svelte";
+    import Footer from "./Footer.svelte";
 
     interface Props {
         accountBalance?: number;
@@ -243,32 +243,32 @@
         </div>
     {/if}
 </div>
-<Footer align={$mobileWidth ? "center" : "end"}>
+<Footer align={ui.mobileWidth ? "center" : "end"}>
     {#if confirmed}
-        <Button small={!$mobileWidth} tiny={$mobileWidth} onClick={onCancel}
+        <Button small={!ui.mobileWidth} tiny={ui.mobileWidth} onClick={onCancel}
             ><Translatable resourceKey={i18nKey("close")} /></Button>
     {:else}
         <Button
             disabled={confirming}
-            tiny={$mobileWidth}
-            small={!$mobileWidth}
+            tiny={ui.mobileWidth}
+            small={!ui.mobileWidth}
             secondary
             onClick={onCancel}><Translatable resourceKey={i18nKey("cancel")} /></Button>
         {#if allowBack}
             <Button
                 disabled={confirming}
-                tiny={$mobileWidth}
-                small={!$mobileWidth}
+                tiny={ui.mobileWidth}
+                small={!ui.mobileWidth}
                 secondary
                 onClick={onFeatures}
                 ><Translatable resourceKey={i18nKey("upgrade.features")} /></Button>
         {/if}
         <Button
-            small={!$mobileWidth}
+            small={!ui.mobileWidth}
             disabled={confirming || insufficientFunds}
             loading={confirming || refreshingBalance}
             onClick={confirm}
-            tiny={$mobileWidth}><Translatable resourceKey={i18nKey("upgrade.confirm")} /></Button>
+            tiny={ui.mobileWidth}><Translatable resourceKey={i18nKey("upgrade.confirm")} /></Button>
     {/if}
 </Footer>
 
