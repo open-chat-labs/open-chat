@@ -1,6 +1,6 @@
 use crate::{read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
-use canister_client::{make_c2c_call_raw, make_c2c_call_with_payment};
+use canister_client::make_c2c_call_raw;
 use canister_tracing_macros::trace;
 use group_canister::c2c_delete_group::{Response::*, *};
 use group_index_canister::c2c_delete_group;

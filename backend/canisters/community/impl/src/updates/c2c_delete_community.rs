@@ -4,7 +4,6 @@ use canister_client::make_c2c_call_raw;
 use canister_tracing_macros::trace;
 use community_canister::c2c_delete_community::{Response::*, *};
 use group_index_canister::c2c_delete_community;
-use tracing::error;
 use types::{CanisterId, UserId};
 
 #[update(msgpack = true)]
