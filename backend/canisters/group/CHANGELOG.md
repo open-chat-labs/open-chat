@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix serializing empty MessagePack responses ([#7764](https://github.com/open-chat-labs/open-chat/pull/7764))
+- Mark Group active after P2P swap status is updated ([#7766](https://github.com/open-chat-labs/open-chat/pull/7766))
 
 ## [[2.0.1684](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1684-group)] - 2025-04-02
 
