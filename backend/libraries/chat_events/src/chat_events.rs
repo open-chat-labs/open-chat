@@ -1390,14 +1390,15 @@ impl ChatEvents {
         message_id: MessageId,
         status: P2PSwapStatus,
         now: TimestampMillis,
-    ) {
-        let _ = self.update_message(
+    ) -> bool {
+        self.update_message(
             thread_root_message_index,
             message_id.into(),
             EventIndex::default(),
             Some(now),
             |message, _| Self::set_p2p_swap_status_inner(message, status),
-        );
+        )
+        .is_ok()
     }
 
     fn set_p2p_swap_status_inner(message: &mut MessageInternal, status: P2PSwapStatus) -> Result<(), UpdateEventError> {
