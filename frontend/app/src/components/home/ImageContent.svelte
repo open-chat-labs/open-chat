@@ -1,16 +1,16 @@
 <script lang="ts">
-    import { rtlStore } from "../../stores/rtl";
     import type { ImageContent, MemeFighterContent } from "openchat-client";
-    import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
-    import ContentCaption from "./ContentCaption.svelte";
-    import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import { isTouchDevice } from "../../utils/devices";
-    import { lowBandwidth } from "../../stores/settings";
-    import Button from "../Button.svelte";
-    import Translatable from "../Translatable.svelte";
+    import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { rtlStore } from "../../stores/rtl";
+    import { lowBandwidth } from "../../stores/settings";
+    import { isTouchDevice } from "../../utils/devices";
+    import Button from "../Button.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Translatable from "../Translatable.svelte";
+    import ContentCaption from "./ContentCaption.svelte";
 
     interface Props {
         content: ImageContent | MemeFighterContent;
@@ -36,11 +36,12 @@
         blockLevelMarkdown = false,
     }: Props = $props();
 
-    let imgElement: HTMLImageElement;
+    let imgElement: HTMLImageElement | undefined = $state();
     let zoom = $state(false);
-    let withCaption =
-        content.kind === "image_content" && content.caption !== undefined && content.caption !== "";
-    let landscape = content.height < content.width;
+    let withCaption = $derived(
+        content.kind === "image_content" && content.caption !== undefined && content.caption !== "",
+    );
+    let landscape = $derived(content.height < content.width);
     let zoomedWidth: number = $state(0);
     let zoomedHeight: number = $state(0);
 
@@ -111,6 +112,12 @@
         hidden = $lowBandwidth && !draft;
     });
     let zoomable = $derived(!draft && !reply && !pinned);
+
+    function onError() {
+        if (imgElement) {
+            imgElement.src = normalised.fallback;
+        }
+    }
 </script>
 
 <svelte:window
@@ -133,11 +140,7 @@
             bind:this={imgElement}
             onclick={onClick}
             ondblclick={onDoubleClick}
-            onerror={() => {
-                if (imgElement) {
-                    imgElement.src = normalised.fallback;
-                }
-            }}
+            onerror={onError}
             class="unzoomed"
             class:landscape
             class:fill
@@ -172,7 +175,7 @@
                         height={zoomedHeight}
                         onclick={onClick}
                         ondblclick={onDoubleClick}
-                        onerror={() => (imgElement.src = normalised.fallback)}
+                        onerror={onError}
                         src={normalised.url}
                         alt={normalised.caption} />
                     <div
