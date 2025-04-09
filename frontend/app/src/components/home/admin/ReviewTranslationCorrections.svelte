@@ -1,27 +1,26 @@
 <script lang="ts">
-    import { _, locale } from "svelte-i18n";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import Hamburger from "svelte-material-icons/Menu.svelte";
-    import Check from "svelte-material-icons/Check.svelte";
-    import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
-    import Translate from "svelte-material-icons/Translate.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import Refresh from "svelte-material-icons/Refresh.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
     import type {
         CandidateTranslations,
         OpenChat,
         RejectReason,
         TranslationCorrection,
     } from "openchat-client";
-    import { userStore } from "openchat-client";
+    import { ui, userStore } from "openchat-client";
     import { getContext, onDestroy, onMount } from "svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import { toastStore } from "../../../stores/toast";
-    import { i18nKey, reviewingTranslations } from "../../../i18n/i18n";
+    import { _, locale } from "svelte-i18n";
+    import Check from "svelte-material-icons/Check.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
+    import Hamburger from "svelte-material-icons/Menu.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
+    import Translate from "svelte-material-icons/Translate.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
+    import { i18nKey, reviewingTranslations } from "../../../i18n/i18n";
+    import { toastStore } from "../../../stores/toast";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import Menu from "../../Menu.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuItem from "../../MenuItem.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -214,7 +213,7 @@
                                     <div class="busy"></div>
                                 {:else}
                                     <HoverIcon>
-                                        <Hamburger size={$iconSize} color={"var(--txt)"} />
+                                        <Hamburger size={ui.iconSize} color={"var(--txt)"} />
                                     </HoverIcon>
                                 {/if}
                             {/snippet}
@@ -223,7 +222,7 @@
                                     <MenuItem onclick={() => previewCorrection(correction)}>
                                         {#snippet icon()}
                                             <EyeOutline
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -234,7 +233,7 @@
                                         <MenuItem onclick={() => (verifying = undefined)}>
                                             {#snippet icon()}
                                                 <Translate
-                                                    size={$iconSize}
+                                                    size={ui.iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -245,7 +244,7 @@
                                         <MenuItem onclick={() => verifyCorrection(correction)}>
                                             {#snippet icon()}
                                                 <Translate
-                                                    size={$iconSize}
+                                                    size={ui.iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -256,7 +255,7 @@
                                     <MenuItem onclick={() => approveCorrection(correction)}>
                                         {#snippet icon()}
                                             <Check
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -268,7 +267,7 @@
                                             rejectCorrection(correction, "incorrect_meaning")}>
                                         {#snippet icon()}
                                             <Close
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -279,7 +278,7 @@
                                         onclick={() => rejectCorrection(correction, "too_long")}>
                                         {#snippet icon()}
                                             <Close
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}

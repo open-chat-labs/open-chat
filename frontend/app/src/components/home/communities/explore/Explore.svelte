@@ -1,31 +1,31 @@
 <script lang="ts">
+    import type { OpenChat } from "openchat-client";
+    import {
+        anonUser,
+        identityState,
+        isDiamond,
+        offlineStore,
+        publish,
+        ScreenWidth,
+        ui,
+    } from "openchat-client";
+    import { getContext, onMount, tick } from "svelte";
+    import { _ } from "svelte-i18n";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
-    import Tune from "svelte-material-icons/Tune.svelte";
-    import { _ } from "svelte-i18n";
-    import Button from "../../../Button.svelte";
-    import HoverIcon from "../../../HoverIcon.svelte";
-    import CommunityCard from "./CommunityCard.svelte";
-    import Search from "../../..//Search.svelte";
-    import {
-        ipadWidth,
-        mobileWidth,
-        screenWidth,
-        ScreenWidth,
-    } from "../../../../stores/screenDimensions";
-    import { iconSize } from "../../../../stores/iconSize";
-    import type { OpenChat } from "openchat-client";
-    import { getContext, onMount, tick } from "svelte";
-    import FancyLoader from "../../../icons/FancyLoader.svelte";
-    import { rightPanelHistory } from "../../../../stores/rightPanel";
     import Plus from "svelte-material-icons/Plus.svelte";
-    import CommunityCardLink from "./CommunityCardLink.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Tune from "svelte-material-icons/Tune.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
-    import { communitySearchState } from "../../../../stores/search.svelte";
-    import Fab from "../../../Fab.svelte";
-    import { anonUser, offlineStore, identityState, isDiamond, publish } from "openchat-client";
     import { exploreCommunitiesFilters } from "../../../../stores/communityFilters";
+    import { communitySearchState } from "../../../../stores/search.svelte";
+    import Search from "../../..//Search.svelte";
+    import Button from "../../../Button.svelte";
+    import Fab from "../../../Fab.svelte";
+    import HoverIcon from "../../../HoverIcon.svelte";
+    import FancyLoader from "../../../icons/FancyLoader.svelte";
+    import Translatable from "../../../Translatable.svelte";
+    import CommunityCard from "./CommunityCard.svelte";
+    import CommunityCardLink from "./CommunityCardLink.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -90,7 +90,7 @@
     }
 
     function showFilters() {
-        rightPanelHistory.push({ kind: "community_filters" });
+        ui.pushRightPanelHistory({ kind: "community_filters" });
     }
 
     onMount(() => {
@@ -121,7 +121,7 @@
             communitySearchState.scrollPos = scrollableElement.scrollTop;
         }
     }
-    let pageSize = $derived(calculatePageSize($screenWidth));
+    let pageSize = $derived(calculatePageSize(ui.screenWidth));
     let more = $derived(communitySearchState.total > communitySearchState.results.length);
     let loading = $derived(searching && communitySearchState.results.length === 0);
 
@@ -140,13 +140,13 @@
     <div class="header">
         <div class="title-row">
             <div class="title">
-                {#if $mobileWidth}
+                {#if ui.mobileWidth}
                     <h4><Translatable resourceKey={i18nKey("communities.exploreMobile")} /></h4>
                 {:else}
                     <h4><Translatable resourceKey={i18nKey("communities.explore")} /></h4>
                 {/if}
             </div>
-            {#if !$ipadWidth}
+            {#if !ui.ipadWidth}
                 <div class="search">
                     <Search
                         fill
@@ -161,19 +161,19 @@
                 </div>
             {/if}
             <div class="buttons">
-                {#if $ipadWidth}
+                {#if ui.ipadWidth}
                     <HoverIcon onclick={createCommunity}>
-                        <Plus size={$iconSize} color={"var(--icon-txt)"} />
+                        <Plus size={ui.iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 {/if}
 
                 <HoverIcon title={$_("showFilters")} onclick={showFilters}>
-                    <Tune size={$iconSize} color={"var(--icon-txt)"} />
+                    <Tune size={ui.iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
         </div>
         <div class="subtitle-row">
-            {#if $ipadWidth}
+            {#if ui.ipadWidth}
                 <div class="search">
                     <Search
                         searching={false}
@@ -244,7 +244,7 @@
     </div>
     <div class:show={showFab} class="fab">
         <Fab on:click={scrollToTop}>
-            <ArrowUp size={$iconSize} color={"#fff"} />
+            <ArrowUp size={ui.iconSize} color={"#fff"} />
         </Fab>
     </div>
 </div>

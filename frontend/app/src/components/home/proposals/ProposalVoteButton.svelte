@@ -1,8 +1,8 @@
 <script lang="ts">
+    import { ui } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
-    import { iconSize } from "../../../stores/iconSize";
+    import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
@@ -33,9 +33,9 @@
     <div onclick={onClick} class:voting class:voted class:disabled class={`icon ${mode}`}>
         {#if !voting}
             {#if mode === "yes"}
-                <ThumbUp size={$iconSize} color={iconColor} />
+                <ThumbUp size={ui.iconSize} color={iconColor} />
             {:else}
-                <ThumbDown size={$iconSize} color={iconColor} />
+                <ThumbDown size={ui.iconSize} color={iconColor} />
             {/if}
         {/if}
     </div>

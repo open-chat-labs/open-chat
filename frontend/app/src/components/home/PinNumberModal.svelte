@@ -1,10 +1,10 @@
 <script lang="ts">
-    import Translatable from "../Translatable.svelte";
+    import { ui } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import ModalContent from "../ModalContent.svelte";
     import Pincode from "../pincode/Pincode.svelte";
+    import Translatable from "../Translatable.svelte";
     import ForgotPinLabel from "./ForgotPinLabel.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
 
     interface Props {
         onComplete: (pin: string) => void;
@@ -19,7 +19,7 @@
     }
 </script>
 
-<ModalContent closeIcon hideFooter fitToContent={!mobileWidth} fixedWidth={false} {onClose}>
+<ModalContent closeIcon hideFooter fitToContent={!ui.mobileWidth} fixedWidth={false} {onClose}>
     {#snippet header()}
         <Translatable resourceKey={i18nKey("pinNumber.enterPin")} />
     {/snippet}

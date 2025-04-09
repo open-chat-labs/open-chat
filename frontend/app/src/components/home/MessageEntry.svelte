@@ -1,59 +1,58 @@
 <script lang="ts">
-    import Alert from "svelte-material-icons/Alert.svelte";
-    import Send from "svelte-material-icons/Send.svelte";
-    import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import AudioAttacher from "./AudioAttacher.svelte";
-    import { getContext, tick } from "svelte";
-    import { _ } from "svelte-i18n";
-    import Progress from "../Progress.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import MentionPicker from "./MentionPicker.svelte";
-    import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import type {
-        User,
+        AttachmentContent,
+        BotActionScope,
         ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
+        ExternalBot,
         Message,
         MessageAction,
-        OpenChat,
-        MultiUserChat,
-        UserOrUserGroup,
-        AttachmentContent,
         MessageContext,
-        BotActionScope,
-        ExternalBot,
+        MultiUserChat,
+        OpenChat,
+        User,
+        UserOrUserGroup,
     } from "openchat-client";
     import {
-        chatIdentifiersEqual,
-        userStore,
-        throttleDeadline,
-        currentCommunityUserGroups as userGroups,
         anonUser,
-        selectedCommunity,
-        random64,
-        directMessageCommandInstance,
-        currentUser,
-        draftMessagesStore,
         botState,
+        chatIdentifiersEqual,
+        currentUser,
+        directMessageCommandInstance,
+        draftMessagesStore,
+        random64,
+        ScreenWidth,
+        selectedCommunity,
+        throttleDeadline,
+        ui,
+        currentCommunityUserGroups as userGroups,
+        userStore,
     } from "openchat-client";
-    import { enterSend } from "../../stores/settings";
+    import { getContext, tick } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Alert from "svelte-material-icons/Alert.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
+    import Send from "svelte-material-icons/Send.svelte";
+    import { translatable } from "../../actions/translatable";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { enterSend, useBlockLevelMarkdown } from "../../stores/settings";
+    import { snowing } from "../../stores/snow";
+    import AlertBoxModal from "../AlertBoxModal.svelte";
+    import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
+    import CommandSelector from "../bots/CommandSelector.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import Progress from "../Progress.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AudioAttacher from "./AudioAttacher.svelte";
+    import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
+    import MarkdownToggle from "./MarkdownToggle.svelte";
+    import MentionPicker from "./MentionPicker.svelte";
     import MessageActions from "./MessageActions.svelte";
     import PreviewFooter from "./PreviewFooter.svelte";
-    import { snowing } from "../../stores/snow";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey, interpolate } from "../../i18n/i18n";
-    import { translatable } from "../../actions/translatable";
-    import MarkdownToggle from "./MarkdownToggle.svelte";
-    import { useBlockLevelMarkdown } from "../../stores/settings";
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
-    import CommandSelector from "../bots/CommandSelector.svelte";
-    import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
-    import AlertBoxModal from "../AlertBoxModal.svelte";
-    import { trackedEffect } from "@src/utils/effects.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -561,7 +560,7 @@
         }
     });
     trackedEffect("screen-width-focus", () => {
-        if ($screenWidth === ScreenWidth.Large) {
+        if (ui.screenWidth === ScreenWidth.Large) {
             inp?.focus();
         }
     });
@@ -636,7 +635,7 @@
         <PreviewFooter {lapsed} {joining} {chat} />
     {:else if externalContent}
         <div class="disclaimer">
-            <Alert size={$iconSize} color={"var(--warn"} />
+            <Alert size={ui.iconSize} color={"var(--warn"} />
             <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
         </div>
     {:else if !canSendAny}
@@ -720,7 +719,7 @@
                         <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
                         <div class="send" onclick={sendMessage}>
                             <HoverIcon title={$_("sendMessage")}>
-                                <Send size={$iconSize} color={"var(--icon-txt)"} />
+                                <Send size={ui.iconSize} color={"var(--icon-txt)"} />
                             </HoverIcon>
                         </div>
                     {/if}
@@ -744,13 +743,15 @@
                     <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
                     <div class="send" onclick={sendMessage}>
                         <HoverIcon>
-                            <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
+                            <ContentSaveEditOutline
+                                size={ui.iconSize}
+                                color={"var(--button-txt)"} />
                         </HoverIcon>
                     </div>
                     <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
                     <div class="send" onclick={onCancelEdit}>
                         <HoverIcon>
-                            <Close size={$iconSize} color={"var(--button-txt)"} />
+                            <Close size={ui.iconSize} color={"var(--button-txt)"} />
                         </HoverIcon>
                     </div>
                 {/if}

@@ -1,16 +1,15 @@
 <script lang="ts">
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import Legend from "../../Legend.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import { AvatarSize, OpenChat, userStore } from "openchat-client";
-    import Avatar from "../../Avatar.svelte";
-    import type { Theme } from "../../../theme/types";
-    import { getContext } from "svelte";
-    import type { Alignment } from "../../../utils/alignment";
     import type { ResourceKey } from "openchat-client";
+    import { AvatarSize, OpenChat, ui, userStore } from "openchat-client";
+    import { getContext } from "svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import type { Theme } from "../../../theme/types";
+    import type { Alignment } from "../../../utils/alignment";
+    import Avatar from "../../Avatar.svelte";
+    import Legend from "../../Legend.svelte";
+    import Menu from "../../Menu.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuItem from "../../MenuItem.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -41,7 +40,7 @@
                 <div class="icon">
                     <ChevronDown
                         viewBox={"0 -3 24 24"}
-                        size={$iconSize}
+                        size={ui.iconSize}
                         color={`${theme.accent}`} />
                 </div>
             </div>

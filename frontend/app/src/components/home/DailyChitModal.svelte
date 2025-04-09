@@ -1,34 +1,34 @@
 <script lang="ts">
-    import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
     import InfoIcon from "@src/components/InfoIcon.svelte";
-    import TrophyOutline from "svelte-material-icons/TrophyOutline.svelte";
-    import { Confetti } from "svelte-confetti";
-    import { getContext, onMount, tick } from "svelte";
-    import { fade } from "svelte/transition";
-    import ModalContent from "../ModalContent.svelte";
     import {
         type AirdropChannelDetails,
         type OpenChat,
         chitStateStore as chitState,
+        ui,
     } from "openchat-client";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import Button from "../Button.svelte";
-    import { now500 } from "../../stores/time";
+    import { getContext, onMount, tick } from "svelte";
+    import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
-    import Progress from "../Progress.svelte";
-    import Streak from "./profile/Streak.svelte";
-    import FancyLoader from "../icons/FancyLoader.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import LearnToEarn from "./profile/LearnToEarn.svelte";
-    import ChitBalance from "./profile/ChitBalance.svelte";
-    import AlertBox from "../AlertBox.svelte";
-    import Markdown from "./Markdown.svelte";
+    import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
+    import TrophyOutline from "svelte-material-icons/TrophyOutline.svelte";
+    import { fade } from "svelte/transition";
+    import { i18nKey } from "../../i18n/i18n";
+    import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
+    import AlertBox from "../AlertBox.svelte";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import FancyLoader from "../icons/FancyLoader.svelte";
     import Link from "../Link.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Progress from "../Progress.svelte";
+    import Translatable from "../Translatable.svelte";
     import StreakInsuranceBuy from "./insurance/StreakInsuranceBuy.svelte";
+    import Markdown from "./Markdown.svelte";
+    import ChitBalance from "./profile/ChitBalance.svelte";
+    import LearnToEarn from "./profile/LearnToEarn.svelte";
+    import Streak from "./profile/Streak.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -140,7 +140,7 @@
         <div class="header">
             <div class="leaderboard">
                 <HoverIcon onclick={leaderboard}>
-                    <TrophyOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    <TrophyOutline size={ui.iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
             <Translatable resourceKey={i18nKey("dailyChit.title")} />

@@ -1,42 +1,41 @@
 <script lang="ts">
-    import TextBoxOutline from "svelte-material-icons/TextBoxOutline.svelte";
-    import KeyPlus from "svelte-material-icons/KeyPlus.svelte";
-    import KeyRemove from "svelte-material-icons/KeyRemove.svelte";
-    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
-    import Magnify from "svelte-material-icons/Magnify.svelte";
-    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
-    import HeartPlus from "svelte-material-icons/HeartPlus.svelte";
-    import HeartMinus from "svelte-material-icons/HeartMinus.svelte";
-    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import type { DirectChatSummary, ExternalBot } from "openchat-client";
     import {
         AvatarSize,
-        type OpenChat,
-        userStore,
-        flattenCommandPermissions,
         directApiKeys,
-        installedDirectBots,
         favouritesStore,
+        flattenCommandPermissions,
+        installedDirectBots,
+        type OpenChat,
         publish,
+        ui,
+        userStore,
     } from "openchat-client";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import SectionHeader from "../SectionHeader.svelte";
-    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import Avatar from "../Avatar.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../stores/rtl";
-    import type { DirectChatSummary, ExternalBot } from "openchat-client";
-    import { iconSize } from "../../stores/iconSize";
-    import Translatable from "../Translatable.svelte";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import HeartMinus from "svelte-material-icons/HeartMinus.svelte";
+    import HeartPlus from "svelte-material-icons/HeartPlus.svelte";
+    import KeyPlus from "svelte-material-icons/KeyPlus.svelte";
+    import KeyRemove from "svelte-material-icons/KeyRemove.svelte";
+    import Magnify from "svelte-material-icons/Magnify.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
+    import TextBoxOutline from "svelte-material-icons/TextBoxOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import WithBotManagement from "./WithBotManagement.svelte";
-    import Link from "../Link.svelte";
+    import { rtlStore } from "../../stores/rtl";
+    import Avatar from "../Avatar.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
     import InfoIcon from "../InfoIcon.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
+    import Link from "../Link.svelte";
     import Menu from "../Menu.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
     import MenuItem from "../MenuItem.svelte";
+    import SectionHeader from "../SectionHeader.svelte";
+    import Translatable from "../Translatable.svelte";
+    import WithBotManagement from "./WithBotManagement.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -78,15 +77,15 @@
         generatingKey,
     })}
         <SectionHeader shadow flush>
-            {#if $mobileWidth}
+            {#if ui.mobileWidth}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div class="back" class:rtl={$rtlStore} onclick={() => publish("clearSelection")}>
                     <HoverIcon>
                         {#if $rtlStore}
-                            <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                            <ArrowRight size={ui.iconSize} color={"var(--icon-txt)"} />
                         {:else}
-                            <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                            <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
                         {/if}
                     </HoverIcon>
                 </div>
@@ -132,7 +131,7 @@
                 <MenuIcon position={"bottom"} align={"end"}>
                     {#snippet menuIcon()}
                         <HoverIcon title={$_("chatMenu")}>
-                            <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
+                            <DotsVertical size={ui.iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
                     {/snippet}
                     {#snippet menuItems()}
@@ -140,7 +139,7 @@
                             {#if !$favouritesStore.has(chat.id)}
                                 <MenuItem onclick={addToFavourites}>
                                     {#snippet icon()}
-                                        <HeartPlus size={$iconSize} color={"var(--menu-warn)"} />
+                                        <HeartPlus size={ui.iconSize} color={"var(--menu-warn)"} />
                                     {/snippet}
                                     {#snippet text()}
                                         <Translatable
@@ -150,7 +149,7 @@
                             {:else}
                                 <MenuItem onclick={removeFromFavourites}>
                                     {#snippet icon()}
-                                        <HeartMinus size={$iconSize} color={"var(--menu-warn)"} />
+                                        <HeartMinus size={ui.iconSize} color={"var(--menu-warn)"} />
                                     {/snippet}
                                     {#snippet text()}
                                         <Translatable
@@ -160,11 +159,11 @@
                                     {/snippet}
                                 </MenuItem>
                             {/if}
-                            {#if $mobileWidth}
+                            {#if ui.mobileWidth}
                                 <MenuItem onclick={searchChat}>
                                     {#snippet icon()}
                                         <Magnify
-                                            size={$iconSize}
+                                            size={ui.iconSize}
                                             color={"var(--icon-inverted-txt)"} />
                                     {/snippet}
                                     {#snippet text()}
@@ -176,7 +175,7 @@
                             <MenuItem onclick={() => removeBot()}>
                                 {#snippet icon()}
                                     <DeleteOutline
-                                        size={$iconSize}
+                                        size={ui.iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -187,7 +186,7 @@
                             <MenuItem onclick={() => reviewCommandPermissions()}>
                                 {#snippet icon()}
                                     <PencilOutline
-                                        size={$iconSize}
+                                        size={ui.iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -200,7 +199,7 @@
                                     <MenuItem onclick={reviewApiKey}>
                                         {#snippet icon()}
                                             <KeyRemove
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -212,7 +211,7 @@
                                     <MenuItem onclick={() => generateApiKey()}>
                                         {#snippet icon()}
                                             <KeyPlus
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-inverted-txt)"} />
                                         {/snippet}
                                         {#snippet text()}
@@ -227,7 +226,7 @@
                             <MenuItem onclick={() => viewBotDetails()}>
                                 {#snippet icon()}
                                     <TextBoxOutline
-                                        size={$iconSize}
+                                        size={ui.iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}

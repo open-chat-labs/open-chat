@@ -1,10 +1,9 @@
 <script lang="ts">
     import type { EnhancedTokenDetails } from "openchat-client";
-    import { cryptoLookup, cryptoTokensSorted } from "openchat-client";
+    import { cryptoLookup, cryptoTokensSorted, ui } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
     import MenuItem from "../MenuItem.svelte";
 
     interface Props {
@@ -53,7 +52,7 @@
                 <div class="symbol">
                     {$cryptoLookup[ledger ?? ""]?.symbol}
                 </div>
-                <ChevronDown viewBox={"0 0 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
+                <ChevronDown viewBox={"0 0 24 24"} size={ui.iconSize} color={"var(--icon-txt)"} />
             </div>
         {/snippet}
 

@@ -1,32 +1,32 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import ModalContent from "../../../ModalContent.svelte";
-    import Button from "../../../Button.svelte";
-    import { menuCloser } from "../../../../actions/closeMenu";
-    import ChooseMembers from "../../ChooseMembers.svelte";
-    import { mobileWidth } from "../../../../stores/screenDimensions";
-    import { getContext, onMount } from "svelte";
-    import type {
-        CandidateMember,
-        CommunitySummary,
-        DefaultChannel,
-        OpenChat,
-        Rules,
-        UserSummary,
+    import {
+        ui,
+        type CandidateMember,
+        type CommunitySummary,
+        type DefaultChannel,
+        type OpenChat,
+        type Rules,
+        type UserSummary,
     } from "openchat-client";
-    import StageHeader from "../../StageHeader.svelte";
-    import PermissionsEditor from "./PermissionsEditor.svelte";
-    import PermissionsViewer from "../PermissionsViewer.svelte";
-    import RulesEditor from "../../RulesEditor.svelte";
-    import Details from "./Details.svelte";
-    import { createCandidateCommunity } from "../../../../stores/community";
-    import VisibilityControl from "../../VisibilityControl.svelte";
-    import ChooseChannels from "./ChooseChannels.svelte";
-    import { toastStore } from "../../../../stores/toast";
     import page from "page";
-    import AreYouSure from "../../../AreYouSure.svelte";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { menuCloser } from "../../../../actions/closeMenu";
     import { i18nKey } from "../../../../i18n/i18n";
+    import { createCandidateCommunity } from "../../../../stores/community";
+    import { toastStore } from "../../../../stores/toast";
+    import AreYouSure from "../../../AreYouSure.svelte";
+    import Button from "../../../Button.svelte";
+    import ModalContent from "../../../ModalContent.svelte";
     import Translatable from "../../../Translatable.svelte";
+    import ChooseMembers from "../../ChooseMembers.svelte";
+    import RulesEditor from "../../RulesEditor.svelte";
+    import StageHeader from "../../StageHeader.svelte";
+    import VisibilityControl from "../../VisibilityControl.svelte";
+    import PermissionsViewer from "../PermissionsViewer.svelte";
+    import ChooseChannels from "./ChooseChannels.svelte";
+    import Details from "./Details.svelte";
+    import PermissionsEditor from "./PermissionsEditor.svelte";
 
     interface Props {
         original?: CommunitySummary;
@@ -301,8 +301,8 @@
                     {#if !editing && stepIndex > 0}
                         <Button
                             disabled={busy}
-                            small={!$mobileWidth}
-                            tiny={$mobileWidth}
+                            small={!ui.mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={() => (step = steps[stepIndex - 1].key)}
                             ><Translatable resourceKey={i18nKey("communities.back")} /></Button>
                     {/if}
@@ -310,8 +310,8 @@
                 <div class="actions">
                     <Button
                         disabled={false}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}
                         onClick={onClose}
                         secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
 
@@ -319,8 +319,8 @@
                         <Button
                             disabled={!dirty || busy || !valid}
                             loading={busy}
-                            small={!$mobileWidth}
-                            tiny={$mobileWidth}
+                            small={!ui.mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={() => save()}
                             ><Translatable
                                 resourceKey={i18nKey(
@@ -331,8 +331,8 @@
                                 )} /></Button>
                     {:else if stepIndex < steps.length - 1}
                         <Button
-                            small={!$mobileWidth}
-                            tiny={$mobileWidth}
+                            small={!ui.mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={() => (step = steps[stepIndex + 1].key)}>
                             <Translatable resourceKey={i18nKey("communities.next")} />
                         </Button>
@@ -340,8 +340,8 @@
                         <Button
                             disabled={busy || !valid}
                             loading={busy}
-                            small={!$mobileWidth}
-                            tiny={$mobileWidth}
+                            small={!ui.mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={() => save()}
                             ><Translatable
                                 resourceKey={i18nKey(

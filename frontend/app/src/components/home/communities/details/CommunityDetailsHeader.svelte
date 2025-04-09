@@ -1,19 +1,17 @@
 <script lang="ts">
-    import SectionHeader from "../../../SectionHeader.svelte";
+    import { publish, ui, type CommunitySummary, type Level } from "openchat-client";
+    import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
-    import HoverIcon from "../../../HoverIcon.svelte";
-    import MenuIcon from "../../../MenuIcon.svelte";
-    import Menu from "../../../Menu.svelte";
-    import MenuItem from "../../../MenuItem.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import { _ } from "svelte-i18n";
-    import { iconSize } from "../../../../stores/iconSize";
-    import { publish, type CommunitySummary, type Level } from "openchat-client";
-    import { rightPanelHistory } from "../../../../stores/rightPanel";
     import { i18nKey } from "../../../../i18n/i18n";
+    import HoverIcon from "../../../HoverIcon.svelte";
+    import Menu from "../../../Menu.svelte";
+    import MenuIcon from "../../../MenuIcon.svelte";
+    import MenuItem from "../../../MenuItem.svelte";
+    import SectionHeader from "../../../SectionHeader.svelte";
     import Translatable from "../../../Translatable.svelte";
 
     interface Props {
@@ -25,13 +23,13 @@
     let { community, canEdit, level }: Props = $props();
 
     function close() {
-        rightPanelHistory.pop();
+        ui.popRightPanelHistory();
     }
     function showMembers() {
-        rightPanelHistory.push({ kind: "show_community_members" });
+        ui.pushRightPanelHistory({ kind: "show_community_members" });
     }
     function invite() {
-        rightPanelHistory.push({ kind: "invite_community_users" });
+        ui.pushRightPanelHistory({ kind: "invite_community_users" });
     }
     function editCommunity() {
         if (canEdit) {
@@ -44,14 +42,14 @@
     <MenuIcon position="bottom" align="start">
         {#snippet menuIcon()}
             <HoverIcon>
-                <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
+                <Hamburger size={ui.iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         {/snippet}
         {#snippet menuItems()}
             <Menu>
                 <MenuItem onclick={showMembers}>
                     {#snippet icon()}
-                        <AccountMultiple size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        <AccountMultiple size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <div>
@@ -61,7 +59,9 @@
                 </MenuItem>
                 <MenuItem onclick={invite}>
                     {#snippet icon()}
-                        <AccountMultiplePlus size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        <AccountMultiplePlus
+                            size={ui.iconSize}
+                            color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <div>
@@ -72,7 +72,7 @@
                 {#if canEdit}
                     <MenuItem onclick={editCommunity}>
                         {#snippet icon()}
-                            <PencilOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            <PencilOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -87,7 +87,7 @@
     <h4><Translatable resourceKey={i18nKey("groupDetails", undefined, level)} /></h4>
     <span title={$_("close")} class="close" onclick={close}>
         <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
+            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>

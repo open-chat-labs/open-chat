@@ -1,20 +1,19 @@
 <script lang="ts">
-    import { type ValidationErrors, type CommandParam } from "openchat-client";
-    import { i18nKey } from "../../i18n/i18n";
-    import Legend from "../Legend.svelte";
-    import Select from "../Select.svelte";
-    import Translatable from "../Translatable.svelte";
-    import Input from "../Input.svelte";
-    import Checkbox from "../Checkbox.svelte";
-    import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import NumberInput from "../NumberInput.svelte";
-    import ValidatingInput from "./ValidatingInput.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
+    import { ui, type CommandParam, type ValidationErrors } from "openchat-client";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
-    import { iconSize } from "../../stores/iconSize";
+    import { i18nKey } from "../../i18n/i18n";
+    import Checkbox from "../Checkbox.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import Input from "../Input.svelte";
     import IntegerInput from "../IntegerInput.svelte";
+    import Legend from "../Legend.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import NumberInput from "../NumberInput.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Select from "../Select.svelte";
+    import Translatable from "../Translatable.svelte";
+    import ValidatingInput from "./ValidatingInput.svelte";
 
     interface Props {
         errorPath: string;
@@ -230,10 +229,10 @@
             <div class="footer">
                 <div class="navigate">
                     <HoverIcon disabled={onPrevious === undefined} onclick={onPrevious}>
-                        <ChevronLeft size={$iconSize} color={"var(--icon-txt)"}></ChevronLeft>
+                        <ChevronLeft size={ui.iconSize} color={"var(--icon-txt)"}></ChevronLeft>
                     </HoverIcon>
                     <HoverIcon disabled={onNext === undefined} onclick={onNext}>
-                        <ChevronRight size={$iconSize} color={"var(--icon-txt)"}></ChevronRight>
+                        <ChevronRight size={ui.iconSize} color={"var(--icon-txt)"}></ChevronRight>
                     </HoverIcon>
                 </div>
             </div>

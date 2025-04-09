@@ -1,28 +1,28 @@
 <script lang="ts">
-    import { getContext, onMount } from "svelte";
-    import Translatable from "../../Translatable.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import ModalContent from "../../ModalContent.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import Button from "../../Button.svelte";
+    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
     import {
         AuthProvider,
         pinNumberFailureStore,
+        ui,
         type OpenChat,
         type Verification,
     } from "openchat-client";
-    import ErrorMessage from "../../ErrorMessage.svelte";
-    import { toastStore } from "../../../stores/toast";
+    import { getContext, onMount } from "svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import {
         pinNumberErrorMessageStore,
         supportsForgot,
         type PinOperation,
     } from "../../../stores/pinNumber";
+    import { toastStore } from "../../../stores/toast";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import ModalContent from "../../ModalContent.svelte";
     import Pincode from "../../pincode/Pincode.svelte";
-    import ReAuthenticate from "./ReAuthenticate.svelte";
-    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+    import Translatable from "../../Translatable.svelte";
     import ForgotPinLabel from "../ForgotPinLabel.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
+    import ReAuthenticate from "./ReAuthenticate.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -129,7 +129,7 @@
     let errorMessage = $derived($pinNumberErrorMessageStore);
 </script>
 
-<ModalContent closeIcon fitToContent={!$mobileWidth} fixedWidth={false} {onClose}>
+<ModalContent closeIcon fitToContent={!ui.mobileWidth} fixedWidth={false} {onClose}>
     {#snippet header()}
         <div class="header">
             <Translatable resourceKey={title} />

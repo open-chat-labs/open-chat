@@ -1,10 +1,4 @@
 <script lang="ts">
-    import { fade } from "svelte/transition";
-    import { Tween } from "svelte/motion";
-    import { quadOut } from "svelte/easing";
-    import Button from "../Button.svelte";
-    import TokenInput from "./TokenInput.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import type {
         Message,
         MessageContext,
@@ -12,26 +6,32 @@
         PendingCryptocurrencyTransfer,
     } from "openchat-client";
     import {
-        lastCryptoSent,
-        currentUser,
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
+        currentUser,
         exchangeRatesLookupStore as exchangeRatesLookup,
+        lastCryptoSent,
+        ui,
     } from "openchat-client";
-    import Overlay from "../Overlay.svelte";
-    import AccountInfo from "./AccountInfo.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import { _ } from "svelte-i18n";
     import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { quadOut } from "svelte/easing";
+    import { Tween } from "svelte/motion";
+    import { fade } from "svelte/transition";
+    import { i18nKey } from "../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import { toastStore } from "../../stores/toast";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AccountInfo from "./AccountInfo.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import TipButton from "./TipButton.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
-    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import { toastStore } from "../../stores/toast";
+    import TokenInput from "./TokenInput.svelte";
 
     const client = getContext<OpenChat>("client");
     const increments: Increment[] = [1, 10, 100];
@@ -342,21 +342,21 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
+                    <Button small={!ui.mobileWidth} tiny={ui.mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if toppingUp || zero}
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             disabled={refreshing}
                             loading={refreshing}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             disabled={!valid}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={send}
                             ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                     {/if}
