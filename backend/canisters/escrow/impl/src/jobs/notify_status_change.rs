@@ -65,11 +65,10 @@ async fn notify_swap_status(canister_id: CanisterId, notification: SwapStatusCha
     }
 }
 
-canister_client::generate_c2c_call!(c2c_notify_p2p_swap_status_change);
+canister_client::generate_c2c_call_ignore_response!(c2c_notify_p2p_swap_status_change);
 
 mod c2c_notify_p2p_swap_status_change {
     use super::*;
 
     pub type Args = SwapStatusChange;
-    pub type Response = ();
 }
