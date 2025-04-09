@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { getContext, onMount } from "svelte";
-    import TokenInput from "../TokenInput.svelte";
     import type {
         CkbtcMinterWithdrawalInfo,
         NamedAccount,
@@ -9,31 +7,31 @@
     } from "openchat-client";
     import {
         BTC_SYMBOL,
-        ICP_SYMBOL,
-        currentUser as user,
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
+        ICP_SYMBOL,
+        ui,
+        currentUser as user,
     } from "openchat-client";
-    import Input from "../../Input.svelte";
-    import { _ } from "svelte-i18n";
-    import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
-    import { toastStore } from "../../../stores/toast";
-    import { iconSize } from "../../../stores/iconSize";
-    import Scanner from "./Scanner.svelte";
-    import SaveAccount from "./SaveAccount.svelte";
-    import AccountSelector from "./AccountSelector.svelte";
     import { isAccountIdentifierValid, isPrincipalValid } from "openchat-shared";
-    import ModalContent from "../../ModalContent.svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import Button from "../../Button.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import ErrorMessage from "../../ErrorMessage.svelte";
+    import { getContext, onMount } from "svelte";
+    import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
-    import BitcoinNetworkSelector from "../BitcoinNetworkSelector.svelte";
+    import { toastStore } from "../../../stores/toast";
     import { Debouncer } from "../../../utils/debouncer";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import Input from "../../Input.svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import BitcoinNetworkSelector from "../BitcoinNetworkSelector.svelte";
+    import TokenInput from "../TokenInput.svelte";
+    import AccountSelector from "./AccountSelector.svelte";
+    import SaveAccount from "./SaveAccount.svelte";
+    import Scanner from "./Scanner.svelte";
 
     interface Props {
         ledger: string;
@@ -256,7 +254,7 @@
                         placeholder={i18nKey("cryptoAccount.sendTarget")} />
 
                     <div class="qr" onclick={scan}>
-                        <QrcodeScan size={$iconSize} color={"var(--icon-selected)"} />
+                        <QrcodeScan size={ui.iconSize} color={"var(--icon-selected)"} />
                     </div>
                 </div>
 
@@ -288,13 +286,13 @@
     {#snippet footer()}
         <span>
             <ButtonGroup>
-                <Button secondary tiny={$mobileWidth} onClick={onClose}
+                <Button secondary tiny={ui.mobileWidth} onClick={onClose}
                     ><Translatable
                         resourceKey={i18nKey(capturingAccount ? "noThanks" : "cancel")} /></Button>
                 <Button
                     disabled={busy || !valid}
                     loading={busy}
-                    tiny={$mobileWidth}
+                    tiny={ui.mobileWidth}
                     onClick={onPrimaryClick}
                     ><Translatable
                         resourceKey={i18nKey(

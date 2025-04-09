@@ -1,27 +1,27 @@
 <script lang="ts">
     import {
-        type AccountTransactions,
-        type OpenChat,
-        type NamedAccount,
-        toRecord,
         type AccountTransaction,
+        type AccountTransactions,
+        type NamedAccount,
+        type OpenChat,
         type ResourceKey,
         cryptoLookup,
-        nervousSystemLookup,
         currentUser,
+        nervousSystemLookup,
+        toRecord,
+        ui,
     } from "openchat-client";
-    import type { RemoteData as RD } from "../../../utils/remoteData";
     import { getContext, onMount } from "svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import ModalContent from "../../ModalContent.svelte";
+    import type { RemoteData as RD } from "../../../utils/remoteData";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import TransactionEndpoint from "./TransactionEndpoint.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
-    import CryptoSelector from "../CryptoSelector.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
+    import CryptoSelector from "../CryptoSelector.svelte";
+    import TransactionEndpoint from "./TransactionEndpoint.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -162,7 +162,7 @@
     );
 </script>
 
-<ModalContent fitToContent={!$mobileWidth} closeIcon {onClose}>
+<ModalContent fitToContent={!ui.mobileWidth} closeIcon {onClose}>
     {#snippet header()}
         <div class="header">
             <div class="main-title">
@@ -261,11 +261,11 @@
                         onClick={() => loadTransactions()}
                         disabled={!moreAvailable && !loading}
                         {loading}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}>
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}>
                         <Translatable resourceKey={i18nKey("cryptoAccount.loadMoreTransactions")} />
                     </Button>
-                    <Button onClick={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Button onClick={onClose} small={!ui.mobileWidth} tiny={ui.mobileWidth}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>

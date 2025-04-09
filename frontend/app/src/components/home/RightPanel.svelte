@@ -1,65 +1,65 @@
 <script lang="ts">
-    import UserProfile from "./profile/UserProfile.svelte";
-    import GroupDetails from "./groupdetails/GroupDetails.svelte";
-    import InviteUsers from "./groupdetails/InviteUsers.svelte";
-    import CommunityFilters from "./communities/explore/Filters.svelte";
-    import Members from "./groupdetails/Members.svelte";
-    import PinnedMessages from "./pinned/PinnedMessages.svelte";
-    import { rightPanelHistory } from "../../stores/rightPanel";
     import type {
         ChatEvent,
+        ChatIdentifier,
         CommunityIdentifier,
         EventWrapper,
+        Level,
         MemberRole,
         Message,
-        UserSummary,
-        OpenChat,
         MultiUserChat,
         MultiUserChatIdentifier,
-        Level,
-        ChatIdentifier,
+        OpenChat,
+        UserSummary,
     } from "openchat-client";
-    import { toastStore } from "../../stores/toast";
+    import {
+        compareRoles,
+        currentChatApiKeys,
+        currentChatBlockedUsers as currentChatBlocked,
+        currentChatBots,
+        currentChatInvitedUsers as currentChatInvited,
+        currentChatLapsedMembers,
+        currentChatMembers,
+        currentChatPinnedMessages,
+        currentCommunityApiKeys,
+        currentCommunityBlockedUsers as currentCommunityBlocked,
+        currentCommunityBots,
+        currentCommunityInvitedUsers as currentCommunityInvited,
+        currentCommunityLapsedMembers as currentCommunityLapsed,
+        currentCommunityMembers,
+        currentUser,
+        eventsStore,
+        pathState,
+        publish,
+        selectedChatStore as selectedChat,
+        selectedChatId,
+        selectedCommunity,
+        ui,
+        userStore,
+    } from "openchat-client";
     import { getContext } from "svelte";
-    import type { Readable } from "svelte/store";
     import { _ } from "svelte-i18n";
-    import { fullWidth } from "../../stores/layout";
-    import Thread from "./thread/Thread.svelte";
-    import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
-    import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
-    import { pageReplace, pathParams } from "../../routes";
-    import { compareRoles } from "openchat-client";
-    import CommunityDetails from "./communities/details/CommunitySummary.svelte";
-    import { currentTheme } from "../../theme/themes";
-    import Resizable from "../Resizable.svelte";
+    import type { Readable } from "svelte/store";
     import { i18nKey } from "../../i18n/i18n";
+    import { pageReplace } from "../../routes";
+    import { toastStore } from "../../stores/toast";
     import { activeVideoCall } from "../../stores/video";
-    import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
+    import { currentTheme } from "../../theme/themes";
+    import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
+    import Resizable from "../Resizable.svelte";
+    import ChannelOrCommunityInvite from "./ChannelOrCommunityInvite.svelte";
     import ChannelOrCommunityMembers from "./ChannelOrCommunityMembers.svelte";
     import ChannelOrCommunitySummary from "./ChannelOrCommunitySummary.svelte";
-    import ChannelOrCommunityInvite from "./ChannelOrCommunityInvite.svelte";
-    import {
-        userStore,
-        currentUser,
-        selectedChatId,
-        selectedChatStore as selectedChat,
-        currentChatMembers,
-        currentChatInvitedUsers as currentChatInvited,
-        currentChatBlockedUsers as currentChatBlocked,
-        currentChatLapsedMembers,
-        currentChatPinnedMessages,
-        currentCommunityMembers,
-        currentCommunityInvitedUsers as currentCommunityInvited,
-        currentCommunityBlockedUsers as currentCommunityBlocked,
-        currentCommunityLapsedMembers as currentCommunityLapsed,
-        selectedCommunity,
-        eventsStore,
-        currentCommunityBots,
-        currentChatBots,
-        currentCommunityApiKeys,
-        currentChatApiKeys,
-        publish,
-    } from "openchat-client";
+    import CommunityDetails from "./communities/details/CommunitySummary.svelte";
+    import CommunityFilters from "./communities/explore/Filters.svelte";
+    import GroupDetails from "./groupdetails/GroupDetails.svelte";
+    import InviteUsers from "./groupdetails/InviteUsers.svelte";
+    import Members from "./groupdetails/Members.svelte";
+    import PinnedMessages from "./pinned/PinnedMessages.svelte";
+    import UserProfile from "./profile/UserProfile.svelte";
+    import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
+    import Thread from "./thread/Thread.svelte";
+    import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
 
     interface Props {
         onGoToMessageIndex: (details: { index: number; preserveFocus: boolean }) => void;
@@ -75,12 +75,10 @@
     let resizedWidth = $state("7");
 
     let user = $derived($userStore.get($currentUser.userId) ?? client.nullUser("unknown"));
-    let lastState = $derived(
-        $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" },
-    );
-    let modal = $derived(!$fullWidth);
+    let modal = $derived(!ui.fullWidth);
     let multiUserChat = $derived(selectedChat as Readable<MultiUserChat>);
-    let empty = $derived($rightPanelHistory.length === 0);
+    let empty = $derived(ui.rightPanelHistory.length === 0);
+    let closeIcon = $derived<"back" | "close">(ui.rightPanelHistory.length > 1 ? "back" : "close");
 
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         const canInvite =
@@ -140,7 +138,7 @@
 
             await client.inviteUsers($selectedCommunity.id, userIds).then((resp) => {
                 if (resp) {
-                    rightPanelHistory.pop();
+                    ui.popRightPanelHistory();
                     if ($multiUserChat?.public ?? false) {
                         toastStore.showSuccessToast(i18nKey("communities.usersInvited"));
                     }
@@ -166,7 +164,7 @@
                 .inviteUsers($multiUserChat.id, userIds)
                 .then((resp) => {
                     if (resp) {
-                        rightPanelHistory.pop();
+                        ui.popRightPanelHistory();
                         if ($multiUserChat?.public ?? false) {
                             toastStore.showSuccessToast(i18nKey("group.usersInvited"));
                         }
@@ -195,23 +193,23 @@
     function goToMessageIndex(detail: { index: number; preserveFocus: boolean }): void {
         onGoToMessageIndex(detail);
         if (modal) {
-            rightPanelHistory.pop();
+            ui.popRightPanelHistory();
         }
     }
 
     function stripThreadFromUrl(path: string) {
         if (
-            ($pathParams.kind === "global_chat_selected_route" ||
-                $pathParams.kind === "selected_channel_route") &&
-            $pathParams.threadMessageIndex !== undefined
+            (pathState.route.kind === "global_chat_selected_route" ||
+                pathState.route.kind === "selected_channel_route") &&
+            pathState.route.threadMessageIndex !== undefined
         ) {
-            return removeThreadMessageIndex($pathParams.threadMessageIndex, path);
+            return removeThreadMessageIndex(pathState.route.threadMessageIndex, path);
         }
         return path;
     }
 
     function closeThread(_id: ChatIdentifier) {
-        rightPanelHistory.pop();
+        ui.popRightPanelHistory();
         pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
         activeVideoCall.threadOpen(false);
     }
@@ -346,7 +344,7 @@
 
     function showInviteCommunityUsers() {
         if ($selectedCommunity !== undefined) {
-            rightPanelHistory.set([{ kind: "invite_community_users" }]);
+            ui.rightPanelHistory = [{ kind: "invite_community_users" }];
         }
     }
 
@@ -375,13 +373,13 @@
     }
 
     let threadRootEvent = $derived(
-        lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
-            ? findMessage($eventsStore, lastState.threadRootMessageId)
+        ui.lastRightPanelState.kind === "message_thread_panel" && $selectedChatId !== undefined
+            ? findMessage($eventsStore, ui.lastRightPanelState.threadRootMessageId)
             : undefined,
     );
 
     let level = $derived(
-        (lastState.kind === "invite_community_users"
+        (ui.lastRightPanelState.kind === "invite_community_users"
             ? "community"
             : $selectedChat?.kind === "channel"
               ? "channel"
@@ -397,55 +395,55 @@
     style={`--resized-width: ${resizedWidth}`}
     class:halloween={$currentTheme.name === "halloween"}
     class:empty>
-    {#if lastState.kind === "group_details" && $selectedChatId !== undefined && $multiUserChat !== undefined}
+    {#if ui.lastRightPanelState.kind === "group_details" && $selectedChatId !== undefined && $multiUserChat !== undefined}
         {#if $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
             <ChannelOrCommunitySummary
                 channel={$multiUserChat}
                 memberCount={$currentChatMembers.length}
                 community={$selectedCommunity}
                 selectedTab="channel"
-                onClose={rightPanelHistory.pop} />
+                onClose={ui.popRightPanelHistory} />
         {:else}
             <GroupDetails
                 chat={$multiUserChat}
                 memberCount={$currentChatMembers.length}
-                onClose={rightPanelHistory.pop} />
+                onClose={ui.popRightPanelHistory} />
         {/if}
-    {:else if lastState.kind === "call_participants_panel"}
+    {:else if ui.lastRightPanelState.kind === "call_participants_panel"}
         <ActiveCallParticipants
-            isOwner={lastState.isOwner}
-            chatId={lastState.chatId}
-            onClose={rightPanelHistory.pop}
-            messageId={lastState.messageId} />
-    {:else if lastState.kind === "invite_community_users" && $selectedCommunity !== undefined}
+            isOwner={ui.lastRightPanelState.isOwner}
+            chatId={ui.lastRightPanelState.chatId}
+            onClose={ui.popRightPanelHistory}
+            messageId={ui.lastRightPanelState.messageId} />
+    {:else if ui.lastRightPanelState.kind === "invite_community_users" && $selectedCommunity !== undefined}
         {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
             <ChannelOrCommunityInvite
                 channel={$multiUserChat}
                 community={$selectedCommunity}
                 userLookup={searchUsers}
                 busy={invitingUsers}
-                closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+                {closeIcon}
                 selectedTab="community"
                 {onInviteCommunityUsers}
                 onInviteChannelUsers={onInviteGroupUsers}
-                onCancelInviteUsers={rightPanelHistory.pop} />
+                onCancelInviteUsers={ui.popRightPanelHistory} />
         {:else}
             <InviteUsers
                 {level}
                 container={$selectedCommunity}
                 userLookup={searchUsers}
                 busy={invitingUsers}
-                closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+                {closeIcon}
                 isCommunityPublic={$selectedCommunity?.public ?? true}
                 onInviteUsers={onInviteCommunityUsers}
-                onCancelInviteUsers={rightPanelHistory.pop} />
+                onCancelInviteUsers={ui.popRightPanelHistory} />
         {/if}
-    {:else if lastState.kind === "show_community_members" && $selectedCommunity !== undefined}
+    {:else if ui.lastRightPanelState.kind === "show_community_members" && $selectedCommunity !== undefined}
         {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel"}
             <ChannelOrCommunityMembers
                 channel={$multiUserChat}
                 community={$selectedCommunity}
-                closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+                {closeIcon}
                 selectedTab="community"
                 onShowInviteCommunityUsers={showInviteCommunityUsers}
                 {onRemoveCommunityMember}
@@ -458,19 +456,19 @@
                 {onChangeGroupRole}
                 {onCancelGroupInvite}
                 {onCancelCommunityInvite}
-                onClose={rightPanelHistory.pop} />
+                onClose={ui.popRightPanelHistory} />
         {:else}
             <Members
-                closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+                {closeIcon}
                 collection={$selectedCommunity}
                 invited={$currentCommunityInvited}
                 members={[...$currentCommunityMembers.values()]}
                 blocked={$currentCommunityBlocked}
                 lapsed={$currentCommunityLapsed}
-                initialUsergroup={lastState.userGroupId}
+                initialUsergroup={ui.lastRightPanelState.userGroupId}
                 installedBots={$currentCommunityBots}
                 apiKeys={$currentCommunityApiKeys}
-                onClose={rightPanelHistory.pop}
+                onClose={ui.popRightPanelHistory}
                 onBlockUser={onBlockCommunityUser}
                 onUnblockUser={onUnblockCommunityUser}
                 onShowInviteUsers={showInviteCommunityUsers}
@@ -478,7 +476,7 @@
                 onChangeRole={onChangeCommunityRole}
                 onCancelInvite={onCancelCommunityInvite} />
         {/if}
-    {:else if lastState.kind === "invite_group_users" && $multiUserChat !== undefined}
+    {:else if ui.lastRightPanelState.kind === "invite_group_users" && $multiUserChat !== undefined}
         {#if $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
             <ChannelOrCommunityInvite
                 channel={$multiUserChat}
@@ -486,11 +484,11 @@
                 userLookup={searchUsers}
                 memberLookup={searchMembers}
                 busy={invitingUsers}
-                closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+                {closeIcon}
                 selectedTab="channel"
                 {onInviteCommunityUsers}
                 onInviteChannelUsers={onInviteGroupUsers}
-                onCancelInviteUsers={rightPanelHistory.pop} />
+                onCancelInviteUsers={ui.popRightPanelHistory} />
         {:else}
             <InviteUsers
                 container={$multiUserChat}
@@ -498,14 +496,14 @@
                 userLookup={searchUsers}
                 memberLookup={searchMembers}
                 busy={invitingUsers}
-                closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+                {closeIcon}
                 isCommunityPublic={$selectedCommunity?.public ?? true}
                 onInviteUsers={onInviteGroupUsers}
-                onCancelInviteUsers={rightPanelHistory.pop} />
+                onCancelInviteUsers={ui.popRightPanelHistory} />
         {/if}
-    {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "group_chat"}
+    {:else if ui.lastRightPanelState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "group_chat"}
         <Members
-            closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+            {closeIcon}
             collection={$multiUserChat}
             invited={$currentChatInvited}
             members={$currentChatMembers}
@@ -513,19 +511,19 @@
             lapsed={$currentChatLapsedMembers}
             installedBots={$currentChatBots}
             apiKeys={$currentChatApiKeys}
-            onClose={rightPanelHistory.pop}
+            onClose={ui.popRightPanelHistory}
             onBlockUser={onBlockGroupUser}
             onUnblockUser={onUnblockGroupUser}
             onShowInviteUsers={onShowInviteGroupUsers}
             onRemoveMember={onRemoveGroupMember}
             onChangeRole={onChangeGroupRole}
             onCancelInvite={onCancelGroupInvite} />
-    {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
+    {:else if ui.lastRightPanelState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
         <ChannelOrCommunityMembers
             selectedTab="channel"
             channel={$multiUserChat}
             community={$selectedCommunity}
-            closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+            {closeIcon}
             onShowInviteCommunityUsers={showInviteCommunityUsers}
             {onRemoveCommunityMember}
             {onChangeCommunityRole}
@@ -535,38 +533,38 @@
             {onUnblockGroupUser}
             {onRemoveGroupMember}
             {onChangeGroupRole}
-            onClose={rightPanelHistory.pop}
+            onClose={ui.popRightPanelHistory}
             {onCancelGroupInvite}
             {onCancelCommunityInvite} />
-    {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
+    {:else if ui.lastRightPanelState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
             onGoToMessageIndex={goToMessageIndex}
             chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
             dateLastPinned={$multiUserChat.dateLastPinned}
-            onClose={rightPanelHistory.pop} />
-    {:else if lastState.kind === "user_profile"}
+            onClose={ui.popRightPanelHistory} />
+    {:else if ui.lastRightPanelState.kind === "user_profile"}
         <UserProfile
             onUnsubscribeNotifications={() => client.setSoftDisabled(true)}
             {user}
-            onCloseProfile={rightPanelHistory.pop} />
+            onCloseProfile={ui.popRightPanelHistory} />
     {:else if threadRootEvent !== undefined && $selectedChat !== undefined}
         <Thread rootEvent={threadRootEvent} chat={$selectedChat} onCloseThread={closeThread} />
-    {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}
-        <ProposalGroupFilters selectedChat={$selectedChat} onClose={rightPanelHistory.pop} />
-    {:else if lastState.kind === "community_details" && $selectedCommunity !== undefined}
+    {:else if ui.lastRightPanelState.kind === "proposal_filters" && $selectedChat !== undefined}
+        <ProposalGroupFilters selectedChat={$selectedChat} onClose={ui.popRightPanelHistory} />
+    {:else if ui.lastRightPanelState.kind === "community_details" && $selectedCommunity !== undefined}
         {#if $multiUserChat !== undefined && $multiUserChat.kind === "channel"}
             <ChannelOrCommunitySummary
                 channel={$multiUserChat}
                 community={$selectedCommunity}
                 memberCount={$currentChatMembers.length}
                 selectedTab="community"
-                onClose={rightPanelHistory.pop} />
+                onClose={ui.popRightPanelHistory} />
         {:else}
             <CommunityDetails />
         {/if}
-    {:else if lastState.kind === "community_filters"}
-        <CommunityFilters onClose={rightPanelHistory.pop} />
+    {:else if ui.lastRightPanelState.kind === "community_filters"}
+        <CommunityFilters onClose={ui.popRightPanelHistory} />
     {/if}
 
     <Resizable {modal} {section} bind:resizedWidth bind:resized bind:resizing />

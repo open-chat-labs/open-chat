@@ -1,25 +1,18 @@
 <script lang="ts">
-    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
-    import Delete from "svelte-material-icons/Delete.svelte";
     import {
-        type AccessGate,
-        type Level,
-        isLeafGate,
-        isCompositeGate,
-        type AccessGateConfig,
-        nervousSystemLookup,
         cryptoLookup,
+        isCompositeGate,
+        isLeafGate,
+        nervousSystemLookup,
+        ui,
+        type AccessGate,
+        type AccessGateConfig,
+        type Level,
     } from "openchat-client";
-    import ModalContent from "../../ModalContent.svelte";
-    import Overlay from "../../Overlay.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Delete from "svelte-material-icons/Delete.svelte";
+    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { _ } from "svelte-i18n";
-    import Button from "../../Button.svelte";
-    import LeafGateBuilder from "./LeafGateBuilder.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import Select from "../../Select.svelte";
-    import CollapsibleCard from "../../CollapsibleCard.svelte";
     import {
         gateLabel,
         getBalanceGateBindings,
@@ -28,12 +21,18 @@
         getPaymentGateBindings,
         type GateBinding,
     } from "../../../utils/access";
-    import { iconSize } from "../../../stores/iconSize";
-    import AccessGateIcon from "./AccessGateIcon.svelte";
-    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
     import Checkbox from "../../Checkbox.svelte";
+    import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import Select from "../../Select.svelte";
+    import Translatable from "../../Translatable.svelte";
     import DurationPicker from "../DurationPicker.svelte";
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
+    import AccessGateIcon from "./AccessGateIcon.svelte";
+    import LeafGateBuilder from "./LeafGateBuilder.svelte";
 
     const MAX_GATES = 5;
 
@@ -157,7 +156,7 @@
                                         <div onclick={() => deleteGate(i)} class="delete">
                                             <Delete
                                                 viewBox={"0 -3 24 24"}
-                                                size={$iconSize}
+                                                size={ui.iconSize}
                                                 color={"var(--icon-txt)"} />
                                         </div>
                                     {/if}
@@ -183,7 +182,7 @@
                         </Button>
                         <div class="icon">
                             <Tooltip position={"top"} align={"middle"}>
-                                <InformationOutline size={$iconSize} color={"var(--txt)"} />
+                                <InformationOutline size={ui.iconSize} color={"var(--txt)"} />
                                 {#snippet popupTemplate()}
                                     <Translatable resourceKey={i18nKey("access.addGateInfo")} />
                                 {/snippet}

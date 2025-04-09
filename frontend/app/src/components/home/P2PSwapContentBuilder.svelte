@@ -1,24 +1,23 @@
 <script lang="ts">
+    import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
+    import { enhancedCryptoLookup as cryptoLookup, isDiamond, publish, ui } from "openchat-client";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { i18nKey } from "../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import AreYouSure from "../AreYouSure.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
-    import TokenInput from "./TokenInput.svelte";
-    import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Legend from "../Legend.svelte";
-    import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
+    import Legend from "../Legend.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import TextArea from "../TextArea.svelte";
+    import Translatable from "../Translatable.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import DurationPicker from "./DurationPicker.svelte";
-    import TextArea from "../TextArea.svelte";
-    import AreYouSure from "../AreYouSure.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
-    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import { enhancedCryptoLookup as cryptoLookup, isDiamond, publish } from "openchat-client";
+    import TokenInput from "./TokenInput.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -242,13 +241,13 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
+                    <Button small={!ui.mobileWidth} tiny={ui.mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <Button
-                        small={!$mobileWidth}
+                        small={!ui.mobileWidth}
                         disabled={!valid || sending}
                         loading={sending}
-                        tiny={$mobileWidth}
+                        tiny={ui.mobileWidth}
                         onClick={onSend}
                         ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                 </ButtonGroup>

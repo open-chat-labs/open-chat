@@ -1,63 +1,61 @@
 <script lang="ts">
-    import CurrentChatHeader from "./CurrentChatHeader.svelte";
-    import CurrentChatMessages from "./CurrentChatMessages.svelte";
-    import Footer from "./Footer.svelte";
-    import { closeNotificationsForChat } from "../../utils/notifications";
-    import { getContext, onMount, tick } from "svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import {
-        type ChatSummary,
-        type EnhancedReplyContext,
-        type EventWrapper,
-        type Mention,
-        type Message,
-        type OpenChat,
-        type FilteredProposals,
-        type User,
+        type AttachmentContent,
+        botState,
         type ChatIdentifier,
         chatIdentifiersEqual,
-        type MultiUserChat,
+        type ChatSummary,
+        communities,
         CommunityMap,
         type CommunitySummary,
-        type AttachmentContent,
-        LEDGER_CANISTER_ICP,
-        type MessageContent,
-        currentUser as user,
-        suspendedUser,
-        currentChatTextContent,
-        currentChatReplyingTo,
-        currentChatPinnedMessages,
         currentChatAttachment,
         currentChatEditingEvent,
-        draftMessagesStore,
-        lastCryptoSent,
-        messagesRead,
+        currentChatPinnedMessages,
+        currentChatReplyingTo,
+        currentChatTextContent,
         blockedUsers as directlyBlockedUsers,
-        communities,
-        selectedCommunity,
+        draftMessagesStore,
+        type EnhancedReplyContext,
+        type EventWrapper,
+        type FilteredProposals,
+        lastCryptoSent,
+        LEDGER_CANISTER_ICP,
+        type Mention,
+        type Message,
+        type MessageContent,
         type MessageContext,
-        subscribe,
         messageContextsEqual,
-        botState,
+        messagesRead,
+        type MultiUserChat,
+        type OpenChat,
+        selectedCommunity,
+        subscribe,
+        suspendedUser,
+        ui,
+        type User,
+        currentUser as user,
     } from "openchat-client";
-    import PollBuilder from "./PollBuilder.svelte";
-    import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
-    import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
-    import GiphySelector from "./GiphySelector.svelte";
-    import MemeBuilder from "./MemeBuilder.svelte";
+    import { getContext, onMount, tick } from "svelte";
+    import { i18nKey } from "../../i18n/i18n";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { toastStore } from "../../stores/toast";
-    import ImportToCommunity from "./communities/Import.svelte";
+    import { closeNotificationsForChat } from "../../utils/notifications";
     import { randomSentence } from "../../utils/randomMsg";
-    import { framed } from "../../stores/xframe";
-    import { rightPanelHistory } from "../../stores/rightPanel";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
-    import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
     import AreYouSure from "../AreYouSure.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import ExternalContent from "./ExternalContent.svelte";
     import DirectChatHeader from "../bots/DirectChatHeader.svelte";
-    import { trackedEffect } from "@src/utils/effects.svelte";
+    import ImportToCommunity from "./communities/Import.svelte";
+    import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
+    import CurrentChatHeader from "./CurrentChatHeader.svelte";
+    import CurrentChatMessages from "./CurrentChatMessages.svelte";
+    import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
+    import ExternalContent from "./ExternalContent.svelte";
+    import Footer from "./Footer.svelte";
+    import GiphySelector from "./GiphySelector.svelte";
+    import MemeBuilder from "./MemeBuilder.svelte";
+    import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
+    import PollBuilder from "./PollBuilder.svelte";
+    import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
 
     interface Props {
         joining: MultiUserChat | undefined;
@@ -147,7 +145,7 @@
             toastStore.showFailureToast(i18nKey("communities.noOwned"));
             importToCommunities = undefined;
         } else {
-            rightPanelHistory.set([]);
+            ui.rightPanelHistory = [];
         }
     }
 
@@ -307,7 +305,7 @@
     function onSendMessageWithContent(content: MessageContent) {
         client.sendMessageWithContent(messageContext, content, false);
     }
-    let showChatHeader = $derived(!$mobileWidth || !$framed);
+    let showChatHeader = $derived(!ui.mobileWidth || !ui.runningInIframe);
     let messageContext = $derived({ chatId: chat.id });
     trackedEffect("current-chat", () => {
         if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {

@@ -1,36 +1,36 @@
 <script lang="ts">
-    import LinkVariantPlus from "svelte-material-icons/LinkVariantPlus.svelte";
-    import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import ArrowRightBoldOutline from "svelte-material-icons/ArrowRightBoldOutline.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import { iconSize } from "../../../stores/iconSize";
-    import ErrorMessage from "../../ErrorMessage.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import { AuthClient } from "@dfinity/auth-client";
+    import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+    import { Principal } from "@dfinity/principal";
     import {
         AuthProvider,
         InMemoryAuthClientStorage,
+        selectedAuthProviderStore,
+        ui,
         type AuthenticationPrincipal,
         type OpenChat,
         type ResourceKey,
-        selectedAuthProviderStore,
         type WebAuthnKey,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import ChooseSignInOption from "./ChooseSignInOption.svelte";
+    import ArrowRightBoldOutline from "svelte-material-icons/ArrowRightBoldOutline.svelte";
+    import LinkVariantPlus from "svelte-material-icons/LinkVariantPlus.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import { configKeys } from "../../../utils/config";
-    import { AuthClient } from "@dfinity/auth-client";
-    import AlertBox from "../../AlertBox.svelte";
-    import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
-    import { Principal } from "@dfinity/principal";
-    import SignInOption from "./SignInOption.svelte";
     import {
         EmailPollerError,
         EmailPollerSuccess,
         EmailSigninHandler,
     } from "../../../utils/signin";
+    import AlertBox from "../../AlertBox.svelte";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
+    import Translatable from "../../Translatable.svelte";
     import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
+    import ChooseSignInOption from "./ChooseSignInOption.svelte";
+    import SignInOption from "./SignInOption.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -327,7 +327,7 @@
 </script>
 
 <div class="header">
-    <LinkVariantPlus size={$iconSize} color={"var(--txt)"} />
+    <LinkVariantPlus size={ui.iconSize} color={"var(--txt)"} />
     <div class="title">
         <Translatable resourceKey={i18nKey("identity.linkIdentity")} />
     </div>
@@ -358,7 +358,7 @@
                     hollow
                     provider={substep.initiator.provider}
                     name={i18nKey(substep.initiator.provider)} />
-                <ArrowRightBoldOutline size={$iconSize} color={"var(--icon-txt)"} />
+                <ArrowRightBoldOutline size={ui.iconSize} color={"var(--icon-txt)"} />
                 <SignInOption
                     hollow
                     provider={substep.approver.provider}

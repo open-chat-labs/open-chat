@@ -1,13 +1,11 @@
 <script lang="ts">
-    import type { NamedAccount } from "openchat-client";
+    import { ui, type NamedAccount } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import Menu from "../../Menu.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuItem from "../../MenuItem.svelte";
+    import Translatable from "../../Translatable.svelte";
 
     interface Props {
         accounts: NamedAccount[];
@@ -47,9 +45,9 @@
         <Translatable resourceKey={i18nKey(selectedName ?? "tokenTransfer.chooseAddress")} />
     </div>
     <div class="icon">
-        <MenuIcon bind:this={menuIconEl} position={$mobileWidth ? "top" : "bottom"} align={"end"}>
+        <MenuIcon bind:this={menuIconEl} position={ui.mobileWidth ? "top" : "bottom"} align={"end"}>
             {#snippet menuIcon()}
-                <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
+                <ChevronDown viewBox={"0 -3 24 24"} size={ui.iconSize} color={"var(--icon-txt)"} />
             {/snippet}
             {#snippet menuItems()}
                 <Menu>

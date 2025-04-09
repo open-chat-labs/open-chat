@@ -1,9 +1,8 @@
 <script lang="ts">
-    import type { ChitEarned } from "openchat-client";
+    import { ui, type ChitEarned } from "openchat-client";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { mobileWidth } from "../../../stores/screenDimensions";
+    import Translatable from "../../Translatable.svelte";
 
     interface Props {
         events: ChitEarned[];
@@ -20,7 +19,7 @@
     <div class="day">{day.getDate()}</div>
 {:else}
     <div class="day has-events" class:otherMonth>
-        <Tooltip autoWidth fill position="top" align={$mobileWidth ? "middle" : "end"}>
+        <Tooltip autoWidth fill position="top" align={ui.mobileWidth ? "middle" : "end"}>
             {day.getDate()}
             {#snippet popupTemplate()}
                 <div class="tt">

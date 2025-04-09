@@ -8,9 +8,10 @@
         currentUser,
         installedDirectBots,
         botState,
+        pathState,
     } from "openchat-client";
     import { getContext, tick } from "svelte";
-    import { pathParams, routeForScope } from "../../routes";
+    import { routeForScope } from "../../routes";
     import BotInstaller from "./install/BotInstaller.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -28,8 +29,8 @@
     function closeInstaller(installed: boolean) {
         if (!installed) {
             if (
-                $pathParams.kind === "global_chat_selected_route" &&
-                chatIdentifiersEqual(chatId, $pathParams.chatId)
+                pathState.route.kind === "global_chat_selected_route" &&
+                chatIdentifiersEqual(chatId, pathState.route.chatId)
             ) {
                 page(routeForScope($chatListScope));
             }

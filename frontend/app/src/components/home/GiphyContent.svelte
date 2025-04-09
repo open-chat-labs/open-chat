@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { rtlStore } from "../../stores/rtl";
-    import type { GiphyContent } from "openchat-client";
-    import ContentCaption from "./ContentCaption.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import Button from "../Button.svelte";
-    import { lowBandwidth } from "../../stores/settings";
-    import Translatable from "../Translatable.svelte";
+    import { ui, type GiphyContent } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
+    import { rtlStore } from "../../stores/rtl";
+    import { lowBandwidth } from "../../stores/settings";
+    import Button from "../Button.svelte";
+    import Translatable from "../Translatable.svelte";
+    import ContentCaption from "./ContentCaption.svelte";
 
     interface Props {
         content: GiphyContent;
@@ -31,7 +30,7 @@
     }: Props = $props();
 
     let withCaption = $derived(content.caption !== undefined && content.caption !== "");
-    let image = $derived($mobileWidth ? content.mobile : content.desktop);
+    let image = $derived(ui.mobileWidth ? content.mobile : content.desktop);
     let landscape = $derived(image.height < image.width);
     let style = $derived(
         `${height === undefined ? "" : `height: ${height}px;`} max-width: ${image.width}px;`,
@@ -53,8 +52,8 @@
             class:reply
             class:rtl={$rtlStore}>
         </div>
-    {:else if $mobileWidth || hidden}
-        {#if hidden && !$mobileWidth}
+    {:else if ui.mobileWidth || hidden}
+        {#if hidden && !ui.mobileWidth}
             <div class="mask">
                 {#if !reply}
                     <div class="reveal">

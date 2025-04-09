@@ -1,34 +1,33 @@
 <script lang="ts">
-    import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
     import {
         isCompositeGate,
         isCredentialGate,
+        isDiamondGate,
         isLeafGate,
+        isLifetimeDiamondGate,
         isPaymentGate,
         isUniquePersonGate,
-        isLifetimeDiamondGate,
-        isDiamondGate,
         OpenChat,
         shouldPreprocessGate,
+        ui,
         type EnhancedAccessGate,
+        type GateCheckSucceeded,
         type LeafGate,
         type PaymentGateApprovals,
-        type GateCheckSucceeded,
     } from "openchat-client";
-    import { _ } from "svelte-i18n";
+    import { getContext, onMount } from "svelte";
+    import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import { getContext, onMount } from "svelte";
-    import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
-    import DiamondGateEvaluator from "./DiamondGateEvaluator.svelte";
-    import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
-    import UniqueHumanGateEvaluator from "./UniqueHumanGateEvaluator.svelte";
+    import Radio from "../../Radio.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccessGateSummary from "./AccessGateSummary.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import Radio from "../../Radio.svelte";
+    import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
+    import DiamondGateEvaluator from "./DiamondGateEvaluator.svelte";
+    import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
+    import UniqueHumanGateEvaluator from "./UniqueHumanGateEvaluator.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -162,7 +161,7 @@
                 {#if isCompositeGate(currentGate) && currentGate.operator === "or"}
                     <div class="header">
                         <div class="icon">
-                            <VectorCombine size={$iconSize} color={"var(--txt)"} />
+                            <VectorCombine size={ui.iconSize} color={"var(--txt)"} />
                         </div>
                         <p class="title">
                             <Translatable resourceKey={i18nKey("access.chooseOneGate")} />

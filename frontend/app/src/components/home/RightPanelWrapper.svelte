@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { layoutStore } from "../../stores/layout";
+    import { ui } from "openchat-client";
+    import { pageReplace } from "../../routes";
     import { rtlStore } from "../../stores/rtl";
-    import { rightPanelHistory } from "../../stores/rightPanel";
     import { removeQueryStringParam } from "../../utils/urls";
     import Overlay from "../Overlay.svelte";
     import RightPanel from "./RightPanel.svelte";
-    import { pageReplace } from "../../routes";
 
     interface Props {
         onGoToMessageIndex: (details: { index: number; preserveFocus: boolean }) => void;
@@ -13,10 +12,10 @@
     let { onGoToMessageIndex }: Props = $props();
 
     function closeRightPanel() {
-        if ($rightPanelHistory.find((panel) => panel.kind === "message_thread_panel")) {
+        if (ui.rightPanelContains("message_thread_panel")) {
             pageReplace(removeQueryStringParam("open"));
         }
-        rightPanelHistory.set([]);
+        ui.rightPanelHistory = [];
     }
 
     function onclick(e: Event) {
@@ -24,11 +23,11 @@
     }
 </script>
 
-{#if $layoutStore.rightPanel === "inline"}
+{#if ui.rightPanelMode === "inline"}
     <RightPanel {onGoToMessageIndex} />
 {/if}
 
-{#if $layoutStore.rightPanel === "floating"}
+{#if ui.rightPanelMode === "floating"}
     <Overlay onClose={closeRightPanel} dismissible>
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->

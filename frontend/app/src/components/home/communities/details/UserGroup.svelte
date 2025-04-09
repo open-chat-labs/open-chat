@@ -1,26 +1,26 @@
 <script lang="ts">
-    import Input from "../../../Input.svelte";
-    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import ButtonGroup from "../../../ButtonGroup.svelte";
-    import Button from "../../../Button.svelte";
-    import { _ } from "svelte-i18n";
-    import type {
-        OpenChat,
-        UserGroupDetails,
-        UserSummary,
-        CommunitySummary,
+    import {
+        type CommunitySummary,
+        type OpenChat,
+        ui,
+        type UserGroupDetails,
+        type UserSummary,
     } from "openchat-client";
-    import Search from "../../../Search.svelte";
     import { getContext } from "svelte";
-    import User from "../../groupdetails/User.svelte";
-    import { iconSize } from "../../../../stores/iconSize";
-    import { toastStore } from "../../../../stores/toast";
-    import VirtualList from "../../../VirtualList.svelte";
-    import Markdown from "../../Markdown.svelte";
-    import Legend from "../../../Legend.svelte";
+    import { _ } from "svelte-i18n";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
-    import Translatable from "../../../Translatable.svelte";
+    import { toastStore } from "../../../../stores/toast";
     import { trimLeadingAtSymbol } from "../../../../utils/user";
+    import Button from "../../../Button.svelte";
+    import ButtonGroup from "../../../ButtonGroup.svelte";
+    import Input from "../../../Input.svelte";
+    import Legend from "../../../Legend.svelte";
+    import Search from "../../../Search.svelte";
+    import Translatable from "../../../Translatable.svelte";
+    import VirtualList from "../../../VirtualList.svelte";
+    import User from "../../groupdetails/User.svelte";
+    import Markdown from "../../Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -207,7 +207,7 @@
                 <User {user} me={false}>
                     {#if canManageUserGroups}
                         <div onclick={() => removeUserFromGroup(user)} class="delete">
-                            <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
+                            <DeleteOutline size={ui.iconSize} color={"var(--icon-txt)"} />
                         </div>
                     {/if}
                 </User>

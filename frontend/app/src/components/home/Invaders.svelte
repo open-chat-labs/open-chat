@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ui } from "openchat-client";
     import { onMount, tick } from "svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
     import { _ } from "svelte-i18n";
     import { isTouchDevice } from "../../utils/devices";
     import Button from "../Button.svelte";
@@ -267,7 +267,7 @@
         const invader = new Image();
         invader.src = "/assets/robot.svg";
         const rows = 5;
-        const columns = $mobileWidth ? 5 : 8;
+        const columns = ui.mobileWidth ? 5 : 8;
         const spacing = 30;
         for (let i = 0; i < rows; i++) {
             for (let j = 0; j < columns; j++) {

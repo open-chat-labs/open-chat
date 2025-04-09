@@ -1,30 +1,28 @@
 <script lang="ts">
-    import { allQuestions, type Questions } from "openchat-client";
+    import { allQuestions, pathState, ui, type Questions } from "openchat-client";
+    import { _ } from "svelte-i18n";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { copyToClipboard } from "../../utils/urls";
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import Markdown from "../home/Markdown.svelte";
-    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
-    import Headline from "./Headline.svelte";
-    import { querystring, location } from "../../routes";
-    import { copyToClipboard } from "../../utils/urls";
-    import { _ } from "svelte-i18n";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import Headline from "./Headline.svelte";
 
     let question: Questions | undefined = $state(undefined);
 
     $effect(() => {
-        const q = $querystring.get("q");
+        const q = pathState.querystring.get("q");
         if (q) {
             question = q as Questions;
         }
     });
 
-    let copySize = $derived($mobileWidth ? "14px" : "16px");
+    let copySize = $derived(ui.mobileWidth ? "14px" : "16px");
 
     function copyUrl(e: Event, q: string): void {
         e.stopPropagation();
-        copyToClipboard(`${window.location.origin}${$location}?q=${q}`);
+        copyToClipboard(`${window.location.origin}${pathState.location}?q=${q}`);
     }
 </script>
 

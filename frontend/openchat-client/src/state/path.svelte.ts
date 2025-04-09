@@ -10,7 +10,7 @@ export class PathState {
             ? new URLSearchParams(this.#pathContextStore.querystring)
             : new URLSearchParams(),
     );
-    #params = $state<RouteParams>({ kind: "not_found_route" });
+    #route = $state<RouteParams>({ kind: "not_found_route" });
     public set routerReady(val: boolean) {
         this.#routerReady = val;
     }
@@ -29,11 +29,11 @@ export class PathState {
     public set notFound(val: boolean) {
         this.#notFound = val;
     }
-    public get params(): Readonly<RouteParams> {
-        return this.#params;
+    public get route(): Readonly<RouteParams> {
+        return this.#route;
     }
-    public setParams(ctx: PageJS.Context, p: RouteParams) {
-        this.#params = p;
+    public setRouteParams(ctx: PageJS.Context, p: RouteParams) {
+        this.#route = p;
         this.#pathContextStore = ctx;
         this.#notFound = false;
     }
@@ -151,3 +151,5 @@ export type BlogRoute = {
 export type NotFound = {
     kind: "not_found_route";
 };
+
+export const pathState = new PathState();

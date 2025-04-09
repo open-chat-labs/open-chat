@@ -1,31 +1,30 @@
 <script lang="ts">
-    import ModalContent from "../../ModalContent.svelte";
-    import Phone from "svelte-material-icons/Phone.svelte";
-    import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
-    import Overlay from "../../Overlay.svelte";
-    import { _ } from "svelte-i18n";
-    import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
-    import { getContext } from "svelte";
     import {
         AvatarSize,
-        type OpenChat,
-        userStore,
         communities,
         selectedCommunity,
+        ui,
+        userStore,
         type ChatIdentifier,
+        type OpenChat,
     } from "openchat-client";
+    import { getContext } from "svelte";
+    import Phone from "svelte-material-icons/Phone.svelte";
+    import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import {
         activeVideoCall,
         incomingVideoCall,
         ringtoneUrls,
-        type IncomingVideoCall,
         selectedRingtone,
+        type IncomingVideoCall,
         type RingtoneKey,
     } from "../../../stores/video";
     import Avatar from "../../Avatar.svelte";
-    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
-    import { iconSize } from "../../../stores/iconSize";
+    import ModalContent from "../../ModalContent.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import Translatable from "../../Translatable.svelte";
 
     interface Props {
         onJoinVideoCall: (chatId: ChatIdentifier) => void;
@@ -117,7 +116,7 @@
                     <div class="btns">
                         <Tooltip position={"top"} align={"middle"}>
                             <div role="button" onclick={cancel} class="btn ignore">
-                                <PhoneHangup size={$iconSize} color={"var(--txt)"} />
+                                <PhoneHangup size={ui.iconSize} color={"var(--txt)"} />
                             </div>
                             {#snippet popupTemplate()}
                                 <Translatable resourceKey={i18nKey("videoCall.ignore")} />
@@ -125,7 +124,7 @@
                         </Tooltip>
                         <Tooltip position={"top"} align={"middle"}>
                             <div role="button" onclick={join} class="btn join">
-                                <Phone size={$iconSize} color={"var(--txt)"} />
+                                <Phone size={ui.iconSize} color={"var(--txt)"} />
                             </div>
                             {#snippet popupTemplate()}
                                 <Translatable resourceKey={i18nKey("videoCall.join")} />

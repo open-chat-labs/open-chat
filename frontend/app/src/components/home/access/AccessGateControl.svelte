@@ -1,13 +1,12 @@
 <script lang="ts">
+    import { ui, type AccessGateConfig, type Level } from "openchat-client";
     import { _ } from "svelte-i18n";
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
-    import { iconSize } from "../../../stores/iconSize";
     import { fade } from "svelte/transition";
-    import AccessGateSummary from "./AccessGateSummary.svelte";
-    import type { AccessGateConfig, Level } from "openchat-client";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import AlertBox from "../../AlertBox.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import AccessGateSummary from "./AccessGateSummary.svelte";
 
     interface Props {
         gateConfig: AccessGateConfig;
@@ -21,7 +20,7 @@
 
 <div in:fade={{ duration: 250 }} class="wrapper">
     <div class="icon">
-        <LockOutline size={$iconSize} color={"var(--icon-txt)"} />
+        <LockOutline size={ui.iconSize} color={"var(--icon-txt)"} />
     </div>
     <div class="section">
         <div class="section-title">{$_("access.chooseGate")}</div>

@@ -1,16 +1,21 @@
 <script lang="ts">
+    import BitcoinAccountInfo from "@components/home/BitcoinAccountInfo.svelte";
+    import {
+        BTC_SYMBOL,
+        cryptoBalance,
+        cryptoLookup,
+        ui,
+        currentUser as user,
+    } from "openchat-client";
+    import { _ } from "svelte-i18n";
+    import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import { _ } from "svelte-i18n";
-    import AccountInfo from "../AccountInfo.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import { BTC_SYMBOL, currentUser as user, cryptoLookup, cryptoBalance } from "openchat-client";
-    import BitcoinAccountInfo from "@components/home/BitcoinAccountInfo.svelte";
+    import AccountInfo from "../AccountInfo.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
     interface Props {
         ledger: string;
@@ -63,7 +68,7 @@
     {#snippet footer()}
         <span>
             <ButtonGroup>
-                <Button tiny={$mobileWidth} onClick={onClose}
+                <Button tiny={ui.mobileWidth} onClick={onClose}
                     ><Translatable resourceKey={i18nKey("close")} /></Button>
             </ButtonGroup>
         </span>

@@ -1,17 +1,20 @@
 <script lang="ts">
-    import Link from "../../Link.svelte";
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
-    import { userStore, currentCommunityMembers as communityMembers } from "openchat-client";
-    import ChatMessageContent from "../ChatMessageContent.svelte";
-    import RepliesTo from "../RepliesTo.svelte";
-    import Avatar from "../../Avatar.svelte";
-    import { AvatarSize } from "openchat-client";
-    import UnresolvedReply from "../UnresolvedReply.svelte";
-    import { rtlStore } from "../../../stores/rtl";
-    import { mobileWidth } from "../../../stores/screenDimensions";
+    import {
+        AvatarSize,
+        currentCommunityMembers as communityMembers,
+        ui,
+        userStore,
+    } from "openchat-client";
     import { getContext } from "svelte";
+    import { rtlStore } from "../../../stores/rtl";
+    import Avatar from "../../Avatar.svelte";
+    import Link from "../../Link.svelte";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
+    import ChatMessageContent from "../ChatMessageContent.svelte";
     import IntersectionObserver from "../IntersectionObserver.svelte";
+    import RepliesTo from "../RepliesTo.svelte";
+    import UnresolvedReply from "../UnresolvedReply.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -63,7 +66,7 @@
         <Avatar
             url={client.userAvatarUrl(sender)}
             userId={sender?.userId}
-            size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
+            size={ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
     </div>
     <IntersectionObserver>
         {#snippet children(intersecting)}

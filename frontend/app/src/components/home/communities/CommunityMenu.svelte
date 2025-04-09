@@ -1,30 +1,28 @@
 <script lang="ts">
-    import CancelIcon from "svelte-material-icons/Cancel.svelte";
-    import TickIcon from "svelte-material-icons/Check.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import BellOff from "svelte-material-icons/BellOff.svelte";
-    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
-    import Contain from "svelte-material-icons/Contain.svelte";
+    import type { CommunitySummary, OpenChat } from "openchat-client";
+    import { chatSummariesListStore, platformModerator, publish, ui } from "openchat-client";
+    import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
-    import LocationExit from "svelte-material-icons/LocationExit.svelte";
-    import FileDocument from "svelte-material-icons/FileDocument.svelte";
-    import PlaylistPlus from "svelte-material-icons/PlaylistPlus.svelte";
+    import BellOff from "svelte-material-icons/BellOff.svelte";
+    import CancelIcon from "svelte-material-icons/Cancel.svelte";
+    import TickIcon from "svelte-material-icons/Check.svelte";
+    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
+    import Contain from "svelte-material-icons/Contain.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
-    import type { CommunitySummary, OpenChat } from "openchat-client";
-    import { chatSummariesListStore, platformModerator, publish } from "openchat-client";
-    import { getContext } from "svelte";
-    import { rightPanelHistory } from "../../../stores/rightPanel";
+    import FileDocument from "svelte-material-icons/FileDocument.svelte";
+    import LocationExit from "svelte-material-icons/LocationExit.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
+    import PlaylistPlus from "svelte-material-icons/PlaylistPlus.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
-    import { notificationsSupported } from "../../../utils/notifications";
     import { toastStore } from "../../../stores/toast";
+    import { notificationsSupported } from "../../../utils/notifications";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import Menu from "../../Menu.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuItem from "../../MenuItem.svelte";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -81,11 +79,13 @@
     }
 
     function showMembers() {
-        rightPanelHistory.set([{ kind: "show_community_members" }]);
+        ui.rightPanelHistory = [{ kind: "show_community_members" }];
     }
 
     function invite() {
-        canInvite && rightPanelHistory.set([{ kind: "invite_community_users" }]);
+        if (canInvite) {
+            ui.rightPanelHistory = [{ kind: "invite_community_users" }];
+        }
     }
 
     function editCommunity() {
@@ -120,14 +120,14 @@
 <MenuIcon position="bottom" align="end">
     {#snippet menuIcon()}
         <HoverIcon>
-            <Kebab size={$iconSize} color={"var(--icon-txt)"} />
+            <Kebab size={ui.iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     {/snippet}
     {#snippet menuItems()}
         <Menu>
             <MenuItem onclick={communityDetails}>
                 {#snippet icon()}
-                    <FileDocument size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                    <FileDocument size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                 {/snippet}
                 {#snippet text()}
                     <div><Translatable resourceKey={i18nKey("communities.details")} /></div>
@@ -135,7 +135,7 @@
             </MenuItem>
             <MenuItem onclick={showMembers}>
                 {#snippet icon()}
-                    <AccountMultiple size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                    <AccountMultiple size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                 {/snippet}
                 {#snippet text()}
                     <div><Translatable resourceKey={i18nKey("communities.members")} /></div>
@@ -144,7 +144,9 @@
             {#if canInvite}
                 <MenuItem onclick={invite}>
                     {#snippet icon()}
-                        <AccountMultiplePlus size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        <AccountMultiplePlus
+                            size={ui.iconSize}
+                            color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <div>
@@ -156,7 +158,7 @@
             {#if canEdit}
                 <MenuItem onclick={editCommunity}>
                     {#snippet icon()}
-                        <PencilOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        <PencilOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <div>
@@ -168,7 +170,7 @@
             {#if canCreateChannel}
                 <MenuItem onclick={newChannel}>
                     {#snippet icon()}
-                        <PlaylistPlus size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        <PlaylistPlus size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <span
@@ -180,7 +182,7 @@
             {#if canCreateChannel}
                 <MenuItem onclick={embedContent}>
                     {#snippet icon()}
-                        <Contain size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        <Contain size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <span><Translatable resourceKey={i18nKey("communities.embed")} /></span>
@@ -189,7 +191,7 @@
             {/if}
             <MenuItem disabled={!canMarkAllRead} onclick={markAllRead}>
                 {#snippet icon()}
-                    <CheckboxMultipleMarked size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                    <CheckboxMultipleMarked size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                 {/snippet}
                 {#snippet text()}
                     <span><Translatable resourceKey={i18nKey("markAllRead")} /></span>
@@ -198,7 +200,7 @@
             {#if notificationsSupported && !isCommunityMuted}
                 <MenuItem onclick={muteAllChannels}>
                     {#snippet icon()}
-                        <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        <BellOff size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                     {/snippet}
                     {#snippet text()}
                         <span
@@ -212,7 +214,7 @@
                 {#if canDelete}
                     <MenuItem warning onclick={deleteCommunity}>
                         {#snippet icon()}
-                            <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} />
+                            <DeleteOutline size={ui.iconSize} color={"var(--menu-warn)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -224,7 +226,7 @@
                 {#if canLeave}
                     <MenuItem warning onclick={leaveCommunity}>
                         {#snippet icon()}
-                            <LocationExit size={$iconSize} color={"var(--menu-warn)"} />
+                            <LocationExit size={ui.iconSize} color={"var(--menu-warn)"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -238,7 +240,7 @@
                 {#if client.isCommunityFrozen(community.id)}
                     <MenuItem warning onclick={unfreezeCommunity}>
                         {#snippet icon()}
-                            <TickIcon size={$iconSize} color={"var(--menu-warn"} />
+                            <TickIcon size={ui.iconSize} color={"var(--menu-warn"} />
                         {/snippet}
                         {#snippet text()}
                             <div>
@@ -249,7 +251,7 @@
                 {:else}
                     <MenuItem warning onclick={freezeCommunity}>
                         {#snippet icon()}
-                            <CancelIcon size={$iconSize} color={"var(--menu-warn"} />
+                            <CancelIcon size={ui.iconSize} color={"var(--menu-warn"} />
                         {/snippet}
                         {#snippet text()}
                             <div>

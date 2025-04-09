@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { toPixel } from "../../stores/screenDimensions";
+    import { ui } from "openchat-client";
 
     interface Props {
         originalWidth: number;
@@ -12,7 +12,7 @@
     let { originalWidth, originalHeight, src, title, totalWidth }: Props = $props();
 
     let windowWidth = $state(0);
-    let scale = $derived(Math.min(windowWidth - toPixel(2), totalWidth) / originalWidth);
+    let scale = $derived(Math.min(windowWidth - ui.toPixel(2), totalWidth) / originalWidth);
 
     let wrapperStyle = $derived(
         `height: ${originalHeight * scale}px; width: ${originalWidth * scale}px;`,

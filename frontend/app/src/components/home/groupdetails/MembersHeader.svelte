@@ -1,13 +1,12 @@
 <script lang="ts">
+    import { ui, type Level, type ResourceKey } from "openchat-client";
+    import { _ } from "svelte-i18n";
+    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
     import HoverIcon from "../../HoverIcon.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import { _ } from "svelte-i18n";
-    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import type { Level, ResourceKey } from "openchat-client";
-    import { i18nKey, interpolate } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
     interface Props {
@@ -38,7 +37,7 @@
             class="add"
             onclick={onShowInviteUsers}>
             <HoverIcon>
-                <AccountMultiplePlus size={$iconSize} color={"var(--icon-txt)"} />
+                <AccountMultiplePlus size={ui.iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}
@@ -46,9 +45,9 @@
     <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
             {#if closeIcon === "close"}
-                <Close size={$iconSize} color={"var(--icon-txt)"} />
+                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
             {:else}
-                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+                <ArrowLeft size={ui.iconSize} color={"var(--icon-txt)"} />
             {/if}
         </HoverIcon>
     </span>
