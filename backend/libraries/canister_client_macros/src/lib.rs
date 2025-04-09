@@ -178,29 +178,6 @@ macro_rules! generate_candid_c2c_call {
 }
 
 #[macro_export]
-macro_rules! generate_c2c_call_with_payment {
-    ($method_name:ident) => {
-        pub async fn $method_name(
-            canister_id: ::types::CanisterId,
-            args: &$method_name::Args,
-            cycles: ::types::Cycles,
-        ) -> Result<$method_name::Response, ::types::C2CError> {
-            let method_name = concat!(stringify!($method_name), "_msgpack");
-
-            canister_client::make_c2c_call_with_payment(
-                canister_id,
-                method_name,
-                args,
-                msgpack::serialize_to_vec,
-                |r| msgpack::deserialize_from_slice(r),
-                cycles,
-            )
-            .await
-        }
-    };
-}
-
-#[macro_export]
 macro_rules! generate_candid_c2c_call_with_payment {
     ($method_name:ident) => {
         pub async fn $method_name(
