@@ -1,30 +1,30 @@
 <script lang="ts">
-    import { onMount, getContext } from "svelte";
-    import RefreshIcon from "svelte-material-icons/Refresh.svelte";
-    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
-    import QRCode from "../QRCode.svelte";
-    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import { _ } from "svelte-i18n";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import Toggle from "../Toggle.svelte";
-    import Link from "../Link.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import AreYouSure from "../AreYouSure.svelte";
-    import { toastStore } from "../../stores/toast";
     import {
-        type OpenChat,
-        routeForChatIdentifier,
-        type CommunitySummary,
         type CommunityIdentifier,
+        type CommunitySummary,
         type MultiUserChat,
         type MultiUserChatIdentifier,
+        type OpenChat,
         type ResourceKey,
+        routeForChatIdentifier,
+        ui,
         currentUser as user,
     } from "openchat-client";
-    import { canShare, shareLink } from "../../utils/share";
-    import Markdown from "./Markdown.svelte";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
+    import RefreshIcon from "svelte-material-icons/Refresh.svelte";
+    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
+    import { canShare, shareLink } from "../../utils/share";
+    import AreYouSure from "../AreYouSure.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
+    import Link from "../Link.svelte";
+    import QRCode from "../QRCode.svelte";
+    import Toggle from "../Toggle.svelte";
     import Translatable from "../Translatable.svelte";
+    import Markdown from "./Markdown.svelte";
 
     interface Props {
         container: MultiUserChat | CommunitySummary;
@@ -202,14 +202,14 @@
                     ) + (container.public ? "" : $_("invite.shareMessageTrust"))} />
             </div>
             <div class="action">
-                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+                <CopyIcon size={ui.iconSize} color={"var(--icon-txt)"} />
                 <Link onClick={onCopy}>
                     <Translatable resourceKey={i18nKey("copy")} />
                 </Link>
             </div>
             {#if canShare()}
                 <div class="action">
-                    <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
+                    <ShareIcon size={ui.iconSize} color={"var(--icon-txt)"} />
                     <Link onClick={onShare}>
                         <Translatable resourceKey={i18nKey("share")} />
                     </Link>
@@ -217,7 +217,7 @@
             {/if}
             {#if !container.public}
                 <div class="action">
-                    <RefreshIcon size={$iconSize} color={"var(--icon-txt)"} />
+                    <RefreshIcon size={ui.iconSize} color={"var(--icon-txt)"} />
                     <Link
                         onClick={() => {
                             confirmReset = true;

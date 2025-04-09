@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ui } from "openchat-client";
     import type { Snippet } from "svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
 
     interface Props {
@@ -15,7 +15,7 @@
 
     let depth = $derived(matches.length);
 
-    let size = $derived($mobileWidth ? "14px" : "16px");
+    let size = $derived(ui.mobileWidth ? "14px" : "16px");
 </script>
 
 <div class="wrapper">

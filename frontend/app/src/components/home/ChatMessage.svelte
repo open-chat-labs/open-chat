@@ -1,76 +1,76 @@
 <script lang="ts">
-    import Link from "../Link.svelte";
-    import { fade } from "svelte/transition";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import {
         AvatarSize,
-        type Message,
-        type EnhancedReplyContext,
-        type Dimensions,
-        type MessageContent,
-        OpenChat,
-        type UserSummary,
-        type MessageReminderCreatedContent,
-        type ChatIdentifier,
-        type ChatType,
-        routeForMessage,
-        translationStore,
-        chatListScopeStore as chatListScope,
-        undeletingMessagesStore,
-        currentCommunityMembers as communityMembers,
-        currentChatMembersMap as chatMembersMap,
-        currentChatBlockedUsers,
         type BotMessageContext as BotMessageContextType,
-        ephemeralMessages,
+        type ChatIdentifier,
+        chatListScopeStore as chatListScope,
+        currentChatMembersMap as chatMembersMap,
+        type ChatType,
+        currentCommunityMembers as communityMembers,
+        currentChatBlockedUsers,
         currentUser,
+        type Dimensions,
+        type EnhancedReplyContext,
+        ephemeralMessages,
+        type Message,
+        type MessageContent,
+        type MessageReminderCreatedContent,
+        OpenChat,
+        pathState,
         publish,
+        routeForMessage,
+        ScreenWidth,
+        translationStore,
+        ui,
         unconfirmedReadByThem,
+        undeletingMessagesStore,
+        type UserSummary,
     } from "openchat-client";
-    import { isTouchOnlyDevice } from "../../utils/devices";
-    import EmojiPicker from "./EmojiPicker.svelte";
-    import Avatar from "../Avatar.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import ChatMessageContent from "./ChatMessageContent.svelte";
-    import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Typing from "../Typing.svelte";
-    import RepliesTo from "./RepliesTo.svelte";
-    import Translatable from "../Translatable.svelte";
-    import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../stores/rtl";
-    import { now } from "../../stores/time";
     import { getContext, onDestroy, onMount, tick } from "svelte";
-    import { dclickReply } from "../../stores/settings";
-    import EmoticonOutline from "svelte-material-icons/EmoticonOutline.svelte";
+    import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
+    import EmoticonOutline from "svelte-material-icons/EmoticonOutline.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
-    import UnresolvedReply from "./UnresolvedReply.svelte";
-    import { mobileWidth, ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import TimeAndTicks from "./TimeAndTicks.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import MessageReaction from "./MessageReaction.svelte";
-    import ThreadSummary from "./ThreadSummary.svelte";
-    import { pageReplace, pathParams } from "../../routes";
-    import { canShareMessage } from "../../utils/share";
-    import ChatMessageMenu from "./ChatMessageMenu.svelte";
-    import { toastStore } from "../../stores/toast";
-    import ReminderBuilder from "./ReminderBuilder.svelte";
-    import ReportMessage from "./ReportMessage.svelte";
+    import { fade } from "svelte/transition";
     import { longpress } from "../../actions/longpress";
-    import TipBuilder from "./TipBuilder.svelte";
-    import TipThumbnail from "./TipThumbnail.svelte";
-    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
-    import { rightPanelHistory } from "../../stores/rightPanel";
-    import { removeQueryStringParam } from "../../utils/urls";
-    import IntersectionObserverComponent from "./IntersectionObserver.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import WithRole from "./profile/WithRole.svelte";
-    import RoleIcon from "./profile/RoleIcon.svelte";
-    import Badges from "./profile/Badges.svelte";
+    import { pageReplace } from "../../routes";
+    import { quickReactions } from "../../stores/quickReactions";
+    import { rtlStore } from "../../stores/rtl";
+    import { dclickReply } from "../../stores/settings";
+    import { now } from "../../stores/time";
+    import { toastStore } from "../../stores/toast";
+    import { isTouchOnlyDevice } from "../../utils/devices";
+    import { canShareMessage } from "../../utils/share";
+    import { removeQueryStringParam } from "../../utils/urls";
+    import Avatar from "../Avatar.svelte";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
-    import { quickReactions } from "../../stores/quickReactions";
+    import HoverIcon from "../HoverIcon.svelte";
+    import Link from "../Link.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Translatable from "../Translatable.svelte";
+    import Typing from "../Typing.svelte";
+    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
+    import ChatMessageContent from "./ChatMessageContent.svelte";
+    import ChatMessageMenu from "./ChatMessageMenu.svelte";
+    import EmojiPicker from "./EmojiPicker.svelte";
     import EphemeralNote from "./EphemeralNote.svelte";
-    import { trackedEffect } from "@src/utils/effects.svelte";
+    import IntersectionObserverComponent from "./IntersectionObserver.svelte";
+    import MessageReaction from "./MessageReaction.svelte";
+    import Badges from "./profile/Badges.svelte";
+    import RoleIcon from "./profile/RoleIcon.svelte";
+    import WithRole from "./profile/WithRole.svelte";
+    import ReminderBuilder from "./ReminderBuilder.svelte";
+    import RepliesTo from "./RepliesTo.svelte";
+    import ReportMessage from "./ReportMessage.svelte";
+    import ThreadSummary from "./ThreadSummary.svelte";
+    import TimeAndTicks from "./TimeAndTicks.svelte";
+    import TipBuilder from "./TipBuilder.svelte";
+    import TipThumbnail from "./TipThumbnail.svelte";
+    import UnresolvedReply from "./UnresolvedReply.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -211,7 +211,7 @@
                 percentageExpired = expired ? 100 : (age / ttl) * 100;
                 // if this message is the root of a thread, make sure that we close that thread when the message expires
                 if (percentageExpired >= 100 && msg.thread) {
-                    rightPanelHistory.filter((panel) => panel.kind !== "message_thread_panel");
+                    ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
                     pageReplace(removeQueryStringParam("open"));
                 }
             });
@@ -343,7 +343,7 @@
                 height: content.height,
             };
         } else if (content.kind === "giphy_content") {
-            return $mobileWidth
+            return ui.mobileWidth
                 ? { width: content.mobile.width, height: content.mobile.height }
                 : { width: content.desktop.width, height: content.desktop.height };
         } else if (
@@ -431,7 +431,7 @@
     function remindMe() {
         showRemindMe = true;
     }
-    let maxWidthFraction = $derived($screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8);
+    let maxWidthFraction = $derived(ui.screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8);
     let inert = $derived(
         msg.content.kind === "deleted_content" ||
             msg.content.kind === "blocked_content" ||
@@ -446,7 +446,7 @@
     );
     let mediaDimensions = $derived(extractDimensions(msg.content));
     let fill = $derived(client.fillMessage(msg));
-    let showAvatar = $derived($screenWidth !== ScreenWidth.ExtraExtraSmall);
+    let showAvatar = $derived(ui.screenWidth !== ScreenWidth.ExtraExtraSmall);
     let translated = $derived($translationStore.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
     let msgUrl = $derived(
@@ -506,7 +506,7 @@
                         class="close-emoji"
                         onclick={() => (showEmojiPicker = false)}>
                         <HoverIcon>
-                            <Close size={$iconSize} color={"var(--icon-txt)"} />
+                            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
                     </span>
                 </div>
@@ -565,7 +565,7 @@
                                         url={client.userAvatarUrl(sender)}
                                         userId={msg.sender}
                                         bot={sender?.kind === "bot"}
-                                        size={$mobileWidth
+                                        size={ui.mobileWidth
                                             ? AvatarSize.Small
                                             : AvatarSize.Default} />
                                 </div>
@@ -644,7 +644,7 @@
                                 <div class="forwarded">
                                     <div>
                                         <ForwardIcon
-                                            size={$iconSize}
+                                            size={ui.iconSize}
                                             color={me
                                                 ? "var(--currentChat-msg-me-muted)"
                                                 : "var(--currentChat-msg-muted)"} />
@@ -787,7 +787,7 @@
                         <div class="actions" class:touch={isTouchOnlyDevice}>
                             <div class="reaction" onclick={() => (showEmojiPicker = true)}>
                                 <HoverIcon>
-                                    <EmoticonOutline size={$iconSize} color={"var(--icon-txt)"} />
+                                    <EmoticonOutline size={ui.iconSize} color={"var(--icon-txt)"} />
                                 </HoverIcon>
                             </div>
                         </div>
@@ -798,10 +798,10 @@
                     <ThreadSummary
                         {chatId}
                         threadRootMessageIndex={msg.messageIndex}
-                        selected={($pathParams.kind === "global_chat_selected_route" ||
-                            $pathParams.kind === "selected_channel_route") &&
-                            msg.messageIndex === $pathParams.messageIndex &&
-                            $pathParams.open}
+                        selected={(pathState.route.kind === "global_chat_selected_route" ||
+                            pathState.route.kind === "selected_channel_route") &&
+                            msg.messageIndex === pathState.route.messageIndex &&
+                            pathState.route.open}
                         {threadSummary}
                         indent={showAvatar}
                         {me}

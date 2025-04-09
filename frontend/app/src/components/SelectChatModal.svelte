@@ -1,7 +1,6 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <script lang="ts">
-    import { getContext } from "svelte";
-    import { rtlStore } from "../stores/rtl";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import type {
         ChatIdentifier,
         ChatSummary,
@@ -13,26 +12,32 @@
         MultiUserChat,
         OpenChat,
     } from "openchat-client";
-    import { userStore, selectedChatId, globalStateStore as globalState } from "openchat-client";
-    import Avatar from "./Avatar.svelte";
-    import CollapsibleCard from "./CollapsibleCard.svelte";
-    import { AvatarSize, chatIdentifiersEqual } from "openchat-client";
-    import { iconSize } from "../stores/iconSize";
-    import HoverIcon from "./HoverIcon.svelte";
+    import {
+        AvatarSize,
+        chatIdentifiersEqual,
+        globalStateStore as globalState,
+        selectedChatId,
+        ui,
+        userStore,
+    } from "openchat-client";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import SectionHeader from "./SectionHeader.svelte";
-    import { _ } from "svelte-i18n";
-    import { now } from "../stores/time";
-    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
-    import Search from "./Search.svelte";
-    import { buildDisplayName } from "../utils/user";
+    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import { i18nKey } from "../i18n/i18n";
+    import { rtlStore } from "../stores/rtl";
+    import { now } from "../stores/time";
+    import { buildDisplayName } from "../utils/user";
+    import Avatar from "./Avatar.svelte";
+    import CollapsibleCard from "./CollapsibleCard.svelte";
+    import HoverIcon from "./HoverIcon.svelte";
+    import Search from "./Search.svelte";
+    import SectionHeader from "./SectionHeader.svelte";
     import Translatable from "./Translatable.svelte";
     import Badges from "./home/profile/Badges.svelte";
-    import { trackedEffect } from "@src/utils/effects.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -283,12 +288,12 @@
 <section>
     <SectionHeader border={false} gap>
         <HoverIcon>
-            <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
+            <AccountMultiple size={ui.iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
         <h4><Translatable resourceKey={i18nKey("sendTo")} /></h4>
         <span role="button" tabindex="0" title={$_("close")} class="close" onclick={onClose}>
             <HoverIcon>
-                <Close size={$iconSize} color={"var(--icon-txt)"} />
+                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     </SectionHeader>
@@ -308,7 +313,7 @@
                     {#snippet titleSlot()}
                         <div class="card-header">
                             <div class="avatar">
-                                <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
+                                <MessageOutline size={ui.iconSize} color={"var(--icon-txt)"} />
                             </div>
                             <div class="details">
                                 <h4 class="title">
@@ -355,7 +360,7 @@
                     {#snippet titleSlot()}
                         <div class="card-header">
                             <div class="avatar">
-                                <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
+                                <ForumOutline size={ui.iconSize} color={"var(--icon-txt)"} />
                             </div>
                             <div class="details">
                                 <h4 class="title">
@@ -390,7 +395,7 @@
                     {#snippet titleSlot()}
                         <div class="card-header">
                             <div class="avatar">
-                                <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
+                                <HeartOutline size={ui.iconSize} color={"var(--icon-txt)"} />
                             </div>
                             <div class="details">
                                 <h4 class="title">

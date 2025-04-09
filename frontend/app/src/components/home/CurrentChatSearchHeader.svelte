@@ -1,13 +1,18 @@
 <script lang="ts">
+    import {
+        type ChatSummary,
+        type MessageMatch,
+        type OpenChat,
+        type UserOrUserGroup,
+        ui,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import SectionHeader from "../SectionHeader.svelte";
-    import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type { MessageMatch, ChatSummary, OpenChat, UserOrUserGroup } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
-    import { iconSize } from "../../stores/iconSize";
+    import SectionHeader from "../SectionHeader.svelte";
     import MentionPicker from "./MentionPicker.svelte";
 
     interface Props {
@@ -252,7 +257,7 @@
 <SectionHeader shadow flush entry bind:height={searchBoxHeight}>
     <div onclick={onClose}>
         <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
+            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </div>
     <div class="wrapper">

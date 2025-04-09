@@ -1,13 +1,12 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, userStore, type CommandArg } from "openchat-client";
-    import Markdown from "../home/Markdown.svelte";
+    import { AvatarSize, OpenChat, ui, userStore, type CommandArg } from "openchat-client";
+    import type { BotContextCommand } from "openchat-shared";
+    import { getContext } from "svelte";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Avatar from "../Avatar.svelte";
-    import { getContext } from "svelte";
     import Typing from "../Typing.svelte";
+    import Markdown from "../home/Markdown.svelte";
     import Tooltip from "../tooltip/Tooltip.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import type { BotContextCommand } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
 
@@ -18,7 +17,7 @@
     }
 
     let { botCommand, finalised }: Props = $props();
-    let MAX_COMMAND_LENGTH = $derived($mobileWidth ? 50 : 150);
+    let MAX_COMMAND_LENGTH = $derived(ui.mobileWidth ? 50 : 150);
     let paramValues = $derived(botCommand.args.map(paramValue));
     let paramsLength = $derived(paramValues.reduce((total, p) => total + p.length, 0));
     let paramMode: "truncated" | "full" = $derived(

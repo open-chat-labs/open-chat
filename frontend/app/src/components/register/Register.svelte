@@ -1,30 +1,29 @@
 <script lang="ts">
-    import Alert from "svelte-material-icons/Alert.svelte";
-    import { locale } from "svelte-i18n";
-    import { i18nKey, setLocale, supportedLanguages } from "../../i18n/i18n";
-    import Toast from "../Toast.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import UsernameInput from "../UsernameInput.svelte";
-    import { getContext, onMount } from "svelte";
-    import { writable, type Writable } from "svelte/store";
     import {
+        ui,
         type CreatedUser,
         type OpenChat,
         type UserOrUserGroup,
         type UserSummary,
     } from "openchat-client";
+    import { getContext, onMount } from "svelte";
+    import { locale } from "svelte-i18n";
+    import Alert from "svelte-material-icons/Alert.svelte";
+    import { writable, type Writable } from "svelte/store";
+    import { i18nKey, setLocale, supportedLanguages } from "../../i18n/i18n";
     import Button from "../Button.svelte";
-    import Select from "../Select.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
+    import FindUser from "../FindUser.svelte";
+    import Legend from "../Legend.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
-    import Legend from "../Legend.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
+    import Select from "../Select.svelte";
+    import Toast from "../Toast.svelte";
     import Translatable from "../Translatable.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import TermsContent from "../landingpages/TermsContent.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import FindUser from "../FindUser.svelte";
     import UserPill from "../UserPill.svelte";
+    import UsernameInput from "../UsernameInput.svelte";
+    import TermsContent from "../landingpages/TermsContent.svelte";
 
     interface Props {
         onCreatedUser: (user: CreatedUser) => void;
@@ -177,7 +176,10 @@
             {/snippet}
             {#snippet footer(onClose)}
                 <span>
-                    <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Button
+                        onClick={() => onClose?.()}
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}>
                         <Translatable resourceKey={i18nKey("register.agree")} />
                     </Button>
                 </span>
@@ -210,7 +212,7 @@
             {:else if badCode}
                 <div class="bad-code">
                     <div class="alert">
-                        <Alert size={$iconSize} color={"var(--warn"} />
+                        <Alert size={ui.iconSize} color={"var(--warn"} />
                     </div>
                     <div class="alert-txt">
                         <h4 class="main">

@@ -1,11 +1,10 @@
 <script lang="ts">
-    import Poll from "svelte-material-icons/Poll.svelte";
-    import { currentUser, type OpenChat, type PollContent } from "openchat-client";
-    import { iconSize } from "../../stores/iconSize";
+    import { currentUser, ui, type OpenChat, type PollContent } from "openchat-client";
     import { getContext } from "svelte";
-    import PollAnswer from "./PollAnswer.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Poll from "svelte-material-icons/Poll.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
+    import PollAnswer from "./PollAnswer.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -104,7 +103,7 @@
     {#if content.config.text !== undefined}
         <div class="question">
             <div class="icon">
-                <Poll size={$iconSize} color={txtColor} />
+                <Poll size={ui.iconSize} color={txtColor} />
             </div>
             <p class="question-txt">{content.config.text}</p>
         </div>

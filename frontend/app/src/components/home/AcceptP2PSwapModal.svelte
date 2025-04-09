@@ -1,20 +1,19 @@
 <script lang="ts">
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import type { OpenChat } from "openchat-client";
-    import Overlay from "../Overlay.svelte";
-    import AccountInfo from "./AccountInfo.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
     import {
         cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
+        ui,
     } from "openchat-client";
+    import { getContext } from "svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AccountInfo from "./AccountInfo.svelte";
+    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -96,21 +95,24 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={onClose}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    <Button
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}
+                        secondary
+                        onClick={onClose}><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if insufficient}
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             disabled={refreshing}
                             loading={refreshing}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             disabled={!valid}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={onAccept}
                             ><Translatable resourceKey={i18nKey("yes")} /></Button>
                     {/if}

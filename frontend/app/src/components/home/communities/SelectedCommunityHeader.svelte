@@ -1,15 +1,14 @@
 <script lang="ts">
-    import Avatar from "../../Avatar.svelte";
-    import { rtlStore } from "../../../stores/rtl";
-    import { AvatarSize, type CommunitySummary, type OpenChat } from "openchat-client";
-    import SectionHeader from "../../SectionHeader.svelte";
-    import CommunityMenu from "./CommunityMenu.svelte";
+    import { AvatarSize, ui, type CommunitySummary, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import VisibilityLabel from "../VisibilityLabel.svelte";
-    import { rightPanelHistory } from "../../../stores/rightPanel";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { rtlStore } from "../../../stores/rtl";
+    import Avatar from "../../Avatar.svelte";
     import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import VisibilityLabel from "../VisibilityLabel.svelte";
+    import CommunityMenu from "./CommunityMenu.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -21,7 +20,7 @@
     let { community, canMarkAllRead }: Props = $props();
 
     function showCommunityMembers() {
-        rightPanelHistory.set([{ kind: "show_community_members" }]);
+        ui.rightPanelHistory = [{ kind: "show_community_members" }];
     }
 </script>
 

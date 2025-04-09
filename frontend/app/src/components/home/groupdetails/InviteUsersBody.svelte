@@ -1,23 +1,22 @@
 <script lang="ts">
-    import Loading from "../../Loading.svelte";
-    import Button from "../../Button.svelte";
-    import { _ } from "svelte-i18n";
-    import SelectUsers from "../SelectUsers.svelte";
-    import type {
-        ChannelIdentifier,
-        CommunitySummary,
-        Level,
-        MultiUserChat,
-        OpenChat,
-        UserOrUserGroup,
-        UserSummary,
+    import {
+        ui,
+        type ChannelIdentifier,
+        type CommunitySummary,
+        type Level,
+        type MultiUserChat,
+        type OpenChat,
+        type UserOrUserGroup,
+        type UserSummary,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
     import { toastStore } from "../../../stores/toast";
-    import { rightPanelHistory } from "../../../stores/rightPanel";
+    import Button from "../../Button.svelte";
+    import Loading from "../../Loading.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
+    import SelectUsers from "../SelectUsers.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -71,11 +70,11 @@
             .then((resp) => {
                 switch (resp.kind) {
                     case "success": {
-                        rightPanelHistory.pop();
+                        ui.popRightPanelHistory();
                         break;
                     }
                     case "add_to_channel_partial_success": {
-                        rightPanelHistory.pop();
+                        ui.popRightPanelHistory();
                         toastStore.showSuccessToast(i18nKey("group.addMembersPartialSuccess"));
                         break;
                     }

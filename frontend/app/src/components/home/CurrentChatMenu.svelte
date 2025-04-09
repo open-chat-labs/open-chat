@@ -1,53 +1,51 @@
 <script lang="ts">
-    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import Headphones from "svelte-material-icons/Headphones.svelte";
-    import CancelIcon from "svelte-material-icons/Cancel.svelte";
-    import TickIcon from "svelte-material-icons/Check.svelte";
-    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import Import from "svelte-material-icons/Import.svelte";
-    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import LocationExit from "svelte-material-icons/LocationExit.svelte";
-    import ConvertToCommunity from "../icons/ConvertToCommunity.svelte";
-    import Tune from "svelte-material-icons/Tune.svelte";
-    import Pin from "svelte-material-icons/Pin.svelte";
-    import Magnify from "svelte-material-icons/Magnify.svelte";
-    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
-    import Bell from "svelte-material-icons/Bell.svelte";
-    import BellOff from "svelte-material-icons/BellOff.svelte";
-    import FileDocument from "svelte-material-icons/FileDocument.svelte";
-    import ChatQuestionIcon from "svelte-material-icons/ChatQuestion.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { _ } from "svelte-i18n";
     import {
-        userStore,
         chatIdentifiersEqual,
         type ChatSummary,
+        currentUser,
+        favouritesStore,
+        type GroupChatSummary,
+        installedDirectBots,
+        isDiamond,
+        isProposalGroup,
+        messagesRead,
         type OpenChat,
         platformModerator,
-        isDiamond,
-        favouritesStore,
-        messagesRead,
-        isProposalGroup,
-        currentUser,
-        installedDirectBots,
         publish,
-        type GroupChatSummary,
+        ui,
+        userStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import { notificationsSupported } from "../../utils/notifications";
-    import { toastStore } from "../../stores/toast";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { rightPanelHistory } from "../../stores/rightPanel";
+    import { _ } from "svelte-i18n";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import Bell from "svelte-material-icons/Bell.svelte";
+    import BellOff from "svelte-material-icons/BellOff.svelte";
+    import CancelIcon from "svelte-material-icons/Cancel.svelte";
+    import ChatQuestionIcon from "svelte-material-icons/ChatQuestion.svelte";
+    import TickIcon from "svelte-material-icons/Check.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import FileDocument from "svelte-material-icons/FileDocument.svelte";
+    import Headphones from "svelte-material-icons/Headphones.svelte";
+    import Import from "svelte-material-icons/Import.svelte";
+    import LocationExit from "svelte-material-icons/LocationExit.svelte";
+    import Magnify from "svelte-material-icons/Magnify.svelte";
+    import Pin from "svelte-material-icons/Pin.svelte";
+    import Tune from "svelte-material-icons/Tune.svelte";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
+    import { toastStore } from "../../stores/toast";
+    import { activeVideoCall } from "../../stores/video";
+    import { notificationsSupported } from "../../utils/notifications";
+    import HoverIcon from "../HoverIcon.svelte";
+    import ConvertToCommunity from "../icons/ConvertToCommunity.svelte";
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
-    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import Menu from "../Menu.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
+    import MenuItem from "../MenuItem.svelte";
     import Translatable from "../Translatable.svelte";
-    import { activeVideoCall } from "../../stores/video";
 
     const client = getContext<OpenChat>("client");
 
@@ -93,14 +91,11 @@
     );
     let isBot = $derived($userStore.get(userId)?.kind === "bot");
     let isSuspended = $derived($userStore.get(userId)?.suspended ?? false);
-    let lastState = $derived(
-        $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" },
-    );
-    let groupDetailsSelected = $derived(lastState.kind === "group_details");
-    let pinnedSelected = $derived(lastState.kind === "show_pinned");
-    let membersSelected = $derived(lastState.kind === "show_group_members");
-    let inviteMembersSelected = $derived(lastState.kind === "invite_group_users");
-    let desktop = $derived(!$mobileWidth);
+    let groupDetailsSelected = $derived(ui.lastRightPanelState.kind === "group_details");
+    let pinnedSelected = $derived(ui.lastRightPanelState.kind === "show_pinned");
+    let membersSelected = $derived(ui.lastRightPanelState.kind === "show_group_members");
+    let inviteMembersSelected = $derived(ui.lastRightPanelState.kind === "invite_group_users");
+    let desktop = $derived(!ui.mobileWidth);
     let canConvert = $derived(
         selectedChatSummary.kind === "group_chat" &&
             client.canConvertGroupToCommunity(selectedChatSummary.id),
@@ -163,11 +158,11 @@
     }
 
     function showPinned() {
-        rightPanelHistory.set([
+        ui.rightPanelHistory = [
             {
                 kind: "show_pinned",
             },
-        ]);
+        ];
     }
 
     function searchChat() {
@@ -294,11 +289,11 @@
 {#if desktop}
     {#if $isProposalGroup}
         <HoverIcon onclick={showProposalFilters} title={$_("showFilters")}>
-            <Tune size={$iconSize} color={"var(--icon-txt)"} />
+            <Tune size={ui.iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     {/if}
     <HoverIcon onclick={searchChat} title={$_("searchChat")}>
-        <Magnify size={$iconSize} color={"var(--icon-txt)"} />
+        <Magnify size={ui.iconSize} color={"var(--icon-txt)"} />
     </HoverIcon>
 
     {#if hasPinned}
@@ -308,7 +303,7 @@
                 class:unread={!pinnedSelected && hasUnreadPinned}
                 class:rtl={$rtlStore}>
                 <Pin
-                    size={$iconSize}
+                    size={ui.iconSize}
                     color={pinnedSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </div>
         </HoverIcon>
@@ -319,12 +314,12 @@
             onclick={showGroupDetails}
             title={interpolate($_, i18nKey("groupDetails", undefined, selectedChatSummary.level))}>
             <FileDocument
-                size={$iconSize}
+                size={ui.iconSize}
                 color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
         </HoverIcon>
         <HoverIcon onclick={showGroupMembers} title={$_("members")}>
             <AccountMultiple
-                size={$iconSize}
+                size={ui.iconSize}
                 color={membersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
         </HoverIcon>
         {#if selectedChatSummary.public || client.canInviteUsers(selectedChatSummary.id)}
@@ -335,7 +330,7 @@
                     i18nKey("group.inviteUsers", undefined, selectedChatSummary.level, true),
                 )}>
                 <AccountMultiplePlus
-                    size={$iconSize}
+                    size={ui.iconSize}
                     color={inviteMembersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         {/if}
@@ -345,7 +340,7 @@
     <MenuIcon position={"bottom"} align={"end"}>
         {#snippet menuIcon()}
             <HoverIcon title={$_("chatMenu")}>
-                <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
+                <DotsVertical size={ui.iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         {/snippet}
         {#snippet menuItems()}
@@ -353,7 +348,7 @@
                 {#if canStartOrJoinVideoCall}
                     <MenuItem onclick={startVideoCall}>
                         {#snippet icon()}
-                            <Headphones size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            <Headphones size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <Translatable resourceKey={videoMenuText} />
@@ -363,7 +358,7 @@
                 {#if !$favouritesStore.has(selectedChatSummary.id)}
                     <MenuItem onclick={addToFavourites}>
                         {#snippet icon()}
-                            <HeartPlus size={$iconSize} color={"var(--menu-warn)"} />
+                            <HeartPlus size={ui.iconSize} color={"var(--menu-warn)"} />
                         {/snippet}
                         {#snippet text()}
                             <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
@@ -372,7 +367,7 @@
                 {:else}
                     <MenuItem onclick={removeFromFavourites}>
                         {#snippet icon()}
-                            <HeartMinus size={$iconSize} color={"var(--menu-warn)"} />
+                            <HeartMinus size={ui.iconSize} color={"var(--menu-warn)"} />
                         {/snippet}
                         {#snippet text()}
                             <Translatable
@@ -380,11 +375,11 @@
                         {/snippet}
                     </MenuItem>
                 {/if}
-                {#if $mobileWidth}
+                {#if ui.mobileWidth}
                     {#if $isProposalGroup}
                         <MenuItem onclick={showProposalFilters}>
                             {#snippet icon()}
-                                <Tune size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                <Tune size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("proposal.filter")} />
@@ -393,7 +388,7 @@
                     {/if}
                     <MenuItem onclick={searchChat}>
                         {#snippet icon()}
-                            <Magnify size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            <Magnify size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <Translatable resourceKey={i18nKey("searchChat")} />
@@ -401,12 +396,12 @@
                     </MenuItem>
                 {/if}
                 {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
-                    {#if $mobileWidth}
+                    {#if ui.mobileWidth}
                         {#if hasPinned}
                             <MenuItem onclick={showPinned}>
                                 {#snippet icon()}
                                     <Pin
-                                        size={$iconSize}
+                                        size={ui.iconSize}
                                         color={hasUnreadPinned
                                             ? "var(--icon-selected)"
                                             : "var(--icon-inverted-txt)"} />
@@ -418,7 +413,9 @@
                         {/if}
                         <MenuItem onclick={showGroupDetails}>
                             {#snippet icon()}
-                                <FileDocument size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                <FileDocument
+                                    size={ui.iconSize}
+                                    color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable
@@ -432,7 +429,7 @@
                         <MenuItem onclick={showGroupMembers}>
                             {#snippet icon()}
                                 <AccountMultiple
-                                    size={$iconSize}
+                                    size={ui.iconSize}
                                     color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
@@ -443,7 +440,7 @@
                             <MenuItem onclick={showInviteGroupUsers}>
                                 {#snippet icon()}
                                     <AccountMultiplePlus
-                                        size={$iconSize}
+                                        size={ui.iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -463,7 +460,7 @@
                         {#if selectedChatSummary.membership.notificationsMuted === true}
                             <MenuItem onclick={() => toggleMuteNotifications(false)}>
                                 {#snippet icon()}
-                                    <Bell size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                    <Bell size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("unmuteNotifications")} />
@@ -472,7 +469,9 @@
                         {:else}
                             <MenuItem onclick={() => toggleMuteNotifications(true)}>
                                 {#snippet icon()}
-                                    <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                    <BellOff
+                                        size={ui.iconSize}
+                                        color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("muteNotifications")} />
@@ -485,7 +484,7 @@
                         <MenuItem onclick={makeProposal}>
                             {#snippet icon()}
                                 <ChatQuestionIcon
-                                    size={$iconSize}
+                                    size={ui.iconSize}
                                     color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
@@ -498,7 +497,7 @@
                         {#if client.isChatFrozen(selectedChatSummary.id)}
                             <MenuItem warning onclick={unfreezeGroup}>
                                 {#snippet icon()}
-                                    <TickIcon size={$iconSize} color={"var(--menu-warn"} />
+                                    <TickIcon size={ui.iconSize} color={"var(--menu-warn"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("unfreezeGroup")} />
@@ -507,7 +506,7 @@
                         {:else}
                             <MenuItem warning onclick={freezeGroup}>
                                 {#snippet icon()}
-                                    <CancelIcon size={$iconSize} color={"var(--menu-warn"} />
+                                    <CancelIcon size={ui.iconSize} color={"var(--menu-warn"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("freezeGroup")} />
@@ -519,7 +518,7 @@
                     {#if client.canLeaveGroup(selectedChatSummary.id)}
                         <MenuItem warning onclick={leaveGroup}>
                             {#snippet icon()}
-                                <LocationExit size={$iconSize} color={"var(--menu-warn)"} />
+                                <LocationExit size={ui.iconSize} color={"var(--menu-warn)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable
@@ -535,7 +534,7 @@
                     {#if canConvert}
                         <MenuItem warning onclick={convertToCommunity}>
                             {#snippet icon()}
-                                <ConvertToCommunity size={$iconSize} color={"var(--menu-warn)"} />
+                                <ConvertToCommunity size={ui.iconSize} color={"var(--menu-warn)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("communities.convert")} />
@@ -545,7 +544,7 @@
                     {#if canImportToCommunity}
                         <MenuItem warning onclick={importToCommunity}>
                             {#snippet icon()}
-                                <Import size={$iconSize} color={"var(--menu-warn)"} />
+                                <Import size={ui.iconSize} color={"var(--menu-warn)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("communities.import")} />
@@ -557,7 +556,7 @@
                     {#if hasPinned}
                         <MenuItem onclick={showPinned}>
                             {#snippet icon()}
-                                <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                <Pin size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("showPinned")} />
@@ -568,7 +567,7 @@
                         {#if selectedChatSummary.membership.notificationsMuted === true}
                             <MenuItem onclick={() => toggleMuteNotifications(false)}>
                                 {#snippet icon()}
-                                    <Bell size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                    <Bell size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("unmuteNotifications")} />
@@ -577,7 +576,9 @@
                         {:else}
                             <MenuItem onclick={() => toggleMuteNotifications(true)}>
                                 {#snippet icon()}
-                                    <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                    <BellOff
+                                        size={ui.iconSize}
+                                        color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("muteNotifications")} />
@@ -588,7 +589,7 @@
                     {#if blocked}
                         <MenuItem onclick={unblockUser}>
                             {#snippet icon()}
-                                <CancelIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                <CancelIcon size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("unblockUser")} />
@@ -597,7 +598,7 @@
                     {:else}
                         <MenuItem onclick={blockUser}>
                             {#snippet icon()}
-                                <CancelIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                <CancelIcon size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable resourceKey={i18nKey("blockUser")} />
@@ -608,7 +609,9 @@
                         {#if isSuspended}
                             <MenuItem onclick={unsuspendUser}>
                                 {#snippet icon()}
-                                    <TickIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                    <TickIcon
+                                        size={ui.iconSize}
+                                        color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("unsuspendUser")} />
@@ -618,7 +621,7 @@
                             <MenuItem onclick={onSuspendUser}>
                                 {#snippet icon()}
                                     <CancelIcon
-                                        size={$iconSize}
+                                        size={ui.iconSize}
                                         color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
@@ -631,7 +634,7 @@
                 {#if botIdToUninstall !== undefined}
                     <MenuItem onclick={() => removeBot(botIdToUninstall)}>
                         {#snippet icon()}
-                            <DeleteOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            <DeleteOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
                         {#snippet text()}
                             <Translatable resourceKey={i18nKey("bots.manage.remove")} />

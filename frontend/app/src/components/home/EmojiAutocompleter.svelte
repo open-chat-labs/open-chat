@@ -1,11 +1,11 @@
 <script lang="ts">
-    import MenuItem from "../MenuItem.svelte";
-    import Menu from "../Menu.svelte";
-    import VirtualList from "../VirtualList.svelte";
+    import type { NativeEmoji } from "emoji-picker-element/shared";
+    import { ui } from "openchat-client";
     import { untrack } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
-    import type { NativeEmoji } from "emoji-picker-element/shared";
-    import { mobileWidth } from "../../stores/screenDimensions";
+    import Menu from "../Menu.svelte";
+    import MenuItem from "../MenuItem.svelte";
+    import VirtualList from "../VirtualList.svelte";
 
     type EmojiSummary = {
         unicode: string;
@@ -25,7 +25,7 @@
     let matches: EmojiSummary[] = $state([]);
 
     // this is definitely a bit horrible. It seems to be necessary when we use the virtual list.
-    let ITEM_HEIGHT = $derived($mobileWidth ? 43.2 : 49.59);
+    let ITEM_HEIGHT = $derived(ui.mobileWidth ? 43.2 : 49.59);
     $effect(() => {
         if (query !== undefined) {
             search(query);

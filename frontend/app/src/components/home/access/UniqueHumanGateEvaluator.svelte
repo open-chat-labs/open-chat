@@ -1,20 +1,19 @@
 <script lang="ts">
-    import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
-    import type { Level, OpenChat } from "openchat-client";
+    import { ui, type Level, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import Button from "../../Button.svelte";
-    import ErrorMessage from "../../ErrorMessage.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import { i18nKey, interpolate } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import { uniquePersonCredentialGate } from "../../../utils/access";
-    import Markdown from "../Markdown.svelte";
     import { _ } from "svelte-i18n";
-    import HumanityConfirmation from "../HumanityConfirmation.svelte";
-    import FancyLoader from "../../icons/FancyLoader.svelte";
-    import LinkAccounts from "../profile/LinkAccounts.svelte";
+    import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
+    import { uniquePersonCredentialGate } from "../../../utils/access";
     import AlertBox from "../../AlertBox.svelte";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import FancyLoader from "../../icons/FancyLoader.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import HumanityConfirmation from "../HumanityConfirmation.svelte";
+    import Markdown from "../Markdown.svelte";
+    import LinkAccounts from "../profile/LinkAccounts.svelte";
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -77,7 +76,7 @@
         explanations={[i18nKey("identity.humanityWarning")]} />
 {:else}
     <div class="header">
-        <AccountCheck size={$iconSize} color={"var(--txt)"} />
+        <AccountCheck size={ui.iconSize} color={"var(--txt)"} />
         <div class="title">
             <Translatable resourceKey={i18nKey("access.uniquePerson")} />
         </div>

@@ -1,13 +1,12 @@
 <script lang="ts">
-    import type { EnhancedReplyContext, CreatedUser, OpenChat } from "openchat-client";
-    import { currentCommunityMembers as communityMembers } from "openchat-client";
-    import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../stores/rtl";
+    import type { CreatedUser, EnhancedReplyContext, OpenChat } from "openchat-client";
+    import { currentCommunityMembers as communityMembers, ui } from "openchat-client";
     import { getContext } from "svelte";
-    import HoverIcon from "../HoverIcon.svelte";
+    import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
+    import { rtlStore } from "../../stores/rtl";
+    import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
-    import { iconSize } from "../../stores/iconSize";
 
     const client = getContext<OpenChat>("client");
 
@@ -37,7 +36,7 @@
     class:crypto={replyingTo.content.kind === "crypto_content"}>
     <div class="close-icon" onclick={onCancelReply}>
         <HoverIcon compact>
-            <Close size={$iconSize} color={me ? "#fff" : "#aaa"} />
+            <Close size={ui.iconSize} color={me ? "#fff" : "#aaa"} />
         </HoverIcon>
     </div>
     <h4 class="username">

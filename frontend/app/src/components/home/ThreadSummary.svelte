@@ -1,12 +1,16 @@
 <script lang="ts">
     import type { ChatIdentifier, OpenChat, ThreadSummary } from "openchat-client";
-    import { userStore } from "openchat-client";
-    import { AvatarSize, messagesRead, threadsFollowedByMeStore } from "openchat-client";
+    import {
+        AvatarSize,
+        messagesRead,
+        threadsFollowedByMeStore,
+        ui,
+        userStore,
+    } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
-    import { mobileWidth } from "../../stores/screenDimensions";
     import Avatar from "../Avatar.svelte";
-    import { getContext, onMount } from "svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -66,7 +70,7 @@
                             threadSummary.numberOfReplies === 1
                                 ? $_("thread.reply")
                                 : $_("thread.replies"),
-                        message: $mobileWidth
+                        message: ui.mobileWidth
                             ? ""
                             : $_("thread.lastMessage", {
                                   values: {
