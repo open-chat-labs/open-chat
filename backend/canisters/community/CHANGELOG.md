@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
 - Simplify responses and reduce mapping by using standardised error codes ([#7754](https://github.com/open-chat-labs/open-chat/pull/7754))
 
+### Fixed
+
+- Fix serializing empty MessagePack responses ([#7764](https://github.com/open-chat-labs/open-chat/pull/7764))
+
 ## [[2.0.1683](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1683-community)] - 2025-04-02
 
 ### Changed

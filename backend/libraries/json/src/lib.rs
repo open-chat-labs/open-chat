@@ -55,3 +55,7 @@ impl serde_json::ser::Formatter for Formatter {
         self.write_string(writer, value)
     }
 }
+
+pub fn serialize_empty() -> Vec<u8> {
+    Vec::new()
+}
