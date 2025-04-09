@@ -565,6 +565,7 @@ export class OpenChat {
         (response: SendMessageSuccess | TransferSuccess) => void
     > = new Map();
     #refreshBalanceSemaphore: Semaphore = new Semaphore(10);
+    #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
@@ -5251,25 +5252,41 @@ export class OpenChat {
             return Promise.resolve(0n);
         }
 
-        return this.#refreshBalanceSemaphore.execute(() => {
-            if (allowCached) {
-                const valueIfUpdatedRecently = cryptoBalance.valueIfUpdatedRecently(ledger);
-                if (valueIfUpdatedRecently !== undefined) {
-                    return Promise.resolve(valueIfUpdatedRecently);
-                }
+        if (allowCached) {
+            const cached = cryptoBalance.valueIfUpdatedRecently(ledger);
+            if (cached !== undefined) {
+                return Promise.resolve(cached);
             }
+        }
 
-            return this.#sendRequest({
-                kind: "refreshAccountBalance",
-                ledger,
-                principal: user.userId,
-            })
-                .then((val) => {
-                    cryptoBalance.set(ledger, val);
-                    return val;
+        // If there is already an inflight promise for this same ledger, return that existing promise rather than
+        // sending an additional query to the canister.
+        const existingPromise = this.#inflightBalanceRefreshPromises.get(ledger);
+        if (existingPromise !== undefined) {
+            return existingPromise;
+        }
+
+        const promise: Promise<bigint> = new Promise((resolve) => {
+            this.#refreshBalanceSemaphore
+                .execute(() => {
+                    return this.#sendRequest({
+                        kind: "refreshAccountBalance",
+                        ledger,
+                        principal: user.userId,
+                    })
+                        .then((val) => {
+                            cryptoBalance.set(ledger, val);
+                            return val;
+                        })
+                        .catch(() => 0n)
+                        .finally(() => this.#inflightBalanceRefreshPromises.delete(ledger));
                 })
-                .catch(() => 0n);
+                .then(resolve);
         });
+
+        this.#inflightBalanceRefreshPromises.set(ledger, promise);
+
+        return promise;
     }
 
     refreshTranslationsBalance(): Promise<bigint> {
