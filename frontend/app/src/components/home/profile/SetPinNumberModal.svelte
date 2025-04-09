@@ -51,7 +51,7 @@
         if (delegation !== undefined) {
             return {
                 kind: "delegation_verification",
-                delegation,
+                delegation: delegation.toJSON(),
             };
         }
 
