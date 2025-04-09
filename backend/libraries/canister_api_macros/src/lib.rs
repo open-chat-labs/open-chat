@@ -72,24 +72,26 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
     let msgpack = if attr.msgpack {
         let msgpack_name = format!("{name}_msgpack");
 
+        let serializer_func = if empty_return {
+            quote! { msgpack::serialize_empty }
+        } else {
+            quote! { msgpack::serialize_then_unwrap }
+        };
+
         let serializer_name = format!("{msgpack_name}_serializer");
         let serializer_ident = Ident::new(&serializer_name, Span::call_site());
 
         let deserializer_name = format!("{msgpack_name}_deserializer");
         let deserializer_ident = Ident::new(&deserializer_name, Span::call_site());
 
-        let encode_with = if empty_return {
-            quote! {}
-        } else {
-            quote! { encode_with = #serializer_ident, }
-        };
+        let encode_with = quote! { encode_with = #serializer_ident, };
         let decode_with = quote! { decode_with = #deserializer_name };
 
         let mut msgpack_item = item.clone();
         msgpack_item.sig.ident = Ident::new(&msgpack_name, Span::call_site());
 
         quote! {
-            use msgpack::serialize_then_unwrap as #serializer_ident;
+            use #serializer_func as #serializer_ident;
             use msgpack::deserialize_owned_then_unwrap as #deserializer_ident;
 
             #[ic_cdk::#method_type(name = #msgpack_name, #guard #composite #manual_reply #encode_with #decode_with)]
@@ -102,24 +104,26 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
     let json = if attr.json {
         let json_name = format!("{name}_json");
 
+        let serializer_func = if empty_return {
+            quote! { json::serialize_empty }
+        } else {
+            quote! { json::serialize_then_unwrap }
+        };
+
         let serializer_name = format!("{json_name}_serializer");
         let serializer_ident = Ident::new(&serializer_name, Span::call_site());
 
         let deserializer_name = format!("{json_name}_deserializer");
         let deserializer_ident = Ident::new(&deserializer_name, Span::call_site());
 
-        let encode_with = if empty_return {
-            quote! {}
-        } else {
-            quote! { encode_with = #serializer_ident, }
-        };
+        let encode_with = quote! { encode_with = #serializer_ident, };
         let decode_with = quote! { decode_with = #deserializer_name };
 
         let mut json_item = item.clone();
         json_item.sig.ident = Ident::new(&json_name, Span::call_site());
 
         quote! {
-            use json::serialize_then_unwrap as #serializer_ident;
+            use #serializer_func as #serializer_ident;
             use json::deserialize_owned_then_unwrap as #deserializer_ident;
 
             #[ic_cdk::#method_type(name = #json_name, #guard #composite #manual_reply #encode_with #decode_with)]

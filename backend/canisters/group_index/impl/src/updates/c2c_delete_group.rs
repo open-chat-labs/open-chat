@@ -3,20 +3,22 @@ use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_delete_group::{Response::*, *};
+use tracing::info;
 use types::{ChatId, CommunityImportedInto, DeletedGroupInfoInternal, UserId};
+use utils::cycles::accept_cycles;
 
 #[update(guard = "caller_is_group_canister", msgpack = true)]
 #[trace]
 fn c2c_delete_group(args: Args) -> Response {
     mutate_state(|state| {
-        delete_group(
-            state.env.caller().into(),
-            args.group_name,
-            args.deleted_by,
-            args.members,
-            None,
-            state,
-        )
+        let group_id = state.env.caller().into();
+
+        let cycles = accept_cycles();
+        if cycles > 0 {
+            info!(cycles, %group_id, "Group refunded cycles when being deleted");
+        }
+
+        delete_group(group_id, args.group_name, args.deleted_by, args.members, None, state)
     })
 }
 

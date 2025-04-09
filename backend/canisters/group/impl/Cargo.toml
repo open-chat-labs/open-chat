@@ -13,6 +13,7 @@ crate-type = ["cdylib"]
 activity_notification_state = { path = "../../../libraries/activity_notification_state" }
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
+canister_client = { path = "../../../libraries/canister_client" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_time = { path = "../../../libraries/canister_time" }
