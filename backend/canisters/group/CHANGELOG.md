@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Simplify responses and reduce mapping by using standardised error codes ([#7754](https://github.com/open-chat-labs/open-chat/pull/7754))
 - Transfer cycles to GroupIndex when deleting a Group ([#7768](https://github.com/open-chat-labs/open-chat/pull/7768))
 - Delete groups that have been dormant for over a year ([#7770](https://github.com/open-chat-labs/open-chat/pull/7770))
+- Use accurate freezing threshold rather than an approximation ([#7771](https://github.com/open-chat-labs/open-chat/pull/7771))
 
 ### Fixed
 
