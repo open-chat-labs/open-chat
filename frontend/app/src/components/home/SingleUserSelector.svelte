@@ -6,33 +6,50 @@
         type OpenChat,
         type ResourceKey,
         type UserOrUserGroup,
+        type UserSummary,
     } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import UserPill from "../UserPill.svelte";
     import ValidatingInput from "../bots/ValidatingInput.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let autofocus: boolean;
-    export let selectedReceiver: UserOrUserGroup | undefined = undefined;
-    export let direction: "up" | "down" = "down";
-    export let placeholder: string = "tokenTransfer.chooseReceiver";
-    export let border = true;
-    export let mentionSelf = false;
-    export let error: ResourceKey[] = [];
-    export let invalid = false;
+    interface Props {
+        autofocus: boolean;
+        selectedReceiver?: UserOrUserGroup | undefined;
+        direction?: "up" | "down";
+        placeholder?: string;
+        border?: boolean;
+        mentionSelf?: boolean;
+        error?: ResourceKey[];
+        invalid?: boolean;
+        onUserSelected?: (user: UserSummary) => void;
+        onUserRemoved?: () => void;
+    }
 
-    let showMentionPicker = false;
-    let textValue: string = "";
-    let inputHeight: number;
+    let {
+        autofocus,
+        selectedReceiver = $bindable(undefined),
+        direction = "down",
+        placeholder = "tokenTransfer.chooseReceiver",
+        border = true,
+        mentionSelf = false,
+        error = [],
+        invalid = false,
+        onUserSelected,
+        onUserRemoved,
+    }: Props = $props();
 
-    function selectReceiver(ev: CustomEvent<UserOrUserGroup>) {
-        selectedReceiver = ev.detail;
+    let showMentionPicker = $state(false);
+    let textValue: string = $state("");
+    let inputHeight: number = $state(0);
+
+    function selectReceiver(userOrGroup: UserOrUserGroup) {
+        selectedReceiver = userOrGroup;
         showMentionPicker = false;
         textValue = "";
-        if (ev.detail.kind === "user") {
-            dispatch("userSelected", ev.detail);
+        if (userOrGroup.kind === "user") {
+            onUserSelected?.(userOrGroup);
         }
     }
 
@@ -40,7 +57,7 @@
         selectedReceiver = undefined;
         showMentionPicker = true;
         textValue = "";
-        dispatch("userRemoved");
+        onUserRemoved?.();
     }
 
     function blur() {
@@ -60,7 +77,8 @@
             offset={inputHeight}
             {direction}
             {mentionSelf}
-            on:mention={selectReceiver}
+            onMention={selectReceiver}
+            onClose={() => (showMentionPicker = false)}
             {border}
             usersOnly
             prefix={textValue.startsWith("@") ? textValue.substring(1) : textValue} />
@@ -70,8 +88,8 @@
     {:else}
         <div class="wrapper" bind:clientHeight={inputHeight}>
             <ValidatingInput
-                onfocus={() => (showMentionPicker = true)}
-                onblur={blur}
+                onFocus={() => (showMentionPicker = true)}
+                onBlur={blur}
                 {invalid}
                 {error}
                 {autofocus}

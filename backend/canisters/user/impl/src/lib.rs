@@ -9,7 +9,7 @@ use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
-use crate::timer_job_types::{ClaimChitInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
@@ -27,6 +27,8 @@ use model::referrals::Referrals;
 use model::streak::Streak;
 use msgpack::serialize_then_unwrap;
 use notifications_canister_c2c_client::{NotificationPusherState, NotificationsBatch};
+use notifications_canister::c2c_push_notification;
+use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -207,13 +209,13 @@ impl RuntimeState {
     }
 
     pub fn set_up_streak_insurance_timer_job(&mut self) {
-        if self.data.streak.has_insurance() {
+        if self.data.streak.days_insured() > 0 {
             self.data
                 .timer_jobs
-                .cancel_jobs(|j| matches!(j, TimerJob::ClaimChitInsurance(_)));
+                .cancel_jobs(|j| matches!(j, TimerJob::ClaimOrResetStreakInsurance(_)));
 
             self.data.timer_jobs.enqueue_job(
-                TimerJob::ClaimChitInsurance(ClaimChitInsuranceJob),
+                TimerJob::ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
                 self.data.streak.ends(),
                 self.env.now(),
             );
@@ -516,6 +518,14 @@ impl Data {
 
     pub fn is_diamond_member(&self, now: TimestampMillis) -> bool {
         self.diamond_membership_expires_at.is_some_and(|ts| now < ts)
+    }
+
+    pub fn verify_not_suspended(&self) -> Result<(), OCErrorCode> {
+        if self.suspended.value {
+            Err(OCErrorCode::InitiatorSuspended)
+        } else {
+            Ok(())
+        }
     }
 
     pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {

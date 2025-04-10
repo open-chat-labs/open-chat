@@ -15,6 +15,10 @@ impl NotifyStatusChangeQueue {
         self.swaps.pop_front()
     }
 
+    pub fn len(&self) -> usize {
+        self.swaps.len()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.swaps.is_empty()
     }

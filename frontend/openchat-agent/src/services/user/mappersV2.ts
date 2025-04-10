@@ -174,6 +174,7 @@ import type { PinNumberSettings } from "openchat-shared";
 import { pinNumberFailureResponseV2 } from "../common/pinNumberErrorMapper";
 import { signedDelegation } from "../../utils/id";
 import { mapCommonResponses } from "../common/commonResponseMapper";
+import { DelegationChain } from "@dfinity/identity";
 
 export function payForStreakInsuranceResponse(
     value: ApiPayForStreakInsuranceResponse,
@@ -282,6 +283,9 @@ export function chitEarnedReason(value: TChitEarnedReason): ChitEarnedReason {
     }
     if (value === "DailyClaimReinstated") {
         return { kind: "daily_claim_reinstated" };
+    }
+    if (value === "StreakInsuranceClaim") {
+        return { kind: "streak_insurance_claim" };
     }
     if (value === "MemeContestWinner") {
         return { kind: "meme_contest_winner" };
@@ -1490,7 +1494,7 @@ export function claimDailyChitResponse(value: UserClaimDailyChitResponse): Claim
 export function apiVerification(domain: Verification): UserSetPinNumberPinNumberVerification {
     switch (domain.kind) {
         case "delegation_verification":
-            return { Delegation: signedDelegation(domain.delegation) };
+            return { Delegation: signedDelegation(DelegationChain.fromJSON(domain.delegation)) };
         case "no_verification":
             return "None";
         case "pin_verification":

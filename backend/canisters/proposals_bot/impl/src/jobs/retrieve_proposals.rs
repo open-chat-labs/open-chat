@@ -4,12 +4,11 @@ use crate::timer_job_types::{ProcessUserRefundJob, TimerJob, TopUpNeuronJob, Vot
 use crate::{mutate_state, RuntimeState};
 use canister_timer_jobs::Job;
 use constants::MINUTE_IN_MS;
-use ic_cdk::call::RejectCode;
 use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::{CanisterId, Proposal};
+use types::{C2CError, CanisterId, Proposal};
 
 pub const NNS_TOPIC_NEURON_MANAGEMENT: i32 = 1;
 pub const NNS_TOPIC_EXCHANGE_RATE: i32 = 2;
@@ -55,7 +54,7 @@ async fn get_and_process_nns_proposals(governance_canister_id: CanisterId) {
     handle_proposals_response(governance_canister_id, response);
 }
 
-async fn get_nns_proposals(governance_canister_id: CanisterId) -> Result<Vec<ProposalInfo>, (RejectCode, String)> {
+async fn get_nns_proposals(governance_canister_id: CanisterId) -> Result<Vec<ProposalInfo>, C2CError> {
     let mut proposals: Vec<ProposalInfo> = Vec::new();
 
     loop {
@@ -88,7 +87,7 @@ async fn get_and_process_sns_proposals(governance_canister_id: CanisterId) {
     handle_proposals_response(governance_canister_id, response);
 }
 
-async fn get_sns_proposals(governance_canister_id: CanisterId) -> Result<Vec<ProposalData>, (RejectCode, String)> {
+async fn get_sns_proposals(governance_canister_id: CanisterId) -> Result<Vec<ProposalData>, C2CError> {
     let mut proposals: Vec<ProposalData> = Vec::new();
 
     loop {
@@ -114,10 +113,7 @@ async fn get_sns_proposals(governance_canister_id: CanisterId) -> Result<Vec<Pro
     Ok(proposals)
 }
 
-fn handle_proposals_response<R: RawProposal>(
-    governance_canister_id: CanisterId,
-    response: Result<Vec<R>, (RejectCode, String)>,
-) {
+fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId, response: Result<Vec<R>, C2CError>) {
     match response {
         Ok(raw_proposals) => {
             let mut proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();

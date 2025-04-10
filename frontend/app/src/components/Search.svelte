@@ -1,11 +1,10 @@
 <script lang="ts">
-    import Magnify from "svelte-material-icons/Magnify.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
+    import { ui, type ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { iconSize } from "../stores/iconSize";
+    import Close from "svelte-material-icons/Close.svelte";
+    import Magnify from "svelte-material-icons/Magnify.svelte";
     import { translatable } from "../actions/translatable";
     import { i18nKey, interpolate } from "../i18n/i18n";
-    import type { ResourceKey } from "openchat-client";
 
     interface Props {
         searchTerm?: string;
@@ -75,14 +74,14 @@
         <span onclick={clearSearch} class="icon close" class:input-style={inputStyle}
             ><Close
                 viewBox={inputStyle ? "0 -3 24 24" : "0 0 24 24"}
-                size={$iconSize}
+                size={ui.iconSize}
                 color={"var(--icon-txt)"} /></span>
     {:else}
         <span class="icon" class:searching class:input-style={inputStyle}>
             {#if !searching}
                 <Magnify
                     viewBox={inputStyle ? "0 -3 24 24" : "0 0 24 24"}
-                    size={$iconSize}
+                    size={ui.iconSize}
                     color={"var(--icon-txt)"} />
             {/if}
         </span>

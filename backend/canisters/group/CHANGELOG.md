@@ -10,6 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
 - Switch to new `c2c_push_notifications` endpoint ([#7733](https://github.com/open-chat-labs/open-chat/pull/7733))
+- Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+- Simplify responses and reduce mapping by using standardised error codes ([#7754](https://github.com/open-chat-labs/open-chat/pull/7754))
+- Transfer cycles to GroupIndex when deleting a Group ([#7768](https://github.com/open-chat-labs/open-chat/pull/7768))
+- Delete groups that have been dormant for over a year ([#7770](https://github.com/open-chat-labs/open-chat/pull/7770))
+- Use accurate freezing threshold rather than an approximation ([#7771](https://github.com/open-chat-labs/open-chat/pull/7771))
+
+### Fixed
+
+- Fix serializing empty MessagePack responses ([#7764](https://github.com/open-chat-labs/open-chat/pull/7764))
+- Mark Group active after P2P swap status is updated ([#7766](https://github.com/open-chat-labs/open-chat/pull/7766))
 
 ## [[2.0.1684](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1684-group)] - 2025-04-02
 

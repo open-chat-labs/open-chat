@@ -10,3 +10,4 @@ candid = { workspace = true }
 canister_client_macros = { path = "../canister_client_macros" }
 ic-cdk = { workspace = true }
 tracing = { workspace = true }
+types = { path = "../types" }

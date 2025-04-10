@@ -8,7 +8,7 @@ use ic_cdk::call::RejectCode;
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_FEE};
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{CanisterId, TimestampMillis};
+use types::{C2CError, CanisterId, TimestampMillis};
 use utils::canister::set_controllers;
 
 const MEMO_CREATE_CANISTER: Memo = Memo(0x41455243); // == 'CREA'
@@ -74,7 +74,7 @@ impl ExpandOntoSubnetJob {
         &self,
         next_step: ExpandOntoSubnetStep,
         now: TimestampMillis,
-    ) -> Result<Option<bool>, (RejectCode, String)> {
+    ) -> Result<Option<bool>, C2CError> {
         let complete = match next_step {
             ExpandOntoSubnetStep::CreateLocalUserIndex => {
                 let canister_id = create_canister(
@@ -197,7 +197,9 @@ impl ExpandOntoSubnetJob {
                             .update_in_progress(|s| s.notifications_index_notified = true, now)
                     })
                 } else {
-                    return Err((
+                    return Err(C2CError::new(
+                        self.notifications_index,
+                        "add_notifications_canister",
                         RejectCode::CanisterError,
                         format!("Failed to add notifications canister: {response:?}"),
                     ));
@@ -224,7 +226,9 @@ impl ExpandOntoSubnetJob {
                             .update_in_progress(|s| s.local_user_index_notified = true, now)
                     })
                 } else {
-                    return Err((
+                    return Err(C2CError::new(
+                        self.user_index,
+                        "add_local_user_index_canister",
                         RejectCode::CanisterError,
                         format!("Failed to add local user index: {response:?}"),
                     ));
@@ -252,7 +256,9 @@ impl ExpandOntoSubnetJob {
                             .update_in_progress(|s| s.local_group_index_notified = true, now)
                     })
                 } else {
-                    return Err((
+                    return Err(C2CError::new(
+                        self.group_index,
+                        "add_local_group_index_canister",
                         RejectCode::CanisterError,
                         format!("Failed to add local group index: {response:?}"),
                     ));
@@ -272,7 +278,7 @@ async fn create_canister(
     this_canister_id: Principal,
     create_canister_block_index: Option<u64>,
     now: TimestampMillis,
-) -> Result<CanisterId, (RejectCode, String)> {
+) -> Result<CanisterId, C2CError> {
     let block_index = match create_canister_block_index {
         Some(index) => index,
         None => {
@@ -301,7 +307,12 @@ async fn create_canister(
                     index
                 }
                 Err(error) => {
-                    return Err((RejectCode::CanisterError, format!("{error:?}")));
+                    return Err(C2CError::new(
+                        ledger,
+                        "transfer",
+                        RejectCode::CanisterError,
+                        format!("{error:?}"),
+                    ));
                 }
             }
         }
@@ -328,6 +339,11 @@ async fn create_canister(
             }
             Ok(canister_id)
         }
-        Err(error) => Err((RejectCode::CanisterError, format!("{error:?}"))),
+        Err(error) => Err(C2CError::new(
+            cmc,
+            "notify_create_canister",
+            RejectCode::CanisterError,
+            format!("{error:?}"),
+        )),
     }
 }

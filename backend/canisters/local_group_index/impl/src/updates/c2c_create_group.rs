@@ -9,7 +9,6 @@ use local_group_index_canister::c2c_create_group::{Response::*, *};
 use local_group_index_canister::ChildCanisterType;
 use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, UserId, UserType};
 use utils::canister;
-use utils::canister::CreateAndInstallError;
 
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
 #[trace]
@@ -58,11 +57,7 @@ async fn c2c_create_group(args: Args) -> Response {
                 local_user_index_canister_id: prepare_ok.local_user_index_canister_id,
             })
         }
-        Err(error) => {
-            let mut canister_id = None;
-            if let CreateAndInstallError::InstallFailed(id, ..) = error {
-                canister_id = Some(id);
-            }
+        Err((canister_id, error)) => {
             mutate_state(|state| rollback(canister_id, state));
             InternalError(format!("{error:?}"))
         }

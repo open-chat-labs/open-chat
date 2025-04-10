@@ -1,16 +1,16 @@
 <script lang="ts">
+    import { ui } from "openchat-client";
     import { onMount, tick, type Snippet } from "svelte";
-    import { fade } from "svelte/transition";
-    import Button from "./Button.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
-    import HoverIcon from "./HoverIcon.svelte";
-    import { rtlStore } from "../stores/rtl";
-    import { mobileWidth } from "../stores/screenDimensions";
-    import { menuStore } from "../stores/menu";
-    import { currentTheme } from "../theme/themes";
-    import Translatable from "./Translatable.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { fade } from "svelte/transition";
     import { i18nKey } from "../i18n/i18n";
+    import { menuStore } from "../stores/menu";
+    import { rtlStore } from "../stores/rtl";
+    import { currentTheme } from "../theme/themes";
+    import Button from "./Button.svelte";
+    import HoverIcon from "./HoverIcon.svelte";
+    import Translatable from "./Translatable.svelte";
 
     type OnClose = (() => void) | undefined;
 
@@ -68,7 +68,7 @@
 
     let divElement: HTMLElement;
 
-    let useAlignTo = $derived(alignTo !== undefined && !$mobileWidth);
+    let useAlignTo = $derived(alignTo !== undefined && !ui.mobileWidth);
     let bgStyle = $derived(backgroundImage ? `--custom-bg: url(${backgroundImage});` : "");
     let position = $state("");
     let style = $derived(
@@ -155,7 +155,7 @@
     {#if !hideFooter}
         <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
             {#if footer}{@render footer(onClose)}{:else}
-                <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
+                <Button onClick={() => onClose?.()} small={!ui.mobileWidth} tiny={ui.mobileWidth}>
                     <Translatable resourceKey={i18nKey("close")} />
                 </Button>
             {/if}

@@ -4,8 +4,8 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::update_channel::{Response::*, *};
-use group_chat_core::UpdateResult;
-use types::OptionUpdate;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, OptionUpdate};
 use url::Url;
 
 #[update(msgpack = true)]
@@ -13,31 +13,34 @@ use url::Url;
 fn update_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| update_channel_impl(args, state))
+    match mutate_state(|state| update_channel_impl(args, state)) {
+        Ok(result) => SuccessV2(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
+fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     clean_args(&mut args);
 
     if state.data.is_frozen() {
-        return CommunityFrozen;
+        return Err(OCErrorCode::CommunityFrozen.into());
     }
 
     if let OptionUpdate::SetToSome(external_url) = &args.external_url {
         if Url::parse(external_url).is_err() {
-            return ExternalUrlInvalid;
+            return Err(OCErrorCode::InvalidExternalUrl.into());
         }
     }
 
     if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {
         if !gate_config.validate(state.data.test_mode) {
-            return AccessGateInvalid;
+            return Err(OCErrorCode::InvalidAccessGate.into());
         }
     }
 
     if let Some(name) = &args.name {
         if state.data.channels.is_name_taken(name, Some(args.channel_id)) {
-            return NameTaken;
+            return Err(OCErrorCode::NameTaken.into());
         }
     }
 
@@ -50,7 +53,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
 
             let prev_gate_config = channel.chat.gate_config.value.clone();
 
-            match channel.chat.update(
+            let result = channel.chat.update(
                 member.user_id,
                 args.name,
                 args.description,
@@ -63,55 +66,46 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 args.events_ttl,
                 args.external_url,
                 now,
-            ) {
-                UpdateResult::Success(result) => {
-                    if channel.chat.is_public.value && channel.chat.gate_config.is_none() {
-                        // If the channel has just been made public or had its gate removed, add
-                        // all existing community members to the channel, except those who have
-                        // been in the channel before and then left
-                        if result.newly_public || matches!(result.gate_config_update, OptionUpdate::SetToNone) {
-                            let channel_id = channel.id;
-                            let mut user_ids = Vec::with_capacity(state.data.members.len());
-                            user_ids.extend(state.data.members.iter_member_ids().filter(|user_id| {
-                                !state.data.members.member_channel_links_removed_contains(*user_id, channel_id)
-                            }));
+            )?;
 
-                            JoinMembersToPublicChannelJob {
-                                channel_id,
-                                members: user_ids,
-                            }
-                            .execute_with_state(state);
-                        }
+            if channel.chat.is_public.value && channel.chat.gate_config.is_none() {
+                // If the channel has just been made public or had its gate removed, add
+                // all existing community members to the channel, except those who have
+                // been in the channel before and then left
+                if result.newly_public || matches!(result.gate_config_update, OptionUpdate::SetToNone) {
+                    let channel_id = channel.id;
+                    let mut user_ids = Vec::with_capacity(state.data.members.len());
+                    user_ids.extend(
+                        state
+                            .data
+                            .members
+                            .iter_member_ids()
+                            .filter(|user_id| !state.data.members.member_channel_links_removed_contains(*user_id, channel_id)),
+                    );
+
+                    JoinMembersToPublicChannelJob {
+                        channel_id,
+                        members: user_ids,
                     }
-
-                    if has_gate_config_updates {
-                        state.data.update_member_expiry(Some(args.channel_id), &prev_gate_config, now);
-                        jobs::expire_members::restart_job(state);
-                    }
-
-                    handle_activity_notification(state);
-
-                    SuccessV2(SuccessResult {
-                        rules_version: result.rules_version,
-                    })
+                    .execute_with_state(state);
                 }
-                UpdateResult::UserSuspended => UserSuspended,
-                UpdateResult::UserLapsed => UserLapsed,
-                UpdateResult::UserNotInGroup => UserNotInChannel,
-                UpdateResult::NotAuthorized => NotAuthorized,
-                UpdateResult::NameTooShort(v) => NameTooShort(v),
-                UpdateResult::NameTooLong(v) => NameTooLong(v),
-                UpdateResult::NameReserved => NameReserved,
-                UpdateResult::DescriptionTooLong(v) => DescriptionTooLong(v),
-                UpdateResult::RulesTooShort(v) => RulesTooShort(v),
-                UpdateResult::RulesTooLong(v) => RulesTooLong(v),
-                UpdateResult::AvatarTooBig(v) => AvatarTooBig(v),
             }
+
+            if has_gate_config_updates {
+                state.data.update_member_expiry(Some(args.channel_id), &prev_gate_config, now);
+                jobs::expire_members::restart_job(state);
+            }
+
+            handle_activity_notification(state);
+
+            Ok(SuccessResult {
+                rules_version: result.rules_version,
+            })
         } else {
-            UserNotInCommunity
+            Err(OCErrorCode::InitiatorNotInCommunity.into())
         }
     } else {
-        ChannelNotFound
+        Err(OCErrorCode::ChatNotFound.into())
     }
 }
 

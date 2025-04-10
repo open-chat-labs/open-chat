@@ -1,40 +1,39 @@
 <script lang="ts">
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import type {
         ChatSummary,
+        MessageContext,
         OpenChat,
         PrizeContentInitial,
-        MessageContext,
     } from "openchat-client";
-    import { bigIntMax } from "openchat-client";
-    import TokenInput from "./TokenInput.svelte";
-    import Overlay from "../Overlay.svelte";
-    import AccountInfo from "./AccountInfo.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Legend from "../Legend.svelte";
-    import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
-    import Range from "../Range.svelte";
-    import Radio from "../Radio.svelte";
-    import CryptoSelector from "./CryptoSelector.svelte";
-    import EqualDistribution from "../icons/EqualDistribution.svelte";
-    import RandomDistribution from "../icons/RandomDistribution.svelte";
-    import TextArea from "../TextArea.svelte";
-    import NumberInput from "../NumberInput.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
-    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import {
-        currentUser as user,
+        bigIntMax,
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
+        ui,
     } from "openchat-client";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { i18nKey } from "../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
     import Checkbox from "../Checkbox.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
+    import EqualDistribution from "../icons/EqualDistribution.svelte";
+    import RandomDistribution from "../icons/RandomDistribution.svelte";
+    import Legend from "../Legend.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import NumberInput from "../NumberInput.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Radio from "../Radio.svelte";
+    import Range from "../Range.svelte";
     import Select from "../Select.svelte";
+    import TextArea from "../TextArea.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AccountInfo from "./AccountInfo.svelte";
+    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
+    import CryptoSelector from "./CryptoSelector.svelte";
+    import TokenInput from "./TokenInput.svelte";
 
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
@@ -77,6 +76,7 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
     let sending = $state(false);
+    let requiresCaptcha = $state(true);
 
     let anyUser = $state(true);
     $effect(() => {
@@ -164,6 +164,7 @@
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
             prizes,
+            requiresCaptcha,
         };
 
         sending = true;
@@ -191,9 +192,9 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
+    function onBalanceRefreshError(err: string) {
         onBalanceRefreshFinished();
-        error = ev.detail;
+        error = err;
     }
 
     function onBalanceRefreshFinished() {
@@ -306,15 +307,15 @@
                     label={i18nKey("cryptoAccount.shortBalanceLabel")}
                     bold
                     showTopUp
-                    on:refreshed={onBalanceRefreshed}
-                    on:error={onBalanceRefreshError} />
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             </span>
         {/snippet}
         {#snippet body()}
             <form>
                 <div class="body" class:zero={zero || toppingUp}>
                     {#if zero || toppingUp}
-                        <AccountInfo {ledger} user={$user} />
+                        <AccountInfo {ledger} />
                         {#if zero}
                             <p>
                                 <Translatable
@@ -330,7 +331,7 @@
                                 {ledger}
                                 label={"prizes.totalAmount"}
                                 autofocus={!multiUserChat}
-                                bind:state={tokenInputState}
+                                bind:status={tokenInputState}
                                 transferFees={totalFees}
                                 {minAmount}
                                 {maxAmount}
@@ -395,7 +396,7 @@
                                 <Legend label={i18nKey("prizes.duration")} />
                                 {#each durations as d}
                                     <Radio
-                                        on:change={() => (selectedDuration = d)}
+                                        onChange={() => (selectedDuration = d)}
                                         value={d}
                                         checked={selectedDuration === d}
                                         id={`duration_${d}`}
@@ -404,12 +405,16 @@
                                 {/each}
                             </div>
                             <div class="restrictions">
-                                <Legend label={i18nKey("prizes.whoCanWin")} />
+                                <Legend label={i18nKey("prizes.restrictions")} />
+                                <!-- <Checkbox
+                                    id="captcha"
+                                    label={i18nKey(`prizes.requiresCaptcha`)}
+                                    bind:checked={requiresCaptcha} /> -->
                                 <Checkbox
                                     id="any_user"
                                     label={i18nKey(`prizes.anyone`)}
                                     bind:checked={anyUser}
-                                    on:change={onAnyUserChecked} />
+                                    onChange={onAnyUserChecked} />
                                 <Checkbox
                                     id="diamond_only"
                                     label={i18nKey(`prizes.onlyDiamond`)}
@@ -418,13 +423,13 @@
                                     <div class="diamond-choice">
                                         <Radio
                                             id={"standard-diamond"}
-                                            on:change={() => (diamondType = "standard")}
+                                            onChange={() => (diamondType = "standard")}
                                             checked={diamondType === "standard"}
                                             label={i18nKey(`prizes.standardDiamond`)}
                                             group={"diamond"} />
                                         <Radio
                                             id={"lifetime-diamond"}
-                                            on:change={() => (diamondType = "lifetime")}
+                                            onChange={() => (diamondType = "lifetime")}
                                             checked={diamondType === "lifetime"}
                                             label={i18nKey(`prizes.lifetimeDiamond`)}
                                             group={"diamond"} />
@@ -463,22 +468,22 @@
         {#snippet footer()}
             <span>
                 <ButtonGroup>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
+                    <Button small={!ui.mobileWidth} tiny={ui.mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     {#if toppingUp || zero}
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             disabled={refreshing}
                             loading={refreshing}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
                     {:else}
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             disabled={!valid || sending}
                             loading={sending}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={send}
                             ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                     {/if}

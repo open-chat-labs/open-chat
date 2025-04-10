@@ -1,20 +1,20 @@
 <script lang="ts">
-    import { sineIn } from "svelte/easing";
-    import { _ } from "svelte-i18n";
-    import Close from "svelte-material-icons/Close.svelte";
-    import Bug from "svelte-material-icons/Bug.svelte";
-    import { fly } from "svelte/transition";
-    import { toastStore, ToastType } from "../stores/toast";
-    import { iconSize } from "../stores/iconSize";
-    import Translatable from "./Translatable.svelte";
     import {
         type ChatIdentifier,
-        routeForChatIdentifier,
         draftMessagesStore,
+        routeForChatIdentifier,
+        ui,
     } from "openchat-client";
-    import { i18nKey, interpolate } from "../i18n/i18n";
     import page from "page";
+    import { _ } from "svelte-i18n";
+    import Bug from "svelte-material-icons/Bug.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { sineIn } from "svelte/easing";
+    import { fly } from "svelte/transition";
+    import { i18nKey, interpolate } from "../i18n/i18n";
+    import { toastStore, ToastType } from "../stores/toast";
     import Tooltip from "./tooltip/Tooltip.svelte";
+    import Translatable from "./Translatable.svelte";
 
     let reactiveResourceKey = $derived($toastStore?.resourceKey);
 
@@ -50,7 +50,7 @@
                 {#if $toastStore.err !== undefined}
                     <Tooltip position="top" align="middle">
                         <div class="report" onclick={report}>
-                            <Bug size={$iconSize} color={"var(--button-txt)"} />
+                            <Bug size={ui.iconSize} color={"var(--button-txt)"} />
                         </div>
                         {#snippet popupTemplate()}
                             <Translatable resourceKey={i18nKey("reportBug")} />
@@ -58,7 +58,7 @@
                     </Tooltip>
                 {/if}
                 <div class="close" onclick={toastStore.hideToast}>
-                    <Close size={$iconSize} color={"var(--button-txt)"} />
+                    <Close size={ui.iconSize} color={"var(--button-txt)"} />
                 </div>
             {/if}
         </div>

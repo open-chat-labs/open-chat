@@ -1,29 +1,27 @@
 <script lang="ts">
-    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
-    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import Avatar from "../../../Avatar.svelte";
-    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import HoverIcon from "@src/components/HoverIcon.svelte";
+    import Menu from "@src/components/Menu.svelte";
+    import MenuIcon from "@src/components/MenuIcon.svelte";
+    import MenuItem from "@src/components/MenuItem.svelte";
+    import Translatable from "@src/components/Translatable.svelte";
+    import { i18nKey } from "@src/i18n/i18n";
     import {
         AvatarSize,
         type ChannelMatch,
+        chatListScopeStore as chatListScope,
         type OpenChat,
         routeForChatIdentifier,
-        chatListScopeStore as chatListScope,
         selectedCommunity,
+        ui,
     } from "openchat-client";
-    import { mobileWidth } from "../../../../stores/screenDimensions";
-    import { getContext } from "svelte";
     import page from "page";
+    import { getContext } from "svelte";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import Avatar from "../../../Avatar.svelte";
     import AccessGateIcon from "../../access/AccessGateIcon.svelte";
-    import { popRightPanelHistory } from "../../../../stores/rightPanel";
     import Markdown from "../../Markdown.svelte";
-    import { iconSize } from "@src/stores/iconSize";
-    import MenuIcon from "@src/components/MenuIcon.svelte";
-    import Menu from "@src/components/Menu.svelte";
-    import { i18nKey } from "@src/i18n/i18n";
-    import Translatable from "@src/components/Translatable.svelte";
-    import MenuItem from "@src/components/MenuItem.svelte";
-    import HoverIcon from "@src/components/HoverIcon.svelte";
 
     interface Props {
         channel: ChannelMatch;
@@ -39,8 +37,8 @@
     function selectChannel(match: ChannelMatch) {
         if ($selectedCommunity === undefined) return;
         if (!match.public) return;
-        if ($mobileWidth) {
-            popRightPanelHistory();
+        if (ui.mobileWidth) {
+            ui.popRightPanelHistory();
         }
         page(routeForChatIdentifier($chatListScope.kind, match.id));
     }
@@ -93,14 +91,14 @@
             <MenuIcon position={"bottom"} align={"end"}>
                 {#snippet menuIcon()}
                     <HoverIcon>
-                        <DotsVertical size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        <DotsVertical size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
                     </HoverIcon>
                 {/snippet}
                 {#snippet menuItems()}
                     <Menu>
                         <MenuItem warning onclick={onDeleteChannel}>
                             {#snippet icon()}
-                                <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} />
+                                <DeleteOutline size={ui.iconSize} color={"var(--menu-warn)"} />
                             {/snippet}
                             {#snippet text()}
                                 <Translatable

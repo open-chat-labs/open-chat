@@ -1,7 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { rightPanelWidth } from "../stores/layout";
-    import { mobileWidth } from "../stores/screenDimensions";
+    import { ui } from "openchat-client";
 
     const MIN_COL_WIDTH = 400;
     const MAX_COL_WIDTH = 900;
@@ -27,11 +25,18 @@
 
     let previous = 0;
 
-    onMount(() => {
-        return rightPanelWidth.subscribe((width) => {
-            resized = width !== undefined;
-            resizedWidth = getWidthVar(width);
-        });
+    $effect(() => {
+        const isResized = ui.rightPanelWidth !== undefined;
+        if (isResized !== resized) {
+            resized = isResized;
+        }
+    });
+
+    $effect(() => {
+        const widthVar = getWidthVar(ui.rightPanelWidth);
+        if (widthVar !== resizedWidth) {
+            resizedWidth = widthVar;
+        }
     });
 
     function startResize(ev: MouseEvent) {
@@ -46,7 +51,7 @@
     }
 
     function resetSize() {
-        rightPanelWidth.set(undefined);
+        ui.rightPanelWidth = undefined;
     }
 
     function clampResize(size: number): number {
@@ -59,7 +64,7 @@
         if (resizing) {
             const diff = previous - ev.screenX;
             const updated = clampResize(section.offsetWidth + diff);
-            rightPanelWidth.set(updated);
+            ui.rightPanelWidth = updated;
             previous = ev.screenX;
         }
     }
@@ -75,7 +80,7 @@
 
 <svelte:window onmousemove={drag} onmouseup={stopResize} />
 
-{#if !$mobileWidth}
+{#if !ui.mobileWidth}
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div
         role="separator"

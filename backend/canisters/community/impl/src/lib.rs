@@ -9,7 +9,6 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, ChatMetricsInternal};
 use community_canister::add_members_to_channel::UserFailedError;
-use community_canister::EventsResponse;
 use constants::{ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -27,6 +26,8 @@ use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
 use notifications_canister_c2c_client::{NotificationPusherState, NotificationsBatch};
+use notifications_canister::c2c_push_notification;
+use oc_error_codes::OCErrorCode;
 use rand::rngs::StdRng;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
@@ -315,47 +316,37 @@ impl RuntimeState {
         }
     }
 
-    pub fn verified_caller(&self, bot_caller: Option<BotCaller>) -> CallerResult {
-        use CallerResult::*;
-
+    pub fn verified_caller(&self, bot_caller: Option<BotCaller>) -> Result<Caller, OCErrorCode> {
         if let Some(bot_caller) = bot_caller {
             if let Some(initiator) = &bot_caller.initiator.user() {
                 // Check the user who initiated the command is a valid member
                 let Some(member) = self.data.members.get_by_user_id(initiator) else {
-                    return NotFound;
+                    return Err(OCErrorCode::InitiatorNotInCommunity);
                 };
 
                 if member.suspended().value {
-                    return Suspended;
+                    return Err(OCErrorCode::InitiatorSuspended);
                 } else if member.lapsed().value {
-                    return Lapsed;
+                    return Err(OCErrorCode::InitiatorLapsed);
                 }
             }
 
-            return Success(Caller::BotV2(bot_caller));
+            return Ok(Caller::BotV2(bot_caller));
         }
 
         let caller = self.env.caller();
 
         if caller == self.data.user_index_canister_id {
-            return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
+            return Ok(Caller::OCBot(OPENCHAT_BOT_USER_ID));
         }
 
-        let Some(member) = self.data.members.get(caller) else {
-            return NotFound;
-        };
-
-        if member.suspended().value {
-            return Suspended;
-        } else if member.lapsed().value {
-            return Lapsed;
-        }
+        let member = self.data.members.get_verified_member(caller)?;
 
         match member.user_type {
-            UserType::User => Success(Caller::User(member.user_id)),
-            UserType::BotV2 => NotFound,
-            UserType::Bot => Success(Caller::Bot(member.user_id)),
-            UserType::OcControlledBot => Success(Caller::OCBot(member.user_id)),
+            UserType::User => Ok(Caller::User(member.user_id)),
+            UserType::BotV2 => Err(OCErrorCode::InitiatorNotFound),
+            UserType::Bot => Ok(Caller::Bot(member.user_id)),
+            UserType::OcControlledBot => Ok(Caller::OCBot(member.user_id)),
         }
     }
 }
@@ -547,6 +538,14 @@ impl Data {
 
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
+    }
+
+    pub fn verify_not_frozen(&self) -> Result<(), OCErrorCode> {
+        if self.is_frozen() {
+            Err(OCErrorCode::CommunityFrozen)
+        } else {
+            Ok(())
+        }
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
@@ -745,15 +744,15 @@ impl Data {
         caller: Principal,
         channel_id: ChannelId,
         bot_initiator: Option<BotInitiator>,
-    ) -> Result<EventsCaller, EventsResponse> {
+    ) -> Result<EventsCaller, OCErrorCode> {
         if let Some(initiator) = bot_initiator {
             let bot_user_id = caller.into();
             let Some(permissions) = self.granted_bot_permissions(&bot_user_id, &initiator, Some(channel_id)) else {
-                return Err(EventsResponse::UserNotInCommunity);
+                return Err(OCErrorCode::InitiatorNotInCommunity);
             };
             let bot_permitted_event_types = permissions.permitted_event_types_to_read();
             if bot_permitted_event_types.is_empty() {
-                return Err(EventsResponse::UserNotInCommunity);
+                return Err(OCErrorCode::InitiatorNotInCommunity);
             }
             Ok(EventsCaller::Bot(BotEventsCaller {
                 bot: bot_user_id,
@@ -767,12 +766,12 @@ impl Data {
             if hidden_for_non_members {
                 if let Some(member) = &member {
                     if member.suspended().value {
-                        return Err(EventsResponse::UserSuspended);
+                        return Err(OCErrorCode::InitiatorSuspended);
                     } else if member.lapsed().value {
-                        return Err(EventsResponse::UserLapsed);
+                        return Err(OCErrorCode::InitiatorLapsed);
                     }
                 } else {
-                    return Err(EventsResponse::UserNotInCommunity);
+                    return Err(OCErrorCode::InitiatorNotInCommunity);
                 }
             }
 

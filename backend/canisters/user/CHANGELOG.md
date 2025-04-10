@@ -12,6 +12,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Back-fill events for any existing streak insurance claims ([#7729](https://github.com/open-chat-labs/open-chat/pull/7729))
 - Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
 - Switch to new `c2c_push_notifications` endpoint ([#7733](https://github.com/open-chat-labs/open-chat/pull/7733))
+- Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+- Simplify responses and reduce mapping by using standardised error codes ([#7754](https://github.com/open-chat-labs/open-chat/pull/7754))
+- Use accurate freezing threshold rather than an approximation ([#7771](https://github.com/open-chat-labs/open-chat/pull/7771))
+
+### Fixed
+
+- Check PIN when paying for streak insurance ([#7746](https://github.com/open-chat-labs/open-chat/pull/7746))
+- Fix streak insurance to cover multiple days missed in a row ([#7747](https://github.com/open-chat-labs/open-chat/pull/7747))
+- Reset streak insurance in summary updates after streak ends ([#7751](https://github.com/open-chat-labs/open-chat/pull/7751))
+- Fix serializing empty MessagePack responses ([#7764](https://github.com/open-chat-labs/open-chat/pull/7764))
 
 ## [[2.0.1686-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1686-user)] - 2025-04-02
 

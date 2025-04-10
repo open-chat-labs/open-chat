@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { rtlStore } from "../../stores/rtl";
-    import { mobileWidth } from "../../stores/screenDimensions";
+    import { trackedEffect } from "@src/utils/effects.svelte";
+    import { ui } from "openchat-client";
+    import { onDestroy, tick, type Snippet } from "svelte";
     import { fade } from "svelte/transition";
-    import { onDestroy, type Snippet } from "svelte";
+    import { rtlStore } from "../../stores/rtl";
     import { tooltipStore } from "../../stores/tooltip";
-    import { tick } from "svelte";
-    import Hoverable from "../Hoverable.svelte";
     import type { Alignment, Position } from "../../utils/alignment";
+    import Hoverable from "../Hoverable.svelte";
 
     interface Props {
         enable?: boolean;
@@ -39,15 +39,15 @@
     }: Props = $props();
 
     let target: Hoverable;
-    let tooltipContainer: HTMLElement | undefined;
+    let tooltipContainer: HTMLElement | undefined = $state();
     let hovering: boolean = $state(false);
 
     let show = $derived(enable && (hovering || longPressed));
     let maxWidth = $derived(
-        autoWidth ? "unset" : calculateMaxWidth(textLength, longestWord, $mobileWidth),
+        autoWidth ? "unset" : calculateMaxWidth(textLength, longestWord, ui.mobileWidth),
     );
 
-    $effect(() => {
+    trackedEffect("tooltip", () => {
         if (show) {
             showTooltip();
         } else {

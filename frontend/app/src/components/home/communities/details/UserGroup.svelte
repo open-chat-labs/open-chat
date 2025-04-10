@@ -1,58 +1,54 @@
 <script lang="ts">
-    import Input from "../../../Input.svelte";
-    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import ButtonGroup from "../../../ButtonGroup.svelte";
-    import Button from "../../../Button.svelte";
-    import { _ } from "svelte-i18n";
-    import type {
-        OpenChat,
-        UserGroupDetails,
-        UserSummary,
-        CommunitySummary,
+    import {
+        type CommunitySummary,
+        type OpenChat,
+        ui,
+        type UserGroupDetails,
+        type UserSummary,
     } from "openchat-client";
-    import Search from "../../../Search.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
-    import User from "../../groupdetails/User.svelte";
-    import { iconSize } from "../../../../stores/iconSize";
-    import { toastStore } from "../../../../stores/toast";
-    import VirtualList from "../../../VirtualList.svelte";
-    import Markdown from "../../Markdown.svelte";
-    import Legend from "../../../Legend.svelte";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
-    import Translatable from "../../../Translatable.svelte";
+    import { toastStore } from "../../../../stores/toast";
     import { trimLeadingAtSymbol } from "../../../../utils/user";
+    import Button from "../../../Button.svelte";
+    import ButtonGroup from "../../../ButtonGroup.svelte";
+    import Input from "../../../Input.svelte";
+    import Legend from "../../../Legend.svelte";
+    import Search from "../../../Search.svelte";
+    import Translatable from "../../../Translatable.svelte";
+    import VirtualList from "../../../VirtualList.svelte";
+    import User from "../../groupdetails/User.svelte";
+    import Markdown from "../../Markdown.svelte";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let community: CommunitySummary;
-    export let original: UserGroupDetails;
-    export let canManageUserGroups: boolean;
-    export let communityUsers: Record<string, UserSummary> = {};
-    export let communityUsersList: UserSummary[] = [];
+    interface Props {
+        community: CommunitySummary;
+        original: UserGroupDetails;
+        canManageUserGroups: boolean;
+        communityUsers?: Record<string, UserSummary>;
+        communityUsersList?: UserSummary[];
+        onCancel: () => void;
+    }
 
-    let userGroup = { ...original };
+    let {
+        community,
+        original,
+        canManageUserGroups,
+        communityUsers = {},
+        communityUsersList = [],
+        onCancel,
+    }: Props = $props();
+
+    let userGroup = $state({ ...original });
     let added: Set<string> = new Set();
     let removed: Set<string> = new Set();
-    let searchVirtualList: VirtualList;
-    let searchTermEntered = "";
-    let usersDirty = false;
-    let saving = false;
-
-    $: searchTerm = trimLeadingAtSymbol(searchTermEntered);
-    $: searchTermLower = searchTerm.toLowerCase();
-    $: groupUsers = [...userGroup.members]
-        .map((m) => communityUsers[m])
-        .filter((u) => u !== undefined);
-    $: matchedUsers = communityUsersList.filter((u) => matchesSearch(searchTermLower, u));
-    $: nameDirty = original.name !== userGroup.name;
-    $: dirty = nameDirty || usersDirty;
-    $: trimmedName = userGroup.name.trim();
-    $: nameValid =
-        trimmedName.length >= MIN_LENGTH &&
-        trimmedName.length <= MAX_LENGTH &&
-        trimmedName.indexOf(" ") < 0;
-    $: valid = nameValid && userGroup.members.size > 0;
+    let searchVirtualList = $state<VirtualList<UserSummary> | undefined>();
+    let searchTermEntered = $state("");
+    let usersDirty = $state(false);
+    let saving = $state(false);
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -96,7 +92,7 @@
 
     function cancel() {
         reset();
-        dispatch("cancel");
+        onCancel();
     }
 
     function reset() {
@@ -133,6 +129,23 @@
         usersDirty = true;
         userGroup = userGroup; //:puke: trigger a reaction
     }
+    let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered));
+    let searchTermLower = $derived(searchTerm.toLowerCase());
+    let groupUsers = $derived(
+        [...userGroup.members].map((m) => communityUsers[m]).filter((u) => u !== undefined),
+    );
+    let matchedUsers = $derived(
+        communityUsersList.filter((u) => matchesSearch(searchTermLower, u)),
+    );
+    let nameDirty = $derived(original.name !== userGroup.name);
+    let dirty = $derived(nameDirty || usersDirty);
+    let trimmedName = $derived(userGroup.name.trim());
+    let nameValid = $derived(
+        trimmedName.length >= MIN_LENGTH &&
+            trimmedName.length <= MAX_LENGTH &&
+            trimmedName.indexOf(" ") < 0,
+    );
+    let valid = $derived(nameValid && userGroup.members.size > 0);
 </script>
 
 <div class="user-group">
@@ -148,7 +161,7 @@
                 disabled={!canManageUserGroups}
                 countdown
                 invalid={nameDirty && !nameValid}
-                onblur={autoCorrect}
+                onBlur={autoCorrect}
                 placeholder={i18nKey("communities.enterUserGroupName")} />
         </div>
         <div class="search">
@@ -164,14 +177,15 @@
                 <VirtualList
                     bind:this={searchVirtualList}
                     keyFn={(user) => user.userId}
-                    items={matchedUsers}
-                    let:item>
-                    <User
-                        on:click={() => addUserToGroup(item)}
-                        user={item}
-                        me={false}
-                        profile={false}
-                        {searchTerm} />
+                    items={matchedUsers}>
+                    {#snippet children(item)}
+                        <User
+                            onClick={() => addUserToGroup(item)}
+                            user={item}
+                            me={false}
+                            profile={false}
+                            {searchTerm} />
+                    {/snippet}
                 </VirtualList>
             </div>
         {/if}
@@ -192,8 +206,8 @@
             <div class="user">
                 <User {user} me={false}>
                     {#if canManageUserGroups}
-                        <div on:click={() => removeUserFromGroup(user)} class="delete">
-                            <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
+                        <div onclick={() => removeUserFromGroup(user)} class="delete">
+                            <DeleteOutline size={ui.iconSize} color={"var(--icon-txt)"} />
                         </div>
                     {/if}
                 </User>

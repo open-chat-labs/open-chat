@@ -1,22 +1,22 @@
 <script lang="ts">
     import {
-        VideoCallMessageUpdated,
+        type ChatIdentifier,
         type MultiUserChatIdentifier,
         type OpenChat,
         type UserSummary,
         chatIdentifiersEqual,
+        subscribe,
+        ui,
         currentUser as user,
     } from "openchat-client";
-    import { _ } from "svelte-i18n";
-    import ActiveCallParticipantsHeader from "./ActiveCallParticipantsHeader.svelte";
-    import ActiveCallParticipant from "./ActiveCallParticipant.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { popRightPanelHistory } from "../../../stores/rightPanel";
-    import { activeVideoCall } from "../../../stores/video";
-    import VirtualList from "../../VirtualList.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { activeVideoCall } from "../../../stores/video";
     import FancyLoader from "../../icons/FancyLoader.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import VirtualList from "../../VirtualList.svelte";
+    import ActiveCallParticipant from "./ActiveCallParticipant.svelte";
+    import ActiveCallParticipantsHeader from "./ActiveCallParticipantsHeader.svelte";
 
     type MappedParticipants = {
         participants: Record<string, UserSummary>;
@@ -24,47 +24,44 @@
         lastUpdated: bigint;
     };
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let chatId: MultiUserChatIdentifier;
-    export let messageId: bigint;
-    export let isOwner: boolean;
+    interface Props {
+        chatId: MultiUserChatIdentifier;
+        messageId: bigint;
+        isOwner: boolean;
+        onClose: () => void;
+    }
 
-    let demoted = new Set<string>();
-    let loading = false;
+    let { chatId, messageId, isOwner, onClose }: Props = $props();
 
-    let selectedTab: "presenters" | "viewers" = "presenters";
-    let videoParticipants: MappedParticipants = {
+    let demoted = $state(new Set<string>());
+    let loading = $state(false);
+
+    let selectedTab: "presenters" | "viewers" = $state("presenters");
+    let videoParticipants: MappedParticipants = $state({
         participants: {},
         hidden: {},
         lastUpdated: 0n,
-    };
-
-    $: participants = Object.values(videoParticipants.participants).filter(
-        (u) => !demoted.has(u.userId),
-    );
-    $: hidden = [
-        ...Object.values(videoParticipants.hidden),
-        ...Object.values(videoParticipants.participants).filter((u) => demoted.has(u.userId)),
-    ];
-
-    onMount(() => {
-        client.addEventListener("openchat_event", clientEvent);
-        refresh(true);
-        return () => {
-            client.removeEventListener("openchat_event", clientEvent);
-        };
     });
 
-    function clientEvent(ev: Event): void {
-        if (ev instanceof VideoCallMessageUpdated) {
-            if (
-                chatIdentifiersEqual(chatId, ev.detail.chatId) &&
-                messageId === ev.detail.messageId
-            ) {
-                refresh();
-            }
+    let participants = $derived(
+        Object.values(videoParticipants.participants).filter((u) => !demoted.has(u.userId)),
+    );
+    let hidden = $derived([
+        ...Object.values(videoParticipants.hidden),
+        ...Object.values(videoParticipants.participants).filter((u) => demoted.has(u.userId)),
+    ]);
+
+    onMount(() => {
+        const unsub = subscribe("videoCallMessageUpdated", videoCallMessageUpdated);
+        refresh(true);
+        return unsub;
+    });
+
+    function videoCallMessageUpdated(payload: { chatId: ChatIdentifier; messageId: bigint }) {
+        if (chatIdentifiersEqual(chatId, payload.chatId) && messageId === payload.messageId) {
+            refresh();
         }
     }
 
@@ -81,23 +78,23 @@
     }
 
     function close() {
-        dispatch("close");
+        onClose();
         activeVideoCall.participantsOpen(false);
-        popRightPanelHistory();
+        ui.popRightPanelHistory();
     }
 
     function selectTab(tab: "presenters" | "viewers") {
         selectedTab = tab;
     }
 
-    function demote(ev: CustomEvent<string>) {
-        demoted.add(ev.detail);
+    function demote(userId: string) {
+        demoted.add(userId);
         demoted = demoted;
-        activeVideoCall.demote(ev.detail);
+        activeVideoCall.demote(userId);
     }
 </script>
 
-<ActiveCallParticipantsHeader on:close={close} />
+<ActiveCallParticipantsHeader onClose={close} />
 
 {#if $activeVideoCall !== undefined}
     {#if loading}
@@ -107,11 +104,11 @@
     {:else}
         {#if $activeVideoCall?.callType === "broadcast"}
             <div class="tabs">
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <div
                     tabindex="0"
                     role="button"
-                    on:click={() => selectTab("presenters")}
+                    onclick={() => selectTab("presenters")}
                     class:selected={selectedTab === "presenters"}
                     class="tab">
                     <Translatable
@@ -119,11 +116,11 @@
                             count: participants.length,
                         })} />
                 </div>
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <div
                     tabindex="0"
                     role="button"
-                    on:click={() => selectTab("viewers")}
+                    onclick={() => selectTab("viewers")}
                     class:selected={selectedTab === "viewers"}
                     class="tab">
                     <Translatable
@@ -139,19 +136,21 @@
                 <ActiveCallParticipant
                     {isOwner}
                     callType={$activeVideoCall.callType}
-                    on:demote={demote}
+                    onDemote={demote}
                     presence={isOwner && participant.userId === $user.userId ? "owner" : "default"}
                     {participant} />
             {/each}
         {/if}
 
         {#if selectedTab === "viewers"}
-            <VirtualList keyFn={(user) => user.userId} items={hidden} let:item>
-                <ActiveCallParticipant
-                    callType={$activeVideoCall.callType}
-                    {isOwner}
-                    presence={"hidden"}
-                    participant={item} />
+            <VirtualList keyFn={(user) => user.userId} items={hidden}>
+                {#snippet children(item)}
+                    <ActiveCallParticipant
+                        callType={$activeVideoCall.callType}
+                        {isOwner}
+                        presence={"hidden"}
+                        participant={item} />
+                {/snippet}
             </VirtualList>
         {/if}
     {/if}

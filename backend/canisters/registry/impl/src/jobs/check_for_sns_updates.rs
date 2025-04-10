@@ -9,7 +9,7 @@ use sns_wasm_canister::list_deployed_snses::DeployedSns;
 use std::collections::HashSet;
 use std::time::Duration;
 use tracing::{error, info};
-use types::{CanisterId, Empty, TimestampMillis};
+use types::{C2CError, CanisterId, Empty, TimestampMillis};
 use utils::canister_timers::run_now_then_interval;
 
 const LIFECYCLE_COMMITTED: i32 = 3;
@@ -90,7 +90,7 @@ async fn is_successfully_launched(sns_swap_canister_id: CanisterId) -> Option<bo
 
 async fn get_nervous_system_metadata_and_parameters(
     governance_canister_id: CanisterId,
-) -> Result<(SnsMetadata, NervousSystemParameters), (RejectCode, String)> {
+) -> Result<(SnsMetadata, NervousSystemParameters), C2CError> {
     futures::future::try_join(
         sns_governance_canister_c2c_client::get_metadata(governance_canister_id, &Empty {}),
         sns_governance_canister_c2c_client::get_nervous_system_parameters(governance_canister_id, &()),
@@ -99,7 +99,9 @@ async fn get_nervous_system_metadata_and_parameters(
 }
 
 async fn get_nervous_system_details(sns: DeployedSns) -> Result<NervousSystemDetails, (RejectCode, String)> {
-    let (metadata, parameters) = get_nervous_system_metadata_and_parameters(sns.governance_canister_id.unwrap()).await?;
+    let (metadata, parameters) = get_nervous_system_metadata_and_parameters(sns.governance_canister_id.unwrap())
+        .await
+        .map_err(|e| (e.reject_code(), e.message().to_string()))?;
 
     let now = read_state(|state| state.env.now());
 

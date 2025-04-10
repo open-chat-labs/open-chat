@@ -1,28 +1,28 @@
 <script lang="ts">
-    import { getContext, onMount } from "svelte";
-    import Translatable from "../../Translatable.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import ModalContent from "../../ModalContent.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import Button from "../../Button.svelte";
+    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
     import {
         AuthProvider,
         pinNumberFailureStore,
+        ui,
         type OpenChat,
         type Verification,
     } from "openchat-client";
-    import ErrorMessage from "../../ErrorMessage.svelte";
-    import { toastStore } from "../../../stores/toast";
+    import { getContext, onMount } from "svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import {
         pinNumberErrorMessageStore,
         supportsForgot,
         type PinOperation,
     } from "../../../stores/pinNumber";
+    import { toastStore } from "../../../stores/toast";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import ModalContent from "../../ModalContent.svelte";
     import Pincode from "../../pincode/Pincode.svelte";
-    import ReAuthenticate from "./ReAuthenticate.svelte";
-    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+    import Translatable from "../../Translatable.svelte";
     import ForgotPinLabel from "../ForgotPinLabel.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
+    import ReAuthenticate from "./ReAuthenticate.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -51,7 +51,7 @@
         if (delegation !== undefined) {
             return {
                 kind: "delegation_verification",
-                delegation,
+                delegation: delegation.toJSON(),
             };
         }
 
@@ -86,16 +86,14 @@
             });
     }
 
-    function reauthenticated(
-        ev: CustomEvent<{
-            key: ECDSAKeyIdentity;
-            delegation: DelegationChain;
-            provider: AuthProvider;
-        }>,
-    ) {
+    function reauthenticated(detail: {
+        key: ECDSAKeyIdentity;
+        delegation: DelegationChain;
+        provider: AuthProvider;
+    }) {
         if (type.kind !== "forgot") return;
 
-        delegation = ev.detail.delegation;
+        delegation = detail.delegation;
         switch (type.while.kind) {
             case "clear":
                 type = { kind: "clear" };
@@ -131,7 +129,7 @@
     let errorMessage = $derived($pinNumberErrorMessageStore);
 </script>
 
-<ModalContent closeIcon fitToContent={!$mobileWidth} fixedWidth={false} {onClose}>
+<ModalContent closeIcon fitToContent={!ui.mobileWidth} fixedWidth={false} {onClose}>
     {#snippet header()}
         <div class="header">
             <Translatable resourceKey={title} />
@@ -141,7 +139,7 @@
         <div class="body">
             {#if type.kind === "forgot"}
                 {#if message !== undefined}
-                    <ReAuthenticate on:success={reauthenticated} {message} />
+                    <ReAuthenticate onSuccess={reauthenticated} {message} />
                 {/if}
             {:else}
                 {#if message !== undefined}
@@ -157,7 +155,7 @@
                             </div>
                         {/if}
                         <Pincode type="numeric" length={6} bind:code={currPinArray} />
-                        <ForgotPinLabel on:forgot={onForgot} />
+                        <ForgotPinLabel {onForgot} />
                     </div>
                 {/if}
                 {#if type.kind !== "clear"}
@@ -180,12 +178,12 @@
         <div class="footer">
             {#if type.kind === "forgot"}
                 <ButtonGroup align="center">
-                    <Button disabled={busy} secondary onClick={close}
+                    <Button disabled={busy} secondary onClick={onClose}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 </ButtonGroup>
             {:else}
                 <ButtonGroup align="center">
-                    <Button disabled={busy} secondary onClick={close}
+                    <Button disabled={busy} secondary onClick={onClose}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <Button loading={busy} disabled={busy || !isValid} onClick={changePin}
                         ><Translatable resourceKey={action} /></Button>

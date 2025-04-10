@@ -1,18 +1,17 @@
-use ic_cdk::call::RejectCode;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc1::transfer::TransferError;
 use tracing::error;
 use types::icrc1::Account;
 use types::{
     icrc1::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction},
-    CanisterId,
+    C2CError, CanisterId,
 };
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
     sender: CanisterId,
     retry_if_bad_fee: bool,
-) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, (RejectCode, String)> {
+) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
     let from = Account::from(sender);
 
     let args = TransferArg {
@@ -56,7 +55,7 @@ pub async fn make_transfer(
     ledger_canister_id: CanisterId,
     args: &TransferArg,
     retry_if_bad_fee: bool,
-) -> Result<Result<u64, String>, (RejectCode, String)> {
+) -> Result<Result<u64, String>, C2CError> {
     let mut response = icrc_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, args).await?;
 
     if retry_if_bad_fee {

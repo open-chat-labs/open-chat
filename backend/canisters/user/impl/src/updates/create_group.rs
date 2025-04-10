@@ -5,6 +5,7 @@ use crate::{
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group;
+use oc_error_codes::OCErrorCode;
 use tracing::error;
 use types::{CanisterId, ChatId};
 use user_canister::create_group::{Response::*, *};
@@ -38,15 +39,15 @@ async fn create_group(mut args: Args) -> Response {
                 mutate_state(|state| commit(r.chat_id, r.local_user_index_canister_id, state));
                 Success(SuccessResult { chat_id: r.chat_id })
             }
-            c2c_create_group::Response::NameTaken => NameTaken,
+            c2c_create_group::Response::NameTaken => Error(OCErrorCode::NameTaken.into()),
             c2c_create_group::Response::Error(error) => Error(error),
             c2c_create_group::Response::CyclesBalanceTooLow
             | c2c_create_group::Response::UserNotFound
-            | c2c_create_group::Response::InternalError => InternalError,
+            | c2c_create_group::Response::InternalError => Error(OCErrorCode::Unknown.into()),
         },
         Err(error) => {
             error!(?error, "Error calling create group");
-            InternalError
+            Error(error.into())
         }
     }
 }

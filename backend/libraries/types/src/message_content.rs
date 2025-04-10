@@ -6,6 +6,7 @@ use crate::{
     TotalVotes, User, UserId, VideoCallType,
 };
 use candid::CandidType;
+use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
@@ -90,6 +91,12 @@ pub enum ContentValidationError {
     InvalidTypeForForwarding,
     PrizeEndDateInThePast,
     Unauthorized,
+}
+
+impl From<ContentValidationError> for OCError {
+    fn from(value: ContentValidationError) -> Self {
+        OCErrorCode::InvalidMessageContent.with_json(&value)
+    }
 }
 
 impl MessageContent {

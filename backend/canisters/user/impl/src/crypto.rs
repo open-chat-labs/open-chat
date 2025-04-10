@@ -1,10 +1,9 @@
 use crate::read_state;
-use ic_cdk::call::RejectCode;
-use types::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, UserId};
+use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, UserId};
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, (RejectCode, String)> {
+) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
     process_transaction_internal(transaction, true).await
 }
 
@@ -15,14 +14,14 @@ pub async fn process_transaction(
 // If calling this method, ensure that the caller has been validated earlier on.
 pub async fn process_transaction_without_caller_check(
     transaction: PendingCryptoTransaction,
-) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, (RejectCode, String)> {
+) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
     process_transaction_internal(transaction, false).await
 }
 
 async fn process_transaction_internal(
     transaction: PendingCryptoTransaction,
     check_caller: bool,
-) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, (RejectCode, String)> {
+) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
     let my_user_id = read_state(|state| {
         if check_caller && state.env.caller() != state.data.owner {
             panic!("Only the owner can transfer cryptocurrency");

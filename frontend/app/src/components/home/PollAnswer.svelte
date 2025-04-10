@@ -4,7 +4,7 @@
     import Progress from "../Progress.svelte";
     import Tooltip from "../tooltip/Tooltip.svelte";
     import type { OpenChat, UserLookup } from "openchat-client";
-    import { userStore } from "openchat-client";
+    import { currentUser, userStore } from "openchat-client";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
@@ -16,7 +16,6 @@
         answer: string;
         voted: boolean;
         txtColor: string;
-        myUserId: string | undefined;
         voters: string[] | undefined;
         numVotes: number;
         showVotes: boolean;
@@ -31,7 +30,6 @@
         answer,
         voted,
         txtColor,
-        myUserId,
         voters,
         numVotes,
         showVotes,
@@ -79,7 +77,7 @@
             onClick?.();
         }
     }
-    let usernames = $derived(buildPollUsernames($userStore, voters, myUserId));
+    let usernames = $derived(buildPollUsernames($userStore, voters, $currentUser.userId));
 </script>
 
 <Tooltip

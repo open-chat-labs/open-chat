@@ -1,42 +1,47 @@
-<!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
-    import type { DefaultChannel, ResourceKey } from "openchat-client";
+    import { ui, type DefaultChannel } from "openchat-client";
     import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";
-    import Input from "../../../Input.svelte";
-    import { _ } from "svelte-i18n";
-    import { iconSize } from "../../../../stores/iconSize";
-    import EditableChannel from "./EditableChannel.svelte";
-    import ErrorMessage from "../../../ErrorMessage.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
+    import ErrorMessage from "../../../ErrorMessage.svelte";
+    import Input from "../../../Input.svelte";
     import Translatable from "../../../Translatable.svelte";
+    import EditableChannel from "./EditableChannel.svelte";
 
     const MIN_CHANNEL_LENGTH = 3;
     const MAX_CHANNEL_LENGTH = 40;
 
-    export let channels: DefaultChannel[];
-    export let valid = true;
+    interface Props {
+        channels: DefaultChannel[];
+        valid?: boolean;
+    }
 
-    let error: ResourceKey | undefined = undefined;
+    let { channels = $bindable(), valid = $bindable(true) }: Props = $props();
 
-    let nextChannelName: string = "";
-
-    $: {
+    let error = $derived.by(() => {
         if (channels.length === 0) {
-            error = i18nKey("communities.mustHaveOneChannel");
+            return i18nKey("communities.mustHaveOneChannel");
         } else if (containsDuplicates(channels)) {
-            error = i18nKey("communities.mustHaveUniqueChannels");
+            return i18nKey("communities.mustHaveUniqueChannels");
         } else if (containsBlanks(channels)) {
-            error = i18nKey("communities.noBlankChannels");
+            return i18nKey("communities.noBlankChannels");
         } else if (containsInvalid(channels)) {
-            error = i18nKey("communities.noInvalidChannels", {
+            return i18nKey("communities.noInvalidChannels", {
                 min: MIN_CHANNEL_LENGTH,
                 max: MAX_CHANNEL_LENGTH,
             });
         } else {
-            error = undefined;
+            return undefined;
         }
-        valid = error === undefined;
-    }
+    });
+
+    $effect(() => {
+        const isValid = error === undefined;
+        if (isValid !== valid) {
+            valid = isValid;
+        }
+    });
+
+    let nextChannelName: string = $state("");
 
     function containsInvalid(channels: DefaultChannel[]): boolean {
         return channels
@@ -70,12 +75,12 @@
 <p class="info">
     <Translatable resourceKey={i18nKey("communities.channelsInfo")} />
 </p>
-{#each channels as channel (channel.createdAt)}
+{#each channels as channel, i (channel.createdAt)}
     <EditableChannel
         min={MIN_CHANNEL_LENGTH}
         max={MAX_CHANNEL_LENGTH}
-        on:deleteChannel={() => deleteChannel(channel.createdAt)}
-        bind:channel />
+        onDeleteChannel={() => deleteChannel(channel.createdAt)}
+        bind:channel={channels[i]} />
 {/each}
 <div class="next">
     <div class="next-txt">
@@ -84,11 +89,11 @@
             minlength={MIN_CHANNEL_LENGTH}
             maxlength={MAX_CHANNEL_LENGTH}
             countdown
-            on:enter={addChannel}
+            onEnter={addChannel}
             placeholder={i18nKey("communities.channelPlaceholder")} />
     </div>
-    <div class="add-btn" on:click={addChannel}>
-        <PlusCircleOutline size={$iconSize} color={"var(--icon-txt)"} />
+    <div class="add-btn" onclick={addChannel}>
+        <PlusCircleOutline size={ui.iconSize} color={"var(--icon-txt)"} />
     </div>
 </div>
 

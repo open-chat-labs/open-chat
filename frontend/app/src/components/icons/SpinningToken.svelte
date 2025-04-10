@@ -1,10 +1,14 @@
 <script lang="ts">
     type Size = "large" | "medium" | "small" | "tiny";
 
-    export let logo: string;
-    export let mirror: boolean = true;
-    export let size: Size = "large";
-    export let spin = true;
+    interface Props {
+        logo: string;
+        mirror?: boolean;
+        size?: Size;
+        spin?: boolean;
+    }
+
+    let { logo, mirror = true, size = "large", spin = true }: Props = $props();
 
     let middle = new Array(9);
 
@@ -25,14 +29,14 @@
 <div class={`purse ${size}`} class:mirror style="--size: {coinSize(size)}">
     <div class="coin" class:spin>
         <div class:flip={!spin} class="back face">
-            <div style={`background-image: url(${logo})`} class="inner" />
+            <div style={`background-image: url(${logo})`} class="inner"></div>
         </div>
         {#if spin}
             {#each middle as _}
-                <div class="middle face" />
+                <div class="middle face"></div>
             {/each}
             <div class="front face">
-                <div style={`background-image: url(${logo})`} class="inner" />
+                <div style={`background-image: url(${logo})`} class="inner"></div>
             </div>
         {/if}
     </div>

@@ -33,7 +33,7 @@ async fn bot_chat_details_impl(args: Args) -> Response {
             .await
             {
                 Ok(response) => response.into(),
-                Err((code, message)) => InternalError(format!("{:?}: {}", code, message)),
+                Err(error) => InternalError(format!("{error:?}")),
             }
         }
         Chat::Channel(community_id, channel_id) => {
@@ -48,7 +48,7 @@ async fn bot_chat_details_impl(args: Args) -> Response {
             .await
             {
                 Ok(response) => response.into(),
-                Err((code, message)) => InternalError(format!("{:?}: {}", code, message)),
+                Err(error) => InternalError(format!("{error:?}")),
             }
         }
     }

@@ -3,8 +3,12 @@
     import { AuthProvider } from "openchat-client";
     import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
 
-    export let provider: AuthProvider;
-    export let square: boolean = false;
+    interface Props {
+        provider: AuthProvider;
+        square?: boolean;
+    }
+
+    let { provider, square = false }: Props = $props();
 </script>
 
 <div class="icon center" class:square>

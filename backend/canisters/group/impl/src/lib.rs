@@ -11,9 +11,7 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{calculate_gate_payments, GatePayment};
-use group_chat_core::{
-    AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation, VerifyMemberError,
-};
+use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersSuccess, UserInvitation};
 use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
@@ -23,6 +21,8 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
 use notifications_canister_c2c_client::{NotificationPusherState, NotificationsBatch};
+use notifications_canister::c2c_push_notification;
+use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
@@ -38,8 +38,8 @@ use types::{
     AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotEventsCaller, BotGroupConfig, BotInitiator, BotPermissions,
     BotRemoved, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId, Cycles, Document, Empty,
     EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
-    IdempotentEnvelope, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId,
-    UserType, MAX_THREADS_IN_SUMMARY,
+    IdempotentEnvelope, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules, TimestampMillis, Timestamped,
+    UserId, UserType, MAX_THREADS_IN_SUMMARY,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -420,35 +420,28 @@ impl RuntimeState {
         }
     }
 
-    pub fn verified_caller(&self, bot_caller: Option<BotCaller>) -> CallerResult {
-        use CallerResult::*;
-
+    pub fn verified_caller(&self, bot_caller: Option<BotCaller>) -> OCResult<Caller> {
         if let Some(bot_caller) = bot_caller {
-            return Success(Caller::BotV2(bot_caller));
+            return Ok(Caller::BotV2(bot_caller));
         }
 
         let caller = self.env.caller();
 
         if caller == self.data.user_index_canister_id {
-            return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
+            return Ok(Caller::OCBot(OPENCHAT_BOT_USER_ID));
         }
 
         let Some(user_id) = self.data.lookup_user_id(caller) else {
-            return NotFound;
+            return Err(OCErrorCode::InitiatorNotFound.into());
         };
 
-        let member = match self.data.chat.members.get_verified_member(user_id) {
-            Ok(member) => member,
-            Err(VerifyMemberError::NotFound) => return NotFound,
-            Err(VerifyMemberError::Lapsed) => return Lapsed,
-            Err(VerifyMemberError::Suspended) => return Suspended,
-        };
+        let member = self.data.chat.members.get_verified_member(user_id)?;
 
         match member.user_type() {
-            UserType::User => Success(Caller::User(member.user_id())),
-            UserType::BotV2 => NotFound,
-            UserType::Bot => Success(Caller::Bot(member.user_id())),
-            UserType::OcControlledBot => Success(Caller::OCBot(member.user_id())),
+            UserType::User => Ok(Caller::User(member.user_id())),
+            UserType::BotV2 => Err(OCErrorCode::InitiatorNotFound.into()),
+            UserType::Bot => Ok(Caller::Bot(member.user_id())),
+            UserType::OcControlledBot => Ok(Caller::OCBot(member.user_id())),
         }
     }
 }
@@ -636,8 +629,30 @@ impl Data {
         self.chat.members.get(&user_id)
     }
 
+    pub fn get_verified_member(&self, user_id_or_principal: Principal) -> Result<GroupMemberInternal, OCErrorCode> {
+        let Some(member) = self.get_member(user_id_or_principal) else {
+            return Err(OCErrorCode::InitiatorNotInChat);
+        };
+
+        if member.suspended().value {
+            Err(OCErrorCode::InitiatorSuspended)
+        } else if member.lapsed().value {
+            Err(OCErrorCode::InitiatorLapsed)
+        } else {
+            Ok(member)
+        }
+    }
+
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
+    }
+
+    pub fn verify_not_frozen(&self) -> Result<(), OCErrorCode> {
+        if self.is_frozen() {
+            Err(OCErrorCode::ChatFrozen)
+        } else {
+            Ok(())
+        }
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
@@ -658,18 +673,16 @@ impl Data {
         invited_by: UserId,
         users: Vec<(UserId, Principal)>,
         now: TimestampMillis,
-    ) -> InvitedUsersResult {
+    ) -> OCResult<InvitedUsersSuccess> {
         let user_ids: Vec<UserId> = users.iter().map(|(user_id, _)| *user_id).collect();
-        let result = self.chat.invite_users(invited_by, user_ids, now);
+        let result = self.chat.invite_users(invited_by, user_ids, now)?;
 
-        if let InvitedUsersResult::Success(success) = &result {
-            let invited_users: HashSet<UserId> = success.invited_users.iter().copied().collect();
-            for (user_id, principal) in users.into_iter().filter(|(user_id, _)| invited_users.contains(user_id)) {
-                self.principal_to_user_id_map.insert(principal, user_id);
-            }
+        let invited_users: HashSet<UserId> = result.invited_users.iter().copied().collect();
+        for (user_id, principal) in users.into_iter().filter(|(user_id, _)| invited_users.contains(user_id)) {
+            self.principal_to_user_id_map.insert(principal, user_id);
         }
 
-        result
+        Ok(result)
     }
 
     pub fn remove_invitation(&mut self, caller: Principal, now: TimestampMillis) -> Option<UserInvitation> {

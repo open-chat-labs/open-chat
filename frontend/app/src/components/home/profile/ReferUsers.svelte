@@ -1,16 +1,15 @@
 <script lang="ts">
-    import { currentUser as user } from "openchat-client";
-    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
+    import { ui, currentUser as user } from "openchat-client";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import QRCode from "../../QRCode.svelte";
-    import Link from "../../Link.svelte";
-    import { iconSize } from "../../../stores/iconSize";
+    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import { canShare, shareLink } from "../../../utils/share";
-    import { i18nKey } from "../../../i18n/i18n";
+    import Link from "../../Link.svelte";
+    import QRCode from "../../QRCode.svelte";
     import Translatable from "../../Translatable.svelte";
 
-    $: link = `${window.location.origin}/?ref=${$user.userId}`;
+    let link = $derived(`${window.location.origin}/?ref=${$user.userId}`);
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(
@@ -35,14 +34,14 @@
         <Translatable resourceKey={i18nKey("userReferralMessage")} />
     </div>
     <div class="action">
-        <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+        <CopyIcon size={ui.iconSize} color={"var(--icon-txt)"} />
         <Link onClick={onCopy}>
             <Translatable resourceKey={i18nKey("copy")} />
         </Link>
     </div>
     {#if canShare()}
         <div class="action">
-            <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
+            <ShareIcon size={ui.iconSize} color={"var(--icon-txt)"} />
             <Link onClick={onShare}>
                 <Translatable resourceKey={i18nKey("share")} />
             </Link>

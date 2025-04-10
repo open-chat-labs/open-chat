@@ -10,6 +10,7 @@ use gated_groups::{
 use group_canister::c2c_join_group::{Response::*, *};
 use group_chat_core::AddResult;
 use group_community_common::ExpiringMember;
+use oc_error_codes::OCErrorCode;
 use types::{AccessGateConfigInternal, MemberJoinedInternal, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
@@ -21,7 +22,7 @@ async fn c2c_join_group(args: Args) -> Response {
         Ok(Some((gate_config, check_gate_args))) => match check_if_passes_gate(gate_config.gate, check_gate_args).await {
             CheckIfPassesGateResult::Success(payments) => payments,
             CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
-            CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
+            CheckIfPassesGateResult::Error(error) => return Error(error),
         },
         Ok(None) => Vec::new(),
         Err(response) => return response,
@@ -37,7 +38,7 @@ fn is_permitted_to_join(
     let caller = state.env.caller();
 
     if state.data.is_frozen() {
-        return Err(ChatFrozen);
+        return Err(Error(OCErrorCode::ChatFrozen.into()));
     }
 
     if let Some(member) = state.data.chat.members.get(&args.user_id) {
@@ -46,13 +47,13 @@ fn is_permitted_to_join(
             return Err(AlreadyInGroupV2(Box::new(summary)));
         }
     } else if state.data.chat.members.is_blocked(&args.user_id) {
-        return Err(Blocked);
+        return Err(Error(OCErrorCode::InitiatorBlocked.into()));
     } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
-        return Err(ParticipantLimitReached(limit));
+        return Err(Error(OCErrorCode::UserLimitReached.with_message(limit)));
     } else if caller == state.data.user_index_canister_id || state.data.get_invitation(args.principal).is_some() {
         return Ok(None);
     } else if !state.data.chat.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
-        return Err(NotInvited);
+        return Err(Error(OCErrorCode::NotInvited.into()));
     }
 
     Ok(state.data.chat.gate_config.as_ref().map(|gc| {
@@ -149,8 +150,8 @@ fn c2c_join_group_impl(args: Args, payments: Vec<GatePayment>, state: &mut Runti
             let summary = state.summary(&member);
             Success(Box::new(summary))
         }
-        AddResult::Blocked => Blocked,
-        AddResult::MemberLimitReached(limit) => ParticipantLimitReached(limit),
+        AddResult::Blocked => Error(OCErrorCode::InitiatorBlocked.into()),
+        AddResult::MemberLimitReached(limit) => Error(OCErrorCode::UserLimitReached.with_message(limit)),
     };
 
     if let Some(gate_expiry) = state.data.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {

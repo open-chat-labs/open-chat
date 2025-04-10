@@ -3,13 +3,13 @@
     import {
         AvatarSize,
         emptyExternalBotPermissions,
-        externalBots,
         installedDirectBots,
         isProposalGroup,
         selectedCommunity,
         type ExternalBotPermissions,
         type ResourceKey,
         type CommandDefinition,
+        botState,
     } from "openchat-client";
     import { type ChatSummary, type OpenChat, userStore } from "openchat-client";
     import { _ } from "svelte-i18n";
@@ -53,7 +53,7 @@
                     verified: false,
                     avatarUrl: client.userAvatarUrl($userStore.get(chat.them.userId)),
                 };
-                const bot = $externalBots.get(chat.them.userId);
+                const bot = botState.externalBots.get(chat.them.userId);
                 const perm =
                     $installedDirectBots.get(chat.them.userId) ?? emptyExternalBotPermissions();
                 return bot === undefined

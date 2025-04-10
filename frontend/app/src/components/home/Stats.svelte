@@ -1,15 +1,13 @@
 <script lang="ts">
-    import { cubicOut } from "svelte/easing";
-    import Flag from "svelte-material-icons/Flag.svelte";
-    import { tweened } from "svelte/motion";
     import type { Metrics, OpenChat } from "openchat-client";
-    import { minutesOnlineStore } from "openchat-client";
+    import { minutesOnlineStore, ui } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import { writable } from "svelte/store";
-    import { iconSize } from "../../stores/iconSize";
+    import Flag from "svelte-material-icons/Flag.svelte";
+    import { cubicOut } from "svelte/easing";
+    import { Tween } from "svelte/motion";
+    import { i18nKey } from "../../i18n/i18n";
     import Tooltip from "../tooltip/Tooltip.svelte";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     interface Props {
@@ -19,18 +17,22 @@
 
     let { stats, showReported = false }: Props = $props();
 
+    const tweenOptions = {
+        duration: 600,
+        easing: cubicOut,
+    };
     let hoveredIndex: number | undefined = $state();
     let rendered = $state(false);
     let previousStats: Metrics | undefined = $state(undefined);
     let totalMessages = $state(0);
-    let textPerc = $state(writable(12.5));
-    let imagePerc = $state(writable(12.5));
-    let videoPerc = $state(writable(12.5));
-    let audioPerc = $state(writable(12.5));
-    let filePerc = $state(writable(12.5));
-    let pollPerc = $state(writable(12.5));
-    let cryptoPerc = $state(writable(12.5));
-    let giphyPerc = $state(writable(12.5));
+    let textPerc = new Tween(12.5, tweenOptions);
+    let imagePerc = new Tween(12.5, tweenOptions);
+    let videoPerc = new Tween(12.5, tweenOptions);
+    let audioPerc = new Tween(12.5, tweenOptions);
+    let filePerc = new Tween(12.5, tweenOptions);
+    let pollPerc = new Tween(12.5, tweenOptions);
+    let cryptoPerc = new Tween(12.5, tweenOptions);
+    let giphyPerc = new Tween(12.5, tweenOptions);
 
     function percToDegree(perc: number): number {
         return (perc / 100) * 360;
@@ -40,14 +42,10 @@
         window.setTimeout(() => (rendered = true), 600);
     });
 
-    function slice(val: number) {
+    function slice(val: number, tween: Tween<number>) {
         const perc = totalMessages > 0 ? (val / totalMessages) * 100 : 12.5;
-        const tween = tweened(0, {
-            duration: 600,
-            easing: cubicOut,
-        });
-        tween.set(perc);
-        return tween;
+        tween.set(0, { duration: 0 });
+        tween.target = perc;
     }
 
     const circum = 471.24;
@@ -69,66 +67,66 @@
                 cryptoMessages +
                 stats.giphyMessages;
 
-            textPerc = slice(stats.textMessages);
-            imagePerc = slice(stats.imageMessages);
-            videoPerc = slice(stats.videoMessages);
-            audioPerc = slice(stats.audioMessages);
-            filePerc = slice(stats.fileMessages);
-            pollPerc = slice(stats.polls);
-            cryptoPerc = slice(cryptoMessages);
-            giphyPerc = slice(stats.giphyMessages);
+            slice(stats.textMessages, textPerc);
+            slice(stats.imageMessages, imagePerc);
+            slice(stats.videoMessages, videoPerc);
+            slice(stats.audioMessages, audioPerc);
+            slice(stats.fileMessages, filePerc);
+            slice(stats.polls, pollPerc);
+            slice(cryptoMessages, cryptoPerc);
+            slice(stats.giphyMessages, giphyPerc);
             previousStats = stats;
         }
     });
     let percentages = $derived([
-        $textPerc,
-        $imagePerc,
-        $videoPerc,
-        $audioPerc,
-        $filePerc,
-        $pollPerc,
-        $cryptoPerc,
-        $giphyPerc,
+        textPerc.current,
+        imagePerc.current,
+        videoPerc.current,
+        audioPerc.current,
+        filePerc.current,
+        pollPerc.current,
+        cryptoPerc.current,
+        giphyPerc.current,
     ]);
     let data = $derived([
         {
             cls: "text",
-            perc: $textPerc,
+            perc: textPerc.current,
             rotate: 0,
         },
         {
             cls: "image",
-            perc: $imagePerc,
+            perc: imagePerc.current,
             rotate: sumSlice(0, 1),
         },
         {
             cls: "video",
-            perc: $videoPerc,
+            perc: videoPerc.current,
             rotate: sumSlice(0, 2),
         },
         {
             cls: "audio",
-            perc: $audioPerc,
+            perc: audioPerc.current,
             rotate: sumSlice(0, 3),
         },
         {
             cls: "file",
-            perc: $filePerc,
+            perc: filePerc.current,
             rotate: sumSlice(0, 4),
         },
         {
             cls: "poll",
-            perc: $pollPerc,
+            perc: pollPerc.current,
             rotate: sumSlice(0, 5),
         },
         {
             cls: "crypto",
-            perc: $cryptoPerc,
+            perc: cryptoPerc.current,
             rotate: sumSlice(0, 6),
         },
         {
             cls: "giphy",
-            perc: $giphyPerc,
+            perc: giphyPerc.current,
             rotate: sumSlice(0, 7),
         },
     ]);
@@ -250,7 +248,7 @@
                     <Translatable resourceKey={i18nKey("stats.reportedMessages")} />
                 </span>
                 <span class="icon">
-                    <Flag size={$iconSize} color={"var(--accent)"} />
+                    <Flag size={ui.iconSize} color={"var(--accent)"} />
                 </span>
             </div>
             {#snippet popupTemplate()}

@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ui } from "openchat-client";
     import type { Snippet } from "svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
     interface Props {
         adopt: Snippet;
         reject: Snippet;
@@ -11,7 +11,7 @@
 </script>
 
 <div class="votes">
-    {#if $mobileWidth}
+    {#if ui.mobileWidth}
         <div class="buttons">
             {@render adopt()}
             {@render reject()}

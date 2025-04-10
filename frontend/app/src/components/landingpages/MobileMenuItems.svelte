@@ -1,19 +1,24 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import { identityState, chatListScopeStore as chatListScope, OpenChat } from "openchat-client";
-    import MenuItem from "../MenuItem.svelte";
-    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
-    import Road from "svelte-material-icons/RoadVariant.svelte";
-    import Note from "svelte-material-icons/NoteTextOutline.svelte";
-    import Graph from "svelte-material-icons/GraphOutline.svelte";
-    import Blog from "svelte-material-icons/PostOutline.svelte";
-    import Help from "svelte-material-icons/HelpCircleOutline.svelte";
-    import Logout from "svelte-material-icons/Logout.svelte";
-    import Shopping from "svelte-material-icons/ShoppingOutline.svelte";
-    import Menu from "../Menu.svelte";
-    import { location, routeForScope } from "../../routes";
+    import {
+        chatListScopeStore as chatListScope,
+        identityState,
+        OpenChat,
+        pathState,
+        ui,
+    } from "openchat-client";
     import page from "page";
-    import { iconSize } from "../../stores/iconSize";
+    import { getContext } from "svelte";
+    import Graph from "svelte-material-icons/GraphOutline.svelte";
+    import Help from "svelte-material-icons/HelpCircleOutline.svelte";
+    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
+    import Logout from "svelte-material-icons/Logout.svelte";
+    import Note from "svelte-material-icons/NoteTextOutline.svelte";
+    import Blog from "svelte-material-icons/PostOutline.svelte";
+    import Road from "svelte-material-icons/RoadVariant.svelte";
+    import Shopping from "svelte-material-icons/ShoppingOutline.svelte";
+    import { routeForScope } from "../../routes";
+    import Menu from "../Menu.svelte";
+    import MenuItem from "../MenuItem.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -22,8 +27,6 @@
     }
 
     let { showBlog }: Props = $props();
-
-    let path = $derived($location);
 
     function launch() {
         if ($identityState.kind === "logged_in") {
@@ -37,7 +40,7 @@
 <Menu>
     <MenuItem>
         {#snippet icon()}
-            <Shopping size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            <Shopping size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             <a
@@ -49,51 +52,53 @@
             </a>
         {/snippet}
     </MenuItem>
-    <MenuItem selected={path === "/features"} onclick={() => page("/features")}>
+    <MenuItem selected={pathState.location === "/features"} onclick={() => page("/features")}>
         {#snippet icon()}
-            <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            <InformationOutline size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             {"Features"}
         {/snippet}
     </MenuItem>
-    <MenuItem selected={path === "/roadmap"} onclick={() => page("/roadmap")}>
+    <MenuItem selected={pathState.location === "/roadmap"} onclick={() => page("/roadmap")}>
         {#snippet icon()}
-            <Road size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            <Road size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             {"Roadmap"}
         {/snippet}
     </MenuItem>
-    <MenuItem selected={path === "/whitepaper"} onclick={() => page("/whitepaper")}>
+    <MenuItem selected={pathState.location === "/whitepaper"} onclick={() => page("/whitepaper")}>
         {#snippet icon()}
-            <Note size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            <Note size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             {"Whitepaper"}
         {/snippet}
     </MenuItem>
-    <MenuItem selected={path === "/architecture"} onclick={() => page("/architecture")}>
+    <MenuItem
+        selected={pathState.location === "/architecture"}
+        onclick={() => page("/architecture")}>
         {#snippet icon()}
-            <Graph size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            <Graph size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             {"Architecture"}
         {/snippet}
     </MenuItem>
     {#if showBlog}
-        <MenuItem selected={path.startsWith("/blog")} onclick={() => page("/blog")}>
+        <MenuItem selected={pathState.location.startsWith("/blog")} onclick={() => page("/blog")}>
             {#snippet icon()}
-                <Blog size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                <Blog size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
             {/snippet}
             {#snippet text()}
                 {"Blog"}
             {/snippet}
         </MenuItem>
     {/if}
-    <MenuItem selected={path.startsWith("/faq")} onclick={() => page("/faq")}>
+    <MenuItem selected={pathState.location.startsWith("/faq")} onclick={() => page("/faq")}>
         {#snippet icon()}
-            <Help size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            <Help size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
         {#snippet text()}
             {"FAQs"}
@@ -111,7 +116,7 @@
         <MenuItem separator />
         <MenuItem onclick={() => client.logout()}>
             {#snippet icon()}
-                <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                <Logout size={ui.iconSize} color={"var(--icon-inverted-txt)"} />
             {/snippet}
             {#snippet text()}
                 {"Logout"}

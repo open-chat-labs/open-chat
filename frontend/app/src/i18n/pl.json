@@ -1356,7 +1356,9 @@
         "onlyUniquePerson": "Tylko wyjątkowi ludzie",
         "prizeFinished": "Twoja wiadomość z nagrodą została już ukończona",
         "randomDistribution": "Losowa dystrybucja",
-        "restrictedMessage": "Aby odebrać tę nagrodę, musisz spełniać następujące wymagania:",
+        "requiresCaptcha": "Wymaga CAPTCHA",
+        "restrictedMessage": "Ta nagroda ma następujące ograniczenia",
+        "restrictions": "Ograniczenia roszczeń",
         "standardDiamond": "Standard",
         "streak": "Pasemko",
         "streakFull": "Seria {n} dni lub dłuższa",
@@ -1606,7 +1608,7 @@
     "roleChanged": "{changedBy} zmienił rolę {changed} na {newRole}",
     "rotationChallenge": {
         "info": "Obróć obraz po lewej stronie, aż będzie odpowiadał kątowi obrazu po prawej stronie",
-        "infoMobile": "Obróć górny obraz, aż będzie odpowiadał kątowi dolnego obrazu",
+        "infoMobile": "Obróć dolny obraz, aż będzie odpowiadał kątowi górnego obrazu",
         "title": "Zrównoważyć boty"
     },
     "rules": {

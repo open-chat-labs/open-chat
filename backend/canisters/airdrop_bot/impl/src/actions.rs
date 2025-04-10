@@ -76,8 +76,8 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Resul
     .await
     {
         Ok(community_canister::local_user_index::Response::Success(canister_id)) => canister_id,
-        Err((code, msg)) => {
-            let retry = should_retry_failed_c2c_call(code, &msg);
+        Err(error) => {
+            let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
             return Err(retry);
         }
     };
@@ -233,9 +233,9 @@ async fn handle_main_message_action(action: AirdropMessage) -> Result<(), bool> 
             error!(?args, ?resp, "Failed to send DM");
             Err(false)
         }
-        Err((code, msg)) => {
-            let retry = should_retry_failed_c2c_call(code, &msg);
-            error!(?args, ?code, msg, "Failed to send DM");
+        Err(error) => {
+            let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
+            error!(?args, ?error, "Failed to send DM");
             Err(retry)
         }
     }
@@ -297,9 +297,9 @@ async fn handle_lottery_message_action(action: AirdropMessage) -> Result<(), boo
             error!(?args, ?resp, "Failed to send lottery message");
             Err(false)
         }
-        Err((code, msg)) => {
-            error!(?args, ?code, msg, "Failed to send lottery message");
-            let retry = should_retry_failed_c2c_call(code, &msg);
+        Err(error) => {
+            error!(?args, ?error, "Failed to send lottery message");
+            let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
             Err(retry)
         }
     }

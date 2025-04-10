@@ -7,32 +7,43 @@
         currentChatRules,
         currentCommunityRules,
         currentCommunityReferrals,
+        publish,
     } from "openchat-client";
     import ScopeToggle from "./communities/ScopeToggle.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import CommunityDetailsHeader from "./communities/details/CommunityDetailsHeader.svelte";
     import GroupDetailsHeader from "./groupdetails/GroupDetailsHeader.svelte";
     import GroupDetailsBody from "./groupdetails/GroupDetailsBody.svelte";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import CommunityDetails from "./communities/details/CommunityDetails.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let channel: ChannelSummary;
-    export let community: CommunitySummary;
-    export let selectedTab: "community" | "channel" = "channel";
-    export let memberCount: number;
+    interface Props {
+        channel: ChannelSummary;
+        community: CommunitySummary;
+        selectedTab?: "community" | "channel";
+        memberCount: number;
+        onClose: () => void;
+    }
 
-    $: communityFrozen = client.isCommunityFrozen(community.id);
-    $: channelFrozen = client.isChatFrozen(channel.id);
-    $: canEditCommunity = !communityFrozen && client.canEditCommunity(community.id);
-    $: canEditChannel =
-        !channelFrozen && !communityFrozen && client.canEditGroupDetails(channel.id);
-    $: rules = $currentCommunityRules ?? defaultChatRules("community");
-    $: canDeleteCommunity = client.canDeleteCommunity(community.id);
-    $: canInviteToCommunity = !communityFrozen && client.canInviteUsers(community.id);
+    let {
+        channel,
+        community,
+        selectedTab = $bindable("channel"),
+        memberCount,
+        onClose,
+    }: Props = $props();
+
+    let communityFrozen = $derived(client.isCommunityFrozen(community.id));
+    let channelFrozen = $derived(client.isChatFrozen(channel.id));
+    let canEditCommunity = $derived(!communityFrozen && client.canEditCommunity(community.id));
+    let canEditChannel = $derived(
+        !channelFrozen && !communityFrozen && client.canEditGroupDetails(channel.id),
+    );
+    let rules = $derived($currentCommunityRules ?? defaultChatRules("community"));
+    let canDeleteCommunity = $derived(client.canDeleteCommunity(community.id));
+    let canInviteToCommunity = $derived(!communityFrozen && client.canInviteUsers(community.id));
 
     function editGroup() {
         if (canEditChannel) {
@@ -45,21 +56,21 @@
 </script>
 
 <ScopeToggle flush bind:selectedTab>
-    <div slot="header">
+    {#snippet header()}
         {#if selectedTab === "community"}
             <CommunityDetailsHeader {community} canEdit={canEditCommunity} level={"community"} />
         {:else if selectedTab === "channel"}
             <GroupDetailsHeader
                 level={"channel"}
                 canEdit={canEditChannel}
-                onClose={() => dispatch("close")}
+                {onClose}
                 onEditGroup={editGroup} />
         {/if}
-    </div>
-    <div slot="channel">
+    {/snippet}
+    {#snippet channelTab()}
         <GroupDetailsBody chat={channel} {memberCount} />
-    </div>
-    <div slot="community">
+    {/snippet}
+    {#snippet communityTab()}
         <CommunityCard
             id={community.id.communityId}
             name={community.name}
@@ -80,5 +91,5 @@
             metrics={community.metrics}
             {community}
             referrals={$currentCommunityReferrals} />
-    </div>
+    {/snippet}
 </ScopeToggle>

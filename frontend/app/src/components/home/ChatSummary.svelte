@@ -1,63 +1,67 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, chatIdentifiersEqual, selectedCommunity } from "openchat-client";
-    import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import type {
-        UserLookup,
         ChatSummary,
-        TypersByKey,
         CommunitySummary,
         DiamondMembershipStatus,
+        TypersByKey,
+        UserLookup,
     } from "openchat-client";
     import {
-        userStore,
-        currentUser as user,
-        suspendedUser,
-        selectedChatId,
-        chatListScopeStore as chatListScope,
+        AvatarSize,
+        OpenChat,
         blockedUsers,
-        messagesRead,
-        byContext as typersByContext,
-        favouritesStore,
+        chatIdentifiersEqual,
+        chatListScopeStore as chatListScope,
         communities,
+        favouritesStore,
+        messagesRead,
+        pathState,
+        publish,
+        selectedChatId,
+        selectedCommunity,
+        suspendedUser,
+        byContext as typersByContext,
+        ui,
+        currentUser as user,
+        userStore,
     } from "openchat-client";
+    import page from "page";
+    import { getContext, onMount, tick, untrack } from "svelte";
+    import { _ } from "svelte-i18n";
+    import ArchiveIcon from "svelte-material-icons/Archive.svelte";
+    import BellIcon from "svelte-material-icons/Bell.svelte";
+    import MutedIcon from "svelte-material-icons/BellOff.svelte";
+    import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
+    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import Delete from "svelte-material-icons/Delete.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Heart from "svelte-material-icons/Heart.svelte";
-    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import PinIcon from "svelte-material-icons/Pin.svelte";
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
-    import BellIcon from "svelte-material-icons/Bell.svelte";
-    import HeartMinus from "../icons/HeartMinus.svelte";
-    import HeartPlus from "../icons/HeartPlus.svelte";
-    import MutedIcon from "svelte-material-icons/BellOff.svelte";
-    import ArchiveIcon from "svelte-material-icons/Archive.svelte";
-    import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { routeForScope } from "../../routes";
     import { rtlStore } from "../../stores/rtl";
+    import { now } from "../../stores/time";
+    import { toastStore } from "../../stores/toast";
+    import { notificationsSupported } from "../../utils/notifications";
+    import { pop } from "../../utils/transition";
+    import { buildDisplayName } from "../../utils/user";
     import Avatar from "../Avatar.svelte";
     import { clamp, swipe } from "../chatSwipe";
-    import { _ } from "svelte-i18n";
-    import Markdown from "./Markdown.svelte";
-    import { pop } from "../../utils/transition";
-    import Typing from "../Typing.svelte";
-    import { getContext, onMount, tick, untrack } from "svelte";
-    import { now } from "../../stores/time";
-    import { iconSize } from "../../stores/iconSize";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import MenuIcon from "../MenuIcon.svelte";
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
-    import { notificationsSupported } from "../../utils/notifications";
-    import { toastStore } from "../../stores/toast";
-    import { routeForScope, pathParams } from "../../routes";
-    import page from "page";
-    import { buildDisplayName } from "../../utils/user";
-    import { i18nKey, interpolate } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
-    import VideoCallIcon from "./video/VideoCallIcon.svelte";
-    import Badges from "./profile/Badges.svelte";
+    import HeartMinus from "../icons/HeartMinus.svelte";
+    import HeartPlus from "../icons/HeartPlus.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
-    import { publish } from "@src/utils/pubsub";
+    import Menu from "../Menu.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
+    import MenuItem from "../MenuItem.svelte";
+    import Translatable from "../Translatable.svelte";
+    import Typing from "../Typing.svelte";
+    import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
+    import Markdown from "./Markdown.svelte";
+    import Badges from "./profile/Badges.svelte";
+    import VideoCallIcon from "./video/VideoCallIcon.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -97,7 +101,7 @@
     let delOffset = $state(maxDelOffset);
     let swiped = $state(false);
 
-    $effect(() => updateUnreadCounts(chatSummary));
+    trackedEffect("unread-counts", () => updateUnreadCounts(chatSummary));
 
     onMount(() => {
         return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
@@ -228,8 +232,8 @@
         e.stopPropagation();
         e.preventDefault();
         if (
-            $pathParams.kind === "global_chat_selected_route" &&
-            chatIdentifiersEqual(chatSummary.id, $pathParams.chatId)
+            pathState.route.kind === "global_chat_selected_route" &&
+            chatIdentifiersEqual(chatSummary.id, pathState.route.chatId)
         ) {
             page(routeForScope($chatListScope));
         }
@@ -465,7 +469,7 @@
                                         <MenuItem onclick={addToFavourites}>
                                             {#snippet icon()}
                                                 <HeartPlus
-                                                    size={$iconSize}
+                                                    size={ui.iconSize}
                                                     color={"var(--menu-warn)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -479,7 +483,7 @@
                                         <MenuItem onclick={removeFromFavourites}>
                                             {#snippet icon()}
                                                 <HeartMinus
-                                                    size={$iconSize}
+                                                    size={ui.iconSize}
                                                     color={"var(--menu-warn)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -494,7 +498,7 @@
                                         <MenuItem onclick={pinChat}>
                                             {#snippet icon()}
                                                 <PinIcon
-                                                    size={$iconSize}
+                                                    size={ui.iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -506,7 +510,7 @@
                                         <MenuItem onclick={unpinChat}>
                                             {#snippet icon()}
                                                 <PinOffIcon
-                                                    size={$iconSize}
+                                                    size={ui.iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -523,7 +527,7 @@
                                                 onclick={() => toggleMuteNotifications(false)}>
                                                 {#snippet icon()}
                                                     <BellIcon
-                                                        size={$iconSize}
+                                                        size={ui.iconSize}
                                                         color={"var(--icon-inverted-txt)"} />
                                                 {/snippet}
                                                 {#snippet text()}
@@ -537,7 +541,7 @@
                                             <MenuItem onclick={() => toggleMuteNotifications(true)}>
                                                 {#snippet icon()}
                                                     <MutedIcon
-                                                        size={$iconSize}
+                                                        size={ui.iconSize}
                                                         color={"var(--icon-inverted-txt)"} />
                                                 {/snippet}
                                                 {#snippet text()}
@@ -555,7 +559,7 @@
                                             onclick={() => client.markAllRead(chatSummary)}>
                                             {#snippet icon()}
                                                 <CheckboxMultipleMarked
-                                                    size={$iconSize}
+                                                    size={ui.iconSize}
                                                     color={"var(--icon-inverted-txt)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -569,7 +573,7 @@
                                             <MenuItem onclick={selectChat}>
                                                 {#snippet icon()}
                                                     <ArchiveOffIcon
-                                                        size={$iconSize}
+                                                        size={ui.iconSize}
                                                         color={"var(--icon-inverted-txt)"} />
                                                 {/snippet}
                                                 {#snippet text()}
@@ -581,7 +585,7 @@
                                             <MenuItem onclick={archiveChat}>
                                                 {#snippet icon()}
                                                     <ArchiveIcon
-                                                        size={$iconSize}
+                                                        size={ui.iconSize}
                                                         color={"var(--icon-inverted-txt)"} />
                                                 {/snippet}
                                                 {#snippet text()}
@@ -595,7 +599,7 @@
                                         <MenuItem warning onclick={leaveGroup}>
                                             {#snippet icon()}
                                                 <LocationExit
-                                                    size={$iconSize}
+                                                    size={ui.iconSize}
                                                     color={"var(--menu-warn)"} />
                                             {/snippet}
                                             {#snippet text()}
@@ -622,7 +626,7 @@
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
                 title={$_("removeChat")}
-                style={$mobileWidth
+                style={ui.mobileWidth
                     ? $rtlStore
                         ? `left: ${delOffset}px`
                         : `right: ${delOffset}px`
@@ -630,7 +634,7 @@
                 onclick={deleteDirectChat}
                 class:rtl={$rtlStore}
                 class="delete-chat">
-                <Delete size={$iconSize} color={"#fff"} />
+                <Delete size={ui.iconSize} color={"#fff"} />
             </div>
         {/if}
     </div>

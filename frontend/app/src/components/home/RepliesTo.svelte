@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import {
         type RehydratedReplyContext,
@@ -15,25 +13,33 @@
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
     import ChatMessageContent from "./ChatMessageContent.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
-    const dispatch = createEventDispatcher();
+    import { getContext } from "svelte";
     import page from "page";
 
     const client = getContext<OpenChat>("client");
 
-    export let chatId: ChatIdentifier;
-    export let repliesTo: RehydratedReplyContext;
-    export let readonly: boolean;
-    export let intersecting: boolean;
+    interface Props {
+        chatId: ChatIdentifier;
+        repliesTo: RehydratedReplyContext;
+        readonly: boolean;
+        intersecting: boolean;
+        onGoToMessageIndex?: (args: { index: number }) => void;
+        onRemovePreview?: (url: string) => void;
+    }
+
+    let { chatId, repliesTo, readonly, intersecting, onGoToMessageIndex, onRemovePreview }: Props =
+        $props();
 
     let debug = false;
 
-    $: me = repliesTo.senderId === $currentUser.userId;
-    $: isTextContent = repliesTo.content?.kind === "text_content";
-    $: isP2PSwap = repliesTo.content.kind === "p2p_swap_content";
-    $: displayName = me
-        ? client.toTitleCase($_("you"))
-        : client.getDisplayNameById(repliesTo.senderId, $communityMembers);
+    let me = $derived(repliesTo.senderId === $currentUser.userId);
+    let isTextContent = $derived(repliesTo.content?.kind === "text_content");
+    let isP2PSwap = $derived(repliesTo.content.kind === "p2p_swap_content");
+    let displayName = $derived(
+        me
+            ? client.toTitleCase($_("you"))
+            : client.getDisplayNameById(repliesTo.senderId, $communityMembers),
+    );
 
     function getUrl() {
         const path = [
@@ -48,7 +54,7 @@
 
     function zoomToMessage() {
         if (chatIdentifiersEqual(repliesTo.sourceContext.chatId, chatId)) {
-            dispatch("goToMessageIndex", {
+            onGoToMessageIndex?.({
                 index: repliesTo.messageIndex,
             });
         } else {
@@ -83,7 +89,7 @@
                     blockLevelMarkdown={true}
                     truncate
                     reply
-                    myUserId={$currentUser.userId}
+                    {onRemovePreview}
                     content={repliesTo.content} />
             </div>
             {#if debug}

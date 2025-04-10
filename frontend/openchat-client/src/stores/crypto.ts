@@ -23,15 +23,28 @@ export const nervousSystemLookup = writable<Record<GovernanceCanister, NervousSy
 export const exchangeRatesLookupStore = writable<Record<string, TokenExchangeRates>>({});
 
 const cryptoBalanceStore = writable<BalanceByCrypto>({});
+const cryptoBalancesLastUpdated = new Map<string, number>();
+let cryptoBalanceStoreValue: BalanceByCrypto = {};
+cryptoBalanceStore.subscribe((v) => cryptoBalanceStoreValue = v);
 
 export const cryptoBalance = {
     subscribe: cryptoBalanceStore.subscribe,
     set: (ledger: string, balance: bigint): void => {
         cryptoBalanceStore.update((record) => {
             record[ledger] = balance;
+            cryptoBalancesLastUpdated.set(ledger, Date.now());
             return record;
         });
     },
+    valueIfUpdatedRecently: (ledger: string): bigint | undefined => {
+        const lastUpdated = cryptoBalancesLastUpdated.get(ledger);
+        if (lastUpdated === undefined) {
+            return undefined;
+        }
+        return Date.now() - lastUpdated < 5 * 60 * 1000
+            ? cryptoBalanceStoreValue[ledger]
+            : undefined;
+    }
 };
 
 export const bitcoinAddress = safeWritable<string | undefined>(undefined);

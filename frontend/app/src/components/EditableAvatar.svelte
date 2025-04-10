@@ -3,13 +3,11 @@
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
     import ModalContent from "./ModalContent.svelte";
-    import { createEventDispatcher } from "svelte";
     import Cropper from "svelte-easy-crop";
     import type { CropData } from "svelte-easy-crop";
     import ChooseImage from "./icons/ChooseImage.svelte";
     import { i18nKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
-    const dispatch = createEventDispatcher();
 
     interface Props {
         image: string | null | undefined;
@@ -17,6 +15,7 @@
         size?: Size;
         mode?: Mode;
         overlayIcon?: boolean;
+        onImageSelected: (args: { url: string; data: Uint8Array }) => void;
     }
 
     let {
@@ -25,6 +24,7 @@
         size = "large",
         mode = "avatar",
         overlayIcon = false,
+        onImageSelected,
     }: Props = $props();
 
     type Dimensions = { width: number; height: number };
@@ -112,7 +112,7 @@
                 image = canvas.toDataURL("image/jpg");
                 showModal = false;
                 console.log("image size: ", data.length);
-                dispatch("imageSelected", { url: image, data });
+                onImageSelected({ url: image, data });
             }
         }, "image/jpg");
     }

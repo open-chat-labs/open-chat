@@ -1,26 +1,26 @@
 <script lang="ts">
-    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
-    import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
-    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import {
         OpenChat,
         achievements,
+        globalStateStore as globalState,
+        ui,
+        currentUser as user,
         type Achievement,
         type ExternalAchievement,
-        currentUser as user,
-        globalStateStore as globalState,
     } from "openchat-client";
+    import { getContext, onMount } from "svelte";
+    import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
+    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
+    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { now } from "../../../stores/time";
+    import Button from "../../Button.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
-    import Translatable from "../../Translatable.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import Button from "../../Button.svelte";
-    import { getContext, onMount } from "svelte";
-    import { iconSize } from "../../../stores/iconSize";
     import Progress from "../../Progress.svelte";
+    import Translatable from "../../Translatable.svelte";
     import ExternalLink from "../../landingpages/ExternalLink.svelte";
-    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
-    import { now } from "../../../stores/time";
 
     const client = getContext<OpenChat>("client");
     const enabled = new Set<string>([
@@ -185,7 +185,7 @@
                             {#each internalNotAchieved as achievement}
                                 <div class="achievement">
                                     <div class="no icon">
-                                        <CheckCircleOutline size={$iconSize} color={"#ccc"} />
+                                        <CheckCircleOutline size={ui.iconSize} color={"#ccc"} />
                                     </div>
                                     <Translatable
                                         resourceKey={i18nKey(`learnToEarn.${achievement}`)} />
@@ -209,7 +209,7 @@
                                 <div class="achievement">
                                     <div class="yes icon">
                                         <CheckCircle
-                                            size={$iconSize}
+                                            size={ui.iconSize}
                                             color={"var(--toast-success-bg)"} />
                                     </div>
                                     <Translatable resourceKey={i18nKey(achievement)} />

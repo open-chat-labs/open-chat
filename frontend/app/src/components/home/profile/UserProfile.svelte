@@ -1,64 +1,31 @@
 <script lang="ts">
-    import SectionHeader from "../../SectionHeader.svelte";
     import {
-        type UserSummary,
-        type OpenChat,
         AvatarSize,
+        type BotClientConfigData,
         type ModerationFlag,
         ModerationFlags,
-        hideMessagesFromDirectBlocked,
-        moderationFlags,
+        type OpenChat,
+        type UserSummary,
+        anonUser,
+        canExtendDiamond,
         communities,
         communitiesList,
-        anonUser,
-        suspendedUser,
-        userMetrics,
-        notificationStatus,
+        globalStateStore as globalState,
+        hideMessagesFromDirectBlocked,
         isDiamond,
         isLifetimeDiamond,
-        canExtendDiamond,
-        globalStateStore as globalState,
-        type BotClientConfigData,
+        moderationFlags,
+        notificationStatus,
+        publish,
+        suspendedUser,
+        ui,
+        userMetrics,
     } from "openchat-client";
-    import { isTouchDevice } from "../../../utils/devices";
+    import { getContext, onMount } from "svelte";
+    import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import StorageUsage from "../../StorageUsage.svelte";
-    import EditableAvatar from "../../EditableAvatar.svelte";
-    import UsernameInput from "../../UsernameInput.svelte";
-    import Avatar from "../../Avatar.svelte";
-    import Button from "../../Button.svelte";
-    import Legend from "../../Legend.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import Select from "../../Select.svelte";
-    import TextArea from "../../TextArea.svelte";
-    import CollapsibleCard from "../../CollapsibleCard.svelte";
-    import FontSize from "./FontSize.svelte";
-    import Stats from "../Stats.svelte";
-    import { notificationsSupported } from "../../../utils/notifications";
-    import { _, locale } from "svelte-i18n";
-    import { iconSize } from "../../../stores/iconSize";
-    import {
-        advancedSectionOpen,
-        appearanceSectionOpen,
-        chatsSectionOpen,
-        dclickReply,
-        restrictedSectionOpen,
-        videoSectionOpen,
-        enterSend,
-        lowBandwidth,
-        referralOpen,
-        statsSectionOpen,
-        storageSectionOpen,
-        userInfoOpen,
-        renderPreviews,
-        verificationSectionOpen,
-        accountsSectionOpen,
-        deleteAccountSectionOpen,
-    } from "../../../stores/settings";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
-    import Toggle from "../../Toggle.svelte";
+    import { menuCloser } from "../../../actions/closeMenu";
     import {
         editmode,
         i18nKey,
@@ -66,35 +33,69 @@
         setLocale,
         supportedLanguages,
     } from "../../../i18n/i18n";
+    import {
+        accountsSectionOpen,
+        advancedSectionOpen,
+        appearanceSectionOpen,
+        chatsSectionOpen,
+        dclickReply,
+        deleteAccountSectionOpen,
+        enterSend,
+        lowBandwidth,
+        referralOpen,
+        renderPreviews,
+        restrictedSectionOpen,
+        statsSectionOpen,
+        storageSectionOpen,
+        userInfoOpen,
+        verificationSectionOpen,
+        videoSectionOpen,
+    } from "../../../stores/settings";
     import { toastStore } from "../../../stores/toast";
-    import ErrorMessage from "../../ErrorMessage.svelte";
-    import ReferUsers from "./ReferUsers.svelte";
-    import Expiry from "../upgrade/Expiry.svelte";
-    import DisplayNameInput from "../../DisplayNameInput.svelte";
-    import CommunityProfile from "./CommunityProfile.svelte";
-    import ThemeSelector from "./ThemeSelector.svelte";
-    import { menuCloser } from "../../../actions/closeMenu";
-    import Translatable from "../../Translatable.svelte";
-    import VideoCallSettings from "./VideoCallSettings.svelte";
-    import ChitEvents from "./ChitEvents.svelte";
-    import Verified from "../../icons/Verified.svelte";
     import { uniquePersonGate } from "../../../utils/access";
-    import ReferredUsersList from "./ReferredUsersList.svelte";
-    import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
-    import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
-    import BotConfigData from "./BotConfigData.svelte";
+    import { isTouchDevice } from "../../../utils/devices";
+    import { notificationsSupported } from "../../../utils/notifications";
+    import Avatar from "../../Avatar.svelte";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import DisplayNameInput from "../../DisplayNameInput.svelte";
+    import EditableAvatar from "../../EditableAvatar.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import Verified from "../../icons/Verified.svelte";
+    import Legend from "../../Legend.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Select from "../../Select.svelte";
+    import StorageUsage from "../../StorageUsage.svelte";
+    import TextArea from "../../TextArea.svelte";
+    import Toggle from "../../Toggle.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import UsernameInput from "../../UsernameInput.svelte";
     import Markdown from "../Markdown.svelte";
-    import { publish } from "@src/utils/pubsub";
+    import Stats from "../Stats.svelte";
+    import Expiry from "../upgrade/Expiry.svelte";
+    import BotConfigData from "./BotConfigData.svelte";
+    import ChitEvents from "./ChitEvents.svelte";
+    import CommunityProfile from "./CommunityProfile.svelte";
+    import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
+    import FontSize from "./FontSize.svelte";
+    import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
+    import ReferredUsersList from "./ReferredUsersList.svelte";
+    import ReferUsers from "./ReferUsers.svelte";
+    import ThemeSelector from "./ThemeSelector.svelte";
+    import VideoCallSettings from "./VideoCallSettings.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
     const MAX_BIO_LENGTH = 2000;
 
     interface Props {
         user: UserSummary;
+        onUnsubscribeNotifications: () => void;
+        onCloseProfile: () => void;
     }
 
-    let { user }: Props = $props();
+    let { user, onCloseProfile, onUnsubscribeNotifications }: Props = $props();
 
     let originalBio = $state("");
     let userbio = $state("");
@@ -251,20 +252,16 @@
         if ($notificationStatus !== "granted") {
             client.askForNotificationPermission();
         } else {
-            dispatch("unsubscribeNotifications");
+            onUnsubscribeNotifications();
         }
     }
 
-    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
-        client.setUserAvatar(ev.detail.data, ev.detail.url).then((success) => {
+    function userAvatarSelected(detail: { url: string; data: Uint8Array }): void {
+        client.setUserAvatar(detail.data, detail.url).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
             }
         });
-    }
-
-    function closeProfile() {
-        dispatch("closeProfile");
     }
 
     function onCopy() {
@@ -289,9 +286,9 @@
 
 <SectionHeader border={false} flush shadow>
     <h4 class="title"><Translatable resourceKey={i18nKey("profile.title")} /></h4>
-    <span title={$_("close")} class="close" onclick={closeProfile}>
+    <span title={$_("close")} class="close" onclick={onCloseProfile}>
         <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
+            <Close size={ui.iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>
@@ -346,7 +343,7 @@
                         <EditableAvatar
                             overlayIcon
                             image={client.userAvatarUrl(user)}
-                            on:imageSelected={userAvatarSelected} />
+                            onImageSelected={userAvatarSelected} />
                     {/if}
                     <div class="human">
                         <Verified size={"large"} {verified} tooltip={i18nKey("human.verified")} />
@@ -439,14 +436,16 @@
                 </CollapsibleCard>
             </div>
         {/if}
-        <div class="linked-accounts">
-            <CollapsibleCard
-                onToggle={accountsSectionOpen.toggle}
-                open={$accountsSectionOpen}
-                headerText={i18nKey("identity.linkedAccounts.section")}>
-                <LinkedAuthAccounts />
-            </CollapsibleCard>
-        </div>
+        {#if !$anonUser}
+            <div class="linked-accounts">
+                <CollapsibleCard
+                    onToggle={accountsSectionOpen.toggle}
+                    open={$accountsSectionOpen}
+                    headerText={i18nKey("identity.linkedAccounts.section")}>
+                    <LinkedAuthAccounts />
+                </CollapsibleCard>
+            </div>
+        {/if}
         <div class="appearance">
             <CollapsibleCard
                 onToggle={appearanceSectionOpen.toggle}
@@ -463,7 +462,7 @@
                     <Toggle
                         id={"translation-mode"}
                         small
-                        on:change={() => editmode.set(!$editmode)}
+                        onChange={() => editmode.set(!$editmode)}
                         label={i18nKey("toggleTranslationEditMode")}
                         checked={$editmode} />
                 {/if}
@@ -497,13 +496,13 @@
                     <Toggle
                         id={"enter-send"}
                         small
-                        on:change={() => enterSend.toggle()}
+                        onChange={() => enterSend.toggle()}
                         label={i18nKey("enterToSend")}
                         checked={$enterSend} />
                     <Toggle
                         id={"dclick-reply"}
                         small
-                        on:change={() => dclickReply.toggle()}
+                        onChange={() => dclickReply.toggle()}
                         label={i18nKey(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
                         checked={$dclickReply} />
                     {#if notificationsSupported}
@@ -511,7 +510,7 @@
                             id={"notifications"}
                             small
                             disabled={$notificationStatus === "hard-denied"}
-                            on:change={toggleNotifications}
+                            onChange={toggleNotifications}
                             label={$notificationStatus === "hard-denied"
                                 ? i18nKey("notificationsDisabled")
                                 : i18nKey("enableNotificationsMenu")}
@@ -520,20 +519,20 @@
                     <Toggle
                         id={"low-bandwidth"}
                         small
-                        on:change={() => lowBandwidth.toggle()}
+                        onChange={() => lowBandwidth.toggle()}
                         label={i18nKey("lowBandwidth")}
                         checked={$lowBandwidth} />
                     <Toggle
                         id={"render-previews"}
                         disabled={$lowBandwidth}
                         small
-                        on:change={() => renderPreviews.toggle()}
+                        onChange={() => renderPreviews.toggle()}
                         label={i18nKey("renderPreviews")}
                         checked={$renderPreviews && !$lowBandwidth} />
                     <Toggle
                         id={"hide-blocked"}
                         small
-                        on:change={() => hideMessagesFromDirectBlocked.toggle()}
+                        onChange={() => hideMessagesFromDirectBlocked.toggle()}
                         label={i18nKey("hideBlocked")}
                         checked={$hideMessagesFromDirectBlocked} />
                 </CollapsibleCard>
@@ -557,19 +556,19 @@
                     <Toggle
                         id={"offensive"}
                         small
-                        on:change={() => toggleModerationFlag(ModerationFlags.Offensive)}
+                        onChange={() => toggleModerationFlag(ModerationFlags.Offensive)}
                         label={i18nKey("communities.offensive")}
                         checked={offensiveEnabled} />
                     <Toggle
                         id={"adult"}
                         small
-                        on:change={() => toggleModerationFlag(ModerationFlags.Adult)}
+                        onChange={() => toggleModerationFlag(ModerationFlags.Adult)}
                         label={i18nKey("communities.adult")}
                         checked={adultEnabled} />
                     <Toggle
                         id={"underReview"}
                         small
-                        on:change={() => toggleModerationFlag(ModerationFlags.UnderReview)}
+                        onChange={() => toggleModerationFlag(ModerationFlags.UnderReview)}
                         label={i18nKey("communities.underReview")}
                         checked={underReviewEnabled} />
                 </CollapsibleCard>
@@ -627,7 +626,7 @@
                         <div class="userid-txt">
                             <div>{user.userId}</div>
                             <div role="button" tabindex="0" onclick={onCopy} class="copy">
-                                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+                                <CopyIcon size={ui.iconSize} color={"var(--icon-txt)"} />
                             </div>
                         </div>
                     </div>

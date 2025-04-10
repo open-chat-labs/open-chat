@@ -1,17 +1,15 @@
 <script lang="ts">
     import { start } from "@memefighter/maker-core";
+    import { ui, type MemeFighterContent as MemeFighterContentType } from "openchat-client";
+    import { tick } from "svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { currentTheme } from "../../theme/themes";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import MemeFighter from "../icons/MemeFighter.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { tick } from "svelte";
-    import type { MemeFighterContent as MemeFighterContentType } from "openchat-client";
-    import { currentTheme } from "../../theme/themes";
+    import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import MemeFighter from "../icons/MemeFighter.svelte";
 
     interface Props {
         open: boolean;
@@ -80,7 +78,7 @@
         <ModalContent fill closeIcon onClose={close}>
             {#snippet header()}
                 <div class="header">
-                    <MemeFighter size={$iconSize} color={"var(--icon-txt)"} />
+                    <MemeFighter size={ui.iconSize} color={"var(--icon-txt)"} />
                     <div class="title">Meme Fighter</div>
                 </div>
             {/snippet}
@@ -99,7 +97,7 @@
             {/snippet}
             {#snippet footer()}
                 <span class="footer">
-                    <ButtonGroup align={$mobileWidth ? "center" : "end"}>
+                    <ButtonGroup align={ui.mobileWidth ? "center" : "end"}>
                         <Button tiny secondary onClick={reset}
                             ><Translatable resourceKey={i18nKey("reset")} /></Button>
                         <Button tiny secondary onClick={close}

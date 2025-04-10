@@ -9,6 +9,7 @@
         selectedChatStore as selectedChat,
         currentCommunityMembers as communityMembers,
         currentUser as user,
+        publish,
     } from "openchat-client";
     import Avatar from "../Avatar.svelte";
     import { getContext } from "svelte";
@@ -16,30 +17,36 @@
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
     import { activeVideoCall } from "../../stores/video";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
-    export let content: VideoCallContent;
-    export let messageIndex: number;
-    export let timestamp: bigint | undefined;
-    export let senderId: string;
+    interface Props {
+        content: VideoCallContent;
+        messageIndex: number;
+        timestamp: bigint | undefined;
+        senderId: string;
+    }
 
-    $: displayName = client.getDisplayNameById(senderId, $communityMembers);
-    $: incall =
+    let { content, messageIndex, timestamp, senderId }: Props = $props();
+
+    let displayName = $derived(client.getDisplayNameById(senderId, $communityMembers));
+    let incall = $derived(
         $activeVideoCall !== undefined &&
-        $selectedChat !== undefined &&
-        $selectedChat.videoCallInProgress === messageIndex &&
-        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id);
-    $: endedDate = content.ended ? new Date(Number(content.ended)) : undefined;
-    $: missed =
-        content.ended && content.participants.find((p) => p.userId === $user.userId) === undefined;
-    $: duration =
+            $selectedChat !== undefined &&
+            $selectedChat.videoCallInProgress === messageIndex &&
+            chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id),
+    );
+    let endedDate = $derived(content.ended ? new Date(Number(content.ended)) : undefined);
+    let missed = $derived(
+        content.ended && content.participants.find((p) => p.userId === $user.userId) === undefined,
+    );
+    let duration = $derived(
         content.ended !== undefined && timestamp !== undefined
             ? i18nKey("videoCall.duration", {
                   duration: client.formatDuration(Number(content.ended - timestamp)),
               })
-            : undefined;
+            : undefined,
+    );
 
     function joinCall() {
         if (!incall && $selectedChat) {

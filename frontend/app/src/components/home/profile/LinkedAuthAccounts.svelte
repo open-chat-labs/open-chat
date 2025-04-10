@@ -1,20 +1,19 @@
 <script lang="ts">
+    import { AuthProvider, OpenChat, ui, type AuthenticationPrincipal } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import Account from "svelte-material-icons/Account.svelte";
     import LinkOff from "svelte-material-icons/LinkOff.svelte";
-    import { AuthProvider, OpenChat, type AuthenticationPrincipal } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Button from "../../Button.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import Translatable from "../../Translatable.svelte";
     import TruncatedAccount from "../TruncatedAccount.svelte";
     import AuthProviderLogo from "./AuthProviderLogo.svelte";
-    import Button from "../../Button.svelte";
-    import Translatable from "../../Translatable.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import { iconSize } from "../../../stores/iconSize";
-    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
-    import LinkAccountsModal from "./LinkAccountsModal.svelte";
-    import Overlay from "../../Overlay.svelte";
     import LinkAccounts from "./LinkAccounts.svelte";
+    import LinkAccountsModal from "./LinkAccountsModal.svelte";
     import UnlinkAccounts from "./UnlinkAccounts.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -41,7 +40,7 @@
                 iiPrincipal={undefined}
                 linkInternetIdentity={false}
                 onProceed={refresh}
-                on:close={refresh} />
+                onClose={refresh} />
         </LinkAccountsModal>
     </Overlay>
 {/if}
@@ -62,7 +61,7 @@
         {#if account.isCurrentIdentity}
             <div class="current">
                 <Tooltip position="top" align="end">
-                    <Account size={$iconSize} color={"var(--icon-txt)"} />
+                    <Account size={ui.iconSize} color={"var(--icon-txt)"} />
                     {#snippet popupTemplate()}
                         <Translatable
                             resourceKey={i18nKey("identity.linkedAccounts.currentAccount")} />
@@ -73,7 +72,7 @@
             <div class="unlink">
                 <Tooltip position="top" align="end">
                     <HoverIcon onclick={() => (unlinking = account)}>
-                        <LinkOff size={$iconSize} color={"var(--icon-txt)"} />
+                        <LinkOff size={ui.iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                     {#snippet popupTemplate()}
                         <Translatable resourceKey={i18nKey("identity.linkedAccounts.unlink")} />

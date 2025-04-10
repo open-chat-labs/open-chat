@@ -1,42 +1,41 @@
 use crate::exchanges::Exchange;
 use crate::read_state;
 use async_trait::async_trait;
-use ic_cdk::call::RejectCode;
 use icdex_canister::deposit::Token0OrToken1;
 use icdex_client::ICDexClient;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
-use types::{AggregatedOrders, CancelOrderRequest, CanisterId, MakeOrderRequest, Order};
+use types::{AggregatedOrders, C2CError, CancelOrderRequest, CanisterId, MakeOrderRequest, Order};
 
 #[async_trait]
 impl<M: Fn(MakeOrderRequest) + Send + Sync, C: Fn(CancelOrderRequest) + Send + Sync> Exchange for ICDexClient<M, C> {
-    async fn latest_price(&self) -> Result<u64, (RejectCode, String)> {
+    async fn latest_price(&self) -> Result<u64, C2CError> {
         self.latest_price().await
     }
 
-    async fn my_open_orders(&self) -> Result<Vec<Order>, (RejectCode, String)> {
+    async fn my_open_orders(&self) -> Result<Vec<Order>, C2CError> {
         self.my_open_orders().await
     }
 
-    async fn orderbook(&self) -> Result<AggregatedOrders, (RejectCode, String)> {
+    async fn orderbook(&self) -> Result<AggregatedOrders, C2CError> {
         self.orderbook().await
     }
 
-    async fn make_orders(&self, orders: Vec<MakeOrderRequest>) -> Result<(), (RejectCode, String)> {
+    async fn make_orders(&self, orders: Vec<MakeOrderRequest>) -> Result<(), C2CError> {
         for order in orders {
             self.make_order(order).await?;
         }
         Ok(())
     }
 
-    async fn cancel_orders(&self, orders: Vec<CancelOrderRequest>) -> Result<(), (RejectCode, String)> {
+    async fn cancel_orders(&self, orders: Vec<CancelOrderRequest>) -> Result<(), C2CError> {
         for order in orders {
             self.cancel_order(order).await?;
         }
         Ok(())
     }
 
-    async fn account_balances(&self) -> Result<Vec<(CanisterId, u128)>, (RejectCode, String)> {
+    async fn account_balances(&self) -> Result<Vec<(CanisterId, u128)>, C2CError> {
         self.account_balances().await
     }
 }

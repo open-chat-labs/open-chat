@@ -1,12 +1,11 @@
 use super::swap_client::{SwapClient, SwapSuccess};
 use crate::token_swaps::{convert_error, nat_to_u128};
 use async_trait::async_trait;
-use ic_cdk::call::RejectCode;
 use icpswap_swap_pool_canister::ICPSwapResult;
 use ledger_utils::convert_to_subaccount;
 use serde::{Deserialize, Serialize};
 use types::icrc1::Account;
-use types::{CanisterId, TokenInfo};
+use types::{C2CError, CanisterId, TokenInfo};
 
 #[derive(Serialize, Deserialize)]
 pub struct ICPSwapClient {
@@ -57,14 +56,14 @@ impl SwapClient for ICPSwapClient {
         self.swap_canister_id
     }
 
-    async fn deposit_account(&self) -> Result<Account, (RejectCode, String)> {
+    async fn deposit_account(&self) -> Result<Account, C2CError> {
         Ok(Account {
             owner: self.swap_canister_id,
             subaccount: Some(convert_to_subaccount(&self.this_canister_id).0),
         })
     }
 
-    async fn deposit(&self, amount: u128) -> Result<u128, (RejectCode, String)> {
+    async fn deposit(&self, amount: u128) -> Result<u128, C2CError> {
         let token = self.input_token();
         let args = icpswap_swap_pool_canister::deposit::Args {
             token: token.ledger.to_string(),
@@ -73,11 +72,11 @@ impl SwapClient for ICPSwapClient {
         };
         match icpswap_swap_pool_canister_c2c_client::deposit(self.swap_canister_id, &args).await? {
             ICPSwapResult::Ok(amount_deposited) => Ok(nat_to_u128(amount_deposited)),
-            ICPSwapResult::Err(error) => Err(convert_error(error)),
+            ICPSwapResult::Err(error) => Err(convert_error(self.swap_canister_id, "deposit", error)),
         }
     }
 
-    async fn swap(&self, amount: u128, min_amount_out: u128) -> Result<Result<SwapSuccess, String>, (RejectCode, String)> {
+    async fn swap(&self, amount: u128, min_amount_out: u128) -> Result<Result<SwapSuccess, String>, C2CError> {
         let args = icpswap_swap_pool_canister::swap::Args {
             operator: self.this_canister_id,
             amount_in: amount.to_string(),
@@ -93,7 +92,7 @@ impl SwapClient for ICPSwapClient {
         }
     }
 
-    async fn withdraw(&self, successful_swap: bool, amount: u128) -> Result<u128, (RejectCode, String)> {
+    async fn withdraw(&self, successful_swap: bool, amount: u128) -> Result<u128, C2CError> {
         let token = if successful_swap { self.output_token() } else { self.input_token() };
         withdraw(self.swap_canister_id, token.ledger, amount, token.fee).await
     }
@@ -104,7 +103,7 @@ pub async fn withdraw(
     ledger_canister_id: CanisterId,
     amount: u128,
     fee: u128,
-) -> Result<u128, (RejectCode, String)> {
+) -> Result<u128, C2CError> {
     let args = icpswap_swap_pool_canister::withdraw::Args {
         token: ledger_canister_id.to_string(),
         amount: amount.into(),
@@ -112,6 +111,6 @@ pub async fn withdraw(
     };
     match icpswap_swap_pool_canister_c2c_client::withdraw(swap_canister_id, &args).await? {
         ICPSwapResult::Ok(amount_out) => Ok(nat_to_u128(amount_out)),
-        ICPSwapResult::Err(error) => Err(convert_error(error)),
+        ICPSwapResult::Err(error) => Err(convert_error(swap_canister_id, "withdraw", error)),
     }
 }

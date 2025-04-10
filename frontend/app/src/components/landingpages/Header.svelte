@@ -1,13 +1,12 @@
 <script lang="ts">
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import MenuIcon from "../MenuIcon.svelte";
+    import { ui } from "openchat-client";
+    import page from "page";
+    import Menu from "svelte-material-icons/Menu.svelte";
     import HoverIcon from "../HoverIcon.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
+    import { postsBySlug } from "./blog/posts";
     import MenuItems from "./MenuItems.svelte";
     import MobileMenuItems from "./MobileMenuItems.svelte";
-    import Menu from "svelte-material-icons/Menu.svelte";
-    import page from "page";
-    import { iconSize } from "../../stores/iconSize";
-    import { postsBySlug } from "./blog/posts";
 
     let showBlog = $derived(Object.values(postsBySlug).length > 0);
 
@@ -22,11 +21,11 @@
             <div class="logo-img"></div>
             <div class="name">OpenChat</div>
         </div>
-        {#if $mobileWidth}
+        {#if ui.mobileWidth}
             <MenuIcon position={"bottom"} align={"end"}>
                 {#snippet menuIcon()}
                     <HoverIcon>
-                        <Menu size={$iconSize} color={"var(--landing-txt)"} />
+                        <Menu size={ui.iconSize} color={"var(--landing-txt)"} />
                     </HoverIcon>
                 {/snippet}
                 {#snippet menuItems()}

@@ -26,37 +26,39 @@
 
     const client = getContext<OpenChat>("client");
 
-    let error: ResourceKey | undefined = undefined;
-    let groupUpgradeConcurrency = "10";
-    let communityUpgradeConcurrency = "10";
-    let userUpgradeConcurrency = "10";
-    let busy: Set<number> = new Set();
-    let governanceCanisterId = "";
-    let stake = "0";
+    let error: ResourceKey | undefined = $state(undefined);
+    let groupUpgradeConcurrency = $state("10");
+    let communityUpgradeConcurrency = $state("10");
+    let userUpgradeConcurrency = $state("10");
+    let busy: Set<number> = $state(new Set());
+    let governanceCanisterId = $state("");
+    let stake = $state("0");
 
-    let exchangeId: string = "";
-    let enabled: boolean = true;
-    let priceIncrement: string = "";
-    let orderSize: string = "";
-    let minOrderSize: string = "";
-    let maxBuyPrice: string = "";
-    let minSellPrice: string = "";
-    let spread: string = "";
-    let minOrdersPerDirection: string = "";
-    let maxOrdersPerDirection: string = "";
-    let maxOrdersToMakePerIteration: string = "";
-    let maxOrdersToCancelPerIteration: string = "";
-    let currentFees: Record<"ICP" | "CHAT", Fees>;
+    let exchangeId: string = $state("");
+    let enabled: boolean = $state(true);
+    let priceIncrement: string = $state("");
+    let orderSize: string = $state("");
+    let minOrderSize: string = $state("");
+    let maxBuyPrice: string = $state("");
+    let minSellPrice: string = $state("");
+    let spread: string = $state("");
+    let minOrdersPerDirection: string = $state("");
+    let maxOrdersPerDirection: string = $state("");
+    let maxOrdersToMakePerIteration: string = $state("");
+    let maxOrdersToCancelPerIteration: string = $state("");
+    let currentFees: Record<"ICP" | "CHAT", Fees> | undefined = $state();
     let originalFees: Record<"ICP" | "CHAT", DiamondMembershipFees>;
-    let feesTab: "ICP" | "CHAT" = "ICP";
-    let tokenLedger = "";
-    let tokenEnabled = true;
+    let feesTab: "ICP" | "CHAT" = $state("ICP");
+    let tokenLedger = $state("");
+    let tokenEnabled = $state(true);
 
-    $: groupUpgradeConcurrencyInvalid = isNaN(parseInt(groupUpgradeConcurrency, 0));
-    $: communityUpgradeConcurrencyInvalid = isNaN(parseInt(communityUpgradeConcurrency, 0));
-    $: userUpgradeConcurrencyInvalid = isNaN(parseInt(userUpgradeConcurrency, 0));
-    $: exchangeIdInvalid = isNaN(parseInt(exchangeId, 0));
-    $: tokenLedgerValid = tokenLedger.length > 0;
+    let groupUpgradeConcurrencyInvalid = $derived(isNaN(parseInt(groupUpgradeConcurrency, 0)));
+    let communityUpgradeConcurrencyInvalid = $derived(
+        isNaN(parseInt(communityUpgradeConcurrency, 0)),
+    );
+    let userUpgradeConcurrencyInvalid = $derived(isNaN(parseInt(userUpgradeConcurrency, 0)));
+    let exchangeIdInvalid = $derived(isNaN(parseInt(exchangeId, 0)));
+    let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
     onMount(() => {
         client.diamondMembershipFees().then((fees) => {
@@ -194,6 +196,7 @@
     }
 
     function mapFees(): DiamondMembershipFees[] {
+        if (currentFees === undefined) return [];
         const mapped = Object.values(currentFees).reduce((res, val) => {
             res[val.token] = {
                 token: val.token,
