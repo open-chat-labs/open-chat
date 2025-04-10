@@ -55,7 +55,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 }
 
-async fn delete_group(group_index_canister_id: CanisterId, args: &c2c_delete_group::Args) -> Response {
+pub(crate) async fn delete_group(group_index_canister_id: CanisterId, args: &c2c_delete_group::Args) -> Response {
     let method_name = "c2c_delete_group_msgpack";
     let payload = msgpack::serialize_then_unwrap(args);
     let c2c_cost = ic_cdk::api::cost_call(method_name.len() as u64, payload.len() as u64);

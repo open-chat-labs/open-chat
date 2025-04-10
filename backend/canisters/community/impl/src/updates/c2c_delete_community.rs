@@ -19,7 +19,7 @@ async fn c2c_delete_community(_args: Args) -> Response {
     let group_index_canister_id = prepare_result.group_index_canister_id;
     let c2c_delete_community_args = c2c_delete_community::Args {
         deleted_by: prepare_result.deleted_by,
-        community_name: prepare_result.communtiy_name,
+        community_name: prepare_result.community_name,
         members: prepare_result.members,
     };
 
@@ -29,7 +29,7 @@ async fn c2c_delete_community(_args: Args) -> Response {
 struct PrepareResult {
     group_index_canister_id: CanisterId,
     deleted_by: UserId,
-    communtiy_name: String,
+    community_name: String,
     members: Vec<UserId>,
 }
 
@@ -50,7 +50,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
             Ok(PrepareResult {
                 group_index_canister_id: state.data.group_index_canister_id,
                 deleted_by: member.user_id,
-                communtiy_name: state.data.name.value.clone(),
+                community_name: state.data.name.value.clone(),
                 members: state.data.members.iter_member_ids().collect(),
             })
         }
