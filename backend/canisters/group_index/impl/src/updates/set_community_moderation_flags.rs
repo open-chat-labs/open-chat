@@ -18,7 +18,7 @@ async fn set_community_moderation_flags(args: Args) -> Response {
     };
 
     match lookup_user(caller, user_index_canister_id).await {
-        Ok(Some(user)) if user.is_platform_operator => (),
+        Ok(Some(user)) if user.is_platform_moderator => (),
         Ok(_) => return NotAuthorized,
         Err(error) => return InternalError(format!("{error:?}")),
     };
