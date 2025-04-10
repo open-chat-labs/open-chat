@@ -4,6 +4,7 @@ use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
+use notifications_canister_c2c_client::NotificationPusherState;
 use stable_memory::get_reader;
 use tracing::info;
 use types::{ChitEarned, ChitEarnedReason};
@@ -27,6 +28,11 @@ fn post_upgrade(args: Args) {
             reason: ChitEarnedReason::StreakInsuranceClaim,
         })
     }
+
+    data.notifications_queue.set_state(NotificationPusherState {
+        notifications_canister: data.notifications_canister_id,
+        authorizer: data.local_user_index_canister_id,
+    });
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 

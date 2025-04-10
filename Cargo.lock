@@ -5424,8 +5424,11 @@ dependencies = [
  "ic-cdk 0.18.0-alpha.2",
  "msgpack",
  "notifications_canister",
+ "serde",
+ "timer_job_queues",
  "tracing",
  "types",
+ "utils 0.1.0",
 ]
 
 [[package]]
