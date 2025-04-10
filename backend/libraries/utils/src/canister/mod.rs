@@ -44,6 +44,10 @@ pub fn should_retry_failed_c2c_call(reject_code: RejectCode, message: &str) -> b
     }
 }
 
+pub fn is_target_canister_uninstalled(reject_code: RejectCode, message: &str) -> bool {
+    matches!(reject_code, RejectCode::CanisterReject) && message.contains("IC0537")
+}
+
 pub fn should_perform_upgrade(
     canister_id: CanisterId,
     current: BuildVersion,
