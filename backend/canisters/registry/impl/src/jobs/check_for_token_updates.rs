@@ -2,9 +2,11 @@ use crate::metadata_helper::MetadataHelper;
 use crate::{mutate_state, read_state};
 use constants::HOUR_IN_MS;
 use ic_cdk::call::RejectCode;
+use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use std::time::Duration;
 use tracing::{error, info};
 use types::{C2CError, CanisterId};
+use utils::canister::is_target_canister_uninstalled;
 use utils::canister_timers::run_now_then_interval;
 
 pub fn start_job() {
@@ -16,13 +18,21 @@ fn run() {
 }
 
 async fn run_async() {
-    let ledger_canister_ids: Vec<_> = read_state(|state| state.data.tokens.iter().map(|t| t.ledger_canister_id).collect());
+    let ledger_canister_ids: Vec<_> = read_state(|state| {
+        state
+            .data
+            .tokens
+            .iter()
+            .filter(|t| !t.uninstalled)
+            .map(|t| t.ledger_canister_id)
+            .collect()
+    });
 
     futures::future::join_all(ledger_canister_ids.into_iter().map(check_for_token_updates)).await;
 }
 
 async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), C2CError> {
-    let metadata = icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await?;
+    let metadata = get_metadata(ledger_canister_id).await?;
     let metadata_helper = match MetadataHelper::try_parse(metadata) {
         Ok(h) => h,
         Err(reason) => {
@@ -75,4 +85,18 @@ async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), C
     });
 
     Ok(())
+}
+
+async fn get_metadata(ledger_canister_id: CanisterId) -> Result<Vec<(String, MetadataValue)>, C2CError> {
+    match icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await {
+        Ok(metadata) => Ok(metadata),
+        Err(error) => {
+            if is_target_canister_uninstalled(error.reject_code(), error.message()) {
+                mutate_state(|state| {
+                    state.data.tokens.mark_uninstalled(ledger_canister_id, state.env.now());
+                });
+            }
+            Err(error)
+        }
+    }
 }

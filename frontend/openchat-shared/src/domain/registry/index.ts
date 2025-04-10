@@ -27,6 +27,7 @@ export type RegistryUpdatesResponseSuccess = {
     kind: "success";
     lastUpdated: bigint;
     tokenDetails: CryptocurrencyDetails[];
+    tokensUninstalled: string[];
     nervousSystemSummary: NervousSystemSummary[];
     swapProviders: DexId[] | undefined;
     messageFiltersAdded: MessageFilterSummary[];
