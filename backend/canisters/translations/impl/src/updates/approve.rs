@@ -9,7 +9,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE};
 use translations_canister::approve::{Response::*, *};
-use user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use user_index_canister_c2c_client::lookup_user;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -18,9 +18,9 @@ async fn approve(args: Args) -> Response {
         read_state(|state| (state.data.user_index_canister_id, state.env.caller(), state.env.now()));
 
     let user_id = match lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_operator => user.user_id,
-        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
+        Ok(Some(user)) if user.is_platform_operator => user.user_id,
+        Ok(_) => return NotAuthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     mutate_state(|state| match state.data.translations.approve(args.id, user_id, now) {

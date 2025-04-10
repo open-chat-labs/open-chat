@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::{add_hot_group_exclusion, remove_hot_group_exclusion};
 use types::{CanisterId, ChatId};
-use user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use user_index_canister_c2c_client::lookup_user;
 
 #[update(msgpack = true)]
 #[trace]
@@ -22,9 +22,9 @@ async fn add_hot_group_exclusion(args: add_hot_group_exclusion::Args) -> add_hot
     };
 
     match lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_moderator => (),
-        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
+        Ok(Some(user)) if user.is_platform_moderator => (),
+        Ok(_) => return NotAuthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     match mutate_state(|state| commit(&args.chat_id, true, state)) {
@@ -49,9 +49,9 @@ async fn remove_hot_group_exclusion(args: remove_hot_group_exclusion::Args) -> r
     };
 
     match lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_moderator => (),
-        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
+        Ok(Some(user)) if user.is_platform_moderator => (),
+        Ok(_) => return NotAuthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     match mutate_state(|state| commit(&args.chat_id, false, state)) {

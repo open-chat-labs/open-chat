@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::remove_participant::{Response::*, *};
 use group_chat_core::GroupRoleInternal;
-use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use local_user_index_canister_c2c_client::lookup_user;
 use msgpack::serialize_then_unwrap;
 use types::{CanisterId, OCResult, UserId};
 use user_canister::c2c_remove_from_group;
@@ -38,9 +38,9 @@ async fn remove_participant_impl(user_to_remove: UserId, block: bool) -> Respons
     // is not authorized
     if prepare_result.is_user_to_remove_an_owner {
         match lookup_user(user_to_remove.into(), prepare_result.local_user_index_canister_id).await {
-            Ok(user) if !user.is_platform_moderator => (),
-            Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-            Err(LookupUserError::InternalError(error)) => return InternalError(error),
+            Ok(Some(user)) if !user.is_platform_moderator => (),
+            Ok(_) => return NotAuthorized,
+            Err(error) => return InternalError(format!("{error:?}")),
         }
     }
 
