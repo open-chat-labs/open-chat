@@ -26,7 +26,6 @@ use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
 use notifications_canister_c2c_client::{NotificationPusherState, NotificationsBatch};
-use notifications_canister::c2c_push_notification;
 use oc_error_codes::OCErrorCode;
 use rand::rngs::StdRng;
 use rand::RngCore;
