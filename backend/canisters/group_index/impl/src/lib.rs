@@ -26,6 +26,7 @@ use types::{
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
 mod jobs;
@@ -58,6 +59,10 @@ impl RuntimeState {
     pub fn is_caller_governance_principal(&self) -> bool {
         let caller = self.env.caller();
         self.data.governance_principals.contains(&caller)
+    }
+
+    pub fn is_caller_user_index_canister(&self) -> bool {
+        self.env.caller() == self.data.user_index_canister_id
     }
 
     pub fn is_caller_registry_canister(&self) -> bool {
@@ -298,6 +303,8 @@ struct Data {
     pub upload_wasm_chunks_whitelist: HashSet<Principal>,
     pub ic_root_key: Vec<u8>,
     pub rng_seed: [u8; 32],
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
     pub local_group_index_event_sync_queue: GroupedTimerJobQueue<LocalGroupIndexEventBatch>,
 }
 
@@ -344,6 +351,7 @@ impl Data {
             upload_wasm_chunks_whitelist: HashSet::default(),
             ic_root_key,
             rng_seed: [0; 32],
+            idempotency_checker: IdempotencyChecker::default(),
             local_group_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
         }
     }
@@ -452,6 +460,7 @@ impl Default for Data {
             upload_wasm_chunks_whitelist: HashSet::default(),
             ic_root_key: Vec::new(),
             rng_seed: [0; 32],
+            idempotency_checker: IdempotencyChecker::default(),
             local_group_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
         }
     }

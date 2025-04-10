@@ -9,6 +9,7 @@ mod updates;
 pub use lifecycle::*;
 use oc_error_codes::OCError;
 pub use queries::*;
+use types::UserId;
 pub use updates::*;
 
 #[ts_export(community)]
@@ -29,6 +30,7 @@ pub enum EventsResponse {
 pub enum LocalGroupIndexEvent {
     NameChanged(NameChanged),
     VerifiedChanged(VerifiedChanged),
+    UserDeleted(UserId),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

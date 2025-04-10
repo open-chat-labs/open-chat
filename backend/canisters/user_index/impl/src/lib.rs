@@ -1,3 +1,4 @@
+use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::notifications_index_event_batch::NotificationsIndexEventBatch;
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
@@ -174,7 +175,7 @@ impl RuntimeState {
         jobs::submit_message_to_modclub::start_job_if_required(self);
     }
 
-    pub fn delete_user(&mut self, user_id: UserId, triggered_by_user: bool) {
+    pub fn delete_user(&mut self, user_id: UserId, triggered_by_user: bool) -> bool {
         let now = self.env.now();
         if let Some(user) = self.data.users.delete_user(user_id, now) {
             self.data.local_index_map.remove_user(&user_id);
@@ -206,6 +207,9 @@ impl RuntimeState {
             jobs::remove_from_online_users_canister::start_job_if_required(self);
 
             self.data.storage_index_users_to_remove_queue.push(user.principal);
+            true
+        } else {
+            false
         }
     }
 
@@ -367,6 +371,7 @@ struct Data {
     pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
+    pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
     pub notifications_index_event_sync_queue: BatchedTimerJobQueue<NotificationsIndexEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
@@ -450,6 +455,7 @@ impl Data {
             storage_index_user_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
+            group_index_event_sync_queue: BatchedTimerJobQueue::new(group_index_canister_id, false),
             notifications_index_event_sync_queue: BatchedTimerJobQueue::new(notifications_index_canister_id, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
@@ -564,6 +570,7 @@ impl Default for Data {
             storage_index_user_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
+            group_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             notifications_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),

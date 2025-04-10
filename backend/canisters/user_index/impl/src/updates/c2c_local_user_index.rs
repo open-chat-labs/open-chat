@@ -6,13 +6,15 @@ use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use constants::ONE_MB;
 use event_store_producer::EventBuilder;
+use group_index_canister::UserIndexEvent as GroupIndexEvent;
 use local_user_index_canister::{
     DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
     UserRegistered, UsernameChanged,
 };
+use rand::RngCore;
 use std::cell::LazyCell;
 use storage_index_canister::add_or_update_users::UserConfig;
-use types::{CanisterId, MessageContent, TextContent, TimestampMillis, UserId, UserType};
+use types::{CanisterId, IdempotentEnvelope, MessageContent, TextContent, TimestampMillis, UserId, UserType};
 use user_index_canister::c2c_local_user_index::{Response::*, *};
 use user_index_canister::LocalUserIndexEvent;
 
@@ -134,6 +136,11 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         LocalUserIndexEvent::NotifyStreakInsurancePayment(payment) => state.data.streak_insurance_logs.mark_payment(*payment),
         LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim) => state.data.streak_insurance_logs.mark_claim(*claim),
+        LocalUserIndexEvent::NotifyOfUserDeleted(c, u) => state.data.group_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: **now,
+            idempotency_id: state.env.rng().next_u64(),
+            value: GroupIndexEvent::NotifyOfUserDeleted(c, u),
+        }),
         LocalUserIndexEvent::BotInstalled(ev) => {
             state
                 .data

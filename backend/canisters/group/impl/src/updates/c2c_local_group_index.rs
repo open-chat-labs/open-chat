@@ -55,6 +55,10 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
         LocalGroupIndexEvent::VerifiedChanged(ev) => {
             state.data.verified = Timestamped::new(ev.verified, **now);
         }
+        LocalGroupIndexEvent::UserDeleted(user_id) => {
+            state.data.chat.members.remove(user_id, **now);
+            state.data.remove_user(user_id, None);
+        }
     }
 
     handle_activity_notification(state);
