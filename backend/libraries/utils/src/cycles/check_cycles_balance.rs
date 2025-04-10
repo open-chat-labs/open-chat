@@ -4,7 +4,7 @@ use std::cmp::max;
 use tracing::error;
 use types::{CanisterId, Cycles};
 
-const FREEZE_THRESHOLD_SECONDS: u32 = 30 * 24 * 60 * 60; // 30 days
+pub const MIN_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + 50_000_000_000;
 
 pub fn check_cycles_balance(top_up_canister_id: CanisterId) {
     if should_notify() {
