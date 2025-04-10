@@ -3329,7 +3329,7 @@ export class OpenChatAgent extends EventTarget {
                             tokenDetails: distinctBy(
                                 [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
                                 (t) => t.ledger,
-                            ),
+                            ).filter((t) => !updates.tokensUninstalled.includes(t.ledger)),
                             nervousSystemSummary: distinctBy(
                                 [
                                     ...updates.nervousSystemSummary,

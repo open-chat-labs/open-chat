@@ -14,7 +14,15 @@ fn run() {
 }
 
 async fn run_async() {
-    let ledger_canister_ids: Vec<_> = read_state(|state| state.data.tokens.iter().map(|t| t.ledger_canister_id).collect());
+    let ledger_canister_ids: Vec<_> = read_state(|state| {
+        state
+            .data
+            .tokens
+            .iter()
+            .filter(|t| !t.uninstalled)
+            .map(|t| t.ledger_canister_id)
+            .collect()
+    });
 
     futures::future::join_all(ledger_canister_ids.into_iter().map(get_supported_standards)).await;
 }

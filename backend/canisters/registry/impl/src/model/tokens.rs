@@ -53,6 +53,7 @@ impl Tokens {
                 enabled: true,
                 last_updated: now,
                 payments: payment.into_iter().collect(),
+                uninstalled: false,
             });
             self.last_updated = now;
             true
@@ -106,6 +107,14 @@ impl Tokens {
                 token.last_updated = now;
                 self.last_updated = now;
             }
+        }
+    }
+
+    pub fn mark_uninstalled(&mut self, ledger_canister_id: CanisterId, now: TimestampMillis) {
+        if let Some(token) = self.get_mut(ledger_canister_id) {
+            token.uninstalled = true;
+            token.last_updated = now;
+            self.last_updated = now;
         }
     }
 
