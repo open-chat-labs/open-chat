@@ -6834,6 +6834,7 @@ export type RegistryUpdatesSuccessResult = Static<typeof RegistryUpdatesSuccessR
 export const RegistryUpdatesSuccessResult = Type.Object({
     last_updated: Type.BigInt(),
     token_details: Type.Optional(Type.Array(RegistryTokenDetails)),
+    tokens_uninstalled: Type.Optional(Type.Array(TSPrincipal)),
     nervous_system_details: Type.Array(RegistryNervousSystemSummary),
     message_filters_added: Type.Array(RegistryMessageFilterSummary),
     message_filters_removed: Type.Array(Type.BigInt()),

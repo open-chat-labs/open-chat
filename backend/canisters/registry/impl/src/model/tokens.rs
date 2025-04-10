@@ -53,6 +53,7 @@ impl Tokens {
                 enabled: true,
                 last_updated: now,
                 payments: payment.into_iter().collect(),
+                uninstalled: false,
             });
             self.last_updated = now;
             true
@@ -60,53 +61,74 @@ impl Tokens {
     }
 
     pub fn update(&mut self, args: registry_canister::update_token::Args, now: TimestampMillis) -> bool {
-        if let Some(token) = self.get_mut(args.ledger_canister_id) {
-            if let Some(name) = args.name {
-                token.name = name;
-            }
-            if let Some(symbol) = args.symbol {
-                token.symbol = symbol;
-            }
-            if let Some(info_url) = args.info_url {
-                token.info_url = info_url;
-            }
-            if let Some(transaction_url_format) = args.transaction_url_format {
-                token.transaction_url_format = transaction_url_format;
-            }
-            if let Some(logo) = args.logo {
-                token.logo_id = logo_id(&logo);
-                token.logo = logo;
-            }
-            if let Some(fee) = args.fee {
-                token.fee = fee;
-            }
-            token.last_updated = now;
-            self.last_updated = now;
-            info!(ledger_canister_id = %args.ledger_canister_id, "Token details updated");
-            true
-        } else {
-            false
-        }
+        self.apply_update(
+            args.ledger_canister_id,
+            |t| {
+                if let Some(name) = args.name {
+                    t.name = name;
+                }
+                if let Some(symbol) = args.symbol {
+                    t.symbol = symbol;
+                }
+                if let Some(info_url) = args.info_url {
+                    t.info_url = info_url;
+                }
+                if let Some(transaction_url_format) = args.transaction_url_format {
+                    t.transaction_url_format = transaction_url_format;
+                }
+                if let Some(logo) = args.logo {
+                    t.logo_id = logo_id(&logo);
+                    t.logo = logo;
+                }
+                if let Some(fee) = args.fee {
+                    t.fee = fee;
+                }
+                info!(ledger_canister_id = %args.ledger_canister_id, "Token details updated");
+                true
+            },
+            now,
+        )
     }
 
     pub fn set_standards(&mut self, ledger_canister_id: CanisterId, supported_standards: Vec<String>, now: TimestampMillis) {
-        if let Some(token) = self.get_mut(ledger_canister_id) {
-            if token.supported_standards != supported_standards {
-                token.supported_standards = supported_standards;
-                token.last_updated = now;
-                self.last_updated = now;
-            }
-        }
+        self.apply_update(
+            ledger_canister_id,
+            |t| {
+                if t.supported_standards != supported_standards {
+                    t.supported_standards = supported_standards;
+                    true
+                } else {
+                    false
+                }
+            },
+            now,
+        );
     }
 
     pub fn set_enabled(&mut self, ledger_canister_id: CanisterId, enabled: bool, now: TimestampMillis) {
-        if let Some(token) = self.get_mut(ledger_canister_id) {
-            if token.enabled != enabled {
-                token.enabled = enabled;
-                token.last_updated = now;
-                self.last_updated = now;
-            }
-        }
+        self.apply_update(
+            ledger_canister_id,
+            |t| {
+                if t.enabled != enabled {
+                    t.enabled = enabled;
+                    true
+                } else {
+                    false
+                }
+            },
+            now,
+        );
+    }
+
+    pub fn mark_uninstalled(&mut self, ledger_canister_id: CanisterId, now: TimestampMillis) {
+        self.apply_update(
+            ledger_canister_id,
+            |t| {
+                t.uninstalled = true;
+                true
+            },
+            now,
+        );
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
@@ -125,8 +147,20 @@ impl Tokens {
         self.tokens.iter().find(|t| t.ledger_canister_id == ledger_canister_id)
     }
 
-    fn get_mut(&mut self, ledger_canister_id: CanisterId) -> Option<&mut TokenDetails> {
-        self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id)
+    fn apply_update<F: FnOnce(&mut TokenDetails) -> bool>(
+        &mut self,
+        ledger_canister_id: CanisterId,
+        update_fn: F,
+        now: TimestampMillis,
+    ) -> bool {
+        if let Some(token) = self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id) {
+            if update_fn(token) {
+                token.last_updated = now;
+                self.last_updated = now;
+                return true;
+            }
+        }
+        false
     }
 }
 
