@@ -9,6 +9,7 @@ use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::post_upgrade::Args;
 use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
+use notifications_canister_c2c_client::NotificationPusherState;
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
@@ -21,8 +22,13 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
+
+    data.notifications_queue.set_state(NotificationPusherState {
+        notifications_canister: data.notifications_canister_id,
+        authorizer: data.local_group_index_canister_id,
+    });
 
     if should_delete_group(&data) {
         ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::futures::spawn(delete_group_async()));

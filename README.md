@@ -20,7 +20,7 @@ Download from https://nodejs.org/en/download
 
 ## Testing locally
 
-Start DFX using `dfx start`
+Start DFX using `dfx start --clean`
 
 To install all the necessary canisters (OpenChat and NNS) run `./scripts/deploy-local.sh`
 
@@ -87,9 +87,9 @@ If you've built the image yourself, then the last argument should be equal to th
 
 Once the container is fully running, the app UI should be available on [http://localhost:5001](http://localhost:5001).
 
-### Offchain vs Canister bots
+### Off-chain vs Canister bots
 
-With the offchain bots, there are no additional steps to take to get the bot connected to the OC app. It should be enough for the bot to run on another available localhost port, and for the OC app to be able to access it.
+With the off-chain bots, there are no additional steps to take to get the bot connected to the OC app. It should be enough for the bot to run on another available localhost port, and for the OC app to be able to access it.
 
 For the canister bots, make sure your `dfx.json` has the following _networks_ entry:
 
@@ -113,7 +113,7 @@ You will still need to have the `dfx` installed locally for issuing commands, bu
 
 #### Deploy a canister bot locally
 
-If you're wondering about _how to deploy_ your canister bot locally, there are a few exmaples of deployment scripts in the [`open-chat-bots`](https://github.com/open-chat-labs/open-chat-bots/tree/main/rs/scripts) repository that you may use (with minor modifications).
+If you're wondering about _how to deploy_ your canister bot locally, there are a few examples of deployment scripts in the [`open-chat-bots`](https://github.com/open-chat-labs/open-chat-bots/tree/main/rs/scripts) repository that you may use (with minor modifications).
 
 ## License
 
