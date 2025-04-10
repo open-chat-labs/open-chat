@@ -457,7 +457,7 @@
                 ui.filterRightPanelHistory((state) => state.kind !== "community_filters");
                 if (
                     $anonUser &&
-                    route.kind === "chat_list_route" &&
+                    pathState.chatListRoute(route) &&
                     (route.scope.kind === "direct_chat" || route.scope.kind === "favourite")
                 ) {
                     client.updateIdentityState({ kind: "logging_in" });
@@ -465,35 +465,35 @@
                     return;
                 }
 
-                if ("scope" in route) {
+                if (pathState.scopedRoute(route)) {
                     client.setChatListScope(route.scope);
                 }
 
                 // When we have a middle panel and this route is for a chat list then select the first chat
-                if (route.kind === "chat_list_route" && selectFirstChat()) {
+                if (pathState.chatListRoute(route) && selectFirstChat()) {
                     return;
                 }
 
                 // first close any open thread
                 closeThread();
 
-                if (route.kind === "home_route") {
+                if (pathState.homeRoute(route)) {
                     client.clearSelectedChat();
                     filterChatSpecificRightPanelStates();
-                } else if (route.kind === "communities_route") {
+                } else if (pathState.communitiesRoute(route)) {
                     client.clearSelectedChat();
                     ui.rightPanelHistory = ui.fullWidth ? [{ kind: "community_filters" }] : [];
-                } else if (route.kind === "selected_community_route") {
+                } else if (pathState.selectedCommunityRoute(route)) {
                     await selectCommunity(route.communityId);
                     if (selectFirstChat()) {
                         communityLoaded = true;
                         return;
                     }
                 } else if (
-                    route.kind === "global_chat_selected_route" ||
-                    route.kind === "selected_channel_route"
+                    pathState.globalChatSelectedRoute(route) ||
+                    pathState.selectedChannelRoute(route)
                 ) {
-                    if (route.kind === "selected_channel_route") {
+                    if (pathState.selectedChannelRoute(route)) {
                         if (!communityLoaded) {
                             await selectCommunity(route.communityId, false);
                         }
@@ -517,7 +517,7 @@
                     }
                     filterChatSpecificRightPanelStates();
 
-                    if (route.kind === "share_route") {
+                    if (pathState.shareRoute(route)) {
                         share = {
                             title: route.title,
                             text: route.text,
