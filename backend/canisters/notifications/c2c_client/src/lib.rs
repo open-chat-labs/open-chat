@@ -9,7 +9,7 @@ use utils::canister::should_retry_failed_c2c_call;
 // Queries
 
 // Updates
-generate_c2c_call!(c2c_push_notifications);
+generate_c2c_call!(c2c_push_notifications, 300);
 generate_c2c_call!(c2c_notifications_index, 300);
 
 timer_job_batch!(
