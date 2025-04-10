@@ -181,6 +181,14 @@ export class BotState {
         this.#prefix = v;
     }
 
+    public get prefixParts() {
+        return this.#prefixParts;
+    }
+
+    public get parsedPrefix() {
+        return this.#parsedPrefix;
+    }
+
     focusPreviousCommand() {
         this.#focusedCommandIndex = (this.#focusedCommandIndex + 1) % this.#commands.length;
     }
