@@ -40,8 +40,8 @@ impl TimerJobItem for NotificationsBatch {
             Ok(c2c_push_notifications::Response::Success) => Ok(()),
             Ok(c2c_push_notifications::Response::InternalError(_)) => Err(true),
             Ok(c2c_push_notifications::Response::Blocked) => Err(false),
-            Err((code, msg)) => {
-                let retry = should_retry_failed_c2c_call(code, &msg);
+            Err(error) => {
+                let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
                 Err(retry)
             }
         }

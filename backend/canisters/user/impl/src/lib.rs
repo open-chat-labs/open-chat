@@ -27,7 +27,6 @@ use model::referrals::Referrals;
 use model::streak::Streak;
 use msgpack::serialize_then_unwrap;
 use notifications_canister_c2c_client::{NotificationPusherState, NotificationsBatch};
-use notifications_canister::c2c_push_notification;
 use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
