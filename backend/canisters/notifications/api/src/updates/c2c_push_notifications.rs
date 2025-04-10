@@ -3,7 +3,7 @@ use serde_bytes::ByteBuf;
 use std::fmt::{Debug, Formatter};
 use types::{CanisterId, Chat, ChatEventType, EventIndex, IdempotentEnvelope, MessageIndex, UserId};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     #[serde(rename = "n")]
     pub notifications: Vec<IdempotentEnvelope<Notification>>,
@@ -11,7 +11,7 @@ pub struct Args {
     pub authorizer: Option<CanisterId>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Notification {
     #[serde(rename = "u")]
     User(UserNotification),
@@ -19,7 +19,7 @@ pub enum Notification {
     Bot(BotNotification),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct UserNotification {
     #[serde(rename = "s")]
     pub sender: Option<UserId>,
@@ -29,7 +29,7 @@ pub struct UserNotification {
     pub notification_bytes: ByteBuf,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BotNotification {
     #[serde(rename = "e")]
     pub event_type: ChatEventType,

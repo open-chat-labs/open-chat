@@ -69,7 +69,7 @@ fn c2c_push_notifications_impl(
         if state
             .data
             .idempotency_checker
-            .check(caller, notification.idempotency_id, notification.created_at)
+            .check(caller, notification.created_at, notification.idempotency_id)
         {
             match notification.value {
                 Notification::User(n) => {
