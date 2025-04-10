@@ -44,6 +44,9 @@ fn post_upgrade(args: Args) {
     });
 }
 
+// In release 2.0.1634 on 11/03/2025 we posted in groups which had been dormant for at least a year
+// stating that they would be deleted in 30 days if they had still received no new messages.
+// This function returns true if the latest message is still that notice.
 fn should_delete_group(data: &Data) -> bool {
     data.chat
         .events
