@@ -15,11 +15,5 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    AlreadyFollowing,
-    ThreadNotFound,
-    UserNotInGroup,
-    UserSuspended,
-    UserLapsed,
-    GroupFrozen,
     Error(OCError),
 }

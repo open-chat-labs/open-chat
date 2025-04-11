@@ -42,11 +42,6 @@ impl From<Args> for send_message::Args {
 pub enum Response {
     Success(SuccessResult),
     NotAuthorized,
-    CommunityFrozen,
-    ChannelNotFound,
-    ThreadNotFound,
-    InvalidRequest(String),
-    MessageAlreadyFinalised,
     Error(OCError),
 }
 
@@ -56,22 +51,7 @@ impl From<send_message::Response> for Response {
 
         match value {
             send_message::Response::Success(success_result) => Success(success_result),
-            send_message::Response::ChannelNotFound => ChannelNotFound,
-            send_message::Response::ThreadMessageNotFound => ThreadNotFound,
-            send_message::Response::MessageEmpty => InvalidRequest("Message empty".to_string()),
-            send_message::Response::TextTooLong(max) => InvalidRequest(format!("Text too long, max: {max}")),
-            send_message::Response::InvalidPoll(reason) => InvalidRequest(format!("Invalid poll, reason: {reason:?}")),
-            send_message::Response::InvalidRequest(reason) => InvalidRequest(reason),
-            send_message::Response::CommunityFrozen => CommunityFrozen,
-            send_message::Response::MessageAlreadyExists => MessageAlreadyFinalised,
             send_message::Response::Error(error) => Error(error),
-            send_message::Response::NotAuthorized
-            | send_message::Response::UserNotInCommunity
-            | send_message::Response::UserNotInChannel
-            | send_message::Response::RulesNotAccepted
-            | send_message::Response::CommunityRulesNotAccepted
-            | send_message::Response::UserLapsed
-            | send_message::Response::UserSuspended => NotAuthorized,
         }
     }
 }

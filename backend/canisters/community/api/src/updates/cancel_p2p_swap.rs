@@ -2,7 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{ChannelId, MessageId, MessageIndex, SwapStatusError};
+use types::{ChannelId, MessageId, MessageIndex};
 
 #[ts_export(community, cancel_p2p_swap)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -16,11 +16,5 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    StatusError(SwapStatusError),
-    SwapNotFound,
-    ChannelNotFound,
-    UserNotInCommunity,
-    UserNotInChannel,
-    ChatFrozen,
     Error(OCError),
 }
