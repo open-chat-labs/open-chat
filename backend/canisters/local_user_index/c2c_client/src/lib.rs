@@ -22,23 +22,15 @@ generate_c2c_call!(c2c_user_canister, 300);
 generate_c2c_call!(join_channel);
 generate_c2c_call!(join_group);
 
-#[derive(Debug)]
-pub enum LookupUserError {
-    UserNotFound,
-    InternalError(String),
-}
-
 pub async fn lookup_user(
     user_id_or_principal: Principal,
     local_user_index_canister_id: CanisterId,
-) -> Result<GlobalUser, LookupUserError> {
+) -> Result<Option<GlobalUser>, C2CError> {
     let args = c2c_lookup_user::Args { user_id_or_principal };
 
-    match crate::c2c_lookup_user(local_user_index_canister_id, &args).await {
-        Ok(c2c_lookup_user::Response::Success(user)) => Ok(user),
-        Ok(_) => Err(LookupUserError::UserNotFound),
-        Err(error) => Err(LookupUserError::InternalError(format!("{error:?}"))),
-    }
+    let response = crate::c2c_lookup_user(local_user_index_canister_id, &args).await?;
+
+    Ok(if let c2c_lookup_user::Response::Success(user) = response { Some(user) } else { None })
 }
 
 pub async fn push_wasm_in_chunks(

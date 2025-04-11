@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::{freeze_community, unfreeze_community};
 use types::{CanisterId, CommunityId, FrozenGroupInfo};
-use user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use user_index_canister_c2c_client::lookup_user;
 
 #[update(msgpack = true)]
 #[trace]
@@ -22,9 +22,9 @@ async fn freeze_community(args: freeze_community::Args) -> freeze_community::Res
     };
 
     let user_id = match lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_moderator => user.user_id,
-        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
+        Ok(Some(user)) if user.is_platform_moderator => user.user_id,
+        Ok(_) => return NotAuthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     let c2c_args = community_canister::c2c_freeze_community::Args {
@@ -88,9 +88,9 @@ async fn unfreeze_community(args: unfreeze_community::Args) -> unfreeze_communit
     };
 
     let user_id = match lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_moderator => user.user_id,
-        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
+        Ok(Some(user)) if user.is_platform_moderator => user.user_id,
+        Ok(_) => return NotAuthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     let c2c_args = community_canister::c2c_unfreeze_community::Args { caller: user_id };
