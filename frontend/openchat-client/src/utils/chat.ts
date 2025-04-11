@@ -280,7 +280,7 @@ export function createMessage(
     };
 }
 
-export function useDraftMessagesStore(contentType: MessageContent["kind"]): boolean {
+export function bypassDraftMessagesStore(contentType: MessageContent["kind"]): boolean {
     switch (contentType) {
         case "crypto_content":
         case "meme_fighter_content":
@@ -289,10 +289,10 @@ export function useDraftMessagesStore(contentType: MessageContent["kind"]): bool
         case "poll_content":
         case "prize_content":
         case "prize_content_initial":
-            return false;
+            return true;
 
         default:
-            return true;
+            return false;
     }
 }
 
