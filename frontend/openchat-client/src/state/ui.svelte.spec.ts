@@ -74,9 +74,15 @@ describe("ui state", () => {
 
             test("show left", () => {
                 expect(ui.showLeft).toBe(true);
-                pathState.setRouteParams(mockContext, { kind: "communities_route" });
+                pathState.setRouteParams(mockContext, {
+                    kind: "communities_route",
+                    scope: { kind: "none" },
+                });
                 expect(ui.showLeft).toBe(false);
-                pathState.setRouteParams(mockContext, { kind: "admin_route" });
+                pathState.setRouteParams(mockContext, {
+                    kind: "admin_route",
+                    scope: { kind: "none" },
+                });
                 expect(ui.showLeft).toBe(false);
             });
         });
@@ -95,7 +101,10 @@ describe("ui state", () => {
 
             test("show middle", () => {
                 expect(ui.showMiddle).toBe(false);
-                pathState.setRouteParams(mockContext, { kind: "communities_route" });
+                pathState.setRouteParams(mockContext, {
+                    kind: "communities_route",
+                    scope: { kind: "none" },
+                });
                 expect(ui.showMiddle).toBe(true);
                 ui.pushRightPanelHistory({ kind: "show_group_members" });
                 expect(ui.showMiddle).toBe(false);
@@ -112,7 +121,10 @@ describe("ui state", () => {
                 ui.pushRightPanelHistory({ kind: "show_group_members" });
                 expect(ui.showNav).toBe(false);
                 ui.popRightPanelHistory();
-                pathState.setRouteParams(mockContext, { kind: "communities_route" });
+                pathState.setRouteParams(mockContext, {
+                    kind: "communities_route",
+                    scope: { kind: "none" },
+                });
                 expect(ui.showNav).toBe(true);
             });
         });

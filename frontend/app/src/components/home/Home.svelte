@@ -481,7 +481,7 @@
                     client.clearSelectedChat();
                     ui.rightPanelHistory = ui.fullWidth ? [{ kind: "community_filters" }] : [];
                 } else if (pathState.isSelectedCommunityRoute(route)) {
-                    await selectCommunity(route.communityId);
+                    // await selectCommunity(route.communityId);
                     if (selectFirstChat()) {
                         communityLoaded = true;
                         return;
@@ -1165,6 +1165,7 @@
     );
     let nervousSystem = $derived(client.tryGetNervousSystem(governanceCanisterId));
     // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
+
     trackedEffect("identity-state", () => {
         if ($identityState.kind === "registering") {
             modal = { kind: "registering" };

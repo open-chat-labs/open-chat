@@ -1,5 +1,7 @@
 import "page";
 
+const noScope: NullScope = { kind: "none" };
+
 export class PathState {
     #notFound = $state<boolean>(false);
     #pathContextStore = $state<PageJS.Context | undefined>(undefined);
@@ -10,7 +12,7 @@ export class PathState {
             ? new URLSearchParams(this.#pathContextStore.querystring)
             : new URLSearchParams(),
     );
-    #route = $state<RouteParams>({ kind: "not_found_route" });
+    #route = $state<RouteParams>({ scope: noScope, kind: "not_found_route" });
     public set routerReady(val: boolean) {
         this.#routerReady = val;
     }
@@ -36,19 +38,6 @@ export class PathState {
         this.#route = p;
         this.#pathContextStore = ctx;
         this.#notFound = false;
-    }
-
-    public scopedRoute(route: RouteParams): route is ScopedRoute {
-        const scopedKinds: RouteParams["kind"][] = [
-            "chat_list_route",
-            "home_route",
-            "global_chat_selected_route",
-            "favourites_route",
-            "selected_community_route",
-            "selected_channel_route",
-            "explore_groups_route",
-        ];
-        return scopedKinds.includes(route.kind);
     }
 
     isChatListRoute(route: RouteParams): route is ChatListRoute {
@@ -119,6 +108,7 @@ import type {
     CommunityIdentifier,
     DirectChatIdentifier,
     GroupChatIdentifier,
+    NullScope,
 } from "openchat-shared";
 
 export type LandingPageRoute =
@@ -149,27 +139,19 @@ export type RouteParams =
     | HotGroupsRoute
     | AdminRoute;
 
-type ScopedRoute =
-    | ChatListRoute
-    | HomeRoute
-    | GlobalSelectedChatRoute
-    | FavouritesRoute
-    | SelectedCommunityRoute
-    | SelectedChannelRoute
-    | HotGroupsRoute;
-
 type Scoped = { scope: ChatListScope };
+type NoScope = { scope: { kind: "none" } };
 
 export type ChatListRoute = Scoped & { kind: "chat_list_route" };
-export type HomeLandingRoute = { kind: "home_landing_route" };
-export type FeaturesRoute = { kind: "features_route" };
-export type ArchitectureRoute = { kind: "architecture_route" };
-export type WhitepaperRoute = { kind: "whitepaper_route" };
-export type RoadmapRoute = { kind: "roadmap_route" };
-export type FaqRoute = { kind: "faq_route" };
-export type DiamondRoute = { kind: "diamond_route" };
-export type GuidelinesRoute = { kind: "guidelines_route" };
-export type TermsRoute = { kind: "terms_route" };
+export type HomeLandingRoute = NoScope & { kind: "home_landing_route" };
+export type FeaturesRoute = NoScope & { kind: "features_route" };
+export type ArchitectureRoute = NoScope & { kind: "architecture_route" };
+export type WhitepaperRoute = NoScope & { kind: "whitepaper_route" };
+export type RoadmapRoute = NoScope & { kind: "roadmap_route" };
+export type FaqRoute = NoScope & { kind: "faq_route" };
+export type DiamondRoute = NoScope & { kind: "diamond_route" };
+export type GuidelinesRoute = NoScope & { kind: "guidelines_route" };
+export type TermsRoute = NoScope & { kind: "terms_route" };
 
 export type HomeRoute = Scoped & {
     kind: "home_route";
@@ -206,15 +188,15 @@ export type SelectedChannelRoute = Scoped & {
     open: boolean;
 };
 
-export type CommunitiesRoute = {
+export type CommunitiesRoute = NoScope & {
     kind: "communities_route";
 };
 
-export type AdminRoute = {
+export type AdminRoute = NoScope & {
     kind: "admin_route";
 };
 
-export type ShareRoute = {
+export type ShareRoute = NoScope & {
     kind: "share_route";
     title: string;
     text: string;
@@ -225,12 +207,12 @@ export type HotGroupsRoute = Scoped & {
     kind: "explore_groups_route";
 };
 
-export type BlogRoute = {
+export type BlogRoute = NoScope & {
     kind: "blog_route";
     slug?: string;
 };
 
-export type NotFound = {
+export type NotFound = NoScope & {
     kind: "not_found_route";
 };
 

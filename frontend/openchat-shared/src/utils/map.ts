@@ -4,7 +4,6 @@
  * But that doesn't work with ChatIdentifier
  *  */
 
-import { SvelteMap } from "svelte/reactivity";
 import type { CommunityIdentifier } from "../domain";
 import type { ChatIdentifier, MessageContext } from "../domain/chat";
 
@@ -12,14 +11,14 @@ export class SafeMap<K, V> {
     protected constructor(
         private toString: (key: K) => string,
         private fromString: (key: string) => K,
-        protected _map: Map<string, V> = new SvelteMap<string, V>(),
+        protected _map: Map<string, V> = new Map<string, V>(),
     ) {}
 
     map<A>(fn: (key: K, val: V) => A): SafeMap<K, A> {
         const mapped = [...this._map.entries()].map(([k, v]) => {
             return [k, fn(this.fromString(k), v)] as [string, A];
         });
-        return new SafeMap<K, A>(this.toString, this.fromString, new SvelteMap<string, A>(mapped));
+        return new SafeMap<K, A>(this.toString, this.fromString, new Map<string, A>(mapped));
     }
 
     merge(other: SafeMap<K, V>): SafeMap<K, V> {
@@ -44,7 +43,7 @@ export class SafeMap<K, V> {
     }
 
     clone(): SafeMap<K, V> {
-        const clone = new SafeMap<K, V>(this.toString, this.fromString, new SvelteMap(this._map));
+        const clone = new SafeMap<K, V>(this.toString, this.fromString, new Map(this._map));
         return clone;
     }
 
@@ -133,7 +132,7 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
     }
 
     static fromJSON<V>(json: string): ChatMap<V> {
-        return new ChatMap<V>(new SvelteMap(JSON.parse(json)));
+        return new ChatMap<V>(new Map(JSON.parse(json)));
     }
 }
 

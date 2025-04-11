@@ -4,8 +4,10 @@ export * from "./events";
 export { OpenChat } from "./openchat";
 export * from "./stores";
 
+export { app } from "./state/app.svelte";
 export { botState } from "./state/bots.svelte";
 export * from "./state/path.svelte";
+export { debouncedDerived } from "./state/reactivity.svelte";
 export { ScreenHeight, ScreenWidth, ui, type Layout } from "./state/ui.svelte";
 export type { FailedMessages } from "./stores/failedMessages";
 export { FilteredProposals } from "./stores/filteredProposals";

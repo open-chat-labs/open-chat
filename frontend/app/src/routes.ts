@@ -1,14 +1,16 @@
 import {
+    pathState,
     type ChatListScope,
     type ChatType,
     type CommunityIdentifier,
     type DirectChatIdentifier,
     type GroupChatIdentifier,
-    pathState,
     type RouteParams,
 } from "openchat-client";
-import { toBigInt32 } from "openchat-shared";
+import { toBigInt32, type NullScope } from "openchat-shared";
 import page from "page";
+
+const noScope: NullScope = { kind: "none" };
 
 // if we attempt to use the router before it is set up it will blow up
 function getRouter(): Promise<typeof page> {
@@ -43,12 +45,14 @@ function qs(ctx: PageJS.Context): URLSearchParams {
 export function adminRoute(_ctx: PageJS.Context): RouteParams {
     return {
         kind: "admin_route",
+        scope: noScope,
     };
 }
 
 export function communitesRoute(_ctx: PageJS.Context): RouteParams {
     return {
         kind: "communities_route",
+        scope: noScope,
     };
 }
 
@@ -59,6 +63,7 @@ export function shareRoute(ctx: PageJS.Context): RouteParams {
         title: $qs.get("title") ?? "",
         text: $qs.get("text") ?? "",
         url: $qs.get("url") ?? "",
+        scope: noScope,
     };
 }
 
@@ -66,6 +71,7 @@ export function blogRoute(ctx: PageJS.Context): RouteParams {
     return {
         kind: "blog_route",
         slug: ctx.params["slug"],
+        scope: noScope,
     };
 }
 

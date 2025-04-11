@@ -15,6 +15,10 @@
             "@styles/*": ["./src/styles/*"]
         }
     },
-    "include": ["./src/**/*", "../vite-env.d.ts"],
+    "include": [
+        "./src/**/*",
+        "../vite-env.d.ts",
+        "../openchat-client/src/state/reactivity.svelte.ts"
+    ],
     "exclude": ["build/**/*", "node_modules"]
 }

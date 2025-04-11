@@ -268,11 +268,12 @@ import {
 import { get } from "svelte/store";
 import type { OpenChatConfig } from "./config";
 import { AIRDROP_BOT_USER_ID } from "./constants";
+import { configureEffects } from "./effects.svelte";
 import { remoteVideoCallStartedEvent } from "./events";
 import { LiveState } from "./liveState";
 import { snapshot } from "./snapshot.svelte";
 import { botState } from "./state/bots.svelte";
-import { pathState, type RouteParams } from "./state/path.svelte";
+import { type RouteParams } from "./state/path.svelte";
 import { blockedUsers } from "./stores/blockedUsers";
 import {
     addGroupPreview,
@@ -707,6 +708,8 @@ export class OpenChat {
         } else {
             await this.#ocIdentityStorage.remove();
         }
+
+        configureEffects(this);
 
         this.#loadUser();
     }
@@ -7945,16 +7948,7 @@ export class OpenChat {
     }
 
     setChatListScope(route: RouteParams): void {
-        const scope = pathState.scopedRoute(route) ? route.scope : this.getDefaultScope();
-        chatListScopeStore.set(scope);
-
-        // we cannot update this $state here because client.setChatListScope is set
-        // inside an $effect. How do we get out of that?
-        // What this is trying to tell us is that chatListScope should be derived state
-        // we shouldn't be setting it at all
-
-        // app.chatListScope = scope;
-        // console.log("SelectedCommunityId: ", app.selectedCommunityId);
+        chatListScopeStore.set(route.scope);
     }
 
     getDefaultScope(): ChatListScope {
