@@ -71,6 +71,7 @@ import {
     buildBlobUrl,
     isLapsed,
     isEventKindHidden,
+    useDraftMessagesStore,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -3985,7 +3986,9 @@ export class OpenChat {
             return Promise.resolve(CommonResponses.failure());
         }
 
-        const draftMessage = this.#liveState.draftMessages.get(messageContext);
+        const draftMessage = useDraftMessagesStore(content.kind)
+            ? this.#liveState.draftMessages.get(messageContext)
+            : undefined;
         const currentEvents = this.#eventsForMessageContext(messageContext);
         const [nextEventIndex, nextMessageIndex] =
             threadRootMessageIndex !== undefined
@@ -4098,7 +4101,9 @@ export class OpenChat {
                 messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
             }
 
-            draftMessagesStore.delete(context);
+            if (useDraftMessagesStore(messageEvent.event.content.kind)) {
+                draftMessagesStore.delete(context);
+            }
 
             if (!isTransfer(messageEvent.event.content)) {
                 this.#sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {

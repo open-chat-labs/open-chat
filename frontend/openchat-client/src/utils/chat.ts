@@ -280,6 +280,22 @@ export function createMessage(
     };
 }
 
+export function useDraftMessagesStore(contentType: MessageContent["kind"]): boolean {
+    switch (contentType) {
+        case "crypto_content":
+        case "meme_fighter_content":
+        case "p2p_swap_content":
+        case "p2p_swap_content_initial":
+        case "poll_content":
+        case "prize_content":
+        case "prize_content_initial":
+            return false;
+
+        default:
+            return true;
+    }
+}
+
 function messageMentionsUser(
     formatter: MessageFormatter,
     userId: string,
