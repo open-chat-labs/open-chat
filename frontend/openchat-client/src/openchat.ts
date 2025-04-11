@@ -1,113 +1,307 @@
 /* eslint-disable no-case-declarations */
-import { gaTrack } from "./utils/ga";
 import { DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@dfinity/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
-import { get } from "svelte/store";
+import {
+    DelegationChain,
+    DelegationIdentity,
+    ECDSAKeyIdentity,
+    WebAuthnIdentity,
+} from "@dfinity/identity";
 import DRange from "drange";
+import type {
+    AcceptedRules,
+    AcceptP2PSwapResponse,
+    AccessGate,
+    AccessGateConfig,
+    AccessTokenType,
+    AccountTransactionResult,
+    Achievement,
+    AddMembersToChannelResponse,
+    AirdropChannelDetails,
+    ApproveAccessGatePaymentResponse,
+    ApproveTransferResponse,
+    AttachmentContent,
+    AuthenticationPrincipal,
+    BotActionScope,
+    BotClientConfigData,
+    BotCommandInstance,
+    BotCommandResponse,
+    BotDefinition,
+    BotDefinitionResponse,
+    BotInstallationLocation,
+    BotMessageContext,
+    CancelP2PSwapResponse,
+    CandidateGroupChat,
+    CandidateProposal,
+    CandidateTranslations,
+    CaptionedContent,
+    ChallengeAttempt,
+    ChannelIdentifier,
+    ChannelSummary,
+    ChatEvent,
+    ChatEventsArgs,
+    ChatEventsResponse,
+    ChatFrozenEvent,
+    ChatIdentifier,
+    ChatListScope,
+    ChatPermissions,
+    ChatSummary,
+    ChatUnfrozenEvent,
+    CheckUsernameResponse,
+    ChitEventsRequest,
+    ChitEventsResponse,
+    ChitLeaderboardResponse,
+    CkbtcMinterDepositInfo,
+    CkbtcMinterWithdrawalInfo,
+    ClaimDailyChitResponse,
+    ClientJoinCommunityResponse,
+    ClientJoinGroupResponse,
+    CommunityDetailsResponse,
+    CommunityIdentifier,
+    CommunityInvite,
+    CommunityPermissions,
+    CommunitySummary,
+    CompletedCryptocurrencyTransfer,
+    ConnectToWorkerResponse,
+    CreateCommunityResponse,
+    CreatedUser,
+    CreateGroupResponse,
+    CreateUserGroupResponse,
+    CryptocurrencyContent,
+    CryptocurrencyDetails,
+    CryptocurrencyTransfer,
+    CurrentUserResponse,
+    DataContent,
+    DexId,
+    DiamondMembershipDuration,
+    DiamondMembershipFees,
+    DiamondMembershipStatus,
+    DirectChatIdentifier,
+    DisableInviteCodeResponse,
+    EnableInviteCodeResponse,
+    EnhancedAccessGate,
+    EventsResponse,
+    EventWrapper,
+    ExpiredEventsRange,
+    ExploreBotsResponse,
+    ExploreChannelsResponse,
+    ExploreCommunitiesResponse,
+    ExternalBot,
+    ExternalBotCommandInstance,
+    ExternalBotPermissions,
+    Failure,
+    FromWorker,
+    GenerateBotKeyResponse,
+    GenerateChallengeResponse,
+    GenerateMagicLinkResponse,
+    GroupChatDetailsResponse,
+    GroupChatIdentifier,
+    GroupChatSummary,
+    GroupInvite,
+    GroupMoved,
+    GroupSearchResponse,
+    GroupSubtype,
+    HandleMagicLinkResponse,
+    IdentityState,
+    InternalBotCommandInstance,
+    InviteCodeResponse,
+    JoinVideoCallResponse,
+    Level,
+    LinkIdentitiesResponse,
+    Logger,
+    MarkReadRequest,
+    Member,
+    MemberRole,
+    Mention,
+    Message,
+    MessageActivityFeedResponse,
+    MessageContent,
+    MessageContext,
+    MessageFormatter,
+    MessagePermission,
+    MessageReminderCreatedContent,
+    ModerationFlag,
+    MultiUserChat,
+    MultiUserChatIdentifier,
+    NamedAccount,
+    NervousSystemDetails,
+    Notification,
+    OptionalChatPermissions,
+    OptionUpdate,
+    PayForDiamondMembershipResponse,
+    PayForStreakInsuranceResponse,
+    PaymentGateApproval,
+    PaymentGateApprovals,
+    PendingCryptocurrencyTransfer,
+    PendingCryptocurrencyWithdrawal,
+    PinNumberFailures,
+    PreprocessedGate,
+    ProposalVoteDetails,
+    ProposeResponse,
+    PublicProfile,
+    RegisterProposalVoteResponse,
+    RegisterUserResponse,
+    RejectReason,
+    RemoteUserSentMessage,
+    RemoteUserToggledReaction,
+    RemoveIdentityLinkResponse,
+    RemoveMemberResponse,
+    ResetInviteCodeResponse,
+    Rules,
+    SaveCryptoAccountResponse,
+    SearchDirectChatResponse,
+    SearchGroupChatResponse,
+    SendMessageResponse,
+    SendMessageSuccess,
+    SetBioResponse,
+    SetDisplayNameResponse,
+    SetMemberDisplayNameResponse,
+    SetPinNumberResponse,
+    SetUsernameResponse,
+    SiwePrepareLoginResponse,
+    SiwsPrepareLoginResponse,
+    SubmitProofOfUniquePersonhoodResponse,
+    Success,
+    SwapTokensResponse,
+    ThreadPreview,
+    ThreadRead,
+    ThreadSummary,
+    ThreadSyncDetails,
+    TipMessageResponse,
+    TokenSwapStatusResponse,
+    TransferSuccess,
+    UpdatedEvent,
+    UpdatedRules,
+    UpdateGroupResponse,
+    UpdateMarketMakerConfigArgs,
+    UpdateMarketMakerConfigResponse,
+    UpdatesResult,
+    UpdateUserGroupResponse,
+    User,
+    UserGroupDetails,
+    UserOrUserGroup,
+    UsersArgs,
+    UsersResponse,
+    UserStatus,
+    UserSummary,
+    Verification,
+    VerifiedCredentialArgs,
+    VersionedRules,
+    VideoCallContent,
+    VideoCallParticipant,
+    VideoCallPresence,
+    WalletConfig,
+    WebAuthnKey,
+    WebAuthnKeyFull,
+    WebRtcMessage,
+    WithdrawBtcResponse,
+    WithdrawCryptocurrencyResponse,
+    WorkerError,
+    WorkerRequest,
+    WorkerResponse,
+    WorkerResult,
+} from "openchat-shared";
 import {
-    canChangeRoles as canChangeCommunityRoles,
-    canBlockUsers as canBlockCommunityUsers,
-    canUnblockUsers as canUnblockCommunityUsers,
-    canInviteUsers as canInviteCommunityUsers,
-    canRemoveMembers as canRemoveCommunityMembers,
-    canDeleteCommunity,
-    canEditCommunity,
-    canChangeCommunityPermissions,
-    canCreatePublicChannel,
-    canCreatePrivateChannel,
-    canManageUserGroups,
-    isCommunityLapsed,
-} from "./utils/community";
-import {
-    buildUserAvatarUrl,
-    canBlockUsers,
-    canAddMembers,
-    canChangePermissions,
-    canChangeRoles,
-    canDeleteGroup,
-    canDeleteOtherUsersMessages,
-    canEditGroupDetails,
-    canForward,
-    canInviteUsers,
-    canLeaveGroup,
-    canChangeVisibility,
-    canPinMessages,
-    canReactToMessages,
-    canRemoveMembers,
-    canMentionAllMembers,
-    canUnblockUsers,
-    containsReaction,
-    createMessage,
-    findMessageById,
-    getMembersString,
-    groupBySender,
-    groupChatFromCandidate,
-    groupEvents,
-    groupMessagesByDate,
-    makeRtcConnections,
-    mergeServerEvents,
-    messageIsReadByThem,
-    metricsEqual,
-    sameUser,
-    isFrozen,
-    isPreviewing,
-    buildTransactionLink,
-    buildTransactionUrlByIndex,
-    buildCryptoTransferText,
-    mergeSendMessageResponse,
-    serialiseMessageForRtc,
-    canConvertToCommunity,
-    canImportToCommunity,
-    buildIdenticonUrl,
-    getMessageText,
-    diffGroupPermissions,
-    canSendDirectMessage,
-    canSendGroupMessage,
-    permittedMessagesInDirectChat,
-    permittedMessagesInGroup,
-    activeUserIdFromEvent,
-    doesMessageFailFilter,
-    canStartVideoCalls,
-    buildBlobUrl,
-    isLapsed,
-    isEventKindHidden,
-} from "./utils/chat";
-import {
-    buildUsernameList,
-    compareIsNotYouThenUsername,
-    compareUsername,
-    formatLastOnlineDate,
-    nullUser,
-    userAvatarUrl,
-} from "./utils/user";
-import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
-import { showTrace } from "./utils/profiling";
-import { CachePrimer } from "./utils/cachePrimer";
-import { Poller } from "./utils/poller";
-import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
+    ANON_USER_ID,
+    anonymousUser,
+    AuthProvider,
+    buildDelegationIdentity,
+    canRetryMessage,
+    chatIdentifiersEqual,
+    chatIdentifierToString,
+    ChatMap,
+    CommonResponses,
+    communityRoles,
+    compareRoles,
+    contentTypeToPermission,
+    defaultChatRules,
+    deletedUser,
+    E8S_PER_TOKEN,
+    extractUserIdsFromMentions,
+    featureRestricted,
+    getContentAsFormattedText,
+    getDisplayDate,
+    getEmailSignInSession,
+    getTimeUntilSessionExpiryMs,
+    IdentityStorage,
+    indexRangeForChat,
+    isBalanceGate,
+    isCaptionedContent,
+    isCompositeGate,
+    isCredentialGate,
+    isEditableContent,
+    isMessageNotification,
+    isNeuronGate,
+    isPaymentGate,
+    isTransfer,
+    LARGE_GROUP_THRESHOLD,
+    LEDGER_CANISTER_CHAT,
+    mapAcceptP2PSwapResponseToStatus,
+    mapCancelP2PSwapResponseToStatus,
+    MessageContextMap,
+    messageContextsEqual,
+    missingUserIds,
+    NoMeetingToJoin,
+    ONE_DAY,
+    ONE_HOUR,
+    ONE_MINUTE_MILLIS,
+    OPENCHAT_BOT_USER_ID,
+    OPENCHAT_VIDEO_CALL_USER_ID,
+    parseBigInt,
+    publish,
+    random128,
+    random64,
+    removeEmailSignInSession,
+    shouldPreprocessGate,
+    storeEmailSignInSession,
+    Stream,
+    toDer,
+    toTitleCase,
+    updateCreatedUser,
+    userIdsFromEvents,
+    userIdsFromTransactions,
+    userOrUserGroupId,
+    userOrUserGroupName,
+    userStatus,
+    WEBAUTHN_ORIGINATING_CANISTER,
+} from "openchat-shared";
+import { get } from "svelte/store";
+import type { OpenChatConfig } from "./config";
+import { AIRDROP_BOT_USER_ID } from "./constants";
+import { remoteVideoCallStartedEvent } from "./events";
+import { LiveState } from "./liveState";
+import { snapshot } from "./snapshot.svelte";
+import { botState } from "./state/bots.svelte";
+import { pathState, type RouteParams } from "./state/path.svelte";
 import { blockedUsers } from "./stores/blockedUsers";
-import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
+    addGroupPreview,
     chatsInitialised,
     chatsLoading,
     chatStateStore,
     clearSelectedChat,
-    createDirectChat,
-    nextEventAndMessageIndexes,
-    setSelectedChat,
-    threadServerEventsStore,
-    nextEventAndMessageIndexesForThread,
     clearServerEvents,
     confirmedEventIndexesLoaded,
-    addGroupPreview,
-    removeUninitializedDirectChat,
-    removeGroupPreview,
+    confirmedThreadEventIndexesLoadedStore,
+    createDirectChat,
     groupPreviewsStore,
     isContiguous,
-    confirmedThreadEventIndexesLoadedStore,
     isContiguousInThread,
+    nextEventAndMessageIndexes,
+    nextEventAndMessageIndexesForThread,
+    removeGroupPreview,
+    removeUninitializedDirectChat,
     selectedMessageContext,
+    setSelectedChat,
+    threadServerEventsStore,
 } from "./stores/chat";
+import {
+    addCommunityPreview,
+    communityPreviewsStore,
+    communityStateStore,
+    nextCommunityIndex,
+    removeCommunityPreview,
+} from "./stores/community";
 import {
     bitcoinAddress,
     cryptoBalance,
@@ -117,54 +311,161 @@ import {
     nervousSystemLookup,
     swappableTokensStore,
 } from "./stores/crypto";
+import { diamondDurationToMs } from "./stores/diamond";
+import { draftMessagesStore } from "./stores/draftMessages";
+import { ephemeralMessages } from "./stores/ephemeralMessages";
+import { failedMessagesStore } from "./stores/failedMessages";
 import {
     disableAllProposalFilters,
     enableAllProposalFilters,
     toggleProposalFilter,
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
+import { hasFlag } from "./stores/flagStore";
+import {
+    chatListScopeStore,
+    chitStateStore,
+    globalStateStore,
+    mergeCombinedUnreadCounts,
+    setGlobalState,
+} from "./stores/global";
+import { applyTranslationCorrection } from "./stores/i18n";
+import { identityState } from "./stores/identity";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
+import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
+import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
 import {
     messageActivityFeedReadUpToLocally,
     messagesRead,
     startMessagesReadTracker,
 } from "./stores/markRead";
+import { type MessageFilter, messageFiltersStore } from "./stores/messageFilters";
+import { minutesOnlineStore } from "./stores/minutesOnline";
 import {
     askForNotificationPermission,
     initNotificationStores,
     setSoftDisabled,
 } from "./stores/notifications";
-import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
+import {
+    capturePinNumberStore,
+    pinNumberFailureStore,
+    pinNumberRequiredStore,
+} from "./stores/pinNumber";
 import { proposalTallies } from "./stores/proposalTallies";
+import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
+import { captureRulesAcceptanceStore } from "./stores/rules";
 import { storageStore, updateStorageLimit } from "./stores/storage";
+import { initialiseMostRecentSentMessageTimes, shouldThrottle } from "./stores/throttling";
 import { isTyping, typing } from "./stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "./stores/unconfirmed";
+import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
+    airdropBotUser,
+    anonymousUserSummary,
+    currentUser,
     openChatBotUser,
     proposalsBotUser,
     specialUsers,
     userStore,
-    currentUser,
-    anonymousUserSummary,
     videoCallBotUser,
-    airdropBotUser,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
+import { CachePrimer } from "./utils/cachePrimer";
+import {
+    activeUserIdFromEvent,
+    buildBlobUrl,
+    buildCryptoTransferText,
+    buildIdenticonUrl,
+    buildTransactionLink,
+    buildTransactionUrlByIndex,
+    buildUserAvatarUrl,
+    canAddMembers,
+    canBlockUsers,
+    canChangePermissions,
+    canChangeRoles,
+    canChangeVisibility,
+    canConvertToCommunity,
+    canDeleteGroup,
+    canDeleteOtherUsersMessages,
+    canEditGroupDetails,
+    canForward,
+    canImportToCommunity,
+    canInviteUsers,
+    canLeaveGroup,
+    canMentionAllMembers,
+    canPinMessages,
+    canReactToMessages,
+    canRemoveMembers,
+    canSendDirectMessage,
+    canSendGroupMessage,
+    canStartVideoCalls,
+    canUnblockUsers,
+    containsReaction,
+    createMessage,
+    diffGroupPermissions,
+    doesMessageFailFilter,
+    findMessageById,
+    getMembersString,
+    getMessageText,
+    getTypingString,
+    groupBySender,
+    groupChatFromCandidate,
+    groupEvents,
+    groupMessagesByDate,
+    isEventKindHidden,
+    isFrozen,
+    isLapsed,
+    isPreviewing,
+    makeRtcConnections,
+    mergeSendMessageResponse,
+    mergeServerEvents,
+    messageIsReadByThem,
+    metricsEqual,
+    permittedMessagesInDirectChat,
+    permittedMessagesInGroup,
+    sameUser,
+    serialiseMessageForRtc,
+    startTyping,
+    stopTyping,
+} from "./utils/chat";
+import {
+    canBlockUsers as canBlockCommunityUsers,
+    canChangeCommunityPermissions,
+    canChangeRoles as canChangeCommunityRoles,
+    canCreatePrivateChannel,
+    canCreatePublicChannel,
+    canDeleteCommunity,
+    canEditCommunity,
+    canInviteUsers as canInviteCommunityUsers,
+    canManageUserGroups,
+    canRemoveMembers as canRemoveCommunityMembers,
+    canUnblockUsers as canUnblockCommunityUsers,
+    isCommunityLapsed,
+} from "./utils/community";
+import { verifyCredential } from "./utils/credentials";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
 import {
     formatMessageDate,
     toDateString,
     toDatetimeString,
     toLongDateString,
-    toShortTimeString,
     toMonthString,
+    toShortTimeString,
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
+import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
+import {
+    disableLinksInText,
+    extractDisabledLinks,
+    extractEnabledLinks,
+    stripLinkDisabledMarker,
+} from "./utils/linkPreviews";
 import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
+import { getUserCountryCode } from "./utils/location";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -174,16 +475,23 @@ import {
     isSocialVideoLink,
     type MaxMediaSizes,
     messageContentFromFile,
+    spotifyRegex,
     twitterLinkRegex,
     youtubeRegex,
-    spotifyRegex,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
+import { hasOwnerRights } from "./utils/permissions";
+import { Poller } from "./utils/poller";
+import { showTrace } from "./utils/profiling";
+import { indexIsInRanges } from "./utils/range";
+import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
 import {
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
     parseWebRtcMessage,
 } from "./utils/rtc";
+import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
+import { Semaphore } from "./utils/semaphore";
 import {
     durationFromMilliseconds,
     formatDisappearingMessageTime,
@@ -193,319 +501,17 @@ import {
 } from "./utils/time";
 import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
-import type { OpenChatConfig } from "./config";
-import { LiveState } from "./liveState";
-import { getTypingString, startTyping, stopTyping } from "./utils/chat";
-import { indexIsInRanges } from "./utils/range";
-import type {
-    CreatedUser,
-    IdentityState,
-    ThreadSyncDetails,
-    WebRtcMessage,
-    ChatSummary,
-    EventWrapper,
-    Message,
-    GroupChatSummary,
-    MemberRole,
-    Rules,
-    EventsResponse,
-    ChatEvent,
-    ThreadSummary,
-    DataContent,
-    SendMessageSuccess,
-    TransferSuccess,
-    User,
-    RemoteUserToggledReaction,
-    RemoteUserSentMessage,
-    CheckUsernameResponse,
-    UserSummary,
-    RegisterUserResponse,
-    CurrentUserResponse,
-    RemoveMemberResponse,
-    RegisterProposalVoteResponse,
-    GroupInvite,
-    SearchDirectChatResponse,
-    SearchGroupChatResponse,
-    ThreadPreview,
-    UsersArgs,
-    UsersResponse,
-    PublicProfile,
-    SetUsernameResponse,
-    SetBioResponse,
-    PendingCryptocurrencyWithdrawal,
-    WithdrawCryptocurrencyResponse,
-    InviteCodeResponse,
-    EnableInviteCodeResponse,
-    DisableInviteCodeResponse,
-    ResetInviteCodeResponse,
-    UpdateGroupResponse,
-    CandidateGroupChat,
-    CreateGroupResponse,
-    Notification,
-    Logger,
-    ChatFrozenEvent,
-    ChatUnfrozenEvent,
-    UserStatus,
-    ThreadRead,
-    DiamondMembershipDuration,
-    DiamondMembershipFees,
-    UpdateMarketMakerConfigArgs,
-    UpdateMarketMakerConfigResponse,
-    UpdatedEvent,
-    AccessGate,
-    ProposalVoteDetails,
-    MessageReminderCreatedContent,
-    CommunityPermissions,
-    CommunitySummary,
-    CreateCommunityResponse,
-    GroupSearchResponse,
-    ChatPermissions,
-    ChatIdentifier,
-    GroupChatIdentifier,
-    DirectChatIdentifier,
-    CommunityIdentifier,
-    ExploreCommunitiesResponse,
-    MultiUserChatIdentifier,
-    MultiUserChat,
-    ChatListScope,
-    ChannelIdentifier,
-    ExploreChannelsResponse,
-    CommunityInvite,
-    ModerationFlag,
-    ChannelSummary,
-    GroupMoved,
-    CryptocurrencyContent,
-    CryptocurrencyDetails,
-    CryptocurrencyTransfer,
-    Mention,
-    SetDisplayNameResponse,
-    UserGroupDetails,
-    CreateUserGroupResponse,
-    UpdateUserGroupResponse,
-    SetMemberDisplayNameResponse,
-    UserOrUserGroup,
-    AttachmentContent,
-    MessageContent,
-    MessageContext,
-    UpdatedRules,
-    PendingCryptocurrencyTransfer,
-    TipMessageResponse,
-    NamedAccount,
-    SaveCryptoAccountResponse,
-    CandidateProposal,
-    GroupSubtype,
-    NervousSystemDetails,
-    OptionUpdate,
-    AccountTransactionResult,
-    MessagePermission,
-    OptionalChatPermissions,
-    ExpiredEventsRange,
-    UpdatesResult,
-    DexId,
-    SwapTokensResponse,
-    TokenSwapStatusResponse,
-    Member,
-    Level,
-    VersionedRules,
-    DiamondMembershipStatus,
-    Success,
-    Failure,
-    AcceptP2PSwapResponse,
-    CancelP2PSwapResponse,
-    CommunityDetailsResponse,
-    GroupChatDetailsResponse,
-    CandidateTranslations,
-    ProposeResponse,
-    RejectReason,
-    JoinVideoCallResponse,
-    AccessTokenType,
-    ApproveAccessGatePaymentResponse,
-    ClientJoinGroupResponse,
-    ClientJoinCommunityResponse,
-    GenerateMagicLinkResponse,
-    HandleMagicLinkResponse,
-    SiwePrepareLoginResponse,
-    SiwsPrepareLoginResponse,
-    VideoCallPresence,
-    VideoCallParticipant,
-    AcceptedRules,
-    ClaimDailyChitResponse,
-    VerifiedCredentialArgs,
-    VideoCallContent,
-    ChitEventsRequest,
-    ChitEventsResponse,
-    GenerateChallengeResponse,
-    ChallengeAttempt,
-    PreprocessedGate,
-    SubmitProofOfUniquePersonhoodResponse,
-    Achievement,
-    PayForDiamondMembershipResponse,
-    LinkIdentitiesResponse,
-    RemoveIdentityLinkResponse,
-    AddMembersToChannelResponse,
-    WalletConfig,
-    AirdropChannelDetails,
-    ChitLeaderboardResponse,
-    AuthenticationPrincipal,
-    AccessGateConfig,
-    Verification,
-    EnhancedAccessGate,
-    PaymentGateApproval,
-    PaymentGateApprovals,
-    MessageActivityFeedResponse,
-    ApproveTransferResponse,
-    BotCommandInstance,
-    InternalBotCommandInstance,
-    ExternalBotCommandInstance,
-    CaptionedContent,
-    ExploreBotsResponse,
-    ExternalBot,
-    ExternalBotPermissions,
-    ConnectToWorkerResponse,
-    FromWorker,
-    WorkerResponse,
-    WorkerError,
-    WorkerRequest,
-    WorkerResult,
-    MarkReadRequest,
-    ChatEventsArgs,
-    ChatEventsResponse,
-    BotDefinitionResponse,
-    BotCommandResponse,
-    BotDefinition,
-    BotMessageContext,
-    BotClientConfigData,
-    CompletedCryptocurrencyTransfer,
-    GenerateBotKeyResponse,
-    WebAuthnKey,
-    WebAuthnKeyFull,
-    BotInstallationLocation,
-    BotActionScope,
-    CkbtcMinterDepositInfo,
-    CkbtcMinterWithdrawalInfo,
-    WithdrawBtcResponse,
-    PayForStreakInsuranceResponse,
-} from "openchat-shared";
-import {
-    Stream,
-    AuthProvider,
-    missingUserIds,
-    getTimeUntilSessionExpiryMs,
-    userIdsFromEvents,
-    getContentAsFormattedText,
-    indexRangeForChat,
-    getDisplayDate,
-    userStatus,
-    compareRoles,
-    E8S_PER_TOKEN,
-    ChatMap,
-    chatIdentifiersEqual,
-    chatIdentifierToString,
-    MessageContextMap,
-    messageContextsEqual,
-    communityRoles,
-    isNeuronGate,
-    toTitleCase,
-    CommonResponses,
-    defaultChatRules,
-    userOrUserGroupName,
-    userOrUserGroupId,
-    extractUserIdsFromMentions,
-    isMessageNotification,
-    userIdsFromTransactions,
-    contentTypeToPermission,
-    mapAcceptP2PSwapResponseToStatus,
-    mapCancelP2PSwapResponseToStatus,
-    anonymousUser,
-    ANON_USER_ID,
-    isPaymentGate,
-    ONE_DAY,
-    ONE_MINUTE_MILLIS,
-    ONE_HOUR,
-    LEDGER_CANISTER_CHAT,
-    OPENCHAT_VIDEO_CALL_USER_ID,
-    IdentityStorage,
-    NoMeetingToJoin,
-    featureRestricted,
-    buildDelegationIdentity,
-    toDer,
-    updateCreatedUser,
-    LARGE_GROUP_THRESHOLD,
-    isCompositeGate,
-    shouldPreprocessGate,
-    deletedUser,
-    OPENCHAT_BOT_USER_ID,
-    isEditableContent,
-    isCaptionedContent,
-    parseBigInt,
-    random64,
-    random128,
-    WEBAUTHN_ORIGINATING_CANISTER,
-    publish,
-} from "openchat-shared";
-import { AIRDROP_BOT_USER_ID } from "./constants";
-import { failedMessagesStore } from "./stores/failedMessages";
-import { diamondDurationToMs } from "./stores/diamond";
-import {
-    addCommunityPreview,
-    communityPreviewsStore,
-    communityStateStore,
-    nextCommunityIndex,
-    removeCommunityPreview,
-} from "./stores/community";
-import {
-    globalStateStore,
-    setGlobalState,
-    chatListScopeStore,
-    chitStateStore,
-    mergeCombinedUnreadCounts,
-} from "./stores/global";
-import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
-import { hasFlag } from "./stores/flagStore";
-import { hasOwnerRights } from "./utils/permissions";
-import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
-import { verifyCredential } from "./utils/credentials";
-import { messageFiltersStore, type MessageFilter } from "./stores/messageFilters";
-import { draftMessagesStore } from "./stores/draftMessages";
-import {
-    disableLinksInText,
-    extractDisabledLinks,
-    extractEnabledLinks,
-    stripLinkDisabledMarker,
-} from "./utils/linkPreviews";
-import type { SendMessageResponse } from "openchat-shared";
-import { applyTranslationCorrection } from "./stores/i18n";
-import { getUserCountryCode } from "./utils/location";
-import { isBalanceGate, isCredentialGate } from "openchat-shared";
-import {
-    DelegationChain,
-    DelegationIdentity,
-    ECDSAKeyIdentity,
-    WebAuthnIdentity,
-} from "@dfinity/identity";
-import {
-    capturePinNumberStore,
-    pinNumberFailureStore,
-    pinNumberRequiredStore,
-} from "./stores/pinNumber";
-import { captureRulesAcceptanceStore } from "./stores/rules";
-import type { SetPinNumberResponse } from "openchat-shared";
-import type { PinNumberFailures, MessageFormatter } from "openchat-shared";
-import { canRetryMessage, isTransfer } from "openchat-shared";
-import { initialiseMostRecentSentMessageTimes, shouldThrottle } from "./stores/throttling";
-import { storeEmailSignInSession } from "openchat-shared";
-import { getEmailSignInSession } from "openchat-shared";
-import { removeEmailSignInSession } from "openchat-shared";
-import { localGlobalUpdates } from "./stores/localGlobalUpdates";
-import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
+import {
+    buildUsernameList,
+    compareIsNotYouThenUsername,
+    compareUsername,
+    formatLastOnlineDate,
+    nullUser,
+    userAvatarUrl,
+} from "./utils/user";
+import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
-import { ephemeralMessages } from "./stores/ephemeralMessages";
-import { minutesOnlineStore } from "./stores/minutesOnline";
-import { Semaphore } from "./utils/semaphore";
-import { snapshot } from "./snapshot.svelte";
-import { remoteVideoCallStartedEvent } from "./events";
-import { botState } from "./state/bots.svelte";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -7938,12 +7944,17 @@ export class OpenChat {
             .catch(() => CommonResponses.failure());
     }
 
-    setChatListScope(scope: ChatListScope): void {
-        if (scope.kind === "none") {
-            chatListScopeStore.set(this.getDefaultScope());
-        } else if (this.#liveState.chatListScope !== scope) {
-            chatListScopeStore.set(scope);
-        }
+    setChatListScope(route: RouteParams): void {
+        const scope = pathState.scopedRoute(route) ? route.scope : this.getDefaultScope();
+        chatListScopeStore.set(scope);
+
+        // we cannot update this $state here because client.setChatListScope is set
+        // inside an $effect. How do we get out of that?
+        // What this is trying to tell us is that chatListScope should be derived state
+        // we shouldn't be setting it at all
+
+        // app.chatListScope = scope;
+        // console.log("SelectedCommunityId: ", app.selectedCommunityId);
     }
 
     getDefaultScope(): ChatListScope {

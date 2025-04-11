@@ -40,7 +40,6 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { activityFeedShowing } from "../../../stores/activity";
     import { rtlStore } from "../../../stores/rtl";
-    import { communityListScrollTop } from "../../../stores/scrollPos";
     import { disableChit, hideChitIcon } from "../../../stores/settings";
     import { now } from "../../../stores/time";
     import { isTouchDevice } from "../../../utils/devices";
@@ -70,12 +69,12 @@
 
     onMount(() => {
         const unsub = communities.subscribe(initCommunitiesList);
-        tick().then(() => (scrollingSection.scrollTop = $communityListScrollTop ?? 0));
+        tick().then(() => (scrollingSection.scrollTop = ui.communityListScrollTop ?? 0));
         return unsub;
     });
 
     function onScroll() {
-        communityListScrollTop.set(scrollingSection.scrollTop);
+        ui.communityListScrollTop = scrollingSection.scrollTop;
     }
 
     function initCommunitiesList(communities: CommunitySummary[]) {

@@ -21,6 +21,7 @@
         OpenChat,
         PubSubEvents,
         ResourceKey,
+        RouteParams,
         Rules,
         UpdatedRules,
     } from "openchat-client";
@@ -55,11 +56,9 @@
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
-    import type { RouteParams } from "../../routes";
     import { pageRedirect, pageReplace, routeForScope } from "../../routes";
     import { createCandidateCommunity } from "../../stores/community";
     import { messageToForwardStore } from "../../stores/messageToForward";
-    import { eventListScrollTop } from "../../stores/scrollPos";
     import { chitPopup, disableChit } from "../../stores/settings";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
@@ -403,7 +402,7 @@
 
             // if it's a known chat let's select it
             closeNotificationsForChat(chat.id);
-            $eventListScrollTop = undefined;
+            ui.eventListScrollTop = undefined;
             client.setSelectedChat(chat.id, messageIndex, threadMessageIndex);
             resetRightPanel();
 
@@ -457,7 +456,7 @@
                 ui.filterRightPanelHistory((state) => state.kind !== "community_filters");
                 if (
                     $anonUser &&
-                    pathState.chatListRoute(route) &&
+                    pathState.isChatListRoute(route) &&
                     (route.scope.kind === "direct_chat" || route.scope.kind === "favourite")
                 ) {
                     client.updateIdentityState({ kind: "logging_in" });
@@ -465,35 +464,33 @@
                     return;
                 }
 
-                if (pathState.scopedRoute(route)) {
-                    client.setChatListScope(route.scope);
-                }
+                client.setChatListScope(route);
 
                 // When we have a middle panel and this route is for a chat list then select the first chat
-                if (pathState.chatListRoute(route) && selectFirstChat()) {
+                if (pathState.isChatListRoute(route) && selectFirstChat()) {
                     return;
                 }
 
                 // first close any open thread
                 closeThread();
 
-                if (pathState.homeRoute(route)) {
+                if (pathState.isHomeRoute(route)) {
                     client.clearSelectedChat();
                     filterChatSpecificRightPanelStates();
-                } else if (pathState.communitiesRoute(route)) {
+                } else if (pathState.isCommunitiesRoute(route)) {
                     client.clearSelectedChat();
                     ui.rightPanelHistory = ui.fullWidth ? [{ kind: "community_filters" }] : [];
-                } else if (pathState.selectedCommunityRoute(route)) {
+                } else if (pathState.isSelectedCommunityRoute(route)) {
                     await selectCommunity(route.communityId);
                     if (selectFirstChat()) {
                         communityLoaded = true;
                         return;
                     }
                 } else if (
-                    pathState.globalChatSelectedRoute(route) ||
-                    pathState.selectedChannelRoute(route)
+                    pathState.isGlobalChatSelectedRoute(route) ||
+                    pathState.isSelectedChannelRoute(route)
                 ) {
-                    if (pathState.selectedChannelRoute(route)) {
+                    if (pathState.isSelectedChannelRoute(route)) {
                         if (!communityLoaded) {
                             await selectCommunity(route.communityId, false);
                         }
@@ -517,7 +514,7 @@
                     }
                     filterChatSpecificRightPanelStates();
 
-                    if (pathState.shareRoute(route)) {
+                    if (pathState.isShareRoute(route)) {
                         share = {
                             title: route.title,
                             text: route.text,

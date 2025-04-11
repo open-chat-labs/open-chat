@@ -140,6 +140,10 @@
         document.documentElement.style.setProperty("--font-size", `${ui.fontSize}px`);
     });
 
+    $effect(() => {
+        console.log("ChatListScope: ", $chatListScope);
+    });
+
     trackedEffect("calculate-height", calculateHeight);
 
     onMount(() => {

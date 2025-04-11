@@ -51,32 +51,64 @@ export class PathState {
         return scopedKinds.includes(route.kind);
     }
 
-    public chatListRoute(route: RouteParams): route is ChatListRoute {
+    isChatListRoute(route: RouteParams): route is ChatListRoute {
         return route.kind === "chat_list_route";
     }
 
-    public homeRoute(route: RouteParams): route is HomeRoute {
+    isHomeRoute(route: RouteParams): route is HomeRoute {
         return route.kind === "home_route";
     }
 
-    public communitiesRoute(route: RouteParams): route is CommunitiesRoute {
+    isCommunitiesRoute(route: RouteParams): route is CommunitiesRoute {
         return route.kind === "communities_route";
     }
 
-    public selectedCommunityRoute(route: RouteParams): route is SelectedCommunityRoute {
+    isSelectedCommunityRoute(route: RouteParams): route is SelectedCommunityRoute {
         return route.kind === "selected_community_route";
     }
 
-    public selectedChannelRoute(route: RouteParams): route is SelectedChannelRoute {
+    isSelectedChannelRoute(route: RouteParams): route is SelectedChannelRoute {
         return route.kind === "selected_channel_route";
     }
 
-    public shareRoute(route: RouteParams): route is ShareRoute {
+    isShareRoute(route: RouteParams): route is ShareRoute {
         return route.kind === "share_route";
     }
 
-    public globalChatSelectedRoute(route: RouteParams): route is GlobalSelectedChatRoute {
+    isGlobalChatSelectedRoute(route: RouteParams): route is GlobalSelectedChatRoute {
         return route.kind === "global_chat_selected_route";
+    }
+
+    isBlogRoute(route: RouteParams): route is BlogRoute {
+        return route.kind === "blog_route";
+    }
+
+    isRoadmapRoute(route: RouteParams): route is RoadmapRoute {
+        return route.kind === "roadmap_route";
+    }
+
+    isWhitepaperRoute(route: RouteParams): route is WhitepaperRoute {
+        return route.kind === "whitepaper_route";
+    }
+
+    isArchitectureRoute(route: RouteParams): route is ArchitectureRoute {
+        return route.kind === "architecture_route";
+    }
+
+    isGuidelinesRoute(route: RouteParams): route is GuidelinesRoute {
+        return route.kind === "guidelines_route";
+    }
+
+    isTermsRoute(route: RouteParams): route is TermsRoute {
+        return route.kind === "terms_route";
+    }
+
+    isFaqRoute(route: RouteParams): route is FaqRoute {
+        return route.kind === "faq_route";
+    }
+
+    isDiamondRoute(route: RouteParams): route is DiamondRoute {
+        return route.kind === "diamond_route";
     }
 }
 

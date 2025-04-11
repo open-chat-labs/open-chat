@@ -5,7 +5,7 @@ export { OpenChat } from "./openchat";
 export * from "./stores";
 
 export { botState } from "./state/bots.svelte";
-export { pathState } from "./state/path.svelte";
+export * from "./state/path.svelte";
 export { ScreenHeight, ScreenWidth, ui, type Layout } from "./state/ui.svelte";
 export type { FailedMessages } from "./stores/failedMessages";
 export { FilteredProposals } from "./stores/filteredProposals";
