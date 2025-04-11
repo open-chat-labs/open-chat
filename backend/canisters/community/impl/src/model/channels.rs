@@ -116,7 +116,9 @@ impl Channels {
     }
 
     pub fn can_leave_all_channels(&self, user_id: UserId) -> bool {
-        self.channels.values().all(|c| c.chat.can_leave(user_id).is_ok())
+        self.channels
+            .values()
+            .all(|c| !c.chat.members.contains(&user_id) || c.chat.can_leave(user_id).is_ok())
     }
 
     pub fn leave_all_channels(&mut self, user_id: UserId, now: TimestampMillis) -> HashMap<ChannelId, GroupMemberInternal> {

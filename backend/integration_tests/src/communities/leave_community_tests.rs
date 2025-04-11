@@ -36,6 +36,38 @@ fn leave_community_succeeds() {
 }
 
 #[test]
+fn leave_community_succeeds_when_not_in_all_channels() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        community_id,
+    } = init_test_data(env, canister_ids, *controller, true);
+
+    let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
+
+    client::community::happy_path::join_community(env, user2.principal, community_id);
+    client::community::happy_path::leave_channel(env, user2.principal, community_id, channel_id);
+
+    env.tick();
+
+    client::user::happy_path::leave_community(env, &user2, community_id);
+
+    env.tick();
+
+    let initial_state = client::user::happy_path::initial_state(env, &user2);
+
+    assert!(initial_state.communities.summaries.is_empty())
+}
+
+#[test]
 fn cannot_leave_community_if_last_owner() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
