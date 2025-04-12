@@ -29,6 +29,7 @@
         currentCommunityMembers,
         currentUser,
         eventsStore,
+        pageReplace,
         pathState,
         publish,
         selectedChatStore as selectedChat,
@@ -41,7 +42,6 @@
     import { _ } from "svelte-i18n";
     import type { Readable } from "svelte/store";
     import { i18nKey } from "../../i18n/i18n";
-    import { pageReplace } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall } from "../../stores/video";
     import { currentTheme } from "../../theme/themes";

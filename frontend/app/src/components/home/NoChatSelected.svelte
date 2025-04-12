@@ -1,19 +1,19 @@
 <script lang="ts">
-    import Button from "../Button.svelte";
-    import page from "page";
-    import { getContext } from "svelte";
     import {
+        chatListScopeStore as chatListScope,
         isLocked,
+        routeForScope,
+        selectedCommunity,
         type ChatListScope,
         type OpenChat,
-        chatListScopeStore as chatListScope,
-        selectedCommunity,
     } from "openchat-client";
+    import page from "page";
+    import { getContext } from "svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import Button from "../Button.svelte";
+    import Translatable from "../Translatable.svelte";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
-    import { routeForScope } from "../../routes";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 

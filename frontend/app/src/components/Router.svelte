@@ -1,25 +1,22 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte";
-    import page from "page";
-    import Home from "./home/HomeRoute.svelte";
-    import { type HomeType } from "./home/HomeRoute.svelte";
-    import LandingPage from "./landingpages/LandingPage.svelte";
-    import { type LandingPageType } from "./landingpages/LandingPage.svelte";
-    import NotFound from "./NotFound.svelte";
-    import { type NotFoundType } from "./NotFound.svelte";
     import {
         type RouteParams,
-        communitesRoute,
+        adminRoute,
         blogRoute,
-        shareRoute,
+        chatListRoute,
+        communitesRoute,
         globalDirectChatSelectedRoute,
         globalGroupChatSelectedRoute,
-        selectedCommunityRoute,
+        pathState,
         selectedChannelRoute,
-        chatListRoute,
-        adminRoute,
-    } from "../routes";
-    import { pathState } from "openchat-client";
+        selectedCommunityRoute,
+        shareRoute,
+    } from "openchat-client";
+    import page from "page";
+    import { onDestroy, onMount } from "svelte";
+    import Home, { type HomeType } from "./home/HomeRoute.svelte";
+    import LandingPage, { type LandingPageType } from "./landingpages/LandingPage.svelte";
+    import NotFound, { type NotFoundType } from "./NotFound.svelte";
 
     interface Props {
         showLandingPage: boolean;

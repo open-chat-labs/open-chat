@@ -39,10 +39,13 @@
         identityState,
         nullMembership,
         offlineStore,
+        pageRedirect,
+        pageReplace,
         pathState,
         capturePinNumberStore as pinNumberStore,
         routeForChatIdentifier,
         routeForMessage,
+        routeForScope,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
         selectedChatId,
         selectedChatStore,
@@ -56,7 +59,6 @@
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
-    import { pageRedirect, pageReplace, routeForScope } from "../../routes";
     import { createCandidateCommunity } from "../../stores/community";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { chitPopup, disableChit } from "../../stores/settings";
@@ -423,31 +425,6 @@
         }
     }
 
-    async function selectCommunity(id: CommunityIdentifier, clearChat = true): Promise<boolean> {
-        const found = await client.setSelectedCommunity(
-            id,
-            pathState.querystring.get("code"),
-            clearChat,
-        );
-        if (!found) {
-            modal = { kind: "no_access" };
-        }
-        return found;
-    }
-
-    function selectFirstChat(): boolean {
-        if (!ui.mobileWidth) {
-            const first = $chatSummariesListStore.find((c) => !c.membership.archived);
-            if (first !== undefined) {
-                pageRedirect(routeForChatIdentifier($chatListScope.kind, first.id));
-                return true;
-            }
-        }
-        return false;
-    }
-
-    let communityLoaded = false;
-
     async function routeChange(initialised: boolean, route: RouteParams): Promise<void> {
         // wrap the whole thing in untrack because we don't want it to react to everything it reads in here
         untrack(async () => {
@@ -467,7 +444,7 @@
                 client.setChatListScope(route);
 
                 // When we have a middle panel and this route is for a chat list then select the first chat
-                if (pathState.isChatListRoute(route) && selectFirstChat()) {
+                if (pathState.isChatListRoute(route) && client.selectFirstChat()) {
                     return;
                 }
 
@@ -480,23 +457,10 @@
                 } else if (pathState.isCommunitiesRoute(route)) {
                     client.clearSelectedChat();
                     ui.rightPanelHistory = ui.fullWidth ? [{ kind: "community_filters" }] : [];
-                } else if (pathState.isSelectedCommunityRoute(route)) {
-                    // await selectCommunity(route.communityId);
-                    if (selectFirstChat()) {
-                        communityLoaded = true;
-                        return;
-                    }
                 } else if (
                     pathState.isGlobalChatSelectedRoute(route) ||
                     pathState.isSelectedChannelRoute(route)
                 ) {
-                    if (pathState.isSelectedChannelRoute(route)) {
-                        if (!communityLoaded) {
-                            await selectCommunity(route.communityId, false);
-                        }
-                        communityLoaded = false;
-                    }
-
                     // if the chat in the url is different from the chat we already have selected
                     if (!chatIdentifiersEqual(route.chatId, $selectedChatId)) {
                         newChatSelected(route.chatId, route.messageIndex, route.threadMessageIndex);

@@ -252,6 +252,7 @@ import {
     random128,
     random64,
     removeEmailSignInSession,
+    routeForChatIdentifier,
     shouldPreprocessGate,
     storeEmailSignInSession,
     Stream,
@@ -273,7 +274,8 @@ import { remoteVideoCallStartedEvent } from "./events";
 import { LiveState } from "./liveState";
 import { snapshot } from "./snapshot.svelte";
 import { botState } from "./state/bots.svelte";
-import { type RouteParams } from "./state/path.svelte";
+import { pathState, type RouteParams } from "./state/path.svelte";
+import { ui } from "./state/ui.svelte";
 import { blockedUsers } from "./stores/blockedUsers";
 import {
     addGroupPreview,
@@ -486,6 +488,7 @@ import { Poller } from "./utils/poller";
 import { showTrace } from "./utils/profiling";
 import { indexIsInRanges } from "./utils/range";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
+import { pageRedirect } from "./utils/routes";
 import {
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
@@ -4754,9 +4757,8 @@ export class OpenChat {
         this.#referralCode = code;
     }
 
-    #extractReferralCodeFromPath(): string | undefined {
-        const qs = new URLSearchParams(window.location.search);
-        return qs.get("ref") ?? undefined;
+    #extractReferralCodeFromPath(): string | null {
+        return pathState.querystringReferral;
     }
 
     captureReferralCode(): boolean {
@@ -7568,16 +7570,12 @@ export class OpenChat {
         }
     }
 
-    async setSelectedCommunity(
-        id: CommunityIdentifier,
-        inviteCode: string | null,
-        clearChat = true,
-    ): Promise<boolean> {
+    async setSelectedCommunity(id: CommunityIdentifier, clearChat = true): Promise<boolean> {
         let community = this.#liveState.communities.get(id);
         if (community === undefined) {
             // if we don't have the community it means we're not a member and we need to look it up
-            if (inviteCode) {
-                await this.setCommunityInvite({ id, code: inviteCode });
+            if (pathState.querystringCode) {
+                await this.setCommunityInvite({ id, code: pathState.querystringCode });
             }
 
             const referredBy = this.#extractReferralCodeFromPath() ?? this.#referralCode;
@@ -7608,7 +7606,19 @@ export class OpenChat {
         if (community !== undefined) {
             this.#loadCommunityDetails(community);
         }
+
         return true;
+    }
+
+    selectFirstChat(): boolean {
+        if (!ui.mobileWidth) {
+            const first = this.#liveState.chatSummariesList.find((c) => !c.membership.archived);
+            if (first !== undefined) {
+                pageRedirect(routeForChatIdentifier(this.#liveState.chatListScope.kind, first.id));
+                return true;
+            }
+        }
+        return false;
     }
 
     importToCommunity(

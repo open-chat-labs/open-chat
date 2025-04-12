@@ -5,7 +5,6 @@
     import "@components/web-components/profileLink";
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
-    import { pageReplace, routeForScope } from "@src/routes";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { menuStore } from "@stores/menu";
     import { rtlStore } from "@stores/rtl";
@@ -35,8 +34,10 @@
         chatListScopeStore as chatListScope,
         identityState,
         inititaliseLogger,
+        pageReplace,
         pathState,
         routeForChatIdentifier,
+        routeForScope,
         selectedCommunity,
         subscribe,
         ui,

@@ -13,28 +13,37 @@ export class PathState {
             : new URLSearchParams(),
     );
     #route = $state<RouteParams>({ scope: noScope, kind: "not_found_route" });
-    public set routerReady(val: boolean) {
+    #querystringCode = $derived(this.#querystring.get("code"));
+    #querystringReferralCode = $derived(this.#querystring.get("ref"));
+
+    set routerReady(val: boolean) {
         this.#routerReady = val;
     }
-    public get querystring(): URLSearchParams {
+    get querystring(): URLSearchParams {
         return this.#querystring;
     }
-    public get location(): string {
+    get location(): string {
         return this.#location;
     }
-    public get notFound(): boolean {
+    get notFound(): boolean {
         return this.#notFound;
     }
-    public get routerReady(): boolean {
+    get routerReady(): boolean {
         return this.#routerReady;
     }
-    public set notFound(val: boolean) {
+    set notFound(val: boolean) {
         this.#notFound = val;
     }
-    public get route(): Readonly<RouteParams> {
+    get route(): Readonly<RouteParams> {
         return this.#route;
     }
-    public setRouteParams(ctx: PageJS.Context, p: RouteParams) {
+    get querystringCode() {
+        return this.#querystringCode;
+    }
+    get querystringReferral() {
+        return this.#querystringReferralCode;
+    }
+    setRouteParams(ctx: PageJS.Context, p: RouteParams) {
         this.#route = p;
         this.#pathContextStore = ctx;
         this.#notFound = false;

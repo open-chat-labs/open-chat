@@ -16,6 +16,7 @@
         OpenChat,
         publish,
         routeForChatIdentifier,
+        routeForScope,
         selectedChatId,
         selectedCommunity,
         ui,
@@ -32,7 +33,6 @@
     import Compass from "svelte-material-icons/CompassOutline.svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import { i18nKey } from "../../i18n/i18n";
-    import { routeForScope } from "../../routes";
     import { chatListView } from "../../stores/chatListView";
     import { exploreGroupsDismissed } from "../../stores/settings";
     import Button from "../Button.svelte";

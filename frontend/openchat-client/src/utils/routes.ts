@@ -1,14 +1,14 @@
 import {
-    pathState,
+    toBigInt32,
     type ChatListScope,
     type ChatType,
     type CommunityIdentifier,
     type DirectChatIdentifier,
     type GroupChatIdentifier,
-    type RouteParams,
-} from "openchat-client";
-import { toBigInt32, type NullScope } from "openchat-shared";
+    type NullScope,
+} from "openchat-shared";
 import page from "page";
+import { pathState, type RouteParams } from "../state/path.svelte";
 
 const noScope: NullScope = { kind: "none" };
 
