@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1700](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1700-community)] - 2025-04-11
+
 ### Fixed
 
 - Fix check for if user can leave community ([#7783](https://github.com/open-chat-labs/open-chat/pull/7783))
