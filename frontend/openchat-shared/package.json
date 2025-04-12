@@ -17,11 +17,11 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/agent": "^2.2.0",
-        "@dfinity/auth-client": "^2.2.0",
-        "@dfinity/candid": "^2.2.0",
-        "@dfinity/identity": "^2.2.0",
-        "@dfinity/principal": "^2.2.0",
+        "@dfinity/agent": "^2.4.1",
+        "@dfinity/auth-client": "^2.4.1",
+        "@dfinity/candid": "^2.4.1",
+        "@dfinity/identity": "^2.4.1",
+        "@dfinity/principal": "^2.4.1",
         "drange": "^2.0.1",
         "rollbar": "^2.26.2"
     },
