@@ -10,7 +10,6 @@ use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron};
 use types::{C2CError, CanisterId, SnsNeuronId};
-use user_index_canister_c2c_client::LookupUserError;
 
 #[update(msgpack = true)]
 #[trace]
@@ -26,9 +25,9 @@ async fn top_up_neuron(args: Args) -> Response {
     };
 
     match user_index_canister_c2c_client::lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_operator => {}
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
-        _ => return Unauthorized,
+        Ok(Some(user)) if user.is_platform_operator => {}
+        Ok(_) => return Unauthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     }
 
     top_up_neuron_impl(&args, ledger_canister_id, sns_neuron_id)
