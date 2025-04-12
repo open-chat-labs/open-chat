@@ -8,7 +8,7 @@
         UserSummary,
     } from "openchat-client";
     import {
-        currentCommunityMembers as communityMembers,
+        app,
         ui,
         currentCommunityUserGroups as userGroupsMap,
         userStore,
@@ -45,7 +45,7 @@
     let communityUsersList: UserSummary[] = $state([]);
 
     onMount(() => {
-        communityUsers = createLookup($communityMembers, $userStore);
+        communityUsers = createLookup(app.selectedCommunityDetails.members, $userStore);
         communityUsersList = Object.values(communityUsers);
     });
 

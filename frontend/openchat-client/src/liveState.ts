@@ -1,89 +1,88 @@
+import type DRange from "drange";
 import type {
     AuthProvider,
     ChatEvent,
     ChatIdentifier,
+    ChatListScope,
     ChatMap,
     ChatSummary,
-    CommunitySummary,
+    ChitState,
     CommunityMap,
+    CommunitySummary,
+    CreatedUser,
+    DiamondMembershipStatus,
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
+    ExternalBotPermissions,
+    Member,
     MessageContext,
+    MultiUserChat,
+    ObjectSet,
+    PinNumberResolver,
+    StreakInsurance,
     ThreadSyncDetails,
     UserLookup,
-    MultiUserChat,
-    ChatListScope,
-    Member,
     VersionedRules,
-    CreatedUser,
-    DiamondMembershipStatus,
-    ChitState,
     WalletConfig,
-    ObjectSet,
-    ExternalBotPermissions,
-    StreakInsurance,
 } from "openchat-shared";
+import { locale } from "svelte-i18n";
+import { serverStreakInsuranceStore } from "./stores";
 import { selectedAuthProviderStore } from "./stores/authProviders";
+import { blockedUsers } from "./stores/blockedUsers";
 import {
-    serverChatSummariesStore,
-    myServerChatSummariesStore,
-    chatSummariesStore,
-    groupPreviewsStore,
-    selectedChatId,
-    eventsStore,
-    selectedChatStore,
-    selectedServerChatStore,
-    currentChatReplyingTo,
+    allChats,
     chatSummariesListStore,
-    threadsByChatStore,
-    focusMessageIndex,
-    focusThreadMessageIndex,
-    threadEvents,
-    threadsFollowedByMeStore,
-    currentChatUserIds,
-    selectedThreadRootMessageIndex,
+    chatSummariesStore,
     chatsInitialised,
     chatsLoading,
-    uninitializedDirectChats,
     confirmedThreadEventIndexesLoadedStore,
-    selectedMessageContext,
-    allChats,
-    currentChatMembers,
-    currentChatRules,
-    pinnedChatsStore,
-    favouritesStore,
     currentChatBots,
+    currentChatMembers,
+    currentChatReplyingTo,
+    currentChatRules,
+    currentChatUserIds,
+    eventsStore,
+    favouritesStore,
+    focusMessageIndex,
+    focusThreadMessageIndex,
+    groupPreviewsStore,
+    myServerChatSummariesStore,
+    pinnedChatsStore,
+    selectedChatId,
+    selectedChatStore,
+    selectedMessageContext,
+    selectedServerChatStore,
+    selectedThreadRootMessageIndex,
+    serverChatSummariesStore,
+    threadEvents,
+    threadsByChatStore,
+    threadsFollowedByMeStore,
+    uninitializedDirectChats,
 } from "./stores/chat";
-import { remainingStorage } from "./stores/storage";
-import { userCreatedStore } from "./stores/userCreated";
-import { anonUser, currentUser, platformModerator, suspendedUser, userStore } from "./stores/user";
-import { blockedUsers } from "./stores/blockedUsers";
-import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
-import type DRange from "drange";
 import {
     communities,
     communityPreviewsStore,
-    currentCommunityMembers,
-    selectedCommunity,
-    currentCommunityRules,
     currentCommunityBots,
+    currentCommunityRules,
+    selectedCommunity,
 } from "./stores/community";
+import { walletConfigStore } from "./stores/crypto";
+import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
+import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
 import {
     type GlobalState,
-    chatListScopeStore,
-    globalStateStore,
-    chitStateStore,
     type PinnedByScope,
+    chatListScopeStore,
+    chitStateStore,
+    globalStateStore,
     installedDirectBots,
 } from "./stores/global";
 import { offlineStore } from "./stores/network";
-import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
-import { locale } from "svelte-i18n";
-import type { PinNumberResolver } from "openchat-shared";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
-import { walletConfigStore } from "./stores/crypto";
-import { serverStreakInsuranceStore } from "./stores";
+import { remainingStorage } from "./stores/storage";
+import { anonUser, currentUser, platformModerator, suspendedUser, userStore } from "./stores/user";
+import { userCreatedStore } from "./stores/userCreated";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -130,7 +129,6 @@ export class LiveState {
     favourites!: ObjectSet<ChatIdentifier>;
     allChats!: ChatMap<ChatSummary>;
     selectedCommunity!: CommunitySummary | undefined;
-    currentCommunityMembers!: Map<string, Member>;
     draftMessages!: DraftMessages;
     currentCommunityRules!: VersionedRules | undefined;
     user!: CreatedUser;
@@ -203,7 +201,6 @@ export class LiveState {
         favouritesStore.subscribe((data) => (this.favourites = data));
         allChats.subscribe((data) => (this.allChats = data));
         selectedCommunity.subscribe((data) => (this.selectedCommunity = data));
-        currentCommunityMembers.subscribe((data) => (this.currentCommunityMembers = data));
         draftMessagesStore.subscribe((data) => (this.draftMessages = data));
         currentCommunityRules.subscribe((data) => (this.currentCommunityRules = data));
         locale.subscribe((data) => (this.locale = data ?? "en"));

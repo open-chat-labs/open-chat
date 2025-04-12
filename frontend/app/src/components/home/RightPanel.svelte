@@ -13,6 +13,7 @@
         UserSummary,
     } from "openchat-client";
     import {
+        app,
         compareRoles,
         currentChatApiKeys,
         currentChatBlockedUsers as currentChatBlocked,
@@ -26,7 +27,6 @@
         currentCommunityBots,
         currentCommunityInvitedUsers as currentCommunityInvited,
         currentCommunityLapsedMembers as currentCommunityLapsed,
-        currentCommunityMembers,
         currentUser,
         eventsStore,
         pageReplace,
@@ -462,7 +462,7 @@
                 {closeIcon}
                 collection={$selectedCommunity}
                 invited={$currentCommunityInvited}
-                members={[...$currentCommunityMembers.values()]}
+                members={[...app.selectedCommunityDetails.members.values()]}
                 blocked={$currentCommunityBlocked}
                 lapsed={$currentCommunityLapsed}
                 initialUsergroup={ui.lastRightPanelState.userGroupId}

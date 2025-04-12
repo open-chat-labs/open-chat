@@ -1,11 +1,6 @@
 <script lang="ts">
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
-    import {
-        AvatarSize,
-        currentCommunityMembers as communityMembers,
-        ui,
-        userStore,
-    } from "openchat-client";
+    import { AvatarSize, app, ui, userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { rtlStore } from "../../../stores/rtl";
     import Avatar from "../../Avatar.svelte";
@@ -32,7 +27,7 @@
     let crypto = msg.content.kind === "crypto_content";
 
     let sender = $derived($userStore.get(senderId));
-    let username = $derived(client.getDisplayName(sender, $communityMembers));
+    let username = $derived(client.getDisplayName(sender, app.selectedCommunityDetails.members));
     let deleted = $derived(msg.content.kind === "deleted_content");
     let fill = $derived(client.fillMessage(msg));
     let me = $derived(user.userId === senderId);

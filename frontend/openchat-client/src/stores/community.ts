@@ -1,23 +1,23 @@
-import { type Writable, derived, writable, get } from "svelte/store";
-import { setsAreEqual } from "../utils/set";
-import {
-    type CommunitySpecificState,
-    type CommunityIdentifier,
-    emptyRules,
-    CommunityMap,
-    type CommunitySummary,
+import type {
+    ExternalBotPermissions,
+    Member,
+    UserGroupDetails,
+    UserGroupSummary,
 } from "openchat-shared";
+import {
+    type CommunityIdentifier,
+    CommunityMap,
+    type CommunitySpecificState,
+    type CommunitySummary,
+    emptyRules,
+} from "openchat-shared";
+import { type Writable, derived, get, writable } from "svelte/store";
+import { mergeLocalUpdates } from "../utils/community";
+import { setsAreEqual } from "../utils/set";
 import { createCommunitySpecificObjectStore } from "./dataByCommunityFactory";
 import { createDerivedPropStore } from "./derived";
 import { chatListScopeStore, globalStateStore } from "./global";
 import { localCommunitySummaryUpdates } from "./localCommunitySummaryUpdates";
-import { mergeLocalUpdates } from "../utils/community";
-import type {
-    Member,
-    ExternalBotPermissions,
-    UserGroupDetails,
-    UserGroupSummary,
-} from "openchat-shared";
 
 // Communities which the current user is previewing
 export const communityPreviewsStore: Writable<CommunityMap<CommunitySummary>> = writable(
@@ -121,12 +121,6 @@ export const currentCommunityUserGroups = createDerivedPropStore<
     CommunitySpecificState,
     "userGroups"
 >(communityStateStore, "userGroups", () => new Map<number, UserGroupDetails>());
-
-export const currentCommunityMembers = createDerivedPropStore<CommunitySpecificState, "members">(
-    communityStateStore,
-    "members",
-    () => new Map<string, Member>(),
-);
 
 export const currentCommunityBlockedUsers = createDerivedPropStore<
     CommunitySpecificState,

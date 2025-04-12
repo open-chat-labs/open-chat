@@ -8,9 +8,9 @@
         type PublicProfile,
         type ResourceKey,
         type UserSummary,
+        app,
         blockedUsers,
         currentChatMembersMap as chatMembersMap,
-        currentCommunityMembers as communityMembers,
         currentUser as createdUser,
         currentChatBlockedUsers,
         currentCommunityBlockedUsers,
@@ -263,7 +263,7 @@
                 username: profile?.username ?? "",
                 displayName: profile?.displayName,
             },
-            inGlobalContext ? undefined : $communityMembers,
+            inGlobalContext ? undefined : app.selectedCommunityDetails.members,
         ),
     );
     let canBlock = $derived(
@@ -318,7 +318,7 @@
                                 <WithRole
                                     userId={user.userId}
                                     chatMembers={$chatMembersMap}
-                                    communityMembers={$communityMembers}>
+                                    communityMembers={app.selectedCommunityDetails.members}>
                                     {#snippet children(communityRole, chatRole)}
                                         <RoleIcon level="community" popup role={communityRole} />
                                         <RoleIcon

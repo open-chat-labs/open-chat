@@ -273,7 +273,9 @@ import { configureEffects } from "./effects.svelte";
 import { remoteVideoCallStartedEvent } from "./events";
 import { LiveState } from "./liveState";
 import { snapshot } from "./snapshot.svelte";
+import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
+import type { CommunityState } from "./state/community.svelte";
 import { pathState, type RouteParams } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
 import { blockedUsers } from "./stores/blockedUsers";
@@ -1639,6 +1641,10 @@ export class OpenChat {
             newAchievement,
         }).then((resp) => {
             if (resp === "success") {
+                // TODO wrong should use local updates
+                // we *could* do something similar with the new runes state
+                // but it would not be reactive as is and it's not what
+                // we should be doing
                 communityStateStore.updateProp(id, "members", (ms) => {
                     const userId = this.#liveState.user.userId;
                     if (userId !== undefined) {
@@ -2489,14 +2495,14 @@ export class OpenChat {
         return true;
     }
 
-    async #updateUserStoreFromCommunityState(id: CommunityIdentifier): Promise<void> {
+    async #updateUserStoreFromCommunityState(community: CommunityState): Promise<void> {
         const allUserIds = new Set<string>();
-        this.#getTruncatedUserIdsFromMembers([
-            ...communityStateStore.getProp(id, "members").values(),
-        ]).forEach((m) => allUserIds.add(m.userId));
-        communityStateStore.getProp(id, "blockedUsers").forEach((u) => allUserIds.add(u));
-        communityStateStore.getProp(id, "invitedUsers").forEach((u) => allUserIds.add(u));
-        communityStateStore.getProp(id, "referrals").forEach((u) => allUserIds.add(u));
+        this.#getTruncatedUserIdsFromMembers([...community.members.values()]).forEach((m) =>
+            allUserIds.add(m.userId),
+        );
+        community.blockedUsers.forEach((u) => allUserIds.add(u));
+        community.invitedUsers.forEach((u) => allUserIds.add(u));
+        community.referrals.forEach((u) => allUserIds.add(u));
         await this.getMissingUsers(allUserIds);
     }
 
@@ -2546,6 +2552,7 @@ export class OpenChat {
     compareIsNotYouThenUsername = compareIsNotYouThenUsername;
     compareUsername = compareUsername;
 
+    // TODO wrong should use local updates
     #blockCommunityUserLocally(id: CommunityIdentifier, userId: string): void {
         communityStateStore.updateProp(id, "blockedUsers", (b) => new Set([...b, userId]));
         communityStateStore.updateProp(id, "members", (ms) => {
@@ -2554,6 +2561,7 @@ export class OpenChat {
         });
     }
 
+    // TODO wrong should use local updates
     #unblockCommunityUserLocally(
         id: CommunityIdentifier,
         userId: string,
@@ -3169,29 +3177,20 @@ export class OpenChat {
         }).catch(() => "failure");
         if (resp !== "failure") {
             const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
-            communityStateStore.setProp(
-                community.id,
-                "members",
+            app.setSelectedCommunityDetails(
+                resp.userGroups,
                 new Map(members.map((m) => [m.userId, m])),
-            );
-            communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
-            communityStateStore.setProp(
-                community.id,
-                "lapsedMembers",
+                resp.blockedUsers,
                 new Set(lapsed.map((m) => m.userId)),
-            );
-            communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
-            communityStateStore.setProp(community.id, "rules", resp.rules);
-            communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
-            communityStateStore.setProp(community.id, "referrals", resp.referrals);
-            communityStateStore.setProp(
-                community.id,
-                "bots",
+                resp.invitedUsers,
+                resp.referrals,
                 resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
+                resp.apiKeys,
             );
-            communityStateStore.setProp(community.id, "apiKeys", resp.apiKeys);
+            if (app.selectedCommunityDetails) {
+                this.#updateUserStoreFromCommunityState(app.selectedCommunityDetails);
+            }
         }
-        await this.#updateUserStoreFromCommunityState(community.id);
     }
 
     async #loadChatDetails(serverChat: ChatSummary): Promise<void> {
@@ -4685,7 +4684,7 @@ export class OpenChat {
                     // are already in a map
                     const existing =
                         level === "community"
-                            ? this.#liveState.currentCommunityMembers
+                            ? app.selectedCommunityDetails.members
                             : new Map(this.#liveState.currentChatMembers.map((m) => [m.userId, m]));
 
                     // Remove any existing members from the global matches until there are at most `maxResults`
@@ -4724,7 +4723,7 @@ export class OpenChat {
     ): UserSummary[] {
         const termLower = term.toLowerCase();
         const matches: UserSummary[] = [];
-        for (const [userId, member] of this.#liveState.currentCommunityMembers) {
+        for (const [userId, member] of app.selectedCommunityDetails.members) {
             let user = this.#liveState.userStore.get(userId);
             if (user?.username !== undefined) {
                 const displayName = member.displayName ?? user.displayName;
@@ -4920,6 +4919,7 @@ export class OpenChat {
         return this.#sendRequest({ kind: "removeSubscription", subscription });
     }
 
+    //TODO this is wrong - this should use local updates
     #inviteUsersLocally(
         id: MultiUserChatIdentifier | CommunityIdentifier,
         userIds: string[],
@@ -4931,6 +4931,7 @@ export class OpenChat {
         }
     }
 
+    //TODO this is wrong - this should use local updates
     #uninviteUsersLocally(
         id: MultiUserChatIdentifier | CommunityIdentifier,
         userIds: string[],
@@ -5017,6 +5018,7 @@ export class OpenChat {
         });
     }
 
+    // TODO this is wrong - this should use local updates
     removeCommunityMember(id: CommunityIdentifier, userId: string): Promise<RemoveMemberResponse> {
         communityStateStore.updateProp(id, "members", (ms) => {
             ms.delete(userId);
@@ -5041,6 +5043,7 @@ export class OpenChat {
         if (newRole === oldRole) return Promise.resolve(true);
 
         // Update the local store
+        // TODO - wrong - should use local updates
         communityStateStore.updateProp(id, "members", (ms) => {
             const m = ms.get(userId);
             if (m !== undefined) {
@@ -5058,6 +5061,7 @@ export class OpenChat {
             .then((success) => {
                 if (!success) {
                     // Revert the local store
+                    // TODO - wrong - should use local updates
                     communityStateStore.updateProp(id, "members", (ms) => {
                         const m = ms.get(userId);
                         if (m !== undefined) {
@@ -6753,7 +6757,7 @@ export class OpenChat {
                         ...user,
                         displayName: this.getDisplayName(
                             user,
-                            this.#liveState.currentCommunityMembers,
+                            app.selectedCommunityDetails.members,
                         ),
                     };
                 }
@@ -7026,7 +7030,7 @@ export class OpenChat {
         // * return it to the front end
         const displayName = this.getDisplayName(
             this.#liveState.user,
-            this.#liveState.currentCommunityMembers,
+            app.selectedCommunityDetails.members,
         );
         const user = this.#liveState.user;
         const username = user.username;
@@ -7843,6 +7847,7 @@ export class OpenChat {
                         return g;
                     });
                     if (rules !== undefined && resp.rulesVersion !== undefined) {
+                        // TODO why are rules stored in community state?
                         communityStateStore.setProp(community.id, "rules", {
                             text: rules.text,
                             enabled: rules.enabled,
@@ -7870,6 +7875,7 @@ export class OpenChat {
             .catch(() => undefined);
     }
 
+    // TODO wrong should use local updates
     #deleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
         communityStateStore.updateProp(id, "userGroups", (groups) => {
             groups.delete(userGroup.id);
@@ -7877,6 +7883,7 @@ export class OpenChat {
         });
     }
 
+    // TODO wrong should use local updates
     #undeleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
         communityStateStore.updateProp(id, "userGroups", (groups) => {
             groups.set(userGroup.id, userGroup);
@@ -7915,6 +7922,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
+                    // TODO wrong should use local updates
                     communityStateStore.updateProp(id, "userGroups", (groups) => {
                         groups.set(resp.userGroupId, { ...userGroup, id: resp.userGroupId });
                         return new Map(groups);
@@ -7947,6 +7955,7 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
+                    // TODO wrong should use local updates
                     communityStateStore.updateProp(id, "userGroups", (groups) => {
                         groups.set(userGroup.id, userGroup);
                         return new Map(groups);
