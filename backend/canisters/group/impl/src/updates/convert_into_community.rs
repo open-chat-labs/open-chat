@@ -26,7 +26,7 @@ async fn convert_into_community(args: Args) -> Response {
     };
 
     match user_index_canister_c2c_client::lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_diamond_member => {}
+        Ok(Some(user)) if user.is_diamond_member => {}
         _ => return NotAuthorized,
     }
 

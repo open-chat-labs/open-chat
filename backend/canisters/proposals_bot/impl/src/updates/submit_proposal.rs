@@ -17,7 +17,7 @@ use sns_governance_canister::types::{
 };
 use tracing::{error, info};
 use types::{icrc2, CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId};
-use user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use user_index_canister_c2c_client::lookup_user;
 
 const OC_ROOT_URL: &str = "https://oc.app/";
 
@@ -47,9 +47,9 @@ async fn submit_proposal_impl(args: Args) -> Response {
     };
 
     let UserDetails { user_id, username, .. } = match lookup_user(caller, user_index_canister_id).await {
-        Ok(u) => u,
-        Err(LookupUserError::UserNotFound) => panic!("User not found"),
-        Err(LookupUserError::InternalError(error)) => return InternalError(format!("Failed to lookup user: {error}")),
+        Ok(Some(u)) => u,
+        Ok(_) => panic!("User not found"),
+        Err(error) => return InternalError(format!("Failed to lookup user: {error:?}")),
     };
 
     match process_transaction(args.transaction.clone(), this_canister_id).await {
