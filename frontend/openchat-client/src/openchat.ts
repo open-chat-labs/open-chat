@@ -481,6 +481,7 @@ import {
     DelegationChain,
     DelegationIdentity,
     ECDSAKeyIdentity,
+    type JsonnableDelegationChain,
     WebAuthnIdentity,
 } from "@dfinity/identity";
 import {
@@ -615,7 +616,7 @@ export class OpenChat {
         });
     }
 
-    deleteCurrentUser(delegation: DelegationChain): Promise<boolean> {
+    deleteCurrentUser(delegation: JsonnableDelegationChain): Promise<boolean> {
         if (!this.#liveState.anonUser) {
             return this.#sendRequest({
                 kind: "deleteUser",
