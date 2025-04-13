@@ -7,7 +7,7 @@ import {
     type UserGroupDetails,
     type VersionedRules,
 } from "openchat-shared";
-import { CommunityState } from "./community.svelte";
+import { CommunityMergedState, CommunityServerState } from "./community.svelte";
 import { pathState } from "./path.svelte";
 import { withEqCheck } from "./reactivity.svelte";
 
@@ -19,15 +19,14 @@ class AppState {
         $effect.root(() => {
             $effect(() => {
                 if (this.#selectedCommunityId === undefined) {
-                    this.#selectedCommunityDetails = CommunityState.empty();
+                    this.#selectedCommunityDetails = new CommunityMergedState(
+                        CommunityServerState.empty(),
+                    );
                 }
             });
         });
     }
 
-    // TODO this will run every time scope changes. And because CommunityIdentifier is an object, any effect that depends
-    // on it may run when the actual community id has not changed (only the reference to the object has changed). We need
-    // to be very careful with that. Effects only check the reference equality of the things.
     #selectedCommunityId = $derived.by<CommunityIdentifier | undefined>(
         withEqCheck(() => {
             switch (pathState.route.scope.kind) {
@@ -41,8 +40,9 @@ class AppState {
         }, communityIdentifiersEqual),
     );
 
-    // this should actually be a derivation of server state + local updates
-    #selectedCommunityDetails = $state<CommunityState>(CommunityState.empty());
+    #selectedCommunityDetails = $state<CommunityMergedState>(
+        new CommunityMergedState(CommunityServerState.empty()),
+    );
 
     get selectedCommunityId() {
         return this.#selectedCommunityId;
@@ -53,6 +53,7 @@ class AppState {
     }
 
     setSelectedCommunityDetails(
+        communityId: CommunityIdentifier,
         userGroups: Map<number, UserGroupDetails>,
         members: Map<string, Member>,
         blockedUsers: Set<string>,
@@ -63,17 +64,22 @@ class AppState {
         apiKeys: Map<string, PublicApiKeyDetails>,
         rules?: VersionedRules,
     ) {
-        this.#selectedCommunityDetails = new CommunityState(
-            userGroups,
-            members,
-            blockedUsers,
-            lapsedMembers,
-            invitedUsers,
-            referrals,
-            bots,
-            apiKeys,
-            rules,
-        );
+        if (communityId.communityId === this.#selectedCommunityId?.communityId) {
+            this.#selectedCommunityDetails = new CommunityMergedState(
+                new CommunityServerState(
+                    communityId,
+                    userGroups,
+                    members,
+                    blockedUsers,
+                    lapsedMembers,
+                    invitedUsers,
+                    referrals,
+                    bots,
+                    apiKeys,
+                    rules,
+                ),
+            );
+        }
     }
 }
 

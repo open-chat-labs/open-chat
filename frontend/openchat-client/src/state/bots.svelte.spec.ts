@@ -1,7 +1,9 @@
 import { botState } from "./bots.svelte";
 
 describe("bot state", () => {
-    beforeAll(() => (botState.messageFormatter = (s) => s));
+    beforeAll(() => {
+        botState.messageFormatter = (s) => s;
+    });
     afterEach(() => botState.cancel());
     describe("prefix processing", () => {
         test("setting prefix", () => {

@@ -275,7 +275,7 @@ import { LiveState } from "./liveState";
 import { snapshot } from "./snapshot.svelte";
 import { app } from "./state/app.svelte";
 import { botState } from "./state/bots.svelte";
-import type { CommunityState } from "./state/community.svelte";
+import type { CommunityMergedState } from "./state/community.svelte";
 import { pathState, type RouteParams } from "./state/path.svelte";
 import { ui } from "./state/ui.svelte";
 import { blockedUsers } from "./stores/blockedUsers";
@@ -2495,7 +2495,7 @@ export class OpenChat {
         return true;
     }
 
-    async #updateUserStoreFromCommunityState(community: CommunityState): Promise<void> {
+    async #updateUserStoreFromCommunityState(community: CommunityMergedState): Promise<void> {
         const allUserIds = new Set<string>();
         this.#getTruncatedUserIdsFromMembers([...community.members.values()]).forEach((m) =>
             allUserIds.add(m.userId),
@@ -3170,14 +3170,16 @@ export class OpenChat {
     }
 
     async #loadCommunityDetails(community: CommunitySummary): Promise<void> {
+        const id = community.id;
         const resp: CommunityDetailsResponse = await this.#sendRequest({
             kind: "getCommunityDetails",
-            id: community.id,
+            id,
             communityLastUpdated: community.lastUpdated,
         }).catch(() => "failure");
         if (resp !== "failure") {
             const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
             app.setSelectedCommunityDetails(
+                id,
                 resp.userGroups,
                 new Map(members.map((m) => [m.userId, m])),
                 resp.blockedUsers,
