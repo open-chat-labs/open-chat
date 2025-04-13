@@ -85,13 +85,6 @@ async fn accept_p2p_swap(args: Args) -> Response {
         Ok(user_canister::c2c_accept_p2p_swap::Response::TransferError(TransferError::InsufficientFunds { .. })) => {
             Error(OCErrorCode::InsufficientFunds.into())
         }
-        Ok(user_canister::c2c_accept_p2p_swap::Response::PinRequired) => Error(OCErrorCode::PinRequired.into()),
-        Ok(user_canister::c2c_accept_p2p_swap::Response::PinIncorrect(delay)) => {
-            Error(OCErrorCode::PinIncorrect.with_message(delay))
-        }
-        Ok(user_canister::c2c_accept_p2p_swap::Response::TooManyFailedPinAttempts(delay)) => {
-            Error(OCErrorCode::TooManyFailedPinAttempts.with_message(delay))
-        }
         Ok(response) => Error(OCErrorCode::Unknown.with_message(format!("{response:?}"))),
         Err(error) => Error(error.into()),
     };
@@ -111,47 +104,37 @@ struct ReserveP2PSwapResult {
 fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> OCResult<ReserveP2PSwapResult> {
     state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let member = state.data.members.get_verified_member(caller)?;
+    let member = state.get_and_verify_calling_member()?;
     let user_id = member.user_id;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+    let now = state.env.now();
 
-    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        let channel_member = channel.chat.members.get_verified_member(user_id)?;
-        let now = state.env.now();
+    let result = channel
+        .chat
+        .reserve_p2p_swap(user_id, args.thread_root_message_index, args.message_id, now)?;
 
-        let result = channel.chat.events.reserve_p2p_swap(
-            user_id,
-            args.thread_root_message_index,
-            args.message_id,
-            channel_member.min_visible_event_index(),
-            now,
-        )?;
+    handle_activity_notification(state);
 
-        handle_activity_notification(state);
-
-        Ok(ReserveP2PSwapResult {
-            user_id,
-            c2c_args: user_canister::c2c_accept_p2p_swap::Args {
-                swap_id: result.content.swap_id,
-                location: P2PSwapLocation::from_message(
-                    Chat::Channel(caller.into(), args.channel_id),
-                    args.thread_root_message_index,
-                    args.message_id,
-                ),
-                created: result.created,
-                created_by: result.created_by,
-                token0: result.content.token0,
-                token0_amount: result.content.token0_amount,
-                token0_txn_in: result.content.token0_txn_in,
-                token1: result.content.token1,
-                token1_amount: result.content.token1_amount,
-                expires_at: result.content.expires_at,
-                pin: args.pin,
-            },
-        })
-    } else {
-        Err(OCErrorCode::ChatNotFound.into())
-    }
+    Ok(ReserveP2PSwapResult {
+        user_id,
+        c2c_args: user_canister::c2c_accept_p2p_swap::Args {
+            swap_id: result.content.swap_id,
+            location: P2PSwapLocation::from_message(
+                Chat::Channel(state.env.canister_id().into(), args.channel_id),
+                args.thread_root_message_index,
+                args.message_id,
+            ),
+            created: result.created,
+            created_by: result.created_by,
+            token0: result.content.token0,
+            token0_amount: result.content.token0_amount,
+            token0_txn_in: result.content.token0_txn_in,
+            token1: result.content.token1,
+            token1_amount: result.content.token1_amount,
+            expires_at: result.content.expires_at,
+            pin: args.pin,
+        },
+    })
 }
 
 fn rollback(

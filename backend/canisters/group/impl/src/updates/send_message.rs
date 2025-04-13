@@ -72,9 +72,8 @@ pub(crate) fn send_message_impl(
     finalised: bool,
     state: &mut RuntimeState,
 ) -> OCResult<SuccessResult> {
-    if state.data.is_frozen() {
-        return Err(OCErrorCode::ChatFrozen.into());
-    }
+    state.data.verify_not_frozen()?;
+
     if state.data.chat.external_url.is_some() {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }

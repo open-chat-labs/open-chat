@@ -19,8 +19,7 @@ fn pin_message_v2(args: Args) -> Response {
 fn pin_message_impl(args: Args, state: &mut RuntimeState) -> OCResult<PushEventResult> {
     state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let user_id = state.data.get_verified_member(caller)?.user_id();
+    let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
     let result = state.data.chat.pin_message(user_id, args.message_index, now)?;
 

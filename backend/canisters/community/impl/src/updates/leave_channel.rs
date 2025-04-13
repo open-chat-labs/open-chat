@@ -2,7 +2,6 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::leave_channel::{Response::*, *};
-use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
 #[update(candid = true, msgpack = true)]
@@ -20,20 +19,13 @@ fn leave_channel(args: Args) -> Response {
 fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let Some(member) = state.data.members.get(caller) else {
-        return Err(OCErrorCode::InitiatorNotInCommunity.into());
-    };
-
-    let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
-        return Err(OCErrorCode::ChatNotFound.into());
-    };
-
+    let user_id = state.get_caller_user_id()?;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
-    let user_id = member.user_id;
 
     channel.chat.leave(user_id, now)?;
     state.data.remove_user_from_channel(user_id, args.channel_id, now);
+
     handle_activity_notification(state);
     Ok(())
 }

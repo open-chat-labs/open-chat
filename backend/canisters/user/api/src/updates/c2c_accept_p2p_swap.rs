@@ -2,7 +2,7 @@ use candid::CandidType;
 use icrc_ledger_types::icrc1::transfer::TransferError;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{Milliseconds, P2PSwapLocation, PinNumberWrapper, TimestampMillis, TokenInfo, UserId};
+use types::{P2PSwapLocation, PinNumberWrapper, TimestampMillis, TokenInfo, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -23,9 +23,6 @@ pub struct Args {
 pub enum Response {
     Success(u64),
     TransferError(TransferError),
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
     Error(OCError),
 }

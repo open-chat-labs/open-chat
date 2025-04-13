@@ -8,7 +8,7 @@ use group_canister::convert_into_community::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use std::collections::HashMap;
-use types::{CanisterId, UserId};
+use types::{CanisterId, OCResult, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -22,7 +22,7 @@ async fn convert_into_community(args: Args) -> Response {
         group_index_canister_id,
     } = match mutate_state(prepare) {
         Ok(result) => result,
-        Err(response) => return response,
+        Err(error) => return Error(error),
     };
 
     match user_index_canister_c2c_client::lookup_user(caller, user_index_canister_id).await {
@@ -71,26 +71,17 @@ struct PrepareResult {
     group_index_canister_id: CanisterId,
 }
 
-fn prepare(state: &mut RuntimeState) -> Result<PrepareResult, Response> {
-    let caller = state.env.caller();
-
-    if let Some(member) = state.data.get_member(caller) {
-        if member.suspended().value {
-            Err(UserSuspended)
-        } else if member.lapsed().value {
-            return Err(UserLapsed);
-        } else if !member.role().is_owner() {
-            Err(NotAuthorized)
-        } else {
-            Ok(PrepareResult {
-                caller,
-                user_id: member.user_id(),
-                user_index_canister_id: state.data.user_index_canister_id,
-                group_index_canister_id: state.data.group_index_canister_id,
-            })
-        }
+fn prepare(state: &mut RuntimeState) -> OCResult<PrepareResult> {
+    let member = state.get_and_verify_calling_member()?;
+    if !member.role().is_owner() {
+        Err(OCErrorCode::InitiatorNotAuthorized.into())
     } else {
-        Err(CallerNotInGroup)
+        Ok(PrepareResult {
+            caller: state.env.caller(),
+            user_id: member.user_id(),
+            user_index_canister_id: state.data.user_index_canister_id,
+            group_index_canister_id: state.data.group_index_canister_id,
+        })
     }
 }
 

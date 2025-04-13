@@ -20,8 +20,7 @@ fn undelete_messages(args: Args) -> Response {
 fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let user_id = state.data.get_verified_member(caller)?.user_id();
+    let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
     let messages = state
         .data

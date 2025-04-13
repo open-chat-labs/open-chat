@@ -5,57 +5,50 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::unblock_user::*;
-use types::UsersUnblocked;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, UsersUnblocked};
 
 #[update(msgpack = true)]
 #[trace]
 fn unblock_user(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| unblock_user_impl(args, state))
+    if let Err(error) = mutate_state(|state| unblock_user_impl(args, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
-fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
-    }
-
-    let caller = state.env.caller();
+fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
     if !state.data.is_public.value {
-        CommunityNotPublic
-    } else if let Some(caller_member) = state.data.members.get(caller) {
-        if caller_member.suspended().value {
-            return UserSuspended;
-        } else if caller_member.lapsed().value {
-            return UserLapsed;
-        }
+        return Err(OCErrorCode::CommunityNotPublic.into());
+    }
 
-        let unblocked_by = caller_member.user_id;
-        if unblocked_by == args.user_id {
-            CannotUnblockSelf
-        } else if caller_member.role().can_unblock_users(&state.data.permissions) {
-            let now = state.env.now();
+    let caller_member = state.get_and_verify_calling_member()?;
 
-            state.data.members.unblock(args.user_id, now);
+    if caller_member.user_id == args.user_id {
+        Err(OCErrorCode::CannotBlockSelf.into())
+    } else if caller_member.role().can_unblock_users(&state.data.permissions) {
+        let now = state.env.now();
 
-            let event = UsersUnblocked {
-                user_ids: vec![args.user_id],
-                unblocked_by,
-            };
+        state.data.members.unblock(args.user_id, now);
 
-            state
-                .data
-                .events
-                .push_event(CommunityEventInternal::UsersUnblocked(Box::new(event)), now);
+        let event = UsersUnblocked {
+            user_ids: vec![args.user_id],
+            unblocked_by: caller_member.user_id,
+        };
 
-            handle_activity_notification(state);
+        state
+            .data
+            .events
+            .push_event(CommunityEventInternal::UsersUnblocked(Box::new(event)), now);
 
-            Success
-        } else {
-            NotAuthorized
-        }
+        handle_activity_notification(state);
+        Ok(())
     } else {
-        UserNotInCommunity
+        Err(OCErrorCode::InitiatorNotAuthorized.into())
     }
 }

@@ -102,41 +102,37 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
         }
     }
 
-    let caller = state.env.caller();
     let gate_config = args
         .gate_config
         .clone()
         .map(|gcu| gcu.into())
         .apply_to(state.data.chat.gate_config.value.clone());
 
-    if let Some(member) = state.data.get_member(caller) {
-        let permissions = args.permissions_v2.as_ref();
+    let member = state.get_and_verify_calling_member()?;
+    let permissions = args.permissions_v2.as_ref();
 
-        state.data.chat.can_update(
-            member.user_id(),
-            &args.name,
-            &args.description,
-            &args.rules,
-            &args.avatar,
-            permissions,
-            &args.public,
-        )?;
+    state.data.chat.can_update(
+        member.user_id(),
+        &args.name,
+        &args.description,
+        &args.rules,
+        &args.avatar,
+        permissions,
+        &args.public,
+    )?;
 
-        let avatar_update = args.avatar.as_ref().expand();
+    let avatar_update = args.avatar.as_ref().expand();
 
-        Ok(PrepareResult {
-            my_user_id: member.user_id(),
-            group_index_canister_id: state.data.group_index_canister_id,
-            is_public: args.public.unwrap_or(state.data.chat.is_public.value),
-            chat_id: state.env.canister_id().into(),
-            name: args.name.as_ref().unwrap_or(&state.data.chat.name).clone(),
-            description: args.description.as_ref().unwrap_or(&state.data.chat.description).clone(),
-            avatar_id: avatar_update.map_or(Document::id(&state.data.chat.avatar), |avatar| avatar.map(|a| a.id)),
-            gate_config,
-        })
-    } else {
-        Err(OCErrorCode::InitiatorNotInChat.into())
-    }
+    Ok(PrepareResult {
+        my_user_id: member.user_id(),
+        group_index_canister_id: state.data.group_index_canister_id,
+        is_public: args.public.unwrap_or(state.data.chat.is_public.value),
+        chat_id: state.env.canister_id().into(),
+        name: args.name.as_ref().unwrap_or(&state.data.chat.name).clone(),
+        description: args.description.as_ref().unwrap_or(&state.data.chat.description).clone(),
+        avatar_id: avatar_update.map_or(Document::id(&state.data.chat.avatar), |avatar| avatar.map(|a| a.id)),
+        gate_config,
+    })
 }
 
 fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessResult {

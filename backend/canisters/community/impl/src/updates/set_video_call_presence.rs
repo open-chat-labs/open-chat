@@ -2,7 +2,6 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::set_video_call_presence::{Response::*, *};
-use oc_error_codes::OCErrorCode;
 use types::{Achievement, OCResult};
 
 #[update(msgpack = true)]
@@ -18,29 +17,19 @@ fn set_video_call_presence(args: Args) -> Response {
 }
 
 pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    if state.data.is_frozen() {
-        return Err(OCErrorCode::CommunityFrozen.into());
-    }
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let member = state.data.members.get_verified_member(caller)?;
-    let user_id = member.user_id;
+    let member = state.get_and_verify_calling_member()?;
     let is_bot = member.user_type.is_bot();
     let now = state.env.now();
-
-    let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
-        return Err(OCErrorCode::ChatNotFound.into());
-    };
-
-    let min_visible_event_index = channel.chat.min_visible_event_index(Some(user_id))?;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
 
     channel
         .chat
-        .events
-        .set_video_call_presence(user_id, args.message_id, args.presence, min_visible_event_index, now)?;
+        .set_video_call_presence(member.user_id, args.message_id, args.presence, now)?;
 
     if args.new_achievement && !is_bot {
-        state.notify_user_of_achievement(user_id, Achievement::JoinedCall, now);
+        state.notify_user_of_achievement(member.user_id, Achievement::JoinedCall, now);
     }
 
     handle_activity_notification(state);

@@ -5,7 +5,8 @@ use canister_tracing_macros::trace;
 use chat_events::Reader;
 use community_canister::report_message::{Response::*, *};
 use group_index_canister::c2c_report_message;
-use types::{CanisterId, MultiUserChat, UserId};
+use oc_error_codes::OCErrorCode;
+use types::{CanisterId, MultiUserChat, OCResult, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -14,7 +15,7 @@ async fn report_message(args: Args) -> Response {
 
     let (c2c_args, group_index_canister) = match read_state(|state| build_c2c_args(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(error) => return Error(error),
     };
 
     match group_index_canister_c2c_client::c2c_report_message(group_index_canister, &c2c_args).await {
@@ -34,57 +35,28 @@ async fn report_message(args: Args) -> Response {
     }
 }
 
-fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_message::Args, CanisterId), Response> {
-    if state.data.is_frozen() {
-        return Err(CommunityFrozen);
-    }
+fn build_c2c_args(args: &Args, state: &RuntimeState) -> OCResult<(c2c_report_message::Args, CanisterId)> {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-
-    let Some(member) = state.data.members.get(caller) else {
-        return Err(UserNotInCommunity);
-    };
-
-    if member.suspended().value {
-        return Err(UserSuspended);
-    } else if member.lapsed().value {
-        return Err(UserLapsed);
-    }
-
+    let member = state.get_and_verify_calling_member()?;
     let user_id = member.user_id;
-
-    let Some(channel) = state.data.channels.get(&args.channel_id) else {
-        return Err(ChannelNotFound);
-    };
-
+    let channel = state.data.channels.get_or_err(&args.channel_id)?;
     let chat = &channel.chat;
-
-    let Some(channel_member) = chat.members.get(&user_id) else {
-        return Err(UserNotInChannel);
-    };
-
-    if channel_member.suspended().value {
-        return Err(UserSuspended);
-    } else if channel_member.lapsed().value {
-        return Err(UserLapsed);
-    }
+    let channel_member = chat.members.get_verified_member(user_id)?;
 
     if args.delete && !channel_member.role().can_delete_messages(&chat.permissions) {
-        return Err(NotAuthorized);
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    let Some(events_reader) =
-        channel
-            .chat
-            .events
-            .events_reader(channel_member.min_visible_event_index(), args.thread_root_message_index, None)
-    else {
-        return Err(MessageNotFound);
-    };
+    let events_reader = channel
+        .chat
+        .events
+        .events_reader(channel_member.min_visible_event_index(), args.thread_root_message_index, None)
+        .ok_or(OCErrorCode::MessageNotFound)?;
 
-    let Some(message) = events_reader.message(args.message_id.into(), Some(user_id)) else {
-        return Err(MessageNotFound);
-    };
+    let message = events_reader
+        .message(args.message_id.into(), Some(user_id))
+        .ok_or(OCErrorCode::MessageNotFound)?;
 
     Ok((
         c2c_report_message::Args {

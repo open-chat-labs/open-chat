@@ -176,7 +176,6 @@ fn is_permitted_to_join(
                         channel
                             .summary(
                                 Some(channel_member.user_id()),
-                                true,
                                 state.data.is_public.value,
                                 &state.data.members,
                             )
@@ -250,7 +249,7 @@ fn commit(
     ) {
         AddResult::Success(result) => {
             let summary = channel
-                .summary(Some(user_id), true, state.data.is_public.value, &state.data.members)
+                .summary(Some(user_id), state.data.is_public.value, &state.data.members)
                 .unwrap();
 
             if let Some(gate_expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
@@ -285,7 +284,7 @@ fn commit(
             channel.chat.members.update_lapsed(user_id, false, now);
 
             let summary = channel
-                .summary(Some(user_id), true, state.data.is_public.value, &state.data.members)
+                .summary(Some(user_id), state.data.is_public.value, &state.data.members)
                 .unwrap();
             AlreadyInChannel(Box::new(summary))
         }

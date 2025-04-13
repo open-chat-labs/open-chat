@@ -5,34 +5,30 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::unblock_user::*;
-use types::UsersUnblocked;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, UsersUnblocked};
 
 #[update(msgpack = true)]
 #[trace]
 fn unblock_user(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| unblock_user_impl(args, state))
+    if let Err(error) = mutate_state(|state| unblock_user_impl(args, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
-fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return ChatFrozen;
-    }
+fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
     if !state.data.chat.is_public.value {
-        GroupNotPublic
-    } else if let Some(caller_member) = state.data.get_member(caller) {
-        if caller_member.suspended().value {
-            return UserSuspended;
-        } else if caller_member.lapsed().value {
-            return UserLapsed;
-        }
-
-        let unblocked_by = caller_member.user_id();
-        if unblocked_by == args.user_id {
-            CannotUnblockSelf
+        Err(OCErrorCode::ChatNotPublic.into())
+    } else {
+        let caller_member = state.get_and_verify_calling_member()?;
+        if caller_member.user_id() == args.user_id {
+            Err(OCErrorCode::CannotBlockSelf.into())
         } else if caller_member.role().can_unblock_users(&state.data.chat.permissions) {
             let now = state.env.now();
 
@@ -40,7 +36,7 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
 
             let event = UsersUnblocked {
                 user_ids: vec![args.user_id],
-                unblocked_by,
+                unblocked_by: caller_member.user_id(),
             };
 
             state.data.chat.events.push_main_event(
@@ -50,11 +46,9 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
             );
 
             handle_activity_notification(state);
-            Success
+            Ok(())
         } else {
-            NotAuthorized
+            Err(OCErrorCode::InitiatorNotAuthorized.into())
         }
-    } else {
-        CallerNotInGroup
     }
 }

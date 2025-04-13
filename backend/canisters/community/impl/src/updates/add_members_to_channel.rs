@@ -38,57 +38,41 @@ struct PrepareResult {
 
 #[allow(clippy::result_large_err)]
 fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
-    if state.data.is_frozen() {
-        return Err(OCErrorCode::CommunityFrozen.into());
-    }
+    state.data.verify_not_frozen()?;
 
     if state.data.is_public.value {
         return Err(OCErrorCode::CommunityPublic.into());
     }
 
-    let caller = state.env.caller();
+    let member = state.get_and_verify_calling_member()?;
+    let user_id = member.user_id;
+    let channel = state.data.channels.get_or_err(&args.channel_id)?;
 
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended().value {
-            return Err(OCErrorCode::InitiatorSuspended.into());
-        } else if member.lapsed().value {
+    if let Some(limit) = channel.chat.members.user_limit_reached() {
+        Err(OCErrorCode::UserLimitReached.with_message(limit))
+    } else if let Some(channel_member) = channel.chat.members.get(&user_id) {
+        let permissions = &channel.chat.permissions;
+        if !channel_member.role().can_add_members(permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        } else if channel_member.lapsed().value {
             return Err(OCErrorCode::InitiatorLapsed.into());
         }
 
-        let user_id = member.user_id;
+        // Only add users who are already community members
+        let users_to_add = args
+            .user_ids
+            .iter()
+            .filter(|user_id| state.data.members.contains(user_id))
+            .map(|user_id| (*user_id, state.data.members.bots().get(user_id).copied().unwrap_or_default()))
+            .collect();
 
-        if let Some(channel) = state.data.channels.get(&args.channel_id) {
-            if let Some(limit) = channel.chat.members.user_limit_reached() {
-                Err(OCErrorCode::UserLimitReached.with_message(limit))
-            } else if let Some(channel_member) = channel.chat.members.get(&user_id) {
-                let permissions = &channel.chat.permissions;
-                if !channel_member.role().can_add_members(permissions) {
-                    return Err(OCErrorCode::InitiatorNotAuthorized.into());
-                } else if channel_member.lapsed().value {
-                    return Err(OCErrorCode::InitiatorLapsed.into());
-                }
-
-                // Only add users who are already community members
-                let users_to_add = args
-                    .user_ids
-                    .iter()
-                    .filter(|user_id| state.data.members.contains(user_id))
-                    .map(|user_id| (*user_id, state.data.members.bots().get(user_id).copied().unwrap_or_default()))
-                    .collect();
-
-                Ok(PrepareResult {
-                    user_id,
-                    users_to_add,
-                    member_display_name: member.display_name().value.clone(),
-                })
-            } else {
-                Err(OCErrorCode::InitiatorNotInChat.into())
-            }
-        } else {
-            Err(OCErrorCode::ChatNotFound.into())
-        }
+        Ok(PrepareResult {
+            user_id,
+            users_to_add,
+            member_display_name: member.display_name().value.clone(),
+        })
     } else {
-        Err(OCErrorCode::InitiatorNotInCommunity.into())
+        Err(OCErrorCode::InitiatorNotInChat.into())
     }
 }
 

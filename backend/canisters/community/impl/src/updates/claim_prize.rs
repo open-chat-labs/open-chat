@@ -2,13 +2,12 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::ReservePrizeResult;
 use community_canister::claim_prize::{Response::*, *};
 use constants::MEMO_PRIZE_CLAIM;
 use ledger_utils::{create_pending_transaction, process_transaction};
 use oc_error_codes::OCErrorCode;
 use tracing::error;
-use types::{CanisterId, CompletedCryptoTransaction, PendingCryptoTransaction, UserId};
+use types::{CanisterId, CompletedCryptoTransaction, OCResult, PendingCryptoTransaction, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -18,7 +17,7 @@ async fn claim_prize(args: Args) -> Response {
     // Validate the request and reserve a prize
     let prepare_result = match mutate_state(|state| prepare(&args, state)) {
         Ok(c) => c,
-        Err(response) => return *response,
+        Err(error) => return Error(error),
     };
 
     let prize_amount = prepare_result.transaction.units();
@@ -56,51 +55,15 @@ struct PrepareResult {
     pub user_id: UserId,
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<Response>> {
-    if state.data.is_frozen() {
-        return Err(Box::new(CommunityFrozen));
-    }
+fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-
-    let member = match state.data.members.get(caller) {
-        Some(m) => m,
-        None => return Err(Box::new(UserNotInCommunity)),
-    };
-
-    if member.suspended().value {
-        return Err(Box::new(UserSuspended));
-    } else if member.lapsed().value {
-        return Err(Box::new(UserLapsed));
-    }
-
-    let channel = match state.data.channels.get_mut(&args.channel_id) {
-        Some(c) => c,
-        None => return Err(Box::new(ChannelNotFound)),
-    };
-
-    let channel_member = match channel.chat.members.get(&member.user_id) {
-        Some(m) => m,
-        None => return Err(Box::new(UserNotInChannel)),
-    };
-
+    let member = state.get_and_verify_calling_member()?;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
     let now_nanos = state.env.now_nanos();
-    let min_visible_event_index = channel_member.min_visible_event_index();
     let user_id = member.user_id;
-
-    let result = match channel
-        .chat
-        .events
-        .reserve_prize(args.message_id, min_visible_event_index, user_id, now)
-    {
-        ReservePrizeResult::Success(result) => result,
-        ReservePrizeResult::AlreadyClaimed => return Err(Box::new(AlreadyClaimed)),
-        ReservePrizeResult::MessageNotFound => return Err(Box::new(MessageNotFound)),
-        ReservePrizeResult::PrizeFullyClaimed => return Err(Box::new(PrizeFullyClaimed)),
-        ReservePrizeResult::PrizeEnded => return Err(Box::new(PrizeEnded)),
-        ReservePrizeResult::LedgerError => return Err(Box::new(LedgerError)),
-    };
+    let result = channel.chat.reserve_prize(user_id, args.message_id, now)?;
 
     // Hack to ensure 2 prizes claimed by the same user in the same block don't result in "duplicate transaction" errors.
     let duplicate_buster = u32::from(result.message_index) as u64 % 1000;

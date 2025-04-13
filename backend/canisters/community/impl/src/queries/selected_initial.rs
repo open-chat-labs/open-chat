@@ -2,24 +2,21 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use community_canister::selected_initial::{Response::*, *};
 use std::collections::HashSet;
-use types::InstalledBotDetails;
+use types::{InstalledBotDetails, OCResult};
 
 #[query(candid = true, msgpack = true)]
 fn selected_initial(args: Args) -> Response {
-    read_state(|state| selected_initial_impl(args, state))
+    match read_state(|state| selected_initial_impl(args, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
-    // Don't call `ic0.caller()` if the community is public or the invite_code is valid to maximise query caching
-    if !state.data.is_public.value || !state.data.is_invite_code_valid(args.invite_code) {
-        let caller = state.env.caller();
-        if !state.data.is_accessible(caller, None) {
-            return PrivateCommunity;
-        }
-    }
-
+fn selected_initial_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
     let caller = state.env.caller();
     let data = &state.data;
+    data.verify_is_accessible(caller, args.invite_code)?;
+
     let last_updated = data.details_last_updated();
     let referrals = data
         .members
@@ -58,7 +55,7 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
 
     let api_keys = data.bot_api_keys.generated_since(0);
 
-    Success(SuccessResult {
+    Ok(SuccessResult {
         timestamp: last_updated,
         last_updated,
         latest_event_index: data.events.latest_event_index(),

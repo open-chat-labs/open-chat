@@ -3,33 +3,28 @@ use canister_api_macros::query;
 use group_canister::selected_updates_v2::{Response::*, *};
 use installed_bots::BotUpdate;
 use std::collections::HashSet;
-use types::InstalledBotDetails;
+use types::{InstalledBotDetails, OCResult};
 
 #[query(candid = true, msgpack = true)]
 fn selected_updates_v2(args: Args) -> Response {
-    read_state(|state| selected_updates_impl(args, state))
+    read_state(|state| selected_updates_impl(args, state)).unwrap_or_else(Error)
 }
 
-fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
-    let bots = &state.data.bots;
+fn selected_updates_impl(args: Args, state: &RuntimeState) -> OCResult<Response> {
     let last_updated = state.data.details_last_updated();
     if last_updated <= args.updates_since {
-        return SuccessNoUpdates(last_updated);
+        return Ok(SuccessNoUpdates(last_updated));
     }
 
-    let caller = state.env.caller();
-    let user_id = match state.data.lookup_user_id(caller) {
-        Some(id) => id,
-        None => return CallerNotInGroup,
-    };
+    let user_id = state.get_caller_user_id()?;
+    let bots = &state.data.bots;
 
+    let mut bots_changed = HashSet::new();
     let mut results = state
         .data
         .chat
-        .selected_group_updates(args.updates_since, last_updated, Some(user_id))
-        .unwrap();
+        .selected_group_updates(args.updates_since, last_updated, Some(user_id))?;
 
-    let mut bots_changed = HashSet::new();
     for (user_id, update) in bots.iter_latest_updates(args.updates_since) {
         match update {
             BotUpdate::Added | BotUpdate::Updated => {
@@ -53,9 +48,5 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
     results.api_keys_generated = state.data.bot_api_keys.generated_since(args.updates_since);
 
-    if results.has_updates() {
-        Success(results)
-    } else {
-        SuccessNoUpdates(last_updated)
-    }
+    Ok(if results.has_updates() { Success(results) } else { SuccessNoUpdates(last_updated) })
 }

@@ -3,6 +3,8 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::update_user_group::{Response::*, *};
+use oc_error_codes::OCErrorCode;
+use types::OCResult;
 use utils::text_validation::{validate_user_group_name, UsernameValidationError};
 
 #[update(msgpack = true)]
@@ -10,45 +12,38 @@ use utils::text_validation::{validate_user_group_name, UsernameValidationError};
 fn update_user_group(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| update_user_group_impl(args, state))
+    if let Err(error) = mutate_state(|state| update_user_group_impl(args, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
-fn update_user_group_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
-    }
+fn update_user_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended().value {
-            return UserSuspended;
-        } else if member.lapsed().value {
-            return UserLapsed;
-        }
+    let member = state.get_and_verify_calling_member()?;
 
-        if !member.role().can_manage_user_groups(&state.data.permissions) {
-            NotAuthorized
-        } else if let Err(error) = args.name.as_ref().map_or(Ok(()), |n| validate_user_group_name(n)) {
-            match error {
-                UsernameValidationError::TooShort(s) => NameTooShort(s),
-                UsernameValidationError::TooLong(l) => NameTooLong(l),
-                UsernameValidationError::Invalid => NameInvalid,
-            }
-        } else {
-            let now = state.env.now();
-
-            if state
-                .data
-                .members
-                .update_user_group(args.user_group_id, args.name, args.users_to_add, args.users_to_remove, now)
-            {
-                handle_activity_notification(state);
-                Success
-            } else {
-                UserGroupNotFound
-            }
-        }
+    if !member.role().can_manage_user_groups(&state.data.permissions) {
+        Err(OCErrorCode::InitiatorNotAuthorized.into())
+    } else if let Err(error) = args.name.as_ref().map_or(Ok(()), |n| validate_user_group_name(n)) {
+        Err(match error {
+            UsernameValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
+            UsernameValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
+            UsernameValidationError::Invalid => OCErrorCode::InvalidName.into(),
+        })
     } else {
-        NotAuthorized
+        let now = state.env.now();
+
+        if state
+            .data
+            .members
+            .update_user_group(args.user_group_id, args.name, args.users_to_add, args.users_to_remove, now)
+        {
+            handle_activity_notification(state);
+            Ok(())
+        } else {
+            Err(OCErrorCode::UserGroupNotFound.into())
+        }
     }
 }

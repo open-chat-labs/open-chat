@@ -72,8 +72,8 @@ struct PrepareResult {
 }
 
 fn prepare(user_id: UserId, state: &RuntimeState) -> OCResult<PrepareResult> {
-    let caller = state.env.caller();
-    let member = state.data.get_verified_member(caller)?;
+    let member = state.get_and_verify_calling_member()?;
+
     Ok(PrepareResult {
         caller_id: member.user_id(),
         user_index_canister_id: state.data.user_index_canister_id,

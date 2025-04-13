@@ -20,13 +20,9 @@ fn cancel_invites(args: Args) -> Response {
 fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let member = state.data.get_verified_member(caller)?;
+    let user_id = state.get_caller_user_id()?;
 
-    state
-        .data
-        .chat
-        .cancel_invites(member.user_id(), args.user_ids, state.env.now())?;
+    state.data.chat.cancel_invites(user_id, args.user_ids, state.env.now())?;
 
     handle_activity_notification(state);
     Ok(())

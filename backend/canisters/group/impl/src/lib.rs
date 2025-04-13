@@ -111,6 +111,25 @@ impl RuntimeState {
         }
     }
 
+    pub fn get_caller_user_id(&self) -> Result<UserId, OCErrorCode> {
+        let caller = self.env.caller();
+        self.data
+            .principal_to_user_id_map
+            .get(&caller)
+            .ok_or(OCErrorCode::InitiatorNotInChat)
+    }
+
+    pub fn get_calling_member(&self) -> Result<GroupMemberInternal, OCErrorCode> {
+        let caller = self.env.caller();
+        self.data.get_member(caller).ok_or(OCErrorCode::InitiatorNotInChat)
+    }
+
+    pub fn get_and_verify_calling_member(&self) -> Result<GroupMemberInternal, OCErrorCode> {
+        let member = self.get_calling_member()?;
+        member.verify()?;
+        Ok(member)
+    }
+
     pub fn push_notification(&mut self, sender: Option<UserId>, recipients: Vec<UserId>, notification: Notification) {
         if !recipients.is_empty() {
             self.data.notifications_queue.push(IdempotentEnvelope {
@@ -349,7 +368,8 @@ impl RuntimeState {
     }
 
     pub fn notify_user_of_achievement(&mut self, user_id: UserId, achievement: Achievement, now: TimestampMillis) {
-        if self.data.achievements.award(user_id, achievement).is_some() {
+        if !self.data.chat.members.bots().contains_key(&user_id) && self.data.achievements.award(user_id, achievement).is_some()
+        {
             self.push_event_to_user(user_id, GroupCanisterEvent::Achievement(achievement), now);
         }
     }
@@ -615,20 +635,6 @@ impl Data {
             .unwrap_or(user_id_or_principal.into());
 
         self.chat.members.get(&user_id)
-    }
-
-    pub fn get_verified_member(&self, user_id_or_principal: Principal) -> Result<GroupMemberInternal, OCErrorCode> {
-        let Some(member) = self.get_member(user_id_or_principal) else {
-            return Err(OCErrorCode::InitiatorNotInChat);
-        };
-
-        if member.suspended().value {
-            Err(OCErrorCode::InitiatorSuspended)
-        } else if member.lapsed().value {
-            Err(OCErrorCode::InitiatorLapsed)
-        } else {
-            Ok(member)
-        }
     }
 
     pub fn is_frozen(&self) -> bool {

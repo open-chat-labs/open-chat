@@ -2,7 +2,6 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::unfollow_thread::{Response::*, *};
-use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
 #[update(msgpack = true)]
@@ -18,19 +17,13 @@ fn unfollow_thread(args: Args) -> Response {
 }
 
 fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    if state.data.is_frozen() {
-        return Err(OCErrorCode::CommunityFrozen.into());
-    }
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
+    let user_id = state.get_and_verify_calling_member()?.user_id;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
-    let user_id = state.data.members.get_verified_member(caller)?.user_id;
 
-    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        channel.chat.unfollow_thread(user_id, args.thread_root_message_index, now)?;
-        state.data.mark_community_updated_in_user_canister(user_id);
-        Ok(())
-    } else {
-        Err(OCErrorCode::ChatNotFound.into())
-    }
+    channel.chat.unfollow_thread(user_id, args.thread_root_message_index, now)?;
+    state.data.mark_community_updated_in_user_canister(user_id);
+    Ok(())
 }
