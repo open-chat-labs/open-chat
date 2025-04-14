@@ -22,7 +22,7 @@ fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> OCRe
 
     let user_id = state.get_and_verify_calling_member()?.user_id;
 
-    if state.data.members.get_by_user_id(&args.user_id).is_none() {
+    if !state.data.members.contains(&args.user_id) {
         return Err(OCErrorCode::TargetUserNotInCommunity.into());
     }
 

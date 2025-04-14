@@ -25,6 +25,7 @@ fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> OCResult<u32> {
     let member = state.get_and_verify_calling_member()?;
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
+
     channel
         .chat
         .cancel_p2p_swap(member.user_id, args.thread_root_message_index, args.message_id, now)

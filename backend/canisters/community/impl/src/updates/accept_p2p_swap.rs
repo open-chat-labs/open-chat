@@ -105,8 +105,8 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> OCResult<ReserveP2P
     state.data.verify_not_frozen()?;
 
     let member = state.get_and_verify_calling_member()?;
-    let user_id = member.user_id;
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+    let user_id = member.user_id;
     let now = state.env.now();
 
     let result = channel
