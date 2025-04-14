@@ -14,9 +14,6 @@ pub struct Args {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    NotAuthorized,
-    CommunityFrozen,
-    ChannelNotFound,
     Error(OCError),
 }
 
@@ -26,14 +23,7 @@ impl From<delete_channel::Response> for Response {
 
         match value {
             delete_channel::Response::Success => Success,
-            delete_channel::Response::CommunityFrozen => CommunityFrozen,
-            delete_channel::Response::ChannelNotFound => ChannelNotFound,
             delete_channel::Response::Error(error) => Error(error),
-            delete_channel::Response::UserSuspended
-            | delete_channel::Response::UserNotInCommunity
-            | delete_channel::Response::UserNotInChannel
-            | delete_channel::Response::UserLapsed
-            | delete_channel::Response::NotAuthorized => NotAuthorized,
         }
     }
 }

@@ -18,18 +18,6 @@ type SendMessageV2Args = record {
 
 type SendMessageResponse = variant {
     Success : SendMessageSuccess;
-    MessageEmpty;
-    TextTooLong : nat32;
-    InvalidPoll : InvalidPollReason;
-    NotAuthorized;
-    CallerNotInGroup;
-    InvalidRequest : text;
-    ThreadMessageNotFound;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
-    RulesNotAccepted;
-    MessageAlreadyExists;
     Error : OCError;
 };
 
@@ -51,11 +39,6 @@ type EditMessageV2Args = record {
 
 type EditMessageResponse = variant {
     Success;
-    MessageNotFound;
-    CallerNotInGroup;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -70,7 +53,6 @@ type StartVideoCallArgs = record {
 
 type StartVideoCallResponse = variant {
     Success;
-    NotAuthorized;
     Error : OCError;
 };
 
@@ -80,8 +62,6 @@ type EndVideoCallArgs = record {
 
 type EndVideoCallResponse = variant {
     Success;
-    MessageNotFound;
-    AlreadyEnded;
     Error : OCError;
 };
 
@@ -92,12 +72,6 @@ type JoinVideoCallArgs = record {
 
 type JoinVideoCallResponse = variant {
     Success;
-    MessageNotFound;
-    AlreadyEnded;
-    GroupFrozen;
-    UserNotInGroup;
-    UserSuspended;
-    UserLapsed;
     Error : OCError;
 };
 
@@ -109,12 +83,6 @@ type SetVideoCallPresenceArgs = record {
 
 type SetVideoCallPresenceResponse = variant {
     Success;
-    MessageNotFound;
-    AlreadyEnded;
-    GroupFrozen;
-    UserNotInGroup;
-    UserSuspended;
-    UserLapsed;
     Error : OCError;
 };
 
@@ -148,11 +116,6 @@ type UndeleteMessagesResponse = variant {
     Success : record {
         messages : vec Message;
     };
-    CallerNotInGroup;
-    MessageNotFound;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -208,10 +171,6 @@ type CancelP2PSwapArgs = record {
 
 type CancelP2PSwapResponse = variant {
     Success;
-    StatusError : SwapStatusError;
-    SwapNotFound;
-    UserNotInGroup;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -227,14 +186,6 @@ type AddReactionArgs = record {
 
 type AddReactionResponse = variant {
     Success;
-    NoChange;
-    InvalidReaction;
-    MessageNotFound;
-    CallerNotInGroup;
-    NotAuthorized;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -247,13 +198,6 @@ type RemoveReactionArgs = record {
 
 type RemoveReactionResponse = variant {
     Success;
-    NoChange;
-    MessageNotFound;
-    CallerNotInGroup;
-    NotAuthorized;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -340,14 +284,6 @@ type ChangeRoleArgs = record {
 
 type ChangeRoleResponse = variant {
     Success;
-    CallerNotInGroup;
-    NotAuthorized;
-    UserNotInGroup;
-    Invalid;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
-    InternalError : text;
     Error : OCError;
 };
 
@@ -393,14 +329,6 @@ type PinMessageArgs = record {
 
 type PinMessageV2Response = variant {
     Success : PushEventResult;
-    NoChange;
-    MessageIndexOutOfRange;
-    NotAuthorized;
-    CallerNotInGroup;
-    MessageNotFound;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -411,13 +339,6 @@ type UnpinMessageArgs = record {
 
 type UnpinMessageResponse = variant {
     SuccessV2 : PushEventResult;
-    NoChange;
-    NotAuthorized;
-    CallerNotInGroup;
-    MessageNotFound;
-    UserSuspended;
-    UserLapsed;
-    ChatFrozen;
     Error : OCError;
 };
 
@@ -579,11 +500,6 @@ type EventsWindowArgs = record {
 
 type EventsResponse = variant {
     Success : EventsSuccessResult;
-    CallerNotInGroup;
-    ThreadMessageNotFound;
-    UserSuspended;
-    UserLapsed;
-    ReplicaNotUpToDateV2 : TimestampMillis;
     Error : OCError;
 };
 
@@ -601,11 +517,6 @@ type MessagesByMessageIndexArgs = record {
 
 type MessagesByMessageIndexResponse = variant {
     Success : MessagesSuccessResult;
-    CallerNotInGroup;
-    ThreadMessageNotFound;
-    UserSuspended;
-    UserLapsed;
-    ReplicaNotUpToDateV2 : TimestampMillis;
     Error : OCError;
 };
 
@@ -777,12 +688,6 @@ type FollowThreadArgs = record {
 
 type FollowThreadResponse = variant {
     Success;
-    AlreadyFollowing;
-    ThreadNotFound;
-    UserNotInGroup;
-    UserSuspended;
-    UserLapsed;
-    GroupFrozen;
     Error : OCError;
 };
 
@@ -792,12 +697,6 @@ type UnfollowThreadArgs = record {
 
 type UnfollowThreadResponse = variant {
     Success;
-    NotFollowing;
-    ThreadNotFound;
-    UserNotInGroup;
-    UserSuspended;
-    UserLapsed;
-    GroupFrozen;
     Error : OCError;
 };
 
@@ -807,9 +706,6 @@ type CancelInvitesArgs = record {
 
 type CancelInvitesResponse = variant {
     Success;
-    NotAuthorized;
-    UserSuspended;
-    UserLapsed;
     Error : OCError;
 };
 

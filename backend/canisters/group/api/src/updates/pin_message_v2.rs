@@ -15,13 +15,5 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(PushEventResult),
-    NoChange,
-    MessageIndexOutOfRange,
-    NotAuthorized,
-    CallerNotInGroup,
-    MessageNotFound,
-    UserSuspended,
-    UserLapsed,
-    ChatFrozen,
     Error(OCError),
 }

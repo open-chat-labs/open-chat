@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, ChatId, CommunityId, EventIndex, MessageIndex, TimestampMillis, UserId};
@@ -76,14 +77,14 @@ pub enum EventsResponse {
     NotFound,
     ReplicaNotUpToDate(TimestampMillis),
     InternalError(String),
+    Error(OCError),
 }
 
 impl From<community_canister::EventsResponse> for EventsResponse {
     fn from(value: community_canister::EventsResponse) -> Self {
         match value {
             community_canister::EventsResponse::Success(events) => EventsResponse::Success(events),
-            community_canister::EventsResponse::ReplicaNotUpToDateV2(ts) => EventsResponse::ReplicaNotUpToDate(ts),
-            _ => EventsResponse::NotFound,
+            community_canister::EventsResponse::Error(error) => EventsResponse::Error(error),
         }
     }
 }
@@ -92,8 +93,7 @@ impl From<group_canister::EventsResponse> for EventsResponse {
     fn from(value: group_canister::EventsResponse) -> Self {
         match value {
             group_canister::EventsResponse::Success(events) => EventsResponse::Success(events),
-            group_canister::EventsResponse::ReplicaNotUpToDateV2(ts) => EventsResponse::ReplicaNotUpToDate(ts),
-            _ => EventsResponse::NotFound,
+            group_canister::EventsResponse::Error(error) => EventsResponse::Error(error),
         }
     }
 }

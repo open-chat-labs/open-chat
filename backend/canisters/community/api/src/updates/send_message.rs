@@ -3,8 +3,7 @@ use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    ChannelId, EventIndex, GroupReplyContext, InvalidPollReason, MessageContentInitial, MessageId, MessageIndex,
-    TimestampMillis, User, Version,
+    ChannelId, EventIndex, GroupReplyContext, MessageContentInitial, MessageId, MessageIndex, TimestampMillis, User, Version,
 };
 
 #[ts_export(community, send_message)]
@@ -30,21 +29,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    ChannelNotFound,
-    ThreadMessageNotFound,
-    MessageEmpty,
-    TextTooLong(u32),
-    InvalidPoll(InvalidPollReason),
-    NotAuthorized,
-    UserNotInCommunity,
-    UserNotInChannel,
-    UserSuspended,
-    InvalidRequest(String),
-    CommunityFrozen,
-    RulesNotAccepted,
-    MessageAlreadyExists,
-    CommunityRulesNotAccepted,
-    UserLapsed,
     Error(OCError),
 }
 

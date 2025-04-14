@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Notify Communities when user deleted ([#7781](https://github.com/open-chat-labs/open-chat/pull/7781))
 
+### Removed
+
+- Remove response types that are no longer used ([#7788](https://github.com/open-chat-labs/open-chat/pull/7788))
+
 ## [[2.0.1700](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1700-community)] - 2025-04-11
 
 ### Fixed

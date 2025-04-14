@@ -150,13 +150,6 @@ async fn send_message_to_channel(
             }),
             community_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
             community_canister::c2c_bot_send_message::Response::NotAuthorized => NotAuthorized,
-            community_canister::c2c_bot_send_message::Response::CommunityFrozen => Frozen,
-            community_canister::c2c_bot_send_message::Response::ChannelNotFound => {
-                InvalidRequest("Channel not found".to_string())
-            }
-            community_canister::c2c_bot_send_message::Response::ThreadNotFound => ThreadNotFound,
-            community_canister::c2c_bot_send_message::Response::InvalidRequest(message) => InvalidRequest(message),
-            community_canister::c2c_bot_send_message::Response::MessageAlreadyFinalised => MessageAlreadyFinalised,
         },
         Err(error) => C2CError(error.reject_code() as i32, error.message().to_string()),
     }
@@ -200,11 +193,6 @@ async fn send_message_to_group(
                 expires_at: result.expires_at,
             }),
             group_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
-            group_canister::c2c_bot_send_message::Response::NotAuthorized => NotAuthorized,
-            group_canister::c2c_bot_send_message::Response::ChatFrozen => Frozen,
-            group_canister::c2c_bot_send_message::Response::ThreadNotFound => ThreadNotFound,
-            group_canister::c2c_bot_send_message::Response::InvalidRequest(message) => InvalidRequest(message),
-            group_canister::c2c_bot_send_message::Response::MessageAlreadyFinalised => MessageAlreadyFinalised,
         },
         Err(error) => C2CError(error.reject_code() as i32, error.message().to_string()),
     }

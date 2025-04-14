@@ -16,11 +16,6 @@ pub use updates::*;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum EventsResponse {
     Success(types::EventsResponse),
-    CallerNotInGroup,
-    ThreadMessageNotFound,
-    UserSuspended,
-    UserLapsed,
-    ReplicaNotUpToDateV2(types::TimestampMillis),
     Error(OCError),
 }
 
