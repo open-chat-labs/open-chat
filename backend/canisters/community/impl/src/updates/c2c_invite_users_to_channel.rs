@@ -5,7 +5,6 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users_to_channel::{Response::*, *};
-use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -32,16 +31,15 @@ fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> OCR
     }
 
     let mut failed_users = Vec::new();
-
     if !users_to_invite_to_community.is_empty() {
-        if let community_canister::c2c_invite_users::Response::Success(r) = invite_users_to_community_impl(
+        if let Ok(result) = invite_users_to_community_impl(
             community_canister::c2c_invite_users::Args {
                 users: users_to_invite_to_community.clone(),
                 caller: args.caller,
             },
             state,
         ) {
-            users_to_invite_to_channel.extend(r.invited_users);
+            users_to_invite_to_channel.extend(result.invited_users);
         } else {
             failed_users.extend(users_to_invite_to_community.into_iter().map(|(u, _)| u))
         }
@@ -51,31 +49,26 @@ fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> OCR
         return Ok(Failed(FailedResult { failed_users }));
     }
 
-    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        let now = state.env.now();
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+    let now = state.env.now();
+    let result = channel.chat.invite_users(member.user_id, users_to_invite_to_channel, now)?;
+    let community_name = state.data.name.value.clone();
+    let channel_name = channel.chat.name.value.clone();
 
-        let result = channel.chat.invite_users(member.user_id, users_to_invite_to_channel, now)?;
+    handle_activity_notification(state);
 
-        let community_name = state.data.name.value.clone();
-        let channel_name = channel.chat.name.value.clone();
-
-        handle_activity_notification(state);
-
-        Ok(if failed_users.is_empty() {
-            Success(SuccessResult {
-                invited_users: result.invited_users,
-                community_name,
-                channel_name,
-            })
-        } else {
-            PartialSuccess(PartialSuccessResult {
-                invited_users: result.invited_users,
-                community_name,
-                channel_name,
-                failed_users,
-            })
+    Ok(if failed_users.is_empty() {
+        Success(SuccessResult {
+            invited_users: result.invited_users,
+            community_name,
+            channel_name,
         })
     } else {
-        Err(OCErrorCode::ChatNotFound.into())
-    }
+        PartialSuccess(PartialSuccessResult {
+            invited_users: result.invited_users,
+            community_name,
+            channel_name,
+            failed_users,
+        })
+    })
 }

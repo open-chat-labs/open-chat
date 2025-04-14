@@ -22,7 +22,7 @@ fn disable_invite_code(args: Args) -> Response {
 fn disable_invite_code_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_and_verify_calling_member()?;
+    let member = state.get_calling_member(true)?;
 
     if member.role().can_invite_users(&state.data.chat.permissions) {
         state.data.invite_code_enabled = false;

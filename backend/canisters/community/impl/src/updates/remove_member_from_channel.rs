@@ -20,7 +20,7 @@ fn remove_member_from_channel(args: Args) -> Response {
 fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let user_id = state.get_and_verify_calling_member()?.user_id;
+    let user_id = state.get_calling_member(true)?.user_id;
 
     if !state.data.members.contains(&args.user_id) {
         return Err(OCErrorCode::TargetUserNotInCommunity.into());

@@ -58,7 +58,7 @@ struct PrepareResult {
 fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_and_verify_calling_member()?;
+    let member = state.get_calling_member(true)?;
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
     let now_nanos = state.env.now_nanos();

@@ -108,7 +108,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
         .map(|gcu| gcu.into())
         .apply_to(state.data.chat.gate_config.value.clone());
 
-    let member = state.get_and_verify_calling_member()?;
+    let member = state.get_calling_member(true)?;
     let permissions = args.permissions_v2.as_ref();
 
     state.data.chat.can_update(

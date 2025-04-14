@@ -69,7 +69,7 @@ struct PrepareResult {
 }
 
 fn prepare(user_id: UserId, state: &RuntimeState) -> OCResult<PrepareResult> {
-    let member = state.get_and_verify_calling_member()?;
+    let member = state.get_calling_member(true)?;
 
     Ok(PrepareResult {
         caller_id: member.user_id,

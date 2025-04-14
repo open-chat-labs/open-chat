@@ -4,7 +4,8 @@ use canister_client::make_c2c_call_raw;
 use canister_tracing_macros::trace;
 use group_canister::c2c_delete_group::{Response::*, *};
 use group_index_canister::c2c_delete_group;
-use types::{CanisterId, UserId};
+use oc_error_codes::OCErrorCode;
+use types::{CanisterId, OCResult, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -13,7 +14,7 @@ async fn c2c_delete_group(_args: Args) -> Response {
 
     let prepare_result = match read_state(prepare) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(error) => return Error(error),
     };
 
     let group_index_canister_id = prepare_result.group_index_canister_id;
@@ -33,25 +34,19 @@ struct PrepareResult {
     members: Vec<UserId>,
 }
 
-fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if state.data.is_frozen() {
-        return Err(ChatFrozen);
-    }
+fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller().into();
-    if let Some(member) = state.data.chat.members.get(&caller) {
-        if !member.role().can_delete_group() {
-            Err(NotAuthorized)
-        } else {
-            Ok(PrepareResult {
-                group_index_canister_id: state.data.group_index_canister_id,
-                deleted_by: member.user_id(),
-                group_name: state.data.chat.name.value.clone(),
-                members: state.data.chat.members.member_ids().iter().copied().collect(),
-            })
-        }
+    let member = state.get_calling_member(true)?;
+    if !member.role().can_delete_group() {
+        Err(OCErrorCode::InitiatorNotAuthorized.into())
     } else {
-        Err(NotAuthorized)
+        Ok(PrepareResult {
+            group_index_canister_id: state.data.group_index_canister_id,
+            deleted_by: member.user_id(),
+            group_name: state.data.chat.name.value.clone(),
+            members: state.data.chat.members.member_ids().iter().copied().collect(),
+        })
     }
 }
 

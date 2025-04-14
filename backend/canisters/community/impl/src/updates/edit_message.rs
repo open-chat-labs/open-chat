@@ -21,7 +21,7 @@ fn edit_message(args: Args) -> Response {
 fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_and_verify_calling_member()?;
+    let member = state.get_calling_member(true)?;
     let now = state.env.now();
 
     let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {

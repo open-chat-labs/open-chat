@@ -11,7 +11,10 @@ use group_canister::c2c_join_group::{Response::*, *};
 use group_chat_core::AddResult;
 use group_community_common::ExpiringMember;
 use oc_error_codes::OCErrorCode;
-use types::{AccessGateConfigInternal, MemberJoinedInternal, UsersUnblocked};
+use types::{
+    AccessGate, AccessGateConfigInternal, CommunityCanisterCommunitySummary, GroupCanisterGroupChatSummary,
+    MemberJoinedInternal, OCResult, UsersUnblocked,
+};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -19,47 +22,49 @@ async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
     let payments = match read_state(|state| is_permitted_to_join(&args, state)) {
-        Ok(Some((gate_config, check_gate_args))) => match check_if_passes_gate(gate_config.gate, check_gate_args).await {
-            CheckIfPassesGateResult::Success(payments) => payments,
-            CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
-            CheckIfPassesGateResult::Error(error) => return Error(error),
-        },
-        Ok(None) => Vec::new(),
-        Err(response) => return response,
+        Ok(IsPermittedToJoinSuccess::NoGate) => Vec::new(),
+        Ok(IsPermittedToJoinSuccess::RequiresGate(gate, check_gate_args)) => {
+            match check_if_passes_gate(gate, *check_gate_args).await {
+                CheckIfPassesGateResult::Success(payments) => payments,
+                CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
+                CheckIfPassesGateResult::Error(error) => return Error(error),
+            }
+        }
+        Ok(IsPermittedToJoinSuccess::AlreadyInGroup(summary)) => return AlreadyInGroupV2(summary),
+        Err(error) => return Error(error),
     };
 
     mutate_state(|state| c2c_join_group_impl(args, payments, state))
 }
 
-fn is_permitted_to_join(
-    args: &Args,
-    state: &RuntimeState,
-) -> Result<Option<(AccessGateConfigInternal, CheckGateArgs)>, Response> {
-    let caller = state.env.caller();
+enum IsPermittedToJoinSuccess {
+    NoGate,
+    RequiresGate(AccessGate, Box<CheckGateArgs>),
+    AlreadyInGroup(Box<GroupCanisterGroupChatSummary>),
+}
 
-    if state.data.is_frozen() {
-        return Err(Error(OCErrorCode::ChatFrozen.into()));
-    }
+fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermittedToJoinSuccess> {
+    state.data.verify_not_frozen()?;
 
     if let Some(member) = state.data.chat.members.get(&args.user_id) {
         if !member.lapsed().value {
             let summary = state.summary(&member);
-            return Err(AlreadyInGroupV2(Box::new(summary)));
+            return Ok(IsPermittedToJoinSuccess::AlreadyInGroup(Box::new(summary)));
         }
     } else if state.data.chat.members.is_blocked(&args.user_id) {
-        return Err(Error(OCErrorCode::InitiatorBlocked.into()));
+        return Err(OCErrorCode::InitiatorBlocked.into());
     } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
-        return Err(Error(OCErrorCode::UserLimitReached.with_message(limit)));
-    } else if caller == state.data.user_index_canister_id || state.data.get_invitation(args.principal).is_some() {
-        return Ok(None);
+        return Err(OCErrorCode::UserLimitReached.with_message(limit));
+    } else if state.env.caller() == state.data.user_index_canister_id || state.data.get_invitation(args.principal).is_some() {
+        return Ok(IsPermittedToJoinSuccess::NoGate);
     } else if !state.data.chat.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
-        return Err(Error(OCErrorCode::NotInvited.into()));
+        return Err(OCErrorCode::NotInvited.into());
     }
 
-    Ok(state.data.chat.gate_config.as_ref().map(|gc| {
-        (
-            gc.clone(),
-            CheckGateArgs {
+    Ok(if let Some(gate_config) = state.data.chat.gate_config.as_ref() {
+        IsPermittedToJoinSuccess::RequiresGate(
+            gate_config.gate.clone(),
+            Box::new(CheckGateArgs {
                 user_id: args.user_id,
                 diamond_membership_expires_at: args.diamond_membership_expires_at,
                 this_canister: state.env.canister_id(),
@@ -76,9 +81,11 @@ fn is_permitted_to_join(
                     }),
                 referred_by_member: false,
                 now: state.env.now(),
-            },
+            }),
         )
-    }))
+    } else {
+        IsPermittedToJoinSuccess::NoGate
+    })
 }
 
 fn c2c_join_group_impl(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> Response {

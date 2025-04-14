@@ -44,7 +44,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
         return Err(OCErrorCode::CommunityPublic.into());
     }
 
-    let member = state.get_and_verify_calling_member()?;
+    let member = state.get_calling_member(true)?;
     let user_id = member.user_id;
     let channel = state.data.channels.get_or_err(&args.channel_id)?;
 

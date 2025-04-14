@@ -119,14 +119,12 @@ impl RuntimeState {
             .ok_or(OCErrorCode::InitiatorNotInChat)
     }
 
-    pub fn get_calling_member(&self) -> Result<GroupMemberInternal, OCErrorCode> {
+    pub fn get_calling_member(&self, verify: bool) -> Result<GroupMemberInternal, OCErrorCode> {
         let caller = self.env.caller();
-        self.data.get_member(caller).ok_or(OCErrorCode::InitiatorNotInChat)
-    }
-
-    pub fn get_and_verify_calling_member(&self) -> Result<GroupMemberInternal, OCErrorCode> {
-        let member = self.get_calling_member()?;
-        member.verify()?;
+        let member = self.data.get_member(caller).ok_or(OCErrorCode::InitiatorNotInChat)?;
+        if verify {
+            member.verify()?;
+        }
         Ok(member)
     }
 
@@ -241,13 +239,14 @@ impl RuntimeState {
         result
     }
 
-    pub fn start_importing_into_community(&mut self, community: CommunityBeingImportedInto) -> StartImportIntoCommunityResult {
-        use StartImportIntoCommunityResult::*;
-
+    pub fn start_importing_into_community(
+        &mut self,
+        community: CommunityBeingImportedInto,
+    ) -> OCResult<StartImportIntoCommunityResultSuccess> {
         if self.data.community_being_imported_into.is_some() && self.data.is_frozen() {
-            AlreadyImportingToAnotherCommunity
+            Err(OCErrorCode::AlreadyImportingIntoAnotherCommunity.into())
         } else if self.data.is_frozen() {
-            ChatFrozen
+            Err(OCErrorCode::ChatFrozen.into())
         } else {
             let transfers_required = self.prepare_transfers_for_import_into_community();
             let serialized = serialize_then_unwrap(&self.data.chat);
@@ -267,7 +266,7 @@ impl RuntimeState {
                 self,
             );
 
-            Success(StartImportIntoCommunityResultSuccess {
+            Ok(StartImportIntoCommunityResultSuccess {
                 total_bytes,
                 transfers_required,
             })

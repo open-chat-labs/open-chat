@@ -3,29 +3,32 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
+use oc_error_codes::OCErrorCode;
 use types::c2c_uninstall_bot::{Response::*, *};
+use types::OCResult;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_uninstall_bot(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| c2c_uninstall_bot_impl(args, state))
+    if let Err(error) = mutate_state(|state| c2c_uninstall_bot_impl(args, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
-fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if args.caller != OPENCHAT_BOT_USER_ID {
-        let Some(member) = state.data.chat.members.get(&args.caller) else {
-            return NotAuthorized;
-        };
-
-        if member.suspended().value || !member.role().is_owner() {
-            return NotAuthorized;
+        let member = state.data.chat.members.get_verified_member(args.caller)?;
+        if !member.role().is_owner() {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
     }
 
     state.data.uninstall_bot(args.caller, args.bot_id, state.env.now());
 
     handle_activity_notification(state);
-    Success
+    Ok(())
 }

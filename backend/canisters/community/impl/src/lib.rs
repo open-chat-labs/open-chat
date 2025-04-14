@@ -119,10 +119,12 @@ impl RuntimeState {
         }
     }
 
-    pub fn get_and_verify_calling_member(&self) -> Result<CommunityMemberInternal, OCErrorCode> {
+    pub fn get_calling_member(&self, verify: bool) -> Result<CommunityMemberInternal, OCErrorCode> {
         let caller = self.env.caller();
         let member = self.data.members.get(caller).ok_or(OCErrorCode::InitiatorNotInCommunity)?;
-        member.verify()?;
+        if verify {
+            member.verify()?;
+        }
         Ok(member)
     }
 

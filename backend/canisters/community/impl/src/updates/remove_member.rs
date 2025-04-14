@@ -67,7 +67,7 @@ struct PrepareResult {
 fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_and_verify_calling_member()?;
+    let member = state.get_calling_member(true)?;
     if member.user_id == user_id {
         Err(OCErrorCode::CannotRemoveSelf.into())
     } else {

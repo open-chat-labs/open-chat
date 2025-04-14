@@ -38,7 +38,7 @@ async fn report_message(args: Args) -> Response {
 fn build_c2c_args(args: &Args, state: &RuntimeState) -> OCResult<(c2c_report_message::Args, CanisterId)> {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_and_verify_calling_member()?;
+    let member = state.get_calling_member(true)?;
     let user_id = member.user_id;
     let channel = state.data.channels.get_or_err(&args.channel_id)?;
     let chat = &channel.chat;

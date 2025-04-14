@@ -432,8 +432,8 @@ impl CommunityMembers {
         self.members_map.get(&user_id)
     }
 
-    pub fn get_verified_member(&self, caller: Principal) -> Result<CommunityMemberInternal, OCErrorCode> {
-        let member = self.get(caller).ok_or(OCErrorCode::InitiatorNotInChat)?;
+    pub fn get_verified_member(&self, user_id_or_principal: Principal) -> Result<CommunityMemberInternal, OCErrorCode> {
+        let member = self.get(user_id_or_principal).ok_or(OCErrorCode::InitiatorNotInChat)?;
         member.verify()?;
         Ok(member)
     }

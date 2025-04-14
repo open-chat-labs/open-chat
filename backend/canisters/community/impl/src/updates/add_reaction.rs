@@ -21,7 +21,7 @@ fn add_reaction(args: Args) -> Response {
 fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_and_verify_calling_member()?;
+    let member = state.get_calling_member(true)?;
     let user_id = member.user_id;
     let new_achievement = args.new_achievement;
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;

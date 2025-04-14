@@ -97,7 +97,7 @@ struct PrepareResult {
 fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_and_verify_calling_member()?;
+    let member = state.get_calling_member(true)?;
     if member.role().can_invite_users(&state.data.chat.permissions) {
         Ok(PrepareResult {
             user_id: member.user_id(),
