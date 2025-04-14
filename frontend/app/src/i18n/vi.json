@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "Tự động",
         "autoInfo": "Tự động sắp xếp ví của bạn. Bất kỳ mã thông báo nào có số dư mã thông báo khác không hoặc có giá trị đô la lớn hơn giá trị đô la tối thiểu được nhập bên dưới sẽ được hiển thị",
+        "btcNetworkFee": "Phí mạng Bitcoin: ~{amount} BTC",
         "comingSoon": "(Sắp có)",
         "configureWallet": "Cấu hình ví của bạn",
         "configureWalletFailure": "Xin lỗi, chúng tôi không thể lưu cấu hình ví của bạn",
@@ -591,6 +592,7 @@
         "manual": "Thủ công",
         "manualInfo": "Tổ chức ví của bạn theo cách thủ công bằng cách chọn chính xác các mã thông báo mà bạn muốn xem",
         "minDollarPlaceholder": "Số dư đô la tối thiểu",
+        "network": "Mạng:",
         "receive": "Nhận được",
         "receiveToken": "Nhận {symbol}",
         "remove": "Xóa khỏi ví",
@@ -1354,7 +1356,9 @@
         "onlyUniquePerson": "Chỉ có con người độc nhất",
         "prizeFinished": "Tin nhắn giải thưởng của bạn hiện đã kết thúc",
         "randomDistribution": "Phân phối ngẫu nhiên",
-        "restrictedMessage": "Để nhận giải thưởng này, bạn phải có những điều sau",
+        "requiresCaptcha": "Yêu cầu CAPTCHA",
+        "restrictedMessage": "Giải thưởng này có những hạn chế sau",
+        "restrictions": "Yêu cầu hạn chế",
         "standardDiamond": "Tiêu chuẩn",
         "streak": "Vệt",
         "streakFull": "Một chuỗi {n} ngày hoặc lâu hơn",
@@ -1604,7 +1608,7 @@
     "roleChanged": "{changedBy} đã thay đổi vai trò của {changed} thành {newRole}",
     "rotationChallenge": {
         "info": "Xoay hình ảnh bên trái cho đến khi nó khớp với góc của hình ảnh bên phải",
-        "infoMobile": "Xoay hình ảnh trên cùng cho đến khi nó khớp với chiều cao của hình ảnh dưới cùng",
+        "infoMobile": "Xoay hình ảnh phía dưới cho đến khi nó khớp với góc của hình ảnh phía trên",
         "title": "Cân bằng các bot"
     },
     "rules": {
@@ -1794,6 +1798,7 @@
         "max": "tối đa",
         "message": "Tin nhắn",
         "messagePlaceholder": "Bao gồm một tin nhắn tùy chọn",
+        "min": "tối thiểu: {amount}",
         "pendingSent": "{sender} đang gửi {token} {amount} đến {receiver}",
         "pendingSentByYou": "bạn đang gửi {token} {amount} đến {receiver}",
         "receiver": "Người nhận",

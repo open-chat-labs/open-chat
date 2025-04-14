@@ -4,18 +4,6 @@
     import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "openchat-shared";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import {
-        commands as commandsStore,
-        createBotInstance,
-        error,
-        focusedCommandIndex,
-        focusNextCommand,
-        focusPreviousCommand,
-        instanceValid,
-        selectedCommand,
-        setSelectedCommand,
-        showingBuilder,
-    } from "./botState";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { getContext, onMount } from "svelte";
     import Logo from "../Logo.svelte";
@@ -36,6 +24,7 @@
         selectedCommunity,
         selectedMessageContext,
         installedDirectBots,
+        botState,
     } from "openchat-client";
     import {
         messagePermissionsForSelectedChat,
@@ -71,7 +60,7 @@
     });
 
     let commands = $derived.by(() => {
-        return $commandsStore.filter((c) => {
+        return botState.commands.filter((c) => {
             return (
                 restrictByBotIfNecessary(c) &&
                 hasPermissionForCommand(c, installedBots, $selectedChatStore, $selectedCommunity)
@@ -170,12 +159,17 @@
     }
 
     function selectCommand(command: FlattenedCommand) {
-        setSelectedCommand(commands, command);
+        botState.setSelectedCommand(commands, command);
         sendCommandIfValid();
     }
 
     function sendCommandIfValid() {
-        if ($selectedCommand && $instanceValid && $selectedChatStore && $selectedMessageContext) {
+        if (
+            botState.selectedCommand &&
+            botState.instanceValid &&
+            $selectedChatStore &&
+            $selectedMessageContext
+        ) {
             client
                 .executeBotCommand(
                     {
@@ -184,7 +178,7 @@
                         threadRootMessageIndex: $selectedMessageContext.threadRootMessageIndex,
                         messageId: random64(),
                     },
-                    createBotInstance($selectedCommand),
+                    botState.createBotInstance(botState.selectedCommand),
                 )
                 .then((result) => {
                     if (result === "failure") {
@@ -198,7 +192,7 @@
     }
 
     onMount(() => {
-        error.set(undefined);
+        botState.error = undefined;
         document.addEventListener("keydown", onkeydown);
         return () => {
             document.removeEventListener("keydown", onkeydown);
@@ -214,14 +208,14 @@
     function onkeydown(ev: KeyboardEvent): void {
         switch (ev.key) {
             case "ArrowDown":
-                focusPreviousCommand();
+                botState.focusPreviousCommand();
                 break;
             case "ArrowUp":
-                focusNextCommand();
+                botState.focusNextCommand();
                 break;
             case "Enter":
-                if (!$showingBuilder) {
-                    setSelectedCommand(commands);
+                if (!botState.showingBuilder) {
+                    botState.setSelectedCommand(commands);
                     sendCommandIfValid();
                     ev.preventDefault();
                 }
@@ -247,7 +241,7 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
             class="command"
-            class:selected={$focusedCommandIndex === i}
+            class:selected={botState.focusedCommandIndex === i}
             onclick={() => selectCommand(command)}>
             {#if command.kind === "external_bot"}
                 <BotAvatar bot={command} />
@@ -283,10 +277,10 @@
     {/each}
 </div>
 
-{#if $error !== undefined}
+{#if botState.error !== undefined}
     <div class="command-error">
         <ErrorMessage>
-            {$error}
+            {botState.error}
         </ErrorMessage>
     </div>
 {/if}

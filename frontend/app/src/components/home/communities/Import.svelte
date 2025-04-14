@@ -10,12 +10,12 @@
         type CommunityMap,
         type CommunitySummary,
         type OpenChat,
+        publish,
     } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
     import { toastStore } from "../../../stores/toast";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 
@@ -56,6 +56,10 @@
     onMount(() => {
         selected = communitiesList.length > 0 ? communitiesList[0] : undefined;
     });
+
+    function areEqual(c1?: CommunitySummary, c2?: CommunitySummary): boolean {
+        return c1 !== undefined && c2 !== undefined && c1.id.communityId === c2.id.communityId;
+    }
 </script>
 
 {#if communitiesList.length > 0}
@@ -70,7 +74,7 @@
                         <div
                             onclick={() => selectCommunity(community)}
                             class="card"
-                            class:selected={community === selected}>
+                            class:selected={areEqual(selected, community)}>
                             <div class="avatar">
                                 <Avatar
                                     url={client.communityAvatarUrl(

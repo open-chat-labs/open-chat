@@ -1,41 +1,40 @@
 <script lang="ts">
-    import { getContext, onMount } from "svelte";
-    import { _ } from "svelte-i18n";
-    import Avatar from "../../Avatar.svelte";
-    import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
-    import Markdown from "../Markdown.svelte";
+    import { disableChit } from "@src/stores/settings";
     import {
         AvatarSize,
-        type UserSummary,
-        type PublicProfile,
         type ChatSummary,
         type CommunitySummary,
         type OpenChat,
+        type PublicProfile,
         type ResourceKey,
-        currentUser as createdUser,
-        platformModerator,
-        selectedChatStore as selectedChat,
+        type UserSummary,
         blockedUsers,
+        currentChatMembersMap as chatMembersMap,
+        currentCommunityMembers as communityMembers,
+        currentUser as createdUser,
         currentChatBlockedUsers,
         currentCommunityBlockedUsers,
+        platformModerator,
+        selectedChatStore as selectedChat,
         selectedCommunity,
-        currentCommunityMembers as communityMembers,
-        currentChatMembersMap as chatMembersMap,
+        ui,
     } from "openchat-client";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { toastStore } from "../../../stores/toast";
+    import Avatar from "../../Avatar.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import { rightPanelHistory } from "../../../stores/rightPanel";
-    import { toastStore } from "../../../stores/toast";
-    import { i18nKey } from "../../../i18n/i18n";
+    import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
+    import Markdown from "../Markdown.svelte";
     import Badges from "./Badges.svelte";
-    import WithRole from "./WithRole.svelte";
-    import RoleIcon from "./RoleIcon.svelte";
     import ChitBalance from "./ChitBalance.svelte";
-    import { disableChit } from "@src/stores/settings";
+    import RoleIcon from "./RoleIcon.svelte";
+    import WithRole from "./WithRole.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -197,7 +196,7 @@
     }
 
     function showUserProfile() {
-        rightPanelHistory.set([{ kind: "user_profile" }]);
+        ui.rightPanelHistory = [{ kind: "user_profile" }];
         onClose();
     }
 
@@ -239,7 +238,7 @@
     let diamondStatus = $derived(user?.diamondStatus);
     let me = $derived(userId === $createdUser.userId);
     let isSuspended = $derived(user?.suspended ?? false);
-    let modal = $derived($mobileWidth);
+    let modal = $derived(ui.mobileWidth);
     let [status, online] = $derived(
         lastOnline !== undefined && lastOnline !== 0
             ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
@@ -319,16 +318,16 @@
                                 <WithRole
                                     userId={user.userId}
                                     chatMembers={$chatMembersMap}
-                                    communityMembers={$communityMembers}
-                                    let:chatRole
-                                    let:communityRole>
-                                    <RoleIcon level="community" popup role={communityRole} />
-                                    <RoleIcon
-                                        level={$selectedChat.kind === "channel"
-                                            ? "channel"
-                                            : "group"}
-                                        popup
-                                        role={chatRole} />
+                                    communityMembers={$communityMembers}>
+                                    {#snippet children(communityRole, chatRole)}
+                                        <RoleIcon level="community" popup role={communityRole} />
+                                        <RoleIcon
+                                            level={$selectedChat.kind === "channel"
+                                                ? "channel"
+                                                : "group"}
+                                            popup
+                                            role={chatRole} />
+                                    {/snippet}
                                 </WithRole>
                             {/if}
                         </div>

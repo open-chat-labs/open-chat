@@ -1,14 +1,13 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import { lowBandwidth } from "@src/stores/settings";
+    import { ui, type OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
+    import CloseIcon from "svelte-material-icons/Close.svelte";
+    import { rtlStore } from "../../stores/rtl";
+    import GenericPreviewComponent from "./GenericPreview.svelte";
+    import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import Tweet from "./Tweet.svelte";
     import YouTubePreview from "./YouTubePreview.svelte";
-    import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
-    import type { OpenChat } from "openchat-client";
-    import GenericPreview from "./GenericPreview.svelte";
-    import CloseIcon from "svelte-material-icons/Close.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { rtlStore } from "../../stores/rtl";
-    import { lowBandwidth } from "@src/stores/settings";
 
     type Preview = SpotifyPreview | YoutubePreview | TwitterPreview | GenericPreview;
 
@@ -37,24 +36,21 @@
     };
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let links: string[];
-    export let intersecting: boolean;
-    export let pinned: boolean;
-    export let fill: boolean;
-    export let me: boolean;
+    interface Props {
+        links: string[];
+        intersecting: boolean;
+        pinned: boolean;
+        fill: boolean;
+        me: boolean;
+        onRemove?: (url: string) => void;
+    }
+
+    let { links, intersecting, pinned, fill, me, onRemove }: Props = $props();
 
     let list: HTMLElement | null | undefined = undefined;
-    let previousLinks: string[] = [];
-    let previews: Preview[] = [];
-
-    $: {
-        if (!arraysAreEqual(previousLinks, links)) {
-            previews = links.map(buildPreview);
-            previousLinks = links;
-        }
-    }
+    let previousLinks: string[] = $state([]);
+    let previews: Preview[] = $state([]);
 
     function arraysAreEqual(a: string[], b: string[]) {
         if (a.length !== b.length) {
@@ -137,9 +133,15 @@
 
     function removePreview(preview: Preview | undefined) {
         if (preview) {
-            dispatch("remove", preview.url);
+            onRemove?.(preview.url);
         }
     }
+    $effect(() => {
+        if (!arraysAreEqual(previousLinks, links)) {
+            previews = links.map(buildPreview);
+            previousLinks = links;
+        }
+    });
 </script>
 
 {#each previews as preview (preview.url)}
@@ -150,17 +152,14 @@
         class:me>
         {#if me}
             <div class="remove-wrapper" class:rtl={$rtlStore}>
-                <div class="remove" on:click={() => removePreview(preview)}>
-                    <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
+                <div class="remove" onclick={() => removePreview(preview)}>
+                    <CloseIcon viewBox="0 0 24 24" size={ui.iconSize} color={"var(--button-txt)"} />
                 </div>
             </div>
         {/if}
         <div class="inner">
             {#if preview.kind === "twitter"}
-                <Tweet
-                    tweetId={preview.tweetId}
-                    {intersecting}
-                    on:rendered={(ev) => adjustScroll(ev.detail)} />
+                <Tweet tweetId={preview.tweetId} {intersecting} onRendered={adjustScroll} />
             {:else if preview.kind === "youtube"}
                 <YouTubePreview
                     {pinned}
@@ -172,11 +171,11 @@
                     fill={fill && previews.length === 1}
                     matches={preview.regexMatch} />
             {:else}
-                <GenericPreview
+                <GenericPreviewComponent
                     url={preview.url}
                     {intersecting}
-                    on:imageLoaded={(ev) => adjustScroll(ev.detail)}
-                    on:rendered={(ev) => renderPreview(ev.detail)} />
+                    onImageLoaded={adjustScroll}
+                    onRendered={renderPreview} />
             {/if}
         </div>
     </div>

@@ -15,6 +15,7 @@ use gated_groups::{
 };
 use group_chat_core::{AddMemberSuccess, AddResult};
 use group_community_common::ExpiringMember;
+use oc_error_codes::OCErrorCode;
 use types::{
     AccessGateConfigInternal, ChannelId, MemberJoinedInternal, TimestampMillis, UniquePersonProof, UserId, UserType,
     VerifiedCredentialGateArgs,
@@ -62,13 +63,17 @@ async fn c2c_join_channel(args: Args) -> Response {
             community_canister::c2c_join_community::Response::AlreadyInCommunity(_) => {
                 check_gate_then_join_channel(&args).await
             }
-            community_canister::c2c_join_community::Response::Error(error) => Error(error),
             community_canister::c2c_join_community::Response::GateCheckFailed(r) => GateCheckFailed(r),
-            community_canister::c2c_join_community::Response::NotInvited => NotInvited,
-            community_canister::c2c_join_community::Response::UserBlocked => UserBlocked,
-            community_canister::c2c_join_community::Response::MemberLimitReached(l) => MemberLimitReached(l),
-            community_canister::c2c_join_community::Response::CommunityFrozen => CommunityFrozen,
-            community_canister::c2c_join_community::Response::InternalError(error) => InternalError(error),
+            community_canister::c2c_join_community::Response::NotInvited => Error(OCErrorCode::NotInvited.into()),
+            community_canister::c2c_join_community::Response::UserBlocked => Error(OCErrorCode::InitiatorBlocked.into()),
+            community_canister::c2c_join_community::Response::MemberLimitReached(l) => {
+                Error(OCErrorCode::UserLimitReached.with_message(l))
+            }
+            community_canister::c2c_join_community::Response::CommunityFrozen => Error(OCErrorCode::CommunityFrozen.into()),
+            community_canister::c2c_join_community::Response::InternalError(error) => {
+                Error(OCErrorCode::Unknown.with_message(error))
+            }
+            community_canister::c2c_join_community::Response::Error(error) => Error(error),
         }
     }
 }
@@ -129,7 +134,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
         Ok(Some((gate_config, check_gate_args))) => match check_if_passes_gate(gate_config.gate, check_gate_args).await {
             CheckIfPassesGateResult::Success(payments) => payments,
             CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
-            CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
+            CheckIfPassesGateResult::Error(error) => return Error(error),
         },
         Ok(None) => Vec::new(),
         Err(response) => return response,
@@ -156,12 +161,12 @@ fn is_permitted_to_join(
     state: &RuntimeState,
 ) -> Result<Option<(AccessGateConfigInternal, CheckGateArgs)>, Response> {
     if state.data.is_frozen() {
-        return Err(CommunityFrozen);
+        return Err(Error(OCErrorCode::CommunityFrozen.into()));
     }
 
     if let Some(member) = state.data.members.get(user_principal) {
         if member.suspended().value {
-            return Err(UserSuspended);
+            return Err(Error(OCErrorCode::InitiatorSuspended.into()));
         }
 
         if let Some(channel) = state.data.channels.get(&channel_id) {
@@ -179,13 +184,13 @@ fn is_permitted_to_join(
                     )));
                 }
             } else if let Some(limit) = channel.chat.members.user_limit_reached() {
-                return Err(MemberLimitReached(limit));
+                return Err(Error(OCErrorCode::UserLimitReached.with_message(limit)));
             } else if channel.chat.members.is_blocked(&member.user_id) {
-                return Err(UserBlocked);
+                return Err(Error(OCErrorCode::InitiatorBlocked.into()));
             } else if channel.chat.invited_users.get(&member.user_id).is_some() {
                 return Ok(None);
             } else if !channel.chat.is_public.value {
-                return Err(NotInvited);
+                return Err(Error(OCErrorCode::NotInvited.into()));
             }
 
             Ok(channel.chat.gate_config.as_ref().map(|g| {
@@ -209,10 +214,10 @@ fn is_permitted_to_join(
                 )
             }))
         } else {
-            Err(ChannelNotFound)
+            Err(Error(OCErrorCode::ChatNotFound.into()))
         }
     } else {
-        Err(UserNotInCommunity)
+        Err(Error(OCErrorCode::InitiatorNotFound.into()))
     }
 }
 
@@ -225,12 +230,12 @@ fn commit(
     state: &mut RuntimeState,
 ) -> Response {
     let Some(member) = state.data.members.get(user_principal) else {
-        return UserNotInCommunity;
+        return Error(OCErrorCode::InitiatorNotInCommunity.into());
     };
 
     let user_id = member.user_id;
     let Some(channel) = state.data.channels.get_mut(&channel_id) else {
-        return ChannelNotFound;
+        return Error(OCErrorCode::ChatNotFound.into());
     };
 
     let now = state.env.now();
@@ -284,8 +289,8 @@ fn commit(
                 .unwrap();
             AlreadyInChannel(Box::new(summary))
         }
-        AddResult::Blocked => UserBlocked,
-        AddResult::MemberLimitReached(limit) => MemberLimitReached(limit),
+        AddResult::Blocked => Error(OCErrorCode::InitiatorBlocked.into()),
+        AddResult::MemberLimitReached(limit) => Error(OCErrorCode::UserLimitReached.with_message(limit)),
     }
 }
 

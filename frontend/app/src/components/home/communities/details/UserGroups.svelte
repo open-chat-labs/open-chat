@@ -1,7 +1,4 @@
 <script lang="ts">
-    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
-    import AreYouSure from "../../../AreYouSure.svelte";
     import type {
         CommunitySummary,
         Member,
@@ -11,21 +8,25 @@
         UserSummary,
     } from "openchat-client";
     import {
-        userStore,
         currentCommunityMembers as communityMembers,
+        ui,
         currentCommunityUserGroups as userGroupsMap,
+        userStore,
     } from "openchat-client";
-    import Plus from "svelte-material-icons/Plus.svelte";
-    import { iconSize } from "../../../../stores/iconSize";
     import { getContext, onMount } from "svelte";
-    import Search from "../../../Search.svelte";
-    import HoverIcon from "../../../HoverIcon.svelte";
-    import UserGroup from "./UserGroup.svelte";
-    import { toastStore } from "../../../../stores/toast";
-    import CollapsibleCard from "../../../CollapsibleCard.svelte";
-    import User from "../../groupdetails/User.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
+    import Plus from "svelte-material-icons/Plus.svelte";
+    import { SvelteSet } from "svelte/reactivity";
     import { i18nKey } from "../../../../i18n/i18n";
+    import { toastStore } from "../../../../stores/toast";
+    import AreYouSure from "../../../AreYouSure.svelte";
+    import CollapsibleCard from "../../../CollapsibleCard.svelte";
+    import HoverIcon from "../../../HoverIcon.svelte";
+    import Search from "../../../Search.svelte";
     import Translatable from "../../../Translatable.svelte";
+    import User from "../../groupdetails/User.svelte";
+    import UserGroup from "./UserGroup.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -78,7 +79,7 @@
             kind: "user_group",
             id: -1,
             name: "",
-            members: new Set<string>(),
+            members: new SvelteSet<string>(),
         };
     }
 
@@ -137,7 +138,7 @@
         {community}
         {communityUsers}
         {communityUsersList}
-        on:cancel={reset}
+        onCancel={reset}
         original={selectedGroup} />
 {:else}
     <div class="user-groups">
@@ -152,7 +153,7 @@
             {#if canManageUserGroups}
                 <div class="add">
                     <HoverIcon onclick={createUserGroup}>
-                        <Plus size={$iconSize} color={"var(--icon-txt)"} />
+                        <Plus size={ui.iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </div>
             {/if}

@@ -39,7 +39,7 @@
 {/if}
 
 <div class="find-user">
-    <FindUser {userLookup} {enabled} {mode} on:selectUser={(e) => onSelectUser(e.detail)} />
+    <FindUser {userLookup} {enabled} {mode} {onSelectUser} />
 </div>
 
 <style lang="scss">

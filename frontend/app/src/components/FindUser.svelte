@@ -1,39 +1,51 @@
 <script lang="ts">
-    import Magnify from "svelte-material-icons/Magnify.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import type { UserSummary } from "openchat-client";
-    import Loading from "./Loading.svelte";
+    import { ui, type UserSummary } from "openchat-client";
+    import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, onMount } from "svelte";
-    import { toastStore } from "../stores/toast";
-    import { iconSize } from "../stores/iconSize";
-    import { i18nKey } from "../i18n/i18n";
+    import Close from "svelte-material-icons/Close.svelte";
+    import Magnify from "svelte-material-icons/Magnify.svelte";
     import { translatable } from "../actions/translatable";
+    import { i18nKey } from "../i18n/i18n";
+    import { toastStore } from "../stores/toast";
+    import { Debouncer } from "../utils/debouncer";
+    import { trimLeadingAtSymbol } from "../utils/user";
+    import Loading from "./Loading.svelte";
     import MatchingUser from "./MatchingUser.svelte";
     import Translatable from "./Translatable.svelte";
-    import { trimLeadingAtSymbol } from "../utils/user";
 
-    export let mode: "add" | "edit";
-    export let enabled = true;
-    export let userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
-    export let placeholderKey: string = "searchForUsername";
-    export let compact = false;
-    export let autofocus = true;
+    interface Props {
+        mode: "add" | "edit";
+        enabled?: boolean;
+        userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
+        placeholderKey?: string;
+        compact?: boolean;
+        autofocus?: boolean;
+        onSelectUser?: (user: UserSummary) => void;
+    }
 
-    const dispatch = createEventDispatcher();
-    let inp: HTMLInputElement;
-    let timer: number | undefined = undefined;
-    let searchTerm: string = "";
-    let communityMembers: UserSummary[] = [];
-    let users: UserSummary[] = [];
-    let searching: boolean = false;
-    let hovering = false;
+    let {
+        mode,
+        enabled = true,
+        userLookup,
+        placeholderKey = "searchForUsername",
+        compact = false,
+        autofocus = true,
+        onSelectUser,
+    }: Props = $props();
+
+    let inp: HTMLInputElement | undefined;
+    let searchTerm: string = $state("");
+    let communityMembers: UserSummary[] = $state([]);
+    let users: UserSummary[] = $state([]);
+    let searching: boolean = $state(false);
+    let hovering = $state(false);
+    const debouncer = new Debouncer(searchUsers, 350);
 
     onMount(() => {
         // this focus seems to cause a problem with the animation of the right panel without
         // this setTimeout. Pretty horrible and who knows if 300 ms will be enough on other machines?
         if (autofocus) {
-            window.setTimeout(() => inp.focus(), 300);
+            window.setTimeout(() => inp?.focus(), 300);
         }
     });
 
@@ -42,32 +54,31 @@
      */
 
     function onSelect(user: UserSummary) {
-        dispatch("selectUser", user);
+        onSelectUser?.(user);
         searchTerm = "";
         users = [];
-        inp.focus();
+        inp?.focus();
     }
 
-    function debounce(value: string) {
-        if (timer) window.clearTimeout(timer);
-        timer = window.setTimeout(() => {
-            if (value === "") {
-                users = [];
-                return;
-            }
-            searching = true;
-            userLookup(value)
-                .then((p) => {
-                    communityMembers = p[0];
-                    users = p[1];
-                })
-                .catch((_err) => toastStore.showFailureToast(i18nKey("userSearchFailed")))
-                .finally(() => (searching = false));
-        }, 350);
+    function searchUsers(value: string) {
+        if (value === "") {
+            users = [];
+            return;
+        }
+        searching = true;
+        userLookup(value)
+            .then((p) => {
+                communityMembers = p[0];
+                users = p[1];
+            })
+            .catch((_err) => toastStore.showFailureToast(i18nKey("userSearchFailed")))
+            .finally(() => (searching = false));
     }
 
     function onInput() {
-        debounce(trimLeadingAtSymbol(inp.value));
+        if (inp) {
+            debouncer.execute(trimLeadingAtSymbol(inp.value));
+        }
     }
 
     function clearFilter() {
@@ -77,19 +88,19 @@
 </script>
 
 <div class="search-form" class:add={mode === "add"} class:edit={mode === "edit"}>
-    <span class="icon"><Magnify size={$iconSize} color={"#ccc"} viewBox="-5 -3 24 24" /></span>
+    <span class="icon"><Magnify size={ui.iconSize} color={"#ccc"} viewBox="-5 -3 24 24" /></span>
     <input
         bind:this={inp}
         bind:value={searchTerm}
         disabled={!enabled}
         type="text"
-        on:input={onInput}
+        oninput={onInput}
         use:translatable={{ key: i18nKey(placeholderKey) }}
         placeholder={$_(placeholderKey)} />
     {#if searching}
-        <span class="loading" />
+        <span class="loading"></span>
     {:else if searchTerm !== ""}
-        <span on:click={clearFilter} class="icon close"><Close color={"#ccc"} /></span>
+        <span onclick={clearFilter} class="icon close"><Close color={"#ccc"} /></span>
     {/if}
 </div>
 <div class="results">

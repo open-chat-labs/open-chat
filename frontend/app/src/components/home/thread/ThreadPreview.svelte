@@ -29,31 +29,39 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let thread: ThreadPreview;
-    export let observer: IntersectionObserver;
+    interface Props {
+        thread: ThreadPreview;
+        observer: IntersectionObserver;
+    }
 
-    $: missingMessages = thread.totalReplies - thread.latestReplies.length;
-    $: threadRootMessageIndex = thread.rootMessage.event.messageIndex;
-    $: chat = $chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined;
-    $: muted = chat?.membership?.notificationsMuted || false;
-    $: syncDetails = chat?.membership?.latestThreads?.find(
-        (t) => t.threadRootMessageIndex === threadRootMessageIndex,
+    let { thread, observer }: Props = $props();
+
+    let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
+    let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
+    let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
+    let muted = $derived(chat?.membership?.notificationsMuted || false);
+    let syncDetails = $derived(
+        chat?.membership?.latestThreads?.find(
+            (t) => t.threadRootMessageIndex === threadRootMessageIndex,
+        ),
     );
-    $: unreadCount = syncDetails
-        ? client.unreadThreadMessageCount(
-              thread.chatId,
-              threadRootMessageIndex,
-              syncDetails.latestMessageIndex,
-          )
-        : 0;
-    $: chatData = {
+    let unreadCount = $derived(
+        syncDetails
+            ? client.unreadThreadMessageCount(
+                  thread.chatId,
+                  threadRootMessageIndex,
+                  syncDetails.latestMessageIndex,
+              )
+            : 0,
+    );
+    let chatData = $derived({
         name: chat?.name,
         avatarUrl: client.groupAvatarUrl(chat, $selectedCommunity),
-    };
+    });
 
-    $: grouped = client.groupBySender(thread.latestReplies);
+    let grouped = $derived(client.groupBySender(thread.latestReplies));
 
-    let open = false;
+    let open = $state(false);
 
     function lastMessageIndex(events: EventWrapper<Message>[]): number | undefined {
         for (let i = events.length - 1; i >= 0; i--) {
@@ -113,7 +121,7 @@
                                 {(chat.kind === "group_chat" || chat.kind === "channel") &&
                                     chat.name}
                             </h4>
-                            <LinkButton underline="hover" on:click={selectThread}
+                            <LinkButton underline="hover" onClick={selectThread}
                                 ><Translatable
                                     resourceKey={i18nKey("thread.open")} />&#8594;</LinkButton>
                         </div>
@@ -137,7 +145,7 @@
                     {/if}
                 </div>
             {/snippet}
-            <IntersectionObserverComponent on:intersecting={isIntersecting}>
+            <IntersectionObserverComponent onIntersecting={isIntersecting}>
                 <div class="body">
                     <div class="root-msg">
                         <ChatMessage
@@ -149,10 +157,8 @@
                             failed={false}
                             senderTyping={false}
                             readByMe
-                            readByThem
                             chatId={thread.chatId}
                             chatType={chat.kind}
-                            user={$user}
                             me={thread.rootMessage.event.sender === $user.userId}
                             first
                             last
@@ -195,10 +201,8 @@
                                 failed={false}
                                 senderTyping={false}
                                 readByMe
-                                readByThem
                                 chatId={thread.chatId}
                                 chatType={chat.kind}
-                                user={$user}
                                 me={evt.event.sender === $user.userId}
                                 first={i === 0}
                                 last={i === userGroup.length - 1}
@@ -223,7 +227,7 @@
                                 botContext={evt.event.botContext} />
                         {/each}
                     {/each}
-                    <LinkButton underline="hover" on:click={selectThread}
+                    <LinkButton underline="hover" onClick={selectThread}
                         ><Translatable
                             resourceKey={i18nKey("thread.openThread")} />&#8594;</LinkButton>
                 </div>

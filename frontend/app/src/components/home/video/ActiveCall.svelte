@@ -1,20 +1,24 @@
 <script lang="ts">
-    import { type DailyCall } from "@daily-co/daily-js";
-    import { _ } from "svelte-i18n";
-    import { mobileWidth } from "../../../stores/screenDimensions";
+    import type { DailyThemeConfig } from "@daily-co/daily-js";
+    import daily, { type DailyCall } from "@daily-co/daily-js";
     import {
         chatIdentifiersEqual,
-        type ChatSummary,
-        OpenChat,
-        type ChatIdentifier,
-        type AccessTokenType,
-        NoMeetingToJoin,
-        userStore,
-        selectedChatStore as selectedChat,
-        currentUser as user,
         communities,
+        NoMeetingToJoin,
+        OpenChat,
+        selectedChatStore as selectedChat,
         selectedCommunity,
+        ui,
+        currentUser as user,
+        userStore,
+        type AccessTokenType,
+        type ChatIdentifier,
+        type ChatSummary,
     } from "openchat-client";
+    import { getContext } from "svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
+    import { toastStore } from "../../../stores/toast";
     import {
         activeVideoCall,
         camera,
@@ -25,20 +29,13 @@
     } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
     import type { Theme } from "../../../theme/types";
-    import type { DailyThemeConfig } from "@daily-co/daily-js";
-    import daily from "@daily-co/daily-js";
-    import AreYouSure from "../../AreYouSure.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import { getContext } from "svelte";
-    import { toastStore } from "../../../stores/toast";
-    import { filterRightPanelHistory, popRightPanelHistory } from "../../../stores/rightPanel";
     import { removeQueryStringParam } from "../../../utils/urls";
-    import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
-    import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import Translatable from "../../Translatable.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
+    import AreYouSure from "../../AreYouSure.svelte";
     import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import Translatable from "../../Translatable.svelte";
     import ActiveCallHeader from "./ActiveCallHeader.svelte";
 
     interface Props {
@@ -116,7 +113,7 @@
             }
 
             // close and threads we have open in the right panel
-            filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+            ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
             removeQueryStringParam("open");
 
             const callType = isPublic ? "broadcast" : "default";
@@ -297,7 +294,7 @@
 
             // this will trigger the left-meeting event which will in turn end the call
             $activeVideoCall.call.leave();
-            popRightPanelHistory();
+            ui.popRightPanelHistory();
         }
     }
 
@@ -356,8 +353,8 @@
     class:visible={$activeVideoCall &&
         $activeVideoCall.view !== "minimised" &&
         !showLandingPage &&
-        !(threadOpen && $mobileWidth) &&
-        !(participantsOpen && $mobileWidth) &&
+        !(threadOpen && ui.mobileWidth) &&
+        !(participantsOpen && ui.mobileWidth) &&
         chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id)}>
     {#if chat !== undefined}
         <ActiveCallHeader

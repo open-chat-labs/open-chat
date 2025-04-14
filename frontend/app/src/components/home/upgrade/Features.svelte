@@ -1,29 +1,22 @@
 <script lang="ts">
-    // import { _ } from "svelte-i18n";
-    import Button from "../../Button.svelte";
-    import Footer from "./Footer.svelte";
+    import { ui } from "openchat-client";
     import Check from "svelte-material-icons/Check.svelte";
     import Minus from "svelte-material-icons/Minus.svelte";
-    import { createEventDispatcher } from "svelte";
-    import Feature from "./Feature.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-
-    const dispatch = createEventDispatcher();
+    import Button from "../../Button.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import Feature from "./Feature.svelte";
+    import Footer from "./Footer.svelte";
 
     interface Props {
         isDiamond: boolean;
         canExtend: boolean;
         landing?: boolean;
         onUpgrade?: () => void;
+        onCancel?: () => void;
     }
 
-    let { isDiamond, canExtend, landing = false, onUpgrade }: Props = $props();
-
-    function cancel() {
-        dispatch("cancel");
-    }
+    let { isDiamond, canExtend, landing = false, onUpgrade, onCancel }: Props = $props();
 </script>
 
 <div class:landing class="grid header">
@@ -271,13 +264,13 @@
 {#if !landing}
     <div class="footer">
         <Footer>
-            <Button tiny={$mobileWidth} small={!$mobileWidth} secondary onClick={cancel}
+            <Button tiny={ui.mobileWidth} small={!ui.mobileWidth} secondary onClick={onCancel}
                 ><Translatable resourceKey={i18nKey(isDiamond ? "close" : "cancel")} /></Button>
             {#if !isDiamond}
-                <Button onClick={() => onUpgrade?.()} tiny={$mobileWidth} small={!$mobileWidth}
+                <Button onClick={() => onUpgrade?.()} tiny={ui.mobileWidth} small={!ui.mobileWidth}
                     ><Translatable resourceKey={i18nKey("upgrade.button")} /></Button>
             {:else if canExtend}
-                <Button onClick={() => onUpgrade?.()} tiny={$mobileWidth} small={!$mobileWidth}
+                <Button onClick={() => onUpgrade?.()} tiny={ui.mobileWidth} small={!ui.mobileWidth}
                     ><Translatable resourceKey={i18nKey("upgrade.extendShort")} /></Button>
             {/if}
         </Footer>

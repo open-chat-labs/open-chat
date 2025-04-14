@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use itertools::Itertools;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::random_string;
@@ -169,7 +170,7 @@ fn cancel_invites_not_authorized() {
 
     assert!(matches!(
         response,
-        community_canister::cancel_invites::Response::NotAuthorized
+        community_canister::cancel_invites::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)
     ));
 
     let community_details = client::community::happy_path::selected_initial(env, user2.principal, community_id);

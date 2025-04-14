@@ -1,12 +1,14 @@
 <script lang="ts">
+    import { ui } from "openchat-client";
     import { onMount } from "svelte";
 
-    import { iconSize } from "../../stores/iconSize";
-    import { mobileWidth } from "../../stores/screenDimensions";
+    interface Props {
+        color: string;
+    }
 
-    export let color: string;
+    let { color }: Props = $props();
 
-    let open = true;
+    let open = $state(true);
 
     function rand(min: number, max: number) {
         return Math.floor(Math.random() * (max - min + 1) + min);
@@ -33,13 +35,17 @@
     }
 
     onMount(() => {
-        if ($mobileWidth) return;
+        if (ui.mobileWidth) return;
         const t = startBlinking();
         return () => window.clearInterval(t);
     });
 </script>
 
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={$iconSize} height={$iconSize}>
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    width={ui.iconSize}
+    height={ui.iconSize}>
     {#if open}
         <ellipse class="left open" cx="9" cy="9.3" rx="1.4" ry="2" fill={color} />
         <ellipse class="right open" cx="15" cy="9.3" rx="1.4" ry="2" fill={color} />

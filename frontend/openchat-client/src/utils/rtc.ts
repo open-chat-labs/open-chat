@@ -8,13 +8,11 @@ import {
     type WebRtcMessage,
     type CommunityIdentifier,
     type RemoteVideoCallStarted,
-    type RemoteVideoCallEnded,
 } from "openchat-shared";
 import { selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
 import { blockedUsers } from "../stores/blockedUsers";
 import { globalStateStore } from "../stores/global";
-import { RemoteVideoCallEndedEvent, RemoteVideoCallStartedEvent } from "../events";
 
 export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
     const chat = findChatByChatType(msg);
@@ -25,20 +23,16 @@ export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
     return true;
 }
 
-export function createRemoteVideoEndedEvent(msg: RemoteVideoCallEnded) {
-    return new RemoteVideoCallEndedEvent(msg.messageId);
-}
-
 export function createRemoteVideoStartedEvent(msg: RemoteVideoCallStarted) {
     const chat = findChatByChatType(msg);
     if (chat) {
-        return new RemoteVideoCallStartedEvent(
-            chat.id,
-            msg.userId,
-            msg.messageId,
-            false,
-            BigInt(Date.now()),
-        );
+        return {
+            chatId: chat.id,
+            userId: msg.userId,
+            messageId: msg.messageId,
+            currentUserIsParticipant: false,
+            timestamp: BigInt(Date.now()),
+        };
     }
 }
 

@@ -7,6 +7,7 @@
         type OpenChat,
         anonUser,
         identityState,
+        pathState,
         selectedAuthProviderStore,
     } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
@@ -16,7 +17,6 @@
     import { configKeys } from "../../utils/config";
     import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import { querystring } from "../../routes";
     import ChooseSignInOption from "./profile/ChooseSignInOption.svelte";
     import { EmailPollerError, EmailSigninHandler } from "../../utils/signin";
     import EmailSigninFeedback from "./EmailSigninFeedback.svelte";
@@ -38,7 +38,7 @@
 
     let emailSigninHandler = new EmailSigninHandler(client, "registration", true);
 
-    let restrictTo = $derived(new Set($querystring.getAll("auth")));
+    let restrictTo = $derived(new Set(pathState.querystring.getAll("auth")));
     let loggingInWithEmail = $derived(
         loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL,
     );
@@ -89,8 +89,7 @@
         onClose();
     }
 
-    function login(ev: CustomEvent<AuthProvider>) {
-        const provider = ev.detail;
+    function login(provider: AuthProvider) {
         if (emailInvalid && provider === AuthProvider.EMAIL) {
             return;
         }
@@ -174,7 +173,7 @@
         <div class="login">
             {#if loginState === "options"}
                 <ChooseSignInOption
-                    on:login={login}
+                    onLogin={login}
                     {mode}
                     {restrictTo}
                     bind:emailInvalid
@@ -198,7 +197,7 @@
                 <EmailSigninFeedback
                     code={verificationCode}
                     polling={$emailSigninHandler}
-                    on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
+                    onCopy={(code) => emailSigninHandler.copyCode(code)} />
                 {#if error !== undefined}
                     <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
                 {/if}

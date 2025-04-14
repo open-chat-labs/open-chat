@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "אוֹטוֹמָטִי",
         "autoInfo": "ארגן את הארנק שלך באופן אוטומטי. כל אסימון עם יתרת אסימון שאינה אפס או עם ערך דולר גבוה מהערך המינימלי של דולר שהוזן למטה יוצג",
+        "btcNetworkFee": "עמלת רשת ביטקוין: ~{amount} BTC",
         "comingSoon": "(בקרוב)",
         "configureWallet": "תגדיר את הארנק שלך",
         "configureWalletFailure": "מצטערים שלא הצלחנו לשמור את תצורת הארנק שלך",
@@ -591,6 +592,7 @@
         "manual": "יָדָנִי",
         "manualInfo": "ארגן את הארנק שלך באופן ידני על ידי בחר בדיוק את האסימונים שאתה רוצה לראות",
         "minDollarPlaceholder": "יתרה מינימלית בדולר",
+        "network": "רֶשֶׁת:",
         "receive": "לְקַבֵּל",
         "receiveToken": "קבל {symbol}",
         "remove": "הסר מהארנק",
@@ -1354,7 +1356,9 @@
         "onlyUniquePerson": "רק בני אדם ייחודיים",
         "prizeFinished": "הודעת הפרס שלך הסתיימה כעת",
         "randomDistribution": "הפצה אקראית",
-        "restrictedMessage": "כדי לתבוע את הפרס הזה, אתה צריך את הדברים הבאים",
+        "requiresCaptcha": "דורש CAPTCHA",
+        "restrictedMessage": "לפרס זה יש את ההגבלות הבאות",
+        "restrictions": "הגבלות תביעה",
         "standardDiamond": "תֶקֶן",
         "streak": "פַּס",
         "streakFull": "רצף של {n} ימים או יותר",
@@ -1604,7 +1608,7 @@
     "roleChanged": "{changedBy} שינה את התפקיד של {changed} ל-{newRole}",
     "rotationChallenge": {
         "info": "סובב את התמונה משמאל עד שתתאים לזווית התמונה מימין",
-        "infoMobile": "סובב את התמונה העליונה עד שתתאים לזון של התמונה התחתונה",
+        "infoMobile": "סובב את התמונה התחתונה עד שתתאים לזווית של התמונה העליונה",
         "title": "איזון את הבוטים"
     },
     "rules": {
@@ -1794,6 +1798,7 @@
         "max": "מקסימום",
         "message": "הוֹדָעָה",
         "messagePlaceholder": "כלול הודעה אופציונלית",
+        "min": "מינימום: {amount}",
         "pendingSent": "{sender} שולח את {token} {amount} אל {receiver}",
         "pendingSentByYou": "אתה שולח {token} {amount} אל {receiver}",
         "receiver": "מקבל",

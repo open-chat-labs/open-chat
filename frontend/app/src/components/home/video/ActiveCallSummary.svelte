@@ -9,6 +9,7 @@
         selectedChatId,
         communities,
         selectedCommunity,
+        publish,
     } from "openchat-client";
     import {
         activeVideoCall,
@@ -32,7 +33,6 @@
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { publish } from "@src/utils/pubsub";
 
     const client = getContext<OpenChat>("client");
 

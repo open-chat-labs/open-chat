@@ -1,13 +1,13 @@
 use chat_events::{
-    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
-    DeleteUndeleteMessagesArgs, EditMessageArgs, GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader,
-    RemoveExpiredEventsResult, TipMessageArgs, UndeleteMessageResult,
+    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteUndeleteMessagesArgs, EditMessageArgs,
+    GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader, RemoveExpiredEventsResult, TipMessageArgs,
 };
 use event_store_producer::{EventStoreClient, Runtime};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use group_community_common::MemberUpdate;
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use oc_error_codes::OCErrorCode;
 use regex_lite::Regex;
 use search::simple::Query;
 use serde::{Deserialize, Serialize};
@@ -16,18 +16,17 @@ use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, Caller, Chat, CustomPermission,
     Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse, ExternalUrlUpdated,
-    FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
-    GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, MemberLeft,
-    MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
-    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions,
-    OptionalMessagePermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates,
-    ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version,
-    Versioned, VersionedRules, VideoCall, MAX_RETURNED_MENTIONS,
+    GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
+    GroupSubtype, GroupVisibilityChanged, HydratedMention, MemberLeft, MembersRemoved, Message, MessageContent, MessageId,
+    MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds,
+    MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
+    PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped,
+    UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
+    MAX_RETURNED_MENTIONS,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
-    validate_channel_name, validate_description, validate_group_name, validate_rules, NameValidationError,
-    RulesValidationError, StringLengthValidationError,
+    validate_channel_name, validate_description, validate_group_name, validate_rules, StringLengthValidationError,
 };
 
 mod invited_users;
@@ -132,29 +131,25 @@ impl GroupChatCore {
         }
     }
 
-    pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> MinVisibleEventIndexResult {
+    pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> OCResult<EventIndex> {
         let hidden_for_non_members = !self.is_public.value || !self.messages_visible_to_non_members.value;
         let event_index_for_new_members = self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default();
 
         // Fast path to skip looking up the member
         if !hidden_for_non_members && event_index_for_new_members == EventIndex::default() {
-            return MinVisibleEventIndexResult::Success(event_index_for_new_members);
+            return Ok(event_index_for_new_members);
         }
 
         if let Some(user_id) = user_id {
             match self.members.get_verified_member(user_id) {
-                Ok(member) => MinVisibleEventIndexResult::Success(member.min_visible_event_index()),
-                Err(error) if hidden_for_non_members => match error {
-                    VerifyMemberError::NotFound => MinVisibleEventIndexResult::UserNotInGroup,
-                    VerifyMemberError::Lapsed => MinVisibleEventIndexResult::UserLapsed,
-                    VerifyMemberError::Suspended => MinVisibleEventIndexResult::UserSuspended,
-                },
-                _ => MinVisibleEventIndexResult::Success(event_index_for_new_members),
+                Ok(member) => Ok(member.min_visible_event_index()),
+                Err(error) if hidden_for_non_members => Err(error.into()),
+                _ => Ok(event_index_for_new_members),
             }
         } else if hidden_for_non_members {
-            MinVisibleEventIndexResult::UserNotInGroup
+            Err(OCErrorCode::InitiatorNotInChat.into())
         } else {
-            MinVisibleEventIndexResult::Success(event_index_for_new_members)
+            Ok(event_index_for_new_members)
         }
     }
 
@@ -357,37 +352,29 @@ impl GroupChatCore {
         ascending: bool,
         max_messages: u32,
         max_events: u32,
-    ) -> EventsResult {
-        use EventsResult::*;
+    ) -> OCResult<EventsResponse> {
+        let reader = self.events_reader(&caller, thread_root_message_index)?;
 
-        match self.events_reader(&caller, thread_root_message_index) {
-            EventsReaderResult::Success(reader) => {
-                let user_id = caller.user_id();
-                let (events, expired_event_ranges, unauthorized) = EventOrExpiredRange::split(reader.scan(
-                    Some(start_index.into()),
-                    ascending,
-                    max_messages as usize,
-                    max_events as usize,
-                    user_id,
-                ));
-                let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
-                let latest_event_index = reader.latest_event_index().unwrap();
-                let chat_last_updated = self.last_updated(user_id);
+        let user_id = caller.user_id();
+        let (events, expired_event_ranges, unauthorized) = EventOrExpiredRange::split(reader.scan(
+            Some(start_index.into()),
+            ascending,
+            max_messages as usize,
+            max_events as usize,
+            user_id,
+        ));
+        let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
+        let latest_event_index = reader.latest_event_index().unwrap();
+        let chat_last_updated = self.last_updated(user_id);
 
-                Success(EventsResponse {
-                    events,
-                    unauthorized,
-                    expired_event_ranges,
-                    expired_message_ranges,
-                    latest_event_index,
-                    chat_last_updated,
-                })
-            }
-            EventsReaderResult::ThreadNotFound => ThreadNotFound,
-            EventsReaderResult::UserNotInGroup => UserNotInGroup,
-            EventsReaderResult::UserSuspended => UserSuspended,
-            EventsReaderResult::UserLapsed => UserLapsed,
-        }
+        Ok(EventsResponse {
+            events,
+            unauthorized,
+            expired_event_ranges,
+            expired_message_ranges,
+            latest_event_index,
+            chat_last_updated,
+        })
     }
 
     pub fn events_by_index(
@@ -395,32 +382,23 @@ impl GroupChatCore {
         caller: EventsCaller,
         thread_root_message_index: Option<MessageIndex>,
         events: Vec<EventIndex>,
-    ) -> EventsResult {
-        use EventsResult::*;
+    ) -> OCResult<EventsResponse> {
+        let reader = self.events_reader(&caller, thread_root_message_index)?;
 
-        match self.events_reader(&caller, thread_root_message_index) {
-            EventsReaderResult::Success(reader) => {
-                let user_id = caller.user_id();
-                let (events, expired_event_ranges, unauthorized) =
-                    EventOrExpiredRange::split(reader.get_by_indexes(&events, user_id));
-                let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
-                let latest_event_index = reader.latest_event_index().unwrap();
-                let chat_last_updated = self.last_updated(user_id);
+        let user_id = caller.user_id();
+        let (events, expired_event_ranges, unauthorized) = EventOrExpiredRange::split(reader.get_by_indexes(&events, user_id));
+        let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
+        let latest_event_index = reader.latest_event_index().unwrap();
+        let chat_last_updated = self.last_updated(user_id);
 
-                Success(EventsResponse {
-                    events,
-                    unauthorized,
-                    expired_event_ranges,
-                    expired_message_ranges,
-                    latest_event_index,
-                    chat_last_updated,
-                })
-            }
-            EventsReaderResult::ThreadNotFound => ThreadNotFound,
-            EventsReaderResult::UserNotInGroup => UserNotInGroup,
-            EventsReaderResult::UserSuspended => UserSuspended,
-            EventsReaderResult::UserLapsed => UserLapsed,
-        }
+        Ok(EventsResponse {
+            events,
+            unauthorized,
+            expired_event_ranges,
+            expired_message_ranges,
+            latest_event_index,
+            chat_last_updated,
+        })
     }
 
     pub fn events_window(
@@ -430,36 +408,24 @@ impl GroupChatCore {
         mid_point: MessageIndex,
         max_messages: u32,
         max_events: u32,
-    ) -> EventsResult {
-        use EventsResult::*;
+    ) -> OCResult<EventsResponse> {
+        let reader = self.events_reader(&caller, thread_root_message_index)?;
 
-        match self.events_reader(&caller, thread_root_message_index) {
-            EventsReaderResult::Success(reader) => {
-                let user_id = caller.user_id();
-                let (events, expired_event_ranges, unauthorized) = EventOrExpiredRange::split(reader.window(
-                    mid_point.into(),
-                    max_messages as usize,
-                    max_events as usize,
-                    user_id,
-                ));
-                let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
-                let latest_event_index = reader.latest_event_index().unwrap();
-                let chat_last_updated = self.last_updated(user_id);
+        let user_id = caller.user_id();
+        let (events, expired_event_ranges, unauthorized) =
+            EventOrExpiredRange::split(reader.window(mid_point.into(), max_messages as usize, max_events as usize, user_id));
+        let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
+        let latest_event_index = reader.latest_event_index().unwrap();
+        let chat_last_updated = self.last_updated(user_id);
 
-                Success(EventsResponse {
-                    events,
-                    unauthorized,
-                    expired_event_ranges,
-                    expired_message_ranges,
-                    latest_event_index,
-                    chat_last_updated,
-                })
-            }
-            EventsReaderResult::ThreadNotFound => ThreadNotFound,
-            EventsReaderResult::UserNotInGroup => UserNotInGroup,
-            EventsReaderResult::UserSuspended => UserSuspended,
-            EventsReaderResult::UserLapsed => UserLapsed,
-        }
+        Ok(EventsResponse {
+            events,
+            unauthorized,
+            expired_event_ranges,
+            expired_message_ranges,
+            latest_event_index,
+            chat_last_updated,
+        })
     }
 
     pub fn messages_by_message_index(
@@ -467,30 +433,22 @@ impl GroupChatCore {
         caller: EventsCaller,
         thread_root_message_index: Option<MessageIndex>,
         messages: Vec<MessageIndex>,
-    ) -> MessagesResult {
-        use MessagesResult::*;
+    ) -> OCResult<MessagesResponse> {
+        let reader = self.events_reader(&caller, thread_root_message_index)?;
 
-        match self.events_reader(&caller, thread_root_message_index) {
-            EventsReaderResult::Success(reader) => {
-                let user_id = caller.user_id();
-                let messages: Vec<_> = messages
-                    .into_iter()
-                    .filter_map(|m| reader.message_event(m.into(), user_id))
-                    .collect();
-                let latest_event_index = reader.latest_event_index().unwrap();
-                let chat_last_updated = self.last_updated(user_id);
+        let user_id = caller.user_id();
+        let messages: Vec<_> = messages
+            .into_iter()
+            .filter_map(|m| reader.message_event(m.into(), user_id))
+            .collect();
+        let latest_event_index = reader.latest_event_index().unwrap();
+        let chat_last_updated = self.last_updated(user_id);
 
-                Success(MessagesResponse {
-                    messages,
-                    latest_event_index,
-                    chat_last_updated,
-                })
-            }
-            EventsReaderResult::ThreadNotFound => ThreadNotFound,
-            EventsReaderResult::UserNotInGroup => UserNotInGroup,
-            EventsReaderResult::UserSuspended => UserSuspended,
-            EventsReaderResult::UserLapsed => UserLapsed,
-        }
+        Ok(MessagesResponse {
+            messages,
+            latest_event_index,
+            chat_last_updated,
+        })
     }
 
     pub fn deleted_message(
@@ -605,9 +563,7 @@ impl GroupChatCore {
         event_store_client: &mut EventStoreClient<R>,
         finalised: bool,
         now: TimestampMillis,
-    ) -> SendMessageResult {
-        use SendMessageResult::*;
-
+    ) -> OCResult<SendMessageSuccess> {
         // If there is an existing message with the same message id then this is invalid unless
         // a bot is updating an unfinalised message
         if let Some((message, _)) =
@@ -638,27 +594,20 @@ impl GroupChatCore {
                 }
             }
 
-            return MessageAlreadyExists;
+            return Err(OCErrorCode::MessageIdAlreadyExists.into());
         }
 
         let PrepareSendMessageSuccess {
             min_visible_event_index,
             everyone_mentioned,
-        } = match self.prepare_send_message(caller, thread_root_message_index, &content, rules_accepted, now) {
-            PrepareSendMessageResult::Success(success) => success,
-            PrepareSendMessageResult::UserLapsed => return UserLapsed,
-            PrepareSendMessageResult::UserSuspended => return UserSuspended,
-            PrepareSendMessageResult::UserNotInGroup => return UserNotInGroup,
-            PrepareSendMessageResult::RulesNotAccepted => return RulesNotAccepted,
-            PrepareSendMessageResult::NotAuthorized => return NotAuthorized,
-        };
+        } = self.prepare_send_message(caller, thread_root_message_index, &content, rules_accepted, now)?;
 
         if let Some(root_message_index) = thread_root_message_index {
             if !self
                 .events
                 .is_accessible(min_visible_event_index, None, root_message_index.into())
             {
-                return ThreadMessageNotFound;
+                return Err(OCErrorCode::ThreadNotFound.into());
             }
         }
 
@@ -698,7 +647,7 @@ impl GroupChatCore {
             )
         };
 
-        Success(SendMessageSuccess {
+        Ok(SendMessageSuccess {
             message_event,
             users_to_notify,
             unfinalised_bot_message,
@@ -718,20 +667,11 @@ impl GroupChatCore {
         suppressed: bool,
         block_level_markdown: bool,
         now: TimestampMillis,
-    ) -> SendMessageResult {
-        use SendMessageResult::*;
-
+    ) -> OCResult<SendMessageSuccess> {
         let PrepareSendMessageSuccess {
             min_visible_event_index,
             everyone_mentioned,
-        } = match self.prepare_send_message(caller, thread_root_message_index, &content, rules_accepted, now) {
-            PrepareSendMessageResult::Success(success) => success,
-            PrepareSendMessageResult::UserLapsed => return UserLapsed,
-            PrepareSendMessageResult::UserSuspended => return UserSuspended,
-            PrepareSendMessageResult::UserNotInGroup => return UserNotInGroup,
-            PrepareSendMessageResult::RulesNotAccepted => return RulesNotAccepted,
-            PrepareSendMessageResult::NotAuthorized => return NotAuthorized,
-        };
+        } = self.prepare_send_message(caller, thread_root_message_index, &content, rules_accepted, now)?;
 
         let edit_message_args = EditMessageArgs {
             sender: caller.agent(),
@@ -744,7 +684,7 @@ impl GroupChatCore {
             now,
         };
 
-        self.events.edit_message::<CdkRuntime>(edit_message_args, None);
+        let _ = self.events.edit_message::<CdkRuntime>(edit_message_args, None);
 
         let reader = self
             .events
@@ -768,7 +708,7 @@ impl GroupChatCore {
             vec![]
         };
 
-        SendMessageResult::Success(SendMessageSuccess {
+        Ok(SendMessageSuccess {
             message_event,
             users_to_notify,
             unfinalised_bot_message: !finalise,
@@ -874,11 +814,9 @@ impl GroupChatCore {
         content: &MessageContentInternal,
         rules_accepted: Option<Version>,
         now: TimestampMillis,
-    ) -> PrepareSendMessageResult {
-        use PrepareSendMessageResult::*;
-
+    ) -> OCResult<PrepareSendMessageSuccess> {
         if matches!(caller, Caller::OCBot(_)) {
-            return Success(PrepareSendMessageSuccess {
+            return Ok(PrepareSendMessageSuccess {
                 min_visible_event_index: EventIndex::default(),
                 everyone_mentioned: false,
             });
@@ -891,20 +829,11 @@ impl GroupChatCore {
             });
         }
 
-        let (min_visible_event_index, can_mention) = if let Some(initator) = caller.initiator() {
-            let member = match self.members.get_verified_member(initator) {
-                Ok(member) => member,
-                Err(error) => {
-                    return match error {
-                        VerifyMemberError::NotFound => UserNotInGroup,
-                        VerifyMemberError::Lapsed => UserLapsed,
-                        VerifyMemberError::Suspended => UserSuspended,
-                    };
-                }
-            };
+        let (min_visible_event_index, can_mention) = if let Some(initiator) = caller.initiator() {
+            let member = self.members.get_verified_member(initiator)?;
 
             if !matches!(content, MessageContentInternal::VideoCall(_)) && !member.check_rules(&self.rules.value) {
-                return RulesNotAccepted;
+                return Err(OCErrorCode::ChatRulesNotAccepted.into());
             }
 
             let permissions = &self.permissions;
@@ -913,7 +842,7 @@ impl GroupChatCore {
                 .role()
                 .can_send_message(content.into(), thread_root_message_index.is_some(), permissions)
             {
-                return NotAuthorized;
+                return Err(OCErrorCode::InitiatorNotAuthorized.into());
             }
 
             (
@@ -924,7 +853,7 @@ impl GroupChatCore {
             (EventIndex::default(), true)
         };
 
-        Success(PrepareSendMessageSuccess {
+        Ok(PrepareSendMessageSuccess {
             min_visible_event_index,
             everyone_mentioned: can_mention && is_everyone_mentioned(content),
         })
@@ -938,37 +867,26 @@ impl GroupChatCore {
         reaction: Reaction,
         now: TimestampMillis,
         event_store_client: &mut EventStoreClient<R>,
-    ) -> AddRemoveReactionResult {
-        use AddRemoveReactionResult::*;
+    ) -> OCResult {
+        let member = self.members.get_verified_member(user_id)?;
 
-        match self.members.get_verified_member(user_id) {
-            Ok(member) => {
-                if !member.role().can_react_to_messages(&self.permissions) {
-                    return NotAuthorized;
-                }
-
-                let min_visible_event_index = member.min_visible_event_index();
-
-                self.events
-                    .add_reaction(
-                        AddRemoveReactionArgs {
-                            user_id,
-                            min_visible_event_index,
-                            thread_root_message_index,
-                            message_id,
-                            reaction,
-                            now,
-                        },
-                        Some(event_store_client),
-                    )
-                    .into()
-            }
-            Err(error) => match error {
-                VerifyMemberError::NotFound => UserNotInGroup,
-                VerifyMemberError::Lapsed => UserLapsed,
-                VerifyMemberError::Suspended => UserSuspended,
-            },
+        if !member.role().can_react_to_messages(&self.permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
+
+        let min_visible_event_index = member.min_visible_event_index();
+
+        self.events.add_reaction(
+            AddRemoveReactionArgs {
+                user_id,
+                min_visible_event_index,
+                thread_root_message_index,
+                message_id,
+                reaction,
+                now,
+            },
+            Some(event_store_client),
+        )
     }
 
     pub fn remove_reaction(
@@ -978,61 +896,40 @@ impl GroupChatCore {
         message_id: MessageId,
         reaction: Reaction,
         now: TimestampMillis,
-    ) -> AddRemoveReactionResult {
-        use AddRemoveReactionResult::*;
+    ) -> OCResult {
+        let member = self.members.get_verified_member(user_id)?;
 
-        match self.members.get_verified_member(user_id) {
-            Ok(member) => {
-                if !member.role().can_react_to_messages(&self.permissions) {
-                    return NotAuthorized;
-                }
-
-                let min_visible_event_index = member.min_visible_event_index();
-
-                self.events
-                    .remove_reaction(AddRemoveReactionArgs {
-                        user_id,
-                        min_visible_event_index,
-                        thread_root_message_index,
-                        message_id,
-                        reaction,
-                        now,
-                    })
-                    .into()
-            }
-            Err(error) => match error {
-                VerifyMemberError::NotFound => UserNotInGroup,
-                VerifyMemberError::Lapsed => UserLapsed,
-                VerifyMemberError::Suspended => UserSuspended,
-            },
+        if !member.role().can_react_to_messages(&self.permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
+
+        let min_visible_event_index = member.min_visible_event_index();
+
+        self.events.remove_reaction(AddRemoveReactionArgs {
+            user_id,
+            min_visible_event_index,
+            thread_root_message_index,
+            message_id,
+            reaction,
+            now,
+        })
     }
 
     pub fn tip_message<R: Runtime + Send + 'static>(
         &mut self,
         args: TipMessageArgs,
         event_store_client: &mut EventStoreClient<R>,
-    ) -> TipMessageResult {
-        use TipMessageResult::*;
+    ) -> OCResult {
+        let member = self.members.get_verified_member(args.user_id)?;
 
-        match self.members.get_verified_member(args.user_id) {
-            Ok(member) => {
-                if !member.role().can_react_to_messages(&self.permissions) {
-                    return NotAuthorized;
-                }
-
-                let min_visible_event_index = member.min_visible_event_index();
-
-                self.events
-                    .tip_message(args, min_visible_event_index, Some(event_store_client))
-                    .into()
-            }
-            Err(error) => match error {
-                VerifyMemberError::NotFound => UserNotInGroup,
-                VerifyMemberError::Lapsed => UserLapsed,
-                VerifyMemberError::Suspended => UserSuspended,
-            },
+        if !member.role().can_react_to_messages(&self.permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
+
+        let min_visible_event_index = member.min_visible_event_index();
+
+        self.events
+            .tip_message(args, min_visible_event_index, Some(event_store_client))
     }
 
     pub fn delete_messages(
@@ -1042,25 +939,16 @@ impl GroupChatCore {
         message_ids: Vec<MessageId>,
         as_platform_moderator: bool,
         now: TimestampMillis,
-    ) -> DeleteMessagesResult {
-        use DeleteMessagesResult::*;
-
+    ) -> OCResult<Vec<(MessageId, OCResult<UserId>)>> {
         let (is_admin, min_visible_event_index) = if as_platform_moderator {
             (true, EventIndex::default())
         } else {
-            match self.members.get_verified_member(user_id) {
-                Ok(member) => (
-                    member.role().can_delete_messages(&self.permissions),
-                    member.min_visible_event_index(),
-                ),
-                Err(error) => {
-                    return match error {
-                        VerifyMemberError::NotFound => UserNotInGroup,
-                        VerifyMemberError::Lapsed => UserLapsed,
-                        VerifyMemberError::Suspended => UserSuspended,
-                    };
-                }
-            }
+            let member = self.members.get_verified_member(user_id)?;
+
+            (
+                member.role().can_delete_messages(&self.permissions),
+                member.min_visible_event_index(),
+            )
         };
 
         let results = self.events.delete_messages(DeleteUndeleteMessagesArgs {
@@ -1075,7 +963,7 @@ impl GroupChatCore {
         if thread_root_message_index.is_none() {
             for message_id in results
                 .iter()
-                .filter(|(_, result)| matches!(result, DeleteMessageResult::Success(_)))
+                .filter(|(_, result)| result.is_ok())
                 .map(|(message_id, _)| *message_id)
             {
                 if let Some(message_index) = self
@@ -1102,7 +990,7 @@ impl GroupChatCore {
             }
         }
 
-        Success(results)
+        Ok(results)
     }
 
     pub fn undelete_messages(
@@ -1111,46 +999,37 @@ impl GroupChatCore {
         thread_root_message_index: Option<MessageIndex>,
         message_ids: Vec<MessageId>,
         now: TimestampMillis,
-    ) -> UndeleteMessagesResult {
-        use UndeleteMessagesResult::*;
+    ) -> OCResult<Vec<Message>> {
+        let member = self.members.get_verified_member(user_id)?;
 
-        match self.members.get_verified_member(user_id) {
-            Ok(member) => {
-                let min_visible_event_index = member.min_visible_event_index();
+        let min_visible_event_index = member.min_visible_event_index();
 
-                let results = self.events.undelete_messages(DeleteUndeleteMessagesArgs {
-                    caller: user_id,
-                    is_admin: member.role().can_delete_messages(&self.permissions),
-                    min_visible_event_index,
-                    thread_root_message_index,
-                    message_ids,
-                    now,
-                });
+        let results = self.events.undelete_messages(DeleteUndeleteMessagesArgs {
+            caller: user_id,
+            is_admin: member.role().can_delete_messages(&self.permissions),
+            min_visible_event_index,
+            thread_root_message_index,
+            message_ids,
+            now,
+        });
 
-                let events_reader = self
-                    .events
-                    .events_reader(min_visible_event_index, thread_root_message_index, None)
-                    .unwrap();
+        let events_reader = self
+            .events
+            .events_reader(min_visible_event_index, thread_root_message_index, None)
+            .unwrap();
 
-                let messages = results
-                    .into_iter()
-                    .filter(|(_, result)| matches!(result, UndeleteMessageResult::Success))
-                    .map(|(message_id, _)| message_id)
-                    .filter_map(|message_id| {
-                        events_reader
-                            .message_internal(message_id.into())
-                            .map(|m| m.hydrate(Some(user_id)))
-                    })
-                    .collect();
+        let messages = results
+            .into_iter()
+            .filter(|(_, result)| result.is_ok())
+            .map(|(message_id, _)| message_id)
+            .filter_map(|message_id| {
+                events_reader
+                    .message_internal(message_id.into())
+                    .map(|m| m.hydrate(Some(user_id)))
+            })
+            .collect();
 
-                Success(messages)
-            }
-            Err(error) => match error {
-                VerifyMemberError::NotFound => UserNotInGroup,
-                VerifyMemberError::Lapsed => UserLapsed,
-                VerifyMemberError::Suspended => UserSuspended,
-            },
-        }
+        Ok(messages)
     }
 
     pub fn change_role(
@@ -1161,7 +1040,7 @@ impl GroupChatCore {
         is_caller_platform_moderator: bool,
         is_user_platform_moderator: bool,
         now: TimestampMillis,
-    ) -> ChangeRoleResult {
+    ) -> OCResult<ChangeRoleSuccess> {
         let result = self.members.change_role(
             caller,
             target_user,
@@ -1170,60 +1049,54 @@ impl GroupChatCore {
             is_caller_platform_moderator,
             is_user_platform_moderator,
             now,
-        );
+        )?;
 
-        if let ChangeRoleResult::Success(r) = &result {
-            let event = RoleChanged {
-                user_ids: vec![target_user],
-                old_role: r.prev_role.into(),
-                new_role,
-                changed_by: caller,
-            };
-
-            self.events
-                .push_main_event(ChatEventInternal::RoleChanged(Box::new(event)), 0, now);
+        let event = RoleChanged {
+            user_ids: vec![target_user],
+            old_role: result.prev_role.into(),
+            new_role,
+            changed_by: caller,
         };
 
-        result
+        self.events
+            .push_main_event(ChatEventInternal::RoleChanged(Box::new(event)), 0, now);
+
+        Ok(result)
     }
 
-    pub fn pin_message(&mut self, user_id: UserId, message_index: MessageIndex, now: TimestampMillis) -> PinUnpinMessageResult {
-        use PinUnpinMessageResult::*;
+    pub fn pin_message(
+        &mut self,
+        user_id: UserId,
+        message_index: MessageIndex,
+        now: TimestampMillis,
+    ) -> OCResult<PushEventResult> {
+        let member = self.members.get_verified_member(user_id)?;
 
-        match self.members.get_verified_member(user_id) {
-            Ok(member) => {
-                if !member.role().can_pin_messages(&self.permissions) {
-                    return NotAuthorized;
-                }
+        if !member.role().can_pin_messages(&self.permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
 
-                let min_visible_event_index = member.min_visible_event_index();
-                let user_id = member.user_id();
+        let min_visible_event_index = member.min_visible_event_index();
+        let user_id = member.user_id();
 
-                if !self.events.is_accessible(min_visible_event_index, None, message_index.into()) {
-                    return MessageNotFound;
-                }
+        if !self.events.is_accessible(min_visible_event_index, None, message_index.into()) {
+            return Err(OCErrorCode::MessageNotFound.into());
+        }
 
-                if self.add_pinned_message(message_index, now) {
-                    let push_event_result = self.events.push_main_event(
-                        ChatEventInternal::MessagePinned(Box::new(MessagePinned {
-                            message_index,
-                            pinned_by: user_id,
-                        })),
-                        0,
-                        now,
-                    );
+        if self.add_pinned_message(message_index, now) {
+            let push_event_result = self.events.push_main_event(
+                ChatEventInternal::MessagePinned(Box::new(MessagePinned {
+                    message_index,
+                    pinned_by: user_id,
+                })),
+                0,
+                now,
+            );
 
-                    self.date_last_pinned = Some(now);
-                    Success(push_event_result)
-                } else {
-                    NoChange
-                }
-            }
-            Err(error) => match error {
-                VerifyMemberError::NotFound => UserNotInGroup,
-                VerifyMemberError::Lapsed => UserLapsed,
-                VerifyMemberError::Suspended => UserSuspended,
-            },
+            self.date_last_pinned = Some(now);
+            Ok(push_event_result)
+        } else {
+            Err(OCErrorCode::NoChange.into())
         }
     }
 
@@ -1232,49 +1105,40 @@ impl GroupChatCore {
         user_id: UserId,
         message_index: MessageIndex,
         now: TimestampMillis,
-    ) -> PinUnpinMessageResult {
-        use PinUnpinMessageResult::*;
+    ) -> OCResult<PushEventResult> {
+        let member = self.members.get_verified_member(user_id)?;
 
-        match self.members.get_verified_member(user_id) {
-            Ok(member) => {
-                if !member.role().can_pin_messages(&self.permissions) {
-                    return NotAuthorized;
-                }
+        if !member.role().can_pin_messages(&self.permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
 
-                if !self
-                    .events
-                    .is_accessible(member.min_visible_event_index(), None, message_index.into())
-                {
-                    return MessageNotFound;
-                }
+        if !self
+            .events
+            .is_accessible(member.min_visible_event_index(), None, message_index.into())
+        {
+            return Err(OCErrorCode::MessageNotFound.into());
+        }
 
-                let user_id = member.user_id();
+        let user_id = member.user_id();
 
-                if self.remove_pinned_message(message_index, now) {
-                    let push_event_result = self.events.push_main_event(
-                        ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
-                            message_index,
-                            unpinned_by: user_id,
-                            due_to_message_deleted: false,
-                        })),
-                        0,
-                        now,
-                    );
+        if self.remove_pinned_message(message_index, now) {
+            let push_event_result = self.events.push_main_event(
+                ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
+                    message_index,
+                    unpinned_by: user_id,
+                    due_to_message_deleted: false,
+                })),
+                0,
+                now,
+            );
 
-                    if self.pinned_messages.is_empty() {
-                        self.date_last_pinned = None;
-                    }
-
-                    Success(push_event_result)
-                } else {
-                    NoChange
-                }
+            if self.pinned_messages.is_empty() {
+                self.date_last_pinned = None;
             }
-            Err(error) => match error {
-                VerifyMemberError::NotFound => UserNotInGroup,
-                VerifyMemberError::Lapsed => UserLapsed,
-                VerifyMemberError::Suspended => UserSuspended,
-            },
+
+            Ok(push_event_result)
+        } else {
+            Err(OCErrorCode::NoChange.into())
         }
     }
 
@@ -1321,195 +1185,158 @@ impl GroupChatCore {
         }
     }
 
-    pub fn invite_users(&mut self, invited_by: UserId, user_ids: Vec<UserId>, now: TimestampMillis) -> InvitedUsersResult {
-        use InvitedUsersResult::*;
-
+    pub fn invite_users(
+        &mut self,
+        invited_by: UserId,
+        user_ids: Vec<UserId>,
+        now: TimestampMillis,
+    ) -> OCResult<InvitedUsersSuccess> {
         const MAX_INVITES: usize = 100;
 
-        match self.members.get_verified_member(invited_by) {
-            Ok(member) => {
-                // The original caller must be authorized to invite other users
-                if !member.role().can_invite_users(&self.permissions) {
-                    return NotAuthorized;
-                }
+        let member = self.members.get_verified_member(invited_by)?;
 
-                // Filter out users who are already members and those who have already been invited
-                let invited_users: Vec<_> = user_ids
-                    .iter()
-                    .unique()
-                    .filter(|user_id| !self.members.contains(user_id) && !self.invited_users.contains(user_id))
-                    .copied()
-                    .collect();
-
-                if !invited_users.is_empty() {
-                    // Check the max invite limit will not be exceeded
-                    if self.invited_users.len() + invited_users.len() > MAX_INVITES {
-                        return TooManyInvites(MAX_INVITES as u32);
-                    }
-
-                    // Find the latest event and message that the invited users are allowed to see
-                    let (min_visible_event_index, min_visible_message_index) = self.min_visible_indexes_for_new_members();
-
-                    // Add new invites
-                    for user_id in invited_users.iter() {
-                        self.invited_users.add(UserInvitation {
-                            invited: *user_id,
-                            invited_by: member.user_id(),
-                            timestamp: now,
-                            min_visible_event_index,
-                            min_visible_message_index,
-                        });
-                    }
-
-                    // Push a UsersInvited event
-                    self.events.push_main_event(
-                        ChatEventInternal::UsersInvited(Box::new(UsersInvited {
-                            user_ids: user_ids.clone(),
-                            invited_by: member.user_id(),
-                        })),
-                        0,
-                        now,
-                    );
-                }
-
-                Success(InvitedUsersSuccess {
-                    invited_users: user_ids,
-                    group_name: self.name.value.clone(),
-                })
-            }
-            Err(error) => match error {
-                VerifyMemberError::NotFound => UserNotInGroup,
-                VerifyMemberError::Lapsed => UserLapsed,
-                VerifyMemberError::Suspended => UserSuspended,
-            },
+        // The original caller must be authorized to invite other users
+        if !member.role().can_invite_users(&self.permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
+
+        // Filter out users who are already members and those who have already been invited
+        let invited_users: Vec<_> = user_ids
+            .iter()
+            .unique()
+            .filter(|user_id| !self.members.contains(user_id) && !self.invited_users.contains(user_id))
+            .copied()
+            .collect();
+
+        if !invited_users.is_empty() {
+            // Check the max invite limit will not be exceeded
+            if self.invited_users.len() + invited_users.len() > MAX_INVITES {
+                return Err(OCErrorCode::TooManyInvites.with_message(MAX_INVITES));
+            }
+
+            // Find the latest event and message that the invited users are allowed to see
+            let (min_visible_event_index, min_visible_message_index) = self.min_visible_indexes_for_new_members();
+
+            // Add new invites
+            for user_id in invited_users.iter() {
+                self.invited_users.add(UserInvitation {
+                    invited: *user_id,
+                    invited_by: member.user_id(),
+                    timestamp: now,
+                    min_visible_event_index,
+                    min_visible_message_index,
+                });
+            }
+
+            // Push a UsersInvited event
+            self.events.push_main_event(
+                ChatEventInternal::UsersInvited(Box::new(UsersInvited {
+                    user_ids: user_ids.clone(),
+                    invited_by: member.user_id(),
+                })),
+                0,
+                now,
+            );
+        }
+
+        Ok(InvitedUsersSuccess {
+            invited_users: user_ids,
+            group_name: self.name.value.clone(),
+        })
     }
 
-    pub fn cancel_invites(&mut self, cancelled_by: UserId, user_ids: Vec<UserId>, now: TimestampMillis) -> CancelInvitesResult {
-        use CancelInvitesResult::*;
+    pub fn cancel_invites(&mut self, cancelled_by: UserId, user_ids: Vec<UserId>, now: TimestampMillis) -> OCResult {
+        let member = self.members.get_verified_member(cancelled_by)?;
 
-        match self.members.get_verified_member(cancelled_by) {
-            Ok(member) => {
-                if !member.role().can_invite_users(&self.permissions) {
-                    return NotAuthorized;
-                }
-
-                for user_id in user_ids {
-                    self.cancel_invite_unchecked(&user_id, now);
-                }
-
-                Success
-            }
-            Err(error) => match error {
-                VerifyMemberError::NotFound => UserNotInGroup,
-                VerifyMemberError::Lapsed => UserLapsed,
-                VerifyMemberError::Suspended => UserSuspended,
-            },
+        if !member.role().can_invite_users(&self.permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
+
+        for user_id in user_ids {
+            self.cancel_invite_unchecked(&user_id, now);
+        }
+
+        Ok(())
     }
 
     pub fn cancel_invite_unchecked(&mut self, user_id: &UserId, now: TimestampMillis) {
         self.invited_users.remove(user_id, now);
     }
 
-    pub fn can_leave(&self, user_id: UserId) -> CanLeaveResult {
-        use CanLeaveResult::*;
-
+    pub fn can_leave(&self, user_id: UserId) -> OCResult {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended().value {
-                UserSuspended
+                Err(OCErrorCode::InitiatorSuspended.into())
             } else if member.role().is_owner() && self.members.owners().len() == 1 {
-                LastOwnerCannotLeave
+                Err(OCErrorCode::LastOwnerCannotLeave.into())
             } else {
-                Yes
+                Ok(())
             }
         } else {
-            UserNotInGroup
+            Err(OCErrorCode::InitiatorNotInChat.into())
         }
     }
 
-    pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> LeaveResult {
-        use LeaveResult::*;
+    pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> OCResult<GroupMemberInternal> {
+        self.can_leave(user_id)?;
 
-        match self.can_leave(user_id) {
-            CanLeaveResult::Yes => {
-                let removed = self.members.remove(user_id, now).unwrap();
+        let removed = self.members.remove(user_id, now).unwrap();
 
-                self.events
-                    .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id })), 0, now);
+        self.events
+            .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id })), 0, now);
 
-                Success(removed)
-            }
-            CanLeaveResult::UserSuspended => UserSuspended,
-            CanLeaveResult::LastOwnerCannotLeave => LastOwnerCannotLeave,
-            CanLeaveResult::UserNotInGroup => UserNotInGroup,
-        }
+        Ok(removed)
     }
 
-    pub fn remove_member(
-        &mut self,
-        user_id: UserId,
-        target_user_id: UserId,
-        block: bool,
-        now: TimestampMillis,
-    ) -> RemoveMemberResult {
-        use RemoveMemberResult::*;
-
+    pub fn remove_member(&mut self, user_id: UserId, target_user_id: UserId, block: bool, now: TimestampMillis) -> OCResult {
         if user_id == target_user_id {
-            return CannotRemoveSelf;
+            return Err(OCErrorCode::CannotRemoveSelf.into());
         }
 
-        match self.members.get_verified_member(user_id) {
-            Ok(member) => {
-                let target_member_role = match self.members.get(&target_user_id) {
-                    Some(m) => m.role().value,
-                    None if block => GroupRoleInternal::Member,
-                    _ => return TargetUserNotInGroup,
-                };
+        let member = self.members.get_verified_member(user_id)?;
 
-                if member
-                    .role()
-                    .can_remove_members_with_role(target_member_role, &self.permissions)
-                {
-                    let is_bot_v2 = matches!(member.user_type(), UserType::BotV2);
+        let target_member_role = match self.members.get(&target_user_id) {
+            Some(m) => m.role().value,
+            None if block => GroupRoleInternal::Member,
+            _ => return Err(OCErrorCode::TargetUserNotInChat.into()),
+        };
 
-                    // Remove the user from the group
-                    self.members.remove(target_user_id, now);
+        if member
+            .role()
+            .can_remove_members_with_role(target_member_role, &self.permissions)
+        {
+            let is_bot_v2 = matches!(member.user_type(), UserType::BotV2);
 
-                    if block && !self.members.block(target_user_id, now) {
-                        // Return Success if the user was already blocked
-                        return Success;
-                    }
+            // Remove the user from the group
+            self.members.remove(target_user_id, now);
 
-                    if !is_bot_v2 {
-                        // Push relevant event
-                        let event = if block {
-                            let event = UsersBlocked {
-                                user_ids: vec![target_user_id],
-                                blocked_by: user_id,
-                            };
-
-                            ChatEventInternal::UsersBlocked(Box::new(event))
-                        } else {
-                            let event = MembersRemoved {
-                                user_ids: vec![target_user_id],
-                                removed_by: user_id,
-                            };
-                            ChatEventInternal::ParticipantsRemoved(Box::new(event))
-                        };
-                        self.events.push_main_event(event, 0, now);
-                    }
-
-                    Success
-                } else {
-                    NotAuthorized
-                }
+            if block && !self.members.block(target_user_id, now) {
+                // Return Ok if the user was already blocked
+                return Ok(());
             }
-            Err(error) => match error {
-                VerifyMemberError::NotFound => UserNotInGroup,
-                VerifyMemberError::Lapsed => UserLapsed,
-                VerifyMemberError::Suspended => UserSuspended,
-            },
+
+            if !is_bot_v2 {
+                // Push relevant event
+                let event = if block {
+                    let event = UsersBlocked {
+                        user_ids: vec![target_user_id],
+                        blocked_by: user_id,
+                    };
+
+                    ChatEventInternal::UsersBlocked(Box::new(event))
+                } else {
+                    let event = MembersRemoved {
+                        user_ids: vec![target_user_id],
+                        removed_by: user_id,
+                    };
+                    ChatEventInternal::ParticipantsRemoved(Box::new(event))
+                };
+                self.events.push_main_event(event, 0, now);
+            }
+
+            Ok(())
+        } else {
+            Err(OCErrorCode::InitiatorNotAuthorized.into())
         }
     }
 
@@ -1527,24 +1354,23 @@ impl GroupChatCore {
         events_ttl: OptionUpdate<Milliseconds>,
         external_url: OptionUpdate<String>,
         now: TimestampMillis,
-    ) -> UpdateResult {
-        match self.can_update(user_id, &name, &description, &rules, &avatar, permissions.as_ref(), &public) {
-            Ok(_) => UpdateResult::Success(Box::new(self.do_update(
-                user_id,
-                name,
-                description,
-                rules,
-                avatar,
-                permissions,
-                gate_config,
-                public,
-                messages_visible_to_non_members,
-                events_ttl,
-                external_url,
-                now,
-            ))),
-            Err(result) => result,
-        }
+    ) -> OCResult<UpdateSuccessResult> {
+        self.can_update(user_id, &name, &description, &rules, &avatar, permissions.as_ref(), &public)?;
+
+        Ok(self.do_update(
+            user_id,
+            name,
+            description,
+            rules,
+            avatar,
+            permissions,
+            gate_config,
+            public,
+            messages_visible_to_non_members,
+            events_ttl,
+            external_url,
+            now,
+        ))
     }
 
     pub fn can_update(
@@ -1556,64 +1382,48 @@ impl GroupChatCore {
         avatar: &OptionUpdate<Document>,
         permissions: Option<&OptionalGroupPermissions>,
         public: &Option<bool>,
-    ) -> Result<(), UpdateResult> {
-        use UpdateResult::*;
-
+    ) -> OCResult {
         let avatar_update = avatar.as_ref().expand();
 
         if let Some(name) = name {
             if matches!(self.events.chat(), Chat::Group(_)) {
                 if let Err(error) = validate_group_name(name, self.is_public.value, self.subtype.value.as_ref()) {
-                    return Err(match error {
-                        NameValidationError::TooShort(s) => NameTooShort(s),
-                        NameValidationError::TooLong(l) => NameTooLong(l),
-                        NameValidationError::Reserved => NameReserved,
-                    });
+                    return Err(error.into());
                 }
             } else if let Err(error) = validate_channel_name(name) {
                 return Err(match error {
-                    StringLengthValidationError::TooShort(s) => NameTooShort(s),
-                    StringLengthValidationError::TooLong(l) => NameTooLong(l),
+                    StringLengthValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
+                    StringLengthValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
                 });
             }
         }
 
         if let Some(description) = description {
             if let Err(error) = validate_description(description) {
-                return Err(DescriptionTooLong(error));
+                return Err(OCErrorCode::DescriptionTooLong.with_json(&error));
             }
         }
 
         if let Some(rules) = rules {
             if let Err(error) = validate_rules(rules.enabled, &rules.text) {
-                return Err(match error {
-                    RulesValidationError::TooShort(s) => RulesTooShort(s),
-                    RulesValidationError::TooLong(l) => RulesTooLong(l),
-                });
+                return Err(error.into());
             }
         }
 
         if let Err(error) = avatar_update.map_or(Ok(()), validate_avatar) {
-            return Err(AvatarTooBig(error));
+            return Err(OCErrorCode::AvatarTooBig.with_json(&error));
         }
 
-        match self.members.get_verified_member(user_id) {
-            Ok(member) => {
-                let group_permissions = &self.permissions;
-                if !member.role().can_update_group(group_permissions)
-                    || (permissions.is_some() && !member.role().can_change_permissions())
-                    || (public.is_some() && !member.role().can_change_group_visibility())
-                {
-                    Err(NotAuthorized)
-                } else {
-                    Ok(())
-                }
-            }
-            Err(error) => Err(match error {
-                VerifyMemberError::NotFound => UserNotInGroup,
-                VerifyMemberError::Lapsed => UserLapsed,
-                VerifyMemberError::Suspended => UserSuspended,
-            }),
+        let member = self.members.get_verified_member(user_id)?;
+
+        let group_permissions = &self.permissions;
+        if !member.role().can_update_group(group_permissions)
+            || (permissions.is_some() && !member.role().can_change_permissions())
+            || (public.is_some() && !member.role().can_change_group_visibility())
+        {
+            Err(OCErrorCode::InitiatorNotAuthorized.into())
+        } else {
+            Ok(())
         }
     }
 
@@ -1816,33 +1626,18 @@ impl GroupChatCore {
         user_id: UserId,
         thread_root_message_index: MessageIndex,
         now: TimestampMillis,
-    ) -> FollowThreadResult {
-        use FollowThreadResult::*;
+    ) -> OCResult {
+        let member = self.members.get_verified_member(user_id)?;
 
-        match self.members.get_verified_member(user_id) {
-            Ok(member) => {
-                match self
-                    .events
-                    .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
-                {
-                    chat_events::FollowThreadResult::Success => {
-                        self.members.update_member(&user_id, |m| {
-                            m.followed_threads.insert(thread_root_message_index, now);
-                            m.unfollowed_threads.remove(thread_root_message_index);
-                            true
-                        });
-                        Success
-                    }
-                    chat_events::FollowThreadResult::AlreadyFollowing => AlreadyFollowing,
-                    chat_events::FollowThreadResult::ThreadNotFound => ThreadNotFound,
-                }
-            }
-            Err(error) => match error {
-                VerifyMemberError::NotFound => UserNotInGroup,
-                VerifyMemberError::Lapsed => UserLapsed,
-                VerifyMemberError::Suspended => UserSuspended,
-            },
-        }
+        self.events
+            .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)?;
+
+        self.members.update_member(&user_id, |m| {
+            m.followed_threads.insert(thread_root_message_index, now);
+            m.unfollowed_threads.remove(thread_root_message_index);
+            true
+        });
+        Ok(())
     }
 
     pub fn unfollow_thread(
@@ -1850,33 +1645,18 @@ impl GroupChatCore {
         user_id: UserId,
         thread_root_message_index: MessageIndex,
         now: TimestampMillis,
-    ) -> UnfollowThreadResult {
-        use UnfollowThreadResult::*;
+    ) -> OCResult {
+        let member = self.members.get_verified_member(user_id)?;
 
-        match self.members.get_verified_member(user_id) {
-            Ok(member) => {
-                match self
-                    .events
-                    .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
-                {
-                    chat_events::UnfollowThreadResult::Success => {
-                        self.members.update_member(&user_id, |m| {
-                            m.followed_threads.remove(thread_root_message_index);
-                            m.unfollowed_threads.insert(thread_root_message_index, now);
-                            true
-                        });
-                        Success
-                    }
-                    chat_events::UnfollowThreadResult::NotFollowing => NotFollowing,
-                    chat_events::UnfollowThreadResult::ThreadNotFound => ThreadNotFound,
-                }
-            }
-            Err(error) => match error {
-                VerifyMemberError::NotFound => UserNotInGroup,
-                VerifyMemberError::Lapsed => UserLapsed,
-                VerifyMemberError::Suspended => UserSuspended,
-            },
-        }
+        self.events
+            .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)?;
+
+        self.members.update_member(&user_id, |m| {
+            m.followed_threads.remove(thread_root_message_index);
+            m.unfollowed_threads.insert(thread_root_message_index, now);
+            true
+        });
+        Ok(())
     }
 
     pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveExpiredEventsResult {
@@ -1934,30 +1714,26 @@ impl GroupChatCore {
             })
     }
 
-    fn events_reader(&self, caller: &EventsCaller, thread_root_message_index: Option<MessageIndex>) -> EventsReaderResult {
-        use EventsReaderResult::*;
-
-        let min_visible_event_index_result = match caller {
+    fn events_reader(
+        &self,
+        caller: &EventsCaller,
+        thread_root_message_index: Option<MessageIndex>,
+    ) -> OCResult<ChatEventsListReader> {
+        let min_visible_event_index = match caller {
             EventsCaller::Unknown => self.min_visible_event_index(None),
             EventsCaller::User(user_id) => self.min_visible_event_index(Some(*user_id)),
-            EventsCaller::Bot(bot) => MinVisibleEventIndexResult::Success(bot.min_visible_event_index),
-            EventsCaller::System => MinVisibleEventIndexResult::Success(EventIndex::default()),
-        };
-        match min_visible_event_index_result {
-            MinVisibleEventIndexResult::Success(min_visible_event_index) => {
-                if let Some(events_reader) = self.events.events_reader(
-                    min_visible_event_index,
-                    thread_root_message_index,
-                    caller.bot_permitted_event_types().cloned(),
-                ) {
-                    Success(events_reader)
-                } else {
-                    ThreadNotFound
-                }
-            }
-            MinVisibleEventIndexResult::UserLapsed => UserLapsed,
-            MinVisibleEventIndexResult::UserSuspended => UserSuspended,
-            MinVisibleEventIndexResult::UserNotInGroup => UserNotInGroup,
+            EventsCaller::Bot(bot) => Ok(bot.min_visible_event_index),
+            EventsCaller::System => Ok(EventIndex::default()),
+        }?;
+
+        if let Some(events_reader) = self.events.events_reader(
+            min_visible_event_index,
+            thread_root_message_index,
+            caller.bot_permitted_event_types().cloned(),
+        ) {
+            Ok(events_reader)
+        } else {
+            Err(OCErrorCode::ThreadNotFound.into())
         }
     }
 
@@ -2069,161 +1845,16 @@ impl GroupChatCore {
     }
 }
 
-pub enum EventsResult {
-    Success(EventsResponse),
-    UserNotInGroup,
-    ThreadNotFound,
-    UserSuspended,
-    UserLapsed,
-}
-
-pub enum MessagesResult {
-    Success(MessagesResponse),
-    UserNotInGroup,
-    ThreadNotFound,
-    UserSuspended,
-    UserLapsed,
-}
-
-#[allow(clippy::large_enum_variant)]
-pub enum SendMessageResult {
-    Success(SendMessageSuccess),
-    ThreadMessageNotFound,
-    NotAuthorized,
-    UserNotInGroup,
-    UserSuspended,
-    UserLapsed,
-    RulesNotAccepted,
-    MessageAlreadyExists,
-    InvalidRequest(String),
-}
-
 pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
     pub unfinalised_bot_message: bool,
 }
 
-pub enum AddRemoveReactionResult {
-    Success(UserId),
-    NoChange,
-    InvalidReaction,
-    MessageNotFound,
-    UserNotInGroup,
-    NotAuthorized,
-    UserSuspended,
-    UserLapsed,
-}
-
-impl From<chat_events::AddRemoveReactionResult> for AddRemoveReactionResult {
-    fn from(value: chat_events::AddRemoveReactionResult) -> Self {
-        match value {
-            chat_events::AddRemoveReactionResult::Success(sender) => AddRemoveReactionResult::Success(sender),
-            chat_events::AddRemoveReactionResult::NoChange => AddRemoveReactionResult::NoChange,
-            chat_events::AddRemoveReactionResult::MessageNotFound => AddRemoveReactionResult::MessageNotFound,
-        }
-    }
-}
-
-pub enum TipMessageResult {
-    Success,
-    MessageNotFound,
-    RecipientMismatch,
-    CannotTipSelf,
-    NotAuthorized,
-    UserNotInGroup,
-    UserSuspended,
-    UserLapsed,
-}
-
-impl From<chat_events::TipMessageResult> for TipMessageResult {
-    fn from(value: chat_events::TipMessageResult) -> Self {
-        match value {
-            chat_events::TipMessageResult::Success => TipMessageResult::Success,
-            chat_events::TipMessageResult::MessageNotFound => TipMessageResult::MessageNotFound,
-            chat_events::TipMessageResult::RecipientMismatch => TipMessageResult::RecipientMismatch,
-            chat_events::TipMessageResult::CannotTipSelf => TipMessageResult::CannotTipSelf,
-        }
-    }
-}
-
-pub enum DeleteMessagesResult {
-    Success(Vec<(MessageId, DeleteMessageResult)>),
-    MessageNotFound,
-    UserNotInGroup,
-    UserSuspended,
-    UserLapsed,
-}
-
-pub enum UndeleteMessagesResult {
-    Success(Vec<Message>),
-    MessageNotFound,
-    UserNotInGroup,
-    UserSuspended,
-    UserLapsed,
-}
-
-pub enum PinUnpinMessageResult {
-    Success(PushEventResult),
-    NoChange,
-    NotAuthorized,
-    UserNotInGroup,
-    MessageNotFound,
-    UserSuspended,
-    UserLapsed,
-}
-
-pub enum CanLeaveResult {
-    Yes,
-    UserSuspended,
-    LastOwnerCannotLeave,
-    UserNotInGroup,
-}
-
-pub enum LeaveResult {
-    Success(GroupMemberInternal),
-    UserSuspended,
-    LastOwnerCannotLeave,
-    UserNotInGroup,
-}
-
-pub enum RemoveMemberResult {
-    Success,
-    UserSuspended,
-    UserLapsed,
-    UserNotInGroup,
-    TargetUserNotInGroup,
-    NotAuthorized,
-    CannotRemoveSelf,
-}
-
-pub enum UpdateResult {
-    Success(Box<UpdateSuccessResult>),
-    UserSuspended,
-    UserLapsed,
-    UserNotInGroup,
-    NotAuthorized,
-    NameTooShort(FieldTooShortResult),
-    NameTooLong(FieldTooLongResult),
-    NameReserved,
-    DescriptionTooLong(FieldTooLongResult),
-    RulesTooShort(FieldTooShortResult),
-    RulesTooLong(FieldTooLongResult),
-    AvatarTooBig(FieldTooLongResult),
-}
-
 pub struct UpdateSuccessResult {
     pub newly_public: bool,
     pub gate_config_update: OptionUpdate<AccessGateConfigInternal>,
     pub rules_version: Option<Version>,
-}
-
-enum EventsReaderResult<'r> {
-    Success(ChatEventsListReader<'r>),
-    UserNotInGroup,
-    ThreadNotFound,
-    UserSuspended,
-    UserLapsed,
 }
 
 pub enum MakePrivateResult {
@@ -2256,44 +1887,9 @@ pub enum SearchResults {
     UserNotInGroup,
 }
 
-pub enum InvitedUsersResult {
-    Success(InvitedUsersSuccess),
-    UserNotInGroup,
-    TooManyInvites(u32),
-    UserSuspended,
-    UserLapsed,
-    NotAuthorized,
-}
-
 pub struct InvitedUsersSuccess {
     pub invited_users: Vec<UserId>,
     pub group_name: String,
-}
-
-pub enum CancelInvitesResult {
-    Success,
-    UserNotInGroup,
-    UserSuspended,
-    NotAuthorized,
-    UserLapsed,
-}
-
-pub enum FollowThreadResult {
-    Success,
-    AlreadyFollowing,
-    ThreadNotFound,
-    UserNotInGroup,
-    UserSuspended,
-    UserLapsed,
-}
-
-pub enum UnfollowThreadResult {
-    Success,
-    NotFollowing,
-    ThreadNotFound,
-    UserNotInGroup,
-    UserSuspended,
-    UserLapsed,
 }
 
 #[derive(Default)]
@@ -2390,25 +1986,9 @@ fn is_everyone_mentioned(content: &MessageContentInternal) -> bool {
         .is_some_and(|text| text.contains("@everyone") && EVERYONE_REGEX.is_match(text))
 }
 
-enum PrepareSendMessageResult {
-    Success(PrepareSendMessageSuccess),
-    UserLapsed,
-    UserSuspended,
-    UserNotInGroup,
-    RulesNotAccepted,
-    NotAuthorized,
-}
-
 struct PrepareSendMessageSuccess {
     min_visible_event_index: EventIndex,
     everyone_mentioned: bool,
-}
-
-pub enum MinVisibleEventIndexResult {
-    Success(EventIndex),
-    UserLapsed,
-    UserSuspended,
-    UserNotInGroup,
 }
 
 #[derive(Serialize, Deserialize, Clone)]

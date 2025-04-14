@@ -1,8 +1,7 @@
 <script lang="ts">
+    import { ui, type ResourceKey } from "openchat-client";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import { iconSize } from "../../stores/iconSize";
     import Translatable from "../Translatable.svelte";
-    import type { ResourceKey } from "openchat-client";
 
     interface Props {
         resourceKey: ResourceKey;
@@ -26,7 +25,7 @@
             onDelete();
         }}
         class="icon">
-        <DeleteOutline viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--button-txt)"} />
+        <DeleteOutline viewBox={"0 -3 24 24"} size={ui.iconSize} color={"var(--button-txt)"} />
     </div>
 </div>
 

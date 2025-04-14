@@ -14,8 +14,6 @@ import type {
     RegistryUpdatesResponse as TRegistryUpdatesResponse,
 } from "../../typebox";
 
-const CKBTC_TO_BTC_OVERRIDE_ENABLED = false;
-
 export function updatesResponse(
     value: TRegistryUpdatesResponse,
     blobUrlPattern: string,
@@ -34,6 +32,7 @@ export function updatesResponse(
                 mapOptional(value.Success.token_details, (tokens) =>
                     tokens.map((t) => tokenDetails(t, blobUrlPattern, registryCanisterId)),
                 ) ?? [],
+            tokensUninstalled: value.Success.tokens_uninstalled?.map(principalBytesToString) ?? [],
             nervousSystemSummary: value.Success.nervous_system_details.map(nervousSystemSummary),
             swapProviders: mapOptional(value.Success.swap_providers, (r) => r.map(swapProvider)),
             messageFiltersAdded: value.Success.message_filters_added,
@@ -89,7 +88,7 @@ function tokenDetails(
         lastUpdated: value.last_updated,
     };
 
-    if (CKBTC_TO_BTC_OVERRIDE_ENABLED && tokenDetails.symbol === CKBTC_SYMBOL) {
+    if (tokenDetails.symbol === CKBTC_SYMBOL) {
         // Override ckBTC to BTC
         tokenDetails.name = "Bitcoin";
         tokenDetails.symbol = BTC_SYMBOL;

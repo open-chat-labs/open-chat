@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "اوتوماتيكي",
         "autoInfo": "قم بتنظيم محفظتك تلقائيًا. سيتم عرض أي رمز به رصيد رمزي غير صفري أو بقيمة دولارية أكبر من الحد الأدنى لقيمة الدولار المدخلة أدناه",
+        "btcNetworkFee": "رسوم شبكة البيتكوين: ~{amount} BTC",
         "comingSoon": "(قريباً)",
         "configureWallet": "قم بتكوين محفظتك",
         "configureWalletFailure": "نأسف لأننا لم نتمكن من حفظ تكوين محفظتك",
@@ -591,6 +592,7 @@
         "manual": "يدوي",
         "manualInfo": "قم بتنظيم محفظتك يدويًا من خلال تحديد الرموز التي تريد رؤيتها بالضبط",
         "minDollarPlaceholder": "الحد الأدنى لرصيد الدولار",
+        "network": "شبكة:",
         "receive": "يستلم",
         "receiveToken": "استقبل {symbol}",
         "remove": "إزالة من المحفظة",
@@ -1354,7 +1356,9 @@
         "onlyUniquePerson": "البشر الفريدون فقط",
         "prizeFinished": "لقد انتهت رسالة الجائزة الخاصة بك الآن",
         "randomDistribution": "التوزيع العشوائي",
-        "restrictedMessage": "للمطالبة بهذه الجائزة يجب أن يكون لديك ما يلي",
+        "requiresCaptcha": "يتطلب CAPTCHA",
+        "restrictedMessage": "هذه الجائزة لها القيود التالية",
+        "restrictions": "قيود المطالبة",
         "standardDiamond": "معيار",
         "streak": "أثَر",
         "streakFull": "سلسلة من {n} يومًا أو أكثر",
@@ -1604,7 +1608,7 @@
     "roleChanged": "قام {changedBy} بتغيير دور {changed} إلى {newRole}",
     "rotationChallenge": {
         "info": "قم بتدوير الصورة على اليسار حتى تتطابق مع زاوية الصورة على اليمين",
-        "infoMobile": "قم بتدوير الصورة العلوية حتى تتطابق مع زاوية الصورة السفلية",
+        "infoMobile": "قم بتدوير الصورة السفلية حتى تتطابق مع زاوية الصورة العلوية",
         "title": "موازنة الروبوتات"
     },
     "rules": {
@@ -1794,6 +1798,7 @@
         "max": "الأعلى",
         "message": "رسالة",
         "messagePlaceholder": "تضمين رسالة اختيارية",
+        "min": "الحد الأدنى: {amount}",
         "pendingSent": "{sender} يرسل {amount} {token} إلى {receiver}",
         "pendingSentByYou": "أنت ترسل {amount} {token} إلى {receiver}",
         "receiver": "متلقي",

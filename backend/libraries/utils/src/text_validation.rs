@@ -1,3 +1,4 @@
+use oc_error_codes::{OCError, OCErrorCode};
 use types::{FieldTooLongResult, FieldTooShortResult, GroupSubtype};
 
 const MIN_USERNAME_LENGTH: u32 = 5;
@@ -26,6 +27,16 @@ pub enum UsernameValidationError {
     TooLong(FieldTooLongResult),
     TooShort(FieldTooShortResult),
     Invalid,
+}
+
+impl From<UsernameValidationError> for OCError {
+    fn from(value: UsernameValidationError) -> Self {
+        match value {
+            UsernameValidationError::TooLong(f) => OCErrorCode::UsernameTooLong.with_json(&f),
+            UsernameValidationError::TooShort(f) => OCErrorCode::UsernameTooShort.with_json(&f),
+            UsernameValidationError::Invalid => OCErrorCode::InvalidUsername.into(),
+        }
+    }
 }
 
 pub fn validate_display_name(display_name: &str) -> Result<(), UsernameValidationError> {
@@ -166,9 +177,28 @@ pub enum NameValidationError {
     Reserved,
 }
 
+impl From<NameValidationError> for OCError {
+    fn from(value: NameValidationError) -> Self {
+        match value {
+            NameValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
+            NameValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
+            NameValidationError::Reserved => OCErrorCode::NameReserved.into(),
+        }
+    }
+}
+
 pub enum RulesValidationError {
     TooShort(FieldTooShortResult),
     TooLong(FieldTooLongResult),
+}
+
+impl From<RulesValidationError> for OCError {
+    fn from(value: RulesValidationError) -> Self {
+        match value {
+            RulesValidationError::TooShort(s) => OCErrorCode::RulesTooShort.with_json(&s),
+            RulesValidationError::TooLong(l) => OCErrorCode::RulesTooLong.with_json(&l),
+        }
+    }
 }
 
 pub enum StringLengthValidationError {

@@ -10,13 +10,13 @@
         | "one hundred"
         | "three six five";
 
-    export let days: number = 0;
-    export let showTooltip = true;
-    export let disabled = false;
+    interface Props {
+        days?: number;
+        showTooltip?: boolean;
+        disabled?: boolean;
+    }
 
-    $: streak = streakFromDays(days);
-    $: show = streak !== "none";
-    $: num = streakNumber(streak);
+    let { days = 0, showTooltip = true, disabled = false }: Props = $props();
 
     function streakFromDays(days: number): Streak {
         return days < 3
@@ -52,6 +52,9 @@
                 return 365;
         }
     }
+    let streak = $derived(streakFromDays(days));
+    let show = $derived(streak !== "none");
+    let num = $derived(streakNumber(streak));
 </script>
 
 {#if show}

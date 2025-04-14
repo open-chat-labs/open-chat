@@ -55,8 +55,8 @@ fn get_next(state: &mut RuntimeState) -> Option<(CanisterId, SwapStatusChange)> 
 async fn notify_swap_status(canister_id: CanisterId, notification: SwapStatusChange) {
     let swap_id = notification.swap_id;
 
-    if let Err((code, msg)) = c2c_notify_p2p_swap_status_change(canister_id, &notification).await {
-        if should_retry_failed_c2c_call(code, &msg) {
+    if let Err(error) = c2c_notify_p2p_swap_status_change(canister_id, &notification).await {
+        if should_retry_failed_c2c_call(error.reject_code(), error.message()) {
             mutate_state(|state| {
                 state.data.notify_status_change_queue.push(swap_id);
                 start_job_if_required(state);
@@ -65,11 +65,10 @@ async fn notify_swap_status(canister_id: CanisterId, notification: SwapStatusCha
     }
 }
 
-canister_client::generate_c2c_call!(c2c_notify_p2p_swap_status_change);
+canister_client::generate_c2c_call_ignore_response!(c2c_notify_p2p_swap_status_change);
 
 mod c2c_notify_p2p_swap_status_change {
     use super::*;
 
     pub type Args = SwapStatusChange;
-    pub type Response = ();
 }

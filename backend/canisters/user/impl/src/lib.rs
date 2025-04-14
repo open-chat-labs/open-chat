@@ -9,7 +9,7 @@ use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
-use crate::timer_job_types::{ClaimChitInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
@@ -26,7 +26,8 @@ use model::message_activity_events::MessageActivityEvents;
 use model::referrals::Referrals;
 use model::streak::Streak;
 use msgpack::serialize_then_unwrap;
-use notifications_canister::c2c_push_notification;
+use notifications_canister_c2c_client::{NotificationPusherState, NotificationsBatch};
+use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -120,17 +121,17 @@ impl RuntimeState {
     }
 
     pub fn push_notification(&mut self, sender: Option<UserId>, recipient: UserId, notification: Notification) {
-        let args = c2c_push_notification::Args {
-            sender,
-            recipients: vec![recipient],
-            authorizer: Some(self.data.local_user_index_canister_id),
-            notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-        };
-        ic_cdk::futures::spawn(push_notification_inner(self.data.notifications_canister_id, args));
-
-        async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
-            let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
-        }
+        self.data.notifications_queue.push(IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: notifications_canister::c2c_push_notifications::Notification::User(
+                notifications_canister::c2c_push_notifications::UserNotification {
+                    sender,
+                    recipients: vec![recipient],
+                    notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
+                },
+            ),
+        })
     }
 
     pub fn run_event_expiry_job(&mut self) {
@@ -207,13 +208,13 @@ impl RuntimeState {
     }
 
     pub fn set_up_streak_insurance_timer_job(&mut self) {
-        if self.data.streak.has_insurance() {
+        if self.data.streak.days_insured() > 0 {
             self.data
                 .timer_jobs
-                .cancel_jobs(|j| matches!(j, TimerJob::ClaimChitInsurance(_)));
+                .cancel_jobs(|j| matches!(j, TimerJob::ClaimOrResetStreakInsurance(_)));
 
             self.data.timer_jobs.enqueue_job(
-                TimerJob::ClaimChitInsurance(ClaimChitInsuranceJob),
+                TimerJob::ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
                 self.data.streak.ends(),
                 self.env.now(),
             );
@@ -421,6 +422,18 @@ struct Data {
     pub idempotency_checker: IdempotencyChecker,
     pub bots: InstalledBots,
     bot_api_keys: BotApiKeys,
+    #[serde(default = "default_notifications_queue")]
+    notifications_queue: BatchedTimerJobQueue<NotificationsBatch>,
+}
+
+fn default_notifications_queue() -> BatchedTimerJobQueue<NotificationsBatch> {
+    BatchedTimerJobQueue::new(
+        NotificationPusherState {
+            notifications_canister: CanisterId::anonymous(),
+            authorizer: CanisterId::anonymous(),
+        },
+        false,
+    )
 }
 
 impl Data {
@@ -492,11 +505,26 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             bots: InstalledBots::default(),
             bot_api_keys: BotApiKeys::default(),
+            notifications_queue: BatchedTimerJobQueue::new(
+                NotificationPusherState {
+                    notifications_canister: notifications_canister_id,
+                    authorizer: local_user_index_canister_id,
+                },
+                false,
+            ),
         }
     }
 
     pub fn is_diamond_member(&self, now: TimestampMillis) -> bool {
         self.diamond_membership_expires_at.is_some_and(|ts| now < ts)
+    }
+
+    pub fn verify_not_suspended(&self) -> Result<(), OCErrorCode> {
+        if self.suspended.value {
+            Err(OCErrorCode::InitiatorSuspended)
+        } else {
+            Ok(())
+        }
     }
 
     pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {

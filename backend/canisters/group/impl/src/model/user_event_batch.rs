@@ -22,8 +22,8 @@ impl TimerJobItem for UserEventBatch {
 
         match response {
             Ok(user_canister::c2c_group_canister::Response::Success) => Ok(()),
-            Err((code, msg)) => {
-                let retry = should_retry_failed_c2c_call(code, &msg);
+            Err(error) => {
+                let retry = should_retry_failed_c2c_call(error.reject_code(), error.message());
                 Err(retry)
             }
         }

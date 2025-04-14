@@ -57,3 +57,7 @@ where
         deserialize_from_slice::<T::FallbackType>(bytes).unwrap().into()
     }
 }
+
+pub fn serialize_empty() -> Vec<u8> {
+    Vec::new()
+}

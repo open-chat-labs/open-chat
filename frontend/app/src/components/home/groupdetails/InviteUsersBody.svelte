@@ -1,51 +1,63 @@
 <script lang="ts">
-    import Loading from "../../Loading.svelte";
-    import Button from "../../Button.svelte";
-    import { _ } from "svelte-i18n";
-    import SelectUsers from "../SelectUsers.svelte";
-    import type {
-        ChannelIdentifier,
-        CommunitySummary,
-        Level,
-        MultiUserChat,
-        OpenChat,
-        UserOrUserGroup,
-        UserSummary,
+    import {
+        ui,
+        type ChannelIdentifier,
+        type CommunitySummary,
+        type Level,
+        type MultiUserChat,
+        type OpenChat,
+        type UserOrUserGroup,
+        type UserSummary,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
-    import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
+    import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
     import { toastStore } from "../../../stores/toast";
-    import { popRightPanelHistory } from "../../../stores/rightPanel";
+    import Button from "../../Button.svelte";
+    import Loading from "../../Loading.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
+    import SelectUsers from "../SelectUsers.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let busy = false;
-    export let userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
-    export let memberLookup:
-        | ((searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>)
-        | undefined = undefined;
-    export let level: Level;
-    export let container: MultiUserChat | CommunitySummary;
-    export let isCommunityPublic: boolean;
+    interface Props {
+        busy?: boolean;
+        userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
+        memberLookup?:
+            | ((searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>)
+            | undefined;
+        level: Level;
+        container: MultiUserChat | CommunitySummary;
+        isCommunityPublic: boolean;
+        onInviteUsers: (users: UserSummary[]) => void;
+    }
+
+    let {
+        busy = $bindable(false),
+        userLookup,
+        memberLookup = undefined,
+        level,
+        container,
+        isCommunityPublic,
+        onInviteUsers,
+    }: Props = $props();
 
     type Tab = "invite_users" | "add_members" | "share";
 
-    $: canInvite = client.canInviteUsers(container.id);
-    $: canAdd =
-        !isCommunityPublic && container.kind === "channel" && client.canAddMembers(container.id);
+    let canInvite = $derived(client.canInviteUsers(container.id));
+    let canAdd = $derived(
+        !isCommunityPublic && container.kind === "channel" && client.canAddMembers(container.id),
+    );
 
-    let usersToAddOrInvite: UserSummary[] = [];
-    let selectedTab: Tab = "share";
+    let usersToAddOrInvite: UserSummary[] = $state([]);
+    let selectedTab: Tab = $state("share");
 
     onMount(() => {
         selectedTab = canAdd ? "add_members" : canInvite ? "invite_users" : "share";
     });
 
     function inviteUsers() {
-        dispatch("inviteUsers", usersToAddOrInvite);
+        onInviteUsers(usersToAddOrInvite);
     }
 
     async function addMembers() {
@@ -58,11 +70,11 @@
             .then((resp) => {
                 switch (resp.kind) {
                     case "success": {
-                        popRightPanelHistory();
+                        ui.popRightPanelHistory();
                         break;
                     }
                     case "add_to_channel_partial_success": {
-                        popRightPanelHistory();
+                        ui.popRightPanelHistory();
                         toastStore.showSuccessToast(i18nKey("group.addMembersPartialSuccess"));
                         break;
                     }
@@ -100,32 +112,32 @@
 {#if canInvite || canAdd}
     <div class="tabs">
         {#if canAdd}
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div
                 tabindex="0"
                 role="button"
-                on:click={() => selectTab("add_members")}
+                onclick={() => selectTab("add_members")}
                 class:selected={selectedTab === "add_members"}
                 class="tab">
                 <Translatable resourceKey={i18nKey("group.addMembersTab")} />
             </div>
         {/if}
         {#if canInvite}
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div
                 tabindex="0"
                 role="button"
-                on:click={() => selectTab("invite_users")}
+                onclick={() => selectTab("invite_users")}
                 class:selected={selectedTab === "invite_users"}
                 class="tab">
                 <Translatable resourceKey={i18nKey("group.inviteUsersTab")} />
             </div>
         {/if}
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div
             tabindex="0"
             role="button"
-            on:click={() => selectTab("share")}
+            onclick={() => selectTab("share")}
             class:selected={selectedTab === "share"}
             class="tab">
             <Translatable resourceKey={i18nKey("group.shareTab")} />

@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "خودکار",
         "autoInfo": "کیف پول خود را به صورت خودکار سازماندهی کنید. هر توکنی با موجودی توکن غیر صفر یا با ارزش دلاری بیشتر از حداقل ارزش دلاری وارد شده در زیر نمایش داده می شود.",
+        "btcNetworkFee": "کارمزد شبکه بیت کوین: ~{amount} BTC",
         "comingSoon": "(به زودی)",
         "configureWallet": "کیف پول خود را پیکربندی کنید",
         "configureWalletFailure": "متأسفیم که نتوانستیم پیکربندی کیف پول شما را ذخیره کنیم",
@@ -591,6 +592,7 @@
         "manual": "دستی",
         "manualInfo": "کیف پول خود را به صورت دستی با انتخاب نشانه هایی که می خواهید ببینید، سازماندهی کنید",
         "minDollarPlaceholder": "حداقل موجودی دلار",
+        "network": "شبکه:",
         "receive": "دريافت كردن",
         "receiveToken": "دریافت {symbol}",
         "remove": "از کیف پول حذف کنید",
@@ -1354,7 +1356,9 @@
         "onlyUniquePerson": "فقط انسان های بی نظیر",
         "prizeFinished": "پیام جایزه شما اکنون به پایان رسیده است",
         "randomDistribution": "توزیع تصادفی",
-        "restrictedMessage": "برای دریافت این جایزه باید موارد زیر را داشته باشید",
+        "requiresCaptcha": "به CAPTCHA نیاز دارد",
+        "restrictedMessage": "این جایزه دارای محدودیت های زیر است",
+        "restrictions": "محدودیت های ادعایی",
         "standardDiamond": "استاندارد",
         "streak": "رگه",
         "streakFull": "رگه‌ای از {n} روز یا بیشتر",
@@ -1604,7 +1608,7 @@
     "roleChanged": "{changedBy} نقش {changed} را به {newRole} تغییر داد",
     "rotationChallenge": {
         "info": "تصویر را در سمت چپ بچرخانید تا با زاویه تصویر سمت راست مطابقت داشته باشد",
-        "infoMobile": "تصویر بالا را تا زمانی بچرخانید که با زاویه تصویر پایین مطابقت داشته باشد",
+        "infoMobile": "تصویر پایین را تا زمانی بچرخانید که با زاویه تصویر بالا مطابقت داشته باشد",
         "title": "ربات ها را متعادل کنید"
     },
     "rules": {
@@ -1794,6 +1798,7 @@
         "max": "حداکثر",
         "message": "پیام",
         "messagePlaceholder": "شامل یک پیام اختیاری",
+        "min": "حداقل: {amount}",
         "pendingSent": "{sender} در حال ارسال {amount} {token} به {receiver} است",
         "pendingSentByYou": "شما در حال ارسال {amount} {token} به {receiver} هستید",
         "receiver": "گیرنده",

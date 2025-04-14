@@ -2,8 +2,9 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_delete_community::{Response::*, *};
-use ic_cdk::call::RejectCode;
-use types::{CanisterId, CommunityId, DeletedCommunityInfo, UserId};
+use tracing::info;
+use types::{C2CError, CanisterId, CommunityId, DeletedCommunityInfo, UserId};
+use utils::cycles::accept_cycles;
 
 #[update(msgpack = true)]
 #[trace]
@@ -42,6 +43,11 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     let community_id = CommunityId::from(caller);
 
     if let Some(local_group_index_canister_id) = state.data.local_index_map.get_index_canister_for_community(&community_id) {
+        let cycles = accept_cycles();
+        if cycles > 0 {
+            info!(cycles, %community_id, "Community refunded cycles when being deleted");
+        }
+
         Ok(PrepareResult {
             local_group_index_canister_id,
             community_id,
@@ -51,13 +57,13 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 }
 
-pub(crate) async fn delete_community(
+async fn delete_community(
     community_id: CommunityId,
     local_group_index_canister_id: CanisterId,
     deleted_by: UserId,
     community_name: String,
     members: Vec<UserId>,
-) -> Result<local_group_index_canister::c2c_delete_community::Response, (RejectCode, String)> {
+) -> Result<local_group_index_canister::c2c_delete_community::Response, C2CError> {
     let response = local_group_index_canister_c2c_client::c2c_delete_community(
         local_group_index_canister_id,
         &local_group_index_canister::c2c_delete_community::Args { community_id },

@@ -1,12 +1,12 @@
 <script lang="ts">
+    import { i18nKey } from "@src/i18n/i18n";
+    import { ui } from "openchat-client";
     import { onMount } from "svelte";
-    import Overlay from "./Overlay.svelte";
-    import ModalContent from "./ModalContent.svelte";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
+    import ModalContent from "./ModalContent.svelte";
+    import Overlay from "./Overlay.svelte";
     import Translatable from "./Translatable.svelte";
-    import { i18nKey } from "@src/i18n/i18n";
-    import { mobileWidth } from "@src/stores/screenDimensions";
 
     const TOLERANCE = 0.1; // tolerance in radians
 
@@ -122,7 +122,7 @@
             <div class="info">
                 <Translatable
                     resourceKey={i18nKey(
-                        $mobileWidth ? "rotationChallenge.infoMobile" : "rotationChallenge.info",
+                        ui.mobileWidth ? "rotationChallenge.infoMobile" : "rotationChallenge.info",
                     )}></Translatable>
             </div>
         {/snippet}
@@ -145,7 +145,7 @@
 
         @include mobile() {
             gap: $sp5;
-            flex-direction: column;
+            flex-direction: column-reverse;
         }
     }
 

@@ -1,83 +1,87 @@
-<script lang="ts">
-    import { onMount, tick } from "svelte";
+<script lang="ts" generics="T">
+    import { trackedEffect } from "@src/utils/effects.svelte";
+    import { onMount, tick, untrack, type Snippet } from "svelte";
 
-    type KeyFn = (item: any) => string;
+    type KeyFn = (item: T) => string;
 
-    // props
-    export let keyFn: KeyFn | undefined = undefined;
-    export let items: any[];
-    export let height = "100%";
-    export let itemHeight: number | undefined = undefined;
-
-    // read-only, but visible to consumers via bind:start
-    export let start = 0;
-    export let end = 0;
+    let {
+        keyFn = undefined,
+        items,
+        height = "100%",
+        itemHeight = undefined,
+        start = $bindable(0),
+        end = $bindable(0),
+        children,
+    }: {
+        keyFn?: KeyFn | undefined;
+        items: T[];
+        height?: string;
+        itemHeight?: number | undefined;
+        start?: number;
+        end?: number;
+        children?: Snippet<[T, number]>;
+    } = $props();
 
     // local state
     let height_map: number[] = [];
     let rows: HTMLCollectionOf<Element>;
-    let viewport: HTMLElement;
-    let contents: HTMLElement;
-    let viewport_height = 0;
-    let visible: { index: number; data: any; key: string | undefined }[];
-    let mounted: boolean;
+    let viewport: HTMLElement | undefined = $state();
+    let contents: HTMLElement | undefined = $state();
+    let viewport_height = $state(0);
+    let visible: { index: number; data: T; key: string | undefined }[] = $derived(
+        items.slice(start, end).map((data, i) => {
+            return { index: i + start, data, key: keyFn ? keyFn(data) : undefined };
+        }),
+    );
+    let mounted: boolean = $state(false);
 
-    let top = 0;
-    let bottom = 0;
+    let top = $state(0);
+    let bottom = $state(0);
     let average_height: number;
-
-    $: visible = items.slice(start, end).map((data, i) => {
-        return { index: i + start, data, key: keyFn ? keyFn(data) : undefined };
-    });
 
     export function reset() {
         start = 0;
         end = 0;
-        viewport_height = viewport.offsetHeight;
-        viewport.scrollTo(0, 0);
+        viewport_height = viewport?.offsetHeight ?? 0;
+        viewport?.scrollTo(0, 0);
         refresh(items, viewport_height, itemHeight);
     }
 
-    // whenever `items` changes, invalidate the current heightmap
-    $: if (mounted) refresh(items, viewport_height, itemHeight);
+    async function refresh(items: T[], viewport_height: number, itemHeight: number | undefined) {
+        untrack(async () => {
+            const scrollTop = viewport?.scrollTop ?? 0;
 
-    async function refresh(
-        items: unknown[],
-        viewport_height: number,
-        itemHeight: number | undefined
-    ) {
-        const { scrollTop } = viewport;
+            await tick(); // wait until the DOM is up to date
 
-        await tick(); // wait until the DOM is up to date
+            let content_height = top - scrollTop;
+            let i = start;
 
-        let content_height = top - scrollTop;
-        let i = start;
+            while (content_height < viewport_height && i < items.length) {
+                let row = rows[i - start] as HTMLElement;
 
-        while (content_height < viewport_height && i < items.length) {
-            let row = rows[i - start] as HTMLElement;
+                if (!row) {
+                    end = i + 1;
+                    await tick(); // render the newly visible row
+                    row = rows[i - start] as HTMLElement;
+                }
 
-            if (!row) {
-                end = i + 1;
-                await tick(); // render the newly visible row
-                row = rows[i - start] as HTMLElement;
+                const row_height = (height_map[i] = itemHeight || row.offsetHeight);
+                content_height += row_height;
+                i += 1;
             }
 
-            const row_height = (height_map[i] = itemHeight || row.offsetHeight);
-            content_height += row_height;
-            i += 1;
-        }
+            end = i;
 
-        end = i;
+            const remaining = items.length - end;
+            average_height = (top + content_height) / end;
 
-        const remaining = items.length - end;
-        average_height = (top + content_height) / end;
-
-        bottom = remaining * average_height;
-        height_map.length = items.length;
+            bottom = remaining * average_height;
+            height_map.length = items.length;
+        });
     }
 
     async function handle_scroll() {
-        const { scrollTop } = viewport;
+        const scrollTop = viewport?.scrollTop ?? 0;
 
         const old_start = start;
 
@@ -131,7 +135,7 @@
             }
 
             const d = actual_height - expected_height;
-            viewport.scrollTo(0, scrollTop + d);
+            viewport?.scrollTo(0, scrollTop + d);
         }
 
         // TODO if we overestimated the space these
@@ -141,24 +145,29 @@
 
     // trigger initial refresh
     onMount(async () => {
-        rows = contents.getElementsByTagName("svelte-virtual-list-row");
+        rows = contents?.getElementsByTagName("svelte-virtual-list-row") ?? new HTMLCollection();
         mounted = true;
         await tick();
-        viewport_height = viewport.offsetHeight;
+        viewport_height = viewport?.offsetHeight ?? 0;
+    });
+
+    // whenever `items` changes, invalidate the current heightmap
+    trackedEffect("virtual-list", () => {
+        if (mounted) refresh(items, viewport_height, itemHeight);
     });
 </script>
 
 <svelte-virtual-list-viewport
     bind:this={viewport}
     bind:offsetHeight={viewport_height}
-    on:scroll={handle_scroll}
+    onscroll={handle_scroll}
     style="height: {height};">
     <svelte-virtual-list-contents
         bind:this={contents}
         style="padding-top: {top}px; padding-bottom: {bottom}px;">
         {#each visible as row (row.key ?? row.index)}
             <svelte-virtual-list-row>
-                <slot itemIndex={row.index} item={row.data}>Missing template</slot>
+                {#if children}{@render children(row.data, row.index)}{:else}Missing template{/if}
             </svelte-virtual-list-row>
         {/each}
     </svelte-virtual-list-contents>

@@ -4,6 +4,7 @@ import {
     type ChatIdentifier,
     routeForChatIdentifier,
     notificationStatus,
+    publish,
 } from "openchat-client";
 import page from "page";
 
@@ -17,10 +18,7 @@ function toUint8Array(base64String: string): Uint8Array {
 export const PUBLIC_VAPID_KEY =
     "BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=";
 
-export async function subscribeToNotifications(
-    client: OpenChat,
-    onNotification: (notification: Notification) => void,
-): Promise<boolean> {
+export async function initialiseNotifications(client: OpenChat): Promise<boolean> {
     if (!notificationsSupported) {
         console.debug("PUSH: notifications not supported");
         return false;
@@ -39,7 +37,7 @@ export async function subscribeToNotifications(
     navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data.type === "NOTIFICATION_RECEIVED") {
             console.debug("PUSH: received push notification from the service worker", event.data);
-            onNotification(event.data.data as Notification);
+            publish("notification", event.data.data as Notification);
         } else if (event.data.type === "NOTIFICATION_CLICKED") {
             console.debug(
                 "PUSH: notification clicked existing client routing to: ",

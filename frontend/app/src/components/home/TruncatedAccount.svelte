@@ -1,14 +1,20 @@
 <script lang="ts">
+    import { ui } from "openchat-client";
+    import type { Snippet } from "svelte";
     import { _ } from "svelte-i18n";
-    import { toastStore } from "../../stores/toast";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { copyToClipboard } from "../../utils/urls";
     import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
+    import { copyToClipboard } from "../../utils/urls";
 
-    export let account: string;
-    export let centered = false;
-    export let disableCopy = false
+    interface Props {
+        account: string;
+        centered?: boolean;
+        disableCopy?: boolean;
+        children?: Snippet;
+    }
+
+    let { account, centered = false, disableCopy = false, children }: Props = $props();
 
     function collapseAccount(account: string) {
         if (account.length > 23) {
@@ -33,13 +39,13 @@
 </script>
 
 <div class="wrapper" class:centered>
-    <slot />
+    {@render children?.()}
     <div class="principal">
         {collapseAccount(account)}
     </div>
     {#if !disableCopy}
-        <div class="copy" title={$_("copyToClipboard")} on:click={copy}>
-            <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
+        <div class="copy" title={$_("copyToClipboard")} onclick={copy}>
+            <ContentCopy size={ui.iconSize} color={"var(--icon-txt)"} />
         </div>
     {/if}
 </div>

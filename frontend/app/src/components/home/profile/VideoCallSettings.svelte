@@ -15,9 +15,9 @@
         new Ringtone("siren", "Siren"),
     ];
 
-    function togglePlay(ev: CustomEvent<Ringtone>) {
+    function onTogglePlay(ringtone: Ringtone) {
         ringtones.forEach((r) => {
-            if (r === ev.detail) {
+            if (r === ringtone) {
                 r.toggle();
             } else {
                 r.stop();
@@ -34,26 +34,26 @@
 <Toggle
     id={"video-camera"}
     small
-    on:change={() => videoCameraOn.toggle()}
+    onChange={() => videoCameraOn.toggle()}
     label={i18nKey("profile.videoCameraOn")}
     checked={$videoCameraOn} />
 
 <Toggle
     id={"video-mic"}
     small
-    on:change={() => videoMicOn.toggle()}
+    onChange={() => videoMicOn.toggle()}
     label={i18nKey("profile.videoMicOn")}
     checked={$videoMicOn} />
 
 <Toggle
     id={"video-speaker-view"}
     small
-    on:change={() => videoSpeakerView.toggle()}
+    onChange={() => videoSpeakerView.toggle()}
     label={i18nKey("profile.videoSpeakerView")}
     checked={$videoSpeakerView} />
 
 <Legend label={i18nKey("profile.ringtone")} />
 
 {#each ringtones as ringtone}
-    <VideoCallRingtone on:togglePlay={togglePlay} {ringtone} />
+    <VideoCallRingtone {onTogglePlay} {ringtone} />
 {/each}

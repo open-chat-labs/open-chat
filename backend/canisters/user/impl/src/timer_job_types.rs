@@ -24,7 +24,8 @@ pub enum TimerJob {
     SendMessageToGroup(Box<SendMessageToGroupJob>),
     SendMessageToChannel(Box<SendMessageToChannelJob>),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
-    ClaimChitInsurance(ClaimChitInsuranceJob),
+    #[serde(alias = "ClaimChitInsurance")]
+    ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -118,7 +119,7 @@ pub struct SendMessageToChannelJob {
 pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call_v2::Args);
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct ClaimChitInsuranceJob;
+pub struct ClaimOrResetStreakInsuranceJob;
 
 impl Job for TimerJob {
     fn execute(self) {
@@ -139,7 +140,7 @@ impl Job for TimerJob {
             TimerJob::SendMessageToGroup(job) => job.execute(),
             TimerJob::SendMessageToChannel(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
-            TimerJob::ClaimChitInsurance(job) => job.execute(),
+            TimerJob::ClaimOrResetStreakInsurance(job) => job.execute(),
         }
     }
 }
@@ -393,20 +394,22 @@ impl Job for SendMessageToChannelJob {
 
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
-        let response = mutate_state(|state| end_video_call_impl(self.0.clone(), state));
-        if !matches!(response, user_canister::end_video_call_v2::Response::Success) {
-            error!(?response, args = ?self.0, "Failed to mark video call ended");
+        if let Err(error) = mutate_state(|state| end_video_call_impl(self.0.clone(), state)) {
+            error!(?error, args = ?self.0, "Failed to mark video call ended");
         }
     }
 }
 
-impl Job for ClaimChitInsuranceJob {
+impl Job for ClaimOrResetStreakInsuranceJob {
     fn execute(self) {
         mutate_state(|state| {
             let now = state.env.now();
             if let Some(insurance_claim) = state.data.streak.claim_via_insurance(now) {
                 state.mark_streak_insurance_claim(insurance_claim);
                 state.notify_user_index_of_chit(now);
+                state.set_up_streak_insurance_timer_job();
+            } else if state.data.streak.days(now) == 0 {
+                state.data.streak.reset_streak_insurance(now);
             }
         });
     }

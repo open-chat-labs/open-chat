@@ -1,12 +1,18 @@
 <script lang="ts">
-    import type { Member } from "openchat-client";
+    import type { Member, MemberRole } from "openchat-client";
+    import type { Snippet } from "svelte";
 
-    export let userId: string | undefined;
-    export let communityMembers: Map<string, Member>;
-    export let chatMembers: Map<string, Member>;
+    interface Props {
+        userId: string | undefined;
+        communityMembers: Map<string, Member>;
+        chatMembers: Map<string, Member>;
+        children?: Snippet<[MemberRole, MemberRole]>;
+    }
 
-    $: communityRole = userId ? communityMembers.get(userId)?.role ?? "none" : "none";
-    $: chatRole = userId ? chatMembers.get(userId)?.role ?? "none" : "none";
+    let { userId, communityMembers, chatMembers, children }: Props = $props();
+
+    let communityRole = $derived(userId ? communityMembers.get(userId)?.role ?? "none" : "none");
+    let chatRole = $derived(userId ? chatMembers.get(userId)?.role ?? "none" : "none");
 </script>
 
-<slot {communityRole} {chatRole} />
+{@render children?.(communityRole, chatRole)}

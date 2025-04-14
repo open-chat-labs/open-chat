@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import type { AudioContent } from "openchat-client";
     import ContentCaption from "./ContentCaption.svelte";
@@ -7,44 +5,50 @@
     import Pause from "svelte-material-icons/Pause.svelte";
     import { setPlayingMedia } from "../../utils/media";
 
-    export let content: AudioContent;
-    export let edited: boolean;
-    export let blockLevelMarkdown: boolean = false;
-    export let me: boolean;
+    interface Props {
+        content: AudioContent;
+        edited: boolean;
+        blockLevelMarkdown?: boolean;
+        me: boolean;
+    }
 
-    $: inner = `var(--audio${me ? "-me" : ""}-inner)`;
-    $: note = `var(--audio${me ? "-me" : ""}-note)`;
+    let { content, edited, blockLevelMarkdown = false, me }: Props = $props();
 
-    let audioPlayer: HTMLAudioElement;
-    let playing: boolean = false;
-    let percPlayed: number = 0;
+    let inner = $derived(`var(--audio${me ? "-me" : ""}-inner)`);
+    let note = $derived(`var(--audio${me ? "-me" : ""}-note)`);
+
+    let audioPlayer: HTMLAudioElement | undefined = $state();
+    let playing: boolean = $state(false);
+    let percPlayed: number = $state(0);
     const circum = 471.24;
 
     function timeupdate() {
+        if (!audioPlayer) return;
         const fractionPlayed = Math.min(audioPlayer.currentTime / audioPlayer.duration, 1);
         percPlayed = fractionPlayed * 100;
     }
 
     function togglePlay() {
         if (playing) {
-            audioPlayer.pause();
+            audioPlayer?.pause();
         } else {
-            audioPlayer.play();
+            audioPlayer?.play();
         }
     }
 
     function onPlay() {
+        if (!audioPlayer) return;
         playing = true;
         setPlayingMedia(audioPlayer);
     }
 </script>
 
 <audio
-    on:timeupdate={timeupdate}
+    ontimeupdate={timeupdate}
     preload="metadata"
-    on:ended={() => (playing = false)}
-    on:play={onPlay}
-    on:pause={() => (playing = false)}
+    onended={() => (playing = false)}
+    onplay={onPlay}
+    onpause={() => (playing = false)}
     bind:this={audioPlayer}>
     <track kind="captions" />
     {#if content.blobUrl}
@@ -52,7 +56,7 @@
     {/if}
 </audio>
 
-<div class="circular" role="button" on:click={togglePlay}>
+<div class="circular" role="button" onclick={togglePlay}>
     <div class="circle">
         <div class="number">
             {#if playing}

@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "Typescript library for interacting with the OpenChat backend",
     "main": "lib/index.js",
+    "type": "module",
     "scripts": {
         "build": "npm run clean && tsc",
         "build:docker": "npm run build",
@@ -17,11 +18,11 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/agent": "^2.2.0",
-        "@dfinity/auth-client": "^2.2.0",
-        "@dfinity/candid": "^2.2.0",
-        "@dfinity/identity": "^2.2.0",
-        "@dfinity/principal": "^2.2.0",
+        "@dfinity/agent": "^2.4.1",
+        "@dfinity/auth-client": "^2.4.1",
+        "@dfinity/candid": "^2.4.1",
+        "@dfinity/identity": "^2.4.1",
+        "@dfinity/principal": "^2.4.1",
         "borc": "^3.0.0",
         "drange": "^2.0.1",
         "identicon.js": "^2.3.3",
@@ -32,6 +33,7 @@
         "usergeek-ic-js": "^1.0.6"
     },
     "devDependencies": {
+        "@sveltejs/vite-plugin-svelte": "^5.0.3",
         "@testing-library/jest-dom": "^6.0.0",
         "@types/identicon.js": "^2.3.1",
         "@types/jest": "^29.5.3",
@@ -42,7 +44,7 @@
         "eslint-plugin-prettier": "^5.0.0",
         "svelte": "^5.25.3",
         "typescript": "=5.4.2",
-        "vitest": "^2.1.9",
+        "vitest": "^3.1.1",
         "wait-on": "^7.0.1"
     }
 }

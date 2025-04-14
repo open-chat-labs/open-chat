@@ -6,6 +6,7 @@ use chat_events::ReservePrizeResult;
 use constants::MEMO_PRIZE_CLAIM;
 use group_canister::claim_prize::{Response::*, *};
 use ledger_utils::{create_pending_transaction, process_transaction};
+use oc_error_codes::OCErrorCode;
 use types::{CanisterId, CompletedCryptoTransaction, PendingCryptoTransaction, UserId};
 
 #[update(msgpack = true)]
@@ -120,12 +121,13 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         &mut state.data.event_store_client,
         now,
     ) {
-        chat_events::ClaimPrizeResult::Success => {
+        Ok(_) => {
             handle_activity_notification(state);
             None
         }
-        chat_events::ClaimPrizeResult::MessageNotFound => Some("MessageNotFound".to_string()),
-        chat_events::ClaimPrizeResult::ReservationNotFound => Some("ReservationNotFound".to_string()),
+        Err(e) if e.matches_code(OCErrorCode::MessageNotFound) => Some("MessageNotFound".to_string()),
+        Err(e) if e.matches_code(OCErrorCode::NoChange) => Some("ReservationNotFound".to_string()),
+        Err(e) => Some(format!("ReservationError: {e:?}")),
     }
 }
 
@@ -137,8 +139,9 @@ fn rollback(args: Args, user_id: UserId, amount: u128, ledger_error: bool, state
         .events
         .unreserve_prize(args.message_id, user_id, amount, ledger_error, now)
     {
-        chat_events::UnreservePrizeResult::Success => "prize reservation cancelled".to_string(),
-        chat_events::UnreservePrizeResult::MessageNotFound => "prize message not found".to_string(),
-        chat_events::UnreservePrizeResult::ReservationNotFound => "prize reservation not found".to_string(),
+        Ok(_) => "prize reservation cancelled".to_string(),
+        Err(e) if e.matches_code(OCErrorCode::MessageNotFound) => "prize message not found".to_string(),
+        Err(e) if e.matches_code(OCErrorCode::NoChange) => "prize reservation not found".to_string(),
+        Err(e) => format!("prize reservation error: {e:?}"),
     }
 }

@@ -1,29 +1,30 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import ReplyingTo from "./ReplyingTo.svelte";
-    import MessageEntry from "./MessageEntry.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import DraftMediaMessage from "./DraftMediaMessage.svelte";
-    import { toastStore } from "../../stores/toast";
-    import EmojiPicker from "./EmojiPicker.svelte";
-    import type {
-        ChatSummary,
-        EnhancedReplyContext,
-        EventWrapper,
-        Message,
-        MessageAction,
-        CreatedUser,
-        OpenChat,
-        MultiUserChat,
-        AttachmentContent,
-        MessageContext,
+    import {
+        type AttachmentContent,
+        type ChatSummary,
+        type CreatedUser,
+        type EnhancedReplyContext,
+        type EventWrapper,
+        type Message,
+        type MessageAction,
+        type MessageContext,
+        type MultiUserChat,
+        type OpenChat,
+        type User,
+        ui,
     } from "openchat-client";
     import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
     import HoverIcon from "../HoverIcon.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import DraftMediaMessage from "./DraftMediaMessage.svelte";
+    import EmojiPicker from "./EmojiPicker.svelte";
+    import MessageEntry from "./MessageEntry.svelte";
+    import ReplyingTo from "./ReplyingTo.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -42,6 +43,19 @@
         externalContent?: boolean;
         messageContext: MessageContext;
         onFileSelected: (content: AttachmentContent) => void;
+        onCancelReply: () => void;
+        onSetTextContent: (txt?: string) => void;
+        onStartTyping: () => void;
+        onStopTyping: () => void;
+        onCancelEdit: () => void;
+        onSendMessage: (args: [string | undefined, User[], boolean]) => void;
+        onClearAttachment: () => void;
+        onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
+        onCreatePrizeMessage?: () => void;
+        onCreateP2PSwapMessage: () => void;
+        onCreatePoll: () => void;
+        onAttachGif: (search: string) => void;
+        onMakeMeme: () => void;
     }
 
     let {
@@ -59,6 +73,19 @@
         externalContent = false,
         messageContext,
         onFileSelected,
+        onCancelReply,
+        onSetTextContent,
+        onCancelEdit,
+        onStartTyping,
+        onStopTyping,
+        onSendMessage,
+        onClearAttachment,
+        onTokenTransfer,
+        onCreatePrizeMessage,
+        onCreateP2PSwapMessage,
+        onCreatePoll,
+        onAttachGif,
+        onMakeMeme,
     }: Props = $props();
 
     let messageAction: MessageAction = $state(undefined);
@@ -102,10 +129,10 @@
         messageContentFromDataTransferItemList([...data.items]);
     }
 
-    function onDrop(e: CustomEvent<DragEvent>) {
-        if (e.detail.dataTransfer) {
-            onDataTransfer(e.detail.dataTransfer);
-            e.detail.preventDefault();
+    function onDrop(e: DragEvent) {
+        if (e.dataTransfer) {
+            onDataTransfer(e.dataTransfer);
+            e.preventDefault();
         }
     }
 
@@ -117,8 +144,10 @@
         }
     }
 
-    function emojiSelected(ev: CustomEvent<string>) {
-        messageEntry?.replaceSelection(ev.detail);
+    function emojiSelected(code?: string) {
+        if (code) {
+            messageEntry?.replaceSelection(code);
+        }
     }
 </script>
 
@@ -131,11 +160,11 @@
                         <h4><Translatable resourceKey={i18nKey("pickEmoji")} /></h4>
                         <span title={$_("close")} class="close-emoji">
                             <HoverIcon onclick={() => (messageAction = undefined)}>
-                                <Close size={$iconSize} color={"var(--icon-txt)"} />
+                                <Close size={ui.iconSize} color={"var(--icon-txt)"} />
                             </HoverIcon>
                         </span>
                     </div>
-                    <EmojiPicker on:emojiSelected={emojiSelected} {mode} />
+                    <EmojiPicker onEmojiSelected={emojiSelected} {mode} />
                 </span>
             {/snippet}
             {#snippet footer()}
@@ -150,7 +179,7 @@
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
             <div class="draft-container">
                 {#if replyingTo}
-                    <ReplyingTo readonly on:cancelReply {user} {replyingTo} />
+                    <ReplyingTo readonly {onCancelReply} {user} {replyingTo} />
                 {/if}
                 {#if attachment !== undefined}
                     <DraftMediaMessage content={attachment} />
@@ -161,8 +190,8 @@
     <MessageEntry
         bind:this={messageEntry}
         bind:messageAction
-        on:paste={onPaste}
-        on:drop={onDrop}
+        {onPaste}
+        {onDrop}
         {externalContent}
         {mode}
         {preview}
@@ -175,21 +204,19 @@
         {textContent}
         {chat}
         {messageContext}
-        on:sendMessage
-        on:cancelEditEvent
-        on:setTextContent
-        on:startTyping
-        on:stopTyping
-        on:createPoll
-        on:searchChat
-        on:tokenTransfer
-        on:createPrizeMessage
-        on:createP2PSwapMessage
-        on:attachGif
-        on:makeMeme
-        on:clearAttachment
-        on:fileSelected={(ev) => onFileSelected(ev.detail)}
-        on:audioCaptured />
+        {onSendMessage}
+        {onCancelEdit}
+        {onSetTextContent}
+        {onStartTyping}
+        {onStopTyping}
+        {onCreatePoll}
+        {onTokenTransfer}
+        {onCreatePrizeMessage}
+        {onCreateP2PSwapMessage}
+        {onAttachGif}
+        {onMakeMeme}
+        {onClearAttachment}
+        {onFileSelected} />
 </div>
 
 <style lang="scss">

@@ -21,7 +21,6 @@ import type {
     ChitState,
     WalletConfig,
     ObjectSet,
-    ExternalBot,
     ExternalBotPermissions,
     StreakInsurance,
 } from "openchat-shared";
@@ -84,7 +83,7 @@ import { locale } from "svelte-i18n";
 import type { PinNumberResolver } from "openchat-shared";
 import { capturePinNumberStore, pinNumberRequiredStore } from "./stores/pinNumber";
 import { walletConfigStore } from "./stores/crypto";
-import { externalBots, serverStreakInsuranceStore } from "./stores";
+import { serverStreakInsuranceStore } from "./stores";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -144,7 +143,6 @@ export class LiveState {
     capturePinNumber!: PinNumberResolver | undefined;
     chitState!: ChitState;
     walletConfig!: WalletConfig;
-    externalBots!: Map<string, ExternalBot>;
     installedDirectBots!: Map<string, ExternalBotPermissions>;
     currentChatBots!: Map<string, ExternalBotPermissions>;
     currentCommunityBots!: Map<string, ExternalBotPermissions>;
@@ -155,7 +153,6 @@ export class LiveState {
         currentChatBots.subscribe((state) => (this.currentChatBots = state));
         currentCommunityBots.subscribe((state) => (this.currentCommunityBots = state));
         installedDirectBots.subscribe((state) => (this.installedDirectBots = state));
-        externalBots.subscribe((state) => (this.externalBots = state));
         chitStateStore.subscribe((state) => (this.chitState = state));
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
         currentUser.subscribe((user) => (this.user = user));

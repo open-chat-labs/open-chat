@@ -1,13 +1,13 @@
 <script lang="ts">
-    import { chatIdentifiersEqual, selectedChatId } from "openchat-client";
+    import { chatIdentifiersEqual, selectedChatId, ui } from "openchat-client";
     import { activeVideoCall } from "../../../stores/video";
-    import { mobileWidth } from "../../../stores/screenDimensions";
 
-    $: show =
-        $mobileWidth &&
-        $activeVideoCall?.chatId !== undefined &&
-        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId) &&
-        $activeVideoCall.view === "minimised";
+    let show = $derived(
+        ui.mobileWidth &&
+            $activeVideoCall?.chatId !== undefined &&
+            chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId) &&
+            $activeVideoCall.view === "minimised",
+    );
 
     function resume() {
         activeVideoCall.setView("default");
@@ -15,9 +15,9 @@
 </script>
 
 {#if show}
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div on:click={resume} class="video-call"></div>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div onclick={resume} class="video-call"></div>
 {/if}
 
 <style lang="scss">

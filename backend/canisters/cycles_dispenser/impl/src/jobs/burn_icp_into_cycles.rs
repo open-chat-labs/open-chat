@@ -96,8 +96,8 @@ async fn burn_icp(burn_details: BurnIcpDetails) {
         Ok(Err(err)) => {
             error!(?err, "Failed to burn ICP into cycles");
         }
-        Err((code, message)) => {
-            error!(?code, message, "Failed to burn ICP into cycles");
+        Err(error) => {
+            error!(?error, "Failed to burn ICP into cycles");
         }
     }
 }

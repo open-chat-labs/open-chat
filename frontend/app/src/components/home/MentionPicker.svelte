@@ -1,88 +1,49 @@
 <script lang="ts">
-    import MenuItem from "../MenuItemLegacy.svelte";
-    import Menu from "../Menu.svelte";
-    import VirtualList from "../VirtualList.svelte";
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
     import {
-        userStore,
-        currentUser,
+        AvatarSize,
         currentCommunityMembers as communityMembers,
+        currentUser,
+        ui,
+        userStore,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
-    import Avatar from "../Avatar.svelte";
-    import { AvatarSize } from "openchat-client";
-    import { mobileWidth } from "../../stores/screenDimensions";
+    import { getContext, onMount } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import { iconSize } from "../../stores/iconSize";
+    import Avatar from "../Avatar.svelte";
+    import Menu from "../Menu.svelte";
+    import MenuItem from "../MenuItem.svelte";
+    import VirtualList from "../VirtualList.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let prefix: string | undefined;
-    export let offset: number;
-    export let direction: "up" | "down" = "up";
-    export let border = false;
-    export let mentionSelf = false;
-    export let supportsUserGroups = false;
-    export let usersOnly = false;
-    export let inline = false;
+    interface Props {
+        prefix: string | undefined;
+        offset: number;
+        direction?: "up" | "down";
+        border?: boolean;
+        mentionSelf?: boolean;
+        supportsUserGroups?: boolean;
+        usersOnly?: boolean;
+        inline?: boolean;
+        onMention: (user: UserOrUserGroup) => void;
+        onClose: () => void;
+    }
 
-    let index = 0;
-    let usersAndGroups: UserOrUserGroup[] = [];
+    let {
+        prefix,
+        offset,
+        direction = "up",
+        border = false,
+        mentionSelf = false,
+        supportsUserGroups = false,
+        usersOnly = false,
+        inline = false,
+        onClose,
+        onMention,
+    }: Props = $props();
 
-    $: itemHeight = $mobileWidth ? 53 : 55;
-    $: borderWidth = direction === "up" ? 2 : 3;
-    $: maxHeight =
-        direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)";
-
-    $: prefixLower = prefix?.toLowerCase();
-
-    $: filtered = usersAndGroups
-        .filter((userOrGroup) => {
-            switch (userOrGroup.kind) {
-                case "user_group":
-                    return (
-                        !usersOnly &&
-                        (prefixLower === undefined ||
-                            (supportsUserGroups &&
-                                userOrGroup.name.toLowerCase().startsWith(prefixLower)))
-                    );
-                case "everyone": {
-                    return (
-                        !usersOnly &&
-                        (prefixLower === undefined || userOrGroup.kind.startsWith(prefixLower))
-                    );
-                }
-                default:
-                    return (
-                        (mentionSelf || userOrGroup.userId !== $currentUser.userId) &&
-                        (prefixLower === undefined ||
-                            userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
-                            userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
-                    );
-            }
-        })
-        .sort((a, b) => {
-            // 'everyone' first, then user groups, then users
-            if (a.kind === "everyone") return -1;
-            if (b.kind === "everyone") return 1;
-
-            if (a.kind === "user_group" && b.kind === "user_group") {
-                return compareMatchNames(a.name, b.name);
-            }
-            if (a.kind === "user" && b.kind === "user") {
-                return compareMatchNames(a.username, b.username);
-            }
-            return a.kind === "user_group" ? -1 : 1;
-        });
-
-    $: style =
-        direction === "up"
-            ? `bottom: ${offset}px; height: ${
-                  filtered.length * itemHeight + borderWidth
-              }px; max-height: ${maxHeight}`
-            : `top: ${offset}px; height: ${
-                  filtered.length * itemHeight + borderWidth
-              }px; max-height: ${maxHeight}`;
+    let index = $state(0);
+    let usersAndGroups: UserOrUserGroup[] = $state([]);
 
     onMount(() => {
         usersAndGroups = Object.values(client.getUserLookupForMentions()).sort(
@@ -93,10 +54,8 @@
         );
     });
 
-    const dispatch = createEventDispatcher();
-
     function mention(userOrGroup: UserOrUserGroup) {
-        dispatch("mention", userOrGroup);
+        onMention($state.snapshot(userOrGroup));
     }
 
     function onKeyDown(ev: KeyboardEvent): void {
@@ -112,7 +71,7 @@
                 ev.stopPropagation();
                 break;
             case "Escape":
-                dispatch("close");
+                onClose();
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
@@ -135,6 +94,72 @@
         }
         return a.length < b.length ? -1 : 1;
     }
+    let itemHeight = $derived(ui.mobileWidth ? 53 : 55);
+    let borderWidth = $derived(direction === "up" ? 2 : 3);
+    let maxHeight = $derived(
+        direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)",
+    );
+    let prefixLower = $derived(prefix?.toLowerCase());
+    let filtered = $derived(
+        usersAndGroups
+            .filter((userOrGroup) => {
+                switch (userOrGroup.kind) {
+                    case "user_group":
+                        return (
+                            !usersOnly &&
+                            (prefixLower === undefined ||
+                                (supportsUserGroups &&
+                                    userOrGroup.name.toLowerCase().startsWith(prefixLower)))
+                        );
+                    case "everyone": {
+                        return (
+                            !usersOnly &&
+                            (prefixLower === undefined || userOrGroup.kind.startsWith(prefixLower))
+                        );
+                    }
+                    default:
+                        return (
+                            (mentionSelf || userOrGroup.userId !== $currentUser.userId) &&
+                            (prefixLower === undefined ||
+                                userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
+                                userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
+                        );
+                }
+            })
+            .sort((a, b) => {
+                // 'everyone' first, then user groups, then users
+                if (a.kind === "everyone") return -1;
+                if (b.kind === "everyone") return 1;
+
+                if (a.kind === "user_group" && b.kind === "user_group") {
+                    return compareMatchNames(a.name, b.name);
+                }
+                if (a.kind === "user" && b.kind === "user") {
+                    return compareMatchNames(a.username, b.username);
+                }
+                return a.kind === "user_group" ? -1 : 1;
+            }),
+    );
+    let style = $derived(
+        direction === "up"
+            ? `bottom: ${offset}px; height: ${
+                  filtered.length * itemHeight + borderWidth
+              }px; max-height: ${maxHeight}`
+            : `top: ${offset}px; height: ${
+                  filtered.length * itemHeight + borderWidth
+              }px; max-height: ${maxHeight}`,
+    );
+
+    function userOrGroupKey(u: UserOrUserGroup): string {
+        switch (u.kind) {
+            case "user_group":
+                return u.id.toString();
+            case "everyone":
+                return "everyone";
+            default:
+                return u.userId;
+        }
+    }
 </script>
 
 {#if filtered.length > 0}
@@ -146,47 +171,53 @@
         class:border
         {style}>
         <Menu fit>
-            <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
-                <MenuItem selected={itemIndex === index} onclick={() => mention(item)}>
-                    <div class="avatar" slot="icon">
-                        {#if item.kind === "user_group" || item.kind === "everyone"}
-                            <div class="group-icon">
-                                <AccountMultiple
-                                    color={"var(--menu-disabled-txt)"}
-                                    size={$iconSize} />
+            <VirtualList keyFn={userOrGroupKey} items={filtered}>
+                {#snippet children(item, itemIndex)}
+                    <MenuItem selected={itemIndex === index} onclick={() => mention(item)}>
+                        {#snippet icon()}
+                            <div class="avatar">
+                                {#if item.kind === "user_group" || item.kind === "everyone"}
+                                    <div class="group-icon">
+                                        <AccountMultiple
+                                            color={"var(--menu-disabled-txt)"}
+                                            size={ui.iconSize} />
+                                    </div>
+                                {:else}
+                                    <Avatar
+                                        url={client.userAvatarUrl($userStore.get(item.userId))}
+                                        userId={item.userId}
+                                        size={AvatarSize.Small} />
+                                {/if}
                             </div>
-                        {:else}
-                            <Avatar
-                                url={client.userAvatarUrl($userStore.get(item.userId))}
-                                userId={item.userId}
-                                size={AvatarSize.Small} />
-                        {/if}
-                    </div>
-                    <div slot="text">
-                        {#if item.kind === "user_group"}
-                            <span class="display-name">
-                                {item.name}
-                            </span>
-                        {:else if item.kind === "everyone"}
-                            <span class="display-name">
-                                {"everyone"}
-                            </span>
-                        {:else}
-                            <span class="display-name">
-                                {client.getDisplayName(item, $communityMembers)}
-                            </span>
-                            <span class="username">
-                                @{item.username}
-                            </span>
-                        {/if}
-                    </div>
-                </MenuItem>
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                {#if item.kind === "user_group"}
+                                    <span class="display-name">
+                                        {item.name}
+                                    </span>
+                                {:else if item.kind === "everyone"}
+                                    <span class="display-name">
+                                        {"everyone"}
+                                    </span>
+                                {:else}
+                                    <span class="display-name">
+                                        {client.getDisplayName(item, $communityMembers)}
+                                    </span>
+                                    <span class="username">
+                                        @{item.username}
+                                    </span>
+                                {/if}
+                            </div>
+                        {/snippet}
+                    </MenuItem>
+                {/snippet}
             </VirtualList>
         </Menu>
     </div>
 {/if}
 
-<svelte:body on:keydown={onKeyDown} />
+<svelte:body onkeydown={onKeyDown} />
 
 <style lang="scss">
     :global(.mention-picker .menu) {

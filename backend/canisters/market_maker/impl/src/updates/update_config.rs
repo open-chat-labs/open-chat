@@ -2,7 +2,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use market_maker_canister::update_config::{Response::*, *};
-use user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use user_index_canister_c2c_client::lookup_user;
 
 #[update]
 #[trace]
@@ -10,9 +10,9 @@ async fn update_config(args: Args) -> Response {
     let (caller, user_index_canister_id) = read_state(|state| (state.env.caller(), state.data.user_index_canister_id));
 
     match lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_operator => (),
-        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
+        Ok(Some(user)) if user.is_platform_operator => (),
+        Ok(_) => return NotAuthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     mutate_state(|state| update_config_impl(args, state))

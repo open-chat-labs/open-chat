@@ -1,7 +1,7 @@
 use candid::Nat;
 use ic_cdk::call::RejectCode;
 use icdex_canister::{ICDexOrderType, MakeOrderResponse, OrderPrice, OrderQuantity, TradingOrder};
-use types::{AggregatedOrders, CancelOrderRequest, CanisterId, MakeOrderRequest, Order, OrderType, TokenInfo};
+use types::{AggregatedOrders, C2CError, CancelOrderRequest, CanisterId, MakeOrderRequest, Order, OrderType, TokenInfo};
 
 pub struct ICDexClient<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> {
     this_canister_id: CanisterId,
@@ -34,13 +34,13 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
         }
     }
 
-    pub async fn latest_price(&self) -> Result<u64, (RejectCode, String)> {
+    pub async fn latest_price(&self) -> Result<u64, C2CError> {
         let response = icdex_canister_c2c_client::stats(self.dex_canister_id, ()).await?.0;
 
         Ok((response.price * self.quote_token_units_per_whole() as f64) as u64)
     }
 
-    pub async fn my_open_orders(&self) -> Result<Vec<Order>, (RejectCode, String)> {
+    pub async fn my_open_orders(&self) -> Result<Vec<Order>, C2CError> {
         let args = (self.this_canister_id.to_string(), None, Some(Nat::from(250u32)));
 
         let orders = icdex_canister_c2c_client::pending(self.dex_canister_id, args).await?.0;
@@ -53,7 +53,7 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
             .collect())
     }
 
-    pub async fn orderbook(&self) -> Result<AggregatedOrders, (RejectCode, String)> {
+    pub async fn orderbook(&self) -> Result<AggregatedOrders, C2CError> {
         let (_, orderbook) = icdex_canister_c2c_client::level10(self.dex_canister_id, ()).await?;
 
         Ok(AggregatedOrders {
@@ -80,7 +80,7 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
         })
     }
 
-    pub async fn make_order(&self, order: MakeOrderRequest) -> Result<(), (RejectCode, String)> {
+    pub async fn make_order(&self, order: MakeOrderRequest) -> Result<(), C2CError> {
         let quantity = match order.order_type {
             OrderType::Bid => OrderQuantity::Buy(order.amount.into(), 0u32.into()),
             OrderType::Ask => OrderQuantity::Sell(order.amount.into()),
@@ -95,11 +95,16 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
                 (self.on_order_made)(order);
                 Ok(())
             }
-            MakeOrderResponse::Err(e) => Err((RejectCode::CanisterError, format!("Args: {args:?}. Error: {e:?}"))),
+            MakeOrderResponse::Err(e) => Err(C2CError::new(
+                self.dex_canister_id,
+                "trade",
+                RejectCode::CanisterError,
+                format!("Args: {args:?}. Error: {e:?}"),
+            )),
         }
     }
 
-    pub async fn cancel_order(&self, order: CancelOrderRequest) -> Result<(), (RejectCode, String)> {
+    pub async fn cancel_order(&self, order: CancelOrderRequest) -> Result<(), C2CError> {
         let id = hex::decode(&order.id).unwrap();
 
         icdex_canister_c2c_client::cancelByTxid(self.dex_canister_id, (id, None)).await?;
@@ -108,7 +113,7 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
         Ok(())
     }
 
-    pub async fn account_balances(&self) -> Result<Vec<(CanisterId, u128)>, (RejectCode, String)> {
+    pub async fn account_balances(&self) -> Result<Vec<(CanisterId, u128)>, C2CError> {
         let response =
             icdex_canister_c2c_client::accountBalance(self.dex_canister_id, &self.this_canister_id.to_string()).await?;
 

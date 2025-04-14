@@ -365,7 +365,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                 Ok(escrow_canister::notify_deposit::Response::Success(_)) => {
                     mutate_state(|state| {
                         if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
-                            channel.chat.events.accept_p2p_swap(
+                            let _ = channel.chat.events.accept_p2p_swap(
                                 self.user_id,
                                 self.thread_root_message_index,
                                 self.message_id,
@@ -457,9 +457,8 @@ impl Job for MarkP2PSwapExpiredJob {
 
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
-        let response = mutate_state(|state| end_video_call_impl(self.0.clone(), state));
-        if !matches!(response, community_canister::end_video_call_v2::Response::Success) {
-            error!(?response, args = ?self.0, "Failed to mark video call ended");
+        if let Err(error) = mutate_state(|state| end_video_call_impl(self.0.clone(), state)) {
+            error!(?error, args = ?self.0, "Failed to mark video call ended");
         }
     }
 }

@@ -5,9 +5,9 @@ use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::remove_participant::{Response::*, *};
 use group_chat_core::GroupRoleInternal;
-use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use local_user_index_canister_c2c_client::lookup_user;
 use msgpack::serialize_then_unwrap;
-use types::{CanisterId, UserId};
+use types::{CanisterId, OCResult, UserId};
 use user_canister::c2c_remove_from_group;
 
 #[update(msgpack = true)]
@@ -38,14 +38,18 @@ async fn remove_participant_impl(user_to_remove: UserId, block: bool) -> Respons
     // is not authorized
     if prepare_result.is_user_to_remove_an_owner {
         match lookup_user(user_to_remove.into(), prepare_result.local_user_index_canister_id).await {
-            Ok(user) if !user.is_platform_moderator => (),
-            Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-            Err(LookupUserError::InternalError(error)) => return InternalError(error),
+            Ok(Some(user)) if !user.is_platform_moderator => (),
+            Ok(_) => return NotAuthorized,
+            Err(error) => return InternalError(format!("{error:?}")),
         }
     }
 
     // Remove the user from the group
-    mutate_state(|state| commit(user_to_remove, block, prepare_result.removed_by, state))
+    if let Err(error) = mutate_state(|state| commit(user_to_remove, block, prepare_result.removed_by, state)) {
+        Error(error)
+    } else {
+        Success
+    }
 }
 
 struct PrepareResult {
@@ -99,36 +103,26 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> Result<
     }
 }
 
-fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) -> Response {
-    match state
+fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) -> OCResult {
+    state
         .data
         .chat
-        .remove_member(removed_by, user_to_remove, block, state.env.now())
-    {
-        group_chat_core::RemoveMemberResult::Success => {
-            state.data.remove_user(user_to_remove, None);
+        .remove_member(removed_by, user_to_remove, block, state.env.now())?;
 
-            handle_activity_notification(state);
+    state.data.remove_user(user_to_remove, None);
 
-            // Fire-and-forget call to notify the user canister
-            remove_membership_from_user_canister(
-                user_to_remove,
-                removed_by,
-                block,
-                state.data.chat.name.value.clone(),
-                state.data.chat.is_public.value,
-                &mut state.data.fire_and_forget_handler,
-            );
+    handle_activity_notification(state);
 
-            Success
-        }
-        group_chat_core::RemoveMemberResult::UserSuspended => UserSuspended,
-        group_chat_core::RemoveMemberResult::UserLapsed => UserLapsed,
-        group_chat_core::RemoveMemberResult::UserNotInGroup => CallerNotInGroup,
-        group_chat_core::RemoveMemberResult::TargetUserNotInGroup => UserNotInGroup,
-        group_chat_core::RemoveMemberResult::NotAuthorized => NotAuthorized,
-        group_chat_core::RemoveMemberResult::CannotRemoveSelf => CannotRemoveSelf,
-    }
+    // Fire-and-forget call to notify the user canister
+    remove_membership_from_user_canister(
+        user_to_remove,
+        removed_by,
+        block,
+        state.data.chat.name.value.clone(),
+        state.data.chat.is_public.value,
+        &mut state.data.fire_and_forget_handler,
+    );
+    Ok(())
 }
 
 fn remove_membership_from_user_canister(

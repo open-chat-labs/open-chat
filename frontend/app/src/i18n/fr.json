@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "Automatique",
         "autoInfo": "Organisez votre portefeuille automatiquement. Tout jeton avec un solde différent de zéro ou avec une valeur en dollars supérieure à la valeur minimale en dollars saisie ci-dessous sera affiché",
+        "btcNetworkFee": "Frais de réseau Bitcoin : ~{amount} BTC",
         "comingSoon": "(Bientôt disponible)",
         "configureWallet": "Configurez votre portefeuille",
         "configureWalletFailure": "Désolé, nous n'avons pas pu enregistrer la configuration de votre portefeuille",
@@ -591,6 +592,7 @@
         "manual": "Manuel",
         "manualInfo": "Organisez votre portefeuille manuellement en sélectionnant exactement les jetons que vous souhaitez voir",
         "minDollarPlaceholder": "Solde minimum en dollars",
+        "network": "Réseau:",
         "receive": "Recevoir",
         "receiveToken": "Recevez {symbol}",
         "remove": "Retirer du portefeuille",
@@ -1354,7 +1356,9 @@
         "onlyUniquePerson": "Seuls les humains uniques",
         "prizeFinished": "Votre message de récompense est maintenant terminé",
         "randomDistribution": "Distribution aléatoire",
-        "restrictedMessage": "Pour réclamer ce prix, vous devez avoir les éléments suivants",
+        "requiresCaptcha": "Nécessite un CAPTCHA",
+        "restrictedMessage": "Ce prix comporte les restrictions suivantes",
+        "restrictions": "Restrictions de réclamation",
         "standardDiamond": "Standard",
         "streak": "Traînée",
         "streakFull": "Une séquence de {n} jours ou plus",
@@ -1604,7 +1608,7 @@
     "roleChanged": "{changedBy} a changé le rôle de {changed} en {newRole}",
     "rotationChallenge": {
         "info": "Faites pivoter l'image de gauche jusqu'à ce qu'elle corresponde à l'angle de l'image de droite",
-        "infoMobile": "Faites pivoter l'image du haut jusqu'à ce qu'elle corresponde à l'angle de l'image du bas",
+        "infoMobile": "Faites pivoter l'image du bas jusqu'à ce qu'elle corresponde à l'angle de l'image du haut",
         "title": "Équilibrer les robots"
     },
     "rules": {
@@ -1794,6 +1798,7 @@
         "max": "Max",
         "message": "Un message",
         "messagePlaceholder": "Inclure un message facultatif",
+        "min": "min: {amount}",
         "pendingSent": "{sender} envoie {amount} {token} à {receiver}",
         "pendingSentByYou": "vous envoyez {amount} {token} à {receiver}",
         "receiver": "Destinataire",

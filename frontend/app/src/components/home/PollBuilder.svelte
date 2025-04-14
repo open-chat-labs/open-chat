@@ -1,20 +1,18 @@
 <script lang="ts">
-    import Button from "../Button.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import Input from "../Input.svelte";
-    import Toggle from "../Toggle.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import Radio from "../Radio.svelte";
-    import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import { ui, type PollContent, type ResourceKey, type TotalPollVotes } from "openchat-client";
+    import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";
-    import { _ } from "svelte-i18n";
-    import { iconSize } from "../../stores/iconSize";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import type { PollContent, TotalPollVotes, ResourceKey } from "openchat-client";
-    import Legend from "../Legend.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
+    import Input from "../Input.svelte";
+    import Legend from "../Legend.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Radio from "../Radio.svelte";
+    import Toggle from "../Toggle.svelte";
     import Translatable from "../Translatable.svelte";
 
     const MAX_QUESTION_LENGTH = 250;
@@ -165,15 +163,15 @@
                 <div class="buttons">
                     <ButtonGroup align={"start"}>
                         <Button
-                            small={!$mobileWidth}
-                            tiny={$mobileWidth}
+                            small={!ui.mobileWidth}
+                            tiny={ui.mobileWidth}
                             secondary={showSettings}
                             onClick={() => (showSettings = false)}
                             ><Translatable resourceKey={i18nKey("poll.poll")} /></Button>
                         <Button
-                            small={!$mobileWidth}
+                            small={!ui.mobileWidth}
                             secondary={!showSettings}
-                            tiny={$mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={() => (showSettings = true)}
                             ><Translatable resourceKey={i18nKey("poll.settings")} /></Button>
                     </ButtonGroup>
@@ -201,7 +199,9 @@
                                         {answer}
                                     </div>
                                     <div class="delete" onclick={() => deleteAnswer(answer)}>
-                                        <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
+                                        <DeleteOutline
+                                            size={ui.iconSize}
+                                            color={"var(--icon-txt)"} />
                                     </div>
                                 </div>
                             {/each}
@@ -214,7 +214,7 @@
                                             minlength={1}
                                             maxlength={MAX_ANSWER_LENGTH}
                                             countdown
-                                            on:enter={addAnswer}
+                                            onEnter={addAnswer}
                                             placeholder={i18nKey(
                                                 poll.pollAnswers.size === MAX_ANSWERS
                                                     ? "poll.maxReached"
@@ -229,7 +229,7 @@
                                     </div>
                                     <div class="add-btn" onclick={addAnswer}>
                                         <PlusCircleOutline
-                                            size={$iconSize}
+                                            size={ui.iconSize}
                                             color={"var(--icon-txt)"} />
                                     </div>
                                 </div>
@@ -240,7 +240,7 @@
                     <Toggle
                         small
                         id={"anonymous"}
-                        on:change={() => (poll.anonymous = !poll.anonymous)}
+                        onChange={() => (poll.anonymous = !poll.anonymous)}
                         label={i18nKey("poll.anonymous")}
                         checked={poll.anonymous} />
 
@@ -248,7 +248,7 @@
                         small
                         id={"allow-multiple"}
                         label={i18nKey("poll.allowMultipleVotes")}
-                        on:change={() =>
+                        onChange={() =>
                             (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
                         checked={poll.allowMultipleVotesPerUser} />
 
@@ -257,14 +257,14 @@
                         id={"allow-change"}
                         disabled={poll.allowMultipleVotesPerUser}
                         label={i18nKey("poll.allowChangeVotes")}
-                        on:change={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
+                        onChange={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
                         checked={!poll.allowMultipleVotesPerUser && poll.allowUserToChangeVote} />
 
                     <Toggle
                         small
                         id={"limited-duration"}
                         label={i18nKey("poll.limitedDuration")}
-                        on:change={() => (poll.limitedDuration = !poll.limitedDuration)}
+                        onChange={() => (poll.limitedDuration = !poll.limitedDuration)}
                         checked={poll.limitedDuration} />
 
                     {#if poll.limitedDuration}
@@ -272,14 +272,14 @@
                             small
                             id={"show-before-end"}
                             label={i18nKey("poll.showBeforeEnd")}
-                            on:change={() =>
+                            onChange={() =>
                                 (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
                             checked={poll.showVotesBeforeEndDate} />
 
                         <Legend label={i18nKey("poll.pollDuration")} />
                         {#each durations as d}
                             <Radio
-                                on:change={() => (selectedDuration = d)}
+                                onChange={() => (selectedDuration = d)}
                                 value={d}
                                 checked={selectedDuration === d}
                                 id={`duration_${d}`}
@@ -292,14 +292,14 @@
             {#snippet footer()}
                 <ButtonGroup>
                     <Button
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}
                         secondary
                         onClick={() => (open = false)}>{$_("cancel")}</Button>
                     <Button
-                        small={!$mobileWidth}
+                        small={!ui.mobileWidth}
                         disabled={!valid}
-                        tiny={$mobileWidth}
+                        tiny={ui.mobileWidth}
                         onClick={start}>{$_("poll.start")}</Button>
                 </ButtonGroup>
             {/snippet}

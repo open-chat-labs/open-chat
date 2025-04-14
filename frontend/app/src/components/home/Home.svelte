@@ -1,136 +1,119 @@
 <script lang="ts">
-    import BackgroundLogo from "../BackgroundLogo.svelte";
-    import { _ } from "svelte-i18n";
-    import LeftPanel from "./LeftPanel.svelte";
-    import type CurrentChatMessages from "./CurrentChatMessages.svelte";
-    import Toast from "../Toast.svelte";
-    import SelectChatModal from "../SelectChatModal.svelte";
-    import MiddlePanel from "./MiddlePanel.svelte";
-    import ViewUserProfile from "./profile/ViewUserProfile.svelte";
-    import EditCommunity from "./communities/edit/Edit.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import type {
-        EnhancedReplyContext,
-        Rules,
-        Message,
-        OpenChat,
-        Notification,
         CandidateGroupChat,
-        EventWrapper,
-        CommunitySummary,
-        Level,
+        ChannelIdentifier,
         ChatIdentifier,
-        DirectChatIdentifier,
         CommunityIdentifier,
+        CommunitySummary,
+        DirectChatIdentifier,
+        EnhancedAccessGate,
+        EnhancedReplyContext,
+        EventWrapper,
+        GateCheckSucceeded,
+        GroupChatSummary,
+        Level,
+        Message,
         MultiUserChat,
         MultiUserChatIdentifier,
-        GroupChatSummary,
-        ChannelIdentifier,
-        UpdatedRules,
-        ResourceKey,
         NervousSystemDetails,
-        EnhancedAccessGate,
-        GateCheckSucceeded,
+        Notification,
+        OpenChat,
+        PubSubEvents,
+        ResourceKey,
+        Rules,
+        UpdatedRules,
     } from "openchat-client";
     import {
-        ChatsUpdated,
-        SelectedChatInvalid,
-        SendMessageFailed,
-        ThreadClosed,
-        RemoteVideoCallStartedEvent,
-        ThreadSelected,
-        defaultChatRules,
-        chatIdentifiersEqual,
-        nullMembership,
-        routeForChatIdentifier,
-        routeForMessage,
-        UserSuspensionChanged,
-        RemoteVideoCallEndedEvent,
-        currentUser as user,
-        suspendedUser,
         anonUser,
-        identityState,
+        chatIdentifiersEqual,
+        chatListScopeStore as chatListScope,
+        chatsInitialised,
         chatSummariesListStore,
         chatSummariesStore,
-        selectedChatStore,
-        selectedChatId,
-        chatsInitialised,
-        draftMessagesStore,
-        chatListScopeStore as chatListScope,
-        currentCommunityRules,
         communities,
+        currentCommunityRules,
+        defaultChatRules,
+        draftMessagesStore,
+        identityState,
+        nullMembership,
         offlineStore,
+        pathState,
         capturePinNumberStore as pinNumberStore,
+        routeForChatIdentifier,
+        routeForMessage,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
-        SummonWitch,
-        RegisterBot,
-        UpdateBot,
+        selectedChatId,
+        selectedChatStore,
+        subscribe,
+        suspendedUser,
+        ui,
+        currentUser as user,
         userStore,
-        RemoveBot,
     } from "openchat-client";
-    import Overlay from "../Overlay.svelte";
-    import { getContext, onMount, tick, untrack } from "svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
     import page from "page";
-    import { pageRedirect, pageReplace, pathParams, routeForScope } from "../../routes";
+    import { getContext, onMount, tick, untrack } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { i18nKey } from "../../i18n/i18n";
     import type { RouteParams } from "../../routes";
-    import { toastStore } from "../../stores/toast";
-    import {
-        closeNotificationsForChat,
-        closeNotifications,
-        subscribeToNotifications,
-    } from "../../utils/notifications";
-    import {
-        filterByChatType,
-        filterRightPanelHistory,
-        rightPanelHistory,
-    } from "../../stores/rightPanel";
-    import Upgrade from "./upgrade/Upgrade.svelte";
-    import AreYouSure from "../AreYouSure.svelte";
-    import { removeQueryStringParam } from "../../utils/urls";
-    import { fullWidth } from "../../stores/layout";
-    import { dimensions } from "../../stores/screenDimensions";
+    import { pageRedirect, pageReplace, routeForScope } from "../../routes";
+    import { createCandidateCommunity } from "../../stores/community";
     import { messageToForwardStore } from "../../stores/messageToForward";
-    import type { Share } from "../../utils/share";
+    import { eventListScrollTop } from "../../stores/scrollPos";
+    import { chitPopup, disableChit } from "../../stores/settings";
+    import { toastStore } from "../../stores/toast";
+    import { activeVideoCall, incomingVideoCall } from "../../stores/video";
     import {
         currentTheme,
         currentThemeName,
         preferredDarkThemeName,
         themeType,
     } from "../../theme/themes";
-    import SuspendedModal from "../SuspendedModal.svelte";
-    import NoAccess from "./NoAccess.svelte";
-    import CreateOrUpdateGroup from "./createOrUpdateGroup/CreateOrUpdateGroup.svelte";
-    import AccountsModal from "./profile/AccountsModal.svelte";
-    import { querystring } from "../../routes";
-    import { eventListScrollTop } from "../../stores/scrollPos";
-    import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
-    import HallOfFame from "./ChitHallOfFame.svelte";
-    import LeftNav from "./nav/LeftNav.svelte";
-    import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
-    import { createCandidateCommunity } from "../../stores/community";
-    import Convert from "./communities/Convert.svelte";
-    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
-    import Register from "../register/Register.svelte";
-    import LoggingInModal from "./LoggingInModal.svelte";
-    import AnonFooter from "./AnonFooter.svelte";
-    import OfflineFooter from "../OfflineFooter.svelte";
-    import RightPanel from "./RightPanelWrapper.svelte";
+    import {
+        closeNotifications,
+        closeNotificationsForChat,
+        initialiseNotifications,
+    } from "../../utils/notifications";
+    import { scream } from "../../utils/scream";
+    import type { Share } from "../../utils/share";
+    import { removeQueryStringParam } from "../../utils/urls";
+    import AreYouSure from "../AreYouSure.svelte";
+    import BackgroundLogo from "../BackgroundLogo.svelte";
+    import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import EditLabel from "../EditLabel.svelte";
-    import { i18nKey } from "../../i18n/i18n";
     import NotFound from "../NotFound.svelte";
-    import { activeVideoCall, incomingVideoCall } from "../../stores/video";
-    import PinNumberModal from "./PinNumberModal.svelte";
+    import OfflineFooter from "../OfflineFooter.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Register from "../register/Register.svelte";
+    import SelectChatModal from "../SelectChatModal.svelte";
+    import SuspendedModal from "../SuspendedModal.svelte";
+    import Toast from "../Toast.svelte";
+    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
-    import DailyChitModal from "./DailyChitModal.svelte";
+    import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
+    import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
+    import AnonFooter from "./AnonFooter.svelte";
     import ChallengeModal from "./ChallengeModal.svelte";
     import ChitEarned from "./ChitEarned.svelte";
-    import { chitPopup, disableChit } from "../../stores/settings";
-    import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
+    import HallOfFame from "./ChitHallOfFame.svelte";
+    import Convert from "./communities/Convert.svelte";
+    import EditCommunity from "./communities/edit/Edit.svelte";
+    import CreateOrUpdateGroup from "./createOrUpdateGroup/CreateOrUpdateGroup.svelte";
+    import type CurrentChatMessages from "./CurrentChatMessages.svelte";
+    import DailyChitModal from "./DailyChitModal.svelte";
+    import LeftPanel from "./LeftPanel.svelte";
+    import LoggingInModal from "./LoggingInModal.svelte";
+    import MiddlePanel from "./MiddlePanel.svelte";
+    import LeftNav from "./nav/LeftNav.svelte";
+    import NoAccess from "./NoAccess.svelte";
+    import PinNumberModal from "./PinNumberModal.svelte";
+    import AccountsModal from "./profile/AccountsModal.svelte";
     import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
-    import { scream } from "../../utils/scream";
-    import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
-    import { subscribe } from "@src/utils/pubsub";
+    import ViewUserProfile from "./profile/ViewUserProfile.svelte";
+    import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
+    import RightPanel from "./RightPanelWrapper.svelte";
+    import Upgrade from "./upgrade/Upgrade.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -242,9 +225,22 @@
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
             subscribe("clearSelection", () => page(routeForScope($chatListScope))),
             subscribe("editGroup", editGroup),
+            subscribe("chatsUpdated", chatsUpdated),
+            subscribe("userSuspensionChanged", () => window.location.reload()),
+            subscribe("selectedChatInvalid", selectedChatInvalid),
+            subscribe("sendMessageFailed", sendMessageFailed),
+            subscribe("summonWitch", summonWitch),
+            subscribe("registerBot", registerBot),
+            subscribe("updateBot", updateBot),
+            subscribe("removeBot", removeBot),
+            subscribe("threadSelected", openThread),
+            subscribe("threadClosed", closeThread),
+            subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
+            subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
+            subscribe("notification", (n) => client.notificationReceived(n)),
         ];
-        subscribeToNotifications(client, (n) => client.notificationReceived(n));
-        client.addEventListener("openchat_event", clientEvent);
+        //TODO push all of this inside the OC client itself
+        initialiseNotifications(client);
         document.body.addEventListener("profile-clicked", (event) => {
             profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
         });
@@ -254,57 +250,50 @@
         }
 
         return () => {
-            client.removeEventListener("openchat_event", clientEvent);
             unsubEvents.forEach((u) => u());
         };
     });
 
-    function clientEvent(ev: Event): void {
-        if (ev instanceof ThreadSelected) {
-            openThread(ev.detail);
-        } else if (ev instanceof RegisterBot) {
-            modal = { kind: "register_bot" };
-        } else if (ev instanceof UpdateBot) {
-            modal = { kind: "update_bot" };
-        } else if (ev instanceof RemoveBot) {
-            modal = { kind: "remove_bot" };
-        } else if (ev instanceof SummonWitch) {
-            summonWitch();
-        } else if (ev instanceof RemoteVideoCallStartedEvent) {
-            remoteVideoCallStarted(ev);
-        } else if (ev instanceof RemoteVideoCallEndedEvent) {
-            remoteVideoCallEnded(ev);
-        } else if (ev instanceof ThreadClosed) {
-            closeThread();
-        } else if (ev instanceof SendMessageFailed) {
-            // This can occur either for chat messages or thread messages so we'll just handle it here
-            if (ev.detail.alert) {
-                toastStore.showFailureToast(i18nKey("errorSendingMessage"));
+    function chatsUpdated() {
+        closeNotifications((notification: Notification) => {
+            if (
+                notification.kind === "channel_notification" ||
+                notification.kind === "direct_notification" ||
+                notification.kind === "group_notification"
+            ) {
+                return client.isMessageRead(
+                    {
+                        chatId: notification.chatId,
+                    },
+                    notification.messageIndex,
+                    undefined,
+                );
             }
-        } else if (ev instanceof ChatsUpdated) {
-            closeNotifications((notification: Notification) => {
-                if (
-                    notification.kind === "channel_notification" ||
-                    notification.kind === "direct_notification" ||
-                    notification.kind === "group_notification"
-                ) {
-                    return client.isMessageRead(
-                        {
-                            chatId: notification.chatId,
-                        },
-                        notification.messageIndex,
-                        undefined,
-                    );
-                }
 
-                return false;
-            });
-        } else if (ev instanceof SelectedChatInvalid) {
-            pageReplace(routeForScope(client.getDefaultScope()));
-        } else if (ev instanceof UserSuspensionChanged) {
-            // The latest suspension details will be picked up on reload when user_index::current_user is called
-            window.location.reload();
+            return false;
+        });
+    }
+
+    function selectedChatInvalid() {
+        pageReplace(routeForScope(client.getDefaultScope()));
+    }
+
+    function sendMessageFailed(alert: boolean) {
+        if (alert) {
+            toastStore.showFailureToast(i18nKey("errorSendingMessage"));
         }
+    }
+
+    function registerBot() {
+        modal = { kind: "register_bot" };
+    }
+
+    function updateBot() {
+        modal = { kind: "update_bot" };
+    }
+
+    function removeBot() {
+        modal = { kind: "remove_bot" };
     }
 
     function summonWitch() {
@@ -321,23 +310,23 @@
         }, 2000);
     }
 
-    function remoteVideoCallEnded(ev: RemoteVideoCallEndedEvent) {
-        if ($incomingVideoCall?.messageId === ev.detail.messageId) {
+    function remoteVideoCallEnded(messageId: bigint) {
+        if ($incomingVideoCall?.messageId === messageId) {
             incomingVideoCall.set(undefined);
         }
     }
 
-    function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
+    function remoteVideoCallStarted(ev: PubSubEvents["remoteVideoCallStarted"]) {
         // If current user is already in the call, or has previously been in the call, or the call started more than an hour ago, exit
         if (
-            chatIdentifiersEqual($activeVideoCall?.chatId, ev.detail.chatId) ||
-            ev.detail.currentUserIsParticipant ||
-            Number(ev.detail.timestamp) < Date.now() - 60 * 60 * 1000
+            chatIdentifiersEqual($activeVideoCall?.chatId, ev.chatId) ||
+            ev.currentUserIsParticipant ||
+            Number(ev.timestamp) < Date.now() - 60 * 60 * 1000
         ) {
             return;
         }
 
-        incomingVideoCall.set(ev.detail);
+        incomingVideoCall.set(ev);
     }
 
     async function newChatSelected(
@@ -364,8 +353,8 @@
             if (chatId.kind === "direct_chat") {
                 await createDirectChat(chatId);
             } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
-                autojoin = $querystring.has("autojoin");
-                const code = $querystring.get("code");
+                autojoin = pathState.querystring.has("autojoin");
+                const code = pathState.querystring.get("code");
                 if (code) {
                     client.groupInvite = {
                         chatId: chatId,
@@ -436,7 +425,11 @@
     }
 
     async function selectCommunity(id: CommunityIdentifier, clearChat = true): Promise<boolean> {
-        const found = await client.setSelectedCommunity(id, $querystring.get("code"), clearChat);
+        const found = await client.setSelectedCommunity(
+            id,
+            pathState.querystring.get("code"),
+            clearChat,
+        );
         if (!found) {
             modal = { kind: "no_access" };
         }
@@ -444,7 +437,7 @@
     }
 
     function selectFirstChat(): boolean {
-        if (!$mobileWidth) {
+        if (!ui.mobileWidth) {
             const first = $chatSummariesListStore.find((c) => !c.membership.archived);
             if (first !== undefined) {
                 pageRedirect(routeForChatIdentifier($chatListScope.kind, first.id));
@@ -456,70 +449,65 @@
 
     let communityLoaded = false;
 
-    async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
+    async function routeChange(initialised: boolean, route: RouteParams): Promise<void> {
         // wrap the whole thing in untrack because we don't want it to react to everything it reads in here
         untrack(async () => {
             // wait until we have loaded the chats
             if (initialised) {
-                filterRightPanelHistory((state) => state.kind !== "community_filters");
+                ui.filterRightPanelHistory((state) => state.kind !== "community_filters");
                 if (
                     $anonUser &&
-                    pathParams.kind === "chat_list_route" &&
-                    (pathParams.scope.kind === "direct_chat" ||
-                        pathParams.scope.kind === "favourite")
+                    route.kind === "chat_list_route" &&
+                    (route.scope.kind === "direct_chat" || route.scope.kind === "favourite")
                 ) {
                     client.updateIdentityState({ kind: "logging_in" });
                     pageRedirect("/group");
                     return;
                 }
 
-                if ("scope" in pathParams) {
-                    client.setChatListScope(pathParams.scope);
+                if ("scope" in route) {
+                    client.setChatListScope(route.scope);
                 }
 
                 // When we have a middle panel and this route is for a chat list then select the first chat
-                if (pathParams.kind === "chat_list_route" && selectFirstChat()) {
+                if (route.kind === "chat_list_route" && selectFirstChat()) {
                     return;
                 }
 
                 // first close any open thread
                 closeThread();
 
-                if (pathParams.kind === "home_route") {
+                if (route.kind === "home_route") {
                     client.clearSelectedChat();
                     filterChatSpecificRightPanelStates();
-                } else if (pathParams.kind === "communities_route") {
+                } else if (route.kind === "communities_route") {
                     client.clearSelectedChat();
-                    rightPanelHistory.set($fullWidth ? [{ kind: "community_filters" }] : []);
-                } else if (pathParams.kind === "selected_community_route") {
-                    await selectCommunity(pathParams.communityId);
+                    ui.rightPanelHistory = ui.fullWidth ? [{ kind: "community_filters" }] : [];
+                } else if (route.kind === "selected_community_route") {
+                    await selectCommunity(route.communityId);
                     if (selectFirstChat()) {
                         communityLoaded = true;
                         return;
                     }
                 } else if (
-                    pathParams.kind === "global_chat_selected_route" ||
-                    pathParams.kind === "selected_channel_route"
+                    route.kind === "global_chat_selected_route" ||
+                    route.kind === "selected_channel_route"
                 ) {
-                    if (pathParams.kind === "selected_channel_route") {
+                    if (route.kind === "selected_channel_route") {
                         if (!communityLoaded) {
-                            await selectCommunity(pathParams.communityId, false);
+                            await selectCommunity(route.communityId, false);
                         }
                         communityLoaded = false;
                     }
 
                     // if the chat in the url is different from the chat we already have selected
-                    if (!chatIdentifiersEqual(pathParams.chatId, $selectedChatId)) {
-                        newChatSelected(
-                            pathParams.chatId,
-                            pathParams.messageIndex,
-                            pathParams.threadMessageIndex,
-                        );
+                    if (!chatIdentifiersEqual(route.chatId, $selectedChatId)) {
+                        newChatSelected(route.chatId, route.messageIndex, route.threadMessageIndex);
                     } else {
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
-                        if (pathParams.messageIndex !== undefined) {
-                            waitAndScrollToMessageIndex(pathParams.messageIndex, false);
+                        if (route.messageIndex !== undefined) {
+                            waitAndScrollToMessageIndex(route.messageIndex, false);
                         }
                     }
                 } else {
@@ -529,11 +517,11 @@
                     }
                     filterChatSpecificRightPanelStates();
 
-                    if (pathParams.kind === "share_route") {
+                    if (route.kind === "share_route") {
                         share = {
-                            title: pathParams.title,
-                            text: pathParams.text,
-                            url: pathParams.url,
+                            title: route.title,
+                            text: route.text,
+                            url: route.url,
                             files: [],
                         };
                         pageReplace(routeForScope(client.getDefaultScope()));
@@ -542,39 +530,39 @@
                 }
 
                 // regardless of the path params, we *always* check the query string
-                const diamond = $querystring.get("diamond");
+                const diamond = pathState.querystring.get("diamond");
                 if (diamond !== null) {
                     showUpgrade = true;
                     pageReplace(removeQueryStringParam("diamond"));
                 }
 
-                const wallet = $querystring.get("wallet");
+                const wallet = pathState.querystring.get("wallet");
                 if (wallet !== null) {
                     modal = { kind: "wallet" };
                     pageReplace(removeQueryStringParam("wallet"));
                 }
 
-                const faq = $querystring.get("faq");
+                const faq = pathState.querystring.get("faq");
                 if (faq !== null) {
                     pageReplace(`/faq?q=${faq}`);
                 }
 
-                const hof = $querystring.get("hof");
+                const hof = pathState.querystring.get("hof");
                 if (hof !== null) {
                     modal = { kind: "hall_of_fame" };
                     pageReplace(removeQueryStringParam("hof"));
                 }
 
-                const everyone = $querystring.get("everyone");
+                const everyone = pathState.querystring.get("everyone");
                 if (everyone !== null) {
-                    rightPanelHistory.set([{ kind: "show_group_members" }]);
+                    ui.rightPanelHistory = [{ kind: "show_group_members" }];
                     pageReplace(removeQueryStringParam("everyone"));
                 }
 
-                const usergroup = $querystring.get("usergroup");
+                const usergroup = pathState.querystring.get("usergroup");
                 if (usergroup !== null) {
                     const userGroupId = Number(usergroup);
-                    rightPanelHistory.set([{ kind: "show_community_members", userGroupId }]);
+                    ui.rightPanelHistory = [{ kind: "show_community_members", userGroupId }];
                     pageReplace(removeQueryStringParam("usergroup"));
                 }
 
@@ -592,7 +580,7 @@
     // Note: very important (and hacky) that this is hidden in a function rather than inline in the top level reactive
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
-        filterRightPanelHistory((panel) => panel.kind === "user_profile");
+        ui.filterRightPanelHistory((panel) => panel.kind === "user_profile");
     }
 
     function closeThread() {
@@ -602,12 +590,12 @@
         }
         tick().then(() => {
             activeVideoCall?.threadOpen(false);
-            filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+            ui.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
         });
     }
 
     function resetRightPanel() {
-        filterByChatType($selectedChatStore);
+        ui.filterRightPanelHistoryByChatType($selectedChatStore);
     }
 
     function goToMessageIndex(detail: { index: number; preserveFocus: boolean }) {
@@ -673,12 +661,12 @@
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
                 return deleteCommunity(confirmActionEvent.communityId).then((_) => {
-                    rightPanelHistory.set([]);
+                    ui.rightPanelHistory = [];
                 });
             case "delete":
                 return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.level).then(
                     (_) => {
-                        rightPanelHistory.set([]);
+                        ui.rightPanelHistory = [];
                         confirmActionEvent.after?.();
                     },
                 );
@@ -759,11 +747,9 @@
     function showInviteGroupUsers(show: boolean) {
         if ($selectedChatId !== undefined) {
             if (show) {
-                rightPanelHistory.set([{ kind: "invite_group_users" }]);
+                ui.rightPanelHistory = [{ kind: "invite_group_users" }];
             } else {
-                rightPanelHistory.update((history) => {
-                    return [...history, { kind: "invite_group_users" }];
-                });
+                ui.pushRightPanelHistory({ kind: "invite_group_users" });
             }
         }
     }
@@ -798,7 +784,7 @@
 
     function showGroupMembers() {
         if ($selectedChatId !== undefined) {
-            rightPanelHistory.set([{ kind: "show_group_members" }]);
+            ui.rightPanelHistory = [{ kind: "show_group_members" }];
         }
     }
 
@@ -806,7 +792,7 @@
         if ($selectedChatId !== undefined) {
             pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
         }
-        rightPanelHistory.set([{ kind: "user_profile" }]);
+        ui.rightPanelHistory = [{ kind: "user_profile" }];
     }
 
     function openThread(ev: { threadRootEvent: EventWrapper<Message>; initiating: boolean }) {
@@ -817,13 +803,13 @@
             }
 
             tick().then(() => {
-                rightPanelHistory.set([
+                ui.rightPanelHistory = [
                     {
                         kind: "message_thread_panel",
                         threadRootMessageIndex: ev.threadRootEvent.event.messageIndex,
                         threadRootMessageId: ev.threadRootEvent.event.messageId,
                     },
-                ]);
+                ];
             });
         }
     }
@@ -832,18 +818,18 @@
         // what do we do here if the community is not selected
         // do we select it?
         if ($chatListScope.kind === "community") {
-            rightPanelHistory.set([{ kind: "community_details" }]);
+            ui.rightPanelHistory = [{ kind: "community_details" }];
         }
     }
 
     function showProposalFilters() {
         if ($selectedChatId !== undefined) {
             pageReplace(routeForChatIdentifier($chatListScope.kind, $selectedChatId));
-            rightPanelHistory.set([
+            ui.rightPanelHistory = [
                 {
                     kind: "proposal_filters",
                 },
-            ]);
+            ];
         }
     }
 
@@ -1122,7 +1108,7 @@
     }
 
     function convertGroupToCommunity(group: GroupChatSummary) {
-        rightPanelHistory.set([]);
+        ui.rightPanelHistory = [];
         convertGroup = group;
     }
 
@@ -1182,7 +1168,7 @@
     );
     let nervousSystem = $derived(client.tryGetNervousSystem(governanceCanisterId));
     // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
-    $effect(() => {
+    trackedEffect("identity-state", () => {
         if ($identityState.kind === "registering") {
             modal = { kind: "registering" };
         } else if ($identityState.kind === "logging_in") {
@@ -1203,11 +1189,11 @@
             tick().then(() => joinGroup(join));
         }
     });
-    $effect(() => {
-        routeChange($chatsInitialised, $pathParams);
+    trackedEffect("route-change", () => {
+        routeChange($chatsInitialised, pathState.route);
     });
-    let bgHeight = $derived($dimensions.height * 0.9);
-    let bgClip = $derived((($dimensions.height - 32) / bgHeight) * 361);
+    let bgHeight = $derived(ui.dimensions.height * 0.9);
+    let bgClip = $derived(((ui.dimensions.height - 32) / bgHeight) * 361);
 </script>
 
 {#if showProfileCard !== undefined}
@@ -1251,7 +1237,7 @@
 <Toast />
 
 {#if showUpgrade && $user}
-    <Upgrade on:cancel={() => (showUpgrade = false)} />
+    <Upgrade onCancel={() => (showUpgrade = false)} />
 {/if}
 
 {#if modal.kind !== "none"}
@@ -1305,7 +1291,7 @@
             <MakeProposalModal
                 selectedMultiUserChat={modal.chat}
                 nervousSystem={modal.nervousSystem}
-                on:close={closeModal} />
+                onClose={closeModal} />
         {:else if modal.kind === "logging_in"}
             <LoggingInModal onClose={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}

@@ -577,6 +577,7 @@
     "cryptoAccount": {
         "auto": "Automatic",
         "autoInfo": "Organise your wallet automatically. Any token with a non-zero token balance or with a dollar value greater than the minimum dollar value entered below will be displayed",
+        "btcNetworkFee": "Bitcoin network fee: ~{amount} BTC",
         "comingSoon": "(coming soon)",
         "configureWallet": "Configure you wallet",
         "configureWalletFailure": "Sorry we were unable to save your wallet config",
@@ -591,6 +592,7 @@
         "manual": "Manual",
         "manualInfo": "Organise your wallet manually by selected exactly the tokens that you want to see",
         "minDollarPlaceholder": "Minimum dollar balance",
+        "network": "Network:",
         "receive": "Receive",
         "receiveToken": "Receive {symbol}",
         "remove": "Remove from wallet",
@@ -1354,7 +1356,9 @@
         "onlyUniquePerson": "Only Unique humans",
         "prizeFinished": "Your prize message has now finished",
         "randomDistribution": "Random distribution",
-        "restrictedMessage": "To claim this prize you must have the following",
+        "requiresCaptcha": "Requires CAPTCHA",
+        "restrictedMessage": "This prize has the following restrictions",
+        "restrictions": "Claim restrictions",
         "standardDiamond": "Standard",
         "streak": "Streak",
         "streakFull": "A streak of {n} days or more",
@@ -1604,7 +1608,7 @@
     "roleChanged": "{changedBy} changed the role of {changed} to {newRole}",
     "rotationChallenge": {
         "info": "Rotate the image on the left until it matches the angle of the image on the right",
-        "infoMobile": "Rotate the top image until it matches the ange of the bottom image",
+        "infoMobile": "Rotate the bottom image until it matches the angle of the top image",
         "title": "Balance the bots"
     },
     "rules": {
@@ -1794,6 +1798,7 @@
         "max": "Max",
         "message": "Message",
         "messagePlaceholder": "Include an optional message",
+        "min": "min: {amount}",
         "pendingSent": "{sender} is sending {amount} {token} to {receiver}",
         "pendingSentByYou": "you are sending {amount} {token} to {receiver}",
         "receiver": "Recipient",

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1694](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1694-escrow)] - 2025-04-09
+
 ### Added
 
 - Introduce standardised error codes ([#7599](https://github.com/open-chat-labs/open-chat/pull/7599))
@@ -13,6 +15,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+- Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+- Expose status notification queue length in metrics ([#7765](https://github.com/open-chat-labs/open-chat/pull/7765))
+
+### Fixed
+
+- Fix swap statuses not updating ([#7763](https://github.com/open-chat-labs/open-chat/pull/7763))
 
 ## [[2.0.1650](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1650-escrow)] - 2025-03-13
 

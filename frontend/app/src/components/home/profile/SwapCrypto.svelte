@@ -1,32 +1,31 @@
 <script lang="ts">
-    import { getContext, onMount } from "svelte";
-    import TokenInput from "../TokenInput.svelte";
     import type { DexId, InterpolationValues, OpenChat, ResourceKey } from "openchat-client";
     import {
+        cryptoBalance as cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
-        cryptoBalance as cryptoBalanceStore,
         swappableTokensStore,
+        ui,
     } from "openchat-client";
-    import { _ } from "svelte-i18n";
-    import Markdown from "../Markdown.svelte";
     import { random128 } from "openchat-shared";
-    import { Record } from "@dfinity/candid/lib/cjs/idl";
-    import CryptoSelector from "../CryptoSelector.svelte";
-    import Legend from "../../Legend.svelte";
-    import SwapProgress from "./SwapProgress.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import Button from "../../Button.svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import ErrorMessage from "../../ErrorMessage.svelte";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { calculateDollarAmount } from "../../../utils/exchange";
     import AlertBox from "../../AlertBox.svelte";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
     import Checkbox from "../../Checkbox.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import Legend from "../../Legend.svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import CryptoSelector from "../CryptoSelector.svelte";
+    import Markdown from "../Markdown.svelte";
+    import TokenInput from "../TokenInput.svelte";
+    import SwapProgress, { type SwapOutcome } from "./SwapProgress.svelte";
 
     interface Props {
         ledgerIn: string;
@@ -207,19 +206,13 @@
         loadSwaps(ledger);
     }
 
-    function onSwapFinished(
-        ev: CustomEvent<{
-            outcome: "success" | "rateChanged" | "insufficientFunds" | "error";
-            ledgerIn: string;
-            ledgerOut: string;
-        }>,
-    ) {
+    function onSwapFinished(outcome: SwapOutcome, ledgerIn: string, ledgerOut: string) {
         busy = false;
         swapState = "finished";
-        result = ev.detail.outcome;
+        result = outcome;
 
-        client.refreshAccountBalance(ev.detail.ledgerIn);
-        client.refreshAccountBalance(ev.detail.ledgerOut);
+        client.refreshAccountBalance(ledgerIn);
+        client.refreshAccountBalance(ledgerOut);
     }
 
     function onPrimaryClick() {
@@ -237,8 +230,8 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        error = $_(ev.detail);
+    function onBalanceRefreshError(err: string) {
+        error = $_(err);
     }
     let initialized = $state(false);
 
@@ -282,8 +275,8 @@
                     value={remainingBalance}
                     label={i18nKey("cryptoAccount.shortBalanceLabel")}
                     bold
-                    on:refreshed={onBalanceRefreshed}
-                    on:error={onBalanceRefreshError} />
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             {/if}
         </span>
     {/snippet}
@@ -332,7 +325,7 @@
                             amountIn={amountInText}
                             decimalsOut={detailsOut.decimals}
                             dex={dexName(bestQuote[0])}
-                            on:finished={onSwapFinished} />
+                            onFinished={onSwapFinished} />
                     </div>
                 {/if}
 
@@ -385,14 +378,14 @@
         <span>
             <ButtonGroup>
                 {#if !swapping}
-                    <Button secondary tiny={$mobileWidth} onClick={onClose}
+                    <Button secondary tiny={ui.mobileWidth} onClick={onClose}
                         ><Translatable resourceKey={i18nKey("close")} /></Button>
                 {/if}
                 {#if result !== "success" && result !== "error"}
                     <Button
                         disabled={busy || !valid}
                         loading={busy}
-                        tiny={$mobileWidth}
+                        tiny={ui.mobileWidth}
                         onClick={onPrimaryClick}
                         ><Translatable resourceKey={primaryButtonText} /></Button>
                 {/if}

@@ -8,7 +8,7 @@
     import SelectedMatch from "./SelectedMatch.svelte";
     import Avatar from "../../Avatar.svelte";
     import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItemLegacy.svelte";
+    import MenuItem from "../../MenuItem.svelte";
 
     const client = getContext<OpenChat>("client");
     const PAGE_SIZE = 15;
@@ -68,14 +68,17 @@
             <Menu fit>
                 {#each groupSearchState.results as group (group.chatId.groupId)}
                     <MenuItem onclick={() => select(group)}>
-                        <Avatar
-                            slot="icon"
-                            url={client.groupAvatarUrl({
-                                ...group,
-                                id: group.chatId,
-                            })}
-                            size={AvatarSize.Small} />
-                        <div slot="text">{group.name}</div>
+                        {#snippet icon()}
+                            <Avatar
+                                url={client.groupAvatarUrl({
+                                    ...group,
+                                    id: group.chatId,
+                                })}
+                                size={AvatarSize.Small} />
+                        {/snippet}
+                        {#snippet text()}
+                            {group.name}
+                        {/snippet}
                     </MenuItem>
                 {/each}
             </Menu>

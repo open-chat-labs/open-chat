@@ -141,7 +141,7 @@
                     </div>
                     <Toggle
                         checked={config.kind === "auto_wallet"}
-                        on:change={toggleMode}
+                        onChange={toggleMode}
                         small
                         bottomMargin={false}
                         id={"wallet-mode-select"}></Toggle>
@@ -195,10 +195,11 @@
                                     <BalanceWithRefresh
                                         ledger={token.ledger}
                                         value={token.balance}
+                                        allowCached={true}
                                         conversion={selectedConversion} />
                                     <Toggle
                                         checked={config.tokens.has(token.ledger)}
-                                        on:change={() => toggle(token.ledger)}
+                                        onChange={() => toggle(token.ledger)}
                                         small
                                         bottomMargin={false}
                                         id={`token_${token.symbol}_toggle`}></Toggle>

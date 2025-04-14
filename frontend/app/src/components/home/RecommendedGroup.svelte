@@ -1,44 +1,48 @@
 <script lang="ts">
-    import Avatar from "../Avatar.svelte";
     import {
         AvatarSize,
+        chatListScopeStore as chatListScope,
+        chatSummariesStore,
+        type GroupChatIdentifier,
         type GroupChatSummary,
         isLocked,
         type MultiUserChat,
         type OpenChat,
+        publish,
         routeForChatIdentifier,
-        suspendedUser,
-        chatListScopeStore as chatListScope,
-        chatSummariesStore,
         selectedCommunity,
+        suspendedUser,
+        ui,
     } from "openchat-client";
-    import { _ } from "svelte-i18n";
-    import Markdown from "./Markdown.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import Footer from "./upgrade/Footer.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { iconSize } from "../../stores/iconSize";
-    import { createEventDispatcher, getContext } from "svelte";
-    import Button from "../Button.svelte";
-    import AccessGateIcon from "./access/AccessGateIcon.svelte";
     import page from "page";
-    import Translatable from "../Translatable.svelte";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Avatar from "../Avatar.svelte";
+    import Button from "../Button.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
-    import { publish } from "@src/utils/pubsub";
+    import Translatable from "../Translatable.svelte";
+    import AccessGateIcon from "./access/AccessGateIcon.svelte";
+    import Markdown from "./Markdown.svelte";
+    import Footer from "./upgrade/Footer.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let group: GroupChatSummary;
-    export let joining: MultiUserChat | undefined;
+    interface Props {
+        group: GroupChatSummary;
+        joining: MultiUserChat | undefined;
+        onDismissRecommendation: (id: GroupChatIdentifier) => void;
+    }
 
-    $: member = $chatSummariesStore.has(group.id);
-    $: locked = isLocked(group.gateConfig.gate);
+    let { group, joining, onDismissRecommendation }: Props = $props();
+
+    let member = $derived($chatSummariesStore.has(group.id));
+    let locked = $derived(isLocked(group.gateConfig.gate));
 
     function dismiss({ id }: GroupChatSummary) {
-        dispatch("dismissRecommendation", id);
+        onDismissRecommendation(id);
     }
 
     function gotoGroup({ id }: GroupChatSummary) {
@@ -62,7 +66,7 @@
             <div class="avatar">
                 <Avatar
                     url={client.groupAvatarUrl(group, $selectedCommunity)}
-                    size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
+                    size={ui.mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
             </div>
             <div class="group-title-line">
                 <WithVerifiedBadge verified={group.verified} size={"small"}>
@@ -77,9 +81,9 @@
                         })} />
                 </p>
             </div>
-            <div title={$_("notInterested")} class="close" on:click={() => dismiss(group)}>
+            <div title={$_("notInterested")} class="close" onclick={() => dismiss(group)}>
                 <HoverIcon>
-                    <Close size={$iconSize} color={"var(--icon-txt)"} />
+                    <Close size={ui.iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
         </div>

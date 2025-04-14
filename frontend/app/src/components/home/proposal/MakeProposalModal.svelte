@@ -1,45 +1,44 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
-    import ModalContent from "../../ModalContent.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import BotPublisher from "@src/components/bots/BotPublisher.svelte";
     import {
+        cryptoBalance as cryptoBalanceStore,
         routeForChatIdentifier,
+        ui,
+        currentUser as user,
         type CandidateProposalAction,
         type MultiUserChat,
         type NervousSystemDetails,
         type OpenChat,
         type ResourceKey,
-        currentUser as user,
-        cryptoBalance as cryptoBalanceStore,
     } from "openchat-client";
     import { isPrincipalValid, isUrl, random32, type ExternalBot } from "openchat-shared";
-    import { iconSize } from "../../../stores/iconSize";
-    import Button from "../../Button.svelte";
-    import Legend from "../../Legend.svelte";
-    import Input from "../../Input.svelte";
-    import TextArea from "../../TextArea.svelte";
-    import Select from "../../Select.svelte";
-    import PencilIcon from "svelte-material-icons/PencilOutline.svelte";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import EyeIcon from "svelte-material-icons/EyeOutline.svelte";
-    import Markdown from "../Markdown.svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import AccountInfo from "../AccountInfo.svelte";
+    import PencilIcon from "svelte-material-icons/PencilOutline.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import {
         createAddTokenPayload,
-        createRegisterExternalAchievementPayload,
         createPublishExternalBotPayload,
+        createRegisterExternalAchievementPayload,
         createUpdateTokenPayload,
     } from "../../../utils/sns";
-    import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
-    import DurationPicker from "../DurationPicker.svelte";
+    import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
+    import Input from "../../Input.svelte";
+    import Legend from "../../Legend.svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import Select from "../../Select.svelte";
+    import TextArea from "../../TextArea.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import AccountInfo from "../AccountInfo.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import DurationPicker from "../DurationPicker.svelte";
+    import Markdown from "../Markdown.svelte";
+    import RemoveBot from "./RemoveBot.svelte";
     import TransferSnsFunds from "./TransferSNSFunds.svelte";
     import VerificationProposal from "./VerificationProposal.svelte";
-    import RemoveBot from "./RemoveBot.svelte";
-    import BotPublisher from "@src/components/bots/BotPublisher.svelte";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -60,14 +59,14 @@
     const USER_INDEX_CANISTER = import.meta.env.OC_USER_INDEX_CANISTER!;
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     interface Props {
         selectedMultiUserChat: MultiUserChat;
         nervousSystem: NervousSystemDetails;
+        onClose: () => void;
     }
 
-    let { selectedMultiUserChat, nervousSystem }: Props = $props();
+    let { selectedMultiUserChat, nervousSystem, onClose }: Props = $props();
 
     let title = $state("");
     let url = $state("");
@@ -135,10 +134,6 @@
         return i18nKey("proposal.maker.message", { cost, token: symbol });
     }
 
-    function onClose() {
-        dispatch("close");
-    }
-
     async function onClickPrimary(): Promise<void> {
         if (step === 0) {
             balanceWithRefresh.refresh();
@@ -192,7 +187,7 @@
             .then((success) => {
                 busy = false;
                 if (success) {
-                    dispatch("close");
+                    onClose();
                 } else {
                     error = "unexpectedError";
                 }
@@ -434,16 +429,16 @@
                 value={cryptoBalance}
                 label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
-                on:click={onStartRefreshingBalance}
-                on:refreshed={onRefreshingBalanceSuccess}
-                on:error={onRefreshingBalanceFailed} />
+                onClick={onStartRefreshingBalance}
+                onRefreshed={onRefreshingBalanceSuccess}
+                onError={onRefreshingBalanceFailed} />
         </div>
     {/snippet}
     {#snippet body()}
         <div class="body">
             <div class="sections">
                 <div class="topup hidden" class:visible={step === 0}>
-                    <AccountInfo {ledger} user={$user} />
+                    <AccountInfo {ledger} />
                     <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                 </div>
                 <div class="common hidden" class:visible={step === 1}>
@@ -548,9 +543,9 @@
                                         )} /></span>
                                 <span class="icon">
                                     {#if summaryPreview}
-                                        <PencilIcon size={$iconSize} viewBox="0 -3 24 24" />
+                                        <PencilIcon size={ui.iconSize} viewBox="0 -3 24 24" />
                                     {:else}
-                                        <EyeIcon size={$iconSize} viewBox="0 -3 24 24" />
+                                        <EyeIcon size={ui.iconSize} viewBox="0 -3 24 24" />
                                     {/if}
                                 </span>
                             </div>
@@ -776,8 +771,8 @@
                     {#if step > 1 || (step == 1 && insufficientFunds)}
                         <Button
                             disabled={busy}
-                            small={!$mobileWidth}
-                            tiny={$mobileWidth}
+                            small={!ui.mobileWidth}
+                            tiny={ui.mobileWidth}
                             onClick={() => (step = step - 1)}
                             ><Translatable resourceKey={i18nKey("group.back")} /></Button>
                     {/if}
@@ -785,8 +780,8 @@
                 <div class="actions">
                     <Button
                         disabled={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}
                         onClick={onClose}
                         secondary>{$_("cancel")}</Button>
 
@@ -795,8 +790,8 @@
                             (canSubmit && !valid) ||
                             selectedProposalType === undefined}
                         loading={busy || refreshingBalance}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
+                        small={!ui.mobileWidth}
+                        tiny={ui.mobileWidth}
                         onClick={onClickPrimary}
                         ><Translatable
                             resourceKey={i18nKey(

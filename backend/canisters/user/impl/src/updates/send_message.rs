@@ -1,16 +1,14 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_local_user_index;
 use crate::guards::caller_is_owner;
-use crate::model::pin_number::VerifyPinError;
 use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
 use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, TimerJob};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::EditMessageArgs;
-use chat_events::EditMessageResult;
 use chat_events::TextContentInternal;
+use chat_events::{EditMessageArgs, EditMessageSuccess};
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult};
 use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 use event_store_producer::NullRuntime;
@@ -76,11 +74,7 @@ async fn send_message_v2(args: Args) -> Response {
                 }
 
                 if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_deref(), now)) {
-                    return match error {
-                        VerifyPinError::PinRequired => PinRequired,
-                        VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-                        VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-                    };
+                    return Error(error.into());
                 }
 
                 // When transferring to bot users, each user transfers to their own subaccount, this way it
@@ -263,7 +257,7 @@ fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_messag
                             now,
                         };
 
-                        let EditMessageResult::Success(message_index, event) =
+                        let Ok(EditMessageSuccess { message_index, event }) =
                             chat.events.edit_message::<CdkRuntime>(edit_message_args, None)
                         else {
                             // Shouldn't happen
