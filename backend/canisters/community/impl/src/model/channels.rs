@@ -267,7 +267,7 @@ impl Channel {
         community_members: &CommunityMembers,
     ) -> Option<CommunityCanisterChannelSummary> {
         let chat = &self.chat;
-        let is_community_member = user_id.is_some_and(|u| self.chat.members.contains(&u));
+        let is_community_member = user_id.is_some_and(|user_id| community_members.contains(&user_id));
         let member = user_id.and_then(|user_id| chat.members.get(&user_id));
 
         let (min_visible_event_index, min_visible_message_index, is_invited) = if let Some(member) = &member {
@@ -374,7 +374,7 @@ impl Channel {
         community_members: &CommunityMembers,
     ) -> ChannelUpdates {
         let chat = &self.chat;
-        let is_community_member = user_id.is_some_and(|u| self.chat.members.contains(&u));
+        let is_community_member = user_id.is_some_and(|user_id| community_members.contains(&user_id));
         let member = user_id.and_then(|id| chat.members.get(&id));
 
         if let Some(m) = &member {
