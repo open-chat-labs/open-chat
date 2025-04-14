@@ -64,12 +64,17 @@ describe("app state", () => {
             expect(app.selectedCommunityDetails.blockedUsers.has("a")).toBe(true);
             expect(app.selectedCommunityDetails.blockedUsers.has("d")).toBe(false);
 
-            console.log("before local update");
-            communityLocalUpdates.blockUser(communityId, "d");
-            console.log("after local update");
-
-            // this doesn't fucking work
+            // check that local updates work and are correctly merged with server state
+            const undo = communityLocalUpdates.blockUser(communityId, "d");
             expect(app.selectedCommunityDetails.blockedUsers.has("d")).toBe(true);
+
+            // undo the local update
+            undo();
+            expect(app.selectedCommunityDetails.blockedUsers.has("d")).toBe(false);
+
+            // try unblock
+            communityLocalUpdates.unblockUser(communityId, "a");
+            expect(app.selectedCommunityDetails.blockedUsers.has("a")).toBe(false);
         });
     });
 });

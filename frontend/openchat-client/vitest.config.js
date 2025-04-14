@@ -11,4 +11,10 @@ export default defineConfig({
             inline: [/svelte/],
         },
     },
+    // eslint-disable-next-line no-undef
+    resolve: process.env.VITEST
+        ? {
+              conditions: ["browser"],
+          }
+        : undefined,
 });

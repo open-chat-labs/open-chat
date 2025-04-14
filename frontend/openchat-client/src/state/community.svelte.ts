@@ -7,35 +7,17 @@ import {
     type UserGroupDetails,
     type VersionedRules,
 } from "openchat-shared";
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
-
-export class LocalSet<T> {
-    #added = new SvelteSet<T>();
-    #removed = new SvelteSet<T>();
-
-    add(thing: T) {
-        this.#added.add(thing);
-        this.#removed.delete(thing);
-    }
-
-    remove(thing: T) {
-        this.#removed.add(thing);
-        this.#added.delete(thing);
-    }
-
-    apply(original: Set<T>): SvelteSet<T> {
-        const merged = new SvelteSet<T>(original);
-        this.#added.forEach((t) => merged.add(t));
-        this.#removed.forEach((t) => merged.delete(t));
-        return merged;
-    }
-}
+import { SvelteMap } from "svelte/reactivity";
+import { LocalMap } from "./map";
+import { LocalSet, ReadonlySet } from "./set";
+import type { UndoLocalUpdate } from "./undo";
 
 export class CommunityLocalState {
     readonly invitedUsers = new LocalSet<string>();
     readonly blockedUsers = new LocalSet<string>();
     readonly referrals = new LocalSet<string>();
     readonly lapsedMembers = new LocalSet<string>();
+    readonly members = new LocalMap<string, Member>();
 }
 
 // Manager - urgh
@@ -43,7 +25,11 @@ export class CommunityLocalState {
 export class CommunityLocalStateManager {
     #data = new SvelteMap<string, CommunityLocalState>();
 
-    get(id: CommunityIdentifier): CommunityLocalState {
+    get(id: CommunityIdentifier): CommunityLocalState | undefined {
+        return this.#data.get(id.communityId);
+    }
+
+    #getOrCreate(id: CommunityIdentifier): CommunityLocalState {
         let state = this.#data.get(id.communityId);
         if (state === undefined) {
             state = new CommunityLocalState();
@@ -52,12 +38,16 @@ export class CommunityLocalStateManager {
         return state;
     }
 
-    blockUser(id: CommunityIdentifier, userId: string) {
-        this.get(id).blockedUsers.add(userId);
+    updateMember(id: CommunityIdentifier, userId: string, member: Member) {
+        this.#getOrCreate(id).members.addOrUpdate(userId, member);
     }
 
-    unblockUser(id: CommunityIdentifier, userId: string) {
-        this.get(id).blockedUsers.remove(userId);
+    blockUser(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
+        return this.#getOrCreate(id).blockedUsers.add(userId);
+    }
+
+    unblockUser(id: CommunityIdentifier, userId: string): UndoLocalUpdate {
+        return this.#getOrCreate(id).blockedUsers.remove(userId);
     }
 }
 
@@ -101,22 +91,21 @@ export class CommunityMergedState {
     #bots;
     #apiKeys;
     #rules;
-    #blockedUsers = $derived.by<Set<string>>(() => {
-        console.log("deriving blocked users", this.server.blockedUsers, this.#local?.blockedUsers);
-        return this.#mergeSet(this.server.blockedUsers, this.#local?.blockedUsers);
-    });
-    #lapsedMembers = $derived<Set<string>>(
+    #blockedUsers = $derived.by<ReadonlySet<string>>(() =>
+        this.#mergeSet(this.server.blockedUsers, this.#local?.blockedUsers),
+    );
+    #lapsedMembers = $derived<ReadonlySet<string>>(
         this.#mergeSet(this.server.lapsedMembers, this.#local?.lapsedMembers),
     );
-    #invitedUsers = $derived<Set<string>>(
+    #invitedUsers = $derived<ReadonlySet<string>>(
         this.#mergeSet(this.server.invitedUsers, this.#local?.invitedUsers),
     );
-    #referrals = $derived<Set<string>>(
+    #referrals = $derived<ReadonlySet<string>>(
         this.#mergeSet(this.server.referrals, this.#local?.referrals),
     );
 
-    #mergeSet<T>(server: Set<T>, local?: LocalSet<T>): Set<T> {
-        return local ? local.apply(server) : server;
+    #mergeSet<T>(server: Set<T>, local?: LocalSet<T>): ReadonlySet<T> {
+        return new ReadonlySet(local ? local.apply(server) : server);
     }
 
     get #local() {
