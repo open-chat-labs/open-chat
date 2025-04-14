@@ -1,5 +1,6 @@
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
+use types::{CanisterId, UserId};
 
 mod lifecycle;
 mod queries;
@@ -7,7 +8,6 @@ mod updates;
 
 pub use lifecycle::*;
 pub use queries::*;
-use types::CanisterId;
 pub use updates::*;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -22,6 +22,7 @@ pub enum GroupIndexEvent {
     CommunityNameChanged(NameChanged),
     GroupVerifiedChanged(VerifiedChanged),
     CommunityVerifiedChanged(VerifiedChanged),
+    NotifyOfUserDeleted(CanisterId, UserId),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
