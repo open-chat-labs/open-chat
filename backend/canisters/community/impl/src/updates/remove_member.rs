@@ -8,7 +8,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::remove_member::{Response::*, *};
 use fire_and_forget_handler::FireAndForgetHandler;
-use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use local_user_index_canister_c2c_client::lookup_user;
 use msgpack::serialize_then_unwrap;
 use types::{CanisterId, CommunityMembersRemoved, CommunityRole, CommunityUsersBlocked, UserId};
 use user_canister::c2c_remove_from_community;
@@ -45,9 +45,9 @@ async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
     // is not authorized
     if prepare_result.is_user_to_remove_an_owner {
         match lookup_user(user_id.into(), prepare_result.local_user_index_canister_id).await {
-            Ok(user) if !user.is_platform_moderator => (),
-            Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-            Err(LookupUserError::InternalError(error)) => return InternalError(error),
+            Ok(Some(user)) if !user.is_platform_moderator => (),
+            Ok(_) => return NotAuthorized,
+            Err(error) => return InternalError(format!("{error:?}")),
         }
     }
 

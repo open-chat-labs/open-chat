@@ -14,7 +14,6 @@ use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command, Inc
 use sns_governance_canister::types::{manage_neuron_response, ManageNeuron};
 use sns_governance_canister_c2c_client::configure_neuron;
 use types::{C2CError, CanisterId, SnsNeuronId};
-use user_index_canister_c2c_client::LookupUserError;
 
 #[update(msgpack = true)]
 #[trace]
@@ -32,9 +31,9 @@ async fn stake_neuron_for_submitting_proposals(args: Args) -> Response {
     };
 
     match user_index_canister_c2c_client::lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_operator => {}
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
-        _ => return Unauthorized,
+        Ok(Some(user)) if user.is_platform_operator => {}
+        Ok(_) => return Unauthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     }
 
     match stake_neuron_impl(&args, this_canister_id, ledger_canister_id, nonce, dissolve_delay_seconds).await {
