@@ -29,6 +29,8 @@ fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" 
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
+group_index_canister = { path = "../../group_index/api" }
+group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 hex = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }

@@ -1,5 +1,6 @@
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
+use types::{CanisterId, UserId};
 
 mod lifecycle;
 mod queries;
@@ -14,4 +15,9 @@ pub enum ChildCanisterType {
     LocalGroupIndex,
     Group,
     Community,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum UserIndexEvent {
+    NotifyOfUserDeleted(CanisterId, UserId),
 }

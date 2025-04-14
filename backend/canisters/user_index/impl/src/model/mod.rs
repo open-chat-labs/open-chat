@@ -2,6 +2,7 @@ pub mod account_billing;
 pub mod chit_leaderboard;
 pub mod diamond_membership_details;
 pub mod external_achievements;
+pub mod group_index_event_batch;
 pub mod local_user_index_map;
 pub mod notifications_index_event_batch;
 pub mod pending_modclub_submissions_queue;
